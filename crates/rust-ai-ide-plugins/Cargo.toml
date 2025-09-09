@@ -1,0 +1,50 @@
+[package]
+name = "rust-ai-ide-plugins"
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+# Core async runtime
+async-trait = { workspace = true }
+tokio = { workspace = true }
+
+# File system and path utilities
+walkdir = { workspace = true }
+dunce = { workspace = true }
+
+# Cryptography and security
+sha2 = "0.10.9"
+base64 = "0.22.1"
+hex = "0.4.3"
+
+# File watching and notifications
+notify = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Time utilities
+chrono = { workspace = true }
+
+# Common utilities
+dirs-next = { workspace = true }
+dirs = { version = "^5.0.0" }
+thiserror = { workspace = true }
+
+# HTTP client for marketplace
+reqwest = { version = "0.12", features = ["json"] }
+urlencoding = "2.1"
+
+# UUID for plugin identification
+uuid = { workspace = true }
+
+# Semantic versioning
+semver = { workspace = true, features = ["serde"] }
+
+# Graph algorithms for dependency resolution
+petgraph = { workspace = true }
+
+# Workspace local dependencies
+rust-ai-ide-types = { workspace = true }
+rust-ai-ide-errors = { workspace = true }

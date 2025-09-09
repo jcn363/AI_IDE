@@ -1,0 +1,1046 @@
+warning|:|crates/rust-ai-ide-lsp/src/client.rs|:|541|:|541|:|22|:|44|:|redundant closure|:|[0m[1m[33mwarning[0m[0m[1m: redundant closure[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-lsp/src/client.rs:541:22[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m541[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m            .map_err(|e| LSPError::Other(e))?;[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                      [0m[0m[1m[33m^^^^^^^^^^^^^^^^^^^^^^[0m[0m [0m[0m[1m[33mhelp: replace the closure with the function itself: `LSPError::Other`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#redundant_closure[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(clippy::redundant_closure)]` on by default[0m
+
+|:|none
+help|:|crates/rust-ai-ide-lsp/src/client.rs|:|541|:|541|:|22|:|44|:|replace the closure with the function itself|:|none|:|LSPError::Other
+warning|:|crates/rust-ai-ide-lsp/src/rust_analyzer.rs|:|151|:|151|:|19|:|37|:|struct update has no effect, all the fields in the struct have already been specified|:|[0m[1m[33mwarning[0m[0m[1m: struct update has no effect, all the fields in the struct have already been specified[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-lsp/src/rust_analyzer.rs:151:19[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m151[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m                ..Default::default()[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                   [0m[0m[1m[33m^^^^^^^^^^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_update[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(clippy::needless_update)]` on by default[0m
+
+|:|none
+warning|:|crates/rust-ai-ide-lsp/src/client.rs|:|541|:|541|:|22|:|44|:|redundant closure|:|[0m[1m[33mwarning[0m[0m[1m: redundant closure[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-lsp/src/client.rs:541:22[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m541[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m            .map_err(|e| LSPError::Other(e))?;[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                      [0m[0m[1m[33m^^^^^^^^^^^^^^^^^^^^^^[0m[0m [0m[0m[1m[33mhelp: replace the closure with the function itself: `LSPError::Other`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#redundant_closure[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(clippy::redundant_closure)]` on by default[0m
+
+|:|none
+help|:|crates/rust-ai-ide-lsp/src/client.rs|:|541|:|541|:|22|:|44|:|replace the closure with the function itself|:|none|:|LSPError::Other
+warning|:|crates/rust-ai-ide-lsp/src/rust_analyzer.rs|:|151|:|151|:|19|:|37|:|struct update has no effect, all the fields in the struct have already been specified|:|[0m[1m[33mwarning[0m[0m[1m: struct update has no effect, all the fields in the struct have already been specified[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-lsp/src/rust_analyzer.rs:151:19[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m151[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m                ..Default::default()[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                   [0m[0m[1m[33m^^^^^^^^^^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_update[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(clippy::needless_update)]` on by default[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/builder.rs|:|513|:|513|:|20|:|24|:|unresolved import `tauri::test`|:|[0m[1m[38;5;9merror[E0432][0m[0m[1m: unresolved import `tauri::test`[0m
+[0m    [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/builder.rs:513:20[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m513[0m[0m  [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        use tauri::test::mock_app;[0m
+[0m     [0m[0m[1m[38;5;12m|[0m[0m                    [0m[0m[1m[38;5;9m^^^^[0m[0m [0m[0m[1m[38;5;9mcould not find `test` in `tauri`[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;10mnote[0m[0m: found an item that was configured out[0m
+[0m    [0m[0m[1m[38;5;12m--> [0m[0m/home/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.8.2/src/lib.rs:1130:9[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m1130[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub mod test;[0m
+[0m     [0m[0m[1m[38;5;12m|[0m[0m         [0m[0m[1m[38;5;10m^^^^[0m
+[0m[1m[38;5;10mnote[0m[0m: the item is gated here[0m
+[0m    [0m[0m[1m[38;5;12m--> [0m[0m/home/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.8.2/src/lib.rs:1128:1[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m1128[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m#[cfg(any(test, feature = "test"))][0m
+[0m     [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;10m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+|:|none
+note|:|/home/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.8.2/src/lib.rs|:|1130|:|1130|:|9|:|13|:|found an item that was configured out|:|none|:|none
+note|:|/home/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.8.2/src/lib.rs|:|1128|:|1128|:|1|:|36|:|the item is gated here|:|none|:|none
+warning|:|crates/rust-ai-ide-cargo/src/commands/build.rs|:|10|:|10|:|33|:|38|:|unused import: `State`|:|[0m[1m[33mwarning[0m[0m[1m: unused import: `State`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/commands/build.rs:10:33[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m10[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0muse tauri::{AppHandle, Manager, State};[0m
+[0m   [0m[0m[1m[38;5;12m|[0m[0m                                 [0m[0m[1m[33m^^^^^[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m   [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(unused_imports)]` on by default[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/commands/build.rs|:|10|:|10|:|31|:|38|:|remove the unused import|:|none|:|
+warning|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|3|:|3|:|5|:|20|:|unused import: `std::path::Path`|:|[0m[1m[33mwarning[0m[0m[1m: unused import: `std::path::Path`[0m
+[0m [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/commands/dependency.rs:3:5[0m
+[0m  [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m3[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0muse std::path::Path;[0m
+[0m  [0m[0m[1m[38;5;12m|[0m[0m     [0m[0m[1m[33m^^^^^^^^^^^^^^^[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|3|:|4|:|1|:|1|:|remove the whole `use` item|:|none|:|
+warning|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|7|:|7|:|26|:|35|:|unused import: `Serialize`|:|[0m[1m[33mwarning[0m[0m[1m: unused import: `Serialize`[0m
+[0m [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/commands/dependency.rs:7:26[0m
+[0m  [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m7[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0muse serde::{Deserialize, Serialize};[0m
+[0m  [0m[0m[1m[38;5;12m|[0m[0m                          [0m[0m[1m[33m^^^^^^^^^[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|7|:|7|:|24|:|35|:|remove the unused import|:|none|:|
+help|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|7|:|7|:|12|:|13|:|remove the unused import|:|none|:|
+help|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|7|:|7|:|35|:|36|:|remove the unused import|:|none|:|
+warning|:|crates/rust-ai-ide-cargo/src/commands/build.rs|:|10|:|10|:|33|:|38|:|unused import: `State`|:|[0m[1m[33mwarning[0m[0m[1m: unused import: `State`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/commands/build.rs:10:33[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m10[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0muse tauri::{AppHandle, Manager, State};[0m
+[0m   [0m[0m[1m[38;5;12m|[0m[0m                                 [0m[0m[1m[33m^^^^^[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m   [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(unused_imports)]` on by default[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/commands/build.rs|:|10|:|10|:|31|:|38|:|remove the unused import|:|none|:|
+warning|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|3|:|3|:|5|:|20|:|unused import: `std::path::Path`|:|[0m[1m[33mwarning[0m[0m[1m: unused import: `std::path::Path`[0m
+[0m [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/commands/dependency.rs:3:5[0m
+[0m  [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m3[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0muse std::path::Path;[0m
+[0m  [0m[0m[1m[38;5;12m|[0m[0m     [0m[0m[1m[33m^^^^^^^^^^^^^^^[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|3|:|4|:|1|:|1|:|remove the whole `use` item|:|none|:|
+warning|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|7|:|7|:|26|:|35|:|unused import: `Serialize`|:|[0m[1m[33mwarning[0m[0m[1m: unused import: `Serialize`[0m
+[0m [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/commands/dependency.rs:7:26[0m
+[0m  [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m7[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0muse serde::{Deserialize, Serialize};[0m
+[0m  [0m[0m[1m[38;5;12m|[0m[0m                          [0m[0m[1m[33m^^^^^^^^^[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|7|:|7|:|24|:|35|:|remove the unused import|:|none|:|
+help|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|7|:|7|:|12|:|13|:|remove the unused import|:|none|:|
+help|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|7|:|7|:|35|:|36|:|remove the unused import|:|none|:|
+warning|:|crates/rust-ai-ide-cargo/src/dependency/mod.rs|:|9|:|9|:|22|:|32|:|unused import: `Dependency`|:|[0m[1m[33mwarning[0m[0m[1m: unused import: `Dependency`[0m
+[0m [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/dependency/mod.rs:9:22[0m
+[0m  [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m9[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0muse cargo_metadata::{Dependency, Package};[0m
+[0m  [0m[0m[1m[38;5;12m|[0m[0m                      [0m[0m[1m[33m^^^^^^^^^^[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/dependency/mod.rs|:|9|:|9|:|22|:|34|:|remove the unused import|:|none|:|
+help|:|crates/rust-ai-ide-cargo/src/dependency/mod.rs|:|9|:|9|:|21|:|22|:|remove the unused import|:|none|:|
+help|:|crates/rust-ai-ide-cargo/src/dependency/mod.rs|:|9|:|9|:|41|:|42|:|remove the unused import|:|none|:|
+warning|:|crates/rust-ai-ide-cargo/src/dependency/mod.rs|:|9|:|9|:|22|:|32|:|unused import: `Dependency`|:|[0m[1m[33mwarning[0m[0m[1m: unused import: `Dependency`[0m
+[0m [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/dependency/mod.rs:9:22[0m
+[0m  [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m9[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0muse cargo_metadata::{Dependency, Package};[0m
+[0m  [0m[0m[1m[38;5;12m|[0m[0m                      [0m[0m[1m[33m^^^^^^^^^^[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/dependency/mod.rs|:|9|:|9|:|22|:|34|:|remove the unused import|:|none|:|
+help|:|crates/rust-ai-ide-cargo/src/dependency/mod.rs|:|9|:|9|:|21|:|22|:|remove the unused import|:|none|:|
+help|:|crates/rust-ai-ide-cargo/src/dependency/mod.rs|:|9|:|9|:|41|:|42|:|remove the unused import|:|none|:|
+warning|:|crates/rust-ai-ide-cargo/src/dependency/mod.rs|:|128|:|128|:|21|:|28|:|variable does not need to be mutable|:|[0m[1m[33mwarning[0m[0m[1m: variable does not need to be mutable[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/dependency/mod.rs:128:21[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m128[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        if let Some(mut dep) = self.dependencies.write().await.get_mut(name) {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                     [0m[0m[1m[38;5;12m----[0m[0m[1m[33m^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                     [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                     [0m[0m[1m[38;5;12mhelp: remove this `mut`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(unused_mut)]` on by default[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/dependency/mod.rs|:|128|:|128|:|21|:|25|:|remove this `mut`|:|none|:|
+warning|:|crates/rust-ai-ide-cargo/src/dependency/mod.rs|:|128|:|128|:|21|:|28|:|variable does not need to be mutable|:|[0m[1m[33mwarning[0m[0m[1m: variable does not need to be mutable[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/dependency/mod.rs:128:21[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m128[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        if let Some(mut dep) = self.dependencies.write().await.get_mut(name) {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                     [0m[0m[1m[38;5;12m----[0m[0m[1m[33m^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                     [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                     [0m[0m[1m[38;5;12mhelp: remove this `mut`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(unused_mut)]` on by default[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/dependency/mod.rs|:|128|:|128|:|21|:|25|:|remove this `mut`|:|none|:|
+error|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|111|:|111|:|30|:|43|:|no method named `path_resolver` found for mutable reference `&mut tauri::App` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `path_resolver` found for mutable reference `&mut tauri::App` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/commands/dependency.rs:111:30[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m111[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    let workspace_path = app.path_resolver().app_local_data_dir()[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                              [0m[0m[1m[38;5;9m^^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `&mut tauri::App`[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|228|:|228|:|13|:|19|:|variant `build::status::BuildStatus::Success` has no field named `output`|:|[0m[1m[38;5;9merror[E0559][0m[0m[1m: variant `build::status::BuildStatus::Success` has no field named `output`[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:228:13[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m228[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m            output: String::new(),[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[38;5;9m^^^^^^[0m[0m [0m[0m[1m[38;5;9m`build::status::BuildStatus::Success` does not have this field[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: all struct fields are already assigned[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|237|:|237|:|13|:|19|:|variant `build::status::BuildStatus::Success` has no field named `output`|:|[0m[1m[38;5;9merror[E0559][0m[0m[1m: variant `build::status::BuildStatus::Success` has no field named `output`[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:237:13[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m237[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m            output: String::new(),[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[38;5;9m^^^^^^[0m[0m [0m[0m[1m[38;5;9m`build::status::BuildStatus::Success` does not have this field[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: all struct fields are already assigned[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|247|:|247|:|13|:|19|:|variant `build::status::BuildStatus::Failed` has no field named `output`|:|[0m[1m[38;5;9merror[E0559][0m[0m[1m: variant `build::status::BuildStatus::Failed` has no field named `output`[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:247:13[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m247[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m            output: String::new(),[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[38;5;9m^^^^^^[0m[0m [0m[0m[1m[38;5;9m`build::status::BuildStatus::Failed` does not have this field[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: all struct fields are already assigned[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|275|:|275|:|13|:|19|:|variant `build::status::BuildStatus::Success` has no field named `output`|:|[0m[1m[38;5;9merror[E0559][0m[0m[1m: variant `build::status::BuildStatus::Success` has no field named `output`[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:275:13[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m275[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m            output: String::new(),[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[38;5;9m^^^^^^[0m[0m [0m[0m[1m[38;5;9m`build::status::BuildStatus::Success` does not have this field[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: all struct fields are already assigned[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|115|:|115|:|9|:|15|:|no method named `manage` found for mutable reference `&mut tauri::App` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `manage` found for mutable reference `&mut tauri::App` in the current scope[0m
+[0m    [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/commands/dependency.rs:115:9[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m115[0m[0m  [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    app.manage(state);[0m
+[0m     [0m[0m[1m[38;5;12m|[0m[0m         [0m[0m[1m[38;5;9m^^^^^^[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+[0m     [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: items from traits can only be used if the trait is in scope[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `manager` with a similar name, but with different arguments[0m
+[0m    [0m[0m[1m[38;5;12m--> [0m[0m/home/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.8.2/src/lib.rs:1094:5[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m1094[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    fn manager(&self) -> &AppManager<R>;[0m
+[0m     [0m[0m[1m[38;5;12m|[0m[0m     [0m[0m[1m[38;5;14m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[0m[1m[38;5;14mhelp[0m[0m: trait `Manager` which provides `manage` is implemented but not in scope; perhaps you want to import it[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m3[0m[0m    [0m[0m[38;5;10m+ use tauri::Manager;[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+help|:|/home/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.8.2/src/lib.rs|:|1094|:|1094|:|5|:|41|:|there is a method `manager` with a similar name, but with different arguments|:|none|:|none
+help|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|3|:|3|:|1|:|1|:|trait `Manager` which provides `manage` is implemented but not in scope; perhaps you want to import it|:|none|:|use tauri::Manager;
+
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|284|:|284|:|13|:|19|:|variant `build::status::BuildStatus::Failed` has no field named `output`|:|[0m[1m[38;5;9merror[E0559][0m[0m[1m: variant `build::status::BuildStatus::Failed` has no field named `output`[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:284:13[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m284[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m            output: String::new(),[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[38;5;9m^^^^^^[0m[0m [0m[0m[1m[38;5;9m`build::status::BuildStatus::Failed` does not have this field[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: all struct fields are already assigned[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|338|:|338|:|13|:|19|:|variant `build::status::BuildStatus::Success` has no field named `output`|:|[0m[1m[38;5;9merror[E0559][0m[0m[1m: variant `build::status::BuildStatus::Success` has no field named `output`[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:338:13[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m338[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m            output: String::new(),[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[38;5;9m^^^^^^[0m[0m [0m[0m[1m[38;5;9m`build::status::BuildStatus::Success` does not have this field[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: all struct fields are already assigned[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|348|:|348|:|13|:|19|:|variant `build::status::BuildStatus::Failed` has no field named `output`|:|[0m[1m[38;5;9merror[E0559][0m[0m[1m: variant `build::status::BuildStatus::Failed` has no field named `output`[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:348:13[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m348[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m            output: String::new(),[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[38;5;9m^^^^^^[0m[0m [0m[0m[1m[38;5;9m`build::status::BuildStatus::Failed` does not have this field[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: all struct fields are already assigned[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|365|:|365|:|24|:|34|:|no method named `is_pending` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_pending` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:365:24[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_pending` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m365[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(result.is_pending());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[1m[38;5;9m^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_pending` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_pending` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:365:24[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_pending` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m365[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(result.is_pending());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[1m[38;5;9m^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|366|:|366|:|25|:|36|:|no method named `is_building` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_building` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:366:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_building` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m366[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m366[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_building` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_building` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:366:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_building` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m366[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m366[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|366|:|366|:|25|:|25|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_failed` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_failed` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:368:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_failed` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m368[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m368[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `is_failure` with a similar name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m368[0m[0m [0m[0m[38;5;9m- [0m[0m        assert!(!result.[0m[0m[38;5;9mis_failed[0m[0m());[0m
+[0m[1m[38;5;12m368[0m[0m [0m[0m[38;5;10m+ [0m[0m        assert!(!result.[0m[0m[38;5;10mis_failure[0m[0m());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|368|:|368|:|25|:|34|:|no method named `is_failed` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_failed` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:368:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_failed` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m368[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m368[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `is_failure` with a similar name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m368[0m[0m [0m[0m[38;5;9m- [0m[0m        assert!(!result.[0m[0m[38;5;9mis_failed[0m[0m());[0m
+[0m[1m[38;5;12m368[0m[0m [0m[0m[38;5;10m+ [0m[0m        assert!(!result.[0m[0m[38;5;10mis_failure[0m[0m());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|368|:|368|:|25|:|25|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|368|:|368|:|25|:|34|:|there is a method `is_failure` with a similar name|:|none|:|is_failure
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|369|:|369|:|25|:|37|:|no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:369:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_cancelled` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m369[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: items from traits can only be used if the trait is implemented and in scope[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: the following traits define an item `is_cancelled`, perhaps you need to implement one of them:[0m
+[0m            candidate #1: `gio::auto::cancellable::CancellableExt`[0m
+[0m            candidate #2: `gio::auto::file_monitor::FileMonitorExt`[0m
+[0m            candidate #3: `soup::auto::auth::AuthExt`[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m369[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:369:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_cancelled` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m369[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: items from traits can only be used if the trait is implemented and in scope[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: the following traits define an item `is_cancelled`, perhaps you need to implement one of them:[0m
+[0m            candidate #1: `gio::auto::cancellable::CancellableExt`[0m
+[0m            candidate #2: `gio::auto::file_monitor::FileMonitorExt`[0m
+[0m            candidate #3: `soup::auto::auth::AuthExt`[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m369[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|369|:|369|:|25|:|25|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|379|:|379|:|25|:|35|:|no method named `is_pending` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_pending` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:379:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_pending` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m379[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_pending());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_pending` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_pending` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:379:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_pending` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m379[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_pending());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|380|:|380|:|24|:|35|:|no method named `is_building` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_building` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:380:24[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_building` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m380[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(result.is_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[1m[38;5;9m^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m380[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(result.[0m[0m[38;5;10mstatus.[0m[0mis_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_building` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_building` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:380:24[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_building` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m380[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(result.is_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[1m[38;5;9m^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m380[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(result.[0m[0m[38;5;10mstatus.[0m[0mis_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|380|:|380|:|24|:|24|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_failed` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_failed` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:382:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_failed` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m382[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m382[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `is_failure` with a similar name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m382[0m[0m [0m[0m[38;5;9m- [0m[0m        assert!(!result.[0m[0m[38;5;9mis_failed[0m[0m());[0m
+[0m[1m[38;5;12m382[0m[0m [0m[0m[38;5;10m+ [0m[0m        assert!(!result.[0m[0m[38;5;10mis_failure[0m[0m());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|382|:|382|:|25|:|34|:|no method named `is_failed` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_failed` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:382:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_failed` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m382[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m382[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `is_failure` with a similar name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m382[0m[0m [0m[0m[38;5;9m- [0m[0m        assert!(!result.[0m[0m[38;5;9mis_failed[0m[0m());[0m
+[0m[1m[38;5;12m382[0m[0m [0m[0m[38;5;10m+ [0m[0m        assert!(!result.[0m[0m[38;5;10mis_failure[0m[0m());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|382|:|382|:|25|:|25|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|382|:|382|:|25|:|34|:|there is a method `is_failure` with a similar name|:|none|:|is_failure
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|383|:|383|:|25|:|37|:|no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:383:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_cancelled` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m383[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: items from traits can only be used if the trait is implemented and in scope[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: the following traits define an item `is_cancelled`, perhaps you need to implement one of them:[0m
+[0m            candidate #1: `gio::auto::cancellable::CancellableExt`[0m
+[0m            candidate #2: `gio::auto::file_monitor::FileMonitorExt`[0m
+[0m            candidate #3: `soup::auto::auth::AuthExt`[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m383[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:383:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_cancelled` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m383[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: items from traits can only be used if the trait is implemented and in scope[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: the following traits define an item `is_cancelled`, perhaps you need to implement one of them:[0m
+[0m            candidate #1: `gio::auto::cancellable::CancellableExt`[0m
+[0m            candidate #2: `gio::auto::file_monitor::FileMonitorExt`[0m
+[0m            candidate #3: `soup::auto::auth::AuthExt`[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m383[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|383|:|383|:|25|:|25|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|390|:|390|:|13|:|19|:|variant `build::status::BuildStatus::Success` has no field named `output`|:|[0m[1m[38;5;9merror[E0559][0m[0m[1m: variant `build::status::BuildStatus::Success` has no field named `output`[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:390:13[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m390[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m            output: String::new(),[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[38;5;9m^^^^^^[0m[0m [0m[0m[1m[38;5;9m`build::status::BuildStatus::Success` does not have this field[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: all struct fields are already assigned[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|392|:|392|:|25|:|35|:|no method named `is_pending` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_pending` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:392:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_pending` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m392[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_pending());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_pending` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_pending` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:392:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_pending` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m392[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_pending());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|393|:|393|:|25|:|36|:|no method named `is_building` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_building` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:393:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_building` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m393[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m393[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_building` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_building` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:393:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_building` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m393[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m393[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|393|:|393|:|25|:|25|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_failed` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_failed` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:395:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_failed` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m395[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m395[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `is_failure` with a similar name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m395[0m[0m [0m[0m[38;5;9m- [0m[0m        assert!(!result.[0m[0m[38;5;9mis_failed[0m[0m());[0m
+[0m[1m[38;5;12m395[0m[0m [0m[0m[38;5;10m+ [0m[0m        assert!(!result.[0m[0m[38;5;10mis_failure[0m[0m());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|395|:|395|:|25|:|34|:|no method named `is_failed` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_failed` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:395:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_failed` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m395[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m395[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `is_failure` with a similar name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m395[0m[0m [0m[0m[38;5;9m- [0m[0m        assert!(!result.[0m[0m[38;5;9mis_failed[0m[0m());[0m
+[0m[1m[38;5;12m395[0m[0m [0m[0m[38;5;10m+ [0m[0m        assert!(!result.[0m[0m[38;5;10mis_failure[0m[0m());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|395|:|395|:|25|:|25|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|395|:|395|:|25|:|34|:|there is a method `is_failure` with a similar name|:|none|:|is_failure
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|396|:|396|:|25|:|37|:|no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:396:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_cancelled` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m396[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: items from traits can only be used if the trait is implemented and in scope[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: the following traits define an item `is_cancelled`, perhaps you need to implement one of them:[0m
+[0m            candidate #1: `gio::auto::cancellable::CancellableExt`[0m
+[0m            candidate #2: `gio::auto::file_monitor::FileMonitorExt`[0m
+[0m            candidate #3: `soup::auto::auth::AuthExt`[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m396[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:396:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_cancelled` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m396[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: items from traits can only be used if the trait is implemented and in scope[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: the following traits define an item `is_cancelled`, perhaps you need to implement one of them:[0m
+[0m            candidate #1: `gio::auto::cancellable::CancellableExt`[0m
+[0m            candidate #2: `gio::auto::file_monitor::FileMonitorExt`[0m
+[0m            candidate #3: `soup::auto::auth::AuthExt`[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m396[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|396|:|396|:|25|:|25|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|403|:|403|:|13|:|19|:|variant `build::status::BuildStatus::Success` has no field named `output`|:|[0m[1m[38;5;9merror[E0559][0m[0m[1m: variant `build::status::BuildStatus::Success` has no field named `output`[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:403:13[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m403[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m            output: String::new(),[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[38;5;9m^^^^^^[0m[0m [0m[0m[1m[38;5;9m`build::status::BuildStatus::Success` does not have this field[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: all struct fields are already assigned[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|406|:|406|:|34|:|42|:|attempted to take value of method `warnings` on type `build::status::BuildStatus`|:|[0m[1m[38;5;9merror[E0615][0m[0m[1m: attempted to take value of method `warnings` on type `build::status::BuildStatus`[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:406:34[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m406[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert_eq!(result.status.warnings, 3);[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                                  [0m[0m[1m[38;5;9m^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod, not a field[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: use parentheses to call the method[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m406[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert_eq!(result.status.warnings[0m[0m[38;5;10m()[0m[0m, 3);[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                                          [0m[0m[38;5;10m++[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|406|:|406|:|42|:|42|:|use parentheses to call the method|:|none|:|()
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|407|:|407|:|34|:|40|:|attempted to take value of method `errors` on type `build::status::BuildStatus`|:|[0m[1m[38;5;9merror[E0615][0m[0m[1m: attempted to take value of method `errors` on type `build::status::BuildStatus`[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:407:34[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m407[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert_eq!(result.status.errors, 0);[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                                  [0m[0m[1m[38;5;9m^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod, not a field[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: use parentheses to call the method[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m407[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert_eq!(result.status.errors[0m[0m[38;5;10m()[0m[0m, 0);[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                                        [0m[0m[38;5;10m++[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|407|:|407|:|40|:|40|:|use parentheses to call the method|:|none|:|()
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|415|:|415|:|13|:|19|:|variant `build::status::BuildStatus::Failed` has no field named `output`|:|[0m[1m[38;5;9merror[E0559][0m[0m[1m: variant `build::status::BuildStatus::Failed` has no field named `output`[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:415:13[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m415[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m            output: String::new(),[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m             [0m[0m[1m[38;5;9m^^^^^^[0m[0m [0m[0m[1m[38;5;9m`build::status::BuildStatus::Failed` does not have this field[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: all struct fields are already assigned[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|417|:|417|:|25|:|35|:|no method named `is_pending` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_pending` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:417:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_pending` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m417[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_pending());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_pending` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_pending` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:417:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_pending` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m417[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_pending());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|418|:|418|:|25|:|36|:|no method named `is_building` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_building` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:418:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_building` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m418[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m418[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_building` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_building` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:418:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_building` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m418[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m418[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|418|:|418|:|25|:|25|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_failed` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_failed` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:420:24[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_failed` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m420[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(result.is_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[1m[38;5;9m^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m420[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(result.[0m[0m[38;5;10mstatus.[0m[0mis_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[38;5;10m+++++++[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `is_failure` with a similar name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m420[0m[0m [0m[0m[38;5;9m- [0m[0m        assert!(result.[0m[0m[38;5;9mis_failed[0m[0m());[0m
+[0m[1m[38;5;12m420[0m[0m [0m[0m[38;5;10m+ [0m[0m        assert!(result.[0m[0m[38;5;10mis_failure[0m[0m());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|420|:|420|:|24|:|33|:|no method named `is_failed` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_failed` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:420:24[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_failed` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m420[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(result.is_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[1m[38;5;9m^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m420[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(result.[0m[0m[38;5;10mstatus.[0m[0mis_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[38;5;10m+++++++[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `is_failure` with a similar name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m420[0m[0m [0m[0m[38;5;9m- [0m[0m        assert!(result.[0m[0m[38;5;9mis_failed[0m[0m());[0m
+[0m[1m[38;5;12m420[0m[0m [0m[0m[38;5;10m+ [0m[0m        assert!(result.[0m[0m[38;5;10mis_failure[0m[0m());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|420|:|420|:|24|:|24|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|420|:|420|:|24|:|33|:|there is a method `is_failure` with a similar name|:|none|:|is_failure
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|421|:|421|:|25|:|37|:|no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:421:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_cancelled` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m421[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: items from traits can only be used if the trait is implemented and in scope[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: the following traits define an item `is_cancelled`, perhaps you need to implement one of them:[0m
+[0m            candidate #1: `gio::auto::cancellable::CancellableExt`[0m
+[0m            candidate #2: `gio::auto::file_monitor::FileMonitorExt`[0m
+[0m            candidate #3: `soup::auto::auth::AuthExt`[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m421[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:421:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_cancelled` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m421[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: items from traits can only be used if the trait is implemented and in scope[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: the following traits define an item `is_cancelled`, perhaps you need to implement one of them:[0m
+[0m            candidate #1: `gio::auto::cancellable::CancellableExt`[0m
+[0m            candidate #2: `gio::auto::file_monitor::FileMonitorExt`[0m
+[0m            candidate #3: `soup::auto::auth::AuthExt`[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m421[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|421|:|421|:|25|:|25|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|428|:|428|:|25|:|35|:|no method named `is_pending` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_pending` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:428:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_pending` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m428[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_pending());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_pending` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_pending` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:428:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_pending` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m428[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_pending());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|429|:|429|:|25|:|36|:|no method named `is_building` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_building` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:429:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_building` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m429[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m429[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_building` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_building` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:429:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_building` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m429[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m429[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_building());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|429|:|429|:|25|:|25|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_failed` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_failed` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:431:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_failed` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m431[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m431[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `is_failure` with a similar name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m431[0m[0m [0m[0m[38;5;9m- [0m[0m        assert!(!result.[0m[0m[38;5;9mis_failed[0m[0m());[0m
+[0m[1m[38;5;12m431[0m[0m [0m[0m[38;5;10m+ [0m[0m        assert!(!result.[0m[0m[38;5;10mis_failure[0m[0m());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|431|:|431|:|25|:|34|:|no method named `is_failed` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_failed` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:431:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_failed` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m431[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m431[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `is_failure` with a similar name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m431[0m[0m [0m[0m[38;5;9m- [0m[0m        assert!(!result.[0m[0m[38;5;9mis_failed[0m[0m());[0m
+[0m[1m[38;5;12m431[0m[0m [0m[0m[38;5;10m+ [0m[0m        assert!(!result.[0m[0m[38;5;10mis_failure[0m[0m());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|431|:|431|:|25|:|25|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|431|:|431|:|25|:|34|:|there is a method `is_failure` with a similar name|:|none|:|is_failure
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|432|:|432|:|24|:|36|:|no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:432:24[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_cancelled` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m432[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(result.is_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[1m[38;5;9m^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: items from traits can only be used if the trait is implemented and in scope[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: the following traits define an item `is_cancelled`, perhaps you need to implement one of them:[0m
+[0m            candidate #1: `gio::auto::cancellable::CancellableExt`[0m
+[0m            candidate #2: `gio::auto::file_monitor::FileMonitorExt`[0m
+[0m            candidate #3: `soup::auto::auth::AuthExt`[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m432[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(result.[0m[0m[38;5;10mstatus.[0m[0mis_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_cancelled` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:432:24[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_cancelled` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m432[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(result.is_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[1m[38;5;9m^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `build::status::BuildResult`[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: items from traits can only be used if the trait is implemented and in scope[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: the following traits define an item `is_cancelled`, perhaps you need to implement one of them:[0m
+[0m            candidate #1: `gio::auto::cancellable::CancellableExt`[0m
+[0m            candidate #2: `gio::auto::file_monitor::FileMonitorExt`[0m
+[0m            candidate #3: `soup::auto::auth::AuthExt`[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m432[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(result.[0m[0m[38;5;10mstatus.[0m[0mis_cancelled());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                        [0m[0m[38;5;10m+++++++[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|432|:|432|:|24|:|24|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|157|:|157|:|1|:|23|:|no method named `is_failed` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_failed` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:435:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_failed` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m435[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m435[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `is_failure` with a similar name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m435[0m[0m [0m[0m[38;5;9m- [0m[0m        assert!(!result.[0m[0m[38;5;9mis_failed[0m[0m());[0m
+[0m[1m[38;5;12m435[0m[0m [0m[0m[38;5;10m+ [0m[0m        assert!(!result.[0m[0m[38;5;10mis_failure[0m[0m());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|435|:|435|:|25|:|34|:|no method named `is_failed` found for struct `build::status::BuildResult` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `is_failed` found for struct `build::status::BuildResult` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/build/status.rs:435:25[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m157[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub struct BuildResult {[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m [0m[0m[1m[38;5;12m----------------------[0m[0m [0m[0m[1m[38;5;12mmethod `is_failed` not found for this struct[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m435[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m        assert!(!result.is_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[1m[38;5;9m^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;14mhelp[0m[0m: one of the expressions' fields has a method of the same name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m435[0m[0m [0m[0m[1m[38;5;12m| [0m[0m        assert!(!result.[0m[0m[38;5;10mstatus.[0m[0mis_failed());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                         [0m[0m[38;5;10m+++++++[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `is_failure` with a similar name[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m435[0m[0m [0m[0m[38;5;9m- [0m[0m        assert!(!result.[0m[0m[38;5;9mis_failed[0m[0m());[0m
+[0m[1m[38;5;12m435[0m[0m [0m[0m[38;5;10m+ [0m[0m        assert!(!result.[0m[0m[38;5;10mis_failure[0m[0m());[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|435|:|435|:|25|:|25|:|one of the expressions' fields has a method of the same name|:|none|:|status.
+help|:|crates/rust-ai-ide-cargo/src/build/status.rs|:|435|:|435|:|25|:|34|:|there is a method `is_failure` with a similar name|:|none|:|is_failure
+error|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|111|:|111|:|30|:|43|:|no method named `path_resolver` found for mutable reference `&mut tauri::App` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `path_resolver` found for mutable reference `&mut tauri::App` in the current scope[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/commands/dependency.rs:111:30[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m111[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    let workspace_path = app.path_resolver().app_local_data_dir()[0m
+[0m    [0m[0m[1m[38;5;12m|[0m[0m                              [0m[0m[1m[38;5;9m^^^^^^^^^^^^^[0m[0m [0m[0m[1m[38;5;9mmethod not found in `&mut tauri::App`[0m
+
+|:|none
+error|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|115|:|115|:|9|:|15|:|no method named `manage` found for mutable reference `&mut tauri::App` in the current scope|:|[0m[1m[38;5;9merror[E0599][0m[0m[1m: no method named `manage` found for mutable reference `&mut tauri::App` in the current scope[0m
+[0m    [0m[0m[1m[38;5;12m--> [0m[0mcrates/rust-ai-ide-cargo/src/commands/dependency.rs:115:9[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m115[0m[0m  [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    app.manage(state);[0m
+[0m     [0m[0m[1m[38;5;12m|[0m[0m         [0m[0m[1m[38;5;9m^^^^^^[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+[0m     [0m[0m[1m[38;5;12m= [0m[0m[1mhelp[0m[0m: items from traits can only be used if the trait is in scope[0m
+[0m[1m[38;5;14mhelp[0m[0m: there is a method `manager` with a similar name, but with different arguments[0m
+[0m    [0m[0m[1m[38;5;12m--> [0m[0m/home/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.8.2/src/lib.rs:1094:5[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m1094[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    fn manager(&self) -> &AppManager<R>;[0m
+[0m     [0m[0m[1m[38;5;12m|[0m[0m     [0m[0m[1m[38;5;14m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[0m[1m[38;5;14mhelp[0m[0m: trait `Manager` which provides `manage` is implemented but not in scope; perhaps you want to import it[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m3[0m[0m    [0m[0m[38;5;10m+ use tauri::Manager;[0m
+[0m     [0m[0m[1m[38;5;12m|[0m
+
+|:|none
+help|:|/home/user/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.8.2/src/lib.rs|:|1094|:|1094|:|5|:|41|:|there is a method `manager` with a similar name, but with different arguments|:|none|:|none
+help|:|crates/rust-ai-ide-cargo/src/commands/dependency.rs|:|3|:|3|:|1|:|1|:|trait `Manager` which provides `manage` is implemented but not in scope; perhaps you want to import it|:|none|:|use tauri::Manager;
+

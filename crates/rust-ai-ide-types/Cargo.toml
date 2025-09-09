@@ -1,0 +1,27 @@
+[package]
+name = "rust-ai-ide-types"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Shared types for Rust AI IDE frontend and backend"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+# typescript-definitions = { version = "0.2", optional = true } # Removed due to version constraint issues
+
+# Conditional dependencies for different platforms
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+js-sys = { version = "0.3.77", optional = true }
+wasm-bindgen = { version = "0.2.100", optional = true }
+
+[features]
+default = ["std"]
+std = []
+webasm = ["dep:js-sys", "dep:wasm-bindgen"]
+full = ["std", "webasm"]

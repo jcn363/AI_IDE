@@ -1,0 +1,77 @@
+[package]
+name = "app"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["jcn363"]
+license = ""
+repository = ""
+edition = "2021"
+rust-version = "1.81.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { workspace = true }
+
+[dependencies]
+# Workspace dependencies
+anyhow = { workspace = true }
+log = { workspace = true }
+petgraph = { workspace = true }
+regex = { workspace = true }
+semver = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tauri = { workspace = true }
+tempfile = { workspace = true }
+thiserror = { workspace = true }
+toml = { workspace = true }
+walkdir = { workspace = true }
+
+# Direct dependencies with specific versions
+cargo_metadata = { workspace = true }
+glob-match = { workspace = true }
+notify = { workspace = true }
+rustsec = { workspace = true }
+spdx = { workspace = true }
+syn = { workspace = true }
+tauri-plugin-dialog = { workspace = true }
+tauri-plugin-fs = { workspace = true }
+tauri-plugin-log = { workspace = true }
+
+# Internal crates (only those that exist)
+rust-ai-ide-core = { path = "../crates/rust-ai-ide-core" }
+rust-ai-ide-lsp = { path = "../crates/rust-ai-ide-lsp", features = ["ai", "multi-language-lsp"] }
+rust-ai-ide-cache = { path = "../crates/rust-ai-ide-cache" }
+rust-ai-ide-plugins = { path = "../crates/rust-ai-ide-plugins" }
+rust-ai-ide-types = { path = "../crates/rust-ai-ide-types" }
+rust-ai-ide-shared-types = { path = "../crates/rust-ai-ide-shared-types" }
+rust-ai-ide-ai-codegen = { path = "../crates/rust-ai-ide-ai-codegen" }
+rust-ai-ide-common = { workspace = true, features = ["tauri-integrated"] }
+rust-ai-ide-errors = { path = "../crates/rust-ai-ide-errors" }
+# New cloud and integration crates
+rust-ai-ide-cloud-integrations = { path = "../crates/rust-ai-ide-cloud-integrations" }
+rust-ai-ide-webhooks = { path = "../crates/rust-ai-ide-webhooks" }
+rust-ai-ide-connectors = { path = "../crates/rust-ai-ide-connectors" }
+# rust-ai-ide-protocol removed: crate directory exists but missing Cargo.toml
+
+# External dependencies for functionality
+dirs = { workspace = true }
+cargo-edit = { workspace = true }
+license-exprs = { workspace = true }
+async-trait = { workspace = true }
+lazy_static = { workspace = true }
+
+# Rate limiting for infrastructure
+governor = { workspace = true }
+# Optimized tokio
+tokio = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+dashmap = { workspace = true }
+once_cell = { workspace = true }
+sha2 = { workspace = true }

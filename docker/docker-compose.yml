@@ -1,0 +1,215 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database for enterprise deployments
+  postgres:
+    image: postgres:14-alpine
+    container_name: rust-ai-ide-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rust_ai_ide
+      POSTGRES_USER: rustai
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - enterprise-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rustai"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis cache for performance optimization
+  redis:
+    image: redis:7-alpine
+    container_name: rust-ai-ide-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass-file /run/secrets/redis_password
+    secrets:
+      - redis_password
+    volumes:
+      - redis_data:/data
+    networks:
+      - enterprise-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Rust AI IDE Backend Service
+  rust-backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.rust
+    container_name: rust-ai-ide-backend
+    restart: unless-stopped
+    environment:
+      # Database configuration
+      DATABASE_URL_FILE: /run/secrets/database_url
+      # Redis configuration
+      REDIS_URL_FILE: /run/secrets/redis_url
+      # Application settings
+      RUST_AI_IDE_ENV: production
+      RUST_AI_IDE_PORT: 8080
+      RUST_AI_IDE_LOG_LEVEL: info
+      # Security settings
+      SECRET_KEY_FILE: /run/secrets/secret_key
+    secrets:
+      - database_url
+      - redis_url
+      - secret_key
+    volumes:
+      - backend_data:/app/data
+      - backend_logs:/app/logs
+      - backend_cache:/app/cache
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - enterprise-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+  # Web Frontend Service
+  web-frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.web
+    container_name: rust-ai-ide-frontend
+    restart: unless-stopped
+    environment:
+      # API Backend URL
+      VITE_API_BASE_URL: http://localhost:8080/api
+      VITE_ENVIRONMENT: enterprise
+      # Security headers
+      NGINX_ACCESS_LOG: "off"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - rust-backend
+    networks:
+      - enterprise-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Tauri Desktop App Container (for enterprise desktop deployments)
+  tauri-desktop:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.tauri
+    container_name: rust-ai-ide-tauri
+    restart: unless-stopped
+    environment:
+      # Application settings
+      RUST_AI_IDE_ENV: enterprise
+      # Display settings (for headless operation if needed)
+      DISPLAY: ${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - tauri_data:/app/data
+      - tauri_config:/app/config
+      - tauri_cache:/app/cache
+      # Mount X11 socket for GUI display
+      - /dev/dri:/dev/dri:ro
+    devices:
+      - /dev/dri:/dev/dri
+    depends_on:
+      - rust-backend
+    networks:
+      - enterprise-network
+    profiles:
+      - desktop
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+
+  # Reverse Proxy for enterprise connectivity
+  reverse-proxy:
+    image: nginx:alpine
+    container_name: rust-ai-ide-reverse-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/reverse-proxy.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - reverse_proxy_logs:/var/log/nginx
+    depends_on:
+      - web-frontend
+      - rust-backend
+    networks:
+      - enterprise-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  redis_password:
+    file: ./secrets/redis_password.txt
+  database_url:
+    file: ./secrets/database_url.txt
+  redis_url:
+    file: ./secrets/redis_url.txt
+  secret_key:
+    file: ./secrets/secret_key.txt
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_data:
+    driver: local
+  backend_logs:
+    driver: local
+  backend_cache:
+    driver: local
+  nginx_logs:
+    driver: local
+  tauri_data:
+    driver: local
+  tauri_config:
+    driver: local
+  tauri_cache:
+    driver: local
+  reverse_proxy_logs:
+    driver: local
+
+networks:
+  enterprise-network:
+    driver: bridge
+    internal: false

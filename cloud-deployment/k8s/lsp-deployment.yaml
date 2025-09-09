@@ -1,0 +1,178 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rust-ai-ide-lsp-server
+  labels:
+    app: rust-ai-ide
+    component: lsp-server
+    version: v1.0
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: rust-ai-ide
+      component: lsp-server
+  template:
+    metadata:
+      labels:
+        app: rust-ai-ide
+        component: lsp-server
+    spec:
+      # Security Context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+
+      containers:
+      - name: lsp-server
+        image: rust-ai-ide/lsp-server:latest
+        ports:
+        - containerPort: 8080
+          name: lsp
+        - containerPort: 9090
+          name: metrics
+
+        # Resource requests and limits
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+        # Health checks
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 10
+          failureThreshold: 5
+
+        # Environment variables
+        env:
+        - name: RUST_LOG
+          value: "info"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+
+        # Volume mounts for configs
+        volumeMounts:
+        - name: config-volume
+          mountPath: /home/lsp-user/config.yaml
+          subPath: config.yaml
+
+        # Startup probe for slow-starting containers
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 12
+
+      # Config volumes
+      volumes:
+      - name: config-volume
+        configMap:
+          name: rust-ai-ide-lsp-config
+
+      # Node affinity for performance
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: node-type
+                operator: In
+                values:
+                - compute-optimized
+
+      # Tolerations for spot instances
+      tolerations:
+      - key: "spot-instance"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-ai-ide-lsp-service
+  labels:
+    app: rust-ai-ide
+    component: lsp-server
+spec:
+  selector:
+    app: rust-ai-ide
+    component: lsp-server
+  ports:
+  - name: lsp
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rust-ai-ide-lsp-config
+data:
+  config.yaml: |
+    server:
+      host: "0.0.0.0"
+      port: 8080
+      max_connections: 1000
+      request_timeout_ms: 30000
+    pool:
+      max_servers_per_language: 5
+      min_servers_per_language: 2
+      deactivation_timeout: 300
+      health_check_interval: 60
+      enable_auto_scaling: true
+      performance_monitoring: true
+      request_timeout_ms: 10000
+      pool_maintenance_interval: 30
+    languages:
+      rust:
+        enable: true
+        binary_path: "/usr/bin/analyzer"
+        args: ["--stdin", "--stdout"]
+        file_extensions: [".rs"]
+      typescript:
+        enable: true
+        binary_path: "/usr/bin/tsserver"
+        args: ["--stdio"]
+        file_extensions: [".ts", ".tsx", ".js", ".jsx"]
+    logging:
+      level: "info"
+      format: "json"
+    cloud:
+      enable_feature_flags: true
+      metrics_endpoint: "/metrics"
+      health_endpoint: "/health"

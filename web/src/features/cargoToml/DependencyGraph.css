@@ -1,0 +1,112 @@
+.dependency-graph-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.dependency-graph-container svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.dependency-graph-container .link {
+  stroke: #999;
+  stroke-opacity: 0.6;
+}
+
+.dependency-graph-container .node circle {
+  stroke: #fff;
+  stroke-width: 1.5px;
+  cursor: pointer;
+  transition: r 0.1s ease-in-out;
+}
+
+.dependency-graph-container .node text {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+  pointer-events: none;
+  text-shadow: 
+    -1px -1px 3px white,  
+    1px -1px 3px white,
+    -1px 1px 3px white,
+    1px 1px 3px white;
+}
+
+.dependency-graph-container .node.crate circle {
+  fill: #1f77b4;
+}
+
+.dependency-graph-container .node.feature circle {
+  fill: #ff7f0e;
+}
+
+.dependency-graph-container .node.workspace circle {
+  fill: #2ca02c;
+}
+
+.dependency-graph-container .node.dev circle {
+  fill: #9467bd;
+}
+
+.dependency-graph-container .node.build circle {
+  fill: #8c564b;
+}
+
+.dependency-graph-container .node text {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* Tooltip styling */
+.dependency-tooltip {
+  position: absolute;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  pointer-events: none;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-width: 300px;
+}
+
+.dependency-tooltip div {
+  margin: 4px 0;
+  line-height: 1.4;
+}
+
+.dependency-tooltip strong {
+  color: #1890ff;
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 4px;
+}
+
+/* Controls */
+.dependency-graph-controls {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dependency-graph-container .node text {
+    font-size: 8px;
+  }
+  
+  .dependency-tooltip {
+    max-width: 200px;
+    font-size: 11px;
+  }
+}

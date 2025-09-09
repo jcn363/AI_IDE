@@ -1,0 +1,44 @@
+{
+  "crates": [
+    {
+      "name": "rust-ai-ide-ai",
+      "description": "AI-powered code assistance and analysis",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-cargo",
+      "description": "Cargo integration and build system",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-core",
+      "description": "Core functionality and utilities",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-monitoring",
+      "description": "System and resource monitoring",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-debugger",
+      "description": "Debugging support",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-lsp",
+      "description": "Language Server Protocol",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-plugins",
+      "description": "Plugin system",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-ui",
+      "description": "User interface components",
+      "status": "✅ Stable"
+    }
+  ]
+}

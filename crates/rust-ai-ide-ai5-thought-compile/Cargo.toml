@@ -1,0 +1,59 @@
+[package]
+name = "rust-ai-ide-ai5-thought-compile"
+version = "0.1.0"
+edition = "2021"
+description = "Thought-to-code direct compilation system for Wave 5 Rust AI IDE"
+authors = ["Rust AI IDE Team"]
+license = "MIT OR Apache-2.0"
+keywords = ["neuro", "thought", "compilation", "quantum", "ai"]
+categories = ["development-tools", "neuroscience"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+futures = "0.3"
+async-trait = "0.1"
+parking_lot = "0.12"
+thiserror = "1.0"
+anyhow = "1.0"
+log = "0.4"
+rand = "0.8"
+
+# EEG and neural interface dependencies
+brainflow = { git = "https://github.com/brainflow-dev/brainflow" }
+neuroflow = { git = "https://github.com/neuroflow/neuroflow-rs" }
+eeg-tools = { git = "https://github.com/eeg-tools/eeg-tools-rs" }
+thought-api = { git = "https://github.com/thought-api/thought-api-rs" }
+
+# Real-time signal processing
+rustfft = "6.2"
+ndarray = "0.15"
+scipy-rs = { git = "https://github.com/scipy/scipy-rs" }
+
+# Machine learning for thought pattern recognition
+tch = "0.13"
+candle = "0.6"
+linfa = "0.7"
+
+# Quantum verification
+qiskit = { git = "https://github.com/Qiskit/qiskit-rust" }
+quantum-verifier = { git = "https://github.com/quantum-verifier/quantum-verifier-rs" }
+
+# Code generation
+syn = { version = "2.0", features = ["full", "visit"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+
+# Natural language processing for thought-to-code translation
+hf-hub = "0.3"
+tokenizers = "0.20"
+transformers = { git = "https://github.com/huggingface/transformers-rust" }
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.5"
+mockall = "0.13"
+cargo-husky = { version = "1", default-features = false, features = ["run-for-all", "prepush-hook", "run-cargo-check", "run-cargo-test", "run-cargo-clippy"] }

@@ -1,0 +1,26 @@
+[package]
+name = "rust-ai-ide-core-metrics"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Performance monitoring and telemetry for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+# Base fundamentals crate
+rust-ai-ide-core-fundamentals = { path = "../rust-ai-ide-core-fundamentals" }
+
+# Serialization
+serde = { workspace = true }
+
+# Time handling
+chrono = { workspace = true }
+
+[features]
+default = ["std"]
+std = []
+
+# Extended features
+full = ["std"]

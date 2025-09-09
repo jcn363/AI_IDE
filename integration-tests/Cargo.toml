@@ -1,0 +1,109 @@
+[package]
+name = "rust-ai-ide-integration-tests"
+version = "0.1.0"
+edition = "2021"
+authors = ["Rust AI IDE Team"]
+description = "Comprehensive integration tests for Rust AI IDE functionality validation"
+publish = false
+
+[dependencies]
+# Integration testing framework
+shared-test-utils = { path = "../crates/shared-test-utils" }
+
+# Core utilities
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Async runtime and traits
+tokio = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+
+# Core error type
+rust-ai-ide-errors = { path = "../crates/rust-ai-ide-errors" }
+
+# AI/ML modules
+rust-ai-ide-ai-analysis = { path = "../crates/rust-ai-ide-ai-analysis" }
+rust-ai-ide-ai-inference = { path = "../crates/rust-ai-ide-ai-inference" }
+rust-ai-ide-ai-learning = { path = "../crates/rust-ai-ide-ai-learning" }
+rust-ai-ide-ai-codegen = { path = "../crates/rust-ai-ide-ai-codegen" }
+rust-ai-ide-ai-refactoring = { path = "../crates/rust-ai-ide-ai-refactoring" }
+
+# LSP module
+rust-ai-ide-lsp = { path = "../crates/rust-ai-ide-lsp" }
+
+[dev-dependencies]
+# Core testing dependencies
+tokio = { workspace = true }
+tokio-test = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+# Integration testing framework
+rust-ai-ide-types = { path = "../crates/rust-ai-ide-types" }
+rust-ai-ide-common = { path = "../crates/rust-ai-ide-common" }
+rust-ai-ide-errors = { path = "../crates/rust-ai-ide-errors" }
+
+# LSP and AI dependencies
+rust-ai-ide-lsp = { path = "../crates/rust-ai-ide-lsp", features = ["ai", "multi-language-lsp"] }
+rust-ai-ide-ai-analysis = { path = "../crates/rust-ai-ide-ai-analysis" }
+rust-ai-ide-ai-inference = { path = "../crates/rust-ai-ide-ai-inference" }
+rust-ai-ide-ai-learning = { path = "../crates/rust-ai-ide-ai-learning" }
+rust-ai-ide-ai-refactoring = { path = "../crates/rust-ai-ide-ai-refactoring" }
+rust-ai-ide-ai-specgen = { path = "../crates/rust-ai-ide-ai-specgen" }
+rust-ai-ide-ai-codegen = { path = "../crates/rust-ai-ide-ai-codegen" }
+
+# Cargo and dependency management
+rust-ai-ide-cargo = { path = "../crates/rust-ai-ide-cargo" }
+cargo_metadata = "0.22.0"
+
+# Performance and metrics
+rust-ai-ide-performance = { path = "../crates/rust-ai-ide-performance" }
+rust-ai-ide-core-metrics = { path = "../crates/rust-ai-ide-core-metrics" }
+
+# Core utilities
+filesystem = { workspace = true }
+tempfile = { workspace = true }
+tracing = { workspace = true }
+
+# Test utilities
+criterion = { workspace = true }
+proptest = { workspace = true }
+rand = { workspace = true }
+
+# Additional LSP testing dependencies
+lsp-server = { workspace = true }
+lsp-types = { workspace = true }
+tower-lsp = { workspace = true }
+async-lsp = { workspace = true }
+
+[[test]]
+name = "lsp_integration"
+path = "src/lsp_integration.rs"
+
+[[test]]
+name = "ai_ml_integration"
+path = "src/ai_ml_integration.rs"
+
+[[test]]
+name = "cargo_dependency_integration"
+path = "src/cargo_dependency_integration.rs"
+
+[[test]]
+name = "cross_crate_integration"
+path = "src/cross_crate_integration.rs"
+
+[[test]]
+name = "performance_regression"
+path = "src/performance_regression.rs"
+
+
+[features]
+default = []
+full = ["lsp_integration", "ai_ml_integration", "cargo_dependency_integration", "cross_crate_integration", "performance_regression"]
+lsp_integration = []
+ai_ml_integration = []
+cargo_dependency_integration = []
+cross_crate_integration = []
+performance_regression = []

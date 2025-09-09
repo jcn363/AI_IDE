@@ -1,0 +1,66 @@
+[package]
+name = "rust-ai-ide-monitoring"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.91.0"
+authors = ["Rust AI IDE Team"]
+license = "MIT OR Apache-2.0"
+publish = false
+
+[features]
+default = ["cli"]
+cli = ["clap"]
+notifications = ["reqwest"]
+
+[dependencies]
+# Core Rust AI IDE types
+rust-ai-ide-types = { workspace = true }
+
+# Core dependencies
+anyhow = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+
+# File system and system utilities
+fs-err = { workspace = true }
+walkdir = { workspace = true }
+path-absolutize = { workspace = true }
+
+# Process execution
+tokio-util = { workspace = true }
+
+# CLI interface (optional)
+clap = { workspace = true, optional = true }
+
+# HTTP client for notifications (optional)
+reqwest = { workspace = true, optional = true }
+
+# Data persistence and analysis
+rusqlite = { workspace = true, optional = true }
+
+# YAML configuration support
+serde_yaml = { workspace = true }
+
+# Async traits support
+async-trait = { workspace = true }
+
+# System information
+sysinfo = { workspace = true }
+num_cpus = { workspace = true }
+
+# Logging
+tracing-subscriber = { workspace = true }
+
+# Utility crates
+dirs-next = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+shared-test-utils = { workspace = true }
+tempfile = { workspace = true }
+criterion = { workspace = true }
+assert_fs = { workspace = true }

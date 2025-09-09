@@ -1,0 +1,99 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rust-ai-ide-ingress
+  annotations:
+    # Enable SSL termination
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Frame-Options "DENY" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    # Rate limiting
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    # CORS
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://your-ide-domain.com"
+  labels:
+    app: rust-ai-ide
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - api.rust-ai-ide.yourdomain.com
+    secretName: rust-ai-ide-tls
+  rules:
+  - host: api.rust-ai-ide.yourdomain.com
+    http:
+      paths:
+      - path: /lsp
+        pathType: Prefix
+        backend:
+          service:
+            name: rust-ai-ide-lsp-service
+            port:
+              number: 8080
+      - path: /ai
+        pathType: Prefix
+        backend:
+          service:
+            name: rust-ai-ide-ai-service
+            port:
+              number: 8000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rust-ai-ide-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: rust-ai-ide
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow ingress from ingress controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8000
+  # Allow inter-pod communication
+  - from:
+    - podSelector:
+        matchLabels:
+          app: rust-ai-ide
+  egress:
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow external API calls for AI models
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80
+  # Allow inter-pod communication
+  - to:
+    - podSelector:
+        matchLabels:
+          app: rust-ai-ide
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring

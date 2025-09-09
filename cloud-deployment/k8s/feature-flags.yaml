@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rust-ai-ide-feature-flags
+  annotations:
+    description: "Feature flags for progressive cloud deployment"
+data:
+  # Core LSP features
+  LSP_MULTI_LANGUAGE: "true"
+  LSP_AUTO_SCALING: "true"
+  LSP_PERFORMANCE_MONITORING: "true"
+
+  # Cloud-native features
+  CLOUD_CACHING: "true"
+  CLOUD_DISTRIBUTED_AI: "true"
+  CLOUD_COLLABORATION: "false"  # Gradual rollout
+  CLOUD_REAL_TIME_SYNC: "false"  # Gradual rollout
+
+  # AI enhancement features
+  AI_ADAPTIVE_LEARNING: "true"
+  AI_RECOMMENDATIONS: "true"
+  AI_INTELLISENSE: "true"
+
+  # Performance optimizations (Phase 3.2)
+  PERFORMANCE_INCREMENTAL_ANALYSIS: "true"
+  PERFORMANCE_OPTIMIZED_CACHING: "true"
+  PERFORMANCE_MEMORY_COMPRESSION: "true"  # Enhanced memory optimization
+
+  # Advanced Performance Features - Phase 3.2
+  PERFORMANCE_DISTRIBUTED_AI_PROCESSING: "true"
+  PERFORMANCE_GPU_ACCELERATION: "true"
+  PERFORMANCE_REDIS_CLUSTER_CACHING: "true"
+  PERFORMANCE_ADAPTIVE_CACHING: "true"
+  PERFORMANCE_PREDICTIVE_PRELOADING: "true"
+  PERFORMANCE_DEPENDENCY_TRACKING: "true"
+  PERFORMANCE_MEMORY_POOLING: "true"
+  PERFORMANCE_STRING_INTERNING: "true"
+  PERFORMANCE_LAZY_LOADING: "true"
+  PERFORMANCE_HIERARCHICAL_CACHING: "true"
+
+  # Observability settings
+  OBSERVABILITY_EXTENDED_METRICS: "true"
+  OBSERVABILITY_AUDIT_LOGGING: "true"
+  OBSERVABILITY_TRACING: "false"  # Gradual rollout
+
+  # Security features
+  SECURITY_ZERO_TRUST: "true"
+  SECURITY_ENCRYPTED_CACHE: "true"
+  SECURITY_AUDIT_EVENTS: "false"  # Gradual rollout
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: rust-ai-ide-feature-flag-updater
+  labels:
+    app: rust-ai-ide
+    component: feature-flag-updater
+spec:
+  selector:
+    matchLabels:
+      app: rust-ai-ide
+      component: feature-flag-updater
+  template:
+    metadata:
+      labels:
+        app: rust-ai-ide
+        component: feature-flag-updater
+    spec:
+      containers:
+      - name: feature-flag-updater
+        image: bitnami/kubectl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Watch for ConfigMap changes and update deployments
+          kubectl get configmap rust-ai-ide-feature-flags -o json | jq -r '.data' > /tmp/flags.json
+          echo "Feature flags updated: $(date)"
+          sleep 60
+        volumeMounts:
+        - name: feature-flags
+          mountPath: /flags
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      volumes:
+      - name: feature-flags
+        configMap:
+          name: rust-ai-ide-feature-flags

@@ -1,0 +1,48 @@
+graph TD
+    subgraph "Rust AI IDE"
+        A[Frontend] --> B[Backend Services]
+        B --> C[Analysis Engine]
+        C --> D[Code Smell Detection]
+        C --> E[Performance Analysis]
+        C --> F[Security Analysis]
+        C --> G[Architecture Analysis]
+        C --> R[Refactoring Engine]
+
+        G --> H[Circular Dependencies]
+        G --> I[Layer Violations]
+        G --> J[Interface Segregation]
+        G --> K[Dependency Inversion]
+
+        R --> L[Symbol Analyzer]
+        R --> M[Pattern Matcher]
+        R --> N[Refactoring Operations]
+        R --> O[Change Validator]
+        R --> P[Code Transformer]
+
+        subgraph Frontend
+            A1[React/TypeScript]
+            A2[Monaco Editor]
+            A3[Redux Store]
+            A4[UI Kit]
+            A5[Refactoring UI]
+            A6[AI Assistant Panel]
+        end
+
+        subgraph "Backend Services"
+            B1[AI Services]
+            B2[LSP Integration]
+            B3[Debug Adapter]
+            B4[Performance Monitor]
+            B5[Refactoring Service]
+            B6[Symbol Analysis Service]
+        end
+
+        subgraph "Core Components"
+            C1[Project Management]
+            C2[Dependency Graph]
+            C3[Build System]
+            C4[Plugin System]
+            C5[Code Model]
+            C6[Refactoring History]
+        end
+    end

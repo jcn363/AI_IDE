@@ -1,0 +1,44 @@
+# LSP Server Configuration for Cloud Deployment
+server:
+  host: "0.0.0.0"
+  port: 8080
+  max_connections: 1000
+  request_timeout_ms: 30000
+
+pool:
+  max_servers_per_language: 5
+  min_servers_per_language: 2
+  deactivation_timeout: 300
+  health_check_interval: 60
+  enable_auto_scaling: true
+  performance_monitoring: true
+  request_timeout_ms: 10000
+  pool_maintenance_interval: 30
+
+languages:
+  rust:
+    enable: true
+    binary_path: "/usr/bin/analyzer"
+    args: ["--stdin", "--stdout"]
+    file_extensions: [".rs"]
+
+  typescript:
+    enable: true
+    binary_path: "/usr/bin/tsserver"
+    args: ["--stdio"]
+    file_extensions: [".ts", ".tsx", ".js", ".jsx"]
+
+  python:
+    enable: true
+    binary_path: "/usr/bin/pyright-langserver"
+    args: ["--stdio"]
+    file_extensions: [".py"]
+
+logging:
+  level: "info"
+  format: "json"
+
+cloud:
+  enable_feature_flags: true
+  metrics_endpoint: "/metrics"
+  health_endpoint: "/health"

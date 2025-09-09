@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refactoring Wizard Integration Test</title>
+</head>
+<body>
+    <h1>Refactoring Wizard Integration Test</h1>
+    <div>
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script type="module">
+        import { invoke } from './dist/tauri-api-polyfill.js'; // Using invoke as fallback
+
+        function log(message) {
+            console.log(message);
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML += '<div>' + message + '</div>';
+        }
+
+        async function testInterfaceExtraction() {
+            log('Testing interface extraction analysis...');
+            try {
+                const result = await invoke('analyze_code_for_interface_extraction', {
+                    filePath: 'test_integration.rs'
+                });
+                log('Interface extraction result: ' + JSON.stringify(result, null, 2));
+            } catch (error) {
+                log('Interface extraction failed: ' + error.message);
+            }
+        }
+
+        async function testAsyncConversion() {
+            log('Testing async conversion analysis...');
+            try {
+                const result = await invoke('analyze_code_for_async_conversion', {
+                    filePath: 'test_integration.rs'
+                });
+                log('Async conversion result: ' + JSON.stringify(result, null, 2));
+            } catch (error) {
+                log('Async conversion failed: ' + error.message);
+            }
+        }
+
+        // Run tests when page loads
+        window.addEventListener('load', async () => {
+            log('Starting integration tests...');
+            await testInterfaceExtraction();
+            await testAsyncConversion();
+            log('Tests completed.');
+        });
+    </script>
+</body>
+</html>

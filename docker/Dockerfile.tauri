@@ -1,0 +1,137 @@
+# Multi-stage Docker build for Tauri Desktop Application
+FROM rust:1.91-slim AS base
+
+# Install system dependencies needed for Tauri and webkit
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    # Tauri build dependencies
+    build-essential \
+    curl \
+    wget \
+    libgtk-3-dev \
+    libwebkit2gtk-4.1-dev \
+    libappindicator3-dev \
+    librsvg2-dev \
+    patchelf \
+    git \
+    pkg-config \
+    libssl-dev \
+    libclang-dev \
+    libgmp3-dev \
+    libmpc-dev \
+    libmpfr-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js for web frontend
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g pnpm
+
+FROM base AS rust-builder
+
+# Set working directory
+WORKDIR /app
+
+# Install nightly Rust toolchain
+RUN rustup install nightly-2025-09-03 && \
+    rustup component add rust-src rustfmt clippy --toolchain nightly-2025-09-03 && \
+    rustup default nightly-2025-09-03 && \
+    rustup target add x86_64-unknown-linux-musl --toolchain nightly-2025-09-03
+
+# Copy dependency manifests
+COPY Cargo.toml Cargo.lock ./
+COPY crates/ ./crates/
+COPY src-tauri/Cargo.toml ./src-tauri/
+COPY workspace-hack/ ./workspace-hack/
+
+# Create empty web directory structure for build context
+RUN mkdir -p web/src web/public web/dist
+
+# Add musl target for static linking (better for enterprise deployments)
+RUN rustup target add x86_64-unknown-linux-musl
+RUN apt-get update && apt-get install -y musl-tools musl-dev
+
+# Build dependencies only first
+RUN cargo fetch
+
+# Use workspace-hack for dependency deduplication
+FROM rust-builder AS builder-with-deps
+
+# Copy web source and build it first
+COPY web/ ./web/
+WORKDIR /app/web
+
+# Install web dependencies and build
+RUN pnpm install --frozen-lockfile
+RUN pnpm build
+
+# Move back to root for Rust build
+WORKDIR /app
+
+# Build Tauri application in release mode
+RUN cargo tauri build --target x86_64-unknown-linux-musl --release
+
+# Runtime stage - minimal Ubuntu for running the application
+FROM ubuntu:20.04 AS runtime
+
+# Set non-interactive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install minimal runtime dependencies
+RUN apt-get update && apt-get install -y \
+    # Basic system libs
+    ca-certificates \
+    libgtk-3-0 \
+    libwebkit2gtk-4.1-0 \
+    libappindicator3-1 \
+    librsvg2-2 \
+    libglib2.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libcairo-gobject2 \
+    libpango-1.0-0 \
+    libatk1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf2.0-0 \
+    libgtk-3-0 \
+    libwebkit2gtk-4.1-0 \
+    libappindicator3-1 \
+    libsoup2.4-1 \
+    libssl1.1 \
+    libgcc-s1 \
+    libwebkit2gtk-4.1-0 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -s /bin/bash appuser
+
+# Create app directory structure
+RUN mkdir -p /opt/rust-ai-ide /app/data /app/config /app/logs /app/cache
+
+# Copy built application
+COPY --from=builder-with-deps /app/src-tauri/target/x86_64-unknown-linux-musl/release/bundle/ /opt/rust-ai-ide/
+
+# Extract and set up the AppImage or binary
+COPY --from=builder-with-deps /app/src-tauri/target/x86_64-unknown-linux-musl/release/bundle/deb/rustaic-de_0.1.0_amd64.deb /tmp/app.deb
+
+# Install the deb package
+RUN dpkg -i /tmp/app.deb || apt-get install -f -y
+
+# Set proper permissions
+RUN chown -R appuser:appuser /app /opt/rust-ai-ide
+
+# Switch to non-root user
+USER appuser
+
+# Set environment variables
+ENV XDG_CONFIG_HOME=/app/config \
+    XDG_DATA_HOME=/app/data \
+    XDG_CACHE_HOME=/app/cache \
+    RUST_AI_IDE_CONFIG_PATH=/app/config \
+    RUST_AI_IDE_DATA_PATH=/app/data \
+    RUST_AI_IDE_ENV=production
+
+# Health check for desktop app (limited in container context)
+HEALTHCHECK --interval=60s --timeout=15s --start-period=30s --retries=3 \
+    CMD pgrep -f "rust-ai-ide" || exit 1
+
+# Default entry point (can be overridden)
+CMD ["/usr/bin/rust-ai-ide"]

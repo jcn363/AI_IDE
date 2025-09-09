@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust AI IDE</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    />
+</head>
+<body>
+    <div id="root"></div>
+        <header class="header">
+            <div class="header-left">
+                <h1>Rust AI IDE</h1>
+            </div>
+            <div class="header-right">
+                <button id="new-file-btn" class="btn">New File</button>
+                <button id="open-folder-btn" class="btn">Open Folder</button>
+                <button id="settings-btn" class="btn">Settings</button>
+                <button id="debugger-btn" class="btn">Debugger</button>
+                <button id="ai-assistant-btn" class="btn btn-primary">AI Assistant</button>
+            </div>
+        </header>
+        
+        <div class="main-container">
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h3>Explorer</h3>
+                    <div id="file-explorer" class="file-tree">
+                        <!-- File tree will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3>Outline</h3>
+                    <div id="code-outline" class="outline-tree">
+                        <!-- Code outline will be populated here -->
+                    </div>
+                </div>
+            </aside>
+            
+            <main class="editor-area">
+                <div class="tab-bar" id="tab-bar">
+                    <!-- File tabs will be added here -->
+                </div>
+                
+                <div class="editor-container">
+                    <div id="monaco-editor" class="editor"></div>
+                </div>
+            </main>
+            
+            <aside class="ai-panel" id="ai-panel" style="display: none;">
+                <div class="ai-header">
+                    <h3>AI Assistant</h3>
+                    <button id="close-ai-panel" class="close-btn">×</button>
+                </div>
+                <div class="ai-chat">
+                    <div id="ai-messages" class="ai-messages">
+                        <!-- AI conversation will be displayed here -->
+                    </div>
+                    <div class="ai-input-container">
+                        <textarea id="ai-input" placeholder="Ask the AI assistant..."></textarea>
+                        <button id="send-ai-message" class="btn btn-primary">Send</button>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Debugger Panel -->
+            <aside class="debugger-panel" id="debugger-panel" style="display: none;">
+                <div class="debugger-header">
+                    <h3>Debugger</h3>
+                    <div class="debug-controls">
+                        <button id="debug-start" class="btn btn-primary" title="Start Debugging">▶</button>
+                        <button id="debug-pause" class="btn" title="Pause">⏸</button>
+                        <button id="debug-stop" class="btn" title="Stop">⏹</button>
+                        <button id="debug-step-over" class="btn" title="Step Over">⏭</button>
+                        <button id="debug-step-into" class="btn" title="Step Into">⏬</button>
+                        <button id="debug-step-out" class="btn" title="Step Out">⏫</button>
+                    </div>
+                    <button id="close-debugger-panel" class="close-btn">×</button>
+                </div>
+                
+                <div class="debugger-content">
+                    <div class="debug-section">
+                        <h4>Variables</h4>
+                        <div id="debug-variables" class="debug-variables"></div>
+                    </div>
+                    
+                    <div class="debug-section">
+                        <h4>Call Stack</h4>
+                        <div id="debug-call-stack" class="debug-call-stack"></div>
+                    </div>
+                    
+                    <div class="debug-section">
+                        <h4>Breakpoints</h4>
+                        <div id="debug-breakpoints" class="debug-breakpoints"></div>
+                    </div>
+                    
+                    <div class="debug-section">
+                        <h4>Evaluation</h4>
+                        <div class="debug-eval-container">
+                            <input type="text" id="debug-eval-input" placeholder="Evaluate expression...">
+                            <button id="debug-eval-btn" class="btn">Eval</button>
+                        </div>
+                        <div id="debug-eval-result" class="debug-eval-result"></div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+        
+        <footer class="status-bar">
+            <div class="status-left">
+                <span id="file-path">No file selected</span>
+            </div>
+            <div class="status-right">
+                <span id="cursor-position">Ln 1, Col 1</span>
+                <span id="language-mode">Rust</span>
+            </div>
+        </footer>
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal" style="display: none;">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button id="close-settings" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>Appearance</h3>
+                    <div class="setting-item">
+                        <label for="theme-select">Theme:</label>
+                        <select id="theme-select" class="setting-control">
+                            <option value="dark">Dark</option>
+                            <option value="light">Light</option>
+                            <option value="high-contrast">High Contrast</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="font-size">Font Size:</label>
+                        <input type="range" id="font-size" class="setting-control" min="10" max="24" value="14">
+                        <span id="font-size-value">14px</span>
+                    </div>
+                    <div class="setting-item">
+                        <label for="font-family">Font Family:</label>
+                        <select id="font-family" class="setting-control">
+                            <option value="'Fira Code', 'Consolas', monospace">Fira Code</option>
+                            <option value="'Consolas', monospace">Consolas</option>
+                            <option value="'Monaco', monospace">Monaco</option>
+                            <option value="'Source Code Pro', monospace">Source Code Pro</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Editor</h3>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="minimap-enabled" checked>
+                            Show minimap
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="word-wrap" checked>
+                            Word wrap
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="line-numbers" checked>
+                            Line numbers
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label for="tab-size">Tab size:</label>
+                        <input type="number" id="tab-size" class="setting-control" min="2" max="8" value="4">
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>AI Assistant</h3>
+                    <div class="setting-item">
+                        <label for="ai-provider">AI Provider:</label>
+                        <select id="ai-provider" class="setting-control">
+                            <option value="openai">OpenAI</option>
+                            <option value="ollama">Ollama (Local)</option>
+                            <option value="local">Local Model</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="ai-model">Model:</label>
+                        <input type="text" id="ai-model" class="setting-control" placeholder="gpt-4" value="gpt-4">
+                    </div>
+                    <div class="setting-item">
+                        <label for="ai-api-key">API Key:</label>
+                        <input type="password" id="ai-api-key" class="setting-control" placeholder="Enter your API key">
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Advanced</h3>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="auto-save" checked>
+                            Auto-save files
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="format-on-save">
+                            Format on save
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label for="auto-save-delay">Auto-save delay (ms):</label>
+                        <input type="number" id="auto-save-delay" class="setting-control" min="500" max="10000" value="2000">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="reset-settings" class="btn">Reset to Defaults</button>
+                <button id="save-settings" class="btn btn-primary">Save Settings</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Command Palette -->
+    <div id="command-palette" class="command-palette" style="display: none;">
+        <div class="command-palette-backdrop"></div>
+        <div class="command-palette-content">
+            <input type="text" id="command-input" placeholder="Type a command..." autocomplete="off">
+            <div id="command-list" class="command-list">
+                <!-- Command suggestions will appear here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Container -->
+    <div id="notifications" class="notifications-container"></div>
+    
+    <script type="module" src="main.js"></script>
+</body>
+</html>

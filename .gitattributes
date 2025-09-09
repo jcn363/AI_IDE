@@ -1,0 +1,53 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Rust files
+*.rs text
+Cargo.toml text
+Cargo.lock text
+
+# Web files
+*.js text
+*.jsx text
+*.ts text
+*.tsx text
+*.html text
+*.css text
+*.json text
+*.md text
+
+# Config files
+*.yml text
+*.yaml text
+*.toml text
+*.ini text
+*.conf text
+
+# Ensure Unix-style line endings for shell scripts
+*.sh text eol=lf
+
+# Ensure Windows-style line endings for batch files
+*.bat text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar.gz binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.rlib binary
+*.a binary
+*.lib binary
+
+# Linguist overrides for GitHub
+*.rs linguist-language=Rust
+*.tsx linguist-language=TypeScript
+*.ts linguist-language=TypeScript
+Cargo.toml linguist-language=TOML

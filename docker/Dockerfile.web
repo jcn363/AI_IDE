@@ -1,0 +1,63 @@
+# Multi-stage Docker build for React/TypeScript Web Frontend
+FROM node:18-alpine AS web-dependencies
+
+# Set working directory
+WORKDIR /app/web
+
+# Install pnpm globally for better performance and disk usage
+RUN npm install -g pnpm
+
+# Copy package manifests first for better Docker caching
+COPY web/package.json web/pnpm-lock.yaml ./
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+# Copy TypeScript config and other config files needed for build
+COPY web/vite.config.ts web/tsconfig.json web/tailwind.config.js web/postcss.config.js ./
+
+FROM web-dependencies AS web-builder
+
+# Copy source files
+COPY web/src/ ./src/
+COPY web/public/ ./public/
+COPY web/index.html ./
+
+# Generate Rust TypeScript types (requires Rust toolchain in build environment)
+RUN --mount=type=bind,target=/app,source=./,readonly \
+    cd /app && cargo run --bin generate-ts-types
+
+# Build the web application
+RUN pnpm build
+
+# Runtime stage - Nginx for serving static files
+FROM nginx:alpine AS web-runtime
+
+# Copy custom nginx configuration
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/default.conf /etc/nginx/conf.d/default.conf
+
+# Copy built web application
+COPY --from=web-builder /app/web/dist/ /usr/share/nginx/html/
+
+# Create directories for SSL certificates and configuration
+RUN mkdir -p /etc/nginx/ssl /etc/nginx/sites-enabled /var/cache/nginx /var/log/nginx
+
+# Set proper permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html \
+    && chown -R nginx:nginx /var/cache/nginx \
+    && chown -R nginx:nginx /var/log/nginx \
+    && chown -R nginx:nginx /etc/nginx
+
+# Switch to non-root user
+USER nginx
+
+# Expose default HTTP and HTTPS ports
+EXPOSE 80 443
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

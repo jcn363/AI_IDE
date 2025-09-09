@@ -1,0 +1,37 @@
+[package]
+name = "rust-ai-ide-ai-refactoring"
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+tokio = { workspace = true }
+async-trait = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+futures = { workspace = true }
+syn = { workspace = true, features = ["full", "extra-traits"] }
+quote = { workspace = true }
+prettyplease = "0.2.37"
+sha2 = "0.10.9"
+anyhow = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+rand = { workspace = true }
+tempfile = { workspace = true }
+tracing = { workspace = true }
+rayon = "1.8.0"
+
+# Common types shared across crates
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+
+# Shared code generation interfaces
+rust-ai-ide-shared-codegen = { path = "../rust-ai-ide-shared-codegen" }
+
+# Shared testing utilities (unified test generation)
+shared-test-utils = { path = "../shared-test-utils" }
+rust-ai-ide-shared-utils = { path = "../rust-ai-ide-shared-utils" }
+
+[dev-dependencies]
+tokio-test = "^0.4.4"
+tempfile = { workspace = true }

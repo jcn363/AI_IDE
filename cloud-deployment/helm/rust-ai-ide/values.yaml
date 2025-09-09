@@ -1,0 +1,208 @@
+# Default values for rust-ai-ide chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global configuration
+global:
+  environment: "development"  # development, staging, production
+  deploymentId: ""
+  rollback:
+    enabled: true
+    automatic: true
+    maximumRetries: 5
+    cooldownSeconds: 300
+
+replicaCount: 3
+
+image:
+  registry: your-registry.com
+  repository: rust-ai-ide
+  tag: "latest"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+aiImage:
+  registry: your-registry.com
+  repository: rust-ai-ide/ai-inference
+  tag: "latest"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  annotations: {}
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  hosts:
+    - host: api.rust-ai-ide.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: rust-ai-ide-tls
+      hosts:
+        - api.rust-ai-ide.yourdomain.com
+
+# Auto-scaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  # LSP specific metrics
+  lspRequestsPerSecond: 50
+  aiInferenceRequestsPerSecond: 20
+
+# Resource limits
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+aiResources:
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+  requests:
+    cpu: 1000m
+    memory: 1Gi
+
+# Environment-specific configurations
+environments:
+  development:
+    replicaCount: 1
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    featureFlags:
+      DEBUG_MODE: "true"
+      MOCK_SERVICES: "true"
+
+  staging:
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+    featureFlags:
+      MONITORING: "true"
+      AUDIT_LOGGING: "true"
+
+  production:
+    replicaCount: 3
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 20
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+
+# Feature flags for progressive deployment
+featureFlags:
+  LSP_MULTI_LANGUAGE: "true"
+  LSP_AUTO_SCALING: "true"
+  CLOUD_CACHING: "true"
+  CLOUD_DISTRIBUTED_AI: "true"
+  AI_ADAPTIVE_LEARNING: "true"
+  MONITORING: "true"
+  SECURITY_SCANNING: "true"
+
+# Advanced monitoring configuration
+monitoring:
+  prometheus:
+    enabled: true
+    scrapeInterval: 15s
+    retention: 30d
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.1
+        for: 5m
+        severity: critical
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        severity: warning
+
+  grafana:
+    enabled: false
+    adminPassword: "changeme"
+    dashboards:
+      enabled: true
+      configMaps:
+        - rust-ai-ide-main-dashboard
+        - rust-ai-ide-performance-dashboard
+
+  alertmanager:
+    enabled: true
+    slack:
+      webhookUrl: ""
+      channel: "#alerts"
+    pagerduty:
+      integrationKey: ""
+
+# Redis configuration
+redis:
+  enabled: true
+  replicas: 3
+  persistence:
+    enabled: true
+    size: 10Gi
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 200m
+
+# Security
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000
+
+podSecurityContext: {}
+
+# Node affinity
+nodeAffinity:
+  preferredDuringSchedulingIgnoredDuringExecution:
+  - weight: 100
+    preference:
+      matchExpressions:
+      - key: node-type
+        operator: In
+        values:
+        - compute-optimized
+
+# Tolerations
+tolerations:
+- key: "spot-instance"
+  operator: "Equal"
+  value: "true"
+  effect: "NoSchedule"

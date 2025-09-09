@@ -1,0 +1,40 @@
+[package]
+name = "rust-ai-ide-connectors"
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+# Async runtime
+tokio = { workspace = true, features = ["full"] }
+async-trait = { workspace = true }
+
+# Serialization
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+
+# HTTP client for service APIs
+reqwest = { workspace = true, features = ["json", "rustls-tls"] }
+
+# WebSocket for real-time connections (Discord)
+tokio-tungstenite = "0.27.0"
+futures-util = "0.3.31"
+
+# OAuth2 for authentication
+oauth2 = "5.0.0"
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Configuration
+dirs-next = { workspace = true }
+
+# Time utilities
+chrono = { workspace = true, features = ["serde"] }
+
+# Workspace dependencies
+rust-ai-ide-types = { workspace = true }
+rust-ai-ide-errors = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }

@@ -1,0 +1,260 @@
+//! Connection pooling for LSP clients
+//!
+//! This module implements connection pooling to efficiently manage
+//! multiple LSP server instances and reduce initialization overhead.
+
+use std::{
+    collections::HashMap,
+    path::PathBuf,
+    sync::Arc,
+    time::Duration,
+};
+
+use dashmap::DashMap;
+use tokio::sync::RwLock;
+use tokio::time::Instant;
+
+use crate::LspClientTrait;
+
+/// Represents an entry in the LSP client pool
+#[derive(Clone)]
+struct PoolEntry {
+    client: Arc<dyn LspClientTrait + Send + Sync>,
+    last_used: Instant,
+    workspace_path: String,
+    healthy: bool,
+    usage_count: u64,
+}
+
+/// LSP client pool for efficient connection management
+#[derive(Clone)]
+pub struct LSPPool {
+    pool: Arc<DashMap<String, PoolEntry>>,
+    max_idle_time: Duration,
+    workspace_registry: Arc<RwLock<HashMap<String, Vec<String>>>>,
+}
+
+impl LSPPool {
+    /// Create a new LSP connection pool
+    pub fn new() -> Self {
+        LSPPool {
+            pool: Arc::new(DashMap::new()),
+            max_idle_time: Duration::from_secs(300), // 5 minutes default
+            workspace_registry: Arc::new(RwLock::new(HashMap::new())),
+        }
+    }
+
+    /// Get a client from the pool or create a new one if needed
+    pub async fn get_client(
+        &self,
+        workspace_key: &str,
+        workspace_path: Option<&str>,
+    ) -> Result<Arc<dyn LspClientTrait + Send + Sync>, String> {
+        // Check if we have a client for this workspace
+        if let Some(mut entry) = self.pool.get_mut(workspace_key) {
+            let entry = entry.value_mut();
+            entry.last_used = Instant::now();
+            entry.usage_count += 1;
+            return Ok(entry.client.clone());
+        }
+
+        // Create a new client if none exists
+        if let Some(path) = workspace_path {
+            let client = self.create_client(workspace_key, Some(path)).await?;
+            let entry = PoolEntry {
+                client: client.clone(),
+                last_used: Instant::now(),
+                workspace_path: path.to_string(),
+                healthy: true,
+                usage_count: 1,
+            };
+            
+            self.pool.insert(workspace_key.to_string(), entry);
+            Ok(client)
+        } else {
+            Err("No workspace path provided".to_string())
+        }
+    }
+
+    /// Return a client to the pool (mark available)
+    pub async fn return_client(&self, _client_id: &str) -> Result<(), String> {
+        // In this implementation, we don't need to do anything special when returning a client
+        // since we're using Arc for reference counting and DashMap for thread-safe access
+        Ok(())
+    }
+
+    /// Mark a client as unhealthy
+    pub async fn mark_unhealthy(&self, client_id: &str) -> Result<(), String> {
+        if let Some(mut entry) = self.pool.get_mut(client_id) {
+            entry.value_mut().healthy = false;
+        }
+        Ok(())
+    }
+
+    /// Get pool statistics
+    pub async fn get_stats(&self) -> LSPPoolStats {
+        let total_connections = self.pool.len();
+        let active_connections = self.pool.iter()
+            .filter(|e| e.value().healthy)
+            .count();
+        let total_usage = self.pool.iter()
+            .map(|e| e.value().usage_count)
+            .sum();
+        let expired_count = self.pool.iter()
+            .filter(|e| e.value().last_used.elapsed() > self.max_idle_time)
+            .count();
+
+        LSPPoolStats {
+            total_connections,
+            active_connections,
+            expired_count,
+            total_usage,
+        }
+    }
+
+    /// Get registered workspaces
+    pub async fn get_workspaces(&self) -> Vec<String> {
+        self.workspace_registry
+            .read()
+            .await
+            .keys()
+            .cloned()
+            .collect()
+    }
+
+    /// Register a workspace
+    pub async fn register_workspace(&self, workspace_path: &str) -> Result<(), String> {
+        let mut registry = self.workspace_registry.write().await;
+        registry.entry(workspace_path.to_string()).or_insert_with(Vec::new);
+        Ok(())
+    }
+
+    /// Unregister a workspace and clean up its clients
+    pub async fn unregister_workspace(&self, workspace_path: &str) -> Result<(), String> {
+        // Remove from workspace registry
+        let mut registry = self.workspace_registry.write().await;
+        registry.remove(workspace_path);
+
+        // Find and remove all clients associated with this workspace
+        let to_remove: Vec<String> = self.pool
+            .iter()
+            .filter(|item| item.value().workspace_path == workspace_path)
+            .map(|item| item.key().clone())
+            .collect();
+
+        for client_id in to_remove {
+            self.pool.remove(&client_id);
+        }
+
+        Ok(())
+    }
+
+    /// Create a new LSP client (internal method)
+    async fn create_client(
+        &self,
+        _workspace_key: &str,
+        workspace_path: Option<&str>,
+    ) -> Result<Arc<dyn LspClientTrait + Send + Sync>, String> {
+        // Create a new LSP client
+        let mut client = crate::client::LSPClient::default();
+        
+        // Initialize the client if we have a workspace path
+        if let Some(path) = workspace_path {
+            // Convert path to PathBuf and initialize client
+            let path_buf = PathBuf::from(path);
+            client.initialize(path_buf).await
+                .map_err(|e| format!("Failed to initialize client: {}", e))?;
+        }
+        
+        // Convert to trait object
+        Ok(Arc::new(client) as Arc<dyn LspClientTrait + Send + Sync>)
+    }
+
+    /// Start the background cleanup task
+    pub async fn start_cleanup_task(&self) {
+        let pool = self.pool.clone();
+        let max_idle_time = self.max_idle_time;
+
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_secs(30)); // Check every 30 seconds
+
+            loop {
+                interval.tick().await;
+
+                let mut keys_to_remove = Vec::new();
+
+                for item in pool.iter() {
+                    if item.last_used.elapsed() > max_idle_time || !item.healthy {
+                        keys_to_remove.push(item.key().clone());
+                    }
+                }
+
+                for key in keys_to_remove {
+                    let _removed = pool.remove(&key);
+                    log::debug!("Cleaned up expired LSP client: {}", key);
+                }
+            }
+        });
+    }
+}
+
+/// Statistics for the LSP connection pool
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct LSPPoolStats {
+    pub total_connections: usize,
+    pub active_connections: usize,
+    pub expired_count: usize,
+    pub total_usage: u64,
+}
+
+impl Default for LSPPoolStats {
+    fn default() -> Self {
+        Self {
+            total_connections: 0,
+            active_connections: 0,
+            expired_count: 0,
+            total_usage: 0,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    #[tokio::test]
+    async fn test_pool_creation() {
+        let pool = LSPPool::new(10);
+        assert_eq!(pool.max_connections, 10);
+        assert!(pool.pool.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_workspace_registration() {
+        let pool = LSPPool::new(10);
+        let workspace_path = "/tmp/test-workspace";
+
+        // Register workspace
+        assert!(pool.register_workspace(workspace_path).await.is_ok());
+
+        // Check workspaces
+        let workspaces = pool.get_workspaces().await;
+        assert!(workspaces.contains(&workspace_path.to_string()));
+
+        // Unregister workspace
+        assert!(pool.unregister_workspace(workspace_path).await.is_ok());
+
+        let workspaces = pool.get_workspaces().await;
+        assert!(!workspaces.contains(&workspace_path.to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_pool_stats() {
+        let pool = LSPPool::new(10);
+        let stats = pool.get_stats().await;
+
+        assert_eq!(stats.total_connections, 0);
+        assert_eq!(stats.active_connections, 0);
+    }
+}

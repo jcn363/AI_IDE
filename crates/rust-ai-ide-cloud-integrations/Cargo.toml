@@ -1,0 +1,35 @@
+[package]
+name = "rust-ai-ide-cloud-integrations"
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+# AWS SDK
+aws-sdk-s3 = "1.0"
+aws-config = "1.0"
+aws-types = "1.0"
+rusoto_core = "0.48.0"
+
+# Azure SDK
+azure_storage = "0.20"
+azure_identity = "0.20"
+
+# GCP SDK
+google-cloud-storage = "0.22"
+google-cloud-pubsub = "0.25"
+tokio = { workspace = true }
+
+# Common utilities
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+
+# HTTP client for cloud APIs
+reqwest = { workspace = true, features = ["json", "rustls-tls"] }
+
+# Workspace dependencies
+rust-ai-ide-types = { workspace = true }
+rust-ai-ide-errors = { workspace = true }

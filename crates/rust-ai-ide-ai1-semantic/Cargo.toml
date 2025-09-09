@@ -1,0 +1,23 @@
+[package]
+name = "rust-ai-ide-ai1-semantic"
+version = "0.1.0"
+edition = "2021"
+description = "Wave 1: Semantic Code Understanding and Analysis Engine"
+authors = ["Roo <ai assistant>"]
+
+[dependencies]
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+syn = { workspace = true }
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
+regex = { workspace = true }
+petgraph = { workspace = true }
+rayon = { workspace = true }
+tree-sitter = { workspace = true }
+tree-sitter-rust = { workspace = true }
+rust-ai-ide-core = { path = "../rust-ai-ide-core" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }

@@ -1,0 +1,151 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rust-ai-ide-custom-metrics
+rules:
+- apiGroups: ["custom.metrics.k8s.io"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch", "create"]
+- apiGroups: ["external.metrics.k8s.io"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch", "create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: rust-ai-ide-custom-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: rust-ai-ide-custom-metrics
+subjects:
+- kind: ServiceAccount
+  name: rust-ai-ide-prometheus-adapter
+  namespace: default
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rust-ai-ide-prometheus-adapter
+  namespace: default
+  labels:
+    app: rust-ai-ide
+    component: prometheus-adapter
+
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1beta1.custom.metrics.k8s.io
+  labels:
+    app: rust-ai-ide
+    component: prometheus-adapter
+spec:
+  insecureSkipTLSVerify: true
+  group: custom.metrics.k8s.io
+  groupPriorityMinimum: 100
+  versionPriority: 100
+  version: v1beta1
+  service:
+    name: rust-ai-ide-prometheus-adapter
+    namespace: default
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rust-ai-ide-prometheus-adapter
+  labels:
+    app: rust-ai-ide
+    component: prometheus-adapter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rust-ai-ide
+      component: prometheus-adapter
+  template:
+    metadata:
+      labels:
+        app: rust-ai-ide
+        component: prometheus-adapter
+    spec:
+      serviceAccountName: rust-ai-ide-prometheus-adapter
+      containers:
+      - name: prometheus-adapter
+        image: prometheus-adapter:v0.11.1
+        args:
+        - --cert-dir=/run/serving-cert
+        - --config=/etc/adapter/config.yaml
+        - --secure-port=6443
+        - --metrics-relabeling-config=/etc/adapter/metrics-relabeling-config.yaml
+        - --prometheus-url=http://rust-ai-ide-prometheus-service:9090
+        - --logtostderr=true
+        - --v=4
+        ports:
+        - containerPort: 6443
+          name: https
+        - containerPort: 8080
+          name: http
+        volumeMounts:
+        - name: adapter-config
+          mountPath: /etc/adapter
+          readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+      volumes:
+      - name: adapter-config
+        configMap:
+          name: rust-ai-ide-prometheus-adapter-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-ai-ide-prometheus-adapter
+  labels:
+    app: rust-ai-ide
+    component: prometheus-adapter
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 6443
+  selector:
+    app: rust-ai-ide
+    component: prometheus-adapter
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rust-ai-ide-prometheus-adapter-config
+  labels:
+    app: rust-ai-ide
+    component: prometheus-adapter
+data:
+  config.yaml: |
+    rules:
+    - seriesQuery: 'lsp_requests_total{app="rust-ai-ide", component="lsp-server", pod!=""}}'
+      resources:
+        template: <<.Resource>>
+      name:
+        matches: "^(.*)_total$"
+        as: "${1}_per_second"
+      metricsQuery: |
+        sum(rate(<<.Series>>{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)
+    - seriesQuery: 'ai_inference_requests_total{app="rust-ai-ide", component="ai-inference", pod!=""}}'
+      resources:
+        template: <<.Resource>>
+      name:
+        matches: "^(.*)_total$"
+        as: "${1}_per_second"
+      metricsQuery: |
+        sum(rate(<<.Series>>{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)

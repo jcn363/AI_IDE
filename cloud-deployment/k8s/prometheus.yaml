@@ -1,0 +1,254 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rust-ai-ide-prometheus-config
+  labels:
+    app: rust-ai-ide
+    component: prometheus
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: "rust-ai-ide-prod"
+
+    rule_files:
+      - "/etc/prometheus/alert_rules.yml"
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+                - alertmanager:9093
+
+    scrape_configs:
+      # LSP Server metrics
+      - job_name: 'rust-ai-ide-lsp'
+        scrape_interval: 10s
+        kubernetes_sd_configs:
+          - role: pod
+            selectors:
+              - role: "pod"
+                label: "app=rust-ai-ide,component=lsp-server"
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            target_label: app
+          - source_labels: [__meta_kubernetes_pod_label_component]
+            target_label: component
+
+      # AI Inference metrics
+      - job_name: 'rust-ai-ide-ai'
+        scrape_interval: 10s
+        kubernetes_sd_configs:
+          - role: pod
+            selectors:
+              - role: "pod"
+                label: "app=rust-ai-ide,component=ai-inference"
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            target_label: app
+          - source_labels: [__meta_kubernetes_pod_label_component]
+            target_label: component
+
+      # Redis metrics
+      - job_name: 'rust-ai-ide-redis'
+        scrape_interval: 30s
+        static_configs:
+          - targets: ['rust-ai-ide-redis-service:6379']
+
+      # Kubernetes metrics
+      - job_name: 'kubernetes-pods'
+        scrape_interval: 30s
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: 'true'
+          - source_labels: [__address__]
+            action: replace
+            regex: ([^:]+)(?::\d+)?
+            replacement: ${1}:9090
+            target_label: __address__
+
+  alert_rules.yml: |
+    groups:
+      - name: rust-ai-ide.rules
+        rules:
+          - alert: HighLSPRequestRate
+            expr: rate(lsp_requests_total[5m]) > 100
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High LSP request rate detected"
+              description: "LSP request rate is {{ $value }} req/s, which is above threshold."
+
+          - alert: HighAIInferenceLatency
+            expr: histogram_quantile(0.95, rate(ai_inference_duration_seconds_bucket[5m])) > 5.0
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High AI inference latency"
+              description: "95th percentile AI inference latency is {{ $value }}s."
+
+          - alert: PodMemoryUsageHigh
+            expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.8
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Pod memory usage high"
+              description: "Pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of its memory limit."
+
+          - alert: PodRestartRateHigh
+            expr: rate(kube_pod_container_status_restarts_total[5m]) > 0.1
+            for: 10m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Pod restart rate high"
+              description: "Pod {{ $labels.pod }} is restarting at rate {{ $value }}/s."
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-storage
+  labels:
+    app: rust-ai-ide
+    component: prometheus
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rust-ai-ide-prometheus
+  labels:
+    app: rust-ai-ide
+    component: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rust-ai-ide
+      component: prometheus
+  template:
+    metadata:
+      labels:
+        app: rust-ai-ide
+        component: prometheus
+    spec:
+      serviceAccountName: prometheus
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.45.0
+        args:
+        - '--config.file=/etc/prometheus/prometheus.yml'
+        - '--storage.tsdb.path=/prometheus'
+        - '--web.console.libraries=/etc/prometheus/console_libraries'
+        - '--web.console.templates=/etc/prometheus/consoles'
+        - '--web.enable-lifecycle'
+        ports:
+        - containerPort: 9090
+          name: http
+        volumeMounts:
+        - name: prometheus-config
+          mountPath: /etc/prometheus
+        - name: prometheus-storage
+          mountPath: /prometheus
+          subPath: prometheus
+        resources:
+          requests:
+            memory: "500Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: prometheus-config
+        configMap:
+          name: rust-ai-ide-prometheus-config
+      - name: prometheus-storage
+        persistentVolumeClaim:
+          claimName: prometheus-storage
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-ai-ide-prometheus-service
+  labels:
+    app: rust-ai-ide
+    component: prometheus
+spec:
+  selector:
+    app: rust-ai-ide
+    component: prometheus
+  ports:
+  - port: 9090
+    targetPort: 9090
+    name: http
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-cluster-role
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: default
+  labels:
+    app: rust-ai-ide
+    component: prometheus
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-cluster-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: default

@@ -1,0 +1,27 @@
+[package]
+name = "test-performance-project"
+version = "0.1.0"
+edition = "2021"
+publish = false
+autobins = false
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "test-performance"
+path = "src/main.rs"
+
+[dependencies]
+# Common dependencies for testing performance
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.143"
+tokio = { version = "1.47.1", features = ["full"] }
+reqwest = { version = "0.12.23", features = ["json"] }
+anyhow = "1.0.99"
+thiserror = "2.0.16"
+log = "0.4.28"
+env_logger = "0.11.8"
+
+[dev-dependencies]
+criterion = "0.7.0"

@@ -1,0 +1,436 @@
+# Multi-Tenant Infrastructure Template
+# This template creates isolated tenant environments in Kubernetes
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rust-ai-ide-tenant-$TENANT_ID
+  labels:
+    tenant-id: "$TENANT_ID"
+    isolation-level: "strict"
+    managed-by: "rust-ai-ide-deployer"
+spec: {}
+
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tenant-quota-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+spec:
+  hard:
+    pods: "$POD_QUOTA"
+    services: "$SERVICE_QUOTA"
+    persistentvolumeclaims: "$PVC_QUOTA"
+    requests.cpu: "$CPU_REQUEST_QUOTA"
+    requests.memory: "$MEMORY_REQUEST_QUOTA"
+    limits.cpu: "$CPU_LIMIT_QUOTA"
+    limits.memory: "$MEMORY_LIMIT_QUOTA"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tenant-config-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+data:
+  TENANT_ID: "$TENANT_ID"
+  TENANT_NAME: "$TENANT_NAME"
+  DATABASE_HOST: "$TENANT_DB_HOST"
+  DATABASE_PORT: "5432"
+  REDIS_HOST: "redis-tenant-$TENANT_ID"
+  REDIS_PORT: "6379"
+  LOG_LEVEL: "info"
+  ENABLE_AUDIT_LOGGING: "true"
+  SLA_SERVICE_LEVEL: "$SLA_LEVEL"
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-isolation-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tenant-id: "$TENANT_ID"
+      namespaceSelector:
+        matchLabels:
+          tenant-id: "$TENANT_ID"
+    - namespaceSelector:
+        matchLabels:
+          name: "kube-system"
+    ports:
+    - protocol: TCP
+      port: 8080  # AI service port
+    - protocol: TCP
+      port: 3000  # LSP port
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          tenant-id: "$TENANT_ID"
+      namespaceSelector:
+        matchLabels:
+          tenant-id: "$TENANT_ID"
+    - namespaceSelector:
+        matchLabels:
+          name: "kube-system"
+    - ipBlock:
+        cidr: "0.0.0.0/0"
+        except:
+        - "10.0.0.0/8"
+        - "172.16.0.0/12"
+        - "192.168.0.0/16"
+    ports:
+    - protocol: TCP
+      port: 443  # HTTPS outbound
+    - protocol: TCP
+      port: 5432 # PostgreSQL
+    - protocol: TCP
+      port: 6379 # Redis
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tenant-user-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["extensions", "networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant-user-binding-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+subjects:
+- kind: User
+  name: "$TENANT_USER_EMAIL"
+  apiGroup: "rbac.authorization.k8s.io"
+roleRef:
+  kind: Role
+  name: tenant-user-$TENANT_ID
+  apiGroup: "rbac.authorization.k8s.io"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-inference-tenant-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+  labels:
+    app: ai-inference
+    tenant-id: "$TENANT_ID"
+spec:
+  replicas: $REPLICA_COUNT
+  selector:
+    matchLabels:
+      app: ai-inference
+      tenant-id: "$TENANT_ID"
+  template:
+    metadata:
+      labels:
+        app: ai-inference
+        tenant-id: "$TENANT_ID"
+    spec:
+      serviceAccountName: rust-aiide-sa
+      containers:
+      - name: ai-inference
+        image: rust-ai-ide/ai-inference:$IMAGE_TAG
+        ports:
+        - containerPort: 8080
+        env:
+        - name: TENANT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: tenant-config-$TENANT_ID
+              key: TENANT_ID
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: tenant-db-secret-$TENANT_ID
+              key: DATABASE_URL
+        - name: EMAIL_SMTP_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: tenant-smtp-secret-$TENANT_ID
+              key: SMTP_CONFIG
+        resources:
+          limits:
+            cpu: "$CPU_LIMIT"
+            memory: "$MEMORY_LIMIT"
+          requests:
+            cpu: "$CPU_REQUEST"
+            memory: "$MEMORY_REQUEST"
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-inference-tenant-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+  labels:
+    app: ai-inference
+    tenant-id: "$TENANT_ID"
+spec:
+  selector:
+    app: ai-inference
+    tenant-id: "$TENANT_ID"
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lsp-server-tenant-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+  labels:
+    app: lsp-server
+    tenant-id: "$TENANT_ID"
+spec:
+  replicas: $REPLICA_COUNT
+  selector:
+    matchLabels:
+      app: lsp-server
+      tenant-id: "$TENANT_ID"
+  template:
+    metadata:
+      labels:
+        app: lsp-server
+        tenant-id: "$TENANT_ID"
+    spec:
+      serviceAccountName: rust-aiide-sa
+      containers:
+      - name: lsp-server
+        image: rust-ai-ide/lsp:$IMAGE_TAG
+        ports:
+        - containerPort: 3000
+        env:
+        - name: TENANT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: tenant-config-$TENANT_ID
+              key: TENANT_ID
+        - name: AI_SERVICE_URL
+          value: "http://ai-inference-tenant-$TENANT_ID:8080"
+        resources:
+          limits:
+            cpu: "$CPU_LIMIT"
+            memory: "$MEMORY_LIMIT"
+          requests:
+            cpu: "$CPU_REQUEST"
+            memory: "$MEMORY_REQUEST"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lsp-server-tenant-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+  labels:
+    app: lsp-server
+    tenant-id: "$TENANT_ID"
+spec:
+  selector:
+    app: lsp-server
+    tenant-id: "$TENANT_ID"
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-tenant-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+  labels:
+    app: redis
+    tenant-id: "$TENANT_ID"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+      tenant-id: "$TENANT_ID"
+  template:
+    metadata:
+      labels:
+        app: redis
+        tenant-id: "$TENANT_ID"
+    spec:
+      serviceAccountName: rust-aiide-sa
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        command: ["redis-server", "--appendonly", "yes", "--protected-mode", "no"]
+        resources:
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+        livenessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+      volumes:
+      - name: redis-data
+        persistentVolumeClaim:
+          claimName: redis-storage-tenant-$TENANT_ID
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-storage-tenant-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+  labels:
+    app: redis
+    tenant-id: "$TENANT_ID"
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "standard"
+  resources:
+    requests:
+      storage: "10Gi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-tenant-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+  labels:
+    app: redis
+    tenant-id: "$TENANT_ID"
+spec:
+  selector:
+    app: redis
+    tenant-id: "$TENANT_ID"
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tenant-ingress-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "$CERT_ISSUER"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - "$TENANT_DOMAIN"
+    - "*.tenant-$TENANT_ID.rust-ai-ide.com"
+    secretName: tenant-tls-$TENANT_ID
+  rules:
+  - host: "$TENANT_DOMAIN"
+    http:
+      paths:
+      - path: /api/v1/ai
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-inference-tenant-$TENANT_ID
+            port:
+              number: 8080
+      - path: /api/v1/lsp
+        pathType: Prefix
+        backend:
+          service:
+            name: lsp-server-tenant-$TENANT_ID
+            port:
+              number: 3000
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-ui-tenant-$TENANT_ID
+            port:
+              number: 80
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: tenant-monitor-$TENANT_ID
+  namespace: rust-ai-ide-tenant-$TENANT_ID
+  labels:
+    tenant-id: "$TENANT_ID"
+    prometheus: "tenant-$TENANT_ID"
+spec:
+  selector:
+    matchLabels:
+      app: ai-inference
+      tenant-id: "$TENANT_ID"
+  endpoints:
+  - port: "metrics"
+    path: /metrics
+    interval: 30s
+  - port: "metrics"
+    targetPort: 8080
+    path: /metrics
+    interval: 30s

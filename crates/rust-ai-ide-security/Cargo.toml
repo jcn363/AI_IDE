@@ -1,0 +1,65 @@
+[package]
+name = "rust-ai-ide-security"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Comprehensive security and compliance framework for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+async-trait = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.143"
+thiserror = "2.0.16"
+anyhow = "1.0.99"
+tracing = "0.1.41"
+tracing-subscriber = { workspace = true }
+
+# Security-specific dependencies
+jsonwebtoken = "9.3.1"
+bcrypt = "0.17.1"
+rand = { workspace = true }
+sha2 = "0.10.9"
+aes-gcm = "0.10.3"
+chacha20poly1305 = "0.10.1"
+generic-array = "1.2.0"
+argon2 = "0.5.3"
+rsa = { version = "0.9.8", features = ["pem"] }
+base64 = "0.22.1"
+uuid = { version = "1.18.1", features = ["v4", "serde"] }
+chrono = { version = "0.4.41", features = ["serde"] }
+
+# HTTP client for external services
+reqwest = { version = "0.12.23", features = ["json", "rustls-tls"] }
+
+# Database for audit logging (temporarily disabled due to SQLite linking conflicts)
+# To enable, uncomment and resolve dependency conflicts with rusqlite
+# sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio", "chrono"], optional = true, default-features = false }
+
+# Integration with other crates
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+
+[features]
+default = ["std"]
+std = []
+
+# Security components
+zero-trust = []
+audit-logging = []
+rbac = []
+key-management = []
+encrypted-config = []
+# sqlx = ["dep:sqlx"]  # Uncomment when enabling SQLx
+
+# Enterprise features
+compliance = ["audit-logging", "rbac", "key-management", "encrypted-config"]
+full-security = ["compliance", "zero-trust"]  # Removed sqlx from default full-security
+
+# Database backends (temporarily disabled)
+# sqlite-audit = ["sqlx"]
+# postgres-audit = ["sqlx", "sqlx/postgres"]
+# mysql-audit = ["sqlx", "sqlx/mysql"]

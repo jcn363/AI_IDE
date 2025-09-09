@@ -1,0 +1,69 @@
+# AI Inference Engine Configuration for Cloud Deployment
+server:
+  host: "0.0.0.0"
+  port: 8000
+  max_concurrent_requests: 50
+  request_timeout_ms: 60000
+
+inference:
+  batch_size: 32
+  max_batch_time_ms: 100
+  model_cache_size_mb: 1024
+  enable_model_warmup: true
+
+models:
+  # Configure available models
+  codellama:
+    name: "codellama-7b"
+    path: "/home/ai-user/models/codellama"
+    cache: true
+    max_memory_mb: 512
+    parallel_requests: 4
+
+  starcoder:
+    name: "starcoder-3b"
+    path: "/home/ai-user/models/starcoder"
+    cache: true
+    max_memory_mb: 256
+    parallel_requests: 8
+
+cache:
+  redis_url: "redis://redis-service:6379"
+  ttl_seconds: 3600
+  enable_distributed: true
+
+monitoring:
+  enable_metrics: true
+  metrics_interval: 30
+  export_prometheus: true
+  prometheus_port: 9091
+
+resource_monitor:
+  enable: true
+  memory_threshold_mb: 1024
+  cpu_threshold_percent: 80
+  disk_threshold_mb: 512
+
+logging:
+  level: "info"
+  format: "json"
+
+cloud:
+  enable_feature_flags: true
+  model_download_url: "${MODEL_REGISTRY_URL}"
+
+# Performance optimization feature flags
+performance:
+  distributed_processing: true  # Enable distributed AI processing
+  gpu_acceleration: true        # Enable GPU acceleration for AI models
+  redis_caching: true          # Enable high-performance Redis caching
+  incremental_analysis: true   # Enable incremental codebase analysis
+  memory_optimization: true    # Enable advanced memory optimization
+  adaptive_caching: true       # Enable predictive caching strategies
+
+  # Resource optimization settings
+  gpu_preload_models: true     # Preload models into GPU memory
+  memory_pool_enabled: true    # Use memory pools for frequent operations
+  string_interning: true       # Enable string interning for LSP symbols
+  dependency_tracking: true    # Track dependencies for smart invalidation
+  hierarchical_caching: true   # Use hierarchical caching (memory + Redis)

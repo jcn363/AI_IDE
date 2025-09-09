@@ -1,0 +1,535 @@
+# GitLab CI/CD Pipeline for Enterprise Rust AI IDE
+# Supports on-premises, air-gapped, and cloud deployments
+
+stages:
+  - validate
+  - build
+  - test
+  - security
+  - package
+  - deploy
+  - cleanup
+
+variables:
+  # Build configuration
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_BUILDKIT: "1"
+  COMPOSE_DOCKER_CLI_BUILD: "1"
+
+  # Rust workspace
+  RUST_VERSION: "1.91"
+  NIGHTLY_VERSION: "2025-09-03"
+  CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
+  TARGET_DIR: "$CI_PROJECT_DIR/target"
+
+  # Node.js
+  NODE_VERSION: "18"
+
+  # Docker registry
+  DOCKER_REGISTRY: "registry.local:5000"
+  DOCKER_IMAGE_PREFIX: "$DOCKER_REGISTRY/rust-ai-ide"
+
+  # Deployment
+  DEPLOY_TARGETS: "staging,production,airgapped"
+
+include:
+  - template: Code-Quality.gitlab-ci.yml
+  - template: SAST.gitlab-ci.yml
+  - template: Dependency-Scanning.gitlab-ci.yml
+  - template: Container-Scanning.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+
+# Global cache configuration
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - ".cargo/"
+    - "target/debug/"
+    - "target/release/"
+    - "web/node_modules/"
+
+# ============ VALIDATION STAGE ============
+
+validate:rust_format:
+  stage: validate
+  image: rust:1.91-slim
+  script:
+    - rustup toolchain install nightly-${NIGHTLY_VERSION} --component rust-src rustfmt clippy
+    - rustup default nightly-${NIGHTLY_VERSION}
+    - cargo fmt --all -- --check
+    - cargo clippy --workspace --all-targets --all-features -- -D warnings
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+    - develop
+
+validate:license_compliance:
+  stage: validate
+  image: rust:1.91-slim
+  script:
+    - cargo install cargo-deny
+    - cargo deny check --hide-inclusion-graph --show-stats
+  artifacts:
+    reports:
+      license_scanning: gl-license-scanning-report.json
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+
+validate:web_lint:
+  stage: validate
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - cd web
+    - npm ci --cache .npm --prefer-offline
+    - npm run type-check
+    - npm run lint
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# ============ BUILD STAGE ============
+
+build:rust_workspace:
+  stage: build
+  image: rust:1.91-slim
+  services:
+    - docker:dind
+  script:
+    - apt-get update && apt-get install -y build-essential pkg-config libssl-dev musl-tools
+    - rustup toolchain install nightly-${NIGHTLY_VERSION} --component rust-src
+    - rustup default nightly-${NIGHTLY_VERSION}
+    - rustup target add x86_64-unknown-linux-musl
+
+    # Clean build
+    - cargo clean
+    - cargo update
+
+    # Build all crates in workspace
+    - cargo build --workspace --release --locked
+    - cargo build --workspace --release --examples
+
+    # Create build artifacts
+    - mkdir -p artifacts/rust
+    - cp -r target/release artifacts/rust/
+  artifacts:
+    paths:
+      - artifacts/rust/
+    expire_in: 1 week
+    when: always
+  cache:
+    policy: push
+
+build:web_frontend:
+  stage: build
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - cd web
+    - npm ci --cache .npm --prefer-offline
+
+    # Generate TypeScript types from Rust
+    - npm run generate-types || echo "Type generation failed, continuing..."
+
+    # Build production bundle
+    - npm run build
+
+    # Create build artifacts
+    - mkdir -p ../artifacts/web
+    - cp -r dist ../artifacts/web/
+  artifacts:
+    paths:
+      - artifacts/web/
+    expire_in: 1 week
+    when: always
+
+build:docker_images:
+  stage: build
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  script:
+    # Login to registry
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+    # Build and tag images
+    - docker build -f docker/Dockerfile.rust -t $DOCKER_IMAGE_PREFIX/rust-backend:$CI_COMMIT_SHA -t $DOCKER_IMAGE_PREFIX/rust-backend:latest .
+    - docker build -f docker/Dockerfile.web -t $DOCKER_IMAGE_PREFIX/web-frontend:$CI_COMMIT_SHA -t $DOCKER_IMAGE_PREFIX/web-frontend:latest .
+    - docker build -f docker/Dockerfile.tauri -t $DOCKER_IMAGE_PREFIX/tauri-desktop:$CI_COMMIT_SHA -t $DOCKER_IMAGE_PREFIX/tauri-desktop:latest .
+
+    # Push images
+    - docker push $DOCKER_IMAGE_PREFIX/rust-backend:$CI_COMMIT_SHA
+    - docker push $DOCKER_IMAGE_PREFIX/rust-backend:latest
+    - docker push $DOCKER_IMAGE_PREFIX/web-frontend:$CI_COMMIT_SHA
+    - docker push $DOCKER_IMAGE_PREFIX/web-frontend:latest
+    - docker push $DOCKER_IMAGE_PREFIX/tauri-desktop:$CI_COMMIT_SHA
+    - docker push $DOCKER_IMAGE_PREFIX/tauri-desktop:latest
+  dependencies:
+    - build:rust_workspace
+    - build:web_frontend
+  only:
+    - main
+    - develop
+    - tags
+
+# ============ TEST STAGE ============
+
+test:rust_unit:
+  stage: test
+  image: rust:1.91-slim
+  script:
+    - rustup toolchain install nightly-${NIGHTLY_VERSION} --component rust-src
+    - rustup default nightly-${NIGHTLY_VERSION}
+
+    # Run unit tests
+    - cargo test --workspace --lib --bins --release -- --nocapture
+
+    # Generate coverage report if grcov is available
+    - |
+      if command -v grcov &> /dev/null; then
+        cargo install grcov
+        export RUSTFLAGS="-Cinstrument-coverage"
+        export LLVM_PROFILE_FILE="rust-cov-%p-%m.profraw"
+        cargo test --workspace
+        grcov . -s . --binary-path ./target/debug/ -t html --branch --ignore-not-existing -o ./target/debug/coverage/
+      fi
+
+    # Create test reports
+    - cargo test --workspace --release -- --format=junit > rust-test-results.xml
+  artifacts:
+    reports:
+      junit: rust-test-results.xml
+    paths:
+      - target/debug/coverage/
+    expire_in: 1 week
+    when: always
+  coverage: '/(?i)total.*?(\d+\.\d+)%/'
+
+test:web_unit:
+  stage: test
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - cd web
+    - npm ci --cache .npm --prefer-offline
+    - npm run test:unit
+    - npm run test:coverage
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: web/coverage/cobertura-coverage.xml
+    expire_in: 1 week
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+
+test:integration:
+  stage: test
+  image: rust:1.91-slim
+  script:
+    # Only run integration tests on main/develop branches
+    - |
+      if [ -d "integration-tests" ]; then
+        rustup toolchain install nightly-${NIGHTLY_VERSION} --component rust-src
+        rustup default nightly-${NIGHTLY_VERSION}
+        cd integration-tests
+        cargo test --release --features enterprise -- --nocapture
+        cargo test --doc --features enterprise
+      else
+        echo "No integration tests directory found, skipping..."
+      fi
+  artifacts:
+    reports:
+      junit: integration-test-results.xml
+    expire_in: 1 week
+    when: always
+  only:
+    - main
+    - develop
+
+# ============ SECURITY STAGE ============
+
+security:dependency_scan:
+  stage: security
+  image: rust:1.91-slim
+  script:
+    - cargo install cargo-audit
+    - cargo audit --format json > cargo-audit-report.json
+    - cargo audit --deny info,warnings > /dev/null || echo "Security issues found"
+
+    # Scan web dependencies
+    - apt-get update && apt-get install -y nodejs npm
+    - cd web && npm audit --audit-level moderate --json > ../npm-audit-report.json
+
+    # Check for banned crates
+    - cargo install cargo-deny
+    - cargo deny check
+  artifacts:
+    reports:
+      dependency_scanning: cargo-audit-report.json
+    paths:
+      - cargo-audit-report.json
+      - npm-audit-report.json
+    expire_in: 1 week
+    when: always
+
+security:container_scan:
+  stage: security
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $DOCKER_IMAGE_PREFIX/rust-backend:$CI_COMMIT_SHA
+
+    # Run Trivy security scan
+    - docker run --rm
+        -v /var/run/docker.sock:/var/run/docker.sock
+        -v $PWD:/tmp
+        aquasecurity/trivy:latest
+        image
+        --format json
+        --output /tmp/trivy-results.json
+        $DOCKER_IMAGE_PREFIX/rust-backend:$CI_COMMIT_SHA
+  artifacts:
+    reports:
+      container_scanning: trivy-results.json
+    paths:
+      - trivy-results.json
+    expire_in: 1 week
+    when: always
+  dependencies:
+    - build:docker_images
+
+# ============ PACKAGE STAGE ============
+
+package:offline_bundle:
+  stage: package
+  image: rust:1.91-slim
+  script:
+    - apt-get update && apt-get install -y build-essential pkg-config libssl-dev musl-tools docker.io
+    - ./docker/scripts/download-offline-packages.sh
+  artifacts:
+    paths:
+      - offline-packages/
+    expire_in: 1 month
+  only:
+    - tags
+    - main
+
+package:release_artifacts:
+  stage: package
+  image: ubuntu:20.04
+  script:
+    # Create release archive
+    - mkdir -p release/rust release/web release/docker release/docs
+    - cp -r artifacts/rust/* release/rust/ 2>/dev/null || true
+    - cp -r artifacts/web/* release/web/ 2>/dev/null || true
+    - cp docker/docker-compose.yml docker/docker-compose.air-gapped.yml release/docker/
+    - cp -r docs/ release/docs/
+
+    # Create compressed release
+    - tar -czf rust-ai-ide-$CI_COMMIT_TAG.tar.gz release/
+    - sha256sum rust-ai-ide-$CI_COMMIT_TAG.tar.gz > rust-ai-ide-$CI_COMMIT_TAG.tar.gz.sha256
+  artifacts:
+    paths:
+      - rust-ai-ide-*.tar.gz
+      - rust-ai-ide-*.tar.gz.sha256
+    expire_in: 1 year
+  only:
+    - tags
+
+# ============ DEPLOY STAGE ============
+
+deploy:staging:
+  stage: deploy
+  image: docker:24-dind
+  environment:
+    name: staging
+    url: http://staging.rust-ai-ide.local
+  script:
+    - cd docker
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+    # Deploy with blue-green strategy
+    - docker-compose --project-name rust-ai-ide-staging up -d --build --force-recreate
+    - docker-compose --project-name rust-ai-ide-staging ps
+
+    # Health check with retry
+    - |
+      for i in {1..30}; do
+        if curl -f --max-time 30 http://localhost:8080/health; then
+          echo "Staging deployment healthy"
+          break
+        fi
+        if [ $i -eq 30 ]; then
+          echo "Staging deployment failed health check"
+          exit 1
+        fi
+        sleep 30
+      done
+
+    # Cleanup old containers
+    - docker system prune -f
+  dependencies:
+    - build:docker_images
+  only:
+    - develop
+  when: manual
+
+deploy:production:
+  stage: deploy
+  image: docker:24-dind
+  environment:
+    name: production
+    url: https://rust-ai-ide.company.com
+  script:
+    - cd docker
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+    # Backup current production
+    - docker tag $DOCKER_IMAGE_PREFIX/rust-backend:latest $DOCKER_IMAGE_PREFIX/rust-backend:backup-$(date +%Y%m%d-%H%M%S)
+
+    # Deploy with canary strategy (scale up gradually)
+    - docker-compose --project-name rust-ai-ide-production up -d --build --scale rust-backend=1
+    - docker-compose --project-name rust-ai-ide-production ps
+
+    # Health check
+    - |
+      for i in {1..60}; do
+        if curl -f --max-time 30 https://rust-ai-ide.company.com/health; then
+          echo "Production deployment healthy"
+          break
+        fi
+        if [ $i -eq 60 ]; then
+          echo "Production deployment failed"
+          # Trigger rollback
+          ./scripts/rollback-production.sh
+          exit 1
+        fi
+        sleep 30
+      done
+
+    # Scale to full production capacity
+    - docker-compose --project-name rust-ai-ide-production up -d --scale rust-backend=3 --scale web-frontend=2
+  dependencies:
+    - build:docker_images
+    - security:container_scan
+  only:
+    - main
+    - tags
+  when: manual
+
+deploy:airgapped:
+  stage: deploy
+  image: docker:24-dind
+  script:
+    - cd docker
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+    # Deploy using air-gapped compose file
+    - docker-compose -f docker-compose.air-gapped.yml --project-name rust-ai-ide-airgapped up -d --build --force-recreate
+
+    # Verify deployment
+    - docker-compose -f docker-compose.air-gapped.yml --project-name rust-ai-ide-airgapped ps
+    - docker-compose -f docker-compose.air-gapped.yml --project-name rust-ai-ide-airgapped logs --tail=50
+  dependencies:
+    - build:docker_images
+    - package:offline_bundle
+  only:
+    - tags  # Only for versioned releases
+  when: manual
+
+# ============ CLEANUP STAGE ============
+
+cleanup:docker_prune:
+  stage: cleanup
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  script:
+    - docker system prune -a --volumes -f
+    - docker image prune -a -f
+  when: always
+  allow_failure: true
+
+cleanup:artifact_cleanup:
+  stage: cleanup
+  image: alpine:latest
+  script:
+    # Clean old artifacts (keep last 10 builds per branch)
+    - |
+      find /tmp/gitlab-runner/cache/rust-ai-ide/ \
+        -name "*.tar.gz" \
+        -mtime +30 \
+        -delete 2>/dev/null || true
+
+    # Clean old test reports
+    - |
+      find /tmp/gitlab-runner/cache/rust-ai-ide/ \
+        -name "*test-results.xml" \
+        -mtime +7 \
+        -delete 2>/dev/null || true
+  when: always
+  allow_failure: true
+
+# ============ MONITORING & NOTIFICATIONS ============
+
+notify:slack_success:
+  stage: .post
+  image: curlimages/curl:latest
+  script:
+    - |
+      curl -X POST -H 'Content-type: application/json' \
+        --data '{"text":"Rust AI IDE deployment successful! 🎉\nBranch: '$CI_COMMIT_REF_NAME'\nBuild: '$CI_JOB_ID'\nURL: '$CI_PROJECT_URL'/pipelines/'$CI_PIPELINE_ID'"}' \
+        $SLACK_WEBHOOK_URL
+  only:
+    - main
+    - develop
+  when: on_success
+
+notify:slack_failure:
+  stage: .post
+  image: curlimages/curl:latest
+  script:
+    - |
+      curl -X POST -H 'Content-type: application/json' \
+        --data '{"text":"Rust AI IDE build failed! ❌\nBranch: '$CI_COMMIT_REF_NAME'\nBuild: '$CI_JOB_ID'\nURL: '$CI_PROJECT_URL'/pipelines/'$CI_PIPELINE_ID'"}' \
+        $SLACK_WEBHOOK_URL
+  when: on_failure
+  allow_failure: true
+
+# Scheduled jobs for maintenance
+scheduled:dependency_update:
+  stage: validate
+  image: rust:1.91-slim
+  script:
+    - cargo update
+    - cargo outdated --exit-code 1 || echo "Dependencies up to date"
+  only:
+    schedules:
+      - cron: "0 2 * * 1"  # Every Monday at 2AM
+  allow_failure: true
+
+scheduled:security_audit:
+  stage: security
+  image: rust:1.91-slim
+  script:
+    - cargo install cargo-audit
+    - cargo audit --deny warnings --format json
+  artifacts:
+    reports:
+      dependency_scanning: security-audit-report.json
+    expire_in: 1 week
+  only:
+    schedules:
+      - cron: "0 3 * * * "  # Daily at 3AM
+  allow_failure: false

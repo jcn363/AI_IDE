@@ -1,0 +1,46 @@
+[package]
+name = "rust-ai-ide-ai4-consciousness"
+version = "0.1.0"
+edition = "2021"
+description = "Wave 4: Consciousness-Aware Development - The Pinnacle of AI Evolution"
+authors = ["Roo <ai assistant>"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+async-trait = "0.1"
+rand = "0.8"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+futures = "0.3"
+
+# Quantum consciousness simulation
+bincode = "1.3"
+petgraph = "0.6"
+rayon = "1.7"
+num-traits = "0.2"
+nalgebra = "0.32"
+
+# Neuroscience-inspired computation
+neuronika = { version = "0.1", optional = true }
+norse = { version = "0.7", optional = true }
+spiking-neural-networks = { version = "0.1", optional = true }
+
+# Quantum consciousness models
+qiskit = { version = "0.1", optional = true }
+qmcpack = { version = "0.1", optional = true }
+cognizant = { version = "0.1", optional = true }
+
+# Multi-dimensional interfaces
+glium = { version = "0.32", optional = true }
+three-d = { version = "0.17", optional = true }
+vulkano = { version = "0.34", optional = true }
+
+[features]
+default = ["consciousness"]
+consciousness = ["neuronika", "norse", "spiking-neural-networks"]
+quantum_consciousness = ["qiskit", "qmcpack", "cognizant"]
+multi_dimensional = ["glium", "three-d", "vulkano"]
+full = ["consciousness", "quantum_consciousness", "multi_dimensional"]

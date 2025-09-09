@@ -1,0 +1,79 @@
+[package]
+name = "rust-ai-ide-shared-types"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Comprehensive shared types crate with automated TypeScript generation from Rust definitions providing cross-platform type consistency"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+# Core workspace dependencies
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+rust-ai-ide-config = { path = "../rust-ai-ide-config" }
+rust-ai-ide-shared-codegen = { path = "../rust-ai-ide-shared-codegen" }
+rust-ai-ide-cache = { path = "../rust-ai-ide-cache" }
+
+# Core Rust dependencies
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+futures = { workspace = true }
+
+# TypeScript/JavaScript generation (with conditional features)
+wasm-bindgen = { version = "0.2.100", optional = true }
+js-sys = { version = "0.3.77", optional = true }
+typescript-definitions = { version = "0.1", optional = true }
+
+# Parser dependencies
+syn = { version = "2.0", features = ["full", "extra-traits", "visit-mut"] }
+quote = { version = "1.0" }
+proc-macro2 = { version = "1.0" }
+
+# CPU and system utilities
+num_cpus = "1.16"
+
+# Date/Time utilities
+chrono = { version = "0.4", features = ["serde"] }
+
+# Template and code generation
+handlebars = { version = "6.0", optional = true }
+tera = { version = "1.20", optional = true }
+
+# Plugin system
+libloading = { version = "0.8", optional = true }
+abi_stable = { version = "0.11", optional = true }
+
+# Development and testing
+[dev-dependencies]
+tempfile = { version = "3.8" }
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = { version = "1.0" }
+
+[features]
+default = ["std"]
+std = []
+typescript = ["dep:typescript-definitions", "dep:handlebars"]
+wasm = ["dep:wasm-bindgen", "dep:js-sys", "typescript"]
+plugins = ["dep:libloading", "dep:abi_stable"]
+templates = ["dep:handlebars", "dep:tera"]
+full = ["std", "typescript", "wasm", "plugins", "templates"]
+
+# Development features
+development = ["full"]
+
+[lib]
+name = "rust_ai_ide_shared_types"
+path = "src/lib.rs"
+
+[[bin]]
+name = "type_generator"
+path = "src/bin/type_generator.rs"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

@@ -1,0 +1,13 @@
+[package]
+name = "rust-ai-ide-shared-codegen"
+version = { workspace = true }
+edition = { workspace = true }
+publish = { workspace = true }
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+
+# Shared common types
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }

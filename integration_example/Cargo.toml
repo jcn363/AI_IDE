@@ -1,0 +1,28 @@
+[package]
+name = "integration-example"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Core dependencies
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+
+# THE SHARED TYPES CRATE - Your new type generation power!
+rust-ai-ide-shared-types = { path = "../../crates/rust-ai-ide-shared-types", features = ["full"] }
+
+# Your existing dependencies
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["serde", "v4"] }
+
+[build-dependencies]
+rust-ai-ide-shared-types = { path = "../../crates/rust-ai-ide-shared-types" }
+
+[dev-dependencies]
+tempfile = "3.0"
+serde_json = "1.0"
+
+[[bin]]
+name = "type-generator"
+path = "src/bin/type_generator.rs"

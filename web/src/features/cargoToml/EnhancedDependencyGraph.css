@@ -1,0 +1,489 @@
+/* Main container */
+.dependency-graph-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dependency-graph-container.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  border-radius: 0;
+}
+
+/* Graph controls */
+.graph-controls {
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  z-index: 10;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Graph content area */
+.graph-wrapper {
+  flex: 1;
+  position: relative;
+  min-height: 400px;
+  background: #fff;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.graph-loading,
+.graph-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+  text-align: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+}
+
+.graph-loading p,
+.graph-error p {
+  margin-top: 16px;
+  color: #666;
+}
+
+/* Node styles */
+.node {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.node:hover {
+  stroke: #ff4d4f;
+  stroke-width: 3px;
+}
+
+/* Link styles */
+.link {
+  stroke-opacity: 0.6;
+  transition: all 0.2s ease;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.link:hover {
+  stroke-opacity: 1;
+  stroke-width: 2px;
+}
+
+/* Sidebar styles */
+.graph-sidebar {
+  position: absolute;
+  right: 20px;
+  top: 80px;
+  width: 300px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+  z-index: 100;
+  max-height: calc(100% - 100px);
+  overflow-y: auto;
+}
+
+.graph-sidebar h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.graph-sidebar pre {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Tooltip styles */
+.tooltip {
+  position: absolute;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  max-width: 300px;
+  transform: translate(-50%, -100%);
+}
+
+.tooltip:after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .graph-sidebar {
+    position: static;
+    width: 100%;
+    margin-top: 16px;
+    max-height: none;
+  }
+  
+  .graph-controls {
+    padding: 8px;
+  }
+}
+
+/* Animation for graph elements */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.node circle {
+  stroke: #fff;
+  stroke-width: 1.5px;
+  cursor: pointer;
+}
+
+.node text {
+  font-size: 12px;
+  font-family: sans-serif;
+  pointer-events: none;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: 0.6;
+  stroke-width: 1.5px;
+}
+
+.graph-controls {
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  z-index: 10;
+}
+
+/* Graph visualization */
+.graph-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.dependency-graph {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  cursor: grab;
+}
+
+.dependency-graph:active {
+  cursor: grabbing;
+}
+
+/* Node styles */
+.node {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.node.highlight {
+  filter: drop-shadow(0 0 8px rgba(255, 127, 14, 0.8));
+}
+
+.node.selected circle {
+  stroke-width: 3px !important;
+  stroke: #1890ff !important;
+  filter: drop-shadow(0 0 6px rgba(24, 144, 255, 0.5));
+}
+
+/* Link styles */
+.link {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: all 0.2s ease;
+}
+
+.link.highlight {
+  stroke-width: 2px !important;
+  stroke-opacity: 0.9 !important;
+}
+
+/* Tooltip styles */
+.dependency-node-tooltip {
+  max-width: 300px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.dependency-node-tooltip .tooltip-header {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dependency-node-tooltip .version {
+  font-size: 12px;
+  color: #666;
+  font-weight: normal;
+  background: #f0f0f0;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.dependency-node-tooltip .tooltip-description {
+  margin: 8px 0;
+  color: #444;
+}
+
+.feature-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.feature-tag {
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
+  color: #1890ff;
+  font-size: 11px;
+  padding: 0 6px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+}
+
+/* Node details panel */
+.node-details-panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 320px;
+  max-height: calc(100% - 32px);
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 100;
+  border: 1px solid #f0f0f0;
+}
+
+.node-details-panel .panel-header {
+  padding: 12px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.node-details-panel .panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.node-details-panel .panel-content {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.dependency-link {
+  color: #1890ff;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.dependency-link:hover {
+  color: #40a9ff;
+  text-decoration: underline;
+}
+
+/* Legend */
+.graph-legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f0f0f0;
+  z-index: 10;
+  font-size: 12px;
+}
+
+.legend-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-color {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Loading and error states */
+.loading-overlay,
+.error-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 100;
+}
+
+.error-message {
+  color: #f5222d;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .node-details-panel {
+    position: static;
+    width: 100%;
+    max-height: 40%;
+    margin-top: 16px;
+  }
+  
+  .graph-wrapper {
+    flex-direction: column;
+  }
+  
+  .graph-legend {
+    position: static;
+    margin: 12px;
+    width: auto;
+  }
+}
+
+/* Animation for graph elements */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.node, .link {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Fullscreen adjustments */
+.ant-modal.fullscreen-modal {
+  max-width: 100%;
+  top: 0;
+  padding-bottom: 0;
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.ant-modal.fullscreen-modal .ant-modal-content {
+  height: 100vh;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ant-modal.fullscreen-modal .ant-modal-body {
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Custom scrollbar for panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

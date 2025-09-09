@@ -1,0 +1,135 @@
+# Enterprise Tenant Configuration
+# This file defines all tenants and their configurations for multi-tenant deployment
+
+tenants:
+  # Example tenant - Acme Corp
+  acme-corp:
+    id: "acme001"
+    name: "Acme Corporation"
+    domain: "ai.acme-corp.com"
+    sla_level: "premium"
+    quota:
+      pods: "100"
+      services: "20"
+      pvcs: "50"
+      cpu_request: "20"
+      cpu_limit: "40"
+      memory_request: "64Gi"
+      memory_limit: "128Gi"
+    replicas: "3"
+    resources:
+      cpu_limit: "2"
+      cpu_request: "500m"
+      memory_limit: "4Gi"
+      memory_request: "2Gi"
+    users:
+      - email: "admin@acme-corp.com"
+        role: "tenant-admin"
+      - email: "dev-team@acme-corp.com"
+        role: "developer"
+      - email: "ops@acme-corp.com"
+        role: "operator"
+    database:
+      host: "postgres-cluster"
+      db_name: "acme_tenant_db"
+    smtp:
+      enabled: true
+      relay: "smtp.acme-corp.com"
+    features:
+      audit_logging: true
+      compliance_reports: true
+      backup_retention_days: 90
+
+  # Example tenant - StartupXYZ
+  startup-xyz:
+    id: "startup001"
+    name: "StartupXYZ Inc"
+    domain: "ai.startupxyz.com"
+    sla_level: "standard"
+    quota:
+      pods: "50"
+      services: "10"
+      pvcs: "25"
+      cpu_request: "10"
+      cpu_limit: "20"
+      memory_request: "32Gi"
+      memory_limit: "64Gi"
+    replicas: "2"
+    resources:
+      cpu_limit: "1"
+      cpu_request: "250m"
+      memory_limit: "2Gi"
+      memory_request: "1Gi"
+    users:
+      - email: "founder@startupxyz.com"
+        role: "tenant-admin"
+      - email: "dev@startupxyz.com"
+        role: "developer"
+    database:
+      host: "postgres-cluster"
+      db_name: "startup_tenant_db"
+    smtp:
+      enabled: false
+    features:
+      audit_logging: true
+      compliance_reports: false
+      backup_retention_days: 30
+
+  # Example tenant - Enterprise Uni
+  ent-university:
+    id: "university001"
+    name: "Enterprise University"
+    domain: "ai.ent-uni.edu"
+    sla_level: "enterprise"
+    quota:
+      pods: "200"
+      services: "40"
+      pvcs: "100"
+      cpu_request: "50"
+      cpu_limit: "100"
+      memory_request: "256Gi"
+      memory_limit: "512Gi"
+    replicas: "5"
+    resources:
+      cpu_limit: "4"
+      cpu_request: "1"
+      memory_limit: "8Gi"
+      memory_request: "4Gi"
+    users:
+      - email: "it-admin@ent-uni.edu"
+        role: "tenant-admin"
+      - email: "cs-dept@ent-uni.edu"
+        role: "developer"
+      - email: "ai-research@ent-uni.edu"
+        role: "researcher"
+      - email: "compliance@ent-uni.edu"
+        role: "auditor"
+    database:
+      host: "postgres-cluster"
+      db_name: "university_tenant_db"
+    smtp:
+      enabled: true
+      relay: "smtp.ent-uni.edu"
+    features:
+      audit_logging: true
+      compliance_reports: true
+      backup_retention_days: 365
+
+# Global tenant settings
+global:
+  cert_issuer: "letsencrypt-prod"
+  image_tag: "latest"
+  shared_services:
+    - "ingress-nginx"
+    - "cert-manager"
+    - "prometheus-stack"
+  monitoring:
+    enabled: true
+    namespace: "monitoring"
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"
+    retention: "30"
+  security:
+    pod_security_standard: "restricted"
+    network_policy_enforcement: true

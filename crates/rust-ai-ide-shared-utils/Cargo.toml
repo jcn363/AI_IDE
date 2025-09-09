@@ -1,0 +1,13 @@
+[package]
+name = "rust-ai-ide-shared-utils"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Shared utilities for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+dunce = { workspace = true }
+pathdiff = "0.2.0"

@@ -1,0 +1,42 @@
+[package]
+name = "rust-ai-ide-ai3-quantum"
+version = "0.1.0"
+edition = "2021"
+description = "Wave 3: Quantum Computing Integration - Quantum Enhanced AI and Optimization"
+authors = ["Roo <ai assistant>"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+tokio-stream = "0.1"
+async-trait = "0.1"
+futures = "0.3"
+rand = "0.8"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+petgraph = "0.6"
+rayon = "1.7"
+num-traits = "0.2"
+num-complex = "0.4"
+nalgebra = "0.32"
+
+# Simulated quantum computing (since actual QC hardware is unavailable)
+# In practice, these would be quantum hardware SDKs
+qcs-sdk = { version = "0.1", optional = true }
+qubits = { version = "0.1", optional = true }
+quantum-crypto = { version = "0.1", optional = true }
+
+# Wave 1 & 2 integration
+rust-ai-ide-ai1-semantic = { path = "../rust-ai-ide-ai1-semantic" }
+rust-ai-ide-ai1-architecture = { path = "../rust-ai-ide-ai1-architecture" }
+rust-ai-ide-ai2-predictive = { path = "../rust-ai-ide-ai2-predictive" }
+rust-ai-ide-ai2-ml-management = { path = "../rust-ai-ide-ai2-ml-management" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+
+[features]
+default = ["simulation"]
+simulation = []
+quantum_hardware = ["qcs-sdk", "qubits", "quantum-crypto"]

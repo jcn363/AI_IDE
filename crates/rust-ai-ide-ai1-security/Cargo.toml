@@ -1,0 +1,21 @@
+[package]
+name = "rust-ai-ide-ai1-security"
+version = "0.1.0"
+edition = "2021"
+description = "Wave 1: Advanced Security Vulnerability Detection and Analysis"
+authors = ["Roo <ai assistant>"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+regex = "1.10"
+reqwest = { version = "0.11", features = ["json"] }
+tokio-sync = "0.1"
+futures = "0.3"
+sha3 = "0.10"
+base64 = "0.21"
+cve = "0.2"
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-ai1-semantic = { path = "../rust-ai-ide-ai1-semantic" }

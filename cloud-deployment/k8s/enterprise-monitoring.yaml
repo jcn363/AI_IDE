@@ -1,0 +1,687 @@
+# Enterprise Monitoring and SLA Tracking System
+# Comprehensive monitoring stack with SLA tracking and alerting
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monitoring-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: rust-ai-ide-prod
+        region: us-central1
+
+    rule_files:
+      - /etc/prometheus/rules/*.yml
+      - /etc/prometheus/rules/enterprise/*.yml
+      - /etc/prometheus/rules/sla/*.yml
+
+    alerting:
+      alertmanagers:
+      - static_configs:
+        - targets:
+          - alertmanager.monitoring.svc.cluster.local:9093
+
+    scrape_configs:
+    - job_name: 'kubernetes-services'
+      kubernetes_sd_configs:
+      - role: service
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scheme]
+        action: replace
+        target_label: __scheme__
+        regex: (https?)
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+        action: replace
+        target_label: __address__
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+      - action: labelmap
+        regex: __meta_kubernetes_service_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_service_name]
+        action: replace
+        target_label: kubernetes_name
+
+    - job_name: 'kubernetes-pods'
+      kubernetes_sd_configs:
+      - role: pod
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        target_label: __address__
+        regex: ([^:]+)
+        replacement: $1:8080
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: pod_name
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        action: replace
+        target_label: node
+
+    - job_name: 'node-exporter'
+      kubernetes_sd_configs:
+      - role: node
+      relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        target_label: __address__
+        replacement: $1:9100
+
+    - job_name: 'kube-state-metrics'
+      kubernetes_sd_configs:
+      - role: service
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_label_app]
+        regex: kube-state-metrics
+        action: keep
+
+    - job_name: 'postgresql'
+      kubernetes_sd_configs:
+      - role: service
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name]
+        regex: postgres-ha
+        action: keep
+      - source_labels: [__address__]
+        regex: ([^:]+):.*
+        target_label: __address__
+        replacement: $1:9187
+
+    - job_name: 'ingress-nginx'
+      kubernetes_sd_configs:
+      - role: pod
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        regex: "true"
+        action: keep
+      - source_labels: [__meta_kubernetes_namespace]
+        regex: ingress-nginx
+        action: keep
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'alerts@rust-ai-ide.com'
+      smtp_auth_username: 'alerts@rust-ai-ide.com'
+      smtp_auth_password: '${SMTP_PASSWORD}'
+
+    templates:
+    - '/etc/alertmanager-templates/*.tmpl'
+
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'team-pager'
+      routes:
+      - match:
+          severity: critical
+        receiver: 'team-pager'
+      - match:
+          severity: warning
+        receiver: 'team-email'
+        continue: true
+      - match:
+          alertname: Watchdog
+        receiver: 'team-pager'
+        repeat_interval: 5m
+
+    receivers:
+    - name: 'team-pager'
+      pagerduty_configs:
+      - service_key: '${PAGERDUTY_SERVICE_KEY}'
+    - name: 'team-email'
+      email_configs:
+      - to: 'devops@rust-ai-ide.com'
+        from: 'alerts@rust-ai-ide.com'
+        smarthost: smtp.gmail.com:587
+        auth_username: 'alerts@rust-ai-ide.com'
+        auth_password: '${SMTP_PASSWORD}'
+        headers:
+          subject: '[{{ .GroupLabels.alertname }}] {{ .Annotations.summary }}'
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sla-tracking-rules
+  namespace: monitoring
+data:
+  sla-rules.yml: |
+    groups:
+    - name: sla.uptime
+      rules:
+      - record: sla:uptime:ratio_1h
+        expr: avg_over_time(up{job="kubernetes-services"}[1h])
+      - record: sla:uptime:ratio_24h
+        expr: avg_over_time(up{job="kubernetes-services"}[24h])
+      - record: sla:uptime:ratio_7d
+        expr: avg_over_time(up{job="kubernetes-services"}[7d])
+      - record: sla:uptime:ratio_30d
+        expr: avg_over_time(up{job="kubernetes-services"}[30d])
+
+    - name: sla.response_time
+      rules:
+      - record: sla:response_time:95p_1h
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="ai-inference"}[1h]))
+      - record: sla:response_time:95p_24h
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="ai-inference"}[24h]))
+      - record: sla:response_time:99p_1h
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job="ai-inference"}[1h]))
+
+    - name: sla.error_rate
+      rules:
+      - record: sla:error_rate:ratio_1h
+        expr: rate(http_requests_total{status=~"5..",job="ai-inference"}[1h]) / rate(http_requests_total{job="ai-inference"}[1h])
+      - record: sla:error_rate:ratio_24h
+        expr: rate(http_requests_total{status=~"5..",job="ai-inference"}[24h]) / rate(http_requests_total{job="ai-inference"}[24h])
+      - record: sla:availability:ratio_1h
+        expr: 1 - (rate(http_requests_total{status=~"5..",job="ai-inference"}[1h]) / rate(http_requests_total{job="ai-inference"}[1h]))
+
+    - name: sla.capacity
+      rules:
+      - record: sla:cpu_usage:ratio_1h
+        expr: rate(container_cpu_usage_seconds_total{pod=~"ai-inference.*"}[1h]) / rate(container_spec_cpu_quota{pod=~"ai-inference.*"}[1h])
+      - record: sla:memory_usage:ratio_1h
+        expr: rate(container_memory_usage_bytes{pod=~"ai-inference.*"}[1h]) / rate(container_spec_memory_limit_bytes{pod=~"ai-inference.*"}[1h])
+      - record: sla:storage_usage:ratio_1h
+        expr: (1 - (kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes))
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: enterprise-alerts
+  namespace: monitoring
+data:
+  alerts.yml: |
+    groups:
+    - name: enterprise.availability
+      rules:
+      - alert: MultiZoneIngressDown
+        expr: count by (zone) (up{app="ingress-nginx"}) < 2
+        for: 5m
+        labels:
+          severity: critical
+          service: ingress
+          category: availability
+        annotations:
+          summary: "Multi-zone ingress controllers down"
+          description: "Less than 2 ingress controllers running in zone {{ $labels.zone }} ({{ $value }} running)"
+
+      - alert: DatabaseClusterDegraded
+        expr: count by (role) (up{app="postgres", role="primary"}) < 1 or count by (role) (up{app="postgres", role="replica"}) < 2
+        for: 2m
+        labels:
+          severity: critical
+          service: database
+          category: availability
+        annotations:
+          summary: "Database cluster degraded"
+          description: "Database cluster health degraded"
+
+      - alert: TenantServiceUnavailable
+        expr: up{job="kubernetes-services"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          service: "{{ $labels.kubernetes_name }}"
+          tenant: "{{ $labels.tenant_id }}"
+          category: tenant
+        annotations:
+          summary: "Tenant service unavailable"
+          description: "Service {{ $labels.kubernetes_name }} for tenant {{ $labels.tenant_id }} is down"
+
+    - name: enterprise.performance
+      rules:
+      - alert: HighResponseTime95p
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="ai-inference"}[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+          service: ai-inference
+          category: performance
+        annotations:
+          summary: "High 95th percentile response time"
+          description: "95th percentile response time > 30s ({{ $value }}s)"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5..", job="ai-inference"}[5m]) / rate(http_requests_total{job="ai-inference"}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          service: ai-inference
+          category: performance
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate > 5% ({{ $value | printf "%.2%%" }})"
+
+      - alert: DatabaseReplicationLag
+        expr: pg_replication_lag > 300
+        for: 5m
+        labels:
+          severity: warning
+          service: postgresql
+          category: database
+        annotations:
+          summary: "Database replication lag high"
+          description: "Replication lag > 300 seconds ({{ $value }}s)"
+
+    - name: enterprise.capacity
+      rules:
+      - alert: HighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total{namespace="rust-ai-ide"}[5m]) / rate(container_spec_cpu_quota{namespace="rust-ai-ide"}[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: "{{ $labels.pod_name }}"
+          category: capacity
+        annotations:
+          summary: "High CPU usage"
+          description: "Pod {{ $labels.pod_name }} CPU usage > 80% ({{ $value | printf "%.0f%%" }})"
+
+      - alert: HighMemoryUsage
+        expr: container_memory_usage_bytes{namespace="rust-ai-ide"} / container_spec_memory_limit_bytes{namespace="rust-ai-ide"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: "{{ $labels.pod_name }}"
+          category: capacity
+        annotations:
+          summary: "High memory usage"
+          description: "Pod {{ $labels.pod_name }} memory usage > 85% ({{ $value | printf "%.0f%%" }})"
+
+      - alert: StorageNearCapacity
+        expr: (kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: storage
+          category: capacity
+        annotations:
+          summary: "Storage near capacity"
+          description: "Volume {{ $labels.persistentvolumeclaim }} < 10% free space"
+
+    - name: enterprise.sla
+      rules:
+      - alert: SLAUptimeBreach
+        expr: avg_over_time(sla:uptime:ratio_1h[1h]) < 0.995
+        for: 5m
+        labels:
+          severity: critical
+          service: sla
+          category: sla
+        annotations:
+          summary: "SLA uptime breach warning"
+          description: "Service uptime dropped below 99.5% in the last hour ({{ $value | printf "%.2%%" }})"
+
+      - alert: SLAErrorRateBreach
+        expr: sla:error_rate:ratio_1h > 0.001
+        for: 5m
+        labels:
+          severity: warning
+          service: sla
+          category: sla
+        annotations:
+          summary: "SLA error rate breach"
+          description: "Error rate exceeds 0.1% in last hour ({{ $value | printf "%.3f%%" }})"
+
+      - alert: SLAStorageQuotaExceeded
+        expr: sla:storage_usage:ratio_1h > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          service: sla
+          category: storage
+        annotations:
+          summary: "SLA storage quota exceeded"
+          description: "Storage usage > 90% for tenant ({{ $value | printf "%.0f%%" }})"
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app: prometheus
+    component: core
+spec:
+  replicas: 2
+  serviceName: prometheus
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        component: core
+    spec:
+      serviceAccountName: prometheus
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.43.0
+        ports:
+        - containerPort: 9090
+        args:
+        - "--config.file=/etc/prometheus/prometheus.yml"
+        - "--storage.tsdb.path=/prometheus"
+        - "--web.console.libraries=/etc/prometheus/console_libraries"
+        - "--web.console.templates=/etc/prometheus/consoles"
+        - "--storage.tsdb.retention.time=200h"
+        - "--web.enable-lifecycle"
+        - "--web.enable-admin-api"
+        volumeMounts:
+        - name: config
+          mountPath: /etc/prometheus
+        - name: prometheus-data
+          mountPath: /prometheus
+        - name: rules
+          mountPath: /etc/prometheus/rules
+        resources:
+          requests:
+            memory: "400Mi"
+            cpu: "100m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: config
+        configMap:
+          name: monitoring-config
+      - name: rules
+        configMap:
+          name: sla-tracking-rules
+      - name: prometheus-data
+        persistentVolumeClaim:
+          claimName: prometheus-storage
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-storage
+  namespace: monitoring
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "standard"
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  selector:
+    app: prometheus
+  ports:
+  - name: http
+    port: 9090
+    targetPort: 9090
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+    component: dashboard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+        component: dashboard
+    spec:
+      serviceAccountName: grafana
+      containers:
+      - name: grafana
+        image: grafana/grafana:9.5.2
+        ports:
+        - containerPort: 3000
+        env:
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grafana-admin-secret
+              key: password
+        - name: GF_USERS_ALLOW_SIGN_UP
+          value: "false"
+        - name: GF_INSTALL_PLUGINS
+          value: "grafana-piechart-panel,grafana-worldmap-panel"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: grafana-storage
+          mountPath: /var/lib/grafana
+        - name: grafana-config
+          mountPath: /etc/grafana/provisioning
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: grafana-storage
+        persistentVolumeClaim:
+          claimName: grafana-storage
+      - name: grafana-config
+        configMap:
+          name: grafana-config
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-storage
+  namespace: monitoring
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "standard"
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    component: alerting
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+        component: alerting
+    spec:
+      serviceAccountName: alertmanager
+      containers:
+      - name: alertmanager
+        image: prom/alertmanager:v0.25.0
+        ports:
+        - containerPort: 9093
+        args:
+        - "--config.file=/etc/alertmanager/alertmanager.yml"
+        - "--storage.path=/alertmanager"
+        volumeMounts:
+        - name: config
+          mountPath: /etc/alertmanager
+        - name: alertmanager-data
+          mountPath: /alertmanager
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "10m"
+          limits:
+            memory: "256Mi"
+            cpu: "100m"
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9093
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9093
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: alertmanager-config
+      - name: alertmanager-data
+        persistentVolumeClaim:
+          claimName: alertmanager-storage
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: alertmanager-storage
+  namespace: monitoring
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "standard"
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: monitoring-ingress
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/auth-type: "basic"
+    nginx.ingress.kubernetes.io/auth-secret: "monitoring-basic-auth"
+    nginx.ingress.kubernetes.io/auth-realm: "Monitoring Dashboard"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - prometheus.rust-ai-ide.com
+    - grafana.rust-ai-ide.com
+    - alertmanager.rust-ai-ide.com
+    secretName: monitoring-tls
+  rules:
+  - host: prometheus.rust-ai-ide.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus
+            port:
+              number: 9090
+  - host: grafana.rust-ai-ide.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000
+  - host: alertmanager.rust-ai-ide.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: alertmanager
+            port:
+              number: 9093

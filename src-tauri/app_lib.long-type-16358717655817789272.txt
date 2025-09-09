@@ -1,0 +1,1 @@
+governor::middleware::NoOpMiddleware<governor::clock::QuantaInstant>: governor::middleware::RateLimitingMiddleware<<C as governor::clock::Clock>::Instant>

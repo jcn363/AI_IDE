@@ -1,0 +1,175 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rust-ai-ide-redis-cluster
+  labels:
+    app: rust-ai-ide
+    component: redis-cluster
+spec:
+  serviceName: rust-ai-ide-redis-cluster
+  replicas: 3
+  selector:
+    matchLabels:
+      app: rust-ai-ide
+      component: redis-cluster
+  template:
+    metadata:
+      labels:
+        app: rust-ai-ide
+        component: redis-cluster
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+    spec:
+      containers:
+      - name: redis
+        image: redis:7.2-alpine
+        ports:
+        - containerPort: 6379
+          name: redis
+        - containerPort: 16379
+          name: cluster
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        - name: redis-config
+          mountPath: /usr/local/etc/redis/redis.conf
+          subPath: redis.conf
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rust-ai-ide-redis-secret
+              key: password
+        # Health checks
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - --raw
+            - incr
+            - ping
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - --raw
+            - incr
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 10
+      # Redis Exporter for Prometheus metrics
+      - name: redis-exporter
+        image: oliver006/redis_exporter:v1.54.0-alpine
+        ports:
+        - containerPort: 9121
+          name: metrics
+        env:
+        - name: REDIS_ADDR
+          value: "redis://127.0.0.1:6379"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rust-ai-ide-redis-secret
+              key: password
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      volumes:
+      - name: redis-config
+        configMap:
+          name: rust-ai-ide-redis-config
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: fast-ssd
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-ai-ide-redis-service
+  labels:
+    app: rust-ai-ide
+    component: redis-cache
+spec:
+  ports:
+  - port: 6379
+    targetPort: 6379
+    name: redis
+  clusterIP: None
+  selector:
+    app: rust-ai-ide
+    component: redis-cache
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rust-ai-ide-redis-config
+data:
+  redis.conf: |
+    # Redis Cluster configuration for high-performance AI IDE caching
+    cluster-enabled yes
+    cluster-config-file /data/nodes.conf
+    cluster-node-timeout 15000
+    cluster-slave-validity-factor 10
+    cluster-migration-barrier 1
+    cluster-require-full-coverage yes
+
+    # Memory management
+    maxmemory 800mb
+    maxmemory-policy allkeys-lru
+    maxmemory-samples 5
+    lazyfree-lazy-eviction yes
+    lazyfree-lazy-expire yes
+    lazyfree-lazy-server-del yes
+
+    # Performance optimizations
+    tcp-keepalive 300
+    timeout 300
+    databases 16
+    tcp-backlog 511
+
+    # Persistence (optimized for performance)
+    save 900 1
+    save 300 10
+    save 60 10000
+    appendonly yes
+    appendfilename "appendonly.aof"
+    appendfsync everysec
+    dir /data
+
+    # Security
+    protected-mode yes
+    requirepass "${REDIS_PASSWORD}"
+
+    # Connection settings
+    maxclients 10000
+    client-output-buffer-limit normal 0 0 0
+    client-output-buffer-limit slave 256mb 64mb 60
+    client-output-buffer-limit pubsub 32mb 8mb 60
+
+    # Logging
+    loglevel notice
+    logfile ""

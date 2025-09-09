@@ -1,0 +1,40 @@
+[package]
+name = "rust-ai-ide-core"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Core utilities and common functionality for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+# Micro-crate dependencies - this breaks monolithic dependency structure
+rust-ai-ide-core-fundamentals = { path = "../rust-ai-ide-core-fundamentals" }
+rust-ai-ide-core-shell = { path = "../rust-ai-ide-core-shell" }
+rust-ai-ide-core-file = { path = "../rust-ai-ide-core-file" }
+rust-ai-ide-core-ai = { path = "../rust-ai-ide-core-ai" }
+rust-ai-ide-core-metrics = { path = "../rust-ai-ide-core-metrics" }
+
+# Async runtime dependency
+tokio = { workspace = true }
+
+# Error handling and logging
+thiserror = "1.0"
+log = "0.4"
+tracing = { workspace = true }
+
+# Legacy dependencies for potential compatibility layers
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+
+[features]
+default = ["std"]
+std = []
+full = ["std"]
+
+# Platform-specific features
+windows = []
+unix = []
+macos = []

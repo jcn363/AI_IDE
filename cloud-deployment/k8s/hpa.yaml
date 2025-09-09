@@ -1,0 +1,163 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: rust-ai-ide-lsp-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rust-ai-ide-lsp-server
+  minReplicas: 2
+  maxReplicas: 20
+  metrics:
+  # Scale based on total LSP requests per second (custom metric)
+  - type: Pods
+    pods:
+      metric:
+        name: lsp_requests_per_second
+        selector:
+          matchLabels:
+            app: rust-ai-ide
+            component: lsp-server
+      target:
+        type: AverageValue
+        averageValue: 50  # Scale when average LPS req/sec exceeds 50
+  # CPU-based scaling (fallback/secondary metric)
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  # Memory-based scaling (safety metric)
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      selectPolicy: Max
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: rust-ai-ide-ai-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rust-ai-ide-ai-inference
+  minReplicas: 2
+  maxReplicas: 20
+  metrics:
+  # Custom metric: AI inference requests per second
+  - type: Pods
+    pods:
+      metric:
+        name: ai_inference_requests_per_second
+        selector:
+          matchLabels:
+            app: rust-ai-ide
+            component: ai-inference
+      target:
+        type: AverageValue
+        averageValue: 50  # Scale when average inference req/sec exceeds 50
+  # GPU utilization as primary scaling metric
+  - type: Resource
+    resource:
+      name: nvidia.com/gpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  # Memory usage for AI workloads
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 75
+  # CPU for computational load
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 600  # More conservative scale-down for AI
+      policies:
+      - type: Percent
+        value: 25
+        periodSeconds: 180
+      - type: Pods
+        value: 1
+        periodSeconds: 180
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      selectPolicy: Max
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: rust-ai-ide-lsp-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: rust-ai-ide
+      component: lsp-server
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: rust-ai-ide-ai-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: rust-ai-ide
+      component: ai-inference
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: rust-ai-ide-redis-pdb
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: rust-ai-ide
+      component: redis-cache

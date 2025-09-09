@@ -1,0 +1,40 @@
+[profile.dev]
+opt-level = 0
+debug = true
+debug-assertions = true
+overflow-checks = true
+doc = false
+strip = false
+panic = "unwind"
+incremental = true
+codegen-units = 256
+
+[profile.release]
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false
+doc = false
+strip = true
+panic = "unwind"
+incremental = false
+codegen-units = 1
+lto = true
+
+[profile.bench]
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false
+doc = false
+strip = false
+panic = "unwind"
+incremental = false
+codegen-units = 1
+lto = true
+
+# Performance analysis profile
+[profile.perf]
+inherits = "release"
+debug = true
+strip = false

@@ -1,0 +1,34 @@
+[package]
+name = "rust-ai-ide-ai3-nlp"
+version = "0.1.0"
+edition = "2021"
+description = "Wave 3: Advanced NLP Code Understanding - Transformer-based Code Semantic Analysis"
+authors = ["Roo <ai assistant>"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+regex = "1.10"
+tokio-stream = "0.1"
+futures = "0.3"
+async-trait = "0.1"
+
+# NLP/ML for code understanding
+tch = { version = "0.12", optional = true }  # PyTorch bindings
+transformer = { version = "0.1", optional = true }
+tokenizers = { version = "0.19", optional = true }
+rust-bert = { version = "0.21", optional = true }
+
+# Integration with previous waves
+rust-ai-ide-ai1-semantic = { path = "../rust-ai-ide-ai1-semantic" }
+rust-ai-ide-ai2-predictive = { path = "../rust-ai-ide-ai2-predictive" }
+
+# Further wave integration
+rust-ai-ide-ai3-quantum = { path = "../rust-ai-ide-ai3-quantum" }
+
+[features]
+default = []
+ml_models = ["tch", "transformer", "tokenizers", "rust-bert"]
+full = ["ml_models"]

@@ -1,0 +1,34 @@
+[package]
+name = "rust-ai-ide-core-ai"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "AI abstractions, analysis interfaces, and AI provider integrations for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+# Base fundamentals crate
+rust-ai-ide-core-fundamentals = { path = "../rust-ai-ide-core-fundamentals" }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# ID generation
+uuid = { workspace = true }
+
+# Time handling
+chrono = { workspace = true }
+
+# Async trait for analysis
+async-trait = { workspace = true }
+
+[features]
+default = ["std"]
+std = []
+
+# Extended features
+async = []
+full = ["std", "async"]

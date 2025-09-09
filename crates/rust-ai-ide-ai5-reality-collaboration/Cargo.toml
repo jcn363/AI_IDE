@@ -1,0 +1,19 @@
+[package]
+name = "rust-ai-ide-ai5-reality-collaboration"
+version = "0.1.0"
+edition = "2021"
+description = "Reality-spanning development collaboration for Wave 5 Rust AI IDE"
+authors = ["Rust AI IDE Team"]
+license = "MIT OR Apache-2.0"
+keywords = ["reality", "collaboration", "quantum", "distributed"]
+categories = ["development-tools", "network-programming"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+anyhow = "1.0"
+thiserror = "1.0"
+log = "0.4"
+petgraph = "0.6"

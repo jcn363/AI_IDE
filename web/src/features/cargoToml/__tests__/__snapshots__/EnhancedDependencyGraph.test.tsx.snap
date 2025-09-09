@@ -1,0 +1,185 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`EnhancedDependencyGraph > matches snapshot with all props 1`] = `
+<div>
+  <div
+    class="enhanced-dependency-graph test-class"
+    data-testid="enhanced-dependency-graph"
+    style="width: 800px; height: 600px;"
+  >
+    <div
+      class="graph-controls"
+    >
+      <button
+        aria-label="Refresh dependency graph"
+        data-testid="refresh-button"
+      >
+        Refresh
+      </button>
+      <button
+        aria-label="Export graph as SVG"
+        data-testid="export-button"
+      >
+        Export
+      </button>
+    </div>
+    <div
+      class="graph-container"
+    >
+      <svg
+        aria-label="Dependency graph visualization"
+        class="graph-svg"
+        data-testid="graph-svg"
+      >
+        <g
+          class="graph-content"
+        />
+      </svg>
+    </div>
+    <div
+      class="project-path"
+    >
+      Project Path: 
+      /test/project
+    </div>
+  </div>
+</div>
+`;
+
+exports[`EnhancedDependencyGraph > matches snapshot with minimal props 1`] = `
+<div>
+  <div
+    class="enhanced-dependency-graph "
+    data-testid="enhanced-dependency-graph"
+    style="width: 100%; height: 600px;"
+  >
+    <div
+      class="graph-controls"
+    >
+      <button
+        aria-label="Refresh dependency graph"
+        data-testid="refresh-button"
+      >
+        Refresh
+      </button>
+      <button
+        aria-label="Export graph as SVG"
+        data-testid="export-button"
+      >
+        Export
+      </button>
+    </div>
+    <div
+      class="graph-container"
+    >
+      <svg
+        aria-label="Dependency graph visualization"
+        class="graph-svg"
+        data-testid="graph-svg"
+      >
+        <g
+          class="graph-content"
+        />
+      </svg>
+    </div>
+    <div
+      class="project-path"
+    >
+      Project Path: 
+      /test/project
+    </div>
+  </div>
+</div>
+`;
+
+exports[`EnhancedDependencyGraph matches snapshot with all props 1`] = `
+<div>
+  <div
+    class="enhanced-dependency-graph test-class"
+    data-testid="enhanced-dependency-graph"
+    style="width: 800px; height: 600px;"
+  >
+    <div
+      class="graph-controls"
+    >
+      <button
+        aria-label="Refresh dependency graph"
+        data-testid="refresh-button"
+      >
+        Refresh
+      </button>
+      <button
+        aria-label="Export graph as SVG"
+        data-testid="export-button"
+      >
+        Export
+      </button>
+    </div>
+    <div
+      class="graph-container"
+    >
+      <svg
+        aria-label="Dependency graph visualization"
+        class="graph-svg"
+        data-testid="graph-svg"
+      >
+        <g
+          class="graph-content"
+        />
+      </svg>
+    </div>
+    <div
+      class="project-path"
+    >
+      Project Path: 
+      /test/project
+    </div>
+  </div>
+</div>
+`;
+
+exports[`EnhancedDependencyGraph matches snapshot with minimal props 1`] = `
+<div>
+  <div
+    class="enhanced-dependency-graph "
+    data-testid="enhanced-dependency-graph"
+    style="width: 100%; height: 600px;"
+  >
+    <div
+      class="graph-controls"
+    >
+      <button
+        aria-label="Refresh dependency graph"
+        data-testid="refresh-button"
+      >
+        Refresh
+      </button>
+      <button
+        aria-label="Export graph as SVG"
+        data-testid="export-button"
+      >
+        Export
+      </button>
+    </div>
+    <div
+      class="graph-container"
+    >
+      <svg
+        aria-label="Dependency graph visualization"
+        class="graph-svg"
+        data-testid="graph-svg"
+      >
+        <g
+          class="graph-content"
+        />
+      </svg>
+    </div>
+    <div
+      class="project-path"
+    >
+      Project Path: 
+      /test/project
+    </div>
+  </div>
+</div>
+`;

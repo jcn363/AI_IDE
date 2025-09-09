@@ -1,0 +1,39 @@
+[package]
+name = "rust-ai-ide-core-fundamentals"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Core types, utilities, error handling, and fundamental functionality for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+# Workspace dependencies
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+regex = { workspace = true }
+uuid = { workspace = true, features = ["v4", "v1"] }
+chrono = { workspace = true }
+fancy-regex = { workspace = true }
+once_cell = { workspace = true }
+num_cpus = { workspace = true }
+sysinfo = { workspace = true }
+toml = { workspace = true }
+anyhow = { workspace = true }
+
+# Core async runtime
+tokio = { workspace = true }
+
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-shared-utils = { path = "../rust-ai-ide-shared-utils" }
+
+[features]
+default = ["std"]
+std = []
+
+# Extended features
+full = ["std"]

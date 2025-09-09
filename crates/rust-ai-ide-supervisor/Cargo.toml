@@ -1,0 +1,50 @@
+[package]
+name = "rust-ai-ide-supervisor"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Core high availability supervisor for Rust AI IDE - manages process monitoring, state persistence, and IPC recovery"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+# Workspace async runtime
+tokio = { workspace = true, default-features = false, features = ["full"], optional = true }
+
+# Serialization
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+
+# Database for state persistence
+libsqlite3-sys = { workspace = true }
+rusqlite = { workspace = true }
+
+# Time management
+chrono = { workspace = true }
+
+# UUID generation
+uuid = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Shared types and services
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+
+# Security validation
+rust-ai-ide-security = { path = "../rust-ai-ide-security" }
+
+# Event bus integration
+rust-ai-ide-shared-services = { path = "../rust-ai-ide-shared-services" }
+
+# Feature flags
+[features]
+default = ["std"]
+std = []
+async = ["tokio"]
+full = ["std", "async"]

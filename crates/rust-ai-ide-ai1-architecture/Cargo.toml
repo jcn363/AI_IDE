@@ -1,0 +1,22 @@
+[package]
+name = "rust-ai-ide-ai1-architecture"
+version = "0.1.0"
+edition = "2021"
+description = "Wave 1: Architecture Modernization and Analysis Tools"
+authors = ["Roo <ai assistant>"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+regex = "1.10"
+petgraph = "0.6"
+rayon = "1.7"
+itertools = "0.12"
+futures = "0.3"
+rand = "0.8"
+rust-ai-ide-core = { path = "../rust-ai-ide-core" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+rust-ai-ide-ai1-semantic = { path = "../rust-ai-ide-ai1-semantic" }

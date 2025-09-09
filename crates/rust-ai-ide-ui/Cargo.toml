@@ -1,0 +1,6 @@
+[package]
+name = "rust-ai-ide-ui"
+version = { workspace = true }
+edition = "2024"
+
+[dependencies]

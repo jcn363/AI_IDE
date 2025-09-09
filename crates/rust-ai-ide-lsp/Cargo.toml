@@ -1,0 +1,64 @@
+[package]
+name = "rust-ai-ide-lsp"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Language Server Protocol implementation for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+# LSP dependencies
+lsp-types = { workspace = true, features = ["proposed"] }
+async-trait = { workspace = true }
+lsp-server = "0.7.9"
+tower-lsp = "0.20.0"
+tokio-tungstenite = { version = "0.27.0", features = ["native-tls"] }
+tungstenite = { version = "0.27.0", features = ["native-tls"] }
+futures-util = { version = "0.3.31", default-features = false, features = ["std"] }
+url = { version = "2.5.7", features = ["serde"] }
+serde_repr = "0.1.20"
+tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt", "registry", "std"] }
+
+# Additional utilities for multi-language support
+glob = "0.3.3"
+dashmap = { version = "6.1.0", features = ["serde"] }
+regex = "1.10"
+parking_lot = { version = "0.12.4", features = ["serde"] }
+tempfile = { workspace = true }     # For tests and temporary files
+pathdiff = "0.2.3"      # For path manipulation
+ignore = "0.4.23"       # For efficient file system traversal
+which = "8.0.0"         # For finding executables in PATH
+
+# Added for multi-language features
+rand = { workspace = true, optional = true } # For random load balancing
+
+# Core async and error handling dependencies from workspace
+tokio = { workspace = true }
+futures = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+log = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+toml = { workspace = true }
+
+# Performance optimizations
+rayon = "1.8"          # For parallel processing
+num_cpus = "1.16"      # For detecting CPU count
+memmap2 = "0.9"        # For memory-mapped file I/O
+
+# Project dependencies
+rust-ai-ide-debugger = { path = "../rust-ai-ide-debugger" }
+rust-ai-ide-core = { path = "../rust-ai-ide-core" }
+rust-ai-ide-shared-services = { path = "../rust-ai-ide-shared-services" }
+rust-ai-ide-ai = { path = "../rust-ai-ide-ai", optional = true }
+
+[features]
+default = ["ai", "basic-lsp", "multi-language-lsp"]
+ai = ["rust-ai-ide-ai"]
+basic-lsp = []
+multi-language-lsp = ["rand"]  # Enable multi-language LSP support with random load balancing

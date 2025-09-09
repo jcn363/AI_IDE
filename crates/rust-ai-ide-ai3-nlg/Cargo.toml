@@ -1,0 +1,40 @@
+[package]
+name = "rust-ai-ide-ai3-nlg"
+version = "0.1.0"
+edition = "2021"
+description = "Wave 3: Natural Language Code Generation - Human Language to Production Code"
+authors = ["Roo <ai assistant>"]
+
+[dependencies]
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+regex = { workspace = true }
+tokio-stream = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+# Large language models (placeholder for actual LM integrations)
+gpt2 = { version = "0.1", optional = true }
+bert = { version = "0.1", optional = true }
+llama = { version = "0.14.2", optional = true }
+
+# Code-specific processing
+tree-sitter = { workspace = true }
+tree-sitter-rust = { workspace = true }
+tree-sitter-python = { workspace = true }
+tree-sitter-javascript = { workspace = true }
+tree-sitter-typescript = { workspace = true }
+
+# Integration with existing systems
+rust-ai-ide-ai1-semantic = { path = "../rust-ai-ide-ai1-semantic" }
+rust-ai-ide-ai1-architecture = { path = "../rust-ai-ide-ai1-architecture" }
+rust-ai-ide-ai2-predictive = { path = "../rust-ai-ide-ai2-predictive" }
+rust-ai-ide-ai3-nlp = { path = "../rust-ai-ide-ai3-nlp" }
+rust-ai-ide-ai3-quantum = { path = "../rust-ai-ide-ai3-quantum" }
+
+[features]
+default = []
+large_models = ["gpt2", "bert", "llama"]
+full = ["large_models"]

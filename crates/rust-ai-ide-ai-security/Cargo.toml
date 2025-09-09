@@ -1,0 +1,37 @@
+[package]
+name = "rust-ai-ide-ai-security"
+version = "4.0.0"
+edition = "2021"
+description = "Wave 4: Secure AI Operations with Privacy-Preserving Computation"
+license = "MIT"
+
+[dependencies]
+# Core dependencies
+serde = { version = "1.0", features = ["derive"] }
+async-trait = "0.1"
+tokio = { version = "1.0", features = ["full"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# Security foundation (Wave 3)
+rust-ai-ide-security = { path = "../rust-ai-ide-security", features = ["full"] }
+
+# AI dependencies - existing crates
+rust-ai-ide-ai-inference = { path = "../rust-ai-ide-ai-inference" }
+rust-ai-ide-ai-codegen = { path = "../rust-ai-ide-ai-codegen" }
+rust-ai-ide-ai-distributed-coordinator = { path = "../rust-ai-ide-ai-distributed-coordinator" }
+
+# Cryptography dependencies
+aes-gcm = "0.10"
+chacha20poly1305 = "0.10"
+rand = "0.8"
+
+# Zero-knowledge proofs and differential privacy (simplified implementations)
+# In production, would use libraries like bulletproofs, libsnark, or similar
+
+[features]
+default = ["encrypted-model-storage", "federated-learning"]
+encrypted-model-storage = []
+federated-learning = []
+zero-knowledge = []
+differential-privacy = []
+quantum-resistant = []

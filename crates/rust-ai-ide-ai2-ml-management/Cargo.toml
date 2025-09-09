@@ -1,0 +1,40 @@
+[package]
+name = "rust-ai-ide-ai2-ml-management"
+version = "0.1.0"
+edition = "2021"
+description = "Wave 2: Advanced ML Model Management and Lifecycle System"
+authors = ["Roo <ai assistant>"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+semver = "1.0"
+sha2 = "0.10"
+futures = "0.3"
+async-trait = "0.1"
+tokio-sync = "0.1"
+petgraph = "0.6"
+rayon = "1.7"
+async-stream = "0.3"
+
+# Wave system dependencies
+rust-ai-ide-ai1-semantic = { path = "../rust-ai-ide-ai1-semantic" }
+rust-ai-ide-ai1-architecture = { path = "../rust-ai-ide-ai1-architecture" }
+rust-ai-ide-ai2-predictive = { path = "../rust-ai-ide-ai2-predictive" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+
+# ML/ML learning specific
+ml-framework-integration = { version = "0.1", optional = true }
+model-serving = { version = "0.1", optional = true }
+distributed-training = { version = "0.1", optional = true }
+
+[features]
+default = []
+distributed = ["distributed-training"]
+serving = ["model-serving"]
+full = ["distributed", "serving", "ml-framework-integration"]

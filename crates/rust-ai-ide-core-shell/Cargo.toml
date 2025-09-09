@@ -1,0 +1,23 @@
+[package]
+name = "rust-ai-ide-core-shell"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Asynchronous shell operations and command execution for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+# Base fundamentals crate
+rust-ai-ide-core-fundamentals = { path = "../rust-ai-ide-core-fundamentals" }
+
+# Core async runtime - must have process features for command execution
+tokio = { workspace = true }
+
+[features]
+default = ["std"]
+std = []
+
+# Additional async features if needed
+full = ["std"]

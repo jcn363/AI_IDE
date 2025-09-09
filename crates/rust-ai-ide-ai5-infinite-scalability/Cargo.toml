@@ -1,0 +1,16 @@
+[package]
+name = "rust-ai-ide-ai5-infinite-scalability"
+version = "0.1.0"
+edition = "2021"
+description = "Infinite scalability development ecosystems for Wave 5 Rust AI IDE"
+authors = ["Rust AI IDE Team"]
+license = "MIT OR Apache-2.0"
+keywords = ["infinite", "scalability", "ecosystems", "fractal"]
+categories = ["development-tools", "distributed"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+anyhow = "1.0"
+thiserror = "1.0"
+log = "0.4"

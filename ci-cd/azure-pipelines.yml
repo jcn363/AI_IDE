@@ -1,0 +1,528 @@
+# Azure DevOps Pipeline for Enterprise Rust AI IDE
+# Supports on-premises, air-gapped, and cloud deployments
+
+trigger:
+  - main
+  - develop
+  - feature/*
+
+pr:
+  - main
+  - develop
+
+parameters:
+  - name: deployTarget
+    displayName: 'Deployment Target'
+    type: string
+    default: 'none'
+    values:
+      - none
+      - staging
+      - production
+      - airgapped
+
+  - name: securityScan
+    displayName: 'Run Security Scans'
+    type: boolean
+    default: true
+
+  - name: integrationTests
+    displayName: 'Run Integration Tests'
+    type: boolean
+    default: false
+
+variables:
+  - group: rust-ai-ide-secrets
+
+  # Build variables
+  - name: BUILD_VERSION
+    value: '$(Build.BuildNumber)-$(Build.SourceVersion)'
+  - name: RUST_VERSION
+    value: '1.91.0'
+  - name: NIGHTLY_VERSION
+    value: '2025-09-03'
+  - name: NODE_VERSION
+    value: '18.x'
+
+  # Docker variables
+  - name: DOCKER_REGISTRY
+    value: 'registry.local:5000'
+  - name: IMAGE_PREFIX
+    value: '$(DOCKER_REGISTRY)/rust-ai-ide'
+
+  # Deployment variables
+  - name: STAGING_URL
+    value: 'http://staging.rust-ai-ide.local'
+  - name: PRODUCTION_URL
+    value: 'https://rust-ai-ide.company.com'
+
+stages:
+  # ============ VALIDATE STAGE ============
+  - stage: Validate
+    displayName: 'Validate'
+    jobs:
+      - job: CodeQuality
+        displayName: 'Rust Code Quality'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'rust:$(RUST_VERSION)'
+        steps:
+          - checkout: self
+            clean: true
+
+          - script: |
+              export RUSTUP_HOME=/usr/local/rustup
+              export CARGO_HOME=/usr/local/cargo
+              export PATH=$CARGO_HOME/bin:$PATH
+
+              # Setup nightly toolchain
+              ./rustup install nightly-$(NIGHTLY_VERSION) --component rust-src rustfmt clippy
+              ./rustup default nightly-$(NIGHTLY_VERSION)
+
+              # Code formatting check
+              cargo fmt --all -- --check
+
+              # Linting
+              cargo clippy --workspace --all-targets --all-features -- -D warnings
+            displayName: 'Run Rust linting and formatting'
+
+          - task: PublishBuildArtifacts@1
+            condition: succeededOrFailed()
+            inputs:
+              pathToPublish: '$(System.DefaultWorkingDirectory)/target/debug'
+              artifactName: 'rust-lint-results'
+
+      - job: LicenseCompliance
+        displayName: 'License Compliance Check'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'rust:$(RUST_VERSION)'
+        steps:
+          - checkout: self
+            clean: true
+
+          - script: |
+              cargo install cargo-deny
+              cargo deny check licenses advisories
+            displayName: 'Check license compliance'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: '$(System.DefaultWorkingDirectory)/target/debug'
+              artifactName: 'license-scan-results'
+
+      - job: WebQuality
+        displayName: 'Web Frontend Quality'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'node:$(NODE_VERSION)'
+        steps:
+          - checkout: self
+            clean: true
+
+          - script: |
+              cd web
+              npm ci --prefer-offline
+              npm run type-check
+              npm run lint
+            displayName: 'Run TypeScript and ESLint checks'
+
+  # ============ BUILD STAGE ============
+  - stage: Build
+    displayName: 'Build'
+    dependsOn: Validate
+    jobs:
+      - job: RustBuild
+        displayName: 'Build Rust Workspace'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'rust:$(RUST_VERSION)'
+        steps:
+          - checkout: self
+            clean: true
+
+          - script: |
+              export RUSTUP_HOME=/usr/local/rustup
+              export CARGO_HOME=/usr/local/cargo
+              export PATH=$CARGO_HOME/bin:$PATH
+
+              apt-get update && apt-get install -y build-essential pkg-config libssl-dev musl-tools
+
+              # Setup nightly toolchain
+              ./rustup install nightly-$(NIGHTLY_VERSION) --component rust-src
+              ./rustup default nightly-$(NIGHTLY_VERSION)
+              ./rustup target add x86_64-unknown-linux-musl
+
+              # Build workspace
+              cargo build --workspace --release --locked
+              cargo build --workspace --release --examples
+            displayName: 'Build Rust binaries'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: 'target/release'
+              artifactName: 'rust-binaries'
+
+      - job: WebBuild
+        displayName: 'Build Web Frontend'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'node:$(NODE_VERSION)'
+        steps:
+          - checkout: self
+            clean: true
+
+          - script: |
+              cd web
+              npm ci --prefer-offline
+
+              # Generate TypeScript types from Rust
+              npm run generate-types || echo "Type generation failed, continuing..."
+
+              # Build production bundle
+              npm run build
+            displayName: 'Build web production bundle'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: 'web/dist'
+              artifactName: 'web-build'
+
+      - job: DockerBuild
+        displayName: 'Build Docker Images'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        steps:
+          - checkout: self
+            clean: true
+
+          - task: Docker@2
+            displayName: 'Build Rust Backend Image'
+            inputs:
+              command: 'buildAndPush'
+              containerRegistry: 'docker-registry'
+              repository: '$(IMAGE_PREFIX)/rust-backend'
+              Dockerfile: 'docker/Dockerfile.rust'
+              buildContext: '.'
+              tags: |
+                $(Build.BuildNumber)
+                latest
+
+          - task: Docker@2
+            displayName: 'Build Web Frontend Image'
+            inputs:
+              command: 'buildAndPush'
+              containerRegistry: 'docker-registry'
+              repository: '$(IMAGE_PREFIX)/web-frontend'
+              Dockerfile: 'docker/Dockerfile.web'
+              buildContext: '.'
+              tags: |
+                $(Build.BuildNumber)
+                latest
+
+          - task: Docker@2
+            displayName: 'Build Tauri Desktop Image'
+            inputs:
+              command: 'buildAndPush'
+              containerRegistry: 'docker-registry'
+              repository: '$(IMAGE_PREFIX)/tauri-desktop'
+              Dockerfile: 'docker/Dockerfile.tauri'
+              buildContext: '.'
+              tags: |
+                $(Build.BuildNumber)
+                latest
+
+  # ============ TEST STAGE ============
+  - stage: Test
+    displayName: 'Test'
+    dependsOn: Build
+    jobs:
+      - job: UnitTests
+        displayName: 'Unit Tests'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'rust:$(RUST_VERSION)'
+        steps:
+          - checkout: self
+            clean: true
+
+          - script: |
+              export RUSTUP_HOME=/usr/local/rustup
+              export CARGO_HOME=/usr/local/cargo
+              export PATH=$CARGO_HOME/bin:$PATH
+
+              ./rustup install nightly-$(NIGHTLY_VERSION) --component rust-src
+              ./rustup default nightly-$(NIGHTLY_VERSION)
+
+              # Run unit tests
+              cargo test --workspace --lib --bins --release -- --nocapture
+            displayName: 'Run unit tests'
+
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFiles: 'target/debug/deps/*.xml'
+              testRunTitle: 'Rust Unit Tests'
+              failTaskOnFailedTests: true
+
+      - job: WebTests
+        displayName: 'Web Frontend Tests'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'node:$(NODE_VERSION)'
+        steps:
+          - checkout: self
+            clean: true
+
+          - script: |
+              cd web
+              npm ci --prefer-offline
+              npm run test:unit -- --coverage --watchAll=false --passWithNoTests
+            displayName: 'Run web tests with coverage'
+
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFiles: 'web/test-results.xml'
+              testRunTitle: 'Web Tests'
+
+          - task: PublishCodeCoverageResults@1
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: 'web/coverage/cobertura-coverage.xml'
+
+      - job: IntegrationTests
+        displayName: 'Integration Tests'
+        condition: eq(variables['Build.SourceBranch'], 'refs/heads/main') # Only on main branch
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'rust:$(RUST_VERSION)'
+        steps:
+          - checkout: self
+            clean: true
+
+          - script: |
+              export RUSTUP_HOME=/usr/local/rustup
+              export CARGO_HOME=/usr/local/cargo
+              export PATH=$CARGO_HOME/bin:$PATH
+
+              ./rustup install nightly-$(NIGHTLY_VERSION) --component rust-src
+              ./rustup default nightly-$(NIGHTLY_VERSION)
+
+              if [ -d "integration-tests" ]; then
+                cd integration-tests
+                cargo test --release --features enterprise -- --nocapture
+              else
+                echo "No integration tests found"
+              fi
+            displayName: 'Run integration tests'
+            condition: eq('${{ parameters.integrationTests }}', true)
+
+  # ============ SECURITY STAGE ============
+  - stage: Security
+    displayName: 'Security'
+    dependsOn: Build
+    condition: eq('${{ parameters.securityScan }}', 'true')
+    jobs:
+      - job: DependencyScanning
+        displayName: 'Dependency Security Scan'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'rust:$(RUST_VERSION)'
+        steps:
+          - checkout: self
+            clean: true
+
+          - script: |
+              # Install security scanning tools
+              cargo install cargo-audit cargo-deny
+
+              # Audit Rust dependencies
+              cargo audit --format json > cargo-audit-report.json
+              cargo deny check
+
+              # Scan web dependencies
+              apt-get install -y nodejs npm
+              cd web && npm audit --audit-level moderate --json > ../npm-audit-report.json
+            displayName: 'Scan dependencies for security issues'
+
+          - task: PublishSecurityAnalysisLogs@1
+            inputs:
+              resultsFile: 'cargo-audit-report.json'
+
+      - job: ContainerScanning
+        displayName: 'Container Image Security Scan'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        steps:
+          - checkout: self
+            clean: true
+
+          - script: |
+              # Run Trivy on built images
+              docker run --rm \
+                -v /var/run/docker.sock:/var/run/docker.sock \
+                aquasecurity/trivy:latest \
+                image \
+                --format json \
+                --output trivy-results.json \
+                $IMAGE_PREFIX/rust-backend:$(Build.BuildNumber)
+
+              # Check for high/critical vulnerabilities
+              if grep -q '"Severity":"HIGH"' trivy-results.json ||
+                 grep -q '"Severity":"CRITICAL"' trivy-results.json; then
+                echo "##vso[task.logissue type=error]High or Critical vulnerabilities found in container image"
+                exit 1
+              fi
+            displayName: 'Scan container images for vulnerabilities'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: 'trivy-results.json'
+              artifactName: 'container-scan-results'
+
+  # ============ DEPLOY STAGE ============
+  - stage: Deploy
+    displayName: 'Deploy'
+    dependsOn: [Test, Security]
+    condition: ne('${{ parameters.deployTarget }}', 'none')
+    jobs:
+      - deployment: Staging
+        displayName: 'Deploy to Staging'
+        condition: eq('${{ parameters.deployTarget }}', 'staging')
+        environment: 'staging'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'docker:latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: none  # We don't need source code
+
+                - script: |
+                    cd docker
+                    echo "Deploying to staging environment..."
+                    docker-compose --project-name rust-ai-ide-staging up -d --build --force-recreate
+                    docker-compose --project-name rust-ai-ide-staging ps
+                  displayName: 'Deploy to staging'
+
+                - script: |
+                    # Health check with timeout
+                    timeout=300
+                    counter=0
+                    while [ $counter -lt $timeout ]; do
+                      if curl -f --max-time 30 http://localhost:8080/health; then
+                        echo "Staging deployment successful"
+                        break
+                      fi
+                      counter=$((counter + 30))
+                      sleep 30
+                    done
+                    if [ $counter -ge $timeout ]; then
+                      echo "##vso[task.logissue type=error]Staging health check failed"
+                      exit 1
+                    fi
+                  displayName: 'Health check verification'
+
+      - deployment: Production
+        displayName: 'Deploy to Production'
+        condition: eq('${{ parameters.deployTarget }}', 'production')
+        environment: 'production'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'docker:latest'
+        strategy:
+          canary:
+            increments: [0, 10, 50, 100]
+            deploy:
+              steps:
+                - script: |
+                    echo "Canary deployment - Increment: $(canary.increment)%"
+                    cd docker
+
+                    # Scale services based on canary increment
+                    case "$(canary.increment)" in
+                      0)
+                        echo "Starting canary deployment..."
+                        ;;
+                      10|50)
+                        docker-compose --project-name rust-ai-ide-production up -d --scale rust-backend=$(canary.increment/10)
+                        ;;
+                      100)
+                        docker-compose --project-name rust-ai-ide-production up -d --scale rust-backend=3 --scale web-frontend=2
+                        echo "Full production deployment complete"
+                        ;;
+                    esac
+
+                    # Wait for containers to be healthy
+                    sleep 60
+                  displayName: 'Production deployment with canary strategy'
+
+                - script: |
+                    # Production health check
+                    if curl -f --max-time 30 $(PRODUCTION_URL)/health; then
+                      echo "Production deployment healthy"
+                    else
+                      echo "##vso[task.logissue type=error]Production health check failed"
+                      exit 1
+                    fi
+                  displayName: 'Production health verification'
+
+      - job: AirgappedDeploy
+        displayName: 'Deploy to Air-gapped Environment'
+        condition: eq('${{ parameters.deployTarget }}', 'airgapped')
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'docker:latest'
+        steps:
+          - checkout: none
+
+          - script: |
+              cd docker
+              echo "Deploying to air-gapped environment..."
+              docker-compose -f docker-compose.air-gapped.yml --project-name rust-ai-ide-airgapped up -d --build --force-recreate
+              docker-compose -f docker-compose.air-gapped.yml --project-name rust-ai-ide-airgapped ps
+            displayName: 'Air-gapped deployment'
+
+  # ============ CLEANUP STAGE ============
+  - stage: Cleanup
+    displayName: 'Cleanup'
+    dependsOn: Deploy
+    condition: always()
+    jobs:
+      - job: DockerCleanup
+        displayName: 'Clean Docker Resources'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'docker:latest'
+        steps:
+          - script: |
+              # Clean up dangling containers and images
+              docker system prune -f
+              docker image prune -f -a
+            displayName: 'Docker system cleanup'
+
+      - job: CacheCleanup
+        displayName: 'Clean Build Cache'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        steps:
+          - task: Cache@2
+            inputs:
+              key: 'cargo | "$(Agent.OS)" | Cargo.lock'
+              path: '$(Pipeline.Workspace)/.cargo'
+              cacheHitVar: 'CARGO_CACHE_RESTORED'
+
+          - script: |
+              # Clean old cargo registry cache
+              if [ "$(CARGO_CACHE_RESTORED)" = "true" ]; then
+                find $(Pipeline.Workspace)/.cargo/registry -name "*.crate" -mtime +30 -delete 2>/dev/null || true
+              fi
+            displayName: 'Clean cargo cache'
+
+# Azure DevOps Service Connections required:
+# - docker-registry: Container Registry service connection
+# - staging: Environment for staging deployment
+# - production: Environment for production deployment
+
+# Variable Groups required:
+# - rust-ai-ide-secrets: Contains sensitive configuration

@@ -1,0 +1,187 @@
+version: '3.8'
+
+# Air-gapped deployment configuration for isolated environments
+# Requirements: All images must be available locally or in private registry
+
+services:
+  # PostgreSQL database (use local image)
+  postgres:
+    image: registry.local/postgres:14-alpine
+    container_name: rust-ai-ide-postgres-airgapped
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rust_ai_ide
+      POSTGRES_USER: rustai
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - airgapped-network
+    # No internet access required
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rustai"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis cache (use local image)
+  redis:
+    image: registry.local/redis:7-alpine
+    container_name: rust-ai-ide-redis-airgapped
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass-file /run/secrets/redis_password
+    secrets:
+      - redis_password
+    volumes:
+      - redis_local_data:/data
+    networks:
+      - airgapped-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Rust AI IDE Backend Service
+  rust-backend:
+    image: registry.local/rust-ai-ide-backend:latest
+    container_name: rust-ai-ide-backend-airgapped
+    restart: unless-stopped
+    environment:
+      DATABASE_URL_FILE: /run/secrets/database_url
+      REDIS_URL_FILE: /run/secrets/redis_url
+      RUST_AI_IDE_ENV: enterprise-airgapped
+      RUST_AI_IDE_PORT: 8080
+      RUST_AI_IDE_LOG_LEVEL: info
+      SECRET_KEY_FILE: /run/secrets/secret_key
+      # Air-gapped specific settings
+      AIRGAPPED_MODE: true
+      OFFLINE_PACKAGE_CACHE: /app/offline-packages
+      NO_INTERNET_ACCESS: true
+    secrets:
+      - database_url
+      - redis_url
+      - secret_key
+    volumes:
+      - backend_local_data:/app/data
+      - backend_local_logs:/app/logs
+      - backend_local_cache:/app/cache
+      # Mount offline package repository
+      - type: bind
+        source: ./offline-packages
+        target: /app/offline-packages
+        read_only: true
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - airgapped-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+  # Web Frontend Service
+  web-frontend:
+    image: registry.local/rust-ai-ide-frontend:latest
+    container_name: rust-ai-ide-frontend-airgapped
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080/api
+      VITE_ENVIRONMENT: enterprise-airgapped
+      NGINX_ACCESS_LOG: "off"
+      OFFLINE_MODE: true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_local_logs:/var/log/nginx
+    depends_on:
+      - rust-backend
+    networks:
+      - airgapped-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Local Docker Registry for air-gapped environments
+  registry:
+    image: registry:2.8
+    container_name: rust-ai-ide-local-registry
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - registry_local_data:/var/lib/registry
+    environment:
+      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/registry
+      REGISTRY_HTTP_ADDR: 0.0.0.0:5000
+    networks:
+      - airgapped-network
+
+  # Optional: Local package repository (e.g., Artifactory or similar)
+  # Uncomment and configure if using local Maven/npm repositories
+  # package-repo:
+  #   image: registry.local/artifactory:latest
+  #   container_name: rust-ai-ide-package-repo
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8081:8081"
+  #   volumes:
+  #     - package_repo_data:/var/opt/jfrog/artifactory/data
+  #   networks:
+  #     - airgapped-network
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  redis_password:
+    file: ./secrets/redis_password.txt
+  database_url:
+    file: ./secrets/database_url.txt
+  redis_url:
+    file: ./secrets/redis_url.txt
+  secret_key:
+    file: ./secrets/secret_key.txt
+
+volumes:
+  postgres_local_data:
+    driver: local
+  redis_local_data:
+    driver: local
+  backend_local_data:
+    driver: local
+  backend_local_logs:
+    driver: local
+  backend_local_cache:
+    driver: local
+  nginx_local_logs:
+    driver: local
+  registry_local_data:
+    driver: local
+  package_repo_data:
+    driver: local
+
+networks:
+  airgapped-network:
+    driver: bridge
+    internal: true  # Prevents external network access

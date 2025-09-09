@@ -1,0 +1,59 @@
+[package]
+name = "rust-ai-ide-ai5-multi-reality"
+version = "0.1.0"
+edition = "2021"
+description = "Multi-reality development frameworks for Wave 5 Rust AI IDE"
+authors = ["Rust AI IDE Team"]
+license = "MIT OR Apache-2.0"
+keywords = ["quantum", "reality", "development", "framework", "ai"]
+categories = ["development-tools", "science"]
+
+[dependencies]
+rusqlite = { version = "0.32", features = ["bundled"] }
+sandstorm = "0.3"
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+futures = "0.3"
+async-trait = "0.1"
+parking_lot = "0.12"
+rayon = "1.10"
+crossbeam = "0.8"
+hyper = { version = "1.0", features = ["full"] }
+http = "1.0"
+thiserror = "1.0"
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.10"
+rand = "0.8"
+sha2 = "0.10"
+aes-gcm = "0.10"
+base64 = "0.22"
+hex = "0.4"
+prost = "0.13"
+capnp = { version = "0.18", optional = true }
+flatbuffers = { version = "24", optional = true }
+
+# Quantum computing dependencies
+qiskit = { git = "https://github.com/Qiskit/qiskit-rust" }
+qudit = { git = "https://github.com/quantum-circuit/qudit-rs" }
+
+# Neural network frameworks
+tch = "0.13"
+candle = "0.6"
+tract-onnx = { git = "https://github.com/sonos/tract", features = ["onnx"] }
+
+# Consciousness simulation
+neural-embedded = { git = "https://github.com/neural-embedded/neural-embedded" }
+brainflow = { git = "https://github.com/brainflow-dev/brainflow" }
+
+# Multi-reality coordination
+reality-core = { git = "https://github.com/multi-reality/reality-core-rs" }
+dimension-sync = { git = "https://github.com/dimension-sync/dimension-sync-rs" }
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.5"
+cargo-husky = { version = "1", default-features = false, features = ["run-for-all", "prepush-hook", "run-cargo-check", "run-cargo-test", "run-cargo-clippy"] }

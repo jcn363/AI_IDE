@@ -1,0 +1,381 @@
+# Enterprise SSO/RBAC Integration with LDAP/Active Directory
+# Deploys authentication proxy and RBAC manager for enterprise access control
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ldap-auth-config
+  namespace: kube-system
+data:
+  config.yaml: |
+    ldap:
+      host: "$LDAP_HOST"
+      port: "$LDAP_PORT"
+      bindDN: "$LDAP_BIND_DN"
+      bindPassword: "$LDAP_BIND_PASSWORD"
+      userSearchBase: "$LDAP_USER_SEARCH_BASE"
+      userFilter: "(&(objectClass=user)(sAMAccountName=%s))"
+      groupSearchBase: "$LDAP_GROUP_SEARCH_BASE"
+      groupFilter: "(&(objectClass=group)(member=%s))"
+      userAttribute: "sAMAccountName"
+      groupAttribute: "memberOf"
+
+    oidc:
+      issuerURL: "$OIDC_ISSUER_URL"
+      clientID: "$OIDC_CLIENT_ID"
+      clientSecret: "$OIDC_CLIENT_SECRET"
+      redirectURL: "$OIDC_REDIRECT_URL"
+
+    rbac:
+      adminGroup: "$ADMIN_GROUP_DN"
+      developerGroup: "$DEVELOPER_GROUP_DN"
+      auditorGroup: "$AUDITOR_GROUP_DN"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ldap-auth-secrets
+  namespace: kube-system
+type: Opaque
+data:
+  ldap-bind-password: "$LDAP_BIND_PASSWORD_BASE64"
+  oidc-client-secret: "$OIDC_CLIENT_SECRET_BASE64"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ldap-authenticator
+  namespace: kube-system
+  labels:
+    app: ldap-authenticator
+    component: authentication
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ldap-authenticator
+  template:
+    metadata:
+      labels:
+        app: ldap-authenticator
+        component: authentication
+    spec:
+      serviceAccountName: ldap-auth-sa
+      containers:
+      - name: dex
+        image: dexidp/dex:v2.37.0
+        ports:
+        - containerPort: 5556
+          name: https
+        - containerPort: 5558
+          name: grpc
+        env:
+        - name: DEX_LDAP_HOST
+          value: "$LDAP_HOST"
+        - name: DEX_LDAP_PORT
+          value: "$LDAP_PORT"
+        - name: DEX_LDAP_BIND_DN
+          valueFrom:
+            secretKeyRef:
+              name: ldap-auth-secrets
+              key: ldap-bind-password
+        - name: DEX_LDAP_BIND_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ldap-auth-secrets
+              key: ldap-bind-password
+        - name: DEX_LDAP_USER_SEARCH_BASE
+          value: "$LDAP_USER_SEARCH_BASE"
+        - name: DEX_LDAP_GROUP_SEARCH_BASE
+          value: "$LDAP_GROUP_SEARCH_BASE"
+        - name: DEX_OIDC_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ldap-auth-secrets
+              key: oidc-client-secret
+        volumeMounts:
+        - name: dex-config
+          mountPath: /etc/dex
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 5556
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 5556
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+      volumes:
+      - name: dex-config
+        configMap:
+          name: ldap-auth-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ldap-authenticator
+  namespace: kube-system
+  labels:
+    app: ldap-authenticator
+spec:
+  ports:
+  - port: 5556
+    targetPort: 5556
+    protocol: TCP
+    name: https
+  - port: 5558
+    targetPort: 5558
+    protocol: TCP
+    name: grpc
+  selector:
+    app: ldap-authenticator
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ldap-auth-ingress
+  namespace: kube-system
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - auth.rust-ai-ide.com
+    secretName: ldap-auth-tls
+  rules:
+  - host: auth.rust-ai-ide.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ldap-authenticator
+            port:
+              number: 5556
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ldap-auth-sa
+  namespace: kube-system
+automountServiceAccountToken: false
+
+---
+# ClusterRole for LDAP Authenticator
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ldap-auth-cluster-role
+rules:
+- apiGroups: ["authentication.k8s.io"]
+  resources: ["tokenreviews"]
+  verbs: ["create"]
+- apiGroups: ["authorization.k8s.io"]
+  resources: ["subjectaccessreviews"]
+  verbs: ["create"]
+- apiGroups: [""]
+  resources: ["users", "groups"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ldap-auth-cluster-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ldap-auth-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: ldap-auth-sa
+  namespace: kube-system
+
+---
+# RBAC ClusterRoles for Enterprise Roles
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: enterprise-admin
+  labels:
+    enterprise-rbac: "true"
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+- nonResourceURLs: ["*"]
+  verbs: ["*"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: enterprise-developer
+  labels:
+    enterprise-rbac: "true"
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "daemonsets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["extensions", "networking.k8s.io"]
+  resources: ["networkpolicies"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: enterprise-auditor
+  labels:
+    enterprise-rbac: "true"
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["*"]
+  verbs: ["get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tenant-admin
+  labels:
+    enterprise-rbac: "true"
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets", "persistentvolumeclaims"]
+  resourceNames: ["tenant-$TENANT_ID-*"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  resourceNames: ["*-tenant-$TENANT_ID"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  resourceNames: ["*-tenant-$TENANT_ID"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+---
+# ClusterRoleBinding Templates (apply per user/group)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: enterprise-admin-binding-$USER_EMAIL
+  labels:
+    enterprise-rbac: "true"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: enterprise-admin
+subjects:
+- kind: User
+  name: "$USER_EMAIL"
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: enterprise-developer-binding-$USER_EMAIL
+  labels:
+    enterprise-rbac: "true"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: enterprise-developer
+subjects:
+- kind: User
+  name: "$USER_EMAIL"
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: enterprise-auditor-binding-$USER_EMAIL
+  labels:
+    enterprise-rbac: "true"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: enterprise-auditor
+subjects:
+- kind: User
+  name: "$USER_EMAIL"
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# ServiceAccount RBAC for Application Authentication
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rust-aiide-sa
+  namespace: default
+automountServiceAccountToken: false
+labels:
+  enterprise-rbac: "true"
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: rust-aiide-app-role
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "secrets"]
+  verbs: ["get", "list", "watch", "create", "update"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+- apiGroups: ["monitoring.coreos.com"]
+  resources: ["servicemonitors"]
+  verbs: ["get", "list", "watch", "create", "update"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rust-aiide-app-binding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: rust-aiide-app-role
+subjects:
+- kind: ServiceAccount
+  name: rust-aiide-sa
+  namespace: default

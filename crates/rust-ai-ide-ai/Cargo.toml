@@ -1,0 +1,78 @@
+[package]
+name = "rust-ai-ide-ai"
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+# Workspace dependencies
+tokio = { workspace = true }
+once_cell = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+anyhow = { workspace = true }
+futures = { workspace = true }
+dashmap = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+sysinfo = { workspace = true }
+petgraph = { workspace = true }
+tempfile = { workspace = true }
+syn = { workspace = true, features = ["full", "extra-traits"] }
+quote = { workspace = true }
+regex = { workspace = true }
+log = { workspace = true }
+tokio-stream = { workspace = true, features = ["full"] }
+blake3 = { workspace = true }
+
+# Direct dependencies with specific versions
+rusqlite = { workspace = true }
+async-trait = { workspace = true }
+reqwest-retry = "0.7.0"
+reqwest-middleware = "0.4.2"
+moka = { version = "0.12.10", features = ["future"] }
+lru = "0.16.0"
+sha2 = "0.10.9"
+heck = { workspace = true }
+fancy-regex = "0.16.1"
+
+# Enhanced AI/ML dependencies
+candle-core = "0.9.1"
+candle-nn = "0.9.1"
+candle-transformers = "0.9.1"
+hf-hub = "0.4.3"
+tokenizers = "0.22.0"
+safetensors = "0.6.2"
+tar = "0.4.44"
+tree-sitter = { workspace = true }
+tree-sitter-rust = { workspace = true }
+tokio-util = { workspace = true }
+bytes = "1.10.1"
+futures-util = "0.3.31"
+rand = { workspace = true }
+rust-ai-ide-ai-inference = { path = "../rust-ai-ide-ai-inference" }
+rust-ai-ide-ai-analysis = { path = "../rust-ai-ide-ai-analysis" }
+rust-ai-ide-ai-codegen = { path = "../rust-ai-ide-ai-codegen" }
+rust-ai-ide-ai-refactoring = { path = "../rust-ai-ide-ai-refactoring" }
+rust-ai-ide-ai-learning = { path = "../rust-ai-ide-ai-learning" }
+dirs-next = { workspace = true }
+filetime = { workspace = true }
+md5 = { workspace = true }
+proc-macro2 = "^1.0.101"
+walkdir = { workspace = true }
+num_cpus = { workspace = true }
+rayon = { workspace = true }
+typetag = { workspace = true }
+lazy_static = { workspace = true }
+handlebars = "6.3.2"
+prettyplease = "0.2.37"
+criterion = { version = "0.7.0", features = ["html_reports"] }
+governor = { workspace = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+tempfile = { workspace = true }
+tokio-test = "^0.4.4"

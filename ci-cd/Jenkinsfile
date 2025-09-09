@@ -1,0 +1,533 @@
+#!/usr/bin/env groovy
+
+// Jenkins Pipeline for Enterprise Rust AI IDE Build and Deployment
+//
+// Prerequisites:
+// - Jenkins agents with Docker, Rust toolchain, Node.js
+// - Credentials configured for deployment targets
+// - docker-compose environment variables set up
+
+pipeline {
+    agent {
+        docker {
+            image 'rust:1.91-slim'
+            args '-v /var/run/docker.sock:/var/run/docker.sock --user root'
+        }
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '30'))
+        disableConcurrentBuilds()
+        timeout(time: 2, unit: 'HOURS')
+        timestamps()
+    }
+
+    environment {
+        // Rust environment
+        RUSTUP_HOME = '/usr/local/rustup'
+        CARGO_HOME = '/usr/local/cargo'
+        PATH = "${CARGO_HOME}/bin:${PATH}"
+
+        // Build environment
+        DOCKER_BUILDKIT = '1'
+        COMPOSE_DOCKER_CLI_BUILD = '1'
+
+        // Security scanning
+        TRIVY_IGNORE_UNFIXED = 'true'
+
+        // Version info
+        BUILD_VERSION = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(8)}"
+    }
+
+    parameters {
+        choice(name: 'DEPLOY_TARGET',
+               choices: ['staging', 'production', 'airgapped', 'none'],
+               description: 'Deployment target environment')
+        booleanParam(name: 'RUN_SECURITY_SCANS',
+                     defaultValue: true,
+                     description: 'Run security scanning tools')
+        booleanParam(name: 'INCLUDE_INTEGRATION_TESTS',
+                     defaultValue: false,
+                     description: 'Run integration tests (takes longer)')
+        string(name: 'DOCKER_REGISTRY',
+               defaultValue: 'registry.local:5000',
+               description: 'Docker registry for image publishing')
+    }
+
+    stages {
+        stage('Checkout & Environment Setup') {
+            steps {
+                script {
+                    echo "Starting build for Rust AI IDE - Version: ${BUILD_VERSION}"
+                    echo "Git Branch: ${env.GIT_BRANCH}"
+                    echo "Git Commit: ${env.GIT_COMMIT}"
+                }
+
+                // Clean workspace
+                cleanWs()
+
+                // Checkout with submodules if any
+                checkout scm
+
+                // Setup Rust nightly toolchain
+                sh '''
+                    export RUSTUP_HOME=/usr/local/rustup
+                    export CARGO_HOME=/usr/local/cargo
+                    export PATH=$CARGO_HOME/bin:$PATH
+
+                    # Install rustup if not present
+                    if ! command -v rustup &> /dev/null; then
+                        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+                    fi
+
+                    # Install nightly toolchain
+                    ./rustup install nightly-2025-09-03
+                    ./rustup component add rust-src rustfmt clippy --toolchain nightly-2025-09-03
+                    ./rustup default nightly-2025-09-03
+
+                    # Verify installation
+                    cargo --version
+                    rustc --version
+                '''
+
+                // Setup Node.js for web frontend
+                sh '''
+                    # Install Node.js if not present
+                    if ! command -v node &> /dev/null; then
+                        curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+                        apt-get install -y nodejs
+                    fi
+
+                    # Install npm packages
+                    cd web && npm ci
+                    cd ..
+                '''
+            }
+        }
+
+        stage('Security & Compliance Checks') {
+            when {
+                expression { params.RUN_SECURITY_SCANS }
+            }
+            parallel {
+                stage('License Compliance') {
+                    steps {
+                        script {
+                            try {
+                                sh '''
+                                    # Run cargo-deny for license compliance
+                                    cargo install cargo-deny --locked
+                                    cargo deny check licenses
+                                    cargo deny check advisories
+
+                                    echo "License compliance check passed"
+                                '''
+                            } catch (Exception e) {
+                                echo "License compliance check failed: ${e.getMessage()}"
+                                // For now, just warn - can be made to fail later
+                                unstable('License compliance issues found')
+                            }
+                        }
+                    }
+                }
+
+                stage('Dependency Vulnerability Scan') {
+                    steps {
+                        script {
+                            try {
+                                sh '''
+                                    # Install/Trivy for container scanning
+                                    if ! command -v trivy &> /dev/null; then
+                                        wget -O /tmp/trivy.deb https://github.com/aquasecurity/trivy/releases/download/v0.40.0/trivy_0.40.0_Linux-64bit.deb
+                                        dpkg -i /tmp/trivy.deb
+                                    fi
+
+                                    # Scan dependencies
+                                    cargo audit --deny warnings
+                                    npm audit --audit-level moderate --audit-dev
+
+                                    echo "Dependency vulnerability scan completed"
+                                '''
+                            } catch (Exception e) {
+                                echo "Vulnerability scan found issues: ${e.getMessage()}"
+                                unstable('Vulnerabilities detected in dependencies')
+                            }
+                        }
+                    }
+                }
+
+                stage('Code Analysis') {
+                    steps {
+                        script {
+                            try {
+                                sh '''
+                                    # Run Clippy for code quality
+                                    cargo +nightly clippy --workspace --all-targets --all-features --release -- -D warnings
+
+                                    # Run additional lints
+                                    cargo +nightly fmt --all -- --check
+                                    cargo +nightly check --workspace --all-features
+
+                                    echo "Code analysis completed successfully"
+                                '''
+                            } catch (Exception e) {
+                                echo "Code quality issues found: ${e.getMessage()}"
+                                currentBuild.result = 'UNSTABLE'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build & Test') {
+            parallel {
+                stage('Rust Backend Build') {
+                    steps {
+                        script {
+                            try {
+                                sh '''
+                                    export RUSTUP_HOME=/usr/local/rustup
+                                    export CARGO_HOME=/usr/local/cargo
+                                    export PATH=$CARGO_HOME/bin:$PATH
+
+                                    # Clean and build release
+                                    cargo clean
+                                    cargo build --workspace --release --locked --quiet
+                                    cargo build --workspace --release --examples
+
+                                    echo "Rust backend build completed successfully"
+                                '''
+                            } catch (Exception e) {
+                                error("Rust backend build failed: ${e.getMessage()}")
+                            }
+                        }
+                        archiveArtifacts artifacts: 'target/release/**/*', fingerprint: true, allowEmptyArchive: true
+                    }
+                }
+
+                stage('Web Frontend Build') {
+                    steps {
+                        script {
+                            dir('web') {
+                                sh '''
+                                    # Generate Rust types for frontend
+                                    npm run generate-types || echo "Type generation failed, continuing..."
+
+                                    # Build production bundle
+                                    npm run build --if-present
+
+                                    # Type check
+                                    npm run type-check --if-present
+                                '''
+                            }
+                        }
+                        archiveArtifacts artifacts: 'web/dist/**', fingerprint: true, allowEmptyArchive: true
+                    }
+                }
+
+                stage('Unit Tests') {
+                    steps {
+                        script {
+                            try {
+                                sh '''
+                                    export RUSTUP_HOME=/usr/local/rustup
+                                    export CARGO_HOME=/usr/local/cargo
+                                    export PATH=$CARGO_HOME/bin:$PATH
+
+                                    # Run unit tests with coverage if available
+                                    cargo test --workspace --lib --bins --release --quiet -- --nocapture
+                                    cargo test --doc
+
+                                    echo "Unit tests passed"
+                                '''
+                            } catch (Exception e) {
+                                error("Unit tests failed: ${e.getMessage()}")
+                            }
+                        }
+                        junit 'target/debug/deps/*.xml'
+                    }
+                }
+            }
+        }
+
+        stage('Integration Tests') {
+            when {
+                expression { params.INCLUDE_INTEGRATION_TESTS }
+            }
+            steps {
+                script {
+                    try {
+                        sh '''
+                            # Run integration tests if they exist
+                            if [ -d "integration-tests" ]; then
+                                cd integration-tests
+                                cargo test --release -- --nocapture
+                            fi
+
+                            echo "Integration tests completed"
+                        '''
+                    } catch (Exception e) {
+                        echo "Integration tests failed: ${e.getMessage()}"
+                        // Don't fail build for integration test failures in CI
+                        unstable('Integration tests failed')
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build & Scan') {
+            steps {
+                script {
+                    // Build all Docker images
+                    def images = [
+                        'docker/Dockerfile.rust': 'rust-backend',
+                        'docker/Dockerfile.web': 'web-frontend',
+                        'docker/Dockerfile.tauri': 'tauri-desktop'
+                    ]
+
+                    images.each { dockerfile, imageName ->
+                        try {
+                            sh """
+                                docker build \\
+                                    --target runtime \\
+                                    -f ${dockerfile} \\
+                                    -t ${params.DOCKER_REGISTRY}/rust-ai-ide/${imageName}:${BUILD_VERSION} \\
+                                    -t ${params.DOCKER_REGISTRY}/rust-ai-ide/${imageName}:latest \\
+                                    .
+                            """
+                        } catch (Exception e) {
+                            error("Docker build failed for ${imageName}: ${e.getMessage()}")
+                        }
+                    }
+
+                    // Security scan built images
+                    if (params.RUN_SECURITY_SCANS) {
+                        sh """
+                            # Scan images for vulnerabilities
+                            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \\
+                                aquasecurity/trivy:latest \\
+                                image --no-progress \\
+                                ${params.DOCKER_REGISTRY}/rust-ai-ide/rust-backend:${BUILD_VERSION}
+
+                            echo "Docker image security scan completed"
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Push to Registry') {
+            steps {
+                script {
+                    try {
+                        // Login to registry (credentials from Jenkins config)
+                        withCredentials([usernamePassword(
+                            credentialsId: 'docker-registry-creds',
+                            usernameVariable: 'DOCKER_USER',
+                            passwordVariable: 'DOCKER_PASS'
+                        )]) {
+                            sh """
+                                echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin ${params.DOCKER_REGISTRY}
+                            """
+                        }
+
+                        // Push images
+                        sh """
+                            docker push ${params.DOCKER_REGISTRY}/rust-ai-ide/rust-backend:${BUILD_VERSION}
+                            docker push ${params.DOCKER_REGISTRY}/rust-ai-ide/rust-backend:latest
+                            docker push ${params.DOCKER_REGISTRY}/rust-ai-ide/web-frontend:${BUILD_VERSION}
+                            docker push ${params.DOCKER_REGISTRY}/rust-ai-ide/web-frontend:latest
+                            docker push ${params.DOCKER_REGISTRY}/rust-ai-ide/tauri-desktop:${BUILD_VERSION}
+                            docker push ${params.DOCKER_REGISTRY}/rust-ai-ide/tauri-desktop:latest
+                        """
+
+                        echo "Successfully pushed images to registry"
+                    } catch (Exception e) {
+                        error("Failed to push images to registry: ${e.getMessage()}")
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Environment') {
+            when {
+                expression { params.DEPLOY_TARGET != 'none' }
+            }
+            environment {
+                COMPOSE_FILE = params.DEPLOY_TARGET == 'staging' ?
+                    'docker/docker-compose.yml' : 'docker/docker-compose.air-gapped.yml'
+            }
+            steps {
+                script {
+                    switch(params.DEPLOY_TARGET) {
+                        case 'staging':
+                            deployToStaging()
+                            break
+                        case 'production':
+                            deployToProduction()
+                            break
+                        case 'airgapped':
+                            deployToAirgapped()
+                            break
+                        default:
+                            echo "No deployment target specified"
+                    }
+                }
+            }
+        }
+
+        stage('Post-Deployment Validation') {
+            when {
+                expression { params.DEPLOY_TARGET != 'none' }
+            }
+            steps {
+                script {
+                    timeout(time: 10, unit: 'MINUTES') {
+                        waitUntil {
+                            try {
+                                def healthCheck
+                                switch(params.DEPLOY_TARGET) {
+                                    case 'staging':
+                                        healthCheck = sh(script: 'curl -f http://staging.rust-ai-ide.local/health', returnStatus: true)
+                                        break
+                                    case 'production':
+                                        healthCheck = sh(script: 'curl -f http://rust-ai-ide.local/health', returnStatus: true)
+                                        break
+                                }
+                                return healthCheck == 0
+                            } catch (Exception e) {
+                                echo "Health check failed, retrying... ${e.getMessage()}"
+                                return false
+                            }
+                        }
+                    }
+                    echo "Post-deployment health check passed"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up Docker images to save space
+            sh '''
+                docker system prune -f
+                docker image prune -f
+            '''
+
+            // Publish test results and coverage if available
+            junit allowEmptyResults: true, testResults: '**/target/debug/deps/*.xml'
+            publishHTML([
+                allowMissing: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'target/debug/coverage',
+                reportFiles: 'index.html',
+                reportName: 'Coverage Report',
+                reportTitles: 'Coverage Report'
+            ])
+        }
+
+        success {
+            script {
+                echo "Pipeline completed successfully!"
+                echo "Build Version: ${BUILD_VERSION}"
+                echo "Deployed to: ${params.DEPLOY_TARGET}"
+
+                // Send notifications
+                emailext (
+                    subject: "Rust AI IDE Build Success - ${BUILD_VERSION}",
+                    body: """
+<html>
+<body>
+<h2>Rust AI IDE Build Report</h2>
+<p>Build: <strong>${BUILD_VERSION}</strong></p>
+<p>Branch: ${env.GIT_BRANCH}</p>
+<p>Status: ✅ SUCCESS</p>
+<p>Deployed to: ${params.DEPLOY_TARGET}</p>
+<p><a href="${BUILD_URL}">View Build Details</a></p>
+</body>
+</html>
+                    """,
+                    to: 'team@company.com'
+                )
+            }
+        }
+
+        failure {
+            script {
+                echo "Pipeline failed!"
+
+                // Send failure notifications
+                emailext (
+                    subject: "Rust AI IDE Build Failed - ${BUILD_VERSION}",
+                    body: """
+<html>
+<body>
+<h2>Rust AI IDE Build Failure</h2>
+<p>Build: <strong>${BUILD_VERSION}</strong></p>
+<p>Branch: ${env.GIT_BRANCH}</p>
+<p>Status: ❌ FAILED</p>
+<p><a href="${BUILD_URL}">View Build Details</a></p>
+</body>
+</html>
+                    """,
+                    to: 'team@company.com'
+                )
+            }
+        }
+
+        unstable {
+            script {
+                echo "Pipeline completed with warnings"
+
+                // Send warning notifications
+                emailext (
+                    subject: "Rust AI IDE Build Warnings - ${BUILD_VERSION}",
+                    body: """
+<html>
+<body>
+<h2>Rust AI IDE Build Warnings</h2>
+<p>Build: <strong>${BUILD_VERSION}</strong></p>
+<p>Branch: ${env.GIT_BRANCH}</p>
+<p>Status: ⚠️ UNSTABLE</p>
+<p><a href="${BUILD_URL}">View Build Details</a></p>
+</body>
+</html>
+                    """,
+                    to: 'team@company.com'
+                )
+            }
+        }
+    }
+}
+
+// Deployment functions
+def deployToStaging() {
+    echo "Deploying to staging environment"
+    sh '''
+        cd docker
+        docker-compose -f docker-compose.yml up -d --build --force-recreate
+        docker-compose ps
+    '''
+}
+
+def deployToProduction() {
+    echo "Deploying to production environment"
+    sh '''
+        cd docker
+        docker-compose -f docker-compose.yml up -d --scale rust-backend=3 --scale web-frontend=2
+        docker-compose ps
+    '''
+}
+
+def deployToAirgapped() {
+    echo "Deploying to air-gapped environment"
+    echo "Note: Ensure offline packages are available"
+    sh '''
+        cd docker
+        docker-compose -f docker-compose.air-gapped.yml up -d --force-recreate
+        docker-compose ps
+    '''
+}

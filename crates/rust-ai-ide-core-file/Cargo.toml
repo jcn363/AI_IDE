@@ -1,0 +1,35 @@
+[package]
+name = "rust-ai-ide-core-file"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "File system operations and path management for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+# Base fundamentals crate
+rust-ai-ide-core-fundamentals = { path = "../rust-ai-ide-core-fundamentals" }
+
+# Core async runtime if needed
+tokio = { workspace = true, optional = true }
+
+# File system utilities
+fs-err = { workspace = true }
+walkdir = { workspace = true }
+
+# Hashing
+sha2 = { version = "0.10.9", features = ["std"] }
+sha1 = "0.10.6"
+
+rust-ai-ide-shared-services = { path = "../rust-ai-ide-shared-services" }
+rust-ai-ide-shared-utils = { path = "../rust-ai-ide-shared-utils" }
+
+[features]
+default = ["std"]
+std = []
+
+# Async features
+async = ["tokio"]
+full = ["std", "async"]

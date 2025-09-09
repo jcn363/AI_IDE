@@ -1,0 +1,29 @@
+[package]
+name = "rust-ai-ide-ai2-predictive"
+version = "0.1.0"
+edition = "2021"
+description = "Wave 2: Predictive AI Development - Machine Learning Enhanced Development Environment"
+authors = ["Roo <ai assistant>"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+tokio-stream = "0.1"
+futures = "0.3"
+async-trait = "0.1"
+rand = "0.8"
+petgraph = "0.6"
+rust-ai-ide-ai1-semantic = { path = "../rust-ai-ide-ai1-semantic" }
+rust-ai-ide-ai1-architecture = { path = "../rust-ai-ide-ai1-architecture" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+
+# ML features placeholder
+ml-framework = { version = "0.1", optional = true }
+model-predictive = { version = "0.1", optional = true }
+
+[features]
+default = []
+ml_backend = ["ml-framework", "model-predictive"]

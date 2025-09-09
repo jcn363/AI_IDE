@@ -1,0 +1,64 @@
+[package]
+name = "rust-ai-ide-ai2-cloud-native"
+version = "0.1.0"
+edition = "2021"
+description = "Wave 2: Cloud-Native Development Environment - Multi-Region, Auto-Scaling AI Development Platform"
+authors = ["Roo <ai assistant>"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+async-trait = "0.1"
+rand = "0.8"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+petgraph = "0.6"
+rayon = "1.7"
+futures = "0.3"
+hashbrown = "0.14"
+tokio-retry = "0.3"
+async-stream = "0.3"
+
+# AWS SDK
+tokio-stream = "0.1"
+aws-config = "1.0"
+aws-sdk-ec2 = "1.2"
+aws-sdk-ecs = "1.2"
+aws-sdk-lambda = "1.2"
+aws-sdk-s3 = "1.2"
+aws-sdk-wafv2 = "1.2"
+
+# HTTP and Networking
+reqwest = { version = "0.11", features = ["json", "stream"] }
+warp = { version = "0.3", optional = true }
+axum = { version = "0.7", optional = true }
+
+# Container and Orchestration
+kube = { version = "0.88", optional = true }
+k8s-openapi = { version = "0.18", optional = true }
+
+# Database (for multi-region data)
+sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite", "postgres", "mysql"], optional = true }
+redis = { version = "0.24", optional = true }
+
+# Development frameworks
+tari_workspace = { version = "0.1", optional = true }
+tauri_nn = { version = "0.1", optional = true }
+
+# Cloud-native specific
+opentelemetry = { version = "0.21", optional = true }
+tracing = "0.1"
+tracing-opentelemetry = { version = "0.22", optional = true }
+
+[features]
+default = ["core", "aws"]
+core = ["warp", "kube-integration"]
+aws = ["aws-config", "aws-sdk-ec2", "aws-sdk-ecs", "aws-sdk-lambda", "aws-sdk-s3", "aws-sdk-wafv2"]
+azure = [] # Future Azure support
+gcp = [] # Future GCP support
+kube-integration = ["kube", "k8s-openapi"]
+monitoring = ["opentelemetry", "tracing-opentelemetry"]
+database = ["sqlx", "redis"]
+full = ["core", "aws", "kube-integration", "monitoring", "database"]

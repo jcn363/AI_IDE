@@ -1,0 +1,85 @@
+# Multi-stage Docker build for Rust AI IDE Workspace
+FROM rust:1.91-slim AS rust-nightly-install
+
+# Install nightly toolchain with required components
+ENV CARGO_HOME /usr/local/cargo
+ENV RUSTUP_HOME /usr/local/rustup
+
+RUN rustup install nightly-2025-09-03 && \
+    rustup component add rust-src rustfmt clippy --toolchain nightly-2025-09-03 && \
+    rustup default nightly-2025-09-03
+
+# Install system dependencies for Rust builds
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    libclang-dev \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM rust-nightly-install AS rust-builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy dependency manifests first for better Docker caching
+COPY Cargo.toml ./
+COPY Cargo.lock ./
+COPY crates/ ./crates/
+COPY src-tauri/Cargo.toml ./src-tauri/
+
+# Build dependencies only (improves build times for iterative changes)
+RUN mkdir -p /.cargo/registry && \
+    cargo fetch
+
+# Setup for workspace hack if needed
+COPY workspace-hack/ ./workspace-hack/
+
+# Build release version of workspace
+RUN cargo build --workspace --release --locked --quiet
+
+# Runtime stage - slim image for production
+FROM debian:bullseye-slim AS rust-runtime
+
+# Install minimal runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl1.1 \
+    libgcc-s1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -s /bin/bash rustuser
+
+# Create directories for data persistence
+RUN mkdir -p /app/data /app/logs /app/cache /app/config
+
+# Set permissions
+RUN chown -R rustuser:rustuser /app
+
+# Switch to non-root user for security
+USER rustuser
+
+# Set working directory
+WORKDIR /app
+
+# Copy built artifacts
+COPY --from=rust-builder --chown=rustuser:rustuser /app/target/release/ ./
+
+# Set environment variables for configuration
+ENV RUST_AI_IDE_CONFIG_PATH=/app/config \
+    RUST_AI_IDE_DATA_PATH=/app/data \
+    RUST_AI_IDE_LOG_PATH=/app/logs \
+    RUST_AI_IDE_CACHE_PATH=/app/cache \
+    RUST_AI_IDE_ENV=production \
+    RUST_AI_IDE_PORT=8080
+
+# Expose port if running web service
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Default command (can be overridden for specific services)
+CMD ["./rust-ai-ide", "--serve-api", "--port", "8080"]

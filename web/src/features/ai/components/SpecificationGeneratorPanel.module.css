@@ -1,0 +1,342 @@
+.specificationGeneratorPanel {
+  padding: 20px;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  background: #ffffff;
+  margin: 20px 0;
+}
+
+.panelHeader {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.panelHeader h3 {
+  margin: 0;
+  color: #2d3748;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.panelTabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.panelTabs button {
+  padding: 10px 20px;
+  border: none;
+  background: #f7fafc;
+  color: #4a5568;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.panelTabs button.active {
+  background: #3182ce;
+  color: white;
+}
+
+.panelTabs button.disabled {
+  background: #e2e8f0;
+  color: #cbd5e0;
+  cursor: not-allowed;
+}
+
+.panelContent {
+  background: #f7fafc;
+  border-radius: 6px;
+  padding: 20px;
+  min-height: 400px;
+}
+
+.specificationInput {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inputControls {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.controlGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.controlGroup label {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 14px;
+}
+
+.controlGroup select {
+  padding: 8px 12px;
+  border: 1px solid #e1e5e9;
+  border-radius: 4px;
+  background: white;
+  font-size: 14px;
+}
+
+.specificationEditor {
+  flex: 1;
+}
+
+.specificationEditor textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e1e5e9;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.errorMessage {
+  padding: 12px;
+  background: #fed7d7;
+  border: 1px solid #fc8181;
+  border-radius: 4px;
+  color: #c53030;
+}
+
+.actionButtons {
+  display: flex;
+  justify-content: center;
+  padding-top: 20px;
+}
+
+.generateButton {
+  background: #3182ce;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.generateButton:hover:not(:disabled) {
+  background: #2c5282;
+}
+
+.generateButton:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
+.noOutput {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #718096;
+  font-size: 18px;
+}
+
+.generatedOutput {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.validationSummary {
+  background: white;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #e1e5e9;
+}
+
+.validationStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.validationStatus.valid {
+  color: #38a169;
+}
+
+.validationStatus.invalid {
+  color: #e53e3e;
+}
+
+.suggestions {
+  margin-top: 12px;
+}
+
+.suggestions h4 {
+  margin: 0 0 8px 0;
+  color: #4a5568;
+  font-size: 14px;
+}
+
+.suggestions ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.suggestions li {
+  color: #718096;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.codeTabs {
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e1e5e9;
+}
+
+.tabHeader {
+  display: flex;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.tabHeader button {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  background: #f7fafc;
+  color: #4a5568;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tabHeader button.active {
+  background: #3182ce;
+  color: white;
+}
+
+.tabContent {
+  padding: 20px;
+  background: #f8fafc;
+}
+
+.fileContent {
+  background: white;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.fileHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #2d3748;
+  color: white;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+}
+
+.codeBlock {
+  margin: 0;
+  padding: 16px;
+  background: #f7fafc;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  border: none;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.fileDescription {
+  padding: 12px 16px;
+  background: #edf2f7;
+  color: #4a5568;
+  font-size: 14px;
+  border-top: 1px solid #e1e5e9;
+}
+
+.module, .supportingFile {
+  margin-bottom: 20px;
+}
+
+.module h4 {
+  margin: 0 0 8px 0;
+  color: #2d3748;
+}
+
+.module p {
+  margin: 0 0 12px 0;
+  color: #718096;
+}
+
+.moduleFile, .supportingFile {
+  margin-left: 20px;
+}
+
+.buildInstructions {
+  background: white;
+  padding: 20px;
+  border-radius: 4px;
+}
+
+.buildInstructions ol {
+  padding-left: 20px;
+}
+
+.buildInstructions li {
+  margin-bottom: 8px;
+  color: #2d3748;
+}
+
+.buildInstructions code {
+  background: #f7fafc;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  color: #38a169;
+}
+
+.dependencies {
+  background: white;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #e1e5e9;
+}
+
+.dependencies h4 {
+  margin: 0 0 12px 0;
+  color: #2d3748;
+}
+
+.dependencyList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.dependencyList li {
+  background: #edf2f7;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.dependencyList code {
+  color: #3182ce;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.modulesList.empty:before,
+.supportingFilesList.empty:before {
+  content: "No files generated for this category";
+  color: #718096;
+  font-style: italic;
+}

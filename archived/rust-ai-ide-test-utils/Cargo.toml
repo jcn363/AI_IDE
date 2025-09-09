@@ -1,0 +1,71 @@
+[package]
+name = "rust-ai-ide-test-utils"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Shared test utilities for Rust AI IDE - DEPRECATED: Use shared-test-utils instead"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+# Core utilities
+json = { version = "0.12.4", optional = true }
+regex = { version = "1.11.2", optional = true }
+
+# Async runtime for testing
+tokio = { version = "1.47.1", features = ["full"], optional = true }
+
+# Test framework
+proptest = { version = "1.7.0", features = ["std"], optional = true }
+
+# I/O utilities for test files
+tempfile = { version = "3.21.0", optional = true }
+fs-err = { version = "3.1.1", optional = true }
+
+# Serialization for test data
+serde = { version = "1.0.219", features = ["derive"], optional = true }
+serde_json = { version = "1.0.143", optional = true }
+
+# Random data generation
+rand = { version = "0.9.2", features = ["std"], optional = true }
+
+# Test metrics
+criterion = { version = "0.7.0", default-features = false, optional = true }
+
+# For performance testing
+chrono = { version = "0.4.41", features = ["serde"], optional = true }
+
+[dependencies.rust-ai-ide-types]
+path = "../rust-ai-ide-types"
+optional = true
+
+[dependencies.rust-ai-ide-errors]
+path = "../rust-ai-ide-errors"
+optional = true
+
+[dependencies.shared-test-utils]
+path = "../shared-test-utils"
+
+[features]
+default = []
+std = []
+
+full = [
+    "std",
+    "async",
+    "performance",
+    "filesystem",
+    "random",
+    "metrics",
+    "types",
+    "errors",
+]
+
+async = ["tokio", "std"]
+performance = ["criterion", "chrono", "std"]
+filesystem = ["tempfile", "fs-err", "std"]
+random = ["rand", "proptest"]
+metrics = ["serde", "serde_json", "std"]
+types = ["serde", "rust-ai-ide-types"]
+errors = ["rust-ai-ide-errors"]

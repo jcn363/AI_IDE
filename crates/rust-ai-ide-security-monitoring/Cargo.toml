@@ -1,0 +1,40 @@
+[package]
+name = "rust-ai-ide-security-monitoring"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Security monitoring and alerting system for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[dependencies]
+async-trait = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+chrono = { workspace = true }
+
+# Security monitoring dependencies
+uuid = { workspace = true }
+regex = { workspace = true }
+moka = { workspace = true }
+
+# Integration dependencies
+rust-ai-ide-types = { workspace = true }
+rust-ai-ide-errors = { workspace = true }
+rust-ai-ide-security = { path = "../rust-ai-ide-security" }
+
+[features]
+default = ["std"]
+std = []
+
+# Monitoring features
+real-time-alerts = []
+anomaly-detection = []
+compliance-monitoring = []
+full-monitoring = ["real-time-alerts", "anomaly-detection", "compliance-monitoring"]
