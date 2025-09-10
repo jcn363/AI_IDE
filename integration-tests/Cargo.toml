@@ -1,5 +1,6 @@
 [package]
 name = "rust-ai-ide-integration-tests"
+readme = { workspace = true }
 version = "0.1.0"
 edition = "2021"
 authors = ["Rust AI IDE Team"]
@@ -69,7 +70,7 @@ tracing = { workspace = true }
 
 # Test utilities
 criterion = { workspace = true }
-proptest = { workspace = true }
+proptest = "^1.0.0"
 rand = { workspace = true }
 
 # Additional LSP testing dependencies
@@ -80,22 +81,27 @@ async-lsp = { workspace = true }
 
 [[test]]
 name = "lsp_integration"
+readme = { workspace = true }
 path = "src/lsp_integration.rs"
 
 [[test]]
 name = "ai_ml_integration"
+readme = { workspace = true }
 path = "src/ai_ml_integration.rs"
 
 [[test]]
 name = "cargo_dependency_integration"
+readme = { workspace = true }
 path = "src/cargo_dependency_integration.rs"
 
 [[test]]
 name = "cross_crate_integration"
+readme = { workspace = true }
 path = "src/cross_crate_integration.rs"
 
 [[test]]
 name = "performance_regression"
+readme = { workspace = true }
 path = "src/performance_regression.rs"
 
 

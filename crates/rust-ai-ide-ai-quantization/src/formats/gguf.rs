@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::io::{Read, Seek, SeekFrom};
 use candle_core::{DType, Device, Tensor};
-use rust_ai_ide_errors::IDEError;
+use crate::IDEError;
 
 /// GGUF file header structure
 #[derive(Debug)]

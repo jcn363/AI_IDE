@@ -1,15 +1,91 @@
 //! Main AI commands module
 //!
 //! This module serves as the main entry point for AI-related functionality,
-//! organizing commands into focused submodules.
+//! organizing commands into focused submodules and providing delegation bridges
+//! to the rust-ai-ide-commands-ai crate.
 
 pub mod services;
 pub mod analysis;
 pub mod learning;
 
-use std::{collections::HashMap};
+use std::{collections::HashMap, sync::Arc};
 use crate::commands::ai::services::AIServiceState;
 use crate::utils;
+
+// Import delegations to rust-ai-ide-commands-ai for better implementations
+use rust_ai_ide_commands_ai::{models::ModelManager, analysis::AnalysisService};
+
+// Type aliases for state management bridge
+/// Bridge state that holds both the original AIServiceState (Mutex) and new RwLock-based services
+#[derive(Default)]
+pub struct AIStateBridge {
+    /// Original Mutex-based AI service state (for compatibility)
+    pub original_state: AIServiceState,
+    /// Commands-ai ModelManager (RwLock-based)
+    pub model_manager: Option<Arc<ModelManager>>,
+    /// Commands-ai AnalysisService (RwLock-based)
+    pub analysis_service: Option<Arc<AnalysisService>>,
+}
+
+impl AIStateBridge {
+    pub async fn new() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        let mut bridge = Self {
+            original_state: Default::default(),
+            model_manager: None,
+            analysis_service: None,
+        };
+
+        // Initialize commands-ai services
+        if let Ok(model_mgr) = ModelManager::new().await {
+            bridge.model_manager = Some(Arc::new(model_mgr));
+        }
+
+        // Create analysis service (requires an AI service instance)
+        if let Some(model_mgr) = &bridge.model_manager {
+            let ai_service = Arc::new(tokio::sync::RwLock::new(
+                rust_ai_ide_commands_ai::services::AIService::new().await?
+            ));
+
+            if let Ok(analysis_svc) = AnalysisService::new(ai_service).await {
+                bridge.analysis_service = Some(Arc::new(analysis_svc));
+            }
+        }
+
+        Ok(bridge)
+    }
+
+    /// Get ModelManager reference, initializing if needed
+    pub async fn model_manager(&mut self) -> Result<Arc<ModelManager>, String> {
+        if self.model_manager.is_none() {
+            let manager = ModelManager::new().await
+                .map_err(|e| format!("Failed to initialize ModelManager: {}", e))?;
+            self.model_manager = Some(Arc::new(manager));
+        }
+
+        Ok(self.model_manager.as_ref().unwrap().clone())
+    }
+
+    /// Get AnalysisService reference, initializing if needed
+    pub async fn analysis_service(&mut self) -> Result<Arc<AnalysisService>, String> {
+        if self.analysis_service.is_none() {
+            // Ensure we have a model manager for analysis service
+            let model_mgr = self.model_manager().await?;
+            let ai_service = Arc::new(tokio::sync::RwLock::new(
+                rust_ai_ide_commands_ai::services::AIService::new().await
+                    .map_err(|e| format!("Failed to create AI service: {}", e))?
+            ));
+
+            let analysis_svc = AnalysisService::new(ai_service).await
+                .map_err(|e| format!("Failed to initialize AnalysisService: {}", e))?;
+            self.analysis_service = Some(Arc::new(analysis_svc));
+        }
+
+        Ok(self.analysis_service.as_ref().unwrap().clone())
+    }
+}
+
+/// Type alias for clarity - the bridged state used in Tauri commands
+pub type AIBridgeState = Arc<tokio::sync::Mutex<AIStateBridge>>;
 
 // send_ai_message defined in modules/ai/commands/mod.rs
 

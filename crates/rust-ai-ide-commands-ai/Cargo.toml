@@ -1,0 +1,60 @@
+[package]
+name = "rust-ai-ide-commands-ai"
+readme = { workspace = true }
+version = "0.1.0"
+edition = "2021"
+description = "Modular AI/ML commands for Rust AI IDE - AI code completion, analysis, and model management"
+license = { workspace = true }
+authors = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+publish = { workspace = true }
+rust-version = { workspace = true }
+
+[lib]
+name = "rust_ai_ide_commands_ai"
+path = "src/lib.rs"
+
+[dependencies]
+# Core AI/ML crates (made optional for modular features)
+rust-ai-ide-ai-analysis = { path = "../../crates/rust-ai-ide-ai-analysis", optional = true }
+rust-ai-ide-ai-codegen = { path = "../../crates/rust-ai-ide-ai-codegen", optional = true }
+rust-ai-ide-ai-inference = { path = "../../crates/rust-ai-ide-ai-inference", optional = true }
+rust-ai-ide-ai-learning = { path = "../../crates/rust-ai-ide-ai-learning", optional = true }
+rust-ai-ide-ai-specgen = { path = "../../crates/rust-ai-ide-ai-specgen", optional = true }
+rust-ai-ide-ai-refactoring = { path = "../../crates/rust-ai-ide-ai-refactoring", optional = true }
+rust-ai-ide-lsp = { path = "../../crates/rust-ai-ide-lsp", features = ["ai"], optional = true }
+
+# Workspace common dependencies
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+uuid = { workspace = true }
+
+# Tauri integration
+tauri = { workspace = true }
+
+# Core IDE types and services
+rust-ai-ide-types = { workspace = true }
+rust-ai-ide-common = { workspace = true, features = ["tauri-integrated"] }
+rust-ai-ide-errors = { path = "../../crates/rust-ai-ide-errors" }
+rust-ai-ide-cache = { path = "../../crates/rust-ai-ide-cache" }
+
+[features]
+default = []
+ai = ["rust-ai-ide-ai-analysis", "rust-ai-ide-ai-codegen", "rust-ai-ide-ai-inference"]
+ml_models = ["rust-ai-ide-ai-learning", "rust-ai-ide-ai-specgen"]
+refactoring = ["rust-ai-ide-ai-refactoring"]
+
+[dev-dependencies]
+tokio-test = "0.4.4"
+mockall = "0.12.1"
+serde_test = "1.0.176"
+proptest = "1.5.0"
+tempfile = "3.10.1"
+assert_matches = "1.5.0"
+futures = "0.3.30"

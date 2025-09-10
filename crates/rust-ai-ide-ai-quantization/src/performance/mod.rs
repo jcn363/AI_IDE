@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
 use serde::{Deserialize, Serialize};
-use rust_ai_ide_errors::IDEError;
+use crate::IDEError;
 
 /// Performance metrics for quantization operations
 #[derive(Debug, Clone, Serialize, Deserialize)]

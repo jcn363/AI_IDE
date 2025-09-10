@@ -44,15 +44,18 @@ pub use debugger::memory_profiling::{
 };
 pub use debugger::thread_debugging::{
     ThreadDebugger, ThreadInfo, AsyncTask, AsyncTaskState, ThreadState, DeadlockInfo,
+    ThreadDebuggerEvent, ExecutionTimeline, TimelineEvent, TimelineEventType,
+};
+
 pub use debugger::performance_profiling::{
     PerformanceProfiler, FunctionCall, FunctionStats, CpuSample, BottleneckAnalysis, Bottleneck, BottleneckType,
     ThroughputAssessment, ResourceUtilization, MemoryUsageBreakdown, FlameGraph, FlameNode, PerformanceProfileEvent,
+};
+
 pub use debugger::types::{
     FrameInteraction, FrameInteractionType, VariableTimelineEntry, VariableChangeSource,
 };
-};
-    ThreadDebuggerEvent, ExecutionTimeline, TimelineEvent, TimelineEventType,
-};
+
 pub use std::sync::Arc;
 pub use tokio::sync::mpsc;
 pub use tokio::sync::Mutex;

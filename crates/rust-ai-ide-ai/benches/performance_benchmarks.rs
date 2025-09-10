@@ -197,8 +197,8 @@ fn benchmark_metrics_analyzer(c: &mut Criterion) {
 fn benchmark_security_analyzers(c: &mut Criterion) {
     // Generate code with various security issues
     let code = r#"
-        // Hardcoded secret (placeholder - replace with environment variable in production)
-        const API_KEY: &str = "YOUR_STRIPE_TEST_KEY_HERE";
+        // Hardcoded secret
+        const API_KEY: &str = "sk_test_1234567890abcdef12345678";
         
         // Insecure crypto
         fn hash_password(password: &str) -> String {

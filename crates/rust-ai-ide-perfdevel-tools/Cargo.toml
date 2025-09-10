@@ -1,0 +1,67 @@
+[package]
+name = "rust-ai-ide-perfdevel-tools"
+readme = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Performance benchmarking and development tools for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+publish = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+name = "rust_ai_ide_perfdevel_tools"
+path = "src/lib.rs"
+
+[dependencies]
+# Workspace dependencies
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "time"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+async-trait = { workspace = true }
+
+# Performance monitoring
+moka = { workspace = true }
+sysinfo = "0.37"
+
+# HTTP for metrics export
+reqwest = { workspace = true, optional = true }
+
+# Additional utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+
+# Local crates
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+
+[dev-dependencies]
+criterion = { workspace = true }
+
+[features]
+default = ["performance_monitoring", "benchmarking", "metrics_export"]
+performance_monitoring = []
+benchmarking = []
+metrics_export = ["reqwest"]
+development = ["benchmarking", "performance_monitoring"]
+
+[[bench]]
+name = "lsp_server_benchmark"
+readme = { workspace = true }
+harness = false
+required-features = ["benchmarking"]
+
+[[bench]]
+name = "completion_perf_benchmark"
+readme = { workspace = true }
+harness = false
+required-features = ["benchmarking"]
+
+[[bench]]
+name = "memory_usage_benchmark"
+readme = { workspace = true }
+harness = false
+required-features = ["benchmarking"]

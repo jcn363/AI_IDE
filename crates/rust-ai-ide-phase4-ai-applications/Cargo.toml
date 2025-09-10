@@ -1,0 +1,97 @@
+[package]
+name = "rust-ai-ide-phase4-ai-applications"
+readme = { workspace = true }
+version = "0.1.0"
+edition = "2021"
+description = "Phase 4.1: Advanced AI Applications - Sophisticated AI-powered development workflows and intelligent assistance"
+license = "MIT OR Apache-2.0"
+publish = false
+rust-version = "1.91.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Core async runtime
+tokio = { version = "1.47.1", features = ["full"] }
+tokio-util = "0.7.16"
+async-trait = "0.1.89"
+futures = "^0.3.31"
+tokio-stream = "0.1.15"
+
+# Serialization
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.143"
+
+# Caching infrastructure
+moka = { version = "0.12", features = ["future"] }
+
+# Concurrent data structures
+parking_lot = { version = "0.12.4", features = ["serde"] }
+dashmap = "6.1.0"
+
+# Error handling and logging
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Time and date handling
+chrono = { version = "0.4.42", features = ["serde"] }
+
+# Statistical analysis and ML
+statrs = "0.18.0"
+ndarray = "0.15.6"
+ndarray-stats = "0.5.1"
+
+# Integration with existing AI crates
+rust-ai-ide-ai-codegen = { path = "../rust-ai-ide-ai-codegen" }
+rust-ai-ide-ai-analysis = { path = "../rust-ai-ide-ai-analysis" }
+rust-ai-ide-ai-inference = { path = "../rust-ai-ide-ai-inference" }
+rust-ai-ide-ai-learning = { path = "../rust-ai-ide-ai-learning" }
+rust-ai-ide-ai-refactoring = { path = "../rust-ai-ide-ai-refactoring" }
+rust-ai-ide-ai-specgen = { path = "../rust-ai-ide-ai-specgen" }
+
+# Integration with Phase 3 systems
+rust-ai-ide-real-time-analysis = { path = "../rust-ai-ide-real-time-analysis" }
+rust-ai-ide-predictive-maintenance = { path = "../rust-ai-ide-predictive-maintenance" }
+rust-ai-ide-predictive-quality = { path = "../rust-ai-ide-predictive-quality" }
+rust-ai-ide-quality-dashboard = { path = "../rust-ai-ide-quality-dashboard" }
+
+# Core IDE infrastructure
+rust-ai-ide-lsp = { path = "../rust-ai-ide-lsp" }
+rust-ai-ide-orchestration = { path = "../rust-ai-ide-orchestration" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+
+# Common utilities and types
+rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+rust-ai-ide-common = { path = "../rust-ai-ide-common", features = ["validation"] }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-performance = { path = "../rust-ai-ide-performance" }
+
+# Tauri integration (optional for frontend integration)
+tauri = { version = "2.0.0-rc.9", optional = true }
+tauri-build = { version = "2.0.0-rc.6", optional = true }
+
+[features]
+default = ["core-engine", "orchestration", "assistant"]
+core-engine = ["real-time-analysis"]
+orchestration = ["lsp"]
+assistant = []
+experimental = ["tauri"]
+
+[dev-dependencies]
+tokio-test = "0.4.4"
+mockall = "0.12.1"
+criterion = { version = "0.7.0", features = ["html_reports"] }
+tempfile = "3.10.1"
+proptest = "1.4.0"
+fake = "2.9.2"
+
+[[bench]]
+name = "ai_applications_performance_benchmark"
+readme = { workspace = true }
+harness = false
+
+[[bench]]
+name = "workflow_orchestration_benchmark"
+readme = { workspace = true }
+harness = false

@@ -1,0 +1,95 @@
+[package]
+name = "rust-ai-ide-advanced-memory"
+readme = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+publish = { workspace = true }
+
+# Tauri integration for FFI bindings
+[[bin]]
+name = "rust-ai-ide-advanced-memory-bin"
+readme = { workspace = true }
+path = "src/main.rs"
+
+[lib]
+name = "rust_ai_ide_advanced_memory"
+readme = { workspace = true }
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Workspace dependencies
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+
+# Core memory management dependencies
+serde = { version = "^1.0.219", features = ["derive"] }
+serde_json = "^1.0.143"
+tokio = { version = "1.47.1", features = ["full"] }
+anyhow = "^1.0.99"
+thiserror = "2.0.16"
+futures = "^0.3.31"
+async-trait = { workspace = true }
+
+# Memory mapping and virtual memory
+memmap2 = { workspace = true }
+sysinfo = "~0.37.0"
+
+# Performance monitoring and caching
+moka = { workspace = true }
+protobuf = { version = "3.5.1", optional = true }
+
+# Logging and async primitives
+tracing = { version = "0.1.41" }
+tracing-subscriber = { workspace = true }
+once_cell = { workspace = true }
+dashmap = { workspace = true }
+
+# Cross-platform support
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = "0.25"
+objc = "0.2.7"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["winuser", "powerbase"] }
+
+[features]
+default = ["tauri"]
+tauri = []
+benchmarking = ["dep:protobuf"]
+
+[lints.rust]
+# Enhanced linting for safety-critical memory management
+# Memory management is critical - increase checks
+dead_code = "deny"
+unused_variables = "deny"
+pointer_structural_match = "warn"
+
+[lints.clippy]
+pedantic = "warn"
+complexity = "deny"
+correctness = "deny"
+perf = "warn"
+style = "warn"
+suspicious = "warn"
+
+# Specific clippy lints for memory management
+box_vec = "warn"
+large_stack_arrays = "warn"
+rc_buffer = "warn"
+vec_box = "warn"
+
+[[example]]
+name = "advanced_memory_usage"
+readme = { workspace = true }
+path = "examples/advanced_memory_usage.rs"
+required-features = []
+
+[[example]]
+name = "memory_profiling"
+readme = { workspace = true }
+path = "examples/memory_profiling.rs"
+required-features = ["benchmarking"]

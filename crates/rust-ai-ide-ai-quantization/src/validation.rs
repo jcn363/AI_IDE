@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use candle_core::{DType, Tensor, Device};
-use rust_ai_ide_errors::IDEError;
+use crate::IDEError;
 use serde::{Deserialize, Serialize};
 
 /// Validation result for quantization quality

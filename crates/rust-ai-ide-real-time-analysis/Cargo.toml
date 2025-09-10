@@ -1,0 +1,92 @@
+[package]
+name = "rust-ai-ide-real-time-analysis"
+readme = { workspace = true }
+version = "0.1.0"
+edition = "2021"
+description = "Phase 3.1: Real-Time Code Analysis Engine - Real-time file monitoring, multi-threaded analysis pipeline, and live quality dashboards"
+license = "MIT OR Apache-2.0"
+publish = false
+rust-version = "1.91.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Core async runtime
+tokio = { version = "1.47.1", features = ["full"] }
+tokio-util = "0.7.16"
+async-trait = "0.1.89"
+futures = "^0.3.31"
+
+# Serialization
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.143"
+
+# File watching
+notify = { version = "6.1.1", default-features = false, features = ["serde"] }
+notify-debouncer-mini = "0.4.1"
+
+# Caching infrastructure (multi-level caching with Moka)
+moka = { version = "0.12", features = ["future"] }
+
+# Parallel processing
+rayon = "1.8.1"
+
+# Concurrent data structures
+dashmap = "6.1.0"
+parking_lot = { version = "0.12.4", features = ["serde"] }
+
+# Error handling and logging
+anyhow = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
+
+# Path and filesystem utilities
+pathdiff = "0.2.3"
+walkdir = "2.5.0"
+ignore = "0.4.23"
+
+# Performance monitoring
+sysinfo = "0.31.1"
+
+# Internal dependencies (Phase 1-2 integration)
+rust-ai-ide-cache = { path = "../rust-ai-ide-cache" }
+rust-ai-ide-lsp = { path = "../rust-ai-ide-lsp" }
+rust-ai-ide-predictive-quality = { path = "../rust-ai-ide-predictive-quality" }
+rust-ai-ide-orchestration = { path = "../rust-ai-ide-orchestration" }
+rust-ai-ide-performance = { path = "../rust-ai-ide-performance" }
+rust-ai-ide-performance-monitoring = { path = "../rust-ai-ide-performance-monitoring" }
+
+# Common types and validation
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+rust-ai-ide-common = { path = "../rust-ai-ide-common", features = ["validation"] }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+
+# AI/ML quality intelligence integration
+rust-ai-ide-ai-inference = { path = "../rust-ai-ide-ai-inference" }
+
+# Dependency analysis
+cargo_metadata = "^0.18.1"
+
+# Dependency resolution graph
+petgraph = { version = "0.6.4", features = ["serde-1"] }
+
+# Channel for event communication
+tokio-stream = "0.1.15"
+
+[features]
+default = ["file-watching", "cache", "parallel-processing"]
+file-watching = []
+cache = []
+parallel-processing = []
+benchmarking = []
+experimental = []
+
+[dev-dependencies]
+tokio-test = "0.4.4"
+mockall = "0.12.1"
+criterion = { version = "0.7.0", features = ["html_reports"] }
+tempfile = "3.10.1"
+proptest = "1.4.0"

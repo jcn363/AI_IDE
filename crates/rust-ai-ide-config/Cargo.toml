@@ -1,5 +1,6 @@
 [package]
 name = "rust-ai-ide-config"
+readme = { workspace = true }
 version = "0.1.0"
 edition = "2021"
 description = "Unified Security-First Configuration System for Rust AI IDE"

@@ -1,12 +1,14 @@
 [package]
 name = "rust-ai-ide-core-metrics"
+readme = { workspace = true }
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
 description = "Performance monitoring and telemetry for Rust AI IDE"
 license = { workspace = true }
 rust-version = { workspace = true }
-repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+publish = { workspace = true }
+repository = { workspace = true }
 
 [dependencies]
 # Base fundamentals crate

@@ -1,12 +1,14 @@
 [package]
 name = "rust-ai-ide-supervisor"
+readme = { workspace = true }
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
 description = "Core high availability supervisor for Rust AI IDE - manages process monitoring, state persistence, and IPC recovery"
 license = { workspace = true }
 rust-version = { workspace = true }
-repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+publish = { workspace = true }
+repository = { workspace = true }
 
 [dependencies]
 # Workspace async runtime

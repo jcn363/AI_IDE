@@ -1,5 +1,6 @@
 [package]
 name = "rust-ai-ide-ai-learning"
+readme = { workspace = true }
 version = { workspace = true }
 edition = { workspace = true }
 description = "AI-powered learning system for pattern recognition and error resolution"

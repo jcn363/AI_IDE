@@ -151,4 +151,4 @@ impl Default for CodingStyle {
 pub enum ModelType {
     CodeLlama,
     StarCoder,
-}</search>
+}

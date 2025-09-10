@@ -1,0 +1,77 @@
+[package]
+name = "rust-ai-ide-multi-model-orchestrator"
+readme = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+rust-version = { workspace = true }
+publish = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+description = "Multi-Model Orchestration infrastructure for Rust AI IDE"
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
+# Workspace dependencies
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+futures = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
+async-trait = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+sysinfo = { workspace = true }
+
+# AI/ML specific
+candle-core = { workspace = true }
+candle-nn = { workspace = true }
+hf-hub = { workspace = true }
+safetensors = { workspace = true }
+moka = { workspace = true, features = ["future"] }
+
+# Performance and caching
+governor = { workspace = true }
+dashmap = { workspace = true }
+lru = { workspace = true }
+rand = { workspace = true }
+num_cpus = { workspace = true }
+
+# File and system utilities
+dirs-next = { workspace = true }
+tempfile = { workspace = true }
+walkdir = { workspace = true }
+filetime = { workspace = true }
+
+# Common utilities
+petgraph = { workspace = true }
+semver = { workspace = true }
+lz4 = { workspace = true }
+memmap2 = { workspace = true }
+
+# Workspace dependencies - common
+rust-ai-ide-common = { path = "../rust-ai-ide-common", features = ["validation"] }
+rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-security = { path = "../rust-ai-ide-security" }
+
+# Phase 1-2 integration
+rust-ai-ide-orchestration = { path = "../rust-ai-ide-orchestration" }
+rust-ai-ide-ai-quantization = { path = "../rust-ai-ide-ai-quantization" }
+rust-ai-ide-predictive-quality = { path = "../rust-ai-ide-predictive-quality" }
+rust-ai-ide-lsp = { path = "../rust-ai-ide-lsp", features = ["ai", "multi-language-lsp"] }
+rust-ai-ide-shared-services = { path = "../rust-ai-ide-shared-services" }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+tempfile = { workspace = true }
+criterion = { workspace = true }
+
+[features]
+default = []
+performance-monitoring = []
+offline-mode = []
+consensus-mechanisms = []

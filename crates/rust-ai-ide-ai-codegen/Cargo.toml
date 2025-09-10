@@ -1,11 +1,13 @@
 [package]
 name = "rust-ai-ide-ai-codegen"
+readme = { workspace = true }
 version = { workspace = true }
 edition = { workspace = true }
 description = "AI-powered multi-language code generation with template systems for the Rust AI IDE"
 authors = { workspace = true }
 license = { workspace = true }
 rust-version = { workspace = true }
+publish = { workspace = true }
 
 [dependencies]
 # Core async runtime
@@ -32,6 +34,9 @@ proc-macro2 = { workspace = true }
 # Pattern matching
 regex = { workspace = true }
 fancy-regex = { workspace = true }
+
+# Tauri for frontend integration
+tauri = { workspace = true }
 
 # Utilities
 uuid = { workspace = true }

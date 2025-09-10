@@ -1,0 +1,80 @@
+[package]
+name = "rust-ai-ide-ai-integration"
+readme = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "AI Service Integration Layer for Rust AI IDE - Phase 2.4"
+license = { workspace = true }
+rust-version = { workspace = true }
+publish = { workspace = true }
+repository = { workspace = true }
+
+[dependencies]
+# Core async and error handling dependencies from workspace
+tokio = { workspace = true }
+futures = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+log = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+toml = { workspace = true }
+async-trait = { workspace = true }
+
+# LSP integration dependencies
+lsp-types = { workspace = true, features = ["proposed"] }
+lsp-server = "0.7.9"
+tower-lsp = "0.20.0"
+
+# Tauri integration
+tauri = { workspace = true, optional = true }
+tauri-build = { workspace = true }
+
+# AI/ML specific dependencies
+moka = { version = "0.12.10", features = ["future"] }  # LRU cache for performance
+regex = "1.10"
+parking_lot = { version = "0.12.4", features = ["serde"] }
+dashmap = { version = "6.1.0", features = ["serde"] }
+
+# TypeScript generation dependencies
+typescript-definitions = "0.1.10"
+syn = { version = "2.0.99", features = ["full", "extra-traits"] }
+quote = "1.0.37"
+
+# Event communication
+tokio-util = { version = "0.7", features = ["codec"] }
+
+# Performance monitoring
+rayon = "1.8"          # Parallel processing
+num_cpus = "1.16"      # CPU detection
+
+# Phase 2 AI components integration
+rust-ai-ide-ai-quantization = { path = "../rust-ai-ide-ai-quantization" }
+rust-ai-ide-predictive-quality = { path = "../rust-ai-ide-predictive-quality" }
+rust-ai-ide-multi-model-orchestrator = { path = "../rust-ai-ide-multi-model-orchestrator" }
+
+# Existing infrastructure integration
+rust-ai-ide-lsp = { path = "../rust-ai-ide-lsp", optional = true }
+rust-ai-ide-orchestration = { path = "../rust-ai-ide-orchestration" }
+rust-ai-ide-performance = { path = "../rust-ai-ide-performance" }
+rust-ai-ide-performance-monitoring = { path = "../rust-ai-ide-performance-monitoring" }
+rust-ai-ide-core = { path = "../rust-ai-ide-core" }
+rust-ai-ide-shared-services = { path = "../rust-ai-ide-shared-services" }
+rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+rust-ai-ide-ai = { path = "../rust-ai-ide-ai" }
+rust-ai-ide-security = { path = "../rust-ai-ide-security" }
+rust-ai-ide-debugger = { path = "../rust-ai-ide-debugger" }
+rust-ai-ide-shared-utils = { path = "../rust-ai-ide-shared-utils" }
+
+[features]
+default = ["lsp", "tauri", "typescript", "performance-router"]
+lsp = ["dep:rust-ai-ide-lsp"]
+tauri = ["dep:tauri"]
+typescript = []
+performance-router = []
+tests = []

@@ -1,0 +1,44 @@
+[package]
+name = "rust-ai-ide-model-versioning"
+readme = { workspace = true }
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "rust_ai_ide_model_versioning"
+path = "src/lib.rs"
+
+[dependencies]
+# Model versioning and A/B testing
+semver = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+rand = { workspace = true }
+
+# Database integration for model metadata and traffic
+rusqlite = { workspace = true }
+turtle = { workspace = true }
+
+# Async and concurrency
+tokio = { workspace = true }
+async-trait = { workspace = true }
+parking_lot = { workspace = true }
+dashmap = { workspace = true }
+
+# Workspace dependencies
+rust-ai-ide-shared-types = { path = "../../crates/rust-ai-ide-shared-types", default-features = false }
+rust-ai-ide-common = { path = "../../crates/rust-ai-ide-common", default-features = false }
+rust-ai-ide-security = { path = "../../crates/rust-ai-ide-security", default-features = false }
+rust-ai-ide-cache = { path = "../../crates/rust-ai-ide-cache", default-features = false }
+rust-ai-ide-errors = { path = "../../crates/rust-ai-ide-errors", default-features = false }
+rust-ai-ide-types = { path = "../../crates/rust-ai-ide-types" }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

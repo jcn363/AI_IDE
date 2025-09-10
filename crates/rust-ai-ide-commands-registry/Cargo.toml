@@ -1,0 +1,44 @@
+[package]
+name = "rust-ai-ide-commands-registry"
+readme = { workspace = true }
+version = "0.1.0"
+edition = "2021"
+description = "Modular command registry for Rust AI IDE - replaces monolithic invoke_handler! macro system"
+license = { workspace = true }
+authors = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+publish = { workspace = true }
+rust-version = { workspace = true }
+
+[lib]
+name = "rust_ai_ide_commands_registry"
+path = "src/lib.rs"
+
+[dependencies]
+# Core async runtime
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+
+# Tauri integration
+tauri = { workspace = true }
+
+# Logging and error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+# Core IDE components
+rust-ai-ide-types = { workspace = true }
+rust-ai-ide-common = { workspace = true }
+rust-ai-ide-errors = { workspace = true }
+
+# Command-specific dependencies
+rust-ai-ide-commands-ai = { path = "../rust-ai-ide-commands-ai", optional = true }
+
+[features]
+default = []
+ai_commands = ["rust-ai-ide-commands-ai"]
+full = ["ai_commands"]

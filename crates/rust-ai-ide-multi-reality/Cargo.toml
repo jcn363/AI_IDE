@@ -1,0 +1,79 @@
+[package]
+name = "rust-ai-ide-multi-reality"
+readme = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+publish = { workspace = true }
+
+[dependencies]
+# Workspace dependencies
+anyhow = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+uuid = { version = "1.18.1", features = ["v4", "serde"] }
+futures = { workspace = true }
+
+# Multi-reality specific dependencies
+web-sys = { version = "0.3", features = [
+  "console",
+  "Window",
+  "Document",
+  "Element",
+  "HtmlElement",
+  "Node",
+  "EventTarget",
+  "Event",
+  "DomRect",
+  "CssStyleDeclaration",
+  "XrSession",
+  "XrSessionInit",
+  "XrReferenceSpace",
+  "XrFrame",
+] }
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+
+# Internal crates
+rust-ai-ide-types = { workspace = true }
+rust-ai-ide-common = { workspace = true }
+rust-ai-ide-errors = { workspace = true }
+
+[features]
+tauri = ["rust-ai-ide-common/tauri-integrated"]
+webxr = []
+performance_testing = []
+secure_storage = []
+
+[lints.rust]
+pointer_structural_match = "warn"
+unused_must_use = "warn"
+nonstandard_style = "warn"
+dead_code = "warn"
+unused_variables = "warn"
+unused_imports = "warn"
+
+[lints.clippy]
+range_plus_one = "warn"
+redundant_clone = "deny"
+type_repetition_in_bounds = "deny"
+struct_excessive_bools = "warn"
+unnested_or_patterns = "warn"
+wildcard_imports = "warn"
+explicit_iter_loop = "warn"
+module_name_repetitions = "warn"
+pub_use = "warn"
+len_without_is_empty = "warn"
+needless_continue = "warn"
+semicolon_if_nothing_returned = "warn"
+items_after_statements = "warn"
+complexity = "warn"
+
+[package.metadata.duplication]
+check_before_commit = true
+similarity_threshold = 0.85
+ignore_patterns = ["test_*.rs", "*_test.rs"]
+skip_checks = []

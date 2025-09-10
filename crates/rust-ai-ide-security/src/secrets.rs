@@ -11,12 +11,11 @@ use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
-use tracing::{info, warn, error};
+use tracing::warn;
 use regex::Regex;
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 
-use crate::AuditLogger;
 
 /// Main secrets scanning engine
 #[derive(Clone)]
@@ -24,7 +23,7 @@ pub struct SecretsScanner {
     pattern_engine: Arc<PatternEngine>,
     entropy_analyzer: Arc<EntropyAnalyzer>,
     context_analyzer: Arc<ContextAnalyzer>,
-    audit_logger: Arc<AuditLogger>,
+    audit_logger: Arc<dyn AuditLogger>,
     findings: Arc<RwLock<Vec<SecretFinding>>>,
 }
 
@@ -41,7 +40,7 @@ pub struct SecretFinding {
     pub false_positive: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SecretType {
     ApiKey,
     Token,
@@ -92,7 +91,7 @@ struct AllowedContext {
 }
 
 impl SecretsScanner {
-    pub async fn new(audit_logger: Arc<AuditLogger>) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn new(audit_logger: Arc<dyn AuditLogger>) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let pattern_engine = Arc::new(PatternEngine::new().await?);
         let entropy_analyzer = Arc::new(EntropyAnalyzer::default());
         let context_analyzer = Arc::new(ContextAnalyzer::new().await?);
@@ -115,7 +114,7 @@ impl SecretsScanner {
             let matches = self.pattern_engine.find_matches(line).await?;
             for potential_secret in matches {
                 // Check entropy
-                let entropy = self.entropy_analyzer.calculate_entropy(&potential_secret);
+                let entropy = self.entropy_analyzer.calculate_entropy(&potential_secret.text);
 
                 // Skip if entropy is too low
                 if entropy < potential_secret.entropy_threshold {
@@ -210,7 +209,7 @@ impl SecretsScanner {
     }
 
     fn calculate_confidence(&self, pattern: &SecretPatternMatch, entropy: f64, line: &str) -> f64 {
-        let mut confidence = 0.5; // Base confidence
+        let mut confidence: f64 = 0.5; // Base confidence
 
         // Adjust based on entropy
         if entropy > 4.0 {
@@ -297,7 +296,7 @@ impl PatternEngine {
         let password_patterns = vec![
             SecretPattern {
                 name: "Password Pattern".to_string(),
-                regex: Regex::new(r"password[\s]*[=:]+\s*[\'"]([^\'"]{8,})[\'"]")?,
+                regex: Regex::new(r#"password[\s]*[=:]+\s*['"]([^'"]{8,})['"]"#)?,
 //                entropy_threshold: 3.5,
                 entropy_threshold: 3.5,
                 context_keywords: vec!["password", "passwd"].into_iter().map(|s| s.to_string()).collect(),
@@ -407,7 +406,7 @@ impl ContextAnalyzer {
         Ok(Self { allowed_contexts })
     }
 
-    pub async fn is_allowed_context(&self, file_path: &str, pattern: &SecretPatternMatch, line: &str) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn is_allowed_context(&self, file_path: &str, _pattern: &SecretPatternMatch, line: &str) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
         for context in &self.allowed_contexts {
             // Check file pattern
             for file_pattern in &context.file_patterns {
@@ -443,6 +442,4 @@ impl ContextAnalyzer {
 pub trait AuditLogger {
     async fn log_secret_detection(&self, finding: &SecretFinding) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }
-
-// Allow use of this module's types in lib.rs
-pub use crate::AuditLogger;
+// We don't have AuditLogger in lib.rs root yet, will be fixed when security crate is complete

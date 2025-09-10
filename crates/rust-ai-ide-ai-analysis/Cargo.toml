@@ -1,5 +1,6 @@
 [package]
 name = "rust-ai-ide-ai-analysis"
+readme = { workspace = true }
 version = "0.1.0"
 edition = "2021"
 

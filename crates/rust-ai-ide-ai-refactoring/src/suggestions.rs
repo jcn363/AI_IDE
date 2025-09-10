@@ -3,6 +3,77 @@ use crate::confidence::{ConfidenceScorer, ConfidenceResult};
 use crate::safety::RefactoringRisk;
 use crate::types::*;
 use std::collections::HashMap;
+use async_trait::async_trait;
+
+/// Trait for suggestion engines
+#[async_trait]
+pub trait SuggestionEngine {
+    /// Get suggestions based on refactoring context
+    async fn get_suggestions(&self, context: &SuggestionContext) -> Result<Vec<RefactoringSuggestion>, String>;
+}
+
+/// Context for suggestion generation
+#[derive(Debug, Clone)]
+pub struct SuggestionContext {
+    pub file_path: String,
+    pub symbol_name: Option<String>,
+    pub symbol_kind: Option<SymbolKind>,
+    pub project_context: std::collections::HashMap<String, String>,
+}
+
+/// AI-powered suggestion engine
+pub struct AISuggestionEngine {
+    base_engine: SuggestionEngineWrapper,
+}
+
+/// Wrapper for the old SuggestionEngine to work with the trait
+struct SuggestionEngineWrapper {
+    inner: SuggestionEngine,
+}
+
+#[async_trait]
+impl SuggestionEngine for SuggestionEngineWrapper {
+    async fn get_suggestions(&self, context: &SuggestionContext) -> Result<Vec<RefactoringSuggestion>, String> {
+        // Convert to refactoring context
+        let refactoring_context = RefactoringContext {
+            file_path: context.file_path.clone(),
+            cursor_line: 0, // Default values
+            cursor_character: 0,
+            selection: None,
+            symbol_name: context.symbol_name.clone(),
+            symbol_kind: context.symbol_kind.clone(),
+        };
+
+        let suggestions = self.inner.generate_suggestions(&refactoring_context, None).await?;
+        let suggestions = suggestions.into_iter()
+            .map(|s| RefactoringSuggestion {
+                operation_type: s.refactoring_type.to_string(),
+                confidence_score: s.confidence.overall_score,
+                description: s.reasoning,
+            })
+            .collect();
+
+        Ok(suggestions)
+    }
+}
+
+/// Implementation for AISuggestionEngine
+impl AISuggestionEngine {
+    pub fn new() -> Self {
+        AISuggestionEngine {
+            base_engine: SuggestionEngineWrapper {
+                inner: SuggestionEngine::new(),
+            },
+        }
+    }
+}
+
+#[async_trait]
+impl SuggestionEngine for AISuggestionEngine {
+    async fn get_suggestions(&self, context: &SuggestionContext) -> Result<Vec<RefactoringSuggestion>, String> {
+        self.base_engine.get_suggestions(context).await
+    }
+}
 
 /// Context-aware suggestion engine for intelligent refactoring recommendations
 pub struct SuggestionEngine {

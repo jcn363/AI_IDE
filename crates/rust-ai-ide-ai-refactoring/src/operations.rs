@@ -1174,21 +1174,23 @@ impl RefactoringOperation for ConvertToAsyncOperation {
                     affected_symbols: vec![function_name.clone()],
                     breaking_changes: if info.calls_awaitable {
                         vec![
-                            format!("All callers of '{}' must use .await", function_name),
+                        vec![
+                            format!("All callers of "{}" must use .await", function_name),
                             "Return type now wrapped in Future<Output = _>".to_string()".to_string(),
                         ]
+                    }
                     } else {
-                        vec![format!("Callers may need to use .await for '{}'", function_name)]
+                        vec![format!("Callers may need to use .await for "{}"", function_name)]
                     },
                     suggestions: vec![
-                        "Ensure all async chains properly handle errors".to_string(),
-                        "Consider using tokio::spawn for CPU-intensive operations".to_string(),
-                        "Review await points for potential deadlocks".to_string(),
+                        "Ensure all async chains properly handle errors ".to_string(),
+                        "Consider using tokio::spawn for CPU-intensive operations ".to_string(),
+                        "Review await points for potential deadlocks ".to_string(),
                     ],
                     warnings: if info.calls_awaitable {
-                        vec!["High impact - all callers must be updated".to_string()]
+                        vec!["High impact - all callers must be updated ".to_string()]
                     } else {
-                        vec!["Lower risk - can be gradually migrated".to_string()]
+                        vec!["Lower risk - can be gradually migrated ".to_string()]
                     },
                 }
             }
@@ -1198,9 +1200,9 @@ impl RefactoringOperation for ConvertToAsyncOperation {
                 potential_impact: RefactoringImpact::High,
                 affected_files: vec![context.file_path.clone()],
                 affected_symbols: vec![function_name],
-                breaking_changes: vec!["Unable to analyze function for async conversion".to_string()],
-                suggestions: vec!["Verify function exists and is convertible".to_string()],
-                warnings: vec!["Analysis failed - conversion may be unsafe".to_string()],
+                breaking_changes: vec!["Unable to analyze function for async conversion ".to_string()],
+                suggestions: vec!["Verify function exists and is convertible ".to_string()],
+                warnings: vec!["Analysis failed - conversion may be unsafe ".to_string()],
             }
         };
 
@@ -1220,11 +1222,11 @@ impl RefactoringOperation for ConvertToAsyncOperation {
     }
 
     fn name(&self) -> &str {
-        "Convert to Async"
+        "Convert to Async "
     }
 
     fn description(&self) -> &str {
-        "Converts a synchronous function to async with proper Future return types"
+        "Converts a synchronous function to async with proper Future return types "
     }
 }
 
@@ -1237,14 +1239,16 @@ impl ConvertToAsyncOperation {
             match item {
                 syn::Item::Fn(fn_item) => {
                     if self.function_calls_target(&fn_item.block, target_function) {
-                        callers.push(format!("function '{}'", fn_item.sig.ident));
+                        let fn_name = format!("{}", fn_item.sig.ident);
+                        callers.push(format!("function \"{}\"", fn_name));
                     }
                 }
                 syn::Item::Impl(impl_block) => {
                     for impl_item in &impl_block.items {
                         if let syn::ImplItem::Method(method) = impl_item {
                             if self.function_calls_target(&method.block, target_function) {
-                                callers.push(format!("method '{}'", method.sig.ident));
+                                let method_name = format!("{}", method.sig.ident);
+                                callers.push(format!("method \"{}\"", method_name));
                             }
                         }
                     }
@@ -1416,7 +1420,7 @@ impl PatternConversionOperation {
             syn::Expr::If(if_expr) => {
                 if self.is_guarded_resource_management(if_expr) {
                     return Some(PatternMatch {
-                        pattern_type: "Guarded Resource Management".to_string(),
+                        pattern_type: r"Guarded Resource Management ".to_string(),
                         start_line: if_expr.if_token.span.start().line,
                         end_line: if_expr.if_token.span.end().line,
                         confidence: 0.7,
@@ -1432,7 +1436,7 @@ impl PatternConversionOperation {
             syn::Expr::MethodCall(method_call) => {
                 if self.is_map_filter_chain(method_call) {
                     return Some(PatternMatch {
-                        pattern_type: "Functional Chaining".to_string(),
+                        pattern_type: r"Functional Chaining ".to_string(),
                         start_line: method_call.dot_token.span.start().line,
                         end_line: method_call.dot_token.span.end().line,
                         confidence: 0.8,
@@ -1442,7 +1446,7 @@ impl PatternConversionOperation {
             }
             syn::Expr::Loop(_) => {
                 return Some(PatternMatch {
-                    pattern_type: "Loop Pattern".to_string(),
+                    pattern_type: r"Loop Pattern ".to_string(),
                     start_line: 0, // Will be set by caller
                     end_line: 0,
                     confidence: 0.6,
@@ -1452,7 +1456,7 @@ impl PatternConversionOperation {
             syn::Expr::Match(match_expr) => {
                 if self.is_conditional_dispatch(match_expr) {
                     return Some(PatternMatch {
-                        pattern_type: "Conditional Dispatch".to_string(),
+                        pattern_type: r"Conditional Dispatch ".to_string(),
                         start_line: match_expr.match_token.span.start().line,
                         end_line: match_expr.match_token.span.end().line,
                         confidence: 0.7,
@@ -1471,9 +1475,9 @@ impl PatternConversionOperation {
             if let syn::Expr::Path(path) = &*call.func {
                 if let Some(ident) = path.path.get_ident() {
                     match ident.to_string().as_str() {
-                        "vec" | "Vec::new" | "HashMap::new" | "HashSet::new" => {
+                        "vec" | r"Vec::new " | r"HashMap::new " | r"HashSet::new " => {
                             return Some(PatternMatch {
-                                pattern_type: "Collection Construction".to_string(),
+                                pattern_type: r"Collection Construction ".to_string(),
                                 start_line: 0,
                                 end_line: 0,
                                 confidence: 0.8,
@@ -1509,51 +1513,51 @@ impl PatternConversionOperation {
     /// Get available conversion options for a pattern type
     fn get_conversion_options(&self, pattern_type: &str) -> Vec<ConversionOption> {
         match pattern_type {
-            "Functional Chaining" => vec![
+            r"Functional Chaining " => vec![
                 ConversionOption {
-                    from_pattern: "map().filter().collect()".to_string(),
-                    to_pattern: "Comprehension-like structure".to_string(),
+                    from_pattern: r"map().filter().collect() ".to_string(),
+                    to_pattern: r"Comprehension-like structure ".to_string(),
                     benefits: vec![
-                        "More readable".to_string(),
-                        "Potentially more efficient".to_string(),
-                        "Follows functional paradigm".to_string(),
+                        r"More readable ".to_string(),
+                        r"Potentially more efficient ".to_string(),
+                        r"Follows functional paradigm ".to_string(),
                     ],
                     risks: vec![
-                        "May require learning new syntax".to_string(),
-                        "Different performance characteristics".to_string(),
+                        r"May require learning new syntax ".to_string(),
+                        r"Different performance characteristics ".to_string(),
                     ],
                     confidence: 0.8,
                 },
             ],
-            "Loop Pattern" => vec![
+            r"Loop Pattern " => vec![
                 ConversionOption {
-                    from_pattern: "for loop with collection".to_string(),
-                    to_pattern: "Iterator methods".to_string(),
+                    from_pattern: r"for loop with collection ".to_string(),
+                    to_pattern: r"Iterator methods ".to_string(),
                     benefits: vec![
-                        "More concise".to_string(),
-                        "Lazy evaluation".to_string(),
-                        "Better composability".to_string(),
+                        r"More concise ".to_string(),
+                        r"Lazy evaluation ".to_string(),
+                        r"Better composability ".to_string(),
                     ],
                     risks: vec![
-                        "Different error handling".to_string(),
-                        "Potentially different allocation patterns".to_string(),
+                        r"Different error handling ".to_string(),
+                        r"Potentially different allocation patterns ".to_string(),
                     ],
                     confidence: 0.7,
                 },
             ],
-            "Conditional Dispatch" => vec![
+            r"Conditional Dispatch " => vec![
                 ConversionOption {
-                    from_pattern: "match on enum/type".to_string(),
-                    to_pattern: "Trait objects/dynamic dispatch".to_string(),
+                    from_pattern: r"match on enum/type ".to_string(),
+                    to_pattern: r"Trait objects/dynamic dispatch ".to_string(),
                     benefits: vec![
-                        "Extensibility".to_string(),
-                        "No need to update match on additions".to_string(),
-                        "Cleaner separation of concerns".to_string(),
+                        r"Extensibility ".to_string(),
+                        r"No need to update match on additions ".to_string(),
+                        r"Cleaner separation of concerns ".to_string(),
                     ],
                     risks: vec![
-                        "Runtime overhead".to_string(),
-                        "Boxing/unboxing".to_string(),
-                        "May lose exhaustiveness checking".to_string(),
+                        r"Runtime overhead ".to_string(),
+                        r"Boxing/unboxing ".to_string(),
+                        r"May lose exhaustiveness checking ".to_string(),
                     ],
                     confidence: 0.6,
                 },
@@ -1561,9 +1565,9 @@ impl PatternConversionOperation {
             _ => vec![
                 ConversionOption {
                     from_pattern: pattern_type.to_string(),
-                    to_pattern: "Alternative implementation".to_string(),
-                    benefits: vec!["May improve readability".to_string()],
-                    risks: vec!["Unknown conversion impact".to_string()],
+                    to_pattern: r"Alternative implementation ".to_string(),
+                    benefits: vec![r"May improve readability ".to_string()],
+                    risks: vec![r"Unknown conversion impact ".to_string()],
                     confidence: 0.5,
                 },
             ],
@@ -1575,7 +1579,7 @@ impl PatternConversionOperation {
         // For now, return a placeholder change
         // In full implementation, would generate actual AST transformations
         vec![CodeChange {
-            file_path: "/target/file.rs".to_string(), // Would get from context
+            file_path: r"/target/file.rs ".to_string(), // Would get from context
             range: CodeRange {
                 start_line: pattern.start_line,
                 start_character: 0,
@@ -1688,8 +1692,9 @@ impl RefactoringOperation for PatternConversionOperation {
                 "Functional transformations may change performance characteristics".to_string(),
             ],
         };
+    };
 
-        Ok(analysis)
+    Ok(analysis)
     }
 
     async fn is_applicable(

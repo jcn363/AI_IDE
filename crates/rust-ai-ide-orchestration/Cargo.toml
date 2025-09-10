@@ -1,0 +1,56 @@
+[package]
+name = "rust-ai-ide-orchestration"
+readme = { workspace = true }
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.91.0"
+authors = ["Rust AI IDE Team"]
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Core async runtime
+tokio = { version = "1.47.1", features = ["full"] }
+tokio-util = "0.7.16"
+async-trait = "0.1.89"
+futures = "^0.3.31"
+
+# Serialization
+serde = { version = "^1.0.219", features = ["derive"] }
+serde_json = "^1.0.143"
+
+# Logging
+tracing = "0.1.41"
+tracing-subscriber = { version = "^0.3.20", features = ["env-filter"] }
+
+# State management
+parking_lot = "^0.12.4"
+
+# Internal dependencies
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+
+# LSP integration
+rust-ai-ide-lsp = { path = "../rust-ai-ide-lsp" }
+
+# AI integration
+rust-ai-ide-ai = { path = "../rust-ai-ide-ai", optional = true }
+
+# Shared services
+rust-ai-ide-shared-services = { path = "../rust-ai-ide-shared-services" }
+
+[features]
+default = []
+ai-integration = ["rust-ai-ide-ai"]
+tauri = []
+lsp = []
+testing = []
+
+[dev-dependencies]
+tokio-test = "0.4.4"
+mockall = "0.12"
+shared-test-utils = { path = "../shared-test-utils" }

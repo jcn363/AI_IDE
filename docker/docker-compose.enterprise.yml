@@ -1,0 +1,350 @@
+version: '3.8'
+
+services:
+  # Enterprise SQL LSP Server - Master Node
+  sql-lsp-enterprise:
+    image: rust-ai-ide/sql-lsp-enterprise:latest
+    container_name: sql-lsp-enterprise-master
+    ports:
+      - "8080:8080"     # Main LSP port
+      - "9090:9090"     # Health check and metrics endpoint
+      - "8443:8443"     # HTTPS port with TLS 1.3
+    environment:
+      - RUST_LSP_LOG_LEVEL=info
+      - RUST_LSP_CONFIG_FILE=/app/config/enterprise-config.toml
+      - RUST_LSP_CACHE_BACKEND=redis
+      - RUST_LSP_DATABASE_TYPE=postgresql
+      - RUST_LSP_SECURITY_TIER=enterprise
+      - RUST_LSP_COMPLIANCE_MODE=enabled
+      - RUST_LSP_SCALING_MODE=horizontal
+      - RUST_LSP_ENCRYPTION_ENABLED=true
+      - RUST_LSP_MFA_REQUIRED=false
+      - RUST_LSP_AUDIT_LOG_RETENTION_DAYS=365
+    volumes:
+      - ./enterprise-config.toml:/app/config/enterprise-config.toml:ro
+      - enterprise-logs:/app/logs
+      - enterprise-cache:/app/cache
+      - ssl-certs:/app/ssl:ro
+    secrets:
+      - postgres_password
+      - redis_password
+      - jwt_secret_key
+      - ssl_private_key
+      - audit_encryption_key
+    networks:
+      - sql-lsp-enterprise
+      - monitoring
+    depends_on:
+      - postgres-cluster
+      - redis-cluster
+      - elk-stack
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+  # PostgreSQL Cluster with High Availability
+  postgres-cluster:
+    image: bitnami/postgresql-repmgr:latest
+    container_name: postgresql-ha-cluster
+    environment:
+      - POSTGRESQL_POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - POSTGRESQL_DATABASE=rust_ai_ide
+      - POSTGRESQL_USERNAME=sql_user
+      - POSTGRESQL_PASSWORD_FILE=/run/secrets/postgres_password
+      - REPMGR_PASSWORD_FILE=/run/secrets/postgres_password
+      - REPMGR_MASTER_HOST=postgres-cluster
+      - REPMGR_NODE_NETWORK_NAME=postgres-cluster
+      - REPMGR_MASTER_PORT=5432
+      - REPMGR_NODE_ID=1
+      - REPMGR_NODE_NAME=postgres-cluster
+      - REPMGR_DATABASE=test_repmgr
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgresql-data:/bitnami/postgresql
+      - postgresql-config:/etc/postgresql
+    secrets:
+      - postgres_password
+    networks:
+      - sql-lsp-enterprise
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sql_user -d rust_ai_ide"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+  # Redis Cluster for Distributed Caching
+  redis-cluster:
+    image: redis:7-alpine
+    container_name: redis-ha-cluster
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file /redis/nodes.conf --cluster-node-timeout 5000 --requirepass-file /run/secrets/redis_password
+    ports:
+      - "6379:6379"
+      - "6380:6380"
+      - "6381:6381"
+    volumes:
+      - redis-data:/redis/data
+      - redis-config:/redis/etc
+    secrets:
+      - redis_password
+    networks:
+      - sql-lsp-enterprise
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # ELK Stack for Log Aggregation and Analysis
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: elasticsearch-node
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - sql-lsp-enterprise
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: logstash-pipeline
+    volumes:
+      - ./logstash-config:/usr/share/logstash/pipeline:ro
+      - logstash-data:/usr/share/logstash/data
+    ports:
+      - "9600:9600"
+      - "5400:5400"
+    environment:
+      - LS_JAVA_OPTS=-Xmx1g
+    networks:
+      - sql-lsp-enterprise
+      - monitoring
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "logstash -t --path.config=/usr/share/logstash/pipeline/ || exit 1"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: kibana-dashboard
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_SSL_ENABLED=false
+    volumes:
+      - kibana-config:/usr/share/kibana/config
+      - kibana-data:/usr/share/kibana/data
+    networks:
+      - monitoring
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
+  # Security scanning and compliance monitoring
+  vulnerability-scanner:
+    image: aquasecurity/trivy:latest
+    container_name: trivy-security-scanner
+    command: ["server", "--listen", "0.0.0.0:4954"]
+    ports:
+      - "4954:4954"
+    volumes:
+      - ./trivy-cache:/root/.cache/trivy
+    networks:
+      - sql-lsp-enterprise
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Backup and recovery service
+  backup-service:
+    image: rust-ai-ide/backup-service:latest
+    container_name: sql-lsp-backup-service
+    environment:
+      - BACKUP_INTERVAL=6h
+      - RETENTION_DAYS=30
+      - COMPRESSION_LEVEL=9
+      - ENCRYPTION_KEY_FILE=/run/secrets/backup_key
+    volumes:
+      - enterprise-backups:/app/backups
+      - postgresql-data:/app/data/postgresql:ro
+      - redis-data:/app/data/redis:ro
+      - elasticsearch-data:/app/data/elasticsearch:ro
+    secrets:
+      - backup_key
+    networks:
+      - sql-lsp-enterprise
+    restart: unless-stopped
+    depends_on:
+      - postgres-cluster
+      - redis-cluster
+      - elasticsearch
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Load balancer for horizontal scaling
+  nginx-lb:
+    image: nginx:alpine
+    container_name: sql-lsp-load-balancer
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-enterprise.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-enterprise-ssl.conf:/etc/nginx/ssl.conf:ro
+      - ssl-certs:/etc/ssl/certs:ro
+    networks:
+      - sql-lsp-enterprise
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+networks:
+  sql-lsp-enterprise:
+    driver: overlay
+    attachable: true
+  monitoring:
+    driver: overlay
+    attachable: true
+
+volumes:
+  postgresql-data:
+    driver: local
+  redis-data:
+    driver: local
+  elasticsearch-data:
+    driver: local
+  kibana-data:
+    driver: local
+  logstash-data:
+    driver: local
+  enterprise-logs:
+    driver: local
+  enterprise-cache:
+    driver: local
+  ssl-certs:
+    driver: local
+  enterprise-backups:
+    driver: local
+
+secrets:
+  postgres_password:
+    external: true
+  redis_password:
+    external: true
+  jwt_secret_key:
+    external: true
+  ssl_private_key:
+    external: true
+  audit_encryption_key:
+    external: true
+  backup_key:
+    external: true

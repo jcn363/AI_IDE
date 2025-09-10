@@ -1,12 +1,54 @@
 [package]
 name = "rust-ai-ide-collaboration"
-version = "0.1.0"
-edition = "2021"
+readme = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Real-time collaboration system for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+publish = { workspace = true }
+repository = { workspace = true }
 
 [dependencies]
-serde = { workspace = true }
-uuid = { workspace = true }
+# Async runtime
+tokio = { workspace = true, features = ["sync", "rt"] }
 
-[lib]
-name = "rust_ai_ide_collaboration"
-path = "src/lib.rs"
+# Serialization for CRDT operations
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+log = { workspace = true }
+
+# WebSocket support for real-time communication
+tokio-tungstenite = "0.21.0"
+futures-util = "0.3.30"
+
+# CRDT dependencies (basic implementation, may need additional crates for complex CRDTs)
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Security and validation
+rust-ai-ide-security = { path = "../rust-ai-ide-security" }
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+
+# Type definitions and error handling
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+
+# AI integration for coaching
+rust-ai-ide-ai-inference = { path = "../rust-ai-ide-ai-inference" }
+
+# LSP integration for collaborative editing context
+rust-ai-ide-lsp = { path = "../rust-ai-ide-lsp" }
+
+[features]
+default = ["std"]
+std = []
+full = ["std"]
+
+# Platform-specific features
+windows = []
+unix = []
+macos = []

@@ -110,7 +110,7 @@ impl Default for SizeStrategy {
 }
 
 impl SizeStrategy {
-    pub fn with_priority_weights(mut self, weights: std::collections::HashMap<String, f32>) -> Self {
+    pub fn with_priority_weights(self, weights: std::collections::HashMap<String, f32>) -> Self {
         *self.priority_weights.write().unwrap() = weights;
         self
     }

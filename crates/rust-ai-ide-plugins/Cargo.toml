@@ -1,5 +1,6 @@
 [package]
 name = "rust-ai-ide-plugins"
+readme = { workspace = true }
 version = { workspace = true }
 edition = { workspace = true }
 
@@ -33,8 +34,11 @@ dirs = { version = "^5.0.0" }
 thiserror = { workspace = true }
 
 # HTTP client for marketplace
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { workspace = true }
 urlencoding = "2.1"
+
+# WebAssembly runtime for plugin execution
+wasmtime = "23.0"
 
 # UUID for plugin identification
 uuid = { workspace = true }

@@ -1,5 +1,6 @@
 [package]
 name = "rust-ai-ide-ai4-consciousness"
+readme = { workspace = true }
 version = "0.1.0"
 edition = "2021"
 description = "Wave 4: Consciousness-Aware Development - The Pinnacle of AI Evolution"

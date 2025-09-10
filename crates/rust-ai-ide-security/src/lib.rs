@@ -247,3 +247,5 @@ pub mod threat_modeling;
 // Re-export new modules
 pub use secrets::{SecretsScanner, SecretFinding, SecretType, VulnerabilitySeverity};
 pub use threat_modeling::{ThreatModelingEngine, ThreatModel, Asset, Threat, StrideCategory};
+
+// AuditLogger is defined locally in the secrets module

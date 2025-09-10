@@ -1,24 +1,22 @@
-//! AI-powered refactoring module
+//! AI-powered code refactoring for Rust AI IDE
 //!
-//! This module provides comprehensive refactoring capabilities
-//! for various programming languages, including analysis,
-//! execution, and test generation.
+//! This crate provides intelligent code refactoring capabilities using machine learning
+//! and static analysis to improve code quality and maintainability.
 
 // Module declarations
 pub mod analysis;
 pub mod batch;
-pub mod operations;
-pub mod types;
-pub mod test_generation;
-pub mod utils;
-
-// New enhanced modules
 pub mod confidence;
-pub mod safety;
-pub mod suggestions;
 pub mod enhanced_backup;
 pub mod logging;
+pub mod operations;
 pub mod progress;
+pub mod safety;
+pub mod service;
+pub mod suggestions;
+pub mod test_generation;
+pub mod types;
+pub mod utils;
 
 // Re-exports for external use
 pub use confidence::ConfidenceScorer;
@@ -28,4 +26,9 @@ pub use logging::{RefactoringLogger, SessionType, SessionStatus};
 pub use suggestions::SuggestionEngine;
 pub use enhanced_backup::EnhancedBackupManager;
 
-// Dependencies
+// Core AI Refactoring Service - Main Integration Point
+pub use service::RefactoringService;
+
+// Re-export commonly used types
+pub use types::*;
+pub use operations::*;

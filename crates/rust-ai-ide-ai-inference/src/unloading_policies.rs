@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use crate::{
     model_handle::ModelHandle,
     resource_monitor::{MemoryPressure, ResourceSummary, SystemMonitor},
-    resource_types::{ModelSize, UnloadingPolicy, BYTES_PER_MB},
+    resource_types::{UnloadingPolicy, BYTES_PER_MB},
 };
 
 /// Policy evaluator that determines which models should be unloaded

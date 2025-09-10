@@ -11,11 +11,15 @@ pub mod collector;
 pub mod memory_analysis;
 pub mod monitoring;
 pub mod profiling;
+pub mod profiling_adapter;
 pub mod regression;
+pub mod startup_optimizer;
 pub mod adaptive_memory;
 pub mod alerting;
 pub mod gpu_acceleration;
 pub mod storage;
+pub mod compilation;
+pub mod compilation_example;
 
 pub use caching::*;
 pub use cpu_analysis::*;
@@ -30,6 +34,8 @@ pub use gpu_acceleration::*;
 pub use memory_analysis::{EnhancedLeakDetector, HeapAnalyzer, HeapGrowthTrend, LeakStatistics, MemoryAnalyzer, AllocationLifetime, LeakCandidate, AutomaticFixSuggestion};
 pub use monitoring::*;
 pub use profiling::*;
+pub use profiling_adapter::*;
+pub use startup_optimizer::*;
 // PerformanceMetrics is now imported from rust_ai_ide_shared_types for consistency
 pub use rust_ai_ide_shared_types::PerformanceMetrics;
 

@@ -239,9 +239,26 @@
 //! - **Behavioral Analysis**: Learning from developer interaction patterns
 //! - **Context-Aware Assistance**: Providing help based on project and task context
 
+// SQL language server implementation
+#[cfg(feature = "sql-lsp")]
+pub mod sql_lsp;
+
+// Enterprise enhancements
+#[cfg(feature = "enterprise-monitoring")]
+pub mod enterprise_monitoring;
+#[cfg(feature = "enterprise-monitoring")]
+pub mod enterprise_monitoring_impl;
+#[cfg(feature = "enterprise-sql-lsp")]
+pub mod enterprise_sql_lsp_server;
+// Web language server implementations
+mod web_language_servers;
+mod web_language_server_factory;
+
+pub mod ai_context;
 pub mod client;
 pub mod client_interface;
 pub mod code_actions;
+pub mod context_aware_completion;
 pub mod debugging_integration;
 pub mod completion;
 pub mod diagnostics;
@@ -289,6 +306,9 @@ pub struct AIContext {
     pub project_context: std::collections::HashMap<String, String>,
 }
 
+// Re-export web language server factory
+pub use web_language_server_factory::WebLanguageServerFactory;
+
 // Re-export multi-language API when feature is enabled
 #[cfg(feature = "multi-language-lsp")]
 pub use cross_language::{CrossLanguageSearchResult, CrossLanguageSymbol};
@@ -298,13 +318,38 @@ pub use language_server::{LanguageServerConfig, LanguageServerKind};
 pub use multi_language::{
     MultiLanguageConfig, MultiLanguageLSP, MultiLanguageStatus, SystemHealth,
 };
+#[cfg(feature = "multi-language-lsp")]
+pub use enhanced_rust_analyzer::{
+    EnhancedRustAnalyzer, MultiLangAIAnalyzer, EnhancedFFIAnalysis,
+    SmartSymbolResult, FFIFix, CompatibilityWarning,
+};
+
+// Re-export cross-language capabilities
+#[cfg(feature = "multi-language-lsp")]
+pub use cross_language_index::{CrossLanguageIndexer, SymbolEntry, SupportedLanguage};
 
 // Re-export AI-related types when ai feature is enabled
+#[cfg(feature = "sql-lsp")]
+pub use sql_lsp::{
+    SqlLspServer, SqlLspConfig, SqlLspError, SqlLspResult,
+    QueryPerformanceMetrics, OptimizedQuerySuggestion,
+    InferredSchema, ContextualErrorFix,
+    CollaborativeEditSession, SqlCompletionItem, SqlHoverInfo,
+    SqlDialectDetector, PostgresDialectDetector, MySqlDialectDetector,
+    SqliteDialectDetector, SqlServerDialectDetector, OracleDialectDetector,
+};
+
 #[cfg(feature = "ai")]
 pub use rust_ai_ide_ai::{
     // From inference crate
     AIService,
     AIProvider,
+
+// Enterprise monitoring re-exports
+#[cfg(feature = "enterprise-monitoring")]
+pub use enterprise_monitoring::*;
+#[cfg(feature = "enterprise-monitoring")]
+pub use enterprise_monitoring_impl::*;
     AnalysisIssue,
     CodeAnalysisResult,
 

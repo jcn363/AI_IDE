@@ -1,5 +1,6 @@
 [package]
 name = "rust-ai-ide-ai3-quantum"
+readme = { workspace = true }
 version = "0.1.0"
 edition = "2021"
 description = "Wave 3: Quantum Computing Integration - Quantum Enhanced AI and Optimization"

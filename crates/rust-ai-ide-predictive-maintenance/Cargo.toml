@@ -1,0 +1,99 @@
+[package]
+name = "rust-ai-ide-predictive-maintenance"
+readme = { workspace = true }
+version = "0.1.0"
+edition = "2021"
+description = "Phase 3.2: Predictive Maintenance Forecasting System - ML-driven technical debt forecasting and automated maintenance recommendations"
+license = "MIT OR Apache-2.0"
+publish = false
+rust-version = "1.91.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Core async runtime
+tokio = { version = "1.47.1", features = ["full"] }
+tokio-util = "0.7.16"
+async-trait = "0.1.89"
+futures = "^0.3.31"
+tokio-stream = "0.1.15"
+
+# Serialization
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.143"
+
+# Caching infrastructure
+moka = { version = "0.12", features = ["future"] }
+
+# Concurrent data structures
+parking_lot = { version = "0.12.4", features = ["serde"] }
+dashmap = "6.1.0"
+
+# Error handling and logging
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Path and filesystem utilities
+walkdir = "2.5.0"
+ignore = "0.4.23"
+
+# Time and date handling
+chrono = { version = "0.4.42", features = ["serde"] }
+
+# Statistical analysis
+statrs = "0.18.0"
+
+# Graph analysis for dependency relationships
+petgraph = { version = "0.6.4", features = ["serde-1"] }
+
+# Database integration (SQLite with enforced version)
+rusqlite = { workspace = true, features = ["bundled"] }
+
+# Internal dependencies (commented out until other crates are available)
+# rust-ai-ide-cache = { path = "../rust-ai-ide-cache" }
+# rust-ai-ide-lsp = { path = "../rust-ai-ide-lsp" }
+# rust-ai-ide-real-time-analysis = { path = "../rust-ai-ide-real-time-analysis" }
+# rust-ai-ide-predictive-quality = { path = "../rust-ai-ide-predictive-quality" }
+# rust-ai-ide-performance = { path = "../rust-ai-ide-performance" }
+# rust-ai-ide-orchestration = { path = "../rust-ai-ide-orchestration" }
+
+# Common types and validation (commented out until other crates are available)
+# rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+# rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+# rust-ai-ide-common = { path = "../rust-ai-ide-common", features = ["validation"] }
+# rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+
+# AI/ML quality intelligence integration (commented out until other crates are available)
+# rust-ai-ide-ai-inference = { path = "../rust-ai-ide-ai-inference" }
+# rust-ai-ide-multi-model-orchestrator = { path = "../rust-ai-ide-multi-model-orchestrator" }
+
+[features]
+default = ["prediction", "cost-estimation", "priority-scoring"]
+prediction = []
+cost-estimation = []
+priority-scoring = []
+experimental = []
+
+[dev-dependencies]
+tokio-test = "0.4.4"
+mockall = "0.12.1"
+criterion = { version = "0.7.0", features = ["html_reports"] }
+tempfile = "3.10.1"
+proptest = "1.4.0"
+fake = "2.9.2"
+
+[[bench]]
+name = "forecast_accuracy_benchmark"
+readme = { workspace = true }
+harness = false
+
+[[bench]]
+name = "cost_estimation_performance"
+readme = { workspace = true }
+harness = false
+
+[[bench]]
+name = "maintenance_prioritization"
+readme = { workspace = true }
+harness = false

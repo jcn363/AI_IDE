@@ -1,0 +1,64 @@
+[package]
+name = "rust-ai-ide-ai-predictive"
+readme = { workspace = true }
+version = "0.1.0"
+edition = "2021"
+description = "Phase 9: AI Predictive Development Assistant - Context-aware code suggestions, proactive refactoring, and intent prediction"
+authors = ["Roo <ai assistant>"]
+rust-version = "1.91.0"
+
+[dependencies]
+tokio = { workspace = true, features = ["full"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+tokio-stream = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+rand = { workspace = true }
+petgraph = { workspace = true }
+
+# Table-based dependencies
+chrono = { workspace = true }
+lazy_static = { workspace = true }
+once_cell = { workspace = true }
+thiserror = { workspace = true }
+regex = { workspace = true }
+log = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+moka = { workspace = true, features = ["future"] }
+lru = { workspace = true }
+num_cpus = { workspace = true }
+notify = { workspace = true }
+
+# LSP and AI dependencies
+lsp-server = { workspace = true }
+lsp-types = { workspace = true }
+tower-lsp = { workspace = true }
+candle-core = { workspace = true }
+candle-nn = { workspace = true }
+safetensors = { workspace = true }
+tokenizers = { workspace = true }
+
+# SQLite dependencies
+rusqlite = { workspace = true }
+libsqlite3-sys = { workspace = true }
+
+# Import internal dependencies
+rust-ai-ide-ai1-semantic = { path = "../rust-ai-ide-ai1-semantic" }
+rust-ai-ide-ai1-architecture = { path = "../rust-ai-ide-ai1-architecture" }
+rust-ai-ide-lsp = { path = "../rust-ai-ide-lsp", optional = true }
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+rust-ai-ide-shared-utils = { path = "../rust-ai-ide-shared-utils" }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+
+[lib]
+crate-type = ["rlib"]
+
+[features]
+default = []
+ai_backend = ["rust-ai-ide-lsp/ai"]
+lsp_integration = ["rust-ai-ide-lsp"]

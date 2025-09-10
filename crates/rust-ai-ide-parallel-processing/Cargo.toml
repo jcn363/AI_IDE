@@ -1,0 +1,54 @@
+[package]
+name = "rust-ai-ide-parallel-processing"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.91.0"
+authors = ["Rust AI IDE Team"]
+license = "MIT OR Apache-2.0"
+publish = false
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+homepage = "https://github.com/rust-ai-ide/rust-ai-ide"
+readme = { workspace = true }
+
+[features]
+default = ["work-stealing"]
+work-stealing = []
+thread-pool = []
+async-only = ["tokio"]
+
+[dependencies]
+# Async runtime integration (from workspace)
+tokio = { version = "1.0", features = ["full"], optional = true }
+
+# CPU parallelism for work-stealing scheduler (from workspace)
+rayon = { version = "1.11" }
+
+# Lock-free data structures for concurrent processing
+crossbeam = "0.8"
+
+# Shared error handling
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+
+# Logging for performance monitoring
+tracing = { version = "0.1" }
+
+# Common serialization for distributed task communication
+serde = { version = "1.0", features = ["derive"] }
+
+# JSON for task serialization
+serde_json = { version = "1.0" }
+
+# Async trait support
+async-trait = "0.1"
+
+# Futures for stream processing
+futures = "0.3"
+
+# Additional threading utilities
+parking_lot = "0.12"
+
+# UUID for task identification
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Get CPU count
+num_cpus = "1.0"

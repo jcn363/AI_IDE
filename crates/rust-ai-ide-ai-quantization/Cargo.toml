@@ -1,5 +1,6 @@
 [package]
 name = "rust-ai-ide-ai-quantization"
+readme = { workspace = true }
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.91.0"
@@ -24,6 +25,7 @@ moka = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true }
 tracing = { workspace = true }
+chrono = { workspace = true }
 
 # Workspace dependencies
 rust-ai-ide-cache = { path = "../rust-ai-ide-cache" }

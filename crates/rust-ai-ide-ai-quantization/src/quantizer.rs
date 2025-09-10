@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use candle_core::Tensor;
 use serde::{Deserialize, Serialize};
-use rust_ai_ide_errors::IDEError;
+use crate::IDEError;
 
 /// Quantization strategy supported by the system
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

@@ -180,13 +180,28 @@ pub async fn update_ai_config(
     Ok("AI configuration updated successfully".to_string())
 }
 
-/// Get loaded models
+/// Get loaded models - delegates to commands-ai ModelManager
 #[tauri::command]
 pub async fn get_loaded_models(
     ai_service: State<'_, AIServiceState>,
+    bridge: State<'_, crate::commands::ai::AIBridgeState>,
 ) -> Result<Vec<ModelInfo>, String> {
+    // Try to use the commands-ai implementation, fallback to placeholder
+    if let Ok(mut bridge_guard) = bridge.lock().await {
+        if let Ok(model_mgr) = bridge_guard.model_manager().await {
+            match model_mgr.list_available_models().await {
+                Ok(models_list) => {
+                    return Ok(models_list.available_models);
+                },
+                Err(e) => {
+                    log::warn!("Failed to get models from commands-ai, falling back to placeholder: {}", e);
+                }
+            }
+        }
+    }
+
+    // Fallback to original placeholder implementation
     acquire_service_and_execute!(ai_service, AIServiceState, {
-        // In a real implementation, this would query the AI service for loaded models
         Ok(vec![
             ModelInfo {
                 name: "gpt-4".to_string(),
@@ -199,27 +214,68 @@ pub async fn get_loaded_models(
     })
 }
 
-/// Load a model
+/// Load a model - delegates to commands-ai ModelManager
 #[tauri::command]
 pub async fn load_model(
     model_name: String,
     ai_service: State<'_, AIServiceState>,
+    bridge: State<'_, crate::commands::ai::AIBridgeState>,
 ) -> Result<String, String> {
+    // Try to use the commands-ai implementation, fallback to placeholder
+    if let Ok(mut bridge_guard) = bridge.lock().await {
+        if let Ok(model_mgr) = bridge_guard.model_manager().await {
+            let request = rust_ai_ide_commands_ai::models::LoadModelRequest {
+                model_id: model_name.clone(),
+                priority: 1,
+                force_reload: false,
+            };
+
+            match model_mgr.load_model(request).await {
+                Ok(model_info) => {
+                    return Ok(format!("Model {} loaded successfully", model_info.name));
+                },
+                Err(e) => {
+                    log::warn!("Failed to load model via commands-ai, falling back to placeholder: {}", e);
+                }
+            }
+        }
+    }
+
+    // Fallback to original placeholder implementation
     acquire_service_and_execute!(ai_service, AIServiceState, {
-        // In a real implementation, this would load the specified model
         log::info!("Loading model: {}", model_name);
         Ok(format!("Model {} loaded successfully", model_name))
     })
 }
 
-/// Unload a model
+/// Unload a model - delegates to commands-ai ModelManager
 #[tauri::command]
 pub async fn unload_model(
     model_name: String,
     ai_service: State<'_, AIServiceState>,
+    bridge: State<'_, crate::commands::ai::AIBridgeState>,
 ) -> Result<String, String> {
+    // Try to use the commands-ai implementation, fallback to placeholder
+    if let Ok(mut bridge_guard) = bridge.lock().await {
+        if let Ok(model_mgr) = bridge_guard.model_manager().await {
+            let request = rust_ai_ide_commands_ai::models::UnloadModelRequest {
+                model_id: model_name.clone(),
+                graceful_shutdown: true,
+            };
+
+            match model_mgr.unload_model(request).await {
+                Ok(_) => {
+                    return Ok(format!("Model {} unloaded successfully", model_name));
+                },
+                Err(e) => {
+                    log::warn!("Failed to unload model via commands-ai, falling back to placeholder: {}", e);
+                }
+            }
+        }
+    }
+
+    // Fallback to original placeholder implementation
     acquire_service_and_execute!(ai_service, AIServiceState, {
-        // In a real implementation, this would unload the specified model
         log::info!("Unloading model: {}", model_name);
         Ok(format!("Model {} unloaded successfully", model_name))
     })

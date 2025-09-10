@@ -39,7 +39,12 @@ pub mod unloading_policies;
 // Re-exports for convenience
 pub use types::*;
 
-/// Re-export commonly used items for convenience
+// Re-exports from types module
+pub use types::{
+    EditOperation, SecurityError, SecurityResult,
+};
+
+// Re-export commonly used items for convenience
 pub use inference::{
     AnalysisType, CodeCompletionConfig, GenerationConfig, InferenceEngine, InferenceError,
 };
@@ -49,7 +54,6 @@ pub use model_loader::{
 };
 pub use predictive_completion::{
     CodingStyle, CompletionContext, CompletionSuggestion, CompletionType, ContextRelevance,
-    EditOperation, SecurityContext, SecurityError, SecurityResult, SymbolContext, SymbolInfo,
-    UserProfile,
+    SecurityContext, SymbolContext, SymbolInfo, UserProfile,
 };
 pub use natural_language_to_code::{NLToCodeConverter, NLToCodeInput, NLToCodeResult};

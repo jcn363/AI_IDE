@@ -554,6 +554,8 @@ pub enum RefactoringType {
     Move,
     /// Inline function call or variable reference
     Inline,
+    /// Inline variable reference
+    InlineVariable,
     /// Change function/method signature
     ChangeSignature,
     /// Replace method call with inline implementation

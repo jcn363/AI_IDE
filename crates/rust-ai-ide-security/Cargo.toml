@@ -1,12 +1,14 @@
 [package]
 name = "rust-ai-ide-security"
+readme = { workspace = true }
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
 description = "Comprehensive security and compliance framework for Rust AI IDE"
 license = { workspace = true }
 rust-version = { workspace = true }
-repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+publish = { workspace = true }
+repository = { workspace = true }
 
 [dependencies]
 async-trait = { workspace = true }
@@ -17,6 +19,10 @@ thiserror = "2.0.16"
 anyhow = "1.0.99"
 tracing = "0.1.41"
 tracing-subscriber = { workspace = true }
+
+# Pattern matching and file operations
+regex = { workspace = true }
+walkdir = { workspace = true }
 
 # Security-specific dependencies
 jsonwebtoken = "9.3.1"

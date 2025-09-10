@@ -24,15 +24,14 @@
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::types::*;
-use crate::EditOperation;
-use crate::SecurityResult;
+use crate::types::SecurityResult;
 
 /// Basic position in a text document
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -106,12 +105,6 @@ pub enum CodingStyle {
     Mixed,
 }
 
-impl Default for CodingStyle {
-    fn default() -> Self {
-        CodingStyle::Mixed
-    }
-}
-
 /// Naming convention preferences
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NamingConvention {
@@ -121,23 +114,11 @@ pub enum NamingConvention {
     PascalCase,
 }
 
-impl Default for NamingConvention {
-    fn default() -> Self {
-        NamingConvention::SnakeCase
-    }
-}
-
 /// Indentation preferences
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum IndentationStyle {
     Spaces { width: u8 },
     Tabs,
-}
-
-impl Default for IndentationStyle {
-    fn default() -> Self {
-        IndentationStyle::Spaces { width: 4 }
-    }
 }
 
 /// Coding proficiency levels
@@ -358,7 +339,7 @@ pub struct FileInfo {
 impl PredictiveCompletionEngine {
     /// Create a new predictive completion engine with built-in language models
     pub async fn new() -> Result<Self, crate::SecurityError> {
-        let mut engine = Self {
+        let engine = Self {
             config: CompletionConfig::default(),
             distilled_models: RwLock::new(HashMap::new()),
             completion_cache: RwLock::new(HashMap::new()),
@@ -475,24 +456,14 @@ impl PredictiveCompletionEngine {
 
     /// Accept user feedback on suggestions
     pub async fn accept_suggestion(&self, suggestion_id: &str, user_context: &CompletionContext) -> SecurityResult<()> {
-        // Track acceptance for future learning
-        // TODO: update ML models
         let mut metrics = self.performance_metrics.write().await;
+
+        // TODO: Track acceptance for future learning, this would update ML models
         metrics.suggestion_acceptance_rate = (metrics.suggestion_acceptance_rate + 1.0) / 2.0; // Simple moving average
 
         // Update user profile based on acceptance
         if self.config.personalization_enabled {
-            // Create a basic user profile from context
-            let user_profile = UserProfile {
-                coding_style: CodingStyle::default(),
-                preferred_libraries: Vec::new(),
-                naming_conventions: NamingConvention::default(),
-                indentation_style: IndentationStyle::default(),
-                language_proficiency: HashMap::new(),
-            };
-            
-            // Use the suggestion ID as the user ID for this example
-            self.update_user_profile(suggestion_id, user_profile).await?;
+            self.update_user_profile_from_context(suggestion_id, user_context).await?;
         }
 
         Ok(())
@@ -500,7 +471,7 @@ impl PredictiveCompletionEngine {
 
     /// Reject suggestion feedback
     pub async fn reject_suggestion(&self, suggestion_id: &str) -> SecurityResult<()> {
-        // Track rejection for model improvement
+        // TODO: Track rejection for model improvement
         // This would help the distilled models learn what not to suggest
         Ok(())
     }
@@ -523,14 +494,21 @@ impl PredictiveCompletionEngine {
         Ok(())
     }
 
+    /// Update user profile from completion context
+    pub async fn update_user_profile_from_context(&self, suggestion_id: &str, user_context: &CompletionContext) -> SecurityResult<()> {
+        let user_id = suggestion_id; // In real implementation, this would extract user ID from suggestion_id
+        let profile = user_context.user_profile.clone();
+        self.update_user_profile(user_id, profile).await
+    }
+
     // Private methods
 
     async fn get_model_for_language(&self, language: &str) -> SecurityResult<Arc<dyn DistilledModel>> {
         let models = self.distilled_models.read().await;
         models.get(language).cloned()
-            .ok_or_else(|| crate::SecurityError::ConfigurationError(
-                format!("No distilled model available for language: {}", language)
-            ))
+            .ok_or_else(|| crate::SecurityError::ConfigurationError {
+                message: format!("No distilled model available for language: {}", language)
+            })
     }
 
     async fn check_cache(&self, context: &CompletionContext) -> Option<CachedCompletion> {
@@ -563,7 +541,7 @@ impl PredictiveCompletionEngine {
     async fn filter_suggestions(&self, suggestions: &mut Vec<CompletionSuggestion>, context: &CompletionContext) -> SecurityResult<()> {
         let mut filtered = Vec::new();
 
-        for suggestion in suggestions {
+        for suggestion in suggestions.iter() {
             if self.security_filter.filter_suggestion(suggestion, context).await? {
                 filtered.push(suggestion.clone());
             }

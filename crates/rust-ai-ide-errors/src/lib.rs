@@ -150,6 +150,10 @@ pub enum RustAIError {
     #[error("Validation error: {0}")]
     Validation(String),
 
+    /// Invalid argument error
+    #[error("Invalid argument: {0}")]
+    InvalidArgument(String),
+
     /// Protocol error
     #[error("Protocol error: {0}")]
     Protocol(String),
@@ -366,6 +370,9 @@ impl From<serde_json::Error> for RustAIError {
         RustAIError::Serialization(error.to_string())
     }
 }
+
+// Note: This conversion is conditionally available when candle-core is used
+// In the AI quantization crate, candle_core errors are handled via direct implementation
 
 impl From<std::string::FromUtf8Error> for RustAIError {
     fn from(error: std::string::FromUtf8Error) -> Self {

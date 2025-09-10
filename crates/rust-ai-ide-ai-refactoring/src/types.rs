@@ -73,6 +73,45 @@ impl std::fmt::Display for RefactoringType {
     }
 }
 
+impl RefactoringType {
+    /// Try to convert from string to RefactoringType
+    pub fn try_from(s: &str) -> Result<Self, String> {
+        match s {
+            "rename" => Ok(RefactoringType::Rename),
+            "extractFunction" => Ok(RefactoringType::ExtractFunction),
+            "extractVariable" => Ok(RefactoringType::ExtractVariable),
+            "extractClass" => Ok(RefactoringType::ExtractClass),
+            "extractInterface" => Ok(RefactoringType::ExtractInterface),
+            "inlineFunction" => Ok(RefactoringType::InlineFunction),
+            "inlineVariable" => Ok(RefactoringType::InlineVariable),
+            "inlineMethod" => Ok(RefactoringType::InlineMethod),
+            "moveMethod" => Ok(RefactoringType::MoveMethod),
+            "moveClass" => Ok(RefactoringType::MoveClass),
+            "moveFile" => Ok(RefactoringType::MoveFile),
+            "removeParameter" => Ok(RefactoringType::RemoveParameter),
+            "introduceParameter" => Ok(RefactoringType::IntroduceParameter),
+            "replaceConstructor" => Ok(RefactoringType::ReplaceConstructor),
+            "replaceConditionals" => Ok(RefactoringType::ReplaceConditionals),
+            "convertMethodToFunction" => Ok(RefactoringType::ConvertMethodToFunction),
+            "splitClass" => Ok(RefactoringType::SplitClass),
+            "mergeClasses" => Ok(RefactoringType::MergeClasses),
+            "changeSignature" => Ok(RefactoringType::ChangeSignature),
+            "addDelegation" => Ok(RefactoringType::AddDelegation),
+            "removeDelegation" => Ok(RefactoringType::RemoveDelegation),
+            "encapsulateField" => Ok(RefactoringType::EncapsulateField),
+            "localizeVariable" => Ok(RefactoringType::LocalizeVariable),
+            "addMissingImports" => Ok(RefactoringType::AddMissingImports),
+            "sortImports" => Ok(RefactoringType::SortImports),
+            "convertToAsync" => Ok(RefactoringType::ConvertToAsync),
+            "generateGettersSetters" => Ok(RefactoringType::GenerateGettersSetters),
+            "patternConversion" => Ok(RefactoringType::PatternConversion),
+            "batchInterfaceExtraction" => Ok(RefactoringType::BatchInterfaceExtraction),
+            "batchPatternConversion" => Ok(RefactoringType::BatchPatternConversion),
+            _ => Err(format!("Unknown refactoring type: {}", s)),
+        }
+    }
+}
+
 /// Context information for a refactoring operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[derive(Default)]

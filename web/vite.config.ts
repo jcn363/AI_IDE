@@ -1,10 +1,23 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import wasm from 'vite-plugin-wasm';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      jsxRuntime: 'automatic',
+      babel: {
+        babelrc: false,
+        configFile: false,
+        plugins: [
+          ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }],
+        ],
+      },
+    }),
+    wasm({
+      target: 'node',
+    }),
     nodePolyfills({
       // To add polyfills only for specific modules, specify them here
       include: ['path', 'os', 'crypto'],
@@ -18,6 +31,9 @@ export default defineConfig({
   define: {
     'process.env': {},
     global: 'globalThis',
+    // Enable React 19 Concurrent Mode features
+    __REACT_CONCURRENT_MODE: true,
+    __REACT_DEVTOOLS_GLOBAL_HOOK__: false,
   },
   worker: {
     format: 'es',
@@ -28,6 +44,9 @@ export default defineConfig({
     assetsDir: 'assets',
     sourcemap: true,
     chunkSizeWarningLimit: 1500,
+    cssCodeSplit: true,
+    // Optimize for large codebases
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {
@@ -43,7 +62,24 @@ export default defineConfig({
             'vscode-ws-jsonrpc',
           ],
           tauri: ['@tauri-apps/api', '@tauri-apps/plugin-fs', '@tauri-apps/plugin-dialog'],
+          // New AI/ML and performance libraries
+          virtualization: ['react-window', 'react-virtuoso'],
+          webgl: ['three', '@types/three'],
+          webvitals: ['web-vitals'],
+          // WASM chunks
+          wasm: ['./src/wasm/**/*'],
         },
+        // Asset handling for WebGL shaders and WASM files
+        assetFileNames: (assetInfo) => {
+          const fileName = assetInfo.name;
+          if (fileName?.endsWith('.wasm')) return 'assets/wasm/[name].[hash][extname]';
+          if (fileName?.endsWith('.frag') || fileName?.endsWith('.vert')) return 'assets/shaders/[name].[hash][extname]';
+          return 'assets/[name].[hash][extname]';
+        },
+      },
+      // WASM import resolution
+      external: (id) => {
+        return id.endsWith('.wasm') ? false : undefined;
       },
     },
   },
@@ -53,6 +89,20 @@ export default defineConfig({
       define: {
         global: 'globalThis',
       },
+      loader: {
+        '.wasm': 'binary',
+        '.frag': 'text',
+        '.vert': 'text',
+      },
+    },
+    // Exclude problematic dependencies
+    exclude: ['@wasm-tool/wasm-pack-plugin'],
+  },
+  // Server configurations for development
+  server: {
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'credentialless',
+      'Cross-Origin-Opener-Policy': 'same-origin',
     },
   },
 });

@@ -1,0 +1,40 @@
+[package]
+name = "rust-ai-ide-battery-optimization"
+readme = { workspace = true }
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rust-ai-ide-core = { path = "../rust-ai-ide-core" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+rust-ai-ide-performance = { path = "../rust-ai-ide-performance" }
+rust-ai-ide-ai-orchestration-core = { path = "../rust-ai-ide-ai-orchestration-core" }
+rust-ai-ide-properties-infra = { path = "../rust-ai-ide-properties-infra", optional = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+anyhow = { workspace = true }
+futures = { workspace = true }
+moka = { workspace = true }
+
+# Mobile platform dependencies
+[target.'cfg(target_os = "android")'.dependencies]
+android-activity = "0.5"
+jni = "0.21"
+
+[target.'cfg(target_os = "ios")'.dependencies]
+objc = "0.2"
+
+[features]
+default = []
+enterprise = ["rust-ai-ide-properties-infra"]
+mobile-ai = []
+
+[lib]
+name = "rust_ai_ide_battery_optimization"
+readme = { workspace = true }
+path = "src/lib.rs"

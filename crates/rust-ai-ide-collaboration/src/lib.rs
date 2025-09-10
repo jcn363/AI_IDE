@@ -1,67 +1,80 @@
-// Rust AI IDE Collaboration crate
-// Provides CRDT-based collaborative editing features
+//! Real-time collaboration system for Rust AI IDE.
+//!
+//! This crate implements CRDT-based collaborative editing, AI coaching during pair programming,
+//! and real-time communication infrastructure.
 
-pub mod crdt;
+pub mod real_time_editing;
+pub mod ai_coaching;
 
-pub use crdt::*;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use serde::{Deserialize, Serialize};
 
-// Collaboration session management
-#[derive(Debug, Clone)]
+/// Core collaboration service that manages sessions and state
+pub struct CollaborationService {
+    state: Arc<RwLock<CollaborationState>>,
+}
+
+/// Global state for the collaboration system
+#[derive(Default)]
+pub struct CollaborationState {
+    pub sessions: Vec<CollaborationSession>,
+    pub active_editing_state: std::collections::HashMap<String, EditingDocument>,
+}
+
+/// Represents a single collaboration session
+#[derive(Clone, Serialize, Deserialize)]
 pub struct CollaborationSession {
-    pub session_id: String,
+    pub id: String,
     pub participants: Vec<String>,
-    pub document_name: String,
-    pub is_active: bool,
+    pub document_id: String,
+    pub last_activity: std::time::SystemTime,
 }
 
-impl CollaborationSession {
-    pub fn new(session_id: String, document_name: String) -> Self {
+/// Represents a document being collaboratively edited
+#[derive(Clone, Serialize, Deserialize)]
+pub struct EditingDocument {
+    pub content: String,
+    pub crdt_state: CRDTState,
+    pub participants: Vec<String>,
+}
+
+impl CollaborationService {
+    pub fn new() -> Self {
         Self {
-            session_id,
+            state: Arc::new(RwLock::new(CollaborationState::default())),
+        }
+    }
+
+    pub async fn create_session(&self, session_id: String, document_id: String) -> Result<(), Box<dyn std::error::Error>> {
+        let mut state = self.state.write().await;
+        state.sessions.push(CollaborationSession {
+            id: session_id.clone(),
             participants: Vec::new(),
-            document_name,
-            is_active: true,
-        }
-    }
+            document_id: document_id.clone(),
+            last_activity: std::time::SystemTime::now(),
+        });
 
-    pub fn add_participant(&mut self, participant_id: String) {
-        if !self.participants.contains(&participant_id) {
-            self.participants.push(participant_id);
-        }
-    }
+        // Initialize empty document state
+        state.active_editing_state.insert(document_id, EditingDocument {
+            content: String::new(),
+            crdt_state: CRDTState::default(),
+            participants: Vec::new(),
+        });
 
-    pub fn remove_participant(&mut self, participant_id: &str) {
-        self.participants.retain(|p| p != participant_id);
-    }
-
-    pub fn get_participant_count(&self) -> usize {
-        self.participants.len()
+        Ok(())
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+/// Basic CRDT state representation (placeholder for full implementation)
+#[derive(Clone, Serialize, Deserialize, Default)]
+pub struct CRDTState {
+    pub operations: Vec<CRDTOperation>,
+}
 
-    #[test]
-    fn test_collaboration_session() {
-        let mut session =
-            CollaborationSession::new("session1".to_string(), "document.rs".to_string());
-
-        assert_eq!(session.session_id, "session1");
-        assert_eq!(session.document_name, "document.rs");
-        assert_eq!(session.get_participant_count(), 0);
-
-        session.add_participant("user1".to_string());
-        session.add_participant("user2".to_string());
-
-        assert_eq!(session.get_participant_count(), 2);
-        assert!(session.participants.contains(&"user1".to_string()));
-        assert!(session.participants.contains(&"user2".to_string()));
-
-        session.remove_participant("user1");
-        assert_eq!(session.get_participant_count(), 1);
-        assert!(!session.participants.contains(&"user1".to_string()));
-        assert!(session.participants.contains(&"user2".to_string()));
-    }
+/// CRDT operation types
+#[derive(Clone, Serialize, Deserialize)]
+pub enum CRDTOperation {
+    Insert { pos: usize, content: String },
+    Delete { pos: usize, len: usize },
 }

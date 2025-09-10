@@ -1,5 +1,6 @@
 [package]
 name = "rust-ai-ide-ai5-meta-universe"
+readme = { workspace = true }
 version = "0.1.0"
 edition = "2021"
 description = "Meta-universe development orchestration for Wave 5 Rust AI IDE"

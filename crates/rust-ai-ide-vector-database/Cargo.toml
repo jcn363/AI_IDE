@@ -1,0 +1,36 @@
+[package]
+name = "rust-ai-ide-vector-database"
+readme = { workspace = true }
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Vector similarity search and indexing
+tantivy = { version = "0.21", default-features = false }
+hnsw = { version = "0.8", default-features = false }
+ndarray = { version = "^0.15", default-features = false }
+tokio = { version = "^1.47", default-features = false, features = ["full"] }
+rayon = "^1.7"
+serde = { version = "^1.0", features = ["derive"] }
+serde_json = "^1.0"
+async-trait = "^0.1"
+parking_lot = "^0.12"
+memmap2 = { version = "^0.9", default-features = false }
+lz4 = "^1.24"
+
+# Workspace dependencies
+rust-ai-ide-shared-types = { path = "../../crates/rust-ai-ide-shared-types", default-features = false }
+rust-ai-ide-common = { path = "../../crates/rust-ai-ide-common", default-features = false }
+rust-ai-ide-security = { path = "../../crates/rust-ai-ide-security", default-features = false }
+rust-ai-ide-cache = { path = "../../crates/rust-ai-ide-cache", default-features = false }
+rust-ai-ide-errors = { path = "../../crates/rust-ai-ide-errors", default-features = false }
+
+[dependencies.uuid]
+version = "^1.18"
+default-features = false
+features = ["v4", "serde"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

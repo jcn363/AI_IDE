@@ -1,0 +1,99 @@
+[package]
+name = "rust-ai-ide-compliance"
+readme = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Enterprise compliance verification system for GDPR and HIPAA compliance in Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+publish = { workspace = true }
+repository = { workspace = true }
+
+[dependencies]
+async-trait = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Cryptography for data protection and integrity
+ring = "0.17.8"
+aes-gcm = "0.10.3"
+chacha20poly1305 = "0.10.1"
+argon2 = "0.5.3"
+rsa = { version = "0.9.8", features = ["pem"] }
+base64 = "0.22.1"
+base16ct = { version = "0.2.0", features = ["alloc"] }
+regex = "1.11.2"
+
+# Audit logging and compliance tracking
+chrono = { workspace = true }
+uuid = { workspace = true }
+moka = { workspace = true }
+
+# HTTP client for external regulatory reporting
+reqwest = { workspace = true }
+
+# AI/ML integration for risk assessment (commented out for initial compilation)
+# rust-ai-ide-ai = { path = "../rust-ai-ide-ai", features = ["nlp"] }
+
+# Integration with security framework (commented out for initial compilation)
+# rust-ai-ide-security = { path = "../rust-ai-ide-security", features = ["audit-logging", "rbac"] }
+
+# Common types and interfaces
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+
+# Webhooks for external notifications (placeholder - will implement later)
+# rust-ai-ide-webhooks = { path = "../rust-ai-ide-webhooks" }
+
+# Monitoring integration (placeholder - will implement later)
+# rust-ai-ide-monitoring = { path = "../rust-ai-ide-monitoring" }
+# rust-ai-ide-performance-monitoring = { path = "../rust-ai-ide-performance-monitoring" }
+
+[features]
+default = ["std"]
+std = []
+
+# Compliance frameworks
+gdpr = []
+hipaa = []
+ccpa = []
+
+# Compliance features
+automated-policies = []
+risk-assessment = []
+data-anonymization = []
+breach-detection = []
+audit-trails = []
+consent-management = ["gdpr"]
+data-portability = ["gdpr"]
+
+# Enterprise features
+compliance-dashboard = []
+regulatory-reporting = []
+policy-enforcement = []
+ai-risk-analysis = ["risk-assessment"]
+
+# Full compliance suite
+full-compliance = [
+    "gdpr",
+    "hipaa",
+    "ccpa",
+    "automated-policies",
+    "risk-assessment",
+    "data-anonymization",
+    "breach-detection",
+    "audit-trails",
+    "consent-management",
+    "data-portability",
+    "compliance-dashboard",
+    "regulatory-reporting",
+    "policy-enforcement",
+    "ai-risk-analysis"
+]

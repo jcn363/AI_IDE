@@ -1,8 +1,68 @@
 {
   "crates": [
     {
+      "name": "rust-ai-ide-security-monitoring",
+      "description": "Security monitoring and threat detection",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-orchestration",
+      "description": "AI/ML service orchestration and management",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-ai-analysis",
+      "description": "AI-powered code analysis and insights",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-ai-codegen",
+      "description": "AI-assisted code generation",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-ai-quantization",
+      "description": "AI model quantization and optimization",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-config",
+      "description": "Configuration management system",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-dsl-codegen",
+      "description": "DSL and code generation utilities",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-ai-inference",
+      "description": "AI inference engine",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-ai-learning",
+      "description": "Machine learning and model training",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-ai-refactoring",
+      "description": "AI-driven code refactoring",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-ai-specgen",
+      "description": "Specification generation from code",
+      "status": "🚧 In Progress"
+    },
+    {
       "name": "rust-ai-ide-ai",
       "description": "AI-powered code assistance and analysis",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-cache",
+      "description": "Caching infrastructure",
       "status": "✅ Stable"
     },
     {
@@ -11,14 +71,64 @@
       "status": "✅ Stable"
     },
     {
-      "name": "rust-ai-ide-core",
-      "description": "Core functionality and utilities",
+      "name": "rust-ai-ide-collaboration",
+      "description": "Real-time collaboration features",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-performance",
+      "description": "Performance monitoring and optimization",
       "status": "✅ Stable"
     },
     {
-      "name": "rust-ai-ide-monitoring",
-      "description": "System and resource monitoring",
+      "name": "rust-ai-ide-performance-monitoring",
+      "description": "Performance metrics and monitoring",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-predictive-quality",
+      "description": "Predictive code quality assessment",
       "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-cloud-feature-flags",
+      "description": "Cloud-based feature flag management",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-common",
+      "description": "Common utilities and shared functionality",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-core-ai",
+      "description": "Core AI functionality",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-core-file",
+      "description": "File system and I/O core components",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-core-fundamentals",
+      "description": "Fundamental utilities and data structures",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-core-metrics",
+      "description": "Core metrics and measurement utilities",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-core-shell",
+      "description": "Shell and terminal integration core",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-core",
+      "description": "Core functionality and utilities",
+      "status": "✅ Stable"
     },
     {
       "name": "rust-ai-ide-debugger",
@@ -26,8 +136,23 @@
       "status": "🚧 In Progress"
     },
     {
+      "name": "rust-ai-ide-derive-utils",
+      "description": "Derive macro utilities",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-errors",
+      "description": "Error handling and types",
+      "status": "✅ Stable"
+    },
+    {
       "name": "rust-ai-ide-lsp",
       "description": "Language Server Protocol",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-simd",
+      "description": "SIMD computation support",
       "status": "✅ Stable"
     },
     {
@@ -36,9 +161,139 @@
       "status": "🚧 In Progress"
     },
     {
+      "name": "rust-ai-ide-security",
+      "description": "Security utilities and encryption",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-shared-codegen",
+      "description": "Shared code generation utilities",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-shared-services",
+      "description": "Shared service abstractions",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-shared-types",
+      "description": "Shared type definitions",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-shared-utils",
+      "description": "Shared utility functions",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-types",
+      "description": "Common type definitions",
+      "status": "✅ Stable"
+    },
+    {
       "name": "rust-ai-ide-ui",
       "description": "User interface components",
       "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-cloud-integrations",
+      "description": "Cloud service integrations",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-webhooks",
+      "description": "Webhook processing and management",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-connectors",
+      "description": "External service connectors",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-supervisor",
+      "description": "Process supervision and management",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "shared-test-utils",
+      "description": "Shared testing utilities for the workspace",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "test-performance-analyzer",
+      "description": "Performance analysis testing tools",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "test-performance-project",
+      "description": "Test project for performance analysis",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "workspace-hack",
+      "description": "Workspace hack for dependency deduplication",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-wasm-components",
+      "description": "WebAssembly components support",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-onnx-runtime",
+      "description": "ONNX runtime integration",
+      "status": "🎯 Beta"
+    },
+    {
+      "name": "rust-ai-ide-vector-database",
+      "description": "Vector database for similarity search",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-semantic-search",
+      "description": "Semantic search capabilities",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-multi-model-orchestrator",
+      "description": "Multi-model orchestration for AI services",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-multi-reality",
+      "description": "Multi-reality and multi-modal support",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-ai-integration",
+      "description": "AI service integration framework",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-real-time-analysis",
+      "description": "Real-time code analysis engine",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-predictive-maintenance",
+      "description": "Predictive maintenance forecasting system",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-advanced-memory",
+      "description": "Advanced memory management system",
+      "status": "🚧 In Progress"
+    },
+    {
+      "name": "rust-ai-ide-memory-optimization",
+      "description": "Memory optimization utilities",
+      "status": "✅ Stable"
+    },
+    {
+      "name": "rust-ai-ide-compliance",
+      "description": "Regulatory compliance and compliance tools",
+      "status": "🎯 Beta"
     }
   ]
 }

@@ -1,30 +1,30 @@
 [package]
 name = "rust-ai-ide-lsp"
+readme = { workspace = true }
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
 description = "Language Server Protocol implementation for Rust AI IDE"
 license = { workspace = true }
 rust-version = { workspace = true }
-repository = "https://github.com/rust-ai-ide/rust-ai-ide"
-
+publish = { workspace = true }
+repository = { workspace = true }
 [dependencies]
+
 # LSP dependencies
 lsp-types = { workspace = true, features = ["proposed"] }
 async-trait = { workspace = true }
-lsp-server = "0.7.9"
-tower-lsp = "0.20.0"
+lsp-server = { workspace = true }
+tower-lsp = { workspace = true }
 tokio-tungstenite = { version = "0.27.0", features = ["native-tls"] }
 tungstenite = { version = "0.27.0", features = ["native-tls"] }
-futures-util = { version = "0.3.31", default-features = false, features = ["std"] }
-url = { version = "2.5.7", features = ["serde"] }
-serde_repr = "0.1.20"
+futures-util = { workspace = true }
+url = { workspace = true, features = ["serde"] }
+serde_repr = { workspace = true }
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt", "registry", "std"] }
 
 # Additional utilities for multi-language support
 glob = "0.3.3"
-dashmap = { version = "6.1.0", features = ["serde"] }
-regex = "1.10"
 parking_lot = { version = "0.12.4", features = ["serde"] }
 tempfile = { workspace = true }     # For tests and temporary files
 pathdiff = "0.2.3"      # For path manipulation
@@ -33,6 +33,43 @@ which = "8.0.0"         # For finding executables in PATH
 
 # Added for multi-language features
 rand = { workspace = true, optional = true } # For random load balancing
+
+# Monitoring and Security Dependencies
+prometheus = { version = "0.13.3", optional = true } # Prometheus metrics collection
+opentelemetry = { version = "0.21.0", optional = true } # Advanced observability
+hdrhistogram = { version = "7.5.3", optional = true } # High-performance latency histograms
+governor = { version = "0.6.0", optional = true } # Rate limiting
+rusqlite = { version = "0.31.0" } # Audit logging database
+sha3 = "0.10.8" # Secure hashing for audit trails
+base64 = "0.21" # Data encoding/decoding
+lazy_static = "1.4.0" # Lazy initialization
+
+# Performance Optimization Dependencies
+dashmap = { version = "6.1.0", features = ["serde"] }
+hyper = { version = "1.4.1", features = ["full"], optional = true } # HTTP load testing
+
+# Security Enhancement Dependencies
+regex = "1.10" # SQL injection pattern matching
+uuid = { version = "1.6", features = ["v4"] } # Secure session IDs
+ring = "0.17.8" # Cryptographic functions
+
+# Development and Testing Dependencies
+criterion = "0.5" # Performance benchmarking
+proptest = "1.3" # Property-based testing for security
+
+# Tree-Sitter for advanced multi-language parsing
+tree-sitter = { version = "0.20.10", optional = true }
+tree-sitter-rust = { version = "0.20.4", optional = true }
+tree-sitter-typescript = { version = "0.20.4", optional = true }
+tree-sitter-javascript = { version = "0.20.4", optional = true }
+tree-sitter-python = { version = "0.20.4", optional = true }
+tree-sitter-go = { version = "0.20.2", optional = true }
+tree-sitter-java = { version = "0.20.2", optional = true }
+tree-sitter-cpp = { version = "0.20.3", optional = true }
+tree-sitter-c = { version = "0.20.6", optional = true }
+tree-sitter-sql = { version = "0.3.2", optional = true }
+tree-sitter-json = { version = "0.20.0", optional = true }
+tree-sitter-yaml = { version = "0.6.0", optional = true }
 
 # Core async and error handling dependencies from workspace
 tokio = { workspace = true }
@@ -47,18 +84,44 @@ chrono = { workspace = true }
 toml = { workspace = true }
 
 # Performance optimizations
-rayon = "1.8"          # For parallel processing
-num_cpus = "1.16"      # For detecting CPU count
-memmap2 = "0.9"        # For memory-mapped file I/O
+rayon = { workspace = true }          # For parallel processing
+lru = { workspace = true }         # For LRU caching
+once_cell = { workspace = true }   # For lazy static initialization
+num_cpus = { workspace = true }    # For getting CPU count for parallel processing
+memmap2 = { workspace = true }        # For memory-mapped file I/O
 
 # Project dependencies
 rust-ai-ide-debugger = { path = "../rust-ai-ide-debugger" }
 rust-ai-ide-core = { path = "../rust-ai-ide-core" }
 rust-ai-ide-shared-services = { path = "../rust-ai-ide-shared-services" }
 rust-ai-ide-ai = { path = "../rust-ai-ide-ai", optional = true }
+rust-ai-ide-ai-predictive = { path = "../rust-ai-ide-ai-predictive", optional = true }
+moka = { workspace = true, optional = true }
 
 [features]
-default = ["ai", "basic-lsp", "multi-language-lsp"]
+default = ["ai", "basic-lsp", "multi-language-lsp", "sql-lsp", "ai-predictive"]
 ai = ["rust-ai-ide-ai"]
 basic-lsp = []
-multi-language-lsp = ["rand"]  # Enable multi-language LSP support with random load balancing
+multi-language-lsp = [
+    "rand",
+    "tree-sitter",
+    "tree-sitter-rust",
+    "tree-sitter-typescript",
+    "tree-sitter-javascript",
+    "tree-sitter-python",
+    "tree-sitter-go",
+    "tree-sitter-java",
+    "tree-sitter-cpp",
+    "tree-sitter-c",
+    "tree-sitter-sql",
+    "tree-sitter-json",
+    "tree-sitter-yaml",
+]  # Enable multi-language LSP support with Tree-Sitter parsers
+sql-lsp = [
+    "tree-sitter-sql",
+    "moka"
+]  # Enable SQL-specific LSP features with caching
+ai-predictive = [
+    "rust-ai-ide-ai-predictive",
+    "moka"
+]  # Enable AI predictive features integration

@@ -1,0 +1,62 @@
+[package]
+name = "rust-ai-ide-dependency-graph"
+version = { workspace = true }
+edition = { workspace = true }
+rust-version = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+publish = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+readme = { workspace = true }
+
+[features]
+default = ["conservative"]
+conservative = []
+aggressive = []
+latest-compatible = []
+
+[dependencies]
+# Graph algorithms for dependency resolution
+petgraph = { workspace = true }
+
+# Version comparison and semver handling
+semver = { workspace = true }
+
+# Cargo.toml parsing and metadata
+cargo_metadata = { workspace = true }
+
+# Async runtime for concurrent operations
+tokio = { workspace = true, features = ["full"] }
+
+# Serialization for dependency data
+serde = { workspace = true, features = ["derive"] }
+serde_yaml = { workspace = true }
+toml = { workspace = true }
+
+# Parallel processing for dependency analysis
+rayon = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+# Date/time handling for cache timestamps
+chrono = { workspace = true, features = ["serde"] }
+
+# Async stream utilities
+futures = { workspace = true }
+
+# Caching implementation
+moka = { workspace = true }
+
+# HTTP client for external dependency resolution
+reqwest = { workspace = true }
+
+# Common utilities
+rust-ai-ide-common = { workspace = true }
+
+# Types shared across the project
+rust-ai-ide-types = { workspace = true }

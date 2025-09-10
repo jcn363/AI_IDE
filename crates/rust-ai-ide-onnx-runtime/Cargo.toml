@@ -1,0 +1,37 @@
+[package]
+name = "rust-ai-ide-onnx-runtime"
+readme = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+# ONNX Runtime integration
+ort = { workspace = true }
+ndarray = { workspace = true }
+tokio = { workspace = true }
+rayon = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+async-trait = { workspace = true }
+parking_lot = { workspace = true }
+thiserror = { workspace = true }
+
+# Workspace dependencies
+rust-ai-ide-shared-types = { workspace = true }
+rust-ai-ide-common = { workspace = true }
+rust-ai-ide-security = { workspace = true }
+rust-ai-ide-cache = { workspace = true }
+rust-ai-ide-errors = { workspace = true }
+
+[features]
+default = []
+# Enable specific execution providers if needed
+cuda = ["ort/cuda"]
+tensorrt = ["ort/tensorrt"]
+openvino = ["ort/openvino"]
+directml = ["ort/directml"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

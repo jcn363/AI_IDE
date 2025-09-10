@@ -1,12 +1,14 @@
 [package]
 name = "rust-ai-ide-shared-types"
+readme = { workspace = true }
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
 description = "Comprehensive shared types crate with automated TypeScript generation from Rust definitions providing cross-platform type consistency"
 license = { workspace = true }
 rust-version = { workspace = true }
-repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+publish = { workspace = true }
+repository = { workspace = true }
 
 [dependencies]
 # Core workspace dependencies
@@ -68,10 +70,12 @@ development = ["full"]
 
 [lib]
 name = "rust_ai_ide_shared_types"
+readme = { workspace = true }
 path = "src/lib.rs"
 
 [[bin]]
 name = "type_generator"
+readme = { workspace = true }
 path = "src/bin/type_generator.rs"
 
 [package.metadata.docs.rs]

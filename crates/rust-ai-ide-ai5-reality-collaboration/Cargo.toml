@@ -1,5 +1,6 @@
 [package]
 name = "rust-ai-ide-ai5-reality-collaboration"
+readme = { workspace = true }
 version = "0.1.0"
 edition = "2021"
 description = "Reality-spanning development collaboration for Wave 5 Rust AI IDE"

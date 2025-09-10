@@ -410,7 +410,9 @@ impl LanguageRouter {
             "rs" => LanguageServerKind::Rust,
             "ts" | "tsx" => LanguageServerKind::TypeScript,
             "js" | "jsx" => LanguageServerKind::JavaScript,
-            "py" => LanguageServerKind::Python,
+            "html" | "htm" | "xhtml" => LanguageServerKind::Html,
+            "css" | "scss" | "sass" | "less" => LanguageServerKind::Css,
+            "sql" | "mysql" | "pgsql" | "postgres" | "psql" => LanguageServerKind::Sql,
             "go" => LanguageServerKind::Go,
             _ => LanguageServerKind::Custom(extension.to_string()),
         }
@@ -422,7 +424,9 @@ impl LanguageRouter {
             "rust" => LanguageServerKind::Rust,
             "typescript" | "ts" => LanguageServerKind::TypeScript,
             "javascript" | "js" => LanguageServerKind::JavaScript,
-            "python" | "py" => LanguageServerKind::Python,
+            "html" | "xhtml" => LanguageServerKind::Html,
+            "css" | "scss" | "sass" | "less" => LanguageServerKind::Css,
+            "sql" | "mysql" | "postgresql" | "postgres" => LanguageServerKind::Sql,
             "go" | "golang" => LanguageServerKind::Go,
             _ => LanguageServerKind::Custom(hint.to_string()),
         }

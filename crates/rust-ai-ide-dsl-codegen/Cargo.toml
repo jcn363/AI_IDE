@@ -1,5 +1,6 @@
 [package]
 name = "rust-ai-ide-dsl-codegen"
+readme = { workspace = true }
 version = { workspace = true }
 edition = { workspace = true }
 publish = { workspace = true }
@@ -38,4 +39,5 @@ rstest = "0.18"
 
 [[bin]]
 name = "dsl-codegen-demo"
+readme = { workspace = true }
 path = "src/main.rs"

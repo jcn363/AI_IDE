@@ -1,5 +1,6 @@
 [package]
 name = "rust-ai-ide-ai3-nlp"
+readme = { workspace = true }
 version = "0.1.0"
 edition = "2021"
 description = "Wave 3: Advanced NLP Code Understanding - Transformer-based Code Semantic Analysis"

@@ -21,6 +21,7 @@ use crate::language_server::{
     LanguageServerConfig, LanguageServerFactory, LanguageServerHandle,
     LanguageServerKind, LanguageServerWrapper, ServerHealth, ServerMetrics,
 };
+use crate::WebLanguageServerFactory;
 
 /// Pool configuration for language server management
 #[derive(Debug, Clone)]
@@ -184,18 +185,48 @@ impl Default for LanguageServerPool {
 impl LanguageServerPool {
     /// Create a new language server pool
     pub fn new_with_config(config: LanguageServerPoolConfig) -> Self {
-        let (sender, _receiver) = mpsc::unbounded_channel();
+        let (tx, rx) = mpsc::unbounded_channel();
+        let servers = Arc::new(DashMap::new());
+        let config = Arc::new(RwLock::new(config));
+        let stats = Arc::new(RwLock::new(PoolStatistics::default()));
+        let resource_monitor = Arc::new(ResourceMonitor::new());
+        let factories: Arc<Mutex<HashMap<String, Box<dyn LanguageServerFactory + Send + Sync>>>> =
+            Arc::new(Mutex::new(HashMap::new()));
+
+        // Register the web language server factory
+        let web_factory = WebLanguageServerFactory::new();
+        let mut factories_guard = futures::executor::block_on(factories.lock());
+        factories_guard.insert(web_factory.factory_name().to_string(), Box::new(web_factory));
+        drop(factories_guard);
+
+        // Start request processing task
+        let servers_clone = servers.clone();
+        let config_clone = config.clone();
+        let stats_clone = stats.clone();
+        let resource_monitor_clone = resource_monitor.clone();
+        let factories_clone = factories.clone();
+        let _pool_task = spawn(async move {
+            Self::process_requests(
+                rx,
+                servers_clone,
+                config_clone,
+                stats_clone,
+                resource_monitor_clone,
+                factories_clone,
+            )
+            .await;
+        });
 
         Self {
-            servers: DashMap::new(),
+            servers,
             detector: LanguageDetector::default(),
             factories: HashMap::new(),
-            request_sender: Some(sender),
-            config: Arc::new(RwLock::new(config)),
-            stats: Arc::new(RwLock::new(PoolStatistics::default())),
+            request_sender: Some(tx),
+            config,
+            stats,
             background_tasks: Mutex::new(Vec::new()),
             healthy: Arc::new(RwLock::new(true)),
-            resource_monitor: Arc::new(ResourceMonitor::new()),
+            resource_monitor,
         }
     }
 

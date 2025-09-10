@@ -1,0 +1,55 @@
+[package]
+name = "rust-ai-ide-predictive-completion"
+readme = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Predictive Code Completion Module - Context-aware suggestion engine"
+license = { workspace = true }
+rust-version = { workspace = true }
+publish = { workspace = true }
+repository = { workspace = true }
+
+[dependencies]
+async-trait = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.143"
+anyhow = "1.0.99"
+thiserror = "2.0.16"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# AI/ML for predictive analysis
+candle-core = "0.6.0"
+candle-nn = "0.6.0"
+tokenizers = "0.18.1"
+
+# Performance and caching
+moka = { version = "0.12", features = ["future"] }
+
+# Language parsing and analysis
+tree-sitter = "0.23"
+tree-sitter-rust = "0.21"
+
+# Concurrency primitives
+dashmap = "6.1.0"
+
+# Metrics and monitoring
+prometheus = "0.13"
+lazy_static = "1.5"
+
+# LSP integration
+lsp-types = "0.96"
+
+# Local workspace dependencies
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-cache = { path = "../rust-ai-ide-cache" }
+
+[features]
+default = ["std"]
+std = []
+experimental = []
+gpu_acceleration = []

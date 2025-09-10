@@ -1,4 +1,4 @@
-use crate::{AIProvider, ModelInfo, ModelSize, Quantization};
+use crate::types::{AIProvider, ModelInfo, ModelSize, Quantization};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

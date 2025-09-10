@@ -1,0 +1,52 @@
+[package]
+name = "rust-ai-ide-simd"
+readme = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+# SIMD operations and intrinsics
+packed_simd = { version = "0.3.8", features = ["into_bits"] }
+
+# Async runtime and concurrency primitives
+tokio = { workspace = true, features = ["full"] }
+async-trait = { workspace = true }
+
+# Memory management and data structures
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+criterion = { workspace = true, features = ["html_reports"] }
+
+# Error handling and logging
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+# Utility dependencies
+once_cell = { workspace = true }
+rayon = { workspace = true }
+
+# Performance monitoring
+moka = { workspace = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+
+[lib]
+name = "rust_ai_ide_simd"
+readme = { workspace = true }
+path = "src/lib.rs"
+
+[features]
+default = []
+# Enable experimental SIMD features
+experimental = []
+
+[[bench]]
+name = "simd_benchmark"
+readme = { workspace = true }
+harness = false
+
+[[bench]]
+name = "memory_benchmark"
+readme = { workspace = true }
+harness = false

@@ -1,0 +1,117 @@
+[package]
+name = "rust-ai-ide-ai-multimodal"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.91.0"
+
+[dependencies]
+# Core async dependencies
+tokio = { version = "1.0", features = ["full", "macros", "rt-multi-thread"] }
+futures = "0.3"
+
+# Common utilities
+rust-ai-ide-common = { path = "../../rust-ai-ide-common" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Async mutex types
+tokio-util = { version = "0.7", features = ["codec"] }
+
+# Computer vision dependencies
+opencv = { version = "0.91", features = ["contrib", "tbb"] }
+image = { version = "0.24", features = ["jpeg", "png", "tiff", "webp", "bmp"] }
+tesseract = "0.16"  # OCR functionality
+
+# Natural language processing
+tokenizers = { version = "0.15", features = ["onig", "esaxx_fast"] }
+transformers = { version = "0.3", features = ["mkl", "cudnn"] }
+
+# Audio processing
+rodio = { version = "0.17", features = ["symphonia-mp3", "symphonia-wav", "symphonia-flac"] }
+cpal = { version = "0.15", features = ["jack"] }
+whisper-rs = "0.3"  # Speech recognition
+
+# Image segmentation and object detection
+tch = { version = "0.11", features = ["vision"] }  # PyTorch integration for vision models
+
+# Multi-modal model inference
+candle-core = "0.6"
+candle-nn = "0.6"
+candle-transformers = "0.6"
+
+# HTTP client for external APIs
+reqwest = { version = "0.11", default-features = false, features = ["json", "multipart", "rustls-tls"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Base64 for image encoding/decoding
+base64 = "0.21"
+
+# JSON Web Token for API authentication (if needed)
+jsonwebtoken = "8.3"
+
+# File system operations
+tokio-io = { version = "0.2", features = ["fs"] }
+
+# UUID generation
+uuid = { version = "1.0", features = ["v4"] }
+
+# Date and time
+chrono = { version = "0.4", features = ["serde"] }
+
+[dependencies.moka]
+version = "0.12"
+features = ["future"]
+
+[dependencies.regex]
+version = "1.10"
+default-features = false
+features = ["std", "unicode", "perf"]
+
+# Development dependencies
+[dev-dependencies]
+tokio-test = "0.4"
+criterion = "0.5"
+proptest = "1.0"
+
+[features]
+default = [
+    "vision",
+    "audio",
+    "text",
+    "gpu_acceleration"
+]
+
+vision = [
+    "opencv/text_freetype",
+    "tch"
+]
+
+audio = [
+    "whisper-rs",
+    "cpal"
+]
+
+text = [
+    "tokenizers/http",
+    "transformers/mkl"
+]
+
+gpu_acceleration = [
+    "opencv/cuda",
+    "tch/cuda"
+]
+
+
+# Build configuration
+[package.metadata.build]
+rustc-args = [
+    "--cfg",
+    "tokio_unstable"
+]
+
+# Lints configuration
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(tokio_unstable)"] }

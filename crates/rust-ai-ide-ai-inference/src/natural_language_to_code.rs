@@ -20,7 +20,6 @@ use uuid::Uuid;
 use chrono::{DateTime, Utc};
 
 use crate::types::*;
-use crate::SecurityResult;
 
 /// Input for natural language to code conversion
 #[derive(Debug, Clone, Serialize, Deserialize)]

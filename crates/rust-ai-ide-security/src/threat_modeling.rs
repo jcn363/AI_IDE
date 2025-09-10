@@ -7,7 +7,6 @@
 //! - Automated threat model generation from codebase analysis
 //! - Countermeasure optimization recommendations
 
-use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
@@ -65,7 +64,7 @@ pub struct Asset {
     pub data_flows: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AssetValue {
     Low,
     Medium,
@@ -100,6 +99,7 @@ pub enum StrideCategory {
     InformationDisclosure,
     DenialOfService,
     ElevationOfPrivilege,
+    Injection,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -178,12 +178,12 @@ pub struct Recommendation {
     pub effectiveness: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct StrideClassifier {
     patterns: Vec<StridePattern>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct StridePattern {
     keywords: Vec<String>,
     category: StrideCategory,
@@ -308,7 +308,7 @@ impl SystemModeler {
         Self { architecture_patterns }
     }
 
-    pub async fn identify_assets(&self, codebase_path: &str) -> Result<Vec<Asset>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn identify_assets(&self, _codebase_path: &str) -> Result<Vec<Asset>, Box<dyn std::error::Error + Send + Sync>> {
         let mut assets = Vec::new();
 
         // Identify key assets from codebase structure
@@ -379,7 +379,7 @@ impl StrideClassifier {
         Self { patterns }
     }
 
-    pub async fn classify_threats(&self, asset: &Asset, codebase_path: &str) -> Result<Vec<Threat>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn classify_threats(&self, asset: &Asset, _codebase_path: &str) -> Result<Vec<Threat>, Box<dyn std::error::Error + Send + Sync>> {
         let mut threats = Vec::new();
 
         for pattern in &self.patterns {
@@ -417,6 +417,7 @@ impl StrideCategory {
             Self::InformationDisclosure => "Information Disclosure",
             Self::DenialOfService => "Denial of Service",
             Self::ElevationOfPrivilege => "Elevation of Privilege",
+            Self::Injection => "Injection",
         }
     }
 }
@@ -444,7 +445,7 @@ impl VectorPrioritizer {
 }
 
 impl Threat {
-    fn attach_vector_priorities(&mut self, weights: &ScoringWeights) {
+    fn attach_vector_priorities(&mut self, _weights: &ScoringWeights) {
         // Update attack vectors with computed priorities
         for vector in &mut self.attack_vectors {
             let complexity_score = match vector.complexity {
@@ -453,13 +454,13 @@ impl Threat {
                 AttackComplexity::High => 3.0,
             };
 
-            let likelihood_score = match self.likelihood {
+            let _likelihood_score = match self.likelihood {
                 ThreatLikelihood::Low => 1.0,
                 ThreatLikelihood::Medium => 2.0,
                 ThreatLikelihood::High => 3.0,
             };
 
-            let impact_score = match self.impact {
+            let _impact_score = match self.impact {
                 ThreatImpact::Low => 1.0,
                 ThreatImpact::Medium => 2.0,
                 ThreatImpact::High => 3.0,
@@ -543,7 +544,7 @@ impl DreadCalculator {
             ThreatImpact::Low => 2.5,
         };
 
-        let reproducibility = match (threat.likelihood, assets.len()) {
+        let reproducibility = match (threat.likelihood.clone(), assets.len()) {
             (ThreatLikelihood::High, _) => 10.0,
             (ThreatLikelihood::Medium, len) if len > 5 => 7.5,
             (ThreatLikelihood::Medium, _) => 5.0,

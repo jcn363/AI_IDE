@@ -1,0 +1,55 @@
+[package]
+name = "rust-ai-ide-memory-optimization"
+readme = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Advanced memory optimization, leak detection, and performance tuning system for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+publish = { workspace = true }
+repository = { workspace = true }
+
+[dependencies]
+# Workspace dependencies
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+async-trait = { workspace = true }
+anyhow = { workspace = true }
+
+# Performance and memory monitoring
+sysinfo = "0.37"
+
+# SIMD integration (optional)
+rust-ai-ide-simd = { path = "../rust-ai-ide-simd", optional = true }
+
+# AI integration for intelligent analysis (optional)
+rust-ai-ide-ai-codegen = { path = "../rust-ai-ide-ai-codegen", optional = true }
+
+# Common utilities and error types
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+
+# Performance analysis integration
+rust-ai-ide-perfdevel-tools = { path = "../rust-ai-ide-perfdevel-tools" }
+
+# Caching integration
+rust-ai-ide-cache = { path = "../rust-ai-ide-cache" }
+moka = { workspace = true }
+
+[lib]
+name = "rust_ai_ide_memory_optimization"
+readme = { workspace = true }
+path = "src/lib.rs"
+
+[features]
+default = ["leak_detection", "optimization", "monitoring"]
+leak_detection = []
+optimization = []
+monitoring = []
+ai_analysis = ["rust-ai-ide-ai-codegen"]
+simd_acceleration = ["rust-ai-ide-simd"]
+comprehensive = ["ai_analysis", "simd_acceleration"]

@@ -11,8 +11,6 @@ use tokio::sync::Mutex;
 use tokio::sync::RwLock;
 use dashmap::DashMap;
 use chrono;
-#[macro_use]
-extern crate async_trait;
 use crate::infra::{EventBus, RateLimiter, ConnectionPool};
 use rust_ai_ide_common::validation::{validate_secure_path, validate_string_input};
 use tauri::Manager;
@@ -396,7 +394,25 @@ pub fn run() {
             // execute_build_task,
             // batch_update_dependencies,
             handlers::fs::list_files,
-            // handlers::lsp::init_lsp,
+           handlers::lsp::init_lsp,
+           handlers::lsp::get_code_completion,
+           handlers::lsp::get_diagnostics,
+           handlers::lsp::goto_definition,
+           handlers::lsp::get_workspace_symbols,
+           handlers::lsp::get_hover_info,
+           handlers::lsp::get_lsp_health_status,
+           handlers::lsp::rename_symbol,
+           handlers::lsp::format_code,
+           handlers::lsp::get_document_symbols,
+           handlers::monitoring::get_monitoring_dashboard,
+           handlers::monitoring::get_real_time_metrics,
+           handlers::monitoring::get_performance_benchmarks,
+           handlers::monitoring::get_system_health_diagnostics,
+           handlers::monitoring::get_optimization_recommendations,
+           handlers::monitoring::get_monitoring_config,
+           handlers::monitoring::update_monitoring_config,
+           handlers::monitoring::generate_performance_report,
+           handlers::monitoring::export_monitoring_data,
             // commands::ai::send_ai_message,
             handlers::project::build_project,
             handlers::project::run_project,
@@ -526,12 +542,9 @@ pub fn run() {
             commands::ai_development::get_pair_programming_assistance,
             commands::ai_development::run_learning_driven_improvements,
             // Cross-Language Refactoring Engine
-            commands::cross_language_refactoring::analyze_cross_language_impact,
-            commands::cross_language_refactoring::execute_cross_language_refactoring,
+            commands::cross_language_refactoring::perform_cross_language_refactoring_cmd,
+            commands::cross_language_refactoring::validate_cross_language_operation,
             commands::cross_language_refactoring::get_supported_languages,
-            commands::cross_language_refactoring::validate_refactoring_safety,
-            commands::cross_language_refactoring::preview_refactoring_changes,
-            commands::cross_language_refactoring::rollback_cross_language_operation,
             // Model Management Commands (moved to analysis)
             commands::analysis::list_available_models,
             commands::analysis::list_downloaded_models,
@@ -547,6 +560,14 @@ pub fn run() {
             commands::analysis::get_resource_status,
             commands::analysis::validate_model_config,
             commands::analysis::download_model,
+            // Additional AI Inference Commands
+            commands::ai_commands::batch_analyze,
+            commands::ai_commands::semantic_inference,
+            commands::ai_commands::vector_index_file,
+            commands::ai_commands::vector_query,
+            commands::ai_commands::pattern_analysis,
+            commands::ai_commands::code_refactor,
+            commands::ai_commands::generate_tests,
              // Compiler Integration Commands (moved to io)
              // Integration Commands - Cloud, Webhooks, Connectors
              cloud_list_resources,
@@ -808,235 +829,6 @@ async fn download_model(
     model_spec: serde_json::Value,
 ) -> Result<String, String> {
     Ok("Model downloaded".to_string())
-}
-
-// Cross-Language Refactoring Command Implementations
-
-#[tauri::command]
-async fn analyze_cross_language_impact(request: serde_json::Value, app_state: tauri::State<'_, Arc<tokio::sync::Mutex<crate::IDEState>>>) -> Result<serde_json::Value, String> {
-    let parsing_result = serde_json::from_value::<cross_language_refactoring::CrossLanguageRefactoringRequest>(request);
-    match parsing_result {
-        Ok(parsed_request) => {
-            let engine = cross_language_refactoring::CrossLanguageRefactoringEngine::new();
-            let context = cross_language_refactoring::CrossLanguageContext {
-                workspace_root: parsed_request.context.workspace_root.clone(),
-                target_symbol: parsed_request.context.target_symbol.clone(),
-                symbol_kind: parsed_request.context.symbol_kind.clone(),
-                dependencies: parsed_request.context.dependencies.clone(),
-            };
-
-            match engine.analyze_cross_language_impact(&parsed_request, &context).await {
-                Ok(analysis) => Ok(serde_json::to_value(analysis).unwrap_or(serde_json::json!({"error": "Serialization failed"}))),
-                Err(e) => Err(format!("Analysis failed: {}", e)),
-            }
-        },
-        Err(e) => Err(format!("Invalid request format: {}", e)),
-    }
-}
-
-#[tauri::command]
-async fn execute_cross_language_refactoring(request: serde_json::Value, app_state: tauri::State<'_, Arc<tokio::sync::Mutex<crate::IDEState>>>) -> Result<serde_json::Value, String> {
-    let parsing_result = serde_json::from_value::<cross_language_refactoring::CrossLanguageRefactoringRequest>(request);
-    match parsing_result {
-        Ok(parsed_request) => {
-            let engine = cross_language_refactoring::CrossLanguageRefactoringEngine::new();
-            let mut progress_tracker = cross_language_refactoring::ProgressTracker::new();
-
-            // TODO: Set proper total_items based on request analysis
-            // progress_tracker.total_items = calculate_total_operations(&parsed_request);
-
-            match engine.execute_cross_language_refactoring(&parsed_request, &mut progress_tracker).await {
-                Ok(result) => Ok(serde_json::to_value(result).unwrap_or(serde_json::json!({"error": "Serialization failed"}))),
-                Err(e) => Err(format!("Refactoring execution failed: {}", e)),
-            }
-        },
-        Err(e) => Err(format!("Invalid request format: {}", e)),
-    }
-}
-
-#[tauri::command]
-async fn get_supported_languages() -> Result<serde_json::Value, String> {
-    let supported_languages = vec![
-        serde_json::json!({
-            "name": "rust",
-            "display_name": "Rust",
-            "supported_operations": ["extract_function", "rename_symbol", "change_signature"],
-            "capabilities": {
-                "supports_generics": true,
-                "supports_async": true,
-                "has_borrow_checker": true,
-                "supports_macro_system": true
-            }
-        }),
-        serde_json::json!({
-            "name": "python",
-            "display_name": "Python",
-            "supported_operations": ["extract_function", "rename_variable", "change_method"],
-            "capabilities": {
-                "supports_generics": false,
-                "supports_async": true,
-                "has_borrow_checker": false,
-                "supports_macro_system": false
-            }
-        }),
-        serde_json::json!({
-            "name": "javascript",
-            "display_name": "JavaScript",
-            "supported_operations": ["extract_function", "rename_variable", "convert_to_arrow"],
-            "capabilities": {
-                "supports_generics": false,
-                "supports_async": true,
-                "has_borrow_checker": false,
-                "supports_macro_system": false
-            }
-        }),
-        serde_json::json!({
-            "name": "typescript",
-            "display_name": "TypeScript",
-            "supported_operations": ["extract_function", "rename_interface", "add_type_annotation"],
-            "capabilities": {
-                "supports_generics": true,
-                "supports_async": true,
-                "has_borrow_checker": false,
-                "supports_macro_system": false
-            }
-        }),
-        serde_json::json!({
-            "name": "java",
-            "display_name": "Java",
-            "supported_operations": ["extract_method", "rename_class", "add_generics"],
-            "capabilities": {
-                "supports_generics": true,
-                "supports_async": false,
-                "has_borrow_checker": false,
-                "supports_macro_system": false
-            }
-        }),
-    ];
-
-    Ok(serde_json::json!({
-        "supported_languages": supported_languages,
-        "interop_capabilities": {
-            "cross_language_symbol_resolution": true,
-            "type_system_compatibility": true,
-            "build_system_integration": true,
-            "dependency_tracking": true
-        }
-    }))
-}
-
-#[tauri::command]
-async fn validate_refactoring_safety(request: serde_json::Value) -> Result<serde_json::Value, String> {
-    let validation_request = serde_json::from_value::<cross_language_refactoring::CrossLanguageRefactoringRequest>(request)
-        .map_err(|e| format!("Invalid request format: {}", e))?;
-
-    let engine = cross_language_refactoring::CrossLanguageRefactoringEngine::new();
-
-    // Perform cross-language safety analysis
-    let context = cross_language_refactoring::CrossLanguageContext {
-        workspace_root: validation_request.context.workspace_root.clone(),
-        target_symbol: validation_request.context.target_symbol.clone(),
-        symbol_kind: validation_request.context.symbol_kind.clone(),
-        dependencies: validation_request.context.dependencies.clone(),
-    };
-
-    match engine.analyze_cross_language_impact(&validation_request, &context).await {
-        Ok(impact_analysis) => {
-            let safety_score = if impact_analysis.risk_assessment.overall_risk == "high" { 0.3 }
-                else if impact_analysis.risk_assessment.overall_risk == "medium" { 0.6 }
-                else { 0.9 };
-
-            Ok(serde_json::json!({
-                "validation_result": {
-                    "is_safe": safety_score > 0.7,
-                    "safety_score": safety_score,
-                    "overall_risk": impact_analysis.risk_assessment.overall_risk,
-                    "blocking_issues": impact_analysis.risk_assessment.blocking_issues,
-                    "recommendations": impact_analysis.risk_assessment.recommendations,
-                },
-                "impact_analysis": impact_analysis,
-                "validation_timestamp": chrono::Utc::now().timestamp(),
-                "validation_engine": "cross_language_refactoring_v1.0"
-            }))
-        },
-        Err(e) => Err(format!("Safety validation failed: {}", e)),
-    }
-}
-
-#[tauri::command]
-async fn preview_refactoring_changes(request: serde_json::Value) -> Result<serde_json::Value, String> {
-    let preview_request = serde_json::from_value::<cross_language_refactoring::CrossLanguageRefactoringRequest>(request)
-        .map_err(|e| format!("Invalid preview request format: {}", e))?;
-
-    let engine = cross_language_refactoring::CrossLanguageRefactoringEngine::new();
-
-    // Generate preview of changes without executing
-    let context = cross_language_refactoring::CrossLanguageContext {
-        workspace_root: preview_request.context.workspace_root.clone(),
-        target_symbol: preview_request.context.target_symbol.clone(),
-        symbol_kind: preview_request.context.symbol_kind.clone(),
-        dependencies: preview_request.context.dependencies.clone(),
-    };
-
-    match engine.analyze_cross_language_impact(&preview_request, &context).await {
-        Ok(analysis) => {
-            let mut preview_changes = Vec::new();
-
-            for (language, language_analysis) in &analysis.affected_files {
-                preview_changes.push(serde_json::json!({
-                    "language": language,
-                    "files_analyzed": language_analysis.files_analyzed,
-                    "risk_assessment": format!("{} risk, {} issues",
-                        language_analysis.risk_level,
-                        language_analysis.issues.len()),
-                    "recommended": language_analysis.risk_level < 0.5,
-                    "estimated_complexity": language_analysis.estimated_complexity
-                }));
-            }
-
-            Ok(serde_json::json!({
-                "preview_success": true,
-                "preview_changes": preview_changes,
-                "phase_breakdown": analysis.recommended_phases,
-                "overall_risk": analysis.risk_assessment.overall_risk,
-                "estimated_effort_days": analysis.estimated_effort_days,
-                "preview_timestamp": chrono::Utc::now().timestamp(),
-                "warnings": analysis.risk_assessment.recommendations
-            }))
-        },
-        Err(e) => Err(format!("Preview generation failed: {}", e)),
-    }
-}
-
-#[tauri::command]
-async fn rollback_cross_language_operation(rollback_request: serde_json::Value) -> Result<serde_json::Value, String> {
-    let request_data = rollback_request.as_object()
-        .ok_or("Invalid rollback request format")?;
-
-    let operation_id = request_data.get("operation_id")
-        .and_then(|v| v.as_str())
-        .ok_or("Missing operation_id in rollback request")?;
-
-    // In a real implementation, this would look up the operation
-    // and execute the stored rollback operations
-    log::info!("Rolling back cross-language operation: {}", operation_id);
-
-    Ok(serde_json::json!({
-        "rollback_success": true,
-        "operation_id": operation_id,
-        "rollback_actions_executed": [
-            "Reverted code changes",
-            "Restored configuration files",
-            "Updated language-specific indices"
-        ],
-        "rollback_timestamp": chrono::Utc::now().timestamp(),
-        "warnings": ["Some manual verification may be required"],
-        "next_steps": [
-            "Verify project still compiles",
-            "Run test suites",
-            "Review changes with team"
-        ]
-    }))
 }
 
 // Also add placeholders for the missing terminal command

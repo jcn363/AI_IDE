@@ -1,5 +1,6 @@
 [package]
 name = "rust-ai-ide-ai-inference"
+readme = { workspace = true }
 version = { workspace = true }
 edition = { workspace = true }
 
@@ -40,6 +41,9 @@ reqwest-middleware = "^0.4.2"
 moka = { workspace = true }
 lru = { workspace = true }
 sha2 = "^0.10.9"
+
+# SIMD acceleration support
+rust-ai-ide-simd = { path = "../rust-ai-ide-simd", optional = true }
 
 [dev-dependencies]
 criterion = { workspace = true }

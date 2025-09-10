@@ -5,6 +5,7 @@
 
 pub mod ai_analysis_commands;
 pub mod analysis;
+pub mod collaboration;
 pub mod cargo_lock_commands;
 pub mod cargo;
 pub mod commands;

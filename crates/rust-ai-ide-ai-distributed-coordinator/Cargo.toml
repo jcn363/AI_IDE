@@ -1,12 +1,14 @@
 [package]
 name = "rust-ai-ide-ai-distributed-coordinator"
+readme = { workspace = true }
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
 description = "Distributed AI coordinator for load balancing and model sharding"
 license = { workspace = true }
 rust-version = { workspace = true }
-repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+publish = { workspace = true }
+repository = { workspace = true }
 
 [dependencies]
 async-trait = { workspace = true }
