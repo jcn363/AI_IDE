@@ -3,61 +3,25 @@
 # This configuration defines policies for dependency security,
 # licensing compliance, and banned packages.
 
-[graph]
-# The path to a directory where cargo-deny will store various cache files
-cache-dir = "~/.cargo/advisory-db"
-
 [advisories]
-# The lint level for security vulnerabilities
-version = 2
-# The url of the advisory database to use
-url = "https://github.com/rustsec/advisory-db"
-# The lint level for when the downloaded advisory database is stale
 yanked = "warn"
-notice = "warn"
-# The lint level for crates with security vulnerabilities
-vulnerability = "deny"
 
 [bans]
-# Lint level for when multiple versions of the same license requirement are detected
 multiple-versions = "warn"
-# The graph highlighting used when creating dotgraphs for crates
 highlight = "all"
-# The default lint level if no other predicates are matched
-# Allow, Warn, Deny, or Normal
 workspace-default-features = "allow"
 external-default-features = "allow"
-allow = [
-    # serde features are commonly used
-    #{ name = "serde", version = "*" },
-    # git2 is used in multiple places
-]
 deny = [
-    # Each entry the name of a crate and a version range. If version is
-    # not specified, all versions will be matched.
-    #
-    # Prevent usage of deprecated or unmaintained crates
     { name = "openssl", reason = "Use rustls instead" },
     { name = "md5", reason = "MD5 is cryptographically broken" },
-
-    # Disallow known problematic crates
     { name = "ring", reason = "Contains low-level cryptographic code that could introduce vulnerabilities" },
     { name = "quick-js", reason = "Experimental JsEngine with known security concerns" },
 ]
 
 [licenses]
-version = 2
-# The lint level for crates which do not have a detectable license
-unlicensed = "deny"
-# Default policy for unmentioned licenses
-default = "deny"
-# List of explicitly allowed licenses
-# https://spdx.org/licenses/
 allow = [
-    # Permissive licenses
     "MIT",
     "Apache-2.0",
-    "Apache-2.0 WITH LLVM-Exception",
     "BSD-2-Clause",
     "BSD-3-Clause",
     "ISC",
@@ -68,105 +32,13 @@ allow = [
     "BSL-1.0",
     "MPL-2.0",
     "Unlicense",
-    "MIT OR Apache-2.0",
-    "(MIT OR Apache-2.0) AND Unicode-DFS-2016",
 ]
-deny = [
-    "AGPL-1.0-or-later",
-    "AGPL-3.0-or-later",
-    "GFDL-1.1-or-later",
-    "GFDL-1.2-or-later",
-    "GFDL-1.3-or-later",
-    "GPL-2.0-or-later",
-    "GPL-3.0-or-later",
-    "LGPL-2.0-or-later",
-    "LGPL-2.1-or-later",
-    "LGPL-3.0-or-later",
-    "CDDL-1.0",
-    "CDDL-1.1",
-]
-# List of exceptions to the license rules above
 exceptions = [
-    # The sqlite3-sys crate includes a bundled SQLite, which is Public Domain
     { allow = ["CC0-1.0"], name = "sqlite3-src", version = "*" },
-    # Allow MPL licensed crates under the same conditions as Mozilla
     { allow = ["MPL-2.0"], name = "webpki-roots", version = "*" },
-    # Allow git2 which uses GPL
     { allow = ["GPL-2.0", "GPL-3.0", "LGPL-2.1"], name = "git2", version = "*" },
 ]
 
 [sources]
-# Lint level for what to happen when a crate from a crate registry that is
-# not in the allow list is encountered
 unknown-registry = "deny"
-# Lint level for what to happen when a crate from a git repository that is not
-# in the allow list is encountered
 unknown-git = "deny"
-
-# Only allow crates from crates.io
-allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-
-# Explicitly allow specific git repositories
-allow-git = [
-    # Tauri and related
-    "https://github.com/tauri-apps/tauri",
-    "https://github.com/tauri-apps/wry",
-    # Common Rust ecosystem tools
-    "https://github.com/rust-analyzer/rust-analyzer",
-    "https://github.com/RustSec/advisory-db",
-    # Other trusted sources
-    "https://github.com/tokio-rs/tracing",
-    "https://github.com/serde-rs/serde",
-]
-
-[sources.allow-org]
-# The source registry for allowed organizations
-github = [
-    # Core Rust
-    "rust-lang",
-    "rust-analyzer",
-    "rust-lang-nursery",
-    
-    # Major Rust projects
-    "tokio-rs",
-    "hyperium",
-    "seanmonstar",
-    "dtolnay",
-    "serde-rs",
-    
-    # Web and WASM
-    "rustwasm",
-    "yewstack",
-    
-    # Tauri
-    "tauri-apps",
-    
-    # Testing and tools
-    "nextest-rs",
-    "rust-fuzz",
-    "BurntSushi",
-    
-    # Security
-    "RustCrypto",
-    "ctz",
-    "oxidecomputer",
-    "graphql-rust",
-    "prisma",
-    "diesel-rs",
-    "rust-lang-nursery",
-    "rust-embedded",
-    "gtk-rs",
-]
-
-[lints]
-# The lint level for crates that have been published outside of the documented
-# date range for a specific version
-workspace-missing = "warn"
-# Lint level for when a workspace has published dependencies that have been
-# yanked
-workspace-patched = "warn"
-# How to handle lint checks for workspace packages
-workspace-cargo-vendor-mitigation-exception = "deny"
-
-# Kinds of filters
-no-core-crypto = "deny"
