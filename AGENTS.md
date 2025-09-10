@@ -8,7 +8,7 @@ This is a large-scale Rust AI IDE project using:
 
 - **Primary Language**: Rust (Nightly 2025-09-03)
 - **Desktop Framework**: Tauri with React/TypeScript web frontend
-- **Architecture**: Modular workspace with 30+ specialized crates
+- **Architecture**: Modular workspace with 67 crates across 5 layers
 - **Key Technologies**: Async Tokio, LSP protocol, AI/ML models
 
 ## Build/Lint/Test Commands
