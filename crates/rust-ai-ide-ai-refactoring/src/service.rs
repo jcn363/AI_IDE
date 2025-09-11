@@ -4,6 +4,7 @@
 //! It serves as the bridge between LSP requests and the comprehensive refactoring
 //! capabilities implemented across the various operation modules.
 
+use crate::SuggestionEngine;
 use crate::operations::*;
 use crate::types::*;
 use crate::analysis::RefactoringAnalysisEngine;

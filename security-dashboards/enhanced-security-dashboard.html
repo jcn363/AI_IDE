@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust AI IDE - Enhanced Security Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #1e40af);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .metric-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-trend {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .trend-up { color: var(--success-color); }
+        .trend-down { color: var(--danger-color); }
+        .trend-stable { color: var(--text-secondary); }
+
+        .chart-container {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .alerts-section {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .alert {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .alert:last-child {
+            margin-bottom: 0;
+        }
+
+        .alert-critical {
+            background-color: #fef2f2;
+            border-left-color: var(--danger-color);
+        }
+
+        .alert-high {
+            background-color: #fef3c7;
+            border-left-color: #f59e0b;
+        }
+
+        .alert-medium {
+            background-color: #fef3c7;
+            border-left-color: var(--warning-color);
+        }
+
+        .alert-low {
+            background-color: #f0f9ff;
+            border-left-color: var(--info-color);
+        }
+
+        .alert-icon {
+            margin-right: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .alert-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-good {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .status-warning {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .recent-activity {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .activity-critical { background-color: #fee2e2; color: #991b1b; }
+        .activity-high { background-color: #fef3c7; color: #92400e; }
+        .activity-medium { background-color: #fef3c7; color: #92400e; }
+        .activity-low { background-color: #f0f9ff; color: #1e40af; }
+        .activity-info { background-color: #f0f9ff; color: #1e40af; }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .refresh-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #1d4ed8;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .metric-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔒 Security Operations Center</h1>
+        <div class="subtitle">Rust AI IDE - Real-time Security Monitoring & Analytics</div>
+        <div id="last-updated" class="subtitle">Loading...</div>
+    </div>
+
+    <div class="container">
+        <!-- Action Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div>
+                <button class="refresh-btn" onclick="refreshDashboard()">🔄 Refresh Data</button>
+            </div>
+            <div id="overall-status" class="status-badge status-good">Loading...</div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="dashboard-grid" id="metrics-grid">
+            <!-- Metrics will be populated by JavaScript -->
+        </div>
+
+        <!-- Charts Section -->
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('overview')">Overview</div>
+            <div class="tab" onclick="switchTab('vulnerabilities')">Vulnerabilities</div>
+            <div class="tab" onclick="switchTab('compliance')">Compliance</div>
+            <div class="tab" onclick="switchTab('performance')">Performance</div>
+        </div>
+
+        <div id="overview-tab" class="tab-content active">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2 class="chart-title">Security Score Trend</h2>
+                    <select id="timeRange" onchange="updateCharts()">
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                        <option value="90d">Last 90 Days</option>
+                    </select>
+                </div>
+                <canvas id="securityScoreChart" width="400" height="200"></canvas>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Vulnerability Distribution</h2>
+                    </div>
+                    <canvas id="vulnerabilityChart" width="400" height="250"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Test Results</h2>
+                    </div>
+                    <canvas id="testResultsChart" width="400" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="vulnerabilities-tab" class="tab-content">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2 class="chart-title">Vulnerability Trends</h2>
+                </div>
+                <canvas id="vulnerabilityTrendChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <div id="compliance-tab" class="tab-content">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2 class="chart-title">Compliance Status</h2>
+                </div>
+                <canvas id="complianceChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <div id="performance-tab" class="tab-content">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2 class="chart-title">Build Performance</h2>
+                </div>
+                <canvas id="performanceChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Active Alerts -->
+        <div class="alerts-section">
+            <h2 style="margin-bottom: 1rem;">Active Security Alerts</h2>
+            <div id="alerts-container">
+                <!-- Alerts will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="recent-activity">
+            <h2 style="margin-bottom: 1rem;">Recent Security Activity</h2>
+            <div id="activity-container">
+                <!-- Activity will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let securityData = {};
+        let currentTab = 'overview';
+        let charts = {};
+
+        // Initialize dashboard
+        async function initDashboard() {
+            try {
+                await loadSecurityData();
+                updateDashboard();
+                initCharts();
+                updateLastUpdated();
+            } catch (error) {
+                console.error('Failed to initialize dashboard:', error);
+                showError('Failed to load security data');
+            }
+        }
+
+        // Load security data
+        async function loadSecurityData() {
+            try {
+                const response = await fetch('./security-dashboard-data.json');
+                securityData = await response.json();
+                console.log('Security data loaded:', securityData);
+            } catch (error) {
+                console.error('Failed to load security data:', error);
+                // Generate mock data for demonstration
+                securityData = generateMockData();
+            }
+        }
+
+        // Generate mock data for demonstration
+        function generateMockData() {
+            const now = new Date();
+            const mockData = {
+                timestamp: now.toISOString(),
+                security_score: Math.floor(Math.random() * 40) + 60, // 60-100
+                risk_level: 'MEDIUM',
+                summary: {
+                    total_reports: 12,
+                    passed_reports: 10,
+                    failed_reports: 2,
+                    warning_reports: 0,
+                    pass_rate: 83.3
+                },
+                vulnerabilities: {
+                    total: 15,
+                    critical: 2,
+                    high: 5,
+                    medium: 6,
+                    low: 2
+                },
+                performance: {
+                    avg_build_time_seconds: 245,
+                    avg_test_time_seconds: 89
+                },
+                compliance: {
+                    passed: 8,
+                    total: 10,
+                    rate: 80
+                },
+                trends: {
+                    security_score_trend: 'improving',
+                    vulnerability_trend: 'decreasing'
+                },
+                alerts: [
+                    {
+                        level: 'CRITICAL',
+                        message: '2 critical vulnerabilities detected in production dependencies',
+                        timestamp: new Date(now.getTime() - 3600000).toISOString()
+                    },
+                    {
+                        level: 'HIGH',
+                        message: 'Security scan failed for container images',
+                        timestamp: new Date(now.getTime() - 7200000).toISOString()
+                    },
+                    {
+                        level: 'MEDIUM',
+                        message: 'Outdated dependencies found in web frontend',
+                        timestamp: new Date(now.getTime() - 10800000).toISOString()
+                    }
+                ],
+                recent_activity: [
+                    {
+                        type: 'scan',
+                        level: 'info',
+                        message: 'Completed OWASP ZAP security scan',
+                        timestamp: new Date(now.getTime() - 1800000).toISOString()
+                    },
+                    {
+                        type: 'patch',
+                        level: 'success',
+                        message: 'Applied security patches to 3 dependencies',
+                        timestamp: new Date(now.getTime() - 3600000).toISOString()
+                    },
+                    {
+                        type: 'alert',
+                        level: 'high',
+                        message: 'New high-severity vulnerability detected',
+                        timestamp: new Date(now.getTime() - 7200000).toISOString()
+                    }
+                ]
+            };
+            return mockData;
+        }
+
+        // Update dashboard with data
+        function updateDashboard() {
+            updateMetrics();
+            updateOverallStatus();
+            updateAlerts();
+            updateActivity();
+        }
+
+        // Update key metrics
+        function updateMetrics() {
+            const metricsGrid = document.getElementById('metrics-grid');
+            const metrics = [
+                {
+                    title: 'Security Score',
+                    value: `${securityData.security_score}/100`,
+                    trend: securityData.trends?.security_score_trend || 'stable',
+                    class: getScoreClass(securityData.security_score)
+                },
+                {
+                    title: 'Total Vulnerabilities',
+                    value: securityData.vulnerabilities?.total || 0,
+                    trend: securityData.trends?.vulnerability_trend || 'stable',
+                    class: getVulnClass(securityData.vulnerabilities?.total || 0)
+                },
+                {
+                    title: 'Critical Issues',
+                    value: securityData.vulnerabilities?.critical || 0,
+                    trend: 'stable',
+                    class: getVulnClass(securityData.vulnerabilities?.critical || 0)
+                },
+                {
+                    title: 'Test Pass Rate',
+                    value: `${Math.round(securityData.summary?.pass_rate || 0)}%`,
+                    trend: 'stable',
+                    class: getPassRateClass(securityData.summary?.pass_rate || 0)
+                },
+                {
+                    title: 'Compliance Rate',
+                    value: `${Math.round(securityData.compliance?.rate || 0)}%`,
+                    trend: 'stable',
+                    class: getComplianceClass(securityData.compliance?.rate || 0)
+                },
+                {
+                    title: 'Avg Build Time',
+                    value: `${securityData.performance?.avg_build_time_seconds || 0}s`,
+                    trend: 'stable',
+                    class: 'status-good'
+                }
+            ];
+
+            metricsGrid.innerHTML = metrics.map(metric => `
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-title">${metric.title}</div>
+                        <div class="metric-trend trend-${metric.trend}">
+                            ${getTrendIcon(metric.trend)}
+                        </div>
+                    </div>
+                    <div class="metric-value ${metric.class}">${metric.value}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill ${metric.class}" style="width: ${getProgressWidth(metric)}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update overall status
+        function updateOverallStatus() {
+            const statusElement = document.getElementById('overall-status');
+            const score = securityData.security_score || 0;
+            const criticalCount = securityData.vulnerabilities?.critical || 0;
+
+            let statusClass = 'status-good';
+            let statusText = 'SECURE';
+
+            if (score < 70 || criticalCount > 0) {
+                statusClass = 'status-danger';
+                statusText = 'AT RISK';
+            } else if (score < 85) {
+                statusClass = 'status-warning';
+                statusText = 'NEEDS ATTENTION';
+            }
+
+            statusElement.className = `status-badge ${statusClass}`;
+            statusElement.textContent = statusText;
+        }
+
+        // Update alerts
+        function updateAlerts() {
+            const alertsContainer = document.getElementById('alerts-container');
+            const alerts = securityData.alerts || [];
+
+            if (alerts.length === 0) {
+                alertsContainer.innerHTML = '<div class="alert alert-low"><div class="alert-icon">✅</div><div class="alert-content"><div class="alert-title">No Active Alerts</div><div class="alert-description">All security checks are passing</div></div></div>';
+                return;
+            }
+
+            alertsContainer.innerHTML = alerts.map(alert => `
+                <div class="alert alert-${alert.level.toLowerCase()}">
+                    <div class="alert-icon">${getAlertIcon(alert.level)}</div>
+                    <div class="alert-content">
+                        <div class="alert-title">${alert.message}</div>
+                        <div class="alert-description">${formatTimestamp(alert.timestamp)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update recent activity
+        function updateActivity() {
+            const activityContainer = document.getElementById('activity-container');
+            const activities = securityData.recent_activity || [];
+
+            activityContainer.innerHTML = activities.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-icon activity-${activity.level.toLowerCase()}">${getActivityIcon(activity.type)}</div>
+                    <div class="activity-content">
+                        <div>${activity.message}</div>
+                        <div class="activity-time">${formatTimestamp(activity.timestamp)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize charts
+        function initCharts() {
+            initSecurityScoreChart();
+            initVulnerabilityChart();
+            initTestResultsChart();
+            initVulnerabilityTrendChart();
+            initComplianceChart();
+            initPerformanceChart();
+        }
+
+        // Initialize security score chart
+        function initSecurityScoreChart() {
+            const ctx = document.getElementById('securityScoreChart').getContext('2d');
+            const mockTrendData = generateTrendData(30, securityData.security_score);
+
+            charts.securityScore = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: mockTrendData.labels,
+                    datasets: [{
+                        label: 'Security Score',
+                        data: mockTrendData.values,
+                        borderColor: 'rgb(37, 99, 235)',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize vulnerability chart
+        function initVulnerabilityChart() {
+            const ctx = document.getElementById('vulnerabilityChart').getContext('2d');
+
+            charts.vulnerability = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low'],
+                    datasets: [{
+                        data: [
+                            securityData.vulnerabilities?.critical || 0,
+                            securityData.vulnerabilities?.high || 0,
+                            securityData.vulnerabilities?.medium || 0,
+                            securityData.vulnerabilities?.low || 0
+                        ],
+                        backgroundColor: [
+                            '#ef4444',
+                            '#f59e0b',
+                            '#eab308',
+                            '#84cc16'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // Initialize test results chart
+        function initTestResultsChart() {
+            const ctx = document.getElementById('testResultsChart').getContext('2d');
+
+            charts.testResults = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Passed', 'Failed', 'Warnings'],
+                    datasets: [{
+                        data: [
+                            securityData.summary?.passed_reports || 0,
+                            securityData.summary?.failed_reports || 0,
+                            securityData.summary?.warning_reports || 0
+                        ],
+                        backgroundColor: [
+                            '#10b981',
+                            '#ef4444',
+                            '#f59e0b'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Initialize vulnerability trend chart
+        function initVulnerabilityTrendChart() {
+            const ctx = document.getElementById('vulnerabilityTrendChart').getContext('2d');
+            const mockTrendData = generateTrendData(30, securityData.vulnerabilities?.total || 0);
+
+            charts.vulnerabilityTrend = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: mockTrendData.labels,
+                    datasets: [
+                        {
+                            label: 'Total Vulnerabilities',
+                            data: mockTrendData.values,
+                            borderColor: 'rgb(239, 68, 68)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Critical Vulnerabilities',
+                            data: mockTrendData.values.map(v => Math.floor(v * 0.1)),
+                            borderColor: 'rgb(220, 38, 38)',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // Initialize compliance chart
+        function initComplianceChart() {
+            const ctx = document.getElementById('complianceChart').getContext('2d');
+
+            charts.compliance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['GDPR', 'HIPAA', 'License', 'Security'],
+                    datasets: [{
+                        label: 'Compliance Status',
+                        data: [85, 90, 95, Math.round(securityData.compliance?.rate || 0)],
+                        backgroundColor: [
+                            '#10b981',
+                            '#10b981',
+                            '#10b981',
+                            securityData.compliance?.rate >= 80 ? '#10b981' : '#f59e0b'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        }
+
+        // Initialize performance chart
+        function initPerformanceChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+
+            charts.performance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Build Time', 'Test Time'],
+                    datasets: [{
+                        label: 'Time (seconds)',
+                        data: [
+                            securityData.performance?.avg_build_time_seconds || 0,
+                            securityData.performance?.avg_test_time_seconds || 0
+                        ],
+                        borderColor: 'rgb(37, 99, 235)',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // Generate mock trend data
+        function generateTrendData(days, currentValue) {
+            const labels = [];
+            const values = [];
+            const now = new Date();
+
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000));
+                labels.push(date.toLocaleDateString());
+
+                // Generate somewhat realistic trend data
+                const variation = (Math.random() - 0.5) * 20;
+                const trendValue = Math.max(0, Math.min(100, currentValue + variation - (i * 0.5)));
+                values.push(Math.round(trendValue));
+            }
+
+            return { labels, values };
+        }
+
+        // Helper functions
+        function getScoreClass(score) {
+            if (score >= 90) return 'status-good';
+            if (score >= 70) return 'status-warning';
+            return 'status-danger';
+        }
+
+        function getVulnClass(count) {
+            if (count === 0) return 'status-good';
+            if (count <= 5) return 'status-warning';
+            return 'status-danger';
+        }
+
+        function getPassRateClass(rate) {
+            if (rate >= 90) return 'status-good';
+            if (rate >= 75) return 'status-warning';
+            return 'status-danger';
+        }
+
+        function getComplianceClass(rate) {
+            if (rate >= 80) return 'status-good';
+            if (rate >= 60) return 'status-warning';
+            return 'status-danger';
+        }
+
+        function getProgressWidth(metric) {
+            switch (metric.title) {
+                case 'Security Score':
+                    return parseInt(metric.value);
+                case 'Test Pass Rate':
+                    return parseInt(metric.value);
+                case 'Compliance Rate':
+                    return parseInt(metric.value);
+                default:
+                    return 50;
+            }
+        }
+
+        function getTrendIcon(trend) {
+            switch (trend) {
+                case 'up':
+                case 'improving':
+                    return '↗️';
+                case 'down':
+                case 'declining':
+                    return '↘️';
+                default:
+                    return '→';
+            }
+        }
+
+        function getAlertIcon(level) {
+            switch (level.toUpperCase()) {
+                case 'CRITICAL':
+                    return '🚨';
+                case 'HIGH':
+                    return '⚠️';
+                case 'MEDIUM':
+                    return '⚡';
+                case 'LOW':
+                    return 'ℹ️';
+                default:
+                    return '📢';
+            }
+        }
+
+        function getActivityIcon(type) {
+            switch (type) {
+                case 'scan':
+                    return '🔍';
+                case 'patch':
+                    return '🛠️';
+                case 'alert':
+                    return '🚨';
+                case 'test':
+                    return '🧪';
+                default:
+                    return '📋';
+            }
+        }
+
+        function formatTimestamp(timestamp) {
+            return moment(timestamp).fromNow();
+        }
+
+        function updateLastUpdated() {
+            const lastUpdated = document.getElementById('last-updated');
+            if (securityData.timestamp) {
+                lastUpdated.textContent = `Last Updated: ${formatTimestamp(securityData.timestamp)}`;
+            }
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+            currentTab = tabName;
+        }
+
+        function updateCharts() {
+            // Update charts based on selected time range
+            const timeRange = document.getElementById('timeRange').value;
+            console.log('Updating charts for time range:', timeRange);
+            // Implementation would update chart data based on selected time range
+        }
+
+        function refreshDashboard() {
+            console.log('Refreshing dashboard...');
+            initDashboard();
+        }
+
+        function showError(message) {
+            const container = document.querySelector('.container');
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <h2>⚠️ Dashboard Error</h2>
+                    <p>${message}</p>
+                    <button class="refresh-btn" onclick="refreshDashboard()">Retry</button>
+                </div>
+            `;
+        }
+
+        // Initialize dashboard on page load
+        window.addEventListener('load', initDashboard);
+
+        // Auto-refresh every 5 minutes
+        setInterval(refreshDashboard, 300000);
+    </script>
+</body>
+</html>

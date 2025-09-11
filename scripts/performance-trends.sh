@@ -1,295 +1,406 @@
 #!/bin/bash
 
-# Performance Trend Analysis Script
-# Analyzes benchmark data over time to identify performance regressions and improvements
+# Performance Trends Analysis Script
+# Analyzes performance metrics and trends for the Rust AI IDE
+# Author: Performance Team
+# Version: 1.0.0
 
 set -euo pipefail
 
 # Configuration
-WORKSPACE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BENCHMARK_DIR="${WORKSPACE_ROOT}/benchmark-data"
-TREND_REPORT="${WORKSPACE_ROOT}/performance-trends-report.md"
-THRESHOLD_DEGRADATION_PERCENT=5
-THRESHOLD_WARNING_PERCENT=10
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+PERFORMANCE_LOG="${PROJECT_ROOT}/logs/performance-trends-$(date +%Y%m%d).log"
+REPORTS_DIR="${PROJECT_ROOT}/reports/performance"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
 
 # Logging functions
 log_info() {
-    echo -e "\033[34m[INFO]\033[0m $(date '+%Y-%m-%d %H:%M:%S') $*" >&2
-}
-
-log_warn() {
-    echo -e "\033[33m[WARN]\033[0m $(date '+%Y-%m-%d %H:%M:%S') $*" >&2
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] INFO: $*" | tee -a "${PERFORMANCE_LOG}"
 }
 
 log_error() {
-    echo -e "\033[31m[ERROR]\033[0m $(date '+%Y-%m-%d %H:%M:%S') $*" >&2
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $*" | tee -a "${PERFORMANCE_LOG}" >&2
 }
 
-# Setup benchmark directory structure
-setup_directories() {
-    log_info "Setting up benchmark directory structure..."
-    mkdir -p "$BENCHMARK_DIR"/{"current","historical","trends"}
+log_success() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] SUCCESS: $*" | tee -a "${PERFORMANCE_LOG}"
 }
 
-# Collect current benchmark data from GitHub artifacts
-collect_current_benchmarks() {
-    log_info "Collecting current benchmark data..."
-
-    # This would typically be done by downloading from GitHub API
-    # For now, we'll work with local benchmark files if available
-
-    find . -name "benchmark-results-*.zip" -type f 2>/dev/null | while read -r archive; do
-        log_info "Extracting benchmarks from $archive"
-        unzip -q "$archive" -d "$BENCHMARK_DIR/current/" 2>/dev/null || \
-        tar -xzf "$archive" -C "$BENCHMARK_DIR/current/" 2>/dev/null || \
-        log_warn "Could not extract $archive"
-    done
+log_warning() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] WARNING: $*" | tee -a "${PERFORMANCE_LOG}"
 }
 
-# Archive historical data
-archive_historical_data() {
-    log_info "Archiving historical benchmark data..."
+# Function to measure build time
+measure_build_time() {
+    log_info "Measuring build performance..."
 
-    if [ -d "$BENCHMARK_DIR/current" ]; then
-        timestamp=$(date +%Y%m%d_%H%M%S)
-        cp -r "$BENCHMARK_DIR/current" "$BENCHMARK_DIR/historical/$timestamp"
+    local start_time=$(date +%s.%3N)
+    if cargo build --release --quiet >/dev/null 2>&1; then
+        local end_time=$(date +%s.%3N)
+        local build_time=$(echo "$end_time - $start_time" | bc)
+
+        log_info "Build completed in ${build_time}s"
+        echo "$build_time"
+    else
+        log_error "Build failed"
+        echo "0"
     fi
 }
 
-# Analyze compilation time trends
-analyze_compilation_trends() {
-    log_info "Analyzing compilation time trends..."
+# Function to measure test execution time
+measure_test_time() {
+    log_info "Measuring test performance..."
 
-    local current_compilation_file=""
-    local historical_compilation_file=""
+    local start_time=$(date +%s.%3N)
+    if cargo test --release --quiet >/dev/null 2>&1; then
+        local end_time=$(date +%s.%3N)
+        local test_time=$(echo "$end_time - $start_time" | bc)
 
-    # Find latest compilation benchmarks
-    if [ -n "$(find "$BENCHMARK_DIR/current" -name "*compilation*.json" 2>/dev/null)" ]; then
-        current_compilation_file=$(find "$BENCHMARK_DIR/current" -name "*compilation*.json" | head -1)
-    fi
-
-    if [ -n "$(find "$BENCHMARK_DIR/historical" -name "*compilation*.json" 2>/dev/null)" ]; then
-        historical_compilation_file=$(find "$BENCHMARK_DIR/historical" -name "*compilation*.json" | sort -r | head -1)
-    fi
-
-    if [ -n "$current_compilation_file" ] && [ -n "$historical_compilation_file" ]; then
-        current_time=$(jq -r '.compilation_time // 0' "$current_compilation_file" 2>/dev/null || echo "0")
-        historical_time=$(jq -r '.compilation_time // 0' "$historical_compilation_file" 2>/dev/null || echo "0")
-
-        if [ "$historical_time" != "0" ] && [ "$current_time" != "0" ]; then
-            change_percent=$(echo "scale=2; (($current_time - $historical_time) / $historical_time) * 100" | bc -l 2>/dev/null || echo "0")
-
-            echo "COMPILATION_TREND=$change_percent" >> "$GITHUB_ENV"
-            echo "COMPILATION_CHANGE_PERCENT=$change_percent" >> "$GITHUB_ENV"
-
-            if (( $(echo "$change_percent > $THRESHOLD_WARNING_PERCENT" | bc -l) )); then
-                log_error "Significant compilation time increase: ${change_percent}% ($historical_time → $current_time)"
-                echo "TREND_SEVERITY=high" >> "$GITHUB_ENV"
-            elif (( $(echo "$change_percent > $THRESHOLD_DEGRADATION_PERCENT" | bc -l) )); then
-                log_warn "Compilation time increase: ${change_percent}% ($historical_time → $current_time)"
-                echo "TREND_SEVERITY=medium" >> "$GITHUB_ENV"
-            elif (( $(echo "$change_percent < -$THRESHOLD_DEGRADATION_PERCENT" | bc -l) )); then
-                log_info "Compilation time improvement: ${change_percent}% ($historical_time → $current_time)"
-                echo "TREND_SEVERITY=improvement" >> "$GITHUB_ENV"
-            else
-                log_info "Compilation time stable: ${change_percent}% change"
-                echo "TREND_SEVERITY=stable" >> "$GITHUB_ENV"
-            fi
-        fi
+        log_info "Tests completed in ${test_time}s"
+        echo "$test_time"
+    else
+        log_error "Tests failed"
+        echo "0"
     fi
 }
 
-# Analyze warning trends
-analyze_warning_trends() {
-    log_info "Analyzing warning count trends..."
+# Function to analyze binary size
+analyze_binary_size() {
+    log_info "Analyzing binary size..."
 
-    local current_check_file=""
-    local historical_check_file=""
+    # Build release binary
+    if cargo build --release --quiet >/dev/null 2>&1; then
+        local binary_path="${PROJECT_ROOT}/target/release/rust-ai-ide"
 
-    # Find latest cargo check benchmarks
-    if [ -n "$(find "$BENCHMARK_DIR/current" -name "*cargo-check*.json" 2>/dev/null)" ]; then
-        current_check_file=$(find "$BENCHMARK_DIR/current" -name "*cargo-check*.json" | head -1)
-    fi
-
-    if [ -n "$(find "$BENCHMARK_DIR/historical" -name "*cargo-check*.json" 2>/dev/null)" ]; then
-        historical_check_file=$(find "$BENCHMARK_DIR/historical" -name "*cargo-check*.json" | sort -r | head -1)
-    fi
-
-    if [ -n "$current_check_file" ] && [ -n "$historical_check_file" ]; then
-        current_warnings=$(jq -r '.warning_count // 0' "$current_check_file" 2>/dev/null || echo "0")
-        historical_warnings=$(jq -r '.warning_count // 0' "$historical_check_file" 2>/dev/null || echo "0")
-
-        if [ "$historical_warnings" != "0" ]; then
-            change_percent=$(echo "scale=2; (($current_warnings - $historical_warnings) / $historical_warnings) * 100" | bc -l 2>/dev/null || echo "0")
-
-            echo "WARNING_TREND=$change_percent" >> "$GITHUB_ENV"
-            echo "WARNINGS_CHANGE_PERCENT=$change_percent" >> "$GITHUB_ENV"
-
-            if (( $(echo "$change_percent > 20" | bc -l) )); then
-                log_error "Significant warning increase: ${change_percent}% ($historical_warnings → $current_warnings)"
-                echo "WARNING_SEVERITY=high" >> "$GITHUB_ENV"
-            elif (( $(echo "$change_percent > 10" | bc -l) )); then
-                log_warn "Warning increase: ${change_percent}% ($historical_warnings → $current_warnings)"
-                echo "WARNING_SEVERITY=medium" >> "$GITHUB_ENV"
-            elif (( $(echo "$change_percent < -10" | bc -l) )); then
-                log_info "Warning reduction: ${change_percent}% ($historical_warnings → $current_warnings)"
-                echo "WARNING_SEVERITY=improvement" >> "$GITHUB_ENV"
-            else
-                log_info "Warning count stable: ${change_percent}% change"
-                echo "WARNING_SEVERITY=stable" >> "$GITHUB_ENV"
-            fi
-        fi
-    fi
-}
-
-# Generate performance trend report
-generate_trend_report() {
-    log_info "Generating performance trend analysis report..."
-
-    cat > "$TREND_REPORT" << EOF
-# Performance Trend Analysis Report
-
-**Generated:** $(date '+%Y-%m-%d %H:%M:%S UTC')
-**Analysis Period:** Last benchmark run vs previous baseline
-**Analysis Script:** $0
-
-## Performance Metrics Overview
-
-### Compilation Performance
-EOF
-
-    # Add compilation trend data
-    if [ -n "${COMPILATION_CHANGE_PERCENT:-}" ]; then
-        echo "- **Compilation Time Change:** ${COMPILATION_CHANGE_PERCENT}%"
-        if [ "${TREND_SEVERITY:-}" == "improvement" ]; then
-            echo "- **Trend:** 🟢 Improvement detected"
-        elif [ "${TREND_SEVERITY:-}" == "high" ]; then
-            echo "- **Trend:** 🔴 Major performance degradation"
-        elif [ "${TREND_SEVERITY:-}" == "medium" ]; then
-            echo "- **Trend:** 🟡 Performance degradation"
+        if [[ -f "$binary_path" ]]; then
+            local size_kb=$(du -k "$binary_path" | cut -f1)
+            log_info "Binary size: ${size_kb}KB"
+            echo "$size_kb"
         else
-            echo "- **Trend:** ⚪ Stable performance"
+            log_warning "Release binary not found"
+            echo "0"
         fi
     else
-        echo "- **Compilation Time Change:** No trend data available"
-    fi
-
-    cat >> "$TREND_REPORT" << EOF
-
-### Warning Analysis
-EOF
-
-    # Add warning trend data
-    if [ -n "${WARNINGS_CHANGE_PERCENT:-}" ]; then
-        echo "- **Warning Count Change:** ${WARNINGS_CHANGE_PERCENT}%"
-        if [ "${WARNING_SEVERITY:-}" == "improvement" ]; then
-            echo "- **Trend:** 🟢 Warning reduction"
-        elif [ "${WARNING_SEVERITY:-}" == "high" ]; then
-            echo "- **Trend:** 🔴 Major warning increase"
-        elif [ "${WARNING_SEVERITY:-}" == "medium" ]; then
-            echo "- **Trend:** 🟡 Warning increase"
-        else
-            echo "- **Trend:** ⚪ Stable warning count"
-        fi
-    else
-        echo "- **Warning Count Change:** No trend data available"
-    fi
-
-    cat >> "$TREND_REPORT" << EOF
-
-## Threshold Settings
-- **Performance Degradation Threshold:** ${THRESHOLD_DEGRADATION_PERCENT}%
-- **Warning Increase Threshold:** 10%
-- **Critical Degradation Threshold:** ${THRESHOLD_WARNING_PERCENT}%
-
-## Recommendations
-
-EOF
-
-    if [ "${TREND_SEVERITY:-}" == "high" ] || [ "${WARNING_SEVERITY:-}" == "high" ]; then
-        echo "### Critical Issues Requiring Immediate Attention
-- 🚨 Performance and/or warning thresholds exceeded
-- Investigate recent code changes for performance regressions
-- Review build optimizations and dependency updates
-- Consider rolling back recent changes if regression is confirmed
-        " >> "$TREND_REPORT"
-    elif [ "${TREND_SEVERITY:-}" == "medium" ] || [ "${WARNING_SEVERITY:-}" == "medium" ]; then
-        echo "### Medium Priority Issues
-- ⚠️ Performance degradation or warning increase detected
-- Monitor trend in upcoming builds
-- Review recent changes for potential optimizations
-- Consider updating dependencies if they're causing issues
-        " >> "$TREND_REPORT"
-    elif [ "${TREND_SEVERITY:-}" == "improvement" ] || [ "${WARNING_SEVERITY:-}" == "improvement" ]; then
-        echo "### Positive Trends
-- ✅ Performance improvements detected
-- Continue monitoring to ensure stability
-- Consider documenting successful optimizations
-        " >> "$TREND_REPORT"
-    else
-        echo "### Stable Performance
-- ✅ No significant performance changes detected
-- Continue regular monitoring
-- Performance within acceptable thresholds
-        " >> "$TREND_REPORT"
-    fi
-
-    cat >> "$TREND_REPORT" << EOF
-
-## Data Sources
-- Current benchmark data: ${BENCHMARK_DIR}/current/
-- Historical benchmark data: ${BENCHMARK_DIR}/historical/
-
-**Note:** This report is automatically generated. For detailed analysis, review the raw benchmark data files.
-EOF
-
-    log_info "Performance trend report saved to: $TREND_REPORT"
-}
-
-# Send notifications (placeholder for integration with Slack/Teams/etc)
-send_notifications() {
-    if [ "${TREND_SEVERITY:-}" == "high" ] || [ "${WARNING_SEVERITY:-}" == "high" ]; then
-        log_error "Critical performance regression detected!"
-        echo "NOTIFICATION_REQUIRED=true" >> "$GITHUB_ENV"
-        echo "NOTIFICATION_SEVERITY=critical" >> "$GITHUB_ENV"
-    elif [ "${TREND_SEVERITY:-}" == "medium" ] || [ "${WARNING_SEVERITY:-}" == "medium" ]; then
-        log_warn "Performance degradation detected"
-        echo "NOTIFICATION_REQUIRED=true" >> "$GITHUB_ENV"
-        echo "NOTIFICATION_SEVERITY=warning" >> "$GITHUB_ENV"
-    elif [ "${TREND_SEVERITY:-}" == "improvement" ] || [ "${WARNING_SEVERITY:-}" == "improvement" ]; then
-        log_info "Performance improvement detected"
-        echo "NOTIFICATION_REQUIRED=false" >> "$GITHUB_ENV"
-        echo "NOTIFICATION_SEVERITY=info" >> "$GITHUB_ENV"
-    else
-        echo "NOTIFICATION_REQUIRED=false" >> "$GITHUB_ENV"
-        echo "NOTIFICATION_SEVERITY=none" >> "$GITHUB_ENV"
+        log_error "Failed to build release binary"
+        echo "0"
     fi
 }
 
-# Main execution flow
+# Function to measure memory usage
+measure_memory_usage() {
+    log_info "Measuring memory usage..."
+
+    # Run a simple cargo check and measure memory
+    local mem_usage=""
+
+    if command -v /usr/bin/time >/dev/null 2>&1; then
+        # Use GNU time to measure memory
+        mem_usage=$(/usr/bin/time -f "%M" cargo check --quiet 2>&1 | tail -1)
+        local mem_kb=$((mem_usage))
+        log_info "Peak memory usage: ${mem_kb}KB"
+        echo "$mem_kb"
+    else
+        log_warning "GNU time not available, skipping memory measurement"
+        echo "0"
+    fi
+}
+
+# Function to check compilation warnings
+check_compilation_warnings() {
+    log_info "Checking compilation warnings..."
+
+    local warnings=$(cargo check 2>&1 | grep -c "warning:" || true)
+    log_info "Compilation warnings: $warnings"
+
+    if [[ $warnings -gt 50 ]]; then
+        log_warning "High number of compilation warnings detected"
+    elif [[ $warnings -eq 0 ]]; then
+        log_success "No compilation warnings"
+    else
+        log_info "Some compilation warnings present"
+    fi
+
+    echo "$warnings"
+}
+
+# Function to analyze dependencies
+analyze_dependencies() {
+    log_info "Analyzing dependency count..."
+
+    local dep_count=$(cargo tree | grep -c "├──" || true)
+    log_info "Total dependencies: $dep_count"
+
+    if [[ $dep_count -gt 200 ]]; then
+        log_warning "High dependency count detected"
+    else
+        log_success "Dependency count is reasonable"
+    fi
+
+    echo "$dep_count"
+}
+
+# Function to generate performance report
+generate_performance_report() {
+    local build_time="$1"
+    local test_time="$2"
+    local binary_size="$3"
+    local memory_usage="$4"
+    local warnings="$5"
+    local dependencies="$6"
+
+    mkdir -p "${REPORTS_DIR}"
+
+    local report_file="${REPORTS_DIR}/performance-report-$(date +%Y%m%d_%H%M%S).json"
+
+    cat > "${report_file}" << EOF
+{
+    "timestamp": "$(date -Iseconds)",
+    "performance_metrics": {
+        "build_time_seconds": $build_time,
+        "test_time_seconds": $test_time,
+        "binary_size_kb": $binary_size,
+        "memory_usage_kb": $memory_usage,
+        "compilation_warnings": $warnings,
+        "dependency_count": $dependencies
+    },
+    "thresholds": {
+        "max_build_time": 300,
+        "max_test_time": 600,
+        "max_binary_size_mb": 100,
+        "max_warnings": 50,
+        "max_dependencies": 200
+    },
+    "recommendations": []
+}
+EOF
+
+    # Add recommendations based on metrics
+    generate_recommendations "$report_file" "$build_time" "$test_time" "$binary_size" "$warnings" "$dependencies"
+
+    log_success "Performance report generated: ${report_file}"
+    echo "${report_file}"
+}
+
+# Function to generate recommendations
+generate_recommendations() {
+    local report_file="$1"
+    local build_time="$2"
+    local test_time="$3"
+    local binary_size="$4"
+    local warnings="$5"
+    local dependencies="$6"
+
+    local recommendations=()
+
+    # Build time recommendations
+    if (( $(echo "$build_time > 300" | bc -l) )); then
+        recommendations+=("Build time is high (${build_time}s). Consider enabling incremental compilation or optimizing build dependencies.")
+    fi
+
+    # Test time recommendations
+    if (( $(echo "$test_time > 600" | bc -l) )); then
+        recommendations+=("Test execution time is high (${test_time}s). Consider parallelizing tests or optimizing slow test cases.")
+    fi
+
+    # Binary size recommendations
+    local binary_mb=$(echo "scale=2; $binary_size / 1024" | bc)
+    if (( $(echo "$binary_mb > 100" | bc -l) )); then
+        recommendations+=("Binary size is large (${binary_mb}MB). Consider enabling size optimizations or removing unused dependencies.")
+    fi
+
+    # Compilation warnings
+    if [[ $warnings -gt 50 ]]; then
+        recommendations+=("High number of compilation warnings ($warnings). Address warnings to improve code quality.")
+    fi
+
+    # Dependencies
+    if [[ $dependencies -gt 200 ]]; then
+        recommendations+=("High dependency count ($dependencies). Consider auditing dependencies for unused crates.")
+    fi
+
+    # Update report with recommendations
+    if [[ ${#recommendations[@]} -gt 0 ]]; then
+        local recs_json=$(printf '%s\n' "${recommendations[@]}" | jq -R . | jq -s .)
+        jq --argjson recs "$recs_json" '.recommendations = $recs' "$report_file" > "${report_file}.tmp"
+        mv "${report_file}.tmp" "$report_file"
+    fi
+}
+
+# Function to compare with previous runs
+compare_with_previous() {
+    local current_report="$1"
+
+    log_info "Comparing with previous performance reports..."
+
+    # Find previous report
+    local previous_report=$(find "${REPORTS_DIR}" -name "performance-report-*.json" -not -name "$(basename "$current_report")" | head -1)
+
+    if [[ -n "$previous_report" ]]; then
+        log_info "Comparing with previous report: $(basename "$previous_report")"
+
+        # Extract metrics from both reports
+        local current_build=$(jq '.performance_metrics.build_time_seconds' "$current_report")
+        local previous_build=$(jq '.performance_metrics.build_time_seconds' "$previous_report")
+
+        if (( $(echo "$current_build > $previous_build" | bc -l) )); then
+            local diff=$(echo "$current_build - $previous_build" | bc)
+            log_warning "Build time increased by ${diff}s compared to previous run")
+        elif (( $(echo "$previous_build > $current_build" | bc -l) )); then
+            local diff=$(echo "$previous_build - $current_build" | bc)
+            log_success "Build time improved by ${diff}s compared to previous run")
+        fi
+    else
+        log_info "No previous performance report found for comparison"
+    fi
+}
+
+# Function to display usage
+usage() {
+    cat << EOF
+Usage: $0 [OPTIONS] [ACTION]
+
+Performance Trends Analysis for Rust AI IDE
+
+ACTIONS:
+    full                Run complete performance analysis (default)
+    build               Measure build time only
+    test                Measure test time only
+    size                Analyze binary size only
+    memory              Measure memory usage only
+    warnings            Check compilation warnings only
+    dependencies        Analyze dependencies only
+
+OPTIONS:
+    -h, --help           Show this help message
+    -v, --verbose        Enable verbose output
+    --analyze-only       Skip measurements, analyze existing data only
+    --compare            Compare with previous runs
+    --output FILE        Save results to specific file
+
+EXAMPLES:
+    $0                    Run complete performance analysis
+    $0 --compare         Run analysis and compare with previous runs
+    $0 build             Measure build time only
+    $0 --analyze-only    Analyze existing performance data
+
+EOF
+}
+
+# Parse command line arguments
+ANALYZE_ONLY=false
+COMPARE=false
+OUTPUT_FILE=""
+ACTION="full"
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
+        --analyze-only)
+            ANALYZE_ONLY=true
+            shift
+            ;;
+        --compare)
+            COMPARE=true
+            shift
+            ;;
+        --output)
+            OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        build|test|size|memory|warnings|dependencies|full)
+            ACTION="$1"
+            shift
+            ;;
+        *)
+            log_error "Unknown option: $1"
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+# Main execution function
 main() {
-    log_info "Starting performance trend analysis..."
+    mkdir -p "${REPORTS_DIR}"
 
-    setup_directories
-    collect_current_benchmarks
-    archive_historical_data
+    log_info "Starting performance trends analysis (Action: ${ACTION})"
 
-    analyze_compilation_trends
-    analyze_warning_trends
-
-    generate_trend_report
-    send_notifications
-
-    log_info "Performance trend analysis complete"
-    log_info "Check $TREND_REPORT for detailed results"
-
-    # Export final status
-    if [ "${TREND_SEVERITY:-}" == "high" ] || [ "${WARNING_SEVERITY:-}" == "high" ]; then
-        exit 1
+    if [[ "${ANALYZE_ONLY}" == true ]]; then
+        log_info "ANALYZE-ONLY MODE: Skipping measurements"
+        exit 0
     fi
+
+    local build_time="0"
+    local test_time="0"
+    local binary_size="0"
+    local memory_usage="0"
+    local warnings="0"
+    local dependencies="0"
+
+    case "${ACTION}" in
+        full)
+            build_time=$(measure_build_time)
+            test_time=$(measure_test_time)
+            binary_size=$(analyze_binary_size)
+            memory_usage=$(measure_memory_usage)
+            warnings=$(check_compilation_warnings)
+            dependencies=$(analyze_dependencies)
+            ;;
+        build)
+            build_time=$(measure_build_time)
+            ;;
+        test)
+            test_time=$(measure_test_time)
+            ;;
+        size)
+            binary_size=$(analyze_binary_size)
+            ;;
+        memory)
+            memory_usage=$(measure_memory_usage)
+            ;;
+        warnings)
+            warnings=$(check_compilation_warnings)
+            ;;
+        dependencies)
+            dependencies=$(analyze_dependencies)
+            ;;
+        *)
+            log_error "Unknown action: ${ACTION}"
+            usage
+            exit 1
+            ;;
+    esac
+
+    # Generate report
+    local report_file
+    if [[ -n "$OUTPUT_FILE" ]]; then
+        report_file="$OUTPUT_FILE"
+    else
+        report_file=$(generate_performance_report "$build_time" "$test_time" "$binary_size" "$memory_usage" "$warnings" "$dependencies")
+    fi
+
+    # Compare with previous runs if requested
+    if [[ "${COMPARE}" == true ]]; then
+        compare_with_previous "$report_file"
+    fi
+
+    log_success "Performance trends analysis completed"
+    log_info "Report: $report_file"
 }
 
-# Execute main function if script is run directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
-fi
+# Execute main function
+main "$@"

@@ -1,0 +1,29 @@
+{
+  "timestamp": "2025-09-11T01:39:09+02:00",
+  "tool": "Security Pattern Detection",
+  "patterns_analyzed": 5,
+  "issues_found": 106,
+  "pattern_details": {
+    "panic!": {
+      "files": 42,
+      "occurrences": 82
+    },
+    "unsafe": {
+      "files": 53,
+      "occurrences": 171
+    },
+    "transmute": {
+      "files": 1,
+      "occurrences": 13
+    },
+    "static mut": {
+      "files": 3,
+      "occurrences": 3
+    },
+    "lazy_static": {
+      "files": 7,
+      "occurrences": 10
+    }
+  },
+  "status": "PATTERNS_FOUND"
+}

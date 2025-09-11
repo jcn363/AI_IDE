@@ -299,3 +299,19 @@ pub struct LSPRefactoringRequest {
     pub context: RefactoringContext,
     pub options: RefactoringOptions,
 }
+
+/// Type alias for LSP refactoring request (backward compatibility)
+pub type RefactoringRequest = LSPRefactoringRequest;
+
+/// Type alias for refactoring result
+pub type RefactoringOperationResult = RefactoringResult;
+
+/// Suggestion type for refactoring suggestions
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RefactoringSuggestion {
+    pub refactoring_type: RefactoringType,
+    pub confidence: f64,
+    pub description: String,
+    pub context: RefactoringContext,
+    pub expected_changes: Vec<CodeChange>,
+}

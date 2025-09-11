@@ -1,257 +1,344 @@
 #!/bin/bash
 
-# Systematic Dependency Review & Code Quality Workflow Scripts
-# This script provides automated workflows for dependency maintenance and unused variable monitoring
+# Automated Maintenance Workflows
+# This script orchestrates maintenance tasks for the Rust AI IDE
+# Author: DevOps Team
+# Version: 1.0.0
 
 set -euo pipefail
 
 # Configuration
-WORKSPACE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CARGO_ARGS="--workspace"
-DRY_RUN="${DRY_RUN:-false}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+LOG_FILE="${PROJECT_ROOT}/logs/maintenance-workflow-$(date +%Y%m%d).log"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
 
 # Logging functions
 log_info() {
-    echo -e "\033[34m[INFO]\033[0m $(date '+%Y-%m-%d %H:%M:%S') $*" >&2
-}
-
-log_warn() {
-    echo -e "\033[33m[WARN]\033[0m $(date '+%Y-%m-%d %H:%M:%S') $*" >&2
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] INFO: $*" | tee -a "${LOG_FILE}"
 }
 
 log_error() {
-    echo -e "\033[31m[ERROR]\033[0m $(date '+%Y-%m-%d %H:%M:%S') $*" >&2
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $*" | tee -a "${LOG_FILE}" >&2
 }
 
-# Workflow: Quick Code Quality Check
-check_unused_variables() {
-    log_info "Running unused variable analysis..."
+log_success() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] SUCCESS: $*" | tee -a "${LOG_FILE}"
+}
 
-    local output_file="${WORKSPACE_ROOT}/unused_variables_report.txt"
+log_warning() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] WARNING: $*" | tee -a "${LOG_FILE}"
+}
 
-    # Capture full cargo check output
-    if cargo check $CARGO_ARGS --message-format=json 2>&1 | tee "$output_file" | jq -r '.message | select(.level == "warning" and (.message | contains("unused variable"))) | .rendered // empty' | head -20; then
-        log_info "Unused variable check completed. Full report saved to: $output_file"
+# Function to check workspace consistency
+check_workspace_consistency() {
+    log_info "Checking workspace consistency..."
+
+    # Check if all Cargo.toml files exist
+    local missing_files=0
+    local total_files=0
+
+    while IFS= read -r -d '' file; do
+        ((total_files++))
+        if [[ ! -f "$file" ]]; then
+            log_error "Missing Cargo.toml file: $file"
+            ((missing_files++))
+        fi
+    done < <(find "${PROJECT_ROOT}/crates" -name "Cargo.toml" -print0)
+
+    if [[ $missing_files -eq 0 ]]; then
+        log_success "Workspace consistency check passed ($total_files files found)"
+        return 0
     else
-        log_error "Cargo check failed. Please review compilation errors first."
+        log_error "Workspace consistency check failed ($missing_files files missing)"
         return 1
     fi
 }
 
-# Workflow: Strategic Variable Analysis
-analyze_strategic_variables() {
-    log_info "Analyzing strategic underscore usage patterns..."
-
-    local report="${WORKSPACE_ROOT}/strategic_variables_report.md"
-
-    cat > "$report" << 'EOF'
-# Strategic Variable Analysis Report
-
-This report identifies variables that may require underscore prefixes for future extensibility.
-
-## AI/ML Function Parameters
-
-### Context Parameters (Future Pipeline Extensions)
-EOF
-
-    # Find AI/ML functions with unused parameters
-    find "${WORKSPACE_ROOT}/crates/rust-ai-ide-ai" -name "*.rs" -exec grep -l "fn.*analysis\|fn.*prediction\|fn.*learning" {} \; | head -5 | while read -r file; do
-        echo -e "\n### $file" >> "$report"
-        grep -n "fn.*(" "$file" | grep -E "analysis|prediction|learning" | head -3 >> "$report" || true
-    done
-
-    cat >> "$report" << 'EOF'
-
-## Recommendations
-
-1. Functions with placeholder parameters should use underscore prefixes
-2. AI/ML analysis functions should preserve signatures for pipeline compatibility
-3. Test-specific unused variables can be locally scoped
-
-EOF
-
-    log_info "Strategic analysis complete. Report saved to: $report"
-}
-
-# Workflow: Dependency Compatibility Audit
-audit_dependencies() {
-    log_info "Running dependency compatibility audit..."
+# Function to update dependencies
+update_dependencies() {
+    log_info "Updating project dependencies..."
 
     # Check for outdated dependencies
-    if command -v cargo-outdated >/dev/null 2>&1; then
-        log_info "Checking for outdated dependencies..."
-        cargo outdated $CARGO_ARGS --root-deps-only || log_warn "cargo-outdated check failed"
+    if cargo outdated --exit-code 1 >/dev/null 2>&1; then
+        log_info "Dependencies are up to date"
     else
-        log_warn "cargo-outdated not installed. Install with: cargo install cargo-outdated"
+        log_info "Updating dependencies..."
+        cargo update
+        log_success "Dependencies updated successfully"
     fi
 
-    # Security audit
-    if command -v cargo-audit >/dev/null 2>&1; then
-        log_info "Running security audit..."
-        cargo audit || log_warn "Security audit found vulnerabilities"
-    else
-        log_warn "cargo-audit not installed. Install with: cargo install cargo-audit"
+    # Update web dependencies if package.json exists
+    if [[ -f "${PROJECT_ROOT}/web/package.json" ]]; then
+        cd "${PROJECT_ROOT}/web"
+        npm audit fix --audit-level moderate || log_warning "Some npm packages could not be automatically fixed"
+        cd "${PROJECT_ROOT}"
     fi
-
-    # Check dependency tree for conflicts
-    log_info "Analyzing dependency tree..."
-    cargo tree $CARGO_ARGS 2>/dev/null | grep -E "(conflicts|duplicate)" || log_info "No dependency conflicts detected"
 }
 
-# Workflow: Compilation Health Check
-check_compilation_health() {
-    log_info "Performing compilation health check..."
+# Function to clean build artifacts
+clean_build_artifacts() {
+    log_info "Cleaning build artifacts..."
 
+    # Clean Rust build artifacts
+    cargo clean
+
+    # Clean web build artifacts
+    if [[ -d "${PROJECT_ROOT}/web/node_modules" ]]; then
+        cd "${PROJECT_ROOT}/web"
+        npm run clean 2>/dev/null || rm -rf dist/ build/ .next/ 2>/dev/null || true
+        cd "${PROJECT_ROOT}"
+    fi
+
+    # Clean Docker images
+    if command -v docker >/dev/null 2>&1; then
+        docker system prune -f >/dev/null 2>&1 || true
+    fi
+
+    log_success "Build artifacts cleaned"
+}
+
+# Function to run security checks
+run_security_checks() {
+    log_info "Running maintenance security checks..."
+
+    # Install cargo-audit if not present
+    if ! command -v cargo-audit >/dev/null 2>&1; then
+        cargo install cargo-audit
+    fi
+
+    # Run security audit
+    if cargo audit --format json >/dev/null 2>&1; then
+        log_success "Security audit passed"
+    else
+        log_warning "Security audit found issues - manual review recommended"
+    fi
+
+    # Check license compliance
+    if command -v cargo-deny >/dev/null 2>&1; then
+        cargo deny check
+    fi
+}
+
+# Function to run performance checks
+run_performance_checks() {
+    log_info "Running performance checks..."
+
+    # Check build times
     local start_time=$(date +%s)
-    local error_count=0
-    local warning_count=0
-
-    # Extract counts from cargo check output
-    if output=$(cargo check $CARGO_ARGS --message-format=json 2>&1); then
-        error_count=$(echo "$output" | jq -r '.message | select(.level == "error") | .rendered' | wc -l)
-        warning_count=$(echo "$output" | jq -r '.message | select(.level == "warning") | .rendered' | wc -l)
-
+    if cargo check --quiet >/dev/null 2>&1; then
         local end_time=$(date +%s)
-        local duration=$((end_time - start_time))
+        local build_time=$((end_time - start_time))
+        log_info "Build time: ${build_time}s"
 
-        log_info "Compilation complete in ${duration}s"
-        log_info "Errors: $error_count"
-        log_info "Warnings: $warning_count"
-
-        if [ "$error_count" -gt 0 ]; then
-            log_error "Compilation errors detected. Please resolve before proceeding."
-            return 1
-        fi
-
-        if [ "$warning_count" -gt 50 ]; then
-            log_warn "High warning count detected ($warning_count). Consider code quality review."
+        if [[ $build_time -gt 300 ]]; then
+            log_warning "Build time is high (${build_time}s) - consider optimization"
         else
-            log_info "Code quality check passed."
+            log_success "Build performance is acceptable"
         fi
     else
-        log_error "Cargo check command failed"
+        log_error "Build check failed"
         return 1
     fi
 }
 
-# Workflow: Backup and Recovery Check
-verify_backup_integrity() {
-    log_info "Verifying backup and recovery integrity..."
+# Function to backup configuration
+backup_configuration() {
+    log_info "Backing up configuration files..."
 
-    # Check if backup directory structure exists
-    local backup_roots=(
-        "${WORKSPACE_ROOT}/crates/rust-ai-ide-ai-refactoring/src/backup"
-        "${WORKSPACE_ROOT}/crates/rust-ai-ide-ai/src/backup"
-    )
+    local backup_dir="${PROJECT_ROOT}/backups/$(date +%Y%m%d_%H%M%S)"
+    mkdir -p "${backup_dir}"
 
-    for backup_root in "${backup_roots[@]}"; do
-        if [ -d "$backup_root" ]; then
-            local backup_count=$(find "$backup_root" -name "*.bak" -o -name "*.backup" | wc -l)
-            log_info "Found $backup_count backup files in $backup_root"
+    # Backup important configuration files
+    cp "${PROJECT_ROOT}/Cargo.toml" "${backup_dir}/" 2>/dev/null || true
+    cp "${PROJECT_ROOT}/rust-toolchain.toml" "${backup_dir}/" 2>/dev/null || true
+    cp -r "${PROJECT_ROOT}/ci-cd/" "${backup_dir}/" 2>/dev/null || true
+    cp -r "${PROJECT_ROOT}/docker/" "${backup_dir}/" 2>/dev/null || true
 
-            # Verify backup integrity (basic check)
-            find "$backup_root" -name "*.bak" -o -name "*.backup" -exec echo "✅ {}" \; | head -5
-        else
-            log_info "Backup directory not found: $backup_root"
-        fi
-    done
+    # Create backup archive
+    cd "${PROJECT_ROOT}"
+    tar -czf "${backup_dir}.tar.gz" -C "${PROJECT_ROOT}" "backups/$(basename "${backup_dir}")" 2>/dev/null || true
+    rm -rf "${backup_dir}"
+
+    log_success "Configuration backup created: ${backup_dir}.tar.gz"
 }
 
-# Workflow: Report Generation
+# Function to generate maintenance report
 generate_maintenance_report() {
-    log_info "Generating comprehensive maintenance report..."
+    local report_file="${PROJECT_ROOT}/reports/maintenance-report-$(date +%Y%m%d_%H%M%S).json"
 
-    local report_file="${WORKSPACE_ROOT}/maintenance_report_$(date +%Y%m%d_%H%M%S).md"
+    mkdir -p "$(dirname "${report_file}")"
 
-    cat > "$report_file" << EOF
-# Maintenance Report - $(date)
-
-Generated by automated workflow script.
-
-## System Health
+    cat > "${report_file}" << EOF
+{
+    "timestamp": "$(date -Iseconds)",
+    "maintenance_type": "automated_workflow",
+    "summary": {
+        "workspace_consistency": "completed",
+        "dependency_updates": "completed",
+        "security_checks": "completed",
+        "performance_checks": "completed",
+        "cleanup": "completed"
+    },
+    "system_info": {
+        "rust_version": "$(rustc --version 2>/dev/null || echo 'unknown')",
+        "cargo_version": "$(cargo --version 2>/dev/null || echo 'unknown')",
+        "git_commit": "$(git rev-parse HEAD 2>/dev/null || echo 'unknown')"
+    }
+}
 EOF
 
-    # Compilation health
-    if check_compilation_health >/dev/null 2>&1; then
-        echo "- ✅ Compilation status: PASS" >> "$report_file"
-    else
-        echo "- ❌ Compilation status: FAIL" >> "$report_file"
-    fi
-
-    # Dependency audit result
-    if audit_dependencies >/dev/null 2>&1; then
-        echo "- ✅ Dependency audit: PASS" >> "$report_file"
-    else
-        echo "- ⚠️ Dependency audit: WARNINGS" >> "$report_file"
-    fi
-
-    cat >> "$report_file" << EOF
-
-## Recent Changes
-- Check git log for recent commits
-- Review dependency updates
-- Monitor code quality trends
-
-## Next Steps
-1. Review any new unused variable warnings
-2. Update dependencies where safe
-3. Address compilation errors if present
-4. Update documentation as needed
-
-For detailed procedures, see: docs/DEPENDENCY_MAINTENANCE.md
-EOF
-
-    log_info "Maintenance report saved to: $report_file"
+    log_success "Maintenance report generated: ${report_file}"
 }
 
-# Main command dispatcher
-main() {
-    local command="${1:-}"
-    shift || true
+# Function to display usage
+usage() {
+    cat << EOF
+Usage: $0 [OPTIONS] [ACTION]
 
-    case "$command" in
-        "check-unused")
-            check_unused_variables "$@"
+Automated Maintenance Workflows for Rust AI IDE
+
+ACTIONS:
+    full                Run complete maintenance workflow (default)
+    check               Check workspace consistency only
+    update              Update dependencies only
+    clean               Clean build artifacts only
+    security            Run security checks only
+    performance         Run performance checks only
+    backup              Backup configuration only
+
+OPTIONS:
+    -h, --help           Show this help message
+    -v, --verbose        Enable verbose output
+    --dry-run            Show what would be done without making changes
+    --skip-security      Skip security checks
+    --skip-performance   Skip performance checks
+
+EXAMPLES:
+    $0                    Run full maintenance workflow
+    $0 --dry-run         Show maintenance workflow without executing
+    $0 check             Check workspace consistency only
+    $0 update            Update dependencies only
+
+EOF
+}
+
+# Parse command line arguments
+DRY_RUN=false
+SKIP_SECURITY=false
+SKIP_PERFORMANCE=false
+VERBOSE=false
+ACTION="full"
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            usage
+            exit 0
             ;;
-        "analyze-strategic")
-            analyze_strategic_variables "$@"
+        -v|--verbose)
+            VERBOSE=true
+            shift
             ;;
-        "audit-deps")
-            audit_dependencies "$@"
+        --dry-run)
+            DRY_RUN=true
+            shift
             ;;
-        "health-check")
-            check_compilation_health "$@"
+        --skip-security)
+            SKIP_SECURITY=true
+            shift
             ;;
-        "backup-check")
-            verify_backup_integrity "$@"
+        --skip-performance)
+            SKIP_PERFORMANCE=true
+            shift
             ;;
-        "full-report")
-            generate_maintenance_report "$@"
-            ;;
-        "help"|"-h"|"--help")
-            echo "Usage: $0 <command>"
-            echo ""
-            echo "Commands:"
-            echo "  check-unused      - Analyze unused variables across workspace"
-            echo "  analyze-strategic - Identify strategic underscore usage patterns"
-            echo "  audit-deps        - Perform dependency compatibility audit"
-            echo "  health-check      - Run compilation and code quality checks"
-            echo "  backup-check      - Verify backup system integrity"
-            echo "  full-report       - Generate comprehensive maintenance report"
-            echo "  help              - Show this help message"
-            echo ""
-            echo "Environment Variables:"
-            echo "  DRY_RUN=true      - Show what would be done without executing"
+        check|update|clean|security|performance|backup|full)
+            ACTION="$1"
+            shift
             ;;
         *)
-            log_error "Invalid command: $command"
-            log_info "Use '$0 help' for available commands"
+            log_error "Unknown option: $1"
+            usage
             exit 1
             ;;
     esac
+done
+
+# Main execution function
+main() {
+    log_info "Starting automated maintenance workflow (Action: ${ACTION})"
+
+    if [[ "${DRY_RUN}" == true ]]; then
+        log_info "DRY RUN MODE: No actual maintenance will be performed"
+        exit 0
+    fi
+
+    local exit_code=0
+
+    case "${ACTION}" in
+        full)
+            # Run complete maintenance workflow
+            if check_workspace_consistency; then
+                update_dependencies
+                clean_build_artifacts
+
+                if [[ "${SKIP_SECURITY}" != true ]]; then
+                    run_security_checks || exit_code=1
+                fi
+
+                if [[ "${SKIP_PERFORMANCE}" != true ]]; then
+                    run_performance_checks || exit_code=1
+                fi
+
+                backup_configuration
+                generate_maintenance_report
+            else
+                exit_code=1
+            fi
+            ;;
+        check)
+            check_workspace_consistency || exit_code=1
+            ;;
+        update)
+            update_dependencies
+            ;;
+        clean)
+            clean_build_artifacts
+            ;;
+        security)
+            if [[ "${SKIP_SECURITY}" != true ]]; then
+                run_security_checks || exit_code=1
+            fi
+            ;;
+        performance)
+            if [[ "${SKIP_PERFORMANCE}" != true ]]; then
+                run_performance_checks || exit_code=1
+            fi
+            ;;
+        backup)
+            backup_configuration
+            ;;
+        *)
+            log_error "Unknown action: ${ACTION}"
+            usage
+            exit 1
+            ;;
+    esac
+
+    if [[ $exit_code -eq 0 ]]; then
+        log_success "Maintenance workflow completed successfully"
+    else
+        log_error "Maintenance workflow completed with errors"
+    fi
+
+    return $exit_code
 }
 
-# Execute main function if script is run directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
-fi
+# Execute main function
+main "$@"

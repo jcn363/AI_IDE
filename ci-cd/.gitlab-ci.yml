@@ -281,6 +281,33 @@ security:dependency_scan:
     expire_in: 1 week
     when: always
 
+security:snyk_scan:
+  stage: security
+  image: node:${NODE_VERSION}-alpine
+  script:
+    # Install AWS CLI and jq for secrets retrieval
+    - apk add --no-cache aws-cli jq
+
+    # Retrieve Snyk credentials from AWS Secrets Manager
+    - chmod +x scripts/ci/retrieve-snyk-secrets.sh
+    - source scripts/ci/retrieve-snyk-secrets.sh
+
+    # Run Snyk dependency scan using existing script
+    - chmod +x scripts/ci/snyk-dependency-scan.sh
+    - scripts/ci/snyk-dependency-scan.sh --severity-threshold medium --fail-on-issues true
+  artifacts:
+    reports:
+      dependency_scanning: security-reports/snyk/snyk-summary-report.json
+    paths:
+      - security-reports/snyk/
+      - snyk-security.log
+    expire_in: 1 week
+    when: always
+  only:
+    - merge_requests
+    - main
+    - develop
+
 security:container_scan:
   stage: security
   image: docker:24-dind

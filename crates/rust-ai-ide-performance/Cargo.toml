@@ -24,6 +24,7 @@ rand = { workspace = true }
 walkdir = { workspace = true }
 futures = { workspace = true }
 moka = { workspace = true }
+warp = "0.3"
 
 [lib]
 name = "rust_ai_ide_performance"

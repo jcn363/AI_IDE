@@ -28,7 +28,7 @@ pub struct AISuggestionEngine {
 
 /// Wrapper for the old SuggestionEngine to work with the trait
 struct SuggestionEngineWrapper {
-    inner: SuggestionEngine,
+    inner: Box<dyn SuggestionEngine + Send + Sync>,
 }
 
 #[async_trait]
@@ -62,7 +62,7 @@ impl AISuggestionEngine {
     pub fn new() -> Self {
         AISuggestionEngine {
             base_engine: SuggestionEngineWrapper {
-                inner: SuggestionEngine::new(),
+                inner: SuggestionEngineImpl::new(),
             },
         }
     }
@@ -76,16 +76,16 @@ impl SuggestionEngine for AISuggestionEngine {
 }
 
 /// Context-aware suggestion engine for intelligent refactoring recommendations
-pub struct SuggestionEngine {
+pub struct SuggestionEngineImpl {
     analyzer: RefactoringAnalyzer,
     confidence_scorer: ConfidenceScorer,
     suggestion_cache: HashMap<String, Vec<SmartSuggestion>>,
     context_patterns: Vec<ContextPattern>,
 }
 
-impl SuggestionEngine {
+impl SuggestionEngineImpl {
     pub fn new() -> Self {
-        SuggestionEngine {
+        SuggestionEngineImpl {
             analyzer: RefactoringAnalyzer::new(),
             confidence_scorer: ConfidenceScorer::new(),
             suggestion_cache: HashMap::new(),
@@ -543,7 +543,7 @@ impl PatternCondition {
     }
 }
 
-impl Default for SuggestionEngine {
+impl Default for SuggestionEngineImpl {
     fn default() -> Self {
         Self::new()
     }

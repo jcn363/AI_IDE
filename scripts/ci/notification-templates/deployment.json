@@ -1,0 +1,12 @@
+{
+    "slack_template": "🚀 *Deployment {{status}}*\nEnvironment: {{environment}}\nVersion: {{version}}\nDetails: {{details}}\nTime: {{timestamp}}",
+    "email_template": "<h3>Deployment {{status}}</h3><p>Environment: {{environment}}</p><p>Version: {{version}}</p><p>Details: {{details}}</p>",
+    "webhook_template": {
+        "event": "deployment",
+        "status": "{{status}}",
+        "environment": "{{environment}}",
+        "version": "{{version}}",
+        "details": "{{details}}",
+        "timestamp": "{{timestamp}}"
+    }
+}

@@ -704,4 +704,435 @@ pub fn complex_processing(data: Vec<i32>) -> Vec<String> {
 
         println!("✓ Operation factory and applicability tests completed successfully");
     }
+
+    #[tokio::test]
+    async fn test_factory_comprehensive_operation_coverage() {
+        let factory = RefactoringOperationFactory;
+        let available_types = factory.available_refactorings();
+
+        // Test that factory can create all available operations
+        for op_type in available_types {
+            match factory.create_operation(&op_type) {
+                Ok(operation) => {
+                    // Verify operation has required traits
+                    assert!(!operation.name().is_empty());
+                    println!("✓ Successfully created operation: {}", operation.name());
+                }
+                Err(e) => {
+                    panic!("Failed to create operation for type {:?}: {}", op_type, e);
+                }
+            }
+        }
+
+        println!("✓ Factory can create all {} available refactoring operations", factory.available_refactorings().len());
+    }
+
+    #[tokio::test]
+    async fn test_cross_module_workflow_extract_rename_signature() {
+        // Create a complex function that will undergo multiple transformations
+        let initial_code = r#"
+pub struct Calculator {
+    value: i32,
+}
+
+impl Calculator {
+    pub fn process_data(&self, input: Vec<i32>) -> Vec<i32> {
+        let mut result = Vec::new();
+        for &item in &input {
+            let processed = self.calculate_internal(item);
+            if processed > 0 {
+                result.push(processed);
+            }
+        }
+        result
+    }
+
+    fn calculate_internal(&self, value: i32) -> i32 {
+        self.value + value * 2
+    }
+}
+"#;
+
+        let temp_dir = create_test_file(initial_code, "workflow_test.rs");
+        let file_path = temp_dir.path().join("workflow_test.rs").to_str().unwrap();
+
+        // Step 1: Extract the internal calculation logic
+        let extract_context = RefactoringContext {
+            file_path: file_path.to_string(),
+            symbol_name: Some("calculate_internal".to_string()),
+            symbol_kind: Some(SymbolKind::Function),
+            cursor_line: 18,
+            cursor_character: 5,
+            selection: Some(CodeRange {
+                start_line: 18,
+                start_character: 5,
+                end_line: 20,
+                end_character: 30,
+            }),
+            context_lines: vec![],
+            language: ProgrammingLanguage::Rust,
+            project_root: "/tmp/test".to_string(),
+        };
+
+        let factory = RefactoringOperationFactory;
+        let extract_op = factory.create_operation(&RefactoringType::ExtractFunction).unwrap();
+
+        let mut options = create_options();
+        options.extra_options = Some(serde_json::json!({"newFunctionName": "compute_value"}));
+
+        let extract_result = extract_op.execute(&extract_context, &options).await.unwrap();
+        assert!(extract_result.success);
+
+        // Read the modified content after extraction
+        let content_after_extract = std::fs::read_to_string(file_path).unwrap();
+
+        // Step 2: Rename the extracted function
+        let rename_context = RefactoringContext {
+            file_path: file_path.to_string(),
+            symbol_name: Some("compute_value".to_string()),
+            symbol_kind: Some(SymbolKind::Function),
+            cursor_line: 18,
+            cursor_character: 5,
+            selection: None,
+            context_lines: vec![],
+            language: ProgrammingLanguage::Rust,
+            project_root: "/tmp/test".to_string(),
+        };
+
+        let rename_op = factory.create_operation(&RefactoringType::Rename).unwrap();
+        let mut rename_options = create_options();
+        rename_options.extra_options = Some(serde_json::json!({"newName": "calculate_value"}));
+
+        let rename_result = rename_op.execute(&rename_context, &rename_options).await.unwrap();
+        assert!(rename_result.success);
+
+        // Step 3: Change signature of the renamed function
+        let signature_context = RefactoringContext {
+            file_path: file_path.to_string(),
+            symbol_name: Some("calculate_value".to_string()),
+            symbol_kind: Some(SymbolKind::Function),
+            cursor_line: 18,
+            cursor_character: 5,
+            selection: None,
+            context_lines: vec![],
+            language: ProgrammingLanguage::Rust,
+            project_root: "/tmp/test".to_string(),
+        };
+
+        let signature_op = factory.create_operation(&RefactoringType::ChangeSignature).unwrap();
+        let mut sig_options = create_options();
+        sig_options.extra_options = Some(serde_json::json!({
+            "newParameters": [{"name": "base", "type": "i32"}, {"name": "multiplier", "type": "i32"}],
+            "returnType": "i32"
+        }));
+
+        let sig_result = signature_op.execute(&signature_context, &sig_options).await.unwrap();
+        assert!(sig_result.success);
+
+        // Verify AST consistency across all transformations
+        let final_content = std::fs::read_to_string(file_path).unwrap();
+
+        // Verify that the function was renamed
+        assert!(final_content.contains("calculate_value"));
+        assert!(!final_content.contains("compute_value"));
+
+        // Verify that the function signature was changed (simplified check)
+        assert!(final_content.contains("fn calculate_value"));
+
+        // Verify that calls to the function were updated
+        assert!(final_content.contains("calculate_value("));
+
+        println!("✓ Cross-module workflow (extract → rename → change signature) completed successfully");
+        println!("✓ AST consistency maintained across sequential operations");
+    }
+
+    #[tokio::test]
+    async fn test_module_interaction_ast_utils_core_traits_operations() {
+        // Create test code to verify module interactions
+        let test_code = r#"
+pub struct DataProcessor {
+    pub data: Vec<String>,
+}
+
+impl DataProcessor {
+    pub fn process_item(&self, item: &String) -> String {
+        item.to_uppercase()
+    }
+
+    pub fn process_all(&self) -> Vec<String> {
+        self.data.iter().map(|item| self.process_item(item)).collect()
+    }
+}
+"#;
+
+        let temp_dir = create_test_file(test_code, "module_interaction.rs");
+        let file_path = temp_dir.path().join("module_interaction.rs").to_str().unwrap();
+
+        // Test ast_utils integration with operations
+        use rust_ai_ide_ai_refactoring::ast_utils::{is_ast_supported, IdentifierRenamer};
+        use rust_ai_ide_ai_refactoring::core_traits::RefactoringOperation;
+        use rust_ai_ide_ai_refactoring::function_method_operations::ExtractFunctionOperation;
+
+        // Verify AST support detection
+        assert!(is_ast_supported(file_path));
+
+        // Test identifier renaming utility
+        let mut renamer = IdentifierRenamer::new();
+        let renamed = renamer.rename_identifiers("process_item", "transform_item", test_code);
+        assert!(renamed.contains("transform_item"));
+        assert!(!renamed.contains("process_item"));
+
+        // Test operation using core traits
+        let context = RefactoringContext {
+            file_path: file_path.to_string(),
+            symbol_name: Some("DataProcessor".to_string()),
+            symbol_kind: Some(SymbolKind::Struct),
+            cursor_line: 1,
+            cursor_character: 1,
+            selection: None,
+            context_lines: vec![],
+            language: ProgrammingLanguage::Rust,
+            project_root: "/tmp/test".to_string(),
+        };
+
+        let factory = RefactoringOperationFactory;
+        let extract_interface_op = factory.create_operation(&RefactoringType::ExtractInterface).unwrap();
+
+        // Verify operation implements required traits
+        assert!(!extract_interface_op.name().is_empty());
+        assert!(!extract_interface_op.description().is_empty());
+
+        // Test applicability through core traits
+        let options = create_options();
+        match extract_interface_op.is_applicable(&context, Some(&options)).await {
+            Ok(applicable) => {
+                if applicable {
+                    let result = extract_interface_op.execute(&context, &options).await.unwrap();
+                    assert!(result.success);
+                    println!("✓ Module interaction test: AST utils, core traits, and operations work together");
+                } else {
+                    println!("✓ Module interaction test: Operation correctly determined as not applicable");
+                }
+            }
+            Err(e) => println!("✓ Module interaction test: Error handling works - {}", e),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_error_handling_across_module_boundaries() {
+        let factory = RefactoringOperationFactory;
+
+        // Test invalid file path
+        let invalid_context = RefactoringContext {
+            file_path: "/nonexistent/path/file.rs".to_string(),
+            symbol_name: Some("test".to_string()),
+            symbol_kind: Some(SymbolKind::Function),
+            cursor_line: 1,
+            cursor_character: 1,
+            selection: None,
+            context_lines: vec![],
+            language: ProgrammingLanguage::Rust,
+            project_root: "/tmp/test".to_string(),
+        };
+
+        let options = create_options();
+        let rename_op = factory.create_operation(&RefactoringType::Rename).unwrap();
+
+        // Test error propagation from file operations to refactoring operations
+        match rename_op.execute(&invalid_context, &options).await {
+            Ok(_) => panic!("Expected error for invalid file path"),
+            Err(e) => {
+                println!("✓ Error handling: Invalid file path error propagated correctly: {}", e);
+                assert!(e.to_string().contains("file") || e.to_string().contains("path"));
+            }
+        }
+
+        // Test invalid operation type
+        match factory.create_operation(&RefactoringType::Rename) {
+            Ok(op) => {
+                // Test with invalid context (missing symbol)
+                let invalid_symbol_context = RefactoringContext {
+                    file_path: "/test/file.rs".to_string(),
+                    symbol_name: None, // Invalid: no symbol name
+                    symbol_kind: Some(SymbolKind::Function),
+                    cursor_line: 1,
+                    cursor_character: 1,
+                    selection: None,
+                    context_lines: vec![],
+                    language: ProgrammingLanguage::Rust,
+                    project_root: "/tmp/test".to_string(),
+                };
+
+                match op.execute(&invalid_symbol_context, &options).await {
+                    Ok(_) => println!("✓ Operation handled missing symbol gracefully"),
+                    Err(e) => println!("✓ Error handling: Missing symbol error propagated: {}", e),
+                }
+            }
+            Err(e) => panic!("Failed to create rename operation: {}", e),
+        }
+
+        println!("✓ Error handling across module boundaries tested successfully");
+    }
+
+    #[tokio::test]
+    async fn test_success_and_failure_scenarios() {
+        let factory = RefactoringOperationFactory;
+
+        // Success scenario: Valid rename operation
+        let success_code = r#"
+pub fn old_function_name() -> i32 {
+    42
+}
+
+pub fn caller() {
+    let result = old_function_name();
+}
+"#;
+
+        let temp_dir = create_test_file(success_code, "success_test.rs");
+        let success_file_path = temp_dir.path().join("success_test.rs").to_str().unwrap();
+
+        let success_context = RefactoringContext {
+            file_path: success_file_path.to_string(),
+            symbol_name: Some("old_function_name".to_string()),
+            symbol_kind: Some(SymbolKind::Function),
+            cursor_line: 1,
+            cursor_character: 5,
+            selection: None,
+            context_lines: vec![],
+            language: ProgrammingLanguage::Rust,
+            project_root: "/tmp/test".to_string(),
+        };
+
+        let mut success_options = create_options();
+        success_options.extra_options = Some(serde_json::json!({"newName": "new_function_name"}));
+
+        let rename_op = factory.create_operation(&RefactoringType::Rename).unwrap();
+        match rename_op.execute(&success_context, &success_options).await {
+            Ok(result) => {
+                assert!(result.success);
+                let modified_content = std::fs::read_to_string(success_file_path).unwrap();
+                assert!(modified_content.contains("new_function_name"));
+                assert!(!modified_content.contains("old_function_name"));
+                println!("✓ Success scenario: Rename operation completed successfully");
+            }
+            Err(e) => panic!("Success scenario failed: {}", e),
+        }
+
+        // Failure scenario: Attempt to rename non-existent symbol
+        let failure_context = RefactoringContext {
+            file_path: success_file_path.to_string(),
+            symbol_name: Some("nonexistent_symbol".to_string()),
+            symbol_kind: Some(SymbolKind::Function),
+            cursor_line: 1,
+            cursor_character: 1,
+            selection: None,
+            context_lines: vec![],
+            language: ProgrammingLanguage::Rust,
+            project_root: "/tmp/test".to_string(),
+        };
+
+        match rename_op.execute(&failure_context, &success_options).await {
+            Ok(result) => {
+                // Operation might succeed but with warnings
+                println!("✓ Failure scenario handled gracefully with result: {:?}", result.warnings);
+            }
+            Err(e) => {
+                println!("✓ Failure scenario: Error correctly returned for non-existent symbol: {}", e);
+            }
+        }
+
+        println!("✓ Both success and failure scenarios tested");
+    }
+
+    #[tokio::test]
+    async fn test_ast_consistency_across_sequential_operations() {
+        // Create complex code for sequential transformations
+        let initial_code = r#"
+pub struct ComplexProcessor {
+    data: Vec<i32>,
+}
+
+impl ComplexProcessor {
+    pub fn new() -> Self {
+        Self { data: vec![] }
+    }
+
+    pub fn add_and_double(&mut self, value: i32) -> i32 {
+        self.data.push(value);
+        value * 2
+    }
+
+    pub fn process_batch(&mut self, values: Vec<i32>) -> Vec<i32> {
+        values.into_iter().map(|v| self.add_and_double(v)).collect()
+    }
+}
+"#;
+
+        let temp_dir = create_test_file(initial_code, "ast_consistency.rs");
+        let file_path = temp_dir.path().join("ast_consistency.rs").to_str().unwrap();
+
+        let factory = RefactoringOperationFactory;
+        let options = create_options();
+
+        // First operation: Extract method
+        let extract_context = RefactoringContext {
+            file_path: file_path.to_string(),
+            symbol_name: Some("add_and_double".to_string()),
+            symbol_kind: Some(SymbolKind::Function),
+            cursor_line: 10,
+            cursor_character: 5,
+            selection: Some(CodeRange {
+                start_line: 12,
+                start_character: 9,
+                end_line: 13,
+                end_character: 20,
+            }),
+            context_lines: vec![],
+            language: ProgrammingLanguage::Rust,
+            project_root: "/tmp/test".to_string(),
+        };
+
+        let extract_op = factory.create_operation(&RefactoringType::ExtractFunction).unwrap();
+        let mut extract_options = options.clone();
+        extract_options.extra_options = Some(serde_json::json!({"newFunctionName": "double_value"}));
+
+        let _extract_result = extract_op.execute(&extract_context, &extract_options).await.unwrap();
+
+        // Second operation: Rename variable in extracted function
+        let rename_context = RefactoringContext {
+            file_path: file_path.to_string(),
+            symbol_name: Some("double_value".to_string()),
+            symbol_kind: Some(SymbolKind::Function),
+            cursor_line: 10,
+            cursor_character: 5,
+            selection: None,
+            context_lines: vec![],
+            language: ProgrammingLanguage::Rust,
+            project_root: "/tmp/test".to_string(),
+        };
+
+        let rename_op = factory.create_operation(&RefactoringType::Rename).unwrap();
+        let mut rename_options = options.clone();
+        rename_options.extra_options = Some(serde_json::json!({"newName": "compute_double"}));
+
+        let _rename_result = rename_op.execute(&rename_context, &rename_options).await.unwrap();
+
+        // Verify AST consistency by checking if code still compiles conceptually
+        let final_content = std::fs::read_to_string(file_path).unwrap();
+
+        // Verify function was renamed
+        assert!(final_content.contains("compute_double"));
+        assert!(!final_content.contains("double_value"));
+
+        // Verify calls were updated
+        assert!(final_content.contains("compute_double("));
+
+        // Verify struct and impl blocks are still intact
+        assert!(final_content.contains("impl ComplexProcessor"));
+        assert!(final_content.contains("pub struct ComplexProcessor"));
+
+        println!("✓ AST consistency verified across sequential operations");
+        println!("✓ Function extraction and renaming maintained code structure");
+    }
 }

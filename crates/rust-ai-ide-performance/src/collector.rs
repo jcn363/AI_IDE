@@ -13,6 +13,9 @@ use rust_ai_ide_shared_types::PerformanceMetrics;
 use crate::alerting::AlertManager;
 use crate::monitoring::SystemMonitor;
 use crate::regression::RegressionDetector;
+use crate::metrics::{MetricsRegistry, PrometheusExporter, MetricsError};
+use crate::metrics_server::{MetricsServer, MetricsServerBuilder, MetricsServerConfig};
+use crate::instrumentation::{PerformanceInstrumentor, InstrumentationConfig};
 
 /// Configuration for the performance collector
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -53,6 +56,10 @@ pub struct UnifiedPerformanceCollector {
     regression_detector: Option<RegressionDetector>,
     /// Alert manager
     alert_manager: Option<AlertManager>,
+    /// Prometheus exporter
+    prometheus_exporter: Option<Arc<PrometheusExporter>>,
+    /// Performance instrumentor
+    instrumentor: Option<Arc<PerformanceInstrumentor>>,
     /// Channel for receiving metrics from external sources
     metrics_receiver: mpsc::Receiver<PerformanceMetrics>,
     metrics_sender: mpsc::Sender<PerformanceMetrics>,

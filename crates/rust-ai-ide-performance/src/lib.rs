@@ -20,6 +20,9 @@ pub mod gpu_acceleration;
 pub mod storage;
 pub mod compilation;
 pub mod compilation_example;
+pub mod metrics;
+pub mod metrics_server;
+pub mod instrumentation;
 
 pub use caching::*;
 pub use cpu_analysis::*;

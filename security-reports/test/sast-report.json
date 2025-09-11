@@ -1,0 +1,7 @@
+{
+  "timestamp": "2025-09-11T01:37:42+02:00",
+  "tool": "SAST",
+  "issues_found": 1,
+  "strict_mode": false,
+  "status": "WARNING"
+}

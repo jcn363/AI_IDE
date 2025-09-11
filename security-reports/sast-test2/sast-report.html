@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enhanced SAST Report - Rust AI IDE</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background: #f0f0f0; padding: 10px; border-radius: 5px; }
+        .status-passed { color: green; }
+        .status-issues-found { color: orange; }
+        .status-failed { color: red; }
+        .section { margin: 20px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .metric { display: inline-block; margin: 10px; padding: 10px; background: #f9f9f9; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Enhanced Static Application Security Testing (SAST) Report</h1>
+        <p><strong>Generated:</strong> Thu Sep 11 01:40:15 AM CEST 2025</p>
+        <p><strong>Duration:</strong> 28 seconds</p>
+        <p><strong>Overall Status:</strong> <span class="status-passed">PASSED</span></p>
+        <p><strong>Total Issues Found:</strong> 0</p>
+    </div>
+
+    <div class="section">
+        <h2>Configuration</h2>
+        <ul>
+            <li><strong>False Positive Filtering:</strong> false</li>
+            <li><strong>Severity Threshold:</strong> info</li>
+            <li><strong>Strict Mode:</strong> false</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Analysis Results</h2>
+        <div class="metric">
+            <strong>Clippy Analysis</strong><br>
+            Errors: 0<br>
+            Warnings: 0<br>
+            Info: 0
+        </div>
+        <div class="metric">
+            <strong>Unsafe Code</strong><br>
+            Automated: 0<br>
+            Manual: 0
+        </div>
+        <div class="metric">
+            <strong>Security Patterns</strong><br>
+            Patterns Found: 106
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Report Files</h3>
+        <ul>
+            <li><a href="comprehensive-sast-report.json">Comprehensive JSON Report</a></li>
+            <li>clippy-errors.log</li>
+<li>clippy-filtered.json</li>
+<li>clippy-raw.json</li>
+<li>clippy-summary.json</li>
+<li>comprehensive-sast-report.json</li>
+<li>security-patterns.json</li>
+<li>unsafe-summary.json</li>
+        </ul>
+    </div>
+</body>
+</html>

@@ -1,0 +1,294 @@
+# GitLab CI Security Rules for Rust AI IDE
+# Additional security policies and rules for CI/CD pipeline
+
+# Security rules and policies
+security:rules:vulnerability_threshold:
+  script:
+    - echo "Checking vulnerability thresholds..."
+    - |
+      if [ -f "security-reports/comprehensive/security-status.json" ]; then
+        CRITICAL_VULNS=$(jq -r '.vulnerabilities.critical // 0' security-reports/comprehensive/security-status.json)
+        HIGH_VULNS=$(jq -r '.vulnerabilities.high // 0' security-reports/comprehensive/security-status.json)
+
+        if [ "$CRITICAL_VULNS" -gt "$SECURITY_CRITICAL_THRESHOLD" ]; then
+          echo "❌ Critical vulnerability threshold exceeded: $CRITICAL_VULNS > $SECURITY_CRITICAL_THRESHOLD"
+          exit 1
+        fi
+
+        if [ "$HIGH_VULNS" -gt "$SECURITY_HIGH_THRESHOLD" ]; then
+          echo "❌ High vulnerability threshold exceeded: $HIGH_VULNS > $SECURITY_HIGH_THRESHOLD"
+          exit 1
+        fi
+
+        echo "✅ Vulnerability thresholds within acceptable limits"
+      fi
+  allow_failure: false
+
+security:rules:license_compliance:
+  script:
+    - echo "Checking license compliance..."
+    - |
+      if [ -f "security-reports/dependency-security-report.json" ]; then
+        LICENSE_ISSUES=$(jq -r '.license_issues // 0' security-reports/dependency-security-report.json)
+        if [ "$LICENSE_ISSUES" -gt 0 ]; then
+          echo "❌ License compliance issues found: $LICENSE_ISSUES"
+          exit 1
+        fi
+        echo "✅ License compliance check passed"
+      fi
+  allow_failure: false
+
+security:rules:security_score_gate:
+  script:
+    - echo "Checking security score gate..."
+    - |
+      if [ -f "security-reports/comprehensive/security-status.json" ]; then
+        SECURITY_SCORE=$(jq -r '.security_score // 0' security-reports/comprehensive/security-status.json)
+        MIN_SCORE=70
+
+        if [ "$SECURITY_SCORE" -lt "$MIN_SCORE" ]; then
+          echo "❌ Security score too low: $SECURITY_SCORE < $MIN_SCORE"
+          echo "Blocking deployment due to low security score"
+          exit 1
+        fi
+
+        echo "✅ Security score gate passed: $SECURITY_SCORE >= $MIN_SCORE"
+      fi
+  allow_failure: false
+
+# Security workflow rules
+workflow:rules:security_maintenance:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
+      when: always
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
+      when: always
+    - when: manual
+
+workflow:rules:security_emergency:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
+      when: manual
+      allow_failure: false
+
+# Security artifact rules
+artifacts:rules:security_reports:
+  artifacts:
+    paths:
+      - security-reports/
+      - security-dashboards/
+    expire_in: 1 week
+    when: always
+
+artifacts:rules:security_backups:
+  artifacts:
+    paths:
+      - security-backups/
+    expire_in: 1 month
+    when: always
+
+# Security environment rules
+variables:rules:security_environment:
+  variables:
+    SECURITY_SCAN_ENABLED: "true"
+    SECURITY_AUDIT_ENABLED: "true"
+    SECURITY_REPORTING_ENABLED: "true"
+    SECURITY_NOTIFICATION_ENABLED: "true"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
+
+# Security secret rules
+secrets:rules:snyk_secrets:
+  secrets:
+    SNYK_TOKEN:
+      vault: rust-ai-ide/snyk/token@kv-v2
+      file: false
+    SNYK_ORG:
+      vault: rust-ai-ide/snyk/org@kv-v2
+      file: false
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
+
+secrets:rules:notification_secrets:
+  secrets:
+    SLACK_WEBHOOK_URL:
+      vault: rust-ai-ide/notifications/slack@kv-v2
+      file: false
+    TEAMS_WEBHOOK_URL:
+      vault: rust-ai-ide/notifications/teams@kv-v2
+      file: false
+    SMTP_PASS:
+      vault: rust-ai-ide/notifications/smtp@kv-v2
+      file: false
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
+
+# Security cache rules
+cache:rules:security_cache:
+  cache:
+    key: security-${CI_COMMIT_REF_SLUG}
+    paths:
+      - security-reports/
+      - .security-cache/
+    policy: pull-push
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
+
+# Security needs rules (additional resources)
+needs:rules:security_dependencies:
+  needs:
+    - security:scan:dependencies
+    - security:scan:web
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
+
+# Security interrupt rules
+interruptible:rules:security_scans:
+  interruptible: true
+  rules:
+    - if: $CI_COMMIT_BRANCH != "main"
+      when: always
+
+interruptible:rules:security_main:
+  interruptible: false
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: always
+
+# Security retry rules
+retry:rules:security_operations:
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+  rules:
+    - if: $CI_JOB_NAME =~ /security:.*/
+
+# Security timeout rules
+timeout:rules:security_scans:
+  timeout: 30 minutes
+  rules:
+    - if: $CI_JOB_NAME =~ /security:scan:.*/
+
+timeout:rules:security_patches:
+  timeout: 45 minutes
+  rules:
+    - if: $CI_JOB_NAME =~ /security:patch:.*/
+
+timeout:rules:security_reports:
+  timeout: 15 minutes
+  rules:
+    - if: $CI_JOB_NAME =~ /security:report:.*/
+
+# Security coverage rules
+coverage:rules:security_coverage:
+  coverage: '/Security Score: (\d+\.\d+)%/'
+  rules:
+    - if: $CI_JOB_NAME =~ /security:.*/
+      exists:
+        - security-reports/comprehensive/security-status.json
+
+# Security badge rules
+badges:rules:security_badge:
+  badges:
+    - name: Security Score
+      link_url: ${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/file/security-dashboards/security-dashboard.html
+      image_url: ${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/raw/security-reports/comprehensive/security-score-badge.svg
+      type: coverage
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      exists:
+        - security-dashboards/security-dashboard.html
+
+# Security deployment rules
+deployment:rules:security_deployment:
+  environment:
+    name: security-review
+    url: ${CI_PROJECT_URL}/-/environments/${CI_ENVIRONMENT_SLUG}
+  deployment_tier: production
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      environment:
+        name: production
+        action: start
+
+# Security monitoring rules
+monitoring:rules:security_metrics:
+  script:
+    - echo "Publishing security metrics..."
+    - |
+      if [ -f "security-reports/comprehensive/security-status.json" ]; then
+        SECURITY_SCORE=$(jq -r '.security_score // 0' security-reports/comprehensive/security-status.json)
+        CRITICAL_VULNS=$(jq -r '.vulnerabilities.critical // 0' security-reports/comprehensive/security-status.json)
+
+        # Publish to monitoring system (example: Prometheus, DataDog, etc.)
+        echo "security_score{project=\"rust-ai-ide\"} $SECURITY_SCORE" > metrics.txt
+        echo "critical_vulnerabilities{project=\"rust-ai-ide\"} $CRITICAL_VULNS" >> metrics.txt
+
+        # In a real implementation, you would push these metrics to your monitoring system
+        cat metrics.txt
+      fi
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: always
+
+# Security compliance rules
+compliance:rules:security_compliance:
+  script:
+    - echo "Checking security compliance..."
+    - |
+      # Check for required security files
+      REQUIRED_FILES=(
+        "security-reports/comprehensive/security-status.json"
+        "security-reports/comprehensive/executive-summary.md"
+        "security-dashboards/security-dashboard.html"
+      )
+
+      for file in "${REQUIRED_FILES[@]}"; do
+        if [ ! -f "$file" ]; then
+          echo "❌ Required security file missing: $file"
+          exit 1
+        fi
+      done
+
+      echo "✅ Security compliance check passed"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
+      when: always
+
+# Security incident response rules
+incident:rules:security_incident:
+  script:
+    - echo "Checking for security incidents..."
+    - |
+      if [ -f "security-reports/comprehensive/security-alerts.json" ]; then
+        ALERT_COUNT=$(jq '. | length' security-reports/comprehensive/security-alerts.json)
+        CRITICAL_ALERTS=$(jq '[.[] | select(.level == "CRITICAL")] | length' security-reports/comprehensive/security-alerts.json)
+
+        if [ "$CRITICAL_ALERTS" -gt 0 ]; then
+          echo "🚨 CRITICAL SECURITY INCIDENT DETECTED"
+          echo "Critical alerts: $CRITICAL_ALERTS"
+          echo "Total alerts: $ALERT_COUNT"
+          echo ""
+          echo "Immediate actions required:"
+          echo "1. Notify security team"
+          echo "2. Halt deployments"
+          echo "3. Initiate incident response"
+          echo "4. Review and patch vulnerabilities"
+          exit 1
+        elif [ "$ALERT_COUNT" -gt 0 ]; then
+          echo "⚠️ Security alerts detected: $ALERT_COUNT"
+          echo "Review security reports for details"
+        else
+          echo "✅ No security incidents detected"
+        fi
+      fi
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: always

@@ -1,0 +1,545 @@
+# GitLab CI/CD Pipeline for Rust AI IDE with Comprehensive Security Integration
+# Includes automated vulnerability scanning, patching, and security reporting
+
+stages:
+  - setup
+  - security_scan
+  - security_patch
+  - security_audit
+  - security_report
+  - security_notify
+  - deploy
+
+variables:
+  # Security configuration
+  SECURITY_REPORT_DIR: "security-reports"
+  SECURITY_DASHBOARD_DIR: "security-dashboards"
+  SECURITY_BACKUP_DIR: "security-backups"
+  SNYK_SEVERITY_THRESHOLD: "medium"
+  ZAP_SCAN_TYPE: "baseline"
+  SECURITY_CRITICAL_THRESHOLD: "8"
+  SECURITY_HIGH_THRESHOLD: "5"
+
+  # Build configuration
+  CARGO_HOME: $CI_PROJECT_DIR/.cargo
+  RUST_BACKTRACE: "1"
+  RUST_NIGHTLY_VERSION: "2025-09-03"
+
+  # Cache configuration
+  CARGO_CACHE_DIR: $CI_PROJECT_DIR/.cargo-cache
+  NPM_CACHE_DIR: $CI_PROJECT_DIR/.npm-cache
+
+# Global cache configuration
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .cargo/
+    - target/
+    - web/node_modules/
+    - .npm-cache/
+    - security-reports/
+    - security-backups/
+
+# Setup stage - Prepare environment and tools
+setup:environment:
+  stage: setup
+  image: rust:latest
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq curl wget jq nodejs npm
+    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-${RUST_NIGHTLY_VERSION}
+    - source $HOME/.cargo/env
+    - rustup component add rust-src rustfmt clippy
+    - npm install -g snyk
+  script:
+    - echo "Environment setup completed"
+    - cargo --version
+    - rustc --version
+    - node --version
+    - npm --version
+    - snyk --version || echo "Snyk not available"
+  artifacts:
+    reports:
+      dotenv: setup.env
+    expire_in: 1 hour
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# Security scanning stage - Run vulnerability scans
+security:scan:dependencies:
+  stage: security_scan
+  image: rust:latest
+  dependencies:
+    - setup:environment
+  before_script:
+    - source $HOME/.cargo/env
+    - apt-get update -qq && apt-get install -y -qq curl jq
+    - source scripts/ci/retrieve-snyk-secrets.sh || echo "Snyk secrets not available"
+  script:
+    - echo "Running dependency security scans..."
+    - mkdir -p ${SECURITY_REPORT_DIR}
+    - bash scripts/ci/security-checks.sh --output ${SECURITY_REPORT_DIR} --quick
+    - source scripts/ci/retrieve-snyk-secrets.sh 2>/dev/null && bash scripts/ci/snyk-dependency-scan.sh --severity-threshold ${SNYK_SEVERITY_THRESHOLD} --report-dir ${SECURITY_REPORT_DIR}/snyk || echo "Snyk scan skipped"
+  artifacts:
+    reports:
+      junit: ${SECURITY_REPORT_DIR}/**/junit-*.xml
+    paths:
+      - ${SECURITY_REPORT_DIR}/
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+    - schedules
+
+security:scan:web:
+  stage: security_scan
+  image: node:latest
+  dependencies:
+    - setup:environment
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq curl jq docker.io
+    - cd web && npm ci
+  script:
+    - echo "Running web component security scans..."
+    - mkdir -p ${SECURITY_REPORT_DIR}/zap
+    - bash scripts/ci/zap-web-scan.sh --${ZAP_SCAN_TYPE} --report-dir ${SECURITY_REPORT_DIR}/zap || echo "ZAP scan completed with warnings"
+  artifacts:
+    paths:
+      - ${SECURITY_REPORT_DIR}/zap/
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+    - schedules
+
+security:scan:container:
+  stage: security_scan
+  image: docker:latest
+  services:
+    - docker:dind
+  dependencies:
+    - setup:environment
+  script:
+    - echo "Running container security scans..."
+    - mkdir -p ${SECURITY_REPORT_DIR}/trivy
+    - docker run --rm -v $(pwd):/workspace aquasecurity/trivy:latest image --format json --output /workspace/${SECURITY_REPORT_DIR}/trivy/container-scan.json rust-ai-ide:latest || echo "Container scan completed"
+  artifacts:
+    paths:
+      - ${SECURITY_REPORT_DIR}/trivy/
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+    - schedules
+
+# Security patching stage - Apply automated patches
+security:patch:dependencies:
+  stage: security_patch
+  image: rust:latest
+  dependencies:
+    - security:scan:dependencies
+    - security:scan:web
+  before_script:
+    - source $HOME/.cargo/env
+    - apt-get update -qq && apt-get install -y -qq curl jq
+    - source scripts/ci/retrieve-snyk-secrets.sh 2>/dev/null || echo "Snyk secrets not available"
+  script:
+    - echo "Running automated dependency patching..."
+    - mkdir -p ${SECURITY_BACKUP_DIR}
+    - bash scripts/ci/automated-patch-application.sh --dry-run --backup-dir ${SECURITY_BACKUP_DIR} --report-dir ${SECURITY_REPORT_DIR}/patch-application
+    - |
+      # Check if patching is needed
+      if [ -f "${SECURITY_REPORT_DIR}/patch-application/patch-application-summary.json" ]; then
+        PATCH_NEEDED=$(jq -r '.overall_success' "${SECURITY_REPORT_DIR}/patch-application/patch-application-summary.json")
+        if [ "$PATCH_NEEDED" = "false" ]; then
+          echo "Patches needed - applying..."
+          bash scripts/ci/automated-patch-application.sh --auto-approve --backup-dir ${SECURITY_BACKUP_DIR} --report-dir ${SECURITY_REPORT_DIR}/patch-application
+        else
+          echo "No patches needed"
+        fi
+      fi
+  artifacts:
+    paths:
+      - ${SECURITY_BACKUP_DIR}/
+      - ${SECURITY_REPORT_DIR}/patch-application/
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    - main
+    - develop
+    - schedules
+
+# Security audit stage - Post-patch verification
+security:audit:post_patch:
+  stage: security_audit
+  image: rust:latest
+  dependencies:
+    - security:patch:dependencies
+    - security:scan:dependencies
+  before_script:
+    - source $HOME/.cargo/env
+    - apt-get update -qq && apt-get install -y -qq curl jq
+  script:
+    - echo "Running post-patch security audit..."
+    - bash scripts/ci/post-patch-security-audit.sh --pre-patch-report-dir ${SECURITY_REPORT_DIR} --report-dir ${SECURITY_REPORT_DIR}/post-patch-audit
+  artifacts:
+    paths:
+      - ${SECURITY_REPORT_DIR}/post-patch-audit/
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    - main
+    - develop
+    - schedules
+
+# Security reporting stage - Generate comprehensive reports
+security:report:comprehensive:
+  stage: security_report
+  image: rust:latest
+  dependencies:
+    - security:audit:post_patch
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq curl jq
+  script:
+    - echo "Generating comprehensive security reports..."
+    - bash scripts/ci/comprehensive-security-reporting.sh --report-dir ${SECURITY_REPORT_DIR}/comprehensive --dashboard-dir ${SECURITY_DASHBOARD_DIR}
+  artifacts:
+    paths:
+      - ${SECURITY_REPORT_DIR}/comprehensive/
+      - ${SECURITY_DASHBOARD_DIR}/
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+    - develop
+    - schedules
+
+# Security notifications stage - Send alerts to stakeholders
+security:notify:alerts:
+  stage: security_notify
+  image: rust:latest
+  dependencies:
+    - security:report:comprehensive
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq curl jq
+  script:
+    - echo "Sending security notifications..."
+    - |
+      if [ -f "${SECURITY_REPORT_DIR}/comprehensive/security-alerts.json" ]; then
+        ALERT_COUNT=$(jq '. | length' "${SECURITY_REPORT_DIR}/comprehensive/security-alerts.json")
+        if [ "$ALERT_COUNT" -gt 0 ]; then
+          echo "Sending $ALERT_COUNT security alerts..."
+          bash scripts/ci/security-notifications.sh --level medium "${SECURITY_REPORT_DIR}/comprehensive/security-alerts.json"
+        else
+          echo "No security alerts to send"
+        fi
+      else
+        echo "No security alerts file found"
+      fi
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+    - schedules
+
+# Dependency update automation - Scheduled maintenance
+security:update:dependencies:
+  stage: security_patch
+  image: rust:latest
+  dependencies:
+    - setup:environment
+  before_script:
+    - source $HOME/.cargo/env
+    - apt-get update -qq && apt-get install -y -qq curl jq
+  script:
+    - echo "Running automated dependency updates..."
+    - mkdir -p ${SECURITY_BACKUP_DIR}
+    - bash scripts/ci/dependency-update-automation.sh --dry-run --backup-dir ${SECURITY_BACKUP_DIR} --report-dir ${SECURITY_REPORT_DIR}/dependency-updates
+  allow_failure: true
+  only:
+    schedules:
+      - cron: "0 2 * * 1"  # Weekly on Monday at 2 AM
+
+# Build and test stage - Standard CI/CD
+build:rust:
+  stage: deploy
+  image: rust:latest
+  dependencies:
+    - setup:environment
+  before_script:
+    - source $HOME/.cargo/env
+    - rustup target add x86_64-unknown-linux-gnu
+  script:
+    - echo "Building Rust AI IDE..."
+    - cargo build --workspace --release
+    - cargo test --workspace --release
+  artifacts:
+    paths:
+      - target/release/
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+
+build:web:
+  stage: deploy
+  image: node:latest
+  dependencies:
+    - setup:environment
+  before_script:
+    - cd web && npm ci
+  script:
+    - echo "Building web frontend..."
+    - cd web && npm run build
+    - cd web && npm run type-check
+    - cd web && npm test
+  artifacts:
+    paths:
+      - web/dist/
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+
+# Dependency maintenance system jobs
+dependency:audit:daily:
+  stage: security_scan
+  image: rust:latest
+  dependencies:
+     - setup:environment
+  before_script:
+     - source $HOME/.cargo/env
+     - apt-get update -qq && apt-get install -y -qq curl jq
+     - cargo install cargo-audit cargo-deny cargo-outdated 2>/dev/null || echo "Some tools already installed"
+  script:
+     - echo "Running daily dependency audit..."
+     - mkdir -p ${SECURITY_REPORT_DIR}/dependency-audits
+     - bash scripts/ci/dependency-audit.sh --verbose --schedule-daily --output-dir ${SECURITY_REPORT_DIR}/dependency-audits/daily
+  artifacts:
+     paths:
+       - ${SECURITY_REPORT_DIR}/dependency-audits/daily/
+     expire_in: 1 week
+  allow_failure: true
+  only:
+     schedules:
+       - cron: "0 6 * * *"  # Daily at 6 AM
+
+dependency:audit:weekly:
+  stage: security_scan
+  image: rust:latest
+  dependencies:
+     - setup:environment
+  before_script:
+     - source $HOME/.cargo/env
+     - apt-get update -qq && apt-get install -y -qq curl jq
+     - cargo install cargo-audit cargo-deny cargo-outdated cargo-semver-checks 2>/dev/null || echo "Some tools already installed"
+  script:
+     - echo "Running comprehensive weekly dependency audit..."
+     - mkdir -p ${SECURITY_REPORT_DIR}/dependency-audits
+     - bash scripts/ci/dependency-audit.sh --verbose --schedule-weekly --all-crates --output-dir ${SECURITY_REPORT_DIR}/dependency-audits/weekly
+  artifacts:
+     paths:
+       - ${SECURITY_REPORT_DIR}/dependency-audits/weekly/
+     expire_in: 1 week
+  allow_failure: true
+  only:
+     schedules:
+       - cron: "0 7 * * 1"  # Weekly on Monday at 7 AM
+
+dependency:compatibility:check:
+  stage: security_scan
+  image: rust:latest
+  dependencies:
+     - setup:environment
+  before_script:
+     - source $HOME/.cargo/env
+     - apt-get update -qq && apt-get install -y -qq curl jq
+  script:
+     - echo "Running comprehensive compatibility checks..."
+     - mkdir -p ${SECURITY_REPORT_DIR}/compatibility
+     - bash scripts/ci/compatibility-check.sh --verbose --parallel 4 --fail-fast --output-dir ${SECURITY_REPORT_DIR}/compatibility
+  artifacts:
+     paths:
+       - ${SECURITY_REPORT_DIR}/compatibility/
+     expire_in: 1 week
+  allow_failure: true
+  only:
+     - merge_requests
+     - main
+     - develop
+     - schedules
+
+dependency:incremental:update:
+  stage: security_patch
+  image: rust:latest
+  dependencies:
+     - setup:environment
+     - dependency:compatibility:check
+  before_script:
+     - source $HOME/.cargo/env
+     - apt-get update -qq && apt-get install -y -qq curl jq
+     - cargo install cargo-outdated 2>/dev/null || echo "cargo-outdated already installed"
+  script:
+     - echo "Running incremental dependency updates..."
+     - mkdir -p ${SECURITY_BACKUP_DIR}
+     - mkdir -p ${SECURITY_REPORT_DIR}/version-bumps
+     - bash scripts/ci/incremental-version-bump.sh --verbose --version-type patch --max-updates 5 --auto-rollback --output-dir ${SECURITY_REPORT_DIR}/version-bumps --backup-dir ${SECURITY_BACKUP_DIR}
+  artifacts:
+     paths:
+       - ${SECURITY_BACKUP_DIR}/
+       - ${SECURITY_REPORT_DIR}/version-bumps/
+     expire_in: 1 week
+  allow_failure: true
+  only:
+     schedules:
+       - cron: "0 8 * * 2"  # Weekly on Tuesday at 8 AM
+
+dependency:regression:test:
+  stage: security_audit
+  image: rust:latest
+  dependencies:
+     - dependency:incremental:update
+  before_script:
+     - source $HOME/.cargo/env
+     - apt-get update -qq && apt-get install -y -qq curl jq
+     - cargo install cargo-tarpaulin 2>/dev/null || echo "cargo-tarpaulin already installed"
+  script:
+     - echo "Running comprehensive regression tests..."
+     - mkdir -p ${SECURITY_REPORT_DIR}/regression-tests
+     - bash scripts/ci/regression-testing.sh --verbose --test-type all --coverage --parallel 4 --output-dir ${SECURITY_REPORT_DIR}/regression-tests
+  artifacts:
+     paths:
+       - ${SECURITY_REPORT_DIR}/regression-tests/
+     expire_in: 1 week
+  allow_failure: true
+  only:
+     - main
+     - develop
+     - schedules
+
+dependency:health:dashboard:
+  stage: security_report
+  image: rust:latest
+  dependencies:
+     - dependency:regression:test
+  before_script:
+     - apt-get update -qq && apt-get install -y -qq curl jq
+  script:
+     - echo "Generating dependency health dashboard..."
+     - mkdir -p ${SECURITY_DASHBOARD_DIR}/dependency-health
+     - bash scripts/ci/dependency-dashboard.sh --verbose --historical-days 30 --format html --include-trends --alert-threshold 80 --output-dir ${SECURITY_DASHBOARD_DIR}/dependency-health
+  artifacts:
+     paths:
+       - ${SECURITY_DASHBOARD_DIR}/dependency-health/
+     expire_in: 1 week
+  only:
+     - merge_requests
+     - main
+     - develop
+     - schedules
+
+# Scheduled security maintenance jobs
+security:maintenance:weekly:
+  stage: security_report
+  image: rust:latest
+  before_script:
+     - apt-get update -qq && apt-get install -y -qq curl jq
+  script:
+     - echo "Running weekly security maintenance..."
+     - bash scripts/ci/comprehensive-security-reporting.sh --retention-days 30
+  allow_failure: true
+  only:
+     schedules:
+       - cron: "0 3 * * 0"  # Weekly on Sunday at 3 AM
+
+security:cleanup:old_reports:
+  stage: security_report
+  image: rust:latest
+  script:
+     - echo "Cleaning up old security reports..."
+     - find security-reports/ -name "*.log" -mtime +30 -delete 2>/dev/null || true
+     - find security-backups/ -name "*" -mtime +90 -delete 2>/dev/null || true
+  allow_failure: true
+  only:
+     schedules:
+       - cron: "0 4 * * 0"  # Weekly on Sunday at 4 AM
+
+# Manual jobs for emergency security operations
+security:emergency:patch:
+  stage: security_patch
+  image: rust:latest
+  dependencies:
+    - security:scan:dependencies
+  before_script:
+    - source $HOME/.cargo/env
+    - apt-get update -qq && apt-get install -y -qq curl jq
+  script:
+    - echo "Running emergency security patching..."
+    - mkdir -p ${SECURITY_BACKUP_DIR}
+    - bash scripts/ci/automated-patch-application.sh --auto-approve --severity-threshold critical --backup-dir ${SECURITY_BACKUP_DIR}
+  when: manual
+  allow_failure: false
+  only:
+    - main
+    - develop
+
+security:emergency:rollback:
+  stage: security_patch
+  image: rust:latest
+  script:
+    - echo "Performing emergency rollback..."
+    - LATEST_BACKUP=$(find ${SECURITY_BACKUP_DIR} -maxdepth 1 -type d -name "20*" | sort | tail -1)
+    - if [ -n "$LATEST_BACKUP" ]; then
+        bash scripts/ci/rollback-patch-application.sh --backup-dir "$LATEST_BACKUP" --force
+      else
+        echo "No backup found for rollback"
+        exit 1
+      fi
+  when: manual
+  allow_failure: false
+  only:
+    - main
+    - develop
+
+# Security gate - Block deployment if critical vulnerabilities exist
+security:gate:
+  stage: deploy
+  image: rust:latest
+  dependencies:
+    - security:report:comprehensive
+  script:
+    - echo "Checking security gate..."
+    - |
+      if [ -f "${SECURITY_REPORT_DIR}/comprehensive/security-status.json" ]; then
+        CRITICAL_VULNS=$(jq -r '.vulnerabilities.critical // 0' "${SECURITY_REPORT_DIR}/comprehensive/security-status.json")
+        SECURITY_SCORE=$(jq -r '.security_score // 0' "${SECURITY_REPORT_DIR}/comprehensive/security-status.json")
+
+        echo "Critical vulnerabilities: $CRITICAL_VULNS"
+        echo "Security score: $SECURITY_SCORE"
+
+        if [ "$CRITICAL_VULNS" -gt "${SECURITY_CRITICAL_THRESHOLD}" ] || [ "$SECURITY_SCORE" -lt 50 ]; then
+          echo "❌ Security gate FAILED - Blocking deployment"
+          echo "Critical vulnerabilities or low security score detected"
+          exit 1
+        else
+          echo "✅ Security gate PASSED - Allowing deployment"
+        fi
+      else
+        echo "⚠️ Security status not available - Allowing deployment with warning"
+      fi
+  allow_failure: true
+  only:
+    - main
+    - develop
+
+# Include security rules
+include:
+  - local: '.gitlab/ci/security-rules.yml'

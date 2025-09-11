@@ -1,0 +1,10 @@
+{
+    "slack_template": "📚 *Documentation Update*\nStatus: {{status}}\nDetails: {{details}}\nTime: {{timestamp}}",
+    "email_template": "<h3>Documentation Update</h3><p>Status: {{status}}</p><p>Details: {{details}}</p>",
+    "webhook_template": {
+        "event": "documentation_update",
+        "status": "{{status}}",
+        "details": "{{details}}",
+        "timestamp": "{{timestamp}}"
+    }
+}

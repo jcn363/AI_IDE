@@ -422,6 +422,7 @@ impl Debugger {
     }
 }
 
+impl Debugger {
     /// Get access to the thread debugger for advanced async/await debugging
     pub fn thread_debugger(&self) -> &ThreadDebugger {
         &self.thread_debugger
@@ -479,6 +480,8 @@ impl Debugger {
         self.thread_debugger.detect_deadlocks()
     }
 }
+
+impl Debugger {
     /// Get access to the memory profiler for advanced memory analysis
     pub fn memory_profiler(&self) -> &MemoryProfiler {
         &self.memory_profiler
@@ -527,6 +530,8 @@ impl Debugger {
     /// Get current heap statistics
     pub fn get_heap_stats(&self) -> &HeapStatistics {
         self.memory_profiler.get_heap_statistics()
+    }
+
     /// Get access to the performance profiler for advanced CPU profiling
     pub fn performance_profiler(&self) -> &PerformanceProfiler {
         &self.performance_profiler
@@ -548,8 +553,6 @@ impl Debugger {
         use crate::debugger::performance_profiling::BottleneckAnalysis;
         self.performance_profiler.stop_profiling()
             .map_err(|e| DebuggerError::process_error(format!("Failed to stop performance profiling: {}", e)))
-    }
-}
     }
 }
 

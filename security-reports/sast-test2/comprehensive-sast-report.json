@@ -1,0 +1,57 @@
+{
+  "timestamp": "2025-09-11T01:40:15+02:00",
+  "duration_seconds": 28,
+  "tool": "Enhanced SAST Suite",
+  "components": [
+    "Clippy Analysis",
+    "Unsafe Code Analysis",
+    "Security Pattern Detection"
+  ],
+  "configuration": {
+    "false_positive_filtering": false,
+    "severity_threshold": "info",
+    "strict_mode": false
+  },
+  "unsafe_analysis": {
+    "timestamp": "2025-09-11T01:39:49+02:00",
+    "tool": "Unsafe Code Analysis",
+    "automated_analysis": true,
+    "manual_analysis": true,
+    "issues_found": {
+      "automated": 0,
+      "manual": 0
+    },
+    "status": "CLEAN"
+  },
+  "security_patterns": {
+    "timestamp": "2025-09-11T01:40:15+02:00",
+    "tool": "Security Pattern Detection",
+    "patterns_analyzed": 5,
+    "issues_found": 106,
+    "pattern_details": {
+      "panic!": {
+        "files": 42,
+        "occurrences": 82
+      },
+      "unsafe": {
+        "files": 53,
+        "occurrences": 171
+      },
+      "transmute": {
+        "files": 1,
+        "occurrences": 13
+      },
+      "static mut": {
+        "files": 3,
+        "occurrences": 3
+      },
+      "lazy_static": {
+        "files": 7,
+        "occurrences": 10
+      }
+    },
+    "status": "PATTERNS_FOUND"
+  },
+  "overall_status": "PASSED",
+  "total_issues_found": 0
+}

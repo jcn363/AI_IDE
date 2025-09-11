@@ -1,0 +1,11 @@
+{
+    "slack_template": "🔍 *Code Review Complete*\nStatus: {{status}}\nReviewer: {{reviewer}}\nDetails: {{details}}\nTime: {{timestamp}}",
+    "email_template": "<h3>Code Review Complete</h3><p>Status: {{status}}</p><p>Reviewer: {{reviewer}}</p><p>Details: {{details}}</p>",
+    "webhook_template": {
+        "event": "review_complete",
+        "status": "{{status}}",
+        "reviewer": "{{reviewer}}",
+        "details": "{{details}}",
+        "timestamp": "{{timestamp}}"
+    }
+}

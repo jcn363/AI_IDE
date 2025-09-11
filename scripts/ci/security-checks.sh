@@ -148,6 +148,13 @@ check_security_tools() {
         fi
     done
 
+    # Check if nightly toolchain is available
+    if ! cargo +nightly --version >/dev/null 2>&1; then
+        log_warning "Nightly Rust toolchain not available - some security checks may be limited"
+    else
+        log_info "Nightly Rust toolchain available for enhanced security checks"
+    fi
+
     for tool in "${optional_tools[@]}"; do
         if ! command -v "${tool}" >/dev/null 2>&1; then
             log_warning "Optional security tool '${tool}' not found"
@@ -197,9 +204,19 @@ install_security_tools() {
 
 # Function for static application security testing (SAST)
 run_sast() {
-    if [[ "${SKIP_SAST}" == true || "${QUICK}" == true ]]; then
-        log_info "Skipping SAST checks"
+    if [[ "${SKIP_SAST}" == true ]]; then
+        log_info "Skipping SAST checks (--skip-sast)"
         return 0
+    fi
+
+    # Check if nightly toolchain is available for enhanced checks
+    if ! cargo +nightly --version >/dev/null 2>&1; then
+        if [[ "${QUICK}" == true ]]; then
+            log_info "Skipping SAST checks (--quick mode and no nightly toolchain)"
+            return 0
+        else
+            log_warning "Nightly toolchain not available - running basic SAST checks only"
+        fi
     fi
 
     log_info "Running Static Application Security Testing..."
@@ -207,9 +224,9 @@ run_sast() {
     local sast_report="${OUTPUT_DIR}/sast-report.json"
     local issues_found=0
 
-    # Clippy security checks
+    # Clippy security checks with nightly toolchain
     log_info "Running enhanced Clippy security checks..."
-    if cargo clippy --all-targets --all-features \
+    if cargo +nightly clippy --all-targets --all-features \
         -- -D clippy::unwrap_used \
         -D clippy::expect_used \
         -D clippy::panic \
@@ -266,15 +283,15 @@ run_dependency_scan() {
     local dep_report="${OUTPUT_DIR}/dependency-security-report.json"
     local issues_found=0
 
-    # cargo-audit for known vulnerabilities
+    # cargo-audit for known vulnerabilities (with nightly toolchain)
     if command -v cargo-audit >/dev/null 2>&1; then
         log_info "Running cargo-audit..."
-        if cargo audit --format json 2>/dev/null | jq . > "${OUTPUT_DIR}/audit-results.json"; then
-            local vulnerabilities=$(jq '.vulnerabilities.count' "${OUTPUT_DIR}/audit-results.json" 2>/dev/null || echo "0")
+        if cargo +nightly audit --format json 2>/dev/null | jq . > "${OUTPUT_DIR}/audit-results.json"; then
+            local vulnerabilities=$(jq '.vulnerabilities.count // 0' "${OUTPUT_DIR}/audit-results.json" 2>/dev/null || echo "0")
             if [[ "${vulnerabilities}" -gt 0 ]]; then
                 issues_found=$((issues_found + 1))
                 log_error "Security vulnerabilities found: ${vulnerabilities}"
-                jq . "${OUTPUT_DIR}/audit-results.json" | head -20
+                jq '.vulnerabilities.list[]? | {package: .package.name, advisory: .advisory.id, severity: .advisory.severity}' "${OUTPUT_DIR}/audit-results.json" 2>/dev/null | head -10
             else
                 log_success "No known vulnerabilities found"
             fi
@@ -284,12 +301,12 @@ run_dependency_scan() {
         fi
     fi
 
-    # cargo-deny for license and advisory checks
+    # cargo-deny for license and advisory checks (with nightly toolchain)
     if command -v cargo-deny >/dev/null 2>&1; then
         log_info "Running cargo-deny checks..."
 
         # License compliance
-        if cargo deny check licenses --format json > "${OUTPUT_DIR}/license-check.json" 2>&1; then
+        if cargo +nightly deny check licenses --format json > "${OUTPUT_DIR}/license-check.json" 2>&1; then
             log_success "License compliance check passed"
         else
             issues_found=$((issues_found + 1))
@@ -297,7 +314,7 @@ run_dependency_scan() {
         fi
 
         # Security advisories
-        if cargo deny check advisories --format json > "${OUTPUT_DIR}/advisory-check.json" 2>&1; then
+        if cargo +nightly deny check advisories --format json > "${OUTPUT_DIR}/advisory-check.json" 2>&1; then
             log_success "Security advisory check passed"
         else
             issues_found=$((issues_found + 1))
@@ -305,7 +322,7 @@ run_dependency_scan() {
         fi
 
         # Bans check
-        if cargo deny check bans --format json > "${OUTPUT_DIR}/bans-check.json" 2>&1; then
+        if cargo +nightly deny check bans --format json > "${OUTPUT_DIR}/bans-check.json" 2>&1; then
             log_success "Dependency bans check passed"
         else
             issues_found=$((issues_found + 1))
@@ -583,8 +600,7 @@ run_sbom_generation() {
     if command -v cargo-cyclonedx >/dev/null 2>&1; then
         log_info "Generating CycloneDX SBOM..."
 
-        if cargo cyclonedx --format json --output /dev/stderr 2>"${OUTPUT_DIR}/sbom/cyclonedx.log" | \
-           cargo cyclonedx --format json --output "${OUTPUT_DIR}/sbom/cyclonedx-sbom.json"; then
+        if cargo cyclonedx --format json --output "${OUTPUT_DIR}/sbom/cyclonedx-sbom.json" 2>"${OUTPUT_DIR}/sbom/cyclonedx.log"; then
 
             # Validate SBOM structure
             if [[ -f "${OUTPUT_DIR}/sbom/cyclonedx-sbom.json" ]]; then
