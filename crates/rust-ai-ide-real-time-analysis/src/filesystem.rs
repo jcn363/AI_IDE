@@ -124,10 +124,8 @@ impl FileSystemWatcher {
     pub async fn new(config: FileWatchConfig) -> WatcherResult<Self> {
         let (event_sender, event_receiver) = mpsc::unbounded_channel();
 
-        let filter_engine = FileFilterEngine::new(
-            config.watch_extensions.clone(),
-            config.max_file_size,
-        );
+        let filter_engine =
+            FileFilterEngine::new(config.watch_extensions.clone(), config.max_file_size);
 
         let change_coalescer = ChangeCoalescer::new(config.debounce_duration);
 
@@ -153,12 +151,9 @@ impl FileSystemWatcher {
         let config_clone = config.clone();
 
         tokio::spawn(async move {
-            if let Err(e) = Self::process_events_loop(
-                inner_clone,
-                event_receiver,
-                config_clone,
-                token,
-            ).await {
+            if let Err(e) =
+                Self::process_events_loop(inner_clone, event_receiver, config_clone, token).await
+            {
                 error!("Event processing loop failed: {}", e);
             }
         });
@@ -174,7 +169,10 @@ impl FileSystemWatcher {
 
     /// Start watching files at the specified paths
     pub async fn start_watching(&self) -> WatcherResult<()> {
-        info!("Starting file system watcher with {} paths", self.inner.config.watch_paths.len());
+        info!(
+            "Starting file system watcher with {} paths",
+            self.inner.config.watch_paths.len()
+        );
 
         // Validate and create watcher
         let mut watcher = self.create_native_watcher()?;
@@ -214,7 +212,9 @@ impl FileSystemWatcher {
             metadata: HashMap::new(),
         };
 
-        self.event_sender.send(event).map_err(|_| WatcherError::Disabled)?;
+        self.event_sender
+            .send(event)
+            .map_err(|_| WatcherError::Disabled)?;
         Ok(())
     }
 
@@ -228,9 +228,15 @@ impl FileSystemWatcher {
         let mut status = HashMap::new();
 
         let watch_state = self.inner.watch_state.read().await;
-        status.insert("watched_paths".to_string(), self.inner.config.watch_paths.len().to_string());
+        status.insert(
+            "watched_paths".to_string(),
+            self.inner.config.watch_paths.len().to_string(),
+        );
         status.insert("active_watches".to_string(), watch_state.len().to_string());
-        status.insert("is_cancelled".to_string(), self.cancellation_token.is_cancelled().to_string());
+        status.insert(
+            "is_cancelled".to_string(),
+            self.cancellation_token.is_cancelled().to_string(),
+        );
 
         status
     }
@@ -239,21 +245,25 @@ impl FileSystemWatcher {
     fn create_native_watcher(&self) -> WatcherResult<RecommendedWatcher> {
         let sender_clone = self.event_sender.clone();
 
-        let debouncer = new_debouncer(self.inner.config.debounce_duration, move |res: DebounceEventResult| {
-            match res {
-                Ok(events) => {
-                    // Process debounced events
-                    for event in events {
-                        if let Err(e) = Self::convert_and_send_event(&sender_clone, &event) {
-                            error!("Failed to send file event: {}", e);
+        let debouncer = new_debouncer(
+            self.inner.config.debounce_duration,
+            move |res: DebounceEventResult| {
+                match res {
+                    Ok(events) => {
+                        // Process debounced events
+                        for event in events {
+                            if let Err(e) = Self::convert_and_send_event(&sender_clone, &event) {
+                                error!("Failed to send file event: {}", e);
+                            }
                         }
                     }
+                    Err(err) => {
+                        error!("Watch error: {:?}", err);
+                    }
                 }
-                Err(err) => {
-                    error!("Watch error: {:?}", err);
-                }
-            }
-        }).map_err(|e| WatcherError::WatchError(notify::Error::Generic(e.to_string())))?;
+            },
+        )
+        .map_err(|e| WatcherError::WatchError(notify::Error::Generic(e.to_string())))?;
 
         Ok(debouncer.watcher())
     }
@@ -368,7 +378,10 @@ impl FileSystemWatcher {
 
 impl FileSystemWatcherInner {
     /// Filter and coalesce an incoming event
-    async fn filter_and_coalesce_event(&self, event: FileSystemEventData) -> Option<FileSystemEventData> {
+    async fn filter_and_coalesce_event(
+        &self,
+        event: FileSystemEventData,
+    ) -> Option<FileSystemEventData> {
         // Apply file filtering
         if !self.filter_engine.should_watch(&event.path).await.ok()? {
             return None;
@@ -403,7 +416,10 @@ impl ChangeCoalescer {
     }
 
     /// Coalesce a change, returning it only if it should be processed
-    pub async fn coalesce_change(&self, event: &FileSystemEventData) -> Option<FileSystemEventData> {
+    pub async fn coalesce_change(
+        &self,
+        event: &FileSystemEventData,
+    ) -> Option<FileSystemEventData> {
         let mut pending = self.pending_changes.write().await;
         let now = Instant::now();
 
@@ -533,9 +549,9 @@ impl FileEventProcessor for DefaultFileEventProcessor {
     fn get_file_priority(&self, path: &std::path::Path) -> TaskPriority {
         // Use file extension to determine priority
         let priority_patterns = [
-            (".rs", TaskPriority::High),          // Rust source files - highest priority
-            (".toml", TaskPriority::High),        // Configuration files
-            (".md", TaskPriority::Low),           // Documentation - lowest priority
+            (".rs", TaskPriority::High),   // Rust source files - highest priority
+            (".toml", TaskPriority::High), // Configuration files
+            (".md", TaskPriority::Low),    // Documentation - lowest priority
             (".js", TaskPriority::Normal),
             (".ts", TaskPriority::Normal),
         ];

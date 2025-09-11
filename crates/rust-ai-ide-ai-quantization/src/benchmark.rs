@@ -1,15 +1,15 @@
 #![feature(impl_trait_in_bindings)]
 
+use crate::IDEError;
+use candle_core::{DType, Device, Tensor};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
-use candle_core::{Tensor, Device, DType};
-use crate::IDEError;
 
-use crate::{QuantizedMemoryManager, ContextWindowManager};
-use crate::quantizer::{QuantizationService, QuantizationConfig, QuantizationStrategy};
+use crate::quantizer::{QuantizationConfig, QuantizationService, QuantizationStrategy};
+use crate::{ContextWindowManager, QuantizedMemoryManager};
 
 /// Comprehensive benchmarking suite for quantization infrastructure
 #[derive(Clone)]
@@ -73,11 +73,18 @@ pub enum ContextPattern {
     /// Fixed context window
     Fixed { size: usize },
     /// Linear expansion
-    LinearExpansion { start: usize, end: usize, steps: usize },
+    LinearExpansion {
+        start: usize,
+        end: usize,
+        steps: usize,
+    },
     /// Exponential growth
     ExponentialGrowth { base_size: usize, max_size: usize },
     /// Realistic conversation patterns
-    Conversation { turn_count: usize, avg_tokens_per_turn: usize },
+    Conversation {
+        turn_count: usize,
+        avg_tokens_per_turn: usize,
+    },
 }
 
 /// Performance targets to validate
@@ -285,7 +292,9 @@ impl QuantizationBenchmarkSuite {
         for config in configs {
             let result = self.run_single_benchmark(&config).await?;
             let mut results = self.results.lock().await;
-            results.test_results.insert(config.test_name.clone(), result);
+            results
+                .test_results
+                .insert(config.test_name.clone(), result);
         }
 
         // Generate summary
@@ -295,7 +304,10 @@ impl QuantizationBenchmarkSuite {
     }
 
     /// Run single benchmark
-    async fn run_single_benchmark(&self, config: &BenchmarkConfig) -> Result<BenchmarkResult, IDEError> {
+    async fn run_single_benchmark(
+        &self,
+        config: &BenchmarkConfig,
+    ) -> Result<BenchmarkResult, IDEError> {
         let start_time = Instant::now();
 
         let mut result = BenchmarkResult {
@@ -328,7 +340,8 @@ impl QuantizationBenchmarkSuite {
         self.run_context_pattern_test(&mut result, config).await?;
 
         // Run quantization performance tests
-        self.run_quantization_performance_test(&mut result, config).await?;
+        self.run_quantization_performance_test(&mut result, config)
+            .await?;
 
         // Validate against performance targets
         self.validate_performance_targets(&mut result, config)?;
@@ -342,7 +355,7 @@ impl QuantizationBenchmarkSuite {
     async fn run_sequential_memory_test(
         &self,
         result: &mut BenchmarkResult,
-        config: &BenchmarkConfig
+        config: &BenchmarkConfig,
     ) -> Result<(), IDEError> {
         let start_time = Instant::now();
 
@@ -351,13 +364,20 @@ impl QuantizationBenchmarkSuite {
         let mut total_allocated = 0u64;
 
         for i in 0..10 {
-            let shape = &[100, 100, config.model_config.parameter_count_m as usize / 10000];
-            let tensor = self.memory_manager.allocate_zero_copy_tensor(
-                &format!("sequential_{}", i),
-                shape,
-                DType::F32,
-                Device::Cpu
-            ).await?;
+            let shape = &[
+                100,
+                100,
+                config.model_config.parameter_count_m as usize / 10000,
+            ];
+            let tensor = self
+                .memory_manager
+                .allocate_zero_copy_tensor(
+                    &format!("sequential_{}", i),
+                    shape,
+                    DType::F32,
+                    Device::Cpu,
+                )
+                .await?;
 
             total_allocated += shape.iter().fold(1, |acc, &x| acc * x) as u64 * 4;
             tensors.push(tensor);
@@ -376,17 +396,15 @@ impl QuantizationBenchmarkSuite {
     async fn run_random_access_test(
         &self,
         result: &mut BenchmarkResult,
-        config: &BenchmarkConfig
+        config: &BenchmarkConfig,
     ) -> Result<(), IDEError> {
         // Random access simulation
         for i in 0..5 {
             let shape = &[50, 50, 100];
-            let _tensor = self.memory_manager.allocate_zero_copy_tensor(
-                &format!("random_{}", i),
-                shape,
-                DType::F16,
-                Device::Cpu
-            ).await?;
+            let _tensor = self
+                .memory_manager
+                .allocate_zero_copy_tensor(&format!("random_{}", i), shape, DType::F16, Device::Cpu)
+                .await?;
         }
 
         result.memory_stats.allocation_count += 5;
@@ -397,19 +415,17 @@ impl QuantizationBenchmarkSuite {
     async fn run_high_churn_test(
         &self,
         result: &mut BenchmarkResult,
-        config: &BenchmarkConfig
+        config: &BenchmarkConfig,
     ) -> Result<(), IDEError> {
         // Rapid allocation and deallocation
         for i in 0..20 {
             let shape = &[25, 25, 50];
             let tensor_name = format!("churn_{}", i);
 
-            let _tensor = self.memory_manager.allocate_zero_copy_tensor(
-                &tensor_name,
-                shape,
-                DType::F16,
-                Device::Cpu
-            ).await?;
+            let _tensor = self
+                .memory_manager
+                .allocate_zero_copy_tensor(&tensor_name, shape, DType::F16, Device::Cpu)
+                .await?;
 
             // Immediately release (simulate high churn)
             if i % 2 == 0 {
@@ -427,19 +443,22 @@ impl QuantizationBenchmarkSuite {
     async fn run_memory_pressure_test(
         &self,
         result: &mut BenchmarkResult,
-        config: &BenchmarkConfig
+        config: &BenchmarkConfig,
     ) -> Result<(), IDEError> {
         // Create memory pressure scenario
         let mut allocated_tensors = Vec::new();
 
         for i in 0..50 {
             let shape = &[200, 100, 50];
-            let tensor = self.memory_manager.allocate_zero_copy_tensor(
-                &format!("pressure_{}", i),
-                shape,
-                DType::F32,
-                Device::Cpu
-            ).await?;
+            let tensor = self
+                .memory_manager
+                .allocate_zero_copy_tensor(
+                    &format!("pressure_{}", i),
+                    shape,
+                    DType::F32,
+                    Device::Cpu,
+                )
+                .await?;
 
             allocated_tensors.push(tensor);
         }
@@ -457,7 +476,7 @@ impl QuantizationBenchmarkSuite {
     async fn run_context_pattern_test(
         &self,
         result: &mut BenchmarkResult,
-        config: &BenchmarkConfig
+        config: &BenchmarkConfig,
     ) -> Result<(), IDEError> {
         let session_id = &config.test_name;
 
@@ -470,16 +489,27 @@ impl QuantizationBenchmarkSuite {
                 for _ in 0..size {
                     let tokens = vec![1, 2, 3]; // Sample tokens
                     let attention_scores = vec![0.1, 0.2, 0.3];
-                    self.context_manager.process_tokens(session_id, &tokens, &attention_scores).await?;
+                    self.context_manager
+                        .process_tokens(session_id, &tokens, &attention_scores)
+                        .await?;
                 }
             }
-            ContextPattern::Conversation { turn_count, avg_tokens_per_turn } => {
+            ContextPattern::Conversation {
+                turn_count,
+                avg_tokens_per_turn,
+            } => {
                 // Conversation pattern simulation
                 for turn in 0..turn_count {
-                    let turn_tokens: Vec<u32> = (0..avg_tokens_per_turn).map(|i| (turn * avg_tokens_per_turn + i) as u32).collect();
-                    let attention_scores: Vec<f32> = (0..avg_tokens_per_turn).map(|i| (i as f32) / avg_tokens_per_turn as f32).collect();
+                    let turn_tokens: Vec<u32> = (0..avg_tokens_per_turn)
+                        .map(|i| (turn * avg_tokens_per_turn + i) as u32)
+                        .collect();
+                    let attention_scores: Vec<f32> = (0..avg_tokens_per_turn)
+                        .map(|i| (i as f32) / avg_tokens_per_turn as f32)
+                        .collect();
 
-                    self.context_manager.process_tokens(session_id, &turn_tokens, &attention_scores).await?;
+                    self.context_manager
+                        .process_tokens(session_id, &turn_tokens, &attention_scores)
+                        .await?;
                 }
             }
             _ => {} // Other patterns implemented similarly
@@ -496,7 +526,7 @@ impl QuantizationBenchmarkSuite {
     async fn run_quantization_performance_test(
         &self,
         result: &mut BenchmarkResult,
-        config: &BenchmarkConfig
+        config: &BenchmarkConfig,
     ) -> Result<(), IDEError> {
         let session_id = &config.test_name;
 
@@ -517,17 +547,19 @@ impl QuantizationBenchmarkSuite {
                 ..Default::default()
             };
 
-            let quantized = self.quantization_service.quantize_model(
-                std::path::Path::new("sample_model.bin"),
-                config
-            ).await?;
+            let quantized = self
+                .quantization_service
+                .quantize_model(std::path::Path::new("sample_model.bin"), config)
+                .await?;
 
             let quantization_time = start_time.elapsed().as_millis() as f64;
 
             // Update performance metrics
             result.quantization_performance.quantization_time_ms += quantization_time;
-            result.quantization_performance.compression_ratio = quantized.size_bytes as f32 / (tensor_data.len() * 4) as f32;
-            result.quantization_performance.throughput_tokens_per_sec = tensor_data.len() as f64 / (quantization_time / 1000.0);
+            result.quantization_performance.compression_ratio =
+                quantized.size_bytes as f32 / (tensor_data.len() * 4) as f32;
+            result.quantization_performance.throughput_tokens_per_sec =
+                tensor_data.len() as f64 / (quantization_time / 1000.0);
         }
 
         // Average metrics across strategies
@@ -544,7 +576,7 @@ impl QuantizationBenchmarkSuite {
     fn validate_performance_targets(
         &mut self,
         result: &mut BenchmarkResult,
-        config: &BenchmarkConfig
+        config: &BenchmarkConfig,
     ) -> Result<(), IDEError> {
         let targets = &config.performance_targets;
 
@@ -553,19 +585,18 @@ impl QuantizationBenchmarkSuite {
             result.status = TestStatus::FailedPerformance;
             result.errors.push(format!(
                 "Latency {:.2}ms exceeds target {:.2}ms",
-                result.quantization_performance.quantization_time_ms,
-                targets.max_latency_ms
+                result.quantization_performance.quantization_time_ms, targets.max_latency_ms
             ));
         }
 
         // Check memory usage
-        let memory_usage_gb = result.memory_stats.peak_usage_bytes as f64 / (1024.0 * 1024.0 * 1024.0);
+        let memory_usage_gb =
+            result.memory_stats.peak_usage_bytes as f64 / (1024.0 * 1024.0 * 1024.0);
         if memory_usage_gb > targets.max_memory_gb {
             result.status = TestStatus::FailedMemory;
             result.errors.push(format!(
                 "Memory usage {:.2}GB exceeds target {:.2}GB",
-                memory_usage_gb,
-                targets.max_memory_gb
+                memory_usage_gb, targets.max_memory_gb
             ));
         }
 
@@ -573,13 +604,14 @@ impl QuantizationBenchmarkSuite {
         if result.quantization_performance.compression_ratio < targets.target_compression_ratio {
             result.errors.push(format!(
                 "Compression ratio {:.2} below target {:.2}",
-                result.quantization_performance.compression_ratio,
-                targets.target_compression_ratio
+                result.quantization_performance.compression_ratio, targets.target_compression_ratio
             ));
         }
 
         // Check accuracy
-        if result.quantization_performance.accuracy_loss_percent > (100.0 - targets.min_accuracy_percent) as f32 {
+        if result.quantization_performance.accuracy_loss_percent
+            > (100.0 - targets.min_accuracy_percent) as f32
+        {
             result.status = TestStatus::FailedAccuracy;
             result.errors.push(format!(
                 "Accuracy loss {:.2}% exceeds allowed {:.2}%",
@@ -627,8 +659,10 @@ impl QuantizationBenchmarkSuite {
         summary.avg_execution_time_ms = total_execution_time / summary.total_tests as f64;
 
         if !performance_scores.is_empty() {
-            summary.performance_score = performance_scores.iter().sum::<f32>() / performance_scores.len() as f32;
-            summary.accuracy_score = accuracy_scores.iter().sum::<f32>() / accuracy_scores.len() as f32;
+            summary.performance_score =
+                performance_scores.iter().sum::<f32>() / performance_scores.len() as f32;
+            summary.accuracy_score =
+                accuracy_scores.iter().sum::<f32>() / accuracy_scores.len() as f32;
             summary.memory_score = memory_scores.iter().sum::<f32>() / memory_scores.len() as f32;
         }
 
@@ -641,14 +675,17 @@ impl QuantizationBenchmarkSuite {
     /// Calculate performance score (0-100)
     fn calculate_performance_score(&self, result: &BenchmarkResult) -> f32 {
         // Base score on latency (lower is better)
-        let latency_score = (500.0 / result.quantization_performance.quantization_time_ms).min(100.0).max(0.0);
+        let latency_score = (500.0 / result.quantization_performance.quantization_time_ms)
+            .min(100.0)
+            .max(0.0);
         latency_score as f32
     }
 
     /// Calculate accuracy score (0-100)
     fn calculate_accuracy_score(&self, result: &BenchmarkResult) -> f32 {
         // Base score on accuracy preservation
-        let accuracy_score = (100.0 - result.quantization_performance.accuracy_loss_percent).max(0.0);
+        let accuracy_score =
+            (100.0 - result.quantization_performance.accuracy_loss_percent).max(0.0);
         accuracy_score as f32
     }
 
@@ -661,25 +698,42 @@ impl QuantizationBenchmarkSuite {
     }
 
     /// Generate performance recommendations
-    fn generate_recommendations(&self, summary: &mut BenchmarkSummary, results: &HashMap<String, BenchmarkResult>) {
+    fn generate_recommendations(
+        &self,
+        summary: &mut BenchmarkSummary,
+        results: &HashMap<String, BenchmarkResult>,
+    ) {
         if summary.performance_score < 70.0 {
-            summary.recommendations.push("Consider optimizing quantization algorithms for better performance".to_string());
+            summary.recommendations.push(
+                "Consider optimizing quantization algorithms for better performance".to_string(),
+            );
         }
 
         if summary.accuracy_score < 85.0 {
-            summary.recommendations.push("Accuracy loss detected - review quantization precision settings".to_string());
+            summary.recommendations.push(
+                "Accuracy loss detected - review quantization precision settings".to_string(),
+            );
         }
 
         if summary.memory_score < 75.0 {
-            summary.recommendations.push("Memory efficiency improvement needed - consider advanced compression techniques".to_string());
+            summary.recommendations.push(
+                "Memory efficiency improvement needed - consider advanced compression techniques"
+                    .to_string(),
+            );
         }
 
         if summary.tests_failed > 0 {
-            summary.recommendations.push(format!("{} benchmarks failed - review error logs for details", summary.tests_failed));
+            summary.recommendations.push(format!(
+                "{} benchmarks failed - review error logs for details",
+                summary.tests_failed
+            ));
         }
 
         if summary.recommendations.is_empty() {
-            summary.recommendations.push("All benchmarks passed - Phase 2 quantization infrastructure is performance ready".to_string());
+            summary.recommendations.push(
+                "All benchmarks passed - Phase 2 quantization infrastructure is performance ready"
+                    .to_string(),
+            );
         }
     }
 
@@ -715,7 +769,7 @@ impl QuantizationBenchmarkSuite {
                 context_pattern: ContextPattern::LinearExpansion {
                     start: 32768,
                     end: 131072,
-                    steps: 100
+                    steps: 100,
                 },
                 performance_targets: PerformanceTargets {
                     max_latency_ms: 750.0,
@@ -731,7 +785,7 @@ impl QuantizationBenchmarkSuite {
     fn gather_system_info() -> SystemInfo {
         SystemInfo {
             cpu_info: "Unknown CPU".to_string(), // Would gather from system APIs
-            ram_gb: 0.0, // Would query system memory
+            ram_gb: 0.0,                         // Would query system memory
             gpu_info: None,
             os_info: "Unknown OS".to_string(), // Would detect OS
             rust_version: env!("CARGO_PKG_RUST_VERSION").to_string(),

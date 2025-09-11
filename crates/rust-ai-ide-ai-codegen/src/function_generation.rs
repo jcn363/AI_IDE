@@ -196,9 +196,16 @@ impl FunctionGenerator {
     }
 
     /// Select the most appropriate template based on context analysis
-    async fn select_template(&self, context: &FunctionGenerationContext) -> Result<(FunctionTemplate, f32), CodeGenerationError> {
-        let templates = self.templates.get(&context.target_language)
-            .ok_or_else(|| CodeGenerationError::UnsupportedLanguage(format!("{:?}", context.target_language)))?;
+    async fn select_template(
+        &self,
+        context: &FunctionGenerationContext,
+    ) -> Result<(FunctionTemplate, f32), CodeGenerationError> {
+        let templates = self
+            .templates
+            .get(&context.target_language)
+            .ok_or_else(|| {
+                CodeGenerationError::UnsupportedLanguage(format!("{:?}", context.target_language))
+            })?;
 
         let mut best_match = &templates[0];
         let mut highest_confidence = 0.0;
@@ -215,11 +222,19 @@ impl FunctionGenerator {
     }
 
     /// Calculate how well a template matches the given context
-    async fn calculate_context_match(&self, context: &FunctionGenerationContext, template: &FunctionTemplate) -> f32 {
+    async fn calculate_context_match(
+        &self,
+        context: &FunctionGenerationContext,
+        template: &FunctionTemplate,
+    ) -> f32 {
         let mut score = template.confidence;
 
         // Boost score if similar functions suggest this pattern
-        if context.similar_functions.iter().any(|f| f.contains(&template.pattern)) {
+        if context
+            .similar_functions
+            .iter()
+            .any(|f| f.contains(&template.pattern))
+        {
             score += 0.1;
         }
 
@@ -245,7 +260,13 @@ impl FunctionGenerator {
             map.insert("name".to_string(), func_name.clone());
         }
         map.insert("param_types".to_string(), context.parameters.join(", "));
-        map.insert("return_type".to_string(), context.return_type.clone().unwrap_or_else(|| "()".to_string()));
+        map.insert(
+            "return_type".to_string(),
+            context
+                .return_type
+                .clone()
+                .unwrap_or_else(|| "()".to_string()),
+        );
 
         // Add project pattern analysis here - simplified for now
         map
@@ -261,7 +282,9 @@ impl FunctionGenerator {
     }
 
     /// Generate function signature from context
-    fn generate_signature(context: &FunctionGenerationContext) -> Result<String, CodeGenerationError> {
+    fn generate_signature(
+        context: &FunctionGenerationContext,
+    ) -> Result<String, CodeGenerationError> {
         let params = if context.parameters.is_empty() {
             "".to_string()
         } else {
@@ -269,7 +292,16 @@ impl FunctionGenerator {
         };
 
         let return_type = context.return_type.clone().unwrap_or("()".to_string());
-        Ok(format!("fn {}({}) -> {}", context.original_function.as_ref().map(|s| s.as_str()).unwrap_or("generated_function"), params, return_type))
+        Ok(format!(
+            "fn {}({}) -> {}",
+            context
+                .original_function
+                .as_ref()
+                .map(|s| s.as_str())
+                .unwrap_or("generated_function"),
+            params,
+            return_type
+        ))
     }
 
     /// Infer necessary imports from generated code
@@ -296,17 +328,33 @@ impl FunctionGenerator {
             "/// {}\n/// Auto-generated function\n/// Parameters: {}\n/// Returns: {}",
             context.function_purpose,
             context.parameters.join(", "),
-            context.return_type.clone().unwrap_or_else(|| "()".to_string())
+            context
+                .return_type
+                .clone()
+                .unwrap_or_else(|| "()".to_string())
         ))
     }
 
     /// Generate tests for the function
-    fn generate_tests(context: &FunctionGenerationContext) -> Result<Option<Vec<GeneratedTest>>, CodeGenerationError> {
+    fn generate_tests(
+        context: &FunctionGenerationContext,
+    ) -> Result<Option<Vec<GeneratedTest>>, CodeGenerationError> {
         let test = GeneratedTest {
-            name: format!("test_{}", context.original_function.as_ref().map(|s| s.as_str()).unwrap_or("generated_function")),
+            name: format!(
+                "test_{}",
+                context
+                    .original_function
+                    .as_ref()
+                    .map(|s| s.as_str())
+                    .unwrap_or("generated_function")
+            ),
             code: format!(
                 "#[test]\nfn test_{}() {{\n    // Test implementation\n    assert!(true);\n}}",
-                context.original_function.as_ref().map(|s| s.as_str()).unwrap_or("function")
+                context
+                    .original_function
+                    .as_ref()
+                    .map(|s| s.as_str())
+                    .unwrap_or("function")
             ),
             test_type: TestType::Unit,
         };
@@ -320,7 +368,6 @@ impl FunctionGenerator {
         let branches = code.matches("if ").count() + code.matches("match ").count();
         (lines as f32 / 10.0) + (branches as f32 / 3.0)
     }
-
 }
 
 impl Default for FunctionGenerator {

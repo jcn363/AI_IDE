@@ -5,15 +5,15 @@
 //! and end-to-end scenarios with browser automation and API testing.
 
 use crate::common::*;
-use crate::{IntegrationTestResult, GlobalTestConfig};
+use crate::{GlobalTestConfig, IntegrationTestResult};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rust_ai_ide_errors::RustAIError;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
-use tokio::sync::Mutex;
 use tauri::{AppHandle, Manager};
+use tokio::sync::Mutex;
 
 /// UI test automation framework for Tauri applications
 pub struct UITestFramework {
@@ -67,20 +67,58 @@ pub struct UITestScenario {
 
 #[derive(Debug, Clone)]
 pub enum TestStep {
-    Navigate { url: String },
-    Click { selector: String },
-    Type { selector: String, text: String, clear: bool },
-    Select { selector: String, value: Option<String>, text: Option<String> },
-    Wait { duration: Duration },
-    WaitForElement { selector: String, visible: bool },
-    WaitForText { selector: String, text: String },
-    AssertVisible { selector: String },
-    AssertHidden { selector: String },
-    AssertText { selector: String, expected_text: String },
-    Screenshot { name: String },
-    Evaluate { script: String },
-    ApiCall { endpoint: String, method: String, body: Option<String> },
-    CommandCall { command: String, args: Vec<String> },
+    Navigate {
+        url: String,
+    },
+    Click {
+        selector: String,
+    },
+    Type {
+        selector: String,
+        text: String,
+        clear: bool,
+    },
+    Select {
+        selector: String,
+        value: Option<String>,
+        text: Option<String>,
+    },
+    Wait {
+        duration: Duration,
+    },
+    WaitForElement {
+        selector: String,
+        visible: bool,
+    },
+    WaitForText {
+        selector: String,
+        text: String,
+    },
+    AssertVisible {
+        selector: String,
+    },
+    AssertHidden {
+        selector: String,
+    },
+    AssertText {
+        selector: String,
+        expected_text: String,
+    },
+    Screenshot {
+        name: String,
+    },
+    Evaluate {
+        script: String,
+    },
+    ApiCall {
+        endpoint: String,
+        method: String,
+        body: Option<String>,
+    },
+    CommandCall {
+        command: String,
+        args: Vec<String>,
+    },
 }
 
 /// Test execution context for UI scenarios
@@ -295,7 +333,9 @@ impl UITestFramework {
             match Self::execute_step(&scenario, &step, &mut context).await {
                 Ok(_) => {}
                 Err(e) => {
-                    context.errors.push(format!("Step {} failed: {}", step_index, e));
+                    context
+                        .errors
+                        .push(format!("Step {} failed: {}", step_index, e));
                     break;
                 }
             }
@@ -303,12 +343,19 @@ impl UITestFramework {
 
         let duration = start_time.elapsed();
         let success = context.errors.is_empty();
-        let steps_completed = if success { scenario.steps.len() } else { context.current_step };
+        let steps_completed = if success {
+            scenario.steps.len()
+        } else {
+            context.current_step
+        };
 
         // Collect performance metrics
         let mut performance_metrics = HashMap::new();
         performance_metrics.insert("total_duration_ms".to_string(), duration.as_millis() as f64);
-        performance_metrics.insert("steps_per_second".to_string(), steps_completed as f64 / duration.as_secs_f64());
+        performance_metrics.insert(
+            "steps_per_second".to_string(),
+            steps_completed as f64 / duration.as_secs_f64(),
+        );
 
         UITestReport {
             scenario_name: scenario.name,
@@ -340,18 +387,43 @@ impl UITestFramework {
         match step {
             TestStep::Navigate { url } => Self::execute_navigate(url, context).await,
             TestStep::Click { selector } => Self::execute_click(selector, context).await,
-            TestStep::Type { selector, text, clear } => Self::execute_type(selector, text, *clear, context).await,
-            TestStep::Select { selector, value, text } => Self::execute_select(selector, value.as_deref(), text.as_deref(), context).await,
+            TestStep::Type {
+                selector,
+                text,
+                clear,
+            } => Self::execute_type(selector, text, *clear, context).await,
+            TestStep::Select {
+                selector,
+                value,
+                text,
+            } => Self::execute_select(selector, value.as_deref(), text.as_deref(), context).await,
             TestStep::Wait { duration } => Self::execute_wait(*duration).await,
-            TestStep::WaitForElement { selector, visible } => Self::execute_wait_for_element(selector, *visible, context).await,
-            TestStep::WaitForText { selector, text } => Self::execute_wait_for_text(selector, text, context).await,
-            TestStep::AssertVisible { selector } => Self::execute_assert_visible(selector, context).await,
-            TestStep::AssertHidden { selector } => Self::execute_assert_hidden(selector, context).await,
-            TestStep::AssertText { selector, expected_text } => Self::execute_assert_text(selector, expected_text, context).await,
+            TestStep::WaitForElement { selector, visible } => {
+                Self::execute_wait_for_element(selector, *visible, context).await
+            }
+            TestStep::WaitForText { selector, text } => {
+                Self::execute_wait_for_text(selector, text, context).await
+            }
+            TestStep::AssertVisible { selector } => {
+                Self::execute_assert_visible(selector, context).await
+            }
+            TestStep::AssertHidden { selector } => {
+                Self::execute_assert_hidden(selector, context).await
+            }
+            TestStep::AssertText {
+                selector,
+                expected_text,
+            } => Self::execute_assert_text(selector, expected_text, context).await,
             TestStep::Screenshot { name } => Self::execute_screenshot(name, context).await,
             TestStep::Evaluate { script } => Self::execute_evaluate(script, context).await,
-            TestStep::ApiCall { endpoint, method, body } => Self::execute_api_call(endpoint, method, body.as_deref(), context).await,
-            TestStep::CommandCall { command, args } => Self::execute_command_call(command, args, context).await,
+            TestStep::ApiCall {
+                endpoint,
+                method,
+                body,
+            } => Self::execute_api_call(endpoint, method, body.as_deref(), context).await,
+            TestStep::CommandCall { command, args } => {
+                Self::execute_command_call(command, args, context).await
+            }
         }
     }
 
@@ -363,23 +435,51 @@ impl UITestFramework {
         let total_duration: Duration = self.reports.iter().map(|r| r.duration).sum();
 
         let mut summary = HashMap::new();
-        summary.insert("total_scenarios".to_string(), serde_json::json!(total_scenarios));
-        summary.insert("executed_scenarios".to_string(), serde_json::json!(total_reports));
-        summary.insert("successful_scenarios".to_string(), serde_json::json!(successful_reports));
-        summary.insert("failed_scenarios".to_string(), serde_json::json!(total_reports - successful_reports));
-        summary.insert("success_rate".to_string(), serde_json::json!(
-            if total_reports == 0 { 0.0 } else { successful_reports as f64 / total_reports as f64 * 100.0 }
-        ));
-        summary.insert("total_duration_ms".to_string(), serde_json::json!(total_duration.as_millis()));
+        summary.insert(
+            "total_scenarios".to_string(),
+            serde_json::json!(total_scenarios),
+        );
+        summary.insert(
+            "executed_scenarios".to_string(),
+            serde_json::json!(total_reports),
+        );
+        summary.insert(
+            "successful_scenarios".to_string(),
+            serde_json::json!(successful_reports),
+        );
+        summary.insert(
+            "failed_scenarios".to_string(),
+            serde_json::json!(total_reports - successful_reports),
+        );
+        summary.insert(
+            "success_rate".to_string(),
+            serde_json::json!(if total_reports == 0 {
+                0.0
+            } else {
+                successful_reports as f64 / total_reports as f64 * 100.0
+            }),
+        );
+        summary.insert(
+            "total_duration_ms".to_string(),
+            serde_json::json!(total_duration.as_millis()),
+        );
 
         // Calculate step execution metrics
         let total_steps: usize = self.reports.iter().map(|r| r.total_steps).sum();
         let completed_steps: usize = self.reports.iter().map(|r| r.steps_completed).sum();
         summary.insert("total_steps".to_string(), serde_json::json!(total_steps));
-        summary.insert("completed_steps".to_string(), serde_json::json!(completed_steps));
-        summary.insert("step_completion_rate".to_string(), serde_json::json!(
-            if total_steps == 0 { 0.0 } else { completed_steps as f64 / total_steps as f64 * 100.0 }
-        ));
+        summary.insert(
+            "completed_steps".to_string(),
+            serde_json::json!(completed_steps),
+        );
+        summary.insert(
+            "step_completion_rate".to_string(),
+            serde_json::json!(if total_steps == 0 {
+                0.0
+            } else {
+                completed_steps as f64 / total_steps as f64 * 100.0
+            }),
+        );
 
         summary
     }
@@ -473,23 +573,49 @@ impl UITestFramework {
             })
             .collect::<Vec<_>>()
             .join("\n")
-    }// Test implementations for UI steps
-    async fn execute_navigate(_url: &str, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
+    } // Test implementations for UI steps
+    async fn execute_navigate(
+        _url: &str,
+        _context: &mut TestExecutionContext,
+    ) -> Result<(), RustAIError> {
         tracing::info!("Navigating to URL: {}", _url);
         Ok(())
     }
-    async fn execute_click(_selector: &str, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
+    async fn execute_click(
+        _selector: &str,
+        _context: &mut TestExecutionContext,
+    ) -> Result<(), RustAIError> {
         tracing::info!("Clicking element: {}", _selector);
         Ok(())
     }
 
-    async fn execute_type(_selector: &str, text: &str, _clear: bool, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
-        tracing::info!("Typing '{}' into element: {} (clear: {})", text, _selector, _clear);
+    async fn execute_type(
+        _selector: &str,
+        text: &str,
+        _clear: bool,
+        _context: &mut TestExecutionContext,
+    ) -> Result<(), RustAIError> {
+        tracing::info!(
+            "Typing '{}' into element: {} (clear: {})",
+            text,
+            _selector,
+            _clear
+        );
         Ok(())
     }
 
-    async fn execute_select(_selector: &str, value: Option<&str>, text: Option<&str>, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
-        tracing::info!("Selecting in element: {} (value: {:?}, text: {:?})", _selector, value, text);
+    async fn execute_select(
+        _selector: &str,
+        value: Option<&str>,
+        text: Option<&str>,
+        _context: &mut TestExecutionContext,
+    ) -> Result<(), RustAIError> {
+        tracing::info!(
+            "Selecting in element: {} (value: {:?}, text: {:?})",
+            _selector,
+            value,
+            text
+        );
         Ok(())
     }
 
@@ -498,46 +624,84 @@ impl UITestFramework {
         Ok(())
     }
 
-    async fn execute_wait_for_element(_selector: &str, _visible: bool, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
+    async fn execute_wait_for_element(
+        _selector: &str,
+        _visible: bool,
+        _context: &mut TestExecutionContext,
+    ) -> Result<(), RustAIError> {
         tracing::info!("Waiting for element: {} (visible: {})", _selector, _visible);
         Ok(())
     }
 
-    async fn execute_wait_for_text(_selector: &str, text: &str, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
+    async fn execute_wait_for_text(
+        _selector: &str,
+        text: &str,
+        _context: &mut TestExecutionContext,
+    ) -> Result<(), RustAIError> {
         tracing::info!("Waiting for text '{}' in element: {}", text, _selector);
         Ok(())
     }
 
-    async fn execute_assert_visible(_selector: &str, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
+    async fn execute_assert_visible(
+        _selector: &str,
+        _context: &mut TestExecutionContext,
+    ) -> Result<(), RustAIError> {
         tracing::info!("Asserting element is visible: {}", _selector);
         Ok(())
     }
 
-    async fn execute_assert_hidden(_selector: &str, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
+    async fn execute_assert_hidden(
+        _selector: &str,
+        _context: &mut TestExecutionContext,
+    ) -> Result<(), RustAIError> {
         tracing::info!("Asserting element is hidden: {}", _selector);
         Ok(())
     }
 
-    async fn execute_assert_text(_selector: &str, expected_text: &str, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
-        tracing::info!("Asserting text '{}' in element: {}", expected_text, _selector);
+    async fn execute_assert_text(
+        _selector: &str,
+        expected_text: &str,
+        _context: &mut TestExecutionContext,
+    ) -> Result<(), RustAIError> {
+        tracing::info!(
+            "Asserting text '{}' in element: {}",
+            expected_text,
+            _selector
+        );
         Ok(())
     }
 
-    async fn execute_screenshot(name: &str, context: &mut TestExecutionContext) -> Result<(), RustAIError> {
+    async fn execute_screenshot(
+        name: &str,
+        context: &mut TestExecutionContext,
+    ) -> Result<(), RustAIError> {
         let screenshot_path = format!("{}_{}.png", context.scenario_name, name);
         tracing::info!("Taking screenshot: {}", screenshot_path);
         context.screenshots.push(screenshot_path);
         Ok(())
     }
 
-    async fn execute_evaluate(_script: &str, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
+    async fn execute_evaluate(
+        _script: &str,
+        _context: &mut TestExecutionContext,
+    ) -> Result<(), RustAIError> {
         tracing::info!("Evaluating JavaScript script");
         Ok(())
     }
 
-    async fn execute_api_call(endpoint: &str, method: &str, body: Option<&str>, context: &mut TestExecutionContext) -> Result<(), RustAIError> {
+    async fn execute_api_call(
+        endpoint: &str,
+        method: &str,
+        body: Option<&str>,
+        context: &mut TestExecutionContext,
+    ) -> Result<(), RustAIError> {
         let start_time = std::time::Instant::now();
-        tracing::info!("Making {} API call to: {} (body: {})", method, endpoint, body.is_some());
+        tracing::info!(
+            "Making {} API call to: {} (body: {})",
+            method,
+            endpoint,
+            body.is_some()
+        );
 
         // Mock response for testing
         let (response_body, status_code) = match method {
@@ -562,18 +726,27 @@ impl UITestFramework {
         Ok(())
     }
 
-    async fn execute_command_call(command: &str, args: &[String], _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
+    async fn execute_command_call(
+        command: &str,
+        args: &[String],
+        _context: &mut TestExecutionContext,
+    ) -> Result<(), RustAIError> {
         tracing::info!("Executing command: {} {:?}", command, args);
 
         let mut cmd = tokio::process::Command::new(command);
         cmd.args(args);
 
-        let result = cmd.output().await
+        let result = cmd
+            .output()
+            .await
             .map_err(|e| RustAIError::CommandError(format!("Failed to execute command: {}", e)))?;
 
         if !result.status.success() {
             let stderr = String::from_utf8_lossy(&result.stderr);
-            return Err(RustAIError::CommandError(format!("Command failed: {}", stderr)));
+            return Err(RustAIError::CommandError(format!(
+                "Command failed: {}",
+                stderr
+            )));
         }
 
         Ok(())

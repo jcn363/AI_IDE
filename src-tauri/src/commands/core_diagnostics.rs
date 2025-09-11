@@ -3,12 +3,12 @@
 //! This module contains the primary diagnostic functions including
 //! compilation analysis, error explanation, and documentation lookup.
 
-use crate::modules::shared::diagnostics::*;
 use crate::commands::documentation::helpers::*;
 use crate::commands::utils::*;
+use crate::modules::shared::diagnostics::*;
 use anyhow::{anyhow, Result};
 use std::collections::HashMap;
-use std::time::{SystemTime, Duration};
+use std::time::{Duration, SystemTime};
 use tauri::State;
 use tokio::time::timeout;
 
@@ -19,17 +19,29 @@ pub async fn get_compiler_diagnostics(
     diagnostic_cache: State<'_, DiagnosticCacheState>,
     explanation_cache: State<'_, ExplanationCacheState>,
 ) -> Result<CompilerDiagnosticsResult, String> {
-    log::info!("Getting compiler diagnostics for: {}", request.workspace_path);
+    log::info!(
+        "Getting compiler diagnostics for: {}",
+        request.workspace_path
+    );
 
-    let cache_key = format!("{}:{}",
+    let cache_key = format!(
+        "{}:{}",
         request.workspace_path,
-        if request.include_explanations { "with_explanations" } else { "basic" });
+        if request.include_explanations {
+            "with_explanations"
+        } else {
+            "basic"
+        }
+    );
 
     // Check cache first if enabled
     if request.use_cache {
         let cache_guard = diagnostic_cache.read().await;
         if let Some(cached) = cache_guard.get(&cache_key) {
-            log::debug!("Returning cached diagnostics for {}", request.workspace_path);
+            log::debug!(
+                "Returning cached diagnostics for {}",
+                request.workspace_path
+            );
             let mut result = cached.value.clone();
             result.metadata.cached = true;
             return Ok(result);
@@ -40,14 +52,13 @@ pub async fn get_compiler_diagnostics(
 
     // Run cargo check with timeout
     let timeout_duration = Duration::from_secs(request.timeout_seconds.unwrap_or(30));
-    let diagnostics_result = timeout(
-        timeout_duration,
-        run_cargo_check(&request.workspace_path)
-    ).await
-    .map_err(|_| "Cargo check timed out".to_string())?
-    .map_err(|e| format!("Cargo check failed: {}", e))?;
+    let diagnostics_result = timeout(timeout_duration, run_cargo_check(&request.workspace_path))
+        .await
+        .map_err(|_| "Cargo check timed out".to_string())?
+        .map_err(|e| format!("Cargo check failed: {}", e))?;
 
-    let compilation_time = start_time.elapsed()
+    let compilation_time = start_time
+        .elapsed()
         .map(|d| d.as_millis() as u64)
         .unwrap_or(0);
 
@@ -62,7 +73,9 @@ pub async fn get_compiler_diagnostics(
     for line in diagnostics_result.lines() {
         if let Ok(json) = serde_json::from_str::<serde_json::Value>(line) {
             if let Some(message) = json.get("message") {
-                if let Some(diagnostic) = parse_compiler_diagnostic(message, &request.workspace_path).await {
+                if let Some(diagnostic) =
+                    parse_compiler_diagnostic(message, &request.workspace_path).await
+                {
                     // Count diagnostic levels
                     match diagnostic.level.as_str() {
                         "error" => error_count += 1,
@@ -77,8 +90,10 @@ pub async fn get_compiler_diagnostics(
                             if let Ok(explanation) = get_cached_error_explanation(
                                 &code.code,
                                 explanation_cache.clone(),
-                                request.cache_ttl_seconds.unwrap_or(3600)
-                            ).await {
+                                request.cache_ttl_seconds.unwrap_or(3600),
+                            )
+                            .await
+                            {
                                 explanations.insert(code.code.clone(), explanation);
                             }
                         }
@@ -120,7 +135,7 @@ pub async fn get_compiler_diagnostics(
         cache_guard.insert(
             cache_key,
             result.clone(),
-            request.cache_ttl_seconds.unwrap_or(300) // 5 minutes default
+            request.cache_ttl_seconds.unwrap_or(300), // 5 minutes default
         );
     }
 
@@ -138,8 +153,9 @@ pub async fn explain_error_code(
     get_cached_error_explanation(
         &request.error_code,
         explanation_cache,
-        request.cache_ttl_seconds.unwrap_or(86400) // 24 hours default
-    ).await
+        request.cache_ttl_seconds.unwrap_or(86400), // 24 hours default
+    )
+    .await
     .map_err(|e| format!("Failed to get error explanation: {}", e))
 }
 

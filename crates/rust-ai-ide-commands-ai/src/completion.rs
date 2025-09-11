@@ -21,13 +21,13 @@ This module integrates with:
 - EventBus for async communication
 */
 
-use std::sync::Arc;
-use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 // Re-export common types
-use super::services::{AIService, AIResult, AIError};
+use super::services::{AIError, AIResult, AIService};
 
 // Note: command_templates macros not available in this crate scope
 // When integrating with Tauri, use templates from src-tauri
@@ -125,7 +125,10 @@ impl CompletionService {
     }
 
     /// Perform code completion
-    pub async fn complete_code(&self, request: CodeCompletionRequest) -> AIResult<CodeCompletionResponse> {
+    pub async fn complete_code(
+        &self,
+        request: CodeCompletionRequest,
+    ) -> AIResult<CodeCompletionResponse> {
         // TODO: Implement actual AI completion logic
         // This is a placeholder implementation that will be replaced with real AI integration
 
@@ -133,7 +136,8 @@ impl CompletionService {
             return Err(AIError::Other {
                 message: CompletionError::UnsupportedLanguage {
                     language: request.language,
-                }.to_string(),
+                }
+                .to_string(),
             });
         }
 
@@ -151,7 +155,10 @@ impl CompletionService {
     }
 
     /// Perform code refactoring
-    pub async fn refactor_code(&self, request: RefactoringRequest) -> AIResult<RefactoringResponse> {
+    pub async fn refactor_code(
+        &self,
+        request: RefactoringRequest,
+    ) -> AIResult<RefactoringResponse> {
         // TODO: Implement actual AI refactoring logic
         // This is a placeholder implementation
 
@@ -159,7 +166,8 @@ impl CompletionService {
             return Err(AIError::Other {
                 message: CompletionError::UnsupportedLanguage {
                     language: request.language,
-                }.to_string(),
+                }
+                .to_string(),
             });
         }
 
@@ -170,7 +178,8 @@ impl CompletionService {
 
         Ok(RefactoringResponse {
             refactored_code,
-            reasoning: "AI-generated refactoring suggestion for improved code structure".to_string(),
+            reasoning: "AI-generated refactoring suggestion for improved code structure"
+                .to_string(),
         })
     }
 }
@@ -258,7 +267,9 @@ mod tests {
     #[derive(Clone)]
     struct MockAIService;
     impl MockAIService {
-        fn new() -> Self { Self }
+        fn new() -> Self {
+            Self
+        }
     }
 
     #[tokio::test]
@@ -288,7 +299,10 @@ mod tests {
         let response = completion_service.complete_code(request).await.unwrap();
         assert_eq!(response.suggestions.len(), 2);
         assert_eq!(response.confidence_scores.len(), 2);
-        assert!(response.confidence_scores.iter().all(|&score| (0.0..=1.0).contains(&score)));
+        assert!(response
+            .confidence_scores
+            .iter()
+            .all(|&score| (0.0..=1.0).contains(&score)));
     }
 
     #[tokio::test]

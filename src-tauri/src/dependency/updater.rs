@@ -1,4 +1,4 @@
-use cargo_edit::{LocalManifest, get_dep_version, set_dep_version, upgrade_requirement};
+use cargo_edit::{get_dep_version, set_dep_version, upgrade_requirement, LocalManifest};
 use cargo_metadata::{Dependency, MetadataCommand, PackageId, SourceKind};
 use semver::{Version, VersionReq};
 use std::path::Path;
@@ -29,12 +29,22 @@ impl DependencyUpdater {
         }
     }
 
-    pub async fn update_dependencies(&self, dry_run: bool) -> Result<Vec<DependencyUpdate>, UpdateError> {
+    pub async fn update_dependencies(
+        &self,
+        dry_run: bool,
+    ) -> Result<Vec<DependencyUpdate>, UpdateError> {
         let mut local_manifest = LocalManifest::try_new(&self.manifest_path)?;
         let mut updates = Vec::new();
 
-        let metadata = MetadataCommand::new().manifest_path(&self.manifest_path).exec()
-            .map_err(|e| UpdateError::ParseManifest(toml::de::Error::from(std::io::Error::new(std::io::ErrorKind::InvalidData, format!("Metadata load error: {}", e)))))?;
+        let metadata = MetadataCommand::new()
+            .manifest_path(&self.manifest_path)
+            .exec()
+            .map_err(|e| {
+                UpdateError::ParseManifest(toml::de::Error::from(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    format!("Metadata load error: {}", e),
+                )))
+            })?;
 
         for pkg in &metadata.packages {
             if pkg.manifest_path == self.manifest_path {
@@ -61,7 +71,11 @@ impl DependencyUpdater {
         dep: &Dependency,
     ) -> Result<Option<DependencyUpdate>, UpdateError> {
         // Skip git and path dependencies
-        if dep.source.as_ref().is_some_and(|s| matches!(s.kind, SourceKind::Git(_) | SourceKind::Path(_))) {
+        if dep
+            .source
+            .as_ref()
+            .is_some_and(|s| matches!(s.kind, SourceKind::Git(_) | SourceKind::Path(_)))
+        {
             return Ok(None);
         }
 

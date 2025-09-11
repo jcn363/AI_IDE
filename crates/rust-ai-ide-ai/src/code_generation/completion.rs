@@ -75,7 +75,7 @@ impl CodeCompleter {
     /// Analyze context and provide completion suggestions
     pub async fn get_completion_suggestions(
         &self,
-        context: CompletionContext
+        context: CompletionContext,
     ) -> Result<Vec<CompletionSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
@@ -101,7 +101,7 @@ impl CodeCompleter {
     /// Generate function completion suggestions
     async fn generate_function_completions(
         &self,
-        context: &CompletionContext
+        context: &CompletionContext,
     ) -> Result<Vec<CompletionSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
@@ -111,7 +111,9 @@ impl CodeCompleter {
             kind: CompletionKind::Snippet,
             description: "Async function with error handling".to_string(),
             confidence: 0.8,
-            additional_info: Some("Generates async function with proper error handling".to_string()),
+            additional_info: Some(
+                "Generates async function with proper error handling".to_string(),
+            ),
         };
         suggestions.push(completion);
 
@@ -121,7 +123,7 @@ impl CodeCompleter {
     /// Generate import completion suggestions
     async fn generate_import_completions(
         &self,
-        context: &CompletionContext
+        context: &CompletionContext,
     ) -> Result<Vec<CompletionSuggestion>, CodeGenerationError> {
         let suggestions = vec![
             CompletionSuggestion {
@@ -146,7 +148,7 @@ impl CodeCompleter {
     /// Generate type completion suggestions
     async fn generate_type_completions(
         &self,
-        context: &CompletionContext
+        context: &CompletionContext,
     ) -> Result<Vec<CompletionSuggestion>, CodeGenerationError> {
         let suggestions = vec![
             CompletionSuggestion {
@@ -171,7 +173,7 @@ impl CodeCompleter {
     /// Generate general completion suggestions
     async fn generate_general_completions(
         &self,
-        _context: &CompletionContext
+        _context: &CompletionContext,
     ) -> Result<Vec<CompletionSuggestion>, CodeGenerationError> {
         let suggestions = vec![
             CompletionSuggestion {

@@ -45,10 +45,10 @@ impl LicensePolicy {
 
     pub fn check_license(&self, license: &str) -> LicenseCompliance {
         let allowed = self.allowed_licenses.contains(&license.to_string())
-                   || self.allowed_licenses.iter().any(|l| license.contains(l));
+            || self.allowed_licenses.iter().any(|l| license.contains(l));
 
         let denied = self.denied_licenses.contains(&license.to_string())
-                  || self.denied_licenses.iter().any(|l| license.contains(l));
+            || self.denied_licenses.iter().any(|l| license.contains(l));
 
         if allowed && !denied {
             LicenseCompliance::Compliant
@@ -86,7 +86,9 @@ impl LicenseComplianceChecker {
     pub fn check_license(&self, license: &str) -> LicenseCompliance {
         // Simple license checking logic
         match license.to_lowercase().as_str() {
-            "mit" | "apache-2.0" | "bsd-3-clause" | "bsd-2-clause" | "isc" => LicenseCompliance::Compliant,
+            "mit" | "apache-2.0" | "bsd-3-clause" | "bsd-2-clause" | "isc" => {
+                LicenseCompliance::Compliant
+            }
             "gpl-2.0" | "gpl-3.0" | "lgpl-2.1" | "lgpl-3.0" => LicenseCompliance::NotInAllowList,
             "" | "none" | "unknown" => LicenseCompliance::UnknownLicense,
             _ => LicenseCompliance::Warning,

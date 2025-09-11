@@ -1,14 +1,16 @@
 //! Tauri commands for orchestration layer management
 
-use tauri::{State, AppHandle};
-use crate::{orchestrator::ServiceOrchestrator, error::OrchestrationError, types::*};
+use crate::{error::OrchestrationError, orchestrator::ServiceOrchestrator, types::*};
+use tauri::{AppHandle, State};
 
 // Tauri command for initializing the orchestrator
 #[tauri::command]
 pub async fn init_orchestrator(
     orchestrator: State<'_, ServiceOrchestrator>,
 ) -> Result<String, String> {
-    orchestrator.initialize().await
+    orchestrator
+        .initialize()
+        .await
         .map(|_| serde_json::json!({"status": "ok"}).to_string())
         .map_err(|e| e.to_string())
 }
@@ -31,7 +33,9 @@ pub async fn register_orchestration_service(
     let registration: ServiceRegistration = serde_json::from_str(&registration_json)
         .map_err(|e| format!("Invalid registration: {}", e))?;
 
-    orchestrator.register_service(registration).await
+    orchestrator
+        .register_service(registration)
+        .await
         .map(|_| serde_json::json!({"status": "ok"}).to_string())
         .map_err(|e| e.to_string())
 }

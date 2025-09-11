@@ -40,10 +40,7 @@ pub enum DependencyError {
     ConfigError(String),
 
     /// Generic dependency resolution error
-    ResolutionError {
-        package: String,
-        reason: String,
-    },
+    ResolutionError { package: String, reason: String },
 
     /// Security-related error
     SecurityError(String),
@@ -52,43 +49,50 @@ pub enum DependencyError {
 impl fmt::Display for DependencyError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            DependencyError::VersionConflict { package, required_versions, source_packages } => {
-                write!(f, "Version conflict for '{}': required versions {:?} from packages {:?}",
-                       package, required_versions, source_packages)
-            },
+            DependencyError::VersionConflict {
+                package,
+                required_versions,
+                source_packages,
+            } => {
+                write!(
+                    f,
+                    "Version conflict for '{}': required versions {:?} from packages {:?}",
+                    package, required_versions, source_packages
+                )
+            }
             DependencyError::CircularDependency(packages) => {
                 write!(f, "Circular dependency detected: {:?}", packages)
-            },
+            }
             DependencyError::PackageNotFound(package) => {
                 write!(f, "Package '{}' not found", package)
-            },
+            }
             DependencyError::NetworkError(msg) => {
                 write!(f, "Network error: {}", msg)
-            },
+            }
             DependencyError::IoError(msg) => {
                 write!(f, "IO error: {}", msg)
-            },
+            }
             DependencyError::ParseError(msg) => {
                 write!(f, "Parse error: {}", msg)
-            },
+            }
             DependencyError::CacheError(msg) => {
                 write!(f, "Cache error: {}", msg)
-            },
+            }
             DependencyError::ResolutionTimeout(msg) => {
                 write!(f, "Resolution timeout: {}", msg)
-            },
+            }
             DependencyError::WorkspaceError(msg) => {
                 write!(f, "Workspace error: {}", msg)
-            },
+            }
             DependencyError::ConfigError(msg) => {
                 write!(f, "Configuration error: {}", msg)
-            },
+            }
             DependencyError::ResolutionError { package, reason } => {
                 write!(f, "Resolution error for '{}': {}", package, reason)
-            },
+            }
             DependencyError::SecurityError(msg) => {
                 write!(f, "Security error: {}", msg)
-            },
+            }
         }
     }
 }
@@ -175,7 +179,11 @@ impl ErrorAggregator {
     /// Get suggestions sorted by confidence
     pub fn get_suggestions(&self) -> Vec<&ErrorSuggestion> {
         let mut suggestions = self.suggestions.iter().collect::<Vec<_>>();
-        suggestions.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+        suggestions.sort_by(|a, b| {
+            b.confidence
+                .partial_cmp(&a.confidence)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         suggestions
     }
 
@@ -191,7 +199,9 @@ impl ErrorAggregator {
             Err(self.errors.into_iter().next().unwrap())
         } else {
             // Multiple errors - combine them
-            let error_messages = self.errors.iter()
+            let error_messages = self
+                .errors
+                .iter()
                 .map(|e| e.to_string())
                 .collect::<Vec<_>>()
                 .join("; ");

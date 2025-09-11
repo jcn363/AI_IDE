@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-use std::path::PathBuf;
+use crate::IDEError;
 use candle_core::Tensor;
 use serde::{Deserialize, Serialize};
-use crate::IDEError;
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 /// Quantization strategy supported by the system
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -106,7 +106,8 @@ impl Quantizer {
         }
 
         // Check memory requirements
-        let estimated_memory: usize = tensors.values()
+        let estimated_memory: usize = tensors
+            .values()
             .map(|t| t.dims().iter().product::<usize>() * 4) // Assume 4 bytes per element
             .sum();
 
@@ -196,10 +197,7 @@ impl Quantizer {
     }
 
     /// Validate tensor is compatible with quantization
-    fn validate_tensor_quantization_compatibility(
-        &self,
-        tensor: &Tensor
-    ) -> Result<(), IDEError> {
+    fn validate_tensor_quantization_compatibility(&self, tensor: &Tensor) -> Result<(), IDEError> {
         let dtype = tensor.dtype();
         match dtype {
             candle_core::DType::F32 | candle_core::DType::F16 => Ok(()),
@@ -223,15 +221,18 @@ impl Quantizer {
 
         // Reshape back (simplified - in real implementation would preserve shape)
         // Convert to bytes representing 4-bit values
-        let quantized_bytes: Vec<u8> = flat_data.chunks(2).map(|chunk| {
-            let val1 = (chunk[0] * 16.0).clamp(0.0, 15.0) as u8;
-            let val2 = if chunk.len() > 1 {
-                (chunk[1] * 16.0).clamp(0.0, 15.0) as u8
-            } else {
-                0
-            };
-            (val1 << 4) | val2
-        }).collect();
+        let quantized_bytes: Vec<u8> = flat_data
+            .chunks(2)
+            .map(|chunk| {
+                let val1 = (chunk[0] * 16.0).clamp(0.0, 15.0) as u8;
+                let val2 = if chunk.len() > 1 {
+                    (chunk[1] * 16.0).clamp(0.0, 15.0) as u8
+                } else {
+                    0
+                };
+                (val1 << 4) | val2
+            })
+            .collect();
 
         // Create quantized tensor (placeholder shape)
         Tensor::from_vec(quantized_bytes, &[quantized_bytes.len()], tensor.device())
@@ -272,7 +273,9 @@ impl Quantizer {
         let max_val = data.iter().fold(f32::NEG_INFINITY, |a, &b| a.max(b));
 
         if (max_val - min_val).abs() < f32::EPSILON {
-            return Err(IDEError::InvalidArgument("Data range too small for quantization".to_string()));
+            return Err(IDEError::InvalidArgument(
+                "Data range too small for quantization".to_string(),
+            ));
         }
 
         // Scale to 0-15 range (4 bits)
@@ -292,7 +295,9 @@ impl Quantizer {
         let max_val = data.iter().fold(f32::NEG_INFINITY, |a, &b| a.max(b));
 
         if (max_val - min_val).abs() < f32::EPSILON {
-            return Err(IDEError::InvalidArgument("Data range too small for quantization".to_string()));
+            return Err(IDEError::InvalidArgument(
+                "Data range too small for quantization".to_string(),
+            ));
         }
 
         // Scale to 0-31 range (5 bits)

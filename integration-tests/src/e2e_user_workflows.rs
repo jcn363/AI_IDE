@@ -4,7 +4,7 @@
 //! from start to finish, covering the complete user journey through the IDE.
 
 use crate::ui_testing::*;
-use crate::{IntegrationTestResult, GlobalTestConfig};
+use crate::{GlobalTestConfig, IntegrationTestResult};
 use chrono::{DateTime, Utc};
 use rust_ai_ide_errors::RustAIError;
 use serde::{Deserialize, Serialize};
@@ -134,7 +134,8 @@ impl E2EWorkflowRunner {
         workflow_type: UserWorkflowType,
         persona: UserPersona,
     ) -> Result<WorkflowExecutionReport, RustAIError> {
-        let workflow_id = format!("{}_{}_{}",
+        let workflow_id = format!(
+            "{}_{}_{}",
             workflow_type_to_string(&workflow_type),
             persona_to_string(&persona),
             chrono::Utc::now().timestamp()
@@ -150,22 +151,50 @@ impl E2EWorkflowRunner {
         };
 
         // Start workflow checkpoint
-        self.add_checkpoint(&mut context, "workflow_started".to_string(), CheckpointStatus::Started, None)?;
+        self.add_checkpoint(
+            &mut context,
+            "workflow_started".to_string(),
+            CheckpointStatus::Started,
+            None,
+        )?;
 
         // Execute the specific workflow
         let result = match workflow_type {
-            UserWorkflowType::NewUserOnboarding => self.execute_new_user_onboarding_workflow(&mut context).await,
-            UserWorkflowType::ProjectDevelopment => self.execute_project_development_workflow(&mut context).await,
-            UserWorkflowType::CodeReviewCollaboration => self.execute_code_review_workflow(&mut context).await,
-            UserWorkflowType::RefactoringImprovement => self.execute_refactoring_workflow(&mut context).await,
+            UserWorkflowType::NewUserOnboarding => {
+                self.execute_new_user_onboarding_workflow(&mut context)
+                    .await
+            }
+            UserWorkflowType::ProjectDevelopment => {
+                self.execute_project_development_workflow(&mut context)
+                    .await
+            }
+            UserWorkflowType::CodeReviewCollaboration => {
+                self.execute_code_review_workflow(&mut context).await
+            }
+            UserWorkflowType::RefactoringImprovement => {
+                self.execute_refactoring_workflow(&mut context).await
+            }
             UserWorkflowType::BugFixDebug => self.execute_bug_fix_workflow(&mut context).await,
-            UserWorkflowType::TestQualityAssurance => self.execute_test_qa_workflow(&mut context).await,
-            UserWorkflowType::DeploymentRelease => self.execute_deployment_workflow(&mut context).await,
+            UserWorkflowType::TestQualityAssurance => {
+                self.execute_test_qa_workflow(&mut context).await
+            }
+            UserWorkflowType::DeploymentRelease => {
+                self.execute_deployment_workflow(&mut context).await
+            }
         };
 
         // End workflow checkpoint
-        let final_status = if result.is_ok() { CheckpointStatus::Completed } else { CheckpointStatus::Failed };
-        self.add_checkpoint(&mut context, "workflow_completed".to_string(), final_status, None)?;
+        let final_status = if result.is_ok() {
+            CheckpointStatus::Completed
+        } else {
+            CheckpointStatus::Failed
+        };
+        self.add_checkpoint(
+            &mut context,
+            "workflow_completed".to_string(),
+            final_status,
+            None,
+        )?;
 
         match result {
             Ok(reports) => Ok(WorkflowExecutionReport {
@@ -173,7 +202,10 @@ impl E2EWorkflowRunner {
                 workflow_type,
                 persona,
                 success: true,
-                duration: context.start_time.elapsed().unwrap_or(Duration::from_secs(0)),
+                duration: context
+                    .start_time
+                    .elapsed()
+                    .unwrap_or(Duration::from_secs(0)),
                 checkpoints: context.checkpoints,
                 ui_test_reports: reports,
                 errors: vec![],
@@ -186,7 +218,10 @@ impl E2EWorkflowRunner {
                     workflow_type,
                     persona,
                     success: false,
-                    duration: context.start_time.elapsed().unwrap_or(Duration::from_secs(0)),
+                    duration: context
+                        .start_time
+                        .elapsed()
+                        .unwrap_or(Duration::from_secs(0)),
                     checkpoints: context.checkpoints,
                     ui_test_reports: vec![],
                     errors: vec![error_msg],
@@ -201,32 +236,57 @@ impl E2EWorkflowRunner {
         &mut self,
         context: &mut WorkflowContext,
     ) -> Result<Vec<UITestReport>, RustAIError> {
-        self.add_checkpoint(context, "tutorial_started".to_string(), CheckpointStatus::Started, None)?;
+        self.add_checkpoint(
+            context,
+            "tutorial_started".to_string(),
+            CheckpointStatus::Started,
+            None,
+        )?;
 
         // Get relevant scenarios for onboarding
-        let onboarding_scenarios = vec![
-            "app_loading",
-            "file_operations",
-        ];
+        let onboarding_scenarios = vec!["app_loading", "file_operations"];
 
         let mut reports = Vec::new();
         for scenario_name in onboarding_scenarios {
-            self.add_checkpoint(context, format!("scenario_{}_started", scenario_name), CheckpointStatus::Started, None)?;
+            self.add_checkpoint(
+                context,
+                format!("scenario_{}_started", scenario_name),
+                CheckpointStatus::Started,
+                None,
+            )?;
 
             let mut filtered_framework = UITestFramework::new();
-            filtered_framework.add_scenario(self.framework.scenarios.iter()
-                .find(|s| s.name == scenario_name)
-                .ok_or_else(|| RustAIError::ConfigurationError(format!("Scenario {} not found", scenario_name)))?
-                .clone()
+            filtered_framework.add_scenario(
+                self.framework
+                    .scenarios
+                    .iter()
+                    .find(|s| s.name == scenario_name)
+                    .ok_or_else(|| {
+                        RustAIError::ConfigurationError(format!(
+                            "Scenario {} not found",
+                            scenario_name
+                        ))
+                    })?
+                    .clone(),
             );
 
             let scenario_reports = filtered_framework.execute_all_scenarios().await?;
             reports.extend(scenario_reports);
 
-            self.add_checkpoint(context, format!("scenario_{}_completed", scenario_name), CheckpointStatus::Completed, Some(format!("{} steps executed", reports.len())))?;
+            self.add_checkpoint(
+                context,
+                format!("scenario_{}_completed", scenario_name),
+                CheckpointStatus::Completed,
+                Some(format!("{} steps executed", reports.len())),
+            )?;
         }
 
-        self.add_checkpoint(context, "tutorial_completed".to_string(), CheckpointStatus::Completed, None)?;
+        self.add_checkpoint(
+            context,
+            "tutorial_completed".to_string(),
+            CheckpointStatus::Completed,
+            None,
+        )?;
         Ok(reports)
     }
 
@@ -235,13 +295,18 @@ impl E2EWorkflowRunner {
         &mut self,
         context: &mut WorkflowContext,
     ) -> Result<Vec<UITestReport>, RustAIError> {
-        self.add_checkpoint(context, "project_creation_started".to_string(), CheckpointStatus::Started, None)?;
+        self.add_checkpoint(
+            context,
+            "project_creation_started".to_string(),
+            CheckpointStatus::Started,
+            None,
+        )?;
 
         let workflows = vec![
             "app_loading",
             "file_operations",
             "complex_refactoring",
-            "full_workflow"
+            "full_workflow",
         ];
 
         self.execute_workflow_scenarios(context, workflows).await
@@ -252,13 +317,14 @@ impl E2EWorkflowRunner {
         &mut self,
         context: &mut WorkflowContext,
     ) -> Result<Vec<UITestReport>, RustAIError> {
-        self.add_checkpoint(context, "code_review_started".to_string(), CheckpointStatus::Started, None)?;
+        self.add_checkpoint(
+            context,
+            "code_review_started".to_string(),
+            CheckpointStatus::Started,
+            None,
+        )?;
 
-        let workflows = vec![
-            "app_loading",
-            "ai_analysis",
-            "performance_monitoring"
-        ];
+        let workflows = vec!["app_loading", "ai_analysis", "performance_monitoring"];
 
         self.execute_workflow_scenarios(context, workflows).await
     }
@@ -268,12 +334,14 @@ impl E2EWorkflowRunner {
         &mut self,
         context: &mut WorkflowContext,
     ) -> Result<Vec<UITestReport>, RustAIError> {
-        self.add_checkpoint(context, "refactoring_started".to_string(), CheckpointStatus::Started, None)?;
+        self.add_checkpoint(
+            context,
+            "refactoring_started".to_string(),
+            CheckpointStatus::Started,
+            None,
+        )?;
 
-        let workflows = vec![
-            "complex_refactoring",
-            "ai_analysis"
-        ];
+        let workflows = vec!["complex_refactoring", "ai_analysis"];
 
         self.execute_workflow_scenarios(context, workflows).await
     }
@@ -283,13 +351,14 @@ impl E2EWorkflowRunner {
         &mut self,
         context: &mut WorkflowContext,
     ) -> Result<Vec<UITestReport>, RustAIError> {
-        self.add_checkpoint(context, "bug_fix_started".to_string(), CheckpointStatus::Started, None)?;
+        self.add_checkpoint(
+            context,
+            "bug_fix_started".to_string(),
+            CheckpointStatus::Started,
+            None,
+        )?;
 
-        let workflows = vec![
-            "app_loading",
-            "error_handling",
-            "file_operations"
-        ];
+        let workflows = vec!["app_loading", "error_handling", "file_operations"];
 
         self.execute_workflow_scenarios(context, workflows).await
     }
@@ -299,13 +368,14 @@ impl E2EWorkflowRunner {
         &mut self,
         context: &mut WorkflowContext,
     ) -> Result<Vec<UITestReport>, RustAIError> {
-        self.add_checkpoint(context, "qa_testing_started".to_string(), CheckpointStatus::Started, None)?;
+        self.add_checkpoint(
+            context,
+            "qa_testing_started".to_string(),
+            CheckpointStatus::Started,
+            None,
+        )?;
 
-        let workflows = vec![
-            "app_loading",
-            "performance_monitoring",
-            "full_workflow"
-        ];
+        let workflows = vec!["app_loading", "performance_monitoring", "full_workflow"];
 
         self.execute_workflow_scenarios(context, workflows).await
     }
@@ -315,12 +385,14 @@ impl E2EWorkflowRunner {
         &mut self,
         context: &mut WorkflowContext,
     ) -> Result<Vec<UITestReport>, RustAIError> {
-        self.add_checkpoint(context, "deployment_started".to_string(), CheckpointStatus::Started, None)?;
+        self.add_checkpoint(
+            context,
+            "deployment_started".to_string(),
+            CheckpointStatus::Started,
+            None,
+        )?;
 
-        let workflows = vec![
-            "performance_monitoring",
-            "full_workflow"
-        ];
+        let workflows = vec!["performance_monitoring", "full_workflow"];
 
         self.execute_workflow_scenarios(context, workflows).await
     }
@@ -334,26 +406,46 @@ impl E2EWorkflowRunner {
         let mut reports = Vec::new();
 
         for scenario_name in scenario_names {
-            self.add_checkpoint(context, format!("scenario_{}_started", scenario_name), CheckpointStatus::Started, None)?;
+            self.add_checkpoint(
+                context,
+                format!("scenario_{}_started", scenario_name),
+                CheckpointStatus::Started,
+                None,
+            )?;
 
             let mut filtered_framework = UITestFramework::new();
-            filtered_framework.add_scenario(self.framework.scenarios.iter()
-                .find(|s| s.name == scenario_name)
-                .ok_or_else(|| RustAIError::ConfigurationError(format!("Scenario {} not found", scenario_name)))?
-                .clone()
+            filtered_framework.add_scenario(
+                self.framework
+                    .scenarios
+                    .iter()
+                    .find(|s| s.name == scenario_name)
+                    .ok_or_else(|| {
+                        RustAIError::ConfigurationError(format!(
+                            "Scenario {} not found",
+                            scenario_name
+                        ))
+                    })?
+                    .clone(),
             );
 
             let scenario_reports = filtered_framework.execute_all_scenarios().await?;
             reports.extend(scenario_reports);
 
-            self.add_checkpoint(context, format!("scenario_{}_completed", scenario_name), CheckpointStatus::Completed, Some(format!("{} steps executed", scenario_reports.len())))?;
+            self.add_checkpoint(
+                context,
+                format!("scenario_{}_completed", scenario_name),
+                CheckpointStatus::Completed,
+                Some(format!("{} steps executed", scenario_reports.len())),
+            )?;
         }
 
         Ok(reports)
     }
 
     /// Execute all available user workflows
-    pub async fn execute_all_user_workflows(&mut self) -> Result<Vec<WorkflowExecutionReport>, RustAIError> {
+    pub async fn execute_all_user_workflows(
+        &mut self,
+    ) -> Result<Vec<WorkflowExecutionReport>, RustAIError> {
         let personas = vec![
             UserPersona::BEGINNER,
             UserPersona::EXPERIENCED,
@@ -382,7 +474,9 @@ impl E2EWorkflowRunner {
                 let sem_clone = semaphore.clone();
                 let _permit = sem_clone.acquire().await.unwrap();
 
-                let report = self.execute_user_workflow(workflow_type.clone(), persona.clone()).await?;
+                let report = self
+                    .execute_user_workflow(workflow_type.clone(), persona.clone())
+                    .await?;
                 reports.push(report);
             }
         }
@@ -416,12 +510,16 @@ impl E2EWorkflowRunner {
         let total_checkpoints = context.checkpoints.len() as f64;
         metrics.insert("total_checkpoints".to_string(), total_checkpoints);
 
-        let completed_checkpoints = context.checkpoints.iter()
+        let completed_checkpoints = context
+            .checkpoints
+            .iter()
             .filter(|c| matches!(c.status, CheckpointStatus::Completed))
             .count() as f64;
         metrics.insert("completed_checkpoints".to_string(), completed_checkpoints);
 
-        let failed_checkpoints = context.checkpoints.iter()
+        let failed_checkpoints = context
+            .checkpoints
+            .iter()
             .filter(|c| matches!(c.status, CheckpointStatus::Failed))
             .count() as f64;
         metrics.insert("failed_checkpoints".to_string(), failed_checkpoints);
@@ -487,7 +585,10 @@ mod tests {
     #[tokio::test]
     async fn test_workflow_type_conversion() {
         let workflow_type = UserWorkflowType::NewUserOnboarding;
-        assert_eq!(workflow_type_to_string(&workflow_type), "new_user_onboarding");
+        assert_eq!(
+            workflow_type_to_string(&workflow_type),
+            "new_user_onboarding"
+        );
 
         let persona = UserPersona::BEGINNER;
         assert_eq!(persona_to_string(&persona), "beginner");

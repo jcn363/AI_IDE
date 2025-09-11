@@ -3,12 +3,12 @@
 //! This module provides Tauri command handlers for Cargo operations
 //! including build, test, dependencies, and workspace management.
 
-use crate::commands::cargo::{cargo::CargoService, cargo::CargoMetadata};
+use crate::commands::cargo::{cargo::CargoMetadata, cargo::CargoService};
 use crate::errors::IDEServiceError;
 use serde::{Deserialize, Serialize};
-use tauri::State;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use tauri::State;
 
 /// Cargo build request
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,9 +46,7 @@ pub struct TestResult {
 
 /// Cargo build command handler
 #[tauri::command]
-pub async fn cargo_build(
-    request: CargoBuildRequest,
-) -> Result<BuildResult, String> {
+pub async fn cargo_build(request: CargoBuildRequest) -> Result<BuildResult, String> {
     log::info!("Starting Cargo build with request: {:?}", request);
 
     // Placeholder implementation - TODO: Implement actual Cargo build
@@ -62,9 +60,7 @@ pub async fn cargo_build(
 
 /// Cargo test command handler
 #[tauri::command]
-pub async fn cargo_test(
-    request: CargoTestRequest,
-) -> Result<TestResult, String> {
+pub async fn cargo_test(request: CargoTestRequest) -> Result<TestResult, String> {
     log::info!("Running Cargo tests with request: {:?}", request);
 
     // Placeholder implementation - TODO: Implement actual Cargo testing
@@ -78,9 +74,7 @@ pub async fn cargo_test(
 
 /// Get Cargo metadata handler
 #[tauri::command]
-pub async fn cargo_metadata(
-    manifest_path: Option<String>,
-) -> Result<CargoMetadata, String> {
+pub async fn cargo_metadata(manifest_path: Option<String>) -> Result<CargoMetadata, String> {
     log::info!("Getting Cargo metadata for {:?}", manifest_path);
 
     // Placeholder - TODO: Implement metadata retrieval
@@ -93,9 +87,7 @@ pub async fn cargo_metadata(
 
 /// Cargo check command handler
 #[tauri::command]
-pub async fn cargo_check(
-    manifest_path: Option<String>,
-) -> Result<String, String> {
+pub async fn cargo_check(manifest_path: Option<String>) -> Result<String, String> {
     log::info!("Running Cargo check on {:?}", manifest_path);
 
     // Placeholder implementation

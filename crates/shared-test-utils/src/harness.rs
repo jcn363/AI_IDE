@@ -1,5 +1,5 @@
-use async_trait::async_trait;
 use crate::error::TestError;
+use async_trait::async_trait;
 use std::fmt::Debug;
 
 /// Core trait for unified test harness
@@ -25,7 +25,11 @@ pub trait TestHarness: Send + Sync {
 
     /// Validate phase: Assert expected behavior and state
     /// Returns validation results or errors
-    async fn validate(&self, context: Self::Context, output: Self::Output) -> Result<TestResult, TestError>;
+    async fn validate(
+        &self,
+        context: Self::Context,
+        output: Self::Output,
+    ) -> Result<TestResult, TestError>;
 
     /// Cleanup phase: tear down test resources (optional)
     async fn cleanup(&self, _context: Self::Context) -> Result<(), TestError> {
@@ -84,7 +88,9 @@ pub struct TestHarnessMetadata {
 /// Factory for creating test harness instances
 #[async_trait]
 pub trait TestHarnessFactory {
-    async fn create_harness(&self) -> Result<Box<dyn TestHarness<Context = (), Input = (), Output = ()> + Send + Sync>, TestError>;
+    async fn create_harness(
+        &self,
+    ) -> Result<Box<dyn TestHarness<Context = (), Input = (), Output = ()> + Send + Sync>, TestError>;
 }
 
 /// Utility for composing multiple test harnesses
@@ -105,17 +111,21 @@ impl<T: TestHarness> TestHarnessSuite<T> {
     }
 
     /// Run all harnesses in the suite
-    pub async fn run_all(&mut self, inputs: Vec<T::Input>) -> Result<Vec<Result<TestResult, TestError>>, TestError>
+    pub async fn run_all(
+        &mut self,
+        inputs: Vec<T::Input>,
+    ) -> Result<Vec<Result<TestResult, TestError>>, TestError>
     where
         T: Clone,
     {
         if inputs.len() != self.harnesses.len() {
-            return Err(TestError::Validation(crate::ValidationError::invalid_setup(
-                format!(
+            return Err(TestError::Validation(
+                crate::ValidationError::invalid_setup(format!(
                     "Input count ({}) doesn't match harness count ({})",
-                    inputs.len(), self.harnesses.len()
-                )
-            )));
+                    inputs.len(),
+                    self.harnesses.len()
+                )),
+            ));
         }
 
         let mut results = Vec::new();

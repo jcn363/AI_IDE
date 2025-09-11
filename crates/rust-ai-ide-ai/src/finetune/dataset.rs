@@ -114,7 +114,10 @@ impl CodeCompletionProcessor {
         let mut samples = Vec::new();
 
         for (line_idx, line) in lines.iter().enumerate() {
-            if line.trim().is_empty() || line.trim().starts_with("//") || line.trim().starts_with("/*") {
+            if line.trim().is_empty()
+                || line.trim().starts_with("//")
+                || line.trim().starts_with("/*")
+            {
                 continue;
             }
 
@@ -122,12 +125,16 @@ impl CodeCompletionProcessor {
             let context_start = line_idx.saturating_sub(self.max_context_length / 10);
             let context: String = lines[context_start..line_idx + 1].join("\n");
 
-            if context.len() >= 50 { // Minimum context size
+            if context.len() >= 50 {
+                // Minimum context size
                 // Find the next non-empty, non-comment line as target
                 let mut target_line = None;
                 for j in (line_idx + 1)..lines.len().min(line_idx + 10) {
                     let next_line = lines[j].trim();
-                    if !next_line.is_empty() && !next_line.starts_with("//") && !next_line.starts_with("/*") {
+                    if !next_line.is_empty()
+                        && !next_line.starts_with("//")
+                        && !next_line.starts_with("/*")
+                    {
                         target_line = Some((j, next_line));
                         break;
                     }
@@ -145,7 +152,11 @@ impl CodeCompletionProcessor {
                     if completion.len() >= self.min_completion_length {
                         samples.push(TrainingSample {
                             id: format!("completion_{}_{}", file_name(file_path), line_idx),
-                            input: format!("{}\n{}", context.trim(), target_content.split_whitespace().next().unwrap_or("")),
+                            input: format!(
+                                "{}\n{}",
+                                context.trim(),
+                                target_content.split_whitespace().next().unwrap_or("")
+                            ),
                             output: completion.trim().to_string(),
                             task_type: TaskType::Completion,
                             metadata: SampleMetadata {
@@ -327,7 +338,9 @@ impl DatasetBuilder {
             filters: DatasetFilters::default(),
             processors: vec![
                 Box::new(CodeCompletionProcessor::new(10, 2048, 0.1)),
-                Box::new(ErrorCorrectionProcessor { compiler_integration: None }),
+                Box::new(ErrorCorrectionProcessor {
+                    compiler_integration: None,
+                }),
             ],
             output_format: OutputFormat::JsonL,
         }
@@ -390,7 +403,11 @@ impl DatasetBuilder {
                                 processed_files += 1;
 
                                 if processed_files % 100 == 0 {
-                                    log::info!("Processed {}/{} files", processed_files, total_files);
+                                    log::info!(
+                                        "Processed {}/{} files",
+                                        processed_files,
+                                        total_files
+                                    );
                                 }
                             }
                         }
@@ -405,7 +422,11 @@ impl DatasetBuilder {
             }
         }
 
-        log::info!("Generated {} training samples from {} files", all_samples.len(), processed_files);
+        log::info!(
+            "Generated {} training samples from {} files",
+            all_samples.len(),
+            processed_files
+        );
 
         // Write dataset to output
         self.save_dataset(&all_samples, output_path).await?;
@@ -437,9 +458,7 @@ impl DatasetBuilder {
     /// Check if file passes configured filters
     fn passes_filters(&self, file_path: &Path) -> bool {
         // Check file extension
-        let extension = file_path.extension()
-            .and_then(|e| e.to_str())
-            .unwrap_or("");
+        let extension = file_path.extension().and_then(|e| e.to_str()).unwrap_or("");
 
         if !self.filters.allowed_extensions.contains(extension) {
             return false;
@@ -469,10 +488,13 @@ impl DatasetBuilder {
     fn is_quality_content(&self, content: &str) -> bool {
         // Basic quality checks
         let lines: Vec<&str> = content.lines().collect();
-        let code_lines = lines.iter().filter(|line| {
-            let trimmed = line.trim();
-            !trimmed.is_empty() && !trimmed.starts_with("//") && !trimmed.starts_with("/*")
-        }).count();
+        let code_lines = lines
+            .iter()
+            .filter(|line| {
+                let trimmed = line.trim();
+                !trimmed.is_empty() && !trimmed.starts_with("//") && !trimmed.starts_with("/*")
+            })
+            .count();
 
         // Must have some actual code
         if code_lines < 5 {
@@ -534,19 +556,28 @@ impl DatasetBuilder {
     }
 
     /// Calculate dataset statistics
-    fn calculate_statistics(&self, samples: &[TrainingSample], processed_files: usize, total_files: usize) -> DatasetStatistics {
+    fn calculate_statistics(
+        &self,
+        samples: &[TrainingSample],
+        processed_files: usize,
+        total_files: usize,
+    ) -> DatasetStatistics {
         let mut samples_by_type = HashMap::new();
         let mut language_distribution = HashMap::new();
         let mut quality_distribution = HashMap::new();
 
-        let total_chars: usize = samples.iter()
-            .map(|s| s.input.len() + s.output.len())
-            .sum();
-        let average_sample_length = if !samples.is_empty() { total_chars / samples.len() } else { 0 };
+        let total_chars: usize = samples.iter().map(|s| s.input.len() + s.output.len()).sum();
+        let average_sample_length = if !samples.is_empty() {
+            total_chars / samples.len()
+        } else {
+            0
+        };
 
         for sample in samples {
             *samples_by_type.entry(sample.task_type.clone()).or_insert(0) += 1;
-            *language_distribution.entry(sample.metadata.language.clone()).or_insert(0) += 1;
+            *language_distribution
+                .entry(sample.metadata.language.clone())
+                .or_insert(0) += 1;
 
             let quality_bucket = format!("{:.1}", sample.metadata.quality_score);
             *quality_distribution.entry(quality_bucket).or_insert(0) += 1;
@@ -558,7 +589,11 @@ impl DatasetBuilder {
             average_sample_length,
             language_distribution,
             quality_distribution,
-            file_coverage: if total_files > 0 { processed_files as f32 / total_files as f32 } else { 0.0 },
+            file_coverage: if total_files > 0 {
+                processed_files as f32 / total_files as f32
+            } else {
+                0.0
+            },
         }
     }
 
@@ -596,8 +631,14 @@ impl DatasetBuilder {
         Ok(DatasetValidation {
             passed: issues.is_empty(),
             issues,
-            quality_score: if samples.is_empty() { 0.0 } else {
-                samples.iter().map(|s| s.metadata.quality_score).sum::<f32>() / samples.len() as f32
+            quality_score: if samples.is_empty() {
+                0.0
+            } else {
+                samples
+                    .iter()
+                    .map(|s| s.metadata.quality_score)
+                    .sum::<f32>()
+                    / samples.len() as f32
             },
             diversity_score,
             balance_score,
@@ -625,7 +666,8 @@ impl DatasetBuilder {
 
         let total = samples.len() as f32;
         let ideal_count = total / type_counts.len() as f32;
-        let max_deviation = type_counts.values()
+        let max_deviation = type_counts
+            .values()
             .map(|&count| (count as f32 - ideal_count).abs())
             .max_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap_or(0.0);
@@ -712,7 +754,10 @@ fn extract_rust_tags(content: &str) -> Vec<String> {
                     tags.push(fn_name.to_string());
                 }
             }
-        } else if line.starts_with("struct ") || line.starts_with("enum ") || line.starts_with("trait ") {
+        } else if line.starts_with("struct ")
+            || line.starts_with("enum ")
+            || line.starts_with("trait ")
+        {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 2 {
                 let name = parts[1].split('<').next().unwrap_or(parts[1]);
@@ -727,7 +772,10 @@ fn extract_rust_tags(content: &str) -> Vec<String> {
 }
 
 fn calculate_lines_complexity(lines: &[&str]) -> u32 {
-    lines.iter().map(|line| calculate_line_complexity(line)).sum()
+    lines
+        .iter()
+        .map(|line| calculate_line_complexity(line))
+        .sum()
 }
 
 fn calculate_line_complexity(line: &str) -> u32 {
@@ -757,7 +805,10 @@ fn calculate_rust_quality(content: &str) -> f32 {
     }
 
     // Check for documentation
-    let doc_lines = lines.iter().filter(|line| line.trim().starts_with("///")).count();
+    let doc_lines = lines
+        .iter()
+        .filter(|line| line.trim().starts_with("///"))
+        .count();
     if doc_lines > lines.len() / 10 {
         score += 0.1;
     }
@@ -791,9 +842,7 @@ mod tests {
 
         let samples = tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(async {
-                processor.process_file(Path::new("test.rs"), content).await
-            })
+            .block_on(async { processor.process_file(Path::new("test.rs"), content).await })
             .unwrap();
 
         assert!(!samples.is_empty());

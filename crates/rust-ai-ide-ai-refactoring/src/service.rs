@@ -4,10 +4,10 @@
 //! It serves as the bridge between LSP requests and the comprehensive refactoring
 //! capabilities implemented across the various operation modules.
 
-use crate::SuggestionEngine;
+use crate::analysis::RefactoringAnalysisEngine;
 use crate::operations::*;
 use crate::types::*;
-use crate::analysis::RefactoringAnalysisEngine;
+use crate::SuggestionEngine;
 // Define RefactoringSuggestion locally since it's not in suggestions.rs yet
 #[derive(Debug, Clone)]
 pub struct RefactoringSuggestion {
@@ -16,16 +16,16 @@ pub struct RefactoringSuggestion {
     pub description: String,
 }
 
-use crate::suggestions::{SuggestionContext};
 use crate::confidence::{ConfidenceScorer, ScoringStrategy};
+use crate::enhanced_backup::EnhancedBackupManager;
+use crate::logging::RefactoringLogger;
 use crate::progress::ProgressTracker;
 use crate::safety::SafetyAnalyzer;
-use crate::logging::RefactoringLogger;
-use crate::enhanced_backup::EnhancedBackupManager;
+use crate::suggestions::SuggestionContext;
 use crate::utils::RefactoringUtils;
 
 #[cfg(feature = "lsp")]
-use lsp_types::{Position, Range, TextDocumentIdentifier, TextEdit, WorkspaceEdit, Uri};
+use lsp_types::{Position, Range, TextDocumentIdentifier, TextEdit, Uri, WorkspaceEdit};
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -102,24 +102,36 @@ impl RefactoringService {
     }
 
     /// Execute a refactoring operation
-    pub async fn execute_operation(&self, request: &RefactoringRequest) -> Result<RefactoringOperationResult, String> {
+    pub async fn execute_operation(
+        &self,
+        request: &RefactoringRequest,
+    ) -> Result<RefactoringOperationResult, String> {
         // Security validation
         self.security_validator.validate_request(request)?;
 
         // Start progress tracking
-        let operation_id = self.progress_tracker.start_operation(request.operation_type.clone()).await;
+        let operation_id = self
+            .progress_tracker
+            .start_operation(request.operation_type.clone())
+            .await;
 
         // Log operation start
-        self.logger.log_operation_start(&request.operation_type, operation_id).await;
+        self.logger
+            .log_operation_start(&request.operation_type, operation_id)
+            .await;
 
         let result = match self.execute_operation_internal(request).await {
             Ok(result) => {
-                self.logger.log_operation_success(&request.operation_type, operation_id).await;
+                self.logger
+                    .log_operation_success(&request.operation_type, operation_id)
+                    .await;
                 self.progress_tracker.complete_operation(operation_id).await;
                 Ok(result)
             }
             Err(e) => {
-                self.logger.log_operation_error(&request.operation_type, operation_id, &e).await;
+                self.logger
+                    .log_operation_error(&request.operation_type, operation_id, &e)
+                    .await;
                 self.progress_tracker.fail_operation(operation_id, &e).await;
                 Err(e)
             }
@@ -129,11 +141,19 @@ impl RefactoringService {
     }
 
     /// Execute operation internally with proper error handling
-    async fn execute_operation_internal(&self, request: &RefactoringRequest) -> Result<RefactoringOperationResult, String> {
+    async fn execute_operation_internal(
+        &self,
+        request: &RefactoringRequest,
+    ) -> Result<RefactoringOperationResult, String> {
         // Parse operation type
         let operation_type = match RefactoringType::try_from(request.operation_type.as_str()) {
             Ok(op_type) => op_type,
-            Err(_) => return Err(format!("Unknown operation type: {}", request.operation_type)),
+            Err(_) => {
+                return Err(format!(
+                    "Unknown operation type: {}",
+                    request.operation_type
+                ))
+            }
         };
 
         // Create the operation instance
@@ -149,18 +169,28 @@ impl RefactoringService {
 
         // Create backup before execution
         if let Err(backup_err) = self.backup_manager.create_backup(&context.file_path).await {
-            self.logger.log_warning(&format!("Backup creation failed: {}", backup_err)).await;
+            self.logger
+                .log_warning(&format!("Backup creation failed: {}", backup_err))
+                .await;
             // Continue execution but log warning
         }
 
         // Execute the operation
-        let result = operation.execute(&context, &convert_options_to_refactoring_options(&request.options)).await?;
+        let result = operation
+            .execute(
+                &context,
+                &convert_options_to_refactoring_options(&request.options),
+            )
+            .await?;
 
         Ok(result)
     }
 
     /// Get refactoring suggestions for a context
-    pub async fn get_suggestions(&self, request: &RefactoringRequest) -> Result<Vec<RefactoringSuggestion>, String> {
+    pub async fn get_suggestions(
+        &self,
+        request: &RefactoringRequest,
+    ) -> Result<Vec<RefactoringSuggestion>, String> {
         // Security validation
         self.security_validator.validate_request(request)?;
 
@@ -172,14 +202,22 @@ impl RefactoringService {
             project_context: HashMap::new(), // Can be enhanced
         };
 
-        let suggestions = self.suggestion_engine.lock().await
-            .get_suggestions(&suggestion_context).await?;
+        let suggestions = self
+            .suggestion_engine
+            .lock()
+            .await
+            .get_suggestions(&suggestion_context)
+            .await?;
 
         // Score suggestions for confidence
         let mut scored_suggestions = Vec::new();
         for suggestion in suggestions {
-            let confidence = self.confidence_scorer.score_suggestion(&suggestion, &context).await?;
-            if confidence >= 0.3 { // Only return confidence suggestions
+            let confidence = self
+                .confidence_scorer
+                .score_suggestion(&suggestion, &context)
+                .await?;
+            if confidence >= 0.3 {
+                // Only return confidence suggestions
                 let mut scored = suggestion.clone();
                 scored.confidence_score = confidence;
                 scored_suggestions.push(scored);
@@ -187,13 +225,17 @@ impl RefactoringService {
         }
 
         // Sort by confidence
-        scored_suggestions.sort_by(|a, b| b.confidence_score.partial_cmp(&a.confidence_score).unwrap());
+        scored_suggestions
+            .sort_by(|a, b| b.confidence_score.partial_cmp(&a.confidence_score).unwrap());
 
         Ok(scored_suggestions)
     }
 
     /// Validate an operation before execution
-    pub async fn validate_operation(&self, request: &RefactoringRequest) -> Result<RefactoringValidationResult, String> {
+    pub async fn validate_operation(
+        &self,
+        request: &RefactoringRequest,
+    ) -> Result<RefactoringValidationResult, String> {
         // Security validation
         self.security_validator.validate_request(request)?;
 
@@ -201,7 +243,10 @@ impl RefactoringService {
         let options = convert_options_to_refactoring_options(&request.options);
 
         // Analyze the operation
-        let analysis = self.analysis_engine.analyze_operation(&context, &options).await?;
+        let analysis = self
+            .analysis_engine
+            .analyze_operation(&context, &options)
+            .await?;
 
         // Check safety
         let safety_check = self.safety_analyzer.analyze_safety(&context).await;
@@ -226,7 +271,10 @@ impl RefactoringService {
     }
 
     /// Get available refactoring operations for a context
-    pub async fn get_available_operations(&self, context: &RefactoringContext) -> Result<Vec<RefactoringType>, String> {
+    pub async fn get_available_operations(
+        &self,
+        context: &RefactoringContext,
+    ) -> Result<Vec<RefactoringType>, String> {
         let mut available_ops = Vec::new();
 
         for op_type in RefactoringOperationFactory::available_refactorings() {
@@ -241,7 +289,10 @@ impl RefactoringService {
     }
 
     /// Get operation metadata
-    pub fn get_operation_metadata(&self, operation_type: &RefactoringType) -> Option<RefactoringOperationMetadata> {
+    pub fn get_operation_metadata(
+        &self,
+        operation_type: &RefactoringType,
+    ) -> Option<RefactoringOperationMetadata> {
         match self.operation_factory.create_operation(operation_type) {
             Ok(operation) => Some(RefactoringOperationMetadata {
                 name: operation.name().to_string(),
@@ -254,14 +305,20 @@ impl RefactoringService {
     }
 
     /// Batch execute multiple operations
-    pub async fn batch_execute(&self, operations: Vec<RefactoringRequest>) -> Result<BatchRefactoringResult, String> {
+    pub async fn batch_execute(
+        &self,
+        operations: Vec<RefactoringRequest>,
+    ) -> Result<BatchRefactoringResult, String> {
         let mut results = Vec::new();
         let mut errors = Vec::new();
 
         for operation in operations {
             match self.execute_operation(&operation).await {
                 Ok(result) => results.push(result),
-                Err(err) => errors.push(format!("Operation {} failed: {}", operation.operation_type, err)),
+                Err(err) => errors.push(format!(
+                    "Operation {} failed: {}",
+                    operation.operation_type, err
+                )),
             }
         }
 
@@ -280,14 +337,16 @@ fn convert_request_to_context(request: &RefactoringRequest) -> RefactoringContex
         file_path: request.file_path.clone(),
         cursor_line: 0, // Can be enhanced from LSP position
         cursor_character: 0,
-        selection: None, // Can be enhanced
+        selection: None,   // Can be enhanced
         symbol_name: None, // Can be extracted from options
         symbol_kind: None,
     }
 }
 
 /// Convert hashmap to refactoring options
-fn convert_options_to_refactoring_options(options: &HashMap<String, serde_json::Value>) -> RefactoringOptions {
+fn convert_options_to_refactoring_options(
+    options: &HashMap<String, serde_json::Value>,
+) -> RefactoringOptions {
     RefactoringOptions {
         create_backup: true,
         generate_tests: true,

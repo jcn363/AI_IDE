@@ -3,13 +3,13 @@
 //! This module provides automated detection of memory leaks and smart
 //! allocation strategies to prevent memory exhaustion.
 
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
-use tokio::sync::{RwLock, Mutex, mpsc};
+use async_trait::async_trait;
+use chrono::Utc;
 use rust_ai_ide_errors::IDEError;
 use serde::{Deserialize, Serialize};
-use chrono::Utc;
-use async_trait::async_trait;
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+use tokio::sync::{mpsc, Mutex, RwLock};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LeakDetectionConfig {
@@ -23,9 +23,9 @@ pub struct LeakDetectionConfig {
 impl Default for LeakDetectionConfig {
     fn default() -> Self {
         Self {
-            suspicion_threshold_seconds: 300,  // 5 minutes
+            suspicion_threshold_seconds: 300, // 5 minutes
             confirmation_threshold_count: 10,
-            monitoring_window_seconds: 3600,   // 1 hour
+            monitoring_window_seconds: 3600, // 1 hour
             auto_prevention_enabled: true,
             smart_allocation_enabled: true,
         }
@@ -87,7 +87,8 @@ impl MemoryProfiler {
     }
 
     pub async fn record_allocation(&mut self, allocation: MemoryAllocation) {
-        self.allocations.insert(allocation.address, allocation.clone());
+        self.allocations
+            .insert(allocation.address, allocation.clone());
         self.update_historical_data();
         self.update_trending_analysis().await;
     }
@@ -98,7 +99,8 @@ impl MemoryProfiler {
         }
 
         let recent_allocations: Vec<_> = self.historical_data.iter().rev().take(10).collect();
-        let growth_values: Vec<_> = recent_allocations.windows(2)
+        let growth_values: Vec<_> = recent_allocations
+            .windows(2)
             .map(|window| {
                 let memory_diff = window[0].1 as f64 - window[1].1 as f64;
                 let time_diff = (window[0].0 - window[1].0).num_seconds() as f64;
@@ -111,7 +113,8 @@ impl MemoryProfiler {
             .collect();
 
         if !growth_values.is_empty() {
-            self.trending_analyzer.growth_rate = growth_values.iter().sum::<f64>() / growth_values.len() as f64;
+            self.trending_analyzer.growth_rate =
+                growth_values.iter().sum::<f64>() / growth_values.len() as f64;
         }
     }
 
@@ -166,19 +169,25 @@ impl SmartAllocationStrategies {
         let mut effectiveness_tracker = HashMap::new();
 
         // Default strategies
-        strategies.insert("pool".to_string(), AllocationStrategy {
-            strategy_type: StrategyType::PoolAllocation,
-            config: HashMap::new(),
-            is_active: true,
-        });
+        strategies.insert(
+            "pool".to_string(),
+            AllocationStrategy {
+                strategy_type: StrategyType::PoolAllocation,
+                config: HashMap::new(),
+                is_active: true,
+            },
+        );
 
-        effectiveness_tracker.insert("pool".to_string(), StrategyEffectiveness {
-            leak_prevention_score: 0.8,
-            memory_efficiency_score: 0.9,
-            performance_impact_score: 0.1,
-            usage_count: 0,
-            last_updated: Utc::now(),
-        });
+        effectiveness_tracker.insert(
+            "pool".to_string(),
+            StrategyEffectiveness {
+                leak_prevention_score: 0.8,
+                memory_efficiency_score: 0.9,
+                performance_impact_score: 0.1,
+                usage_count: 0,
+                last_updated: Utc::now(),
+            },
+        );
 
         Self {
             strategies,
@@ -186,7 +195,10 @@ impl SmartAllocationStrategies {
         }
     }
 
-    pub async fn recommend_strategy(&mut self, allocation_pattern: &AllocationPattern) -> StrategyType {
+    pub async fn recommend_strategy(
+        &mut self,
+        allocation_pattern: &AllocationPattern,
+    ) -> StrategyType {
         // Simple strategy recommendation based on allocation pattern
         match allocation_pattern {
             AllocationPattern::FrequentAccess => StrategyType::PoolAllocation,
@@ -223,8 +235,12 @@ impl MemoryMonitoringIntegrator {
         if let Ok(mut profiler) = self.profiler.try_lock() {
             profiler.update_historical_data();
 
-            if self.alerts_enabled && profiler.trending_analyzer.growth_rate > 1024.0 {  // 1MB/sec growth
-                tracing::warn!("High memory growth rate detected: {:.2} bytes/sec", profiler.trending_analyzer.growth_rate);
+            if self.alerts_enabled && profiler.trending_analyzer.growth_rate > 1024.0 {
+                // 1MB/sec growth
+                tracing::warn!(
+                    "High memory growth rate detected: {:.2} bytes/sec",
+                    profiler.trending_analyzer.growth_rate
+                );
             }
         }
 
@@ -312,8 +328,14 @@ impl MemoryLeakDetector {
         // Apply smart strategies
         if self.config.smart_allocation_enabled {
             let mut strategies = self.strategies.lock().await;
-            let recommended_strategy = strategies.recommend_strategy(&allocation.access_pattern).await;
-            tracing::info!("Recommended allocation strategy: {:?} for {}", recommended_strategy, allocation.owner);
+            let recommended_strategy = strategies
+                .recommend_strategy(&allocation.access_pattern)
+                .await;
+            tracing::info!(
+                "Recommended allocation strategy: {:?} for {}",
+                recommended_strategy,
+                allocation.owner
+            );
         }
 
         Ok(())
@@ -326,7 +348,8 @@ impl MemoryLeakDetector {
         // Check suspicion criteria
         if allocation_age > self.config.suspicion_threshold_seconds {
             if let AllocationPattern::StaleAccess = allocation.access_pattern {
-                return allocation_age > self.config.suspicion_threshold_seconds * 2;  // Extra time for stale allocations
+                return allocation_age > self.config.suspicion_threshold_seconds * 2;
+                // Extra time for stale allocations
             }
             return true;
         }
@@ -334,9 +357,16 @@ impl MemoryLeakDetector {
         false
     }
 
-    async fn create_leak_report(&self, allocation: &MemoryAllocation) -> Result<LeakReport, IDEError> {
+    async fn create_leak_report(
+        &self,
+        allocation: &MemoryAllocation,
+    ) -> Result<LeakReport, IDEError> {
         Ok(LeakReport {
-            leak_id: format!("leak_{}_{}", allocation.address, allocation.allocation_time.timestamp()),
+            leak_id: format!(
+                "leak_{}_{}",
+                allocation.address,
+                allocation.allocation_time.timestamp()
+            ),
             suspected_address: allocation.address,
             suspected_owner: allocation.owner.clone(),
             timespan_seconds: (Utc::now() - allocation.allocation_time).num_seconds() as u64,

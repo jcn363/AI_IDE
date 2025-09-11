@@ -99,9 +99,12 @@ impl MockLSPServer {
         if requests.iter().any(|req| req.method == method) {
             Ok(())
         } else {
-            Err(TestError::Validation(crate::ValidationError::invalid_setup(
-                format!("Expected request '{}' was not received", method)
-            )))
+            Err(TestError::Validation(
+                crate::ValidationError::invalid_setup(format!(
+                    "Expected request '{}' was not received",
+                    method
+                )),
+            ))
         }
     }
 }
@@ -127,13 +130,19 @@ impl MockLSPClient {
     }
 
     /// Send a request to the server
-    pub async fn send_request(&self, request: LSPRequest) -> Result<Option<LSPResponse>, TestError> {
+    pub async fn send_request(
+        &self,
+        request: LSPRequest,
+    ) -> Result<Option<LSPResponse>, TestError> {
         self.server.handle_request(request)
     }
 
     /// Send a notification to the server
     pub fn send_notification(&self, notification: LSPNotification) {
-        self.outbound_notifications.lock().unwrap().push(notification.clone());
+        self.outbound_notifications
+            .lock()
+            .unwrap()
+            .push(notification.clone());
         // In a real implementation, this would send to the server
     }
 
@@ -243,25 +252,31 @@ impl LSPFixtures {
         let mut fixture = Self::initialized();
 
         // Add responses directly since we have mutable access
-        fixture.server.add_response("textDocument/completion", serde_json::json!({
-            "isIncomplete": false,
-            "items": [
-                {
-                    "label": "println!",
-                    "kind": 3,
-                    "detail": "macro",
-                    "documentation": "Prints to stdout"
-                }
-            ]
-        }));
+        fixture.server.add_response(
+            "textDocument/completion",
+            serde_json::json!({
+                "isIncomplete": false,
+                "items": [
+                    {
+                        "label": "println!",
+                        "kind": 3,
+                        "detail": "macro",
+                        "documentation": "Prints to stdout"
+                    }
+                ]
+            }),
+        );
 
-        fixture.server.add_response("textDocument/definition", serde_json::json!({
-            "uri": "file:///test/src/lib.rs",
-            "range": {
-                "start": {"line": 10, "character": 5},
-                "end": {"line": 10, "character": 15}
-            }
-        }));
+        fixture.server.add_response(
+            "textDocument/definition",
+            serde_json::json!({
+                "uri": "file:///test/src/lib.rs",
+                "range": {
+                    "start": {"line": 10, "character": 5},
+                    "end": {"line": 10, "character": 15}
+                }
+            }),
+        );
 
         fixture
     }
@@ -270,15 +285,21 @@ impl LSPFixtures {
     pub fn cargo_server() -> LSPFixture {
         let mut fixture = Self::initialized();
 
-        fixture.server.add_response("cargo/check", serde_json::json!({
-            "success": true,
-            "diagnostics": []
-        }));
+        fixture.server.add_response(
+            "cargo/check",
+            serde_json::json!({
+                "success": true,
+                "diagnostics": []
+            }),
+        );
 
-        fixture.server.add_response("cargo/build", serde_json::json!({
-            "success": true,
-            "output": "Finished dev [unoptimized + debuginfo]"
-        }));
+        fixture.server.add_response(
+            "cargo/build",
+            serde_json::json!({
+                "success": true,
+                "output": "Finished dev [unoptimized + debuginfo]"
+            }),
+        );
 
         fixture
     }
@@ -385,25 +406,35 @@ impl LSPAssertions {
         server.verify_request_received(method)
     }
 
-    pub fn assert_response_contains(response: &LSPResponse, key: &str, expected: &serde_json::Value) -> Result<(), TestError> {
+    pub fn assert_response_contains(
+        response: &LSPResponse,
+        key: &str,
+        expected: &serde_json::Value,
+    ) -> Result<(), TestError> {
         if let Some(result) = &response.result {
             if let Some(value) = result.get(key) {
                 if value == expected {
                     Ok(())
                 } else {
-                    Err(TestError::Validation(crate::ValidationError::invalid_setup(
-                        format!("Expected {} for key '{}', got {}", expected, key, value)
-                    )))
+                    Err(TestError::Validation(
+                        crate::ValidationError::invalid_setup(format!(
+                            "Expected {} for key '{}', got {}",
+                            expected, key, value
+                        )),
+                    ))
                 }
             } else {
-                Err(TestError::Validation(crate::ValidationError::invalid_setup(
-                    format!("Key '{}' not found in response", key)
-                )))
+                Err(TestError::Validation(
+                    crate::ValidationError::invalid_setup(format!(
+                        "Key '{}' not found in response",
+                        key
+                    )),
+                ))
             }
         } else {
-            Err(TestError::Validation(crate::ValidationError::invalid_setup(
-                "No result in response"
-            )))
+            Err(TestError::Validation(
+                crate::ValidationError::invalid_setup("No result in response"),
+            ))
         }
     }
 
@@ -412,9 +443,12 @@ impl LSPAssertions {
         if notifications.iter().any(|n| n.method == method) {
             Ok(())
         } else {
-            Err(TestError::Validation(crate::ValidationError::invalid_setup(
-                format!("Expected notification '{}' was not sent", method)
-            )))
+            Err(TestError::Validation(
+                crate::ValidationError::invalid_setup(format!(
+                    "Expected notification '{}' was not sent",
+                    method
+                )),
+            ))
         }
     }
 }

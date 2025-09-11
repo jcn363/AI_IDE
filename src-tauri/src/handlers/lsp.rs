@@ -3,10 +3,10 @@
 //! This module contains handlers for LSP-related Tauri commands with enhanced
 //! multi-language support and AI-powered capabilities.
 
-use rust_ai_ide_common::validation::validate_secure_path;
 use rust_ai_ide_common::errors::IDEError;
-use std::sync::Arc;
+use rust_ai_ide_common::validation::validate_secure_path;
 use std::collections::HashMap;
+use std::sync::Arc;
 use tokio::sync::Mutex;
 
 /// Global LSP server state management
@@ -100,11 +100,21 @@ pub async fn init_lsp(init_options: Option<serde_json::Value>) -> Result<LSPHeal
     let config = LSPClientConfig {
         name: "rust-analyzer".to_string(),
         language: "rust".to_string(),
-        args: vec!["--log-file".to_string(), "/tmp/rust-ai-ide-lsp.log".to_string()],
-        env: Some([
-            ("RUST_BACKTRACE".to_string(), "1".to_string()),
-            ("CARGO_TARGET_DIR".to_string(), "/tmp/rust-ai-ide-target".to_string()),
-        ].into_iter().collect()),
+        args: vec![
+            "--log-file".to_string(),
+            "/tmp/rust-ai-ide-lsp.log".to_string(),
+        ],
+        env: Some(
+            [
+                ("RUST_BACKTRACE".to_string(), "1".to_string()),
+                (
+                    "CARGO_TARGET_DIR".to_string(),
+                    "/tmp/rust-ai-ide-target".to_string(),
+                ),
+            ]
+            .into_iter()
+            .collect(),
+        ),
         init_path: None,
     };
 
@@ -142,7 +152,11 @@ pub async fn get_code_completion(
     validate_secure_path(&file_path, false)
         .map_err(|_| "Invalid file path provided".to_string())?;
 
-    log::info!("Getting enhanced code completion for {}:{}", file_path, line);
+    log::info!(
+        "Getting enhanced code completion for {}:{}",
+        file_path,
+        line
+    );
 
     // TODO: Integrate with rust_ai_ide_lsp::CompletionProvider
     // For now, return enhanced completion response
@@ -329,7 +343,12 @@ pub async fn get_hover_info(
     validate_secure_path(&file_path, false)
         .map_err(|_| "Invalid file path provided".to_string())?;
 
-    log::info!("Getting enhanced hover information for {}:{}:{}", file_path, line, character);
+    log::info!(
+        "Getting enhanced hover information for {}:{}:{}",
+        file_path,
+        line,
+        character
+    );
 
     // TODO: Integrate with LSP hover information
     let response = serde_json::json!({
@@ -404,7 +423,12 @@ pub async fn rename_symbol(
         return Err("Symbol names cannot be empty".to_string());
     }
 
-    log::info!("Renaming symbol '{}' to '{}' in {}", old_name, new_name, file_path);
+    log::info!(
+        "Renaming symbol '{}' to '{}' in {}",
+        old_name,
+        new_name,
+        file_path
+    );
 
     // TODO: Implement actual renaming with LSP
     let response = serde_json::json!({
@@ -457,9 +481,7 @@ pub async fn format_code(
 
     // TODO: Implement with actual LSP formatter
     // For now, simulate formatting improvements
-    let formatted_content = content
-        .replace("let x=", "let x =")
-        .replace("fn (", "fn(")
+    let formatted_content = content.replace("let x=", "let x =").replace("fn (", "fn(")
         + "\n\n// Code formatted with enhanced style rules";
 
     Ok(formatted_content)

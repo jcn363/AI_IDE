@@ -70,7 +70,11 @@ pub struct CloudQuota {
 }
 
 impl CloudOperationResult {
-    pub fn success(message: impl Into<String>, resource_id: Option<String>, data: Option<serde_json::Value>) -> Self {
+    pub fn success(
+        message: impl Into<String>,
+        resource_id: Option<String>,
+        data: Option<serde_json::Value>,
+    ) -> Self {
         Self {
             success: true,
             message: message.into(),

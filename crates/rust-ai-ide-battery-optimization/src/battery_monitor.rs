@@ -3,12 +3,12 @@
 //! Provides real-time battery state tracking for mobile platforms with
 //! cross-platform compatibility and comprehensive metrics collection.
 
+use crate::{BatteryConfig, BatteryState};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
-use crate::{BatteryState, BatteryConfig};
-use std::collections::VecDeque;
 
 /// Battery monitoring service
 pub struct BatteryMonitor {
@@ -67,7 +67,7 @@ impl BatteryMonitor {
         Self {
             state: Arc::new(RwLock::new(InternalBatteryState {
                 current_state: BatteryState {
-                    level: 1.0,  // Assume full battery initially
+                    level: 1.0, // Assume full battery initially
                     voltage: None,
                     temperature: None,
                     is_charging: false,
@@ -88,7 +88,9 @@ impl BatteryMonitor {
         // Initialize platform-specific monitoring
         #[cfg(target_os = "android")]
         {
-            state.platform_monitor = Some(Box::new(crate::platform::android::AndroidBatteryMonitor::new()));
+            state.platform_monitor = Some(Box::new(
+                crate::platform::android::AndroidBatteryMonitor::new(),
+            ));
         }
 
         #[cfg(target_os = "ios")]
@@ -99,7 +101,8 @@ impl BatteryMonitor {
         #[cfg(not(any(target_os = "android", target_os = "ios")))]
         {
             // Use mock monitor for desktop development/testing
-            state.platform_monitor = Some(Box::new(crate::platform::mock::MockBatteryMonitor::new()));
+            state.platform_monitor =
+                Some(Box::new(crate::platform::mock::MockBatteryMonitor::new()));
         }
 
         if let Some(monitor) = &mut state.platform_monitor {
@@ -124,7 +127,10 @@ impl BatteryMonitor {
             // Record in history
             if write_state.current_state.level < 0.05 {
                 // Critical battery warning - could trigger emergency actions
-                tracing::warn!("Battery level critically low: {}%", write_state.current_state.level * 100.0);
+                tracing::warn!(
+                    "Battery level critically low: {}%",
+                    write_state.current_state.level * 100.0
+                );
             }
 
             Ok(current_state)
@@ -133,7 +139,10 @@ impl BatteryMonitor {
         }
     }
 
-    pub async fn get_consumption_pattern(&self, window_minutes: u32) -> anyhow::Result<ConsumptionPattern> {
+    pub async fn get_consumption_pattern(
+        &self,
+        window_minutes: u32,
+    ) -> anyhow::Result<ConsumptionPattern> {
         let history = self.history.read().await;
         let mut readings = history.iter().collect::<Vec<_>>();
 
@@ -165,7 +174,8 @@ impl BatteryMonitor {
 
         for window in readings.windows(2) {
             if let [prev, curr] = window {
-                let time_diff_hours = (curr.timestamp - prev.timestamp).num_seconds() as f32 / 3600.0;
+                let time_diff_hours =
+                    (curr.timestamp - prev.timestamp).num_seconds() as f32 / 3600.0;
                 if time_diff_hours > 0.0 {
                     let level_diff = prev.state.level - curr.state.level;
                     if level_diff > 0.0 {
@@ -177,7 +187,8 @@ impl BatteryMonitor {
             }
         }
 
-        let average_consumption_per_hour = total_consumption / (readings.len() as f32 - 1.0).max(1.0);
+        let average_consumption_per_hour =
+            total_consumption / (readings.len() as f32 - 1.0).max(1.0);
 
         Ok(ConsumptionPattern {
             time_window_minutes: window_minutes,
@@ -238,9 +249,7 @@ impl BatteryMonitor {
     }
 
     pub fn is_monitoring_initialized(&self) -> bool {
-        futures::executor::block_on(async {
-            self.state.read().await.platform_monitor.is_some()
-        })
+        futures::executor::block_on(async { self.state.read().await.platform_monitor.is_some() })
     }
 }
 

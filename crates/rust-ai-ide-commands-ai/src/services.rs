@@ -63,11 +63,26 @@ impl AIService {
         let state = self.state.read().await;
         let mut health = std::collections::HashMap::new();
 
-        health.insert("initialized".to_string(), serde_json::json!(state.is_initialized));
-        health.insert("loaded_models".to_string(), serde_json::json!(state.loaded_models));
-        health.insert("active_jobs".to_string(), serde_json::json!(state.active_jobs));
-        health.insert("max_models".to_string(), serde_json::json!(self.config.max_models_loaded));
-        health.insert("cache_size".to_string(), serde_json::json!(self.config.cache_size));
+        health.insert(
+            "initialized".to_string(),
+            serde_json::json!(state.is_initialized),
+        );
+        health.insert(
+            "loaded_models".to_string(),
+            serde_json::json!(state.loaded_models),
+        );
+        health.insert(
+            "active_jobs".to_string(),
+            serde_json::json!(state.active_jobs),
+        );
+        health.insert(
+            "max_models".to_string(),
+            serde_json::json!(self.config.max_models_loaded),
+        );
+        health.insert(
+            "cache_size".to_string(),
+            serde_json::json!(self.config.cache_size),
+        );
 
         health
     }

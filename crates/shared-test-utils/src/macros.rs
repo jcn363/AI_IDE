@@ -30,7 +30,13 @@ macro_rules! assert_file_contains {
 #[macro_export]
 macro_rules! assert_test_eq {
     ($left:expr, $right:expr) => {
-        assert_eq!($left, $right, "Test assertion failed at {}:{}", file!(), line!());
+        assert_eq!(
+            $left,
+            $right,
+            "Test assertion failed at {}:{}",
+            file!(),
+            line!()
+        );
     };
     ($left:expr, $right:expr, $msg:expr) => {
         assert_eq!($left, $right, "{} (at {}:{})", $msg, file!(), line!());
@@ -53,8 +59,11 @@ macro_rules! setup_test_workspace {
         $crate::filesystem::TempWorkspace::new().expect_test("Failed to create test workspace")
     };
     ($scenario:expr) => {{
-        let workspace = $crate::filesystem::TempWorkspace::new().expect_test("Failed to create test workspace");
-        workspace.setup_scenario($scenario).expect_test("Failed to setup test scenario");
+        let workspace =
+            $crate::filesystem::TempWorkspace::new().expect_test("Failed to create test workspace");
+        workspace
+            .setup_scenario($scenario)
+            .expect_test("Failed to setup test scenario");
         workspace
     }};
 }
@@ -63,7 +72,9 @@ macro_rules! setup_test_workspace {
 macro_rules! with_test_fixture {
     ($fixture:expr) => {{
         let workspace = setup_test_workspace!();
-        let fixture = $fixture.build(&workspace).expect_test("Failed to build fixture");
+        let fixture = $fixture
+            .build(&workspace)
+            .expect_test("Failed to build fixture");
         (workspace, fixture)
     }};
 }
@@ -73,7 +84,12 @@ macro_rules! assert_timeout {
     ($future:expr, $duration:expr) => {
         $crate::async_utils::with_timeout($future, $duration)
             .await
-            .expect_test(concat!("Async operation timed out at ", file!(), ":", line!()));
+            .expect_test(concat!(
+                "Async operation timed out at ",
+                file!(),
+                ":",
+                line!()
+            ));
     };
 }
 
@@ -141,7 +157,9 @@ mod tests {
     #[test]
     fn test_assert_test_file_exists() {
         let workspace = TempWorkspace::new().expect("Failed to create workspace");
-        workspace.create_file(std::path::Path::new("test.txt"), "test").expect("Failed to create file");
+        workspace
+            .create_file(std::path::Path::new("test.txt"), "test")
+            .expect("Failed to create file");
 
         assert_test_file_exists!(workspace, std::path::Path::new("test.txt"));
     }
@@ -149,7 +167,9 @@ mod tests {
     #[test]
     fn test_assert_file_contains() {
         let workspace = TempWorkspace::new().expect("Failed to create workspace");
-        workspace.create_file(std::path::Path::new("test.txt"), "Hello World").expect("Failed to create file");
+        workspace
+            .create_file(std::path::Path::new("test.txt"), "Hello World")
+            .expect("Failed to create file");
 
         assert_file_contains!(workspace, std::path::Path::new("test.txt"), "Hello");
     }

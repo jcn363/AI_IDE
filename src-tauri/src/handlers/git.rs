@@ -2,9 +2,9 @@
 //!
 //! This module contains handlers for Git-related Tauri commands.
 
-use rust_ai_ide_core::validation::validate_secure_path;
 use rust_ai_ide_core::shell_utils::git;
-use rust_ai_ide_core::{IDEError, ContextualError};
+use rust_ai_ide_core::validation::validate_secure_path;
+use rust_ai_ide_core::{ContextualError, IDEError};
 use std::path::Path;
 
 /// Check if Git is available on the system
@@ -17,8 +17,9 @@ pub async fn git_is_available() -> Result<bool, String> {
         }
         Err(e) => Err(ContextualError::new(
             IDEError::IoError(format!("Git is not available: {}", e)),
-            "Git availability check failed".to_string()
-        ).into())
+            "Git availability check failed".to_string(),
+        )
+        .into()),
     }
 }
 
@@ -26,24 +27,27 @@ pub async fn git_is_available() -> Result<bool, String> {
 #[tauri::command]
 pub async fn git_init_repo(directory: String) -> Result<String, String> {
     // Validate path security
-    validate_secure_path(&directory, true)
-        .map_err(|e| ContextualError::new(
+    validate_secure_path(&directory, true).map_err(|e| {
+        ContextualError::new(
             IDEError::ValidationError(e.to_string()),
-            format!("Invalid repository directory: {}", directory)
-        ))?;
+            format!("Invalid repository directory: {}", directory),
+        )
+    })?;
 
     let path_buf = Path::new(&directory);
     if !path_buf.exists() {
         return Err(ContextualError::new(
             IDEError::IoError(format!("Directory does not exist: {}", directory)),
-            "Git init failed: directory not found".to_string()
-        ).into());
+            "Git init failed: directory not found".to_string(),
+        )
+        .into());
     }
     if !path_buf.is_dir() {
         return Err(ContextualError::new(
             IDEError::IoError(format!("Path is not a directory: {}", directory)),
-            "Git init failed: not a directory".to_string()
-        ).into());
+            "Git init failed: not a directory".to_string(),
+        )
+        .into());
     }
 
     // Use unified git init utility
@@ -54,14 +58,16 @@ pub async fn git_init_repo(directory: String) -> Result<String, String> {
             } else {
                 Err(ContextualError::new(
                     IDEError::GitError(format!("Git init failed: {}", result.stderr)),
-                    "Repository initialization failed".to_string()
-                ).into())
+                    "Repository initialization failed".to_string(),
+                )
+                .into())
             }
         }
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git init: {}", e)),
-            format!("Git init command failed in: {}", directory)
-        ).into())
+            format!("Git init command failed in: {}", directory),
+        )
+        .into()),
     }
 }
 
@@ -69,11 +75,12 @@ pub async fn git_init_repo(directory: String) -> Result<String, String> {
 #[tauri::command]
 pub async fn git_status(directory: String) -> Result<String, String> {
     // Validate path security
-    validate_secure_path(&directory, true)
-        .map_err(|e| ContextualError::new(
+    validate_secure_path(&directory, true).map_err(|e| {
+        ContextualError::new(
             IDEError::ValidationError(e.to_string()),
-            format!("Invalid directory path for git status: {}", directory)
-        ))?;
+            format!("Invalid directory path for git status: {}", directory),
+        )
+    })?;
 
     let path_buf = Path::new(&directory);
 
@@ -85,14 +92,14 @@ pub async fn git_status(directory: String) -> Result<String, String> {
             } else {
                 Err(ContextualError::new(
                     IDEError::GitError(format!("Git status failed: {}", result.stderr)),
-                    "Git status check failed".to_string()
+                    "Git status check failed".to_string(),
                 ))
             }
         }
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git status: {}", e)),
-            format!("Git status command failed in: {}", directory)
-        ))
+            format!("Git status command failed in: {}", directory),
+        )),
     }
 }
 
@@ -100,19 +107,21 @@ pub async fn git_status(directory: String) -> Result<String, String> {
 #[tauri::command]
 pub async fn git_add(directory: String, paths: Vec<String>) -> Result<(), String> {
     // Validate path security for directory
-    validate_secure_path(&directory, true)
-        .map_err(|e| ContextualError::new(
+    validate_secure_path(&directory, true).map_err(|e| {
+        ContextualError::new(
             IDEError::ValidationError(e.to_string()),
-            format!("Invalid directory path for git add: {}", directory)
-        ))?;
+            format!("Invalid directory path for git add: {}", directory),
+        )
+    })?;
 
     // Validate each additional path
     for path in &paths {
-        validate_secure_path(path, true)
-            .map_err(|e| ContextualError::new(
+        validate_secure_path(path, true).map_err(|e| {
+            ContextualError::new(
                 IDEError::ValidationError(e.to_string()),
-                format!("Invalid path for git add: {}", path)
-            ))?;
+                format!("Invalid path for git add: {}", path),
+            )
+        })?;
     }
 
     let path_buf = Path::new(&directory);
@@ -132,14 +141,14 @@ pub async fn git_add(directory: String, paths: Vec<String>) -> Result<(), String
             } else {
                 Err(ContextualError::new(
                     IDEError::GitError(format!("Git add failed: {}", result.stderr)),
-                    "Git add operation failed".to_string()
+                    "Git add operation failed".to_string(),
                 ))
             }
         }
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git add: {}", e)),
-            format!("Git add command failed in: {}", directory)
-        ))
+            format!("Git add command failed in: {}", directory),
+        )),
     }
 }
 
@@ -149,20 +158,21 @@ pub async fn git_commit(
     directory: String,
     message: String,
     author_name: Option<String>,
-    author_email: Option<String>
+    author_email: Option<String>,
 ) -> Result<String, String> {
     // Validate path security
-    validate_secure_path(&directory, true)
-        .map_err(|e| ContextualError::new(
+    validate_secure_path(&directory, true).map_err(|e| {
+        ContextualError::new(
             IDEError::ValidationError(e.to_string()),
-            format!("Invalid directory path for git commit: {}", directory)
-        ))?;
+            format!("Invalid directory path for git commit: {}", directory),
+        )
+    })?;
 
     // Validate commit message
     if message.trim().is_empty() {
         return Err(ContextualError::new(
             IDEError::ValidationError("Commit message cannot be empty".to_string()),
-            "Git commit failed: empty message".to_string()
+            "Git commit failed: empty message".to_string(),
         ));
     }
 
@@ -177,14 +187,14 @@ pub async fn git_commit(
             } else {
                 Err(ContextualError::new(
                     IDEError::GitError(format!("Git commit failed: {}", result.stderr)),
-                    "Git commit operation failed".to_string()
+                    "Git commit operation failed".to_string(),
                 ))
             }
         }
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git commit: {}", e)),
-            format!("Git commit command failed in: {}", directory)
-        ))
+            format!("Git commit command failed in: {}", directory),
+        )),
     }
 }
 
@@ -192,11 +202,12 @@ pub async fn git_commit(
 #[tauri::command]
 pub async fn git_log(directory: String, limit: Option<u32>) -> Result<String, String> {
     // Validate path security
-    validate_secure_path(&directory, true)
-        .map_err(|e| ContextualError::new(
+    validate_secure_path(&directory, true).map_err(|e| {
+        ContextualError::new(
             IDEError::ValidationError(e.to_string()),
-            format!("Invalid directory path for git log: {}", directory)
-        ))?;
+            format!("Invalid directory path for git log: {}", directory),
+        )
+    })?;
 
     let path_buf = Path::new(&directory);
     let limit_val = limit.unwrap_or(20) as usize;
@@ -209,34 +220,40 @@ pub async fn git_log(directory: String, limit: Option<u32>) -> Result<String, St
             } else {
                 Err(ContextualError::new(
                     IDEError::GitError(format!("Git log failed: {}", result.stderr)),
-                    "Git log operation failed".to_string()
+                    "Git log operation failed".to_string(),
                 ))
             }
         }
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git log: {}", e)),
-            format!("Git log command failed in: {}", directory)
-        ))
+            format!("Git log command failed in: {}", directory),
+        )),
     }
 }
 
 /// Show Git diff
 #[tauri::command]
-pub async fn git_diff(directory: String, path: Option<String>, revspec: Option<String>) -> Result<String, String> {
+pub async fn git_diff(
+    directory: String,
+    path: Option<String>,
+    revspec: Option<String>,
+) -> Result<String, String> {
     // Validate path security
-    validate_secure_path(&directory, true)
-        .map_err(|e| ContextualError::new(
+    validate_secure_path(&directory, true).map_err(|e| {
+        ContextualError::new(
             IDEError::ValidationError(e.to_string()),
-            format!("Invalid directory path for git diff: {}", directory)
-        ))?;
+            format!("Invalid directory path for git diff: {}", directory),
+        )
+    })?;
 
     // Validate optional path
     if let Some(ref p) = path {
-        validate_secure_path(p, true)
-            .map_err(|e| ContextualError::new(
+        validate_secure_path(p, true).map_err(|e| {
+            ContextualError::new(
                 IDEError::ValidationError(e.to_string()),
-                format!("Invalid path for git diff: {}", p)
-            ))?;
+                format!("Invalid path for git diff: {}", p),
+            )
+        })?;
     }
 
     let path_buf = Path::new(&directory);
@@ -256,14 +273,14 @@ pub async fn git_diff(directory: String, path: Option<String>, revspec: Option<S
             } else {
                 Err(ContextualError::new(
                     IDEError::GitError(format!("Git diff failed: {}", result.stderr)),
-                    "Git diff operation failed".to_string()
+                    "Git diff operation failed".to_string(),
                 ))
             }
         }
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git diff: {}", e)),
-            format!("Git diff command failed in: {}", directory)
-        ))
+            format!("Git diff command failed in: {}", directory),
+        )),
     }
 }
 
@@ -271,18 +288,20 @@ pub async fn git_diff(directory: String, path: Option<String>, revspec: Option<S
 #[tauri::command]
 pub async fn git_blame(directory: String, path: String) -> Result<String, String> {
     // Validate path security
-    validate_secure_path(&directory, true)
-        .map_err(|e| ContextualError::new(
+    validate_secure_path(&directory, true).map_err(|e| {
+        ContextualError::new(
             IDEError::ValidationError(e.to_string()),
-            format!("Invalid directory path for git blame: {}", directory)
-        ))?;
+            format!("Invalid directory path for git blame: {}", directory),
+        )
+    })?;
 
     // Validate file path
-    validate_secure_path(&path, true)
-        .map_err(|e| ContextualError::new(
+    validate_secure_path(&path, true).map_err(|e| {
+        ContextualError::new(
             IDEError::ValidationError(e.to_string()),
-            format!("Invalid file path for git blame: {}", path)
-        ))?;
+            format!("Invalid file path for git blame: {}", path),
+        )
+    })?;
 
     let path_buf = Path::new(&directory);
 
@@ -294,13 +313,16 @@ pub async fn git_blame(directory: String, path: String) -> Result<String, String
             } else {
                 Err(ContextualError::new(
                     IDEError::GitError(format!("Git blame failed: {}", result.stderr)),
-                    "Git blame operation failed".to_string()
+                    "Git blame operation failed".to_string(),
                 ))
             }
         }
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git blame: {}", e)),
-            format!("Git blame command failed in: {} for file: {}", directory, path)
-        ))
+            format!(
+                "Git blame command failed in: {} for file: {}",
+                directory, path
+            ),
+        )),
     }
 }

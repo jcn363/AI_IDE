@@ -1,15 +1,15 @@
 //! Async operations for dependency graph processing
 
+use futures::stream::{self, StreamExt};
+use std::collections::HashMap;
+use std::sync::Arc;
 use tokio::sync::{mpsc, RwLock, Semaphore};
 use tokio::task;
-use std::sync::Arc;
-use std::collections::HashMap;
-use futures::stream::{self, StreamExt};
 
+use crate::cache::*;
 use crate::error::*;
 use crate::graph::*;
 use crate::resolver::*;
-use crate::cache::*;
 
 #[derive(Debug, Clone)]
 pub struct AsyncOperationConfig {
@@ -40,11 +40,21 @@ pub struct AsyncGraphProcessor {
 /// Operation types for async processing
 #[derive(Debug, Clone)]
 pub enum AsyncOperation {
-    ResolveDependencies { package_name: String },
-    UpdatePackageVersions { package_versions: HashMap<String, String> },
-    ValidateConflicts { check_workspace: bool },
-    AnalyzeDependencies { analysis_type: AnalysisType },
-    UpdateCache { invalidate_all: bool },
+    ResolveDependencies {
+        package_name: String,
+    },
+    UpdatePackageVersions {
+        package_versions: HashMap<String, String>,
+    },
+    ValidateConflicts {
+        check_workspace: bool,
+    },
+    AnalyzeDependencies {
+        analysis_type: AnalysisType,
+    },
+    UpdateCache {
+        invalidate_all: bool,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -58,11 +68,22 @@ pub enum AnalysisType {
 /// Result of an async operation
 #[derive(Debug, Clone)]
 pub enum OperationResult {
-    Resolution { resolved_versions: HashMap<String, String> },
-    Validation { is_valid: bool, conflicts: Vec<String> },
-    Analysis { results: HashMap<String, serde_json::Value> },
-    Cache { updated_entries: usize },
-    BatchResults { results: Vec<AsyncResult> },
+    Resolution {
+        resolved_versions: HashMap<String, String>,
+    },
+    Validation {
+        is_valid: bool,
+        conflicts: Vec<String>,
+    },
+    Analysis {
+        results: HashMap<String, serde_json::Value>,
+    },
+    Cache {
+        updated_entries: usize,
+    },
+    BatchResults {
+        results: Vec<AsyncResult>,
+    },
 }
 
 /// Async operation result wrapper
@@ -99,29 +120,35 @@ impl AsyncGraphProcessor {
     }
 
     /// Execute a single async operation
-    pub async fn execute_operation(&self, operation: AsyncOperation) -> DependencyResult<OperationResult> {
-        let _permit = self.semaphore.acquire().await
-            .map_err(|e| DependencyError::ResolutionError {
-                package: "semaphore".to_string(),
-                reason: format!("Failed to acquire semaphore: {}", e),
-            })?;
+    pub async fn execute_operation(
+        &self,
+        operation: AsyncOperation,
+    ) -> DependencyResult<OperationResult> {
+        let _permit =
+            self.semaphore
+                .acquire()
+                .await
+                .map_err(|e| DependencyError::ResolutionError {
+                    package: "semaphore".to_string(),
+                    reason: format!("Failed to acquire semaphore: {}", e),
+                })?;
 
         match operation {
             AsyncOperation::ResolveDependencies { package_name } => {
                 self.resolve_dependencies(package_name).await
-            },
+            }
             AsyncOperation::UpdatePackageVersions { package_versions } => {
                 self.update_package_versions(package_versions).await
-            },
+            }
             AsyncOperation::ValidateConflicts { check_workspace } => {
                 self.validate_conflicts(check_workspace).await
-            },
+            }
             AsyncOperation::AnalyzeDependencies { analysis_type } => {
                 self.analyze_dependencies(analysis_type).await
-            },
+            }
             AsyncOperation::UpdateCache { invalidate_all } => {
                 self.update_cache(invalidate_all).await
-            },
+            }
         }
     }
 
@@ -132,20 +159,25 @@ impl AsyncGraphProcessor {
     ) -> DependencyResult<AsyncResult> {
         let start_time = std::time::Instant::now();
 
-        let operation_id = format!("batch-{}-{}", chrono::Utc::now().timestamp(), operations.len());
+        let operation_id = format!(
+            "batch-{}-{}",
+            chrono::Utc::now().timestamp(),
+            operations.len()
+        );
 
         // Process operations in parallel using futures streams
-        let results: Vec<Result<(String, OperationResult), DependencyError>> = stream::iter(operations)
-            .map(|(id, op)| {
-                let processor = &self;
-                async move {
-                    let result = processor.execute_operation(op).await;
-                    result.map(|res| (id, res))
-                }
-            })
-            .buffer_unordered(self.config.max_concurrent_operations)
-            .collect()
-            .await;
+        let results: Vec<Result<(String, OperationResult), DependencyError>> =
+            stream::iter(operations)
+                .map(|(id, op)| {
+                    let processor = &self;
+                    async move {
+                        let result = processor.execute_operation(op).await;
+                        result.map(|res| (id, res))
+                    }
+                })
+                .buffer_unordered(self.config.max_concurrent_operations)
+                .collect()
+                .await;
 
         let execution_time = start_time.elapsed().as_millis() as u64;
 
@@ -162,7 +194,7 @@ impl AsyncGraphProcessor {
                         execution_time_ms: execution_time,
                         timestamp: chrono::Utc::now(),
                     });
-                },
+                }
                 Err(e) => {
                     failed.push(AsyncResult {
                         operation_id: format!("failed-{}", chrono::Utc::now().timestamp()),
@@ -219,7 +251,10 @@ impl AsyncGraphProcessor {
     }
 
     // Operation implementations
-    async fn resolve_dependencies(&self, package_name: String) -> DependencyResult<OperationResult> {
+    async fn resolve_dependencies(
+        &self,
+        package_name: String,
+    ) -> DependencyResult<OperationResult> {
         let cache_key = DependencyResolutionKey {
             root_package: package_name.clone(),
             resolution_strategy: format!("{:?}", self.resolver.strategy),
@@ -235,7 +270,9 @@ impl AsyncGraphProcessor {
 
         // Perform resolution
         let resolved_versions = self.resolver.resolve_conflicts().await?;
-        let operation_result = OperationResult::Resolution { resolved_versions: resolved_versions.clone() };
+        let operation_result = OperationResult::Resolution {
+            resolved_versions: resolved_versions.clone(),
+        };
 
         // Cache the result
         let cache_entry = DependencyResolutionEntry {
@@ -248,8 +285,13 @@ impl AsyncGraphProcessor {
         Ok(operation_result)
     }
 
-    async fn update_package_versions(&self, package_versions: HashMap<String, String>) -> DependencyResult<OperationResult> {
-        self.resolver.apply_resolved_versions(&package_versions).await?;
+    async fn update_package_versions(
+        &self,
+        package_versions: HashMap<String, String>,
+    ) -> DependencyResult<OperationResult> {
+        self.resolver
+            .apply_resolved_versions(&package_versions)
+            .await?;
 
         Ok(OperationResult::Resolution {
             resolved_versions: package_versions,
@@ -266,10 +308,7 @@ impl AsyncGraphProcessor {
             vec![]
         };
 
-        let cycle_strings: Vec<String> = cycle_conflicts
-            .into_iter()
-            .flatten()
-            .collect();
+        let cycle_strings: Vec<String> = cycle_conflicts.into_iter().flatten().collect();
 
         let is_valid = cycle_strings.is_empty();
 
@@ -279,7 +318,10 @@ impl AsyncGraphProcessor {
         })
     }
 
-    async fn analyze_dependencies(&self, analysis_type: AnalysisType) -> DependencyResult<OperationResult> {
+    async fn analyze_dependencies(
+        &self,
+        analysis_type: AnalysisType,
+    ) -> DependencyResult<OperationResult> {
         let graph = self.graph.read().await;
         let stats = graph.get_statistics();
 
@@ -290,24 +332,24 @@ impl AsyncGraphProcessor {
                 // Basic security analysis
                 analysis_results.insert(
                     "vulnerability_check".to_string(),
-                    serde_json::json!({"status": "completed", "vulnerabilities_found": 0})
+                    serde_json::json!({"status": "completed", "vulnerabilities_found": 0}),
                 );
-            },
+            }
             AnalysisType::Performance => {
                 analysis_results.insert(
                     "performance_metrics".to_string(),
                     serde_json::json!({
                         "package_count": stats.total_packages,
                         "dependencies_count": stats.total_dependencies
-                    })
+                    }),
                 );
-            },
+            }
             AnalysisType::Licensing => {
                 analysis_results.insert(
                     "license_compliance".to_string(),
                     serde_json::json!({"compliant": true, "licenses_checked": stats.total_packages})
                 );
-            },
+            }
             AnalysisType::Comprehensive => {
                 analysis_results.insert(
                     "full_analysis".to_string(),
@@ -316,9 +358,9 @@ impl AsyncGraphProcessor {
                         "dependencies": stats.total_dependencies,
                         "workspace_members": stats.workspace_members,
                         "has_cycles": stats.has_cycles
-                    })
+                    }),
                 );
-            },
+            }
         }
 
         Ok(OperationResult::Analysis {
@@ -339,9 +381,9 @@ impl AsyncGraphProcessor {
         let stats = self.cache.get_stats().await;
 
         Ok(OperationResult::Cache {
-            updated_entries: stats.package_metadata_entries as usize +
-                           stats.dependency_tree_entries as usize +
-                           stats.resolution_entries as usize,
+            updated_entries: stats.package_metadata_entries as usize
+                + stats.dependency_tree_entries as usize
+                + stats.resolution_entries as usize,
         })
     }
 }
@@ -391,8 +433,14 @@ impl AsyncProcessorActor {
     }
 
     /// Submit an operation for async processing
-    pub async fn submit_operation(&self, operation_id: String, operation: AsyncOperation) -> DependencyResult<()> {
-        self.operation_tx.send((operation_id, operation)).await
+    pub async fn submit_operation(
+        &self,
+        operation_id: String,
+        operation: AsyncOperation,
+    ) -> DependencyResult<()> {
+        self.operation_tx
+            .send((operation_id, operation))
+            .await
             .map_err(|e| DependencyError::ResolutionError {
                 package: "actor".to_string(),
                 reason: format!("Failed to submit operation: {}", e),
@@ -427,7 +475,11 @@ impl BatchOperationQueue {
     }
 
     /// Add operation to queue
-    pub async fn enqueue(&self, operation_id: String, operation: AsyncOperation) -> DependencyResult<()> {
+    pub async fn enqueue(
+        &self,
+        operation_id: String,
+        operation: AsyncOperation,
+    ) -> DependencyResult<()> {
         let mut queue = self.queue.write().await;
         queue.push((operation_id, operation));
 
@@ -452,7 +504,11 @@ impl BatchOperationQueue {
     async fn process_batch(&self, batch: Vec<(String, AsyncOperation)>) -> DependencyResult<()> {
         // Submit all operations for processing
         for (operation_id, operation) in batch {
-            if let Err(e) = self.processor.submit_operation(operation_id, operation).await {
+            if let Err(e) = self
+                .processor
+                .submit_operation(operation_id, operation)
+                .await
+            {
                 tracing::error!("Failed to submit batch operation: {}", e);
             }
         }

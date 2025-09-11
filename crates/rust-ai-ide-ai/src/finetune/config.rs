@@ -410,19 +410,27 @@ impl TrainingConfig {
 
         // Check learning rate is reasonable
         if self.learning_rate < 1e-7 || self.learning_rate > 1e-2 {
-            return Err(ValidationError::new("learning rate out of reasonable range"));
+            return Err(ValidationError::new(
+                "learning rate out of reasonable range",
+            ));
         }
 
         // Check batch size is power of 2 for efficiency
         if self.batch_size & (self.batch_size - 1) != 0 {
-            log::warn!("Batch size {} is not a power of 2, may impact performance", self.batch_size);
+            log::warn!(
+                "Batch size {} is not a power of 2, may impact performance",
+                self.batch_size
+            );
         }
 
         // Check LoRA parameters if provided
         if let Some(rank) = self.lora_rank {
             if let Some(alpha) = self.lora_alpha {
                 if alpha / rank as f32 > 2.0 {
-                    log::warn!("LoRA alpha/rank ratio ({}) is quite high, may lead to instability", alpha / rank as f32);
+                    log::warn!(
+                        "LoRA alpha/rank ratio ({}) is quite high, may lead to instability",
+                        alpha / rank as f32
+                    );
                 }
             }
         }
@@ -430,7 +438,10 @@ impl TrainingConfig {
         // Check gradient accumulation doesn't create too large effective batch size
         let effective_batch_size = self.batch_size * self.gradient_accumulation_steps;
         if effective_batch_size > 1024 {
-            log::warn!("Effective batch size {} is very large, may cause memory issues", effective_batch_size);
+            log::warn!(
+                "Effective batch size {} is very large, may cause memory issues",
+                effective_batch_size
+            );
         }
 
         // Validate distributed configuration
@@ -444,7 +455,10 @@ impl TrainingConfig {
     }
 
     /// Get recommended configuration based on hardware
-    pub fn get_recommended_for_hardware(&self, hardware: HardwareProfile) -> Result<TrainingConfig> {
+    pub fn get_recommended_for_hardware(
+        &self,
+        hardware: HardwareProfile,
+    ) -> Result<TrainingConfig> {
         let mut config = self.clone();
 
         match hardware.gpu_memory_gb {
@@ -493,9 +507,14 @@ impl TrainingConfig {
     }
 
     /// Get estimated training time
-    pub fn estimate_training_time(&self, dataset_stats: &DatasetStats, hardware: &HardwareProfile) -> TrainingTimeEstimate {
+    pub fn estimate_training_time(
+        &self,
+        dataset_stats: &DatasetStats,
+        hardware: &HardwareProfile,
+    ) -> TrainingTimeEstimate {
         let samples_per_step = self.batch_size * self.gradient_accumulation_steps;
-        let total_steps = (dataset_stats.sample_count as usize * self.max_epochs) / samples_per_step;
+        let total_steps =
+            (dataset_stats.sample_count as usize * self.max_epochs) / samples_per_step;
         let steps_per_hour = hardware.estimated_performance_steps_per_hour;
 
         let estimated_hours = total_steps as f64 / steps_per_hour;
@@ -512,21 +531,27 @@ impl TrainingConfig {
     /// Estimate memory requirement in GB
     pub fn estimate_memory_requirement(&self, hardware: &HardwareProfile) -> f64 {
         let model_size_gb = match hardware.gpu_memory_gb {
-            0..=8 => 7.0,    // Small models
-            9..=16 => 14.0,  // Medium models
-            _ => 30.0,        // Large models
+            0..=8 => 7.0,   // Small models
+            9..=16 => 14.0, // Medium models
+            _ => 30.0,      // Large models
         };
 
         let batch_memory = model_size_gb * (self.batch_size as f64 / 8.0); // Rough estimate
         let gradient_memory = batch_memory * 2.0; // For backward pass
         let optimizer_memory = gradient_memory * 1.5; // Optimizer state
 
-        optimizer_memory * if hardware.has_mixed_precision { 0.6 } else { 1.0 }
+        optimizer_memory
+            * if hardware.has_mixed_precision {
+                0.6
+            } else {
+                1.0
+            }
     }
 
     /// Get optimal batch size for hardware
     pub fn get_optimal_batch_size(&self, hardware: &HardwareProfile) -> usize {
-        let memory_per_sample_gb = self.estimate_memory_requirement(hardware) / self.batch_size as f64;
+        let memory_per_sample_gb =
+            self.estimate_memory_requirement(hardware) / self.batch_size as f64;
 
         match hardware.gpu_memory_gb as f64 / memory_per_sample_gb {
             x if x >= 32.0 => 32,
@@ -676,7 +701,10 @@ pub mod presets {
             "error_fixing" | "error_correction" => error_fixing(),
             "documentation" | "doc_generation" => documentation_generation(),
             _ => {
-                log::warn!("Unknown task type '{}', using code completion preset", task_type);
+                log::warn!(
+                    "Unknown task type '{}', using code completion preset",
+                    task_type
+                );
                 code_completion()
             }
         }
@@ -724,26 +752,37 @@ pub mod utils {
             dataloader_pin_memory: config2.dataloader_pin_memory,
             mixed_precision: config2.mixed_precision.or(config1.mixed_precision),
             gradient_checkpointing: config2.gradient_checkpointing,
-            early_stopping_patience: config2.early_stopping_patience.or(config1.early_stopping_patience),
+            early_stopping_patience: config2
+                .early_stopping_patience
+                .or(config1.early_stopping_patience),
             label_smoothing: config2.label_smoothing.or(config1.label_smoothing),
             distributed_config: config2.distributed_config.or(config1.distributed_config),
-            model_specific_config: config2.model_specific_config.or(config1.model_specific_config),
+            model_specific_config: config2
+                .model_specific_config
+                .or(config1.model_specific_config),
             evaluation_config: config2.evaluation_config.or(config1.evaluation_config),
             training_hooks: config2.training_hooks,
         }
     }
 
     /// Validate configuration for a specific model type
-    pub fn validate_for_model(config: &TrainingConfig, model_type: &crate::finetune::ModelType) -> Result<()> {
+    pub fn validate_for_model(
+        config: &TrainingConfig,
+        model_type: &crate::finetune::ModelType,
+    ) -> Result<()> {
         match model_type {
             crate::finetune::ModelType::CodeLlama => {
                 if config.max_seq_length > 16384 {
-                    return Err(anyhow::anyhow!("CodeLlama context length cannot exceed 16384"));
+                    return Err(anyhow::anyhow!(
+                        "CodeLlama context length cannot exceed 16384"
+                    ));
                 }
             }
             crate::finetune::ModelType::StarCoder => {
                 if config.max_seq_length > 8192 {
-                    return Err(anyhow::anyhow!("StarCoder context length cannot exceed 8192"));
+                    return Err(anyhow::anyhow!(
+                        "StarCoder context length cannot exceed 8192"
+                    ));
                 }
             }
         }

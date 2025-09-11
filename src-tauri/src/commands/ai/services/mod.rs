@@ -5,20 +5,18 @@
 
 pub mod finetune;
 
+use crate::acquire_service_and_execute; // Import exported macro from crate root
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use crate::acquire_service_and_execute; // Import exported macro from crate root
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
-use tauri::State;
 use serde::{Deserialize, Serialize};
+use tauri::State;
 
-use crate::security::vulnerability_scanner::{VulnerabilityScanner, VulnerabilityReport};
-use rust_ai_ide_lsp::{
-    AIContext, AIProvider, AIService,
-};
+use crate::security::vulnerability_scanner::{VulnerabilityReport, VulnerabilityScanner};
 use rust_ai_ide_lsp::analysis::AnalysisPreferences;
+use rust_ai_ide_lsp::{AIContext, AIProvider, AIService};
 
 /// Shared AI service state
 pub type AIServiceState = Arc<Mutex<Option<AIService>>>;
@@ -192,9 +190,12 @@ pub async fn get_loaded_models(
             match model_mgr.list_available_models().await {
                 Ok(models_list) => {
                     return Ok(models_list.available_models);
-                },
+                }
                 Err(e) => {
-                    log::warn!("Failed to get models from commands-ai, falling back to placeholder: {}", e);
+                    log::warn!(
+                        "Failed to get models from commands-ai, falling back to placeholder: {}",
+                        e
+                    );
                 }
             }
         }
@@ -202,15 +203,13 @@ pub async fn get_loaded_models(
 
     // Fallback to original placeholder implementation
     acquire_service_and_execute!(ai_service, AIServiceState, {
-        Ok(vec![
-            ModelInfo {
-                name: "gpt-4".to_string(),
-                version: "latest".to_string(),
-                size_mb: 0, // Placeholder
-                loaded_at: chrono::Utc::now(),
-                status: ModelStatus::Loaded,
-            }
-        ])
+        Ok(vec![ModelInfo {
+            name: "gpt-4".to_string(),
+            version: "latest".to_string(),
+            size_mb: 0, // Placeholder
+            loaded_at: chrono::Utc::now(),
+            status: ModelStatus::Loaded,
+        }])
     })
 }
 
@@ -233,9 +232,12 @@ pub async fn load_model(
             match model_mgr.load_model(request).await {
                 Ok(model_info) => {
                     return Ok(format!("Model {} loaded successfully", model_info.name));
-                },
+                }
                 Err(e) => {
-                    log::warn!("Failed to load model via commands-ai, falling back to placeholder: {}", e);
+                    log::warn!(
+                        "Failed to load model via commands-ai, falling back to placeholder: {}",
+                        e
+                    );
                 }
             }
         }
@@ -266,9 +268,12 @@ pub async fn unload_model(
             match model_mgr.unload_model(request).await {
                 Ok(_) => {
                     return Ok(format!("Model {} unloaded successfully", model_name));
-                },
+                }
                 Err(e) => {
-                    log::warn!("Failed to unload model via commands-ai, falling back to placeholder: {}", e);
+                    log::warn!(
+                        "Failed to unload model via commands-ai, falling back to placeholder: {}",
+                        e
+                    );
                 }
             }
         }
@@ -306,10 +311,10 @@ pub async fn get_resource_status(
 ) -> Result<ResourceStatus, String> {
     acquire_service_and_execute!(ai_service, AIServiceState, {
         Ok(ResourceStatus {
-            memory_usage_mb: 0, // Placeholder
+            memory_usage_mb: 0,     // Placeholder
             cpu_usage_percent: 0.0, // Placeholder
             active_models: vec![],
-            max_memory_mb: 8192, // Placeholder
+            max_memory_mb: 8192,       // Placeholder
             available_memory_mb: 8192, // Placeholder
         })
     })
@@ -317,9 +322,7 @@ pub async fn get_resource_status(
 
 /// Validate model configuration
 #[tauri::command]
-pub async fn validate_model_config(
-    config: ModelConfig,
-) -> Result<ValidationResult, String> {
+pub async fn validate_model_config(config: ModelConfig) -> Result<ValidationResult, String> {
     // In a real implementation, this would validate the model configuration
     Ok(ValidationResult {
         is_valid: true,
@@ -330,10 +333,7 @@ pub async fn validate_model_config(
 
 /// Download model
 #[tauri::command]
-pub async fn download_model(
-    model_name: String,
-    version: Option<String>,
-) -> Result<String, String> {
+pub async fn download_model(model_name: String, version: Option<String>) -> Result<String, String> {
     // In a real implementation, this would download the model
     log::info!("Downloading model: {}", model_name);
     Ok(format!("Model {} download initiated", model_name))

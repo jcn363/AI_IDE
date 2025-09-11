@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
 use crate::error::TestError;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Represents a mock Tauri command for testing
 #[derive(Debug)]
@@ -25,7 +25,10 @@ impl MockCommand {
     }
 
     pub fn with_error(mut self, error: &str) -> Self {
-        self.result = Err(serde_json::Error::io(std::io::Error::new(std::io::ErrorKind::Other, error)));
+        self.result = Err(serde_json::Error::io(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            error,
+        )));
         self
     }
 }
@@ -66,19 +69,23 @@ impl CommandTestRunner {
     ) -> Result<R, TestError> {
         self.called_commands.push(name.to_string());
 
-        let command = self.commands.get(name).ok_or_else(|| {
-            TestError::Tauri(format!("Command '{}' not registered", name))
-        })?;
+        let command = self
+            .commands
+            .get(name)
+            .ok_or_else(|| TestError::Tauri(format!("Command '{}' not registered", name)))?;
 
         // Validate payload matches (simplified for testing)
-        let payload_value = serde_json::to_value(payload)
-            .map_err(|e| TestError::Serialization(e.to_string()))?;
+        let payload_value =
+            serde_json::to_value(payload).map_err(|e| TestError::Serialization(e.to_string()))?;
 
         let expected_payload = &command.payload;
         if *expected_payload != serde_json::Value::Null && expected_payload != &payload_value {
-            return Err(TestError::Validation(crate::error::ValidationError::invalid_setup(
-                format!("Payload mismatch for command '{}': expected {:?}, got {:?}", name, expected_payload, payload_value)
-            )));
+            return Err(TestError::Validation(
+                crate::error::ValidationError::invalid_setup(format!(
+                    "Payload mismatch for command '{}': expected {:?}, got {:?}",
+                    name, expected_payload, payload_value
+                )),
+            ));
         }
 
         match &command.result {
@@ -97,9 +104,12 @@ impl CommandTestRunner {
     pub fn assert_commands_called(&self, expected: &[&str]) -> Result<(), TestError> {
         let called: Vec<&str> = self.called_commands.iter().map(|s| s.as_str()).collect();
         if called != expected {
-            return Err(TestError::Validation(crate::error::ValidationError::invalid_setup(
-                format!("Expected commands {:?}, but got {:?}", expected, called)
-            )));
+            return Err(TestError::Validation(
+                crate::error::ValidationError::invalid_setup(format!(
+                    "Expected commands {:?}, but got {:?}",
+                    expected, called
+                )),
+            ));
         }
         Ok(())
     }
@@ -133,12 +143,21 @@ impl CommandTestBuilder {
         self
     }
 
-    pub fn success_command<T: Serialize>(self, name: &str, payload: T, result: serde_json::Value) -> Self {
-        self.with_command(MockCommand::new(name, serde_json::to_value(payload).unwrap()).with_result(result))
+    pub fn success_command<T: Serialize>(
+        self,
+        name: &str,
+        payload: T,
+        result: serde_json::Value,
+    ) -> Self {
+        self.with_command(
+            MockCommand::new(name, serde_json::to_value(payload).unwrap()).with_result(result),
+        )
     }
 
     pub fn error_command<T: Serialize>(self, name: &str, payload: T, error: &str) -> Self {
-        self.with_command(MockCommand::new(name, serde_json::to_value(payload).unwrap()).with_error(error))
+        self.with_command(
+            MockCommand::new(name, serde_json::to_value(payload).unwrap()).with_error(error),
+        )
     }
 
     pub fn build_runner(self) -> CommandTestRunner {
@@ -163,43 +182,65 @@ impl CommandTestPresets {
     /// Preset for basic AI analysis commands
     pub fn ai_analysis() -> CommandTestBuilder {
         CommandTestBuilder::new()
-            .success_command("analyze_code", serde_json::json!({
-                "code": "fn hello() {}",
-                "language": "rust"
-            }), serde_json::json!({
-                "analysis": {
-                    "complexity": 1,
-                    "issues": []
-                }
-            }))
-            .error_command("get_suggestions", serde_json::json!({"code": ""}),
-                "Invalid code provided")
+            .success_command(
+                "analyze_code",
+                serde_json::json!({
+                    "code": "fn hello() {}",
+                    "language": "rust"
+                }),
+                serde_json::json!({
+                    "analysis": {
+                        "complexity": 1,
+                        "issues": []
+                    }
+                }),
+            )
+            .error_command(
+                "get_suggestions",
+                serde_json::json!({"code": ""}),
+                "Invalid code provided",
+            )
     }
 
     /// Preset for filesystem commands
     pub fn filesystem() -> CommandTestBuilder {
         CommandTestBuilder::new()
-            .success_command("read_file", serde_json::json!({
-                "path": "/test/file.rs"
-            }), serde_json::json!({
-                "content": "pub fn test() {}"
-            }))
-            .error_command("write_file", serde_json::json!({
-                "path": "/invalid/path"
-            }), "Permission denied")
+            .success_command(
+                "read_file",
+                serde_json::json!({
+                    "path": "/test/file.rs"
+                }),
+                serde_json::json!({
+                    "content": "pub fn test() {}"
+                }),
+            )
+            .error_command(
+                "write_file",
+                serde_json::json!({
+                    "path": "/invalid/path"
+                }),
+                "Permission denied",
+            )
     }
 
     /// Preset for Cargo operations
     pub fn cargo() -> CommandTestBuilder {
         CommandTestBuilder::new()
-            .success_command("cargo_build", serde_json::json!({
-                "release": false
-            }), serde_json::json!({
-                "success": true,
-                "output": "Compiling..."
-            }))
-            .error_command("cargo_publish", serde_json::json!({"dry_run": false}),
-                "Authentication required")
+            .success_command(
+                "cargo_build",
+                serde_json::json!({
+                    "release": false
+                }),
+                serde_json::json!({
+                    "success": true,
+                    "output": "Compiling..."
+                }),
+            )
+            .error_command(
+                "cargo_publish",
+                serde_json::json!({"dry_run": false}),
+                "Authentication required",
+            )
     }
 }
 
@@ -219,8 +260,11 @@ macro_rules! setup_command_test {
 #[macro_export]
 macro_rules! assert_command_called {
     ($runner:expr, $command:expr) => {
-        assert!($runner.called_commands().contains(&$command.to_string()),
-            "Expected command '{}' to be called", $command);
+        assert!(
+            $runner.called_commands().contains(&$command.to_string()),
+            "Expected command '{}' to be called",
+            $command
+        );
     };
 }
 

@@ -1,7 +1,7 @@
 //! Error types for the predictive maintenance system
 
-use std::fmt;
 use rust_ai_ide_errors::IDEError;
+use std::fmt;
 
 /// Result type for maintenance operations
 pub type MaintenanceResult<T> = Result<T, MaintenanceError>;
@@ -42,10 +42,18 @@ impl fmt::Display for MaintenanceError {
         match self {
             MaintenanceError::IDEError(err) => write!(f, "IDE error: {}", err),
             MaintenanceError::ForecastingError(msg) => write!(f, "Forecasting error: {}", msg),
-            MaintenanceError::CostEstimationError(msg) => write!(f, "Cost estimation error: {}", msg),
-            MaintenanceError::ImpactAnalysisError(msg) => write!(f, "Impact analysis error: {}", msg),
-            MaintenanceError::PriorityCalculationError(msg) => write!(f, "Priority calculation error: {}", msg),
-            MaintenanceError::RecommendationError(msg) => write!(f, "Recommendation error: {}", msg),
+            MaintenanceError::CostEstimationError(msg) => {
+                write!(f, "Cost estimation error: {}", msg)
+            }
+            MaintenanceError::ImpactAnalysisError(msg) => {
+                write!(f, "Impact analysis error: {}", msg)
+            }
+            MaintenanceError::PriorityCalculationError(msg) => {
+                write!(f, "Priority calculation error: {}", msg)
+            }
+            MaintenanceError::RecommendationError(msg) => {
+                write!(f, "Recommendation error: {}", msg)
+            }
             MaintenanceError::DatabaseError(msg) => write!(f, "Database error: {}", msg),
             MaintenanceError::ConfigurationError(msg) => write!(f, "Configuration error: {}", msg),
             MaintenanceError::ValidationError(msg) => write!(f, "Validation error: {}", msg),
@@ -86,7 +94,10 @@ mod tests {
     #[test]
     fn test_error_display() {
         let forecast_error = MaintenanceError::ForecastingError("Test error".to_string());
-        assert_eq!(format!("{}", forecast_error), "Forecasting error: Test error");
+        assert_eq!(
+            format!("{}", forecast_error),
+            "Forecasting error: Test error"
+        );
     }
 
     #[test]

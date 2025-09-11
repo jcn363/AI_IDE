@@ -113,8 +113,7 @@ impl RefactoringType {
 }
 
 /// Context information for a refactoring operation
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RefactoringContext {
     pub file_path: String,
     pub cursor_line: usize,

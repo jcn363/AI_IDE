@@ -6,8 +6,8 @@
 //! - Security patch management
 
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use std::collections::HashMap;
+use std::path::Path;
 
 pub type VulnerabilityScanner = RustsecScanner;
 pub type VulnerabilityReport = VulnerabilityInfo;
@@ -89,15 +89,23 @@ impl SecurityPolicy {
         }
     }
 
-    pub fn check_vulnerabilities(&self, vulnerabilities: &[VulnerabilityInfo]) -> Vec<VulnerabilityResult> {
-        vulnerabilities.iter().map(|vuln| {
-            let compliance = self.check_vulnerability(vuln);
-            VulnerabilityResult {
-                vulnerability: vuln.clone(),
-                status: compliance,
-                allowed: self.allowed_vulnerabilities.contains(&vuln.vulnerability_id),
-            }
-        }).collect()
+    pub fn check_vulnerabilities(
+        &self,
+        vulnerabilities: &[VulnerabilityInfo],
+    ) -> Vec<VulnerabilityResult> {
+        vulnerabilities
+            .iter()
+            .map(|vuln| {
+                let compliance = self.check_vulnerability(vuln);
+                VulnerabilityResult {
+                    vulnerability: vuln.clone(),
+                    status: compliance,
+                    allowed: self
+                        .allowed_vulnerabilities
+                        .contains(&vuln.vulnerability_id),
+                }
+            })
+            .collect()
     }
 }
 

@@ -3,15 +3,15 @@
 //! Multi-dimensional health scoring combining quality metrics, trends analysis,
 //! and benchmarked comparisons for instant feedback on code quality.
 
-use std::sync::Arc;
-use tokio::sync::RwLock;
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
-use crate::types::*;
 use crate::model_service::PredictiveModelService;
+use crate::types::*;
 use rust_ai_ide_performance_monitoring::PerformanceMonitor;
 
 /// Core code health scorer
@@ -30,21 +30,18 @@ impl CodeHealthScorer {
         model_service: Arc<PredictiveModelService>,
         performance_monitor: Arc<PerformanceMonitor>,
     ) -> Self {
-        let multi_metric_analyzer = Arc::new(
-            MultiMetricHealthAnalyzer::new(Arc::clone(&model_service))
-        );
+        let multi_metric_analyzer =
+            Arc::new(MultiMetricHealthAnalyzer::new(Arc::clone(&model_service)));
 
         let trend_analyzer = Arc::new(CodeQualityTrendAnalyzer::new());
 
         let benchmark_comparer = Arc::new(HealthBenchmarkComparer::new());
 
-        let real_time_scorer = Arc::new(
-            RealTimeHealthScorer::new(Arc::clone(&model_service))
-        );
+        let real_time_scorer = Arc::new(RealTimeHealthScorer::new(Arc::clone(&model_service)));
 
-        let performance_integrator = Arc::new(
-            PerformanceHealthIntegrator::new(Arc::clone(&performance_monitor))
-        );
+        let performance_integrator = Arc::new(PerformanceHealthIntegrator::new(Arc::clone(
+            &performance_monitor,
+        )));
 
         let score_cache: moka::future::Cache<String, HealthScoreResult> =
             moka::future::Cache::builder()
@@ -70,18 +67,22 @@ impl CodeHealthScorer {
             log::warn!("Health scoring initialized slowly");
         }
 
-        let cache_key = format!("health_score_{}_{}_{}",
+        let cache_key = format!(
+            "health_score_{}_{}_{}",
             request.files.len(),
             request.project_path.clone().unwrap_or_default(),
-            Utc::now().timestamp());
+            Utc::now().timestamp()
+        );
 
         if let Some(cached) = self.score_cache.get(&cache_key).await {
             return Ok(cached);
         }
 
         // 1. Analyze multi-dimensional health metrics
-        let metric_scores = self.multi_metric_analyzer
-            .analyze_metrics(&request.files).await?;
+        let metric_scores = self
+            .multi_metric_analyzer
+            .analyze_metrics(&request.files)
+            .await?;
 
         // 2. Calculate trend analysis if requested
         let trend_analysis = if request.include_trends {
@@ -92,7 +93,11 @@ impl CodeHealthScorer {
 
         // 3. Perform benchmark comparison
         let benchmark_comparison = if let Some(benchmark) = &request.benchmark_against {
-            Some(self.benchmark_comparer.compare_against(benchmark, &metric_scores).await?)
+            Some(
+                self.benchmark_comparer
+                    .compare_against(benchmark, &metric_scores)
+                    .await?,
+            )
         } else {
             None
         };
@@ -104,8 +109,10 @@ impl CodeHealthScorer {
         let recommendations = self.generate_recommendations(&metric_scores).await;
 
         // 6. Integrate performance health metrics
-        let performance_health = self.performance_integrator
-            .integrate_performance_metrics(&request.files).await?;
+        let performance_health = self
+            .performance_integrator
+            .integrate_performance_metrics(&request.files)
+            .await?;
 
         // 7. Create result
         let result = HealthScoreResult {
@@ -120,10 +127,14 @@ impl CodeHealthScorer {
         // 8. Ensure performance requirement (<300ms)
         let total_duration = start_time.elapsed();
         if total_duration > std::time::Duration::from_millis(300) {
-            log::error!("Health scoring exceeded 300ms requirement: {}ms", total_duration.as_millis());
-            return Err(crate::PredictiveError::PerformanceError(
-                format!("Health scoring took {}ms, exceeds 300ms requirement", total_duration.as_millis())
-            ));
+            log::error!(
+                "Health scoring exceeded 300ms requirement: {}ms",
+                total_duration.as_millis()
+            );
+            return Err(crate::PredictiveError::PerformanceError(format!(
+                "Health scoring took {}ms, exceeds 300ms requirement",
+                total_duration.as_millis()
+            )));
         }
 
         // 9. Cache result (brief TTL due to real-time nature)
@@ -160,18 +171,19 @@ impl CodeHealthScorer {
         }
     }
 
-    async fn generate_recommendations(&self, _metric_scores: &HashMap<String, f64>) -> Vec<HealthRecommendation> {
+    async fn generate_recommendations(
+        &self,
+        _metric_scores: &HashMap<String, f64>,
+    ) -> Vec<HealthRecommendation> {
         // TODO: Generate intelligent recommendations based on metric scores
-        vec![
-            HealthRecommendation {
-                priority: SeverityLevel::High,
-                category: "security".to_string(),
-                description: "Address outstanding credential exposure vulnerabilities".to_string(),
-                estimated_impact: 0.3,
-                estimated_effort: EffortLevel::Medium,
-                related_metrics: vec!["security".to_string(), "maintainability".to_string()],
-            }
-        ]
+        vec![HealthRecommendation {
+            priority: SeverityLevel::High,
+            category: "security".to_string(),
+            description: "Address outstanding credential exposure vulnerabilities".to_string(),
+            estimated_impact: 0.3,
+            estimated_effort: EffortLevel::Medium,
+            related_metrics: vec!["security".to_string(), "maintainability".to_string()],
+        }]
     }
 }
 
@@ -192,7 +204,8 @@ impl MultiMetricHealthAnalyzer {
             ("maintainability".to_string(), 0.7),
             ("performance".to_string(), 0.9),
             ("test_coverage".to_string(), 0.6),
-        ].into())
+        ]
+        .into())
     }
 }
 
@@ -229,7 +242,11 @@ impl HealthBenchmarkComparer {
         }
     }
 
-    async fn compare_against(&self, benchmark_name: &str, _scores: &HashMap<String, f64>) -> Result<BenchmarkComparison> {
+    async fn compare_against(
+        &self,
+        benchmark_name: &str,
+        _scores: &HashMap<String, f64>,
+    ) -> Result<BenchmarkComparison> {
         // TODO: Compare against industry or project benchmarks
         Ok(BenchmarkComparison {
             benchmark_name: benchmark_name.to_string(),
@@ -261,10 +278,15 @@ pub struct PerformanceHealthIntegrator {
 
 impl PerformanceHealthIntegrator {
     fn new(performance_monitor: Arc<PerformanceMonitor>) -> Self {
-        Self { performance_monitor }
+        Self {
+            performance_monitor,
+        }
     }
 
-    async fn integrate_performance_metrics(&self, _files: &[String]) -> Result<PerformanceIntegration> {
+    async fn integrate_performance_metrics(
+        &self,
+        _files: &[String],
+    ) -> Result<PerformanceIntegration> {
         // TODO: Integrate performance metrics from Phase 1 performance monitor
         Ok(PerformanceIntegration {})
     }

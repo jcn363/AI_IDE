@@ -43,7 +43,8 @@ pub fn validate_path_security(path: &str) -> Result<(), String> {
 
 /// File size validation
 pub fn validate_file_size<P: AsRef<Path>>(path: P, max_size: u64) -> Result<(), String> {
-    let metadata = std::fs::metadata(path).map_err(|e| format!("Failed to check file metadata: {}", e))?;
+    let metadata =
+        std::fs::metadata(path).map_err(|e| format!("Failed to check file metadata: {}", e))?;
 
     if metadata.len() > max_size {
         return Err("File is too large".to_string());
@@ -59,14 +60,21 @@ pub fn validate_string_input(input: &str, max_length: usize) -> Result<(), Strin
     }
 
     if input.len() > max_length {
-        return Err(format!("Input exceeds maximum length of {} characters", max_length));
+        return Err(format!(
+            "Input exceeds maximum length of {} characters",
+            max_length
+        ));
     }
 
     Ok(())
 }
 
 /// Extended string input validation (for compatibility)
-pub fn validate_string_input_ext(input: &str, max_length: usize, allow_special_chars: bool) -> Result<(), String> {
+pub fn validate_string_input_ext(
+    input: &str,
+    max_length: usize,
+    allow_special_chars: bool,
+) -> Result<(), String> {
     validate_string_input(input, max_length)?;
 
     if !allow_special_chars {
@@ -79,7 +87,11 @@ pub fn validate_string_input_ext(input: &str, max_length: usize, allow_special_c
 }
 
 /// File size validation for content
-pub fn validate_file_size_content(content: &[u8], max_size_kb: usize, operation: &str) -> Result<(), String> {
+pub fn validate_file_size_content(
+    content: &[u8],
+    max_size_kb: usize,
+    operation: &str,
+) -> Result<(), String> {
     let size_kb = content.len() / 1024;
     if size_kb > max_size_kb {
         return Err(format!(
@@ -91,14 +103,18 @@ pub fn validate_file_size_content(content: &[u8], max_size_kb: usize, operation:
 }
 
 /// Validate file size with operation name
-pub fn validate_file_size_with_op(path: &str, max_size_kb: usize, operation: &str) -> Result<(), String> {
+pub fn validate_file_size_with_op(
+    path: &str,
+    max_size_kb: usize,
+    operation: &str,
+) -> Result<(), String> {
     match std::fs::metadata(path) {
         Ok(metadata) => {
             if metadata.is_file() {
                 validate_file_size_content(
                     &std::fs::read(path).map_err(|_| format!("Cannot read file: {}", path))?,
                     max_size_kb,
-                    operation
+                    operation,
                 )
             } else {
                 Err(format!("{}: Path is not a file", operation))
@@ -109,7 +125,11 @@ pub fn validate_file_size_with_op(path: &str, max_size_kb: usize, operation: &st
 }
 
 /// Validate path not excluded
-pub fn validate_path_not_excluded<P: AsRef<Path>>(path: P, excluded_paths: &[String], operation: &str) -> Result<(), String> {
+pub fn validate_path_not_excluded<P: AsRef<Path>>(
+    path: P,
+    excluded_paths: &[String],
+    operation: &str,
+) -> Result<(), String> {
     let path_str = path.as_ref().to_string_lossy();
     for excluded in excluded_paths {
         if path_str.contains(excluded.trim_end_matches('/').trim_start_matches('/')) {
@@ -133,7 +153,10 @@ pub fn validate_dependency_format(dep: &str) -> Result<(), String> {
     }
 
     // Check for valid package name format (simplified)
-    if !dep.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+    if !dep
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
+    {
         return Err("Invalid dependency name format".to_string());
     }
 

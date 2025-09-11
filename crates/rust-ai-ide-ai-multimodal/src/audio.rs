@@ -3,8 +3,8 @@
 //! This module handles audio input processing, voice recognition, and speech analysis
 //! using cpal and Whisper integration.
 
-use crate::errors::{MultimodalError, AudioError, ProcessingError};
-use crate::types::{ModalityType, ModalityData, ModalityResult, AnalysisRequest};
+use crate::errors::{AudioError, MultimodalError, ProcessingError};
+use crate::types::{AnalysisRequest, ModalityData, ModalityResult, ModalityType};
 use std::sync::Arc;
 
 /// Audio processor with speech recognition capabilities

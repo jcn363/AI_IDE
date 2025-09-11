@@ -6,8 +6,8 @@
 use crate::commands::ai::services::{AIServiceState, FinetuneService};
 use crate::errors::IDEServiceError;
 use serde::{Deserialize, Serialize};
-use tauri::State;
 use std::sync::Arc;
+use tauri::State;
 use tokio::sync::Mutex;
 
 /// Request for AI code completion

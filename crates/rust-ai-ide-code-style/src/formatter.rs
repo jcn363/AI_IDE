@@ -50,8 +50,9 @@ impl RustFormatter {
         if let Some(config) = &self.custom_config {
             // Write config to temporary file (simplified)
             let config_path = "/tmp/rustfmt.toml";
-            tokio::fs::write(config_path, config).await
-                .map_err(|e| StyleCheckError::ConfigError(format!("Failed to write config: {}", e)))?;
+            tokio::fs::write(config_path, config).await.map_err(|e| {
+                StyleCheckError::ConfigError(format!("Failed to write config: {}", e))
+            })?;
             command.arg("--config-path").arg(config_path);
         }
 
@@ -60,24 +61,32 @@ impl RustFormatter {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
 
-        let mut child = command.spawn()
+        let mut child = command
+            .spawn()
             .map_err(|e| StyleCheckError::FormatError(format!("Failed to spawn rustfmt: {}", e)))?;
 
         // Write content to stdin
         if let Some(mut stdin) = child.stdin.take() {
-            tokio::io::AsyncWriteExt::write_all(&mut stdin, content.as_bytes()).await
-                .map_err(|e| StyleCheckError::FormatError(format!("Failed to write to rustfmt: {}", e)))?;
+            tokio::io::AsyncWriteExt::write_all(&mut stdin, content.as_bytes())
+                .await
+                .map_err(|e| {
+                    StyleCheckError::FormatError(format!("Failed to write to rustfmt: {}", e))
+                })?;
         }
 
-        let output = child.wait_with_output().await
-            .map_err(|e| StyleCheckError::FormatError(format!("rustfmt execution failed: {}", e)))?;
+        let output = child.wait_with_output().await.map_err(|e| {
+            StyleCheckError::FormatError(format!("rustfmt execution failed: {}", e))
+        })?;
 
         if output.status.success() {
             let formatted = String::from_utf8_lossy(&output.stdout).to_string();
             Ok(formatted)
         } else {
             let error_msg = String::from_utf8_lossy(&output.stderr);
-            Err(StyleCheckError::FormatError(format!("rustfmt failed: {}", error_msg)))
+            Err(StyleCheckError::FormatError(format!(
+                "rustfmt failed: {}",
+                error_msg
+            )))
         }
     }
 
@@ -131,14 +140,18 @@ impl RustFormatter {
 
     /// Add spacing after keywords
     fn add_keyword_spacing(&self, line: &str) -> String {
-        let keywords_needing_space = ["let", "fn", "struct", "enum", "impl", "if", "else", "for", "while", "match"];
+        let keywords_needing_space = [
+            "let", "fn", "struct", "enum", "impl", "if", "else", "for", "while", "match",
+        ];
 
         let mut result = line.to_string();
 
         for keyword in &keywords_needing_space {
             let pattern = format!("{}([^{}])", keyword, regex::escape(" ("));
             if let Ok(regex) = regex::Regex::new(&pattern) {
-                result = regex.replace_all(&result, format!("{} $1", keyword)).to_string();
+                result = regex
+                    .replace_all(&result, format!("{} $1", keyword))
+                    .to_string();
             }
         }
 
@@ -153,7 +166,10 @@ impl RustFormatter {
         let operators = ["+", "-", "*", "/", "=", "==", "!=", "<", ">", "<=", ">="];
 
         for op in &operators {
-            if line.contains(op) && !line.contains(&format!(" {}", op)) && !line.contains(&format!("{} ", op)){
+            if line.contains(op)
+                && !line.contains(&format!(" {}", op))
+                && !line.contains(&format!("{} ", op))
+            {
                 result = result.replace(op, &format!(" {} ", op));
                 // Clean up extra spaces
                 result = result.replace(&format!("  {}  ", op), &format!(" {} ", op));
@@ -189,7 +205,10 @@ mod tests {
     fn test_basic_formatting() {
         let formatter = RustFormatter::new();
         let code = "fn main(){let x=1+2;println!(\"{}\",x);}";
-        let formatted = tokio::runtime::Runtime::new().unwrap().block_on(formatter.basic_format(code)).unwrap();
+        let formatted = tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(formatter.basic_format(code))
+            .unwrap();
 
         // Basic checks - this would be more comprehensive in practice
         assert!(formatted.contains("fn"));

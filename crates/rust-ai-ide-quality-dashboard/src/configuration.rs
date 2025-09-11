@@ -2,12 +2,12 @@
 //!
 //! This module handles dashboard configuration management, validation, and loading.
 
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tokio::fs;
-use serde::{Deserialize, Serialize};
 
+use crate::errors::{ConfigurationError, DashboardResult};
 use crate::types::*;
-use crate::errors::{DashboardResult, ConfigurationError};
 
 /// Dashboard configuration manager
 #[derive(Clone)]
@@ -33,7 +33,11 @@ pub struct ConfigurationValidator {
 #[async_trait::async_trait]
 pub trait ConfigurationListener: Send + Sync {
     /// Handle configuration change
-    async fn on_configuration_changed(&self, old_config: &DashboardConfiguration, new_config: &DashboardConfiguration);
+    async fn on_configuration_changed(
+        &self,
+        old_config: &DashboardConfiguration,
+        new_config: &DashboardConfiguration,
+    );
 
     /// Get listener ID
     fn listener_id(&self) -> &str;
@@ -53,11 +57,13 @@ impl ConfigurationManager {
 
     /// Load configuration from file
     pub async fn load_from_file<P: AsRef<Path>>(&mut self, path: P) -> DashboardResult<()> {
-        let content = fs::read_to_string(&path).await
-            .map_err(|e| ConfigurationError::FileAccess(format!("Failed to read config file: {}", e)))?;
+        let content = fs::read_to_string(&path).await.map_err(|e| {
+            ConfigurationError::FileAccess(format!("Failed to read config file: {}", e))
+        })?;
 
-        let config: DashboardConfiguration = serde_json::from_str(&content)
-            .map_err(|e| ConfigurationError::ParseError(format!("Failed to parse config: {}", e)))?;
+        let config: DashboardConfiguration = serde_json::from_str(&content).map_err(|e| {
+            ConfigurationError::ParseError(format!("Failed to parse config: {}", e))
+        })?;
 
         self.validator.validate(&config)?;
         *self.config.write().await = config;
@@ -69,14 +75,17 @@ impl ConfigurationManager {
     /// Save configuration to file
     pub async fn save_to_file(&self, path: Option<String>) -> DashboardResult<()> {
         let config = self.config.read().await;
-        let path = path.or_else(|| self.config_path.clone())
-            .ok_or_else(|| ConfigurationError::MissingConfig("No configuration file path specified".to_string()))?;
+        let path = path.or_else(|| self.config_path.clone()).ok_or_else(|| {
+            ConfigurationError::MissingConfig("No configuration file path specified".to_string())
+        })?;
 
-        let content = serde_json::to_string_pretty(&*config)
-            .map_err(|e| ConfigurationError::ParseError(format!("Failed to serialize config: {}", e)))?;
+        let content = serde_json::to_string_pretty(&*config).map_err(|e| {
+            ConfigurationError::ParseError(format!("Failed to serialize config: {}", e))
+        })?;
 
-        fs::write(&path, content).await
-            .map_err(|e| ConfigurationError::FileAccess(format!("Failed to write config file: {}", e)))?;
+        fs::write(&path, content).await.map_err(|e| {
+            ConfigurationError::FileAccess(format!("Failed to write config file: {}", e))
+        })?;
 
         Ok(())
     }
@@ -87,7 +96,10 @@ impl ConfigurationManager {
     }
 
     /// Update configuration
-    pub async fn update_configuration(&self, new_config: DashboardConfiguration) -> DashboardResult<()> {
+    pub async fn update_configuration(
+        &self,
+        new_config: DashboardConfiguration,
+    ) -> DashboardResult<()> {
         self.validator.validate(&new_config)?;
         *self.config.write().await = new_config;
         Ok(())
@@ -122,14 +134,16 @@ impl ConfigurationValidator {
             return Err(ConfigurationError::InvalidParameter {
                 parameter: "update_interval".to_string(),
                 reason: "Must be greater than 0".to_string(),
-            }.into());
+            }
+            .into());
         }
 
         if config.update_interval > 3600 {
             return Err(ConfigurationError::InvalidParameter {
                 parameter: "update_interval".to_string(),
                 reason: "Must not exceed 1 hour".to_string(),
-            }.into());
+            }
+            .into());
         }
 
         // Validate retention days
@@ -137,7 +151,8 @@ impl ConfigurationValidator {
             return Err(ConfigurationError::InvalidParameter {
                 parameter: "retention_days".to_string(),
                 reason: "Must be greater than 0".to_string(),
-            }.into());
+            }
+            .into());
         }
 
         // Validate enabled metrics
@@ -145,7 +160,8 @@ impl ConfigurationValidator {
             return Err(ConfigurationError::InvalidParameter {
                 parameter: "enabled_metrics".to_string(),
                 reason: "At least one metric must be enabled".to_string(),
-            }.into());
+            }
+            .into());
         }
 
         Ok(())
@@ -207,8 +223,8 @@ impl ConfigurationBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::NamedTempFile;
     use std::io::Write;
+    use tempfile::NamedTempFile;
 
     #[tokio::test]
     async fn test_configuration_validation() {

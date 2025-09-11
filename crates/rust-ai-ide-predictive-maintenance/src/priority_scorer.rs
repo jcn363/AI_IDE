@@ -1,6 +1,6 @@
 //! Automated maintenance prioritization component
 
-use crate::{types::*, errors::*};
+use crate::{errors::*, types::*};
 
 #[derive(Debug)]
 pub struct PriorityScorer {
@@ -9,7 +9,9 @@ pub struct PriorityScorer {
 
 impl PriorityScorer {
     pub async fn new(config: &MaintenanceConfig) -> MaintenanceResult<Self> {
-        Ok(Self { config: config.clone() })
+        Ok(Self {
+            config: config.clone(),
+        })
     }
 
     pub async fn calculate_priority(

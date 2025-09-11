@@ -3,13 +3,12 @@
 //! Comprehensive audit logging and tracking for compliance operations,
 //! including security events, data access patterns, and regulatory requirements.
 
+use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use async_trait::async_trait;
 
 use crate::core::{
-    AuditEntry, AuditSeverity, ComplianceError, ComplianceResult, AuditConfig,
-    ComplianceConfig,
+    AuditConfig, AuditEntry, AuditSeverity, ComplianceConfig, ComplianceError, ComplianceResult,
 };
 
 /// Audit trail manager for compliance logging
@@ -61,7 +60,8 @@ impl AuditTrailManager {
         let entries = self.entries.lock().await;
 
         if let Some(filter) = filter {
-            Ok(entries.iter()
+            Ok(entries
+                .iter()
                 .filter(|entry| filter.matches(entry))
                 .cloned()
                 .collect())
@@ -76,11 +76,26 @@ impl AuditTrailManager {
 
         let summary = AuditSummary {
             total_entries: entries.len(),
-            critical_entries: entries.iter().filter(|e| matches!(e.severity, AuditSeverity::Critical)).count(),
-            error_entries: entries.iter().filter(|e| matches!(e.severity, AuditSeverity::Error)).count(),
-            warning_entries: entries.iter().filter(|e| matches!(e.severity, AuditSeverity::Warning)).count(),
-            info_entries: entries.iter().filter(|e| matches!(e.severity, AuditSeverity::Info)).count(),
-            time_range: entries.last().map(|e| e.timestamp).unwrap_or_else(|| chrono::Utc::now()),
+            critical_entries: entries
+                .iter()
+                .filter(|e| matches!(e.severity, AuditSeverity::Critical))
+                .count(),
+            error_entries: entries
+                .iter()
+                .filter(|e| matches!(e.severity, AuditSeverity::Error))
+                .count(),
+            warning_entries: entries
+                .iter()
+                .filter(|e| matches!(e.severity, AuditSeverity::Warning))
+                .count(),
+            info_entries: entries
+                .iter()
+                .filter(|e| matches!(e.severity, AuditSeverity::Info))
+                .count(),
+            time_range: entries
+                .last()
+                .map(|e| e.timestamp)
+                .unwrap_or_else(|| chrono::Utc::now()),
         };
 
         serde_json::to_value(summary).map_err(|e| ComplianceError::AuditError {
@@ -167,7 +182,11 @@ impl AuditFilter {
         self
     }
 
-    pub fn date_range(mut self, from: chrono::DateTime<chrono::Utc>, to: chrono::DateTime<chrono::Utc>) -> Self {
+    pub fn date_range(
+        mut self,
+        from: chrono::DateTime<chrono::Utc>,
+        to: chrono::DateTime<chrono::Utc>,
+    ) -> Self {
         self.date_from = Some(from);
         self.date_to = Some(to);
         self
@@ -211,9 +230,10 @@ impl AuditFilter {
 
         if let Some(search_text) = &self.search_text {
             let search_lower = search_text.to_lowercase();
-            if !entry.action.to_lowercase().contains(&search_lower) &&
-               !entry.details.to_lowercase().contains(&search_lower) &&
-               !entry.category.to_lowercase().contains(&search_lower) {
+            if !entry.action.to_lowercase().contains(&search_lower)
+                && !entry.details.to_lowercase().contains(&search_lower)
+                && !entry.category.to_lowercase().contains(&search_lower)
+            {
                 return false;
             }
         }

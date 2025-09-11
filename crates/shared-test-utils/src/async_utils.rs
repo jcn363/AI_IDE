@@ -1,13 +1,13 @@
+use crate::error::TestError;
+use std::future::Future;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use std::future::Future;
 use tokio::time::timeout;
-use crate::error::TestError;
 
 /// Executes a future with a timeout
 pub async fn with_timeout<T>(
     future: impl Future<Output = T>,
-    duration: Duration
+    duration: Duration,
 ) -> Result<T, TestError> {
     timeout(duration, future)
         .await
@@ -17,15 +17,13 @@ pub async fn with_timeout<T>(
 /// Runs a task with timeout, returning the result or error
 pub async fn timeout_task<T>(
     task: impl Future<Output = Result<T, TestError>> + Send + 'static,
-    duration: Duration
+    duration: Duration,
 ) -> Result<T, TestError> {
     with_timeout(task, duration).await?
 }
 
 /// Runs multiple tasks concurrently and returns the first successful result
-pub async fn run_concurrent<T, Fut>(
-    futures: Vec<Fut>
-) -> Result<T, TestError>
+pub async fn run_concurrent<T, Fut>(futures: Vec<Fut>) -> Result<T, TestError>
 where
     Fut: Future<Output = Result<T, TestError>> + Send + 'static,
     T: Send + 'static,
@@ -45,13 +43,15 @@ where
     }
 
     // If no successful results, return a generic error
-    Err(TestError::Async("No successful results from concurrent tasks".to_string()))
+    Err(TestError::Async(
+        "No successful results from concurrent tasks".to_string(),
+    ))
 }
 
 /// Waits for all tasks to complete with a timeout
 pub async fn wait_all_timeout<T>(
     tasks: Vec<impl Future<Output = T> + Send + 'static>,
-    duration: Duration
+    duration: Duration,
 ) -> Result<Vec<T>, TestError> {
     with_timeout(futures::future::join_all(tasks), duration).await
 }
@@ -81,8 +81,12 @@ impl AsyncTestHelper {
         task2: impl Future<Output = Result<T2, TestError>> + Send + 'static,
     ) -> Result<futures::future::Either<T1, T2>, TestError> {
         match futures::future::select(Box::pin(task1), Box::pin(task2)).await {
-            futures::future::Either::Left((result1, _)) => Ok(futures::future::Either::Left(result1?)),
-            futures::future::Either::Right((result2, _)) => Ok(futures::future::Either::Right(result2?)),
+            futures::future::Either::Left((result1, _)) => {
+                Ok(futures::future::Either::Left(result1?))
+            }
+            futures::future::Either::Right((result2, _)) => {
+                Ok(futures::future::Either::Right(result2?))
+            }
         }
     }
 }
@@ -110,10 +114,7 @@ impl AsyncContext {
     }
 
     /// Executes a test task with the default timeout
-    pub async fn execute<T>(
-        &self,
-        task: impl Future<Output = T>
-    ) -> Result<T, TestError> {
+    pub async fn execute<T>(&self, task: impl Future<Output = T>) -> Result<T, TestError> {
         with_timeout(task, self.default_timeout).await
     }
 
@@ -121,7 +122,7 @@ impl AsyncContext {
     pub async fn execute_concurrent<T>(
         &self,
         tasks: Vec<impl Future<Output = T> + Send + 'static>,
-        concurrent_timeout: Option<Duration>
+        concurrent_timeout: Option<Duration>,
     ) -> Result<Vec<T>, TestError>
     where
         T: Send + 'static,
@@ -135,7 +136,8 @@ impl AsyncContext {
 #[macro_export]
 macro_rules! assert_async_timeout {
     ($future:expr, $timeout:expr) => {
-        $crate::async_utils::with_timeout($future, $timeout).await
+        $crate::async_utils::with_timeout($future, $timeout)
+            .await
             .expect_test(concat!("Async operation timed out in test: ", line!()));
     };
 }
@@ -167,7 +169,9 @@ pub struct ConcurrencyTester {
 
 impl ConcurrencyTester {
     pub fn new() -> Self {
-        Self { thread_count: num_cpus::get() }
+        Self {
+            thread_count: num_cpus::get(),
+        }
     }
 
     pub fn with_thread_count(mut self, count: usize) -> Self {
@@ -179,7 +183,7 @@ impl ConcurrencyTester {
     pub async fn test_concurrent<F, Fut, T>(
         &self,
         test_fn: F,
-        iterations: usize
+        iterations: usize,
     ) -> Result<Vec<T>, TestError>
     where
         F: Fn() -> Fut + Send + Sync + Clone + 'static,
@@ -189,9 +193,7 @@ impl ConcurrencyTester {
         let mut tasks = Vec::new();
         for _ in 0..iterations.min(self.thread_count * 10) {
             let test_fn = test_fn.clone();
-            tasks.push(tokio::spawn(async move {
-                test_fn().await
-            }));
+            tasks.push(tokio::spawn(async move { test_fn().await }));
         }
 
         let results = futures::future::join_all(tasks).await;
@@ -212,7 +214,7 @@ impl ConcurrencyTester {
     pub async fn test_race_conditions<F, Fut>(
         &self,
         setup: F,
-        operations: Vec<Box<dyn FnOnce() -> Fut + Send + 'static>>
+        operations: Vec<Box<dyn FnOnce() -> Fut + Send + 'static>>,
     ) -> Result<(), TestError>
     where
         F: FnOnce() + Send + 'static,
@@ -225,9 +227,7 @@ impl ConcurrencyTester {
 
         let mut tasks = Vec::new();
         for operation in operations {
-            tasks.push(tokio::spawn(async move {
-                operation().await
-            }));
+            tasks.push(tokio::spawn(async move { operation().await }));
         }
 
         let results = futures::future::join_all(tasks).await;
@@ -235,7 +235,12 @@ impl ConcurrencyTester {
             match result {
                 Ok(Ok(_)) => continue,
                 Ok(Err(e)) => return Err(e),
-                Err(e) => return Err(TestError::Async(format!("Race condition test failed: {:?}", e))),
+                Err(e) => {
+                    return Err(TestError::Async(format!(
+                        "Race condition test failed: {:?}",
+                        e
+                    )))
+                }
             }
         }
 
@@ -251,7 +256,13 @@ impl Default for ConcurrencyTester {
 
 /// Async task scheduler for controlling execution timing in tests
 pub struct AsyncScheduler {
-    tasks: Vec<(String, Box<dyn FnOnce() -> std::pin::Pin<Box<dyn Future<Output = Result<(), TestError>> + Send>> + Send>)>,
+    tasks: Vec<(
+        String,
+        Box<
+            dyn FnOnce() -> std::pin::Pin<Box<dyn Future<Output = Result<(), TestError>> + Send>>
+                + Send,
+        >,
+    )>,
 }
 
 impl AsyncScheduler {
@@ -260,19 +271,13 @@ impl AsyncScheduler {
     }
 
     /// Add a task to be executed at a specific order
-    pub fn add_task<F, Fut>(
-        mut self,
-        name: &str,
-        task: F
-    ) -> Self
+    pub fn add_task<F, Fut>(mut self, name: &str, task: F) -> Self
     where
         F: FnOnce() -> Fut + Send + 'static,
         Fut: Future<Output = Result<(), TestError>> + Send + 'static,
     {
-        self.tasks.push((
-            name.to_string(),
-            Box::new(move || Box::pin(task()))
-        ));
+        self.tasks
+            .push((name.to_string(), Box::new(move || Box::pin(task()))));
         self
     }
 
@@ -353,10 +358,7 @@ impl AsyncStressTester {
     }
 
     /// Run stress test with the given async operation
-    pub async fn run<F, Fut, T>(
-        &self,
-        operation: F
-    ) -> Result<StressTestResults, TestError>
+    pub async fn run<F, Fut, T>(&self, operation: F) -> Result<StressTestResults, TestError>
     where
         F: Fn() -> Fut + Send + Sync + Clone + 'static,
         Fut: Future<Output = Result<T, TestError>> + Send + 'static,
@@ -373,7 +375,10 @@ impl AsyncStressTester {
 
         for i in 0..self.iterations {
             let operation = operation.clone();
-            let permit = semaphore.clone().acquire_owned().await
+            let permit = semaphore
+                .clone()
+                .acquire_owned()
+                .await
                 .map_err(|_| TestError::Async("Semaphore acquire failed".to_string()))?;
             let task = tokio::spawn(async move {
                 let _permit = permit; // Hold permit until task completes
@@ -385,7 +390,8 @@ impl AsyncStressTester {
         let results = futures::future::join_all(tasks.into_iter().map(|(i, task)| async move {
             let timeout_result = tokio::time::timeout(self.timeout, task).await;
             (i, timeout_result)
-        })).await;
+        }))
+        .await;
 
         for (iteration, result) in results {
             match result {
@@ -437,8 +443,20 @@ pub struct StressTestResults {
 /// Async test hooks for setup and teardown
 #[derive(Default)]
 pub struct AsyncTestHooks {
-    before_each: Vec<Box<dyn Fn() -> std::pin::Pin<Box<dyn Future<Output = Result<(), TestError>> + Send>> + Send + Sync>>,
-    after_each: Vec<Box<dyn Fn() -> std::pin::Pin<Box<dyn Future<Output = Result<(), TestError>> + Send>> + Send + Sync>>,
+    before_each: Vec<
+        Box<
+            dyn Fn() -> std::pin::Pin<Box<dyn Future<Output = Result<(), TestError>> + Send>>
+                + Send
+                + Sync,
+        >,
+    >,
+    after_each: Vec<
+        Box<
+            dyn Fn() -> std::pin::Pin<Box<dyn Future<Output = Result<(), TestError>> + Send>>
+                + Send
+                + Sync,
+        >,
+    >,
 }
 
 impl AsyncTestHooks {
@@ -497,7 +515,10 @@ impl DeadlockDetector {
 
     /// Register a task start
     pub fn task_started(&self, task_name: &str) {
-        self.active_tasks.lock().unwrap().push(task_name.to_string());
+        self.active_tasks
+            .lock()
+            .unwrap()
+            .push(task_name.to_string());
     }
 
     /// Register a task completion
@@ -548,17 +569,19 @@ mod tests {
         let counter = Arc::new(Mutex::new(0));
         let counter_clone = counter.clone();
 
-        let result = tester.test_concurrent(
-            move || {
-                let counter = counter_clone.clone();
-                async move {
-                    let mut val = counter.lock().unwrap();
-                    *val += 1;
-                    Ok(())
-                }
-            },
-            10
-        ).await;
+        let result = tester
+            .test_concurrent(
+                move || {
+                    let counter = counter_clone.clone();
+                    async move {
+                        let mut val = counter.lock().unwrap();
+                        *val += 1;
+                        Ok(())
+                    }
+                },
+                10,
+            )
+            .await;
 
         assert!(result.is_ok());
         assert_eq!(*counter.lock().unwrap(), 10);

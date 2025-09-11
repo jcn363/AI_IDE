@@ -24,15 +24,15 @@ This module integrates with:
 - Background task management
 */
 
-use std::sync::Arc;
-use std::collections::HashMap;
-use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 // Note: Using a simple UUID generation for now
 
 // Re-export common types
-use super::services::{AIService, AIResult, AIError};
+use super::services::{AIError, AIResult, AIService};
 
 // Note: command_templates macros not available in this crate scope
 // When integrating with Tauri, use templates from src-tauri
@@ -196,7 +196,10 @@ impl TrainingCoordinator {
     }
 
     /// Start a fine-tuning job
-    pub async fn start_finetune_job(&self, request: FineTuneRequest) -> AIResult<TrainingJobResponse> {
+    pub async fn start_finetune_job(
+        &self,
+        request: FineTuneRequest,
+    ) -> AIResult<TrainingJobResponse> {
         // TODO: Implement actual fine-tuning job logic
         // This is a placeholder implementation
 
@@ -206,14 +209,21 @@ impl TrainingCoordinator {
             return Err(AIError::Other {
                 message: TrainingError::JobAlreadyRunning {
                     job_id: request.model_id.clone(),
-                }.to_string(),
+                }
+                .to_string(),
             });
         }
         drop(active);
 
         // Create training job
-        let job_id = format!("finetune_{}_{}", request.model_id,
-                            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs());
+        let job_id = format!(
+            "finetune_{}_{}",
+            request.model_id,
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+        );
         let job = TrainingJob {
             id: job_id.clone(),
             model_id: request.model_id.clone(),
@@ -222,10 +232,13 @@ impl TrainingCoordinator {
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_secs(),
-            estimated_completion: Some(std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs() + 3600), // 1 hour estimate
+            estimated_completion: Some(
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs()
+                    + 3600,
+            ), // 1 hour estimate
             progress: TrainingProgress {
                 epochs_completed: 0,
                 epochs_total: request.configuration.epochs,

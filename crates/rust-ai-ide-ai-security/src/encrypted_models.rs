@@ -1,8 +1,8 @@
 // Encrypted Models Module
 // Secure storage and loading of encrypted AI models
 
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
 /// Configuration for model encryption
@@ -69,7 +69,12 @@ impl EncryptedModels {
     }
 
     /// Encrypt and store AI model
-    pub async fn store_encrypted_model(&self, model_id: String, model_data: Vec<u8>, metadata: ModelMetadata) -> Result<()> {
+    pub async fn store_encrypted_model(
+        &self,
+        model_id: String,
+        model_data: Vec<u8>,
+        metadata: ModelMetadata,
+    ) -> Result<()> {
         // Placeholder: encrypt model data using the encryption algorithm
         let (encrypted_data, iv, tag) = self.encrypt_model_data(&model_data)?;
 
@@ -90,7 +95,8 @@ impl EncryptedModels {
     /// Load and decrypt AI model
     pub async fn load_decrypted_model(&self, model_id: &str) -> Result<Vec<u8>> {
         let store = self.model_store.lock().await;
-        let encrypted_model = store.get(model_id)
+        let encrypted_model = store
+            .get(model_id)
             .ok_or_else(|| anyhow::anyhow!("Model not found: {}", model_id))?;
 
         self.decrypt_model_data(&encrypted_model)
@@ -99,20 +105,22 @@ impl EncryptedModels {
     /// List available encrypted models
     pub async fn list_models(&self) -> Vec<ModelInfo> {
         let store = self.model_store.lock().await;
-        store.iter().map(|(_, model)| {
-            ModelInfo {
+        store
+            .iter()
+            .map(|(_, model)| ModelInfo {
                 id: model.model_id.clone(),
                 model_type: model.metadata.model_type.clone(),
                 encrypted: true,
                 size_encrypted: model.encrypted_data.len(),
-            }
-        }).collect()
+            })
+            .collect()
     }
 
     /// Verify model integrity
     pub async fn verify_model_integrity(&self, model_id: &str) -> Result<bool> {
         let store = self.model_store.lock().await;
-        let model = store.get(model_id)
+        let model = store
+            .get(model_id)
             .ok_or_else(|| anyhow::anyhow!("Model not found: {}", model_id))?;
 
         // Placeholder: check authentication tag

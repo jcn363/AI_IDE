@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use candle_core::{DType, Tensor, Device};
 use crate::IDEError;
+use candle_core::{DType, Device, Tensor};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Validation result for quantization quality
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,10 +38,10 @@ pub struct QualityThresholds {
 impl Default for QualityThresholds {
     fn default() -> Self {
         Self {
-            max_mse: 0.1,       // Reasonable MSE for most applications
-            min_psnr: 30.0,     // 30dB PSNR minimum
+            max_mse: 0.1,                  // Reasonable MSE for most applications
+            min_psnr: 30.0,                // 30dB PSNR minimum
             max_mean_absolute_error: 0.05, // Max 5% mean absolute error
-            min_quality_score: 85.0, // Minimum 85% quality score
+            min_quality_score: 85.0,       // Minimum 85% quality score
         }
     }
 }
@@ -72,7 +72,7 @@ impl QuantizationValidator {
     ) -> Result<QuantizationValidationResult, IDEError> {
         if original_tensors.len() != quantized_tensors.len() {
             return Err(IDEError::InvalidArgument(
-                "Original and quantized tensor counts don't match".to_string()
+                "Original and quantized tensor counts don't match".to_string(),
             ));
         }
 
@@ -112,7 +112,8 @@ impl QuantizationValidator {
         let avg_mean_absolute_error = mean_absolute_error / tensor_count as f64;
 
         // Calculate quality score (0-100)
-        let quality_score = self.calculate_quality_score(avg_mse, avg_psnr, max_error, avg_mean_absolute_error);
+        let quality_score =
+            self.calculate_quality_score(avg_mse, avg_psnr, max_error, avg_mean_absolute_error);
 
         let meets_threshold = quality_score >= self.thresholds.min_quality_score;
 
@@ -136,7 +137,7 @@ impl QuantizationValidator {
         // Ensure same shape
         if original.dims() != quantized.dims() {
             return Err(IDEError::InvalidArgument(
-                "Original and quantized tensor shapes don't match".to_string()
+                "Original and quantized tensor shapes don't match".to_string(),
             ));
         }
 
@@ -248,7 +249,9 @@ impl QuantizationValidator {
     }
 
     /// Create recommended thresholds for different quantization strategies
-    pub fn get_recommended_thresholds(strategy: &super::quantizer::QuantizationStrategy) -> QualityThresholds {
+    pub fn get_recommended_thresholds(
+        strategy: &super::quantizer::QuantizationStrategy,
+    ) -> QualityThresholds {
         match strategy {
             super::quantizer::QuantizationStrategy::GGUF_Q4_0 => QualityThresholds {
                 max_mse: 0.05,

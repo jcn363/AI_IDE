@@ -3,12 +3,12 @@
 //! Analyzes dependencies between files for predictive quality intelligence,
 //! enabling impact assessment and maintaining forecasting accuracy.
 
-use std::sync::Arc;
-use tokio::sync::RwLock;
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 use rust_ai_ide_ai_learning::LearningEngine;
 
@@ -36,7 +36,10 @@ impl CrossFileDependencyAnalyzer {
     }
 
     /// Analyze cross-file dependencies for predictive modeling
-    pub async fn analyze_dependencies(&self, project_path: &str) -> Result<CrossFileDependencyAnalysis> {
+    pub async fn analyze_dependencies(
+        &self,
+        project_path: &str,
+    ) -> Result<CrossFileDependencyAnalysis> {
         // TODO: Implement comprehensive dependency analysis
         Ok(CrossFileDependencyAnalysis {
             dependency_graph: DependencyGraph::new(),

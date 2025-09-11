@@ -4,13 +4,13 @@
 //! capabilities for fine-tuning CodeLlama and StarCoder models.
 
 use anyhow::Result;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::{RwLock, mpsc};
+use tokio::sync::{mpsc, RwLock};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 /// Training orchestrator for managing fine-tuning jobs
 #[derive(Debug)]
@@ -74,7 +74,7 @@ pub trait TrainingProcess: Send + Sync {
 }
 
 // Re-export for convenience
-pub use crate::finetune::{FineTuneJob, TrainingStatus, TrainingProgress, TrainingMetrics};
+pub use crate::finetune::{FineTuneJob, TrainingMetrics, TrainingProgress, TrainingStatus};
 
 /// Orchestration configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -150,13 +150,16 @@ impl TrainingOrchestrator {
         }
 
         // Allocate resources
-        self.resource_manager.allocate_resources(&job_id, &job).await?;
+        self.resource_manager
+            .allocate_resources(&job_id, &job)
+            .await?;
 
         // Emit job started event
         self.emit_event(TrainingEvent::JobStarted {
             job_id: job_id.clone(),
             timestamp: Utc::now(),
-        }).await;
+        })
+        .await;
 
         // Start the training process asynchronously
         self.start_training_process(job_id.clone()).await?;
@@ -186,7 +189,9 @@ impl TrainingOrchestrator {
     pub async fn cancel_job(&self, job_id: &str) -> Result<()> {
         let mut jobs = self.jobs.write().await;
         if let Some(job_state) = jobs.get_mut(job_id) {
-            if job_state.status != TrainingStatus::Completed && job_state.status != TrainingStatus::Failed {
+            if job_state.status != TrainingStatus::Completed
+                && job_state.status != TrainingStatus::Failed
+            {
                 job_state.status = TrainingStatus::Cancelled;
                 job_state.end_time = Some(Utc::now());
 
@@ -206,7 +211,8 @@ impl TrainingOrchestrator {
                     job_id: job_id.to_string(),
                     error: "Job cancelled by user".to_string(),
                     timestamp: Utc::now(),
-                }).await;
+                })
+                .await;
 
                 log::info!("Job {} cancelled successfully", job_id);
             }
@@ -218,21 +224,30 @@ impl TrainingOrchestrator {
     /// Get all jobs
     pub async fn get_all_jobs(&self) -> Result<Vec<FineTuneJob>> {
         let jobs = self.jobs.read().await;
-        Ok(jobs.values().map(|state| {
-            let mut job = state.job.clone();
-            job.status = state.status.clone();
-            if let Some(progress) = &state.last_progress {
-                job.progress = progress.clone();
-            }
-            job
-        }).collect())
+        Ok(jobs
+            .values()
+            .map(|state| {
+                let mut job = state.job.clone();
+                job.status = state.status.clone();
+                if let Some(progress) = &state.last_progress {
+                    job.progress = progress.clone();
+                }
+                job
+            })
+            .collect())
     }
 
     /// Get active jobs
     pub async fn get_active_jobs(&self) -> Result<Vec<FineTuneJob>> {
         let jobs = self.jobs.read().await;
-        Ok(jobs.values()
-            .filter(|state| matches!(state.status, TrainingStatus::Training | TrainingStatus::PreparingData))
+        Ok(jobs
+            .values()
+            .filter(|state| {
+                matches!(
+                    state.status,
+                    TrainingStatus::Training | TrainingStatus::PreparingData
+                )
+            })
             .map(|state| {
                 let mut job = state.job.clone();
                 job.status = state.status.clone();
@@ -247,7 +262,8 @@ impl TrainingOrchestrator {
     /// Get completed jobs
     pub async fn get_completed_jobs(&self) -> Result<Vec<FineTuneJob>> {
         let jobs = self.jobs.read().await;
-        Ok(jobs.values()
+        Ok(jobs
+            .values()
             .filter(|state| matches!(state.status, TrainingStatus::Completed))
             .map(|state| {
                 let mut job = state.job.clone();
@@ -268,7 +284,10 @@ impl TrainingOrchestrator {
         {
             let jobs = self.jobs.read().await;
             for (job_id, job_state) in jobs.iter() {
-                if matches!(job_state.status, TrainingStatus::Completed | TrainingStatus::Failed | TrainingStatus::Cancelled) {
+                if matches!(
+                    job_state.status,
+                    TrainingStatus::Completed | TrainingStatus::Failed | TrainingStatus::Cancelled
+                ) {
                     if let Some(end_time) = job_state.end_time {
                         if end_time < cutoff_time {
                             jobs_to_cleanup.push(job_id.clone());
@@ -369,7 +388,8 @@ impl TrainingOrchestrator {
                     TrainingStatus::Training => {
                         // Simulate progress updates
                         progress.step += 10;
-                        progress.epoch = progress.step / (progress.total_steps / progress.total_epochs);
+                        progress.epoch =
+                            progress.step / (progress.total_steps / progress.total_epochs);
 
                         if progress.step >= progress.total_steps {
                             // Training completed
@@ -380,7 +400,8 @@ impl TrainingOrchestrator {
                             // Release resources
                             drop(jobs);
                             self.resource_manager.release_resources(&job_id).await?;
-                            *self.active_jobs.write().await = self.active_jobs.read().await.saturating_sub(1);
+                            *self.active_jobs.write().await =
+                                self.active_jobs.read().await.saturating_sub(1);
 
                             // Emit completion event
                             self.emit_event(TrainingEvent::JobCompleted {
@@ -396,7 +417,8 @@ impl TrainingOrchestrator {
                                     code_bleu_score: Some(0.75),
                                 },
                                 timestamp: Utc::now(),
-                            }).await;
+                            })
+                            .await;
 
                             break;
                         } else {
@@ -423,7 +445,8 @@ impl TrainingOrchestrator {
                 job_id: job_id.clone(),
                 progress: progress.clone(),
                 timestamp: Utc::now(),
-            }).await;
+            })
+            .await;
         }
 
         log::info!("Job monitoring completed for: {}", job_id);
@@ -444,8 +467,11 @@ impl TrainingOrchestrator {
 
             // Log resource usage
             if let Ok(usage) = self.resource_manager.get_current_usage().await {
-                log::debug!("Current resource usage - Memory: {:.1}GB, GPU: {:.1}%",
-                    usage.memory_gb, usage.gpu_utilization);
+                log::debug!(
+                    "Current resource usage - Memory: {:.1}GB, GPU: {:.1}%",
+                    usage.memory_gb,
+                    usage.gpu_utilization
+                );
             }
         }
     }
@@ -458,7 +484,12 @@ impl TrainingOrchestrator {
         {
             let jobs = self.jobs.read().await;
             for (job_id, job_state) in jobs.iter() {
-                if matches!(job_state.status, TrainingStatus::Training | TrainingStatus::PreparingData | TrainingStatus::Initializing) {
+                if matches!(
+                    job_state.status,
+                    TrainingStatus::Training
+                        | TrainingStatus::PreparingData
+                        | TrainingStatus::Initializing
+                ) {
                     if let Some(start_time) = job_state.start_time {
                         if Utc::now().signed_duration_since(start_time) > timeout_duration {
                             timed_out_jobs.push(job_id.clone());
@@ -499,7 +530,8 @@ impl TrainingOrchestrator {
                 job_id: job_id.to_string(),
                 error: "Job timed out after 48 hours".to_string(),
                 timestamp: Utc::now(),
-            }).await;
+            })
+            .await;
         }
 
         Ok(())
@@ -521,8 +553,14 @@ impl TrainingOrchestrator {
         }
 
         let total_jobs = jobs.len();
-        let completed_jobs = status_counts.get(&TrainingStatus::Completed).copied().unwrap_or(0);
-        let failed_jobs = status_counts.get(&TrainingStatus::Failed).copied().unwrap_or(0);
+        let completed_jobs = status_counts
+            .get(&TrainingStatus::Completed)
+            .copied()
+            .unwrap_or(0);
+        let failed_jobs = status_counts
+            .get(&TrainingStatus::Failed)
+            .copied()
+            .unwrap_or(0);
 
         Ok(OrchestratorStatistics {
             total_jobs,
@@ -536,17 +574,20 @@ impl TrainingOrchestrator {
     /// Export job queue to JSON
     pub async fn export_job_queue(&self) -> Result<String> {
         let jobs = self.jobs.read().await;
-        let job_summaries: Vec<_> = jobs.values().map(|state| {
-            serde_json::json!({
-                "id": state.job.id,
-                "name": state.job.name,
-                "status": state.status,
-                "model_type": state.job.model_type,
-                "created_at": state.job.created_at,
-                "start_time": state.start_time,
-                "progress": state.last_progress,
+        let job_summaries: Vec<_> = jobs
+            .values()
+            .map(|state| {
+                serde_json::json!({
+                    "id": state.job.id,
+                    "name": state.job.name,
+                    "status": state.status,
+                    "model_type": state.job.model_type,
+                    "created_at": state.job.created_at,
+                    "start_time": state.start_time,
+                    "progress": state.last_progress,
+                })
             })
-        }).collect();
+            .collect();
 
         Ok(serde_json::to_string_pretty(&job_summaries)?)
     }
@@ -630,8 +671,11 @@ impl ResourceManager {
 
         // Check availability
         if *memory_usage + required_memory > self.available_memory_gb {
-            return Err(anyhow::anyhow!("Insufficient memory. Required: {}GB, Available: {}GB",
-                required_memory, self.available_memory_gb - *memory_usage));
+            return Err(anyhow::anyhow!(
+                "Insufficient memory. Required: {}GB, Available: {}GB",
+                required_memory,
+                self.available_memory_gb - *memory_usage
+            ));
         }
 
         // Find available GPU by iterating over all GPUs
@@ -652,7 +696,12 @@ impl ResourceManager {
 
         job_map.insert(job_id.to_string(), allocation);
 
-        log::info!("Allocated resources for job {}: {:.1}GB memory, GPU {}", job_id, required_memory, gpu_index);
+        log::info!(
+            "Allocated resources for job {}: {:.1}GB memory, GPU {}",
+            job_id,
+            required_memory,
+            gpu_index
+        );
         Ok(())
     }
 
@@ -838,7 +887,10 @@ mod tests {
 
         // Get job status
         let job_status = orchestrator.get_job_status(&job_id).await.unwrap();
-        assert!(matches!(job_status.status, TrainingStatus::Initializing | TrainingStatus::Training));
+        assert!(matches!(
+            job_status.status,
+            TrainingStatus::Initializing | TrainingStatus::Training
+        ));
 
         // Get all jobs
         let all_jobs = orchestrator.get_all_jobs().await.unwrap();

@@ -29,20 +29,20 @@ pub struct ColdStartOptimizer {
 
 #[derive(Debug, Clone)]
 pub struct ColdStartConfig {
-    pub target_startup_time_ms: u64,         // Target <500ms
-    pub target_warm_time_ms: u64,           // Target <100ms
-    pub enable_preloading: bool,            // Enable memory preloading
-    pub enable_parallel_init: bool,         // Enable parallel initialization
-    pub preload_concurrency_limit: usize,   // Max concurrent preload tasks
-    pub cache_warmup_queries: Vec<String>,  // Queries to warm cache
-    pub memory_pinning_kb: usize,           // Amount of memory to pin (KB)
+    pub target_startup_time_ms: u64,       // Target <500ms
+    pub target_warm_time_ms: u64,          // Target <100ms
+    pub enable_preloading: bool,           // Enable memory preloading
+    pub enable_parallel_init: bool,        // Enable parallel initialization
+    pub preload_concurrency_limit: usize,  // Max concurrent preload tasks
+    pub cache_warmup_queries: Vec<String>, // Queries to warm cache
+    pub memory_pinning_kb: usize,          // Amount of memory to pin (KB)
 }
 
 impl Default for ColdStartConfig {
     fn default() -> Self {
         Self {
-            target_startup_time_ms: 500,     // <500ms cold start target
-            target_warm_time_ms: 100,        // <100ms warm start target
+            target_startup_time_ms: 500, // <500ms cold start target
+            target_warm_time_ms: 100,    // <100ms warm start target
             enable_preloading: true,
             enable_parallel_init: true,
             preload_concurrency_limit: 4,
@@ -51,7 +51,7 @@ impl Default for ColdStartConfig {
                 "rust-analyzer:diagnostics".to_string(),
                 "completion:trigger".to_string(),
             ],
-            memory_pinning_kb: 1024,         // 1MB memory pinning
+            memory_pinning_kb: 1024, // 1MB memory pinning
         }
     }
 }
@@ -115,14 +115,14 @@ impl ColdStartOptimizer {
     /// Create a new cold start optimizer
     pub fn new(config: ColdStartConfig) -> Self {
         let mut initialization_order = vec![
-            Component::CoreFoundation,    // Must be first
-            Component::FileSystem,        // Fast, independent
-            Component::CacheSystem,       // Can run in parallel with FS
-            Component::NetworkLayer,      // Can run in parallel
-            Component::LanguageServers,   // Depends on network
-            Component::AnalysisEngine,    // Can run in parallel
-            Component::UIComponents,      // Can run in parallel with analysis
-            Component::Plugins,          // Last, can run in parallel
+            Component::CoreFoundation,  // Must be first
+            Component::FileSystem,      // Fast, independent
+            Component::CacheSystem,     // Can run in parallel with FS
+            Component::NetworkLayer,    // Can run in parallel
+            Component::LanguageServers, // Depends on network
+            Component::AnalysisEngine,  // Can run in parallel
+            Component::UIComponents,    // Can run in parallel with analysis
+            Component::Plugins,         // Last, can run in parallel
         ];
 
         // For parallel initialization, reorder some components
@@ -130,9 +130,9 @@ impl ColdStartOptimizer {
             initialization_order = vec![
                 Component::CoreFoundation,
                 Component::FileSystem,
-                Component::NetworkLayer,      // Parallel with cache
-                Component::CacheSystem,       // Parallel with network
-                Component::AnalysisEngine,    // Parallel with language servers
+                Component::NetworkLayer,   // Parallel with cache
+                Component::CacheSystem,    // Parallel with network
+                Component::AnalysisEngine, // Parallel with language servers
                 Component::LanguageServers,
                 Component::UIComponents,
                 Component::Plugins,
@@ -175,12 +175,12 @@ impl ColdStartOptimizer {
         let total_time = start_time.elapsed();
         let startup_time_ms = total_time.as_millis() as u64;
 
-        self.startup_time.store(startup_time_ms, std::sync::atomic::Ordering::Relaxed);
+        self.startup_time
+            .store(startup_time_ms, std::sync::atomic::Ordering::Relaxed);
 
         info!(
             "Cold start optimization completed in {}ms (target: {}ms)",
-            startup_time_ms,
-            self.config.target_startup_time_ms
+            startup_time_ms, self.config.target_startup_time_ms
         );
 
         let result = ColdStartResult {
@@ -200,7 +200,10 @@ impl ColdStartOptimizer {
             return Ok(());
         }
 
-        debug!("Preloading {}KB of memory...", self.config.memory_pinning_kb);
+        debug!(
+            "Preloading {}KB of memory...",
+            self.config.memory_pinning_kb
+        );
 
         // Preallocate memory to avoid page faults during startup
         let preload_data = vec![0u8; self.config.memory_pinning_kb * 1024];
@@ -228,7 +231,10 @@ impl ColdStartOptimizer {
 
         // Start components in parallel where possible
         for component in &self.initialization_order {
-            let permit = semaphore.clone().acquire_owned().await
+            let permit = semaphore
+                .clone()
+                .acquire_owned()
+                .await
                 .map_err(|e| format!("Failed to acquire semaphore: {}", e))?;
 
             let component_clone = component.clone();
@@ -266,7 +272,10 @@ impl ColdStartOptimizer {
                 }
 
                 let duration = start_time.elapsed();
-                debug!("Component {:?} initialized in {:?}", component_clone, duration);
+                debug!(
+                    "Component {:?} initialized in {:?}",
+                    component_clone, duration
+                );
 
                 // Explicitly drop permit to release semaphore
                 drop(permit);
@@ -282,7 +291,9 @@ impl ColdStartOptimizer {
     async fn warm_cache_and_prefetch(&self) -> Result<(), String> {
         debug!("Starting cache warming...");
 
-        let warmup_tasks = self.config.cache_warmup_queries
+        let warmup_tasks = self
+            .config
+            .cache_warmup_queries
             .iter()
             .map(|query| {
                 let query_clone = query.clone();
@@ -304,7 +315,8 @@ impl ColdStartOptimizer {
 
     /// Check if cold start is optimized
     pub fn is_optimized(&self) -> bool {
-        self.startup_time.load(std::sync::atomic::Ordering::Relaxed) < self.config.target_startup_time_ms
+        self.startup_time.load(std::sync::atomic::Ordering::Relaxed)
+            < self.config.target_startup_time_ms
     }
 
     /// Get current startup time
@@ -336,9 +348,7 @@ pub struct ColdStartResult {
 }
 
 /// Optimized analyzer creation function
-pub async fn create_optimized_analyzer(
-    should_optimize: bool,
-) -> Result<(), String> {
+pub async fn create_optimized_analyzer(should_optimize: bool) -> Result<(), String> {
     if !should_optimize {
         return Ok(());
     }
@@ -349,10 +359,15 @@ pub async fn create_optimized_analyzer(
     let result = optimizer.optimize_cold_start().await?;
 
     if result.within_target {
-        info!("✓ Cold start optimization successful: {}ms", result.total_time_ms);
+        info!(
+            "✓ Cold start optimization successful: {}ms",
+            result.total_time_ms
+        );
     } else {
-        warn!("⚠ Cold start optimization needs improvement: {}ms (target: {}ms)",
-              result.total_time_ms, optimizer.config.target_startup_time_ms);
+        warn!(
+            "⚠ Cold start optimization needs improvement: {}ms (target: {}ms)",
+            result.total_time_ms, optimizer.config.target_startup_time_ms
+        );
     }
 
     Ok(())

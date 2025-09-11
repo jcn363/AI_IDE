@@ -3,9 +3,9 @@
 //! This module provides language detection based on file extensions and
 //! test framework mappings for different programming languages.
 
+use super::test_config::ProgrammingLanguage;
 use std::collections::HashMap;
 use std::path::Path;
-use super::test_config::ProgrammingLanguage;
 
 /// Test framework information
 #[derive(Debug, Clone)]
@@ -28,15 +28,69 @@ impl LanguageDetector {
         let mut framework_map = HashMap::new();
 
         // Add language mappings...
-        Self::add_language_mapping(&mut framework_map, "rs", ProgrammingLanguage::Rust, vec!["cargo-test"], "cargo-test");
-        Self::add_language_mapping(&mut framework_map, "ts", ProgrammingLanguage::TypeScript, vec!["jest", "mocha", "vitest"], "jest");
-        Self::add_language_mapping(&mut framework_map, "js", ProgrammingLanguage::JavaScript, vec!["jest", "mocha", "jasmine"], "jest");
-        Self::add_language_mapping(&mut framework_map, "py", ProgrammingLanguage::Python, vec!["pytest", "unittest"], "pytest");
-        Self::add_language_mapping(&mut framework_map, "java", ProgrammingLanguage::Java, vec!["junit", "testng"], "junit");
-        Self::add_language_mapping(&mut framework_map, "cs", ProgrammingLanguage::CSharp, vec!["nunit", "xunit", "mstest"], "xunit");
-        Self::add_language_mapping(&mut framework_map, "go", ProgrammingLanguage::Go, vec!["testing"], "testing");
-        Self::add_language_mapping(&mut framework_map, "cpp", ProgrammingLanguage::Cpp, vec!["googletest", "catch2"], "googletest");
-        Self::add_language_mapping(&mut framework_map, "c", ProgrammingLanguage::C, vec!["cmocka", "criterion"], "cmocka");
+        Self::add_language_mapping(
+            &mut framework_map,
+            "rs",
+            ProgrammingLanguage::Rust,
+            vec!["cargo-test"],
+            "cargo-test",
+        );
+        Self::add_language_mapping(
+            &mut framework_map,
+            "ts",
+            ProgrammingLanguage::TypeScript,
+            vec!["jest", "mocha", "vitest"],
+            "jest",
+        );
+        Self::add_language_mapping(
+            &mut framework_map,
+            "js",
+            ProgrammingLanguage::JavaScript,
+            vec!["jest", "mocha", "jasmine"],
+            "jest",
+        );
+        Self::add_language_mapping(
+            &mut framework_map,
+            "py",
+            ProgrammingLanguage::Python,
+            vec!["pytest", "unittest"],
+            "pytest",
+        );
+        Self::add_language_mapping(
+            &mut framework_map,
+            "java",
+            ProgrammingLanguage::Java,
+            vec!["junit", "testng"],
+            "junit",
+        );
+        Self::add_language_mapping(
+            &mut framework_map,
+            "cs",
+            ProgrammingLanguage::CSharp,
+            vec!["nunit", "xunit", "mstest"],
+            "xunit",
+        );
+        Self::add_language_mapping(
+            &mut framework_map,
+            "go",
+            ProgrammingLanguage::Go,
+            vec!["testing"],
+            "testing",
+        );
+        Self::add_language_mapping(
+            &mut framework_map,
+            "cpp",
+            ProgrammingLanguage::Cpp,
+            vec!["googletest", "catch2"],
+            "googletest",
+        );
+        Self::add_language_mapping(
+            &mut framework_map,
+            "c",
+            ProgrammingLanguage::C,
+            vec!["cmocka", "criterion"],
+            "cmocka",
+        );
 
         Self { framework_map }
     }
@@ -55,7 +109,7 @@ impl LanguageDetector {
                 test_frameworks: frameworks.into_iter().map(|s| s.to_string()).collect(),
                 file_extensions: vec![extension.to_string()],
                 preferred_framework: preferred.to_string(),
-            }
+            },
         );
     }
 

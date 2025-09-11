@@ -4,10 +4,10 @@
 //! to identify common programming patterns, anti-patterns, and architectural smells.
 
 use crate::analysis::types::Severity;
-use crate::multi_ast::{MultiASTParser, UnifiedAST, Language, ASTNode};
-use rust_ai_ide_common::{IdeResult, IdeError};
-use std::collections::{HashMap};
+use crate::multi_ast::{ASTNode, Language, MultiASTParser, UnifiedAST};
+use rust_ai_ide_common::{IdeError, IdeResult};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Pattern recognition engine for multi-language analysis
 #[derive(Debug)]
@@ -136,16 +136,16 @@ impl LanguageAwarePatternRecognizer {
         file_path: &str,
     ) -> IdeResult<Vec<RecognizedPattern>> {
         // Parse the code into unified AST
-        let ast = self.ast_parser.parse(language, content)
-            .map_err(|e| {
-                eprintln!("Failed to parse code: {}", e);
-                IdeError::Analysis { message: format!("Parse error: {}", e), file_path: file_path.to_string() }
-            })?;
+        let ast = self.ast_parser.parse(language, content).map_err(|e| {
+            eprintln!("Failed to parse code: {}", e);
+            IdeError::Analysis {
+                message: format!("Parse error: {}", e),
+                file_path: file_path.to_string(),
+            }
+        })?;
 
         // Get patterns for this language
-        let language_patterns = self.patterns.get(language)
-            .cloned()
-            .unwrap_or_default();
+        let language_patterns = self.patterns.get(language).cloned().unwrap_or_default();
 
         // Find patterns in the AST
         let mut recognized_patterns = Vec::new();
@@ -153,12 +153,19 @@ impl LanguageAwarePatternRecognizer {
         for pattern in language_patterns {
             if let Some(matches) = self.find_pattern_matches(&ast, &pattern) {
                 for match_context in matches {
-                    let confidence = self.calculate_confidence(&pattern.confidence_rule, &match_context);
+                    let confidence =
+                        self.calculate_confidence(&pattern.confidence_rule, &match_context);
 
                     if confidence >= self.thresholds.min_confidence {
                         let recognized = RecognizedPattern {
                             pattern: pattern.clone(),
-                            location: format!("{}:{}", file_path, match_context.get("location").unwrap_or(&"unknown".to_string())),
+                            location: format!(
+                                "{}:{}",
+                                file_path,
+                                match_context
+                                    .get("location")
+                                    .unwrap_or(&"unknown".to_string())
+                            ),
                             confidence,
                             context: match_context,
                             suggestions: self.generate_suggestions(&pattern),
@@ -182,7 +189,13 @@ impl LanguageAwarePatternRecognizer {
         let mut matches = Vec::new();
 
         // Walk the AST and look for pattern matches
-        self.walk_ast_for_pattern(&ast.root_node, &pattern.ast_pattern, &mut matches, &mut HashMap::new(), 0);
+        self.walk_ast_for_pattern(
+            &ast.root_node,
+            &pattern.ast_pattern,
+            &mut matches,
+            &mut HashMap::new(),
+            0,
+        );
 
         if matches.is_empty() {
             None
@@ -228,23 +241,27 @@ impl LanguageAwarePatternRecognizer {
         depth: usize,
     ) {
         match node {
-            ASTNode::Document { children, .. } |
-            ASTNode::Statement { content: children, .. } |
-            ASTNode::Expression { operands: children, .. } => {
+            ASTNode::Document { children, .. }
+            | ASTNode::Statement {
+                content: children, ..
+            }
+            | ASTNode::Expression {
+                operands: children, ..
+            } => {
                 for child in children {
                     self.walk_ast_for_pattern(child, pattern, matches, context, depth);
                 }
-            },
+            }
             ASTNode::Function { body, .. } => {
                 for child in body {
                     self.walk_ast_for_pattern(child, pattern, matches, context, depth);
                 }
-            },
+            }
             ASTNode::Class { methods, .. } => {
                 for method in methods {
                     self.walk_ast_for_pattern(method, pattern, matches, context, depth);
                 }
-            },
+            }
             _ => {
                 // Other node types don't have children to walk
             }
@@ -304,13 +321,16 @@ impl LanguageAwarePatternRecognizer {
     }
 
     /// Calculate pattern confidence
-    fn calculate_confidence(&self, rule: &ConfidenceRule, context: &HashMap<String, String>) -> f64 {
+    fn calculate_confidence(
+        &self,
+        rule: &ConfidenceRule,
+        context: &HashMap<String, String>,
+    ) -> f64 {
         let mut confidence = rule.base_score;
 
         for multiplier in &rule.multipliers {
             // Simple condition checking - in practice this would be more sophisticated
-            if !multiplier.condition.is_empty() &&
-               context.contains_key(&multiplier.condition) {
+            if !multiplier.condition.is_empty() && context.contains_key(&multiplier.condition) {
                 confidence *= multiplier.multiplier;
             }
         }
@@ -327,7 +347,10 @@ impl LanguageAwarePatternRecognizer {
                 "Consider breaking down complex constructs into smaller, focused units".to_string(),
             ],
             PatternCategory::SecurityVulnerability => vec![
-                format!("Address this {} security vulnerability immediately", pattern.name),
+                format!(
+                    "Address this {} security vulnerability immediately",
+                    pattern.name
+                ),
                 "Implement proper input validation and sanitization".to_string(),
                 "Review authorization and authentication mechanisms".to_string(),
             ],
@@ -359,7 +382,8 @@ impl LanguageAwarePatternRecognizer {
         let long_function_pattern = PatternDefinition {
             id: "long_function".to_string(),
             name: "Long Function".to_string(),
-            description: "Function with excessive number of lines indicating poor cohesion".to_string(),
+            description: "Function with excessive number of lines indicating poor cohesion"
+                .to_string(),
             category: PatternCategory::MaintainabilityProblem,
             severity: Severity::Warning,
             ast_pattern: ASTPattern {
@@ -369,12 +393,10 @@ impl LanguageAwarePatternRecognizer {
             },
             confidence_rule: ConfidenceRule {
                 base_score: 0.8,
-                multipliers: vec![
-                    ConfidenceMultiplier {
-                        condition: "line_count".to_string(),
-                        multiplier: 1.2,
-                    },
-                ],
+                multipliers: vec![ConfidenceMultiplier {
+                    condition: "line_count".to_string(),
+                    multiplier: 1.2,
+                }],
             },
         };
 
@@ -382,7 +404,8 @@ impl LanguageAwarePatternRecognizer {
         let large_class_pattern = PatternDefinition {
             id: "large_class".to_string(),
             name: "Large Class".to_string(),
-            description: "Class with too many methods or fields indicating SRP violation".to_string(),
+            description: "Class with too many methods or fields indicating SRP violation"
+                .to_string(),
             category: PatternCategory::AntiPattern,
             severity: Severity::Error,
             ast_pattern: ASTPattern {
@@ -418,7 +441,9 @@ impl LanguageAwarePatternRecognizer {
         let god_object_pattern = PatternDefinition {
             id: "god_object".to_string(),
             name: "God Object".to_string(),
-            description: "Class with too many responsibilities (violates Single Responsibility Principle)".to_string(),
+            description:
+                "Class with too many responsibilities (violates Single Responsibility Principle)"
+                    .to_string(),
             category: PatternCategory::AntiPattern,
             severity: Severity::Critical,
             ast_pattern: ASTPattern {
@@ -461,12 +486,18 @@ impl LanguageAwarePatternRecognizer {
 
     /// Register a pattern for a specific language
     pub fn register_pattern(&mut self, language: &Language, pattern: PatternDefinition) {
-        self.patterns.entry(language.clone()).or_insert_with(Vec::new).push(pattern);
+        self.patterns
+            .entry(language.clone())
+            .or_insert_with(Vec::new)
+            .push(pattern);
     }
 
     /// Get patterns for a specific language
     pub fn get_patterns_for_language(&self, language: &Language) -> Vec<&PatternDefinition> {
-        self.patterns.get(language).map(|patterns| patterns.iter().collect()).unwrap_or_default()
+        self.patterns
+            .get(language)
+            .map(|patterns| patterns.iter().collect())
+            .unwrap_or_default()
     }
 
     /// Get all supported languages

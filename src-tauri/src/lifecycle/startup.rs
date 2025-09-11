@@ -7,7 +7,7 @@
 //! - Command handler registration
 //! - Background task startup
 
-use super::{LifecyclePhase, LifecycleEvent};
+use super::{LifecycleEvent, LifecyclePhase};
 use crate::commands;
 use crate::utils;
 use anyhow::Result;
@@ -68,7 +68,8 @@ impl StartupPhase {
                 "plugins": ["log", "fs", "dialog"]
             }),
             ..Default::default()
-        }).await;
+        })
+        .await;
 
         Ok(())
     }
@@ -103,7 +104,8 @@ impl StartupPhase {
                 "delegated": true
             }),
             ..Default::default()
-        }).await;
+        })
+        .await;
 
         Ok(())
     }
@@ -127,7 +129,8 @@ impl StartupPhase {
                         "status": "ready"
                     }),
                     ..Default::default()
-                }).await;
+                })
+                .await;
             }
             Err(e) => {
                 log::warn!("AI service initialization failed during startup: {}", e);
@@ -140,7 +143,8 @@ impl StartupPhase {
                         "error": e.to_string()
                     }),
                     ..Default::default()
-                }).await;
+                })
+                .await;
             }
         }
 
@@ -151,10 +155,14 @@ impl StartupPhase {
         log::debug!("Starting background tasks");
 
         // Initialize cache cleanup task
-        let diagnostic_cache_state = app.state::<crate::modules::shared::diagnostics::DiagnosticCacheState>();
-        let explanation_cache_state = app.state::<crate::modules::shared::diagnostics::ExplanationCacheState>();
+        let diagnostic_cache_state =
+            app.state::<crate::modules::shared::diagnostics::DiagnosticCacheState>();
+        let explanation_cache_state =
+            app.state::<crate::modules::shared::diagnostics::ExplanationCacheState>();
 
-        let cache_cleanup_result = utils::initialize_cache_cleanup_task(diagnostic_cache_state, explanation_cache_state).await;
+        let cache_cleanup_result =
+            utils::initialize_cache_cleanup_task(diagnostic_cache_state, explanation_cache_state)
+                .await;
 
         match cache_cleanup_result {
             Ok(_) => {
@@ -166,7 +174,8 @@ impl StartupPhase {
                         "tasks": ["cache_cleanup"]
                     }),
                     ..Default::default()
-                }).await;
+                })
+                .await;
             }
             Err(e) => {
                 log::error!("Failed to start cache cleanup task: {}", e);
@@ -178,7 +187,8 @@ impl StartupPhase {
                         "error": e.to_string()
                     }),
                     ..Default::default()
-                }).await;
+                })
+                .await;
             }
         }
 

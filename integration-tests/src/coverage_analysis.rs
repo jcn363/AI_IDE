@@ -3,11 +3,11 @@
 //! Comprehensive coverage analysis system that tracks test coverage over time,
 //! provides trend analysis, and generates quality gate checks for CI/CD pipelines.
 
-use crate::{IntegrationTestResult, GlobalTestConfig};
+use crate::{GlobalTestConfig, IntegrationTestResult};
 use chrono::{DateTime, Utc};
 use rust_ai_ide_errors::RustAIError;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, BTreeMap};
+use std::collections::{BTreeMap, HashMap};
 use std::time::Duration;
 
 /// Main coverage analysis system
@@ -57,11 +57,11 @@ pub struct FileCoverage {
 
 #[derive(Debug, Clone)]
 pub enum CoverageCategory {
-    Good,      // > 80%
+    Good,       // > 80%
     Acceptable, // 70-80%
-    Warning,   // 50-70%
-    Critical,  // < 50%
-    Uncovered, // 0%
+    Warning,    // 50-70%
+    Critical,   // < 50%
+    Uncovered,  // 0%
 }
 
 #[derive(Debug, Clone)]
@@ -86,7 +86,7 @@ pub enum UncoveredReason {
 #[derive(Debug, Clone)]
 pub struct CoverageTrends {
     pub coverage_trend: TrendDirection,
-    pub velocity: f64, // percentage points per day
+    pub velocity: f64,         // percentage points per day
     pub plateau_duration: u32, // days without significant change
     pub coverage_gaps: Vec<CoverageGap>,
 }
@@ -282,8 +282,8 @@ impl Default for TrendThresholds {
         Self {
             min_coverage_percentage: 80.0,
             max_decline_rate: 2.0, // 2 percentage points per day max decline
-            max_plateau_days: 14, // 2 weeks
-            min_velocity: 0.1, // 0.1 percentage points per day improvement
+            max_plateau_days: 14,  // 2 weeks
+            min_velocity: 0.1,     // 0.1 percentage points per day improvement
         }
     }
 }
@@ -319,8 +319,9 @@ impl CoverageAnalyzer {
 
     /// Generate comprehensive coverage report
     pub fn generate_coverage_report(&self) -> Result<CoverageReport, RustAIError> {
-        let snapshot = self.current_snapshot.clone()
-            .ok_or_else(|| RustAIError::ConfigurationError("No coverage snapshot available".to_string()))?;
+        let snapshot = self.current_snapshot.clone().ok_or_else(|| {
+            RustAIError::ConfigurationError("No coverage snapshot available".to_string())
+        })?;
 
         let trends = self.analyze_trends()?;
         let recommendations = self.generate_recommendations(&snapshot, &trends)?;
@@ -352,7 +353,8 @@ impl CoverageAnalyzer {
         let recent_snapshots: Vec<_> = self.trend_history.values().rev().take(10).collect();
 
         // Calculate overall trend direction
-        let coverage_values: Vec<f64> = recent_snapshots.iter()
+        let coverage_values: Vec<f64> = recent_snapshots
+            .iter()
             .map(|s| s.coverage_data.overall_percentage)
             .collect();
 
@@ -360,7 +362,10 @@ impl CoverageAnalyzer {
 
         // Calculate velocity (changes per day)
         let mut velocities = HashMap::new();
-        velocities.insert("overall_coverage".to_string(), self.calculate_velocity(&coverage_values));
+        velocities.insert(
+            "overall_coverage".to_string(),
+            self.calculate_velocity(&coverage_values),
+        );
 
         // Find bottlenecks
         let bottlenecks = self.identify_bottlenecks(&recent_snapshots);
@@ -391,9 +396,14 @@ impl CoverageAnalyzer {
         let n = coverage_values.len() as f64;
         let x_sum: f64 = (0..coverage_values.len()).map(|i| i as f64).sum();
         let y_sum: f64 = coverage_values.iter().sum();
-        let xy_sum: f64 = coverage_values.iter().enumerate()
-            .map(|(i, &y)| i as f64 * y).sum();
-        let xx_sum: f64 = (0..coverage_values.len()).map(|i| (i as f64 * i as f64)).sum();
+        let xy_sum: f64 = coverage_values
+            .iter()
+            .enumerate()
+            .map(|(i, &y)| i as f64 * y)
+            .sum();
+        let xx_sum: f64 = (0..coverage_values.len())
+            .map(|i| (i as f64 * i as f64))
+            .sum();
 
         let slope = (n * xy_sum - x_sum * y_sum) / (n * xx_sum - x_sum * x_sum);
 
@@ -473,7 +483,9 @@ impl CoverageAnalyzer {
             BottleneckType::ErrorConditions
         } else if file_coverage.branches_covered < file_coverage.total_branches / 2 {
             BottleneckType::ComplexBranching
-        } else if file_coverage.file_path.contains("platform") || file_coverage.file_path.contains("ffi") {
+        } else if file_coverage.file_path.contains("platform")
+            || file_coverage.file_path.contains("ffi")
+        {
             BottleneckType::PlatformIntegration
         } else if file_coverage.functions_covered < file_coverage.total_functions / 2 {
             BottleneckType::ExternalDependencies
@@ -511,9 +523,11 @@ impl CoverageAnalyzer {
 
         // Calculate coefficient of variation as a proxy for confidence
         let mean = coverage_values.iter().sum::<f64>() / coverage_values.len() as f64;
-        let variance = coverage_values.iter()
+        let variance = coverage_values
+            .iter()
             .map(|v| (v - mean).powi(2))
-            .sum::<f64>() / coverage_values.len() as f64;
+            .sum::<f64>()
+            / coverage_values.len() as f64;
         let std_dev = variance.sqrt();
 
         if mean > 0.0 {
@@ -542,7 +556,10 @@ impl CoverageAnalyzer {
             confidence_interval,
             time_horizon_days: 30,
             factors_influencing: vec![
-                format!("Current velocity: {:.2} percentage points per day", velocity),
+                format!(
+                    "Current velocity: {:.2} percentage points per day",
+                    velocity
+                ),
                 "Historical trend stability".to_string(),
                 "Codebase growth rate".to_string(),
                 "Test addition rate".to_string(),

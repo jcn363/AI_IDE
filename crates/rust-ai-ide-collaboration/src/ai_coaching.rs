@@ -3,14 +3,14 @@
 //! Provides live contextual assistance, pair programming support, and collaborative AI agents
 //! that enhance the coding experience during real-time collaboration.
 
+use communication::{CollaborationMessage, WebSocketConnection};
+use rust_ai_ide_ai_inference::{
+    AnalysisResult, AnalysisType, CodeCompletionConfig, CompletionContext, CompletionSuggestion,
+    InferenceEngine,
+};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
-use rust_ai_ide_ai_inference::{
-    CompletionContext, InferenceEngine, CodeCompletionConfig,
-    CompletionSuggestion, AnalysisResult, AnalysisType,
-};
-use communication::{WebSocketConnection, CollaborationMessage};
 
 /// Core AI coaching service for collaborative sessions
 pub struct AICoachingService {
@@ -50,12 +50,31 @@ pub struct CodeContext {
 /// Coaching event types
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum CoachingEvent {
-    CodeSuggestion { suggestion: String, confidence: f32, author: String },
-    BestPracticeAdvice { advice: String, context: String },
-    ErrorWarning { error: String, suggestion: String },
-    RefactoringHint { description: String, confidence_level: f32 },
-    KnowledgeTransfer { topic: String, explanation: String },
-    CollaborativeInsight { insight: String, supported_by: Vec<String> },
+    CodeSuggestion {
+        suggestion: String,
+        confidence: f32,
+        author: String,
+    },
+    BestPracticeAdvice {
+        advice: String,
+        context: String,
+    },
+    ErrorWarning {
+        error: String,
+        suggestion: String,
+    },
+    RefactoringHint {
+        description: String,
+        confidence_level: f32,
+    },
+    KnowledgeTransfer {
+        topic: String,
+        explanation: String,
+    },
+    CollaborativeInsight {
+        insight: String,
+        supported_by: Vec<String>,
+    },
 }
 
 /// Individual AI collaborator agent
@@ -187,13 +206,24 @@ impl AICoachingService {
     }
 
     /// Start AI coaching for a collaboration session
-    pub async fn start_coaching_session(&self, session_id: String, context: SessionContext) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn start_coaching_session(
+        &self,
+        session_id: String,
+        context: SessionContext,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = self.state.write().await;
-        state.active_sessions.insert(session_id.clone(), context.clone());
+        state
+            .active_sessions
+            .insert(session_id.clone(), context.clone());
 
         // Initialize AI collaborators for this session
-        self.initialize_collaborator_agents(&session_id, &context.collaborators).await;
-        log::info!("AI coaching session {} started with {} participants", session_id, context.collaborators.len());
+        self.initialize_collaborator_agents(&session_id, &context.collaborators)
+            .await;
+        log::info!(
+            "AI coaching session {} started with {} participants",
+            session_id,
+            context.collaborators.len()
+        );
 
         Ok(())
     }
@@ -203,20 +233,30 @@ impl AICoachingService {
         &self,
         session_id: &str,
         code_context: &CodeContext,
-        user_actions: &[CodeAction]
+        user_actions: &[CodeAction],
     ) -> Result<AICoachingEvent, Box<dyn std::error::Error>> {
         let state = self.state.read().await;
-        let session = state.active_sessions.get(session_id)
+        let session = state
+            .active_sessions
+            .get(session_id)
             .ok_or_else(|| format!("Session {} not found", session_id))?;
 
         // Analyze the current context
-        let analysis = self.analyze_context(code_context, user_actions, &session.coding_goals).await?;
+        let analysis = self
+            .analyze_context(code_context, user_actions, &session.coding_goals)
+            .await?;
 
         // Determine most appropriate coaching event
-        let coaching_event = self.determine_coaching_action(&analysis, &self.extract_learning_opportunities(code_context)).await?;
+        let coaching_event = self
+            .determine_coaching_action(
+                &analysis,
+                &self.extract_learning_opportunities(code_context),
+            )
+            .await?;
 
         // Record the coaching event
-        self.record_coaching_event(session_id, &coaching_event).await?;
+        self.record_coaching_event(session_id, &coaching_event)
+            .await?;
 
         Ok(coaching_event)
     }
@@ -226,7 +266,7 @@ impl AICoachingService {
         &self,
         session_id: &str,
         context: &CodeContext,
-        previous_suggestions: &[DynamicSuggestion]
+        previous_suggestions: &[DynamicSuggestion],
     ) -> Result<DynamicSuggestion, Box<dyn std::error::Error>> {
         let inference_config = CodeCompletionConfig {
             max_length: 100,
@@ -248,17 +288,23 @@ impl AICoachingService {
             user_profile: None,
         };
 
-        let completion_result = self.inference_engine.generate_code_completion(
-            &completion_context.prefix,
-            &completion_context.prefix,
-            &inference_config
-        ).await?;
+        let completion_result = self
+            .inference_engine
+            .generate_code_completion(
+                &completion_context.prefix,
+                &completion_context.prefix,
+                &inference_config,
+            )
+            .await?;
 
         Ok(DynamicSuggestion {
             suggestion_type: SuggestionType::Completion,
             content: completion_result.completion,
             alternatives: completion_result.suggestions.unwrap_or_default(),
-            reasoning: format!("Confidence: {:.2}%", completion_result.confidence_score * 100.0),
+            reasoning: format!(
+                "Confidence: {:.2}%",
+                completion_result.confidence_score * 100.0
+            ),
         })
     }
 
@@ -267,18 +313,21 @@ impl AICoachingService {
         &self,
         session_id: &str,
         topic: &str,
-        learner_profile: &LearnerProfile
+        learner_profile: &LearnerProfile,
     ) -> Result<TeachingMoment, Box<dyn std::error::Error>> {
         let teaching_method = self.determine_optimal_teaching_method(learner_profile);
 
-        let explanation_context = format!("Teach {} using {} method for learner with {} experience",
-                                       topic, self.teaching_method_name(&teaching_method),
-                                       learner_profile.experience_level);
+        let explanation_context = format!(
+            "Teach {} using {} method for learner with {} experience",
+            topic,
+            self.teaching_method_name(&teaching_method),
+            learner_profile.experience_level
+        );
 
-        let analysis_result = self.inference_engine.analyze_code(
-            &explanation_context,
-            AnalysisType::ExplainCode
-        ).await?;
+        let analysis_result = self
+            .inference_engine
+            .analyze_code(&explanation_context, AnalysisType::ExplainCode)
+            .await?;
 
         Ok(TeachingMoment {
             concept: topic.to_string(),
@@ -291,7 +340,7 @@ impl AICoachingService {
     pub async fn provide_collaborative_insights(
         &self,
         session_id: &str,
-        analysis_context: &CodeContext
+        analysis_context: &CodeContext,
     ) -> Result<CollaborativeAsk, Box<dyn std::error::Error>> {
         let collaborators = self.collaborators.read().await;
         let mut insights = Vec::new();
@@ -299,7 +348,9 @@ impl AICoachingService {
 
         for (agent_id, agent) in collaborators.iter() {
             if self.is_agent_relevant(agent, analysis_context) {
-                let insight = self.generate_agent_insight(agent_id, analysis_context).await?;
+                let insight = self
+                    .generate_agent_insight(agent_id, analysis_context)
+                    .await?;
                 insights.push(insight.insight.clone());
                 supported_by.push(agent_id.clone());
             }
@@ -323,13 +374,19 @@ impl AICoachingService {
     pub async fn perform_live_code_analysis(
         &self,
         session_id: &str,
-        code_context: &CodeContext
+        code_context: &CodeContext,
     ) -> Result<CodeAnalysisInsight, Box<dyn std::error::Error>> {
         let analysis_results = futures::future::join_all(vec![
-            self.inference_engine.analyze_code(&code_context.visible_code, AnalysisType::FindBugs),
-            self.inference_engine.analyze_code(&code_context.visible_code, AnalysisType::PerformanceAnalysis),
-            self.inference_engine.analyze_code(&code_context.visible_code, AnalysisType::SecurityReview),
-        ]).await;
+            self.inference_engine
+                .analyze_code(&code_context.visible_code, AnalysisType::FindBugs),
+            self.inference_engine.analyze_code(
+                &code_context.visible_code,
+                AnalysisType::PerformanceAnalysis,
+            ),
+            self.inference_engine
+                .analyze_code(&code_context.visible_code, AnalysisType::SecurityReview),
+        ])
+        .await;
 
         let mut findings = Vec::new();
         let mut recommendations = Vec::new();
@@ -352,7 +409,11 @@ impl AICoachingService {
     }
 
     /// Update session context with new information
-    pub async fn update_session_context(&self, session_id: &str, new_context: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn update_session_context(
+        &self,
+        session_id: &str,
+        new_context: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = self.state.write().await;
         if let Some(session) = state.active_sessions.get_mut(session_id) {
             session.code_context.project_context = new_context.to_string();
@@ -362,12 +423,20 @@ impl AICoachingService {
     }
 
     /// End AI coaching session
-    pub async fn end_coaching_session(&self, session_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn end_coaching_session(
+        &self,
+        session_id: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = self.state.write().await;
         if state.active_sessions.remove(session_id).is_some() {
             // Cleanup collaborators
             let mut collaborators = self.collaborators.write().await;
-            for participant in &state.active_sessions.remove(session_id).unwrap_or_default().collaborators {
+            for participant in &state
+                .active_sessions
+                .remove(session_id)
+                .unwrap_or_default()
+                .collaborators
+            {
                 collaborators.remove(participant);
             }
             log::info!("AI coaching session {} ended", session_id);
@@ -395,7 +464,7 @@ impl AICoachingService {
         &self,
         code_context: &CodeContext,
         user_actions: &[CodeAction],
-        goals: &[String]
+        goals: &[String],
     ) -> Result<ContextAnalysis, Box<dyn std::error::Error>> {
         // Analyze recent code changes and context
         Ok(ContextAnalysis {
@@ -409,7 +478,7 @@ impl AICoachingService {
     async fn determine_coaching_action(
         &self,
         analysis: &ContextAnalysis,
-        opportunities: &[LearningOpportunity]
+        opportunities: &[LearningOpportunity],
     ) -> Result<AICoachingEvent, Box<dyn std::error::Error>> {
         // Determine the most helpful coaching action based on current context
         if let Some(opportunity) = opportunities.first() {
@@ -437,14 +506,20 @@ impl AICoachingService {
         }))
     }
 
-    async fn record_coaching_event(&self, session_id: &str, event: &AICoachingEvent) -> Result<(), Box<dyn std::error::Error>> {
+    async fn record_coaching_event(
+        &self,
+        session_id: &str,
+        event: &AICoachingEvent,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = self.state.write().await;
         match event {
             AICoachingEvent::ContextualHint(hint) => {
-                state.coaching_history.push(CoachingEvent::BestPracticeAdvice {
-                    advice: hint.hint.clone(),
-                    context: hint.explanation.clone(),
-                });
+                state
+                    .coaching_history
+                    .push(CoachingEvent::BestPracticeAdvice {
+                        advice: hint.hint.clone(),
+                        context: hint.explanation.clone(),
+                    });
             }
             AICoachingEvent::DynamicSuggestion(suggestion) => {
                 state.coaching_history.push(CoachingEvent::CodeSuggestion {
@@ -477,10 +552,16 @@ impl AICoachingService {
     }
 
     fn is_agent_relevant(&self, agent: &CollaboratorAgent, context: &CodeContext) -> bool {
-        agent.expertise_areas.contains(&context.programming_language)
+        agent
+            .expertise_areas
+            .contains(&context.programming_language)
     }
 
-    async fn generate_agent_insight(&self, agent_id: &str, context: &CodeContext) -> Result<CoachingEvent, Box<dyn std::error::Error>> {
+    async fn generate_agent_insight(
+        &self,
+        agent_id: &str,
+        context: &CodeContext,
+    ) -> Result<CoachingEvent, Box<dyn std::error::Error>> {
         Ok(CoachingEvent::CodeSuggestion {
             suggestion: format!("AI Agent {} suggests: Consider refactoring", agent_id),
             confidence: 0.75,

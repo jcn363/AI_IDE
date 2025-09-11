@@ -1,11 +1,11 @@
 use cargo_metadata::Package;
+use rust_ai_ide_core::shell_utils;
 use semver::Version;
 use serde::Serialize;
 use std::{
     collections::{HashMap, HashSet},
     path::PathBuf,
 };
-use rust_ai_ide_core::shell_utils;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DependencyInfo {
@@ -30,10 +30,10 @@ impl DependencyUpdateChecker {
     pub fn check_updates(&self) -> Result<Vec<DependencyInfo>, String> {
         // Get cargo metadata
         let metadata = self.get_cargo_metadata()?;
-        
+
         // Get outdated dependencies
         let outdated_deps = self.get_outdated_dependencies()?;
-        
+
         // Process and combine the data
         self.process_dependencies(metadata, outdated_deps)
     }
@@ -71,7 +71,8 @@ impl DependencyUpdateChecker {
         }
 
         let stdout = String::from_utf8_lossy(&output.stdout);
-        Ok(stdout.lines()
+        Ok(stdout
+            .lines()
             .filter_map(|line| serde_json::from_str::<serde_json::Value>(line).ok())
             .collect())
     }
@@ -82,7 +83,7 @@ impl DependencyUpdateChecker {
         outdated_deps: Vec<serde_json::Value>,
     ) -> Result<Vec<DependencyInfo>, String> {
         let mut deps_map = HashMap::new();
-        
+
         // Get all workspace members
         let empty_members: Vec<&str> = vec![];
         let members: Vec<&str> = if let Some(arr) = metadata["workspace_members"].as_array() {
@@ -98,13 +99,16 @@ impl DependencyUpdateChecker {
                     // Process dependencies
                     if let Some(deps) = package["dependencies"].as_array() {
                         for dep in deps {
-                            if let (Some(name), Some(version)) = (dep["name"].as_str(), dep["req"].as_str()) {
-                                let entry = deps_map.entry(name.to_string())
-                                    .or_insert_with(|| {
-                                        let is_direct = members.iter().any(|m| m.starts_with(&format!("{} ", name)));
-                                        (version.to_string(), is_direct, Vec::new())
-                                    });
-                                
+                            if let (Some(name), Some(version)) =
+                                (dep["name"].as_str(), dep["req"].as_str())
+                            {
+                                let entry = deps_map.entry(name.to_string()).or_insert_with(|| {
+                                    let is_direct = members
+                                        .iter()
+                                        .any(|m| m.starts_with(&format!("{} ", name)));
+                                    (version.to_string(), is_direct, Vec::new())
+                                });
+
                                 // Track which workspace members use this dependency
                                 if !entry.2.contains(&package_name.to_string()) {
                                     entry.2.push(package_name.to_string());
@@ -118,23 +122,20 @@ impl DependencyUpdateChecker {
 
         // Process the outdated dependencies
         let mut updates = Vec::new();
-        
+
         for dep in outdated_deps {
-            if let (
-                Some(name),
-                Some(current_version),
-                Some(latest_version),
-                Some(project),
-            ) = (
+            if let (Some(name), Some(current_version), Some(latest_version), Some(project)) = (
                 dep["name"].as_str(),
-                dep["project"].as_str().or_else(|| dep["compatible"].as_str()),
+                dep["project"]
+                    .as_str()
+                    .or_else(|| dep["compatible"].as_str()),
                 dep["latest"].as_str(),
                 dep["project"].as_str(),
             ) {
                 if let Some((_, is_direct, used_in)) = deps_map.get_mut(name) {
                     let update_type = if let (Ok(current), Ok(latest)) = (
                         Version::parse(current_version.trim_start_matches('^')),
-                        Version::parse(latest_version)
+                        Version::parse(latest_version),
                     ) {
                         if current.major < latest.major {
                             "major"
@@ -166,8 +167,14 @@ impl DependencyUpdateChecker {
     fn get_changelog_url(&self, name: &str, version: &str) -> Option<String> {
         // Try to construct a changelog URL based on common patterns
         let base_urls = [
-            format!("https://github.com/rust-lang/{}/releases/tag/{}", name, version),
-            format!("https://github.com/{}/{}/releases/tag/{}", name, name, version),
+            format!(
+                "https://github.com/rust-lang/{}/releases/tag/{}",
+                name, version
+            ),
+            format!(
+                "https://github.com/{}/{}/releases/tag/{}",
+                name, name, version
+            ),
             format!("https://crates.io/crates/{}/{}", name, version),
         ];
 

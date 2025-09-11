@@ -12,12 +12,12 @@
 //! - **Interactive Refinement**: Allows user feedback and iterative improvement
 //! - **Safety Validation**: Ensures generated code meets security and quality standards
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 use crate::types::*;
 
@@ -84,7 +84,12 @@ pub trait NLProcessingEngine: Send + Sync {
     async fn convert_to_code(&self, input: &NLToCodeInput) -> SecurityResult<NLToCodeResult>;
 
     /// Refine existing code based on user feedback
-    async fn refine_code(&self, original: &str, feedback: &str, context: &NLToCodeInput) -> SecurityResult<NLToCodeResult>;
+    async fn refine_code(
+        &self,
+        original: &str,
+        feedback: &str,
+        context: &NLToCodeInput,
+    ) -> SecurityResult<NLToCodeResult>;
 
     /// Validate generated code for syntax and semantic correctness
     async fn validate_code(&self, code: &str, language: &str) -> SecurityResult<ValidationResult>;
@@ -146,7 +151,10 @@ impl NLToCodeConverter {
         };
 
         // Validate the generated code
-        let validation = self.engine.validate_code(&result.code, &result.language).await?;
+        let validation = self
+            .engine
+            .validate_code(&result.code, &result.language)
+            .await?;
         result.warnings.extend(validation.syntax_errors);
         result.warnings.extend(validation.semantic_warnings);
         result.warnings.extend(validation.security_issues);
@@ -158,35 +166,61 @@ impl NLToCodeConverter {
     }
 
     /// Refine existing generated code based on user feedback
-    pub async fn refine(&self, code: &str, feedback: &str, original_input: &NLToCodeInput) -> SecurityResult<NLToCodeResult> {
+    pub async fn refine(
+        &self,
+        code: &str,
+        feedback: &str,
+        original_input: &NLToCodeInput,
+    ) -> SecurityResult<NLToCodeResult> {
         // Process user feedback
-        let refined_input = self.feedback_processor.process_feedback(original_input.clone(), feedback).await;
+        let refined_input = self
+            .feedback_processor
+            .process_feedback(original_input.clone(), feedback)
+            .await;
 
         // Use the engine to refine the code
-        self.engine.refine_code(code, feedback, &refined_input).await
+        self.engine
+            .refine_code(code, feedback, &refined_input)
+            .await
     }
 
     /// Generate multiple alternative implementations
-    pub async fn generate_alternatives(&self, original: &NLToCodeResult, input: &NLToCodeInput) -> Vec<AlternativeCode> {
+    pub async fn generate_alternatives(
+        &self,
+        original: &NLToCodeResult,
+        input: &NLToCodeInput,
+    ) -> Vec<AlternativeCode> {
         let mut alternatives = Vec::new();
 
         // Performance-optimized variant
-        if let Some(perf_variant) = self.generate_performance_variant(&original.code, &input.target_language).await {
+        if let Some(perf_variant) = self
+            .generate_performance_variant(&original.code, &input.target_language)
+            .await
+        {
             alternatives.push(perf_variant);
         }
 
         // Memory-efficient variant
-        if let Some(memory_variant) = self.generate_memory_efficient_variant(&original.code, &input.target_language).await {
+        if let Some(memory_variant) = self
+            .generate_memory_efficient_variant(&original.code, &input.target_language)
+            .await
+        {
             alternatives.push(memory_variant);
         }
 
         // Readable/maintainable variant
-        if let Some(readable_variant) = self.generate_readable_variant(&original.code, &input.target_language).await {
+        if let Some(readable_variant) = self
+            .generate_readable_variant(&original.code, &input.target_language)
+            .await
+        {
             alternatives.push(readable_variant);
         }
 
         // Error-handling enhanced variant
-        if let Some(error_handling_variant) = self.generate_error_handling_variant(&original.code, &input.target_language).await {
+        if let Some(error_handling_variant) = self
+            .generate_error_handling_variant(&original.code, &input.target_language)
+            .await
+        {
             alternatives.push(error_handling_variant);
         }
 
@@ -194,7 +228,11 @@ impl NLToCodeConverter {
     }
 
     /// Enhance input with contextual understanding
-    async fn enhance_input_with_context(&self, input: NLToCodeInput, context: &ContextAnalysis) -> NLToCodeInput {
+    async fn enhance_input_with_context(
+        &self,
+        input: NLToCodeInput,
+        context: &ContextAnalysis,
+    ) -> NLToCodeInput {
         let mut enhanced = input.clone();
 
         // Add context-based improvements to the description
@@ -203,7 +241,8 @@ impl NLToCodeConverter {
         }
 
         if context.uses_async {
-            enhanced.description += "\nInclude proper async/await patterns as used in this codebase.";
+            enhanced.description +=
+                "\nInclude proper async/await patterns as used in this codebase.";
         }
 
         if let Some(style) = &context.detected_style {
@@ -214,7 +253,11 @@ impl NLToCodeConverter {
     }
 
     /// Generate performance-optimized variant
-    async fn generate_performance_variant(&self, original: &str, language: &str) -> Option<AlternativeCode> {
+    async fn generate_performance_variant(
+        &self,
+        original: &str,
+        language: &str,
+    ) -> Option<AlternativeCode> {
         // This would use templates and optimizations based on language
         let optimized = match language {
             "rust" => self.optimize_rust_performance(original),
@@ -241,7 +284,11 @@ impl NLToCodeConverter {
     }
 
     /// Generate memory-efficient variant
-    async fn generate_memory_efficient_variant(&self, original: &str, language: &str) -> Option<AlternativeCode> {
+    async fn generate_memory_efficient_variant(
+        &self,
+        original: &str,
+        language: &str,
+    ) -> Option<AlternativeCode> {
         let optimized = match language {
             "rust" => self.optimize_rust_memory(original),
             "python" => self.optimize_python_memory(original),
@@ -266,7 +313,11 @@ impl NLToCodeConverter {
     }
 
     /// Generate readable/maintainable variant
-    async fn generate_readable_variant(&self, original: &str, language: &str) -> Option<AlternativeCode> {
+    async fn generate_readable_variant(
+        &self,
+        original: &str,
+        language: &str,
+    ) -> Option<AlternativeCode> {
         let readable = match language {
             "rust" => self.improve_rust_readability(original),
             "python" => self.improve_python_readability(original),
@@ -291,7 +342,11 @@ impl NLToCodeConverter {
     }
 
     /// Generate error-handling enhanced variant
-    async fn generate_error_handling_variant(&self, original: &str, language: &str) -> Option<AlternativeCode> {
+    async fn generate_error_handling_variant(
+        &self,
+        original: &str,
+        language: &str,
+    ) -> Option<AlternativeCode> {
         let enhanced = match language {
             "rust" => self.enhance_rust_error_handling(original),
             "python" => self.enhance_python_error_handling(original),
@@ -457,21 +512,32 @@ impl NLProcessingEngine for BasicNLPToCodeEngine {
             "python" => self.generate_python_code(&input),
             "javascript" => self.generate_javascript_code(&input),
             "typescript" => self.generate_typescript_code(&input),
-            _ => format!("// Code for {} is not yet supported\n", input.target_language),
+            _ => format!(
+                "// Code for {} is not yet supported\n",
+                input.target_language
+            ),
         };
 
         Ok(NLToCodeResult {
             code,
             language: input.target_language.clone(),
             confidence_score: 0.85,
-            explanation: format!("Generated {} code for: {}", input.target_language, input.description),
+            explanation: format!(
+                "Generated {} code for: {}",
+                input.target_language, input.description
+            ),
             warnings: vec![],
             alternatives: vec![],
             metadata: GenerationMetadata::default(),
         })
     }
 
-    async fn refine_code(&self, original: &str, feedback: &str, context: &NLToCodeInput) -> SecurityResult<NLToCodeResult> {
+    async fn refine_code(
+        &self,
+        original: &str,
+        feedback: &str,
+        context: &NLToCodeInput,
+    ) -> SecurityResult<NLToCodeResult> {
         // Refine code based on feedback
         let refined_code = format!("{}\n// Refined based on feedback: {}", original, feedback);
 
@@ -503,7 +569,8 @@ impl NLProcessingEngine for BasicNLPToCodeEngine {
 
 impl BasicNLPToCodeEngine {
     fn generate_rust_code(&self, input: &NLToCodeInput) -> String {
-        format!(r#"//! Generated code for: {}
+        format!(
+            r#"//! Generated code for: {}
 //!
 //! This code was automatically generated from natural language.
 //! Please review and customize as needed.
@@ -582,11 +649,14 @@ mod tests {{
         assert_eq!(feature_mut.value(), 42);
     }}
 }}
-"#, input.description, input.description, input.description)
+"#,
+            input.description, input.description, input.description
+        )
     }
 
     fn generate_python_code(&self, input: &NLToCodeInput) -> String {
-        format!(r#"""Generated code for: {description}
+        format!(
+            r#"""Generated code for: {description}
 
 This code was automatically generated from natural language.
 Please review and customize as needed.
@@ -649,11 +719,14 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
-"#, description=input.description)
+"#,
+            description = input.description
+        )
     }
 
     fn generate_javascript_code(&self, input: &NLToCodeInput) -> String {
-        format!(r#"/**
+        format!(
+            r#"/**
  * Generated code for: {description}
  *
  * This code was automatically generated from natural language.
@@ -739,11 +812,14 @@ module.exports = {{
 if (require.main === module) {{
     main().catch(console.error);
 }}
-"#, description=input.description)
+"#,
+            description = input.description
+        )
     }
 
     fn generate_typescript_code(&self, input: &NLToCodeInput) -> String {
-        format!(r#"/**
+        format!(
+            r#"/**
  * Generated code for: {description}
  *
  * This code was automatically generated from natural language.
@@ -865,7 +941,9 @@ export {{
 if (require.main === module) {{
     main().catch(console.error);
 }}
-"#, description=input.description)
+"#,
+            description = input.description
+        )
     }
 }
 

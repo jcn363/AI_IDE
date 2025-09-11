@@ -3,13 +3,13 @@
 //! This module provides core traits and implementations for AI service management,
 //! including service discovery, connection pooling, and unified interfaces.
 
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use rust_ai_ide_ai_inference::ModelSize;
-use rust_ai_ide_lsp::{AIService, AIContext, Completion};
-use tokio::sync::Semaphore;
+use rust_ai_ide_lsp::{AIContext, AIService, Completion};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
+use tokio::sync::Semaphore;
 
 /// Local AIProvider enum with added Claude variant
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,10 +17,18 @@ pub enum AIProvider {
     Mock,
     OpenAI,
     Anthropic,
-    CodeLlamaRust { model_size: rust_ai_ide_ai_inference::ModelSize },
-    StarCoderRust { model_size: rust_ai_ide_ai_inference::ModelSize },
-    Local { model_path: String },
-    Claude { api_key: String },
+    CodeLlamaRust {
+        model_size: rust_ai_ide_ai_inference::ModelSize,
+    },
+    StarCoderRust {
+        model_size: rust_ai_ide_ai_inference::ModelSize,
+    },
+    Local {
+        model_path: String,
+    },
+    Claude {
+        api_key: String,
+    },
 }
 
 /// Trait for AI services to implement common functionality
@@ -175,7 +183,11 @@ impl<T: Send + Sync> ConnectionPool<T> {
         let in_use = connections.iter().filter(|c| c.in_use).count();
         let available = total - in_use;
 
-        Ok(PoolStatus { total, available, in_use })
+        Ok(PoolStatus {
+            total,
+            available,
+            in_use,
+        })
     }
 }
 
@@ -223,7 +235,11 @@ impl AIServiceRegistry {
     }
 
     /// Register a direct service (non-pooled)
-    pub fn register_service(&self, name: &str, service: Arc<WrappedAIService>) -> Result<(), String> {
+    pub fn register_service(
+        &self,
+        name: &str,
+        service: Arc<WrappedAIService>,
+    ) -> Result<(), String> {
         let mut services = self.services.lock().map_err(|e| e.to_string())?;
         if services.contains_key(name) {
             return Err(format!("Service '{}' already registered", name));
@@ -233,8 +249,14 @@ impl AIServiceRegistry {
     }
 
     /// Register a pooled service
-    pub fn register_pooled_service(&self, name: &str, config: PooledServiceConfig, initial_services: Vec<WrappedAIService>) -> Result<(), String> {
-        let services: Vec<Arc<WrappedAIService>> = initial_services.into_iter().map(Arc::new).collect();
+    pub fn register_pooled_service(
+        &self,
+        name: &str,
+        config: PooledServiceConfig,
+        initial_services: Vec<WrappedAIService>,
+    ) -> Result<(), String> {
+        let services: Vec<Arc<WrappedAIService>> =
+            initial_services.into_iter().map(Arc::new).collect();
         let pool = Arc::new(ConnectionPool::new(config, services));
 
         let mut pools = self.pools.lock().map_err(|e| e.to_string())?;
@@ -245,13 +267,21 @@ impl AIServiceRegistry {
     /// Get a direct service by name
     pub fn get_service(&self, name: &str) -> Result<Arc<WrappedAIService>, String> {
         let services = self.services.lock().map_err(|e| e.to_string())?;
-        services.get(name).cloned().ok_or_else(|| format!("Service '{}' not found", name))
+        services
+            .get(name)
+            .cloned()
+            .ok_or_else(|| format!("Service '{}' not found", name))
     }
 
     /// Get a pooled service connection
-    pub async fn get_pooled_service(&self, name: &str) -> Result<PoolGuard<WrappedAIService>, String> {
+    pub async fn get_pooled_service(
+        &self,
+        name: &str,
+    ) -> Result<PoolGuard<WrappedAIService>, String> {
         let pools = self.pools.lock().map_err(|e| e.to_string())?;
-        let pool = pools.get(name).ok_or_else(|| format!("Pooled service '{}' not found", name))?;
+        let pool = pools
+            .get(name)
+            .ok_or_else(|| format!("Pooled service '{}' not found", name))?;
         pool.acquire().await
     }
 

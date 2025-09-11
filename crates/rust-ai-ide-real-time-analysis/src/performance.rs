@@ -178,7 +178,8 @@ impl PerformanceMonitor {
 
     /// Record timing for an operation
     async fn record_timing(&self, operation_id: &str, duration: Duration) {
-        let timings = self.timings
+        let timings = self
+            .timings
             .entry(operation_id.to_string())
             .or_insert_with(Vec::new);
 
@@ -245,7 +246,9 @@ impl PerformanceMonitor {
         let response_time_analysis = self.analyze_response_times(&stats).await;
         let resource_analysis = self.analyze_resource_usage().await;
 
-        let recommendations = self.generate_recommendations(&stats, &resource_analysis).await;
+        let recommendations = self
+            .generate_recommendations(&stats, &resource_analysis)
+            .await;
         let alerts = self.generate_alerts(&stats, &response_time_analysis).await;
 
         PerformanceReport {
@@ -268,11 +271,11 @@ impl PerformanceMonitor {
 
         for (_operation, avg_time) in &stats.avg_response_times {
             let score = match avg_time.as_millis() {
-                0..=100 => 1.0,   // Excellent (< 100ms)
-                101..=500 => 0.8, // Good (100-500ms)
-                501..=2000 => 0.6, // Acceptable (500ms-2s)
+                0..=100 => 1.0,     // Excellent (< 100ms)
+                101..=500 => 0.8,   // Good (100-500ms)
+                501..=2000 => 0.6,  // Acceptable (500ms-2s)
                 2001..=5000 => 0.4, // Slow (2-5s)
-                _ => 0.2,          // Very slow (>5s)
+                _ => 0.2,           // Very slow (>5s)
             };
             total_score += score;
             operation_count += 1;
@@ -334,11 +337,14 @@ impl PerformanceMonitor {
 
         let memory_efficiency_score = if total_memory > 0 {
             let avg_memory = total_memory / operation_count.max(1);
-            if avg_memory < 100 * 1024 * 1024 { // 100MB
+            if avg_memory < 100 * 1024 * 1024 {
+                // 100MB
                 1.0
-            } else if avg_memory < 500 * 1024 * 1024 { // 500MB
+            } else if avg_memory < 500 * 1024 * 1024 {
+                // 500MB
                 0.8
-            } else if avg_memory < 1024 * 1024 * 1024 { // 1GB
+            } else if avg_memory < 1024 * 1024 * 1024 {
+                // 1GB
                 0.6
             } else {
                 0.4
@@ -373,7 +379,7 @@ impl PerformanceMonitor {
         if resource_analysis.memory_efficiency_score < 0.7 {
             recommendations.push(
                 "Consider implementing memory-efficient data structures or streaming analysis"
-                    .to_string()
+                    .to_string(),
             );
         }
 
@@ -516,7 +522,10 @@ mod tests {
         assert!(report.overall_score >= 0.0);
         assert!(report.overall_score <= 1.0);
         assert!(report.response_time_analysis.slow_operations_count >= 1);
-        assert!(!report.response_time_analysis.problematic_operations.is_empty());
+        assert!(!report
+            .response_time_analysis
+            .problematic_operations
+            .is_empty());
     }
 
     #[tokio::test]

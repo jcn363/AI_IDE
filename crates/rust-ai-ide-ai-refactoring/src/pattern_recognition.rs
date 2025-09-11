@@ -1,7 +1,7 @@
 use crate::types::*;
+use crate::RefactoringOperation;
 use async_trait::async_trait;
 use std::fs;
-use crate::RefactoringOperation;
 
 /// Categories of detectable patterns
 #[derive(Clone, PartialEq)]
@@ -200,69 +200,66 @@ impl PatternConversionOperation {
     /// Get available conversion options for a pattern type
     fn get_conversion_options(&self, pattern_type: &str) -> Vec<ConversionOption> {
         match pattern_type {
-            "Functional Chaining" => vec![
-                ConversionOption {
-                    from_pattern: "map().filter().collect()".to_string(),
-                    to_pattern: "Comprehension-like structure".to_string(),
-                    benefits: vec![
-                        "More readable".to_string(),
-                        "Potentially more efficient".to_string(),
-                        "Follows functional paradigm".to_string(),
-                    ],
-                    risks: vec![
-                        "May require learning new syntax".to_string(),
-                        "Different performance characteristics".to_string(),
-                    ],
-                    confidence: 0.8,
-                },
-            ],
-            "Loop Pattern" => vec![
-                ConversionOption {
-                    from_pattern: "for loop with collection".to_string(),
-                    to_pattern: "Iterator methods".to_string(),
-                    benefits: vec![
-                        "More concise".to_string(),
-                        "Lazy evaluation".to_string(),
-                        "Better composability".to_string(),
-                    ],
-                    risks: vec![
-                        "Different error handling".to_string(),
-                        "Potentially different allocation patterns".to_string(),
-                    ],
-                    confidence: 0.7,
-                },
-            ],
-            "Conditional Dispatch" => vec![
-                ConversionOption {
-                    from_pattern: "match on enum/type".to_string(),
-                    to_pattern: "Trait objects/dynamic dispatch".to_string(),
-                    benefits: vec![
-                        "Extensibility".to_string(),
-                        "No need to update match on additions".to_string(),
-                        "Cleaner separation of concerns".to_string(),
-                    ],
-                    risks: vec![
-                        "Runtime overhead".to_string(),
-                        "Boxing/unboxing".to_string(),
-                        "May lose exhaustiveness checking".to_string(),
-                    ],
-                    confidence: 0.6,
-                },
-            ],
-            _ => vec![
-                ConversionOption {
-                    from_pattern: pattern_type.to_string(),
-                    to_pattern: "Alternative implementation".to_string(),
-                    benefits: vec!["May improve readability".to_string()],
-                    risks: vec!["Unknown conversion impact".to_string()],
-                    confidence: 0.5,
-                },
-            ],
+            "Functional Chaining" => vec![ConversionOption {
+                from_pattern: "map().filter().collect()".to_string(),
+                to_pattern: "Comprehension-like structure".to_string(),
+                benefits: vec![
+                    "More readable".to_string(),
+                    "Potentially more efficient".to_string(),
+                    "Follows functional paradigm".to_string(),
+                ],
+                risks: vec![
+                    "May require learning new syntax".to_string(),
+                    "Different performance characteristics".to_string(),
+                ],
+                confidence: 0.8,
+            }],
+            "Loop Pattern" => vec![ConversionOption {
+                from_pattern: "for loop with collection".to_string(),
+                to_pattern: "Iterator methods".to_string(),
+                benefits: vec![
+                    "More concise".to_string(),
+                    "Lazy evaluation".to_string(),
+                    "Better composability".to_string(),
+                ],
+                risks: vec![
+                    "Different error handling".to_string(),
+                    "Potentially different allocation patterns".to_string(),
+                ],
+                confidence: 0.7,
+            }],
+            "Conditional Dispatch" => vec![ConversionOption {
+                from_pattern: "match on enum/type".to_string(),
+                to_pattern: "Trait objects/dynamic dispatch".to_string(),
+                benefits: vec![
+                    "Extensibility".to_string(),
+                    "No need to update match on additions".to_string(),
+                    "Cleaner separation of concerns".to_string(),
+                ],
+                risks: vec![
+                    "Runtime overhead".to_string(),
+                    "Boxing/unboxing".to_string(),
+                    "May lose exhaustiveness checking".to_string(),
+                ],
+                confidence: 0.6,
+            }],
+            _ => vec![ConversionOption {
+                from_pattern: pattern_type.to_string(),
+                to_pattern: "Alternative implementation".to_string(),
+                benefits: vec!["May improve readability".to_string()],
+                risks: vec!["Unknown conversion impact".to_string()],
+                confidence: 0.5,
+            }],
         }
     }
 
     /// Apply pattern conversion
-    fn apply_conversion(&self, pattern: &PatternMatch, conversion: &ConversionOption, syntax: &syn::File) -> Vec<CodeChange> {
+    fn apply_conversion(
+        &self,
+        pattern: &PatternMatch,
+        conversion: &ConversionOption,
+        syntax: &syn::File,
+    ) -> Vec<CodeChange> {
         // For now, return a placeholder change
         // In full implementation, would generate actual AST transformations
         vec![CodeChange {
@@ -274,7 +271,10 @@ impl PatternConversionOperation {
                 end_character: 100, // approximate
             },
             old_text: format!("// Old {} pattern", pattern.pattern_type),
-            new_text: format!("// New {} pattern - converted from {}", conversion.to_pattern, conversion.from_pattern),
+            new_text: format!(
+                "// New {} pattern - converted from {}",
+                conversion.to_pattern, conversion.from_pattern
+            ),
             change_type: ChangeType::Replacement,
         }]
     }
@@ -311,7 +311,8 @@ impl RefactoringOperation for PatternConversionOperation {
 
             if !conversions.is_empty() {
                 // Use the highest confidence conversion
-                let best_conversion = conversions.into_iter()
+                let best_conversion = conversions
+                    .into_iter()
                     .max_by(|a, b| a.confidence.partial_cmp(&b.confidence).unwrap())
                     .unwrap();
 
@@ -321,7 +322,8 @@ impl RefactoringOperation for PatternConversionOperation {
 
                     warnings.push(format!(
                         "Converted {} pattern with {:.1}% confidence",
-                        pattern.pattern_type, best_conversion.confidence * 100.0
+                        pattern.pattern_type,
+                        best_conversion.confidence * 100.0
                     ));
 
                     for benefit in &best_conversion.benefits {
@@ -357,7 +359,13 @@ impl RefactoringOperation for PatternConversionOperation {
 
         let analysis = RefactoringAnalysis {
             is_safe: pattern_count > 0,
-            confidence_score: if pattern_count > 2 { 0.7 } else if pattern_count > 0 { 0.5 } else { 0.0 },
+            confidence_score: if pattern_count > 2 {
+                0.7
+            } else if pattern_count > 0 {
+                0.5
+            } else {
+                0.0
+            },
             potential_impact: if pattern_count > 3 {
                 RefactoringImpact::High
             } else {
@@ -365,9 +373,15 @@ impl RefactoringOperation for PatternConversionOperation {
             },
             affected_files: vec![context.file_path.clone()],
             affected_symbols: vec![],
-            breaking_changes: patterns.iter()
+            breaking_changes: patterns
+                .iter()
                 .filter(|p| p.category == PatternCategory::ControlFlow)
-                .map(|p| format!("Control flow pattern '{}' may change semantics", p.pattern_type))
+                .map(|p| {
+                    format!(
+                        "Control flow pattern '{}' may change semantics",
+                        p.pattern_type
+                    )
+                })
                 .collect(),
             suggestions: vec![
                 format!("Found {} convertible patterns", pattern_count),
@@ -446,18 +460,26 @@ impl RefactoringOperation for BatchPatternConversionOperation {
 
             // Process patterns for this file
             for pattern in &patterns {
-                let conversions = PatternConversionOperation.get_conversion_options(&pattern.pattern_type);
+                let conversions =
+                    PatternConversionOperation.get_conversion_options(&pattern.pattern_type);
 
                 if !conversions.is_empty() {
-                    let best_conversion = conversions.into_iter()
+                    let best_conversion = conversions
+                        .into_iter()
                         .max_by(|a, b| a.confidence.partial_cmp(&b.confidence).unwrap())
                         .unwrap();
 
-                    if best_conversion.confidence > 0.5 { // Lower threshold for batch processing
-                        let changes = PatternConversionOperation.apply_conversion(&pattern, &best_conversion, &syntax);
+                    if best_conversion.confidence > 0.5 {
+                        // Lower threshold for batch processing
+                        let changes = PatternConversionOperation.apply_conversion(
+                            &pattern,
+                            &best_conversion,
+                            &syntax,
+                        );
 
                         // Update file paths in changes
-                        let mut file_changes = changes.into_iter()
+                        let mut file_changes = changes
+                            .into_iter()
                             .map(|mut change| {
                                 change.file_path = file_path.clone();
                                 change
@@ -468,7 +490,9 @@ impl RefactoringOperation for BatchPatternConversionOperation {
 
                         warnings.push(format!(
                             "Converted {} pattern in {} with {:.1}% confidence",
-                            pattern.pattern_type, file_path, best_conversion.confidence * 100.0
+                            pattern.pattern_type,
+                            file_path,
+                            best_conversion.confidence * 100.0
                         ));
 
                         if !affected_files.contains(file_path) {
@@ -483,8 +507,13 @@ impl RefactoringOperation for BatchPatternConversionOperation {
             return Err("No patterns found across the codebase that could be converted".into());
         }
 
-        warnings.push(format!("Batch conversion processed {} files", affected_files.len()));
-        warnings.push("Review all changes carefully as batch operations affect multiple files".to_string());
+        warnings.push(format!(
+            "Batch conversion processed {} files",
+            affected_files.len()
+        ));
+        warnings.push(
+            "Review all changes carefully as batch operations affect multiple files".to_string(),
+        );
 
         Ok(RefactoringResult {
             id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
@@ -552,7 +581,10 @@ impl RefactoringOperation for ReplaceConditionalsOperation {
         let conditionals = self.find_replaceable_conditionals(&syntax)?;
 
         if conditionals.is_empty() {
-            return Err("No conditional statements found that can be replaced with alternative constructs".into());
+            return Err(
+                "No conditional statements found that can be replaced with alternative constructs"
+                    .into(),
+            );
         }
 
         let mut all_changes = Vec::new();
@@ -562,11 +594,16 @@ impl RefactoringOperation for ReplaceConditionalsOperation {
         for conditional in &conditionals {
             let alternatives = self.generate_conditional_alternatives(&conditional)?;
 
-            if let Some(best_alternative) = alternatives.into_iter()
+            if let Some(best_alternative) = alternatives
+                .into_iter()
                 .max_by(|a, b| a.confidence.partial_cmp(&b.confidence).unwrap())
             {
                 if best_alternative.confidence > 0.7 {
-                    let changes = self.apply_conditional_replacement(&conditional, &best_alternative, &syntax);
+                    let changes = self.apply_conditional_replacement(
+                        &conditional,
+                        &best_alternative,
+                        &syntax,
+                    );
                     all_changes.extend(changes);
 
                     warnings.push(format!(
@@ -583,7 +620,10 @@ impl RefactoringOperation for ReplaceConditionalsOperation {
             return Err("No conditional replacements had sufficient confidence".into());
         }
 
-        warnings.push("Conditional replacement may change code semantics - review changes carefully".to_string());
+        warnings.push(
+            "Conditional replacement may change code semantics - review changes carefully"
+                .to_string(),
+        );
 
         Ok(RefactoringResult {
             id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
@@ -634,12 +674,16 @@ impl RefactoringOperation for ReplaceConditionalsOperation {
 
 impl BatchPatternConversionOperation {
     /// Collect all Rust files in the workspace or directory
-    fn collect_rust_files(&self, base_path: &str) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
+    fn collect_rust_files(
+        &self,
+        base_path: &str,
+    ) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
         let mut rust_files = Vec::new();
 
         // For now, just process the single file and files in the same directory
         // In a full implementation, this would scan the entire workspace
-        let base_dir = std::path::Path::new(base_path).parent()
+        let base_dir = std::path::Path::new(base_path)
+            .parent()
             .unwrap_or(std::path::Path::new("."))
             .to_path_buf();
 
@@ -670,7 +714,10 @@ impl BatchPatternConversionOperation {
 
 impl ReplaceConditionalsOperation {
     /// Find conditional statements that can be replaced with alternative constructs
-    fn find_replaceable_conditionals(&self, syntax: &syn::File) -> Result<Vec<ConditionalMatch>, Box<dyn std::error::Error + Send + Sync>> {
+    fn find_replaceable_conditionals(
+        &self,
+        syntax: &syn::File,
+    ) -> Result<Vec<ConditionalMatch>, Box<dyn std::error::Error + Send + Sync>> {
         let mut conditionals = Vec::new();
 
         for item in &syntax.items {
@@ -774,69 +821,61 @@ impl ReplaceConditionalsOperation {
     }
 
     /// Generate alternative constructs for a conditional pattern
-    fn generate_conditional_alternatives(&self, conditional: &ConditionalMatch) -> Result<Vec<ConditionalAlternative>, Box<dyn std::error::Error + Send + Sync>> {
+    fn generate_conditional_alternatives(
+        &self,
+        conditional: &ConditionalMatch,
+    ) -> Result<Vec<ConditionalAlternative>, Box<dyn std::error::Error + Send + Sync>> {
         match conditional.pattern_type.as_str() {
-            "Simple If-Else Chain" => {
-                Ok(vec![
-                    ConditionalAlternative {
-                        replacement_type: "match expression".to_string(),
-                        confidence: 0.8,
-                        benefits: vec!![
-                            "More concise".to_string(),
-                            "Better exhaustiveness checking".to_string(),
-                        ],
-                        risks: vec![
-                            "May require pattern matching".to_string(),
-                        ],
-                    },
-                ])
-            }
-            "Guarded Resource Management" => {
-                Ok(vec![
-                    ConditionalAlternative {
-                        replacement_type: "RAII pattern".to_string(),
-                        confidence: 0.7,
-                        benefits: vec![
-                            "Automatic resource cleanup".to_string(),
-                            "Exception safety".to_string(),
-                        ],
-                        risks: vec![
-                            "May change control flow".to_string(),
-                        ],
-                    },
-                ])
-            }
-            "Exhaustive Match with Defaults" => {
-                Ok(vec![
-                    ConditionalAlternative {
-                        replacement_type: "polymorphism".to_string(),
-                        confidence: 0.6,
-                        benefits: vec![
-                            "Better extensibility".to_string(),
-                            "Cleaner separation of concerns".to_string(),
-                        ],
-                        risks: vec![
-                            "May require trait definitions".to_string(),
-                            "Runtime overhead".to_string(),
-                        ],
-                    },
-                ])
-            }
-            _ => {
-                Ok(vec![
-                    ConditionalAlternative {
-                        replacement_type: "alternative construct".to_string(),
-                        confidence: 0.5,
-                        benefits: vec!["May improve readability".to_string()],
-                        risks: vec!["Unknown impact".to_string()],
-                    },
-                ])
-            }
+            "Simple If-Else Chain" => Ok(vec![
+                ConditionalAlternative {
+                    replacement_type: "match expression".to_string(),
+                    confidence: 0.8,
+                    benefits: vec!![
+                        "More concise".to_string(),
+                        "Better exhaustiveness checking".to_string(),
+                    ],
+                    risks: vec![
+                        "May require pattern matching".to_string(),
+                    ],
+                },
+            ]),
+            "Guarded Resource Management" => Ok(vec![ConditionalAlternative {
+                replacement_type: "RAII pattern".to_string(),
+                confidence: 0.7,
+                benefits: vec![
+                    "Automatic resource cleanup".to_string(),
+                    "Exception safety".to_string(),
+                ],
+                risks: vec!["May change control flow".to_string()],
+            }]),
+            "Exhaustive Match with Defaults" => Ok(vec![ConditionalAlternative {
+                replacement_type: "polymorphism".to_string(),
+                confidence: 0.6,
+                benefits: vec![
+                    "Better extensibility".to_string(),
+                    "Cleaner separation of concerns".to_string(),
+                ],
+                risks: vec![
+                    "May require trait definitions".to_string(),
+                    "Runtime overhead".to_string(),
+                ],
+            }]),
+            _ => Ok(vec![ConditionalAlternative {
+                replacement_type: "alternative construct".to_string(),
+                confidence: 0.5,
+                benefits: vec!["May improve readability".to_string()],
+                risks: vec!["Unknown impact".to_string()],
+            }]),
         }
     }
 
     /// Apply conditional replacement transformation
-    fn apply_conditional_replacement(&self, conditional: &ConditionalMatch, alternative: &ConditionalAlternative, syntax: &syn::File) -> Vec<CodeChange> {
+    fn apply_conditional_replacement(
+        &self,
+        conditional: &ConditionalMatch,
+        alternative: &ConditionalAlternative,
+        syntax: &syn::File,
+    ) -> Vec<CodeChange> {
         vec![CodeChange {
             file_path: "/target/file.rs".to_string(),
             range: CodeRange {
@@ -846,7 +885,10 @@ impl ReplaceConditionalsOperation {
                 end_character: 100,
             },
             old_text: format!("// Old {} conditional", conditional.pattern_type),
-            new_text: format!("// New {} replacement - converted to {}", alternative.replacement_type, conditional.pattern_type),
+            new_text: format!(
+                "// New {} replacement - converted to {}",
+                alternative.replacement_type, conditional.pattern_type
+            ),
             change_type: ChangeType::Replacement,
         }]
     }

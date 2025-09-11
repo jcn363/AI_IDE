@@ -3,11 +3,11 @@
 //! This module provides the Tauri frontend interface for AI feedback and results,
 //! enabling seamless communication between the AI service layer and the frontend.
 
+use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use async_trait::async_trait;
 
-use crate::errors::{IntegrationError, FrontendInterfaceError};
+use crate::errors::{FrontendInterfaceError, IntegrationError};
 use crate::types::*;
 
 /// Main AI Tauri Interface structure
@@ -115,9 +115,7 @@ pub trait UserFeedbackCollector {
     ) -> Result<(), FrontendInterfaceError>;
 
     /// Analyze feedback patterns
-    async fn analyze_feedback_patterns(
-        &self,
-    ) -> Result<FeedbackAnalysis, FrontendInterfaceError>;
+    async fn analyze_feedback_patterns(&self) -> Result<FeedbackAnalysis, FrontendInterfaceError>;
 }
 
 /// UI state manager trait
@@ -132,10 +130,7 @@ pub trait AiUiStateManager {
     ) -> Result<(), FrontendInterfaceError>;
 
     /// Get current UI state for session
-    async fn get_ui_state(
-        &self,
-        session_id: &str,
-    ) -> Result<UiState, FrontendInterfaceError>;
+    async fn get_ui_state(&self, session_id: &str) -> Result<UiState, FrontendInterfaceError>;
 }
 
 /// Error reporter trait
@@ -622,9 +617,7 @@ impl UserFeedbackCollector for PlaceholderUserFeedbackCollector {
         Ok(())
     }
 
-    async fn analyze_feedback_patterns(
-        &self,
-    ) -> Result<FeedbackAnalysis, FrontendInterfaceError> {
+    async fn analyze_feedback_patterns(&self) -> Result<FeedbackAnalysis, FrontendInterfaceError> {
         Ok(FeedbackAnalysis {
             overall_satisfaction: 4.2,
             category_scores: std::collections::HashMap::new(),
@@ -645,10 +638,7 @@ impl AiUiStateManager for PlaceholderUiStateManager {
         Ok(())
     }
 
-    async fn get_ui_state(
-        &self,
-        _session_id: &str,
-    ) -> Result<UiState, FrontendInterfaceError> {
+    async fn get_ui_state(&self, _session_id: &str) -> Result<UiState, FrontendInterfaceError> {
         Ok(UiState {
             loading: false,
             progress: None,

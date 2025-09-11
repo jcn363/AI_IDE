@@ -1,8 +1,8 @@
 //! Cross-Language Support Module
 //! Provides support for analyzing and refactoring code across multiple programming languages.
 
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Cross-language refactoring engine
 #[derive(Debug)]
@@ -32,7 +32,10 @@ impl CrossLanguageRefactor {
         self.supported_languages.get(language)
     }
 
-    pub fn analyze_cross_language_dependencies(&self, codebases: &[(String, String)]) -> Vec<CrossLanguageDependency> {
+    pub fn analyze_cross_language_dependencies(
+        &self,
+        codebases: &[(String, String)],
+    ) -> Vec<CrossLanguageDependency> {
         vec![] // Placeholder
     }
 }

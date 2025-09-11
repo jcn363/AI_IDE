@@ -1,7 +1,11 @@
 //! Core dependency graph structures and algorithms
 
-use petgraph::{stable_graph::StableGraph, Directed, graph::{NodeIndex, EdgeIndex}};
 use petgraph::visit::IntoEdgesDirected;
+use petgraph::{
+    graph::{EdgeIndex, NodeIndex},
+    stable_graph::StableGraph,
+    Directed,
+};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -131,9 +135,11 @@ impl DependencyGraph {
         target: &str,
         edge: DependencyEdge,
     ) -> DependencyResult<EdgeIndex> {
-        let source_idx = self.node_indices.get(source).copied().ok_or_else(|| {
-            DependencyError::PackageNotFound(source.to_string())
-        })?;
+        let source_idx = self
+            .node_indices
+            .get(source)
+            .copied()
+            .ok_or_else(|| DependencyError::PackageNotFound(source.to_string()))?;
 
         // Add target package if it doesn't exist
         if !self.node_indices.contains_key(target) {
@@ -162,7 +168,10 @@ impl DependencyGraph {
         let target_idx = self.node_indices[target];
 
         // Check if edge already exists to avoid duplicates
-        for edge_ref in self.graph.edges_directed(source_idx, petgraph::Direction::Outgoing) {
+        for edge_ref in self
+            .graph
+            .edges_directed(source_idx, petgraph::Direction::Outgoing)
+        {
             if edge_ref.target() == target_idx {
                 // Edge already exists, could update or return existing
                 return Ok(edge_ref.id());
@@ -173,13 +182,21 @@ impl DependencyGraph {
     }
 
     /// Get dependencies of a package
-    pub fn get_dependencies(&self, package_name: &str) -> DependencyResult<Vec<(String, DependencyEdge)>> {
-        let node_idx = self.node_indices.get(package_name).copied().ok_or_else(|| {
-            DependencyError::PackageNotFound(package_name.to_string())
-        })?;
+    pub fn get_dependencies(
+        &self,
+        package_name: &str,
+    ) -> DependencyResult<Vec<(String, DependencyEdge)>> {
+        let node_idx = self
+            .node_indices
+            .get(package_name)
+            .copied()
+            .ok_or_else(|| DependencyError::PackageNotFound(package_name.to_string()))?;
 
         let mut dependencies = Vec::new();
-        for edge_ref in self.graph.edges_directed(node_idx, petgraph::Direction::Outgoing) {
+        for edge_ref in self
+            .graph
+            .edges_directed(node_idx, petgraph::Direction::Outgoing)
+        {
             if let Some(target_node) = self.graph.node_weight(edge_ref.target()) {
                 dependencies.push((target_node.name.clone(), edge_ref.weight().clone()));
             }
@@ -189,13 +206,21 @@ impl DependencyGraph {
     }
 
     /// Get dependants (reverse dependencies) of a package
-    pub fn get_dependants(&self, package_name: &str) -> DependencyResult<Vec<(String, DependencyEdge)>> {
-        let node_idx = self.node_indices.get(package_name).copied().ok_or_else(|| {
-            DependencyError::PackageNotFound(package_name.to_string())
-        })?;
+    pub fn get_dependants(
+        &self,
+        package_name: &str,
+    ) -> DependencyResult<Vec<(String, DependencyEdge)>> {
+        let node_idx = self
+            .node_indices
+            .get(package_name)
+            .copied()
+            .ok_or_else(|| DependencyError::PackageNotFound(package_name.to_string()))?;
 
         let mut dependants = Vec::new();
-        for edge_ref in self.graph.edges_directed(node_idx, petgraph::Direction::Incoming) {
+        for edge_ref in self
+            .graph
+            .edges_directed(node_idx, petgraph::Direction::Incoming)
+        {
             if let Some(source_node) = self.graph.node_weight(edge_ref.source()) {
                 dependants.push((source_node.name.clone(), edge_ref.weight().clone()));
             }
@@ -211,12 +236,14 @@ impl DependencyGraph {
 
     /// Check if two packages share a dependency
     pub fn has_shared_dependency(&self, package1: &str, package2: &str) -> DependencyResult<bool> {
-        let deps1: HashSet<String> = self.get_dependencies(package1)?
+        let deps1: HashSet<String> = self
+            .get_dependencies(package1)?
             .into_iter()
             .map(|(name, _)| name)
             .collect();
 
-        let deps2: HashSet<String> = self.get_dependencies(package2)?
+        let deps2: HashSet<String> = self
+            .get_dependencies(package2)?
             .into_iter()
             .map(|(name, _)| name)
             .collect();
@@ -238,13 +265,17 @@ impl DependencyGraph {
 
     /// Get shortest path length between two packages
     pub fn get_path_length(&self, from: &str, to: &str) -> DependencyResult<usize> {
-        let start_idx = self.node_indices.get(from).copied().ok_or_else(|| {
-            DependencyError::PackageNotFound(from.to_string())
-        })?;
+        let start_idx = self
+            .node_indices
+            .get(from)
+            .copied()
+            .ok_or_else(|| DependencyError::PackageNotFound(from.to_string()))?;
 
-        let end_idx = self.node_indices.get(to).copied().ok_or_else(|| {
-            DependencyError::PackageNotFound(to.to_string())
-        })?;
+        let end_idx = self
+            .node_indices
+            .get(to)
+            .copied()
+            .ok_or_else(|| DependencyError::PackageNotFound(to.to_string()))?;
 
         // BFS to find shortest path
         let mut visited = HashSet::new();
@@ -260,7 +291,10 @@ impl DependencyGraph {
                 return Ok(distances[&current]);
             }
 
-            for neighbor in self.graph.neighbors_directed(current, petgraph::Direction::Outgoing) {
+            for neighbor in self
+                .graph
+                .neighbors_directed(current, petgraph::Direction::Outgoing)
+            {
                 if !visited.contains(&neighbor) {
                     visited.insert(neighbor);
                     queue.push_back(neighbor);
@@ -288,9 +322,11 @@ impl DependencyGraph {
 
         for scc in petgraph::algo::tarjan_scc(&self.graph) {
             if scc.len() > 1 {
-                let cycle: Vec<String> = scc.into_iter()
+                let cycle: Vec<String> = scc
+                    .into_iter()
                     .filter_map(|node_idx| {
-                        self.graph.node_weight(node_idx)
+                        self.graph
+                            .node_weight(node_idx)
                             .map(|node| node.name.clone())
                     })
                     .collect();
@@ -305,20 +341,22 @@ impl DependencyGraph {
     pub fn topological_sort(&self) -> DependencyResult<Vec<String>> {
         if self.has_cycles() {
             let cycles = self.get_cycles();
-            return Err(DependencyError::CircularDependency(cycles.into_iter().flatten().collect()));
+            return Err(DependencyError::CircularDependency(
+                cycles.into_iter().flatten().collect(),
+            ));
         }
 
         petgraph::algo::toposort(&self.graph, None)
-            .map_err(|_| {
-                DependencyError::ResolutionError {
-                    package: "graph".to_string(),
-                    reason: "Cycle detected during topological sort".to_string(),
-                }
+            .map_err(|_| DependencyError::ResolutionError {
+                package: "graph".to_string(),
+                reason: "Cycle detected during topological sort".to_string(),
             })
             .and_then(|nodes| {
-                Ok(nodes.into_iter()
+                Ok(nodes
+                    .into_iter()
                     .filter_map(|node_idx| {
-                        self.graph.node_weight(node_idx)
+                        self.graph
+                            .node_weight(node_idx)
                             .map(|node| node.name.clone())
                     })
                     .collect())
@@ -330,7 +368,8 @@ impl DependencyGraph {
     where
         F: Fn(&DependencyNode) -> bool,
     {
-        self.graph.node_weights()
+        self.graph
+            .node_weights()
             .filter(|node| predicate(node))
             .collect()
     }
@@ -373,9 +412,12 @@ impl DependencyGraph {
 
     /// Convert the graph to DOT format for visualization
     pub fn to_dot(&self) -> String {
-        use petgraph::dot::{Dot, Config};
+        use petgraph::dot::{Config, Dot};
 
-        format!("{:?}", Dot::with_config(&self.graph, &[Config::EdgeNoLabel]))
+        format!(
+            "{:?}",
+            Dot::with_config(&self.graph, &[Config::EdgeNoLabel])
+        )
     }
 
     /// Get packages by their dependency depth

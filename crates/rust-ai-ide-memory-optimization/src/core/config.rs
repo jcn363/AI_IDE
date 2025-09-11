@@ -118,7 +118,8 @@ impl MemoryOptimizationConfig {
 
     /// Validate configuration parameters
     pub fn validate(&self) -> Result<(), String> {
-        if self.memory_alert_threshold_percent < 0.0 || self.memory_alert_threshold_percent > 100.0 {
+        if self.memory_alert_threshold_percent < 0.0 || self.memory_alert_threshold_percent > 100.0
+        {
             return Err("Memory alert threshold must be between 0 and 100".to_string());
         }
 

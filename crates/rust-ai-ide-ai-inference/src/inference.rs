@@ -8,9 +8,9 @@ use tokio::time::timeout;
 
 // SIMD acceleration support
 #[cfg(feature = "rust-ai-ide-simd")]
-use rust_ai_ide_simd::{SIMDProcessor, SIMDOperations, get_simd_processor};
-#[cfg(feature = "rust-ai-ide-simd")]
 use rust_ai_ide_simd::memory::PrefetchHint;
+#[cfg(feature = "rust-ai-ide-simd")]
+use rust_ai_ide_simd::{get_simd_processor, SIMDOperations, SIMDProcessor};
 
 /// Inference engine trait for executing AI models
 #[async_trait::async_trait]
@@ -169,20 +169,29 @@ impl ModelManager {
         model_priorities.insert(ModelSize::XLarge, 1.0);
 
         // Task to model mapping for optimal selection
-        task_model_mapping.insert("code_completion".to_string(), vec![
-            "code_llama_small".to_string(),
-            "star_coder_small".to_string(),
-            "code_llama_medium".to_string(),
-        ]);
-        task_model_mapping.insert("code_analysis".to_string(), vec![
-            "code_llama_large".to_string(),
-            "code_llama_xlarge".to_string(),
-        ]);
-        task_model_mapping.insert("text_generation".to_string(), vec![
-            "code_llama_medium".to_string(),
-            "code_llama_large".to_string(),
-            "star_coder_medium".to_string(),
-        ]);
+        task_model_mapping.insert(
+            "code_completion".to_string(),
+            vec![
+                "code_llama_small".to_string(),
+                "star_coder_small".to_string(),
+                "code_llama_medium".to_string(),
+            ],
+        );
+        task_model_mapping.insert(
+            "code_analysis".to_string(),
+            vec![
+                "code_llama_large".to_string(),
+                "code_llama_xlarge".to_string(),
+            ],
+        );
+        task_model_mapping.insert(
+            "text_generation".to_string(),
+            vec![
+                "code_llama_medium".to_string(),
+                "code_llama_large".to_string(),
+                "star_coder_medium".to_string(),
+            ],
+        );
 
         Self {
             available_models,
@@ -637,14 +646,19 @@ impl InferenceEngine for LocalInferenceEngine {
         config: &CodeCompletionConfig,
     ) -> Result<CodeCompletionResult, InferenceError> {
         // Use model manager to select optimal model for completion task
-        let selected_model = self.model_manager.select_model("code_completion", context)
+        let selected_model = self
+            .model_manager
+            .select_model("code_completion", context)
             .unwrap_or_else(|| self.model_name.clone());
 
         // Auto-switch model if different from current
         if selected_model != self.model_name {
             // In a real implementation, this would switch the model
             // For now, log the recommendation
-            eprintln!("Model switch recommended: {} -> {}", self.model_name, selected_model);
+            eprintln!(
+                "Model switch recommended: {} -> {}",
+                self.model_name, selected_model
+            );
         }
 
         // Prepare prompt based on provider
@@ -682,7 +696,8 @@ impl InferenceEngine for LocalInferenceEngine {
 
         // Calculate confidence based on multiple factors with SIMD optimization
         #[cfg(feature = "rust-ai-ide-simd")]
-        let confidence_score = self.simd_compute_confidence_score(context, suggestion_quality_factors(&result.text));
+        let confidence_score =
+            self.simd_compute_confidence_score(context, suggestion_quality_factors(&result.text));
 
         #[cfg(not(feature = "rust-ai-ide-simd"))]
         let confidence_score = {
@@ -704,7 +719,8 @@ impl InferenceEngine for LocalInferenceEngine {
                 quality_factors.0,
                 quality_factors.1,
                 quality_factors.2,
-            ]).min(0.95)
+            ])
+            .min(0.95)
         };
 
         Ok(CodeCompletionResult {
@@ -788,13 +804,18 @@ impl InferenceEngine for LocalInferenceEngine {
 impl LocalInferenceEngine {
     /// SIMD-accelerated confidence score computation
     #[cfg(feature = "rust-ai-ide-simd")]
-    fn simd_compute_confidence_score(&self, context: &str, quality_factors: (f32, f32, f32)) -> f32 {
+    fn simd_compute_confidence_score(
+        &self,
+        context: &str,
+        quality_factors: (f32, f32, f32),
+    ) -> f32 {
         if let Some(simd_proc) = get_simd_processor().ok() {
             // Prepare factors array for SIMD processing
             let factors = [
-                0.75, // base_confidence
+                0.75,                                         // base_confidence
                 if context.len() > 1000 { 0.1 } else { 0.0 }, // context_length_factor
-                match self.model_info.model_size { // model_quality_factor
+                match self.model_info.model_size {
+                    // model_quality_factor
                     ModelSize::XLarge => 0.15,
                     ModelSize::Large => 0.1,
                     ModelSize::Medium => 0.05,
@@ -821,7 +842,8 @@ impl LocalInferenceEngine {
                     ModelSize::ExtraLarge => 0.2,
                 },
             ];
-            self.fusion_confidence_factors(&confidence_factors).min(0.95)
+            self.fusion_confidence_factors(&confidence_factors)
+                .min(0.95)
         }
     }
 
@@ -830,7 +852,8 @@ impl LocalInferenceEngine {
     fn fusion_confidence_factors_simd(&self, factors: &[f32]) -> f32 {
         let weights = [1.0, 0.8, 1.2, 1.1, 0.9, 0.7];
 
-        let weighted_factors: Vec<f32> = factors.iter()
+        let weighted_factors: Vec<f32> = factors
+            .iter()
             .zip(weights.iter())
             .map(|(f, w)| f * w)
             .collect();
@@ -906,7 +929,8 @@ impl LocalInferenceEngine {
                     }
                     Err(_) => {
                         // Fallback to non-SIMD similarity calculation
-                        let similarity = self.scalar_cosine_similarity(query_embedding, db_embedding);
+                        let similarity =
+                            self.scalar_cosine_similarity(query_embedding, db_embedding);
                         if similarity >= similarity_threshold {
                             similarities.push((i, similarity));
                         }
@@ -963,7 +987,8 @@ impl LocalInferenceEngine {
             // Parallel batch processing with SIMD-optimized sub-operations
             let mut handles = Vec::new();
 
-            for chunk in code_samples.chunks(4) { // Process in chunks to balance parallelism
+            for chunk in code_samples.chunks(4) {
+                // Process in chunks to balance parallelism
                 let chunk = chunk.to_vec();
                 let analysis_type = analysis_type.clone();
 
@@ -976,7 +1001,10 @@ impl LocalInferenceEngine {
                         let syntax_score = self.simd_syntax_scoring(&code);
 
                         // Analysis result with SIMD optimizations
-                        let analysis = format!("Code analysis (with SIMD acceleration): syntax score {}", syntax_score);
+                        let analysis = format!(
+                            "Code analysis (with SIMD acceleration): syntax score {}",
+                            syntax_score
+                        );
                         let suggestions = vec![
                             "Add error handling".to_string(),
                             "Improve variable naming".to_string(),
@@ -1039,7 +1067,8 @@ impl LocalInferenceEngine {
         let chars: Vec<char> = code.chars().collect();
         let bracket_score = chars.iter().filter(|&&c| c == '{' || c == '}').count() as f32 * 0.1;
         let semicolon_score = chars.iter().filter(|&&c| c == ';').count() as f32 * 0.05;
-        let function_score = chars.windows(3).filter(|w| w == &['f', 'n', ' ']).count() as f32 * 0.2;
+        let function_score =
+            chars.windows(3).filter(|w| w == &['f', 'n', ' ']).count() as f32 * 0.2;
 
         (bracket_score + semicolon_score + function_score).min(1.0)
     }
@@ -1133,11 +1162,7 @@ fn suggestion_quality_factors(suggestion: &str) -> (f32, f32, f32) {
         0.5
     };
 
-    let novelty_score = if suggestion.len() > 50 {
-        0.6
-    } else {
-        0.4
-    };
+    let novelty_score = if suggestion.len() > 50 { 0.6 } else { 0.4 };
 
     (syntactic_quality, semantic_quality, novelty_score)
 }

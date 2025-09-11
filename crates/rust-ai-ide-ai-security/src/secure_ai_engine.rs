@@ -1,9 +1,9 @@
 // Secure AI Engine Module
 // Implements secure AI model operations with Wave 3 security integration
 
-use std::str::FromStr;
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use tokio::sync::Mutex;
 
 /// Privacy levels for AI operations
@@ -49,10 +49,7 @@ pub struct SecureAIEngine {
 
 impl SecureAIEngine {
     /// Process secure AI inference with privacy preservation
-    pub async fn process_inference(
-        &self,
-        _request: AIInferenceRequest,
-    ) -> Result<SecureAIResult> {
+    pub async fn process_inference(&self, _request: AIInferenceRequest) -> Result<SecureAIResult> {
         // Placeholder implementation
         Ok(SecureAIResult {
             encrypted_result: vec![],

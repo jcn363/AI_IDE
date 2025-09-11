@@ -1,8 +1,8 @@
+use crate::IDEError;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
-use crate::IDEError;
 
 /// Performance metrics for quantization operations
 #[derive(Debug, Clone, Serialize, Deserialize)]

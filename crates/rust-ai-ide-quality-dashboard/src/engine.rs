@@ -4,13 +4,13 @@
 //! processing, visualization rendering, alert management, and performance caching.
 
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock, mpsc};
-use tokio::time::{Duration, interval};
 use tokio::spawn;
+use tokio::sync::{mpsc, Mutex, RwLock};
+use tokio::time::{interval, Duration};
 
+use crate::configuration::DashboardConfiguration;
 use crate::errors::{DashboardError, DashboardResult};
 use crate::types::*;
-use crate::configuration::DashboardConfiguration;
 
 /// Core dashboard engine coordinating all real-time processing
 #[derive(Clone)]
@@ -347,20 +347,16 @@ impl DashboardEngine {
         let cached_config = config.read().await.clone();
         let cached_config = Arc::new(Mutex::new(cached_config));
 
-        let metric_processor = Arc::new(RwLock::new(
-            MetricProcessor::new(&cached_config).await?
-        ));
+        let metric_processor = Arc::new(RwLock::new(MetricProcessor::new(&cached_config).await?));
 
         let visualization_renderer = Arc::new(RwLock::new(
-            VisualizationRenderer::new(cached_config.clone()).await?
+            VisualizationRenderer::new(cached_config.clone()).await?,
         ));
 
-        let alert_system = Arc::new(RwLock::new(
-            AlertSystem::new(cached_config.clone()).await?
-        ));
+        let alert_system = Arc::new(RwLock::new(AlertSystem::new(cached_config.clone()).await?));
 
         let cache_manager = Arc::new(RwLock::new(
-            DashboardCache::new(cached_config.clone()).await?
+            DashboardCache::new(cached_config.clone()).await?,
         ));
 
         Ok(Self {
@@ -391,7 +387,9 @@ impl DashboardEngine {
         let mut state = self.state.lock().await;
         if state.running {
             return Err(DashboardError::Engine(
-                crate::errors::EngineError::InitializationFailed("Engine already running".to_string())
+                crate::errors::EngineError::InitializationFailed(
+                    "Engine already running".to_string(),
+                ),
             ));
         }
 
@@ -454,16 +452,25 @@ impl DashboardEngine {
 
         // Process metrics through aggregator
         let processor = self.metric_processor.write().await;
-        processor.aggregator.aggregate_metrics(metrics.clone()).await?;
+        processor
+            .aggregator
+            .aggregate_metrics(metrics.clone())
+            .await?;
 
         // Update visualization data
         drop(processor);
-        self.visualization_renderer.write().await
-            .process_metric_updates(metrics.clone()).await?;
+        self.visualization_renderer
+            .write()
+            .await
+            .process_metric_updates(metrics.clone())
+            .await?;
 
         // Check for alert conditions
-        self.alert_system.write().await
-            .check_alerts(metrics).await?;
+        self.alert_system
+            .write()
+            .await
+            .check_alerts(metrics)
+            .await?;
 
         // Update engine metrics
         let processing_time = start_time.elapsed();
@@ -572,7 +579,10 @@ impl VisualizationRenderer {
     }
 
     /// Process metric updates for visualization
-    pub async fn process_metric_updates(&mut self, _metrics: Vec<MetricValue>) -> DashboardResult<()> {
+    pub async fn process_metric_updates(
+        &mut self,
+        _metrics: Vec<MetricValue>,
+    ) -> DashboardResult<()> {
         // Implementation for processing metric updates
         Ok(())
     }

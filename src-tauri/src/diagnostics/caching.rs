@@ -1,9 +1,9 @@
 //! Diagnostic caching functionality using unified cache infrastructure
 
 use crate::diagnostics::*;
-use rust_ai_ide_cache::{InMemoryCache, CacheConfig, Cache};
-use std::time::{SystemTime, Duration};
+use rust_ai_ide_cache::{Cache, CacheConfig, InMemoryCache};
 use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 
 /// Unified diagnostic cache using rust-ai-ide-cache
 pub struct DiagnosticCache {
@@ -36,8 +36,20 @@ impl DiagnosticCache {
         }
     }
 
-    pub async fn insert(&mut self, key: String, diagnostic: CompilerDiagnosticsResult, ttl_seconds: u64) {
-        let _ = self.inner.insert(key, diagnostic, Some(tokio::time::Duration::from_secs(ttl_seconds))).await;
+    pub async fn insert(
+        &mut self,
+        key: String,
+        diagnostic: CompilerDiagnosticsResult,
+        ttl_seconds: u64,
+    ) {
+        let _ = self
+            .inner
+            .insert(
+                key,
+                diagnostic,
+                Some(tokio::time::Duration::from_secs(ttl_seconds)),
+            )
+            .await;
     }
 
     pub async fn len(&self) -> usize {
@@ -80,8 +92,20 @@ impl ExplanationCache {
         }
     }
 
-    pub async fn insert(&mut self, error_code: String, explanation: ErrorCodeExplanation, ttl_seconds: u64) {
-        let _ = self.inner.insert(error_code, explanation, Some(tokio::time::Duration::from_secs(ttl_seconds))).await;
+    pub async fn insert(
+        &mut self,
+        error_code: String,
+        explanation: ErrorCodeExplanation,
+        ttl_seconds: u64,
+    ) {
+        let _ = self
+            .inner
+            .insert(
+                error_code,
+                explanation,
+                Some(tokio::time::Duration::from_secs(ttl_seconds)),
+            )
+            .await;
     }
 
     pub async fn len(&self) -> usize {

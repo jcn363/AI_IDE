@@ -25,7 +25,7 @@ impl RiskAssessmentEngine {
     pub async fn assess_risks(
         &self,
         _data: &[u8],
-        _context: &DataProcessingContext
+        _context: &DataProcessingContext,
     ) -> ComplianceResult<RiskAssessmentResult> {
         // Placeholder implementation
         Ok(RiskAssessmentResult {

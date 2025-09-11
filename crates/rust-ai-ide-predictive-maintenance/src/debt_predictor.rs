@@ -1,15 +1,11 @@
 //! Technical debt forecasting and trend analysis component
 
-use std::collections::HashMap;
-use chrono::{DateTime, Utc, Duration};
+use crate::{errors::*, forecast::MLForecastingEngine, types::*};
 use async_trait::async_trait;
+use chrono::{DateTime, Duration, Utc};
 use ndarray::{Array1, Array2};
 use statrs::statistics::{OrderStatistics, Statistics};
-use crate::{
-    types::*,
-    errors::*,
-    forecast::MLForecastingEngine,
-};
+use std::collections::HashMap;
 
 /// Core technical debt predictor implementing ML-driven forecasting
 #[derive(Debug)]
@@ -53,7 +49,8 @@ impl DebtPredictor {
         context: &AnalysisContext,
     ) -> MaintenanceResult<DebtForecast> {
         // Analyze historical debt trends
-        let historical_analysis = self.historical_analyzer
+        let historical_analysis = self
+            .historical_analyzer
             .analyze_historical_trends(context)
             .await?;
 
@@ -63,15 +60,13 @@ impl DebtPredictor {
 
         for horizon in &self.config.forecast_horizons {
             for debt_item in &context.current_debt_items {
-                let projection = self.project_single_debt_item(
-                    debt_item,
-                    &historical_analysis,
-                    *horizon,
-                    workspace,
-                ).await?;
+                let projection = self
+                    .project_single_debt_item(debt_item, &historical_analysis, *horizon, workspace)
+                    .await?;
 
                 // Find critical thresholds for this projection
-                let thresholds = self.intervention_detector
+                let thresholds = self
+                    .intervention_detector
                     .detect_critical_thresholds(&projection, &historical_analysis)
                     .await?;
 
@@ -82,14 +77,16 @@ impl DebtPredictor {
 
         // Sort projected debt by current severity (highest first)
         projected_debt.sort_by(|a, b| {
-            b.timeline.first()
+            b.timeline
+                .first()
                 .map(|p| p.severity)
                 .unwrap_or(0.0)
                 .partial_cmp(&a.timeline.first().map(|p| p.severity).unwrap_or(0.0))
                 .unwrap()
         });
 
-        let confidence_score = self.calculate_forecast_confidence(&projected_debt, &historical_analysis);
+        let confidence_score =
+            self.calculate_forecast_confidence(&projected_debt, &historical_analysis);
 
         Ok(DebtForecast {
             projected_debt,
@@ -108,32 +105,31 @@ impl DebtPredictor {
         workspace: &Workspace,
     ) -> MaintenanceResult<ProjectedDebtItem> {
         // Calculate average growth rate from historical data
-        let growth_rate = self.calculate_growth_rate_for_debt_type(
-            debt_item.debt_type.clone(),
-            historical_analysis,
-        ).await?;
+        let growth_rate = self
+            .calculate_growth_rate_for_debt_type(debt_item.debt_type.clone(), historical_analysis)
+            .await?;
 
         // Calculate base trajectory using trend predictor
-        let base_trajectory = self.trend_predictor
+        let base_trajectory = self
+            .trend_predictor
             .predict_trend(debt_item, growth_rate, horizon_weeks)
             .await?;
 
         // Enhance with ML forecasting for more accuracy
-        let enhanced_trajectory = self.forecasting_engine
+        let enhanced_trajectory = self
+            .forecasting_engine
             .enhance_debt_forecast(debt_item, &base_trajectory, historical_analysis)
             .await?;
 
         // Identify risk factors that might affect this debt item
-        let risk_factors = self.identify_risk_factors(
-            debt_item,
-            workspace,
-            &enhanced_trajectory,
-        ).await?;
+        let risk_factors = self
+            .identify_risk_factors(debt_item, workspace, &enhanced_trajectory)
+            .await?;
 
         // Calculate threshold crossings
-        let threshold_crossings = self.calculate_threshold_crossings(
-            &enhanced_trajectory,
-        ).await?;
+        let threshold_crossings = self
+            .calculate_threshold_crossings(&enhanced_trajectory)
+            .await?;
 
         Ok(ProjectedDebtItem {
             original_debt_id: debt_item.id.clone(),
@@ -154,17 +150,22 @@ impl DebtPredictor {
         // Analyze historical measurements for this debt type
         for measurement in &historical_analysis.historical_measurements {
             if let Some(type_data) = measurement.debt_by_type.get(&debt_type) {
-                if let Some(prev_measurement) = historical_analysis.historical_measurements
+                if let Some(prev_measurement) = historical_analysis
+                    .historical_measurements
                     .iter()
                     .find(|m| m.timestamp < measurement.timestamp)
                 {
                     if let Some(prev_type_data) = prev_measurement.debt_by_type.get(&debt_type) {
                         // Calculate weekly growth rate
-                        let days_diff = (measurement.timestamp.timestamp() - prev_measurement.timestamp.timestamp()) as f64 / 86400.0;
+                        let days_diff = (measurement.timestamp.timestamp()
+                            - prev_measurement.timestamp.timestamp())
+                            as f64
+                            / 86400.0;
                         let weeks_diff = days_diff / 7.0;
 
                         if weeks_diff > 0.0 {
-                            let severity_growth = type_data.avg_severity - prev_type_data.avg_severity;
+                            let severity_growth =
+                                type_data.avg_severity - prev_type_data.avg_severity;
                             let growth_rate = severity_growth / weeks_diff;
                             growth_rates.push(growth_rate);
                         }
@@ -195,14 +196,16 @@ impl DebtPredictor {
             risk_factors.push(RiskFactor {
                 factor_type: RiskType::ChangeFrequency,
                 score: 0.8,
-                description: "File is frequently modified, increasing debt accumulation risk".to_string(),
+                description: "File is frequently modified, increasing debt accumulation risk"
+                    .to_string(),
                 activation_time: Utc::now(),
             });
         }
 
         // Technology obsolescence risk
         let age_weeks = debt_item.age_days as f64 / 7.0;
-        if age_weeks > 52.0 * 2.0 { // 2 years old
+        if age_weeks > 52.0 * 2.0 {
+            // 2 years old
             risk_factors.push(RiskFactor {
                 factor_type: RiskType::TechnologyObsolescence,
                 score: (age_weeks / (52.0 * 5.0)).min(1.0), // Max out at 5 years
@@ -241,8 +244,10 @@ impl DebtPredictor {
 
                 if current.severity < threshold && next.severity >= threshold {
                     // Linear interpolation to find crossing point
-                    let progress = (threshold - current.severity) / (next.severity - current.severity);
-                    let crossing_time = current.timestamp + (next.timestamp - current.timestamp) * progress;
+                    let progress =
+                        (threshold - current.severity) / (next.severity - current.severity);
+                    let crossing_time =
+                        current.timestamp + (next.timestamp - current.timestamp) * progress;
                     crossings.push(crossing_time);
                 }
             }
@@ -281,7 +286,8 @@ impl DebtPredictor {
     /// Calculate consistency across projections
     fn calculate_forecast_consistency(&self, projected_debt: &Vec<ProjectedDebtItem>) -> f64 {
         // Simple consistency measure: how many projections follow expected trends
-        let consistent_projections = projected_debt.iter()
+        let consistent_projections = projected_debt
+            .iter()
             .filter(|proj| self.is_projection_consistent(proj))
             .count();
 
@@ -295,10 +301,7 @@ impl DebtPredictor {
         }
 
         // Check for reasonable growth rates
-        let recent_points: Vec<_> = projection.timeline.iter()
-            .rev()
-            .take(3)
-            .collect();
+        let recent_points: Vec<_> = projection.timeline.iter().rev().take(3).collect();
 
         let mut growth_rates = Vec::new();
         for window in recent_points.windows(2) {
@@ -367,7 +370,8 @@ impl HistoricalDebtAnalyzer {
             // Group debt items by type for this measurement
             let mut debt_by_type = HashMap::new();
             for debt_item in &context.current_debt_items {
-                let entry = debt_by_type.entry(debt_item.debt_type.clone())
+                let entry = debt_by_type
+                    .entry(debt_item.debt_type.clone())
                     .or_insert_with(|| DebtTypeStats {
                         count: 0,
                         avg_severity: 0.0,
@@ -418,11 +422,13 @@ impl HistoricalDebtAnalyzer {
             let current = &window[0];
             let previous = &window[1];
 
-            let days_diff = (current.timestamp.timestamp() - previous.timestamp.timestamp()) as f64 / 86400.0;
+            let days_diff =
+                (current.timestamp.timestamp() - previous.timestamp.timestamp()) as f64 / 86400.0;
             let weeks_diff = days_diff / 7.0;
 
             if weeks_diff > 0.0 && previous.total_debt > 0.0 {
-                let growth_rate = (current.total_debt - previous.total_debt) / previous.total_debt / weeks_diff;
+                let growth_rate =
+                    (current.total_debt - previous.total_debt) / previous.total_debt / weeks_diff;
                 growth_rates.push(growth_rate);
             }
         }
@@ -434,9 +440,11 @@ impl HistoricalDebtAnalyzer {
         // Calculate median and standard deviation
         let avg_growth = growth_rates[..].partial_cmp_median().unwrap_or(0.05);
         let mean = growth_rates.iter().sum::<f64>() / growth_rates.len() as f64;
-        let variance = growth_rates.iter()
+        let variance = growth_rates
+            .iter()
             .map(|rate| (rate - mean).powi(2))
-            .sum::<f64>() / growth_rates.len() as f64;
+            .sum::<f64>()
+            / growth_rates.len() as f64;
         let volatility = variance.sqrt();
 
         (avg_growth, volatility)
@@ -474,8 +482,8 @@ impl DebtTrendPredictor {
             let severity = start_severity * (1.0 + growth_rate).powi(week as i32);
 
             // Impact grows somewhat slower than severity
-            let maintainability_impact = debt_item.maintainability_impact *
-                (1.0 + growth_rate * 0.8).powi(week as i32);
+            let maintainability_impact =
+                debt_item.maintainability_impact * (1.0 + growth_rate * 0.8).powi(week as i32);
 
             // Confidence interval reduces with time
             let confidence_factor = (-week as f64 / horizon_weeks as f64).exp();
@@ -518,17 +526,27 @@ impl InterventionDetector {
 
         // Define critical severity thresholds
         let critical_thresholds = vec![
-            (0.4, "Low urgency intervention", "Debt is approaching critical levels"),
-            (0.7, "High urgency intervention", "Debt requires immediate attention"),
-            (0.85, "Critical intervention required", "Debt will seriously impact maintainability"),
+            (
+                0.4,
+                "Low urgency intervention",
+                "Debt is approaching critical levels",
+            ),
+            (
+                0.7,
+                "High urgency intervention",
+                "Debt requires immediate attention",
+            ),
+            (
+                0.85,
+                "Critical intervention required",
+                "Debt will seriously impact maintainability",
+            ),
         ];
 
         for (value, description, consequences) in critical_thresholds {
-            if let Some(crossing_time) = self.find_first_crossing_after_threshold(
-                &projection.timeline,
-                value,
-                Utc::now(),
-            ) {
+            if let Some(crossing_time) =
+                self.find_first_crossing_after_threshold(&projection.timeline, value, Utc::now())
+            {
                 thresholds.push(Threshold {
                     threshold_type: ThresholdType::Severity,
                     value,
@@ -570,8 +588,8 @@ impl InterventionDetector {
             if current.severity < threshold && next.severity >= threshold {
                 // Linear interpolation
                 let progress = (threshold - current.severity) / (next.severity - current.severity);
-                let crossing_time = current.timestamp +
-                    (next.timestamp - current.timestamp) * progress;
+                let crossing_time =
+                    current.timestamp + (next.timestamp - current.timestamp) * progress;
                 return Some(crossing_time);
             }
         }
@@ -676,9 +694,8 @@ mod tests {
         };
 
         // Should handle empty data gracefully
-        let result = tokio::spawn(async move {
-            analyzer.analyze_historical_trends(&context).await
-        });
+        let result =
+            tokio::spawn(async move { analyzer.analyze_historical_trends(&context).await });
         // Note: In actual test, we'd need to await and assert
     }
 }

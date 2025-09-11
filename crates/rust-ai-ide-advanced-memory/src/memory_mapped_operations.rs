@@ -3,15 +3,15 @@
 //! This module provides zero-copy operations, stream processing for large datasets,
 //! and cross-platform memory mapping capabilities optimized for large-scale development.
 
+use async_trait::async_trait;
+use memmap2::{Mmap, MmapMut, MmapOptions};
+use rust_ai_ide_errors::IDEError;
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Cursor, Read, Write, Seek, SeekFrom};
+use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::{RwLock, Mutex};
-use memmap2::{MmapOptions, Mmap, MmapMut};
-use async_trait::async_trait;
-use rust_ai_ide_errors::IDEError;
+use tokio::sync::{Mutex, RwLock};
 
 /// Configuration for memory mapped operations
 #[derive(Debug, Clone)]
@@ -74,18 +74,17 @@ impl MemoryMappedFileManager {
             }
         }
 
-        let file = File::open(&file_path)
-            .map_err(|e| IDEError::IoError(e))?;
+        let file = File::open(&file_path).map_err(|e| IDEError::IoError(e))?;
 
-        let metadata = file.metadata()
-            .map_err(|e| IDEError::IoError(e))?;
+        let metadata = file.metadata().map_err(|e| IDEError::IoError(e))?;
 
         let file_size = metadata.len() as usize;
 
         if file_size > self.config.max_file_size_gb * 1024 * 1024 * 1024 {
-            return Err(IDEError::InvalidArgument(
-                format!("File size {} exceeds maximum allowed size", file_size)
-            ));
+            return Err(IDEError::InvalidArgument(format!(
+                "File size {} exceeds maximum allowed size",
+                file_size
+            )));
         }
 
         let mmap = unsafe {
@@ -118,7 +117,12 @@ impl MemoryMappedFileManager {
     }
 
     /// Read data from mapped file (zero-copy)
-    pub async fn read_from_mapped(&self, file_id: &str, offset: usize, size: usize) -> Result<&[u8], IDEError> {
+    pub async fn read_from_mapped(
+        &self,
+        file_id: &str,
+        offset: usize,
+        size: usize,
+    ) -> Result<&[u8], IDEError> {
         let mut mappings = self.mappings.write().await;
 
         if let Some(mapped_file) = mappings.get_mut(file_id) {
@@ -127,27 +131,25 @@ impl MemoryMappedFileManager {
 
             if offset + size > mapped_file.size_bytes {
                 return Err(IDEError::InvalidArgument(
-                    "Read range exceeds file size".to_string()
+                    "Read range exceeds file size".to_string(),
                 ));
             }
 
             let data = &mapped_file.mmap[offset..offset + size];
 
             // Create a 'static lifetime slice (unsafe but valid for the mmap lifetime)
-            unsafe {
-                Ok(std::slice::from_raw_parts(data.as_ptr(), data.len()))
-            }
+            unsafe { Ok(std::slice::from_raw_parts(data.as_ptr(), data.len())) }
         } else {
-            Err(IDEError::InvalidArgument(format!("Mapped file {} not found", file_id)))
+            Err(IDEError::InvalidArgument(format!(
+                "Mapped file {} not found",
+                file_id
+            )))
         }
     }
 
     /// Evict oldest mapping when limit exceeded
     fn evict_oldest_mapping(&self, mappings: &mut HashMap<String, MappedFile>) {
-        if let Some((oldest_id, _)) = mappings
-            .iter()
-            .min_by_key(|(_, f)| f.last_access)
-        {
+        if let Some((oldest_id, _)) = mappings.iter().min_by_key(|(_, f)| f.last_access) {
             let oldest_id = oldest_id.clone();
             mappings.remove(&oldest_id);
             tracing::info!("Evicted oldest mapping: {}", oldest_id);
@@ -180,12 +182,9 @@ impl StreamProcessingEngine {
     where
         F: Fn(&[u8], usize) -> Result<(), IDEError> + Send + 'static,
     {
-        let mut file = File::open(&file_path)
-            .map_err(|e| IDEError::IoError(e))?;
+        let mut file = File::open(&file_path).map_err(|e| IDEError::IoError(e))?;
 
-        let file_size = file.metadata()
-            .map_err(|e| IDEError::IoError(e))?
-            .len() as usize;
+        let file_size = file.metadata().map_err(|e| IDEError::IoError(e))?.len() as usize;
 
         let processor = Arc::new(processor);
         let mut handles = Vec::new();
@@ -224,7 +223,8 @@ impl StreamProcessingEngine {
             file.read_exact(&mut chunk)
                 .map_err(|e| IDEError::IoError(e))?;
 
-            tx.send((chunk_num, chunk)).await
+            tx.send((chunk_num, chunk))
+                .await
                 .map_err(|e| IDEError::InternalError(format!("Channel send error: {}", e)))?;
 
             current_offset = chunk_end;
@@ -254,7 +254,12 @@ impl StreamProcessingEngine {
                     let chunk = chunk_data.1;
 
                     if let Err(e) = processor_clone(&chunk, chunk_num) {
-                        tracing::error!("Stream processing error in worker {} chunk {}: {}", worker_id, chunk_num, e);
+                        tracing::error!(
+                            "Stream processing error in worker {} chunk {}: {}",
+                            worker_id,
+                            chunk_num,
+                            e
+                        );
                     }
                 }
             });
@@ -273,7 +278,8 @@ impl StreamProcessingEngine {
             file.read_exact_at(&mut chunk, current_offset as u64)
                 .map_err(|e| IDEError::IoError(e))?;
 
-            tx.send((chunk_num, chunk)).await
+            tx.send((chunk_num, chunk))
+                .await
                 .map_err(|e| IDEError::InternalError(format!("Channel send error: {}", e)))?;
 
             current_offset = chunk_end;
@@ -287,7 +293,11 @@ impl StreamProcessingEngine {
             }
         }
 
-        tracing::info!("Stream processing completed for {} ({} chunks)", file_path.display(), num_chunks);
+        tracing::info!(
+            "Stream processing completed for {} ({} chunks)",
+            file_path.display(),
+            num_chunks
+        );
 
         Ok(())
     }
@@ -394,7 +404,10 @@ impl MemoryMappedOperations {
     }
 
     pub async fn initialize(&self) -> Result<(), IDEError> {
-        tracing::info!("Memory Mapped Operations initialized with config: {:?}", self.config);
+        tracing::info!(
+            "Memory Mapped Operations initialized with config: {:?}",
+            self.config
+        );
         Ok(())
     }
 
@@ -412,8 +425,15 @@ impl MemoryMappedOperations {
     }
 
     /// Read from mapped file (zero copy)
-    pub async fn read_mapped(&self, file_id: &str, offset: usize, size: usize) -> Result<&[u8], IDEError> {
-        self.file_manager.read_from_mapped(file_id, offset, size).await
+    pub async fn read_mapped(
+        &self,
+        file_id: &str,
+        offset: usize,
+        size: usize,
+    ) -> Result<&[u8], IDEError> {
+        self.file_manager
+            .read_from_mapped(file_id, offset, size)
+            .await
     }
 
     /// Stream process large file
@@ -425,11 +445,17 @@ impl MemoryMappedOperations {
     where
         F: Fn(&[u8], usize) -> Result<(), IDEError> + Send + 'static,
     {
-        self.stream_engine.process_file_in_chunks(file_path, processor).await
+        self.stream_engine
+            .process_file_in_chunks(file_path, processor)
+            .await
     }
 
     /// Map AI model for efficient inference
-    pub async fn map_model(&self, model_path: PathBuf, format: ModelFormat) -> Result<String, IDEError> {
+    pub async fn map_model(
+        &self,
+        model_path: PathBuf,
+        format: ModelFormat,
+    ) -> Result<String, IDEError> {
         self.model_mapper.map_model(model_path, format).await
     }
 
@@ -460,11 +486,14 @@ impl ModelMemoryMapper {
         }
     }
 
-    pub async fn map_model(&self, model_path: PathBuf, format: ModelFormat) -> Result<String, IDEError> {
+    pub async fn map_model(
+        &self,
+        model_path: PathBuf,
+        format: ModelFormat,
+    ) -> Result<String, IDEError> {
         let model_id = format!("model_{}", model_path.display());
 
-        let file = File::open(&model_path)
-            .map_err(|e| IDEError::IoError(e))?;
+        let file = File::open(&model_path).map_err(|e| IDEError::IoError(e))?;
 
         let mmap = unsafe {
             MmapOptions::new()
@@ -485,7 +514,12 @@ impl ModelMemoryMapper {
         let mut mappings = self.model_mappings.write().await;
         mappings.insert(model_id.clone(), mapping);
 
-        tracing::info!("Mapped AI model: {} ({}) format: {:?}", model_path.display(), format!("{} bytes", file_size), format);
+        tracing::info!(
+            "Mapped AI model: {} ({}) format: {:?}",
+            model_path.display(),
+            format!("{} bytes", file_size),
+            format
+        );
 
         Ok(model_id)
     }

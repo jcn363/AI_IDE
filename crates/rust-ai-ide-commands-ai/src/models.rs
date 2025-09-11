@@ -24,14 +24,14 @@ This module integrates with:
 - Caching for model metadata
 */
 
-use std::sync::Arc;
-use std::collections::{HashMap, VecDeque};
-use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::collections::{HashMap, VecDeque};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 // Re-export common types
-use super::services::{AIService, AIResult, AIError};
+use super::services::{AIError, AIResult, AIService};
 
 // Command template macros not available in this crate
 
@@ -254,7 +254,8 @@ impl ModelManager {
                 return Err(AIError::Other {
                     message: ModelError::ModelAlreadyLoaded {
                         model_id: request.model_id,
-                    }.to_string(),
+                    }
+                    .to_string(),
                 });
             }
 
@@ -292,7 +293,8 @@ impl ModelManager {
             Err(AIError::Other {
                 message: ModelError::ModelNotFound {
                     model_id: request.model_id,
-                }.to_string(),
+                }
+                .to_string(),
             })
         }
     }

@@ -28,7 +28,10 @@ pub async fn test_list(project_path: String) -> Result<Vec<String>, String> {
 
     for line in stdout.lines() {
         if line.starts_with("test ") {
-            if let Some(name) = line.strip_prefix("test ").and_then(|s| s.split_whitespace().next()) {
+            if let Some(name) = line
+                .strip_prefix("test ")
+                .and_then(|s| s.split_whitespace().next())
+            {
                 tests.push(name.to_string());
             }
         }
@@ -60,14 +63,21 @@ pub async fn test_run_stream(
         project_path,
         Some(command_id),
         app_handle,
-    ).await
+    )
+    .await
 }
 
 /// Check test coverage availability
 #[tauri::command]
 pub async fn coverage_is_available() -> Result<bool, String> {
-    let has_llvm_cov = std::process::Command::new("cargo").args(["llvm-cov", "--version"]).output().is_ok();
-    let has_tarpaulin = std::process::Command::new("cargo").args(["tarpaulin", "--version"]).output().is_ok();
+    let has_llvm_cov = std::process::Command::new("cargo")
+        .args(["llvm-cov", "--version"])
+        .output()
+        .is_ok();
+    let has_tarpaulin = std::process::Command::new("cargo")
+        .args(["tarpaulin", "--version"])
+        .output()
+        .is_ok();
     Ok(has_llvm_cov || has_tarpaulin)
 }
 
@@ -80,12 +90,22 @@ pub async fn coverage_run(project_path: String) -> Result<String, String> {
         return Err(e);
     }
 
-    let try_llvm = Command::new("cargo").args(["llvm-cov", "--version"]).output().is_ok();
+    let try_llvm = Command::new("cargo")
+        .args(["llvm-cov", "--version"])
+        .output()
+        .is_ok();
     let output = if try_llvm {
-        Command::new("cargo").args(["llvm-cov", "--json"]).current_dir(&project_path).output()
+        Command::new("cargo")
+            .args(["llvm-cov", "--json"])
+            .current_dir(&project_path)
+            .output()
     } else {
-        Command::new("cargo").args(["tarpaulin", "--out", "Stdout"]).current_dir(&project_path).output()
-    }.map_err(|e| format!("Failed to run coverage: {}", e))?;
+        Command::new("cargo")
+            .args(["tarpaulin", "--out", "Stdout"])
+            .current_dir(&project_path)
+            .output()
+    }
+    .map_err(|e| format!("Failed to run coverage: {}", e))?;
 
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();

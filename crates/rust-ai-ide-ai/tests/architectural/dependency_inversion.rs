@@ -1,10 +1,7 @@
 //! Tests for dependency inversion principle analysis
 
 use super::*;
-use crate::analysis::{
-    architectural::DependencyInversionAnalyzer,
-    AnalysisType, Severity,
-};
+use crate::analysis::{architectural::DependencyInversionAnalyzer, AnalysisType, Severity};
 
 #[test]
 fn test_proper_dependency_inversion() {
@@ -48,13 +45,17 @@ fn test_proper_dependency_inversion() {
             }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_success(&result);
     assert!(
-        !has_findings(&result, AnalysisType::DependencyInversion, Severity::Warning),
+        !has_findings(
+            &result,
+            AnalysisType::DependencyInversion,
+            Severity::Warning
+        ),
         "Expected no dependency inversion violations"
     );
 }
@@ -98,10 +99,10 @@ fn test_violation_direct_concrete_dependency() {
             }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_finding!(
         &result,
         AnalysisType::DependencyInversion,
@@ -132,10 +133,10 @@ fn test_violation_concrete_dependency_in_method() {
             }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_finding!(
         &result,
         AnalysisType::DependencyInversion,
@@ -178,18 +179,25 @@ fn test_dependency_inversion_with_generics() {
             }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_success(&result);
     assert!(
-        !has_findings(&result, AnalysisType::DependencyInversion, Severity::Warning),
+        !has_findings(
+            &result,
+            AnalysisType::DependencyInversion,
+            Severity::Warning
+        ),
         "Expected no dependency inversion violations with proper generic usage"
     );
 }
 
 // Helper function to check for specific findings
 fn has_findings(result: &AnalysisResult, analysis_type: AnalysisType, severity: Severity) -> bool {
-    result.findings.iter().any(|f| f.analysis_type == analysis_type && f.severity == severity)
+    result
+        .findings
+        .iter()
+        .any(|f| f.analysis_type == analysis_type && f.severity == severity)
 }

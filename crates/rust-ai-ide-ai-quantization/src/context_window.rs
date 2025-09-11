@@ -1,12 +1,12 @@
 #![feature(impl_trait_in_bindings)]
 
+use crate::IDEError;
+use candle_core::{DType, Device, Tensor};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::{Mutex, RwLock};
-use serde::{Deserialize, Serialize};
-use crate::IDEError;
-use candle_core::{Tensor, Device, DType};
 
 /// Context window manager for expanding token capacity (32K→128K)
 #[derive(Clone)]
@@ -58,7 +58,7 @@ pub struct SlidingWindowConfig {
 impl Default for ContextWindowConfig {
     fn default() -> Self {
         Self {
-            max_context_size: 128 * 1024,     // 128K tokens
+            max_context_size: 128 * 1024,      // 128K tokens
             base_context_size: 32 * 1024,      // 32K tokens
             extended_context_size: 128 * 1024, // 128K tokens
             compression_ratio: 0.25,           // 4:1 compression
@@ -169,7 +169,9 @@ impl ContextWindowManager {
         let profiler = Arc::new(ContextWindowProfiler::new());
         let token_buffer = Arc::new(RwLock::new(RollingTokenBuffer {
             recent_tokens: VecDeque::with_capacity(config.sliding_window_config.recent_window_size),
-            compressed_tokens: VecDeque::with_capacity(config.sliding_window_config.compressed_window_size),
+            compressed_tokens: VecDeque::with_capacity(
+                config.sliding_window_config.compressed_window_size,
+            ),
             max_recent_capacity: config.sliding_window_config.recent_window_size,
         }));
 
@@ -193,7 +195,9 @@ impl ContextWindowManager {
         let mut sessions = self.sessions.lock().await;
         sessions.insert(session_id.to_string(), session);
 
-        self.profiler.record_operation("create_session", Duration::default()).await;
+        self.profiler
+            .record_operation("create_session", Duration::default())
+            .await;
         Ok(session_id.to_string())
     }
 
@@ -202,22 +206,27 @@ impl ContextWindowManager {
         &self,
         session_id: &str,
         tokens: &[u32],
-        attention_scores: &[f32]
+        attention_scores: &[f32],
     ) -> Result<WindowUpdateResult, IDEError> {
         let start_time = Instant::now();
 
         // Get or create session
         let mut sessions = self.sessions.lock().await;
-        let session = sessions.get_mut(session_id)
-            .ok_or_else(|| IDEError::InvalidArgument(format!("Session {} not found", session_id)))?;
+        let session = sessions.get_mut(session_id).ok_or_else(|| {
+            IDEError::InvalidArgument(format!("Session {} not found", session_id))
+        })?;
 
         session.last_activity = Instant::now();
 
-        let result = self.process_tokens_internal(session, tokens, attention_scores).await?;
+        let result = self
+            .process_tokens_internal(session, tokens, attention_scores)
+            .await?;
 
         // Update performance metrics
         let processing_time = start_time.elapsed();
-        self.profiler.record_operation("process_tokens", processing_time).await;
+        self.profiler
+            .record_operation("process_tokens", processing_time)
+            .await;
         session.stats.total_tokens_processed += tokens.len() as u64;
 
         Ok(result)
@@ -228,7 +237,7 @@ impl ContextWindowManager {
         &self,
         session: &mut ContextSession,
         tokens: &[u32],
-        attention_scores: &[f32]
+        attention_scores: &[f32],
     ) -> Result<WindowUpdateResult, IDEError> {
         let mut buffer = self.token_buffer.write().await;
 
@@ -255,7 +264,8 @@ impl ContextWindowManager {
         // Calculate memory usage
         let memory_usage = self.calculate_memory_usage(&buffer).await;
         session.window_state.memory_usage = memory_usage;
-        session.window_state.current_size = session.window_state.recent_tokens + session.window_state.compressed_tokens;
+        session.window_state.current_size =
+            session.window_state.recent_tokens + session.window_state.compressed_tokens;
 
         Ok(WindowUpdateResult {
             window_size: session.window_state.current_size,
@@ -267,7 +277,8 @@ impl ContextWindowManager {
 
     /// Determine if token compression is needed
     async fn should_compress(&self, state: &WindowState, buffer: &RollingTokenBuffer) -> bool {
-        let memory_usage_percent = (state.memory_usage as f32 / self.config.max_context_size as f32) * 100.0;
+        let memory_usage_percent =
+            (state.memory_usage as f32 / self.config.max_context_size as f32) * 100.0;
         let recent_full = buffer.recent_tokens.len() >= buffer.max_recent_capacity;
 
         memory_usage_percent >= self.config.memory_threshold_percent || recent_full
@@ -277,7 +288,7 @@ impl ContextWindowManager {
     async fn compress_old_tokens(
         &self,
         buffer: &mut RollingTokenBuffer,
-        session: &mut ContextSession
+        session: &mut ContextSession,
     ) -> Result<(), IDEError> {
         let compression_start = Instant::now();
 
@@ -310,23 +321,30 @@ impl ContextWindowManager {
         session.window_state.recent_tokens -= original_tokens;
         session.stats.total_compressions += 1;
         let estimated_original_bytes = original_tokens * std::mem::size_of::<TokenRecord>();
-        session.window_state.compression_factor = (estimated_original_bytes as f32) / (compressed_bytes as f32);
+        session.window_state.compression_factor =
+            (estimated_original_bytes as f32) / (compressed_bytes as f32);
 
         let compression_time = compression_start.elapsed();
-        self.profiler.record_operation("token_compression", compression_time).await;
+        self.profiler
+            .record_operation("token_compression", compression_time)
+            .await;
 
         Ok(())
     }
 
     /// Compress a chunk of tokens
-    async fn compress_token_chunk(&self, tokens: &[TokenRecord]) -> Result<CompressedTokenChunk, IDEError> {
+    async fn compress_token_chunk(
+        &self,
+        tokens: &[TokenRecord],
+    ) -> Result<CompressedTokenChunk, IDEError> {
         // Simple run-length encoding for demonstration
         // In practice, this would use advanced compression algorithms
         let mut compressed_data = Vec::new();
         let mut i = 0;
 
         // Calculate quality score based on attention scores
-        let avg_attention = tokens.iter().map(|t| t.attention_score).sum::<f32>() / tokens.len() as f32;
+        let avg_attention =
+            tokens.iter().map(|t| t.attention_score).sum::<f32>() / tokens.len() as f32;
 
         while i < tokens.len() {
             let mut j = i;
@@ -355,13 +373,14 @@ impl ContextWindowManager {
         &self,
         session_id: &str,
         start_position: usize,
-        count: usize
+        count: usize,
     ) -> Result<Vec<u32>, IDEError> {
         let start_time = Instant::now();
 
         let sessions = self.sessions.lock().await;
-        let session = sessions.get(session_id)
-            .ok_or_else(|| IDEError::InvalidArgument(format!("Session {} not found", session_id)))?;
+        let session = sessions.get(session_id).ok_or_else(|| {
+            IDEError::InvalidArgument(format!("Session {} not found", session_id))
+        })?;
 
         let buffer = self.token_buffer.read().await;
 
@@ -370,14 +389,17 @@ impl ContextWindowManager {
             let recent_start = start_position - session.window_state.compressed_tokens;
 
             if recent_start + count <= buffer.recent_tokens.len() {
-                let tokens: Vec<u32> = buffer.recent_tokens
+                let tokens: Vec<u32> = buffer
+                    .recent_tokens
                     .iter()
                     .skip(recent_start)
                     .take(count)
                     .map(|record| record.token_id)
                     .collect();
 
-                self.profiler.record_operation("retrieve_recent_tokens", start_time.elapsed()).await;
+                self.profiler
+                    .record_operation("retrieve_recent_tokens", start_time.elapsed())
+                    .await;
                 return Ok(tokens);
             }
         }
@@ -391,7 +413,7 @@ impl ContextWindowManager {
         &self,
         buffer: &RollingTokenBuffer,
         start_position: usize,
-        count: usize
+        count: usize,
     ) -> Result<Vec<u32>, IDEError> {
         let start_time = Instant::now();
 
@@ -424,19 +446,24 @@ impl ContextWindowManager {
         }
 
         let decompression_time = start_time.elapsed();
-        self.profiler.record_operation("decompress_tokens", decompression_time).await;
+        self.profiler
+            .record_operation("decompress_tokens", decompression_time)
+            .await;
 
         Ok(result)
     }
 
     /// Decompress a single token chunk
-    async fn decompress_token_chunk(&self, chunk: &CompressedTokenChunk) -> Result<Vec<u32>, IDEError> {
+    async fn decompress_token_chunk(
+        &self,
+        chunk: &CompressedTokenChunk,
+    ) -> Result<Vec<u32>, IDEError> {
         let mut decompressed = Vec::with_capacity(chunk.original_count);
         let mut data_iter = chunk.compressed_data.iter();
 
         while let (Some((token_bytes, length_bytes)), Some((length_bytes2, _))) = (
             data_iter.next().copied().zip(data_iter.next().copied()),
-            data_iter.next().copied().zip(data_iter.next().copied())
+            data_iter.next().copied().zip(data_iter.next().copied()),
         ) {
             let token_id = u32::from_le_bytes([token_bytes, length_bytes, 0, 0]);
             let run_length = u16::from_le_bytes([length_bytes2, 0]);
@@ -452,7 +479,9 @@ impl ContextWindowManager {
     /// Calculate current memory usage
     async fn calculate_memory_usage(&self, buffer: &RollingTokenBuffer) -> u64 {
         let recent_memory = buffer.recent_tokens.len() * std::mem::size_of::<TokenRecord>();
-        let compressed_memory: usize = buffer.compressed_tokens.iter()
+        let compressed_memory: usize = buffer
+            .compressed_tokens
+            .iter()
             .map(|chunk| chunk.compressed_data.len() + std::mem::size_of::<CompressedTokenChunk>())
             .sum();
 
@@ -462,8 +491,9 @@ impl ContextWindowManager {
     /// Get session statistics
     pub async fn get_session_stats(&self, session_id: &str) -> Result<SessionStats, IDEError> {
         let sessions = self.sessions.lock().await;
-        let session = sessions.get(session_id)
-            .ok_or_else(|| IDEError::InvalidArgument(format!("Session {} not found", session_id)))?;
+        let session = sessions.get(session_id).ok_or_else(|| {
+            IDEError::InvalidArgument(format!("Session {} not found", session_id))
+        })?;
 
         Ok(session.stats.clone())
     }
@@ -517,7 +547,9 @@ impl ContextWindowProfiler {
         let duration_ns = duration.as_nanos() as u64;
 
         metrics.max_operation_time_ns = metrics.max_operation_time_ns.max(duration_ns);
-        metrics.avg_operation_time_ns = ((metrics.avg_operation_time_ns * (metrics.total_operations - 1)) + duration_ns) / metrics.total_operations;
+        metrics.avg_operation_time_ns =
+            ((metrics.avg_operation_time_ns * (metrics.total_operations - 1)) + duration_ns)
+                / metrics.total_operations;
 
         // Track compression vs decompression time
         match operation_type {
@@ -577,7 +609,9 @@ mod tests {
         let tokens = vec![1, 2, 3, 4, 5];
         let attention_scores = vec![0.1, 0.2, 0.3, 0.4, 0.5];
 
-        let result = manager.process_tokens(session_id, &tokens, &attention_scores).await;
+        let result = manager
+            .process_tokens(session_id, &tokens, &attention_scores)
+            .await;
         assert!(result.is_ok());
 
         let update = result.unwrap();
@@ -595,7 +629,10 @@ mod tests {
         let tokens = vec![10, 20, 30, 40, 50];
         let attention_scores = vec![0.9, 0.8, 0.7, 0.6, 0.5];
 
-        manager.process_tokens(session_id, &tokens, &attention_scores).await.unwrap();
+        manager
+            .process_tokens(session_id, &tokens, &attention_scores)
+            .await
+            .unwrap();
 
         let retrieved = manager.retrieve_tokens(session_id, 0, 3).await.unwrap();
         assert_eq!(retrieved, vec![10, 20, 30]);

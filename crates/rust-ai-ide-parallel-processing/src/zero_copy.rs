@@ -1,14 +1,14 @@
-use std::sync::Arc;
-use tokio::sync::{Mutex, Semaphore, RwLock};
-use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
-use memmap2::{MmapMut, MmapOptions};
+use crate::{ResourcePoolManager, ResourceRequirements};
 use futures::stream::{StreamExt, TryStreamExt};
+use memmap2::{MmapMut, MmapOptions};
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
 use std::collections::{HashMap, VecDeque};
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::Path;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
-use crate::{ResourcePoolManager, ResourceRequirements};
+use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
+use tokio::sync::{Mutex, RwLock, Semaphore};
 
 /// Trait for zero-copy buffer management
 pub trait ZeroCopyBuffer {
@@ -47,7 +47,8 @@ impl MmapManager {
             IDEError::new(
                 IDEErrorKind::ConcurrencyError,
                 "Failed to acquire mmap permit",
-            ).with_source(e)
+            )
+            .with_source(e)
         })?;
 
         let file_id = path.as_ref().to_string_lossy().to_string();
@@ -74,21 +75,14 @@ impl MmapManager {
             })?;
 
         file.set_len(size as u64).map_err(|e| {
-            IDEError::new(IDEErrorKind::FileOperation, "Failed to set file size")
-                .with_source(e)
+            IDEError::new(IDEErrorKind::FileOperation, "Failed to set file size").with_source(e)
         })?;
 
         let mmap = unsafe {
-            MmapOptions::new()
-                .len(size)
-                .map_mut(&file)
-                .map_err(|e| {
-                    IDEError::new(
-                        IDEErrorKind::MemoryError,
-                        "Failed to create memory map",
-                    )
+            MmapOptions::new().len(size).map_mut(&file).map_err(|e| {
+                IDEError::new(IDEErrorKind::MemoryError, "Failed to create memory map")
                     .with_source(e)
-                })?
+            })?
         };
 
         maps.insert(file_id.clone(), mmap);
@@ -142,10 +136,7 @@ impl<T: ZeroCopyBuffer> ZeroCopyChannel<T> {
     pub async fn receive(&self) -> Result<T, IDEError> {
         let mut receiver = self.receiver.lock().await;
         receiver.recv().await.ok_or_else(|| {
-            IDEError::new(
-                IDEErrorKind::CommunicationError,
-                "Zero-copy channel closed",
-            )
+            IDEError::new(IDEErrorKind::CommunicationError, "Zero-copy channel closed")
         })
     }
 }
@@ -209,13 +200,20 @@ impl AdvancedZeroCopyOperations {
         };
 
         let mut pool = self.resource_pool.write().await;
-        pool.entry(file_id.clone()).or_insert_with(VecDeque::new)
+        pool.entry(file_id.clone())
+            .or_insert_with(VecDeque::new)
             .push_back(segment);
 
         let mut scheduler = self.cleanup_scheduler.write().await;
         scheduler.insert(file_id, Instant::now());
 
-        Ok(MmapSegment::new(file_id, path.as_ref().to_path_buf(), offset, size, cleanup_delay))
+        Ok(MmapSegment::new(
+            file_id,
+            path.as_ref().to_path_buf(),
+            offset,
+            size,
+            cleanup_delay,
+        ))
     }
 
     /// Access memory-mapped segment with automatic LRU management
@@ -248,9 +246,7 @@ impl AdvancedZeroCopyOperations {
 
         for operation in operations {
             let result = match operation.op_type {
-                ZeroCopyOperationType::Read => {
-                    self.read_operation(&operation).await?
-                }
+                ZeroCopyOperationType::Read => self.read_operation(&operation).await?,
                 ZeroCopyOperationType::Write(data) => {
                     self.write_operation(&operation, &data).await?
                 }

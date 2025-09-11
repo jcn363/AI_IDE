@@ -3,8 +3,11 @@
 //! Comprehensive GDPR compliance implementation including data protection principles,
 //! individual rights management, and data breach notification.
 
-use crate::core::{ComplianceError, ComplianceResult, ComplianceConfig, FrameworkProcessingResult, ComplianceStatus};
-use crate::engine::{DataProcessingContext, ComplianceProcessor, DataBreachNotification};
+use crate::core::{
+    ComplianceConfig, ComplianceError, ComplianceResult, ComplianceStatus,
+    FrameworkProcessingResult,
+};
+use crate::engine::{ComplianceProcessor, DataBreachNotification, DataProcessingContext};
 use async_trait::async_trait;
 
 /// GDPR compliance processor
@@ -26,7 +29,11 @@ impl GdprProcessor {
 
 #[async_trait]
 impl ComplianceProcessor for GdprProcessor {
-    async fn process_data(&self, data: &[u8], context: &DataProcessingContext) -> ComplianceResult<FrameworkProcessingResult> {
+    async fn process_data(
+        &self,
+        data: &[u8],
+        context: &DataProcessingContext,
+    ) -> ComplianceResult<FrameworkProcessingResult> {
         // GDPR-specific data processing logic
         // Check for personal data, consent, lawful processing grounds, etc.
 
@@ -57,10 +64,14 @@ impl ComplianceProcessor for GdprProcessor {
         }))
     }
 
-    async fn handle_breach_notification(&self, breach: &DataBreachNotification) -> ComplianceResult<()> {
+    async fn handle_breach_notification(
+        &self,
+        breach: &DataBreachNotification,
+    ) -> ComplianceResult<()> {
         log::warn!("GDPR breach notification received: {}", breach.details);
 
-        if breach.affected_records > 100 || breach.severity == crate::core::AuditSeverity::Critical {
+        if breach.affected_records > 100 || breach.severity == crate::core::AuditSeverity::Critical
+        {
             log::error!("GDPR breach requires regulatory notification within 72 hours");
         }
 
@@ -78,7 +89,7 @@ impl GdprProcessor {
     pub async fn process_subject_access_request(
         &self,
         _subject_id: &str,
-        _request: &SubjectAccessRequest
+        _request: &SubjectAccessRequest,
     ) -> ComplianceResult<SubjectAccessResponse> {
         // Implementation for GDPR Article 15 - right of access
         Ok(SubjectAccessResponse {
@@ -88,10 +99,7 @@ impl GdprProcessor {
     }
 
     /// Process consent management
-    pub async fn process_consent(
-        &self,
-        _consent: &Consent
-    ) -> ComplianceResult<()> {
+    pub async fn process_consent(&self, _consent: &Consent) -> ComplianceResult<()> {
         // Implementation for GDPR consent management
         Ok(())
     }

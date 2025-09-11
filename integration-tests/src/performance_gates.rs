@@ -3,7 +3,7 @@
 //! Automated performance gate checking system that integrates with CI/CD pipelines
 //! to prevent performance regressions and ensure quality standards.
 
-use crate::{IntegrationTestResult, GlobalTestConfig};
+use crate::{GlobalTestConfig, IntegrationTestResult};
 use chrono::{DateTime, Utc};
 use rust_ai_ide_errors::RustAIError;
 use serde::{Deserialize, Serialize};
@@ -185,7 +185,8 @@ impl PerformanceGateChecker {
 
     /// Set performance threshold for a specific metric
     pub fn set_threshold(&mut self, metric_name: &str, threshold: PerformanceBaseline) {
-        self.baseline_metrics.insert(metric_name.to_string(), threshold);
+        self.baseline_metrics
+            .insert(metric_name.to_string(), threshold);
     }
 
     /// Execute all enabled performance gates
@@ -221,7 +222,10 @@ impl PerformanceGateChecker {
     }
 
     /// Collect performance measurements for a gate
-    async fn collect_measurements(&self, gate: &PerformanceGate) -> Result<Vec<PerformanceMeasurement>, RustAIError> {
+    async fn collect_measurements(
+        &self,
+        gate: &PerformanceGate,
+    ) -> Result<Vec<PerformanceMeasurement>, RustAIError> {
         // Simulate collecting real performance metrics
         // In practice, this would integrate with the actual performance measurement tools
 
@@ -265,28 +269,30 @@ impl PerformanceGateChecker {
 
         for measurement in measurements {
             if let Some(baseline) = self.baseline_metrics.get(&measurement.metric_name) {
-                let regression_percent = ((measurement.value - baseline.value) / baseline.value) * 100.0;
+                let regression_percent =
+                    ((measurement.value - baseline.value) / baseline.value) * 100.0;
 
                 // Check if regression exceeds threshold
                 if regression_percent.abs() > self.current_thresholds.max_regression_percent {
-                    let violation = PerformanceGateViolation {
-                        metric_name: measurement.metric_name.clone(),
-                        measured_value: measurement.value,
-                        baseline_value: baseline.value,
-                        threshold_percentage: self.current_thresholds.max_regression_percent,
-                        violation_type: if regression_percent > 0.0 {
-                            ViolationType::Regression
-                        } else {
-                            ViolationType::Degradation
-                        },
-                        severity: if regression_percent.abs() > 10.0 {
-                            ViolationSeverity::Critical
-                        } else if regression_percent.abs() > 7.0 {
-                            ViolationSeverity::High
-                        } else {
-                            ViolationSeverity::Medium
-                        },
-                        description: format!(
+                    let violation =
+                        PerformanceGateViolation {
+                            metric_name: measurement.metric_name.clone(),
+                            measured_value: measurement.value,
+                            baseline_value: baseline.value,
+                            threshold_percentage: self.current_thresholds.max_regression_percent,
+                            violation_type: if regression_percent > 0.0 {
+                                ViolationType::Regression
+                            } else {
+                                ViolationType::Degradation
+                            },
+                            severity: if regression_percent.abs() > 10.0 {
+                                ViolationSeverity::Critical
+                            } else if regression_percent.abs() > 7.0 {
+                                ViolationSeverity::High
+                            } else {
+                                ViolationSeverity::Medium
+                            },
+                            description: format!(
                             "Performance {} of {:.1}% detected in {} ({:.2} {} vs baseline {:.2})",
                             if regression_percent > 0.0 { "regression" } else { "improvement" },
                             regression_percent.abs(),
@@ -295,7 +301,7 @@ impl PerformanceGateChecker {
                             measurement.unit,
                             baseline.value
                         ),
-                    };
+                        };
 
                     violations.push(violation);
                 }
@@ -307,8 +313,12 @@ impl PerformanceGateChecker {
 
     /// Determine gate check status
     fn determine_gate_status(&self, violations: &[PerformanceGateViolation]) -> GateCheckStatus {
-        let has_critical = violations.iter().any(|v| matches!(v.severity, ViolationSeverity::Critical));
-        let has_high = violations.iter().any(|v| matches!(v.severity, ViolationSeverity::High));
+        let has_critical = violations
+            .iter()
+            .any(|v| matches!(v.severity, ViolationSeverity::Critical));
+        let has_high = violations
+            .iter()
+            .any(|v| matches!(v.severity, ViolationSeverity::High));
 
         if has_critical && self.gate_config.fail_on_regression {
             GateCheckStatus::Failed
@@ -332,18 +342,29 @@ impl PerformanceGateChecker {
                     ));
 
                     if violation.metric_name.contains("build") {
-                        recommendations.push("Consider incremental compilation or parallel builds".to_string());
+                        recommendations.push(
+                            "Consider incremental compilation or parallel builds".to_string(),
+                        );
                     } else if violation.metric_name.contains("memory") {
-                        recommendations.push("Review memory allocation patterns and consider memory pooling".to_string());
+                        recommendations.push(
+                            "Review memory allocation patterns and consider memory pooling"
+                                .to_string(),
+                        );
                     }
                 }
                 ViolationType::Degradation => {
                     if self.gate_config.strict_mode {
-                        recommendations.push(format!("Monitor {}.{} improvement trend", violation.metric_name, violation.violation_type));
+                        recommendations.push(format!(
+                            "Monitor {}.{} improvement trend",
+                            violation.metric_name, violation.violation_type
+                        ));
                     }
                 }
                 _ => {
-                    recommendations.push(format!("Investigate {}.{} anomaly", violation.metric_name, violation.violation_type));
+                    recommendations.push(format!(
+                        "Investigate {}.{} anomaly",
+                        violation.metric_name, violation.violation_type
+                    ));
                 }
             }
         }
@@ -354,9 +375,18 @@ impl PerformanceGateChecker {
     /// Get gate summary for CI/CD integration
     pub fn get_gate_summary(&self, results: &[GateCheckResult]) -> GateCheckSummary {
         let total_gates = results.len();
-        let passed_gates = results.iter().filter(|r| matches!(r.status, GateCheckStatus::Passed)).count();
-        let warning_gates = results.iter().filter(|r| matches!(r.status, GateCheckStatus::Warning)).count();
-        let failed_gates = results.iter().filter(|r| matches!(r.status, GateCheckStatus::Failed)).count();
+        let passed_gates = results
+            .iter()
+            .filter(|r| matches!(r.status, GateCheckStatus::Passed))
+            .count();
+        let warning_gates = results
+            .iter()
+            .filter(|r| matches!(r.status, GateCheckStatus::Warning))
+            .count();
+        let failed_gates = results
+            .iter()
+            .filter(|r| matches!(r.status, GateCheckStatus::Failed))
+            .count();
 
         let overall_status = if failed_gates > 0 {
             GateCheckStatus::Failed
@@ -367,7 +397,10 @@ impl PerformanceGateChecker {
         };
 
         let all_violations: Vec<_> = results.iter().flat_map(|r| r.violations.iter()).collect();
-        let all_recommendations: Vec<_> = results.iter().flat_map(|r| r.recommendations.iter()).collect();
+        let all_recommendations: Vec<_> = results
+            .iter()
+            .flat_map(|r| r.recommendations.iter())
+            .collect();
 
         GateCheckSummary {
             total_gates,

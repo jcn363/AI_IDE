@@ -1,9 +1,8 @@
+use crate::capability::get_cached_capabilities;
+use crate::error::{RecoveryStrategy, SIMDError, SIMDResult};
 /// SIMD-aligned memory management for optimal performance
-
 use std::alloc::{alloc, dealloc, Layout};
 use std::ptr::{null_mut, NonNull};
-use crate::error::{SIMDError, SIMDResult, RecoveryStrategy};
-use crate::capability::get_cached_capabilities;
 
 /// SIMD memory allocator for aligned memory allocation
 pub struct SIMDAllocator {
@@ -28,10 +27,11 @@ impl SIMDAllocator {
         let caps = get_cached_capabilities();
         let alignment = caps.recommended_alignment();
 
-        let size_bytes = count.checked_mul(std::mem::size_of::<T>())
-            .ok_or(SIMDError::MemoryAllocationError {
+        let size_bytes = count.checked_mul(std::mem::size_of::<T>()).ok_or(
+            SIMDError::MemoryAllocationError {
                 reason: "Integer overflow in size calculation".to_string(),
-            })?;
+            },
+        )?;
 
         // Ensure minimum alignment and natural alignment for type
         let alignment = alignment.max(std::mem::align_of::<T>());
@@ -43,10 +43,14 @@ impl SIMDAllocator {
             });
         }
 
-        let layout = Layout::from_size_align(size_bytes, alignment)
-            .map_err(|_| SIMDError::MemoryAllocationError {
-                reason: format!("Invalid layout for size {} and alignment {}", size_bytes, alignment),
-            })?;
+        let layout = Layout::from_size_align(size_bytes, alignment).map_err(|_| {
+            SIMDError::MemoryAllocationError {
+                reason: format!(
+                    "Invalid layout for size {} and alignment {}",
+                    size_bytes, alignment
+                ),
+            }
+        })?;
 
         // Use cached allocation if available
         let cache_key = format!("{}_{}_{}", std::any::type_name::<T>(), count, alignment);
@@ -61,11 +65,16 @@ impl SIMDAllocator {
         let ptr = unsafe { alloc(layout) };
         if ptr.is_null() {
             return Err(SIMDError::MemoryAllocationError {
-                reason: format!("Failed to allocate {} bytes aligned to {}", size_bytes, alignment),
+                reason: format!(
+                    "Failed to allocate {} bytes aligned to {}",
+                    size_bytes, alignment
+                ),
             });
         }
 
-        let allocation_count = self.allocation_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        let allocation_count = self
+            .allocation_count
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         tracing::debug!(
             "SIMD allocation #{}: {} bytes at alignment {}, type: {}",
             allocation_count,
@@ -114,7 +123,11 @@ impl SIMDAllocator {
                     // SSE4.1 prefetch instructions
                     std::arch::x86_64::_mm_prefetch(
                         data.as_ptr().add(i) as *const i8,
-                        if hint == PrefetchHint::NonTemporal { 0 } else { locality }
+                        if hint == PrefetchHint::NonTemporal {
+                            0
+                        } else {
+                            locality
+                        },
                     );
                 }
             }
@@ -141,10 +154,12 @@ impl SIMDAllocator {
         // Verify alignment
         let actual_alignment = data_ptr.as_ptr() as usize % std::mem::align_of::<T>();
         if actual_alignment != 0 {
-            unsafe { dealloc(ptr.as_ptr(), Layout::from_size_align_unchecked(
-                count * std::mem::size_of::<T>(),
-                alignment,
-            )); }
+            unsafe {
+                dealloc(
+                    ptr.as_ptr(),
+                    Layout::from_size_align_unchecked(count * std::mem::size_of::<T>(), alignment),
+                );
+            }
             return Err(SIMDError::AlignmentError {
                 required: std::mem::align_of::<T>(),
                 actual: actual_alignment,
@@ -162,7 +177,9 @@ impl SIMDAllocator {
     /// Get current allocation statistics
     pub fn stats(&self) -> AllocationStats {
         AllocationStats {
-            total_allocations: self.allocation_count.load(std::sync::atomic::Ordering::SeqCst),
+            total_allocations: self
+                .allocation_count
+                .load(std::sync::atomic::Ordering::SeqCst),
             cache_hits: 0, // TODO: Implement cache hit tracking
             cache_size: self.cache.run_pending_tasks(),
         }
@@ -424,7 +441,12 @@ mod tests {
     #[test]
     fn test_simd_allocator_creation() {
         let allocator = SIMDAllocator::new();
-        assert_eq!(allocator.allocation_count.load(std::sync::atomic::Ordering::SeqCst), 0);
+        assert_eq!(
+            allocator
+                .allocation_count
+                .load(std::sync::atomic::Ordering::SeqCst),
+            0
+        );
     }
 
     #[test]

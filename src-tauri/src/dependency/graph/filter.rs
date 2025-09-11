@@ -107,11 +107,20 @@ impl DependencyFilter {
 
     fn matches_node(&self, node: &super::node::DependencyNode) -> bool {
         // Check type filters
-        if !self.include_types.is_empty() && !node.dependencies.iter().any(|d| self.include_types.contains(&d.dep_type)) {
+        if !self.include_types.is_empty()
+            && !node
+                .dependencies
+                .iter()
+                .any(|d| self.include_types.contains(&d.dep_type))
+        {
             return false;
         }
 
-        if node.dependencies.iter().any(|d| self.exclude_types.contains(&d.dep_type)) {
+        if node
+            .dependencies
+            .iter()
+            .any(|d| self.exclude_types.contains(&d.dep_type))
+        {
             return false;
         }
 
@@ -175,13 +184,17 @@ impl DependencyFilter {
             keep.insert(node_idx);
 
             // Add all dependencies to the visit queue
-            for edge in graph.graph().edges_directed(node_idx, petgraph::Direction::Outgoing) {
+            for edge in graph
+                .graph()
+                .edges_directed(node_idx, petgraph::Direction::Outgoing)
+            {
                 to_visit.push((edge.target(), depth + 1));
             }
         }
 
         // Remove nodes not in the keep set
-        let to_remove: Vec<_> = graph.graph()
+        let to_remove: Vec<_> = graph
+            .graph()
             .node_indices()
             .filter(|&idx| !keep.contains(&idx))
             .collect();

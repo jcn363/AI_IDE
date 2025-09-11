@@ -1,12 +1,12 @@
-use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock, mpsc};
-use std::collections::{HashMap, HashSet};
 use rust_ai_ide_common::{IDEError, IDEErrorKind};
-use wasmtime::{Engine, Module, Store, Instance, Memory};
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
+use std::process::{Command, Stdio};
+use std::sync::Arc;
+use tokio::sync::{mpsc, Mutex, RwLock};
 use tokio::task::spawn_blocking;
 use tokio::time::{timeout, Duration};
-use std::process::{Stdio, Command};
-use serde::{Deserialize, Serialize};
+use wasmtime::{Engine, Instance, Memory, Module, Store};
 
 /// Plugin runtime for secure execution of IDE extensions
 pub struct PluginRuntime {
@@ -24,7 +24,8 @@ impl PluginRuntime {
         config.cranelift_opt_level(wasmtime::OptLevel::Speed);
         config.memory_init_cow(false);
 
-        let engine = Engine::new(&config).ok()
+        let engine = Engine::new(&config)
+            .ok()
             .expect("Failed to create WebAssembly engine");
 
         Self {
@@ -37,7 +38,11 @@ impl PluginRuntime {
         }
     }
 
-    pub async fn load_plugin(&self, plugin_path: &str, permissions: PluginPermissions) -> Result<String, IDEError> {
+    pub async fn load_plugin(
+        &self,
+        plugin_path: &str,
+        permissions: PluginPermissions,
+    ) -> Result<String, IDEError> {
         let plugin_id = uuid::Uuid::new_v4().to_string();
 
         // Validate plugin path
@@ -46,20 +51,28 @@ impl PluginRuntime {
         // Load WebAssembly module
         let module = spawn_blocking(move || {
             std::fs::read(plugin_path)
-                .map_err(|e| IDEError::new(IDEErrorKind::FileOperation, "Failed to read plugin file")
-                    .with_source(e))
+                .map_err(|e| {
+                    IDEError::new(IDEErrorKind::FileOperation, "Failed to read plugin file")
+                        .with_source(e)
+                })
                 .and_then(|bytes| {
                     //@ Validate WASM module
-                    wasmtime::Module::validate(&Engine::default(), &bytes)
-                        .map_err(|e| IDEError::new(IDEErrorKind::ValidationError, "Invalid WebAssembly module")
-                            .with_source(e))?;
+                    wasmtime::Module::validate(&Engine::default(), &bytes).map_err(|e| {
+                        IDEError::new(IDEErrorKind::ValidationError, "Invalid WebAssembly module")
+                            .with_source(e)
+                    })?;
                     Ok(bytes)
                 })
-        }).await??;
+        })
+        .await??;
 
-        let wasm_module = Module::new(&self.engine, &module)
-            .map_err(|e| IDEError::new(IDEErrorKind::ValidationError, "Failed to create WASM module")
-                .with_source(e))?;
+        let wasm_module = Module::new(&self.engine, &module).map_err(|e| {
+            IDEError::new(
+                IDEErrorKind::ValidationError,
+                "Failed to create WASM module",
+            )
+            .with_source(e)
+        })?;
 
         // Create plugin instance
         let plugin_instance = PluginInstance {
@@ -106,8 +119,12 @@ impl PluginRuntime {
         let plugin_instance = {
             let plugins = self.loaded_plugins.read().await;
             plugins.get(plugin_id).cloned()
-        }.ok_or_else(|| {
-            IDEError::new(IDEErrorKind::ResourceNotFound, format!("Plugin {} not loaded", plugin_id))
+        }
+        .ok_or_else(|| {
+            IDEError::new(
+                IDEErrorKind::ResourceNotFound,
+                format!("Plugin {} not loaded", plugin_id),
+            )
         })?;
 
         // Check permissions
@@ -123,20 +140,27 @@ impl PluginRuntime {
         if context.memory + input.len() > plugin_instance.memory_limit {
             return Err(IDEError::new(
                 IDEErrorKind::ResourceExhausted,
-                format!("Plugin memory limit exceeded: {}/{}", context.memory, plugin_instance.memory_limit)
+                format!(
+                    "Plugin memory limit exceeded: {}/{}",
+                    context.memory, plugin_instance.memory_limit
+                ),
             ));
         }
 
         // Schedule execution
-        let execution_token = self.plugin_scheduler.schedule_execution(
-            plugin_id.to_string(),
-            ExecutionPriority::Normal,
-        ).await?;
+        let execution_token = self
+            .plugin_scheduler
+            .schedule_execution(plugin_id.to_string(), ExecutionPriority::Normal)
+            .await?;
 
         // Execute with timeout
         let timeout_duration = plugin_instance.execution_timeout;
-        let result = timeout(timeout_duration, self.execute_plugin_internal(plugin_instance, input, &mut context)).await
-            .map_err(|_| IDEError::new(IDEErrorKind::Timeout, "Plugin execution timeout"))??;
+        let result = timeout(
+            timeout_duration,
+            self.execute_plugin_internal(plugin_instance, input, &mut context),
+        )
+        .await
+        .map_err(|_| IDEError::new(IDEErrorKind::Timeout, "Plugin execution timeout"))??;
 
         // Update context
         context.memory = context.memory.max(result.len());
@@ -149,9 +173,13 @@ impl PluginRuntime {
         }
 
         // Complete execution
-        self.plugin_scheduler.complete_execution(execution_token).await?;
+        self.plugin_scheduler
+            .complete_execution(execution_token)
+            .await?;
 
-        self.plugin_monitor.record_plugin_execution(plugin_id, result.len()).await;
+        self.plugin_monitor
+            .record_plugin_execution(plugin_id, result.len())
+            .await;
 
         Ok(result)
     }
@@ -169,26 +197,31 @@ impl PluginRuntime {
                 input: input.to_vec(),
                 output: Vec::new(),
                 memory: Memory::new(&mut store, wasmtime::MemoryType::new(1, Some(2)))
-                    .map_err(|e| IDEError::new(IDEErrorKind::MemoryError, "")
-                        .with_source(e))?,
+                    .map_err(|e| IDEError::new(IDEErrorKind::MemoryError, "").with_source(e))?,
             },
         );
 
         // Instantiate module
-        let instance = Instance::new(&mut store, &plugin_instance.module, &[])
-            .map_err(|e| IDEError::new(IDEErrorKind::ExecutionError, "Failed to instantiate plugin")
-                .with_source(e))?;
+        let instance = Instance::new(&mut store, &plugin_instance.module, &[]).map_err(|e| {
+            IDEError::new(IDEErrorKind::ExecutionError, "Failed to instantiate plugin")
+                .with_source(e)
+        })?;
 
         // Call main function
         let main_fn = instance
             .get_typed_func::<(u64, u64), u64>(&mut store, "_plugin_main")
-            .map_err(|e| IDEError::new(IDEErrorKind::ExecutionError, "Plugin missing main function")
-                .with_source(e))?;
+            .map_err(|e| {
+                IDEError::new(IDEErrorKind::ExecutionError, "Plugin missing main function")
+                    .with_source(e)
+            })?;
 
         let (input_ptr, input_len) = self.allocate_input(&store, input)?;
-        let result_ptr = main_fn.call(&mut store, (input_ptr, input_len as u64))
-            .map_err(|e| IDEError::new(IDEErrorKind::ExecutionError, "Plugin execution failed")
-                .with_source(e))?;
+        let result_ptr = main_fn
+            .call(&mut store, (input_ptr, input_len as u64))
+            .map_err(|e| {
+                IDEError::new(IDEErrorKind::ExecutionError, "Plugin execution failed")
+                    .with_source(e)
+            })?;
 
         // Extract output
         let output = self.extract_output(&store, result_ptr)?;
@@ -196,13 +229,21 @@ impl PluginRuntime {
         Ok(output)
     }
 
-    fn allocate_input(&self, _store: &Store<WasmtimeRuntimeData>, input: &[u8]) -> Result<(u64, u64), IDEError> {
+    fn allocate_input(
+        &self,
+        _store: &Store<WasmtimeRuntimeData>,
+        input: &[u8],
+    ) -> Result<(u64, u64), IDEError> {
         // Placeholder for WASM memory allocation
         // In a real implementation, this would allocate WASM memory and copy input
         Ok((0, input.len() as u64))
     }
 
-    fn extract_output(&self, _store: &Store<WasmtimeRuntimeData>, result_ptr: u64) -> Result<Vec<u8>, IDEError> {
+    fn extract_output(
+        &self,
+        _store: &Store<WasmtimeRuntimeData>,
+        result_ptr: u64,
+    ) -> Result<Vec<u8>, IDEError> {
         // Placeholder for extracting output from WASM memory
         Ok(vec![])
     }
@@ -236,24 +277,31 @@ impl PluginRuntime {
         if path.contains("..") || path.contains("\\") {
             return Err(IDEError::new(
                 IDEErrorKind::SecurityViolation,
-                "Plugin path contains invalid characters"
+                "Plugin path contains invalid characters",
             ));
         }
 
         if !std::path::Path::new(path).exists() {
             return Err(IDEError::new(
                 IDEErrorKind::FileOperation,
-                format!("Plugin file does not exist: {}", path)
+                format!("Plugin file does not exist: {}", path),
             ));
         }
 
         Ok(())
     }
 
-    async fn check_permissions(&self, plugin: &PluginInstance, operation: &str) -> Result<(), IDEError> {
+    async fn check_permissions(
+        &self,
+        plugin: &PluginInstance,
+        operation: &str,
+    ) -> Result<(), IDEError> {
         let perms = self.plugin_permissions.read().await;
         let permissions = perms.get(&plugin.id).ok_or_else(|| {
-            IDEError::new(IDEErrorKind::SecurityViolation, "No permissions found for plugin")
+            IDEError::new(
+                IDEErrorKind::SecurityViolation,
+                "No permissions found for plugin",
+            )
         })?;
 
         match operation {
@@ -261,27 +309,27 @@ impl PluginRuntime {
                 if !permissions.can_execute {
                     return Err(IDEError::new(
                         IDEErrorKind::SecurityViolation,
-                        "Plugin does not have execution permission"
+                        "Plugin does not have execution permission",
                     ));
                 }
-            },
+            }
             "filesystem" => {
                 if !permissions.can_access_filesystem {
                     return Err(IDEError::new(
                         IDEErrorKind::SecurityViolation,
-                        "Plugin does not have filesystem access permission"
+                        "Plugin does not have filesystem access permission",
                     ));
                 }
-            },
+            }
             "network" => {
                 if !permissions.can_make_network_requests {
                     return Err(IDEError::new(
                         IDEErrorKind::SecurityViolation,
-                        "Plugin does not have network access permission"
+                        "Plugin does not have network access permission",
                     ));
                 }
-            },
-            _ => {},
+            }
+            _ => {}
         }
 
         Ok(())
@@ -291,7 +339,8 @@ impl PluginRuntime {
         let plugins = self.loaded_plugins.read().await;
         let contexts = self.execution_contexts.lock().await;
 
-        plugins.keys()
+        plugins
+            .keys()
             .map(|id| {
                 let status = if let Some(context) = contexts.get(id) {
                     PluginStatus {
@@ -460,19 +509,26 @@ impl PluginMonitor {
         let load_events = self.load_events.lock().await;
         let execution_events = self.execution_events.lock().await;
 
-        let plugin_ids: HashSet<String> = load_events.iter()
-            .map(|e| e.plugin_id.clone())
-            .collect();
+        let plugin_ids: HashSet<String> = load_events.iter().map(|e| e.plugin_id.clone()).collect();
 
-        plugin_ids.iter()
+        plugin_ids
+            .iter()
             .map(|plugin_id| {
-                let loads = load_events.iter().filter(|e| &e.plugin_id == plugin_id).count();
-                let executions = execution_events.iter().filter(|e| &e.plugin_id == plugin_id);
+                let loads = load_events
+                    .iter()
+                    .filter(|e| &e.plugin_id == plugin_id)
+                    .count();
+                let executions = execution_events
+                    .iter()
+                    .filter(|e| &e.plugin_id == plugin_id);
 
                 let total_executions = executions.clone().count();
                 let successful_executions = executions.filter(|e| e.success).count();
                 let avg_execution_time = if total_executions > 0 {
-                    executions.map(|e| e.execution_time.as_millis()).sum::<u128>() / total_executions as u128
+                    executions
+                        .map(|e| e.execution_time.as_millis())
+                        .sum::<u128>()
+                        / total_executions as u128
                 } else {
                     0
                 };

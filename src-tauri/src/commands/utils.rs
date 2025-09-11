@@ -22,15 +22,20 @@ macro_rules! async_command {
     // Command with cached state access
     ($operation:expr, $cache_key:expr, $cache:ident, $state:expr, $body:block) => {{
         log::info!("{}", $operation);
-        $cache_key.map(|key| {
-            let cache_guard = async {
-                let cache = $state.read().await;
-                cache.get(&key).cloned()
-            };
-            cache_guard
-        }).flatten().unwrap_or_else(|| {
-            async move { $body }.await.map_err(|e| format!("{} failed: {}", $operation, e))
-        })
+        $cache_key
+            .map(|key| {
+                let cache_guard = async {
+                    let cache = $state.read().await;
+                    cache.get(&key).cloned()
+                };
+                cache_guard
+            })
+            .flatten()
+            .unwrap_or_else(|| {
+                async move { $body }
+                    .await
+                    .map_err(|e| format!("{} failed: {}", $operation, e))
+            })
     }};
 }
 

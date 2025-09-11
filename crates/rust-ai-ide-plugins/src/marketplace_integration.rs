@@ -1,11 +1,11 @@
-use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock, mpsc};
-use std::collections::{HashMap, HashSet};
-use rust_ai_ide_common::{IDEError, IDEErrorKind};  
-use serde::{Deserialize, Serialize};
-use std::time::{Duration, SystemTime};
-use moka::future::Cache;
 use crate::plugin_runtime::PluginPermissions;
+use moka::future::Cache;
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+use std::time::{Duration, SystemTime};
+use tokio::sync::{mpsc, Mutex, RwLock};
 
 /// Plugin marketplace integration system
 pub struct MarketplaceIntegration {
@@ -43,7 +43,11 @@ impl MarketplaceIntegration {
         }
     }
 
-    pub async fn browse_plugins(&self, category: Option<&str>, query: Option<&str>) -> Result<Vec<PluginInfo>, IDEError> {
+    pub async fn browse_plugins(
+        &self,
+        category: Option<&str>,
+        query: Option<&str>,
+    ) -> Result<Vec<PluginInfo>, IDEError> {
         let plugins = self.client.browse_plugins(category, query).await?;
         Ok(plugins)
     }
@@ -56,7 +60,10 @@ impl MarketplaceIntegration {
         let plugin_data = self.client.download_plugin_data(plugin_id).await?;
 
         // Validate plugin
-        let validated = self.validator.validate_plugin(&plugin_data, &plugin_info).await?;
+        let validated = self
+            .validator
+            .validate_plugin(&plugin_data, &plugin_info)
+            .await?;
 
         if let ValidationResult::Rejected(reason) = validated {
             return Err(IDEError::new(
@@ -66,19 +73,26 @@ impl MarketplaceIntegration {
         }
 
         // Install plugin
-        let install_path = self.installer.install_plugin(&plugin_data, &plugin_info).await?;
+        let install_path = self
+            .installer
+            .install_plugin(&plugin_data, &plugin_info)
+            .await?;
 
         // Update state
         let mut state = self.async_state.lock().await;
-        state.installed_plugins.insert(plugin_id.to_string(), plugin_info.clone());
-        state.installation_times.insert(plugin_id.to_string(), SystemTime::now());
+        state
+            .installed_plugins
+            .insert(plugin_id.to_string(), plugin_info.clone());
+        state
+            .installation_times
+            .insert(plugin_id.to_string(), SystemTime::now());
 
         Ok(install_path)
     }
 
     pub async fn uninstall_plugin(&self, plugin_id: &str) -> Result<(), IDEError> {
         self.installer.uninstall_plugin(plugin_id).await?;
-        
+
         let mut state = self.async_state.lock().await;
         state.installed_plugins.remove(plugin_id);
         state.installation_times.remove(plugin_id);
@@ -90,9 +104,14 @@ impl MarketplaceIntegration {
         self.update_manager.update_plugin(plugin_id).await
     }
 
-    pub async fn rate_plugin(&self, plugin_id: &str, rating: f64, review: &str) -> Result<(), IDEError> {
+    pub async fn rate_plugin(
+        &self,
+        plugin_id: &str,
+        rating: f64,
+        review: &str,
+    ) -> Result<(), IDEError> {
         let reviewer_id = "current_user"; // Would be actual user ID
-        
+
         let review = PluginReview {
             plugin_id: plugin_id.to_string(),
             reviewer_id: reviewer_id.to_string(),
@@ -107,14 +126,16 @@ impl MarketplaceIntegration {
 
     pub async fn get_plugin_details(&self, plugin_id: &str) -> Result<PluginDetails, IDEError> {
         let state = self.async_state.lock().await;
-        
-        let basic_info = state.installed_plugins.get(plugin_id)
+
+        let basic_info = state
+            .installed_plugins
+            .get(plugin_id)
             .cloned()
             .ok_or_else(|| IDEError::new(IDEErrorKind::ResourceNotFound, "Plugin not installed"))?;
 
         let reviews = self.rating_system.get_reviews(plugin_id).await?;
         let average_rating = self.rating_system.get_average_rating(plugin_id).await?;
-        
+
         Ok(PluginDetails {
             info: basic_info,
             reviews_count: reviews.len(),
@@ -141,7 +162,7 @@ impl MarketplaceIntegration {
 
         loop {
             let _ = interval.tick().await;
-            
+
             // Check for plugin updates
             if let Ok(updates) = update_manager.check_for_updates().await {
                 for update in updates {
@@ -151,7 +172,7 @@ impl MarketplaceIntegration {
                         severity: UpdateSeverity::Normal,
                         description: "Plugin update available".to_string(),
                     };
-                    
+
                     let _ = receiver.try_send(notification);
                 }
             }
@@ -185,34 +206,45 @@ impl MarketplaceClient {
         }
     }
 
-    pub async fn browse_plugins(&self, category: Option<&str>, query: Option<&str>) -> Result<Vec<PluginInfo>, IDEError> {
+    pub async fn browse_plugins(
+        &self,
+        category: Option<&str>,
+        query: Option<&str>,
+    ) -> Result<Vec<PluginInfo>, IDEError> {
         let mut params = vec![];
-        
+
         if let Some(cat) = category {
             params.push(("category", cat));
         }
-        
+
         if let Some(q) = query {
             params.push(("search", q));
         }
 
         let cache_key = format!("browse:{:p}:{:p}", category, query); // Use pointer addresses as cache key
-        
+
         if let Some(cached_response) = self.cache.get(&cache_key).await {
             return Ok(cached_response.plugins.clone());
         }
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .get(&format!("{}/api/plugins", self.base_url))
             .query(&params)
             .send()
             .await
-            .map_err(|e| IDEError::new(IDEErrorKind::NetworkError, "Failed to fetch plugins")
-                .with_source(e))?
+            .map_err(|e| {
+                IDEError::new(IDEErrorKind::NetworkError, "Failed to fetch plugins").with_source(e)
+            })?
             .json::<MarketplaceResponse>()
             .await
-            .map_err(|e| IDEError::new(IDEErrorKind::Deserialization, "Failed to parse plugin response")
-                .with_source(e))?;
+            .map_err(|e| {
+                IDEError::new(
+                    IDEErrorKind::Deserialization,
+                    "Failed to parse plugin response",
+                )
+                .with_source(e)
+            })?;
 
         let plugins = response.plugins.clone();
         self.cache.insert(cache_key, response).await;
@@ -227,27 +259,38 @@ impl MarketplaceClient {
             return Ok(cached_response.info.unwrap());
         }
 
-        let plugin_info: PluginInfo = self.http_client
+        let plugin_info: PluginInfo = self
+            .http_client
             .get(&format!("{}/api/plugins/{}", self.base_url, plugin_id))
             .send()
             .await
-            .map_err(|e| IDEError::new(IDEErrorKind::NetworkError, "Failed to fetch plugin info")
-                .with_source(e))?
+            .map_err(|e| {
+                IDEError::new(IDEErrorKind::NetworkError, "Failed to fetch plugin info")
+                    .with_source(e)
+            })?
             .json()
             .await
-            .map_err(|e| IDEError::new(IDEErrorKind::Deserialization, "Failed to parse plugin info")
-                .with_source(e))?;
+            .map_err(|e| {
+                IDEError::new(IDEErrorKind::Deserialization, "Failed to parse plugin info")
+                    .with_source(e)
+            })?;
 
         Ok(plugin_info)
     }
 
     pub async fn download_plugin_data(&self, plugin_id: &str) -> Result<Vec<u8>, IDEError> {
-        let response = self.http_client
-            .get(&format!("{}/api/plugins/{}/download", self.base_url, plugin_id))
+        let response = self
+            .http_client
+            .get(&format!(
+                "{}/api/plugins/{}/download",
+                self.base_url, plugin_id
+            ))
             .send()
             .await
-            .map_err(|e| IDEError::new(IDEErrorKind::NetworkError, "Failed to download plugin")
-                .with_source(e))?;
+            .map_err(|e| {
+                IDEError::new(IDEErrorKind::NetworkError, "Failed to download plugin")
+                    .with_source(e)
+            })?;
 
         if !response.status().is_success() {
             return Err(IDEError::new(
@@ -256,9 +299,9 @@ impl MarketplaceClient {
             ));
         }
 
-        let bytes = response.bytes().await
-            .map_err(|e| IDEError::new(IDEErrorKind::NetworkError, "Failed to read plugin data")
-                .with_source(e))?;
+        let bytes = response.bytes().await.map_err(|e| {
+            IDEError::new(IDEErrorKind::NetworkError, "Failed to read plugin data").with_source(e)
+        })?;
 
         Ok(bytes.to_vec())
     }
@@ -278,17 +321,27 @@ impl PluginValidator {
         }
     }
 
-    pub async fn validate_plugin(&self, plugin_data: &[u8], plugin_info: &PluginInfo) -> Result<ValidationResult, IDEError> {
+    pub async fn validate_plugin(
+        &self,
+        plugin_data: &[u8],
+        plugin_info: &PluginInfo,
+    ) -> Result<ValidationResult, IDEError> {
         // Security validation
         let security_result = self.security_scanner.scan_plugin(plugin_data).await?;
-        
+
         if let SecurityScanResult::Dangerous(reasons) = security_result {
-            return Ok(ValidationResult::Rejected(format!("Security violations: {:?}", reasons)));
+            return Ok(ValidationResult::Rejected(format!(
+                "Security violations: {:?}",
+                reasons
+            )));
         }
 
         // Compatibility check
-        let compatibility_result = self.compatibility_checker.check_compatibility(plugin_info).await?;
-        
+        let compatibility_result = self
+            .compatibility_checker
+            .check_compatibility(plugin_info)
+            .await?;
+
         if let CompatibilityResult::Incompatible(reason) = compatibility_result {
             return Ok(ValidationResult::Rejected(reason));
         }
@@ -311,22 +364,35 @@ impl PluginInstaller {
         }
     }
 
-    pub async fn install_plugin(&self, plugin_data: &[u8], plugin_info: &PluginInfo) -> Result<String, IDEError> {
+    pub async fn install_plugin(
+        &self,
+        plugin_data: &[u8],
+        plugin_info: &PluginInfo,
+    ) -> Result<String, IDEError> {
         // Create plugin directory
         let plugin_dir = format!("{}/{}", self.install_directory, plugin_info.id);
-        tokio::fs::create_dir_all(&plugin_dir).await
-            .map_err(|e| IDEError::new(IDEErrorKind::FileOperation, "Failed to create plugin directory")
-                .with_source(e))?;
+        tokio::fs::create_dir_all(&plugin_dir).await.map_err(|e| {
+            IDEError::new(
+                IDEErrorKind::FileOperation,
+                "Failed to create plugin directory",
+            )
+            .with_source(e)
+        })?;
 
         // Write plugin data
         let plugin_path = format!("{}/plugin.wasm", plugin_dir);
-        tokio::fs::write(&plugin_path, plugin_data).await
-            .map_err(|e| IDEError::new(IDEErrorKind::FileOperation, "Failed to write plugin file")
-                .with_source(e))?;
+        tokio::fs::write(&plugin_path, plugin_data)
+            .await
+            .map_err(|e| {
+                IDEError::new(IDEErrorKind::FileOperation, "Failed to write plugin file")
+                    .with_source(e)
+            })?;
 
         // Install dependencies if any
         if !plugin_info.dependencies.is_empty() {
-            self.dependency_resolver.resolve_dependencies(&plugin_info.dependencies).await?;
+            self.dependency_resolver
+                .resolve_dependencies(&plugin_info.dependencies)
+                .await?;
         }
 
         Ok(plugin_path)
@@ -334,9 +400,13 @@ impl PluginInstaller {
 
     pub async fn uninstall_plugin(&self, plugin_id: &str) -> Result<(), IDEError> {
         let plugin_dir = format!("{}/{}", self.install_directory, plugin_id);
-        tokio::fs::remove_dir_all(&plugin_dir).await
-            .map_err(|e| IDEError::new(IDEErrorKind::FileOperation, "Failed to remove plugin directory")
-                .with_source(e))?;
+        tokio::fs::remove_dir_all(&plugin_dir).await.map_err(|e| {
+            IDEError::new(
+                IDEErrorKind::FileOperation,
+                "Failed to remove plugin directory",
+            )
+            .with_source(e)
+        })?;
 
         Ok(())
     }
@@ -381,7 +451,8 @@ impl PluginRatingSystem {
 
     pub async fn submit_review(&self, review: PluginReview) -> Result<(), IDEError> {
         let mut reviews = self.reviews.write().await;
-        reviews.entry(review.plugin_id.clone())
+        reviews
+            .entry(review.plugin_id.clone())
             .or_insert_with(Vec::new)
             .push(review);
         Ok(())
@@ -389,19 +460,20 @@ impl PluginRatingSystem {
 
     pub async fn get_reviews(&self, plugin_id: &str) -> Result<Vec<PluginReview>, IDEError> {
         let reviews = self.reviews.read().await;
-        Ok(reviews.get(plugin_id)
+        Ok(reviews
+            .get(plugin_id)
             .map(|r| r.clone())
             .unwrap_or_default())
     }
 
     pub async fn get_average_rating(&self, plugin_id: &str) -> Result<f64, IDEError> {
         let reviews = self.reviews.read().await;
-        
+
         if let Some(plugin_reviews) = reviews.get(plugin_id) {
             if plugin_reviews.is_empty() {
                 return Ok(0.0);
             }
-            
+
             let sum: f64 = plugin_reviews.iter().map(|r| r.rating).sum();
             Ok(sum / plugin_reviews.len() as f64)
         } else {
@@ -514,7 +586,9 @@ pub enum CompatibilityResult {
 // Placeholder implementations for supporting classes
 pub struct SecurityScanner;
 impl SecurityScanner {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
     pub async fn scan_plugin(&self, _data: &[u8]) -> Result<SecurityScanResult, IDEError> {
         Ok(SecurityScanResult::Safe)
     }
@@ -522,15 +596,22 @@ impl SecurityScanner {
 
 pub struct CompatibilityChecker;
 impl CompatibilityChecker {
-    pub fn new() -> Self { Self }
-    pub async fn check_compatibility(&self, _plugin: &PluginInfo) -> Result<CompatibilityResult, IDEError> {
+    pub fn new() -> Self {
+        Self
+    }
+    pub async fn check_compatibility(
+        &self,
+        _plugin: &PluginInfo,
+    ) -> Result<CompatibilityResult, IDEError> {
         Ok(CompatibilityResult::Compatible("Placeholder".to_string()))
     }
 }
 
 pub struct DependencyResolver;
 impl DependencyResolver {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
     pub async fn resolve_dependencies(&self, _deps: &[String]) -> Result<(), IDEError> {
         Ok(())
     }

@@ -1,7 +1,7 @@
-use std::path::{Path, PathBuf};
-use std::fs;
-use tempfile::{TempDir, NamedTempFile};
 use crate::error::TestError;
+use std::fs;
+use std::path::{Path, PathBuf};
+use tempfile::{NamedTempFile, TempDir};
 
 /// A temporary workspace for tests that automatically cleans up after test completion
 // Prepared for shared test workspace management across crates
@@ -69,8 +69,7 @@ impl TempWorkspace {
 
     /// Creates a temporary file within the workspace
     pub fn create_temp_file(&self, _prefix: &str) -> Result<NamedTempFile, TestError> {
-        NamedTempFile::new_in(self.path())
-            .map_err(|e| TestError::Io(e.to_string()))
+        NamedTempFile::new_in(self.path()).map_err(|e| TestError::Io(e.to_string()))
     }
 
     /// Returns all files and directories in the workspace
@@ -85,7 +84,11 @@ impl TempWorkspace {
             let entry = entry.map_err(|e| TestError::Io(e.to_string()))?;
             entries.push(entry.path());
 
-            if entry.file_type().map_err(|e| TestError::Io(e.to_string()))?.is_dir() {
+            if entry
+                .file_type()
+                .map_err(|e| TestError::Io(e.to_string()))?
+                .is_dir()
+            {
                 self.collect_entries(entries, &entry.path())?;
             }
         }
@@ -107,7 +110,8 @@ impl TempWorkspace {
     pub fn setup_basic_project(&self) -> Result<(), TestError> {
         self.create_dir(Path::new("src"))?;
         self.create_dir(Path::new("tests"))?;
-        self.create_file(Path::new("Cargo.toml"),
+        self.create_file(
+            Path::new("Cargo.toml"),
             r#"[package]
 name = "test-project"
 version = "0.1.0"
@@ -115,11 +119,14 @@ edition = "2021"
 
 [dependencies]
 tokio = "1.0"
-"#)?;
-        self.create_file(Path::new("src/lib.rs"),
+"#,
+        )?;
+        self.create_file(
+            Path::new("src/lib.rs"),
             r#"pub fn hello() -> &'static str {
     "Hello from test project!"
-}"#)?;
+}"#,
+        )?;
         Ok(())
     }
 
@@ -130,7 +137,8 @@ tokio = "1.0"
             TestScenario::WithTests => {
                 self.setup_basic_project()?;
                 self.create_dir(Path::new("tests/integration"))?;
-                self.create_file(Path::new("tests/lib_test.rs"),
+                self.create_file(
+                    Path::new("tests/lib_test.rs"),
                     r#"#[cfg(test)]
 mod tests {
     use super::*;
@@ -139,7 +147,8 @@ mod tests {
     fn test_hello() {
         assert_eq!(hello(), "Hello from test project!");
     }
-}"#)
+}"#,
+                )
             }
             TestScenario::Empty => Ok(()),
         }

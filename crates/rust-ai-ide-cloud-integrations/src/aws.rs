@@ -1,11 +1,11 @@
+use crate::types::{CloudAuth, CloudResource};
+use crate::CloudProvider;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
-use anyhow::{Result, Context};
+use aws_config::{BehaviorVersion, Region};
+use aws_sdk_s3::{Client as S3Client, Config as S3Config, Error as S3Error};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use aws_sdk_s3::{Client as S3Client, Config as S3Config, Error as S3Error};
-use aws_config::{BehaviorVersion, Region};
-use crate::types::{CloudAuth, CloudResource};
-use crate::{CloudProvider};
 
 /// AWS-specific configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,16 +32,11 @@ impl CloudProvider for AwsClient {
             .load()
             .await;
 
-        let s3_config = S3Config::builder()
-            .defaults(shared_config)
-            .build();
+        let s3_config = S3Config::builder().defaults(shared_config).build();
 
         let s3_client = S3Client::from_conf(s3_config);
 
-        Ok(Self {
-            s3_client,
-            config,
-        })
+        Ok(Self { s3_client, config })
     }
 
     async fn list_resources(&self, resource_type: &str) -> Result<Vec<CloudResource>> {
@@ -54,7 +49,10 @@ impl CloudProvider for AwsClient {
     async fn deploy_resource(&self, resource: &CloudResource) -> Result<String> {
         match resource.resource_type.as_str() {
             "s3" => self.create_s3_bucket(&resource.name).await,
-            _ => Err(anyhow::anyhow!("Unsupported AWS resource type: {}", resource.resource_type)),
+            _ => Err(anyhow::anyhow!(
+                "Unsupported AWS resource type: {}",
+                resource.resource_type
+            )),
         }
     }
 
@@ -74,7 +72,10 @@ impl CloudProvider for AwsClient {
             let bucket = &resource_id[5..]; // Remove s3:// prefix
             self.delete_s3_bucket(bucket).await
         } else {
-            Err(anyhow::anyhow!("Unsupported AWS resource type for deletion: {}", resource_id))
+            Err(anyhow::anyhow!(
+                "Unsupported AWS resource type for deletion: {}",
+                resource_id
+            ))
         }
     }
 }
@@ -88,7 +89,12 @@ impl AwsClient {
         if let Some(buckets) = resp.buckets {
             for bucket in buckets {
                 if let Some(name) = bucket.name {
-                    let created_at = bucket.creation_date.and_then(|dt| Some(chrono::DateTime::<chrono::Utc>::from_utc(dt.to_chrono(), chrono::Utc)));
+                    let created_at = bucket.creation_date.and_then(|dt| {
+                        Some(chrono::DateTime::<chrono::Utc>::from_utc(
+                            dt.to_chrono(),
+                            chrono::Utc,
+                        ))
+                    });
                     let resource = CloudResource {
                         id: format!("s3://{}", name),
                         name,

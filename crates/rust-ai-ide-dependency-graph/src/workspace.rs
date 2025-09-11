@@ -1,10 +1,10 @@
 //! Workspace-aware dependency management
 
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
-use tokio::sync::RwLock;
 use std::sync::Arc;
+use tokio::sync::RwLock;
 
 use crate::error::*;
 use crate::graph::*;
@@ -135,7 +135,9 @@ impl WorkspaceResolver {
     }
 
     /// Resolve workspace-internal dependencies
-    pub async fn resolve_workspace_dependencies(&self) -> DependencyResult<WorkspaceResolutionResult> {
+    pub async fn resolve_workspace_dependencies(
+        &self,
+    ) -> DependencyResult<WorkspaceResolutionResult> {
         let mut internal_deps = HashMap::new();
         let mut external_deps = HashMap::new();
         let mut version_conflicts = Vec::new();
@@ -146,12 +148,14 @@ impl WorkspaceResolver {
             for dep in &member.dependencies {
                 if self.members.contains_key(dep) {
                     // Internal workspace dependency
-                    internal_deps.entry(package_name.clone())
+                    internal_deps
+                        .entry(package_name.clone())
                         .or_insert_with(Vec::new)
                         .push(dep.clone());
                 } else {
                     // External dependency
-                    external_deps.entry(package_name.clone())
+                    external_deps
+                        .entry(package_name.clone())
                         .or_insert_with(Vec::new)
                         .push(dep.clone());
                 }
@@ -166,11 +170,16 @@ impl WorkspaceResolver {
             internal_dependencies: internal_deps,
             external_dependencies: external_deps,
             version_conflicts,
-            resolution_suggestions: self.generate_resolution_suggestions(&version_conflicts).await?,
+            resolution_suggestions: self
+                .generate_resolution_suggestions(&version_conflicts)
+                .await?,
         })
     }
 
-    fn analyze_version_conflicts(&self, internal_deps: &HashMap<String, Vec<String>>) -> DependencyResult<Vec<VersionConflict>> {
+    fn analyze_version_conflicts(
+        &self,
+        internal_deps: &HashMap<String, Vec<String>>,
+    ) -> DependencyResult<Vec<VersionConflict>> {
         let mut conflicts = Vec::new();
         let mut dep_usage = HashMap::new();
 
@@ -194,13 +203,17 @@ impl WorkspaceResolver {
                 if packages_using.len() > 1 {
                     conflicts.push(VersionConflict {
                         package_name: dep,
-                        constraints: packages_using.iter().enumerate().map(|(i, pkg)| {
-                            PackageConstraint {
-                                source_package: pkg.clone(),
-                                version_req: "*".to_string(), // Placeholder
-                                depth: i,
-                            }
-                        }).collect(),
+                        constraints: packages_using
+                            .iter()
+                            .enumerate()
+                            .map(|(i, pkg)| {
+                                PackageConstraint {
+                                    source_package: pkg.clone(),
+                                    version_req: "*".to_string(), // Placeholder
+                                    depth: i,
+                                }
+                            })
+                            .collect(),
                         suggested_resolution: None,
                         conflict_level: ConflictLevel::Warning,
                     });
@@ -211,7 +224,10 @@ impl WorkspaceResolver {
         Ok(conflicts)
     }
 
-    async fn generate_resolution_suggestions(&self, conflicts: &[VersionConflict]) -> DependencyResult<Vec<String>> {
+    async fn generate_resolution_suggestions(
+        &self,
+        conflicts: &[VersionConflict],
+    ) -> DependencyResult<Vec<String>> {
         let mut suggestions = Vec::new();
 
         for conflict in conflicts {
@@ -262,7 +278,8 @@ impl WorkspaceResolver {
 
     /// Get workspace dependency paths
     pub fn get_workspace_paths(&self) -> Vec<PathBuf> {
-        self.members.values()
+        self.members
+            .values()
             .map(|member| member.path.clone())
             .collect()
     }
@@ -294,7 +311,9 @@ impl WorkspaceResolver {
     /// Get workspace statistics
     pub fn get_workspace_stats(&self) -> WorkspaceStats {
         let total_members = self.members.len();
-        let published_count = self.members.values()
+        let published_count = self
+            .members
+            .values()
             .filter(|m| matches!(m.status, PublicationStatus::Published { .. }))
             .count();
         let unpublished_count = total_members - published_count;
@@ -368,7 +387,9 @@ impl WorkspaceAwareManager {
     }
 
     /// Perform workspace-aware dependency resolution
-    pub async fn resolve_workspace_dependencies(&self) -> DependencyResult<WorkspaceResolutionResult> {
+    pub async fn resolve_workspace_dependencies(
+        &self,
+    ) -> DependencyResult<WorkspaceResolutionResult> {
         self.resolver.resolve_workspace_dependencies().await
     }
 
@@ -460,8 +481,8 @@ impl WorkspaceAnalysis {
         score -= self.resolution.version_conflicts.len() as f64 * 5.0;
 
         // Deduct for integrity issues
-        let integrity_issues = self.graph_integrity_check.missing_workspace_members.len() +
-                             self.graph_integrity_check.incorrect_workspace_marking.len();
+        let integrity_issues = self.graph_integrity_check.missing_workspace_members.len()
+            + self.graph_integrity_check.incorrect_workspace_marking.len();
         score -= integrity_issues as f64 * 10.0;
 
         // Deduct for low workspace coverage

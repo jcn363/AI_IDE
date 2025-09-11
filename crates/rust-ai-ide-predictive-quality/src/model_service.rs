@@ -3,15 +3,15 @@
 //! Integrates with Phase 2.1 model quantization infrastructure for
 //! ML-powered predictive quality intelligence capabilities.
 
-use std::sync::Arc;
-use tokio::sync::RwLock;
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 use rust_ai_ide_ai_inference::InferenceEngine;
-use rust_ai_ide_ai_quantization::{QuantizationEngine, GGUFModel, QuantizationMetrics};
+use rust_ai_ide_ai_quantization::{GGUFModel, QuantizationEngine, QuantizationMetrics};
 
 /// Core predictive model service
 pub struct PredictiveModelService {
@@ -55,7 +55,10 @@ impl PredictiveModelService {
         let model_arc = Arc::new(model_instance);
 
         // Cache the loaded model
-        self.active_models.write().await.insert(model_key, Arc::clone(&model_arc));
+        self.active_models
+            .write()
+            .await
+            .insert(model_key, Arc::clone(&model_arc));
 
         Ok(model_arc)
     }

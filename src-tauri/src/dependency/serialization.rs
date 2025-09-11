@@ -1,8 +1,8 @@
 //! Serialization logic for dependency graphs
 
 use super::models::*;
-use serde::{Serialize, Deserialize};
 use petgraph::visit::EdgeRef;
+use serde::{Deserialize, Serialize};
 use serde_json;
 
 /// Supported export formats for the dependency graph
@@ -16,7 +16,10 @@ pub enum ExportFormat {
 }
 
 /// Export a dependency graph to the specified format
-pub fn export_graph(graph: &DependencyGraph, format: ExportFormat) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+pub fn export_graph(
+    graph: &DependencyGraph,
+    format: ExportFormat,
+) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     match format {
         ExportFormat::Dot => export_dot(graph),
         ExportFormat::Json => export_json(graph),
@@ -31,14 +34,28 @@ fn export_dot(graph: &DependencyGraph) -> Result<Vec<u8>, Box<dyn std::error::Er
     for node_idx in graph.graph.node_indices() {
         if let Some(node) = graph.graph.node_weight(node_idx) {
             let label = format!("{}@{}", node.name, node.version);
-            let shape = if node.is_workspace() { "doubleoctagon" } else { "box" };
-            let style = if node.is_workspace() { "filled" } else { "rounded" };
-            let color = if node.is_workspace() { "#d4f1f9" } else { "#ffffff" };
+            let shape = if node.is_workspace() {
+                "doubleoctagon"
+            } else {
+                "box"
+            };
+            let style = if node.is_workspace() {
+                "filled"
+            } else {
+                "rounded"
+            };
+            let color = if node.is_workspace() {
+                "#d4f1f9"
+            } else {
+                "#ffffff"
+            };
 
             output.extend_from_slice(
-                format!("  \"{}:{}\" [label=\"{}\" shape={} style=\"{} \" fillcolor=\"{}\"]\n",
+                format!(
+                    "  \"{}:{}\" [label=\"{}\" shape={} style=\"{} \" fillcolor=\"{}\"]\n",
                     node.name, node.version, label, shape, style, color
-                ).as_bytes()
+                )
+                .as_bytes(),
             );
         }
     }
@@ -57,11 +74,11 @@ fn export_dot(graph: &DependencyGraph) -> Result<Vec<u8>, Box<dyn std::error::Er
             };
 
             output.extend_from_slice(
-                format!("  \"{}:{}\" -> \"{}:{}\" {}\n",
-                    source.name, source.version,
-                    target.name, target.version,
-                    style
-                ).as_bytes()
+                format!(
+                    "  \"{}:{}\" -> \"{}:{}\" {}\n",
+                    source.name, source.version, target.name, target.version, style
+                )
+                .as_bytes(),
             );
         }
     }
@@ -124,4 +141,4 @@ fn export_json(graph: &DependencyGraph) -> Result<Vec<u8>, Box<dyn std::error::E
     Ok(serde_json::to_vec_pretty(&export)?)
 }
 
-pub use self::{ExportFormat, export_graph};
+pub use self::{export_graph, ExportFormat};

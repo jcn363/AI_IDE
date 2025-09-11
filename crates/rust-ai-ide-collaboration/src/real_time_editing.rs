@@ -3,9 +3,9 @@
 //! Implements Conflict-Free Replicated Data Types for distributed text editing,
 //! operational transforms for efficient synchronization, and intelligent merge policies.
 
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Core collaborative editing service
@@ -107,28 +107,31 @@ impl RealTimeEditingService {
         site_id: u32,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut documents = self.documents.write().await;
-        let doc_state = documents.get_mut(&document_id)
+        let doc_state = documents
+            .get_mut(&document_id)
             .ok_or_else(|| format!("Document {} not found", document_id))?;
 
         // Apply the operation to the CRDT
         doc_state.crdt.apply_operation(operation.clone(), site_id)?;
 
         // Add to operations log
-        doc_state.operations_log.push(Operation::InsertOp(InsertOperation {
-            id: Uuid::new_v4(),
-            position: match &operation {
-                CRDTOperation::Insert { pos, .. } => *pos,
-                CRDTOperation::Delete { pos, .. } => *pos,
-            },
-            content: match &operation {
-                CRDTOperation::Insert { char, .. } => char.to_string(),
-                CRDTOperation::Delete { .. } => "".to_string(),
-            },
-            site_id,
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)?
-                .as_millis() as u64,
-        }));
+        doc_state
+            .operations_log
+            .push(Operation::InsertOp(InsertOperation {
+                id: Uuid::new_v4(),
+                position: match &operation {
+                    CRDTOperation::Insert { pos, .. } => *pos,
+                    CRDTOperation::Delete { pos, .. } => *pos,
+                },
+                content: match &operation {
+                    CRDTOperation::Insert { char, .. } => char.to_string(),
+                    CRDTOperation::Delete { .. } => "".to_string(),
+                },
+                site_id,
+                timestamp: std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)?
+                    .as_millis() as u64,
+            }));
 
         Ok(())
     }
@@ -142,14 +145,17 @@ impl RealTimeEditingService {
         user_id: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut documents = self.documents.write().await;
-        let doc_state = documents.get_mut(&document_id)
+        let doc_state = documents
+            .get_mut(&document_id)
             .ok_or_else(|| format!("Document {} not found", document_id))?;
 
         // Resolve conflicts using the merge policy
-        let resolved_operation = self.resolve_conflicts(&operation, &merge_policy, &doc_state.operations_log)?;
+        let resolved_operation =
+            self.resolve_conflicts(&operation, &merge_policy, &doc_state.operations_log)?;
 
         // Transform the operation against concurrent operations
-        let transformed_operation = self.transform_operation(resolved_operation, &doc_state.operations_log)?;
+        let transformed_operation =
+            self.transform_operation(resolved_operation, &doc_state.operations_log)?;
 
         // Apply the transformed operation
         self.apply_operation_to_document(&mut doc_state.crdt, &transformed_operation)?;
@@ -168,12 +174,15 @@ impl RealTimeEditingService {
         merge_policy: MergePolicy,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut documents = self.documents.write().await;
-        let doc_state = documents.get_mut(&document_id)
+        let doc_state = documents
+            .get_mut(&document_id)
             .ok_or_else(|| format!("Document {} not found", document_id))?;
 
         for operation in operations {
-            let resolved_operation = self.resolve_conflicts(&operation, &merge_policy, &doc_state.operations_log)?;
-            let transformed_operation = self.transform_operation(resolved_operation, &doc_state.operations_log)?;
+            let resolved_operation =
+                self.resolve_conflicts(&operation, &merge_policy, &doc_state.operations_log)?;
+            let transformed_operation =
+                self.transform_operation(resolved_operation, &doc_state.operations_log)?;
 
             self.apply_operation_to_document(&mut doc_state.crdt, &transformed_operation)?;
             doc_state.operations_log.push(transformed_operation);
@@ -186,7 +195,7 @@ impl RealTimeEditingService {
         &self,
         operation: &Operation,
         _policy: &MergePolicy,
-        log: &[Operation]
+        log: &[Operation],
     ) -> Result<Operation, Box<dyn std::error::Error>> {
         // Simple conflict resolution - latest timestamp wins
         // Real implementation would handle complex conflict resolution logic
@@ -196,7 +205,7 @@ impl RealTimeEditingService {
     fn transform_operation(
         &self,
         operation: Operation,
-        log: &[Operation]
+        log: &[Operation],
     ) -> Result<Operation, Box<dyn std::error::Error>> {
         // Operational transformation implementation
         // Transform the incoming operation to account for other operations that have occurred
@@ -212,7 +221,7 @@ impl RealTimeEditingService {
     fn transform_against(
         &self,
         mut incoming: Operation,
-        existing: &Operation
+        existing: &Operation,
     ) -> Result<Operation, Box<dyn std::error::Error>> {
         // Transformation rules for operational transforms
         match (&mut incoming, existing) {
@@ -240,25 +249,31 @@ impl RealTimeEditingService {
     fn apply_operation_to_document(
         &self,
         crdt: &mut TextCRDT,
-        operation: &Operation
+        operation: &Operation,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match operation {
             Operation::InsertOp(insert_op) => {
                 // Apply insert operation to CRDT
-                crdt.apply_crdt_operation(CRDTOperation::Insert {
-                    pos: insert_op.position,
-                    char: insert_op.content.chars().next().unwrap_or(' '),
-                    lamport_clock: insert_op.timestamp,
-                    site_id: insert_op.site_id,
-                }, insert_op.site_id)?;
+                crdt.apply_crdt_operation(
+                    CRDTOperation::Insert {
+                        pos: insert_op.position,
+                        char: insert_op.content.chars().next().unwrap_or(' '),
+                        lamport_clock: insert_op.timestamp,
+                        site_id: insert_op.site_id,
+                    },
+                    insert_op.site_id,
+                )?;
             }
             Operation::DeleteOp(delete_op) => {
                 // Apply delete operation
-                crdt.apply_crdt_operation(CRDTOperation::Delete {
-                    pos: delete_op.position,
-                    lamport_clock: delete_op.timestamp,
-                    site_id: delete_op.site_id,
-                }, delete_op.site_id)?;
+                crdt.apply_crdt_operation(
+                    CRDTOperation::Delete {
+                        pos: delete_op.position,
+                        lamport_clock: delete_op.timestamp,
+                        site_id: delete_op.site_id,
+                    },
+                    delete_op.site_id,
+                )?;
             }
             Operation::TransformOp { .. } => {
                 // Transformed operations are handled separately
@@ -268,9 +283,13 @@ impl RealTimeEditingService {
     }
 
     /// Get the current document content from CRDT state
-    pub async fn get_document_content(&self, document_id: &str) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn get_document_content(
+        &self,
+        document_id: &str,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let documents = self.documents.read().await;
-        let doc_state = documents.get(document_id)
+        let doc_state = documents
+            .get(document_id)
             .ok_or_else(|| format!("Document {} not found", document_id))?;
 
         Ok(doc_state.crdt.to_string())
@@ -285,11 +304,21 @@ impl TextCRDT {
         }
     }
 
-    pub fn apply_operation(&mut self, operation: CRDTOperation, site_id: u32) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn apply_operation(
+        &mut self,
+        operation: CRDTOperation,
+        site_id: u32,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // Find or create site state
-        let site_idx = self.sites.iter().position(|site| site.site_id == site_id)
+        let site_idx = self
+            .sites
+            .iter()
+            .position(|site| site.site_id == site_id)
             .unwrap_or_else(|| {
-                self.sites.push(SiteState { site_id, operations: Vec::new() });
+                self.sites.push(SiteState {
+                    site_id,
+                    operations: Vec::new(),
+                });
                 self.sites.len() - 1
             });
 
@@ -314,7 +343,8 @@ impl TextCRDT {
     }
 
     pub fn to_string(&self) -> String {
-        self.tombstone.iter()
+        self.tombstone
+            .iter()
             .filter_map(|&opt_char| opt_char)
             .collect()
     }

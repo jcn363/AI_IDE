@@ -60,7 +60,10 @@ impl HealthScorer {
     }
 
     /// Calculate maintainability score
-    fn calculate_maintainability_score(&self, project_path: &str) -> Result<HealthScore, PredictiveError> {
+    fn calculate_maintainability_score(
+        &self,
+        project_path: &str,
+    ) -> Result<HealthScore, PredictiveError> {
         let metrics = extract_code_metrics(project_path);
 
         // Use weighted formula: MI = 171 - 5.2 * ln(AVG_CC) - 0.23 * LOC
@@ -99,7 +102,10 @@ impl HealthScorer {
                 ScoreFactor {
                     name: "Function Size".to_string(),
                     impact: -0.3,
-                    description: format!("Average function length: {:.1}", metrics.avg_function_size),
+                    description: format!(
+                        "Average function length: {:.1}",
+                        metrics.avg_function_size
+                    ),
                 },
             ],
             recommendations: generate_maintainability_recommendations(mi, &metrics),
@@ -108,7 +114,10 @@ impl HealthScorer {
     }
 
     /// Calculate technical debt score
-    fn calculate_technical_debt_score(&self, project_path: &str) -> Result<HealthScore, PredictiveError> {
+    fn calculate_technical_debt_score(
+        &self,
+        project_path: &str,
+    ) -> Result<HealthScore, PredictiveError> {
         let debt_indicators = analyze_technical_debt_indicators(project_path);
 
         // Calculate debt score based on multiple indicators
@@ -138,17 +147,26 @@ impl HealthScorer {
                 ScoreFactor {
                     name: "Code Duplication".to_string(),
                     impact: -debt_indicators.duplication_ratio * 0.3,
-                    description: format!("Duplicated code: {:.1}%", debt_indicators.duplication_ratio * 100.0),
+                    description: format!(
+                        "Duplicated code: {:.1}%",
+                        debt_indicators.duplication_ratio * 100.0
+                    ),
                 },
                 ScoreFactor {
                     name: "Outdated Dependencies".to_string(),
                     impact: -debt_indicators.outdated_deps_ratio * 0.2,
-                    description: format!("Outdated packages: {}", debt_indicators.outdated_deps_count),
+                    description: format!(
+                        "Outdated packages: {}",
+                        debt_indicators.outdated_deps_count
+                    ),
                 },
                 ScoreFactor {
                     name: "Test Coverage Gap".to_string(),
                     impact: -(1.0 - debt_indicators.test_coverage) * 0.3,
-                    description: format!("Test coverage: {:.1}%", debt_indicators.test_coverage * 100.0),
+                    description: format!(
+                        "Test coverage: {:.1}%",
+                        debt_indicators.test_coverage * 100.0
+                    ),
                 },
             ],
             recommendations: generate_debt_reduction_recommendations(&debt_indicators),
@@ -157,7 +175,10 @@ impl HealthScorer {
     }
 
     /// Calculate test coverage effectiveness
-    fn calculate_test_coverage_score(&self, project_path: &str) -> Result<HealthScore, PredictiveError> {
+    fn calculate_test_coverage_score(
+        &self,
+        project_path: &str,
+    ) -> Result<HealthScore, PredictiveError> {
         let coverage_data = analyze_test_coverage(project_path);
 
         let normalized_score = coverage_data.line_coverage.min(1.0);
@@ -184,17 +205,26 @@ impl HealthScorer {
                 ScoreFactor {
                     name: "Line Coverage".to_string(),
                     impact: coverage_data.line_coverage,
-                    description: format!("Lines covered: {:.1}%", coverage_data.line_coverage * 100.0),
+                    description: format!(
+                        "Lines covered: {:.1}%",
+                        coverage_data.line_coverage * 100.0
+                    ),
                 },
                 ScoreFactor {
                     name: "Branch Coverage".to_string(),
                     impact: coverage_data.branch_coverage * 0.3,
-                    description: format!("Branch coverage: {:.1}%", coverage_data.branch_coverage * 100.0),
+                    description: format!(
+                        "Branch coverage: {:.1}%",
+                        coverage_data.branch_coverage * 100.0
+                    ),
                 },
                 ScoreFactor {
                     name: "Test-to-Code Ratio".to_string(),
                     impact: coverage_data.test_ratio.min(1.0) * 0.2,
-                    description: format!("Test lines per code line: {:.2}", coverage_data.test_ratio),
+                    description: format!(
+                        "Test lines per code line: {:.2}",
+                        coverage_data.test_ratio
+                    ),
                 },
             ],
             recommendations: generate_test_coverage_recommendations(&coverage_data),
@@ -203,7 +233,10 @@ impl HealthScorer {
     }
 
     /// Calculate documentation completeness
-    fn calculate_documentation_score(&self, project_path: &str) -> Result<HealthScore, PredictiveError> {
+    fn calculate_documentation_score(
+        &self,
+        project_path: &str,
+    ) -> Result<HealthScore, PredictiveError> {
         let docs_data = analyze_documentation_quality(project_path);
 
         let normalized_score = docs_data.completeness_score;
@@ -225,17 +258,26 @@ impl HealthScorer {
             score: normalized_score,
             grade,
             confidence: 0.8,
-            description: format!("Documentation completeness: {:.1}%", docs_data.completeness_score * 100.0),
+            description: format!(
+                "Documentation completeness: {:.1}%",
+                docs_data.completeness_score * 100.0
+            ),
             factors: vec![
                 ScoreFactor {
                     name: "Public API Documentation".to_string(),
                     impact: docs_data.public_api_docs_ratio,
-                    description: format!("Public API documented: {:.1}%", docs_data.public_api_docs_ratio * 100.0),
+                    description: format!(
+                        "Public API documented: {:.1}%",
+                        docs_data.public_api_docs_ratio * 100.0
+                    ),
                 },
                 ScoreFactor {
                     name: "Code Example Coverage".to_string(),
                     impact: docs_data.examples_coverage * 0.5,
-                    description: format!("Code examples provided: {:.1}%", docs_data.examples_coverage * 100.0),
+                    description: format!(
+                        "Code examples provided: {:.1}%",
+                        docs_data.examples_coverage * 100.0
+                    ),
                 },
             ],
             recommendations: generate_documentation_recommendations(&docs_data),
@@ -244,7 +286,10 @@ impl HealthScorer {
     }
 
     /// Calculate architectural health
-    fn calculate_architectural_health_score(&self, project_path: &str) -> Result<HealthScore, PredictiveError> {
+    fn calculate_architectural_health_score(
+        &self,
+        project_path: &str,
+    ) -> Result<HealthScore, PredictiveError> {
         let arch_data = analyze_architecture_quality(project_path);
 
         let normalized_score = arch_data.architecture_score;
@@ -276,12 +321,18 @@ impl HealthScorer {
                 ScoreFactor {
                     name: "Circular Dependencies".to_string(),
                     impact: -arch_data.circular_deps_ratio,
-                    description: format!("Circular dependency ratio: {:.1}%", arch_data.circular_deps_ratio * 100.0),
+                    description: format!(
+                        "Circular dependency ratio: {:.1}%",
+                        arch_data.circular_deps_ratio * 100.0
+                    ),
                 },
                 ScoreFactor {
                     name: "Module Coupling".to_string(),
                     impact: -arch_data.average_coupling,
-                    description: format!("Average module coupling: {:.2}", arch_data.average_coupling),
+                    description: format!(
+                        "Average module coupling: {:.2}",
+                        arch_data.average_coupling
+                    ),
                 },
             ],
             recommendations: generate_architectural_recommendations(&arch_data),
@@ -290,7 +341,10 @@ impl HealthScorer {
     }
 
     /// Calculate security readiness score
-    fn calculate_security_readiness_score(&self, project_path: &str) -> Result<HealthScore, PredictiveError> {
+    fn calculate_security_readiness_score(
+        &self,
+        project_path: &str,
+    ) -> Result<HealthScore, PredictiveError> {
         let security_data = analyze_security_readiness(project_path);
 
         let normalized_score = security_data.security_readiness;
@@ -317,16 +371,26 @@ impl HealthScorer {
                 ScoreFactor {
                     name: "Vulnerability Count".to_string(),
                     impact: -security_data.open_vulnerabilities as f32 / 10.0,
-                    description: format!("Open vulnerabilities: {}", security_data.open_vulnerabilities),
+                    description: format!(
+                        "Open vulnerabilities: {}",
+                        security_data.open_vulnerabilities
+                    ),
                 },
                 ScoreFactor {
                     name: "Security Headers".to_string(),
                     impact: security_data.security_headers * 0.5,
-                    description: format!("Security headers configured: {:.1}%", security_data.security_headers * 100.0),
+                    description: format!(
+                        "Security headers configured: {:.1}%",
+                        security_data.security_headers * 100.0
+                    ),
                 },
                 ScoreFactor {
                     name: "Dependency Audit".to_string(),
-                    impact: if security_data.deps_audited { 0.3 } else { -0.3 },
+                    impact: if security_data.deps_audited {
+                        0.3
+                    } else {
+                        -0.3
+                    },
                     description: format!("Dependencies audited: {}", security_data.deps_audited),
                 },
             ],
@@ -590,7 +654,8 @@ fn generate_maintainability_recommendations(mi: f64, metrics: &CodeMetrics) -> V
     }
 
     if mi < 65.0 {
-        recommendations.push("Break down large functions into smaller, focused functions".to_string());
+        recommendations
+            .push("Break down large functions into smaller, focused functions".to_string());
     }
 
     recommendations.push("Implement SOLID principles in new code".to_string());
@@ -605,7 +670,8 @@ fn generate_debt_reduction_recommendations(indicators: &TechnicalDebtIndicators)
     }
 
     if indicators.outdated_deps_count > 0 {
-        recommendations.push("Update outdated dependencies and audit for security issues".to_string());
+        recommendations
+            .push("Update outdated dependencies and audit for security issues".to_string());
     }
 
     if indicators.test_coverage < 0.7 {
@@ -647,7 +713,8 @@ fn generate_architectural_recommendations(arch: &ArchitectureData) -> Vec<String
     let mut recommendations = Vec::new();
 
     if arch.circular_deps_ratio > 0.05 {
-        recommendations.push("Resolve circular dependencies through dependency injection".to_string());
+        recommendations
+            .push("Resolve circular dependencies through dependency injection".to_string());
     }
 
     if arch.average_coupling > 0.5 {

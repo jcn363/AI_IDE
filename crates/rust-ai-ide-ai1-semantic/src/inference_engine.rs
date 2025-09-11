@@ -11,9 +11,7 @@ pub struct InferenceEngine {
 
 impl InferenceEngine {
     pub fn new() -> Self {
-        Self {
-            rules: vec![],
-        }
+        Self { rules: vec![] }
     }
 
     pub fn add_rule(&mut self, rule: InferenceRule) {
@@ -41,7 +39,11 @@ pub struct InferenceRule {
 }
 
 impl InferenceRule {
-    pub fn new(name: &str, condition: fn(&SemanticContext) -> bool, action: fn(&SemanticContext) -> InferenceResult) -> Self {
+    pub fn new(
+        name: &str,
+        condition: fn(&SemanticContext) -> bool,
+        action: fn(&SemanticContext) -> InferenceResult,
+    ) -> Self {
         Self {
             name: name.to_string(),
             condition,

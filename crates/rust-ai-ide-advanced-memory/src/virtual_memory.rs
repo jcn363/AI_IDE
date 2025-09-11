@@ -3,15 +3,15 @@
 //! This module provides capabilities to manage memory beyond physical RAM limits,
 //! enabling efficient handling of large codebases and data structures.
 
+use async_trait::async_trait;
+use memmap2::{MmapMut, MmapOptions};
+use rust_ai_ide_errors::IDEError;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::{RwLock, Mutex};
-use memmap2::{MmapOptions, MmapMut};
-use rust_ai_ide_errors::IDEError;
-use serde::{Deserialize, Serialize};
-use async_trait::async_trait;
+use tokio::sync::{Mutex, RwLock};
 
 /// Configuration for virtual memory management
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -98,13 +98,17 @@ impl VirtualPageManager {
         })
     }
 
-    async fn create_swap_file(config: &VirtualMemoryConfig, size: usize) -> Result<Arc<RwLock<MmapMut>>, IDEError> {
-        let swap_path = config.swap_file_path.clone()
+    async fn create_swap_file(
+        config: &VirtualMemoryConfig,
+        size: usize,
+    ) -> Result<Arc<RwLock<MmapMut>>, IDEError> {
+        let swap_path = config
+            .swap_file_path
+            .clone()
             .unwrap_or_else(|| std::env::temp_dir().join("rust-ai-ide-swap"));
 
         // Create swap file
-        let mut file = File::create(&swap_path)
-            .map_err(|e| IDEError::IoError(e))?;
+        let mut file = File::create(&swap_path).map_err(|e| IDEError::IoError(e))?;
 
         // Pre-allocate space
         file.set_len(size as u64)
@@ -121,11 +125,16 @@ impl VirtualPageManager {
     }
 
     /// Allocate a new virtual memory page
-    pub async fn allocate_page(&self, page_id: String, size_bytes: usize) -> Result<MemoryPage, IDEError> {
+    pub async fn allocate_page(
+        &self,
+        page_id: String,
+        size_bytes: usize,
+    ) -> Result<MemoryPage, IDEError> {
         let page_size = self.config.page_size_mb * 1024 * 1024;
         if size_bytes > page_size {
             return Err(IDEError::InvalidArgument(format!(
-                "Requested size {} exceeds page size {}", size_bytes, page_size
+                "Requested size {} exceeds page size {}",
+                size_bytes, page_size
             )));
         }
 
@@ -135,7 +144,9 @@ impl VirtualPageManager {
             if let Some(evicted_page_id) = self.find_page_to_swap().await? {
                 self.swap_page_to_disk(&evicted_page_id).await?;
             } else {
-                return Err(IDEError::InternalError("No free pages available and no pages to swap".to_string()));
+                return Err(IDEError::InternalError(
+                    "No free pages available and no pages to swap".to_string(),
+                ));
             }
         }
 
@@ -207,7 +218,10 @@ impl VirtualPageManager {
                 Err(IDEError::InternalError("Swap not enabled".to_string()))
             }
         } else {
-            Err(IDEError::InvalidArgument(format!("Page {} not found", page_id)))
+            Err(IDEError::InvalidArgument(format!(
+                "Page {} not found",
+                page_id
+            )))
         }
     }
 
@@ -240,7 +254,10 @@ impl VirtualPageManager {
                 Err(IDEError::InternalError("Swap not enabled".to_string()))
             }
         } else {
-            Err(IDEError::InvalidArgument(format!("Page {} not found", page_id)))
+            Err(IDEError::InvalidArgument(format!(
+                "Page {} not found",
+                page_id
+            )))
         }
     }
 
@@ -259,7 +276,10 @@ impl VirtualPageManager {
 
             Ok(())
         } else {
-            Err(IDEError::InvalidArgument(format!("Page {} not found", page_id)))
+            Err(IDEError::InvalidArgument(format!(
+                "Page {} not found",
+                page_id
+            )))
         }
     }
 }
@@ -282,18 +302,17 @@ impl LargeFileMemoryHandler {
     pub async fn map_file(&self, file_path: PathBuf) -> Result<String, IDEError> {
         let file_id = format!("file_{}", file_path.display());
 
-        let file = File::open(&file_path)
-            .map_err(|e| IDEError::IoError(e))?;
+        let file = File::open(&file_path).map_err(|e| IDEError::IoError(e))?;
 
-        let metadata = file.metadata()
-            .map_err(|e| IDEError::IoError(e))?;
+        let metadata = file.metadata().map_err(|e| IDEError::IoError(e))?;
 
         let file_size = metadata.len() as usize;
 
         if file_size > self.config.max_virtual_memory_gb * 1024 * 1024 * 1024 {
-            return Err(IDEError::InvalidArgument(
-                format!("File size {} exceeds maximum virtual memory", file_size)
-            ));
+            return Err(IDEError::InvalidArgument(format!(
+                "File size {} exceeds maximum virtual memory",
+                file_size
+            )));
         }
 
         let mmap = unsafe {
@@ -306,7 +325,11 @@ impl LargeFileMemoryHandler {
         let mut mappings = self.file_mappings.write().await;
         mappings.insert(file_id.clone(), (file, mmap));
 
-        tracing::info!("Mapped large file: {} ({} bytes)", file_path.display(), file_size);
+        tracing::info!(
+            "Mapped large file: {} ({} bytes)",
+            file_path.display(),
+            file_size
+        );
 
         Ok(file_id)
     }
@@ -339,7 +362,10 @@ impl LargeFileMemoryHandler {
             tracing::info!("Processed {} bytes in chunks of {}", total_size, chunk_size);
             Ok(())
         } else {
-            Err(IDEError::InvalidArgument(format!("File mapping {} not found", file_id)))
+            Err(IDEError::InvalidArgument(format!(
+                "File mapping {} not found",
+                file_id
+            )))
         }
     }
 }
@@ -384,7 +410,10 @@ impl VirtualAddressSpaceManager {
             tracing::info!("Freed address space: 0x{:x} - 0x{:x}", range.0, range.1);
             Ok(())
         } else {
-            Err(IDEError::InvalidArgument(format!("Address {} not allocated", address)))
+            Err(IDEError::InvalidArgument(format!(
+                "Address {} not allocated",
+                address
+            )))
         }
     }
 
@@ -412,7 +441,9 @@ impl VirtualAddressSpaceManager {
             }
         }
 
-        Err(IDEError::InternalError("No suitable address space found".to_string()))
+        Err(IDEError::InternalError(
+            "No suitable address space found".to_string(),
+        ))
     }
 }
 
@@ -443,7 +474,10 @@ impl VirtualMemoryInterface {
     }
 
     pub async fn initialize(&self) -> Result<(), IDEError> {
-        tracing::info!("Virtual Memory Interface initialized with config: {:?}", self.config);
+        tracing::info!(
+            "Virtual Memory Interface initialized with config: {:?}",
+            self.config
+        );
         Ok(())
     }
 
@@ -456,7 +490,11 @@ impl VirtualMemoryInterface {
     }
 
     /// Allocate virtual memory page
-    pub async fn allocate_page(&self, page_id: String, size_bytes: usize) -> Result<MemoryPage, IDEError> {
+    pub async fn allocate_page(
+        &self,
+        page_id: String,
+        size_bytes: usize,
+    ) -> Result<MemoryPage, IDEError> {
         self.page_manager.allocate_page(page_id, size_bytes).await
     }
 
@@ -475,7 +513,9 @@ impl VirtualMemoryInterface {
     where
         F: Fn(&[u8]) -> Result<(), IDEError>,
     {
-        self.large_file_handler.stream_process_file(file_id, chunk_size, processor).await
+        self.large_file_handler
+            .stream_process_file(file_id, chunk_size, processor)
+            .await
     }
 
     /// Access memory page
@@ -499,7 +539,8 @@ impl VirtualMemoryInterface {
         let allocated = self.address_manager.allocated_ranges.read().await;
         let mappings = self.large_file_handler.file_mappings.read().await;
 
-        let total_allocated = allocated.iter()
+        let total_allocated = allocated
+            .iter()
             .map(|(start, end)| end - start)
             .sum::<usize>();
 

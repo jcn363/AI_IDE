@@ -6,10 +6,10 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use tauri::State;
 use serde::{Deserialize, Serialize};
+use tauri::State;
 
-use rust_ai_ide_lsp::{LearningSystemData, AIService, ErrorPattern, FixSuggestion, LearnedPattern};
+use rust_ai_ide_lsp::{AIService, ErrorPattern, FixSuggestion, LearnedPattern, LearningSystemData};
 
 /// AI service state (re-exported for convenience)
 pub type AIServiceState = Arc<tokio::sync::Mutex<Option<AIService>>>;
@@ -71,11 +71,15 @@ pub async fn update_learning_preferences(
 ) -> Result<String, String> {
     log::info!("Updating learning preferences");
 
-    execute_command!("update_learning_preferences", &CommandConfig::default(), async move || {
-        // In a real implementation, this would update the learning system configuration
-        // and persist the preferences to storage
-        Ok("Learning preferences updated successfully".to_string())
-    })
+    execute_command!(
+        "update_learning_preferences",
+        &CommandConfig::default(),
+        async move || {
+            // In a real implementation, this would update the learning system configuration
+            // and persist the preferences to storage
+            Ok("Learning preferences updated successfully".to_string())
+        }
+    )
 }
 
 /// Get learning system statistics
@@ -85,22 +89,26 @@ pub async fn get_learning_statistics(
 ) -> Result<LearningSystemData, String> {
     log::info!("Getting learning statistics");
 
-    execute_command!("get_learning_statistics", &CommandConfig::default(), async move || {
-        acquire_service_and_execute!(ai_service, AIServiceState, {
-            // In a real implementation, this would query the learning system for statistics
-            let stats = LearningSystemData {
-                learned_patterns: Vec::new(),
-                user_preferences: crate::commands::ai::services::LearningPreferences::default(),
-                statistics: rust_ai_ide_lsp::learning::LearningStatistics {
-                    total_patterns_learned: 0,
-                    successful_fixes_applied: 0,
-                    average_confidence_score: 0.0,
-                    last_updated: chrono::Utc::now(),
-                },
-            };
-            Ok(stats)
-        })
-    })
+    execute_command!(
+        "get_learning_statistics",
+        &CommandConfig::default(),
+        async move || {
+            acquire_service_and_execute!(ai_service, AIServiceState, {
+                // In a real implementation, this would query the learning system for statistics
+                let stats = LearningSystemData {
+                    learned_patterns: Vec::new(),
+                    user_preferences: crate::commands::ai::services::LearningPreferences::default(),
+                    statistics: rust_ai_ide_lsp::learning::LearningStatistics {
+                        total_patterns_learned: 0,
+                        successful_fixes_applied: 0,
+                        average_confidence_score: 0.0,
+                        last_updated: chrono::Utc::now(),
+                    },
+                };
+                Ok(stats)
+            })
+        }
+    )
 }
 
 /// Re-export learning-related types
@@ -151,11 +159,14 @@ pub async fn apply_learned_pattern(
 
     acquire_service_and_execute!(ai_service, AIServiceState, {
         // Get the pattern from learning system
-        let patterns = service.get_learned_patterns(&code_context).await
+        let patterns = service
+            .get_learned_patterns(&code_context)
+            .await
             .map_err(|e| format!("Failed to get patterns: {}", e))?;
 
         // Find the pattern by ID
-        let pattern = patterns.into_iter()
+        let pattern = patterns
+            .into_iter()
             .find(|p| p.id.to_string() == pattern_id)
             .ok_or_else(|| format!("Pattern {} not found", pattern_id))?;
 
@@ -163,7 +174,10 @@ pub async fn apply_learned_pattern(
         Ok(rust_ai_ide_lsp::FixSuggestion {
             id: format!("applied_{}", pattern_id),
             title: pattern.successful_fix.title,
-            description: format!("Applied learned pattern (confidence: {:.2})", pattern.confidence),
+            description: format!(
+                "Applied learned pattern (confidence: {:.2})",
+                pattern.confidence
+            ),
             fix_type: pattern.successful_fix.fix_type,
             changes: pattern.successful_fix.changes,
             confidence: pattern.confidence,
@@ -227,9 +241,7 @@ impl Default for CommandConfig {
 macro_rules! acquire_service_and_execute {
     ($service:expr, $state_type:ty, $operation:block) => {{
         let service_guard = $service.lock().await;
-        let service = service_guard
-            .as_ref()
-            .ok_or("AI service not initialized")?;
+        let service = service_guard.as_ref().ok_or("AI service not initialized")?;
         $operation
     }};
 }

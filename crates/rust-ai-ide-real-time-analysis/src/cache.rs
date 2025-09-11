@@ -12,11 +12,9 @@ use serde::{Deserialize, Serialize};
 use sled::{Db, IVec};
 use tokio::fs;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn, instrument};
+use tracing::{debug, error, info, instrument, warn};
 
-use crate::types::{
-    AnalysisResult, AnalysisType, CacheConfig, PerformanceMetrics,
-};
+use crate::types::{AnalysisResult, AnalysisType, CacheConfig, PerformanceMetrics};
 
 /// Cache errors
 #[derive(Debug, thiserror::Error)]
@@ -77,7 +75,8 @@ impl CacheKey {
     /// Create a cache key from file path and analysis type
     pub async fn from_file(file_path: &Path, analysis_type: AnalysisType) -> CacheResult<Self> {
         let metadata = tokio::fs::metadata(file_path).await?;
-        let file_mtime = metadata.modified()?
+        let file_mtime = metadata
+            .modified()?
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs() as i64;
@@ -102,7 +101,8 @@ impl CacheKey {
     /// Check if cache key is still valid for a file
     pub async fn is_valid(&self) -> bool {
         if let Ok(metadata) = tokio::fs::metadata(&self.file_path).await {
-            let current_mtime = metadata.modified()
+            let current_mtime = metadata
+                .modified()
                 .unwrap_or(std::time::UNIX_EPOCH)
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
@@ -286,7 +286,9 @@ impl AnalysisCache {
                         self.statistics.hits += 1;
 
                         // Promote to memory cache
-                        self.memory_cache.insert(string_key.clone(), cached_result.clone()).await;
+                        self.memory_cache
+                            .insert(string_key.clone(), cached_result.clone())
+                            .await;
 
                         return Ok(Some(cached_result.result));
                     } else {
@@ -303,7 +305,11 @@ impl AnalysisCache {
         // Check access time threshold for metrics
         let access_time = start_time.elapsed();
         if access_time > self.config.hit_time_threshold {
-            warn!("Slow cache access: {}ms for key: {}", access_time.as_millis(), string_key);
+            warn!(
+                "Slow cache access: {}ms for key: {}",
+                access_time.as_millis(),
+                string_key
+            );
         }
 
         Ok(None)
@@ -327,7 +333,9 @@ impl AnalysisCache {
         debug!("Storing result in memory cache: {}", string_key);
 
         // Store in memory cache
-        self.memory_cache.insert(string_key.clone(), cached_result.clone()).await;
+        self.memory_cache
+            .insert(string_key.clone(), cached_result.clone())
+            .await;
 
         // Store in disk cache if available
         if let Some(disk_db) = self.disk_cache.write().await.as_ref() {
@@ -444,7 +452,9 @@ impl AnalysisCache {
 
         // Update last eviction timestamp
         {
-            let mut stats = unsafe { &mut *(&*self.statistics as *const CacheStatistics as *mut CacheStatistics) };
+            let mut stats = unsafe {
+                &mut *(&*self.statistics as *const CacheStatistics as *mut CacheStatistics)
+            };
             stats.last_eviction = Some(chrono::Utc::now().timestamp());
         }
 
@@ -501,7 +511,8 @@ impl CacheManager {
 
     /// Track dependencies for a cache key
     async fn track_dependencies(&self, key: CacheKey) {
-        self.dependency_tracker.add_dependency(key.file_path.clone(), key);
+        self.dependency_tracker
+            .add_dependency(key.file_path.clone(), key);
     }
 
     /// Invalidate dependent cache entries

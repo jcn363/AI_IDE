@@ -1,6 +1,6 @@
-use async_trait::async_trait;
 use crate::error::TestError;
 use crate::test_generation::*;
+use async_trait::async_trait;
 use std::collections::HashMap;
 
 /// Trait for language-specific test generation
@@ -120,7 +120,7 @@ pub struct TestTemplateSet {
 pub trait LanguageGeneratorFactory {
     async fn create_generator(
         &self,
-        language: &ProgrammingLanguage
+        language: &ProgrammingLanguage,
     ) -> Result<Box<dyn LanguageTestGenerator>, TestError>;
 }
 
@@ -145,15 +145,17 @@ impl LanguageGeneratorRegistry {
 
     pub async fn create_generator(
         &self,
-        language: &ProgrammingLanguage
+        language: &ProgrammingLanguage,
     ) -> Result<Box<dyn LanguageTestGenerator>, TestError> {
-        let factory = self.generators.get(language)
-            .ok_or_else(|| {
-                use crate::error::ValidationError;
-                TestError::Validation(ValidationError::InvalidTestSetup {
-                    message: format!("No generator factory registered for language: {:?}", language)
-                })
-            })?;
+        let factory = self.generators.get(language).ok_or_else(|| {
+            use crate::error::ValidationError;
+            TestError::Validation(ValidationError::InvalidTestSetup {
+                message: format!(
+                    "No generator factory registered for language: {:?}",
+                    language
+                ),
+            })
+        })?;
 
         factory.create_generator(language).await
     }
@@ -181,7 +183,7 @@ impl UnifiedLanguageTestGenerator {
 
     pub async fn get_generator(
         &self,
-        language: &ProgrammingLanguage
+        language: &ProgrammingLanguage,
     ) -> Result<Box<dyn LanguageTestGenerator>, TestError> {
         self.registry.create_generator(language).await
     }
@@ -200,23 +202,31 @@ impl UnifiedLanguageTestGenerator {
             TestType::Unit => generator.generate_unit_tests(code, context).await,
             TestType::Integration => generator.generate_integration_tests(code, context).await,
             TestType::Property => {
-                if generator.get_test_templates().values().any(|t| t.property_test_template.is_some()) {
+                if generator
+                    .get_test_templates()
+                    .values()
+                    .any(|t| t.property_test_template.is_some())
+                {
                     generator.generate_property_tests(code, context).await
                 } else {
                     Ok(vec![])
                 }
-            },
+            }
             TestType::Benchmark => {
-                if generator.get_test_templates().values().any(|t| t.benchmark_template.is_some()) {
+                if generator
+                    .get_test_templates()
+                    .values()
+                    .any(|t| t.benchmark_template.is_some())
+                {
                     generator.generate_benchmarks(code, context).await
                 } else {
                     Ok(vec![])
                 }
-            },
+            }
             TestType::Fuzz | TestType::E2e => {
                 // Fuzz and E2E not implemented yet
                 Ok(vec![])
-            },
+            }
         }
     }
 }
@@ -321,7 +331,7 @@ macro_rules! language_generator_impl {
 /// Default language generators
 pub mod generators {
     use super::*;
-// Removed unused import - test_generation types are accessed via crate::test_generation path
+    // Removed unused import - test_generation types are accessed via crate::test_generation path
 
     pub struct RustTestGenerator;
 
@@ -343,7 +353,7 @@ pub mod generators {
     impl LanguageGeneratorFactory for RustGeneratorFactory {
         async fn create_generator(
             &self,
-            _language: &ProgrammingLanguage
+            _language: &ProgrammingLanguage,
         ) -> Result<Box<dyn LanguageTestGenerator>, TestError> {
             Ok(Box::new(RustTestGenerator))
         }
@@ -355,7 +365,7 @@ pub mod generators {
     impl LanguageGeneratorFactory for TypeScriptGeneratorFactory {
         async fn create_generator(
             &self,
-            _language: &ProgrammingLanguage
+            _language: &ProgrammingLanguage,
         ) -> Result<Box<dyn LanguageTestGenerator>, TestError> {
             Ok(Box::new(TypeScriptTestGenerator))
         }
@@ -367,7 +377,7 @@ pub mod generators {
     impl LanguageGeneratorFactory for PythonGeneratorFactory {
         async fn create_generator(
             &self,
-            _language: &ProgrammingLanguage
+            _language: &ProgrammingLanguage,
         ) -> Result<Box<dyn LanguageTestGenerator>, TestError> {
             Ok(Box::new(PythonTestGenerator))
         }
@@ -379,7 +389,7 @@ pub mod generators {
     impl LanguageGeneratorFactory for JavaGeneratorFactory {
         async fn create_generator(
             &self,
-            _language: &ProgrammingLanguage
+            _language: &ProgrammingLanguage,
         ) -> Result<Box<dyn LanguageTestGenerator>, TestError> {
             Ok(Box::new(JavaTestGenerator))
         }

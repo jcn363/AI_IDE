@@ -1,13 +1,13 @@
 #![feature(impl_trait_in_bindings)]
 
+use crate::IDEError;
+use candle_core::{DType, Device, Tensor};
+use moka::future::Cache as MokaCache;
 use std::collections::HashMap;
 use std::mem::ManuallyDrop;
 use std::sync::Arc;
-use tokio::sync::Mutex;
-use candle_core::{Tensor, Device, DType};
-use crate::IDEError;
-use moka::future::Cache as MokaCache;
 use std::time::Duration;
+use tokio::sync::Mutex;
 
 /// Zero-copy memory manager for quantized models
 #[derive(Clone)]
@@ -42,9 +42,9 @@ pub struct MemoryManagerConfig {
 impl Default for MemoryManagerConfig {
     fn default() -> Self {
         Self {
-            max_memory_pool: 4 * 1024 * 1024 * 1024, // 4GB
+            max_memory_pool: 4 * 1024 * 1024 * 1024,    // 4GB
             tensor_cache_limit: 2 * 1024 * 1024 * 1024, // 2GB
-            cache_ttl_seconds: 1800, // 30 minutes
+            cache_ttl_seconds: 1800,                    // 30 minutes
             enable_zero_copy: true,
             memory_alignment: 64, // AVX512 alignment
         }
@@ -113,10 +113,11 @@ impl QuantizedMemoryManager {
         {
             let stats = self.allocator_stats.lock().await;
             if stats.total_allocated + required_size > self.config.max_memory_pool {
-                return Err(IDEError::InvalidArgument(
-                    format!("Memory allocation would exceed pool limit: {} bytes required, {} available",
-                           required_size, self.config.max_memory_pool - stats.total_allocated)
-                ));
+                return Err(IDEError::InvalidArgument(format!(
+                    "Memory allocation would exceed pool limit: {} bytes required, {} available",
+                    required_size,
+                    self.config.max_memory_pool - stats.total_allocated
+                )));
             }
         }
 
@@ -135,20 +136,25 @@ impl QuantizedMemoryManager {
         let memory_region = self.allocate_memory_region(aligned_size, device).await?;
 
         // Create tensor from allocated memory (zero-copy)
-        let tensor = self.create_tensor_from_memory(name, &memory_region, shape, dtype, device).await?;
+        let tensor = self
+            .create_tensor_from_memory(name, &memory_region, shape, dtype, device)
+            .await?;
 
         let tensor_arc = Arc::new(tensor);
 
         // Register for cleanup
         {
             let mut registry = self.tensor_registry.lock().await;
-            registry.entry(name.to_string())
+            registry
+                .entry(name.to_string())
                 .or_insert_with(Vec::new)
                 .push(Arc::clone(&tensor_arc));
         }
 
         // Cache the tensor
-        self.tensor_cache.insert(name.to_string(), Arc::clone(&tensor_arc)).await;
+        self.tensor_cache
+            .insert(name.to_string(), Arc::clone(&tensor_arc))
+            .await;
 
         // Update allocation statistics
         {
@@ -166,9 +172,15 @@ impl QuantizedMemoryManager {
     }
 
     /// Allocate memory region with alignment and pinning
-    async fn allocate_memory_region(&self, size: usize, device: Device) -> Result<MemoryRegion, IDEError> {
+    async fn allocate_memory_region(
+        &self,
+        size: usize,
+        device: Device,
+    ) -> Result<MemoryRegion, IDEError> {
         if !self.config.enable_zero_copy {
-            return Err(IDEError::InvalidArgument("Zero-copy operations are disabled in configuration".to_string()));
+            return Err(IDEError::InvalidArgument(
+                "Zero-copy operations are disabled in configuration".to_string(),
+            ));
         }
 
         // Allocate aligned memory
@@ -183,7 +195,10 @@ impl QuantizedMemoryManager {
                 let mut stats = self.allocator_stats.lock().await;
                 stats.allocation_failures += 1;
             }
-            return Err(IDEError::InvalidArgument(format!("Failed to allocate {} bytes of memory", size)));
+            return Err(IDEError::InvalidArgument(format!(
+                "Failed to allocate {} bytes of memory",
+                size
+            )));
         }
 
         // Pin memory if supported (for CUDA)
@@ -218,9 +233,10 @@ impl QuantizedMemoryManager {
         let byte_size = shape.iter().fold(1, |acc, &x| acc * x) * dtype.size_in_bytes();
 
         if byte_size > region.size {
-            return Err(IDEError::InvalidArgument(
-                format!("Tensor size {} exceeds allocated memory region {}", byte_size, region.size)
-            ));
+            return Err(IDEError::InvalidArgument(format!(
+                "Tensor size {} exceeds allocated memory region {}",
+                byte_size, region.size
+            )));
         }
 
         // Create tensor from raw memory pointer
@@ -229,7 +245,7 @@ impl QuantizedMemoryManager {
                 std::slice::from_raw_parts(region.ptr, region.size),
                 dtype,
                 shape,
-                device
+                device,
             )?;
 
             Ok(tensor)
@@ -299,7 +315,10 @@ impl QuantizedMemoryManager {
             if let Some(region) = regions.remove(&key) {
                 // Deallocate memory
                 let layout = unsafe {
-                    std::alloc::Layout::from_size_align_unchecked(region.size, self.config.memory_alignment)
+                    std::alloc::Layout::from_size_align_unchecked(
+                        region.size,
+                        self.config.memory_alignment,
+                    )
                 };
                 unsafe {
                     std::alloc::dealloc(region.ptr, layout);
@@ -322,7 +341,7 @@ impl QuantizedMemoryManager {
     /// Optimize memory layout for quantized operations
     pub async fn optimize_memory_layout(
         &self,
-        tensors: &mut HashMap<String, Arc<Tensor>>
+        tensors: &mut HashMap<String, Arc<Tensor>>,
     ) -> Result<(), IDEError> {
         // Reorder tensors for better memory access patterns
         // Group by access frequency and tensor size
@@ -341,7 +360,9 @@ impl QuantizedMemoryManager {
             let device = tensor.device();
 
             // Allocate new zero-copy tensor
-            let optimized_tensor = self.allocate_zero_copy_tensor(name, shape, *dtype, device.clone()).await?;
+            let optimized_tensor = self
+                .allocate_zero_copy_tensor(name, shape, *dtype, device.clone())
+                .await?;
 
             // Replace in the map
             tensors.insert(name.clone(), optimized_tensor);
@@ -411,12 +432,9 @@ mod tests {
         });
 
         let shape = &[10, 20, 30];
-        let tensor = manager.allocate_zero_copy_tensor(
-            "test_tensor",
-            shape,
-            DType::F32,
-            Device::Cpu
-        ).await;
+        let tensor = manager
+            .allocate_zero_copy_tensor("test_tensor", shape, DType::F32, Device::Cpu)
+            .await;
 
         assert!(tensor.is_ok());
 
@@ -430,12 +448,9 @@ mod tests {
         let manager = QuantizedMemoryManager::new(MemoryManagerConfig::default());
 
         let shape = &[100, 200];
-        let tensor = manager.allocate_zero_copy_tensor(
-            "cleanup_test",
-            shape,
-            DType::F32,
-            Device::Cpu
-        ).await;
+        let tensor = manager
+            .allocate_zero_copy_tensor("cleanup_test", shape, DType::F32, Device::Cpu)
+            .await;
 
         assert!(tensor.is_ok());
 

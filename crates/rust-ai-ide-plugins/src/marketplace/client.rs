@@ -232,13 +232,19 @@ impl MarketplaceClient {
     }
 
     /// Get popular plugins
-    pub async fn get_popular_plugins(&self, limit: Option<u32>) -> Result<Vec<PopularPlugin>, PluginError> {
+    pub async fn get_popular_plugins(
+        &self,
+        limit: Option<u32>,
+    ) -> Result<Vec<PopularPlugin>, PluginError> {
         let results = self.get_popular_from_default_server(limit).await?;
         Ok(results)
     }
 
     /// Search plugins by category
-    pub async fn search_by_category(&self, category: PluginCategory) -> Result<Vec<MarketplaceSearchResult>, PluginError> {
+    pub async fn search_by_category(
+        &self,
+        category: PluginCategory,
+    ) -> Result<Vec<MarketplaceSearchResult>, PluginError> {
         let category_str = format!("{:?}", category);
         self.search_plugins("", Some(&category_str), None).await
     }
@@ -252,15 +258,23 @@ impl MarketplaceClient {
             }
         }
 
-        Err(PluginError::Other("Failed to submit review to all servers".to_string()))
+        Err(PluginError::Other(
+            "Failed to submit review to all servers".to_string(),
+        ))
     }
 
     /// Get plugin reviews
-    pub async fn get_reviews(&self, plugin_id: &str, limit: Option<u32>) -> Result<Vec<PluginReview>, PluginError> {
+    pub async fn get_reviews(
+        &self,
+        plugin_id: &str,
+        limit: Option<u32>,
+    ) -> Result<Vec<PluginReview>, PluginError> {
         let mut all_reviews = Vec::new();
 
         for server in &self.servers {
-            let server_reviews = self.get_reviews_from_server(server, plugin_id, limit).await?;
+            let server_reviews = self
+                .get_reviews_from_server(server, plugin_id, limit)
+                .await?;
             all_reviews.extend(server_reviews);
         }
 
@@ -269,12 +283,16 @@ impl MarketplaceClient {
 
     /// Get marketplace analytics
     pub async fn get_analytics(&self) -> Result<MarketplaceAnalytics, PluginError> {
-        self.get_analytics_from_server(&self.servers.first().unwrap()).await
+        self.get_analytics_from_server(&self.servers.first().unwrap())
+            .await
     }
 
     // Helper methods for new functionality
 
-    async fn get_featured_from_server(&self, server: &MarketplaceServer) -> Result<Vec<MarketplaceSearchResult>, PluginError> {
+    async fn get_featured_from_server(
+        &self,
+        server: &MarketplaceServer,
+    ) -> Result<Vec<MarketplaceSearchResult>, PluginError> {
         let url = format!("{}/api/plugins/featured", server.url);
         let mut request = self.client.get(&url);
 
@@ -284,14 +302,19 @@ impl MarketplaceClient {
 
         let response = request.send().await?;
         if !response.status().is_success() {
-            return Err(PluginError::Other("Failed to get featured plugins".to_string()));
+            return Err(PluginError::Other(
+                "Failed to get featured plugins".to_string(),
+            ));
         }
 
         let plugins: Vec<MarketplaceSearchResult> = response.json().await?;
         Ok(plugins)
     }
 
-    async fn get_popular_from_default_server(&self, limit: Option<u32>) -> Result<Vec<PopularPlugin>, PluginError> {
+    async fn get_popular_from_default_server(
+        &self,
+        limit: Option<u32>,
+    ) -> Result<Vec<PopularPlugin>, PluginError> {
         if let Some(server) = self.servers.first() {
             let mut url = format!("{}/api/analytics/popular", server.url);
             if let Some(lim) = limit {
@@ -306,17 +329,25 @@ impl MarketplaceClient {
 
             let response = request.send().await?;
             if !response.status().is_success() {
-                return Err(PluginError::Other("Failed to get popular plugins".to_string()));
+                return Err(PluginError::Other(
+                    "Failed to get popular plugins".to_string(),
+                ));
             }
 
             let popular: Vec<PopularPlugin> = response.json().await?;
             Ok(popular)
         } else {
-            Err(PluginError::Other("No marketplace servers configured".to_string()))
+            Err(PluginError::Other(
+                "No marketplace servers configured".to_string(),
+            ))
         }
     }
 
-    async fn submit_review_to_server(&self, server: &MarketplaceServer, review: &PluginReview) -> Result<(), PluginError> {
+    async fn submit_review_to_server(
+        &self,
+        server: &MarketplaceServer,
+        review: &PluginReview,
+    ) -> Result<(), PluginError> {
         let url = format!("{}/api/plugins/{}/reviews", server.url, review.plugin_id);
         let mut request = self.client.post(&url).json(review);
 
@@ -332,7 +363,12 @@ impl MarketplaceClient {
         Ok(())
     }
 
-    async fn get_reviews_from_server(&self, server: &MarketplaceServer, plugin_id: &str, limit: Option<u32>) -> Result<Vec<PluginReview>, PluginError> {
+    async fn get_reviews_from_server(
+        &self,
+        server: &MarketplaceServer,
+        plugin_id: &str,
+        limit: Option<u32>,
+    ) -> Result<Vec<PluginReview>, PluginError> {
         let mut url = format!("{}/api/plugins/{}/reviews", server.url, plugin_id);
         if let Some(lim) = limit {
             url.push_str(&format!("?limit={}", lim));
@@ -353,7 +389,10 @@ impl MarketplaceClient {
         Ok(reviews)
     }
 
-    async fn get_analytics_from_server(&self, server: &MarketplaceServer) -> Result<MarketplaceAnalytics, PluginError> {
+    async fn get_analytics_from_server(
+        &self,
+        server: &MarketplaceServer,
+    ) -> Result<MarketplaceAnalytics, PluginError> {
         let url = format!("{}/api/analytics/overview", server.url);
         let mut request = self.client.get(&url);
 

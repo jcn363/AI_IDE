@@ -4,7 +4,9 @@
 //! for TypeScript, Python, JavaScript, Java, C++, Go, and other languages.
 
 use crate::function_generation::GeneratedFunction;
-use rust_ai_ide_shared_codegen::generator::{CodeGenerationContext, TargetLanguage, UserPreferences};
+use rust_ai_ide_shared_codegen::generator::{
+    CodeGenerationContext, TargetLanguage, UserPreferences,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -100,7 +102,9 @@ impl LanguageSpecificGenerator {
         variables: HashMap<String, String>,
     ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
         let lang_key = Self::language_to_key(language);
-        let templates = self.templates.get(&lang_key)
+        let templates = self
+            .templates
+            .get(&lang_key)
             .ok_or_else(|| format!("No templates available for language {:?}", language))?;
 
         let template = match template_type {
@@ -127,7 +131,8 @@ impl LanguageSpecificGenerator {
         let mut variables = HashMap::new();
 
         // Format parameters
-        let params_str = parameters.iter()
+        let params_str = parameters
+            .iter()
             .map(|(name, ty)| format!("{}: {}", name, ty))
             .collect::<Vec<_>>()
             .join(", ");
@@ -190,7 +195,8 @@ impl LanguageSpecificGenerator {
             TargetLanguage::Cpp => "cpp",
             TargetLanguage::Rust => "rust",
             _ => "other",
-        }.to_string()
+        }
+        .to_string()
     }
 
     /// Render template with variables (simplified Handlebars-like syntax)
@@ -225,14 +231,21 @@ impl LanguageSpecificGenerator {
     /// Apply line wrapping based on max line length
     fn apply_line_wrapping(&self, code: &mut String, max_length: usize) {
         // Simple line wrapping implementation
-        let lines: Vec<String> = code.lines().map(|line| {
-            if line.len() > max_length {
-                // Insert line breaks for long lines (simplified)
-                format!("{}\n    {}", &line[..max_length/2], &line[max_length/2..])
-            } else {
-                line.to_string()
-            }
-        }).collect();
+        let lines: Vec<String> = code
+            .lines()
+            .map(|line| {
+                if line.len() > max_length {
+                    // Insert line breaks for long lines (simplified)
+                    format!(
+                        "{}\n    {}",
+                        &line[..max_length / 2],
+                        &line[max_length / 2..]
+                    )
+                } else {
+                    line.to_string()
+                }
+            })
+            .collect();
 
         *code = lines.join("\n");
     }

@@ -11,18 +11,18 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Result;
-use tauri::State;
 use serde::{Deserialize, Serialize};
+use tauri::State;
 use tokio::fs;
 use tokio::time::timeout;
 use walkdir::WalkDir;
 
-use crate::security::vulnerability_scanner::{VulnerabilityScanner, VulnerabilityReport};
+use crate::security::vulnerability_scanner::{VulnerabilityReport, VulnerabilityScanner};
 use crate::utils::sanitize_tauri_input;
 use crate::utils::SanitizeType;
 use rust_ai_ide_lsp::{
-    AIContext, AIService, AnalysisPreferences, CodeAnalysisResult,
-    RefactoringSuggestion, SecurityIssue,
+    AIContext, AIService, AnalysisPreferences, CodeAnalysisResult, RefactoringSuggestion,
+    SecurityIssue,
 };
 
 // Import diagnostic types from shared module
@@ -189,7 +189,7 @@ macro_rules! sanitize_and_validate_command {
         validate_file_size(
             &$request.content.as_bytes(),
             1024 * 1024, // 1MB limit
-            "analyze_file"
+            "analyze_file",
         )?;
     }};
 }
@@ -211,7 +211,8 @@ pub async fn analyze_file(
         validate_path_not_excluded(
             Path::new(&request.file_path),
             &config.excluded_paths,
-            "analyze_file"        )?;
+            "analyze_file",
+        )?;
 
         // Try to use the commands-ai implementation, fallback to original
         if let Ok(mut bridge_guard) = bridge.lock().await {
@@ -227,24 +228,31 @@ pub async fn analyze_file(
                     Ok(result) => {
                         // Convert commands-ai result to existing form
                         return Ok(CodeAnalysisResult {
-                            issues: result.issues.into_iter().map(|issue| {
-                                rust_ai_ide_lsp::AnalysisIssue {
-                                    severity: issue.severity,
-                                    line: issue.line,
-                                    message: issue.message,
-                                    category: issue.category,
-                                    suggestion: None, // Would need mapping
-                                }
-                            }).collect(),
+                            issues: result
+                                .issues
+                                .into_iter()
+                                .map(|issue| {
+                                    rust_ai_ide_lsp::AnalysisIssue {
+                                        severity: issue.severity,
+                                        line: issue.line,
+                                        message: issue.message,
+                                        category: issue.category,
+                                        suggestion: None, // Would need mapping
+                                    }
+                                })
+                                .collect(),
                             suggestions: result.suggestions,
                             metrics: result.metrics,
                             performance_hints: result.performance_insights,
                             code_quality_score: None,
                             timestamp: chrono::Utc::now(),
                         });
-                    },
+                    }
                     Err(e) => {
-                        log::warn!("Failed to analyze file via commands-ai, falling back to original: {}", e);
+                        log::warn!(
+                            "Failed to analyze file via commands-ai, falling back to original: {}",
+                            e
+                        );
                     }
                 }
             }
@@ -289,9 +297,10 @@ pub async fn analyze_workspace(
 
             match analysis_svc.analyze_workspace(workspace_request).await {
                 Ok(result) => {
-                    return serde_json::to_value(&result)
-                        .map_err(|e| format!("Failed to serialize workspace analysis result: {}", e));
-                },
+                    return serde_json::to_value(&result).map_err(|e| {
+                        format!("Failed to serialize workspace analysis result: {}", e)
+                    });
+                }
                 Err(e) => {
                     log::warn!("Failed to analyze workspace via commands-ai, falling back to placeholder: {}", e);
                 }
@@ -332,7 +341,7 @@ pub async fn get_code_quality(
                 Ok(result) => {
                     return serde_json::to_value(&result)
                         .map_err(|e| format!("Failed to serialize code quality result: {}", e));
-                },
+                }
                 Err(e) => {
                     log::warn!("Failed to assess code quality via commands-ai, falling back to placeholder: {}", e);
                 }
@@ -422,9 +431,7 @@ pub async fn get_performance_suggestions(
 
 /// Apply AI-recommended suggestion
 #[tauri::command]
-pub async fn apply_ai_suggestion(
-    request: ApplySuggestionRequest,
-) -> Result<String, String> {
+pub async fn apply_ai_suggestion(request: ApplySuggestionRequest) -> Result<String, String> {
     log::info!("Applying AI suggestion: {}", request.suggestion_id);
 
     let mut applied_changes = Vec::new();
@@ -432,7 +439,11 @@ pub async fn apply_ai_suggestion(
     for change in &request.changes {
         // Create backup if requested
         if request.create_backup {
-            let backup_path = format!("{}.backup.{}", change.file_path, chrono::Utc::now().timestamp());
+            let backup_path = format!(
+                "{}.backup.{}",
+                change.file_path,
+                chrono::Utc::now().timestamp()
+            );
             if let Err(e) = fs::copy(&change.file_path, &backup_path).await {
                 log::warn!("Failed to create backup for {}: {}", change.file_path, e);
             } else {
@@ -610,9 +621,7 @@ impl Default for CommandConfig {
 macro_rules! acquire_service_and_execute {
     ($service:expr, $state_type:ty, $operation:block) => {{
         let service_guard = $service.lock().await;
-        let service = service_guard
-            .as_ref()
-            .ok_or("AI service not initialized")?;
+        let service = service_guard.as_ref().ok_or("AI service not initialized")?;
         $operation
     }};
 }

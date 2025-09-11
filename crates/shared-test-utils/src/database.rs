@@ -135,24 +135,30 @@ impl DatabaseFixture {
 
     #[cfg(not(feature = "database"))]
     async fn setup_sqlite(&mut self) -> Result<(), TestError> {
-        Err(TestError::Validation(crate::ValidationError::invalid_setup(
-            "Database feature not enabled. Add 'database' feature flag."
-        )))
+        Err(TestError::Validation(
+            crate::ValidationError::invalid_setup(
+                "Database feature not enabled. Add 'database' feature flag.",
+            ),
+        ))
     }
 
     async fn setup_postgres(&mut self) -> Result<(), TestError> {
         // TODO: Implement PostgreSQL setup with sqlx
-        Err(TestError::Validation(crate::ValidationError::invalid_setup(
-            "PostgreSQL support not yet implemented"
-        )))
+        Err(TestError::Validation(
+            crate::ValidationError::invalid_setup("PostgreSQL support not yet implemented"),
+        ))
     }
 
     /// Execute a query and return results
     #[cfg(feature = "database")]
-    pub fn execute_query(&self, sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<Vec<rusqlite::Row>, TestError> {
+    pub fn execute_query(
+        &self,
+        sql: &str,
+        params: &[&dyn rusqlite::ToSql],
+    ) -> Result<Vec<rusqlite::Row>, TestError> {
         let conn = self.connection.as_ref().ok_or_else(|| {
             TestError::Validation(crate::ValidationError::invalid_setup(
-                "Database not initialized"
+                "Database not initialized",
             ))
         })?;
 
@@ -207,7 +213,10 @@ impl DatabaseFixtures {
 
 /// Mock database for testing without real database dependencies
 pub struct MockDatabase {
-    tables: std::collections::HashMap<String, Vec<std::collections::HashMap<String, serde_json::Value>>>,
+    tables: std::collections::HashMap<
+        String,
+        Vec<std::collections::HashMap<String, serde_json::Value>>,
+    >,
 }
 
 impl MockDatabase {
@@ -218,18 +227,30 @@ impl MockDatabase {
     }
 
     /// Insert mock data into a table
-    pub fn insert(&mut self, table: &str, data: std::collections::HashMap<String, serde_json::Value>) -> Result<(), TestError> {
-        self.tables.entry(table.to_string()).or_insert_with(Vec::new).push(data);
+    pub fn insert(
+        &mut self,
+        table: &str,
+        data: std::collections::HashMap<String, serde_json::Value>,
+    ) -> Result<(), TestError> {
+        self.tables
+            .entry(table.to_string())
+            .or_insert_with(Vec::new)
+            .push(data);
         Ok(())
     }
 
     /// Query mock data from a table
-    pub fn query(&self, table: &str, condition: Option<&str>) -> Result<Vec<std::collections::HashMap<String, serde_json::Value>>, TestError> {
+    pub fn query(
+        &self,
+        table: &str,
+        condition: Option<&str>,
+    ) -> Result<Vec<std::collections::HashMap<String, serde_json::Value>>, TestError> {
         let table_data = self.tables.get(table).cloned().unwrap_or_default();
 
         if let Some(cond) = condition {
             // Simple mock filtering - in real implementation, this would parse SQL-like conditions
-            Ok(table_data.into_iter()
+            Ok(table_data
+                .into_iter()
                 .filter(|row| {
                     // Simple ID-based filtering for demonstration
                     if let Some(serde_json::Value::String(id)) = row.get("id") {
@@ -288,9 +309,9 @@ impl DatabaseTransaction {
 #[cfg(not(feature = "database"))]
 impl DatabaseTransaction {
     pub fn begin(_conn: &()) -> Result<Self, TestError> {
-        Err(TestError::Validation(crate::ValidationError::invalid_setup(
-            "Database feature not enabled"
-        )))
+        Err(TestError::Validation(
+            crate::ValidationError::invalid_setup("Database feature not enabled"),
+        ))
     }
 
     pub fn commit(self) -> Result<(), TestError> {
@@ -326,7 +347,9 @@ mod tests {
         rt.block_on(fixture.setup()).expect("Setup should succeed");
 
         // Should be able to execute queries
-        let results = fixture.execute_query("SELECT 1 as test", &[]).expect("Query should succeed");
+        let results = fixture
+            .execute_query("SELECT 1 as test", &[])
+            .expect("Query should succeed");
         assert_eq!(results.len(), 1);
     }
 

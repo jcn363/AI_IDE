@@ -1,11 +1,11 @@
+use crate::types::{Channel, Message, ServiceEvent};
+use crate::ServiceConnector;
 use async_trait::async_trait;
+use futures_util::{SinkExt, StreamExt};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
-use futures_util::{SinkExt, StreamExt};
-use crate::types::{Message, Channel, ServiceEvent};
-use crate::ServiceConnector;
 
 /// Discord API endpoints
 const DISCORD_API_BASE: &str = "https://discord.com/api/v10";
@@ -42,7 +42,8 @@ impl ServiceConnector for DiscordConnector {
         // Test authentication
         let test_result = self.test_connection().await?;
         if test_result {
-            self.is_connected.store(true, std::sync::atomic::Ordering::Relaxed);
+            self.is_connected
+                .store(true, std::sync::atomic::Ordering::Relaxed);
             Ok(())
         } else {
             Err("Failed to authenticate with Discord API".into())
@@ -50,21 +51,28 @@ impl ServiceConnector for DiscordConnector {
     }
 
     async fn disconnect(&self) -> Result<(), Box<dyn std::error::Error>> {
-        self.is_connected.store(false, std::sync::atomic::Ordering::Relaxed);
+        self.is_connected
+            .store(false, std::sync::atomic::Ordering::Relaxed);
         Ok(())
     }
 
-    async fn send_message(&self, channel: &str, message: &str) -> Result<String, Box<dyn std::error::Error>> {
+    async fn send_message(
+        &self,
+        channel: &str,
+        message: &str,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         if !self.is_connected.load(std::sync::atomic::Ordering::Relaxed) {
             return Err("Not connected to Discord".into());
         }
 
-        let payload = serde_json::json!({
-            "content": message
-        });
+        let payload = serde_json::json!({ "content": message });
 
-        let response = self.client
-            .post(&format!("{}/channels/{}/messages", DISCORD_API_BASE, channel))
+        let response = self
+            .client
+            .post(&format!(
+                "{}/channels/{}/messages",
+                DISCORD_API_BASE, channel
+            ))
             .bearer_auth(&self.token)
             .json(&payload)
             .send()
@@ -88,7 +96,7 @@ impl ServiceConnector for DiscordConnector {
                 self.handle_gateway_connection(ws_stream).await?;
                 Ok(())
             }
-            Err(e) => Err(format!("Failed to connect to Discord Gateway: {}", e).into())
+            Err(e) => Err(format!("Failed to connect to Discord Gateway: {}", e).into()),
         }
     }
 
@@ -115,7 +123,8 @@ impl ServiceConnector for DiscordConnector {
 impl DiscordConnector {
     /// Test connection to Discord API
     async fn test_connection(&self) -> Result<bool, Box<dyn std::error::Error>> {
-        let response = self.client
+        let response = self
+            .client
             .get(&format!("{}/users/@me", DISCORD_API_BASE))
             .bearer_auth(&self.token)
             .send()
@@ -125,9 +134,16 @@ impl DiscordConnector {
     }
 
     /// Get channels for a guild
-    pub async fn get_guild_channels(&self, guild_id: &str) -> Result<Vec<Channel>, Box<dyn std::error::Error>> {
-        let response = self.client
-            .get(&format!("{}/guilds/{}/channels", DISCORD_API_BASE, guild_id))
+    pub async fn get_guild_channels(
+        &self,
+        guild_id: &str,
+    ) -> Result<Vec<Channel>, Box<dyn std::error::Error>> {
+        let response = self
+            .client
+            .get(&format!(
+                "{}/guilds/{}/channels",
+                DISCORD_API_BASE, guild_id
+            ))
             .bearer_auth(&self.token)
             .send()
             .await?;
@@ -158,7 +174,10 @@ impl DiscordConnector {
     }
 
     /// Handle Discord Gateway WebSocket connection
-    async fn handle_gateway_connection(&self, mut ws_stream: WebSocketStream<MaybeTlsStream<tokio::net::TcpStream>>) -> Result<(), Box<dyn std::error::Error>> {
+    async fn handle_gateway_connection(
+        &self,
+        mut ws_stream: WebSocketStream<MaybeTlsStream<tokio::net::TcpStream>>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("Connected to Discord Gateway");
 
         // Identify with Discord
@@ -198,13 +217,17 @@ impl DiscordConnector {
     }
 
     /// Handle incoming WebSocket messages from Discord Gateway
-    async fn handle_gateway_message(&self, message: tokio_tungstenite::tungstenite::Message) -> Result<(), Box<dyn std::error::Error>> {
+    async fn handle_gateway_message(
+        &self,
+        message: tokio_tungstenite::tungstenite::Message,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         match message {
             tokio_tungstenite::tungstenite::Message::Text(text) => {
                 let json: serde_json::Value = serde_json::from_str(&text)?;
                 if let Some(op_code) = json["op"].as_u64() {
                     match op_code {
-                        0 => { // Dispatch
+                        0 => {
+                            // Dispatch
                             if let Some(event_type) = json["t"].as_str() {
                                 tracing::debug!("Received Discord event: {}", event_type);
 
@@ -213,7 +236,8 @@ impl DiscordConnector {
                                     if event_type == "MESSAGE_CREATE" {
                                         if let Some(d) = json["d"].as_object() {
                                             if let Ok(message) = self.parse_discord_message(d) {
-                                                let _ = event_sender.send(ServiceEvent::MessageReceived(message));
+                                                let _ = event_sender
+                                                    .send(ServiceEvent::MessageReceived(message));
                                             }
                                         }
                                     }
@@ -233,10 +257,16 @@ impl DiscordConnector {
     }
 
     /// Parse Discord message from Gateway payload
-    fn parse_discord_message(&self, data: &serde_json::Map<String, serde_json::Value>) -> Result<Message, Box<dyn std::error::Error>> {
+    fn parse_discord_message(
+        &self,
+        data: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<Message, Box<dyn std::error::Error>> {
         let id = data["id"].as_str().unwrap_or("").to_string();
         let content = data["content"].as_str().unwrap_or("").to_string();
-        let author = data["author"]["username"].as_str().unwrap_or("").to_string();
+        let author = data["author"]["username"]
+            .as_str()
+            .unwrap_or("")
+            .to_string();
         let channel_id = data["channel_id"].as_str().unwrap_or("").to_string();
 
         Ok(Message {

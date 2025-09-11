@@ -1,9 +1,9 @@
 //! Style types and structures
 
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use std::fmt;
 pub use super::*;
+use serde::{Deserialize, Serialize};
+use std::fmt;
+use uuid::Uuid;
 
 /// Configuration for style checking
 #[derive(Debug, Clone, Serialize, Deserialize)]

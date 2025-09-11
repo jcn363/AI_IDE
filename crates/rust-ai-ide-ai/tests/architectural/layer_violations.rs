@@ -1,10 +1,7 @@
 //! Tests for layer violation detection
 
 use super::*;
-use crate::analysis::{
-    architectural::LayerViolationDetector,
-    AnalysisType, Severity,
-};
+use crate::analysis::{architectural::LayerViolationDetector, AnalysisType, Severity};
 
 #[test]
 fn test_proper_layer_architecture() {
@@ -58,10 +55,10 @@ fn test_proper_layer_architecture() {
             }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_success(&result);
     assert!(
         !has_findings(&result, AnalysisType::LayerViolation, Severity::Error),
@@ -91,10 +88,10 @@ fn test_domain_depending_on_infrastructure() {
             pub struct DatabaseOrderRepository;
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_finding!(
         &result,
         AnalysisType::LayerViolation,
@@ -152,10 +149,10 @@ fn test_cross_layer_dependencies() {
             }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_finding!(
         &result,
         AnalysisType::LayerViolation,
@@ -193,10 +190,10 @@ fn test_cyclic_dependencies_between_layers() {
             }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_finding!(
         &result,
         AnalysisType::LayerViolation,
@@ -207,5 +204,8 @@ fn test_cyclic_dependencies_between_layers() {
 
 // Helper function to check for specific findings
 fn has_findings(result: &AnalysisResult, analysis_type: AnalysisType, severity: Severity) -> bool {
-    result.findings.iter().any(|f| f.analysis_type == analysis_type && f.severity == severity)
+    result
+        .findings
+        .iter()
+        .any(|f| f.analysis_type == analysis_type && f.severity == severity)
 }

@@ -3,11 +3,11 @@
 //! This module provides comprehensive monitoring capabilities integrating
 //! with existing performance tracking systems.
 
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::{RwLock, Mutex};
 use rust_ai_ide_errors::IDEError;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::{Mutex, RwLock};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MemoryUsageSnapshot {
@@ -38,7 +38,10 @@ impl RealtimeMemoryUsageTracker {
     }
 
     pub async fn get_latest_snapshot(&self) -> Result<MemoryUsageSnapshot, IDEError> {
-        self.latest_snapshot.read().await.clone()
+        self.latest_snapshot
+            .read()
+            .await
+            .clone()
             .ok_or_else(|| IDEError::InternalError("No snapshot available".to_string()))
     }
 }
@@ -70,12 +73,15 @@ impl CrossComponentResourceCoordinator {
 
     pub async fn register_component(&self, component_id: String) {
         let mut stats = self.component_stats.write().await;
-        stats.insert(component_id.clone(), ComponentResourceStats {
-            component_id,
-            memory_usage_kb: 0,
-            cpu_time_ms: 0,
-            efficiency_score: 1.0,
-        });
+        stats.insert(
+            component_id.clone(),
+            ComponentResourceStats {
+                component_id,
+                memory_usage_kb: 0,
+                cpu_time_ms: 0,
+                efficiency_score: 1.0,
+            },
+        );
     }
 }
 
@@ -102,7 +108,10 @@ impl ResourceAllocationPlanner {
         Self
     }
 
-    pub async fn create_allocation_plan(&self, _recommendations: &[String]) -> Result<serde_json::Value, IDEError> {
+    pub async fn create_allocation_plan(
+        &self,
+        _recommendations: &[String],
+    ) -> Result<serde_json::Value, IDEError> {
         Ok(serde_json::json!({"status": "planning complete"}))
     }
 }

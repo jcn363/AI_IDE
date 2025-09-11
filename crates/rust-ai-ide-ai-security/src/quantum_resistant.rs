@@ -1,18 +1,18 @@
 // Quantum-Resistant Encryption Module
 // Implements post-quantum cryptographic primitives for AI operations
 
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
 use pqcrypto_kyber::*;
-use pqcrypto_traits::kem::{PublicKey, SecretKey, Ciphertext};
+use pqcrypto_traits::kem::{Ciphertext, PublicKey, SecretKey};
+use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
 /// Post-quantum AI configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PostQuantumAIConfig {
     pub key_encapsulation_method: String, // "kyber"
-    pub signature_scheme: String, // "falcon"
-    pub encryption_level: String, // "512", "768", "1024"
+    pub signature_scheme: String,         // "falcon"
+    pub encryption_level: String,         // "512", "768", "1024"
     pub model_encryption_enabled: bool,
     pub gradient_encryption_enabled: bool,
 }
@@ -86,7 +86,10 @@ impl QuantumResistantAI {
     }
 
     /// Decrypt AI model data
-    pub async fn decrypt_model_data(&self, encrypted_data: &QuantumEncryptedData) -> Result<Vec<u8>> {
+    pub async fn decrypt_model_data(
+        &self,
+        encrypted_data: &QuantumEncryptedData,
+    ) -> Result<Vec<u8>> {
         // Decapsulate to get shared secret
         let shared_secret = decapsulate(&encrypted_data.ciphertext, &self.secret_key);
 
@@ -99,7 +102,10 @@ impl QuantumResistantAI {
     }
 
     /// Secure AI inference with quantum-resistant encryption
-    pub async fn secure_inference(&self, inference_request: &[u8]) -> Result<QuantumEncryptedResult> {
+    pub async fn secure_inference(
+        &self,
+        inference_request: &[u8],
+    ) -> Result<QuantumEncryptedResult> {
         let initialized = self.is_initialized.lock().await;
         if !*initialized {
             return Err(anyhow::anyhow!("Quantum resistance not enabled"));
@@ -109,7 +115,11 @@ impl QuantumResistantAI {
         let (secret_shared, cipher_text) = encapsulate(&self.public_key);
 
         // Simulate AI inference (placeholder)
-        let inference_result = format!("Quantum-secure inference result for {:?}", inference_request).into_bytes();
+        let inference_result = format!(
+            "Quantum-secure inference result for {:?}",
+            inference_request
+        )
+        .into_bytes();
 
         let mut encrypted_result = Vec::from(cipher_text.as_bytes());
         encrypted_result.extend_from_slice(&inference_result);

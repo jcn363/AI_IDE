@@ -98,7 +98,10 @@ impl ComplianceError {
 
     /// Check if error is critical (requires immediate attention)
     pub fn is_critical(&self) -> bool {
-        matches!(self, Self::GdprViolation { .. } | Self::HipaaViolation { .. })
+        matches!(
+            self,
+            Self::GdprViolation { .. } | Self::HipaaViolation { .. }
+        )
     }
 
     /// Get error category for grouping
@@ -202,7 +205,11 @@ impl Default for AuditEntry {
 
 impl AuditEntry {
     /// Create a new audit entry
-    pub fn new(severity: AuditSeverity, category: impl Into<String>, action: impl Into<String>) -> Self {
+    pub fn new(
+        severity: AuditSeverity,
+        category: impl Into<String>,
+        action: impl Into<String>,
+    ) -> Self {
         Self {
             severity,
             category: category.into(),
@@ -401,7 +408,7 @@ pub mod utils {
 
     /// Hash sensitive data for audit logging
     pub fn hash_for_audit(data: &str) -> String {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(data);
         format!("sha256:{}", base16ct::encode_lower(&hasher.finalize()))
@@ -416,9 +423,9 @@ pub mod utils {
     pub fn contains_pii(data: &str) -> bool {
         // Simple PII detection patterns
         let pii_patterns = [
-            r"\b\d{3}-\d{2}-\d{4}\b",  // SSN
-            r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b",  // Credit card
-            r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",  // Email
+            r"\b\d{3}-\d{2}-\d{4}\b",                               // SSN
+            r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b",          // Credit card
+            r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", // Email
         ];
 
         for pattern in &pii_patterns {

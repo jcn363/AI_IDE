@@ -214,7 +214,10 @@ impl ArchitecturalAdvisor for IntelligentArchitecturalAdvisor {
         let validation_issues = self.validator.validate_context(&context).await?;
         if !validation_issues.is_empty() {
             // Log validation concerns but continue analysis with degraded confidence
-            println!("Context validation issues detected: {:?}", validation_issues);
+            println!(
+                "Context validation issues detected: {:?}",
+                validation_issues
+            );
         }
 
         // AI/ML Pipeline Phase 2: Structural codebase analysis
@@ -342,7 +345,10 @@ impl ArchitecturalAdvisor for IntelligentArchitecturalAdvisor {
         // Verify analysis completeness and identify potential gaps in coverage
         let validation_issues = self.validator.validate_analysis(analysis).await?;
         if !validation_issues.is_empty() {
-            println!("Analysis validation concerns identified: {:?}", validation_issues);
+            println!(
+                "Analysis validation concerns identified: {:?}",
+                validation_issues
+            );
         }
 
         // AI/ML Pipeline Phase 3: Primary recommendation generation

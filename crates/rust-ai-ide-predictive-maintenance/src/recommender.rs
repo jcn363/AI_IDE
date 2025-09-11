@@ -1,6 +1,6 @@
 //! Intelligent maintenance recommendation system
 
-use crate::{types::*, errors::*};
+use crate::{errors::*, types::*};
 
 #[derive(Debug)]
 pub struct Recommendor {
@@ -9,7 +9,9 @@ pub struct Recommendor {
 
 impl Recommendor {
     pub async fn new(config: &MaintenanceConfig) -> MaintenanceResult<Self> {
-        Ok(Self { config: config.clone() })
+        Ok(Self {
+            config: config.clone(),
+        })
     }
 
     pub async fn generate_recommendations(

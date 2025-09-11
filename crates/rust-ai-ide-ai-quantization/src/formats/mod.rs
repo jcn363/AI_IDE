@@ -2,4 +2,4 @@
 
 pub mod gguf;
 
-pub use gguf::{GGUFQuantizer, GGUFDType, GGUFTensorInfo, GGUFMetadataType, GGUFHeader};
+pub use gguf::{GGUFDType, GGUFHeader, GGUFMetadataType, GGUFQuantizer, GGUFTensorInfo};

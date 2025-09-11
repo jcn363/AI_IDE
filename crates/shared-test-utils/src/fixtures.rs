@@ -1,7 +1,7 @@
-use std::path::PathBuf;
-use std::collections::HashMap;
 use crate::error::TestError;
 use crate::filesystem::TempWorkspace;
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 /// Builder pattern for creating test fixtures
 #[derive(Clone, Debug, Default)]
@@ -106,7 +106,8 @@ impl FixturePresets {
     /// Basic Rust library fixture
     pub fn rust_library() -> TestFixtureBuilder {
         TestFixtureBuilder::new()
-            .with_file("Cargo.toml",
+            .with_file(
+                "Cargo.toml",
                 r#"[package]
 name = "test-lib"
 version = "0.1.0"
@@ -114,15 +115,20 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0"
-"#)
-            .with_file("src/lib.rs", "pub fn hello() -> &'static str { \"Hello!\" }")
+"#,
+            )
+            .with_file(
+                "src/lib.rs",
+                "pub fn hello() -> &'static str { \"Hello!\" }",
+            )
             .with_directory("src")
     }
 
     /// Cargo workspace fixture
     pub fn cargo_workspace(members: &[&str]) -> TestFixtureBuilder {
-        let mut builder = TestFixtureBuilder::new()
-            .with_file("Cargo.toml", format!(
+        let mut builder = TestFixtureBuilder::new().with_file(
+            "Cargo.toml",
+            format!(
                 r#"[workspace]
 resolver = "2"
 members = [{}]
@@ -132,24 +138,33 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 "#,
-                members.iter()
+                members
+                    .iter()
                     .map(|m| format!("\"{}\"", m))
                     .collect::<Vec<_>>()
                     .join(", ")
-            ));
+            ),
+        );
 
         for member in members {
             builder = builder
                 .with_directory(format!("{}/src", member))
-                .with_file(format!("{}/Cargo.toml", member),
-                    format!(r#"[package]
+                .with_file(
+                    format!("{}/Cargo.toml", member),
+                    format!(
+                        r#"[package]
 name = "{}"
 version.workspace = true
 edition.workspace = true
 publish.workspace = true
-"#, member))
-                .with_file(format!("{}/src/lib.rs", member),
-                    format!("// {} library code", member));
+"#,
+                        member
+                    ),
+                )
+                .with_file(
+                    format!("{}/src/lib.rs", member),
+                    format!("// {} library code", member),
+                );
         }
 
         builder
@@ -157,15 +172,16 @@ publish.workspace = true
 
     /// JSON configuration fixture
     pub fn json_config() -> TestFixtureBuilder {
-        TestFixtureBuilder::new()
-            .with_file("config.json",
-                r#"{
+        TestFixtureBuilder::new().with_file(
+            "config.json",
+            r#"{
   "app": {
     "name": "test-app",
     "version": "1.0.0"
   },
   "features": ["feature1", "feature2"]
-}"#)
+}"#,
+        )
     }
 
     /// Multi-module Rust project

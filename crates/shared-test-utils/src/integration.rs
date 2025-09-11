@@ -1,9 +1,9 @@
-use std::path::{Path, PathBuf};
-use std::collections::HashMap;
-use tokio::runtime::Runtime;
-use serde::{Serialize, Deserialize};
 use crate::error::TestError;
 use crate::filesystem::TempWorkspace;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use tokio::runtime::Runtime;
 
 /// Global state for integration tests
 #[derive(Clone)]
@@ -58,17 +58,20 @@ impl IntegrationTestRunner {
         workspace.create_dir(Path::new("logs"))?;
 
         // Setup basic configuration files
-        workspace.create_file(Path::new("config.toml"), &format!(
-            r#"cleanup_on_exit = {}
+        workspace.create_file(
+            Path::new("config.toml"),
+            &format!(
+                r#"cleanup_on_exit = {}
 isolated_tests = {}
 enable_logging = {}
 timeout_seconds = {}
 "#,
-            config.cleanup_on_exit,
-            config.isolated_tests,
-            config.enable_logging,
-            config.timeout_seconds
-        ))?;
+                config.cleanup_on_exit,
+                config.isolated_tests,
+                config.enable_logging,
+                config.timeout_seconds
+            ),
+        )?;
 
         // Initialize logging if enabled
         if config.enable_logging {
@@ -85,8 +88,10 @@ timeout_seconds = {}
 
         // Setup Tokio runtime for async operations
         if self.runtime.is_none() {
-            self.runtime = Some(Runtime::new()
-                .map_err(|e| TestError::Async(format!("Failed to create runtime: {}", e)))?);
+            self.runtime = Some(
+                Runtime::new()
+                    .map_err(|e| TestError::Async(format!("Failed to create runtime: {}", e)))?,
+            );
         }
 
         Ok(())
@@ -103,9 +108,11 @@ timeout_seconds = {}
         T: Send + 'static,
     {
         if self.context.is_none() {
-            return Err(TestError::Validation(crate::error::ValidationError::invalid_setup(
-                "Integration test not properly initialized. Call setup() first."
-            )));
+            return Err(TestError::Validation(
+                crate::error::ValidationError::invalid_setup(
+                    "Integration test not properly initialized. Call setup() first.",
+                ),
+            ));
         }
 
         let mut context = self.context.clone().unwrap();
@@ -113,14 +120,18 @@ timeout_seconds = {}
         // Execute test in runtime if available
         if let Some(runtime) = &self.runtime {
             runtime.block_on(async {
-                context.state.insert("current_scenario".to_string(),
-                    serde_json::Value::String(scenario_name.to_string()));
+                context.state.insert(
+                    "current_scenario".to_string(),
+                    serde_json::Value::String(scenario_name.to_string()),
+                );
 
                 test_fn(&mut context)
             })
         } else {
-            context.state.insert("current_scenario".to_string(),
-                serde_json::Value::String(scenario_name.to_string()));
+            context.state.insert(
+                "current_scenario".to_string(),
+                serde_json::Value::String(scenario_name.to_string()),
+            );
 
             test_fn(&mut context)
         }
@@ -163,9 +174,15 @@ impl Drop for IntegrationTestRunner {
 
 impl IntegrationContext {
     /// Stores state in the context
-    pub fn store_state<T: serde::Serialize>(&mut self, key: &str, value: T) -> Result<(), TestError> {
-        self.state.insert(key.to_string(),
-            serde_json::to_value(value).map_err(|e| TestError::Serialization(e.to_string()))?);
+    pub fn store_state<T: serde::Serialize>(
+        &mut self,
+        key: &str,
+        value: T,
+    ) -> Result<(), TestError> {
+        self.state.insert(
+            key.to_string(),
+            serde_json::to_value(value).map_err(|e| TestError::Serialization(e.to_string()))?,
+        );
         Ok(())
     }
 
@@ -175,9 +192,12 @@ impl IntegrationContext {
             serde_json::from_value(value.clone())
                 .map_err(|arg0: serde_json::Error| TestError::Serialization(arg0.to_string()))
         } else {
-            Err(TestError::Validation(crate::error::ValidationError::invalid_setup(
-                format!("State key '{}' not found", key)
-            )))
+            Err(TestError::Validation(
+                crate::error::ValidationError::invalid_setup(format!(
+                    "State key '{}' not found",
+                    key
+                )),
+            ))
         }
     }
 

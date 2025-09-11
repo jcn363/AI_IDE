@@ -154,18 +154,27 @@ where
         // Collect keys to remove first to avoid borrowing issues
         let keys_to_remove: Vec<K> = match self.eviction_policy {
             EvictionPolicy::Lru => {
-                let mut entries: Vec<_> = data.iter().map(|(k, v)| (k.clone(), v.accessed_at)).collect();
+                let mut entries: Vec<_> = data
+                    .iter()
+                    .map(|(k, v)| (k.clone(), v.accessed_at))
+                    .collect();
                 entries.sort_by_key(|(_, accessed_at)| *accessed_at);
                 entries.into_iter().take(count).map(|(k, _)| k).collect()
             }
             EvictionPolicy::Lfu => {
                 // For simplicity, using access count as frequency
-                let mut entries: Vec<_> = data.iter().map(|(k, v)| (k.clone(), v.accessed_at)).collect();
+                let mut entries: Vec<_> = data
+                    .iter()
+                    .map(|(k, v)| (k.clone(), v.accessed_at))
+                    .collect();
                 entries.sort_by_key(|(_, accessed_at)| *accessed_at);
                 entries.into_iter().take(count).map(|(k, _)| k).collect()
             }
             EvictionPolicy::Fifo => {
-                let mut entries: Vec<_> = data.iter().map(|(k, v)| (k.clone(), v.created_at)).collect();
+                let mut entries: Vec<_> = data
+                    .iter()
+                    .map(|(k, v)| (k.clone(), v.created_at))
+                    .collect();
                 entries.sort_by_key(|(_, created_at)| *created_at);
                 entries.into_iter().take(count).map(|(k, _)| k).collect()
             }
@@ -238,15 +247,24 @@ where
     }
 
     pub fn expect_get(&self, key: K) {
-        self.expected_calls.lock().unwrap().push(CacheCall::Get(key));
+        self.expected_calls
+            .lock()
+            .unwrap()
+            .push(CacheCall::Get(key));
     }
 
     pub fn expect_put(&self, key: K, value: V) {
-        self.expected_calls.lock().unwrap().push(CacheCall::Put(key, value));
+        self.expected_calls
+            .lock()
+            .unwrap()
+            .push(CacheCall::Put(key, value));
     }
 
     pub fn expect_remove(&self, key: K) {
-        self.expected_calls.lock().unwrap().push(CacheCall::Remove(key));
+        self.expected_calls
+            .lock()
+            .unwrap()
+            .push(CacheCall::Remove(key));
     }
 
     pub fn expect_clear(&self) {
@@ -295,7 +313,10 @@ impl CacheFixtures {
     /// Create a cache fixture pre-populated with common test data
     pub fn populated() -> CacheFixture<String, serde_json::Value> {
         let mut initial_data = HashMap::new();
-        initial_data.insert("user:123".to_string(), serde_json::json!({"name": "John", "id": 123}));
+        initial_data.insert(
+            "user:123".to_string(),
+            serde_json::json!({"name": "John", "id": 123}),
+        );
         initial_data.insert("config:theme".to_string(), serde_json::json!("dark"));
 
         CacheFixture::new().with_initial_data(initial_data)
@@ -360,7 +381,8 @@ where
 
         CacheBenchmarkResult {
             total_time: elapsed,
-            operations_per_second: (total_gets + total_puts + total_removes) as f64 / elapsed.as_secs_f64(),
+            operations_per_second: (total_gets + total_puts + total_removes) as f64
+                / elapsed.as_secs_f64(),
             total_gets,
             total_puts,
             total_removes,
@@ -443,7 +465,13 @@ mod tests {
     fn test_mock_cache_ttl() {
         let cache = MockCache::<String, String>::new();
 
-        cache.put_with_ttl("key1".to_string(), "value1".to_string(), Duration::from_millis(10)).unwrap();
+        cache
+            .put_with_ttl(
+                "key1".to_string(),
+                "value1".to_string(),
+                Duration::from_millis(10),
+            )
+            .unwrap();
 
         // Should work initially
         assert_eq!(cache.get(&"key1".to_string()), Some("value1".to_string()));
@@ -474,7 +502,9 @@ mod tests {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(fixture.setup()).unwrap();
 
-        fixture.put("key1".to_string(), "value1".to_string()).unwrap();
+        fixture
+            .put("key1".to_string(), "value1".to_string())
+            .unwrap();
 
         // Should find in L1 after first access
         assert_eq!(fixture.get(&"key1".to_string()), Some("value1".to_string()));

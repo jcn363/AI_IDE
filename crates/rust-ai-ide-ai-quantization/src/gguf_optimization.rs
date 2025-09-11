@@ -1,13 +1,13 @@
 #![feature(impl_trait_in_bindings)]
 
+use crate::IDEError;
+use candle_core::{DType, Device, Tensor};
+use rust_ai_ide_security::validate_secure_path;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
-use candle_core::{Tensor, Device, DType};
-use crate::IDEError;
-use rust_ai_ide_security::validate_secure_path;
 
 /// GGUF model optimization and deployment engine
 #[derive(Clone)]
@@ -116,7 +116,10 @@ impl GGUFOptimizationEngine {
 
         // Validate model file exists
         if !model_path.exists() {
-            return Err(IDEError::InvalidArgument(format!("Model file does not exist: {:?}", model_path)));
+            return Err(IDEError::InvalidArgument(format!(
+                "Model file does not exist: {:?}",
+                model_path
+            )));
         }
 
         let start_time = std::time::Instant::now();
@@ -125,13 +128,19 @@ impl GGUFOptimizationEngine {
         let model_info = self.analyze_model_structure(model_path).await?;
 
         // Step 2: Apply GGUF optimizations
-        let optimized_model = self.apply_gguf_optimizations(&model_info, quantization_strategy).await?;
+        let optimized_model = self
+            .apply_gguf_optimizations(&model_info, quantization_strategy)
+            .await?;
 
         // Step 3: Deploy the optimized model
-        let deployment_info = self.deploy_optimized_model(&optimized_model, model_id).await?;
+        let deployment_info = self
+            .deploy_optimized_model(&optimized_model, model_id)
+            .await?;
 
         // Step 4: Validate deployment
-        let performance_metrics = self.validate_deployment_performance(&deployment_info).await?;
+        let performance_metrics = self
+            .validate_deployment_performance(&deployment_info)
+            .await?;
 
         let deployed_model = DeployedGGUFModel {
             model_id: model_id.to_string(),
@@ -155,7 +164,10 @@ impl GGUFOptimizationEngine {
     }
 
     /// Analyze model structure for optimization
-    async fn analyze_model_structure(&self, model_path: &Path) -> Result<ModelAnalysisInfo, IDEError> {
+    async fn analyze_model_structure(
+        &self,
+        model_path: &Path,
+    ) -> Result<ModelAnalysisInfo, IDEError> {
         // Load model weights and analyze structure
         let tensors = candle_core::safetensors::load(model_path)?;
 
@@ -191,7 +203,7 @@ impl GGUFOptimizationEngine {
     async fn apply_gguf_optimizations(
         &self,
         model_info: &ModelAnalysisInfo,
-        strategy: &str
+        strategy: &str,
     ) -> Result<OptimizedModelInfo, IDEError> {
         let mut optimized_tensors = HashMap::new();
         let mut total_compression = 0.0f32;
@@ -204,7 +216,12 @@ impl GGUFOptimizationEngine {
             "Q4_0" => self.optimize_for_q4_0(&tensors).await,
             "Q5_0" => self.optimize_for_q5_0(&tensors).await,
             "Q8_0" => self.optimize_for_q8_0(&tensors).await,
-            _ => return Err(IDEError::InvalidArgument(format!("Unsupported quantization strategy: {}", strategy))),
+            _ => {
+                return Err(IDEError::InvalidArgument(format!(
+                    "Unsupported quantization strategy: {}",
+                    strategy
+                )))
+            }
         }?;
 
         for (name, compression_info) in compression_strategy {
@@ -220,67 +237,92 @@ impl GGUFOptimizationEngine {
             metadata: GGUFMetadata {
                 quantization_strategy: strategy.to_string(),
                 original_parameter_count: model_info.total_parameters,
-                optimized_parameter_count: (model_info.total_parameters as f32 * avg_compression) as u64,
+                optimized_parameter_count: (model_info.total_parameters as f32 * avg_compression)
+                    as u64,
             },
         })
     }
 
     /// Optimize for Q4_0 quantization
-    async fn optimize_for_q4_0(&self, tensors: &HashMap<String, Tensor>) -> Result<HashMap<String, CompressionInfo>, IDEError> {
+    async fn optimize_for_q4_0(
+        &self,
+        tensors: &HashMap<String, Tensor>,
+    ) -> Result<HashMap<String, CompressionInfo>, IDEError> {
         let mut results = HashMap::new();
 
         for (name, tensor) in tensors {
             // Apply Q4_0 specific optimizations
             let quantized_tensor = self.apply_q4_0_optimization(tensor)?;
-            let original_size = tensor.dims().iter().fold(1, |acc, &x| acc * x) * tensor.dtype().size_in_bytes();
-            let quantized_size = quantized_tensor.dims().iter().fold(1, |acc, &x| acc * x) * quantized_tensor.dtype().size_in_bytes();
+            let original_size =
+                tensor.dims().iter().fold(1, |acc, &x| acc * x) * tensor.dtype().size_in_bytes();
+            let quantized_size = quantized_tensor.dims().iter().fold(1, |acc, &x| acc * x)
+                * quantized_tensor.dtype().size_in_bytes();
             let compression_ratio = original_size as f32 / quantized_size as f32;
 
-            results.insert(name.clone(), CompressionInfo {
-                tensor: quantized_tensor,
-                compression_ratio,
-                quantization_noise: 0.05, // Estimated noise for Q4_0
-            });
+            results.insert(
+                name.clone(),
+                CompressionInfo {
+                    tensor: quantized_tensor,
+                    compression_ratio,
+                    quantization_noise: 0.05, // Estimated noise for Q4_0
+                },
+            );
         }
 
         Ok(results)
     }
 
     /// Optimize for Q5_0 quantization
-    async fn optimize_for_q5_0(&self, tensors: &HashMap<String, Tensor>) -> Result<HashMap<String, CompressionInfo>, IDEError> {
+    async fn optimize_for_q5_0(
+        &self,
+        tensors: &HashMap<String, Tensor>,
+    ) -> Result<HashMap<String, CompressionInfo>, IDEError> {
         let mut results = HashMap::new();
 
         for (name, tensor) in tensors {
             let quantized_tensor = self.apply_q5_0_optimization(tensor)?;
-            let original_size = tensor.dims().iter().fold(1, |acc, &x| acc * x) * tensor.dtype().size_in_bytes();
-            let quantized_size = quantized_tensor.dims().iter().fold(1, |acc, &x| acc * x) * quantized_tensor.dtype().size_in_bytes();
+            let original_size =
+                tensor.dims().iter().fold(1, |acc, &x| acc * x) * tensor.dtype().size_in_bytes();
+            let quantized_size = quantized_tensor.dims().iter().fold(1, |acc, &x| acc * x)
+                * quantized_tensor.dtype().size_in_bytes();
             let compression_ratio = original_size as f32 / quantized_size as f32;
 
-            results.insert(name.clone(), CompressionInfo {
-                tensor: quantized_tensor,
-                compression_ratio,
-                quantization_noise: 0.03, // Lower noise for Q5_0
-            });
+            results.insert(
+                name.clone(),
+                CompressionInfo {
+                    tensor: quantized_tensor,
+                    compression_ratio,
+                    quantization_noise: 0.03, // Lower noise for Q5_0
+                },
+            );
         }
 
         Ok(results)
     }
 
     /// Optimize for Q8_0 quantization
-    async fn optimize_for_q8_0(&self, tensors: &HashMap<String, Tensor>) -> Result<HashMap<String, CompressionInfo>, IDEError> {
+    async fn optimize_for_q8_0(
+        &self,
+        tensors: &HashMap<String, Tensor>,
+    ) -> Result<HashMap<String, CompressionInfo>, IDEError> {
         let mut results = HashMap::new();
 
         for (name, tensor) in tensors {
             let quantized_tensor = self.apply_q8_0_optimization(tensor)?;
-            let original_size = tensor.dims().iter().fold(1, |acc, &x| acc * x) * tensor.dtype().size_in_bytes();
-            let quantized_size = quantized_tensor.dims().iter().fold(1, |acc, &x| acc * x) * quantized_tensor.dtype().size_in_bytes();
+            let original_size =
+                tensor.dims().iter().fold(1, |acc, &x| acc * x) * tensor.dtype().size_in_bytes();
+            let quantized_size = quantized_tensor.dims().iter().fold(1, |acc, &x| acc * x)
+                * quantized_tensor.dtype().size_in_bytes();
             let compression_ratio = original_size as f32 / quantized_size as f32;
 
-            results.insert(name.clone(), CompressionInfo {
-                tensor: quantized_tensor,
-                compression_ratio,
-                quantization_noise: 0.01, // Minimal noise for Q8_0
-            });
+            results.insert(
+                name.clone(),
+                CompressionInfo {
+                    tensor: quantized_tensor,
+                    compression_ratio,
+                    quantization_noise: 0.01, // Minimal noise for Q8_0
+                },
+            );
         }
 
         Ok(results)
@@ -291,8 +333,12 @@ impl GGUFOptimizationEngine {
         // Convert to GGUF Q4_0 format
         // This is a simplified implementation - real GGUF uses specific binary format
         let quantized_data: Vec<u8> = self.quantize_to_q4_0_bytes(tensor)?;
-        Tensor::from_vec(quantized_data.clone(), &[quantized_data.len()], tensor.device())
-            .map_err(|e| IDEError::InvalidArgument(format!("Q4_0 optimization failed: {}", e)))
+        Tensor::from_vec(
+            quantized_data.clone(),
+            &[quantized_data.len()],
+            tensor.device(),
+        )
+        .map_err(|e| IDEError::InvalidArgument(format!("Q4_0 optimization failed: {}", e)))
     }
 
     /// Apply Q5_0 optimization to a single tensor
@@ -361,7 +407,7 @@ impl GGUFOptimizationEngine {
     async fn deploy_optimized_model(
         &self,
         optimized_model: &OptimizedModelInfo,
-        model_id: &str
+        model_id: &str,
     ) -> Result<DeploymentInfo, IDEError> {
         // Create GGUF file path
         let gguf_path = PathBuf::from(format!("models/{}.gguf", model_id));
@@ -378,16 +424,22 @@ impl GGUFOptimizationEngine {
     }
 
     /// Write GGUF file format
-    async fn write_gguf_file(&self, path: &Path, model: &OptimizedModelInfo) -> Result<(), IDEError> {
+    async fn write_gguf_file(
+        &self,
+        path: &Path,
+        model: &OptimizedModelInfo,
+    ) -> Result<(), IDEError> {
         // This would implement GGUF binary format writing
         // For now, just create a placeholder file
-        tokio::fs::write(path, b"GGUF_PLACEHOLDER").await
+        tokio::fs::write(path, b"GGUF_PLACEHOLDER")
+            .await
             .map_err(|e| IDEError::InvalidArgument(format!("Failed to write GGUF file: {}", e)))
     }
 
     /// Calculate model size in MB
     fn calculate_model_size_mb(&self, tensors: &HashMap<String, Tensor>) -> f64 {
-        let total_bytes: usize = tensors.values()
+        let total_bytes: usize = tensors
+            .values()
             .map(|t| t.dims().iter().fold(1, |acc, &x| acc * x) * t.dtype().size_in_bytes())
             .sum();
 
@@ -397,7 +449,7 @@ impl GGUFOptimizationEngine {
     /// Validate deployment performance
     async fn validate_deployment_performance(
         &self,
-        deployment: &DeploymentInfo
+        deployment: &DeploymentInfo,
     ) -> Result<GGUFPerformanceMetrics, IDEError> {
         // Run performance validation tests
         let tokens_per_sec = self.measure_inference_throughput(deployment).await?;
@@ -406,14 +458,21 @@ impl GGUFOptimizationEngine {
         Ok(GGUFPerformanceMetrics {
             tokens_per_sec,
             memory_usage_mb,
-            gpu_utilization_percent: if self.config.enable_cuda { Some(85.0) } else { None },
+            gpu_utilization_percent: if self.config.enable_cuda {
+                Some(85.0)
+            } else {
+                None
+            },
             accuracy_retention_percent: 95.0, // Placeholder - would be measured
-            context_switch_overhead_us: 250, // Estimated overhead
+            context_switch_overhead_us: 250,  // Estimated overhead
         })
     }
 
     /// Measure inference throughput
-    async fn measure_inference_throughput(&self, deployment: &DeploymentInfo) -> Result<f64, IDEError> {
+    async fn measure_inference_throughput(
+        &self,
+        deployment: &DeploymentInfo,
+    ) -> Result<f64, IDEError> {
         // This would run actual inference benchmarks
         // For now, return estimated throughput based on model size
         let base_throughput = match self.config.memory_optimization_level {
@@ -429,21 +488,27 @@ impl GGUFOptimizationEngine {
     }
 
     /// Determine optimal quantization strategy
-    fn determine_optimal_strategy(&self, tensor_types: &HashMap<String, i32>, total_params: u64) -> String {
+    fn determine_optimal_strategy(
+        &self,
+        tensor_types: &HashMap<String, i32>,
+        total_params: u64,
+    ) -> String {
         // Simple strategy selection based on model characteristics
         let has_fp16 = tensor_types.contains_key("F16");
 
         match (total_params, has_fp16) {
             (p, true) if p > 1_000_000_000 => "Q4_0", // Large FP16 models -> aggressive quantization
-            (p, _) if p > 500_000_000 => "Q5_0",    // Medium-large models -> balanced
-            _ => "Q8_0",                           // Small models -> high quality
-        }.to_string()
+            (p, _) if p > 500_000_000 => "Q5_0",      // Medium-large models -> balanced
+            _ => "Q8_0",                              // Small models -> high quality
+        }
+        .to_string()
     }
 
     /// Get deployed model information
     pub async fn get_deployed_model(&self, model_id: &str) -> Result<DeployedGGUFModel, IDEError> {
         let deployed = self.deployed_models.lock().await;
-        deployed.get(model_id)
+        deployed
+            .get(model_id)
             .cloned()
             .ok_or_else(|| IDEError::InvalidArgument(format!("Model {} not found", model_id)))
     }
@@ -461,12 +526,18 @@ impl GGUFOptimizationEngine {
         if let Some(model) = deployed.remove(model_id) {
             // Remove GGUF file
             if model.gguf_path.exists() {
-                tokio::fs::remove_file(&model.gguf_path).await
-                    .map_err(|e| IDEError::InvalidArgument(format!("Failed to remove GGUF file: {}", e)))?;
+                tokio::fs::remove_file(&model.gguf_path)
+                    .await
+                    .map_err(|e| {
+                        IDEError::InvalidArgument(format!("Failed to remove GGUF file: {}", e))
+                    })?;
             }
             Ok(())
         } else {
-            Err(IDEError::InvalidArgument(format!("Model {} not found", model_id)))
+            Err(IDEError::InvalidArgument(format!(
+                "Model {} not found",
+                model_id
+            )))
         }
     }
 }

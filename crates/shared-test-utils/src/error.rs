@@ -119,18 +119,26 @@ impl From<std::str::Utf8Error> for TestError {
 
 impl ValidationError {
     pub fn path_validation(msg: impl Into<String>) -> Self {
-        ValidationError::PathValidation { message: msg.into() }
+        ValidationError::PathValidation {
+            message: msg.into(),
+        }
     }
 
     pub fn security_validation(msg: impl Into<String>) -> Self {
-        ValidationError::SecurityValidation { message: msg.into() }
+        ValidationError::SecurityValidation {
+            message: msg.into(),
+        }
     }
 
     pub fn content_validation(msg: impl Into<String>) -> Self {
-        ValidationError::ContentValidation { message: msg.into() }
+        ValidationError::ContentValidation {
+            message: msg.into(),
+        }
     }
 
     pub fn invalid_setup(msg: impl Into<String>) -> Self {
-        ValidationError::InvalidTestSetup { message: msg.into() }
+        ValidationError::InvalidTestSetup {
+            message: msg.into(),
+        }
     }
 }

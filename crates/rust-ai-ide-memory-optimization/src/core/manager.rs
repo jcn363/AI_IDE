@@ -3,9 +3,9 @@
 //! with integration to existing SIMD and AI infrastructure.
 
 use std::sync::Arc;
+use sysinfo::{System, SystemExt};
 use tokio::sync::{Mutex, RwLock};
 use tokio::time::{self, Duration};
-use sysinfo::{System, SystemExt};
 
 #[cfg(feature = "ai_analysis")]
 use rust_ai_ide_ai_codegen::types::CodeAnalysis;
@@ -104,7 +104,9 @@ pub struct MemoryOptimizationManager {
 impl MemoryOptimizationManager {
     /// Create a new memory optimization manager
     pub async fn new(config: MemoryOptimizationConfig) -> MemoryOptimizationResult<Self> {
-        config.validate().map_err(|e| anyhow::anyhow!("Invalid configuration: {}", e))?;
+        config
+            .validate()
+            .map_err(|e| anyhow::anyhow!("Invalid configuration: {}", e))?;
 
         let manager = Self {
             config,
@@ -186,7 +188,9 @@ impl MemoryOptimizationManager {
     }
 
     /// Perform comprehensive memory scan and optimization
-    pub async fn perform_comprehensive_scan(&self) -> MemoryOptimizationResult<SComprehensiveScanResults> {
+    pub async fn perform_comprehensive_scan(
+        &self,
+    ) -> MemoryOptimizationResult<SComprehensiveScanResults> {
         tracing::info!("Performing comprehensive memory scan");
 
         // Collect current memory statistics
@@ -246,8 +250,11 @@ impl MemoryOptimizationManager {
         // Check alert threshold
         let should_alert = self.memory_monitor.lock().await.should_alert(&stats);
         if should_alert {
-            tracing::warn!("🚨 Memory usage alert: {:.1}% (threshold: {:.1}%)",
-                stats.memory_usage_percent, self.config.memory_alert_threshold_percent);
+            tracing::warn!(
+                "🚨 Memory usage alert: {:.1}% (threshold: {:.1}%)",
+                stats.memory_usage_percent,
+                self.config.memory_alert_threshold_percent
+            );
         }
 
         // Perform leak scanning if enabled and due
@@ -255,10 +262,12 @@ impl MemoryOptimizationManager {
             if let Some(detector) = self.leak_detector.read().await.as_ref() {
                 match detector.scan_for_leaks().await {
                     Ok(snapshots) if !snapshots.is_empty() => {
-                        tracing::warn!("🔍 Potential memory leaks detected: {} snapshot(s)",
-                            snapshots.len());
+                        tracing::warn!(
+                            "🔍 Potential memory leaks detected: {} snapshot(s)",
+                            snapshots.len()
+                        );
                     }
-                    Ok(_) => {}  // No leaks detected
+                    Ok(_) => {} // No leaks detected
                     Err(e) => tracing::error!("Leak detection failed: {}", e),
                 }
             }
@@ -346,7 +355,7 @@ pub struct ComprehensiveScanResults {
     pub leak_reports: Vec<crate::leak_detection::LeakReport>,
     pub optimization_suggestions: Vec<OptimizationSuggestion>,
     pub should_alert: bool,
-    pub performance_report: Option<String>,  // SIMD performance report
+    pub performance_report: Option<String>, // SIMD performance report
     pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 
@@ -376,7 +385,7 @@ mod tests {
         let config = MemoryOptimizationConfig::default();
         let manager = MemoryOptimizationManager::new(config).await.unwrap();
 
-        let mut monitor = MemoryMonitor::new(50.0);  // Low threshold for testing
+        let mut monitor = MemoryMonitor::new(50.0); // Low threshold for testing
         let stats = monitor.collect_statistics();
 
         assert!(monitor.should_alert(&stats) || !monitor.should_alert(&stats));

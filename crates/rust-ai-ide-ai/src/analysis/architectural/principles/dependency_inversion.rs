@@ -1,8 +1,8 @@
-use syn::{visit::Visit, ItemImpl, TypePath};
 use super::super::types::CodeLocation;
+use syn::{visit::Visit, ItemImpl, TypePath};
 
 /// Analyzer for the Dependency Inversion Principle
-/// 
+///
 /// This analyzer checks for violations where high-level modules depend on low-level
 /// modules directly instead of depending on abstractions.
 pub struct DependencyInversionAnalyzer {
@@ -67,8 +67,11 @@ impl<'ast> Visit<'ast> for DependencyInversionVisitor<'_> {
 
     fn visit_type_path(&mut self, ty: &'ast TypePath) {
         // Skip if this is part of a trait path
-        if self.current_impl_trait.as_ref()
-            .map_or(false, |trait_path| is_path_part_of(trait_path, &ty.path)) {
+        if self
+            .current_impl_trait
+            .as_ref()
+            .map_or(false, |trait_path| is_path_part_of(trait_path, &ty.path))
+        {
             return;
         }
 
@@ -79,16 +82,19 @@ impl<'ast> Visit<'ast> for DependencyInversionVisitor<'_> {
 
         // Check if this is a concrete type that should be behind an interface
         let type_name = path_to_string(&ty.path);
-        if !self.analyzer.known_abstractions.iter().any(|abstraction| {
-            type_name.starts_with(abstraction)
-        }) {
+        if !self
+            .analyzer
+            .known_abstractions
+            .iter()
+            .any(|abstraction| type_name.starts_with(abstraction))
+        {
             // This is a potential violation
             let location = CodeLocation {
                 file_path: String::new(), // Will be filled in by the caller
                 line: ty.span().start().line as u32,
                 column: ty.span().start().column as u32,
             };
-            
+
             self.analyzer.violations.push(DependencyInversionViolation {
                 concrete_type: type_name,
                 location,
@@ -102,10 +108,12 @@ fn is_path_part_of(base_path: &syn::Path, test_path: &syn::Path) -> bool {
     if base_path.segments.len() > test_path.segments.len() {
         return false;
     }
-    
-    base_path.segments.iter().zip(&test_path.segments).all(|(a, b)| {
-        a.ident == b.ident
-    })
+
+    base_path
+        .segments
+        .iter()
+        .zip(&test_path.segments)
+        .all(|(a, b)| a.ident == b.ident)
 }
 
 fn is_std_or_primitive(path: &syn::Path) -> bool {
@@ -114,11 +122,35 @@ fn is_std_or_primitive(path: &syn::Path) -> bool {
         let ident = segment.ident.to_string();
         matches!(
             ident.as_str(),
-            "u8" | "u16" | "u32" | "u64" | "u128" | "usize" |
-            "i8" | "i16" | "i32" | "i64" | "i128" | "isize" |
-            "f32" | "f64" | "bool" | "char" | "str" | "String" |
-            "Vec" | "Option" | "Result" | "Box" | "Arc" | "Rc" |
-            "Cell" | "RefCell" | "Mutex" | "RwLock" | "HashMap" | "HashSet"
+            "u8" | "u16"
+                | "u32"
+                | "u64"
+                | "u128"
+                | "usize"
+                | "i8"
+                | "i16"
+                | "i32"
+                | "i64"
+                | "i128"
+                | "isize"
+                | "f32"
+                | "f64"
+                | "bool"
+                | "char"
+                | "str"
+                | "String"
+                | "Vec"
+                | "Option"
+                | "Result"
+                | "Box"
+                | "Arc"
+                | "Rc"
+                | "Cell"
+                | "RefCell"
+                | "Mutex"
+                | "RwLock"
+                | "HashMap"
+                | "HashSet"
         )
     } else {
         false
@@ -147,11 +179,10 @@ mod tests {
             
             struct ConcreteRepository;
         "#;
-        
+
         let file = syn::parse_file(code).unwrap();
-        let mut analyzer = DependencyInversionAnalyzer::new()
-            .with_abstraction("dyn Repository");
-        
+        let mut analyzer = DependencyInversionAnalyzer::new().with_abstraction("dyn Repository");
+
         for item in &file.items {
             if let syn::Item::Struct(s) = item {
                 let mut visitor = DependencyInversionVisitor {
@@ -161,7 +192,7 @@ mod tests {
                 visitor.visit_item_struct(s);
             }
         }
-        
+
         assert_eq!(analyzer.violations().len(), 1);
         assert_eq!(analyzer.violations()[0].concrete_type, "ConcreteRepository");
     }

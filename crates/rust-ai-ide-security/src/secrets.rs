@@ -8,14 +8,13 @@
 //! - Integration with existing audit logging system
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 use tracing::warn;
-use regex::Regex;
-use std::collections::HashMap;
-use chrono::{DateTime, Utc};
-
 
 /// Main secrets scanning engine
 #[derive(Clone)]
@@ -91,7 +90,9 @@ struct AllowedContext {
 }
 
 impl SecretsScanner {
-    pub async fn new(audit_logger: Arc<dyn AuditLogger>) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn new(
+        audit_logger: Arc<dyn AuditLogger>,
+    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let pattern_engine = Arc::new(PatternEngine::new().await?);
         let entropy_analyzer = Arc::new(EntropyAnalyzer::default());
         let context_analyzer = Arc::new(ContextAnalyzer::new().await?);
@@ -106,7 +107,11 @@ impl SecretsScanner {
     }
 
     /// Scan content for potential secrets
-    pub async fn scan_content(&self, content: &str, file_path: &str) -> Result<Vec<SecretFinding>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn scan_content(
+        &self,
+        content: &str,
+        file_path: &str,
+    ) -> Result<Vec<SecretFinding>, Box<dyn std::error::Error + Send + Sync>> {
         let mut findings = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -114,7 +119,9 @@ impl SecretsScanner {
             let matches = self.pattern_engine.find_matches(line).await?;
             for potential_secret in matches {
                 // Check entropy
-                let entropy = self.entropy_analyzer.calculate_entropy(&potential_secret.text);
+                let entropy = self
+                    .entropy_analyzer
+                    .calculate_entropy(&potential_secret.text);
 
                 // Skip if entropy is too low
                 if entropy < potential_secret.entropy_threshold {
@@ -122,7 +129,11 @@ impl SecretsScanner {
                 }
 
                 // Check if it's in an allowed context
-                if self.context_analyzer.is_allowed_context(file_path, &potential_secret, line).await? {
+                if self
+                    .context_analyzer
+                    .is_allowed_context(file_path, &potential_secret, line)
+                    .await?
+                {
                     continue;
                 }
 
@@ -156,7 +167,10 @@ impl SecretsScanner {
     }
 
     /// Scan a directory recursively for secrets
-    pub async fn scan_directory(&self, path: &str) -> Result<Vec<SecretFinding>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn scan_directory(
+        &self,
+        path: &str,
+    ) -> Result<Vec<SecretFinding>, Box<dyn std::error::Error + Send + Sync>> {
         let mut all_findings = Vec::new();
 
         // Use walkdir to traverse directory
@@ -187,13 +201,13 @@ impl SecretsScanner {
     fn should_skip_file(&self, file_path: &str) -> bool {
         // Common patterns to skip
         let skip_patterns = [
-            r"\.log$",           // Log files
-            r"\.min\.",          // Minified files
-            r"node_modules/",    // Dependencies
-            r"\.git/",          // Git history
-            r"target/",         // Rust build artifacts
-            r"dist/",           // Build outputs
-            r"\.lock$",         // Lock files
+            r"\.log$",              // Log files
+            r"\.min\.",             // Minified files
+            r"node_modules/",       // Dependencies
+            r"\.git/",              // Git history
+            r"target/",             // Rust build artifacts
+            r"dist/",               // Build outputs
+            r"\.lock$",             // Lock files
             r"package-lock\.json$", // NPM lock file
         ];
 
@@ -232,7 +246,11 @@ impl SecretsScanner {
         confidence.min(1.0)
     }
 
-    fn determine_severity(&self, pattern: &SecretPatternMatch, confidence: f64) -> VulnerabilitySeverity {
+    fn determine_severity(
+        &self,
+        pattern: &SecretPatternMatch,
+        confidence: f64,
+    ) -> VulnerabilitySeverity {
         match pattern.secret_type {
             SecretType::PrivateKey | SecretType::Certificate => {
                 if confidence > 0.8 {
@@ -240,14 +258,14 @@ impl SecretsScanner {
                 } else {
                     VulnerabilitySeverity::High
                 }
-            },
+            }
             SecretType::Password => {
                 if confidence > 0.7 {
                     VulnerabilitySeverity::High
                 } else {
                     VulnerabilitySeverity::Medium
                 }
-            },
+            }
             _ => {
                 if confidence > 0.8 {
                     VulnerabilitySeverity::High
@@ -256,7 +274,7 @@ impl SecretsScanner {
                 } else {
                     VulnerabilitySeverity::Low
                 }
-            },
+            }
         }
     }
 }
@@ -270,59 +288,71 @@ impl PatternEngine {
             SecretPattern {
                 name: "Common API Key".to_string(),
                 regex: Regex::new(r"([a-zA-Z0-9]{20,50})")?,
-//                entropy_threshold: 4.0,
+                //                entropy_threshold: 4.0,
                 entropy_threshold: 4.0,
-                context_keywords: vec!["api_key", "apikey", "token", "key", "secret"].into_iter().map(|s| s.to_string()).collect(),
+                context_keywords: vec!["api_key", "apikey", "token", "key", "secret"]
+                    .into_iter()
+                    .map(|s| s.to_string())
+                    .collect(),
             },
             SecretPattern {
                 name: "Base64 API Key".to_string(),
                 regex: Regex::new(r"([A-Za-z0-9+/=]{20,})")?,
-//                entropy_threshold: 4.5,
+                //                entropy_threshold: 4.5,
                 entropy_threshold: 4.5,
-                context_keywords: vec!["api_key", "apikey", "token"].into_iter().map(|s| s.to_string()).collect(),
+                context_keywords: vec!["api_key", "apikey", "token"]
+                    .into_iter()
+                    .map(|s| s.to_string())
+                    .collect(),
             },
         ];
 
-        let token_patterns = vec![
-            SecretPattern {
-                name: "Bearer Token".to_string(),
-                regex: Regex::new(r"Bearer\s+([A-Za-z0-9+/=\.]{20,})")?,
-//                entropy_threshold: 4.5,
-                entropy_threshold: 4.5,
-                context_keywords: vec!["authorization", "bearer", "token"].into_iter().map(|s| s.to_string()).collect(),
-            },
-        ];
+        let token_patterns = vec![SecretPattern {
+            name: "Bearer Token".to_string(),
+            regex: Regex::new(r"Bearer\s+([A-Za-z0-9+/=\.]{20,})")?,
+            //                entropy_threshold: 4.5,
+            entropy_threshold: 4.5,
+            context_keywords: vec!["authorization", "bearer", "token"]
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect(),
+        }];
 
-        let password_patterns = vec![
-            SecretPattern {
-                name: "Password Pattern".to_string(),
-                regex: Regex::new(r#"password[\s]*[=:]+\s*['"]([^'"]{8,})['"]"#)?,
-//                entropy_threshold: 3.5,
-                entropy_threshold: 3.5,
-                context_keywords: vec!["password", "passwd"].into_iter().map(|s| s.to_string()).collect(),
-            },
-        ];
+        let password_patterns = vec![SecretPattern {
+            name: "Password Pattern".to_string(),
+            regex: Regex::new(r#"password[\s]*[=:]+\s*['"]([^'"]{8,})['"]"#)?,
+            //                entropy_threshold: 3.5,
+            entropy_threshold: 3.5,
+            context_keywords: vec!["password", "passwd"]
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect(),
+        }];
 
-        let private_key_patterns = vec![
-            SecretPattern {
-                name: "SSH Private Key".to_string(),
-                regex: Regex::new(r"-----BEGIN\s+(RSA|DSA|ECDSA|OPENSSH)\s+PRIVATE\s+KEY-----")?,
-//                entropy_threshold: 5.0,
-                entropy_threshold: 5.0,
-                context_keywords: vec!["private", "key", "rsa", "dsa"].into_iter().map(|s| s.to_string()).collect(),
-            },
-        ];
+        let private_key_patterns = vec![SecretPattern {
+            name: "SSH Private Key".to_string(),
+            regex: Regex::new(r"-----BEGIN\s+(RSA|DSA|ECDSA|OPENSSH)\s+PRIVATE\s+KEY-----")?,
+            //                entropy_threshold: 5.0,
+            entropy_threshold: 5.0,
+            context_keywords: vec!["private", "key", "rsa", "dsa"]
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect(),
+        }];
 
         patterns.insert(SecretType::ApiKey, api_key_patterns);
         patterns.insert(SecretType::Token, token_patterns);
         patterns.insert(SecretType::Password, password_patterns);
         patterns.insert(SecretType::PrivateKey, private_key_patterns);
-//        patterns.insert(SecretType::ApiKey, api_key_patterns);
+        //        patterns.insert(SecretType::ApiKey, api_key_patterns);
 
         Ok(Self { patterns })
     }
 
-    async fn find_matches(&self, line: &str) -> Result<Vec<SecretPatternMatch>, Box<dyn std::error::Error + Send + Sync>> {
+    async fn find_matches(
+        &self,
+        line: &str,
+    ) -> Result<Vec<SecretPatternMatch>, Box<dyn std::error::Error + Send + Sync>> {
         let mut matches = Vec::new();
 
         for (secret_type, patterns) in &self.patterns {
@@ -406,7 +436,12 @@ impl ContextAnalyzer {
         Ok(Self { allowed_contexts })
     }
 
-    pub async fn is_allowed_context(&self, file_path: &str, _pattern: &SecretPatternMatch, line: &str) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn is_allowed_context(
+        &self,
+        file_path: &str,
+        _pattern: &SecretPatternMatch,
+        line: &str,
+    ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
         for context in &self.allowed_contexts {
             // Check file pattern
             for file_pattern in &context.file_patterns {
@@ -428,8 +463,17 @@ impl ContextAnalyzer {
 
     pub fn has_secret_context(&self, line: &str) -> bool {
         let secret_keywords = [
-            "secret", "token", "key", "api_key", "apikey", "password", "bearer",
-            "auth", "credential", "private", "certificate"
+            "secret",
+            "token",
+            "key",
+            "api_key",
+            "apikey",
+            "password",
+            "bearer",
+            "auth",
+            "credential",
+            "private",
+            "certificate",
         ];
 
         let line_lower = line.to_lowercase();
@@ -440,6 +484,9 @@ impl ContextAnalyzer {
 // Placeholder for audit logger integration
 #[async_trait]
 pub trait AuditLogger {
-    async fn log_secret_detection(&self, finding: &SecretFinding) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+    async fn log_secret_detection(
+        &self,
+        finding: &SecretFinding,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }
 // We don't have AuditLogger in lib.rs root yet, will be fixed when security crate is complete

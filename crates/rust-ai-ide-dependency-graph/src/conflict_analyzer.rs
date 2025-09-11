@@ -1,9 +1,9 @@
 //! Conflict analyzer for dependency version conflicts and resolution suggestions
 
-use semver::{Version, VersionReq};
-use std::collections::{HashMap, HashSet};
 use rayon::prelude::*;
+use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 use crate::error::*;
 use crate::graph::*;
@@ -65,13 +65,13 @@ impl ConflictAnalyzer {
                 let dependencies = graph.get_dependencies(&node.name)?;
                 for (dep_name, dep_edge) in dependencies {
                     if let Some(version_req) = &dep_edge.version_constraint {
-                        constraint_map.entry(dep_name.clone())
-                            .or_default()
-                            .push(ConstraintInfo::new(
+                        constraint_map.entry(dep_name.clone()).or_default().push(
+                            ConstraintInfo::new(
                                 node.name.clone(),
                                 version_req.clone(),
                                 dep_edge.req_depth,
-                            ));
+                            ),
+                        );
                     }
                 }
             }
@@ -80,7 +80,9 @@ impl ConflictAnalyzer {
         // Analyze conflicts for each package
         for (package_name, constraints) in constraint_map {
             if constraints.len() > 1 {
-                let conflict = self.analyze_package_conflict(&package_name, &constraints).await?;
+                let conflict = self
+                    .analyze_package_conflict(&package_name, &constraints)
+                    .await?;
                 conflicts.push(conflict);
             }
         }
@@ -115,7 +117,8 @@ impl ConflictAnalyzer {
         };
 
         if unique_reqs.len() > 1 {
-            conflict.conflict_level = self.determine_conflict_level(constraints.len(), unique_reqs.len());
+            conflict.conflict_level =
+                self.determine_conflict_level(constraints.len(), unique_reqs.len());
             conflict.suggested_resolution = Some(self.suggest_resolution(&constraints).await?);
         }
 
@@ -134,7 +137,11 @@ impl ConflictAnalyzer {
         ])
     }
 
-    fn determine_conflict_level(&self, constraint_count: usize, unique_reqs: usize) -> ConflictLevel {
+    fn determine_conflict_level(
+        &self,
+        constraint_count: usize,
+        unique_reqs: usize,
+    ) -> ConflictLevel {
         match constraint_count {
             2..=3 => ConflictLevel::Warning,
             4..=6 => ConflictLevel::Error,
@@ -173,11 +180,9 @@ impl ConflictAnalyzer {
             .into_iter()
             .max_by_key(|(_, count)| *count)
             .map(|(version, _)| version)
-            .ok_or_else(|| {
-                DependencyError::ResolutionError {
-                    package: "unknown".to_string(),
-                    reason: "No compatible version found".to_string(),
-                }
+            .ok_or_else(|| DependencyError::ResolutionError {
+                package: "unknown".to_string(),
+                reason: "No compatible version found".to_string(),
             })
     }
 
@@ -218,8 +223,9 @@ impl ConflictAnalyzer {
     /// Check if there are any unresolvable conflicts
     pub async fn has_unresolvable_conflicts(&self) -> DependencyResult<bool> {
         let conflicts = self.analyze_conflicts().await?;
-        let has_unresolvable = conflicts.iter()
-            .any(|c| c.conflict_level == ConflictLevel::Critical && c.suggested_resolution.is_none());
+        let has_unresolvable = conflicts.iter().any(|c| {
+            c.conflict_level == ConflictLevel::Critical && c.suggested_resolution.is_none()
+        });
 
         Ok(has_unresolvable)
     }
@@ -313,7 +319,10 @@ impl ComprehensiveConflictAnalyzer {
         })
     }
 
-    async fn estimate_breaking_changes(&self, resolutions: &HashMap<String, String>) -> DependencyResult<usize> {
+    async fn estimate_breaking_changes(
+        &self,
+        resolutions: &HashMap<String, String>,
+    ) -> DependencyResult<usize> {
         // Rough estimation based on major version changes
         let mut breaking_changes = 0;
 

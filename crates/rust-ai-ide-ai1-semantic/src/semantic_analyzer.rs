@@ -1,11 +1,11 @@
 //! Semantic Analyzer Module
 //! Provides deep semantic analysis of code for understanding intent, relationships, and potential improvements.
 
-use std::collections::{HashMap, HashSet};
-use serde::{Deserialize, Serialize};
-use syn::{visit::Visit, Type, Block, Stmt};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
+use syn::{visit::Visit, Block, Stmt, Type};
 
 /// Definition information
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -148,14 +148,17 @@ impl SemanticAnalyzer {
     }
 
     /// Analyze source code for semantic understanding
-    pub async fn analyze(&mut self, source_code: &str, language: &str) -> Result<SemanticContext, String> {
+    pub async fn analyze(
+        &mut self,
+        source_code: &str,
+        language: &str,
+    ) -> Result<SemanticContext, String> {
         if language != "rust" {
             return Err(format!("Unsupported language: {}", language));
         }
 
         // Parse the source code into AST
-        let ast = syn::parse_file(source_code)
-            .map_err(|e| format!("Parse error: {}", e))?;
+        let ast = syn::parse_file(source_code).map_err(|e| format!("Parse error: {}", e))?;
 
         // Perform semantic analysis
         let mut context = SemanticContext {
@@ -194,34 +197,51 @@ impl SemanticAnalyzer {
     }
 
     /// Find definitions by name
-    pub fn find_definition(&self, name: &str, context: &SemanticContext) -> Option<&SymbolDefinition> {
+    pub fn find_definition(
+        &self,
+        name: &str,
+        context: &SemanticContext,
+    ) -> Option<&SymbolDefinition> {
         context.definitions.iter().find(|def| def.name == name)
     }
 
     /// Find all usages of a symbol
-    pub fn find_usages(&self, definition: &SymbolDefinition, context: &SemanticContext) -> Vec<&SymbolUsage> {
-        context.usages.iter()
+    pub fn find_usages(
+        &self,
+        definition: &SymbolDefinition,
+        context: &SemanticContext,
+    ) -> Vec<&SymbolUsage> {
+        context
+            .usages
+            .iter()
             .filter(|usage| usage.definition == definition.location.start_line as SymbolIndex) // simplified mapping
             .collect()
     }
 
     fn calculate_complexity_metrics(&self, context: &mut SemanticContext, source_code: &str) {
         let lines = source_code.lines().count();
-        context.complexity_metrics.lines_of_code.insert("total".to_string(), lines as u32);
+        context
+            .complexity_metrics
+            .lines_of_code
+            .insert("total".to_string(), lines as u32);
 
         // Calculate cyclomatic complexity for functions (simplified)
         for def in &context.definitions {
             if matches!(def.kind, SymbolKind::Function | SymbolKind::Method) {
                 let complexity = self.calculate_cyclomatic_complexity(source_code, &def.location);
-                context.complexity_metrics.cyclomatic_complexity.insert(
-                    def.name.clone(),
-                    complexity
-                );
+                context
+                    .complexity_metrics
+                    .cyclomatic_complexity
+                    .insert(def.name.clone(), complexity);
             }
         }
 
         // Calculate averages
-        let total_complexity: u32 = context.complexity_metrics.cyclomatic_complexity.values().sum();
+        let total_complexity: u32 = context
+            .complexity_metrics
+            .cyclomatic_complexity
+            .values()
+            .sum();
         let function_count = context.complexity_metrics.cyclomatic_complexity.len() as f32;
         context.complexity_metrics.average_function_complexity = if function_count > 0 {
             total_complexity as f32 / function_count
@@ -229,12 +249,21 @@ impl SemanticAnalyzer {
             0.0
         };
 
-        context.complexity_metrics.function_count = context.definitions.iter()
+        context.complexity_metrics.function_count = context
+            .definitions
+            .iter()
             .filter(|def| matches!(def.kind, SymbolKind::Function | SymbolKind::Method))
             .count() as u32;
 
-        context.complexity_metrics.type_count = context.definitions.iter()
-            .filter(|def| matches!(def.kind, SymbolKind::Struct | SymbolKind::Enum | SymbolKind::Trait))
+        context.complexity_metrics.type_count = context
+            .definitions
+            .iter()
+            .filter(|def| {
+                matches!(
+                    def.kind,
+                    SymbolKind::Struct | SymbolKind::Enum | SymbolKind::Trait
+                )
+            })
             .count() as u32;
     }
 
@@ -247,13 +276,14 @@ impl SemanticAnalyzer {
         for line_idx in (location.start_line as usize)..=(location.end_line as usize) {
             if let Some(line) = lines.get(line_idx.saturating_sub(1)) {
                 let line_str = line.to_lowercase();
-                if line_str.contains("if ") ||
-                   line_str.contains("else") ||
-                   line_str.contains("while ") ||
-                   line_str.contains("for ") ||
-                   line_str.contains("match ") ||
-                   line_str.contains("|| ") ||
-                   line_str.contains("&& ") {
+                if line_str.contains("if ")
+                    || line_str.contains("else")
+                    || line_str.contains("while ")
+                    || line_str.contains("for ")
+                    || line_str.contains("match ")
+                    || line_str.contains("|| ")
+                    || line_str.contains("&& ")
+                {
                     complexity += 1;
                 }
             }
@@ -272,7 +302,10 @@ impl SemanticAnalyzer {
                         smell_type: "Long Function".to_string(),
                         location: def.location.clone(),
                         severity: 0.7,
-                        description: format!("Function '{}' is too long ({} lines)", def.name, length),
+                        description: format!(
+                            "Function '{}' is too long ({} lines)",
+                            def.name, length
+                        ),
                         suggestions: vec![
                             "Consider breaking down into smaller functions".to_string(),
                             "Extract duplicate code into separate functions".to_string(),
@@ -290,7 +323,10 @@ impl SemanticAnalyzer {
                         smell_type: "High Complexity".to_string(),
                         location: def.location.clone(),
                         severity: 0.8,
-                        description: format!("Function '{}' has high cyclomatic complexity ({})", name, complexity),
+                        description: format!(
+                            "Function '{}' has high cyclomatic complexity ({})",
+                            name, complexity
+                        ),
                         suggestions: vec![
                             "Simplify conditional logic".to_string(),
                             "Extract complex conditions into separate functions".to_string(),
@@ -310,7 +346,7 @@ impl SemanticAnalyzer {
                 if i != j {
                     let rel_type = self.determine_relationship_type(
                         &context.definitions[i],
-                        &context.definitions[j]
+                        &context.definitions[j],
                     );
 
                     if rel_type.is_some() {
@@ -326,7 +362,11 @@ impl SemanticAnalyzer {
         }
     }
 
-    fn determine_relationship_type(&self, from: &SymbolDefinition, to: &SymbolDefinition) -> Option<RelationshipType> {
+    fn determine_relationship_type(
+        &self,
+        from: &SymbolDefinition,
+        to: &SymbolDefinition,
+    ) -> Option<RelationshipType> {
         // Simplified relationship determination
         match (&from.kind, &to.kind) {
             (SymbolKind::Function, SymbolKind::Function) => Some(RelationshipType::Calls),
@@ -351,7 +391,13 @@ impl<'a> SemanticVisitor<'a> {
         }
     }
 
-    fn add_definition(&mut self, name: String, kind: SymbolKind, location: CodeLocation, visibility: Visibility) {
+    fn add_definition(
+        &mut self,
+        name: String,
+        kind: SymbolKind,
+        location: CodeLocation,
+        visibility: Visibility,
+    ) {
         self.context.definitions.push(SymbolDefinition {
             name,
             kind,
@@ -376,7 +422,7 @@ impl<'a> Visit<'_> for SemanticVisitor<'a> {
 
         let location = CodeLocation {
             file: "current".to_string(), // Would get from file path
-            start_line: 0, // Would get from span
+            start_line: 0,               // Would get from span
             end_line: 0,
             start_column: 0,
             end_column: 0,

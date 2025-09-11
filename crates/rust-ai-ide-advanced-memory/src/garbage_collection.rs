@@ -3,11 +3,11 @@
 //! This module coordinates memory cleanup across all framework components
 //! and integrates with Rust's ownership system.
 
+use async_trait::async_trait;
+use rust_ai_ide_errors::IDEError;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-use tokio::sync::{RwLock, Mutex, mpsc};
-use rust_ai_ide_errors::IDEError;
-use async_trait::async_trait;
+use tokio::sync::{mpsc, Mutex, RwLock};
 
 #[derive(Clone)]
 pub struct GcConfig {
@@ -31,7 +31,7 @@ impl Default for GcConfig {
 #[derive(Debug)]
 pub struct ComponentMemoryTracker {
     component_refs: HashMap<String, HashSet<String>>, // component_id -> object_ids
-    reverse_refs: HashMap<String, HashSet<String>>,  // object_id -> component_ids
+    reverse_refs: HashMap<String, HashSet<String>>,   // object_id -> component_ids
     reference_counts: HashMap<String, usize>,
 }
 
@@ -45,16 +45,19 @@ impl ComponentMemoryTracker {
     }
 
     pub fn register_component(&mut self, component_id: String) {
-        self.component_refs.entry(component_id.clone())
+        self.component_refs
+            .entry(component_id.clone())
             .or_insert_with(HashSet::new);
     }
 
     pub fn track_object(&mut self, component_id: &str, object_id: String) {
-        self.component_refs.entry(component_id.to_string())
+        self.component_refs
+            .entry(component_id.to_string())
             .or_insert_with(HashSet::new)
             .insert(object_id.clone());
 
-        self.reverse_refs.entry(object_id.clone())
+        self.reverse_refs
+            .entry(object_id.clone())
             .or_insert_with(HashSet::new)
             .insert(component_id.to_string());
 
@@ -97,7 +100,10 @@ impl ReferenceCycleDetector {
         }
     }
 
-    pub async fn detect_cycles(&mut self, tracker: &ComponentMemoryTracker) -> Result<HashSet<String>, IDEError> {
+    pub async fn detect_cycles(
+        &mut self,
+        tracker: &ComponentMemoryTracker,
+    ) -> Result<HashSet<String>, IDEError> {
         let mut cycles = HashSet::new();
 
         if !self.detection_enabled {
@@ -110,7 +116,13 @@ impl ReferenceCycleDetector {
 
         for component_id in tracker.component_refs.keys() {
             if !visited.contains(component_id) {
-                self.dfs_cycle_detection(component_id, tracker, &mut visited, &mut recursion_stack, &mut cycles)?;
+                self.dfs_cycle_detection(
+                    component_id,
+                    tracker,
+                    &mut visited,
+                    &mut recursion_stack,
+                    &mut cycles,
+                )?;
             }
         }
 
@@ -123,7 +135,7 @@ impl ReferenceCycleDetector {
         tracker: &ComponentMemoryTracker,
         visited: &mut HashSet<String>,
         recursion_stack: &mut HashSet<String>,
-        cycles: &mut HashSet<String>
+        cycles: &mut HashSet<String>,
     ) -> Result<(), IDEError> {
         visited.insert(component_id.to_string());
         recursion_stack.insert(component_id.to_string());
@@ -131,7 +143,13 @@ impl ReferenceCycleDetector {
         if let Some(component_refs) = tracker.reverse_refs.get(component_id) {
             for ref_component_id in component_refs {
                 if !visited.contains(ref_component_id) {
-                    self.dfs_cycle_detection(ref_component_id, tracker, visited, recursion_stack, cycles)?;
+                    self.dfs_cycle_detection(
+                        ref_component_id,
+                        tracker,
+                        visited,
+                        recursion_stack,
+                        cycles,
+                    )?;
                 } else if recursion_stack.contains(ref_component_id) {
                     cycles.insert(ref_component_id.clone());
                 }
@@ -228,12 +246,14 @@ impl FragmentationMonitor {
 
         self.fragmentation_metrics.insert(
             format!("global_{}", chrono::Utc::now().timestamp()),
-            fragmentation
+            fragmentation,
         );
 
         // Keep only recent metrics
         if self.fragmentation_metrics.len() > 10 {
-            let keys_to_remove: Vec<String> = self.fragmentation_metrics.keys()
+            let keys_to_remove: Vec<String> = self
+                .fragmentation_metrics
+                .keys()
                 .take(self.fragmentation_metrics.len() - 10)
                 .cloned()
                 .collect();
@@ -269,7 +289,10 @@ impl OwnershipSystemCoordinator {
 
     pub fn release_ownership(&mut self, object_id: &str) -> Result<(), IDEError> {
         if self.ownership_tracking.remove(object_id).is_none() {
-            return Err(IDEError::InvalidArgument(format!("Object {} has no tracked ownership", object_id)));
+            return Err(IDEError::InvalidArgument(format!(
+                "Object {} has no tracked ownership",
+                object_id
+            )));
         }
         Ok(())
     }
@@ -314,10 +337,16 @@ impl GarbageCollectionCoordinator {
         Ok(())
     }
 
-    pub async fn trigger_gc_cycle(&self, memory_pressure: f64, fragmentation: f64) -> Result<(), IDEError> {
+    pub async fn trigger_gc_cycle(
+        &self,
+        memory_pressure: f64,
+        fragmentation: f64,
+    ) -> Result<(), IDEError> {
         let should_run = {
             let scheduler = self.gc_scheduler.lock().await;
-            scheduler.should_trigger_gc(memory_pressure, fragmentation).await
+            scheduler
+                .should_trigger_gc(memory_pressure, fragmentation)
+                .await
         };
 
         if should_run {
@@ -363,7 +392,10 @@ impl GarbageCollectionCoordinator {
             let mut monitor = self.fragmentation_monitor.lock().await;
             // Mock memory values for now
             let fragmentation = monitor.monitor_fragmentation(1024, 256).await;
-            tracing::info!("Current memory fragmentation: {:.2}%", fragmentation * 100.0);
+            tracing::info!(
+                "Current memory fragmentation: {:.2}%",
+                fragmentation * 100.0
+            );
         }
 
         Ok(())
@@ -380,7 +412,11 @@ impl GarbageCollectionCoordinator {
                 // Remove one reference to potentially break the cycle
                 let object_to_remove = component_objects.iter().next().unwrap().clone();
                 component_objects.remove(&object_to_remove);
-                tracing::info!("Removed reference {} from component {}", object_to_remove, component_id);
+                tracing::info!(
+                    "Removed reference {} from component {}",
+                    object_to_remove,
+                    component_id
+                );
             }
         }
 

@@ -1,11 +1,11 @@
 //! Data structures for dependency analysis
 
+use cargo_metadata::Package;
+use petgraph::graph::{DiGraph, NodeIndex};
+use petgraph::visit::{EdgeRef, NodeRef};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use petgraph::graph::{DiGraph, NodeIndex};
-use petgraph::visit::{EdgeRef, NodeRef};
-use cargo_metadata::Package;
 
 /// Types of dependencies in the graph
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -108,17 +108,23 @@ pub struct DependencyNode {
 impl DependencyNode {
     /// Check if this is a direct dependency
     pub fn is_direct(&self) -> bool {
-        self.dependencies.iter().any(|d| d.dep_type == DependencyType::Normal)
+        self.dependencies
+            .iter()
+            .any(|d| d.dep_type == DependencyType::Normal)
     }
 
     /// Check if this is a development dependency
     pub fn is_dev(&self) -> bool {
-        self.dependencies.iter().all(|d| d.dep_type == DependencyType::Dev)
+        self.dependencies
+            .iter()
+            .all(|d| d.dep_type == DependencyType::Dev)
     }
 
     /// Check if this is a build dependency
     pub fn is_build(&self) -> bool {
-        self.dependencies.iter().all(|d| d.dep_type == DependencyType::Build)
+        self.dependencies
+            .iter()
+            .all(|d| d.dep_type == DependencyType::Build)
     }
 
     /// Check if this is a workspace member
@@ -131,9 +137,11 @@ impl DependencyNode {
         let source = if package.source.is_none() {
             if package.manifest_path.starts_with("/") {
                 Source::Path(
-                    package.manifest_path.parent()
+                    package
+                        .manifest_path
+                        .parent()
                         .map(|p| p.as_std_path().to_path_buf())
-                        .unwrap_or_default()
+                        .unwrap_or_default(),
                 )
             } else {
                 Source::Workspace
@@ -164,7 +172,10 @@ impl DependencyNode {
             license: package.license.clone(),
             source,
             is_workspace_member: false, // Will be updated later
-            path: package.manifest_path.parent().map(|p| p.as_std_path().to_path_buf()),
+            path: package
+                .manifest_path
+                .parent()
+                .map(|p| p.as_std_path().to_path_buf()),
             features: package.features.keys().cloned().collect(),
             default_features: true, // Will be updated from dependencies
             dependencies: Vec::new(),
@@ -194,13 +205,17 @@ impl Serialize for DependencyGraph {
         let nodes: Vec<DependencyNode> = self.graph.node_weights().cloned().collect();
         state.serialize_field("nodes", &nodes)?;
 
-        let edges: Vec<(usize, usize, DependencyEdge)> = self.graph.edge_references()
+        let edges: Vec<(usize, usize, DependencyEdge)> = self
+            .graph
+            .edge_references()
             .map(|e| (e.source().index(), e.target().index(), e.weight().clone()))
             .collect();
         state.serialize_field("edges", &edges)?;
 
         // Serialize node_indices as HashMap<String, usize> using NodeIndex.index()
-        let node_indices_serialized: HashMap<String, usize> = self.node_indices.iter()
+        let node_indices_serialized: HashMap<String, usize> = self
+            .node_indices
+            .iter()
             .map(|(k, v)| (k.clone(), v.index()))
             .collect();
         state.serialize_field("node_indices", &node_indices_serialized)?;
@@ -225,16 +240,24 @@ impl<'de> Deserialize<'de> for DependencyGraph {
 
         let raw = DependencyGraphRaw::deserialize(deserializer)?;
         let mut graph = DiGraph::new();
-        let node_indices_vec: Vec<NodeIndex> = raw.nodes.into_iter().map(|n| graph.add_node(n)).collect();
+        let node_indices_vec: Vec<NodeIndex> =
+            raw.nodes.into_iter().map(|n| graph.add_node(n)).collect();
 
         for (source, target, weight) in raw.edges {
             if source >= node_indices_vec.len() || target >= node_indices_vec.len() {
-                return Err(serde::de::Error::custom(format!("Invalid node index in edges: source={}, target={}, len={}", source, target, node_indices_vec.len())));
+                return Err(serde::de::Error::custom(format!(
+                    "Invalid node index in edges: source={}, target={}, len={}",
+                    source,
+                    target,
+                    node_indices_vec.len()
+                )));
             }
             graph.add_edge(node_indices_vec[source], node_indices_vec[target], weight);
         }
 
-        let node_indices: HashMap<String, NodeIndex> = raw.node_indices.into_iter()
+        let node_indices: HashMap<String, NodeIndex> = raw
+            .node_indices
+            .into_iter()
             .filter_map(|(k, idx)| {
                 if idx < node_indices_vec.len() {
                     Some((k, node_indices_vec[idx]))

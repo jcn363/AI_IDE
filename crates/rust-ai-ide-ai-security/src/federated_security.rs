@@ -1,10 +1,10 @@
 // Federated Security Module
 // Implements secure multi-party computation and federated learning security
 
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
-use anyhow::Result;
 
 // Import federated learning types
 use super::federated_learning::{FederatedTrainingRequest, FederatedTrainingResult};
@@ -59,14 +59,25 @@ impl FederatedSecurity {
     }
 
     /// Register participant with public key
-    pub async fn register_participant(&mut self, participant: String, public_key: Vec<u8>) -> Result<()> {
+    pub async fn register_participant(
+        &mut self,
+        participant: String,
+        public_key: Vec<u8>,
+    ) -> Result<()> {
         self.participant_keys.insert(participant, public_key);
         Ok(())
     }
 
     /// Verify participant authentication
-    pub async fn verify_participant(&self, participant: &str, signature: &[u8], message: &[u8]) -> Result<bool> {
-        let public_key = self.participant_keys.get(participant)
+    pub async fn verify_participant(
+        &self,
+        participant: &str,
+        signature: &[u8],
+        message: &[u8],
+    ) -> Result<bool> {
+        let public_key = self
+            .participant_keys
+            .get(participant)
             .ok_or_else(|| anyhow::anyhow!("Participant not registered"))?;
 
         // TODO: Implement cryptographic signature verification
@@ -92,9 +103,14 @@ impl FederatedSecurity {
     }
 
     /// Secure federated training with participant coordination
-    pub async fn secure_training(&self, request: &FederatedTrainingRequest) -> Result<FederatedTrainingResult> {
+    pub async fn secure_training(
+        &self,
+        request: &FederatedTrainingRequest,
+    ) -> Result<FederatedTrainingResult> {
         if !self.check_minimum_participants() {
-            return Err(anyhow::anyhow!("Insufficient participants for federated training"));
+            return Err(anyhow::anyhow!(
+                "Insufficient participants for federated training"
+            ));
         }
 
         // Enable security if not already enabled

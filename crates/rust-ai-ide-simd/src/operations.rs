@@ -1,8 +1,7 @@
-/// Vectorized mathematical operations and neural network primitives
-
-use crate::error::{SIMDError, SIMDResult};
 use crate::capability::get_cached_capabilities;
 use crate::dispatch::VectorDispatcher;
+/// Vectorized mathematical operations and neural network primitives
+use crate::error::{SIMDError, SIMDResult};
 
 /// SIMD operations library for mathematical computations
 pub struct SIMDOperations {
@@ -18,14 +17,16 @@ impl SIMDOperations {
 
     /// Vectorized addition of arrays
     pub fn vector_add(&self, lhs: &[f32], rhs: &[f32]) -> SIMDResult<Vec<f32>> {
-        self.dispatcher.dispatch_f32x8(lhs, rhs, |a, b| a + b)
+        self.dispatcher
+            .dispatch_f32x8(lhs, rhs, |a, b| a + b)
             .or_else(|_| self.dispatcher.dispatch_f32x4(lhs, rhs, |a, b| a + b))
             .or_else(|_| self.vector_add_fallback(lhs, rhs))
     }
 
     /// Vectorized multiplication of arrays
     pub fn vector_mul(&self, lhs: &[f32], rhs: &[f32]) -> SIMDResult<Vec<f32>> {
-        self.dispatcher.dispatch_f32x8(lhs, rhs, |a, b| a * b)
+        self.dispatcher
+            .dispatch_f32x8(lhs, rhs, |a, b| a * b)
             .or_else(|_| self.dispatcher.dispatch_f32x4(lhs, rhs, |a, b| a * b))
             .or_else(|_| self.vector_mul_fallback(lhs, rhs))
     }
@@ -203,13 +204,17 @@ impl SIMDOperations {
     }
 
     fn relu_scalar(&self, input: &[f32]) -> SIMDResult<Vec<f32>> {
-        Ok(input.iter().map(|&x| if x > 0.0 { x } else { 0.0 }).collect())
+        Ok(input
+            .iter()
+            .map(|&x| if x > 0.0 { x } else { 0.0 })
+            .collect())
     }
 
     fn sigmoid_avx2(&self, input: &[f32]) -> SIMDResult<Vec<f32>> {
         // Compute sigmoid(x) = 1 / (1 + exp(-x))
         // We'll compute this as 1 / (1 + exp(-x))
-        #[cfg(target_arch = "x86_64")] {
+        #[cfg(target_arch = "x86_64")]
+        {
             use std::arch::x86_64::*;
             let mut result = Vec::with_capacity(input.len());
             unsafe {
@@ -234,7 +239,8 @@ impl SIMDOperations {
             Ok(result)
         }
 
-        #[cfg(not(target_arch = "x86_64"))] {
+        #[cfg(not(target_arch = "x86_64"))]
+        {
             self.sigmoid_scalar(input)
         }
     }
@@ -246,7 +252,8 @@ impl SIMDOperations {
 
     fn sigmoid_sse(&self, input: &[f32]) -> SIMDResult<Vec<f32>> {
         // SSE version - similar to AVX2 but with 4-element vectors
-        #[cfg(target_arch = "x86_64")] {
+        #[cfg(target_arch = "x86_64")]
+        {
             use std::arch::x86_64::*;
             let mut result = Vec::with_capacity(input.len());
             unsafe {
@@ -271,7 +278,8 @@ impl SIMDOperations {
             Ok(result)
         }
 
-        #[cfg(not(target_arch = "x86_64"))] {
+        #[cfg(not(target_arch = "x86_64"))]
+        {
             self.sigmoid_scalar(input)
         }
     }
@@ -289,7 +297,8 @@ impl SIMDOperations {
     ) -> SIMDResult<Vec<f32>> {
         let mut result = vec![0.0; rows];
 
-        #[cfg(target_arch = "x86_64")] {
+        #[cfg(target_arch = "x86_64")]
+        {
             use std::arch::x86_64::*;
 
             unsafe {
@@ -303,8 +312,8 @@ impl SIMDOperations {
                             if j + 8 <= cols {
                                 let matrix_chunk = _mm256_loadu_ps(&matrix[row_start + j]);
                                 let broadcast_vec = _mm256_broadcast_ss(&vector[j]);
-                                sum = _mm256_add_ps(sum,
-                                    _mm256_mul_ps(matrix_chunk, broadcast_vec));
+                                sum =
+                                    _mm256_add_ps(sum, _mm256_mul_ps(matrix_chunk, broadcast_vec));
                             } else {
                                 // Handle remaining elements
                                 for k in j..cols.min(j + 8) {
@@ -330,8 +339,7 @@ impl SIMDOperations {
                             if j + 4 <= cols {
                                 let matrix_chunk = _mm_loadu_ps(&matrix[row_start + j]);
                                 let broadcast_vec = _mm_broadcast_ss(&vector[j]);
-                                sum = _mm_add_ps(sum,
-                                    _mm_mul_ps(matrix_chunk, broadcast_vec));
+                                sum = _mm_add_ps(sum, _mm_mul_ps(matrix_chunk, broadcast_vec));
                             } else {
                                 for k in j..cols.min(j + 4) {
                                     if k < cols {
@@ -351,7 +359,8 @@ impl SIMDOperations {
             }
         }
 
-        #[cfg(not(target_arch = "x86_64"))] {
+        #[cfg(not(target_arch = "x86_64"))]
+        {
             return self.matrix_vector_multiply_scalar(matrix, vector, rows, cols);
         }
 
@@ -376,7 +385,8 @@ impl SIMDOperations {
 
     fn dot_product_fma(&self, lhs: &[f32], rhs: &[f32]) -> SIMDResult<f32> {
         // FMA (Fused Multiply-Add) enabled dot product for AVX/AVX2
-        #[cfg(target_arch = "x86_64")] {
+        #[cfg(target_arch = "x86_64")]
+        {
             use std::arch::x86_64::*;
             unsafe {
                 let mut sum = _mm256_setzero_ps();
@@ -392,7 +402,7 @@ impl SIMDOperations {
                 // Handle remaining elements
                 for j in i..lhs.len() {
                     let a_scalar = _mm256_broadcast_ss(&lhs[j]);
-                    let b_scalar = _mm256_loadu_ps(&rhs[j..(j+1).min(rhs.len())]);
+                    let b_scalar = _mm256_loadu_ps(&rhs[j..(j + 1).min(rhs.len())]);
                     sum = _mm256_fmadd_ps(a_scalar, b_scalar, sum);
                 }
 
@@ -402,7 +412,8 @@ impl SIMDOperations {
             }
         }
 
-        #[cfg(not(target_arch = "x86_64"))] {
+        #[cfg(not(target_arch = "x86_64"))]
+        {
             self.dot_product_scalar(lhs, rhs)
         }
     }

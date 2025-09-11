@@ -3,9 +3,9 @@
 //! This module provides the LSP AI bridge that integrates AI capabilities
 //! with LSP service for real-time AI assistance in code editing workflows.
 
+use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use async_trait::async_trait;
 
 use crate::errors::{IntegrationError, LspBridgeError};
 use crate::types::*;
@@ -394,10 +394,9 @@ impl LSPAiBridgeTrait for LSPAiBridge {
                 ]
             }));
             completion.confidence_score = Some(0.85);
-            completion.enhancement_metadata.insert(
-                "source".to_string(),
-                serde_json::json!("ai_enhanced"),
-            );
+            completion
+                .enhancement_metadata
+                .insert("source".to_string(), serde_json::json!("ai_enhanced"));
         }
 
         Ok(completion)
@@ -484,9 +483,11 @@ impl AICompletionMerger {
                 confidence_threshold: 0.5,
                 max_merge_count: 10,
             },
-            cache: Arc::new(moka::future::Cache::builder()
-                .time_to_live(std::time::Duration::from_secs(300))
-                .build()),
+            cache: Arc::new(
+                moka::future::Cache::builder()
+                    .time_to_live(std::time::Duration::from_secs(300))
+                    .build(),
+            ),
         }
     }
 }

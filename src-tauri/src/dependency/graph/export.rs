@@ -1,9 +1,9 @@
 //! Module for exporting dependency graphs to various formats
 
-use super::{DependencyGraph, DependencyNode, DependencyEdge};
+use super::{DependencyEdge, DependencyGraph, DependencyNode};
 use anyhow::Result;
 use petgraph::visit::EdgeRef;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Supported export formats for the dependency graph
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -27,23 +27,37 @@ pub fn export_graph(graph: &DependencyGraph, format: ExportFormat) -> Result<Vec
 fn export_dot(graph: &DependencyGraph) -> Result<Vec<u8>> {
     let mut output = Vec::new();
     output.extend_from_slice(b"digraph dependencies {\n  node [shape=box, style=rounded];\n\n");
-    
+
     // Add nodes
     for node_idx in graph.graph().node_indices() {
         if let Some(node) = graph.graph().node_weight(node_idx) {
             let label = format!("{}@{}", node.name, node.version);
-            let shape = if node.is_workspace() { "doubleoctagon" } else { "box" };
-            let style = if node.is_workspace() { "filled" } else { "rounded" };
-            let color = if node.is_workspace() { "#d4f1f9" } else { "#ffffff" };
-            
+            let shape = if node.is_workspace() {
+                "doubleoctagon"
+            } else {
+                "box"
+            };
+            let style = if node.is_workspace() {
+                "filled"
+            } else {
+                "rounded"
+            };
+            let color = if node.is_workspace() {
+                "#d4f1f9"
+            } else {
+                "#ffffff"
+            };
+
             output.extend_from_slice(
-                format!("  \"{}:{}\" [label=\"{}\" shape={} style=\"{} \" fillcolor=\"{}\"]\n",
+                format!(
+                    "  \"{}:{}\" [label=\"{}\" shape={} style=\"{} \" fillcolor=\"{}\"]\n",
                     node.name, node.version, label, shape, style, color
-                ).as_bytes()
+                )
+                .as_bytes(),
             );
         }
     }
-    
+
     // Add edges
     for edge in graph.graph().edge_references() {
         if let (Some(source), Some(target)) = (
@@ -56,17 +70,17 @@ fn export_dot(graph: &DependencyGraph) -> Result<Vec<u8>> {
                 super::DependencyType::Workspace => "style=bold",
                 _ => "",
             };
-            
+
             output.extend_from_slice(
-                format!("  \"{}:{}\" -> \"{}:{}\" {}\n",
-                    source.name, source.version,
-                    target.name, target.version,
-                    style
-                ).as_bytes()
+                format!(
+                    "  \"{}:{}\" -> \"{}:{}\" {}\n",
+                    source.name, source.version, target.name, target.version, style
+                )
+                .as_bytes(),
             );
         }
     }
-    
+
     output.extend_from_slice(b"}\n");
     Ok(output)
 }
@@ -79,16 +93,16 @@ fn export_json(graph: &DependencyGraph) -> Result<Vec<u8>> {
         version: String,
         is_workspace: bool,
     }
-    
+
     #[derive(Serialize)]
     struct ExportEdge {
         source: String,
         target: String,
         r#type: &'static str,
     }
-    
+
     let mut export = (Vec::new(), Vec::new());
-    
+
     // Add nodes
     for node_idx in graph.graph().node_indices() {
         if let Some(node) = graph.graph().node_weight(node_idx) {
@@ -100,7 +114,7 @@ fn export_json(graph: &DependencyGraph) -> Result<Vec<u8>> {
             });
         }
     }
-    
+
     // Add edges
     for edge in graph.graph().edge_references() {
         if let (Some(source), Some(target)) = (
@@ -113,7 +127,7 @@ fn export_json(graph: &DependencyGraph) -> Result<Vec<u8>> {
                 super::DependencyType::Build => "build",
                 super::DependencyType::Workspace => "workspace",
             };
-            
+
             export.1.push(ExportEdge {
                 source: format!("{}:{}", source.name, source.version),
                 target: format!("{}:{}", target.name, target.version),
@@ -121,6 +135,6 @@ fn export_json(graph: &DependencyGraph) -> Result<Vec<u8>> {
             });
         }
     }
-    
+
     Ok(serde_json::to_vec_pretty(&export)?)
 }

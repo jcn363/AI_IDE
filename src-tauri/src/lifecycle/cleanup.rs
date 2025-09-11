@@ -8,7 +8,7 @@
 //! - Graceful service disconnection
 //! - Error reporting and logging
 
-use super::{LifecyclePhase, LifecycleEvent};
+use super::{LifecycleEvent, LifecyclePhase};
 use anyhow::Result;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -92,11 +92,10 @@ impl CleanupPhase {
                     phase: LifecyclePhase::Stopped,
                     message: "Cleanup completed successfully".to_string(),
                     success: true,
-                    metadata: serde_json::json!({
-                        "cleanup_duration_ms": cleanup_duration_ms
-                    }),
+                    metadata: serde_json::json!({ "cleanup_duration_ms": cleanup_duration_ms }),
                     ..Default::default()
-                }).await;
+                })
+                .await;
             }
             Ok(Err(e)) => {
                 log::error!("Cleanup failed: {}", e);
@@ -106,7 +105,8 @@ impl CleanupPhase {
                     success: false,
                     metadata: serde_json::json!({ "error": e.to_string() }),
                     ..Default::default()
-                }).await;
+                })
+                .await;
                 return Err(e);
             }
             Err(_) => {
@@ -117,7 +117,8 @@ impl CleanupPhase {
                     success: false,
                     metadata: serde_json::json!({ "timeout": true }),
                     ..Default::default()
-                }).await;
+                })
+                .await;
 
                 // In a real implementation, you might want to force exit here
                 if self.cleanup_timeout.as_secs() > 0 {
@@ -166,7 +167,8 @@ impl CleanupPhase {
             success: true,
             metadata: serde_json::json!({ "operation": "stop_accepting_work" }),
             ..Default::default()
-        }).await;
+        })
+        .await;
 
         Ok(())
     }
@@ -189,7 +191,8 @@ impl CleanupPhase {
             success: true,
             metadata: serde_json::json!({ "pending_operations": 0 }),
             ..Default::default()
-        }).await;
+        })
+        .await;
 
         Ok(())
     }
@@ -212,7 +215,8 @@ impl CleanupPhase {
                 "persisted_entries": 0
             }),
             ..Default::default()
-        }).await;
+        })
+        .await;
 
         Ok(())
     }
@@ -235,7 +239,8 @@ impl CleanupPhase {
                 "remaining_tasks": 0
             }),
             ..Default::default()
-        }).await;
+        })
+        .await;
 
         Ok(())
     }
@@ -259,7 +264,8 @@ impl CleanupPhase {
                 "connections_closed": 0
             }),
             ..Default::default()
-        }).await;
+        })
+        .await;
 
         Ok(())
     }
@@ -284,7 +290,8 @@ impl CleanupPhase {
                 "deleted_lock_files": 0
             }),
             ..Default::default()
-        }).await;
+        })
+        .await;
 
         Ok(())
     }

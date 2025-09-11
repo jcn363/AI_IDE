@@ -1,10 +1,10 @@
 #![feature(impl_trait_in_bindings)]
 
+use crate::IDEError;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
-use serde::{Deserialize, Serialize};
-use crate::IDEError;
 
 /// Phase 2 AI Quantization Orchestration Integration with Phase 1
 /// This module provides seamless integration between all Phase 2 components
@@ -161,7 +161,7 @@ impl QuantizationOrchestrationIntegration {
 
         // Create benchmark suite
         let benchmark_suite = Arc::new(Mutex::new(
-            crate::benchmark::QuantizationBenchmarkSuite::new().await?
+            crate::benchmark::QuantizationBenchmarkSuite::new().await?,
         ));
 
         let orchestration_state = Arc::new(RwLock::new(OrchestrationState {
@@ -197,7 +197,11 @@ impl QuantizationOrchestrationIntegration {
             )));
         }
 
-        let session_id = format!("session_{}_{}", user_id, chrono::Utc::now().timestamp_millis());
+        let session_id = format!(
+            "session_{}_{}",
+            user_id,
+            chrono::Utc::now().timestamp_millis()
+        );
 
         // Create context window session
         self.context_manager.create_session(&session_id).await?;
@@ -211,7 +215,9 @@ impl QuantizationOrchestrationIntegration {
             last_activity: chrono::Utc::now(),
         };
 
-        state.active_sessions.insert(session_id.clone(), session_info);
+        state
+            .active_sessions
+            .insert(session_id.clone(), session_info);
         state.system_metrics.active_sessions_count = state.active_sessions.len();
 
         Ok(session_id)
@@ -232,17 +238,17 @@ impl QuantizationOrchestrationIntegration {
         self.update_session_activity(session_id).await?;
 
         // Process tokens through context window manager
-        let window_result = self.context_manager.process_tokens(
-            session_id,
-            &request.tokens,
-            &request.attention_scores,
-        ).await?;
+        let window_result = self
+            .context_manager
+            .process_tokens(session_id, &request.tokens, &request.attention_scores)
+            .await?;
 
         // Perform inference (placeholder - would integrate with actual AI inference)
         let inference_result = self.perform_quantized_inference(&request).await?;
 
         // Update session metrics
-        self.update_session_metrics(session_id, &inference_result).await?;
+        self.update_session_metrics(session_id, &inference_result)
+            .await?;
 
         // Update system metrics
         self.update_system_metrics(&window_result).await?;
@@ -267,11 +273,10 @@ impl QuantizationOrchestrationIntegration {
         quantization_strategy: &str,
     ) -> Result<String, IDEError> {
         // Deploy through GGUF optimization engine
-        let deployed_model = self.gguf_engine.optimize_and_deploy_model(
-            model_path,
-            model_id,
-            quantization_strategy,
-        ).await?;
+        let deployed_model = self
+            .gguf_engine
+            .optimize_and_deploy_model(model_path, model_id, quantization_strategy)
+            .await?;
 
         // Register with orchestration layer
         let mut state = self.orchestration_state.write().await;
@@ -294,14 +299,18 @@ impl QuantizationOrchestrationIntegration {
             health_status: ModelHealthStatus::Healthy,
         };
 
-        state.deployed_models.insert(model_id.to_string(), deployment_info);
+        state
+            .deployed_models
+            .insert(model_id.to_string(), deployment_info);
         state.system_metrics.deployed_models_count = state.deployed_models.len();
 
         Ok(deployed_model.gguf_path.to_string_lossy().to_string())
     }
 
     /// Run comprehensive performance benchmarks
-    pub async fn run_performance_benchmarks(&self) -> Result<crate::benchmark::BenchmarkResults, IDEError> {
+    pub async fn run_performance_benchmarks(
+        &self,
+    ) -> Result<crate::benchmark::BenchmarkResults, IDEError> {
         let mut benchmark_suite = self.benchmark_suite.lock().await;
         benchmark_suite.run_all_benchmarks().await?;
         let results = benchmark_suite.get_results().await;
@@ -319,7 +328,10 @@ impl QuantizationOrchestrationIntegration {
         let sessions = self.get_active_sessions().await;
         for session in sessions {
             // Compress context windows if needed
-            let _ = self.context_manager.process_tokens(&session, &[], &[]).await?;
+            let _ = self
+                .context_manager
+                .process_tokens(&session, &[], &[])
+                .await?;
         }
 
         let memory_stats_after = self.memory_manager.get_allocator_stats().await;
@@ -339,12 +351,15 @@ impl QuantizationOrchestrationIntegration {
         let memory_stats = self.memory_manager.get_allocator_stats().await;
 
         // Calculate health score
-        let unhealthy_models = state.deployed_models.values()
+        let unhealthy_models = state
+            .deployed_models
+            .values()
             .filter(|m| matches!(m.health_status, ModelHealthStatus::Unhealthy))
             .count();
 
         let memory_pressure = memory_stats.current_usage as f32 / memory_stats.peak_usage as f32;
-        let session_utilization = state.active_sessions.len() as f32 / state.config.max_concurrent_sessions as f32;
+        let session_utilization =
+            state.active_sessions.len() as f32 / state.config.max_concurrent_sessions as f32;
 
         let health_score = match (unhealthy_models, memory_pressure, session_utilization) {
             (0, pressure, util) if pressure < 0.8 && util < 0.9 => 100,
@@ -389,14 +404,21 @@ impl QuantizationOrchestrationIntegration {
         let state = self.orchestration_state.read().await;
 
         if !state.active_sessions.contains_key(session_id) {
-            return Err(IDEError::InvalidArgument(format!("Session {} not found", session_id)));
+            return Err(IDEError::InvalidArgument(format!(
+                "Session {} not found",
+                session_id
+            )));
         }
 
         // Check session timeout
         if let Some(session) = state.active_sessions.get(session_id) {
-            let timeout_duration = chrono::Duration::seconds(state.config.session_timeout_seconds as i64);
+            let timeout_duration =
+                chrono::Duration::seconds(state.config.session_timeout_seconds as i64);
             if chrono::Utc::now().signed_duration_since(session.last_activity) > timeout_duration {
-                return Err(IDEError::InvalidArgument(format!("Session {} has timed out", session_id)));
+                return Err(IDEError::InvalidArgument(format!(
+                    "Session {} has timed out",
+                    session_id
+                )));
             }
         }
 
@@ -411,19 +433,28 @@ impl QuantizationOrchestrationIntegration {
         Ok(())
     }
 
-    async fn update_session_metrics(&self, session_id: &str, inference_result: &InferenceResult) -> Result<(), IDEError> {
+    async fn update_session_metrics(
+        &self,
+        session_id: &str,
+        inference_result: &InferenceResult,
+    ) -> Result<(), IDEError> {
         let mut state = self.orchestration_state.write().await;
         if let Some(session) = state.active_sessions.get_mut(session_id) {
-            session.performance_metrics.tokens_processed += inference_result.generated_tokens.len() as u64;
+            session.performance_metrics.tokens_processed +=
+                inference_result.generated_tokens.len() as u64;
             // Would update other metrics based on actual inference results
         }
         Ok(())
     }
 
-    async fn update_system_metrics(&self, window_result: &crate::context_window::WindowUpdateResult) -> Result<(), IDEError> {
+    async fn update_system_metrics(
+        &self,
+        window_result: &crate::context_window::WindowUpdateResult,
+    ) -> Result<(), IDEError> {
         let mut state = self.orchestration_state.write().await;
         state.system_metrics.total_tokens_processed += 1; // Simplified
-        state.system_metrics.total_memory_allocated_mb = window_result.memory_usage as f64 / (1024.0 * 1024.0);
+        state.system_metrics.total_memory_allocated_mb =
+            window_result.memory_usage as f64 / (1024.0 * 1024.0);
         Ok(())
     }
 
@@ -432,7 +463,10 @@ impl QuantizationOrchestrationIntegration {
         state.active_sessions.keys().cloned().collect()
     }
 
-    async fn perform_quantized_inference(&self, request: &AIRequest) -> Result<InferenceResult, IDEError> {
+    async fn perform_quantized_inference(
+        &self,
+        request: &AIRequest,
+    ) -> Result<InferenceResult, IDEError> {
         // Placeholder inference logic - would integrate with actual AI models
         Ok(InferenceResult {
             generated_tokens: vec![1, 2, 3, 4, 5], // Placeholder tokens
@@ -477,11 +511,15 @@ impl QuantizationOrchestrationIntegration {
         // Check session timeouts
         let expired_sessions = {
             let state = self.orchestration_state.read().await;
-            let timeout_duration = chrono::Duration::seconds(state.config.session_timeout_seconds as i64);
+            let timeout_duration =
+                chrono::Duration::seconds(state.config.session_timeout_seconds as i64);
 
-            state.active_sessions.iter()
+            state
+                .active_sessions
+                .iter()
                 .filter(|(_, session)| {
-                    chrono::Utc::now().signed_duration_since(session.last_activity) > timeout_duration
+                    chrono::Utc::now().signed_duration_since(session.last_activity)
+                        > timeout_duration
                 })
                 .map(|(id, _)| id.clone())
                 .collect::<Vec<_>>()
@@ -615,7 +653,10 @@ mod tests {
     #[test]
     async fn test_session_creation() {
         let integration = QuantizationOrchestrationIntegration::new().await.unwrap();
-        let session_id = integration.create_session("test_user").await.expect("Failed to create session");
+        let session_id = integration
+            .create_session("test_user")
+            .await
+            .expect("Failed to create session");
 
         // Verify session was created
         let state = integration.orchestration_state.read().await;

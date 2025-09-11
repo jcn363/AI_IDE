@@ -12,9 +12,7 @@ pub struct QuantizationIntegration {
 impl QuantizationIntegration {
     /// Create new quantization integration
     pub fn new() -> Self {
-        Self {
-            backend: "candle",
-        }
+        Self { backend: "candle" }
     }
 
     /// Integrates quantization with AI model loading

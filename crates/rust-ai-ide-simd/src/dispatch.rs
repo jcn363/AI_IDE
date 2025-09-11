@@ -1,12 +1,11 @@
+use crate::capability::get_cached_capabilities;
+use crate::error::{SIMDError, SIMDResult};
 /// Vector operation dispatcher for SIMD-accelerated computations
-
 use core_simd::f32x4;
 use core_simd::f32x8;
 use core_simd::f64x4;
 use core_simd::i32x4;
 use core_simd::i32x8;
-use crate::error::{SIMDError, SIMDResult};
-use crate::capability::get_cached_capabilities;
 
 /// Vector operation dispatcher that selects optimal SIMD instruction set
 pub struct VectorDispatcher;
@@ -18,12 +17,7 @@ impl VectorDispatcher {
     }
 
     /// Dispatch f32x4 operations using SSE
-    pub fn dispatch_f32x4<F>(
-        &self,
-        lhs: &[f32],
-        rhs: &[f32],
-        operation: F,
-    ) -> SIMDResult<Vec<f32>>
+    pub fn dispatch_f32x4<F>(&self, lhs: &[f32], rhs: &[f32], operation: F) -> SIMDResult<Vec<f32>>
     where
         F: Fn(f32, f32) -> f32,
     {
@@ -68,12 +62,7 @@ impl VectorDispatcher {
     }
 
     /// Dispatch f32x8 operations using AVX/AVX2
-    pub fn dispatch_f32x8<F>(
-        &self,
-        lhs: &[f32],
-        rhs: &[f32],
-        operation: F,
-    ) -> SIMDResult<Vec<f32>>
+    pub fn dispatch_f32x8<F>(&self, lhs: &[f32], rhs: &[f32], operation: F) -> SIMDResult<Vec<f32>>
     where
         F: Fn(f32, f32) -> f32,
     {
@@ -340,7 +329,8 @@ impl VectorDispatcher {
 
             for ii in (0..m).step_by(block_size) {
                 for jj in (0..k).step_by(block_size) {
-                    for kk in (0..n).step_by(8) { // AVX/AVX2 register width
+                    for kk in (0..n).step_by(8) {
+                        // AVX/AVX2 register width
                         for i in ii..(ii + block_size).min(m) {
                             for j in jj..(jj + block_size).min(k) {
                                 let mut sum = _mm256_setzero_ps();
@@ -479,10 +469,13 @@ mod tests {
 
         // Test mismatched dimensions
         let a = vec![1.0, 2.0, 3.0, 4.0]; // 2x2
-        let b = vec![5.0, 6.0];           // 1x2
+        let b = vec![5.0, 6.0]; // 1x2
 
         let result = dispatcher.matrix_multiply_dispatch(&a, &b, 2, 2, 1);
-        assert!(matches!(result, Err(SIMDError::MatrixDimensionsError { .. })));
+        assert!(matches!(
+            result,
+            Err(SIMDError::MatrixDimensionsError { .. })
+        ));
     }
 
     #[test]
@@ -490,8 +483,8 @@ mod tests {
         let dispatcher = VectorDispatcher::new();
 
         // Simple 2x2 matrix multiplication
-        let a = vec![1.0, 2.0, 3.0, 4.0];     // 2x2
-        let b = vec![5.0, 6.0, 7.0, 8.0];     // 2x2
+        let a = vec![1.0, 2.0, 3.0, 4.0]; // 2x2
+        let b = vec![5.0, 6.0, 7.0, 8.0]; // 2x2
         let expected = vec![19.0, 22.0, 43.0, 50.0]; // 2x2 result
 
         let result = dispatcher.matrix_multiply_dispatch(&a, &b, 2, 2, 2);

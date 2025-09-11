@@ -4,10 +4,10 @@
 //! suggestions, and maintenance planning based on code patterns, architectural
 //! analysis, and industry best practices.
 
-use serde::{Deserialize, Serialize};
-use super::vulnerability::PredictedVulnerability;
-use super::performance::PerformanceBottleneckForecast;
 use super::health::HealthScore;
+use super::performance::PerformanceBottleneckForecast;
+use super::vulnerability::PredictedVulnerability;
+use serde::{Deserialize, Serialize};
 
 /// Maintenance recommendation engine
 #[derive(Debug)]
@@ -44,7 +44,9 @@ impl RecommendationEngine {
 
         // Generate performance optimization recommendations
         for bottleneck in performance_bottlenecks {
-            let recs = self.generate_performance_recommendations(bottleneck).await?;
+            let recs = self
+                .generate_performance_recommendations(bottleneck)
+                .await?;
             recommendations.extend(recs);
         }
 
@@ -100,7 +102,8 @@ impl RecommendationEngine {
                 recommendations.push(MaintenanceRecommendation {
                     id: generate_recommendation_id(),
                     title: "Modernize to Memory-Safe Patterns".to_string(),
-                    description: "Replace unsafe memory operations with safe Rust abstractions".to_string(),
+                    description: "Replace unsafe memory operations with safe Rust abstractions"
+                        .to_string(),
                     priority: MaintenancePriority::High,
                     effort: EffortEstimate::High,
                     risk_mitigation: 0.9,
@@ -117,7 +120,10 @@ impl RecommendationEngine {
                 // Generic recommendation for other vulnerability types
                 recommendations.push(MaintenanceRecommendation {
                     id: generate_recommendation_id(),
-                    title: format!("Address {} Vulnerability", vulnerability.vulnerability_type.description()),
+                    title: format!(
+                        "Address {} Vulnerability",
+                        vulnerability.vulnerability_type.description()
+                    ),
                     description: vulnerability.description.clone(),
                     priority: MaintenancePriority::High,
                     effort: EffortEstimate::Medium,
@@ -145,12 +151,17 @@ impl RecommendationEngine {
                 recommendations.push(MaintenanceRecommendation {
                     id: generate_recommendation_id(),
                     title: "Optimize CPU-Intensive Operations".to_string(),
-                    description: "Implement parallel processing and algorithm optimization".to_string(),
+                    description: "Implement parallel processing and algorithm optimization"
+                        .to_string(),
                     priority: MaintenancePriority::Medium,
                     effort: EffortEstimate::High,
                     risk_mitigation: 0.6,
                     category: RecommendationCategory::Performance,
-                    applicable_locations: bottleneck.locations.iter().map(|l| l.file_path.clone()).collect(),
+                    applicable_locations: bottleneck
+                        .locations
+                        .iter()
+                        .map(|l| l.file_path.clone())
+                        .collect(),
                     code_changes: Vec::new(),
                     alternatives: bottleneck.scaling_recommendations.clone(),
                 });
@@ -159,12 +170,18 @@ impl RecommendationEngine {
                 recommendations.push(MaintenanceRecommendation {
                     id: generate_recommendation_id(),
                     title: "Implement Memory Optimization".to_string(),
-                    description: "Reduce memory allocations and implement efficient data structures".to_string(),
+                    description:
+                        "Reduce memory allocations and implement efficient data structures"
+                            .to_string(),
                     priority: MaintenancePriority::Medium,
                     effort: EffortEstimate::Medium,
                     risk_mitigation: 0.7,
                     category: RecommendationCategory::Memory,
-                    applicable_locations: bottleneck.locations.iter().map(|l| l.file_path.clone()).collect(),
+                    applicable_locations: bottleneck
+                        .locations
+                        .iter()
+                        .map(|l| l.file_path.clone())
+                        .collect(),
                     code_changes: Vec::new(),
                     alternatives: bottleneck.scaling_recommendations.clone(),
                 });
@@ -172,13 +189,20 @@ impl RecommendationEngine {
             _ => {
                 recommendations.push(MaintenanceRecommendation {
                     id: generate_recommendation_id(),
-                    title: format!("Address {} Bottleneck", format!("{:?}", bottleneck.bottleneck_type)),
+                    title: format!(
+                        "Address {} Bottleneck",
+                        format!("{:?}", bottleneck.bottleneck_type)
+                    ),
                     description: bottleneck.description.clone(),
                     priority: MaintenancePriority::Medium,
                     effort: EffortEstimate::Medium,
                     risk_mitigation: 0.5,
                     category: RecommendationCategory::Performance,
-                    applicable_locations: bottleneck.locations.iter().map(|l| l.file_path.clone()).collect(),
+                    applicable_locations: bottleneck
+                        .locations
+                        .iter()
+                        .map(|l| l.file_path.clone())
+                        .collect(),
                     code_changes: Vec::new(),
                     alternatives: bottleneck.scaling_recommendations.clone(),
                 });
@@ -201,7 +225,8 @@ impl RecommendationEngine {
                     recommendations.push(MaintenanceRecommendation {
                         id: generate_recommendation_id(),
                         title: "Improve Code Maintainability".to_string(),
-                        description: "Refactor complex functions and improve code organization".to_string(),
+                        description: "Refactor complex functions and improve code organization"
+                            .to_string(),
                         priority: MaintenancePriority::Medium,
                         effort: EffortEstimate::High,
                         risk_mitigation: 0.8,
@@ -233,7 +258,10 @@ impl RecommendationEngine {
                     recommendations.push(MaintenanceRecommendation {
                         id: generate_recommendation_id(),
                         title: format!("Improve {} Health", format!("{:?}", health_score.category)),
-                        description: format!("Address {} health concerns", format!("{:?}", health_score.category).to_lowercase()),
+                        description: format!(
+                            "Address {} health concerns",
+                            format!("{:?}", health_score.category).to_lowercase()
+                        ),
                         priority: MaintenancePriority::Medium,
                         effort: EffortEstimate::Medium,
                         risk_mitigation: 0.6,
@@ -250,7 +278,9 @@ impl RecommendationEngine {
     }
 
     /// Generate proactive improvement recommendations
-    async fn generate_proactive_recommendations(&self) -> Result<Vec<MaintenanceRecommendation>, PredictiveError> {
+    async fn generate_proactive_recommendations(
+        &self,
+    ) -> Result<Vec<MaintenanceRecommendation>, PredictiveError> {
         let mut recommendations = Vec::new();
 
         // Add modernization and best practices recommendations
@@ -273,7 +303,9 @@ impl RecommendationEngine {
         recommendations.push(MaintenanceRecommendation {
             id: generate_recommendation_id(),
             title: "Implement Comprehensive Error Handling".to_string(),
-            description: "Replace generic error types with specific error types and proper error propagation".to_string(),
+            description:
+                "Replace generic error types with specific error types and proper error propagation"
+                    .to_string(),
             priority: MaintenancePriority::Medium,
             effort: EffortEstimate::High,
             risk_mitigation: 0.7,

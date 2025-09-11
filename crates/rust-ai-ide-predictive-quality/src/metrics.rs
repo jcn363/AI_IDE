@@ -1,10 +1,10 @@
 //! Performance metrics and monitoring for predictive quality intelligence
 
-use prometheus::{
-    Encoder, HistogramOpts, HistogramVec, IntCounterVec, Opts, Registry,
-    TextEncoder, register_counter_vec, register_histogram_vec,
-};
 use lazy_static::lazy_static;
+use prometheus::{
+    register_counter_vec, register_histogram_vec, Encoder, HistogramOpts, HistogramVec,
+    IntCounterVec, Opts, Registry, TextEncoder,
+};
 use std::time::Instant;
 
 /// Metrics for vulnerability prediction operations
@@ -25,7 +25,8 @@ impl VulnerabilityMetrics {
             "Total number of vulnerability predictions made",
             &["outcome"],
             registry
-        ).unwrap();
+        )
+        .unwrap();
 
         let prediction_duration = register_histogram_vec!(
             HistogramOpts::new(
@@ -34,21 +35,24 @@ impl VulnerabilityMetrics {
             ),
             &["phase"],
             registry
-        ).unwrap();
+        )
+        .unwrap();
 
         let cache_hits = register_counter_vec!(
             "rust_ai_ide_vulnerability_cache_hits_total",
             "Number of cache hits for vulnerability predictions",
             &[],
             registry
-        ).unwrap();
+        )
+        .unwrap();
 
         let cache_misses = register_counter_vec!(
             "rust_ai_ide_vulnerability_cache_misses_total",
             "Number of cache misses for vulnerability predictions",
             &[],
             registry
-        ).unwrap();
+        )
+        .unwrap();
 
         let accuracy_rate = register_histogram_vec!(
             HistogramOpts::new(
@@ -57,7 +61,8 @@ impl VulnerabilityMetrics {
             ),
             &["threshold"],
             registry
-        ).unwrap();
+        )
+        .unwrap();
 
         Self {
             predictions_total,
@@ -83,15 +88,11 @@ impl VulnerabilityMetrics {
     }
 
     pub async fn record_prediction_success(&self) {
-        self.predictions_total
-            .with_label_values(&["success"])
-            .inc();
+        self.predictions_total.with_label_values(&["success"]).inc();
     }
 
     pub async fn record_prediction_failure(&self) {
-        self.predictions_total
-            .with_label_values(&["failure"])
-            .inc();
+        self.predictions_total.with_label_values(&["failure"]).inc();
     }
 }
 
@@ -112,7 +113,8 @@ impl MaintenanceMetrics {
             "Total number of maintenance forecasts made",
             &["outcome"],
             registry
-        ).unwrap();
+        )
+        .unwrap();
 
         let forecast_duration = register_histogram_vec!(
             HistogramOpts::new(
@@ -121,7 +123,8 @@ impl MaintenanceMetrics {
             ),
             &["component"],
             registry
-        ).unwrap();
+        )
+        .unwrap();
 
         let cost_estimation_accuracy = register_histogram_vec!(
             HistogramOpts::new(
@@ -130,7 +133,8 @@ impl MaintenanceMetrics {
             ),
             &["tolerance_range"],
             registry
-        ).unwrap();
+        )
+        .unwrap();
 
         let task_priority_distribution = register_histogram_vec!(
             HistogramOpts::new(
@@ -139,7 +143,8 @@ impl MaintenanceMetrics {
             ),
             &["priority"],
             registry
-        ).unwrap();
+        )
+        .unwrap();
 
         Self {
             forecasts_total,
@@ -150,9 +155,7 @@ impl MaintenanceMetrics {
     }
 
     pub async fn record_forecast_success(&self) {
-        self.forecasts_total
-            .with_label_values(&["success"])
-            .inc();
+        self.forecasts_total.with_label_values(&["success"]).inc();
     }
 
     pub async fn record_forecast_duration(&self, duration: std::time::Duration) {
@@ -179,7 +182,8 @@ impl HealthMetrics {
             "Total number of health scores calculated",
             &["result_type"],
             registry
-        ).unwrap();
+        )
+        .unwrap();
 
         let scoring_duration = register_histogram_vec!(
             HistogramOpts::new(
@@ -188,23 +192,23 @@ impl HealthMetrics {
             ),
             &["metric_type"],
             registry
-        ).unwrap();
+        )
+        .unwrap();
 
         let health_trend = register_histogram_vec!(
-            HistogramOpts::new(
-                "rust_ai_ide_health_trend",
-                "Health trend over time periods"
-            ),
+            HistogramOpts::new("rust_ai_ide_health_trend", "Health trend over time periods"),
             &["direction", "period"],
             registry
-        ).unwrap();
+        )
+        .unwrap();
 
         let performance_requirements_met = register_counter_vec!(
             "rust_ai_ide_performance_requirements_met_total",
             "Number of times performance requirements were met",
             &["requirement"],
             registry
-        ).unwrap();
+        )
+        .unwrap();
 
         Self {
             scores_total,
@@ -264,9 +268,16 @@ lazy_static::lazy_static! {
 
 /// Helper trait for reporting operation metrics
 pub trait MetricReporter {
-    async fn report_operation(&self, operation_name: &str, success: bool, duration: std::time::Duration) {
-        GLOBAL_PREDICTIVE_METRICS.vulnerability_metrics
-            .report_operation(operation_name, success, duration).await;
+    async fn report_operation(
+        &self,
+        operation_name: &str,
+        success: bool,
+        duration: std::time::Duration,
+    ) {
+        GLOBAL_PREDICTIVE_METRICS
+            .vulnerability_metrics
+            .report_operation(operation_name, success, duration)
+            .await;
     }
 }
 

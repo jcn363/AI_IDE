@@ -52,10 +52,7 @@ pub type DashboardResult<T> = Result<T, DashboardError>;
 #[derive(Debug)]
 pub enum ConfigurationError {
     /// Invalid configuration parameter
-    InvalidParameter {
-        parameter: String,
-        reason: String,
-    },
+    InvalidParameter { parameter: String, reason: String },
 
     /// Missing required configuration
     MissingConfig(String),
@@ -96,10 +93,7 @@ pub enum MetricCollectionError {
     AggregationFailed(String),
 
     /// Rate limiting exceeded
-    RateLimitExceeded {
-        attempted: u32,
-        limit: u32,
-    },
+    RateLimitExceeded { attempted: u32, limit: u32 },
 }
 
 /// Trend analysis and forecasting errors
@@ -147,10 +141,7 @@ pub enum CollaborationError {
     SyncError(String),
 
     /// Team size exceeded
-    TeamSizeExceeded {
-        current: usize,
-        maximum: usize,
-    },
+    TeamSizeExceeded { current: usize, maximum: usize },
 }
 
 /// UI integration errors
@@ -228,16 +219,10 @@ pub enum DatabaseError {
 #[derive(Debug)]
 pub enum PerformanceError {
     /// Memory usage exceeded
-    MemoryLimitExceeded {
-        used: usize,
-        limit: usize,
-    },
+    MemoryLimitExceeded { used: usize, limit: usize },
 
     /// CPU usage threshold exceeded
-    CpuThresholdExceeded {
-        usage: f64,
-        threshold: f64,
-    },
+    CpuThresholdExceeded { usage: f64, threshold: f64 },
 
     /// Slow operation detected
     SlowOperation {
@@ -288,14 +273,18 @@ impl fmt::Display for DashboardError {
 impl fmt::Display for ConfigurationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ConfigurationError::InvalidParameter { parameter, reason } =>
-                write!(f, "Invalid parameter '{}': {}", parameter, reason),
-            ConfigurationError::MissingConfig(config) =>
-                write!(f, "Missing required configuration: {}", config),
-            ConfigurationError::FileAccess(path) =>
-                write!(f, "Configuration file access failed: {}", path),
-            ConfigurationError::ParseError(reason) =>
-                write!(f, "Configuration parsing failed: {}", reason),
+            ConfigurationError::InvalidParameter { parameter, reason } => {
+                write!(f, "Invalid parameter '{}': {}", parameter, reason)
+            }
+            ConfigurationError::MissingConfig(config) => {
+                write!(f, "Missing required configuration: {}", config)
+            }
+            ConfigurationError::FileAccess(path) => {
+                write!(f, "Configuration file access failed: {}", path)
+            }
+            ConfigurationError::ParseError(reason) => {
+                write!(f, "Configuration parsing failed: {}", reason)
+            }
         }
     }
 }
@@ -303,14 +292,16 @@ impl fmt::Display for ConfigurationError {
 impl fmt::Display for EngineError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            EngineError::InitializationFailed(reason) =>
-                write!(f, "Engine initialization failed: {}", reason),
-            EngineError::ShutdownError(reason) =>
-                write!(f, "Engine shutdown error: {}", reason),
-            EngineError::StateCorruption(reason) =>
-                write!(f, "Engine state corruption: {}", reason),
-            EngineError::ResourceAllocation(reason) =>
-                write!(f, "Resource allocation failed: {}", reason),
+            EngineError::InitializationFailed(reason) => {
+                write!(f, "Engine initialization failed: {}", reason)
+            }
+            EngineError::ShutdownError(reason) => write!(f, "Engine shutdown error: {}", reason),
+            EngineError::StateCorruption(reason) => {
+                write!(f, "Engine state corruption: {}", reason)
+            }
+            EngineError::ResourceAllocation(reason) => {
+                write!(f, "Resource allocation failed: {}", reason)
+            }
         }
     }
 }
@@ -318,14 +309,20 @@ impl fmt::Display for EngineError {
 impl fmt::Display for MetricCollectionError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            MetricCollectionError::SourceUnavailable(source) =>
-                write!(f, "Metric source unavailable: {}", source),
-            MetricCollectionError::ValidationFailed(reason) =>
-                write!(f, "Metric validation failed: {}", reason),
-            MetricCollectionError::AggregationFailed(reason) =>
-                write!(f, "Metric aggregation failed: {}", reason),
-            MetricCollectionError::RateLimitExceeded { attempted, limit } =>
-                write!(f, "Rate limit exceeded: {} requested, {} allowed per second", attempted, limit),
+            MetricCollectionError::SourceUnavailable(source) => {
+                write!(f, "Metric source unavailable: {}", source)
+            }
+            MetricCollectionError::ValidationFailed(reason) => {
+                write!(f, "Metric validation failed: {}", reason)
+            }
+            MetricCollectionError::AggregationFailed(reason) => {
+                write!(f, "Metric aggregation failed: {}", reason)
+            }
+            MetricCollectionError::RateLimitExceeded { attempted, limit } => write!(
+                f,
+                "Rate limit exceeded: {} requested, {} allowed per second",
+                attempted, limit
+            ),
         }
     }
 }
@@ -333,14 +330,18 @@ impl fmt::Display for MetricCollectionError {
 impl fmt::Display for TrendAnalysisError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            TrendAnalysisError::InsufficientData(reason) =>
-                write!(f, "Insufficient data for trend analysis: {}", reason),
-            TrendAnalysisError::StatisticalError(reason) =>
-                write!(f, "Statistical analysis error: {}", reason),
-            TrendAnalysisError::ForecastingError(reason) =>
-                write!(f, "Forecasting model error: {}", reason),
-            TrendAnalysisError::DataCorruption(reason) =>
-                write!(f, "Time series data corruption: {}", reason),
+            TrendAnalysisError::InsufficientData(reason) => {
+                write!(f, "Insufficient data for trend analysis: {}", reason)
+            }
+            TrendAnalysisError::StatisticalError(reason) => {
+                write!(f, "Statistical analysis error: {}", reason)
+            }
+            TrendAnalysisError::ForecastingError(reason) => {
+                write!(f, "Forecasting model error: {}", reason)
+            }
+            TrendAnalysisError::DataCorruption(reason) => {
+                write!(f, "Time series data corruption: {}", reason)
+            }
         }
     }
 }
@@ -348,14 +349,18 @@ impl fmt::Display for TrendAnalysisError {
 impl fmt::Display for VisualizationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            VisualizationError::ChartGenerationFailed(reason) =>
-                write!(f, "Chart generation failed: {}", reason),
-            VisualizationError::DataTransformation(reason) =>
-                write!(f, "Data transformation error: {}", reason),
-            VisualizationError::RenderingError(reason) =>
-                write!(f, "Rendering engine error: {}", reason),
-            VisualizationError::WidgetConfigError(reason) =>
-                write!(f, "Widget configuration error: {}", reason),
+            VisualizationError::ChartGenerationFailed(reason) => {
+                write!(f, "Chart generation failed: {}", reason)
+            }
+            VisualizationError::DataTransformation(reason) => {
+                write!(f, "Data transformation error: {}", reason)
+            }
+            VisualizationError::RenderingError(reason) => {
+                write!(f, "Rendering engine error: {}", reason)
+            }
+            VisualizationError::WidgetConfigError(reason) => {
+                write!(f, "Widget configuration error: {}", reason)
+            }
         }
     }
 }
@@ -363,14 +368,18 @@ impl fmt::Display for VisualizationError {
 impl fmt::Display for CollaborationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CollaborationError::SessionCreationFailed(reason) =>
-                write!(f, "Session creation failed: {}", reason),
-            CollaborationError::PermissionDenied(reason) =>
-                write!(f, "Permission denied: {}", reason),
-            CollaborationError::SyncError(reason) =>
-                write!(f, "Real-time sync failed: {}", reason),
-            CollaborationError::TeamSizeExceeded { current, maximum } =>
-                write!(f, "Team size limit exceeded: {} current, {} maximum", current, maximum),
+            CollaborationError::SessionCreationFailed(reason) => {
+                write!(f, "Session creation failed: {}", reason)
+            }
+            CollaborationError::PermissionDenied(reason) => {
+                write!(f, "Permission denied: {}", reason)
+            }
+            CollaborationError::SyncError(reason) => write!(f, "Real-time sync failed: {}", reason),
+            CollaborationError::TeamSizeExceeded { current, maximum } => write!(
+                f,
+                "Team size limit exceeded: {} current, {} maximum",
+                current, maximum
+            ),
         }
     }
 }
@@ -378,14 +387,16 @@ impl fmt::Display for CollaborationError {
 impl fmt::Display for UiIntegrationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            UiIntegrationError::UpdateFailed(reason) =>
-                write!(f, "UI update failed: {}", reason),
-            UiIntegrationError::LayoutError(reason) =>
-                write!(f, "Layout initialization error: {}", reason),
-            UiIntegrationError::ExportError(reason) =>
-                write!(f, "Export operation failed: {}", reason),
-            UiIntegrationError::AccessibilityError(reason) =>
-                write!(f, "Accessibility check failed: {}", reason),
+            UiIntegrationError::UpdateFailed(reason) => write!(f, "UI update failed: {}", reason),
+            UiIntegrationError::LayoutError(reason) => {
+                write!(f, "Layout initialization error: {}", reason)
+            }
+            UiIntegrationError::ExportError(reason) => {
+                write!(f, "Export operation failed: {}", reason)
+            }
+            UiIntegrationError::AccessibilityError(reason) => {
+                write!(f, "Accessibility check failed: {}", reason)
+            }
         }
     }
 }
@@ -393,14 +404,21 @@ impl fmt::Display for UiIntegrationError {
 impl fmt::Display for SecurityError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            SecurityError::PathTraversal { attempted_path, sanitization_result } =>
-                write!(f, "Path traversal detected: {} sanitized to {}", attempted_path, sanitization_result),
-            SecurityError::UnauthorizedAccess(reason) =>
-                write!(f, "Unauthorized access attempt: {}", reason),
-            SecurityError::EncryptionError(reason) =>
-                write!(f, "Encryption/decryption error: {}", reason),
-            SecurityError::AuditFailure(reason) =>
-                write!(f, "Audit logging failed: {}", reason),
+            SecurityError::PathTraversal {
+                attempted_path,
+                sanitization_result,
+            } => write!(
+                f,
+                "Path traversal detected: {} sanitized to {}",
+                attempted_path, sanitization_result
+            ),
+            SecurityError::UnauthorizedAccess(reason) => {
+                write!(f, "Unauthorized access attempt: {}", reason)
+            }
+            SecurityError::EncryptionError(reason) => {
+                write!(f, "Encryption/decryption error: {}", reason)
+            }
+            SecurityError::AuditFailure(reason) => write!(f, "Audit logging failed: {}", reason),
         }
     }
 }
@@ -408,14 +426,24 @@ impl fmt::Display for SecurityError {
 impl fmt::Display for ExternalServiceError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ExternalServiceError::ConnectionFailed(reason) =>
-                write!(f, "Service connection failed: {}", reason),
-            ExternalServiceError::ApiRequestError(reason) =>
-                write!(f, "API request error: {}", reason),
-            ExternalServiceError::Timeout { service, timeout_ms, operation } =>
-                write!(f, "{} operation on {} timed out after {}ms", operation, service, timeout_ms),
-            ExternalServiceError::InvalidResponse(reason) =>
-                write!(f, "Service returned invalid response: {}", reason),
+            ExternalServiceError::ConnectionFailed(reason) => {
+                write!(f, "Service connection failed: {}", reason)
+            }
+            ExternalServiceError::ApiRequestError(reason) => {
+                write!(f, "API request error: {}", reason)
+            }
+            ExternalServiceError::Timeout {
+                service,
+                timeout_ms,
+                operation,
+            } => write!(
+                f,
+                "{} operation on {} timed out after {}ms",
+                operation, service, timeout_ms
+            ),
+            ExternalServiceError::InvalidResponse(reason) => {
+                write!(f, "Service returned invalid response: {}", reason)
+            }
         }
     }
 }
@@ -423,14 +451,16 @@ impl fmt::Display for ExternalServiceError {
 impl fmt::Display for DatabaseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            DatabaseError::ConnectionFailed(reason) =>
-                write!(f, "Database connection failed: {}", reason),
-            DatabaseError::QueryFailed(reason) =>
-                write!(f, "Database query failed: {}", reason),
-            DatabaseError::MigrationError(reason) =>
-                write!(f, "Database migration error: {}", reason),
-            DatabaseError::IntegrityViolation(reason) =>
-                write!(f, "Database integrity violation: {}", reason),
+            DatabaseError::ConnectionFailed(reason) => {
+                write!(f, "Database connection failed: {}", reason)
+            }
+            DatabaseError::QueryFailed(reason) => write!(f, "Database query failed: {}", reason),
+            DatabaseError::MigrationError(reason) => {
+                write!(f, "Database migration error: {}", reason)
+            }
+            DatabaseError::IntegrityViolation(reason) => {
+                write!(f, "Database integrity violation: {}", reason)
+            }
         }
     }
 }
@@ -438,14 +468,28 @@ impl fmt::Display for DatabaseError {
 impl fmt::Display for PerformanceError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            PerformanceError::MemoryLimitExceeded { used, limit } =>
-                write!(f, "Memory limit exceeded: {}MB used, {}MB limit", used, limit),
-            PerformanceError::CpuThresholdExceeded { usage, threshold } =>
-                write!(f, "CPU threshold exceeded: {:.2}% usage, {:.2}% threshold", usage, threshold),
-            PerformanceError::SlowOperation { operation, duration_ms, threshold_ms } =>
-                write!(f, "Slow operation detected: {} took {}ms (threshold: {}ms)", operation, duration_ms, threshold_ms),
-            PerformanceError::ResourceContention(reason) =>
-                write!(f, "Resource contention detected: {}", reason),
+            PerformanceError::MemoryLimitExceeded { used, limit } => write!(
+                f,
+                "Memory limit exceeded: {}MB used, {}MB limit",
+                used, limit
+            ),
+            PerformanceError::CpuThresholdExceeded { usage, threshold } => write!(
+                f,
+                "CPU threshold exceeded: {:.2}% usage, {:.2}% threshold",
+                usage, threshold
+            ),
+            PerformanceError::SlowOperation {
+                operation,
+                duration_ms,
+                threshold_ms,
+            } => write!(
+                f,
+                "Slow operation detected: {} took {}ms (threshold: {}ms)",
+                operation, duration_ms, threshold_ms
+            ),
+            PerformanceError::ResourceContention(reason) => {
+                write!(f, "Resource contention detected: {}", reason)
+            }
         }
     }
 }
@@ -453,14 +497,10 @@ impl fmt::Display for PerformanceError {
 impl fmt::Display for SystemError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            SystemError::IoError(reason) =>
-                write!(f, "I/O error: {}", reason),
-            SystemError::SerializationError(reason) =>
-                write!(f, "Serialization error: {}", reason),
-            SystemError::InternalError(reason) =>
-                write!(f, "Internal error: {}", reason),
-            SystemError::UnknownError(reason) =>
-                write!(f, "Unknown error: {}", reason),
+            SystemError::IoError(reason) => write!(f, "I/O error: {}", reason),
+            SystemError::SerializationError(reason) => write!(f, "Serialization error: {}", reason),
+            SystemError::InternalError(reason) => write!(f, "Internal error: {}", reason),
+            SystemError::UnknownError(reason) => write!(f, "Unknown error: {}", reason),
         }
     }
 }

@@ -1,19 +1,12 @@
+use super::{
+    AdvancedPatternDetector, ConcurrencySecurityAnalyzer, CryptographicAnalyzer,
+    InputValidationAnalyzer, SecurityIssue,
+};
+use crate::analysis::{
+    AnalysisCategory, AnalysisFinding, AnalysisPreferences, Analyzer, AnalyzerExt,
+};
 use anyhow::Result;
 use syn::File;
-use crate::analysis::{
-    AnalysisCategory,
-    AnalysisFinding,
-    AnalysisPreferences,
-    Analyzer,
-    AnalyzerExt
-};
-use super::{
-    AdvancedPatternDetector, 
-    CryptographicAnalyzer, 
-    InputValidationAnalyzer, 
-    ConcurrencySecurityAnalyzer,
-    SecurityIssue,
-};
 
 /// Security analyzer that integrates all security-related analysis components
 #[derive(Debug)]
@@ -64,7 +57,7 @@ impl Analyzer for SecurityAnalyzer {
     fn is_enabled(&self, preferences: &AnalysisPreferences) -> bool {
         preferences.security_analysis
     }
-    
+
     fn category(&self) -> AnalysisCategory {
         AnalysisCategory::Security
     }
@@ -72,7 +65,8 @@ impl Analyzer for SecurityAnalyzer {
 
 /// Convert security issues to analysis findings
 fn convert_security_issues(issues: Vec<SecurityIssue>) -> Vec<AnalysisFinding> {
-    issues.into_iter()
+    issues
+        .into_iter()
         .map(|issue| {
             AnalysisFinding::new(
                 issue.issue_type.to_string(),

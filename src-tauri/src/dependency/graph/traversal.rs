@@ -1,6 +1,6 @@
 //! Graph traversal algorithms for dependency graphs
 
-use super::{DependencyGraph, DependencyNode, DependencyEdge};
+use super::{DependencyEdge, DependencyGraph, DependencyNode};
 use petgraph::visit::{Dfs, EdgeRef};
 use petgraph::Direction;
 use std::collections::{HashMap, HashSet};
@@ -51,12 +51,12 @@ pub fn find_all_paths<'a>(
         .find_node(from)
         .map(|(idx, _)| idx)
         .unwrap_or_else(|| panic!("Node not found: {}", from));
-    
+
     let to_idx = graph
         .find_node(to)
         .map(|(idx, _)| idx)
         .ok_or_else(|| format!("Node not found: {}", to));
-    
+
     let to_idx = match to_idx {
         Ok(idx) => idx,
         Err(_) => return Vec::new(),
@@ -137,31 +137,31 @@ pub fn find_all_dependencies<'a>(
     include_types: &[super::DependencyType],
 ) -> HashMap<String, &'a DependencyNode> {
     let mut result = HashMap::new();
-    
+
     if let Some((start_idx, _)) = graph.find_node(node_name) {
         let mut dfs = Dfs::new(graph.graph(), start_idx);
-        
+
         while let Some(node_idx) = dfs.next(graph.graph()) {
             if node_idx == start_idx {
                 continue; // Skip the start node
             }
-            
+
             if let Some(node) = graph.graph().node_weight(node_idx) {
                 // Check if any incoming edge matches the included types
-                let has_matching_edge = graph.graph()
+                let has_matching_edge = graph
+                    .graph()
                     .edges_directed(node_idx, Direction::Incoming)
                     .any(|edge| {
-                        include_types.is_empty() || 
-                        include_types.contains(&edge.weight().dep_type)
+                        include_types.is_empty() || include_types.contains(&edge.weight().dep_type)
                     });
-                
+
                 if has_matching_edge {
                     result.insert(node.name.clone(), node);
                 }
             }
         }
     }
-    
+
     result
 }
 
@@ -171,14 +171,14 @@ pub fn find_reverse_dependencies<'a>(
     node_name: &str,
 ) -> HashMap<String, &'a DependencyNode> {
     let mut result = HashMap::new();
-    
+
     if let Some((target_idx, _)) = graph.find_node(node_name) {
         // We need to find all nodes that have a path to our target
         for node_idx in graph.graph().node_indices() {
             if node_idx == target_idx {
                 continue; // Skip the target node itself
             }
-            
+
             if let Some(node) = graph.graph().node_weight(node_idx) {
                 // Check if there's any path from this node to our target
                 let mut dfs = Dfs::new(graph.graph(), node_idx);
@@ -188,6 +188,6 @@ pub fn find_reverse_dependencies<'a>(
             }
         }
     }
-    
+
     result
 }

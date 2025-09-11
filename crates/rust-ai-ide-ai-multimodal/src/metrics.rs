@@ -197,7 +197,10 @@ mod tests {
         let key = "test_key".to_string();
         let value = serde_json::json!({"test": "data"});
 
-        collector.cache_result(key.clone(), value.clone()).await.unwrap();
+        collector
+            .cache_result(key.clone(), value.clone())
+            .await
+            .unwrap();
         let retrieved = collector.get_cached_result(&key).await.unwrap();
 
         assert_eq!(retrieved.as_ref(), Some(&value));

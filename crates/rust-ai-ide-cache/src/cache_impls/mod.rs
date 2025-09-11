@@ -16,7 +16,10 @@ pub use redis::{RedisCache, RedisConfig};
 pub use redis::RedisClusterCache;
 
 // Re-exports for convenience
-pub use distributed_work_stealing::{DistributedWorkStealingCache, WorkStealingConfig, HashPartitioner, Partitioner, PredictivePredictor};
+pub use distributed_work_stealing::{
+    DistributedWorkStealingCache, HashPartitioner, Partitioner, PredictivePredictor,
+    WorkStealingConfig,
+};
 pub use hybrid::HybridCache;
 pub use in_memory::InMemoryCache;
 

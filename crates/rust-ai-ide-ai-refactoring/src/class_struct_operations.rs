@@ -1,12 +1,12 @@
-use std::fs;
-use std::collections::HashMap;
-use syn::{visit::Visit, visit_mut::VisitMut, Ident};
-use prettyplease;
-use quote;
-use async_trait::async_trait;
 use crate::types::*;
 use crate::utils::*;
 use crate::RefactoringOperation;
+use async_trait::async_trait;
+use prettyplease;
+use quote;
+use std::collections::HashMap;
+use std::fs;
+use syn::{visit::Visit, visit_mut::VisitMut, Ident};
 
 /// Extract Interface operation - extracts an interface from a class/struct
 pub struct ExtractInterfaceOperation;
@@ -54,12 +54,11 @@ impl ExtractInterfaceOperation {
     }
 
     /// Generate a proper trait definition
-    fn generate_trait_code(
-        &self,
-        trait_name: &str,
-        methods: &[ExtractedMethod],
-    ) -> String {
-        let mut trait_code = format!("/// Auto-generated trait from struct methods\npub trait {} {{\n", trait_name);
+    fn generate_trait_code(&self, trait_name: &str, methods: &[ExtractedMethod]) -> String {
+        let mut trait_code = format!(
+            "/// Auto-generated trait from struct methods\npub trait {} {{\n",
+            trait_name
+        );
 
         for method in methods {
             // Add documentation comments
@@ -68,7 +67,10 @@ impl ExtractInterfaceOperation {
                     if nv.path.is_ident("doc") {
                         let attr_str = quote::quote!(#attr).to_string();
                         // Extract the doc comment content
-                        if let Some(content) = attr_str.strip_prefix("///").or_else(|| attr_str.strip_prefix("/**")) {
+                        if let Some(content) = attr_str
+                            .strip_prefix("///")
+                            .or_else(|| attr_str.strip_prefix("/**"))
+                        {
                             let clean_content = content.trim_end_matches("*/").trim();
                             trait_code.push_str(&format!("    {}\n", clean_content));
                         }
@@ -78,9 +80,7 @@ impl ExtractInterfaceOperation {
 
             // Add method signature (remove pub and async from trait methods)
             let sig_str = quote::quote!(#method.signature).to_string();
-            let clean_sig = sig_str
-                .replace("pub ", "")
-                .replace("async ", "");
+            let clean_sig = sig_str.replace("pub ", "").replace("async ", "");
             trait_code.push_str(&format!("    {};\n", clean_sig));
         }
 
@@ -95,14 +95,19 @@ impl ExtractInterfaceOperation {
         struct_name: &str,
         methods: &[ExtractedMethod],
     ) -> String {
-        let mut impl_code = format!("/// Auto-generated implementation of {} for {}\nimpl {} for {} {{\n",
-            trait_name, struct_name, trait_name, struct_name);
+        let mut impl_code = format!(
+            "/// Auto-generated implementation of {} for {}\nimpl {} for {} {{\n",
+            trait_name, struct_name, trait_name, struct_name
+        );
 
         for method in methods {
             let method_ident = &method.signature.ident;
 
             // Generate method implementation that delegates to self
-            let params: Vec<_> = method.signature.inputs.iter()
+            let params: Vec<_> = method
+                .signature
+                .inputs
+                .iter()
                 .filter_map(|arg| {
                     if let syn::FnArg::Typed(pat_type) = arg {
                         if let syn::Pat::Ident(pat_ident) = &*pat_type.pat {
@@ -144,14 +149,24 @@ impl ExtractInterfaceOperation {
     }
 
     /// Validate that the struct has enough methods for interface extraction
-    fn validate_extraction(&self, methods: &[ExtractedMethod], struct_name: &str) -> Result<(), String> {
+    fn validate_extraction(
+        &self,
+        methods: &[ExtractedMethod],
+        struct_name: &str,
+    ) -> Result<(), String> {
         if methods.is_empty() {
-            return Err(format!("Struct '{}' has no public methods to extract into an interface", struct_name));
+            return Err(format!(
+                "Struct '{}' has no public methods to extract into an interface",
+                struct_name
+            ));
         }
 
         if methods.len() < 2 {
-            return Err(format!("Interface extraction needs at least 2 public methods. Struct '{}' has only {}",
-                struct_name, methods.len()));
+            return Err(format!(
+                "Interface extraction needs at least 2 public methods. Struct '{}' has only {}",
+                struct_name,
+                methods.len()
+            ));
         }
 
         Ok(())
@@ -174,7 +189,9 @@ impl RefactoringOperation for ExtractInterfaceOperation {
         let syntax = syn::parse_file(&content)?;
 
         // Extract the target struct name
-        let struct_name = context.symbol_name.as_deref()
+        let struct_name = context
+            .symbol_name
+            .as_deref()
             .ok_or("No symbol name provided for extract interface operation")?;
 
         // Extract public methods from the struct's impl blocks
@@ -202,8 +219,9 @@ impl RefactoringOperation for ExtractInterfaceOperation {
         let mut insertion_point = 0;
 
         for (i, line) in lines.iter().enumerate() {
-            if line.contains(&format!("struct {}", struct_name)) ||
-                line.contains(&format!("pub struct {}", struct_name)) {
+            if line.contains(&format!("struct {}", struct_name))
+                || line.contains(&format!("pub struct {}", struct_name))
+            {
                 insertion_point = i;
                 break;
             }
@@ -342,8 +360,11 @@ impl SplitClassOperation {
                                     if let syn::Item::Impl(impl_block) = item {
                                         for impl_item in &impl_block.items {
                                             if let syn::ImplItem::Method(method) = impl_item {
-                                                if self.method_uses_field(&method.block, &field_name) {
-                                                    methods_using.push(method.sig.ident.to_string());
+                                                if self
+                                                    .method_uses_field(&method.block, &field_name)
+                                                {
+                                                    methods_using
+                                                        .push(method.sig.ident.to_string());
                                                 }
                                             }
                                         }
@@ -423,18 +444,25 @@ impl SplitClassOperation {
         for field in fields {
             let methods_count = field.methods_using.len();
             let key = if methods_count == 1 {
-                format!("{}_specific", field.methods_using.get(0).unwrap_or(&"private".to_string()))
+                format!(
+                    "{}_specific",
+                    field.methods_using.get(0).unwrap_or(&"private".to_string())
+                )
             } else if methods_count > 3 {
                 "core".to_string()
             } else {
                 "shared".to_string()
             };
 
-            field_groups.entry(key).or_insert_with(Vec::new).push(field.clone());
+            field_groups
+                .entry(key)
+                .or_insert_with(Vec::new)
+                .push(field.clone());
         }
 
         // Create split configurations from groups
-        field_groups.into_iter()
+        field_groups
+            .into_iter()
             .filter(|(_, group_fields)| group_fields.len() >= 2) // Only split if group has 2+ fields
             .enumerate()
             .map(|(i, (group_name, group_fields))| {
@@ -444,9 +472,12 @@ impl SplitClassOperation {
                     format!("{}{}", group_name, i + 1)
                 };
 
-                let associated_methods = methods.iter()
+                let associated_methods = methods
+                    .iter()
                     .filter(|method| {
-                        method.fields_used.iter()
+                        method
+                            .fields_used
+                            .iter()
                             .any(|field| group_fields.iter().any(|gf| gf.name == *field))
                     })
                     .cloned()
@@ -463,9 +494,16 @@ impl SplitClassOperation {
     }
 
     /// Check if splitting would be beneficial
-    fn validate_split_benefits(&self, fields: &[FieldInfo], _methods: &[MethodInfo]) -> Result<(), String> {
+    fn validate_split_benefits(
+        &self,
+        fields: &[FieldInfo],
+        _methods: &[MethodInfo],
+    ) -> Result<(), String> {
         if fields.len() < 4 {
-            return Err(format!("Struct has only {} fields, splitting may not provide benefits", fields.len()));
+            return Err(format!(
+                "Struct has only {} fields, splitting may not provide benefits",
+                fields.len()
+            ));
         }
 
         // Check for clear separation of concerns
@@ -503,7 +541,9 @@ impl RefactoringOperation for SplitClassOperation {
         let content = fs::read_to_string(file_path)?;
         let syntax: syn::File = syn::parse_file(&content)?;
 
-        let struct_name = context.symbol_name.as_deref()
+        let struct_name = context
+            .symbol_name
+            .as_deref()
             .ok_or("No struct name provided for splitting operation")?;
 
         // Analyze current structure
@@ -533,14 +573,19 @@ impl RefactoringOperation for SplitClassOperation {
             let mut insert_after = 0;
 
             for (j, line) in lines.iter().enumerate() {
-                if line.contains("}") && insert_after == 0 && j > 0 && lines[j-1].contains("struct") {
+                if line.contains("}")
+                    && insert_after == 0
+                    && j > 0
+                    && lines[j - 1].contains("struct")
+                {
                     insert_after = j + 1;
                     break;
                 }
             }
 
             // Insert new struct definition
-            let mut result_lines: Vec<String> = new_content.lines().map(|s| s.to_string()).collect();
+            let mut result_lines: Vec<String> =
+                new_content.lines().map(|s| s.to_string()).collect();
             result_lines.insert(insert_after, format!("{}\n", struct_code));
             new_content = result_lines.join("\n");
 
@@ -570,8 +615,13 @@ impl RefactoringOperation for SplitClassOperation {
             changes,
             error_message: None,
             warnings: vec![
-                format!("Split {} into {} separate structs", struct_name, split_configs.len()),
-                "Original struct now uses composition pattern - verify all field accesses".to_string(),
+                format!(
+                    "Split {} into {} separate structs",
+                    struct_name,
+                    split_configs.len()
+                ),
+                "Original struct now uses composition pattern - verify all field accesses"
+                    .to_string(),
                 "Consider updating trait implementations to delegate to split structs".to_string(),
                 "Check for any circular dependencies between split structs".to_string(),
             ],
@@ -588,10 +638,16 @@ impl RefactoringOperation for SplitClassOperation {
 
         let struct_name = context.symbol_name.clone().unwrap_or_default();
 
-        let analysis = match (self.analyze_struct_patterns(&syntax, &struct_name),
-                              self.analyze_method_patterns(&syntax, &struct_name)) {
+        let analysis = match (
+            self.analyze_struct_patterns(&syntax, &struct_name),
+            self.analyze_method_patterns(&syntax, &struct_name),
+        ) {
             (Ok(fields), Ok(methods)) => {
-                let confidence = if fields.len() >= 6 && methods.len() >= 4 { 0.8 } else { 0.6 };
+                let confidence = if fields.len() >= 6 && methods.len() >= 4 {
+                    0.8
+                } else {
+                    0.6
+                };
 
                 RefactoringAnalysis {
                     is_safe: confidence > 0.7,
@@ -624,9 +680,11 @@ impl RefactoringOperation for SplitClassOperation {
                 affected_files: vec![context.file_path.clone()],
                 affected_symbols: vec![struct_name],
                 breaking_changes: vec!["Unable to analyze struct for splitting".to_string()],
-                suggestions: vec!["Verify struct exists and has sufficient complexity for splitting".to_string()],
+                suggestions: vec![
+                    "Verify struct exists and has sufficient complexity for splitting".to_string(),
+                ],
                 warnings: vec!["Analysis failed".to_string()],
-            }
+            },
         };
 
         Ok(analysis)
@@ -663,11 +721,18 @@ impl SplitClassOperation {
         let mut struct_code = String::new();
 
         // Add struct definition
-        struct_code.push_str(&format!("/// Split struct {} containing specific functionality\n", config.class_name));
+        struct_code.push_str(&format!(
+            "/// Split struct {} containing specific functionality\n",
+            config.class_name
+        ));
         struct_code.push_str(&format!("pub struct {} {{\n", config.class_name));
 
         for field in &config.fields {
-            struct_code.push_str(&format!("    pub {}: {},\n", field.name, quote::quote!(#field.ty)));
+            struct_code.push_str(&format!(
+                "    pub {}: {},\n",
+                field.name,
+                quote::quote!(#field.ty)
+            ));
         }
 
         struct_code.push_str("}\n\n");
@@ -699,7 +764,8 @@ impl SplitClassOperation {
         composition_code.push_str("    // Split struct composition\n");
 
         for config in configs {
-            composition_code.push_str(&format!("    {}: {},\n",
+            composition_code.push_str(&format!(
+                "    {}: {},\n",
                 config.class_name.to_lowercase(),
                 config.class_name
             ));

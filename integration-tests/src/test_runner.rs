@@ -2,7 +2,7 @@
 
 use crate::common::EnhancedIntegrationTestRunner;
 use crate::test_config::*;
-use crate::{IntegrationTestResult, GlobalTestConfig};
+use crate::{GlobalTestConfig, IntegrationTestResult};
 use async_trait::async_trait;
 use rust_ai_ide_errors::RustAIError;
 use shared_test_utils::IntegrationContext;
@@ -90,13 +90,20 @@ impl ComprehensiveTestRunner {
             config,
             global_config,
             test_runners: Vec::new(),
-            semaphore: Arc::new(Semaphore::new(if global_config.parallel_execution { 4 } else { 1 })),
+            semaphore: Arc::new(Semaphore::new(if global_config.parallel_execution {
+                4
+            } else {
+                1
+            })),
             stats: TestExecutionStats::new(),
         })
     }
 
     /// Load configuration from file
-    pub fn with_config_path<P: AsRef<std::path::Path>>(mut self, path: P) -> Result<Self, RustAIError> {
+    pub fn with_config_path<P: AsRef<std::path::Path>>(
+        mut self,
+        path: P,
+    ) -> Result<Self, RustAIError> {
         let loaded_config = TestConfigLoader::load_config(path)?;
         self.config = loaded_config;
         Ok(self)
@@ -123,7 +130,10 @@ impl ComprehensiveTestRunner {
     }
 
     /// Run a specific test suite
-    pub async fn run_test_suite(&self, runner: &TestSuiteRunnerImpl) -> Result<Vec<IntegrationTestResult>, RustAIError> {
+    pub async fn run_test_suite(
+        &self,
+        runner: &TestSuiteRunnerImpl,
+    ) -> Result<Vec<IntegrationTestResult>, RustAIError> {
         let permit = self.semaphore.acquire().await?;
         let start_time = std::time::Instant::now();
 
@@ -132,7 +142,11 @@ impl ComprehensiveTestRunner {
         drop(permit);
 
         let duration = start_time.elapsed();
-        tracing::info!("Test suite '{}' completed in {:.2}s", runner.suite_name(), duration.as_secs_f64());
+        tracing::info!(
+            "Test suite '{}' completed in {:.2}s",
+            runner.suite_name(),
+            duration.as_secs_f64()
+        );
 
         results
     }
@@ -141,10 +155,20 @@ impl ComprehensiveTestRunner {
     fn is_suite_enabled(&self, suite_name: &str) -> bool {
         match suite_name {
             "lsp" => self.config.global_settings.enable_all_tests && self.config.lsp_tests.enabled,
-            "ai_ml" => self.config.global_settings.enable_all_tests && self.config.ai_ml_tests.enabled,
-            "cargo" => self.config.global_settings.enable_all_tests && self.config.cargo_tests.enabled,
-            "cross_crate" => self.config.global_settings.enable_all_tests && self.config.cross_crate_tests.enabled,
-            "performance" => self.config.global_settings.enable_all_tests && self.config.performance_tests.enabled,
+            "ai_ml" => {
+                self.config.global_settings.enable_all_tests && self.config.ai_ml_tests.enabled
+            }
+            "cargo" => {
+                self.config.global_settings.enable_all_tests && self.config.cargo_tests.enabled
+            }
+            "cross_crate" => {
+                self.config.global_settings.enable_all_tests
+                    && self.config.cross_crate_tests.enabled
+            }
+            "performance" => {
+                self.config.global_settings.enable_all_tests
+                    && self.config.performance_tests.enabled
+            }
             _ => false,
         }
     }
@@ -159,8 +183,14 @@ impl ComprehensiveTestRunner {
         let mut config = IntegrationConfig {
             cleanup_on_exit: self.config.global_settings.cleanup_on_failure,
             isolated_tests: true,
-            enable_logging: self.config.global_settings.log_level == "debug" || self.config.global_settings.log_level == "trace",
-            timeout_seconds: self.config.global_settings.report_directory.parse().unwrap_or(300),
+            enable_logging: self.config.global_settings.log_level == "debug"
+                || self.config.global_settings.log_level == "trace",
+            timeout_seconds: self
+                .config
+                .global_settings
+                .report_directory
+                .parse()
+                .unwrap_or(300),
         };
 
         if self.config.global_settings.parallel_execution {
@@ -246,7 +276,9 @@ where
         match tokio::time::timeout(
             std::time::Duration::from_secs(60), // 60 second timeout per attempt
             test_future,
-        ).await {
+        )
+        .await
+        {
             Ok(Ok(_)) => {
                 result.success = true;
                 result.duration_ms = attempt_start.elapsed().as_millis() as u64;
@@ -255,25 +287,37 @@ where
             }
             Ok(Err(e)) => {
                 if attempt <= max_retries {
-                    result.errors.push(format!("Attempt {} failed: {}", attempt, e));
-                    tokio::time::sleep(std::time::Duration::from_millis(500 * attempt as u64)).await;
+                    result
+                        .errors
+                        .push(format!("Attempt {} failed: {}", attempt, e));
+                    tokio::time::sleep(std::time::Duration::from_millis(500 * attempt as u64))
+                        .await;
                 } else {
-                    result.errors.push(format!("Test failed after {} attempts: {}", max_retries + 1, e));
+                    result.errors.push(format!(
+                        "Test failed after {} attempts: {}",
+                        max_retries + 1,
+                        e
+                    ));
                 }
             }
             Err(_) => {
                 if attempt <= max_retries {
                     result.errors.push(format!("Attempt {} timed out", attempt));
-                    tokio::time::sleep(std::time::Duration::from_millis(1000 * attempt as u64)).await;
+                    tokio::time::sleep(std::time::Duration::from_millis(1000 * attempt as u64))
+                        .await;
                 } else {
-                    result.errors.push("Test timed out after all retry attempts".to_string());
+                    result
+                        .errors
+                        .push("Test timed out after all retry attempts".to_string());
                 }
             }
         }
     }
 
     if !result.success && result.errors.is_empty() {
-        result.errors.push("Test failed with unknown error".to_string());
+        result
+            .errors
+            .push("Test failed with unknown error".to_string());
     }
 
     result
@@ -367,7 +411,11 @@ impl TestResultReporter {
              Total Duration: {:.2}s\n\n",
             total_tests,
             passed,
-            if total_tests > 0 { (passed as f64 / total_tests as f64) * 100.0 } else { 0.0 },
+            if total_tests > 0 {
+                (passed as f64 / total_tests as f64) * 100.0
+            } else {
+                0.0
+            },
             failed,
             total_duration.as_secs_f64()
         );
@@ -378,8 +426,7 @@ impl TestResultReporter {
                 if !result.success {
                     report.push_str(&format!(
                         "❌ {} ({}ms)\n",
-                        result.test_name,
-                        result.duration_ms
+                        result.test_name, result.duration_ms
                     ));
                     for error in &result.errors {
                         report.push_str(&format!("   {}\n", error));
@@ -394,8 +441,7 @@ impl TestResultReporter {
             if result.success {
                 report.push_str(&format!(
                     "✅ {} ({}ms)\n",
-                    result.test_name,
-                    result.duration_ms
+                    result.test_name, result.duration_ms
                 ));
             }
         }
@@ -481,20 +527,28 @@ impl TestResultReporter {
             self.results.len(),
             passed,
             failed
-        ) + &self.results.iter().map(|result| {
-            format!(
-                "<div class=\"test {}\">\n\
+        ) + &self
+            .results
+            .iter()
+            .map(|result| {
+                format!(
+                    "<div class=\"test {}\">\n\
                  <h3>{}</h3>\n\
                  <p>Duration: {}ms</p>\n\
                  {}</div>",
-                if result.success { "passed" } else { "failed" },
-                result.test_name,
-                result.duration_ms,
-                if result.success { "<p>✅ Passed</p>".to_string() } else {
-                    format!("<p>❌ Failed: {}</p>", result.errors.join(", "))
-                }
-            )
-        }).collect::<Vec<_>>().join("\n") + "\n\
+                    if result.success { "passed" } else { "failed" },
+                    result.test_name,
+                    result.duration_ms,
+                    if result.success {
+                        "<p>✅ Passed</p>".to_string()
+                    } else {
+                        format!("<p>❌ Failed: {}</p>", result.errors.join(", "))
+                    }
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+            + "\n\
                </div>\n\
              </body>\n\
              </html>"

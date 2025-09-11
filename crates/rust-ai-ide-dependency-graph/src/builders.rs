@@ -2,14 +2,14 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
-use std::sync::Arc;
 
+use crate::cache::*;
 use crate::error::*;
 use crate::graph::*;
 use crate::resolver::*;
-use crate::cache::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyGraphConfig {
@@ -86,7 +86,9 @@ impl DependencyGraphServiceBuilder {
     }
 
     pub async fn build(self) -> DependencyResult<DependencyGraphService> {
-        let graph = self.graph.unwrap_or_else(|| Arc::new(RwLock::new(DependencyGraph::new())));
+        let graph = self
+            .graph
+            .unwrap_or_else(|| Arc::new(RwLock::new(DependencyGraph::new())));
         let cache = self.cache.unwrap_or_else(|| Arc::new(GraphCache::new()));
 
         // Initialize cache warm-up if enabled
@@ -117,10 +119,8 @@ impl DependencyGraphService {
     }
 
     pub async fn create_resolver(&self) -> DependencyResolver {
-        DependencyResolver::new(
-            self.graph.clone(),
-            self.config.default_resolution_strategy,
-        ).with_parallel_fetches(self.config.max_parallel_fetches)
+        DependencyResolver::new(self.graph.clone(), self.config.default_resolution_strategy)
+            .with_parallel_fetches(self.config.max_parallel_fetches)
     }
 
     pub async fn get_graph_stats(&self) -> DependencyResult<DependencyGraphStats> {
@@ -142,14 +142,19 @@ impl DependencyGraphService {
         }
 
         if let Some(max_depth) = self.config.max_dependency_depth {
-            let deep_packages: Vec<String> = graph.get_packages_by_depth().await?
+            let deep_packages: Vec<String> = graph
+                .get_packages_by_depth()
+                .await?
                 .into_iter()
                 .filter(|(_, depth)| *depth > max_depth)
                 .map(|(name, _)| name)
                 .collect();
 
             if !deep_packages.is_empty() {
-                warnings.push(ValidationWarning::DeepDependencies { packages: deep_packages, max_depth });
+                warnings.push(ValidationWarning::DeepDependencies {
+                    packages: deep_packages,
+                    max_depth,
+                });
             }
         }
 
@@ -190,7 +195,10 @@ pub struct ValidationSummary {
 
 #[derive(Debug, Clone)]
 pub enum ValidationWarning {
-    DeepDependencies { packages: Vec<String>, max_depth: usize },
+    DeepDependencies {
+        packages: Vec<String>,
+        max_depth: usize,
+    },
     UnusedDependencies(Vec<String>),
     DeprecatedDependencies(Vec<String>),
 }

@@ -118,9 +118,14 @@ impl SizeStrategy {
     fn estimate_entry_size<V: serde::Serialize>(&self, entry: &CacheEntry<V>) -> usize {
         let base_size = std::mem::size_of::<CacheEntry<V>>();
         let value_size = self.estimate_value_size(entry);
-        let metadata_size = entry.metadata.iter()
-            .map(|(k, v)| k.len() + serde_json::from_str::<serde_json::Value>(v)
-                .map_or(v.len(), |value| self.estimate_json_size(&value)))
+        let metadata_size = entry
+            .metadata
+            .iter()
+            .map(|(k, v)| {
+                k.len()
+                    + serde_json::from_str::<serde_json::Value>(v)
+                        .map_or(v.len(), |value| self.estimate_json_size(&value))
+            })
             .sum::<usize>();
 
         base_size + value_size + metadata_size + entry.size_hint()
@@ -137,24 +142,43 @@ impl SizeStrategy {
     fn estimate_json_size(&self, value: &serde_json::Value) -> usize {
         match value {
             serde_json::Value::String(s) => s.len(),
-            serde_json::Value::Array(arr) => arr.iter().map(|v| self.estimate_json_size(v)).sum::<usize>(),
-            serde_json::Value::Object(obj) => obj.iter().map(|(k, v)| k.len() + self.estimate_json_size(v)).sum::<usize>(),
+            serde_json::Value::Array(arr) => arr
+                .iter()
+                .map(|v| self.estimate_json_size(v))
+                .sum::<usize>(),
+            serde_json::Value::Object(obj) => obj
+                .iter()
+                .map(|(k, v)| k.len() + self.estimate_json_size(v))
+                .sum::<usize>(),
             _ => 16, // Small fixed size for primitives
         }
     }
 
-    fn calculate_eviction_score(&self, entry: &CacheEntry<impl serde::Serialize>, access_count: u64) -> f64 {
-        let priority_weight = entry.metadata.get("priority")
+    fn calculate_eviction_score(
+        &self,
+        entry: &CacheEntry<impl serde::Serialize>,
+        access_count: u64,
+    ) -> f64 {
+        let priority_weight = entry
+            .metadata
+            .get("priority")
             .and_then(|v| Some(v.as_str()))
             .and_then(|p| self.priority_weights.read().unwrap().get(p).copied())
             .unwrap_or(1.0);
 
-        let size_weight = (self.estimate_entry_size(entry) as f64 / self.max_memory_usage as f64).min(1.0);
-        let freshness_weight = chrono::Utc::now().timestamp() as f64 - entry.last_accessed.timestamp() as f64;
-        let usage_weight = if access_count > 0 { 1.0 / (access_count as f64 + 1.0) } else { 2.0 };
+        let size_weight =
+            (self.estimate_entry_size(entry) as f64 / self.max_memory_usage as f64).min(1.0);
+        let freshness_weight =
+            chrono::Utc::now().timestamp() as f64 - entry.last_accessed.timestamp() as f64;
+        let usage_weight = if access_count > 0 {
+            1.0 / (access_count as f64 + 1.0)
+        } else {
+            2.0
+        };
 
         // Higher score means more likely to be evicted
-        (size_weight * 0.4 + freshness_weight * 0.3 * priority_weight as f64 + usage_weight * 0.3).clamp(0.0, 1.0)
+        (size_weight * 0.4 + freshness_weight * 0.3 * priority_weight as f64 + usage_weight * 0.3)
+            .clamp(0.0, 1.0)
     }
 }
 
@@ -176,12 +200,14 @@ where
         }
 
         // Calculate current memory usage
-        let current_usage: usize = entries.iter()
+        let current_usage: usize = entries
+            .iter()
             .map(|(_, entry)| self.estimate_entry_size(entry))
             .sum();
 
         // Update current memory (atomic operation)
-        self.current_memory.store(current_usage, std::sync::atomic::Ordering::Relaxed);
+        self.current_memory
+            .store(current_usage, std::sync::atomic::Ordering::Relaxed);
 
         // If we're under memory limit, don't evict
         if current_usage <= self.max_memory_usage {
@@ -189,7 +215,9 @@ where
         }
 
         // Calculate eviction scores
-        let mut scored_entries: Vec<_> = entries.iter().enumerate()
+        let mut scored_entries: Vec<_> = entries
+            .iter()
+            .enumerate()
             .map(|(idx, (key, entry))| {
                 let score = self.calculate_eviction_score(entry, entry.access_count);
                 (idx, score, current_usage - self.estimate_entry_size(entry))
@@ -198,7 +226,8 @@ where
 
         // Sort by score (highest first) and then by memory savings (lowest first)
         scored_entries.sort_by(|a, b| {
-            b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal)
+            b.1.partial_cmp(&a.1)
+                .unwrap_or(std::cmp::Ordering::Equal)
                 .then_with(|| a.2.cmp(&b.2))
         });
 
@@ -240,7 +269,8 @@ pub struct AdaptiveStrategy {
     pub weight_frequency: f32,
     pub weight_size: f32,
     pub adaptive_mode: std::sync::atomic::AtomicBool,
-    pub usage_history: std::sync::RwLock<std::collections::VecDeque<(chrono::DateTime<chrono::Utc>, usize, f64)>>,
+    pub usage_history:
+        std::sync::RwLock<std::collections::VecDeque<(chrono::DateTime<chrono::Utc>, usize, f64)>>,
     pub prediction_enabled: bool,
 }
 
@@ -260,7 +290,10 @@ impl Default for AdaptiveStrategy {
 impl AdaptiveStrategy {
     /// Adapt weights based on historical usage patterns
     pub async fn adapt_weights(&self, current_hit_rate: f64, current_throughput: f64) {
-        if !self.adaptive_mode.load(std::sync::atomic::Ordering::Relaxed) {
+        if !self
+            .adaptive_mode
+            .load(std::sync::atomic::Ordering::Relaxed)
+        {
             return;
         }
 
@@ -270,9 +303,15 @@ impl AdaptiveStrategy {
         }
 
         // Calculate trend: is performance improving?
-        let recent_performance: Vec<_> = history.iter().rev().take(5).map(|(_, _, perf)| *perf).collect();
+        let recent_performance: Vec<_> = history
+            .iter()
+            .rev()
+            .take(5)
+            .map(|(_, _, perf)| *perf)
+            .collect();
         let avg_recent = recent_performance.iter().sum::<f64>() / recent_performance.len() as f64;
-        let trend = avg_recent - (history.iter().map(|(_, _, perf)| *perf).sum::<f64>() / history.len() as f64);
+        let trend = avg_recent
+            - (history.iter().map(|(_, _, perf)| *perf).sum::<f64>() / history.len() as f64);
 
         // Adjust weights based on trend
         if trend > 0.0 {
@@ -287,7 +326,11 @@ impl AdaptiveStrategy {
             if history.len() >= 1000 {
                 history.pop_front();
             }
-            history.push_back((chrono::Utc::now(), current_hit_rate as usize, current_throughput));
+            history.push_back((
+                chrono::Utc::now(),
+                current_hit_rate as usize,
+                current_throughput,
+            ));
         }
     }
 
@@ -345,7 +388,9 @@ where
                 let cost_factor = size_score * (1.0 + access_pattern_factor.log10().max(0.0));
 
                 // Priority-based weighting
-                let priority_weight = entry.metadata.get("priority")
+                let priority_weight = entry
+                    .metadata
+                    .get("priority")
                     .and_then(|v| Some(v.as_str()))
                     .map(|p| match p {
                         "high" => 0.3,
@@ -356,14 +401,17 @@ where
                     .unwrap_or(0.7);
 
                 // Adaptive scoring
-                let base_score = if self.adaptive_mode.load(std::sync::atomic::Ordering::Relaxed) {
+                let base_score = if self
+                    .adaptive_mode
+                    .load(std::sync::atomic::Ordering::Relaxed)
+                {
                     // Use adaptive weights based on historical performance
                     adaptive_scoring(recent_score, frequency_score, size_score, entry, self)
                 } else {
                     // Use configured weights
-                    recent_score * self.weight_recent +
-                    frequency_score * self.weight_frequency +
-                    size_score * self.weight_size
+                    recent_score * self.weight_recent
+                        + frequency_score * self.weight_frequency
+                        + size_score * self.weight_size
                 };
 
                 // Prediction boost: entries that might be accessed soon get lower scores
@@ -390,7 +438,8 @@ where
             .filter(|(idx, score)| {
                 let entry = entries[*idx].1;
                 // Don't evict entries accessed within last minute if they have high access count
-                let minutes_since_access = ((now.timestamp() - entry.last_accessed.timestamp()) as f64) / 60.0;
+                let minutes_since_access =
+                    ((now.timestamp() - entry.last_accessed.timestamp()) as f64) / 60.0;
                 !(minutes_since_access < 1.0 && entry.access_count > 5)
             })
             .map(|(idx, _)| entries[idx].0.clone())
@@ -414,7 +463,11 @@ fn adaptive_scoring<V>(
     }
 
     // Calculate average hit rate
-    let avg_hit_rate: f64 = history.iter().map(|(_, hit_rate, _)| *hit_rate as f64).sum::<f64>() / history.len() as f64;
+    let avg_hit_rate: f64 = history
+        .iter()
+        .map(|(_, hit_rate, _)| *hit_rate as f64)
+        .sum::<f64>()
+        / history.len() as f64;
 
     // Adjust weights based on hit rate performance
     let (recent_weight, freq_weight, size_weight) = if avg_hit_rate > 0.8 {
@@ -487,7 +540,7 @@ pub struct WTinyLFU {
     sketch_width: usize,
     sketch_depth: usize,
     window_accesses: std::sync::RwLock<std::collections::VecDeque<(u64, u64)>>, // (timestamp, hash)
-    main_accesses: std::sync::RwLock<std::collections::HashMap<u64, u8>>, // Hash -> frequency
+    main_accesses: std::sync::RwLock<std::collections::HashMap<u64, u8>>,       // Hash -> frequency
     current_window_size: std::sync::atomic::AtomicUsize,
 }
 
@@ -497,13 +550,18 @@ impl WTinyLFU {
             window_size,
             sketch_width: 1024,
             sketch_depth: 4,
-            window_accesses: std::sync::RwLock::new(std::collections::VecDeque::with_capacity(window_size)),
+            window_accesses: std::sync::RwLock::new(std::collections::VecDeque::with_capacity(
+                window_size,
+            )),
             main_accesses: std::sync::RwLock::new(std::collections::HashMap::new()),
             current_window_size: std::sync::atomic::AtomicUsize::new(0),
         }
     }
 
-    fn hash_key<K>(&self, key: &K) -> u64 where K: std::hash::Hash {
+    fn hash_key<K>(&self, key: &K) -> u64
+    where
+        K: std::hash::Hash,
+    {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
 
@@ -513,7 +571,12 @@ impl WTinyLFU {
     }
 
     fn estimate_frequency(&self, hash: u64) -> u8 {
-        self.main_accesses.read().unwrap().get(&hash).copied().unwrap_or(0)
+        self.main_accesses
+            .read()
+            .unwrap()
+            .get(&hash)
+            .copied()
+            .unwrap_or(0)
     }
 
     fn record_access(&self, hash: u64, now: u64) {
@@ -525,7 +588,9 @@ impl WTinyLFU {
                 if let Some((_, old_hash)) = window.pop_front() {
                     // Move frequent items to main structure
                     if self.estimate_frequency(old_hash) > 1 {
-                        self.main_accesses.write().unwrap()
+                        self.main_accesses
+                            .write()
+                            .unwrap()
                             .entry(old_hash)
                             .and_modify(|freq| {
                                 if *freq < 255 {
@@ -539,7 +604,9 @@ impl WTinyLFU {
         }
 
         // Update main frequency
-        self.main_accesses.write().unwrap()
+        self.main_accesses
+            .write()
+            .unwrap()
             .entry(hash)
             .and_modify(|freq| {
                 if *freq < 255 {
@@ -550,7 +617,7 @@ impl WTinyLFU {
 
         self.current_window_size.store(
             self.window_accesses.read().unwrap().len(),
-            std::sync::atomic::Ordering::Relaxed
+            std::sync::atomic::Ordering::Relaxed,
         );
     }
 }
@@ -584,7 +651,9 @@ where
             .as_secs();
 
         // Score entries using W-TinyLFU algorithm
-        let mut scored_entries: Vec<_> = entries.iter().enumerate()
+        let mut scored_entries: Vec<_> = entries
+            .iter()
+            .enumerate()
             .map(|(idx, (key, entry))| {
                 let hash = self.hash_key(key);
                 let frequency = self.estimate_frequency(hash);
@@ -593,7 +662,10 @@ where
                 self.record_access(hash, now);
 
                 // Calculate score based on frequency and recency
-                let recency_factor = 1.0 / ((now as f64) - entry.last_accessed.timestamp() as f64).abs().max(1.0);
+                let recency_factor = 1.0
+                    / ((now as f64) - entry.last_accessed.timestamp() as f64)
+                        .abs()
+                        .max(1.0);
                 let frequency_factor = frequency.min(100) as f32 / 100.0; // Cap frequency
 
                 // W-TinyLFU score (higher = more likely to keep)
@@ -606,7 +678,8 @@ where
         // Sort by score (lower scores evicted first)
         scored_entries.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
 
-        scored_entries.into_iter()
+        scored_entries
+            .into_iter()
             .take(target_count)
             .map(|(idx, _)| entries[idx].0.clone())
             .collect()
@@ -708,7 +781,12 @@ where
                 hasher.finish()
             };
 
-            let ref_bit = *self.reference_bits.read().unwrap().get(&key_hash).unwrap_or(&false);
+            let ref_bit = *self
+                .reference_bits
+                .read()
+                .unwrap()
+                .get(&key_hash)
+                .unwrap_or(&false);
 
             if !ref_bit {
                 selected.push(entries[hand].0.clone());
@@ -723,7 +801,8 @@ where
             }
         }
 
-        self.clock_hand.store(hand, std::sync::atomic::Ordering::Relaxed);
+        self.clock_hand
+            .store(hand, std::sync::atomic::Ordering::Relaxed);
         selected
     }
 }

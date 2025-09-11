@@ -2,11 +2,11 @@
 //!
 //! Provides common testing utilities for refactoring system integration tests
 
-use std::collections::HashMap;
 use rust_ai_ide_ai::refactoring::{
-    RefactoringContext, RefactoringOptions, CodeRange, SymbolKind,
-    RefactoringType, BackendCapabilitiesResponse, BackendFeatures
+    BackendCapabilitiesResponse, BackendFeatures, CodeRange, RefactoringContext,
+    RefactoringOptions, RefactoringType, SymbolKind,
 };
+use std::collections::HashMap;
 
 // Test file paths and content
 pub const TEST_RUST_FILE: &str = "tests/data/test_file.rs";
@@ -145,11 +145,7 @@ pub fn create_mock_capabilities() -> BackendCapabilitiesResponse {
             "inline-function".to_string(),
             "move-method".to_string(),
         ],
-        supported_file_types: vec![
-            "rs".to_string(),
-            "ts".to_string(),
-            "js".to_string(),
-        ],
+        supported_file_types: vec!["rs".to_string(), "ts".to_string(), "js".to_string()],
         features: BackendFeatures {
             batch_operations: true,
             analysis: true,
@@ -204,8 +200,11 @@ pub fn create_frontend_test_context() -> MockFrontendContext {
 
 /// Map frontend context to backend format
 pub fn map_to_backend_context(frontend: &MockFrontendContext) -> RefactoringContext {
-    let selection = if frontend.startLine != 0 || frontend.startCharacter != 0 ||
-                        frontend.endLine != 0 || frontend.endCharacter != 0 {
+    let selection = if frontend.startLine != 0
+        || frontend.startCharacter != 0
+        || frontend.endLine != 0
+        || frontend.endCharacter != 0
+    {
         Some(CodeRange {
             start_line: frontend.startLine as usize,
             start_character: frontend.startCharacter as usize,
@@ -257,8 +256,8 @@ pub fn assert_contexts_equal(a: &RefactoringContext, b: &RefactoringContext) {
             assert_eq!(sel_a.start_character, sel_b.start_character);
             assert_eq!(sel_a.end_line, sel_b.end_line);
             assert_eq!(sel_a.end_character, sel_b.end_character);
-        },
-        (None, None) => {},
+        }
+        (None, None) => {}
         _ => panic!("Selection mismatch: one context has selection, other doesn't"),
     }
 }

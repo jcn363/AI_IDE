@@ -1,12 +1,9 @@
 //! Maintenance cost estimation component for predictive forecasting
 
-use std::collections::HashMap;
+use crate::{errors::*, types::*};
 use async_trait::async_trait;
 use chrono::Duration;
-use crate::{
-    types::*,
-    errors::*,
-};
+use std::collections::HashMap;
 
 /// Core maintenance cost estimator
 #[derive(Debug)]
@@ -44,19 +41,15 @@ impl CostEstimator {
     }
 
     /// Estimate cost for a single debt item (main interface)
-    pub async fn estimate_cost(
-        &self,
-        debt_item: &DebtItem,
-    ) -> MaintenanceResult<CostBreakdown> {
+    pub async fn estimate_cost(&self, debt_item: &DebtItem) -> MaintenanceResult<CostBreakdown> {
         // Calculate base effort estimate
-        let base_effort = self.complexity_mapper
+        let base_effort = self
+            .complexity_mapper
             .map_complexity_to_effort(debt_item)
             .await?;
 
         // Apply risk factors
-        let risk_factor = self.risk_assessor
-            .assess_risk(debt_item)
-            .await?;
+        let risk_factor = self.risk_assessor.assess_risk(debt_item).await?;
 
         // Calculate complexity multiplier
         let complexity_multiplier = self.calculate_complexity_multiplier(debt_item);
@@ -68,13 +61,15 @@ impl CostEstimator {
         let urgency_score = self.calculate_urgency_score(debt_item, adjusted_effort);
 
         // Generate detailed cost components
-        let components = self.generate_cost_components(
-            base_effort,
-            adjusted_effort,
-            risk_factor,
-            complexity_multiplier,
-            debt_item,
-        ).await?;
+        let components = self
+            .generate_cost_components(
+                base_effort,
+                adjusted_effort,
+                risk_factor,
+                complexity_multiplier,
+                debt_item,
+            )
+            .await?;
 
         Ok(CostBreakdown {
             estimated_effort_hours: adjusted_effort,
@@ -99,23 +94,23 @@ impl CostEstimator {
 
         // Adjust based on debt type
         multiplier *= match debt_item.debt_type {
-            DebtType::Security => 1.5, // Security issues are more complex
-            DebtType::Architecture => 1.4, // Architecture changes are complex
-            DebtType::Performance => 1.3, // Performance optimizations can be tricky
-            DebtType::Test => 1.2, // Test debt often has ripple effects
+            DebtType::Security => 1.5,      // Security issues are more complex
+            DebtType::Architecture => 1.4,  // Architecture changes are complex
+            DebtType::Performance => 1.3,   // Performance optimizations can be tricky
+            DebtType::Test => 1.2,          // Test debt often has ripple effects
             DebtType::Documentation => 0.8, // Documentation is usually easier
             _ => 1.0,
         };
 
         // Adjust based on file location (common patterns)
-        if debt_item.file_path.contains("src/main.rs") ||
-           debt_item.file_path.contains("lib.rs") {
+        if debt_item.file_path.contains("src/main.rs") || debt_item.file_path.contains("lib.rs") {
             multiplier *= 1.25; // Core files are more risky to modify
         }
 
         // Adjust for frequently modified files
-        if debt_item.tags.contains(&"frequently-modified".to_string()) ||
-           debt_item.tags.contains(&"hot-spot".to_string()) {
+        if debt_item.tags.contains(&"frequently-modified".to_string())
+            || debt_item.tags.contains(&"hot-spot".to_string())
+        {
             multiplier *= 1.1; // Small increase for active files
         }
 
@@ -174,7 +169,10 @@ impl CostEstimator {
             component_name: "Implementation".to_string(),
             base_effort_hours: base_effort * 0.5,
             adjusted_effort_hours: implementation_effort,
-            justification: format!("Actual code changes to address the {} debt", debt_item.debt_type),
+            justification: format!(
+                "Actual code changes to address the {} debt",
+                debt_item.debt_type
+            ),
         });
 
         // Testing phase
@@ -188,8 +186,12 @@ impl CostEstimator {
         });
 
         // Documentation phase (if needed)
-        if matches!(debt_item.debt_type, DebtType::Documentation) ||
-           debt_item.description.to_lowercase().contains("documentation") {
+        if matches!(debt_item.debt_type, DebtType::Documentation)
+            || debt_item
+                .description
+                .to_lowercase()
+                .contains("documentation")
+        {
             components.push(CostComponent {
                 component_name: "Documentation Updates".to_string(),
                 base_effort_hours: base_effort * 0.05,
@@ -205,7 +207,8 @@ impl CostEstimator {
                 component_name: "Risk Mitigation".to_string(),
                 base_effort_hours: 0.0, // Risk mitigation is over base estimate
                 adjusted_effort_hours: risk_mitigation_effort,
-                justification: "Additional time for careful handling of high-risk changes".to_string(),
+                justification: "Additional time for careful handling of high-risk changes"
+                    .to_string(),
             });
         }
 
@@ -237,8 +240,9 @@ impl CostEstimator {
         }
 
         // Higher testing for core components
-        if debt_item.tags.contains(&"core".to_string()) ||
-           debt_item.tags.contains(&"critical-path".to_string()) {
+        if debt_item.tags.contains(&"core".to_string())
+            || debt_item.tags.contains(&"critical-path".to_string())
+        {
             multiplier *= 1.25;
         }
 
@@ -265,17 +269,12 @@ impl ComplexityToCostMapper {
     }
 
     /// Map debt item complexity to estimated effort hours
-    pub async fn map_complexity_to_effort(
-        &self,
-        debt_item: &DebtItem,
-    ) -> MaintenanceResult<f64> {
+    pub async fn map_complexity_to_effort(&self, debt_item: &DebtItem) -> MaintenanceResult<f64> {
         // Use debt type as primary mapping key
         let debt_type_key = format!("{:?}", debt_item.debt_type);
 
         // Get base estimate from mappings or use default
-        let base_estimate = self.mappings.get(&debt_type_key)
-            .copied()
-            .unwrap_or(4.0); // 4 hours default
+        let base_estimate = self.mappings.get(&debt_type_key).copied().unwrap_or(4.0); // 4 hours default
 
         // Adjust based on severity
         let severity_multiplier = 1.0 + (debt_item.severity * 0.5);
@@ -325,7 +324,8 @@ impl EffortEstimator {
         &self,
         debt_items: &[DebtItem],
     ) -> MaintenanceResult<EffortDistribution> {
-        let total_effort: f64 = debt_items.iter()
+        let total_effort: f64 = debt_items
+            .iter()
             .map(|item| item.estimated_effort_hours)
             .sum();
 
@@ -335,21 +335,34 @@ impl EffortEstimator {
             total_effort / debt_items.len() as f64
         };
 
-        let max_effort = debt_items.iter()
+        let max_effort = debt_items
+            .iter()
             .map(|item| item.estimated_effort_hours)
             .fold(0.0, |acc, x| acc.max(x));
 
-        let min_effort = debt_items.iter()
+        let min_effort = debt_items
+            .iter()
             .map(|item| item.estimated_effort_hours)
-            .fold(f64::INFINITY, |acc, x| {
-                if x > 0.0 { acc.min(x) } else { acc }
-            });
+            .fold(
+                f64::INFINITY,
+                |acc, x| {
+                    if x > 0.0 {
+                        acc.min(x)
+                    } else {
+                        acc
+                    }
+                },
+            );
 
         Ok(EffortDistribution {
             total_effort,
             average_effort,
             max_effort,
-            min_effort: if min_effort == f64::INFINITY { 0.0 } else { min_effort },
+            min_effort: if min_effort == f64::INFINITY {
+                0.0
+            } else {
+                min_effort
+            },
             task_count: debt_items.len(),
         })
     }
@@ -424,9 +437,10 @@ impl DebtRiskAssessor {
         };
 
         // Risk based on location (core files are riskier)
-        if debt_item.file_path.contains("main.rs") ||
-           debt_item.file_path.contains("lib.rs") ||
-           debt_item.tags.contains(&"critical".to_string()) {
+        if debt_item.file_path.contains("main.rs")
+            || debt_item.file_path.contains("lib.rs")
+            || debt_item.tags.contains(&"critical".to_string())
+        {
             risk_score *= 1.25;
         }
 
@@ -456,10 +470,10 @@ impl DebtRiskAssessor {
     fn calculate_optimal_fix_window(&self, debt_item: &DebtItem) -> u32 {
         // Optimal fix window in weeks based on severity
         let base_window = match debt_item.severity {
-            s if s > 0.8 => 1,  // Fix within 1 week for critical debt
-            s if s > 0.6 => 2,  // Fix within 2 weeks for high severity
-            s if s > 0.4 => 4,  // Fix within 4 weeks for medium severity
-            _ => 8,             // Fix within 8 weeks for low severity
+            s if s > 0.8 => 1, // Fix within 1 week for critical debt
+            s if s > 0.6 => 2, // Fix within 2 weeks for high severity
+            s if s > 0.4 => 4, // Fix within 4 weeks for medium severity
+            _ => 8,            // Fix within 8 weeks for low severity
         };
 
         // Adjust based on debt type
@@ -491,7 +505,8 @@ impl CostOptimizationEngine {
         &self,
         cost_breakdowns: &[CostBreakdown],
     ) -> MaintenanceResult<CostOptimization> {
-        let total_cost: f64 = cost_breakdowns.iter()
+        let total_cost: f64 = cost_breakdowns
+            .iter()
             .map(|cb| cb.estimated_effort_hours)
             .sum();
 
@@ -503,7 +518,9 @@ impl CostOptimizationEngine {
             if breakdown.estimated_effort_hours < 4.0 && breakdown.urgency_score > 0.7 {
                 optimization_tips.push(format!(
                     "Quick win: Item {} ({} hours) has high urgency ({:.1}%)",
-                    index, breakdown.estimated_effort_hours, breakdown.urgency_score * 100.0
+                    index,
+                    breakdown.estimated_effort_hours,
+                    breakdown.urgency_score * 100.0
                 ));
             }
         }
@@ -513,7 +530,8 @@ impl CostOptimizationEngine {
             if breakdown.risk_factor > 1.5 {
                 optimization_tips.push(format!(
                     "High-risk: Item {} has {:.1}% higher risk - consider early intervention",
-                    index, (breakdown.risk_factor - 1.0) * 100.0
+                    index,
+                    (breakdown.risk_factor - 1.0) * 100.0
                 ));
             }
         }

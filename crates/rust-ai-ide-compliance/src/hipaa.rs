@@ -3,8 +3,11 @@
 //! Comprehensive HIPAA compliance implementation including security rule,
 //! privacy rule, and breach notification requirements.
 
-use crate::core::{ComplianceError, ComplianceResult, ComplianceConfig, FrameworkProcessingResult, ComplianceStatus};
-use crate::engine::{DataProcessingContext, ComplianceProcessor, DataBreachNotification};
+use crate::core::{
+    ComplianceConfig, ComplianceError, ComplianceResult, ComplianceStatus,
+    FrameworkProcessingResult,
+};
+use crate::engine::{ComplianceProcessor, DataBreachNotification, DataProcessingContext};
 use async_trait::async_trait;
 
 /// HIPAA compliance processor
@@ -26,7 +29,11 @@ impl HipaaProcessor {
 
 #[async_trait]
 impl ComplianceProcessor for HipaaProcessor {
-    async fn process_data(&self, data: &[u8], context: &DataProcessingContext) -> ComplianceResult<FrameworkProcessingResult> {
+    async fn process_data(
+        &self,
+        data: &[u8],
+        context: &DataProcessingContext,
+    ) -> ComplianceResult<FrameworkProcessingResult> {
         // HIPAA-specific PHI detection and processing
         let violations = Vec::new(); // Placeholder
         let recommendations = vec![
@@ -55,7 +62,10 @@ impl ComplianceProcessor for HipaaProcessor {
         }))
     }
 
-    async fn handle_breach_notification(&self, breach: &DataBreachNotification) -> ComplianceResult<()> {
+    async fn handle_breach_notification(
+        &self,
+        breach: &DataBreachNotification,
+    ) -> ComplianceResult<()> {
         log::warn!("HIPAA breach notification received: {}", breach.details);
 
         // HIPAA requires notification within 60 days (breach analysis) + individual notice timing
@@ -78,13 +88,20 @@ impl HipaaProcessor {
     }
 
     /// Register PHI access
-    pub async fn register_phi_access(&mut self, _phi_id: &str, _access: &PhiAccess) -> ComplianceResult<()> {
+    pub async fn register_phi_access(
+        &mut self,
+        _phi_id: &str,
+        _access: &PhiAccess,
+    ) -> ComplianceResult<()> {
         // Implementation for PHI access logging
         Ok(())
     }
 
     /// Check BAA compliance
-    pub fn check_business_associate_agreement(&self, _associate_id: &str) -> ComplianceResult<BusinessAssociateStatus> {
+    pub fn check_business_associate_agreement(
+        &self,
+        _associate_id: &str,
+    ) -> ComplianceResult<BusinessAssociateStatus> {
         // Implementation for BAA verification
         Ok(BusinessAssociateStatus::Compliant)
     }

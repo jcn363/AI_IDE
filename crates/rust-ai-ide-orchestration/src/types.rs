@@ -17,7 +17,9 @@ pub struct ServiceVersion {
 impl ServiceVersion {
     pub fn new(major: u32, minor: u32, patch: u32) -> Self {
         Self {
-            major, minor, patch,
+            major,
+            minor,
+            patch,
             build: None,
         }
     }

@@ -403,7 +403,8 @@ impl ArchitectureAnalyzer {
         let mut suggestions = Vec::new();
 
         for (pattern_name, confidence) in detected_patterns {
-            if *confidence > 0.6 { // Lower threshold for more suggestions, ranking will handle relevance
+            if *confidence > 0.6 {
+                // Lower threshold for more suggestions, ranking will handle relevance
                 if let Some(pattern) = self.patterns.get(pattern_name) {
                     let category_boost = match pattern.category {
                         PatternCategory::Enterprise => 0.05,
@@ -459,7 +460,11 @@ impl ArchitectureAnalyzer {
         }
 
         // Sort suggestions by confidence descending for better ranking
-        suggestions.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+        suggestions.sort_by(|a, b| {
+            b.confidence
+                .partial_cmp(&a.confidence)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         suggestions
     }

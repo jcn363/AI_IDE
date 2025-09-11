@@ -6,17 +6,18 @@
 //! - Metadata management
 //! - Dependency management
 
-use std::process::Command;
-use std::path::Path;
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
+use std::path::Path;
+use std::process::Command;
 use std::sync::Arc;
 use tauri::Emitter;
-use tokio::sync::Mutex;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command as TokioCommand;
-use once_cell::sync::Lazy;
+use tokio::sync::Mutex;
 
-static RUNNING: Lazy<Mutex<HashMap<String, Arc<Mutex<std::process::Child>>>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+static RUNNING: Lazy<Mutex<HashMap<String, Arc<Mutex<std::process::Child>>>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug)]
 pub struct CargoService;
@@ -121,7 +122,9 @@ impl CargoService {
             "cwd": directory.display().to_string(),
             "ts": chrono::Utc::now().timestamp_millis(),
         });
-        app_handle.emit("cargo:command-start", start).map_err(|e| e.to_string())?;
+        app_handle
+            .emit("cargo:command-start", start)
+            .map_err(|e| e.to_string())?;
 
         // Determine if JSON diagnostics are requested
         let json_mode = args.iter().any(|a| a == "--message-format=json");
@@ -221,7 +224,10 @@ impl CargoService {
         // Wait for completion
         let status = {
             let mut locked = child_arc.lock().await;
-            locked.wait().await.map_err(|e| format!("Failed to wait on cargo process: {}", e))?
+            locked
+                .wait()
+                .await
+                .map_err(|e| format!("Failed to wait on cargo process: {}", e))?
         };
         // Remove from registry when finished
         {
@@ -231,14 +237,16 @@ impl CargoService {
         let _ = tokio::join!(stdout_task, stderr_task);
 
         // Emit finish event
-        app_handle.emit(
-            "cargo:command-finish",
-            serde_json::json!({
-                "commandId": command_id,
-                "code": status.code().unwrap_or(-1),
-                "ts": chrono::Utc::now().timestamp_millis(),
-            }),
-        ).map_err(|e| e.to_string())?;
+        app_handle
+            .emit(
+                "cargo:command-finish",
+                serde_json::json!({
+                    "commandId": command_id,
+                    "code": status.code().unwrap_or(-1),
+                    "ts": chrono::Utc::now().timestamp_millis(),
+                }),
+            )
+            .map_err(|e| e.to_string())?;
 
         Ok(())
     }

@@ -130,144 +130,229 @@ pub async fn estimate_coverage(
 
 /// Check if a language supports property tests
 pub fn supports_property_tests(language: &ProgrammingLanguage) -> bool {
-    matches!(language, ProgrammingLanguage::Rust | ProgrammingLanguage::TypeScript | ProgrammingLanguage::JavaScript)
+    matches!(
+        language,
+        ProgrammingLanguage::Rust
+            | ProgrammingLanguage::TypeScript
+            | ProgrammingLanguage::JavaScript
+    )
 }
 
 /// Placeholder implementations for language-specific refactoring test generation
 /// These are all stub implementations that would be filled in for production use
-pub fn generate_typescript_rename_async_test(_old_name: &str, _new_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_typescript_rename_async_test(
+    _old_name: &str,
+    _new_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("TypeScript async rename test generation not implemented".into())
 }
 
-pub fn generate_rust_extract_function_edge_cases_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_rust_extract_function_edge_cases_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Rust extract function edge cases test generation not implemented".into())
 }
 
-pub fn generate_typescript_extract_function_async_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_typescript_extract_function_async_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("TypeScript extract function async test generation not implemented".into())
 }
 
-pub fn generate_python_extract_function_unit_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_python_extract_function_unit_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Python extract function test generation not implemented".into())
 }
 
-pub fn generate_python_extract_function_decorator_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_python_extract_function_decorator_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Python extract function decorator test generation not implemented".into())
 }
 
-pub fn generate_java_extract_function_unit_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_java_extract_function_unit_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Java extract function test generation not implemented".into())
 }
 
-pub fn generate_java_extract_function_private_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_java_extract_function_private_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Java extract function private test generation not implemented".into())
 }
 
-pub fn generate_generic_extract_function_test(_function_name: &str, _language: &ProgrammingLanguage) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_generic_extract_function_test(
+    _function_name: &str,
+    _language: &ProgrammingLanguage,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Generic extract function test generation not implemented".into())
 }
 
-pub fn generate_python_extract_function_preserve_behavior_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_python_extract_function_preserve_behavior_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Python extract function preserve behavior test generation not implemented".into())
 }
 
-pub fn generate_rust_extract_variable_unit_test(_variable_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_rust_extract_variable_unit_test(
+    _variable_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Rust extract variable test generation not implemented".into())
 }
 
-pub fn generate_rust_extract_variable_scope_test(_variable_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_rust_extract_variable_scope_test(
+    _variable_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Rust extract variable scope test generation not implemented".into())
 }
 
-pub fn generate_typescript_extract_variable_unit_test(_variable_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_typescript_extract_variable_unit_test(
+    _variable_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("TypeScript extract variable test generation not implemented".into())
 }
 
-pub fn generate_typescript_extract_variable_const_test(_variable_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_typescript_extract_variable_const_test(
+    _variable_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("TypeScript extract variable const test generation not implemented".into())
 }
 
-pub fn generate_python_extract_variable_unit_test(_variable_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_python_extract_variable_unit_test(
+    _variable_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Python extract variable test generation not implemented".into())
 }
 
-pub fn generate_python_extract_variable_global_test(_variable_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_python_extract_variable_global_test(
+    _variable_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Python extract variable global test generation not implemented".into())
 }
 
-pub fn generate_generic_extract_variable_test(_variable_name: &str, _language: &ProgrammingLanguage) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_generic_extract_variable_test(
+    _variable_name: &str,
+    _language: &ProgrammingLanguage,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Generic extract variable test generation not implemented".into())
 }
 
-pub fn generate_rust_extract_interface_unit_test(_interface_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_rust_extract_interface_unit_test(
+    _interface_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Rust extract interface test generation not implemented".into())
 }
 
-pub fn generate_rust_extract_interface_impl_test(_interface_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_rust_extract_interface_impl_test(
+    _interface_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Rust extract interface impl test generation not implemented".into())
 }
 
-pub fn generate_typescript_extract_interface_unit_test(_interface_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_typescript_extract_interface_unit_test(
+    _interface_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("TypeScript extract interface test generation not implemented".into())
 }
 
-pub fn generate_typescript_extract_interface_multiple_test(_interface_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_typescript_extract_interface_multiple_test(
+    _interface_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("TypeScript extract interface multiple test generation not implemented".into())
 }
 
-pub fn generate_generic_extract_interface_test(_interface_name: &str, _language: &ProgrammingLanguage) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_generic_extract_interface_test(
+    _interface_name: &str,
+    _language: &ProgrammingLanguage,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Generic extract interface test generation not implemented".into())
 }
 
-pub fn generate_rust_async_conversion_unit_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_rust_async_conversion_unit_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Rust async conversion test generation not implemented".into())
 }
 
-pub fn generate_rust_async_conversion_error_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_rust_async_conversion_error_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Rust async conversion error test generation not implemented".into())
 }
 
-pub fn generate_typescript_async_conversion_unit_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_typescript_async_conversion_unit_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("TypeScript async conversion test generation not implemented".into())
 }
 
-pub fn generate_javascript_async_conversion_unit_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_javascript_async_conversion_unit_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("JavaScript async conversion test generation not implemented".into())
 }
 
-pub fn generate_javascript_async_conversion_promise_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_javascript_async_conversion_promise_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("JavaScript promise conversion test generation not implemented".into())
 }
 
-pub fn generate_python_async_conversion_unit_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_python_async_conversion_unit_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Python async conversion test generation not implemented".into())
 }
 
-pub fn generate_python_async_conversion_await_test(_function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_python_async_conversion_await_test(
+    _function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Python async await test generation not implemented".into())
 }
 
-pub fn generate_generic_async_conversion_test(_function_name: &str, _language: &ProgrammingLanguage) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_generic_async_conversion_test(
+    _function_name: &str,
+    _language: &ProgrammingLanguage,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Generic async conversion test generation not implemented".into())
 }
 
-pub fn generate_python_rename_unit_test(_old_name: &str, _new_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_python_rename_unit_test(
+    _old_name: &str,
+    _new_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Python rename test generation not implemented".into())
 }
 
-pub fn generate_python_rename_method_test(_old_name: &str, _new_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_python_rename_method_test(
+    _old_name: &str,
+    _new_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Python rename method test generation not implemented".into())
 }
 
-pub fn generate_java_rename_unit_test(_old_name: &str, _new_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_java_rename_unit_test(
+    _old_name: &str,
+    _new_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Java rename test generation not implemented".into())
 }
 
-pub fn generate_java_rename_static_test(_old_name: &str, _new_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_java_rename_static_test(
+    _old_name: &str,
+    _new_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     Err("Java rename static test generation not implemented".into())
 }
 
-pub fn generate_generic_rename_test(_old_name: &str, _new_name: &str, _language: &ProgrammingLanguage, _framework: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+pub fn generate_generic_rename_test(
+    _old_name: &str,
+    _new_name: &str,
+    _language: &ProgrammingLanguage,
+    _framework: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
     let test_code = format!(
         "// Generic rename test for unsupported language
 test_rename_{}_to_{}() {{

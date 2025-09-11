@@ -9,14 +9,14 @@
 //! - Model performance validation
 //! - Learning system accuracy testing
 
-use crate::common::{ExtendedIntegrationContext, scenarios::AIScenarioBuilder};
+use crate::common::{scenarios::AIScenarioBuilder, ExtendedIntegrationContext};
 use crate::IntegrationTestResult;
-use rust_ai_ide_errors::RustAIError;
 use rust_ai_ide_ai_analysis::AnalysisEngine;
-use rust_ai_ide_ai_inference::{InferenceEngine, AIModel};
-use rust_ai_ide_ai_learning::{LearningSystem, TrainingData};
 use rust_ai_ide_ai_codegen::{CodeGenerator, GenerationConfig};
-use rust_ai_ide_ai_refactoring::{RefactoringEngine, RefactoringContext};
+use rust_ai_ide_ai_inference::{AIModel, InferenceEngine};
+use rust_ai_ide_ai_learning::{LearningSystem, TrainingData};
+use rust_ai_ide_ai_refactoring::{RefactoringContext, RefactoringEngine};
+use rust_ai_ide_errors::RustAIError;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -46,7 +46,10 @@ impl AIMLIntegrationTestRunner {
     }
 
     /// Setup AI/ML test environment with engines and models
-    pub async fn setup_test_environment(&mut self, context: ExtendedIntegrationContext) -> Result<(), RustAIError> {
+    pub async fn setup_test_environment(
+        &mut self,
+        context: ExtendedIntegrationContext,
+    ) -> Result<(), RustAIError> {
         self.context = Some(context);
 
         // Initialize AI engines
@@ -128,7 +131,9 @@ impl AIMLIntegrationTestRunner {
                 result.success = true;
             }
             Err(e) => {
-                result.errors.push(format!("Code analysis pipeline test failed: {}", e));
+                result
+                    .errors
+                    .push(format!("Code analysis pipeline test failed: {}", e));
             }
         }
 
@@ -156,26 +161,37 @@ impl AIMLIntegrationTestRunner {
             std::fs::write(&test_file, test_code)?;
 
             // Run full analysis pipeline
-            let analysis_results = analysis_engine.analyze_file(test_file.to_str().unwrap()).await?;
+            let analysis_results = analysis_engine
+                .analyze_file(test_file.to_str().unwrap())
+                .await?;
 
             // Validate analysis quality
-            assert!(!analysis_results.issues.is_empty(), "Should detect at least one issue");
+            assert!(
+                !analysis_results.issues.is_empty(),
+                "Should detect at least one issue"
+            );
 
             // Check for unused variable detection
-            let unused_issues = analysis_results.issues.iter()
+            let unused_issues = analysis_results
+                .issues
+                .iter()
                 .filter(|issue| issue.category.contains("unused"))
                 .count();
             assert!(unused_issues >= 1, "Should detect unused variables");
 
             // Check for shadowing detection
-            let shadowing_issues = analysis_results.issues.iter()
+            let shadowing_issues = analysis_results
+                .issues
+                .iter()
                 .filter(|issue| issue.category.contains("shadow"))
                 .count();
             assert!(shadowing_issues >= 1, "Should detect variable shadowing");
 
             Ok(())
         } else {
-            Err(RustAIError::invalid_input("Analysis engine not initialized"))
+            Err(RustAIError::invalid_input(
+                "Analysis engine not initialized",
+            ))
         }
     }
 
@@ -191,7 +207,9 @@ impl AIMLIntegrationTestRunner {
                 result.success = true;
             }
             Err(e) => {
-                result.errors.push(format!("ML inference test failed: {}", e));
+                result
+                    .errors
+                    .push(format!("ML inference test failed: {}", e));
             }
         }
 
@@ -208,19 +226,32 @@ impl AIMLIntegrationTestRunner {
             let analysis_result = inference_engine.analyze_code(code_sample).await?;
 
             // Validate inference results
-            assert!(analysis_result.confidence > 0.0, "Should have confidence score");
-            assert!(!analysis_result.predictions.is_empty(), "Should have predictions");
+            assert!(
+                analysis_result.confidence > 0.0,
+                "Should have confidence score"
+            );
+            assert!(
+                !analysis_result.predictions.is_empty(),
+                "Should have predictions"
+            );
 
             // Test bug detection model
             let buggy_code = "fn main() { let x = 5; /* x never used */ }";
             let bug_result = inference_engine.detect_bugs(buggy_code).await?;
 
-            assert!(bug_result.detections.iter().any(|d| d.category == "unused_variable"),
-                   "Should detect unused variable bug");
+            assert!(
+                bug_result
+                    .detections
+                    .iter()
+                    .any(|d| d.category == "unused_variable"),
+                "Should detect unused variable bug"
+            );
 
             Ok(())
         } else {
-            Err(RustAIError::invalid_input("Inference engine not initialized"))
+            Err(RustAIError::invalid_input(
+                "Inference engine not initialized",
+            ))
         }
     }
 
@@ -236,7 +267,9 @@ impl AIMLIntegrationTestRunner {
                 result.success = true;
             }
             Err(e) => {
-                result.errors.push(format!("Learning cycles test failed: {}", e));
+                result
+                    .errors
+                    .push(format!("Learning cycles test failed: {}", e));
             }
         }
 
@@ -257,8 +290,11 @@ impl AIMLIntegrationTestRunner {
             // Generate more training data based on analysis
             let new_samples = vec![
                 ("fn test() { let y = vec![]; y.push(1); }", false), // good usage
-                ("fn test() { let z = 42; }", true), // unused variable
-                ("fn test() { let a = String::new(); println!(\"{}\", a); }", false), // used variable
+                ("fn test() { let z = 42; }", true),                 // unused variable
+                (
+                    "fn test() { let a = String::new(); println!(\"{}\", a); }",
+                    false,
+                ), // used variable
             ];
 
             for (code, has_bug) in new_samples {
@@ -270,11 +306,16 @@ impl AIMLIntegrationTestRunner {
 
             // Check improved accuracy
             let improved_accuracy = learning_system.get_model_accuracy("bug_detection").await?;
-            assert!(improved_accuracy >= initial_accuracy, "Accuracy should improve with more training data");
+            assert!(
+                improved_accuracy >= initial_accuracy,
+                "Accuracy should improve with more training data"
+            );
 
             Ok(())
         } else {
-            Err(RustAIError::invalid_input("Learning system not initialized"))
+            Err(RustAIError::invalid_input(
+                "Learning system not initialized",
+            ))
         }
     }
 
@@ -290,7 +331,9 @@ impl AIMLIntegrationTestRunner {
                 result.success = true;
             }
             Err(e) => {
-                result.errors.push(format!("Code generation test failed: {}", e));
+                result
+                    .errors
+                    .push(format!("Code generation test failed: {}", e));
             }
         }
 
@@ -307,12 +350,18 @@ impl AIMLIntegrationTestRunner {
             let config = GenerationConfig::default().with_style("rust");
 
             let generated_function = code_generator.generate_function(func_spec, &config).await?;
-            assert!(generated_function.contains("fn factorial"), "Should generate factorial function");
+            assert!(
+                generated_function.contains("fn factorial"),
+                "Should generate factorial function"
+            );
 
             // Test struct generation
             let struct_spec = "Create a Person struct with name: String and age: u32";
             let generated_struct = code_generator.generate_struct(struct_spec, &config).await?;
-            assert!(generated_struct.contains("struct Person"), "Should generate Person struct");
+            assert!(
+                generated_struct.contains("struct Person"),
+                "Should generate Person struct"
+            );
 
             // Validate generated code compiles
             if let Some(context) = &self.context {
@@ -321,7 +370,10 @@ impl AIMLIntegrationTestRunner {
                 std::fs::write(&test_file, full_code)?;
 
                 // Basic syntax check (in real implementation, would compile)
-                assert!(full_code.contains("{"), "Generated code should have proper structure");
+                assert!(
+                    full_code.contains("{"),
+                    "Generated code should have proper structure"
+                );
             }
 
             Ok(())
@@ -342,7 +394,9 @@ impl AIMLIntegrationTestRunner {
                 result.success = true;
             }
             Err(e) => {
-                result.errors.push(format!("Refactoring assistance test failed: {}", e));
+                result
+                    .errors
+                    .push(format!("Refactoring assistance test failed: {}", e));
             }
         }
 
@@ -353,7 +407,8 @@ impl AIMLIntegrationTestRunner {
     }
 
     async fn perform_refactoring_test(&self) -> Result<(), RustAIError> {
-        if let (Some(refactoring_engine), Some(context)) = (&self.refactoring_engine, &self.context) {
+        if let (Some(refactoring_engine), Some(context)) = (&self.refactoring_engine, &self.context)
+        {
             // Test code that can be refactored
             let messy_code = r#"fn process_data() {
     let mut result = Vec::new();
@@ -375,24 +430,35 @@ impl AIMLIntegrationTestRunner {
                 .with_focus("process_data");
 
             // Get refactoring suggestions
-            let suggestions = refactoring_engine.analyze_refactoring_opportunities(&refactoring_context).await?;
+            let suggestions = refactoring_engine
+                .analyze_refactoring_opportunities(&refactoring_context)
+                .await?;
 
-            assert!(!suggestions.is_empty(), "Should provide refactoring suggestions");
+            assert!(
+                !suggestions.is_empty(),
+                "Should provide refactoring suggestions"
+            );
 
             // Test specific refactoring
-            let refactored_code = refactoring_engine.apply_refactoring_suggestion(
-                suggestions[0].id.clone(),
-                &refactoring_context
-            ).await?;
+            let refactored_code = refactoring_engine
+                .apply_refactoring_suggestion(suggestions[0].id.clone(), &refactoring_context)
+                .await?;
 
             // Validate refactored code
-            assert!(refactored_code.contains("fn process_data"), "Should preserve function signature");
-            assert!(refactored_code.lines().count() <= messy_code.lines().count(),
-                   "Refactored code should be more concise");
+            assert!(
+                refactored_code.contains("fn process_data"),
+                "Should preserve function signature"
+            );
+            assert!(
+                refactored_code.lines().count() <= messy_code.lines().count(),
+                "Refactored code should be more concise"
+            );
 
             Ok(())
         } else {
-            Err(RustAIError::invalid_input("Refactoring engine not initialized"))
+            Err(RustAIError::invalid_input(
+                "Refactoring engine not initialized",
+            ))
         }
     }
 
@@ -408,7 +474,9 @@ impl AIMLIntegrationTestRunner {
                 result.success = true;
             }
             Err(e) => {
-                result.errors.push(format!("Error resolution test failed: {}", e));
+                result
+                    .errors
+                    .push(format!("Error resolution test failed: {}", e));
             }
         }
 
@@ -438,29 +506,45 @@ fn main() {
 }"#;
 
             context.create_sample_rust_project("error_resolution_test")?;
-            let test_file = context.test_workspace.join("error_resolution_test/src/main.rs");
+            let test_file = context
+                .test_workspace
+                .join("error_resolution_test/src/main.rs");
             std::fs::write(&test_file, buggy_code)?;
 
             // Analyze for errors
-            let analysis_results = analysis_engine.analyze_file(test_file.to_str().unwrap()).await?;
+            let analysis_results = analysis_engine
+                .analyze_file(test_file.to_str().unwrap())
+                .await?;
 
             // Generate error resolutions
-            let resolutions = analysis_engine.generate_error_resolutions(&analysis_results).await?;
+            let resolutions = analysis_engine
+                .generate_error_resolutions(&analysis_results)
+                .await?;
 
-            assert!(!resolutions.is_empty(), "Should provide resolution suggestions");
+            assert!(
+                !resolutions.is_empty(),
+                "Should provide resolution suggestions"
+            );
 
             // Test resolution application
             let resolution = &resolutions[0];
-            let fixed_code = analysis_engine.apply_error_resolution(resolution.id.clone()).await?;
+            let fixed_code = analysis_engine
+                .apply_error_resolution(resolution.id.clone())
+                .await?;
 
             // Basic validation - should not contain the error pattern anymore
-            assert!(!fixed_code.contains("println!(\"Total: {}\", total);") ||
-                   fixed_code.contains("clone()") || fixed_code.contains("&total"),
-                   "Error should be resolved");
+            assert!(
+                !fixed_code.contains("println!(\"Total: {}\", total);")
+                    || fixed_code.contains("clone()")
+                    || fixed_code.contains("&total"),
+                "Error should be resolved"
+            );
 
             Ok(())
         } else {
-            Err(RustAIError::invalid_input("Analysis engine not initialized"))
+            Err(RustAIError::invalid_input(
+                "Analysis engine not initialized",
+            ))
         }
     }
 
@@ -509,13 +593,14 @@ impl crate::test_runner::TestSuiteRunner for AIMLIntegrationTestRunner {
     }
 
     fn is_test_enabled(&self, test_name: &str) -> bool {
-        matches!(test_name,
-            "code_analysis_pipeline" |
-            "ml_inference" |
-            "learning_cycles" |
-            "code_generation" |
-            "refactoring_assistance" |
-            "error_resolution"
+        matches!(
+            test_name,
+            "code_analysis_pipeline"
+                | "ml_inference"
+                | "learning_cycles"
+                | "code_generation"
+                | "refactoring_assistance"
+                | "error_resolution"
         )
     }
 
@@ -563,13 +648,11 @@ mod tests {
         let workspace_path = temp_dir.path().join("workspace");
         std::fs::create_dir_all(&workspace_path).unwrap();
 
-        let context = ExtendedIntegrationContext::new(
-            shared_test_utils::IntegrationContext {
-                test_dir: workspace_path,
-                config: shared_test_utils::IntegrationConfig::default(),
-                state: std::collections::HashMap::new(),
-            }
-        );
+        let context = ExtendedIntegrationContext::new(shared_test_utils::IntegrationContext {
+            test_dir: workspace_path,
+            config: shared_test_utils::IntegrationConfig::default(),
+            state: std::collections::HashMap::new(),
+        });
 
         let scenario = AIScenarioBuilder::new("code_quality")
             .with_code("fn test() { assert!(true); }")

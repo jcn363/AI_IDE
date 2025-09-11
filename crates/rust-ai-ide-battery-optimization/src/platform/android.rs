@@ -3,7 +3,7 @@
 //! Uses Android's BatteryManager API through JNI to monitor battery state
 //! on Android devices. Requires proper JNI setup and Android permissions.
 
-use crate::{BatteryState, battery_monitor::PlatformBatteryMonitor};
+use crate::{battery_monitor::PlatformBatteryMonitor, BatteryState};
 use chrono::{DateTime, Utc};
 
 pub struct AndroidBatteryMonitor {
@@ -47,11 +47,11 @@ impl AndroidBatteryMonitor {
 
         // Placeholder implementation for development
         Ok(BatteryState {
-            level: 0.85, // 85% battery
-            voltage: Some(4.05), // Typical Android voltage
+            level: 0.85,             // 85% battery
+            voltage: Some(4.05),     // Typical Android voltage
             temperature: Some(32.0), // Celsius
             is_charging: true,
-            health_percentage: Some(0.95), // 95% health
+            health_percentage: Some(0.95),     // 95% health
             time_remaining_minutes: Some(240), // 4 hours remaining
         })
     }

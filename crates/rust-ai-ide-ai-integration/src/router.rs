@@ -3,9 +3,9 @@
 //! This module provides intelligent routing and load balancing for AI requests,
 //! optimizing performance based on model capabilities, load conditions, and user needs.
 
+use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use async_trait::async_trait;
 
 use crate::errors::{IntegrationError, PerformanceRouterError};
 use crate::types::*;
@@ -167,10 +167,15 @@ pub enum RouterStatus {
 #[async_trait]
 pub trait AiLoadBalancer {
     /// Distribute AI request across available services
-    async fn balance_request(&self, request: &AiRequestContext) -> Result<String, PerformanceRouterError>;
+    async fn balance_request(
+        &self,
+        request: &AiRequestContext,
+    ) -> Result<String, PerformanceRouterError>;
 
     /// Get load status for all routes
-    async fn get_load_status(&self) -> Result<std::collections::HashMap<String, LoadStatus>, PerformanceRouterError>;
+    async fn get_load_status(
+        &self,
+    ) -> Result<std::collections::HashMap<String, LoadStatus>, PerformanceRouterError>;
 }
 
 /// AI response optimizer trait
@@ -188,10 +193,17 @@ pub trait AiResponseOptimizer {
 #[async_trait]
 pub trait AiCacheManager {
     /// Check if request result is cached
-    async fn check_cache(&self, request: &AiRequestContext) -> Result<Option<FrontendAiResponse>, PerformanceRouterError>;
+    async fn check_cache(
+        &self,
+        request: &AiRequestContext,
+    ) -> Result<Option<FrontendAiResponse>, PerformanceRouterError>;
 
     /// Store response in cache
-    async fn store_cache(&self, request: &AiRequestContext, response: &FrontendAiResponse) -> Result<(), PerformanceRouterError>;
+    async fn store_cache(
+        &self,
+        request: &AiRequestContext,
+        response: &FrontendAiResponse,
+    ) -> Result<(), PerformanceRouterError>;
 
     /// Invalidate cache entries
     async fn invalidate_cache(&self, pattern: &str) -> Result<(), PerformanceRouterError>;
@@ -201,7 +213,10 @@ pub trait AiCacheManager {
 #[async_trait]
 pub trait AiPriorityRouter {
     /// Route request based on priority and conditions
-    async fn route_priority(&self, request: &AiRequestContext) -> Result<String, PerformanceRouterError>;
+    async fn route_priority(
+        &self,
+        request: &AiRequestContext,
+    ) -> Result<String, PerformanceRouterError>;
 
     /// Adjust routing based on user preferences
     async fn adjust_for_preferences(
@@ -222,7 +237,9 @@ pub trait AiFallbackEngine {
     ) -> Result<String, PerformanceRouterError>;
 
     /// Check fallback availability
-    async fn check_fallback_availability(&self) -> Result<std::collections::HashMap<String, bool>, PerformanceRouterError>;
+    async fn check_fallback_availability(
+        &self,
+    ) -> Result<std::collections::HashMap<String, bool>, PerformanceRouterError>;
 }
 
 /// Load status information
@@ -286,7 +303,10 @@ impl AiPerformanceRouter {
     }
 
     /// Route AI request to appropriate service
-    pub async fn route_request(&self, request: &AiRequestContext) -> Result<String, PerformanceRouterError> {
+    pub async fn route_request(
+        &self,
+        request: &AiRequestContext,
+    ) -> Result<String, PerformanceRouterError> {
         // Check cache first
         if let Some(cached_response) = self.cache_manager.check_cache(request).await? {
             // Return cached route
@@ -300,7 +320,8 @@ impl AiPerformanceRouter {
         let priority_route = self.priority_router.route_priority(request).await?;
 
         // Select final route based on conditions
-        self.select_route(request, &load_status, &priority_route).await
+        self.select_route(request, &load_status, &priority_route)
+            .await
     }
 
     /// Optimize response for delivery
@@ -309,7 +330,9 @@ impl AiPerformanceRouter {
         response: &mut FrontendAiResponse,
         context: &AiRequestContext,
     ) -> Result<(), PerformanceRouterError> {
-        self.response_optimizer.optimize_response(response, context).await?;
+        self.response_optimizer
+            .optimize_response(response, context)
+            .await?;
         self.cache_manager.store_cache(context, response).await?;
         Ok(())
     }
@@ -327,7 +350,10 @@ impl AiPerformanceRouter {
     }
 
     /// Update routing rules dynamically
-    pub async fn update_routing_rules(&self, rules: Vec<RoutingRule>) -> Result<(), PerformanceRouterError> {
+    pub async fn update_routing_rules(
+        &self,
+        rules: Vec<RoutingRule>,
+    ) -> Result<(), PerformanceRouterError> {
         let mut state = self.state.write().await;
         state.routing_rules = rules;
         Ok(())
@@ -347,7 +373,10 @@ impl AiPerformanceRouter {
 
         // Simple load-based routing (placeholder)
         if load_options.is_empty() {
-            return self.fallback_engine.execute_fallback(request, "primary-route").await;
+            return self
+                .fallback_engine
+                .execute_fallback(request, "primary-route")
+                .await;
         }
 
         // Priority-based routing (placeholder)
@@ -376,18 +405,26 @@ pub struct PlaceholderFallbackEngine;
 
 #[async_trait]
 impl AiLoadBalancer for PlaceholderLoadBalancer {
-    async fn balance_request(&self, _request: &AiRequestContext) -> Result<String, PerformanceRouterError> {
+    async fn balance_request(
+        &self,
+        _request: &AiRequestContext,
+    ) -> Result<String, PerformanceRouterError> {
         Ok("balanced-route".to_string())
     }
 
-    async fn get_load_status(&self) -> Result<std::collections::HashMap<String, LoadStatus>, PerformanceRouterError> {
+    async fn get_load_status(
+        &self,
+    ) -> Result<std::collections::HashMap<String, LoadStatus>, PerformanceRouterError> {
         let mut status = std::collections::HashMap::new();
-        status.insert("route-1".to_string(), LoadStatus {
-            load_percentage: 0.65,
-            queue_depth: 5,
-            health_status: HealthStatus::Healthy,
-            available_capacity: 15,
-        });
+        status.insert(
+            "route-1".to_string(),
+            LoadStatus {
+                load_percentage: 0.65,
+                queue_depth: 5,
+                health_status: HealthStatus::Healthy,
+                available_capacity: 15,
+            },
+        );
         Ok(status)
     }
 }
@@ -405,11 +442,18 @@ impl AiResponseOptimizer for PlaceholderResponseOptimizer {
 
 #[async_trait]
 impl AiCacheManager for PlaceholderCacheManager {
-    async fn check_cache(&self, _request: &AiRequestContext) -> Result<Option<FrontendAiResponse>, PerformanceRouterError> {
+    async fn check_cache(
+        &self,
+        _request: &AiRequestContext,
+    ) -> Result<Option<FrontendAiResponse>, PerformanceRouterError> {
         Ok(None)
     }
 
-    async fn store_cache(&self, _request: &AiRequestContext, _response: &FrontendAiResponse) -> Result<(), PerformanceRouterError> {
+    async fn store_cache(
+        &self,
+        _request: &AiRequestContext,
+        _response: &FrontendAiResponse,
+    ) -> Result<(), PerformanceRouterError> {
         Ok(())
     }
 
@@ -420,7 +464,10 @@ impl AiCacheManager for PlaceholderCacheManager {
 
 #[async_trait]
 impl AiPriorityRouter for PlaceholderPriorityRouter {
-    async fn route_priority(&self, _request: &AiRequestContext) -> Result<String, PerformanceRouterError> {
+    async fn route_priority(
+        &self,
+        _request: &AiRequestContext,
+    ) -> Result<String, PerformanceRouterError> {
         Ok("priority-route".to_string())
     }
 
@@ -443,7 +490,9 @@ impl AiFallbackEngine for PlaceholderFallbackEngine {
         Ok("fallback-route".to_string())
     }
 
-    async fn check_fallback_availability(&self) -> Result<std::collections::HashMap<String, bool>, PerformanceRouterError> {
+    async fn check_fallback_availability(
+        &self,
+    ) -> Result<std::collections::HashMap<String, bool>, PerformanceRouterError> {
         let mut availability = std::collections::HashMap::new();
         availability.insert("primary".to_string(), true);
         availability.insert("secondary".to_string(), true);

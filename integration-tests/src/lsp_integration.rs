@@ -11,12 +11,12 @@
 //! - High-throughput request processing
 //! - Error recovery and graceful degradation
 
-use crate::common::{ExtendedIntegrationContext, scenarios::LSPScenarioBuilder, SAMPLE_RUST_FILE};
+use crate::common::{scenarios::LSPScenarioBuilder, ExtendedIntegrationContext, SAMPLE_RUST_FILE};
 use crate::IntegrationTestResult;
 use async_trait::async_trait;
 use rust_ai_ide_errors::RustAIError;
-use rust_ai_ide_lsp::{client::LSPClient, LSPClientConfig, AIContext};
-use shared_test_utils::lsp::{MockLSPServer, LSPFixture, LSPMessageBuilder};
+use rust_ai_ide_lsp::{client::LSPClient, AIContext, LSPClientConfig};
+use shared_test_utils::lsp::{LSPFixture, LSPMessageBuilder, MockLSPServer};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -40,7 +40,10 @@ impl LSPIntegrationTestRunner {
     }
 
     /// Setup LSP test environment with mock server
-    pub async fn setup_test_environment(&mut self, context: ExtendedIntegrationContext) -> Result<(), RustAIError> {
+    pub async fn setup_test_environment(
+        &mut self,
+        context: ExtendedIntegrationContext,
+    ) -> Result<(), RustAIError> {
         self.context = Some(context);
 
         // Initialize mock LSP server
@@ -142,10 +145,15 @@ impl LSPIntegrationTestRunner {
         match self.perform_server_initialization_test().await {
             Ok(_) => {
                 result.success = true;
-                result.add_metric("server_startup_time", start_time.elapsed().as_millis().to_string());
+                result.add_metric(
+                    "server_startup_time",
+                    start_time.elapsed().as_millis().to_string(),
+                );
             }
             Err(e) => {
-                result.errors.push(format!("Server initialization failed: {}", e));
+                result
+                    .errors
+                    .push(format!("Server initialization failed: {}", e));
             }
         }
 
@@ -159,7 +167,10 @@ impl LSPIntegrationTestRunner {
         if let Some(client) = &self.client {
             // Test basic LSP capabilities
             let capabilities = client.capabilities().await?;
-            assert!(!capabilities.text_document_sync.is_none(), "Server must support text document sync");
+            assert!(
+                !capabilities.text_document_sync.is_none(),
+                "Server must support text document sync"
+            );
 
             // Test server status
             let status = client.server_status().await?;
@@ -183,7 +194,9 @@ impl LSPIntegrationTestRunner {
                 result.success = true;
             }
             Err(e) => {
-                result.errors.push(format!("AI completion test failed: {}", e));
+                result
+                    .errors
+                    .push(format!("AI completion test failed: {}", e));
             }
         }
 
@@ -219,10 +232,14 @@ impl LSPIntegrationTestRunner {
                 assert!(!completions.items.is_empty(), "Should receive completions");
 
                 // Validate completion quality
-                let has_meaningful_suggestions = completions.items.iter().any(|item| {
-                    item.label.contains("Vec") || item.detail.is_some()
-                });
-                assert!(has_meaningful_suggestions, "Completions should be meaningful");
+                let has_meaningful_suggestions = completions
+                    .items
+                    .iter()
+                    .any(|item| item.label.contains("Vec") || item.detail.is_some());
+                assert!(
+                    has_meaningful_suggestions,
+                    "Completions should be meaningful"
+                );
 
                 Ok(())
             } else {
@@ -245,7 +262,9 @@ impl LSPIntegrationTestRunner {
                 result.success = true;
             }
             Err(e) => {
-                result.errors.push(format!("Diagnostic processing test failed: {}", e));
+                result
+                    .errors
+                    .push(format!("Diagnostic processing test failed: {}", e));
             }
         }
 
@@ -274,15 +293,23 @@ impl LSPIntegrationTestRunner {
                 let diagnostics = client.get_diagnostics(&file_uri).await?;
 
                 // Validate that unused variables are detected
-                let unused_diagnostics = diagnostics.items.iter()
+                let unused_diagnostics = diagnostics
+                    .items
+                    .iter()
                     .filter(|d| d.message.contains("unused"))
                     .count();
 
-                assert!(unused_diagnostics >= 2, "Should detect at least 2 unused variables");
+                assert!(
+                    unused_diagnostics >= 2,
+                    "Should detect at least 2 unused variables"
+                );
 
                 // Test AI-enhanced diagnostics if available
                 if let Some(ai_diagnostics) = client.get_ai_enhanced_diagnostics(&file_uri).await {
-                    assert!(!ai_diagnostics.is_empty(), "AI diagnostics should provide additional insights");
+                    assert!(
+                        !ai_diagnostics.is_empty(),
+                        "AI diagnostics should provide additional insights"
+                    );
                 }
 
                 Ok(())
@@ -306,7 +333,9 @@ impl LSPIntegrationTestRunner {
                 result.success = true;
             }
             Err(e) => {
-                result.errors.push(format!("Hover information test failed: {}", e));
+                result
+                    .errors
+                    .push(format!("Hover information test failed: {}", e));
             }
         }
 
@@ -333,8 +362,10 @@ impl LSPIntegrationTestRunner {
 
                 // Test AI-enhanced hover if available
                 if let Some(ai_hover) = client.get_ai_hover(&file_uri, position).await {
-                    assert!(ai_hover.contents.len() > hover_info.as_ref().unwrap().contents.len(),
-                           "AI hover should provide more comprehensive information");
+                    assert!(
+                        ai_hover.contents.len() > hover_info.as_ref().unwrap().contents.len(),
+                        "AI hover should provide more comprehensive information"
+                    );
                 }
 
                 Ok(())
@@ -358,7 +389,9 @@ impl LSPIntegrationTestRunner {
                 result.success = true;
             }
             Err(e) => {
-                result.errors.push(format!("Symbol search test failed: {}", e));
+                result
+                    .errors
+                    .push(format!("Symbol search test failed: {}", e));
             }
         }
 
@@ -378,8 +411,10 @@ impl LSPIntegrationTestRunner {
 
             // Test workspace symbols
             let workspace_symbols = client.search_workspace_symbols(&symbol_query).await?;
-            assert!(workspace_symbols.len() >= symbols.len(),
-                   "Workspace search should find at least as many symbols as file search");
+            assert!(
+                workspace_symbols.len() >= symbols.len(),
+                "Workspace search should find at least as many symbols as file search"
+            );
 
             Ok(())
         } else {
@@ -399,7 +434,9 @@ impl LSPIntegrationTestRunner {
                 result.success = true;
             }
             Err(e) => {
-                result.errors.push(format!("Multi-language test failed: {}", e));
+                result
+                    .errors
+                    .push(format!("Multi-language test failed: {}", e));
             }
         }
 
@@ -416,10 +453,14 @@ impl LSPIntegrationTestRunner {
         if let Some(client) = &self.client {
             // Test that client supports multiple languages
             let supported_languages = client.supported_languages().await?;
-            assert!(supported_languages.contains(&"rust".to_string()),
-                   "Should support Rust language");
-            assert!(supported_languages.len() >= 1,
-                   "Should support at least one language");
+            assert!(
+                supported_languages.contains(&"rust".to_string()),
+                "Should support Rust language"
+            );
+            assert!(
+                supported_languages.len() >= 1,
+                "Should support at least one language"
+            );
 
             Ok(())
         } else {
@@ -486,7 +527,10 @@ impl LSPIntegrationTestRunner {
                 total_items += result;
             }
 
-            assert!(total_items > 0, "Should receive completions from concurrent requests");
+            assert!(
+                total_items > 0,
+                "Should receive completions from concurrent requests"
+            );
 
             Ok(())
         } else {
@@ -498,7 +542,7 @@ impl LSPIntegrationTestRunner {
     pub fn get_all_results(&self) -> &[IntegrationTestResult] {
         &self.results
     }
- }
+}
 
 /// Async trait implementation for integration with the test runner framework
 #[async_trait]
@@ -541,14 +585,15 @@ impl crate::test_runner::TestSuiteRunner for LSPIntegrationTestRunner {
     }
 
     fn is_test_enabled(&self, test_name: &str) -> bool {
-        matches!(test_name,
-            "lsp_server_initialization" |
-            "ai_completion_requests" |
-            "diagnostic_processing" |
-            "hover_information" |
-            "symbol_search" |
-            "multi_language_support" |
-            "performance_throughput"
+        matches!(
+            test_name,
+            "lsp_server_initialization"
+                | "ai_completion_requests"
+                | "diagnostic_processing"
+                | "hover_information"
+                | "symbol_search"
+                | "multi_language_support"
+                | "performance_throughput"
         )
     }
 
@@ -572,13 +617,11 @@ mod tests {
         let workspace_path = temp_dir.path().join("workspace");
         std::fs::create_dir_all(&workspace_path).unwrap();
 
-        let context = ExtendedIntegrationContext::new(
-            shared_test_utils::IntegrationContext {
-                test_dir: workspace_path,
-                config: shared_test_utils::IntegrationConfig::default(),
-                state: std::collections::HashMap::new(),
-            }
-        );
+        let context = ExtendedIntegrationContext::new(shared_test_utils::IntegrationContext {
+            test_dir: workspace_path,
+            config: shared_test_utils::IntegrationConfig::default(),
+            state: std::collections::HashMap::new(),
+        });
 
         let scenario = LSPScenarioBuilder::new()
             .with_file("src/main.rs", SAMPLE_RUST_FILE)

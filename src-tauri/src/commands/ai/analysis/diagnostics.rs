@@ -15,8 +15,8 @@ use std::path::Path;
 use std::sync::Arc;
 
 use anyhow::Result;
-use rust_ai_ide_lsp::error_resolution::FixType;
 use rust_ai_ide_core::shell_utils::{cargo, rustc};
+use rust_ai_ide_lsp::error_resolution::FixType;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use tauri::State;
@@ -109,10 +109,10 @@ pub async fn resolve_errors_with_ai(
         .as_ref()
         .ok_or("AI service not initialized")?;
 
-pub use rust_ai_ide_lsp::learning::types::AnalysisPreferences;
-use rust_ai_ide_lsp::AIContext;
+    pub use rust_ai_ide_lsp::learning::types::AnalysisPreferences;
+    use rust_ai_ide_lsp::AIContext;
 
-use rust_ai_ide_lsp::learning::types::AnalysisPreferences;
+    use rust_ai_ide_lsp::learning::types::AnalysisPreferences;
 
     let context = AIContext {
         current_code: request.content,
@@ -210,7 +210,11 @@ pub fn parse_compiler_diagnostic(message: &serde_json::Value) -> Option<Compiler
 
     // Extract file_path, line, and column from the first span if available
     let (file_path, line, column) = if let Some(first_span) = spans.first() {
-        (first_span.file_name.clone(), first_span.line_start, first_span.column_start)
+        (
+            first_span.file_name.clone(),
+            first_span.line_start,
+            first_span.column_start,
+        )
     } else {
         (String::new(), 0, 0)
     };

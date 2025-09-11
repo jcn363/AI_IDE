@@ -7,11 +7,11 @@
 //! - Automated threat model generation from codebase analysis
 //! - Countermeasure optimization recommendations
 
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
-use std::collections::HashMap;
 
 #[derive(Clone)]
 pub struct ThreatModelingEngine {
@@ -248,9 +248,15 @@ impl ThreatModelingEngine {
         }
     }
 
-    pub async fn generate_threat_model(&self, codebase_path: &str) -> Result<ThreatModel, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn generate_threat_model(
+        &self,
+        codebase_path: &str,
+    ) -> Result<ThreatModel, Box<dyn std::error::Error + Send + Sync>> {
         let assets = self.system_modeler.identify_assets(codebase_path).await?;
-        let threats = self.attack_vector_analyzer.analyze_threats(&assets, codebase_path).await?;
+        let threats = self
+            .attack_vector_analyzer
+            .analyze_threats(&assets, codebase_path)
+            .await?;
 
         let mut attack_trees = Vec::new();
         let mut risk_assessments = Vec::new();
@@ -266,7 +272,8 @@ impl ThreatModelingEngine {
         Ok(ThreatModel {
             id: uuid::Uuid::new_v4().to_string(),
             name: "Auto-Generated Threat Model".to_string(),
-            description: "Automatically generated threat model based on codebase analysis".to_string(),
+            description: "Automatically generated threat model based on codebase analysis"
+                .to_string(),
             assets,
             threats,
             attack_trees,
@@ -275,7 +282,10 @@ impl ThreatModelingEngine {
         })
     }
 
-    async fn build_attack_tree(&self, threat: &Threat) -> Result<AttackTree, Box<dyn std::error::Error + Send + Sync>> {
+    async fn build_attack_tree(
+        &self,
+        threat: &Threat,
+    ) -> Result<AttackTree, Box<dyn std::error::Error + Send + Sync>> {
         let root = AttackNode {
             id: uuid::Uuid::new_v4().to_string(),
             label: threat.title.clone(),
@@ -295,20 +305,37 @@ impl SystemModeler {
         let architecture_patterns = vec![
             ArchitecturePattern {
                 name: "Web API".to_string(),
-                assets: vec!["API Endpoints", "Database", "Authentication"].into_iter().map(String::from).collect(),
-                threats: vec!["Injection", "Broken Auth", "Data Exposure"].into_iter().map(String::from).collect(),
+                assets: vec!["API Endpoints", "Database", "Authentication"]
+                    .into_iter()
+                    .map(String::from)
+                    .collect(),
+                threats: vec!["Injection", "Broken Auth", "Data Exposure"]
+                    .into_iter()
+                    .map(String::from)
+                    .collect(),
             },
             ArchitecturePattern {
                 name: "Desktop Application".to_string(),
-                assets: vec!["UI Components", "Local Storage", "IPC Channels"].into_iter().map(String::from).collect(),
-                threats: vec!["Input Validation", "Privilege Escalation", "Data Tampering"].into_iter().map(String::from).collect(),
+                assets: vec!["UI Components", "Local Storage", "IPC Channels"]
+                    .into_iter()
+                    .map(String::from)
+                    .collect(),
+                threats: vec!["Input Validation", "Privilege Escalation", "Data Tampering"]
+                    .into_iter()
+                    .map(String::from)
+                    .collect(),
             },
         ];
 
-        Self { architecture_patterns }
+        Self {
+            architecture_patterns,
+        }
     }
 
-    pub async fn identify_assets(&self, _codebase_path: &str) -> Result<Vec<Asset>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn identify_assets(
+        &self,
+        _codebase_path: &str,
+    ) -> Result<Vec<Asset>, Box<dyn std::error::Error + Send + Sync>> {
         let mut assets = Vec::new();
 
         // Identify key assets from codebase structure
@@ -317,7 +344,10 @@ impl SystemModeler {
             name: "User Configuration Data".to_string(),
             value: AssetValue::Critical,
             classification: SecurityClassification::Confidential,
-            data_flows: vec!["File System", "Network"].into_iter().map(String::from).collect(),
+            data_flows: vec!["File System", "Network"]
+                .into_iter()
+                .map(String::from)
+                .collect(),
         });
 
         assets.push(Asset {
@@ -325,7 +355,10 @@ impl SystemModeler {
             name: "AI Models and Training Data".to_string(),
             value: AssetValue::High,
             classification: SecurityClassification::Restricted,
-            data_flows: vec!["Local Storage", "IPC"].into_iter().map(String::from).collect(),
+            data_flows: vec!["Local Storage", "IPC"]
+                .into_iter()
+                .map(String::from)
+                .collect(),
         });
 
         Ok(assets)
@@ -340,17 +373,26 @@ impl AttackVectorAnalyzer {
         }
     }
 
-    pub async fn analyze_threats(&self, assets: &[Asset], codebase_path: &str) -> Result<Vec<Threat>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn analyze_threats(
+        &self,
+        assets: &[Asset],
+        codebase_path: &str,
+    ) -> Result<Vec<Threat>, Box<dyn std::error::Error + Send + Sync>> {
         let mut threats = Vec::new();
 
         // Generate threats based on asset analysis
         for asset in assets {
-            let asset_threats = self.stride_classifier.classify_threats(asset, codebase_path).await?;
+            let asset_threats = self
+                .stride_classifier
+                .classify_threats(asset, codebase_path)
+                .await?;
             threats.extend(asset_threats);
         }
 
         // Prioritize threats
-        self.vector_prioritizer.prioritize_threats(&mut threats).await?;
+        self.vector_prioritizer
+            .prioritize_threats(&mut threats)
+            .await?;
 
         Ok(threats)
     }
@@ -360,17 +402,26 @@ impl StrideClassifier {
     pub fn new() -> Self {
         let patterns = vec![
             StridePattern {
-                keywords: vec!["authentication", "login", "auth"].into_iter().map(String::from).collect(),
+                keywords: vec!["authentication", "login", "auth"]
+                    .into_iter()
+                    .map(String::from)
+                    .collect(),
                 category: StrideCategory::Spoofing,
                 weight: 0.8,
             },
             StridePattern {
-                keywords: vec!["encrypt", "security", "crypto"].into_iter().map(String::from).collect(),
+                keywords: vec!["encrypt", "security", "crypto"]
+                    .into_iter()
+                    .map(String::from)
+                    .collect(),
                 category: StrideCategory::Tampering,
                 weight: 0.7,
             },
             StridePattern {
-                keywords: vec!["logging", "audit", "events"].into_iter().map(String::from).collect(),
+                keywords: vec!["logging", "audit", "events"]
+                    .into_iter()
+                    .map(String::from)
+                    .collect(),
                 category: StrideCategory::Repudiation,
                 weight: 0.6,
             },
@@ -379,13 +430,21 @@ impl StrideClassifier {
         Self { patterns }
     }
 
-    pub async fn classify_threats(&self, asset: &Asset, _codebase_path: &str) -> Result<Vec<Threat>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn classify_threats(
+        &self,
+        asset: &Asset,
+        _codebase_path: &str,
+    ) -> Result<Vec<Threat>, Box<dyn std::error::Error + Send + Sync>> {
         let mut threats = Vec::new();
 
         for pattern in &self.patterns {
             threats.push(Threat {
                 id: uuid::Uuid::new_v4().to_string(),
-                title: format!("{} Threat against {}", pattern.category.as_str(), asset.name),
+                title: format!(
+                    "{} Threat against {}",
+                    pattern.category.as_str(),
+                    asset.name
+                ),
                 description: format!("Automated threat identification for {}", asset.name),
                 stride_category: pattern.category.clone(),
                 attack_vectors: vec![AttackVector {
@@ -433,7 +492,10 @@ impl VectorPrioritizer {
         }
     }
 
-    pub async fn prioritize_threats(&self, threats: &mut [Threat]) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn prioritize_threats(
+        &self,
+        threats: &mut [Threat],
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         for threat in threats.iter_mut() {
             // Simple prioritization logic
             threat.attach_vector_priorities(&self.scoring_weights);
@@ -486,7 +548,11 @@ impl RiskQuantifier {
         }
     }
 
-    pub async fn assess_risk(&self, threat: &Threat, assets: &[Asset]) -> Result<RiskAssessment, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn assess_risk(
+        &self,
+        threat: &Threat,
+        assets: &[Asset],
+    ) -> Result<RiskAssessment, Box<dyn std::error::Error + Send + Sync>> {
         let dread_score = self.dread_calculator.calculate(threat, assets);
         let overall_risk = self.calculate_overall_risk(dread_score);
         let recommendations = self.generate_recommendations(threat, dread_score).await?;
@@ -511,12 +577,19 @@ impl RiskQuantifier {
         }
     }
 
-    async fn generate_recommendations(&self, threat: &Threat, dread_score: f64) -> Result<Vec<Recommendation>, Box<dyn std::error::Error + Send + Sync>> {
+    async fn generate_recommendations(
+        &self,
+        threat: &Threat,
+        dread_score: f64,
+    ) -> Result<Vec<Recommendation>, Box<dyn std::error::Error + Send + Sync>> {
         let mut recommendations = Vec::new();
 
         recommendations.push(Recommendation {
             priority: if dread_score >= 6.0 { 1 } else { 2 },
-            description: format!("Implement countermeasures for {} threat", threat.stride_category.as_str()),
+            description: format!(
+                "Implement countermeasures for {} threat",
+                threat.stride_category.as_str()
+            ),
             implementation_cost: MitigationCost::Medium,
             effectiveness: 0.8,
         });
@@ -552,18 +625,24 @@ impl DreadCalculator {
         };
 
         let exploitability = 7.5; // Default medium-high
-        let affected_users = if assets.iter().any(|a| matches!(a.classification, SecurityClassification::Public | SecurityClassification::Internal)) {
+        let affected_users = if assets.iter().any(|a| {
+            matches!(
+                a.classification,
+                SecurityClassification::Public | SecurityClassification::Internal
+            )
+        }) {
             10.0
         } else {
             5.0
         };
         let discoverability = 5.0; // Default medium
 
-        let weighted_sum = (damage * self.damage_weight +
-                           reproducibility * self.reproducibility_weight +
-                           exploitability * self.exploitability_weight +
-                           affected_users * self.affected_users_weight +
-                           discoverability * self.discoverability_weight) / 5.0;
+        let weighted_sum = (damage * self.damage_weight
+            + reproducibility * self.reproducibility_weight
+            + exploitability * self.exploitability_weight
+            + affected_users * self.affected_users_weight
+            + discoverability * self.discoverability_weight)
+            / 5.0;
 
         weighted_sum.min(10.0).max(0.0)
     }
@@ -572,7 +651,10 @@ impl DreadCalculator {
 impl ConfidenceAnalyzer {
     pub fn new() -> Self {
         Self {
-            confidence_factors: vec!["evidence_quality", "threat_maturity", "data_completeness"].into_iter().map(String::from).collect(),
+            confidence_factors: vec!["evidence_quality", "threat_maturity", "data_completeness"]
+                .into_iter()
+                .map(String::from)
+                .collect(),
         }
     }
 
@@ -582,7 +664,8 @@ impl ConfidenceAnalyzer {
             return 0.5;
         }
 
-        let low_complexity_count = attack_vectors.iter()
+        let low_complexity_count = attack_vectors
+            .iter()
             .filter(|v| matches!(v.complexity, AttackComplexity::Low))
             .count() as f64;
 
@@ -606,7 +689,7 @@ impl MitigationPlanner {
                 id: "input_validation".to_string(),
                 name: "Input Validation Framework".to_string(),
                 description: "Comprehensive input sanitization and validation".to_string(),
-                stride_categories: vec![StrideCategory::Injection],  // Injection is a custom addition
+                stride_categories: vec![StrideCategory::Injection], // Injection is a custom addition
                 cost: MitigationCost::Low,
                 effectiveness: 0.8,
             },
@@ -615,7 +698,9 @@ impl MitigationPlanner {
         // Add Injection as a custom category since STRIDE doesn't have it directly
 
         Self {
-            countermeasure_database: Arc::new(RwLock::new(CountermeasureDatabase { countermeasures })),
+            countermeasure_database: Arc::new(RwLock::new(CountermeasureDatabase {
+                countermeasures,
+            })),
         }
     }
 }

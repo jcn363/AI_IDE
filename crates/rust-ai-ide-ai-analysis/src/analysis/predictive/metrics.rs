@@ -36,8 +36,12 @@ impl QualityMetricsAnalyzer {
     ) -> Result<ComprehensiveQualityReport, PredictiveError> {
         let current_metrics = self.collect_current_metrics(project_path).await?;
         let trends = self.trend_analyzer.analyze_trends(historical_data)?;
-        let benchmarks = self.benchmark_comparator.compare_with_benchmarks(&current_metrics)?;
-        let predictions = self.predictive_forecaster.forecast_metrics(&current_metrics, historical_data)?;
+        let benchmarks = self
+            .benchmark_comparator
+            .compare_with_benchmarks(&current_metrics)?;
+        let predictions = self
+            .predictive_forecaster
+            .forecast_metrics(&current_metrics, historical_data)?;
 
         Ok(ComprehensiveQualityReport {
             current_metrics,
@@ -50,7 +54,10 @@ impl QualityMetricsAnalyzer {
     }
 
     /// Collect current metrics from the project
-    async fn collect_current_metrics(&self, project_path: &str) -> Result<CurrentMetrics, PredictiveError> {
+    async fn collect_current_metrics(
+        &self,
+        project_path: &str,
+    ) -> Result<CurrentMetrics, PredictiveError> {
         let mut metrics = CurrentMetrics::default();
 
         // Collect basic code metrics
@@ -94,7 +101,10 @@ impl TrendAnalyzer {
         }
     }
 
-    fn analyze_trends(&self, historical_data: Option<&HistoricalData>) -> Result<TrendAnalysis, PredictiveError> {
+    fn analyze_trends(
+        &self,
+        historical_data: Option<&HistoricalData>,
+    ) -> Result<TrendAnalysis, PredictiveError> {
         if let Some(data) = historical_data {
             let trends = self.calculate_metric_trends(data)?;
             let predictions = self.predict_future_trends(&trends)?;
@@ -112,19 +122,34 @@ impl TrendAnalyzer {
         }
     }
 
-    fn calculate_metric_trends(&self, data: &HistoricalData) -> Result<HashMap<String, MetricTrend>, PredictiveError> {
+    fn calculate_metric_trends(
+        &self,
+        data: &HistoricalData,
+    ) -> Result<HashMap<String, MetricTrend>, PredictiveError> {
         let mut trends = HashMap::new();
 
         // Calculate trends for each metric category
-        trends.insert("maintainability".to_string(), self.calculate_maintainability_trend(data));
+        trends.insert(
+            "maintainability".to_string(),
+            self.calculate_maintainability_trend(data),
+        );
         trends.insert("security".to_string(), self.calculate_security_trend(data));
-        trends.insert("performance".to_string(), self.calculate_performance_trend(data));
-        trends.insert("test_coverage".to_string(), self.calculate_test_coverage_trend(data));
+        trends.insert(
+            "performance".to_string(),
+            self.calculate_performance_trend(data),
+        );
+        trends.insert(
+            "test_coverage".to_string(),
+            self.calculate_test_coverage_trend(data),
+        );
 
         Ok(trends)
     }
 
-    fn predict_future_trends(&self, trends: &HashMap<String, MetricTrend>) -> Result<HashMap<String, FuturePrediction>, PredictiveError> {
+    fn predict_future_trends(
+        &self,
+        trends: &HashMap<String, MetricTrend>,
+    ) -> Result<HashMap<String, FuturePrediction>, PredictiveError> {
         let mut predictions = HashMap::new();
 
         for (metric_name, trend) in trends {
@@ -135,12 +160,18 @@ impl TrendAnalyzer {
         Ok(predictions)
     }
 
-    fn generate_trend_based_recommendations(&self, trends: &HashMap<String, MetricTrend>) -> Result<Vec<String>, PredictiveError> {
+    fn generate_trend_based_recommendations(
+        &self,
+        trends: &HashMap<String, MetricTrend>,
+    ) -> Result<Vec<String>, PredictiveError> {
         let mut recommendations = Vec::new();
 
         for (metric_name, trend) in trends {
             if trend.direction == TrendDirection::Declining {
-                recommendations.push(format!("{} is declining - consider intervention", metric_name));
+                recommendations.push(format!(
+                    "{} is declining - consider intervention",
+                    metric_name
+                ));
             }
         }
 
@@ -150,7 +181,8 @@ impl TrendAnalyzer {
     // Individual trend calculation methods
     fn calculate_maintainability_trend(&self, data: &HistoricalData) -> MetricTrend {
         let recent_reports = self.get_recent_reports(data);
-        let maintainability_scores: Vec<f32> = recent_reports.iter()
+        let maintainability_scores: Vec<f32> = recent_reports
+            .iter()
             .map(|r| r.maintainability_index)
             .collect();
 
@@ -159,27 +191,22 @@ impl TrendAnalyzer {
 
     fn calculate_security_trend(&self, data: &HistoricalData) -> MetricTrend {
         let recent_reports = self.get_recent_reports(data);
-        let security_scores: Vec<f32> = recent_reports.iter()
-            .map(|r| r.security_score)
-            .collect();
+        let security_scores: Vec<f32> = recent_reports.iter().map(|r| r.security_score).collect();
 
         self.calculate_trend(&security_scores, "security")
     }
 
     fn calculate_performance_trend(&self, data: &HistoricalData) -> MetricTrend {
         let recent_reports = self.get_recent_reports(data);
-        let performance_scores: Vec<f32> = recent_reports.iter()
-            .map(|r| r.performance_score)
-            .collect();
+        let performance_scores: Vec<f32> =
+            recent_reports.iter().map(|r| r.performance_score).collect();
 
         self.calculate_trend(&performance_scores, "performance")
     }
 
     fn calculate_test_coverage_trend(&self, data: &HistoricalData) -> MetricTrend {
         let recent_reports = self.get_recent_reports(data);
-        let coverage_scores: Vec<f32> = recent_reports.iter()
-            .map(|r| r.test_coverage)
-            .collect();
+        let coverage_scores: Vec<f32> = recent_reports.iter().map(|r| r.test_coverage).collect();
 
         self.calculate_trend(&coverage_scores, "test_coverage")
     }
@@ -246,7 +273,8 @@ impl TrendAnalyzer {
 
         for (i, &y) in values.iter().enumerate() {
             let x = i as f32;
-            let predicted_y = mean_y + self.calculate_linear_regression_slope(values) * (x - mean_y);
+            let predicted_y =
+                mean_y + self.calculate_linear_regression_slope(values) * (x - mean_y);
             ss_res += (y - predicted_y).powi(2);
             ss_tot += (y - mean_y).powi(2);
         }
@@ -255,7 +283,10 @@ impl TrendAnalyzer {
         r_squared.max(0.0).min(1.0)
     }
 
-    fn predict_metric_future(&self, trend: &MetricTrend) -> Result<FuturePrediction, PredictiveError> {
+    fn predict_metric_future(
+        &self,
+        trend: &MetricTrend,
+    ) -> Result<FuturePrediction, PredictiveError> {
         let months_ahead = 3;
         let predicted_value = trend.recent_average + trend.slope * (months_ahead as f32 * 30.0);
         let confidence = trend.confidence * 0.8; // Slightly lower confidence for predictions
@@ -264,14 +295,19 @@ impl TrendAnalyzer {
             predicted_value: predicted_value.max(0.0).min(1.0),
             timeline_months: months_ahead,
             confidence,
-            trend_continuation_probability: if trend.direction == TrendDirection::Stable { 0.7 } else { 0.6 },
+            trend_continuation_probability: if trend.direction == TrendDirection::Stable {
+                0.7
+            } else {
+                0.6
+            },
         })
     }
 
     fn get_recent_reports(&self, data: &HistoricalData) -> Vec<MiniReport> {
         let cutoff = chrono::Utc::now() - chrono::Duration::days(self.analysis_window_days as i64);
 
-        data.reports.iter()
+        data.reports
+            .iter()
             .filter(|r| r.timestamp > cutoff)
             .map(|r| MiniReport {
                 timestamp: r.timestamp,
@@ -293,41 +329,48 @@ pub struct BenchmarkComparator {
 impl BenchmarkComparator {
     fn new() -> Self {
         let mut standards = HashMap::new();
-        standards.insert("maintainability".to_string(), IndustryBenchmark {
-            excellent_threshold: 0.85,
-            good_threshold: 0.7,
-            average_threshold: 0.55,
-            poor_threshold: 0.4,
-            percentile_25: 0.65,
-            percentile_75: 0.8,
-            percentile_90: 0.85,
-        });
+        standards.insert(
+            "maintainability".to_string(),
+            IndustryBenchmark {
+                excellent_threshold: 0.85,
+                good_threshold: 0.7,
+                average_threshold: 0.55,
+                poor_threshold: 0.4,
+                percentile_25: 0.65,
+                percentile_75: 0.8,
+                percentile_90: 0.85,
+            },
+        );
 
-        standards.insert("security".to_string(), IndustryBenchmark {
-            excellent_threshold: 0.9,
-            good_threshold: 0.75,
-            average_threshold: 0.6,
-            poor_threshold: 0.4,
-            percentile_25: 0.7,
-            percentile_75: 0.8,
-            percentile_90: 0.85,
-        });
+        standards.insert(
+            "security".to_string(),
+            IndustryBenchmark {
+                excellent_threshold: 0.9,
+                good_threshold: 0.75,
+                average_threshold: 0.6,
+                poor_threshold: 0.4,
+                percentile_25: 0.7,
+                percentile_75: 0.8,
+                percentile_90: 0.85,
+            },
+        );
 
         Self {
             industry_standards: standards,
         }
     }
 
-    fn compare_with_benchmarks(&self, metrics: &CurrentMetrics) -> Result<BenchmarkComparison, PredictiveError> {
+    fn compare_with_benchmarks(
+        &self,
+        metrics: &CurrentMetrics,
+    ) -> Result<BenchmarkComparison, PredictiveError> {
         let maintainability_comparison = self.compare_metric_with_benchmark(
             metrics.maintainability_metrics.overall_score,
-            "maintainability"
+            "maintainability",
         )?;
 
-        let security_comparison = self.compare_metric_with_benchmark(
-            metrics.security_metrics.overall_score,
-            "security"
-        )?;
+        let security_comparison =
+            self.compare_metric_with_benchmark(metrics.security_metrics.overall_score, "security")?;
 
         // Clone the values before moving them
         let maintainability_clone = maintainability_comparison.clone();
@@ -340,9 +383,14 @@ impl BenchmarkComparator {
         })
     }
 
-    fn compare_metric_with_benchmark(&self, value: f32, metric_name: &str) -> Result<MetricBenchmarkComparison, PredictiveError> {
-        let benchmark = self.industry_standards.get(metric_name)
-            .ok_or_else(|| PredictiveError::AnalysisFailed(format!("No benchmark available for {}", metric_name)))?;
+    fn compare_metric_with_benchmark(
+        &self,
+        value: f32,
+        metric_name: &str,
+    ) -> Result<MetricBenchmarkComparison, PredictiveError> {
+        let benchmark = self.industry_standards.get(metric_name).ok_or_else(|| {
+            PredictiveError::AnalysisFailed(format!("No benchmark available for {}", metric_name))
+        })?;
 
         let rating = if value >= benchmark.excellent_threshold {
             BenchmarkRating::Excellent
@@ -380,7 +428,11 @@ impl BenchmarkComparator {
         }
     }
 
-    fn calculate_overall_rating(&self, maint: &MetricBenchmarkComparison, sec: &MetricBenchmarkComparison) -> OverallBenchmarkRating {
+    fn calculate_overall_rating(
+        &self,
+        maint: &MetricBenchmarkComparison,
+        sec: &MetricBenchmarkComparison,
+    ) -> OverallBenchmarkRating {
         let maint_score = match maint.benchmark_rating {
             BenchmarkRating::Excellent => 5,
             BenchmarkRating::Good => 4,
@@ -422,15 +474,18 @@ impl PredictiveForecaster {
         }
     }
 
-    fn forecast_metrics(&self, current: &CurrentMetrics, historical: Option<&HistoricalData>) -> Result<MetricForecasts, PredictiveError> {
+    fn forecast_metrics(
+        &self,
+        current: &CurrentMetrics,
+        historical: Option<&HistoricalData>,
+    ) -> Result<MetricForecasts, PredictiveError> {
         // Implementation would use time series forecasting models
         Ok(MetricForecasts::default())
     }
 }
 
 // Supporting data structures
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum TrendDirection {
     Improving,
     Stable,
@@ -559,19 +614,27 @@ fn collect_performance_metrics(_project_path: &str) -> Result<PerformanceMetrics
     Ok(PerformanceMetrics::default())
 }
 
-fn collect_maintainability_metrics(_project_path: &str) -> Result<MaintainabilityMetrics, PredictiveError> {
+fn collect_maintainability_metrics(
+    _project_path: &str,
+) -> Result<MaintainabilityMetrics, PredictiveError> {
     Ok(MaintainabilityMetrics::default())
 }
 
-fn collect_test_coverage_metrics(_project_path: &str) -> Result<TestCoverageMetrics, PredictiveError> {
+fn collect_test_coverage_metrics(
+    _project_path: &str,
+) -> Result<TestCoverageMetrics, PredictiveError> {
     Ok(TestCoverageMetrics::default())
 }
 
-fn collect_documentation_metrics(_project_path: &str) -> Result<DocumentationMetrics, PredictiveError> {
+fn collect_documentation_metrics(
+    _project_path: &str,
+) -> Result<DocumentationMetrics, PredictiveError> {
     Ok(DocumentationMetrics::default())
 }
 
-fn collect_architecture_metrics(_project_path: &str) -> Result<ArchitectureMetrics, PredictiveError> {
+fn collect_architecture_metrics(
+    _project_path: &str,
+) -> Result<ArchitectureMetrics, PredictiveError> {
     Ok(ArchitectureMetrics::default())
 }
 

@@ -5,9 +5,9 @@
 
 use crate::errors::IDEServiceError;
 use serde::{Deserialize, Serialize};
-use tauri::State;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use tauri::State;
 
 /// Documentation generation request
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,9 +41,7 @@ pub struct DocFile {
 
 /// Get available documentation files handler
 #[tauri::command]
-pub async fn doc_list_files(
-    directory: Option<PathBuf>,
-) -> Result<Vec<String>, String> {
+pub async fn doc_list_files(directory: Option<PathBuf>) -> Result<Vec<String>, String> {
     log::info!("Listing documentation files in {:?}", directory);
 
     // Placeholder list
@@ -72,9 +70,7 @@ pub async fn doc_search(
 
 /// Open documentation in browser handler
 #[tauri::command]
-pub async fn doc_open_browser(
-    path: PathBuf,
-) -> Result<(), String> {
+pub async fn doc_open_browser(path: PathBuf) -> Result<(), String> {
     log::info!("Opening documentation in browser: {:?}", path);
 
     // TODO: Implement browser opening
@@ -83,9 +79,7 @@ pub async fn doc_open_browser(
 
 /// Validate documentation format handler
 #[tauri::command]
-pub async fn doc_validate(
-    path: PathBuf,
-) -> Result<Vec<String>, String> {
+pub async fn doc_validate(path: PathBuf) -> Result<Vec<String>, String> {
     log::info!("Validating documentation: {:?}", path);
 
     // Placeholder validation - TODO: Implement actual validation

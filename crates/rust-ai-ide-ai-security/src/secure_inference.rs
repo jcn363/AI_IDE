@@ -1,8 +1,8 @@
 // Secure Inference Module
 // Handles encrypted AI inference results and secure communication
 
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 
 /// Encrypted AI inference result with audit trail
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,11 +16,7 @@ pub struct AISecureInferenceResult {
 
 impl AISecureInferenceResult {
     /// Create new secure inference result
-    pub fn new(
-        result: Vec<u8>,
-        audit_id: String,
-        guarantees: Vec<String>,
-    ) -> Self {
+    pub fn new(result: Vec<u8>, audit_id: String, guarantees: Vec<String>) -> Self {
         Self {
             inference_result: result,
             audit_id: Some(audit_id),

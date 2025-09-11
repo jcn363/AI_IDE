@@ -1,5 +1,4 @@
 /// SIMD-specific error types and handling
-
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -23,7 +22,10 @@ pub enum SIMDError {
     FallbackError { reason: String },
 
     #[error("Matrix multiplication dimensions are incompatible: A={a_dims}, B={b_dims}")]
-    MatrixDimensionsError { a_dims: (usize, usize), b_dims: (usize, usize) },
+    MatrixDimensionsError {
+        a_dims: (usize, usize),
+        b_dims: (usize, usize),
+    },
 
     #[error("Performance monitoring operation failed: {reason}")]
     PerformanceMonitoringError { reason: String },
@@ -87,7 +89,9 @@ impl SIMDRecoveryHandler {
             }
             RecoveryStrategy::RetryDifferentImplementation => {
                 if self.current_error_count < 3 {
-                    tracing::warn!("SIMD operation failed, retrying with alternate implementation...");
+                    tracing::warn!(
+                        "SIMD operation failed, retrying with alternate implementation..."
+                    );
                     Err(SIMDError::FallbackError {
                         reason: format!("Retry failed: {:?}", error),
                     })

@@ -1,15 +1,15 @@
-use crate::types::*;
-use crate::pattern_recognition::*;
-use crate::signature_operations::*;
-use crate::variable_operations::*;
-use crate::rename_operations::*;
-use crate::code_organization::*;
+use crate::async_operations::*;
 use crate::batch_operations::*;
+use crate::class_struct_operations::*;
+use crate::code_organization::*;
 use crate::delegation_operations::*;
 use crate::file_operations::*;
-use crate::async_operations::*;
 use crate::function_method_operations::*;
-use crate::class_struct_operations::*;
+use crate::pattern_recognition::*;
+use crate::rename_operations::*;
+use crate::signature_operations::*;
+use crate::types::*;
+use crate::variable_operations::*;
 use crate::RefactoringOperation;
 
 /// Factory for creating refactoring operations
@@ -58,9 +58,8 @@ impl RefactoringOperationFactory {
             }
             RefactoringType::BatchPatternConversion => {
                 Ok(Box::new(BatchPatternConversionOperation {}))
-            }
-            // InterfaceExtraction removed - use ExtractInterface instead
-            // AsyncAwaitPatternConversion removed - use ConvertToAsync instead
+            } // InterfaceExtraction removed - use ExtractInterface instead
+              // AsyncAwaitPatternConversion removed - use ConvertToAsync instead
         }
     }
 

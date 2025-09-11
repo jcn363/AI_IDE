@@ -1,10 +1,7 @@
 //! Tests for interface segregation principle analysis
 
 use super::*;
-use crate::analysis::{
-    architectural::InterfaceSegregationAnalyzer,
-    AnalysisType, Severity,
-};
+use crate::analysis::{architectural::InterfaceSegregationAnalyzer, AnalysisType, Severity};
 
 #[test]
 fn test_proper_interface_segregation() {
@@ -32,13 +29,17 @@ fn test_proper_interface_segregation() {
             }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_success(&result);
     assert!(
-        !has_findings(&result, AnalysisType::InterfaceSegregation, Severity::Warning),
+        !has_findings(
+            &result,
+            AnalysisType::InterfaceSegregation,
+            Severity::Warning
+        ),
         "Expected no interface segregation violations"
     );
 }
@@ -67,10 +68,10 @@ fn test_violation_large_interface() {
             }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_finding!(
         &result,
         AnalysisType::InterfaceSegregation,
@@ -104,10 +105,10 @@ fn test_violation_forced_unused_methods() {
             }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_finding!(
         &result,
         AnalysisType::InterfaceSegregation,
@@ -156,18 +157,25 @@ fn test_well_segregated_interfaces() {
             // Robot doesn't implement Eatable, which is correct
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_success(&result);
     assert!(
-        !has_findings(&result, AnalysisType::InterfaceSegregation, Severity::Warning),
+        !has_findings(
+            &result,
+            AnalysisType::InterfaceSegregation,
+            Severity::Warning
+        ),
         "Expected no interface segregation violations with well-segregated interfaces"
     );
 }
 
 // Helper function to check for specific findings
 fn has_findings(result: &AnalysisResult, analysis_type: AnalysisType, severity: Severity) -> bool {
-    result.findings.iter().any(|f| f.analysis_type == analysis_type && f.severity == severity)
+    result
+        .findings
+        .iter()
+        .any(|f| f.analysis_type == analysis_type && f.severity == severity)
 }

@@ -453,7 +453,13 @@ mod tests {
     #[test]
     fn test_dependency_section_conversion() {
         assert_eq!(DependencySection::Dependencies.as_str(), "dependencies");
-        assert_eq!(DependencySection::DevDependencies.as_str(), "dev-dependencies");
-        assert_eq!(DependencySection::BuildDependencies.as_str(), "build-dependencies");
+        assert_eq!(
+            DependencySection::DevDependencies.as_str(),
+            "dev-dependencies"
+        );
+        assert_eq!(
+            DependencySection::BuildDependencies.as_str(),
+            "build-dependencies"
+        );
     }
 }

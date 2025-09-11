@@ -1,6 +1,6 @@
 use crate::types::*;
-use async_trait::async_trait;
 use crate::RefactoringOperation;
+use async_trait::async_trait;
 
 /// Batch Interface Extraction operation - extracts interfaces from multiple classes
 pub struct BatchInterfaceExtractionOperation;

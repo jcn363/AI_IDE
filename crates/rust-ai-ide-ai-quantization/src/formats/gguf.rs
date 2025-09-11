@@ -1,7 +1,7 @@
+use crate::IDEError;
+use candle_core::{DType, Device, Tensor};
 use std::collections::HashMap;
 use std::io::{Read, Seek, SeekFrom};
-use candle_core::{DType, Device, Tensor};
-use crate::IDEError;
 
 /// GGUF file header structure
 #[derive(Debug)]
@@ -97,10 +97,7 @@ impl GGUFQuantizer {
     }
 
     /// Quantize single tensor to Q4_0
-    async fn quantize_single_tensor_q4_0(
-        &self,
-        tensor: &Tensor,
-    ) -> Result<Tensor, IDEError> {
+    async fn quantize_single_tensor_q4_0(&self, tensor: &Tensor) -> Result<Tensor, IDEError> {
         // Convert to F32 for processing
         let tensor_f32 = tensor.to_dtype(DType::F32)?;
 
@@ -115,8 +112,8 @@ impl GGUFQuantizer {
         let quantized_data: Vec<u8> = flat_data
             .into_iter()
             .map(|val| {
-                let quantized = ((val - min_val) / (max_val - min_val) * 15.0)
-                    .clamp(0.0, 15.0) as u8;
+                let quantized =
+                    ((val - min_val) / (max_val - min_val) * 15.0).clamp(0.0, 15.0) as u8;
                 quantized
             })
             .collect();
@@ -136,10 +133,7 @@ impl GGUFQuantizer {
     }
 
     /// Quantize single tensor to Q5_0
-    async fn quantize_single_tensor_q5_0(
-        &self,
-        tensor: &Tensor,
-    ) -> Result<Tensor, IDEError> {
+    async fn quantize_single_tensor_q5_0(&self, tensor: &Tensor) -> Result<Tensor, IDEError> {
         let tensor_f32 = tensor.to_dtype(DType::F32)?;
         let data = tensor_f32.to_vec2::<f32>()?;
         let mut flat_data: Vec<f32> = data.into_iter().flatten().collect();
@@ -151,8 +145,8 @@ impl GGUFQuantizer {
         let quantized_data: Vec<u8> = flat_data
             .into_iter()
             .map(|val| {
-                let quantized = ((val - min_val) / (max_val - min_val) * 31.0)
-                    .clamp(0.0, 31.0) as u8;
+                let quantized =
+                    ((val - min_val) / (max_val - min_val) * 31.0).clamp(0.0, 31.0) as u8;
                 quantized
             })
             .collect();

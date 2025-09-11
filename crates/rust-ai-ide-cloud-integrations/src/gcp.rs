@@ -1,11 +1,11 @@
+use crate::types::{CloudAuth, CloudResource};
+use crate::CloudProvider;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
-use anyhow::{Result, Context};
+use google_cloud_storage::client::{Client as StorageClient, ClientConfig};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use google_cloud_storage::client::{Client as StorageClient, ClientConfig};
 use tokio::fs;
-use crate::types::{CloudAuth, CloudResource};
-use crate::{CloudProvider};
 
 /// GCP-specific configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -58,7 +58,10 @@ impl CloudProvider for GcpClient {
     async fn deploy_resource(&self, resource: &CloudResource) -> Result<String> {
         match resource.resource_type.as_str() {
             "storage" => self.create_storage_bucket(&resource.name).await,
-            _ => Err(anyhow::anyhow!("Unsupported GCP resource type: {}", resource.resource_type)),
+            _ => Err(anyhow::anyhow!(
+                "Unsupported GCP resource type: {}",
+                resource.resource_type
+            )),
         }
     }
 
@@ -76,7 +79,10 @@ impl CloudProvider for GcpClient {
             let bucket = &resource_id[5..]; // Remove gcp:// prefix
             self.delete_storage_bucket(bucket).await
         } else {
-            Err(anyhow::anyhow!("Unsupported GCP resource type for deletion: {}", resource_id))
+            Err(anyhow::anyhow!(
+                "Unsupported GCP resource type for deletion: {}",
+                resource_id
+            ))
         }
     }
 }
@@ -92,7 +98,10 @@ impl GcpClient {
         for bucket in buckets {
             let created_at = bucket.time_created.and_then(|dt| {
                 let millis = dt.seconds * 1000 + (dt.nanos / 1_000_000) as i64;
-                chrono::DateTime::from_timestamp(millis / 1000, ((millis % 1000) * 1_000_000) as u32)
+                chrono::DateTime::from_timestamp(
+                    millis / 1000,
+                    ((millis % 1000) * 1_000_000) as u32,
+                )
             });
 
             let resource = CloudResource {
@@ -113,11 +122,7 @@ impl GcpClient {
     /// Create storage bucket
     async fn create_storage_bucket(&self, bucket_name: &str) -> Result<String> {
         let project_id = &self.config.project_id;
-        let bucket = google_cloud_storage::bucket::Bucket::new(
-            bucket_name,
-            project_id,
-            None,
-        );
+        let bucket = google_cloud_storage::bucket::Bucket::new(bucket_name, project_id, None);
 
         self.storage_client
             .create_bucket(project_id, bucket_name.to_string())

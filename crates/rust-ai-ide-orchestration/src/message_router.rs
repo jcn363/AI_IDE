@@ -3,7 +3,7 @@ use tokio::sync::mpsc;
 
 use crate::error::{OrchestrationError, OrchestrationResult};
 use crate::service_registry::ServiceRegistry;
-use crate::types::{ServiceId, ServiceMessage, MessageType};
+use crate::types::{MessageType, ServiceId, ServiceMessage};
 
 /// Message router for inter-service communication
 #[derive(Debug, Clone)]
@@ -28,16 +28,20 @@ impl MessageRouter {
     /// Send a message to a service
     pub async fn send_message(&self, message: ServiceMessage) -> OrchestrationResult<()> {
         tracing::debug!("Routing message: {}", message.message_id);
-        self.message_sender.send(message).await.map_err(|_| {
-            OrchestrationError::MessageRoutingError("Channel is full".to_string())
-        })?;
+        self.message_sender
+            .send(message)
+            .await
+            .map_err(|_| OrchestrationError::MessageRoutingError("Channel is full".to_string()))?;
         Ok(())
     }
 
     /// Receive the next available message
     pub async fn receive_message(&self) -> ServiceMessage {
         let mut receiver = self.message_receiver.lock().await;
-        receiver.recv().await.expect("Message router channel closed")
+        receiver
+            .recv()
+            .await
+            .expect("Message router channel closed")
     }
 
     /// Create a request-response message pair

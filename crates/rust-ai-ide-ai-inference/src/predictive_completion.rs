@@ -23,15 +23,15 @@
 //! 5. **Caching Layer**: High-performance caching for common patterns
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-use crate::types::*;
 use crate::types::SecurityResult;
+use crate::types::*;
 
 /// Basic position in a text document
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -264,7 +264,7 @@ pub trait DistilledModel: Send + Sync {
     async fn generate_completions(
         &self,
         context: &CompletionContext,
-        config: &CompletionConfig
+        config: &CompletionConfig,
     ) -> SecurityResult<Vec<CompletionSuggestion>>;
 
     fn language(&self) -> &str;
@@ -284,7 +284,9 @@ pub struct CachedCompletion {
 
 impl CachedCompletion {
     pub fn is_still_valid(&self) -> bool {
-        let elapsed = Utc::now().signed_duration_since(self.cached_at).num_seconds();
+        let elapsed = Utc::now()
+            .signed_duration_since(self.cached_at)
+            .num_seconds();
         elapsed < self.ttl_seconds as i64
     }
 }
@@ -317,7 +319,7 @@ pub trait CompletionSecurityFilter: Send + Sync {
     async fn filter_suggestion(
         &self,
         suggestion: &CompletionSuggestion,
-        context: &CompletionContext
+        context: &CompletionContext,
     ) -> SecurityResult<bool>; // true = allow, false = block
 
     async fn validate_context(&self, context: &CompletionContext) -> SecurityResult<Vec<String>>; // warnings/errors
@@ -359,9 +361,15 @@ impl PredictiveCompletionEngine {
 
         // Register built-in language models
         engine.register_model(Arc::new(RustCompletionModel)).await?;
-        engine.register_model(Arc::new(JavaScriptCompletionModel)).await?;
-        engine.register_model(Arc::new(TypeScriptCompletionModel)).await?;
-        engine.register_model(Arc::new(PythonCompletionModel)).await?;
+        engine
+            .register_model(Arc::new(JavaScriptCompletionModel))
+            .await?;
+        engine
+            .register_model(Arc::new(TypeScriptCompletionModel))
+            .await?;
+        engine
+            .register_model(Arc::new(PythonCompletionModel))
+            .await?;
 
         Ok(engine)
     }
@@ -380,7 +388,10 @@ impl PredictiveCompletionEngine {
     }
 
     /// Generate completion suggestions for the given context
-    pub async fn generate_completions(&self, context: CompletionContext) -> SecurityResult<CompletionResponse> {
+    pub async fn generate_completions(
+        &self,
+        context: CompletionContext,
+    ) -> SecurityResult<CompletionResponse> {
         let start_time = std::time::Instant::now();
         let request_id = Uuid::new_v4().to_string();
 
@@ -406,7 +417,9 @@ impl PredictiveCompletionEngine {
         metrics.total_requests += 1;
 
         // Get appropriate model for the language
-        let model = self.get_model_for_language(&context.file_info.language).await?;
+        let model = self
+            .get_model_for_language(&context.file_info.language)
+            .await?;
 
         // Generate completions using distilled model
         let mut suggestions = model.generate_completions(&context, &self.config).await?;
@@ -416,8 +429,15 @@ impl PredictiveCompletionEngine {
 
         // Sort by confidence and relevance
         suggestions.sort_by(|a, b| {
-            b.confidence_score.partial_cmp(&a.confidence_score).unwrap()
-                .then_with(|| b.context_relevance.overall_score().partial_cmp(&a.context_relevance.overall_score()).unwrap())
+            b.confidence_score
+                .partial_cmp(&a.confidence_score)
+                .unwrap()
+                .then_with(|| {
+                    b.context_relevance
+                        .overall_score()
+                        .partial_cmp(&a.context_relevance.overall_score())
+                        .unwrap()
+                })
         });
 
         // Limit number of suggestions
@@ -426,10 +446,16 @@ impl PredictiveCompletionEngine {
         }
 
         // Apply user profile personalization
-        self.personalize_suggestions(&mut suggestions, &context).await?;
+        self.personalize_suggestions(&mut suggestions, &context)
+            .await?;
 
         // Update language metrics
-        self.update_language_metrics(&context.file_info.language, start_time.elapsed().as_millis() as f64, !suggestions.is_empty()).await;
+        self.update_language_metrics(
+            &context.file_info.language,
+            start_time.elapsed().as_millis() as f64,
+            !suggestions.is_empty(),
+        )
+        .await;
 
         // Cache the results
         if self.config.cache_enabled {
@@ -455,7 +481,11 @@ impl PredictiveCompletionEngine {
     }
 
     /// Accept user feedback on suggestions
-    pub async fn accept_suggestion(&self, suggestion_id: &str, user_context: &CompletionContext) -> SecurityResult<()> {
+    pub async fn accept_suggestion(
+        &self,
+        suggestion_id: &str,
+        user_context: &CompletionContext,
+    ) -> SecurityResult<()> {
         let mut metrics = self.performance_metrics.write().await;
 
         // TODO: Track acceptance for future learning, this would update ML models
@@ -463,7 +493,8 @@ impl PredictiveCompletionEngine {
 
         // Update user profile based on acceptance
         if self.config.personalization_enabled {
-            self.update_user_profile_from_context(suggestion_id, user_context).await?;
+            self.update_user_profile_from_context(suggestion_id, user_context)
+                .await?;
         }
 
         Ok(())
@@ -488,14 +519,22 @@ impl PredictiveCompletionEngine {
     }
 
     /// Update user profile based on usage patterns
-    pub async fn update_user_profile(&self, user_id: &str, profile: UserProfile) -> SecurityResult<()> {
+    pub async fn update_user_profile(
+        &self,
+        user_id: &str,
+        profile: UserProfile,
+    ) -> SecurityResult<()> {
         let mut profiles = self.user_profiles.write().await;
         profiles.insert(user_id.to_string(), profile);
         Ok(())
     }
 
     /// Update user profile from completion context
-    pub async fn update_user_profile_from_context(&self, suggestion_id: &str, user_context: &CompletionContext) -> SecurityResult<()> {
+    pub async fn update_user_profile_from_context(
+        &self,
+        suggestion_id: &str,
+        user_context: &CompletionContext,
+    ) -> SecurityResult<()> {
         let user_id = suggestion_id; // In real implementation, this would extract user ID from suggestion_id
         let profile = user_context.user_profile.clone();
         self.update_user_profile(user_id, profile).await
@@ -503,11 +542,16 @@ impl PredictiveCompletionEngine {
 
     // Private methods
 
-    async fn get_model_for_language(&self, language: &str) -> SecurityResult<Arc<dyn DistilledModel>> {
+    async fn get_model_for_language(
+        &self,
+        language: &str,
+    ) -> SecurityResult<Arc<dyn DistilledModel>> {
         let models = self.distilled_models.read().await;
-        models.get(language).cloned()
+        models
+            .get(language)
+            .cloned()
             .ok_or_else(|| crate::SecurityError::ConfigurationError {
-                message: format!("No distilled model available for language: {}", language)
+                message: format!("No distilled model available for language: {}", language),
             })
     }
 
@@ -524,7 +568,11 @@ impl PredictiveCompletionEngine {
         None
     }
 
-    async fn cache_completions(&self, context: &CompletionContext, suggestions: &[CompletionSuggestion]) {
+    async fn cache_completions(
+        &self,
+        context: &CompletionContext,
+        suggestions: &[CompletionSuggestion],
+    ) {
         let cache_key = self.generate_cache_key(context);
         let cached = CachedCompletion {
             context_hash: cache_key.clone(),
@@ -538,11 +586,19 @@ impl PredictiveCompletionEngine {
         cache.insert(cache_key, cached);
     }
 
-    async fn filter_suggestions(&self, suggestions: &mut Vec<CompletionSuggestion>, context: &CompletionContext) -> SecurityResult<()> {
+    async fn filter_suggestions(
+        &self,
+        suggestions: &mut Vec<CompletionSuggestion>,
+        context: &CompletionContext,
+    ) -> SecurityResult<()> {
         let mut filtered = Vec::new();
 
         for suggestion in suggestions.iter() {
-            if self.security_filter.filter_suggestion(suggestion, context).await? {
+            if self
+                .security_filter
+                .filter_suggestion(suggestion, context)
+                .await?
+            {
                 filtered.push(suggestion.clone());
             }
         }
@@ -551,7 +607,11 @@ impl PredictiveCompletionEngine {
         Ok(())
     }
 
-    async fn personalize_suggestions(&self, suggestions: &mut Vec<CompletionSuggestion>, context: &CompletionContext) -> SecurityResult<()> {
+    async fn personalize_suggestions(
+        &self,
+        suggestions: &mut Vec<CompletionSuggestion>,
+        context: &CompletionContext,
+    ) -> SecurityResult<()> {
         if !self.config.personalization_enabled {
             return Ok(());
         }
@@ -581,15 +641,20 @@ impl PredictiveCompletionEngine {
 
     async fn update_language_metrics(&self, language: &str, response_time_ms: f64, success: bool) {
         let mut metrics = self.performance_metrics.write().await;
-        let lang_metrics = metrics.by_language.entry(language.to_string()).or_insert(LanguageMetrics {
-            requests: 0,
-            avg_response_time_ms: 0.0,
-            success_rate: 0.0,
-            popular_completions: Vec::new(),
-        });
+        let lang_metrics =
+            metrics
+                .by_language
+                .entry(language.to_string())
+                .or_insert(LanguageMetrics {
+                    requests: 0,
+                    avg_response_time_ms: 0.0,
+                    success_rate: 0.0,
+                    popular_completions: Vec::new(),
+                });
 
         lang_metrics.requests += 1;
-        lang_metrics.avg_response_time_ms = (lang_metrics.avg_response_time_ms + response_time_ms) / 2.0;
+        lang_metrics.avg_response_time_ms =
+            (lang_metrics.avg_response_time_ms + response_time_ms) / 2.0;
 
         if success {
             lang_metrics.success_rate = (lang_metrics.success_rate + 1.0) / 2.0;
@@ -599,7 +664,7 @@ impl PredictiveCompletionEngine {
     }
 
     fn generate_cache_key(&self, context: &CompletionContext) -> String {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
 
         // Include key context elements in hash
@@ -616,11 +681,11 @@ impl PredictiveCompletionEngine {
 impl ContextRelevance {
     pub fn overall_score(&self) -> f64 {
         // Weighted combination of relevance factors
-        0.3 * self.semantic_match +
-        0.2 * self.lexical_match +
-        0.2 * self.recency_score +
-        0.15 * self.user_preference_score +
-        0.15 * self.project_context_score
+        0.3 * self.semantic_match
+            + 0.2 * self.lexical_match
+            + 0.2 * self.recency_score
+            + 0.15 * self.user_preference_score
+            + 0.15 * self.project_context_score
     }
 }
 
@@ -681,19 +746,35 @@ pub struct DefaultSecurityFilter;
 
 #[async_trait]
 impl CompletionSecurityFilter for DefaultSecurityFilter {
-    async fn filter_suggestion(&self, suggestion: &CompletionSuggestion, context: &CompletionContext) -> SecurityResult<bool> {
+    async fn filter_suggestion(
+        &self,
+        suggestion: &CompletionSuggestion,
+        context: &CompletionContext,
+    ) -> SecurityResult<bool> {
         // Check for sensitive keywords
         let sensitive_keywords = [
-            "password", "secret", "key", "token", "credential",
-            "auth", "login", "privilege", "admin", "root"
+            "password",
+            "secret",
+            "key",
+            "token",
+            "credential",
+            "auth",
+            "login",
+            "privilege",
+            "admin",
+            "root",
         ];
 
         let suggestion_text = suggestion.completion_text.to_lowercase();
 
         for keyword in &sensitive_keywords {
-            if suggestion_text.contains(keyword) &&
-               !context.security_context.allowed_patterns.iter()
-                   .any(|pattern| suggestion_text.contains(pattern)) {
+            if suggestion_text.contains(keyword)
+                && !context
+                    .security_context
+                    .allowed_patterns
+                    .iter()
+                    .any(|pattern| suggestion_text.contains(pattern))
+            {
                 return Ok(false); // Block sensitive suggestions
             }
         }
@@ -717,7 +798,11 @@ pub struct PythonCompletionModel;
 
 #[async_trait]
 impl DistilledModel for RustCompletionModel {
-    async fn generate_completions(&self, context: &CompletionContext, config: &CompletionConfig) -> SecurityResult<Vec<CompletionSuggestion>> {
+    async fn generate_completions(
+        &self,
+        context: &CompletionContext,
+        config: &CompletionConfig,
+    ) -> SecurityResult<Vec<CompletionSuggestion>> {
         let mut suggestions = Vec::new();
 
         // Simple keyword-based suggestions (in practice, this would use ML)
@@ -725,11 +810,26 @@ impl DistilledModel for RustCompletionModel {
             ("fn ", "fn ", 0.8, CompletionType::Keyword),
             ("let ", "let ", 0.9, CompletionType::Keyword),
             ("if ", "if ", 0.7, CompletionType::Keyword),
-            ("match ", "match value {\n    \n}", 0.8, CompletionType::Keyword),
-            ("println!", "println!(\"{}\", );", 0.9, CompletionType::Function),
+            (
+                "match ",
+                "match value {\n    \n}",
+                0.8,
+                CompletionType::Keyword,
+            ),
+            (
+                "println!",
+                "println!(\"{}\", );",
+                0.9,
+                CompletionType::Function,
+            ),
             (".iter()", ".iter()", 0.6, CompletionType::Method),
             (".map(", ".map(|x| x)", 0.7, CompletionType::Method),
-            (".collect()", ".collect::<Vec<_>>()", 0.7, CompletionType::Method),
+            (
+                ".collect()",
+                ".collect::<Vec<_>>()",
+                0.7,
+                CompletionType::Method,
+            ),
         ];
 
         for (prefix, completion, confidence, comp_type) in &rust_keywords {
@@ -740,7 +840,9 @@ impl DistilledModel for RustCompletionModel {
 
             // Simple relevancy check
             if context.prefix.ends_with(&prefix[..prefix.len()-1]) || // Starts with keyword
-               context.prefix.lines().last().unwrap_or("").contains(prefix) { // Contains in current line
+               context.prefix.lines().last().unwrap_or("").contains(prefix)
+            {
+                // Contains in current line
 
                 let suggestion = CompletionSuggestion {
                     id: Uuid::new_v4().to_string(),
@@ -788,28 +890,82 @@ impl DistilledModel for RustCompletionModel {
 
 #[async_trait]
 impl DistilledModel for JavaScriptCompletionModel {
-    async fn generate_completions(&self, context: &CompletionContext, config: &CompletionConfig) -> SecurityResult<Vec<CompletionSuggestion>> {
+    async fn generate_completions(
+        &self,
+        context: &CompletionContext,
+        config: &CompletionConfig,
+    ) -> SecurityResult<Vec<CompletionSuggestion>> {
         let mut suggestions = Vec::new();
 
         // JavaScript-specific completion patterns
         let js_keywords = [
-            ("function ", "function name() {\n    \n}", 0.9, CompletionType::Keyword),
+            (
+                "function ",
+                "function name() {\n    \n}",
+                0.9,
+                CompletionType::Keyword,
+            ),
             ("const ", "const variable = ", 0.9, CompletionType::Keyword),
             ("let ", "let variable = ", 0.8, CompletionType::Keyword),
             ("var ", "var variable = ", 0.6, CompletionType::Keyword), // Lower confidence for legacy
             ("if ", "if () {\n    \n}", 0.8, CompletionType::Keyword),
             ("else", "else {\n    \n}", 0.8, CompletionType::Keyword),
-            ("for ", "for (let i = 0; i < ; i++) {\n    \n}", 0.9, CompletionType::Keyword),
-            ("while ", "while () {\n    \n}", 0.8, CompletionType::Keyword),
-            ("console.log(", "console.log('');", 0.9, CompletionType::Function),
-            ("console.error(", "console.error('');", 0.9, CompletionType::Function),
-            (".map(", ".map(function(item) { return item; })", 0.8, CompletionType::Method),
-            (".filter(", ".filter(function(item) { return true; })", 0.8, CompletionType::Method),
-            (".reduce(", ".reduce(function(acc, item) { return acc; }, initial)", 0.8, CompletionType::Method),
-            ("async ", "async function name() {\n    \n}", 0.9, CompletionType::Keyword),
+            (
+                "for ",
+                "for (let i = 0; i < ; i++) {\n    \n}",
+                0.9,
+                CompletionType::Keyword,
+            ),
+            (
+                "while ",
+                "while () {\n    \n}",
+                0.8,
+                CompletionType::Keyword,
+            ),
+            (
+                "console.log(",
+                "console.log('');",
+                0.9,
+                CompletionType::Function,
+            ),
+            (
+                "console.error(",
+                "console.error('');",
+                0.9,
+                CompletionType::Function,
+            ),
+            (
+                ".map(",
+                ".map(function(item) { return item; })",
+                0.8,
+                CompletionType::Method,
+            ),
+            (
+                ".filter(",
+                ".filter(function(item) { return true; })",
+                0.8,
+                CompletionType::Method,
+            ),
+            (
+                ".reduce(",
+                ".reduce(function(acc, item) { return acc; }, initial)",
+                0.8,
+                CompletionType::Method,
+            ),
+            (
+                "async ",
+                "async function name() {\n    \n}",
+                0.9,
+                CompletionType::Keyword,
+            ),
             ("await ", "await ", 0.8, CompletionType::Keyword),
             ("=>", " => ", 0.7, CompletionType::Operator),
-            ("try", "try {\n    \n} catch (error) {\n    console.error(error);\n}", 0.8, CompletionType::Keyword),
+            (
+                "try",
+                "try {\n    \n} catch (error) {\n    console.error(error);\n}",
+                0.8,
+                CompletionType::Keyword,
+            ),
         ];
 
         for (prefix, completion, confidence, comp_type) in &js_keywords {
@@ -817,9 +973,11 @@ impl DistilledModel for JavaScriptCompletionModel {
                 continue; // Already typing this
             }
 
-            if context.prefix.ends_with(&prefix[..prefix.len().saturating_sub(1)]) ||
-               context.prefix.lines().last().unwrap_or("").contains(prefix) {
-
+            if context
+                .prefix
+                .ends_with(&prefix[..prefix.len().saturating_sub(1)])
+                || context.prefix.lines().last().unwrap_or("").contains(prefix)
+            {
                 let suggestion = CompletionSuggestion {
                     id: Uuid::new_v4().to_string(),
                     completion_text: completion.to_string(),
@@ -864,23 +1022,62 @@ impl DistilledModel for JavaScriptCompletionModel {
 
 #[async_trait]
 impl DistilledModel for TypeScriptCompletionModel {
-    async fn generate_completions(&self, context: &CompletionContext, config: &CompletionConfig) -> SecurityResult<Vec<CompletionSuggestion>> {
+    async fn generate_completions(
+        &self,
+        context: &CompletionContext,
+        config: &CompletionConfig,
+    ) -> SecurityResult<Vec<CompletionSuggestion>> {
         let mut suggestions = Vec::new();
 
         // TypeScript-specific completion patterns (building on JavaScript)
         let ts_keywords = [
-            ("function ", "function name(): type {\n    \n}", 0.9, CompletionType::Keyword),
-            ("const ", "const variable: type = ", 0.9, CompletionType::Keyword),
-            ("interface ", "interface Name {\n    \n}", 0.9, CompletionType::Keyword),
+            (
+                "function ",
+                "function name(): type {\n    \n}",
+                0.9,
+                CompletionType::Keyword,
+            ),
+            (
+                "const ",
+                "const variable: type = ",
+                0.9,
+                CompletionType::Keyword,
+            ),
+            (
+                "interface ",
+                "interface Name {\n    \n}",
+                0.9,
+                CompletionType::Keyword,
+            ),
             ("type ", "type Name = ", 0.9, CompletionType::Keyword),
-            ("enum ", "enum Name {\n    VALUE = \"\",\n}", 0.9, CompletionType::Keyword),
-            ("class ", "class Name {\n    constructor() {\n        \n    }\n}", 0.9, CompletionType::Keyword),
+            (
+                "enum ",
+                "enum Name {\n    VALUE = \"\",\n}",
+                0.9,
+                CompletionType::Keyword,
+            ),
+            (
+                "class ",
+                "class Name {\n    constructor() {\n        \n    }\n}",
+                0.9,
+                CompletionType::Keyword,
+            ),
             ("public ", "public ", 0.8, CompletionType::Keyword),
             ("private ", "private ", 0.8, CompletionType::Keyword),
             ("protected ", "protected ", 0.8, CompletionType::Keyword),
             ("readonly ", "readonly ", 0.8, CompletionType::Keyword),
-            ("implements ", "implements Interface", 0.8, CompletionType::Keyword),
-            ("extends ", "extends BaseClass", 0.8, CompletionType::Keyword),
+            (
+                "implements ",
+                "implements Interface",
+                0.8,
+                CompletionType::Keyword,
+            ),
+            (
+                "extends ",
+                "extends BaseClass",
+                0.8,
+                CompletionType::Keyword,
+            ),
             ("as ", "as type", 0.7, CompletionType::Keyword),
             ("<T>", "<T>", 0.8, CompletionType::Type),
             ("Promise<", "Promise<type>", 0.9, CompletionType::Type),
@@ -892,9 +1089,11 @@ impl DistilledModel for TypeScriptCompletionModel {
                 continue;
             }
 
-            if context.prefix.ends_with(&prefix[..prefix.len().saturating_sub(1)]) ||
-               context.prefix.lines().last().unwrap_or("").contains(prefix) {
-
+            if context
+                .prefix
+                .ends_with(&prefix[..prefix.len().saturating_sub(1)])
+                || context.prefix.lines().last().unwrap_or("").contains(prefix)
+            {
                 let suggestion = CompletionSuggestion {
                     id: Uuid::new_v4().to_string(),
                     completion_text: completion.to_string(),
@@ -939,7 +1138,11 @@ impl DistilledModel for TypeScriptCompletionModel {
 
 #[async_trait]
 impl DistilledModel for PythonCompletionModel {
-    async fn generate_completions(&self, context: &CompletionContext, config: &CompletionConfig) -> SecurityResult<Vec<CompletionSuggestion>> {
+    async fn generate_completions(
+        &self,
+        context: &CompletionContext,
+        config: &CompletionConfig,
+    ) -> SecurityResult<Vec<CompletionSuggestion>> {
         let mut suggestions = Vec::new();
 
         // Python-specific completion patterns
@@ -980,9 +1183,11 @@ impl DistilledModel for PythonCompletionModel {
                 continue;
             }
 
-            if context.prefix.ends_with(&prefix[..prefix.len().saturating_sub(1)]) ||
-               context.prefix.lines().last().unwrap_or("").contains(prefix) {
-
+            if context
+                .prefix
+                .ends_with(&prefix[..prefix.len().saturating_sub(1)])
+                || context.prefix.lines().last().unwrap_or("").contains(prefix)
+            {
                 let suggestion = CompletionSuggestion {
                     id: Uuid::new_v4().to_string(),
                     completion_text: completion.to_string(),
@@ -1108,7 +1313,10 @@ mod tests {
         let js_context = CompletionContext {
             prefix: "func".to_string(),
             suffix: "".to_string(),
-            position: Position { line: 0, character: 4 },
+            position: Position {
+                line: 0,
+                character: 4,
+            },
             file_info: FileInfo {
                 path: "test.js".to_string(),
                 language: "javascript".to_string(),
@@ -1151,13 +1359,19 @@ mod tests {
 
         let js_response = engine.generate_completions(js_context).await.unwrap();
         assert!(!js_response.suggestions.is_empty());
-        assert!(js_response.suggestions.iter().any(|s| s.completion_text.contains("function")));
+        assert!(js_response
+            .suggestions
+            .iter()
+            .any(|s| s.completion_text.contains("function")));
 
         // Test TypeScript completion
         let ts_context = CompletionContext {
             prefix: "inter".to_string(),
             suffix: "".to_string(),
-            position: Position { line: 0, character: 5 },
+            position: Position {
+                line: 0,
+                character: 5,
+            },
             file_info: FileInfo {
                 path: "test.ts".to_string(),
                 language: "typescript".to_string(),
@@ -1171,13 +1385,19 @@ mod tests {
 
         let ts_response = engine.generate_completions(ts_context).await.unwrap();
         assert!(!ts_response.suggestions.is_empty());
-        assert!(ts_response.suggestions.iter().any(|s| s.completion_text.contains("interface")));
+        assert!(ts_response
+            .suggestions
+            .iter()
+            .any(|s| s.completion_text.contains("interface")));
 
         // Test Python completion
         let py_context = CompletionContext {
             prefix: "def".to_string(),
             suffix: "".to_string(),
-            position: Position { line: 0, character: 3 },
+            position: Position {
+                line: 0,
+                character: 3,
+            },
             file_info: FileInfo {
                 path: "test.py".to_string(),
                 language: "python".to_string(),
@@ -1191,6 +1411,9 @@ mod tests {
 
         let py_response = engine.generate_completions(py_context).await.unwrap();
         assert!(!py_response.suggestions.is_empty());
-        assert!(py_response.suggestions.iter().any(|s| s.completion_text.contains("def")));
+        assert!(py_response
+            .suggestions
+            .iter()
+            .any(|s| s.completion_text.contains("def")));
     }
 }

@@ -1,15 +1,18 @@
 use crate::analysis::RefactoringAnalyzer;
-use crate::confidence::{ConfidenceScorer, ConfidenceResult};
+use crate::confidence::{ConfidenceResult, ConfidenceScorer};
 use crate::safety::RefactoringRisk;
 use crate::types::*;
-use std::collections::HashMap;
 use async_trait::async_trait;
+use std::collections::HashMap;
 
 /// Trait for suggestion engines
 #[async_trait]
 pub trait SuggestionEngine {
     /// Get suggestions based on refactoring context
-    async fn get_suggestions(&self, context: &SuggestionContext) -> Result<Vec<RefactoringSuggestion>, String>;
+    async fn get_suggestions(
+        &self,
+        context: &SuggestionContext,
+    ) -> Result<Vec<RefactoringSuggestion>, String>;
 }
 
 /// Context for suggestion generation
@@ -33,7 +36,10 @@ struct SuggestionEngineWrapper {
 
 #[async_trait]
 impl SuggestionEngine for SuggestionEngineWrapper {
-    async fn get_suggestions(&self, context: &SuggestionContext) -> Result<Vec<RefactoringSuggestion>, String> {
+    async fn get_suggestions(
+        &self,
+        context: &SuggestionContext,
+    ) -> Result<Vec<RefactoringSuggestion>, String> {
         // Convert to refactoring context
         let refactoring_context = RefactoringContext {
             file_path: context.file_path.clone(),
@@ -44,8 +50,12 @@ impl SuggestionEngine for SuggestionEngineWrapper {
             symbol_kind: context.symbol_kind.clone(),
         };
 
-        let suggestions = self.inner.generate_suggestions(&refactoring_context, None).await?;
-        let suggestions = suggestions.into_iter()
+        let suggestions = self
+            .inner
+            .generate_suggestions(&refactoring_context, None)
+            .await?;
+        let suggestions = suggestions
+            .into_iter()
             .map(|s| RefactoringSuggestion {
                 operation_type: s.refactoring_type.to_string(),
                 confidence_score: s.confidence.overall_score,
@@ -70,7 +80,10 @@ impl AISuggestionEngine {
 
 #[async_trait]
 impl SuggestionEngine for AISuggestionEngine {
-    async fn get_suggestions(&self, context: &SuggestionContext) -> Result<Vec<RefactoringSuggestion>, String> {
+    async fn get_suggestions(
+        &self,
+        context: &SuggestionContext,
+    ) -> Result<Vec<RefactoringSuggestion>, String> {
         self.base_engine.get_suggestions(context).await
     }
 }
@@ -109,18 +122,26 @@ impl SuggestionEngineImpl {
         let mut suggestions = Vec::new();
 
         // Analyze context for applicable refactorings
-        let applicable_refactorings = self.analyzer.get_applicable_refactorings_parallel(context).await?;
+        let applicable_refactorings = self
+            .analyzer
+            .get_applicable_refactorings_parallel(context)
+            .await?;
 
         // Generate smart suggestions with context awareness
         for refactoring_type in applicable_refactorings {
-            if let Some(suggestion) = self.create_smart_suggestion(&refactoring_type, context, code_content).await {
+            if let Some(suggestion) = self
+                .create_smart_suggestion(&refactoring_type, context, code_content)
+                .await
+            {
                 suggestions.push(suggestion);
             }
         }
 
         // Sort by relevance and confidence
         suggestions.sort_by(|a, b| {
-            b.confidence.overall_score.partial_cmp(&a.confidence.overall_score)
+            b.confidence
+                .overall_score
+                .partial_cmp(&a.confidence.overall_score)
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
 
@@ -137,14 +158,18 @@ impl SuggestionEngineImpl {
         context: &RefactoringContext,
         code_content: Option<&str>,
     ) -> Option<SmartSuggestion> {
-        let analysis = self.analyzer.analyze_refactoring_cached(refactoring_type, context).await.ok()?;
-        let confidence = self.confidence_scorer.calculate_confidence(
-            refactoring_type,
-            context,
-            &Some(analysis.clone()),
-        ).await;
+        let analysis = self
+            .analyzer
+            .analyze_refactoring_cached(refactoring_type, context)
+            .await
+            .ok()?;
+        let confidence = self
+            .confidence_scorer
+            .calculate_confidence(refactoring_type, context, &Some(analysis.clone()))
+            .await;
 
-        let context_relevance = self.calculate_context_relevance(refactoring_type, context, &analysis);
+        let context_relevance =
+            self.calculate_context_relevance(refactoring_type, context, &analysis);
         let impact_assessment = self.assess_impact(refactoring_type, &analysis);
 
         // Only suggest if confidence is above threshold
@@ -261,11 +286,15 @@ impl SuggestionEngineImpl {
             SuggestionPriority::High
         }
         // Medium confidence, medium risk = medium priority
-        else if confidence.overall_score >= 0.6 && matches!(impact.risk_level, RefactoringRisk::Medium) {
+        else if confidence.overall_score >= 0.6
+            && matches!(impact.risk_level, RefactoringRisk::Medium)
+        {
             SuggestionPriority::Medium
         }
         // High confidence, high risk = consider carefully
-        else if confidence.overall_score >= 0.7 && matches!(impact.risk_level, RefactoringRisk::High) {
+        else if confidence.overall_score >= 0.7
+            && matches!(impact.risk_level, RefactoringRisk::High)
+        {
             SuggestionPriority::Medium
         }
         // Low confidence or critical risk = low priority
@@ -286,7 +315,10 @@ impl SuggestionEngineImpl {
         reasons.push(format!("This refactoring improves code maintainability"));
 
         if analysis.confidence_score > 0.8 {
-            reasons.push(format!("High confidence ({:.1}%) based on analysis", analysis.confidence_score * 100.0));
+            reasons.push(format!(
+                "High confidence ({:.1}%) based on analysis",
+                analysis.confidence_score * 100.0
+            ));
         }
 
         if let Some(symbol_name) = &context.symbol_name {
@@ -316,10 +348,9 @@ impl SuggestionEngineImpl {
                 RefactoringType::ExtractVariable,
                 RefactoringType::ConvertToAsync,
             ],
-            RefactoringType::ExtractVariable => vec![
-                RefactoringType::Rename,
-                RefactoringType::InlineVariable,
-            ],
+            RefactoringType::ExtractVariable => {
+                vec![RefactoringType::Rename, RefactoringType::InlineVariable]
+            }
             _ => Vec::new(),
         }
     }
@@ -402,9 +433,7 @@ impl SuggestionEngineImpl {
                     PatternCondition::SelectionShorterThan(10),
                     PatternCondition::SelectionNumeric,
                 ],
-                target_refactorings: vec![
-                    RefactoringType::ExtractVariable,
-                ],
+                target_refactorings: vec![RefactoringType::ExtractVariable],
                 relevance_boost: 0.4,
             },
             ContextPattern {
@@ -510,19 +539,17 @@ pub enum PatternCondition {
 impl PatternCondition {
     pub fn matches(&self, context: &RefactoringContext) -> bool {
         match self {
-            PatternCondition::SymbolKind(expected) => {
-                context.symbol_kind == Some(expected.clone())
-            }
-            PatternCondition::SelectionLongerThan(min_len) => {
-                context.selection.as_ref()
-                    .map(|sel| sel.end_character - sel.start_character > *min_len as usize)
-                    .unwrap_or(false)
-            }
-            PatternCondition::SelectionShorterThan(max_len) => {
-                context.selection.as_ref()
-                    .map(|sel| sel.end_character - sel.start_character < *max_len as usize)
-                    .unwrap_or(false)
-            }
+            PatternCondition::SymbolKind(expected) => context.symbol_kind == Some(expected.clone()),
+            PatternCondition::SelectionLongerThan(min_len) => context
+                .selection
+                .as_ref()
+                .map(|sel| sel.end_character - sel.start_character > *min_len as usize)
+                .unwrap_or(false),
+            PatternCondition::SelectionShorterThan(max_len) => context
+                .selection
+                .as_ref()
+                .map(|sel| sel.end_character - sel.start_character < *max_len as usize)
+                .unwrap_or(false),
             PatternCondition::SelectionNumeric => {
                 // This would need code analysis - simplified for now
                 true
@@ -531,14 +558,12 @@ impl PatternCondition {
                 // This would need code analysis - simplified for now
                 context.selection.is_some()
             }
-            PatternCondition::SymbolNameContains(substring) => {
-                context.symbol_name.as_ref()
-                    .map(|name| name.contains(substring))
-                    .unwrap_or(false)
-            }
-            PatternCondition::FileExtension(expected) => {
-                context.file_path.ends_with(expected)
-            }
+            PatternCondition::SymbolNameContains(substring) => context
+                .symbol_name
+                .as_ref()
+                .map(|name| name.contains(substring))
+                .unwrap_or(false),
+            PatternCondition::FileExtension(expected) => context.file_path.ends_with(expected),
         }
     }
 }

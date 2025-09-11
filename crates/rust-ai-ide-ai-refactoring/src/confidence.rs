@@ -33,13 +33,20 @@ impl ConfidenceScorer {
         }
     }
 
-    pub async fn score_suggestion(&self, _suggestion: &crate::RefactoringSuggestion, _context: &RefactoringContext) -> Result<f64, String> {
+    pub async fn score_suggestion(
+        &self,
+        _suggestion: &crate::RefactoringSuggestion,
+        _context: &RefactoringContext,
+    ) -> Result<f64, String> {
         Ok(0.8) // Basic score
     }
 
-    pub async fn calculate_confidence(&self, _refactoring_type: &RefactoringType, _context: &RefactoringContext, _analysis: &Option<RefactoringAnalysis>) -> ConfidenceResult {
-        ConfidenceResult {
-            overall_score: 0.8,
-        }
+    pub async fn calculate_confidence(
+        &self,
+        _refactoring_type: &RefactoringType,
+        _context: &RefactoringContext,
+        _analysis: &Option<RefactoringAnalysis>,
+    ) -> ConfidenceResult {
+        ConfidenceResult { overall_score: 0.8 }
     }
 }

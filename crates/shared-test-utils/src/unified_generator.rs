@@ -3,8 +3,8 @@
 //! This module contains the main UnifiedTestGenerator struct and all
 //! test generation logic for multiple programming languages.
 
-use super::test_config::*;
 use super::language_detector::*;
+use super::test_config::*;
 
 /// Comprehensive test suite result
 #[derive(Debug, Clone)]
@@ -165,9 +165,17 @@ impl UnifiedTestGenerator {
         let (language, framework) = self.language_detector.detect_language(&context.file_path);
 
         match refactoring_type {
-            RefactoringType::Rename => self.generate_rename_tests(context, result, &language, &framework),
-            RefactoringType::ExtractFunction => self.generate_extract_function_tests(context, result, &language, &framework),
-            _ => Ok(vec![self.generate_generic_refactoring_test(refactoring_type, &language, &framework)?]),
+            RefactoringType::Rename => {
+                self.generate_rename_tests(context, result, &language, &framework)
+            }
+            RefactoringType::ExtractFunction => {
+                self.generate_extract_function_tests(context, result, &language, &framework)
+            }
+            _ => Ok(vec![self.generate_generic_refactoring_test(
+                refactoring_type,
+                &language,
+                &framework,
+            )?]),
         }
     }
 
@@ -176,7 +184,7 @@ impl UnifiedTestGenerator {
         &self,
         _code: &str,
         language: &ProgrammingLanguage,
-        framework: &str
+        framework: &str,
     ) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
         let test_name = "test_basic_functionality".to_string();
         let test_code = generate_unit_test_code("function_under_test", language, framework);
@@ -213,13 +221,15 @@ impl UnifiedTestGenerator {
                 generate_rust_rename_unit_test(old_name, new_name)?,
                 generate_rust_rename_integration_test(old_name, new_name)?,
             ]),
-            ProgrammingLanguage::TypeScript => Ok(vec![
-                generate_typescript_rename_unit_test(old_name, new_name)?,
-            ]),
-            ProgrammingLanguage::Python => Ok(vec![
-                generate_python_rename_unit_test(old_name, new_name)?,
-            ]),
-            _ => Ok(vec![generate_generic_rename_test(old_name, new_name, language, framework)?]),
+            ProgrammingLanguage::TypeScript => Ok(vec![generate_typescript_rename_unit_test(
+                old_name, new_name,
+            )?]),
+            ProgrammingLanguage::Python => {
+                Ok(vec![generate_python_rename_unit_test(old_name, new_name)?])
+            }
+            _ => Ok(vec![generate_generic_rename_test(
+                old_name, new_name, language, framework,
+            )?]),
         }
     }
 
@@ -232,7 +242,9 @@ impl UnifiedTestGenerator {
         framework: &str,
     ) -> Result<Vec<GeneratedTest>, Box<dyn std::error::Error + Send + Sync>> {
         let default_function_name = "extracted_function".to_string();
-        let function_name = result.extracted_function_name.as_ref()
+        let function_name = result
+            .extracted_function_name
+            .as_ref()
             .unwrap_or(&default_function_name);
 
         match language {
@@ -240,10 +252,16 @@ impl UnifiedTestGenerator {
                 generate_rust_extract_function_unit_test(function_name)?,
                 generate_rust_extract_function_integration_test(function_name)?,
             ]),
-            ProgrammingLanguage::TypeScript => Ok(vec![
-                generate_typescript_extract_function_unit_test(function_name)?,
-            ]),
-            _ => Ok(vec![generate_generic_extract_function_test(function_name, language, framework)?]),
+            ProgrammingLanguage::TypeScript => {
+                Ok(vec![generate_typescript_extract_function_unit_test(
+                    function_name,
+                )?])
+            }
+            _ => Ok(vec![generate_generic_extract_function_test(
+                function_name,
+                language,
+                framework,
+            )?]),
         }
     }
 
@@ -275,47 +293,64 @@ impl UnifiedTestGenerator {
 }
 
 /// Helper functions for generating language-specific test code
-pub fn generate_unit_test_code(function_name: &str, language: &ProgrammingLanguage, _framework: &str) -> String {
+pub fn generate_unit_test_code(
+    function_name: &str,
+    language: &ProgrammingLanguage,
+    _framework: &str,
+) -> String {
     match language {
-        ProgrammingLanguage::Rust => format!(r#"
+        ProgrammingLanguage::Rust => format!(
+            r#"
 #[test]
 fn test_{}() {{
     // Test basic functionality
     let result = {}();
     assert_eq!(result, 42);
 }}
-"#, function_name, function_name),
+"#,
+            function_name, function_name
+        ),
 
-        ProgrammingLanguage::TypeScript => format!(r#"
+        ProgrammingLanguage::TypeScript => format!(
+            r#"
 describe("Basic Tests", () => {{
     it("should {} work correctly", () => {{
         const result = {}();
         expect(result).toBe(42);
     }});
 }});
-"#, function_name, function_name),
+"#,
+            function_name, function_name
+        ),
 
-        ProgrammingLanguage::Python => format!(r#"
+        ProgrammingLanguage::Python => format!(
+            r#"
 class TestBasicFunctionality:
     def test_{}(self):
         """Test that {} works correctly"""
         result = {}()
         self.assertEqual(result, 42)
-"#, function_name, function_name, function_name),
+"#,
+            function_name, function_name, function_name
+        ),
 
-        _ => format!(r#"
+        _ => format!(
+            r#"
 // Generic test for {}
 test_{}() {{
     result = {}()
     assert_equal(result, 42)
 }}
-"#, function_name, function_name, function_name),
+"#,
+            function_name, function_name, function_name
+        ),
     }
 }
 
 fn generate_generic_test_code(refactoring_name: &str, language: &ProgrammingLanguage) -> String {
     match language {
-        ProgrammingLanguage::Rust => format!(r#"
+        ProgrammingLanguage::Rust => format!(
+            r#"
 // Generic test for {} refactoring
 #[test]
 fn test_{}_preserves_behavior() {{
@@ -324,9 +359,12 @@ fn test_{}_preserves_behavior() {{
 
     assert_eq!(baseline_state, refactored_state, "{} changed behavior unexpectedly");
 }}
-"#, refactoring_name, refactoring_name, refactoring_name),
+"#,
+            refactoring_name, refactoring_name, refactoring_name
+        ),
 
-        ProgrammingLanguage::TypeScript => format!(r#"
+        ProgrammingLanguage::TypeScript => format!(
+            r#"
 // Generic test for {} refactoring
 describe("{} Behavior Preservation", () => {{
     it("should preserve behavior after refactoring", () => {{
@@ -335,31 +373,43 @@ describe("{} Behavior Preservation", () => {{
         expect(baseline).toEqual(refactored);
     }});
 }});
-"#, refactoring_name, refactoring_name),
+"#,
+            refactoring_name, refactoring_name
+        ),
 
-        ProgrammingLanguage::Python => format!(r#"
+        ProgrammingLanguage::Python => format!(
+            r#"
 # Generic test for {} refactoring
 class Test{}Preservation:
     def test_{}_preserves_behavior(self):
         baseline = get_baseline_state()
         refactored = get_refactored_state()
         self.assertEqual(baseline, refactored)
-"#, refactoring_name, refactoring_name, refactoring_name),
+"#,
+            refactoring_name, refactoring_name, refactoring_name
+        ),
 
-        _ => format!(r#"
+        _ => format!(
+            r#"
 // Generic test for {} refactoring
 test_{}_preserves_behavior() {{
     baseline = get_baseline_state()
     refactored = get_refactored_state()
     assert_equal(baseline, refactored)
 }}
-"#, refactoring_name, refactoring_name),
+"#,
+            refactoring_name, refactoring_name
+        ),
     }
 }
 
 // Language-specific test generation functions
-fn generate_rust_rename_unit_test(old_name: &str, new_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
-    let test_code = format!(r#"
+fn generate_rust_rename_unit_test(
+    old_name: &str,
+    new_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+    let test_code = format!(
+        r#"
 #[test]
 fn test_rename_{0}_to_{1}() {{
     // Test that the renamed symbol works correctly
@@ -374,7 +424,9 @@ fn test_rename_{0}_to_{1}() {{
     let result = renamed_function("{5}");
     assert_eq!(result, "{5}");
 }}
-"#, old_name, new_name, new_name, old_name, new_name, old_name);
+"#,
+        old_name, new_name, new_name, old_name, new_name, old_name
+    );
 
     Ok(GeneratedTest {
         name: format!("test_rename_{}_to_{}", old_name, new_name),
@@ -390,8 +442,12 @@ fn test_rename_{0}_to_{1}() {{
     })
 }
 
-fn generate_rust_rename_integration_test(old_name: &str, new_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
-    let test_code = format!(r#"
+fn generate_rust_rename_integration_test(
+    old_name: &str,
+    new_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+    let test_code = format!(
+        r#"
 #[test]
 fn test_{}_integration() {{
     // Integration test for renamed {} to {}
@@ -403,7 +459,9 @@ fn test_{}_integration() {{
     let expected = expected_behavior_from_{}();
     assert_eq!(result.unwrap(), expected);
 }}
-"#, new_name, old_name, new_name, new_name, old_name);
+"#,
+        new_name, old_name, new_name, new_name, old_name
+    );
 
     Ok(GeneratedTest {
         name: format!("test_{}_integration", new_name),
@@ -419,8 +477,12 @@ fn test_{}_integration() {{
     })
 }
 
-fn generate_typescript_rename_unit_test(old_name: &str, new_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
-    let test_code = format!(r#"
+fn generate_typescript_rename_unit_test(
+    old_name: &str,
+    new_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+    let test_code = format!(
+        r#"
 describe("Rename Test: {0} -> {1}", () => {{
     it("should work with renamed identifier", () => {{
         const {2}: string = "{3}";
@@ -434,7 +496,9 @@ describe("Rename Test: {0} -> {1}", () => {{
         expect(result).toBe("{5}");
     }});
 }});
-"#, old_name, new_name, new_name, old_name, new_name, old_name);
+"#,
+        old_name, new_name, new_name, old_name, new_name, old_name
+    );
 
     Ok(GeneratedTest {
         name: format!("test_rename_{}_to_{}", old_name, new_name),
@@ -450,14 +514,20 @@ describe("Rename Test: {0} -> {1}", () => {{
     })
 }
 
-fn generate_python_rename_unit_test(old_name: &str, new_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
-    let test_code = format!(r#"
+fn generate_python_rename_unit_test(
+    old_name: &str,
+    new_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+    let test_code = format!(
+        r#"
 class TestRename:
     def test_rename_{}_to_{}(self):
         """Test that {} was successfully renamed"""
         {} = "{}"
         self.assertEqual({}, "{}")
-"#, old_name, new_name, old_name, new_name, old_name, new_name, old_name);
+"#,
+        old_name, new_name, old_name, new_name, old_name, new_name, old_name
+    );
 
     Ok(GeneratedTest {
         name: format!("test_rename_{}_to_{}", old_name, new_name),
@@ -473,14 +543,22 @@ class TestRename:
     })
 }
 
-fn generate_generic_rename_test(old_name: &str, new_name: &str, language: &ProgrammingLanguage, framework: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
-    let test_code = format!(r#"
+fn generate_generic_rename_test(
+    old_name: &str,
+    new_name: &str,
+    language: &ProgrammingLanguage,
+    framework: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+    let test_code = format!(
+        r#"
 // Generic rename test for unsupported language
 test_rename_{}_to_{}() {{
     // Test logic would depend on the target language
     assert_equal({}, {});
 }}
-"#, old_name, new_name, new_name, old_name);
+"#,
+        old_name, new_name, new_name, old_name
+    );
 
     Ok(GeneratedTest {
         name: format!("test_rename_{}_to_{}", old_name, new_name),
@@ -496,8 +574,11 @@ test_rename_{}_to_{}() {{
     })
 }
 
-fn generate_rust_extract_function_unit_test(function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
-    let test_code = format!(r#"
+fn generate_rust_extract_function_unit_test(
+    function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+    let test_code = format!(
+        r#"
 #[test]
 fn test_{}_with_various_inputs() {{
     // Test the extracted function with various inputs
@@ -508,13 +589,18 @@ fn test_{}_with_various_inputs() {{
     // Test edge cases
     assert_eq!({}(-1), -2);
 }}
-"#, function_name, function_name, function_name, function_name, function_name);
+"#,
+        function_name, function_name, function_name, function_name, function_name
+    );
 
     Ok(GeneratedTest {
         name: format!("test_{}_unit", function_name),
         code: test_code,
         test_type: TestType::Unit,
-        description: format!("Unit tests for extracted function {} in Rust", function_name),
+        description: format!(
+            "Unit tests for extracted function {} in Rust",
+            function_name
+        ),
         language: ProgrammingLanguage::Rust,
         framework: "cargo-test".to_string(),
         expected_coverage: vec![function_name.to_string()],
@@ -524,8 +610,11 @@ fn test_{}_with_various_inputs() {{
     })
 }
 
-fn generate_rust_extract_function_integration_test(function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
-    let test_code = format!(r#"
+fn generate_rust_extract_function_integration_test(
+    function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+    let test_code = format!(
+        r#"
 #[test]
 fn test_{}_integration() {{
     // Integration test for extracted function {}
@@ -533,24 +622,36 @@ fn test_{}_integration() {{
     let result = {}(data);
     assert!(result.is_ok());
 }}
-"#, function_name, function_name, function_name);
+"#,
+        function_name, function_name, function_name
+    );
 
     Ok(GeneratedTest {
         name: format!("test_{}_integration", function_name),
         code: test_code,
         test_type: TestType::Integration,
-        description: format!("Integration tests for extracted function {} in Rust", function_name),
+        description: format!(
+            "Integration tests for extracted function {} in Rust",
+            function_name
+        ),
         language: ProgrammingLanguage::Rust,
         framework: "cargo-test".to_string(),
         expected_coverage: vec![function_name.to_string()],
         dependencies: vec![],
-        tags: vec!["extract".to_string(), "function".to_string(), "integration".to_string()],
+        tags: vec![
+            "extract".to_string(),
+            "function".to_string(),
+            "integration".to_string(),
+        ],
         confidence_score: 0.85,
     })
 }
 
-fn generate_typescript_extract_function_unit_test(function_name: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
-    let test_code = format!(r#"
+fn generate_typescript_extract_function_unit_test(
+    function_name: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+    let test_code = format!(
+        r#"
 describe("Extracted Function: {}", () => {{
     it("should work with various inputs", () => {{
         expect({}(1)).toBe(2);
@@ -563,7 +664,9 @@ describe("Extracted Function: {}", () => {{
         expect({}(Number.MAX_SAFE_INTEGER)).toBeDefined();
     }});
 }});
-"#, function_name, function_name, function_name, function_name, function_name, function_name);
+"#,
+        function_name, function_name, function_name, function_name, function_name, function_name
+    );
 
     Ok(GeneratedTest {
         name: format!("test_extracted_function_{}", function_name),
@@ -579,14 +682,21 @@ describe("Extracted Function: {}", () => {{
     })
 }
 
-fn generate_generic_extract_function_test(function_name: &str, language: &ProgrammingLanguage, framework: &str) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
-    let test_code = format!(r#"
+fn generate_generic_extract_function_test(
+    function_name: &str,
+    language: &ProgrammingLanguage,
+    framework: &str,
+) -> Result<GeneratedTest, Box<dyn std::error::Error + Send + Sync>> {
+    let test_code = format!(
+        r#"
 // Generic test for extracted function {}
 test_{}_function() {{
     assert_equal({}(1), 2);
     assert_equal({}(5), 10);
 }}
-"#, function_name, function_name, function_name, function_name);
+"#,
+        function_name, function_name, function_name, function_name
+    );
 
     Ok(GeneratedTest {
         name: format!("test_extracted_{}", function_name),
@@ -597,7 +707,11 @@ test_{}_function() {{
         framework: framework.to_string(),
         expected_coverage: vec![function_name.to_string()],
         dependencies: vec![],
-        tags: vec!["extract".to_string(), "function".to_string(), "generic".to_string()],
+        tags: vec![
+            "extract".to_string(),
+            "function".to_string(),
+            "generic".to_string(),
+        ],
         confidence_score: 0.85,
     })
 }

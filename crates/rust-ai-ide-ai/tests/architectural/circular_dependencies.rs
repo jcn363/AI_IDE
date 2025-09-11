@@ -1,10 +1,7 @@
 //! Tests for circular dependency detection
 
 use super::*;
-use crate::analysis::{
-    architectural::CircularDependencyAnalyzer,
-    AnalysisType, Severity,
-};
+use crate::analysis::{architectural::CircularDependencyAnalyzer, AnalysisType, Severity};
 
 #[test]
 fn test_no_circular_dependencies() {
@@ -18,10 +15,10 @@ fn test_no_circular_dependencies() {
             pub fn b() { a::a(); }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_success(&result);
     assert!(
         !has_findings(&result, AnalysisType::CircularDependency, Severity::Warning),
@@ -42,10 +39,10 @@ fn test_direct_circular_dependency() {
             pub fn b() { a::a(); }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_finding!(
         &result,
         AnalysisType::CircularDependency,
@@ -72,10 +69,10 @@ fn test_indirect_circular_dependency() {
             pub fn c() { a::a(); }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_finding!(
         &result,
         AnalysisType::CircularDependency,
@@ -92,10 +89,10 @@ fn test_self_referential_module() {
             pub fn a() { a::a(); }
         }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_finding!(
         &result,
         AnalysisType::CircularDependency,
@@ -112,10 +109,10 @@ fn test_circular_dependency_with_depth() {
         mod c { pub fn c() { d::d(); } }
         mod d { pub fn d() { a::a(); } }
     "#;
-    
+
     let registry = create_test_registry();
     let result = registry.analyze_code(code, "test.rs").unwrap();
-    
+
     assert_finding!(
         &result,
         AnalysisType::CircularDependency,
@@ -126,5 +123,8 @@ fn test_circular_dependency_with_depth() {
 
 // Helper function to check for specific findings
 fn has_findings(result: &AnalysisResult, analysis_type: AnalysisType, severity: Severity) -> bool {
-    result.findings.iter().any(|f| f.analysis_type == analysis_type && f.severity == severity)
+    result
+        .findings
+        .iter()
+        .any(|f| f.analysis_type == analysis_type && f.severity == severity)
 }

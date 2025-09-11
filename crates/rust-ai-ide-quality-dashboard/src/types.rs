@@ -109,21 +109,13 @@ pub struct TimeSeriesData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TrendDirection {
     /// Improving trend
-    Improving {
-        slope: f64,
-        confidence: f64,
-    },
+    Improving { slope: f64, confidence: f64 },
 
     /// Degrading trend
-    Degrading {
-        slope: f64,
-        confidence: f64,
-    },
+    Degrading { slope: f64, confidence: f64 },
 
     /// Stable trend
-    Stable {
-        volatility: f64,
-    },
+    Stable { volatility: f64 },
 }
 
 /// Quality benchmarking data

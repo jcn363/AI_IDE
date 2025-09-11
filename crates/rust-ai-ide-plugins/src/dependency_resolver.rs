@@ -570,13 +570,16 @@ impl<'de> Deserialize<'de> for DependencyGraph {
 
         let raw = DependencyGraphRaw::deserialize(deserializer)?;
         let mut graph = DiGraph::new();
-        let node_indices_vec: Vec<NodeIndex> = raw.nodes.into_iter().map(|n| graph.add_node(n)).collect();
+        let node_indices_vec: Vec<NodeIndex> =
+            raw.nodes.into_iter().map(|n| graph.add_node(n)).collect();
 
         for (source, target, weight) in raw.edges {
             if source >= node_indices_vec.len() || target >= node_indices_vec.len() {
                 return Err(serde::de::Error::custom(format!(
                     "Invalid node index in edges: source={}, target={}, len={}",
-                    source, target, node_indices_vec.len()
+                    source,
+                    target,
+                    node_indices_vec.len()
                 )));
             }
             graph.add_edge(node_indices_vec[source], node_indices_vec[target], weight);

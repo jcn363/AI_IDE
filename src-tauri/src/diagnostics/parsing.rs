@@ -15,7 +15,8 @@ pub async fn parse_compiler_diagnostic(
     let code = if let Some(code_obj) = message.get("code") {
         Some(CompilerErrorCode {
             code: code_obj.get("code")?.as_str()?.to_string(),
-            explanation: code_obj.get("explanation")
+            explanation: code_obj
+                .get("explanation")
                 .and_then(|e| e.as_str())
                 .map(|s| s.to_string()),
         })
@@ -29,10 +30,13 @@ pub async fn parse_compiler_diagnostic(
         Vec::new()
     };
 
-    let children = if let Some(children_array) = message.get("children").and_then(|c| c.as_array()) {
+    let children = if let Some(children_array) = message.get("children").and_then(|c| c.as_array())
+    {
         let mut children = Vec::new();
         for child in children_array {
-            if let Some(child_diagnostic) = Box::pin(parse_compiler_diagnostic(child, workspace_path)).await {
+            if let Some(child_diagnostic) =
+                Box::pin(parse_compiler_diagnostic(child, workspace_path)).await
+            {
                 children.push(child_diagnostic);
             }
         }
@@ -41,7 +45,8 @@ pub async fn parse_compiler_diagnostic(
         Vec::new()
     };
 
-    let rendered = message.get("rendered")
+    let rendered = message
+        .get("rendered")
         .and_then(|r| r.as_str())
         .map(|s| s.to_string());
 
@@ -77,13 +82,16 @@ pub fn parse_compiler_span(span: &Value) -> Option<CompilerSpan> {
         Vec::new()
     };
 
-    let label = span.get("label")
+    let label = span
+        .get("label")
         .and_then(|l| l.as_str())
         .map(|s| s.to_string());
-    let suggested_replacement = span.get("suggested_replacement")
+    let suggested_replacement = span
+        .get("suggested_replacement")
         .and_then(|sr| sr.as_str())
         .map(|s| s.to_string());
-    let suggestion_applicability = span.get("suggestion_applicability")
+    let suggestion_applicability = span
+        .get("suggestion_applicability")
         .and_then(|sa| sa.as_str())
         .map(|s| s.to_string());
 
@@ -179,7 +187,10 @@ pub fn extract_module_path(content: &str) -> Option<String> {
     for line in content.lines() {
         let trimmed = line.trim();
         if trimmed.starts_with("mod ") && !trimmed.contains('{') {
-            if let Some(module_name) = trimmed.strip_prefix("mod ").and_then(|s| s.split(';').next()) {
+            if let Some(module_name) = trimmed
+                .strip_prefix("mod ")
+                .and_then(|s| s.split(';').next())
+            {
                 return Some(module_name.trim().to_string());
             }
         }
@@ -188,7 +199,9 @@ pub fn extract_module_path(content: &str) -> Option<String> {
 }
 
 /// Generate suggested fixes from diagnostic
-pub async fn generate_suggested_fixes(diagnostic: &CompilerDiagnostic) -> Result<Vec<FixSuggestion>> {
+pub async fn generate_suggested_fixes(
+    diagnostic: &CompilerDiagnostic,
+) -> Result<Vec<FixSuggestion>> {
     let mut fixes = Vec::new();
 
     // Note: LSP CompilerDiagnostic doesn't have spans field, so we cannot access suggested_replacement
@@ -203,7 +216,10 @@ pub async fn generate_suggested_fixes(diagnostic: &CompilerDiagnostic) -> Result
         description: diagnostic.message.clone(),
         changes: vec![], // Empty changes since spans are not available
         confidence: 0.5, // Medium confidence
-        explanation: format!("Basic suggestion for compiler error: {}", diagnostic.message),
+        explanation: format!(
+            "Basic suggestion for compiler error: {}",
+            diagnostic.message
+        ),
         documentation_links: vec![],
         auto_applicable: false, // Cannot auto-apply without specific changes
         impact: FixImpact::Local,

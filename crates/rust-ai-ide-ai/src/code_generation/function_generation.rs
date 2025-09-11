@@ -64,12 +64,15 @@ struct FunctionTemplate {
 }
 
 impl FunctionGenerator {
-
     pub fn metadata(&self) -> GeneratorMetadata {
         GeneratorMetadata {
             name: "FunctionGenerator".to_string(),
             version: "1.0.0".to_string(),
-            language_support: vec![TargetLanguage::Rust, TargetLanguage::Python, TargetLanguage::TypeScript],
+            language_support: vec![
+                TargetLanguage::Rust,
+                TargetLanguage::Python,
+                TargetLanguage::TypeScript,
+            ],
             description: "Intelligent function generator with quality validation".to_string(),
             author: "Rust AI IDE".to_string(),
         }
@@ -88,7 +91,6 @@ impl FunctionGenerator {
         };
         Ok(quality)
     }
-
 }
 
 impl FunctionGenerator {
@@ -100,7 +102,10 @@ impl FunctionGenerator {
     }
 
     /// Generate a function based on the given context
-    pub async fn generate_function(&self, context: FunctionGenerationContext) -> Result<GeneratedFunction, CodeGenerationError> {
+    pub async fn generate_function(
+        &self,
+        context: FunctionGenerationContext,
+    ) -> Result<GeneratedFunction, CodeGenerationError> {
         // For now, return a placeholder function
         // In a real implementation, this would analyze the context and generate code
         let function = GeneratedFunction {
@@ -143,7 +148,9 @@ impl FunctionGenerator {
             },
             FunctionTemplate {
                 pattern: "mutator".to_string(),
-                template: "fn set_{field}(&mut self, {field}: {type}) {\n    self.{field} = {field};\n}".to_string(),
+                template:
+                    "fn set_{field}(&mut self, {field}: {type}) {\n    self.{field} = {field};\n}"
+                        .to_string(),
                 language: TargetLanguage::Rust,
                 confidence: 0.95,
             },

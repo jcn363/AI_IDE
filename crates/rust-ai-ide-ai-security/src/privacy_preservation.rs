@@ -1,8 +1,8 @@
 // Privacy Preserving Computation Module
 // Implements differential privacy, homomorphic encryption, and zero-knowledge proofs
 
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 
 /// Privacy level configurations
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -57,7 +57,10 @@ impl PrivacyGuard {
         })
     }
 
-    pub fn apply_privacy(&self, request: &crate::secure_ai_engine::AIInferenceRequest) -> Result<PrivacyPreservedRequest> {
+    pub fn apply_privacy(
+        &self,
+        request: &crate::secure_ai_engine::AIInferenceRequest,
+    ) -> Result<PrivacyPreservedRequest> {
         let mut sanitized_prompt = request.prompt.clone();
 
         // Apply differential privacy noise to input
@@ -82,7 +85,10 @@ impl PrivacyGuard {
         let mut guarantees = vec!["Input sanitization".to_string()];
 
         if self.config.differential_privacy > 0.0 {
-            guarantees.push(format!("Differential privacy (epsilon={})", self.config.differential_privacy));
+            guarantees.push(format!(
+                "Differential privacy (epsilon={})",
+                self.config.differential_privacy
+            ));
         }
 
         if self.config.homomorphic_encryption {

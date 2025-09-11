@@ -27,7 +27,11 @@ impl PolicyEnforcementEngine {
     }
 
     /// Enforce policies on given data
-    pub async fn enforce_policies(&self, data: &[u8], context: &PolicyContext) -> ComplianceResult<PolicyResult> {
+    pub async fn enforce_policies(
+        &self,
+        data: &[u8],
+        context: &PolicyContext,
+    ) -> ComplianceResult<PolicyResult> {
         // Placeholder implementation
         Ok(PolicyResult {
             allowed: true,
@@ -37,7 +41,10 @@ impl PolicyEnforcementEngine {
     }
 
     /// Update policy definitions
-    pub async fn update_policies(&mut self, policies: Vec<PolicyDefinition>) -> ComplianceResult<()> {
+    pub async fn update_policies(
+        &mut self,
+        policies: Vec<PolicyDefinition>,
+    ) -> ComplianceResult<()> {
         // Placeholder implementation
         Ok(())
     }

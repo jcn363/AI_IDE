@@ -3,11 +3,11 @@
 //! Provides intelligent energy management strategies for balancing
 //! performance with battery life across different operating modes.
 
+use crate::{AIPowerMode, BatteryConfig, BatteryState};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
-use crate::{BatteryState, BatteryConfig, AIPowerMode};
 
 /// Energy management service
 pub struct EnergyManager {
@@ -28,9 +28,9 @@ pub struct EnergyState {
 pub struct EnergyProfile {
     pub name: String,
     pub power_mode: PowerMode,
-    pub cpu_scaling: f32,          // 0.0 to 1.0 (1.0 = max performance)
-    pub gpu_scaling: Option<f32>,  // GPU scaling if available
-    pub memory_pressure: f32,      // 0.0 to 1.0 (0.0 = aggressive freeing)
+    pub cpu_scaling: f32,         // 0.0 to 1.0 (1.0 = max performance)
+    pub gpu_scaling: Option<f32>, // GPU scaling if available
+    pub memory_pressure: f32,     // 0.0 to 1.0 (0.0 = aggressive freeing)
     pub network_throttling: bool,
     pub background_task_throttle: bool,
     pub description: String,
@@ -94,49 +94,61 @@ impl EnergyManager {
     fn create_default_profiles() -> HashMap<String, EnergyProfile> {
         let mut profiles = HashMap::new();
 
-        profiles.insert("high_performance".to_string(), EnergyProfile {
-            name: "High Performance".to_string(),
-            power_mode: PowerMode::HighPerformance,
-            cpu_scaling: 1.0,
-            gpu_scaling: Some(1.0),
-            memory_pressure: 0.2,
-            network_throttling: false,
-            background_task_throttle: false,
-            description: "Maximum performance, minimal power optimization".to_string(),
-        });
+        profiles.insert(
+            "high_performance".to_string(),
+            EnergyProfile {
+                name: "High Performance".to_string(),
+                power_mode: PowerMode::HighPerformance,
+                cpu_scaling: 1.0,
+                gpu_scaling: Some(1.0),
+                memory_pressure: 0.2,
+                network_throttling: false,
+                background_task_throttle: false,
+                description: "Maximum performance, minimal power optimization".to_string(),
+            },
+        );
 
-        profiles.insert("balanced".to_string(), EnergyProfile {
-            name: "Balanced".to_string(),
-            power_mode: PowerMode::Balanced,
-            cpu_scaling: 0.8,
-            gpu_scaling: Some(0.8),
-            memory_pressure: 0.5,
-            network_throttling: false,
-            background_task_throttle: true,
-            description: "Good balance between performance and power efficiency".to_string(),
-        });
+        profiles.insert(
+            "balanced".to_string(),
+            EnergyProfile {
+                name: "Balanced".to_string(),
+                power_mode: PowerMode::Balanced,
+                cpu_scaling: 0.8,
+                gpu_scaling: Some(0.8),
+                memory_pressure: 0.5,
+                network_throttling: false,
+                background_task_throttle: true,
+                description: "Good balance between performance and power efficiency".to_string(),
+            },
+        );
 
-        profiles.insert("power_saver".to_string(), EnergyProfile {
-            name: "Power Saver".to_string(),
-            power_mode: PowerMode::PowerSaver,
-            cpu_scaling: 0.5,
-            gpu_scaling: Some(0.3),
-            memory_pressure: 0.8,
-            network_throttling: true,
-            background_task_throttle: true,
-            description: "Aggressive power saving with reduced performance".to_string(),
-        });
+        profiles.insert(
+            "power_saver".to_string(),
+            EnergyProfile {
+                name: "Power Saver".to_string(),
+                power_mode: PowerMode::PowerSaver,
+                cpu_scaling: 0.5,
+                gpu_scaling: Some(0.3),
+                memory_pressure: 0.8,
+                network_throttling: true,
+                background_task_throttle: true,
+                description: "Aggressive power saving with reduced performance".to_string(),
+            },
+        );
 
-        profiles.insert("emergency".to_string(), EnergyProfile {
-            name: "Emergency".to_string(),
-            power_mode: PowerMode::Emergency,
-            cpu_scaling: 0.3,
-            gpu_scaling: Some(0.1),
-            memory_pressure: 0.9,
-            network_throttling: true,
-            background_task_throttle: true,
-            description: "Critical battery mode for maximum power preservation".to_string(),
-        });
+        profiles.insert(
+            "emergency".to_string(),
+            EnergyProfile {
+                name: "Emergency".to_string(),
+                power_mode: PowerMode::Emergency,
+                cpu_scaling: 0.3,
+                gpu_scaling: Some(0.1),
+                memory_pressure: 0.9,
+                network_throttling: true,
+                background_task_throttle: true,
+                description: "Critical battery mode for maximum power preservation".to_string(),
+            },
+        );
 
         profiles
     }
@@ -153,11 +165,17 @@ impl EnergyManager {
             PowerMode::Custom(ref name) => name,
         };
 
-        profiles.get(profile_key).cloned()
+        profiles
+            .get(profile_key)
+            .cloned()
             .ok_or_else(|| anyhow::anyhow!("Profile not found: {}", profile_key))
     }
 
-    pub async fn switch_power_mode(&self, battery_state: &BatteryState, ai_mode: &AIPowerMode) -> anyhow::Result<()> {
+    pub async fn switch_power_mode(
+        &self,
+        battery_state: &BatteryState,
+        ai_mode: &AIPowerMode,
+    ) -> anyhow::Result<()> {
         let new_mode = self.calculate_optimal_mode(battery_state, ai_mode);
 
         let mut state = self.state.write().await;
@@ -176,7 +194,11 @@ impl EnergyManager {
         Ok(())
     }
 
-    fn calculate_optimal_mode(&self, battery_state: &BatteryState, ai_mode: &AIPowerMode) -> PowerMode {
+    fn calculate_optimal_mode(
+        &self,
+        battery_state: &BatteryState,
+        ai_mode: &AIPowerMode,
+    ) -> PowerMode {
         // Intelligent mode selection based on battery state and AI requirements
         if battery_state.level < self.config.emergency_mode_threshold {
             return PowerMode::Emergency;
@@ -224,16 +246,18 @@ impl EnergyManager {
             state.energy_budget.current_usage_mah = estimated_usage;
 
             // Calculate efficiency score
-            state.energy_budget.efficiency_score = self.calculate_efficiency_score(
-                &state.energy_budget,
-                battery_state
-            );
+            state.energy_budget.efficiency_score =
+                self.calculate_efficiency_score(&state.energy_budget, battery_state);
         }
 
         Ok(())
     }
 
-    fn calculate_energy_usage(&self, profile: &EnergyProfile, battery_state: &BatteryState) -> anyhow::Result<f32> {
+    fn calculate_energy_usage(
+        &self,
+        profile: &EnergyProfile,
+        battery_state: &BatteryState,
+    ) -> anyhow::Result<f32> {
         // Simplified energy calculation - in real implementation this would be more sophisticated
         let base_usage_per_hour = match profile.power_mode {
             PowerMode::HighPerformance => 1500.0, // mAh/hour
@@ -246,15 +270,28 @@ impl EnergyManager {
         // Adjust for battery level and temperature
         let level_factor = if battery_state.level < 0.2 { 1.3 } else { 1.0 }; // Higher drain at low battery
         let temp_factor = if let Some(temp) = battery_state.temperature {
-            if temp > 35.0 { 1.2 } else if temp < 20.0 { 0.9 } else { 1.0 }
-        } else { 1.0 };
+            if temp > 35.0 {
+                1.2
+            } else if temp < 20.0 {
+                0.9
+            } else {
+                1.0
+            }
+        } else {
+            1.0
+        };
 
         Ok(base_usage_per_hour * level_factor * temp_factor)
     }
 
-    fn calculate_efficiency_score(&self, budget: &EnergyBudget, battery_state: &BatteryState) -> f32 {
+    fn calculate_efficiency_score(
+        &self,
+        budget: &EnergyBudget,
+        battery_state: &BatteryState,
+    ) -> f32 {
         let efficiency = if budget.target_energy_usage_mah > 0.0 {
-            (budget.target_energy_usage_mah - budget.current_usage_mah).max(0.0) / budget.target_energy_usage_mah
+            (budget.target_energy_usage_mah - budget.current_usage_mah).max(0.0)
+                / budget.target_energy_usage_mah
         } else {
             0.5
         };
@@ -297,7 +334,7 @@ impl ResourceLimits {
     pub fn power_saver() -> Self {
         Self {
             max_cpu_usage_percent: 50.0,
-            max_memory_usage_mb: Some(2048), // 2GB limit
+            max_memory_usage_mb: Some(2048),        // 2GB limit
             max_network_bandwidth_kbps: Some(1024), // 1Mbps limit
             background_task_cpu_limit: 20.0,
         }
@@ -306,7 +343,7 @@ impl ResourceLimits {
     pub fn emergency() -> Self {
         Self {
             max_cpu_usage_percent: 30.0,
-            max_memory_usage_mb: Some(1024), // 1GB limit
+            max_memory_usage_mb: Some(1024),       // 1GB limit
             max_network_bandwidth_kbps: Some(256), // 256Kbps limit
             background_task_cpu_limit: 5.0,
         }
@@ -346,12 +383,15 @@ mod tests {
             time_remaining_minutes: Some(30),
         };
 
-        manager.switch_power_mode(&battery_state, &AIPowerMode::Balanced).await.unwrap();
+        manager
+            .switch_power_mode(&battery_state, &AIPowerMode::Balanced)
+            .await
+            .unwrap();
 
         // Should switch to emergency mode due to low battery
         let profile = manager.get_current_profile().await.unwrap();
         match profile.power_mode {
-            PowerMode::Emergency => {}, // Expected
+            PowerMode::Emergency => {} // Expected
             other => panic!("Expected Emergency mode, got {:?}", other),
         }
     }

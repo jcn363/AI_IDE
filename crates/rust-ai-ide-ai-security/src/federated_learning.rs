@@ -1,9 +1,9 @@
 // Federated Learning Module
 // Implements secure federated learning with privacy preservation
 
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
-use anyhow::Result;
 
 /// Training request for federated learning
 #[derive(Debug, Clone, Serialize, Deserialize)]

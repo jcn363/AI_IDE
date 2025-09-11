@@ -1,6 +1,6 @@
 use crate::types::*;
-use async_trait::async_trait;
 use crate::RefactoringOperation;
+use async_trait::async_trait;
 
 /// Move Class operation - moves a class to a different file or location
 pub struct MoveClassOperation;

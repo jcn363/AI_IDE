@@ -1,11 +1,11 @@
 //! Common utilities and helpers for integration tests
 
+use rust_ai_ide_errors::RustAIError;
+use shared_test_utils::integration::IntegrationTestRunner;
+use shared_test_utils::IntegrationContext;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use shared_test_utils::IntegrationContext;
-use shared_test_utils::integration::IntegrationTestRunner;
-use rust_ai_ide_errors::RustAIError;
 
 /// Common test data directory and sample files
 pub const TEST_DATA_DIR: &str = "integration-test-data";
@@ -67,7 +67,8 @@ impl ExtendedIntegrationContext {
         std::fs::create_dir_all(&project_dir)?;
 
         // Create Cargo.toml
-        let cargo_toml = format!(r#"
+        let cargo_toml = format!(
+            r#"
 [package]
 name = "{}"
 version = "0.1.0"
@@ -76,7 +77,9 @@ edition = "2021"
 [dependencies]
 serde = "1.0"
 tokio = "1.0"
-"#, project_name);
+"#,
+            project_name
+        );
 
         std::fs::write(project_dir.join("Cargo.toml"), cargo_toml)?;
 
@@ -84,14 +87,18 @@ tokio = "1.0"
         std::fs::create_dir_all(project_dir.join("src"))?;
         std::fs::write(
             project_dir.join("src/main.rs"),
-            SAMPLE_RUST_FILE.replace("TestAnalyzer", &format!("{}Analyzer", project_name))
+            SAMPLE_RUST_FILE.replace("TestAnalyzer", &format!("{}Analyzer", project_name)),
         )?;
 
         Ok(())
     }
 
     /// Create mock LSP response data
-    pub async fn store_mock_data(&self, key: &str, value: serde_json::Value) -> Result<(), RustAIError> {
+    pub async fn store_mock_data(
+        &self,
+        key: &str,
+        value: serde_json::Value,
+    ) -> Result<(), RustAIError> {
         let mut mock_data = self.mock_data.lock().await;
         mock_data.insert(key.to_string(), value);
         Ok(())
@@ -144,12 +151,19 @@ tokio = "1.0"
     }
 
     /// Validate that a file exists and contains expected content
-    pub async fn validate_file_content(&self, path: &Path, expected_content: &str) -> Result<bool, RustAIError> {
+    pub async fn validate_file_content(
+        &self,
+        path: &Path,
+        expected_content: &str,
+    ) -> Result<bool, RustAIError> {
         if path.is_absolute() {
             return Ok(path.exists() && std::fs::read_to_string(path)?.contains(expected_content));
         } else {
             let full_path = self.test_workspace.join(path);
-            Ok(full_path.exists() && std::fs::read_to_string(full_path)?.contains(expected_content))
+            Ok(
+                full_path.exists()
+                    && std::fs::read_to_string(full_path)?.contains(expected_content),
+            )
         }
     }
 }
@@ -169,7 +183,10 @@ impl EnhancedIntegrationTestRunner {
     }
 
     /// Initialize with enhanced context
-    pub async fn setup_enhanced(&mut self, config: shared_test_utils::IntegrationContext) -> Result<(), RustAIError> {
+    pub async fn setup_enhanced(
+        &mut self,
+        config: shared_test_utils::IntegrationContext,
+    ) -> Result<(), RustAIError> {
         self.runner.setup(config.clone()).await?;
 
         if let Some(base_context) = self.runner.context() {
@@ -195,11 +212,15 @@ impl EnhancedIntegrationTestRunner {
         F: FnOnce(&mut ExtendedIntegrationContext) -> Result<T, RustAIError> + Send + 'static,
         T: Send + 'static,
     {
-        let mut context = self.extended_context.clone()
+        let mut context = self
+            .extended_context
+            .clone()
             .ok_or_else(|| RustAIError::invalid_input("Enhanced context not initialized"))?;
 
         // Setup test scenario
-        context.base.store_state("scenario", scenario_name.to_string())?;
+        context
+            .base
+            .store_state("scenario", scenario_name.to_string())?;
 
         // Run the test function
         let result = test_fn(&mut context)?;
@@ -227,12 +248,14 @@ pub mod scenarios {
         }
 
         pub fn with_file(mut self, path: &str, content: &str) -> Self {
-            self.project_files.push((path.to_string(), content.to_string()));
+            self.project_files
+                .push((path.to_string(), content.to_string()));
             self
         }
 
         pub fn expect_completion(mut self, position: (u32, u32)) -> Self {
-            self.expected_operations.push(format!("completion: ({}, {})", position.0, position.1));
+            self.expected_operations
+                .push(format!("completion: ({}, {})", position.0, position.1));
             self
         }
 
@@ -255,7 +278,9 @@ pub mod scenarios {
             }
 
             // Store expected operations in context
-            context.base.store_state("expected_operations", self.expected_operations)?;
+            context
+                .base
+                .store_state("expected_operations", self.expected_operations)?;
 
             Ok(())
         }
@@ -287,10 +312,19 @@ pub mod scenarios {
             self
         }
 
-        pub async fn build(self, context: &mut ExtendedIntegrationContext) -> Result<(), RustAIError> {
-            context.store_mock_data("analysis_type", serde_json::json!(self.analysis_type)).await?;
-            context.store_mock_data("input_code", serde_json::json!(self.input_code)).await?;
-            context.store_mock_data("expected_issues", serde_json::json!(self.expected_issues)).await?;
+        pub async fn build(
+            self,
+            context: &mut ExtendedIntegrationContext,
+        ) -> Result<(), RustAIError> {
+            context
+                .store_mock_data("analysis_type", serde_json::json!(self.analysis_type))
+                .await?;
+            context
+                .store_mock_data("input_code", serde_json::json!(self.input_code))
+                .await?;
+            context
+                .store_mock_data("expected_issues", serde_json::json!(self.expected_issues))
+                .await?;
             Ok(())
         }
     }

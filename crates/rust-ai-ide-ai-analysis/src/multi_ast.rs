@@ -1,8 +1,8 @@
+use crate::error_handling::{AnalysisError, AnalysisResult};
 use serde::{Deserialize, Serialize};
-use tree_sitter::{Node, Parser as TreeSitterParser};
 use std::collections::HashMap;
 use std::fmt;
-use crate::error_handling::{AnalysisError, AnalysisResult};
+use tree_sitter::{Node, Parser as TreeSitterParser};
 
 /// Multi-language AST parsing and abstraction layer
 ///
@@ -182,7 +182,6 @@ pub struct MultiASTParser {
     parsers: HashMap<Language, TreeSitterParser>,
 }
 
-
 impl MultiASTParser {
     /// Create a new multi-language AST parser
     pub fn new() -> Self {
@@ -196,7 +195,9 @@ impl MultiASTParser {
 
         // Initialize JavaScript parser (using TypeScript parser for JS as well)
         let mut js_parser = TreeSitterParser::new();
-        js_parser.set_language(&tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into()).unwrap();
+        js_parser
+            .set_language(&tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
+            .unwrap();
         parsers.insert(Language::JavaScript, js_parser);
 
         // Initialize Python parser
@@ -231,14 +232,16 @@ impl MultiASTParser {
         match language {
             Language::Rust => self.parse_rust(content),
             lang if self.parsers.contains_key(lang) => self.parse_treesitter(lang, content),
-            _ => Err(AnalysisError::UnsupportedLanguage(format!("{:?}", language))),
+            _ => Err(AnalysisError::UnsupportedLanguage(format!(
+                "{:?}",
+                language
+            ))),
         }
     }
 
     /// Parse Rust code using syn
     fn parse_rust(&self, content: &str) -> AnalysisResult<UnifiedAST> {
-        let ast = syn::parse_file(content)
-            .map_err(|e| AnalysisError::ParseError(e.to_string()))?;
+        let ast = syn::parse_file(content).map_err(|e| AnalysisError::ParseError(e.to_string()))?;
 
         let root_node = self.convert_syn_to_unified(&ast, content);
         Ok(UnifiedAST {
@@ -249,11 +252,17 @@ impl MultiASTParser {
     }
 
     /// Parse code using tree-sitter
-    fn parse_treesitter(&mut self, language: &Language, content: &str) -> AnalysisResult<UnifiedAST> {
-        let parser = self.parsers.get_mut(language)
-            .ok_or_else(|| AnalysisError::UnsupportedLanguage(format!("No parser for {:?}", language)))?;
+    fn parse_treesitter(
+        &mut self,
+        language: &Language,
+        content: &str,
+    ) -> AnalysisResult<UnifiedAST> {
+        let parser = self.parsers.get_mut(language).ok_or_else(|| {
+            AnalysisError::UnsupportedLanguage(format!("No parser for {:?}", language))
+        })?;
 
-        let tree = parser.parse(content, None)
+        let tree = parser
+            .parse(content, None)
             .ok_or_else(|| AnalysisError::ParseError("Tree-sitter parsing failed".to_string()))?;
 
         // Convert tree-sitter tree to unified AST
@@ -268,56 +277,63 @@ impl MultiASTParser {
 
     /// Convert syn AST to unified AST
     fn convert_syn_to_unified(&self, ast: &syn::File, content: &str) -> ASTNode {
-        let children = ast.items.iter().map(|item| {
-            match item {
-                syn::Item::Fn(func) => ASTNode::Function {
-                    name: func.sig.ident.to_string(),
-                    parameters: func.sig.inputs.iter().map(|param| {
-                        match param {
-                            syn::FnArg::Receiver(_) => Parameter {
-                                name: "self".to_string(),
-                                param_type: None,
-                                default_value: None,
-                            },
-                            syn::FnArg::Typed(pat_type) => {
-                                let name = match &*pat_type.pat {
-                                    syn::Pat::Ident(ident) => ident.ident.to_string(),
-                                    _ => "_".to_string(),
-                                };
-                                let param_type = Some(quote::quote!(#pat_type.ty).to_string());
-                                Parameter {
-                                    name,
-                                    param_type,
+        let children = ast
+            .items
+            .iter()
+            .map(|item| {
+                match item {
+                    syn::Item::Fn(func) => ASTNode::Function {
+                        name: func.sig.ident.to_string(),
+                        parameters: func
+                            .sig
+                            .inputs
+                            .iter()
+                            .map(|param| match param {
+                                syn::FnArg::Receiver(_) => Parameter {
+                                    name: "self".to_string(),
+                                    param_type: None,
                                     default_value: None,
+                                },
+                                syn::FnArg::Typed(pat_type) => {
+                                    let name = match &*pat_type.pat {
+                                        syn::Pat::Ident(ident) => ident.ident.to_string(),
+                                        _ => "_".to_string(),
+                                    };
+                                    let param_type = Some(quote::quote!(#pat_type.ty).to_string());
+                                    Parameter {
+                                        name,
+                                        param_type,
+                                        default_value: None,
+                                    }
                                 }
-                            }
-                        }
-                    }).collect(),
-                    return_type: match &func.sig.output {
-                        syn::ReturnType::Default => None,
-                        syn::ReturnType::Type(_, ty) => Some(quote::quote!(#ty).to_string()),
+                            })
+                            .collect(),
+                        return_type: match &func.sig.output {
+                            syn::ReturnType::Default => None,
+                            syn::ReturnType::Type(_, ty) => Some(quote::quote!(#ty).to_string()),
+                        },
+                        body: vec![],                   // Would need deeper conversion
+                        visibility: Visibility::Public, // Assume public for now
+                        source_range: SourceRange {
+                            start_line: 0,
+                            start_column: 0,
+                            end_line: 0,
+                            end_column: 0,
+                        },
                     },
-                    body: vec![], // Would need deeper conversion
-                    visibility: Visibility::Public, // Assume public for now
-                    source_range: SourceRange {
-                        start_line: 0,
-                        start_column: 0,
-                        end_line: 0,
-                        end_column: 0,
+                    _ => ASTNode::Other {
+                        node_type: "item".to_string(),
+                        properties: HashMap::new(),
+                        source_range: SourceRange {
+                            start_line: 0,
+                            start_column: 0,
+                            end_line: 0,
+                            end_column: 0,
+                        },
                     },
-                },
-                _ => ASTNode::Other {
-                    node_type: "item".to_string(),
-                    properties: HashMap::new(),
-                    source_range: SourceRange {
-                        start_line: 0,
-                        start_column: 0,
-                        end_line: 0,
-                        end_column: 0,
-                    },
-                },
-            }
-        }).collect();
+                }
+            })
+            .collect();
 
         ASTNode::Document {
             children,
@@ -341,7 +357,9 @@ impl MultiASTParser {
 
         match node.kind() {
             "function_definition" | "function_declaration" => {
-                let name = self.find_child_text(&node, &["identifier", "name"], source).unwrap_or_default();
+                let name = self
+                    .find_child_text(&node, &["identifier", "name"], source)
+                    .unwrap_or_default();
                 let parameters = self.extract_parameters(&node, source);
                 let return_type = self.find_child_text(&node, &["return_type", "type"], source);
 
@@ -349,43 +367,55 @@ impl MultiASTParser {
                     name,
                     parameters,
                     return_type,
-                    body: node.named_children(&mut node.walk()).map(|child| {
-                        self.convert_treesitter_to_unified(child, source)
-                    }).collect(),
+                    body: node
+                        .named_children(&mut node.walk())
+                        .map(|child| self.convert_treesitter_to_unified(child, source))
+                        .collect(),
                     visibility: Visibility::Public, // Default
                     source_range,
                 }
-            },
+            }
             "class_definition" | "class_declaration" => {
-                let name = self.find_child_text(&node, &["identifier", "name"], source).unwrap_or_default();
+                let name = self
+                    .find_child_text(&node, &["identifier", "name"], source)
+                    .unwrap_or_default();
 
                 ASTNode::Class {
                     name,
-                    extends: vec![], // Would need to extract inheritance
+                    extends: vec![],    // Would need to extract inheritance
                     implements: vec![], // Would need to extract interfaces
-                    methods: node.named_children(&mut node.walk()).filter_map(|child| {
-                        if matches!(child.kind(), "function_definition" | "method_definition") {
-                            Some(self.convert_treesitter_to_unified(child, source))
-                        } else {
-                            None
-                        }
-                    }).collect(),
-                    fields: node.named_children(&mut node.walk()).filter_map(|child| {
-                        if matches!(child.kind(), "field_declaration" | "variable_declaration") {
-                            Some(Field {
-                                name: self.find_child_text(&child, &["identifier"], source).unwrap_or_default(),
-                                field_type: self.find_child_text(&child, &["type"], source),
-                                visibility: Visibility::Public,
-                                default_value: None,
-                            })
-                        } else {
-                            None
-                        }
-                    }).collect(),
+                    methods: node
+                        .named_children(&mut node.walk())
+                        .filter_map(|child| {
+                            if matches!(child.kind(), "function_definition" | "method_definition") {
+                                Some(self.convert_treesitter_to_unified(child, source))
+                            } else {
+                                None
+                            }
+                        })
+                        .collect(),
+                    fields: node
+                        .named_children(&mut node.walk())
+                        .filter_map(|child| {
+                            if matches!(child.kind(), "field_declaration" | "variable_declaration")
+                            {
+                                Some(Field {
+                                    name: self
+                                        .find_child_text(&child, &["identifier"], source)
+                                        .unwrap_or_default(),
+                                    field_type: self.find_child_text(&child, &["type"], source),
+                                    visibility: Visibility::Public,
+                                    default_value: None,
+                                })
+                            } else {
+                                None
+                            }
+                        })
+                        .collect(),
                     visibility: Visibility::Public,
                     source_range,
                 }
-            },
+            }
             "import_statement" | "import_declaration" => {
                 let module = self.extract_import_module(&node, source);
                 let symbols = self.extract_import_symbols(&node, source);
@@ -396,15 +426,20 @@ impl MultiASTParser {
                     alias: None,
                     source_range,
                 }
-            },
+            }
             "comment" => {
                 let content = node.utf8_text(source.as_bytes()).unwrap_or("").to_string();
-                ASTNode::Comment { content, source_range }
-            },
+                ASTNode::Comment {
+                    content,
+                    source_range,
+                }
+            }
             _ => {
                 let mut properties = HashMap::new();
-                properties.insert("text".to_string(),
-                    node.utf8_text(source.as_bytes()).unwrap_or("").to_string());
+                properties.insert(
+                    "text".to_string(),
+                    node.utf8_text(source.as_bytes()).unwrap_or("").to_string(),
+                );
 
                 ASTNode::Other {
                     node_type: node.kind().to_string(),
@@ -419,7 +454,10 @@ impl MultiASTParser {
     fn find_child_text(&self, node: &Node, kinds: &[&str], source: &str) -> Option<String> {
         for child in node.named_children(&mut node.walk()) {
             if kinds.contains(&child.kind()) {
-                return child.utf8_text(source.as_bytes()).ok().map(|s| s.to_string());
+                return child
+                    .utf8_text(source.as_bytes())
+                    .ok()
+                    .map(|s| s.to_string());
             }
             // Recursively search in children
             if let Some(text) = self.find_child_text(&child, kinds, source) {
@@ -433,7 +471,8 @@ impl MultiASTParser {
     fn extract_parameters(&self, node: &Node, source: &str) -> Vec<Parameter> {
         let mut parameters = vec![];
 
-        if let Some(params_node) = node.named_child(1) { // Usually parameters are the second child
+        if let Some(params_node) = node.named_child(1) {
+            // Usually parameters are the second child
             for child in params_node.named_children(&mut params_node.walk()) {
                 if matches!(child.kind(), "identifier" | "parameter") {
                     let name = child.utf8_text(source.as_bytes()).unwrap_or("").to_string();
@@ -481,8 +520,11 @@ impl Default for MultiASTParser {
 
 impl fmt::Debug for MultiASTParser {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "MultiASTParser {{ parsers: {} language parsers }}",
-               self.parsers.len())
+        write!(
+            f,
+            "MultiASTParser {{ parsers: {} language parsers }}",
+            self.parsers.len()
+        )
     }
 }
 

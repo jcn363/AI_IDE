@@ -54,7 +54,7 @@ impl BuildManager {
         tx: mpsc::Sender<String>,
     ) -> Result<BuildResult> {
         let start = std::time::Instant::now();
-        
+
         // Execute pre-build hooks
         if let Err(e) = self.config.hooks.execute_pre_build(project_path).await {
             tx.send(format!("Pre-build hook failed: {}\n", e)).await?;
@@ -66,7 +66,9 @@ impl BuildManager {
         }
 
         // Execute the actual build
-        let build_result = self.execute_cargo_build(project_path, profile, tx.clone()).await;
+        let build_result = self
+            .execute_cargo_build(project_path, profile, tx.clone())
+            .await;
 
         // Execute post-build hooks regardless of build success
         if let Err(e) = self.config.hooks.execute_post_build(project_path).await {
@@ -89,57 +91,59 @@ impl BuildManager {
     ) -> Result<BuildResult> {
         let mut command = Command::new("cargo");
         command.current_dir(project_path);
-        
+
         // Set environment variables
         command.envs(&self.config.env);
-        
+
         // Build command
         command.arg("build");
-        
+
         // Set profile
         if profile != "debug" {
             command.arg("--profile").arg(profile);
         }
-        
+
         // Set target if specified
         if let Some(target) = &self.config.target {
             command.arg("--target").arg(target);
         }
-        
+
         // Handle features
         if self.config.all_features {
             command.arg("--all-features");
         } else if self.config.no_default_features {
             command.arg("--no-default-features");
         } else if !self.config.features.is_empty() {
-            command.arg("--features").arg(self.config.features.join(","));
+            command
+                .arg("--features")
+                .arg(self.config.features.join(","));
         }
-        
+
         // Execute the command
         let output = command
             .output()
             .map_err(|e| anyhow::anyhow!("Failed to execute cargo build: {}", e))?;
-        
+
         // Send output
         let output_str = String::from_utf8_lossy(&output.stdout);
         let error_str = String::from_utf8_lossy(&output.stderr);
-        
+
         tx.send(output_str.to_string()).await?;
         if !error_str.is_empty() {
             tx.send(error_str.to_string()).await?;
         }
-        
+
         Ok(BuildResult {
             success: output.status.success(),
             output: format!("{}\n{}", output_str, error_str),
             duration: start.elapsed(),
         })
     }
-    
+
     pub fn get_config(&self) -> &BuildConfig {
         &self.config
     }
-    
+
     pub fn get_config_mut(&mut self) -> &mut BuildConfig {
         &mut self.config
     }

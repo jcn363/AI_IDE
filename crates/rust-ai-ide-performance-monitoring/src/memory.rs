@@ -3,11 +3,11 @@
 //! This module provides comprehensive memory monitoring, leak detection,
 //! and memory optimization features with cross-platform support.
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
 
 /// Memory leak detector with smart scheduling
 #[derive(Debug)]
@@ -224,19 +224,25 @@ impl MemoryLeakDetector {
         let n = allocations.len() as f64;
         let timestamps: Vec<f64> = allocations
             .iter()
-            .map(|a| a.timestamp.duration_since(std::time::SystemTime::UNIX_EPOCH).unwrap().as_secs_f64())
+            .map(|a| {
+                a.timestamp
+                    .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs_f64()
+            })
             .collect();
 
-        let values: Vec<f64> = allocations
-            .iter()
-            .map(|a| a.size_bytes as f64)
-            .collect();
+        let values: Vec<f64> = allocations.iter().map(|a| a.size_bytes as f64).collect();
 
         // Simple linear regression: slope = covariance(x,y) / variance(x)
         let x_mean = timestamps.iter().sum::<f64>() / n;
         let y_mean = values.iter().sum::<f64>() / n;
 
-        let numerator = timestamps.iter().zip(values.iter()).map(|(x, y)| (x - x_mean) * (y - y_mean)).sum::<f64>();
+        let numerator = timestamps
+            .iter()
+            .zip(values.iter())
+            .map(|(x, y)| (x - x_mean) * (y - y_mean))
+            .sum::<f64>();
         let denominator = timestamps.iter().map(|x| (x - x_mean).powi(2)).sum::<f64>();
 
         if denominator == 0.0 {
@@ -325,7 +331,10 @@ impl MemoryOptimizer {
 
         // Update state
         let mut state = self.state.lock().await;
-        state.total_memory_freed += optimizations.iter().map(|o| o.memory_freed_bytes).sum::<usize>();
+        state.total_memory_freed += optimizations
+            .iter()
+            .map(|o| o.memory_freed_bytes)
+            .sum::<usize>();
         state.optimizations_applied.extend(optimizations.clone());
         state.last_cleanup = Instant::now();
 
@@ -405,7 +414,7 @@ mod tests {
             detector.record_allocation(
                 "test_category".to_string(),
                 1000 + i * 100,
-                format!("allocation_{}", i)
+                format!("allocation_{}", i),
             );
         }
 
@@ -430,9 +439,14 @@ mod tests {
     #[tokio::test]
     async fn test_virtual_memory_manager() {
         let manager = VirtualMemoryManager::new(10 * 1024 * 1024, 100 * 1024 * 1024); // 10MB, 100MB
-        manager.track_dataset("test_dataset".to_string(), 5 * 1024 * 1024).await; // 5MB
+        manager
+            .track_dataset("test_dataset".to_string(), 5 * 1024 * 1024)
+            .await; // 5MB
 
-        assert_eq!(manager.get_dataset_size("test_dataset").await, Some(5 * 1024 * 1024));
+        assert_eq!(
+            manager.get_dataset_size("test_dataset").await,
+            Some(5 * 1024 * 1024)
+        );
         assert!(!manager.should_swap_to_disk("test_dataset").await);
         assert_eq!(manager.total_memory_usage().await, 5 * 1024 * 1024);
     }

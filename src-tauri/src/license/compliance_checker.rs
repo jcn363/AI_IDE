@@ -15,11 +15,11 @@ impl Default for LicenseComplianceChecker {
         allowed.insert("BSD-3-Clause");
         allowed.insert("ISC");
         allowed.insert("Unlicense");
-        
+
         let mut denied = HashSet::new();
         denied.insert("GPL-3.0");
         denied.insert("AGPL-3.0");
-        
+
         Self {
             allowed_licenses: allowed,
             denied_licenses: denied,
@@ -30,18 +30,18 @@ impl Default for LicenseComplianceChecker {
 impl LicenseComplianceChecker {
     pub fn new(allowed: Option<Vec<&'static str>>, denied: Option<Vec<&'static str>>) -> Self {
         let mut checker = Self::default();
-        
+
         if let Some(allowed) = allowed {
             checker.allowed_licenses = allowed.into_iter().collect();
         }
-        
+
         if let Some(denied) = denied {
             checker.denied_licenses = denied.into_iter().collect();
         }
-        
+
         checker
     }
-    
+
     pub fn check_license(&self, license: &str) -> LicenseCompliance {
         match license.parse::<Expression>() {
             Err(_) => LicenseCompliance::Invalid,
@@ -62,7 +62,7 @@ impl LicenseComplianceChecker {
             LicenseCompliance::Unknown
         }
     }
-    
+
     fn check_denied_licenses(&self, expr: &Expression) -> Option<Vec<String>> {
         let mut denied = Vec::new();
 
@@ -81,7 +81,7 @@ impl LicenseComplianceChecker {
             Some(denied)
         }
     }
-    
+
     fn check_allowed_licenses(&self, expr: &Expression) -> Option<Vec<String>> {
         let mut allowed = Vec::new();
 

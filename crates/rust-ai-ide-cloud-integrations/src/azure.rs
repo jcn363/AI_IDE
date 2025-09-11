@@ -1,11 +1,11 @@
+use crate::types::{CloudAuth, CloudResource};
+use crate::CloudProvider;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
-use anyhow::{Result, Context};
+use azure_identity::{DefaultAzureCredential, TokenCredentialOptions};
+use azure_storage::blob::{BlobServiceClient, ContainerService, CopyBlobOptions};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use azure_storage::blob::{BlobServiceClient, ContainerService, CopyBlobOptions};
-use azure_identity::{DefaultAzureCredential, TokenCredentialOptions};
-use crate::types::{CloudAuth, CloudResource};
-use crate::{CloudProvider};
 
 /// Azure-specific configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -55,7 +55,10 @@ impl CloudProvider for AzureClient {
     async fn deploy_resource(&self, resource: &CloudResource) -> Result<String> {
         match resource.resource_type.as_str() {
             "storage" => self.create_storage_container(&resource.name).await,
-            _ => Err(anyhow::anyhow!("Unsupported Azure resource type: {}", resource.resource_type)),
+            _ => Err(anyhow::anyhow!(
+                "Unsupported Azure resource type: {}",
+                resource.resource_type
+            )),
         }
     }
 
@@ -73,7 +76,10 @@ impl CloudProvider for AzureClient {
             let container = &resource_id[9..]; // Remove azure:// prefix
             self.delete_storage_container(container).await
         } else {
-            Err(anyhow::anyhow!("Unsupported Azure resource type for deletion: {}", resource_id))
+            Err(anyhow::anyhow!(
+                "Unsupported Azure resource type for deletion: {}",
+                resource_id
+            ))
         }
     }
 }
@@ -82,7 +88,11 @@ impl AzureClient {
     /// List storage containers (blob containers)
     async fn list_storage_containers(&self) -> Result<Vec<CloudResource>> {
         let client = self.blob_client.clone();
-        let containers = client.list_containers().include_metadata(true).execute().await?;
+        let containers = client
+            .list_containers()
+            .include_metadata(true)
+            .execute()
+            .await?;
 
         let mut resources = Vec::new();
 

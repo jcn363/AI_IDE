@@ -3,8 +3,8 @@
 //! This module contains helper functions for parsing diagnostic information,
 //! extracting error explanations, generating fixes, and related utility functions.
 
-use crate::modules::shared::diagnostics::*;
 use crate::commands::utils::*;
+use crate::modules::shared::diagnostics::*;
 use anyhow::{anyhow, Result};
 use std::collections::HashMap;
 use uuid;
@@ -46,8 +46,9 @@ async fn get_cached_error_explanation(
     crate::diagnostics::error_handling::get_cached_error_explanation(
         error_code,
         explanation_cache,
-        ttl_seconds
-    ).await
+        ttl_seconds,
+    )
+    .await
 }
 
 /// Get error code explanation from external source
@@ -60,10 +61,7 @@ async fn get_error_code_explanation(error_code: &str) -> Result<ErrorCodeExplana
 pub fn parse_rustc_explanation(text: &str) -> (String, String, Vec<ErrorExample>) {
     let lines: Vec<&str> = text.lines().collect();
 
-    let title = lines.first()
-        .unwrap_or(&"")
-        .trim()
-        .to_string();
+    let title = lines.first().unwrap_or(&"").trim().to_string();
 
     let explanation = text.to_string();
 
@@ -109,7 +107,8 @@ pub fn extract_related_errors(text: &str) -> Vec<String> {
     for line in text.lines() {
         if let Some(captures) = regex::Regex::new(r"E\d{4}")
             .ok()
-            .and_then(|re| re.find(line)) {
+            .and_then(|re| re.find(line))
+        {
             let error_code = captures.as_str().to_string();
             if !related.contains(&error_code) {
                 related.push(error_code);
@@ -170,7 +169,9 @@ pub fn extract_suggested_solutions(text: &str) -> Vec<String> {
 }
 
 /// Generate suggested fixes from compiler diagnostic spans
-pub async fn generate_suggested_fixes(diagnostic: &CompilerDiagnostic) -> Result<Vec<FixSuggestion>> {
+pub async fn generate_suggested_fixes(
+    diagnostic: &CompilerDiagnostic,
+) -> Result<Vec<FixSuggestion>> {
     let mut fixes = Vec::new();
 
     // Extract suggestions from compiler spans
@@ -179,19 +180,28 @@ pub async fn generate_suggested_fixes(diagnostic: &CompilerDiagnostic) -> Result
             let fix = FixSuggestion {
                 id: uuid::Uuid::new_v4().to_string(),
                 title: "Apply compiler suggestion".to_string(),
-                description: span.label.clone()
+                description: span
+                    .label
+                    .clone()
                     .unwrap_or_else(|| "Compiler suggested fix".to_string()),
                 fix_type: FixType::QuickFix,
                 changes: vec![CodeChange {
                     file_path: span.file_name.clone(),
-                    range: (span.line_start, span.column_start, span.line_end, span.column_end),
+                    range: (
+                        span.line_start,
+                        span.column_start,
+                        span.line_end,
+                        span.column_end,
+                    ),
                     old_text: String::new(), // Would need to extract from source
                     new_text: replacement.clone(),
                     change_type: CompilerChangeType::Replace,
                 }],
-                confidence: if span.suggestion_applicability
+                confidence: if span
+                    .suggestion_applicability
                     .as_ref()
-                    .map_or(false, |a| a == "machine-applicable") {
+                    .map_or(false, |a| a == "machine-applicable")
+                {
                     0.9
                 } else {
                     0.7

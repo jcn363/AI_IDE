@@ -1,5 +1,5 @@
-use crate::RefactoringOperation;
 use crate::types::*;
+use crate::RefactoringOperation;
 use async_trait::async_trait;
 
 /// Extract Variable operation - extracts a selected expression into a variable

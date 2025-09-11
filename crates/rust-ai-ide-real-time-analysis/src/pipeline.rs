@@ -1,9 +1,9 @@
 #![allow(missing_docs)]
 
-use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque, hash_map::Entry};
+use std::collections::{hash_map::Entry, BinaryHeap, HashMap, HashSet, VecDeque};
 use std::path::PathBuf;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
@@ -12,14 +12,14 @@ use futures::future::join_all;
 use petgraph::prelude::*;
 use petgraph::Graph;
 use rayon::prelude::*;
-use tokio::sync::{Mutex, RwLock, Semaphore, mpsc, oneshot};
+use tokio::sync::{mpsc, oneshot, Mutex, RwLock, Semaphore};
 use tokio::task;
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, error, info, warn, instrument};
+use tracing::{debug, error, info, instrument, warn};
 
 use crate::types::{
-    AnalysisMetadata, AnalysisResult, AnalysisType, PipelineConfig, PriorityConfig, TaskPriority,
-    PerformanceMetrics, AnalysisTrigger,
+    AnalysisMetadata, AnalysisResult, AnalysisTrigger, AnalysisType, PerformanceMetrics,
+    PipelineConfig, PriorityConfig, TaskPriority,
 };
 
 /// Errors that can occur in the analysis pipeline
@@ -320,7 +320,11 @@ impl MultiThreadedAnalysisPipeline {
 
         // Log partial failures
         if !errors.is_empty() {
-            warn!("Some tasks failed to submit: {} succeeded, {} failed", results.len(), errors.len());
+            warn!(
+                "Some tasks failed to submit: {} succeeded, {} failed",
+                results.len(),
+                errors.len()
+            );
         }
 
         Ok(results)
@@ -436,15 +440,22 @@ impl MultiThreadedAnalysisPipeline {
     /// Validate a task before submission
     async fn validate_task(&self, task: &AnalysisTask) -> PipelineResult<()> {
         if task.id.is_empty() {
-            return Err(PipelineError::InvalidTask("Task ID cannot be empty".to_string()));
+            return Err(PipelineError::InvalidTask(
+                "Task ID cannot be empty".to_string(),
+            ));
         }
 
         if task.file_path.as_os_str().is_empty() {
-            return Err(PipelineError::InvalidTask("File path cannot be empty".to_string()));
+            return Err(PipelineError::InvalidTask(
+                "File path cannot be empty".to_string(),
+            ));
         }
 
         if !task.file_path.exists() {
-            return Err(PipelineError::InvalidTask(format!("File does not exist: {:?}", task.file_path)));
+            return Err(PipelineError::InvalidTask(format!(
+                "File does not exist: {:?}",
+                task.file_path
+            )));
         }
 
         Ok(())
@@ -490,7 +501,11 @@ impl PipelineWorker {
     }
 
     /// Process a single analysis task
-    async fn process_task(&self, inner: &Arc<PipelineInner>, task: AnalysisTask) -> PipelineResult<()> {
+    async fn process_task(
+        &self,
+        inner: &Arc<PipelineInner>,
+        task: AnalysisTask,
+    ) -> PipelineResult<()> {
         // Mark task as running
         let running_task = RunningTask {
             task: task.clone(),
@@ -515,7 +530,9 @@ impl PipelineWorker {
 
         match result {
             Ok(analysis_result) => {
-                inner.completed_tasks.insert(task.id.clone(), analysis_result);
+                inner
+                    .completed_tasks
+                    .insert(task.id.clone(), analysis_result);
                 inner.progress_tracker.inc_processed();
                 debug!("Task {} completed successfully", task.id);
             }
@@ -535,7 +552,11 @@ impl PipelineWorker {
     }
 
     /// Wait for task dependencies to complete
-    async fn wait_for_dependencies(&self, inner: &Arc<PipelineInner>, task: &AnalysisTask) -> PipelineResult<()> {
+    async fn wait_for_dependencies(
+        &self,
+        inner: &Arc<PipelineInner>,
+        task: &AnalysisTask,
+    ) -> PipelineResult<()> {
         for dep_id in &task.dependencies {
             loop {
                 // Check if dependency is completed
@@ -549,9 +570,10 @@ impl PipelineWorker {
                     let still_queued = queue.iter().any(|t| t.id == *dep_id);
 
                     if !still_queued {
-                        return Err(PipelineError::DependencyFailed(
-                            format!("Dependency {} not found", dep_id)
-                        ));
+                        return Err(PipelineError::DependencyFailed(format!(
+                            "Dependency {} not found",
+                            dep_id
+                        )));
                     }
                 }
 
@@ -588,7 +610,9 @@ impl PipelineWorker {
         };
 
         // Create analysis results based on task type
-        let result = self.generate_analysis_result(&metadata, &metrics, duration).await;
+        let result = self
+            .generate_analysis_result(&metadata, &metrics, duration)
+            .await;
 
         Ok(result)
     }
@@ -664,7 +688,9 @@ impl PipelineInner {
         }
 
         // Find worker with lowest load
-        self.workers.iter().min_by_key(|w| w.work_semaphore.available_permits())
+        self.workers
+            .iter()
+            .min_by_key(|w| w.work_semaphore.available_permits())
     }
 }
 
@@ -735,7 +761,11 @@ impl FallbackHandler {
     }
 
     /// Handle a task failure with fallback mechanism
-    async fn handle_failure(&self, task: &AnalysisTask, error: &PipelineError) -> PipelineResult<()> {
+    async fn handle_failure(
+        &self,
+        task: &AnalysisTask,
+        error: &PipelineError,
+    ) -> PipelineResult<()> {
         warn!("Task {} failed: {}", task.id, error);
 
         // Simple exponential backoff retry logic (in a real implementation)

@@ -42,15 +42,18 @@ impl ServiceOrchestrator {
         info!("Initializing Service Orchestrator...");
 
         // Initialize message router
-        let message_router = crate::message_router::MessageRouter::new(self.service_registry.clone());
+        let message_router =
+            crate::message_router::MessageRouter::new(self.service_registry.clone());
         *self.message_router.write().await = Some(message_router);
 
         // Initialize health monitor
-        let health_monitor = crate::health_monitor::HealthMonitor::new(self.service_registry.clone());
+        let health_monitor =
+            crate::health_monitor::HealthMonitor::new(self.service_registry.clone());
         *self.health_monitor.write().await = Some(health_monitor);
 
         // Initialize lifecycle manager
-        let lifecycle_manager = crate::lifecycle_manager::LifecycleManager::new(self.service_registry.clone());
+        let lifecycle_manager =
+            crate::lifecycle_manager::LifecycleManager::new(self.service_registry.clone());
         *self.lifecycle_manager.write().await = Some(lifecycle_manager);
 
         *self.initialized.write().await = true;
@@ -161,7 +164,9 @@ impl ServiceOrchestrator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{ServiceCapabilities, ServicePriority, ServiceRegistration, ServiceStatus, ServiceVersion};
+    use crate::types::{
+        ServiceCapabilities, ServicePriority, ServiceRegistration, ServiceStatus, ServiceVersion,
+    };
 
     #[tokio::test]
     async fn test_orchestrator_initialization() {

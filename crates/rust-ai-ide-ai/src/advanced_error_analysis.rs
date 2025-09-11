@@ -1199,10 +1199,10 @@ impl RootCauseEngine {
         &self,
         error_context: &ErrorContext,
         _project_context: &AIContext, /* EXTENSIBILITY: Comprehensive project context for advanced
-                                        root cause analysis including workspace metadata, dependency
-                                        graphs, language configurations, and historical patterns.
-                                        Enables future ML-driven root cause inference using project-wide
-                                        context factors, configuration impacts, and ecosystem dependencies. */
+                                      root cause analysis including workspace metadata, dependency
+                                      graphs, language configurations, and historical patterns.
+                                      Enables future ML-driven root cause inference using project-wide
+                                      context factors, configuration impacts, and ecosystem dependencies. */
     ) -> AIResult<RootCauseAnalysis> {
         // Implementation for root cause analysis
         // This would use ML models and pattern matching to determine root causes
@@ -1279,10 +1279,10 @@ impl PredictionSystem {
     pub async fn predict_related_errors(
         &self,
         _root_cause: &RootCauseAnalysis, /* EXTENSIBILITY: Root cause baseline for predictive modeling
-                                           of cascading error patterns and systemic failure modes.
-                                           Enables future ML-based temporal error prediction, risk
-                                           assessment algorithms, and preventive intervention strategies
-                                           based on error propagation models and historical patterns. */
+                                         of cascading error patterns and systemic failure modes.
+                                         Enables future ML-based temporal error prediction, risk
+                                         assessment algorithms, and preventive intervention strategies
+                                         based on error propagation models and historical patterns. */
     ) -> AIResult<Vec<PredictionResult>> {
         // Implementation for predictive analysis
         Ok(vec![]) // Placeholder - would return actual predictions
@@ -1331,13 +1331,13 @@ impl SolutionGenerator {
     pub async fn generate_solutions(
         &self,
         _root_cause: &RootCauseAnalysis, /* EXTENSIBILITY: Structured root cause analysis for template
-                                           matching and solution generation. Enables future sophisticated
-                                           solution selection algorithms, context-aware suggestion ranking,
-                                           and personalized fix recommendations based on developer history. */
+                                         matching and solution generation. Enables future sophisticated
+                                         solution selection algorithms, context-aware suggestion ranking,
+                                         and personalized fix recommendations based on developer history. */
         _error_context: &ErrorContext, /* EXTENSIBILITY: Error context for template parameterization
-                                         and solution customization. Supports future contextual code
-                                         analysis, multi-file solution generation, and language-specific
-                                         solution adaptation with syntax and semantic awareness. */
+                                       and solution customization. Supports future contextual code
+                                       analysis, multi-file solution generation, and language-specific
+                                       solution adaptation with syntax and semantic awareness. */
     ) -> AIResult<Vec<FixSuggestion>> {
         // Implementation for solution generation
         Ok(vec![]) // Placeholder - would return actual solutions
@@ -1459,15 +1459,15 @@ impl EvolutionTracker {
     pub async fn track_evolution(
         &self,
         _root_cause: &RootCauseAnalysis, /* EXTENSIBILITY: Historical root cause patterns for
-                                          longitudinal evolutionary tracking. Enables future temporal
-                                          analysis of error evolution, pattern emergence over time,
-                                          and predictive modeling of systemic quality degradation
-                                          across the entire codebase lifecycle. */
-        _error_context: &ErrorContext,   /* EXTENSIBILITY: Current error context for pattern correlation
-                                          and evolution stage identification. Supports future integration
-                                          with temporal databases, trend analysis frameworks, and
-                                          historical pattern recognition algorithms for proactive
-                                          quality management. */
+                                         longitudinal evolutionary tracking. Enables future temporal
+                                         analysis of error evolution, pattern emergence over time,
+                                         and predictive modeling of systemic quality degradation
+                                         across the entire codebase lifecycle. */
+        _error_context: &ErrorContext, /* EXTENSIBILITY: Current error context for pattern correlation
+                                       and evolution stage identification. Supports future integration
+                                       with temporal databases, trend analysis frameworks, and
+                                       historical pattern recognition algorithms for proactive
+                                       quality management. */
     ) -> AIResult<Vec<EvolutionPattern>> {
         Ok(vec![]) // Placeholder - would return actual evolution patterns
     }

@@ -1,9 +1,9 @@
 //! Architecture pattern suggestions
 
-use rust_ai_ide_ai_analysis::ArchitectureSuggestion;
-use uuid::Uuid;
 use chrono::{DateTime, Utc};
+use rust_ai_ide_ai_analysis::ArchitectureSuggestion;
 use std::collections::HashSet;
+use uuid::Uuid;
 
 /// Analyzer for architecture patterns and suggestions
 pub struct ArchitecturePatternAnalyzer {
@@ -63,7 +63,8 @@ impl ArchitecturePatternAnalyzer {
                     "view".to_string(),
                     "controller".to_string(),
                 ]),
-                suggestion: "Consider more modern alternatives like MVVM or clean architecture".to_string(),
+                suggestion: "Consider more modern alternatives like MVVM or clean architecture"
+                    .to_string(),
                 confidence_threshold: 0.8,
             },
         );
@@ -76,7 +77,11 @@ impl ArchitecturePatternAnalyzer {
                 category: PatternCategory::Behavioral,
                 detector: PatternDetector::Composite(vec![
                     PatternDetector::TraitPattern(vec!["Repository".to_string()]),
-                    PatternDetector::FunctionPattern(vec!["find_by".to_string(), "save".to_string(), "delete".to_string()]),
+                    PatternDetector::FunctionPattern(vec![
+                        "find_by".to_string(),
+                        "save".to_string(),
+                        "delete".to_string(),
+                    ]),
                 ]),
                 suggestion: "Excellent pattern for data access abstraction!".to_string(),
                 confidence_threshold: 0.6,
@@ -106,10 +111,14 @@ impl ArchitecturePatternAnalyzer {
                 name: "Strategy Pattern".to_string(),
                 category: PatternCategory::Behavioral,
                 detector: PatternDetector::Composite(vec![
-                    PatternDetector::TraitPattern(vec!["Strategy".to_string(), "Algorithm".to_string()]),
+                    PatternDetector::TraitPattern(vec![
+                        "Strategy".to_string(),
+                        "Algorithm".to_string(),
+                    ]),
                     PatternDetector::TypePattern(vec!["Box<dyn".to_string(), "Arc<".to_string()]),
                 ]),
-                suggestion: "Runtime algorithm selection pattern - ensure proper error handling".to_string(),
+                suggestion: "Runtime algorithm selection pattern - ensure proper error handling"
+                    .to_string(),
                 confidence_threshold: 0.8,
             },
         );
@@ -146,7 +155,10 @@ impl ArchitecturePatternAnalyzer {
     }
 
     /// Analyze multiple files for patterns
-    pub async fn analyze_multiple_files(&self, files: &[(&str, &str)]) -> Result<Vec<ArchitectureSuggestion>, super::StyleCheckError> {
+    pub async fn analyze_multiple_files(
+        &self,
+        files: &[(&str, &str)],
+    ) -> Result<Vec<ArchitectureSuggestion>, super::StyleCheckError> {
         let mut suggestions = Vec::new();
         let mut all_patterns_found = HashSet::new();
 
@@ -166,7 +178,11 @@ impl ArchitecturePatternAnalyzer {
     }
 
     /// Analyze a single file for patterns
-    pub async fn analyze_single_file(&self, file_path: &str, content: &str) -> Result<Vec<ArchitectureSuggestion>, super::StyleCheckError> {
+    pub async fn analyze_single_file(
+        &self,
+        file_path: &str,
+        content: &str,
+    ) -> Result<Vec<ArchitectureSuggestion>, super::StyleCheckError> {
         let mut suggestions = Vec::new();
 
         for (pattern_name, template) in &self.known_patterns {
@@ -204,19 +220,22 @@ impl ArchitecturePatternAnalyzer {
     fn detect_pattern(&self, content: &str, detector: &PatternDetector) -> f64 {
         match detector {
             PatternDetector::FunctionPattern(patterns) => {
-                let found_count = patterns.iter()
+                let found_count = patterns
+                    .iter()
                     .filter(|pattern| content.contains(*pattern))
                     .count();
                 found_count as f64 / patterns.len() as f64
             }
             PatternDetector::TypePattern(patterns) => {
-                let found_count = patterns.iter()
+                let found_count = patterns
+                    .iter()
                     .filter(|pattern| content.contains(*pattern))
                     .count();
                 found_count as f64 / patterns.len() as f64
             }
             PatternDetector::TraitPattern(patterns) => {
-                let found_count = patterns.iter()
+                let found_count = patterns
+                    .iter()
                     .filter(|pattern| content.contains(*pattern))
                     .count();
                 found_count as f64 / patterns.len() as f64
@@ -224,8 +243,11 @@ impl ArchitecturePatternAnalyzer {
             PatternDetector::ModulePattern(patterns) => {
                 // For module patterns, we check for structural indicators
                 let content_lines = content.lines().count();
-                let function_lines = content.lines()
-                    .filter(|line| line.trim().starts_with("fn ") | line.trim().starts_with("pub fn "))
+                let function_lines = content
+                    .lines()
+                    .filter(|line| {
+                        line.trim().starts_with("fn ") | line.trim().starts_with("pub fn ")
+                    })
                     .count();
 
                 // High ratio of functions to lines suggests potential monolithic structure
@@ -236,7 +258,8 @@ impl ArchitecturePatternAnalyzer {
                 }
             }
             PatternDetector::Composite(detectors) => {
-                let total_confidence = detectors.iter()
+                let total_confidence = detectors
+                    .iter()
                     .map(|d| self.detect_pattern(content, d))
                     .sum::<f64>();
 
@@ -246,11 +269,13 @@ impl ArchitecturePatternAnalyzer {
     }
 
     /// Generate suggestions based on cross-file analysis
-    fn generate_cross_file_suggestions(&self, patterns_found: &HashSet<ArchitectureSuggestion>) -> Vec<ArchitectureSuggestion> {
+    fn generate_cross_file_suggestions(
+        &self,
+        patterns_found: &HashSet<ArchitectureSuggestion>,
+    ) -> Vec<ArchitectureSuggestion> {
         let mut suggestions = Vec::new();
-        let pattern_names: HashSet<String> = patterns_found.iter()
-            .map(|p| p.pattern.clone())
-            .collect();
+        let pattern_names: HashSet<String> =
+            patterns_found.iter().map(|p| p.pattern.clone()).collect();
 
         // Check for incompatible patterns
         if pattern_names.contains("MVC") && pattern_names.contains("Repository") {
@@ -287,7 +312,8 @@ impl ArchitecturePatternAnalyzer {
                     column: 0,
                     offset: 0,
                 },
-                description: "Factory pattern without Strategy pattern may limit flexibility".to_string(),
+                description: "Factory pattern without Strategy pattern may limit flexibility"
+                    .to_string(),
                 benefits: vec![
                     "Replaced object creation".to_string(),
                     "Configuration flexibility".to_string(),
@@ -311,7 +337,8 @@ impl ArchitecturePatternAnalyzer {
                     column: 0,
                     offset: 0,
                 },
-                description: "Your patterns lend themselves well to hexagonal architecture".to_string(),
+                description: "Your patterns lend themselves well to hexagonal architecture"
+                    .to_string(),
                 benefits: vec![
                     "Technology independence".to_string(),
                     "Testability".to_string(),
@@ -391,7 +418,10 @@ mod tests {
             }
         "#;
 
-        let suggestions = analyzer.analyze_single_file("test.rs", factory_code).await.unwrap();
+        let suggestions = analyzer
+            .analyze_single_file("test.rs", factory_code)
+            .await
+            .unwrap();
 
         // Should detect factory pattern
         assert!(suggestions.iter().any(|s| s.pattern.contains("Factory")));

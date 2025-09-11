@@ -1,8 +1,8 @@
+use crate::types::{Channel, Message};
+use crate::ServiceConnector;
 use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use crate::types::{Message, Channel};
-use crate::ServiceConnector;
 
 /// Slack API endpoints
 const SLACK_API_BASE: &str = "https://slack.com/api";
@@ -31,7 +31,8 @@ impl ServiceConnector for SlackConnector {
         // Test authentication with a simple API call
         let test_result = self.test_connection().await?;
         if test_result {
-            self.is_connected.store(true, std::sync::atomic::Ordering::Relaxed);
+            self.is_connected
+                .store(true, std::sync::atomic::Ordering::Relaxed);
             Ok(())
         } else {
             Err("Failed to authenticate with Slack API".into())
@@ -39,11 +40,16 @@ impl ServiceConnector for SlackConnector {
     }
 
     async fn disconnect(&self) -> Result<(), Box<dyn std::error::Error>> {
-        self.is_connected.store(false, std::sync::atomic::Ordering::Relaxed);
+        self.is_connected
+            .store(false, std::sync::atomic::Ordering::Relaxed);
         Ok(())
     }
 
-    async fn send_message(&self, channel: &str, message: &str) -> Result<String, Box<dyn std::error::Error>> {
+    async fn send_message(
+        &self,
+        channel: &str,
+        message: &str,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         if !self.is_connected.load(std::sync::atomic::Ordering::Relaxed) {
             return Err("Not connected to Slack".into());
         }
@@ -53,7 +59,8 @@ impl ServiceConnector for SlackConnector {
             "text": message
         });
 
-        let response = self.client
+        let response = self
+            .client
             .post(&format!("{}/chat.postMessage", SLACK_API_BASE))
             .bearer_auth(&self.token)
             .json(&payload)
@@ -101,7 +108,8 @@ impl ServiceConnector for SlackConnector {
 impl SlackConnector {
     /// Test connection to Slack API
     async fn test_connection(&self) -> Result<bool, Box<dyn std::error::Error>> {
-        let response = self.client
+        let response = self
+            .client
             .get(&format!("{}/auth.test", SLACK_API_BASE))
             .bearer_auth(&self.token)
             .send()
@@ -117,7 +125,8 @@ impl SlackConnector {
 
     /// Get channels list
     pub async fn get_channels(&self) -> Result<Vec<Channel>, Box<dyn std::error::Error>> {
-        let response = self.client
+        let response = self
+            .client
             .get(&format!("{}/conversations.list", SLACK_API_BASE))
             .bearer_auth(&self.token)
             .send()
@@ -141,7 +150,12 @@ impl SlackConnector {
     }
 
     /// Send file attachment
-    pub async fn send_file(&self, channel: &str, filename: &str, content: &[u8]) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn send_file(
+        &self,
+        channel: &str,
+        filename: &str,
+        content: &[u8],
+    ) -> Result<String, Box<dyn std::error::Error>> {
         // Implementation for sending files would require multipart upload
         tracing::info!("File upload not implemented yet for Slack connector");
         Ok("file_upload_placeholder".to_string())

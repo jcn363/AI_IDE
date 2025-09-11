@@ -1,11 +1,11 @@
 use anyhow::{Context, Result};
+use rust_ai_ide_common::fs::{read_file_to_string, write_string_to_file};
 use serde::{Deserialize, Serialize};
 use spdx::Expression;
 use std::{
     collections::HashSet,
     path::{Path, PathBuf},
 };
-use rust_ai_ide_common::fs::{read_file_to_string, write_string_to_file};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct LicensePolicy {
@@ -26,7 +26,8 @@ impl LicensePolicy {
     }
 
     pub async fn from_file(path: &Path) -> Result<Self> {
-        let content = read_file_to_string(path).await
+        let content = read_file_to_string(path)
+            .await
             .with_context(|| format!("Failed to read license policy from {:?}", path))?;
 
         let mut policy: Self = toml::from_str(&content)
@@ -37,10 +38,10 @@ impl LicensePolicy {
     }
 
     pub async fn save_to_file(&self, path: &Path) -> Result<()> {
-        let content = toml::to_string_pretty(self)
-            .context("Failed to serialize license policy")?;
+        let content = toml::to_string_pretty(self).context("Failed to serialize license policy")?;
 
-        write_string_to_file(path, &content).await
+        write_string_to_file(path, &content)
+            .await
             .with_context(|| format!("Failed to write license policy to {:?}", path))?;
 
         Ok(())
@@ -85,12 +86,17 @@ impl LicensePolicy {
 
     fn compile_license_list(licenses: &[String], list_name: &str) -> Result<Expression> {
         if licenses.is_empty() {
-            return Ok(Expression::parse("MIT").expect("Invalid dummy expression")); // Dummy expression that always evaluates to true
+            return Ok(Expression::parse("MIT").expect("Invalid dummy expression"));
+            // Dummy expression that always evaluates to true
         }
 
         let combined = licenses.join(" OR ");
-        Expression::parse(&combined)
-            .with_context(|| format!("Invalid SPDX expression in {} list: {}", list_name, combined))
+        Expression::parse(&combined).with_context(|| {
+            format!(
+                "Invalid SPDX expression in {} list: {}",
+                list_name, combined
+            )
+        })
     }
 }
 

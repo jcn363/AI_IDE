@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use cargo_edit::{LocalManifest, get_dep_version, set_dep_version, upgrade_requirement};
+use cargo_edit::{get_dep_version, set_dep_version, upgrade_requirement, LocalManifest};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -38,8 +38,8 @@ impl BatchUpdater {
     }
 
     pub fn update_dependencies(&self, updates: &[(&str, &str)]) -> Result<BatchUpdateResult> {
-        let mut manifest = LocalManifest::try_new(&self.manifest_path)
-            .context("Failed to load Cargo.toml")?;
+        let mut manifest =
+            LocalManifest::try_new(&self.manifest_path).context("Failed to load Cargo.toml")?;
 
         let mut result = BatchUpdateResult {
             updated: Vec::new(),
@@ -67,7 +67,9 @@ impl BatchUpdater {
         }
 
         if !self.dry_run && !result.updated.is_empty() {
-            manifest.write().context("Failed to write updated Cargo.toml")?;
+            manifest
+                .write()
+                .context("Failed to write updated Cargo.toml")?;
         }
 
         Ok(result)

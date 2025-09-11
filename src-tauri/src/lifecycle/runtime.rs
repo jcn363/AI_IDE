@@ -7,7 +7,7 @@
 //! - Service health checks
 //! - Performance monitoring
 
-use super::{LifecyclePhase, LifecycleEvent};
+use super::{LifecycleEvent, LifecyclePhase};
 use anyhow::Result;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -119,7 +119,8 @@ impl RuntimePhase {
                         success: true,
                         metadata: serde_json::json!({ "type": "health_check" }),
                         ..Default::default()
-                    }).await;
+                    })
+                    .await;
                 }
                 Err(e) => {
                     log::warn!("Health check failed: {}", e);
@@ -129,7 +130,8 @@ impl RuntimePhase {
                         success: false,
                         metadata: serde_json::json!({ "error": e.to_string() }),
                         ..Default::default()
-                    }).await;
+                    })
+                    .await;
                 }
             }
         }
@@ -151,7 +153,8 @@ impl RuntimePhase {
             health.last_health_check = std::time::SystemTime::now();
 
             // Emit warning if memory usage is high
-            if memory_usage > 500 { // 500MB threshold
+            if memory_usage > 500 {
+                // 500MB threshold
                 log::warn!("High memory usage detected: {} MB", memory_usage);
                 self.emit_event(LifecycleEvent {
                     phase: LifecyclePhase::Running,
@@ -162,7 +165,8 @@ impl RuntimePhase {
                         "threshold_mb": 500
                     }),
                     ..Default::default()
-                }).await;
+                })
+                .await;
             } else if self.monitoring_config.enable_detailed_logging {
                 log::debug!("Memory usage: {} MB", memory_usage);
             }
@@ -173,7 +177,10 @@ impl RuntimePhase {
         Ok(())
     }
 
-    async fn performance_monitoring_loop(&self, phase_state: Arc<Mutex<LifecyclePhase>>) -> Result<()> {
+    async fn performance_monitoring_loop(
+        &self,
+        phase_state: Arc<Mutex<LifecyclePhase>>,
+    ) -> Result<()> {
         let mut interval = time::interval(self.monitoring_config.performance_check_interval);
 
         loop {
@@ -199,7 +206,8 @@ impl RuntimePhase {
                             "active_threads": metrics.active_threads
                         }),
                         ..Default::default()
-                    }).await;
+                    })
+                    .await;
                 }
                 Err(e) => {
                     log::error!("Performance check failed: {}", e);
@@ -215,7 +223,8 @@ impl RuntimePhase {
 
         // Simulate AI service health check
         // In a real implementation, this would check actual service endpoints
-        let ai_status = if rand::random::<f32>() > 0.1 { // 90% success rate
+        let ai_status = if rand::random::<f32>() > 0.1 {
+            // 90% success rate
             ServiceStatus::Healthy
         } else {
             ServiceStatus::Degraded("Service is responding slowly".to_string())
@@ -249,7 +258,7 @@ impl RuntimePhase {
 
         Ok(PerformanceMetrics {
             response_time,
-            cpu_usage: 15.5, // Mock CPU usage
+            cpu_usage: 15.5,   // Mock CPU usage
             active_threads: 4, // Mock thread count
             timestamp: std::time::SystemTime::now(),
         })

@@ -218,7 +218,7 @@ For detailed configuration options and examples, see [INSTALL.md](INSTALL.md#con
 ### Current Metrics
 
 | Metric | Target | Current | Status |
-|--------|--------|---------|--------|
+| -------------|------|-------|------------------ |
 | Test Coverage | 95% | 95% | ✅ Achieved |
 | Startup Time | <500ms | 400ms | ✅ Achieved |
 | Memory Usage | <2GB | 1.8GB | ✅ Achieved |
@@ -251,4 +251,4 @@ For detailed build and test commands, see [INSTALL.md](INSTALL.md#build-configur
 
 ---
 
-*This roadmap is continuously updated based on development progress and community feedback. For implementation details, refer to individual crate documentation and the main README.md for user-facing features.*
+_This roadmap is continuously updated based on development progress and community feedback. For implementation details, refer to individual crate documentation and the main README.md for user-facing features._

@@ -37,14 +37,17 @@ impl<T: Clone + 'static> GenericMock<T> {
     where
         F: Fn(&[&dyn std::any::Any]) -> T + Send + Sync + 'static,
     {
-        self.behaviors.lock().unwrap().insert(method.to_string(), Box::new(behavior));
+        self.behaviors
+            .lock()
+            .unwrap()
+            .insert(method.to_string(), Box::new(behavior));
     }
 
     /// Execute a mock method
     pub fn execute(&self, method: &str, args: &[&dyn std::any::Any]) -> T {
         self.call_history.lock().unwrap().push((
             method.to_string(),
-            args.iter().map(|arg| format!("{:?}", arg)).collect()
+            args.iter().map(|arg| format!("{:?}", arg)).collect(),
         ));
 
         if let Some(behavior) = self.behaviors.lock().unwrap().get(method) {
@@ -56,13 +59,21 @@ impl<T: Clone + 'static> GenericMock<T> {
 
     /// Verify that a method was called
     pub fn verify_called(&self, method: &str) -> bool {
-        self.call_history.lock().unwrap().iter().any(|(m, _)| m == method)
+        self.call_history
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|(m, _)| m == method)
     }
 
     /// Verify that a method was called with specific arguments
     pub fn verify_called_with(&self, method: &str, args: &[&str]) -> bool {
         self.call_history.lock().unwrap().iter().any(|(m, a)| {
-            m == method && a.len() == args.len() && a.iter().zip(args).all(|(actual, expected)| actual.contains(expected))
+            m == method
+                && a.len() == args.len()
+                && a.iter()
+                    .zip(args)
+                    .all(|(actual, expected)| actual.contains(expected))
         })
     }
 
@@ -103,16 +114,30 @@ impl MockBehaviors {
 
     /// Return an error
     pub fn error<T>(error: String) -> impl Fn(&[&dyn std::any::Any]) -> Result<T, TestError> {
-        move |_| Err(TestError::Validation(crate::ValidationError::invalid_setup(error.clone())))
+        move |_| {
+            Err(TestError::Validation(
+                crate::ValidationError::invalid_setup(error.clone()),
+            ))
+        }
     }
 
     /// Return based on argument value
-    pub fn conditional<T, F>(condition: F, true_value: T, false_value: T) -> impl Fn(&[&dyn std::any::Any]) -> T
+    pub fn conditional<T, F>(
+        condition: F,
+        true_value: T,
+        false_value: T,
+    ) -> impl Fn(&[&dyn std::any::Any]) -> T
     where
         F: Fn(&[&dyn std::any::Any]) -> bool,
         T: Clone,
     {
-        move |args| if condition(args) { true_value.clone() } else { false_value.clone() }
+        move |args| {
+            if condition(args) {
+                true_value.clone()
+            } else {
+                false_value.clone()
+            }
+        }
     }
 
     /// Sequence of return values
@@ -146,7 +171,8 @@ impl MockFactory {
 
     /// Register a mock with a name
     pub fn register<T: 'static + Send + Sync>(&mut self, name: &str, mock: T) {
-        self.mocks.insert(name.to_string(), Box::new(Arc::new(Mutex::new(mock))));
+        self.mocks
+            .insert(name.to_string(), Box::new(Arc::new(Mutex::new(mock))));
     }
 
     /// Get a mock by name
@@ -259,7 +285,13 @@ impl HttpMock {
     }
 
     /// Simulate an HTTP request
-    pub fn request(&self, method: &str, url: &str, headers: HashMap<String, String>, body: Option<String>) -> Option<MockHttpResponse> {
+    pub fn request(
+        &self,
+        method: &str,
+        url: &str,
+        headers: HashMap<String, String>,
+        body: Option<String>,
+    ) -> Option<MockHttpResponse> {
         let request = MockHttpRequest {
             method: method.to_string(),
             url: url.to_string(),
@@ -280,9 +312,11 @@ impl HttpMock {
 
     /// Verify endpoint was called
     pub fn verify_called(&self, method: &str, url: &str) -> bool {
-        self.history.lock().unwrap().iter().any(|req|
-            req.method.to_uppercase() == method.to_uppercase() && req.url == url
-        )
+        self.history
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|req| req.method.to_uppercase() == method.to_uppercase() && req.url == url)
     }
 }
 
@@ -319,21 +353,30 @@ impl FileSystemMock {
 
     /// Read a file
     pub fn read_file(&self, path: &str) -> Result<String, TestError> {
-        self.history.lock().unwrap().push(FileOperation::Read(path.to_string()));
+        self.history
+            .lock()
+            .unwrap()
+            .push(FileOperation::Read(path.to_string()));
 
         if let Some(content) = self.files.lock().unwrap().get(path) {
             Ok(content.clone())
         } else {
-            Err(TestError::Validation(crate::ValidationError::invalid_setup(
-                format!("File not found: {}", path)
-            )))
+            Err(TestError::Validation(
+                crate::ValidationError::invalid_setup(format!("File not found: {}", path)),
+            ))
         }
     }
 
     /// Write to a file
     pub fn write_file(&self, path: &str, content: &str) -> Result<(), TestError> {
-        self.history.lock().unwrap().push(FileOperation::Write(path.to_string(), content.to_string()));
-        self.files.lock().unwrap().insert(path.to_string(), content.to_string());
+        self.history
+            .lock()
+            .unwrap()
+            .push(FileOperation::Write(path.to_string(), content.to_string()));
+        self.files
+            .lock()
+            .unwrap()
+            .insert(path.to_string(), content.to_string());
         Ok(())
     }
 
@@ -344,14 +387,23 @@ impl FileSystemMock {
 
     /// Create directory
     pub fn create_dir(&self, path: &str) -> Result<(), TestError> {
-        self.history.lock().unwrap().push(FileOperation::CreateDir(path.to_string()));
-        self.directories.lock().unwrap().insert(path.to_string(), Vec::new());
+        self.history
+            .lock()
+            .unwrap()
+            .push(FileOperation::CreateDir(path.to_string()));
+        self.directories
+            .lock()
+            .unwrap()
+            .insert(path.to_string(), Vec::new());
         Ok(())
     }
 
     /// List directory contents
     pub fn list_dir(&self, path: &str) -> Result<Vec<String>, TestError> {
-        self.history.lock().unwrap().push(FileOperation::ListDir(path.to_string()));
+        self.history
+            .lock()
+            .unwrap()
+            .push(FileOperation::ListDir(path.to_string()));
 
         if let Some(contents) = self.directories.lock().unwrap().get(path) {
             Ok(contents.clone())
@@ -362,12 +414,18 @@ impl FileSystemMock {
 
     /// Add initial file to the mock
     pub fn add_file(&self, path: &str, content: &str) {
-        self.files.lock().unwrap().insert(path.to_string(), content.to_string());
+        self.files
+            .lock()
+            .unwrap()
+            .insert(path.to_string(), content.to_string());
     }
 
     /// Add initial directory to the mock
     pub fn add_directory(&self, path: &str, contents: Vec<String>) {
-        self.directories.lock().unwrap().insert(path.to_string(), contents);
+        self.directories
+            .lock()
+            .unwrap()
+            .insert(path.to_string(), contents);
     }
 
     /// Get operation history
@@ -389,21 +447,27 @@ impl MockPresets {
     /// Create a successful API mock
     pub fn successful_api() -> HttpMock {
         let mut mock = HttpMock::new();
-        mock.mock_endpoint("GET", "/api/status", MockHttpResponse {
-            status: 200,
-            headers: HashMap::new(),
-            body: Some(r#"{"status": "ok"}"#.to_string()),
-        });
+        mock.mock_endpoint(
+            "GET",
+            "/api/status",
+            MockHttpResponse {
+                status: 200,
+                headers: HashMap::new(),
+                body: Some(r#"{"status": "ok"}"#.to_string()),
+            },
+        );
         mock
     }
 
     /// Create a file system with common Rust project structure
     pub fn rust_project_fs() -> FileSystemMock {
         let fs = FileSystemMock::new();
-        fs.add_file("Cargo.toml", r#"[package]
+        fs.add_file(
+            "Cargo.toml",
+            r#"[package]
 name = "test-project"
 version = "0.1.0"
-edition = "2021""#
+edition = "2021""#,
         );
         fs.add_file("src/lib.rs", "pub fn hello() -> &'static str { \"Hello\" }");
         fs.add_directory("src", vec!["lib.rs".to_string()]);
@@ -413,10 +477,22 @@ edition = "2021""#
     /// Create a database mock with common operations
     pub fn database_mock() -> GenericMock<Result<serde_json::Value, TestError>> {
         let mock = GenericMock::<Result<serde_json::Value, TestError>>::new();
-        mock.when("query", MockBehaviors::success(|| Ok(serde_json::json!({"results": []}))));
-        mock.when("insert", MockBehaviors::success(|| Ok(serde_json::json!({"inserted": 1}))));
-        mock.when("update", MockBehaviors::success(|| Ok(serde_json::json!({"updated": 1}))));
-        mock.when("delete", MockBehaviors::success(|| Ok(serde_json::json!({"deleted": 1}))));
+        mock.when(
+            "query",
+            MockBehaviors::success(|| Ok(serde_json::json!({"results": []}))),
+        );
+        mock.when(
+            "insert",
+            MockBehaviors::success(|| Ok(serde_json::json!({"inserted": 1}))),
+        );
+        mock.when(
+            "update",
+            MockBehaviors::success(|| Ok(serde_json::json!({"updated": 1}))),
+        );
+        mock.when(
+            "delete",
+            MockBehaviors::success(|| Ok(serde_json::json!({"deleted": 1}))),
+        );
         mock
     }
 }
@@ -428,7 +504,10 @@ mod tests {
     #[test]
     fn test_generic_mock() {
         let mock = GenericMock::<String>::new();
-        mock.when("greet", MockBehaviors::success(|| "Hello World".to_string()));
+        mock.when(
+            "greet",
+            MockBehaviors::success(|| "Hello World".to_string()),
+        );
 
         let result = mock.execute("greet", &[]);
         assert_eq!(result, "Hello World");
@@ -438,11 +517,15 @@ mod tests {
     #[test]
     fn test_http_mock() {
         let mut mock = HttpMock::new();
-        mock.mock_endpoint("GET", "/test", MockHttpResponse {
-            status: 200,
-            headers: HashMap::new(),
-            body: Some("success".to_string()),
-        });
+        mock.mock_endpoint(
+            "GET",
+            "/test",
+            MockHttpResponse {
+                status: 200,
+                headers: HashMap::new(),
+                body: Some("success".to_string()),
+            },
+        );
 
         let response = mock.request("GET", "/test", HashMap::new(), None).unwrap();
         assert_eq!(response.status, 200);

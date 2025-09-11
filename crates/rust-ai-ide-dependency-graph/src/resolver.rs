@@ -1,21 +1,21 @@
 //! Dependency resolution algorithms and strategies
 
-use semver::{Version, VersionReq};
-use std::collections::{HashMap, HashSet};
 use rayon::prelude::*;
-use tokio::sync::RwLock;
-use std::sync::Arc;
+use semver::{Version, VersionReq};
 use std::cmp::Ordering;
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 use crate::error::*;
 use crate::graph::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResolutionStrategy {
-    Conservative,  // Prefer existing versions, minimize changes
-    Aggressive,    // Use latest compatible versions
+    Conservative,     // Prefer existing versions, minimize changes
+    Aggressive,       // Use latest compatible versions
     LatestCompatible, // Use latest compatible versions for direct deps only
-    WorkspaceAware, // Consider workspace members first
+    WorkspaceAware,   // Consider workspace members first
 }
 
 pub struct DependencyResolver {
@@ -45,16 +45,16 @@ impl DependencyResolver {
         match self.strategy {
             ResolutionStrategy::Conservative => {
                 selected_versions = self.resolve_conservative().await?;
-            },
+            }
             ResolutionStrategy::Aggressive => {
                 selected_versions = self.resolve_aggressive().await?;
-            },
+            }
             ResolutionStrategy::LatestCompatible => {
                 selected_versions = self.resolve_latest_compatible().await?;
-            },
+            }
             ResolutionStrategy::WorkspaceAware => {
                 selected_versions = self.resolve_workspace_aware().await?;
-            },
+            }
         }
 
         Ok(selected_versions)
@@ -106,7 +106,9 @@ impl DependencyResolver {
                     let node_deps = graph.get_dependencies(&node.name)?;
                     for (dep_name, dep_edge) in node_deps {
                         if let Some(version_req) = &dep_edge.version_constraint {
-                            let latest_version = self.find_latest_compatible_version(&dep_name, version_req).await?;
+                            let latest_version = self
+                                .find_latest_compatible_version(&dep_name, version_req)
+                                .await?;
                             selected_versions.insert(dep_name, latest_version);
                         }
                     }
@@ -148,7 +150,10 @@ impl DependencyResolver {
     }
 
     /// Analyze version conflicts across the dependency graph
-    async fn analyze_version_conflicts(&self, graph: &DependencyGraph) -> DependencyResult<HashMap<String, VersionConflict>> {
+    async fn analyze_version_conflicts(
+        &self,
+        graph: &DependencyGraph,
+    ) -> DependencyResult<HashMap<String, VersionConflict>> {
         let mut conflicts = HashMap::new();
 
         for (_, node_idx) in &graph.node_indices {
@@ -160,13 +165,18 @@ impl DependencyResolver {
                         conflicts
                             .entry(dep_name.clone())
                             .or_insert_with(VersionConflict::new)
-                            .add_constraint(node.name.clone(), version_req.clone(), dep_edge.req_depth);
+                            .add_constraint(
+                                node.name.clone(),
+                                version_req.clone(),
+                                dep_edge.req_depth,
+                            );
                     }
                 }
             }
         }
 
-        Ok(conflicts.into_iter()
+        Ok(conflicts
+            .into_iter()
             .filter(|(_, conflict)| conflict.has_conflict())
             .collect())
     }
@@ -176,17 +186,20 @@ impl DependencyResolver {
         let mut version_counts = HashMap::new();
 
         for constraint in &conflict.constraints {
-            let version_req = VersionReq::parse(&constraint.version_req)
-                .map_err(|_| DependencyError::ParseError(
-                    format!("Invalid version requirement: {}", constraint.version_req)
-                ))?;
+            let version_req = VersionReq::parse(&constraint.version_req).map_err(|_| {
+                DependencyError::ParseError(format!(
+                    "Invalid version requirement: {}",
+                    constraint.version_req
+                ))
+            })?;
 
             if let Ok(version) = self.select_matching_version(&version_req, &conflict.constraints) {
                 *version_counts.entry(version).or_insert(0) += 1;
             }
         }
 
-        let selected_version = version_counts.into_iter()
+        let selected_version = version_counts
+            .into_iter()
             .max_by_key(|(_, count)| *count)
             .map(|(version, _)| version)
             .unwrap_or_else(|| "1.0.0".to_string());
@@ -197,7 +210,8 @@ impl DependencyResolver {
     fn select_aggressive_version(&self, conflict: &VersionConflict) -> DependencyResult<String> {
         // Find the highest compatible version for all constraints
         let all_versions = self.get_all_compatible_versions(conflict)?;
-        let latest_version = all_versions.into_iter()
+        let latest_version = all_versions
+            .into_iter()
             .filter_map(|v| Version::parse(&v).ok())
             .max()
             .map(|v| v.to_string())
@@ -206,17 +220,22 @@ impl DependencyResolver {
         Ok(latest_version)
     }
 
-    fn select_workspace_aware_version(&self, conflict: &VersionConflict) -> DependencyResult<String> {
+    fn select_workspace_aware_version(
+        &self,
+        conflict: &VersionConflict,
+    ) -> DependencyResult<String> {
         // Prefer versions that are already used in the workspace
         self.select_conservative_version(conflict)
     }
 
-    fn select_matching_version(&self, version_req: &VersionReq, constraints: &[PackageConstraint]) -> Result<String, ()> {
+    fn select_matching_version(
+        &self,
+        version_req: &VersionReq,
+        constraints: &[PackageConstraint],
+    ) -> Result<String, ()> {
         // This is a simplified implementation - in a real scenario,
         // you would fetch available versions from crates.io
-        let candidates = vec![
-            "1.0.0", "1.0.1", "1.1.0", "1.2.0", "2.0.0", "2.1.0"
-        ];
+        let candidates = vec!["1.0.0", "1.0.1", "1.1.0", "1.2.0", "2.0.0", "2.1.0"];
 
         for candidate in candidates {
             if let Ok(version) = Version::parse(candidate) {
@@ -229,19 +248,22 @@ impl DependencyResolver {
         Err(())
     }
 
-    fn get_all_compatible_versions(&self, conflict: &VersionConflict) -> DependencyResult<Vec<String>> {
+    fn get_all_compatible_versions(
+        &self,
+        conflict: &VersionConflict,
+    ) -> DependencyResult<Vec<String>> {
         let mut compatible_versions = HashSet::new();
 
         for constraint in &conflict.constraints {
-            let version_req = VersionReq::parse(&constraint.version_req)
-                .map_err(|_| DependencyError::ParseError(
-                    format!("Invalid version requirement: {}", constraint.version_req)
-                ))?;
+            let version_req = VersionReq::parse(&constraint.version_req).map_err(|_| {
+                DependencyError::ParseError(format!(
+                    "Invalid version requirement: {}",
+                    constraint.version_req
+                ))
+            })?;
 
             // Again, simplified - would fetch real versions in production
-            let candidates = vec![
-                "1.0.0", "1.0.1", "1.1.0", "1.2.0", "2.0.0", "2.1.0"
-            ];
+            let candidates = vec!["1.0.0", "1.0.1", "1.1.0", "1.2.0", "2.0.0", "2.1.0"];
 
             for candidate in candidates {
                 if let Ok(version) = Version::parse(candidate) {
@@ -255,11 +277,14 @@ impl DependencyResolver {
         Ok(compatible_versions.into_iter().collect())
     }
 
-    async fn find_latest_compatible_version(&self, package: &str, version_req: &str) -> DependencyResult<String> {
-        let version_req = VersionReq::parse(version_req)
-            .map_err(|_| DependencyError::ParseError(
-                format!("Invalid version requirement: {}", version_req)
-            ))?;
+    async fn find_latest_compatible_version(
+        &self,
+        package: &str,
+        version_req: &str,
+    ) -> DependencyResult<String> {
+        let version_req = VersionReq::parse(version_req).map_err(|_| {
+            DependencyError::ParseError(format!("Invalid version requirement: {}", version_req))
+        })?;
 
         // Simplified - would fetch real latest version from registry
         self.select_matching_version(&version_req, &[])
@@ -273,7 +298,9 @@ impl DependencyResolver {
         if let Some(root) = &graph.root_package {
             // A dependency is direct if it's one level from root
             if let Ok(dependencies) = graph.get_dependencies(root) {
-                dependencies.iter().any(|(dep_name, _)| dep_name == &node.name)
+                dependencies
+                    .iter()
+                    .any(|(dep_name, _)| dep_name == &node.name)
             } else {
                 false
             }
@@ -284,12 +311,20 @@ impl DependencyResolver {
     }
 
     /// Perform parallel resolution of multiple packages
-    pub async fn resolve_parallel(&self, packages: Vec<String>) -> DependencyResult<HashMap<String, String>> {
-        let results: Vec<_> = packages.par_chunks(self.max_parallel_fetches)
+    pub async fn resolve_parallel(
+        &self,
+        packages: Vec<String>,
+    ) -> DependencyResult<HashMap<String, String>> {
+        let results: Vec<_> = packages
+            .par_chunks(self.max_parallel_fetches)
             .map(|chunk| {
                 // This is where you would perform parallel fetches/resolution
                 // Using rayon for CPU-bound operations
-                chunk.iter().cloned().map(|pkg| (pkg, "1.0.0".to_string())).collect::<HashMap<_, _>>()
+                chunk
+                    .iter()
+                    .cloned()
+                    .map(|pkg| (pkg, "1.0.0".to_string()))
+                    .collect::<HashMap<_, _>>()
             })
             .collect();
 
@@ -302,7 +337,10 @@ impl DependencyResolver {
     }
 
     /// Apply resolved versions back to the graph
-    pub async fn apply_resolved_versions(&self, resolved_versions: &HashMap<String, String>) -> DependencyResult<()> {
+    pub async fn apply_resolved_versions(
+        &self,
+        resolved_versions: &HashMap<String, String>,
+    ) -> DependencyResult<()> {
         let mut graph = self.graph.write().await;
 
         for (package_name, version) in resolved_versions {
@@ -332,7 +370,12 @@ impl VersionConflict {
         }
     }
 
-    pub fn add_constraint(&mut self, source_package: String, version_req: String, depth: usize) -> &mut Self {
+    pub fn add_constraint(
+        &mut self,
+        source_package: String,
+        version_req: String,
+        depth: usize,
+    ) -> &mut Self {
         self.constraints.push(PackageConstraint {
             source_package,
             version_req,
@@ -350,7 +393,10 @@ impl VersionConflict {
     }
 
     pub fn get_conflicting_packages(&self) -> Vec<String> {
-        self.constraints.iter().map(|c| c.source_package.clone()).collect()
+        self.constraints
+            .iter()
+            .map(|c| c.source_package.clone())
+            .collect()
     }
 }
 

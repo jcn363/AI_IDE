@@ -4,11 +4,11 @@
 //! Enhanced to use unified types from rust-ai-ide-common and advanced AI analysis.
 
 use crate::CodeGenerationError;
+use rust_ai_ide_common::types::*;
+use rust_ai_ide_shared_codegen::generator::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use rust_ai_ide_common::types::*;
-use rust_ai_ide_shared_codegen::generator::*;
 // Add Tauri state for AI services access
 
 /// Advanced test generator implementation with AI-powered analysis
@@ -101,9 +101,7 @@ impl TestGenerator {
     }
 
     /// Create a new test generator with AI services
-    pub fn with_ai_services(
-        ai_services: Arc<Mutex<AIInferenceServices>>
-    ) -> Self {
+    pub fn with_ai_services(ai_services: Arc<Mutex<AIInferenceServices>>) -> Self {
         Self {
             pattern_database: Self::initialize_patterns(),
             coverage_analyzer: CoverageAnalyzer::new(),
@@ -229,11 +227,17 @@ fn test_{function_name}_edge_cases() {{
   // Test edge cases and error conditions
   let invalid_result = {function_name}({invalid_args});
   assert!(invalid_result.is_err());
-}}"#.to_string(),
-                parameters: vec!["function_name".to_string(), "test_args".to_string(), "expected_value".to_string(), "invalid_args".to_string()],
+}}"#
+                .to_string(),
+                parameters: vec![
+                    "function_name".to_string(),
+                    "test_args".to_string(),
+                    "expected_value".to_string(),
+                    "invalid_args".to_string(),
+                ],
                 confidence: 0.8,
                 applicability_conditions: vec!["has_no_side_effects".to_string()],
-            }
+            },
         );
 
         // Async function test patterns
@@ -241,7 +245,7 @@ fn test_{function_name}_edge_cases() {{
             "async_function".to_string(),
             TestPattern {
                 pattern_type: PatternType::AsyncTest,
-                  template: r#"
+                template: r#"
 #[tokio::test]
 async fn test_{function_name}_async() {{
   // Test async functionality
@@ -257,11 +261,17 @@ async fn test_{function_name}_timeout() {{
       {function_name}({slow_args})
   ).await;
   assert!(timeout_result.is_err());
-}}"#.to_string(),
-                parameters: vec!["function_name".to_string(), "test_args".to_string(), "expected_value".to_string(), "slow_args".to_string()],
+}}"#
+                .to_string(),
+                parameters: vec![
+                    "function_name".to_string(),
+                    "test_args".to_string(),
+                    "expected_value".to_string(),
+                    "slow_args".to_string(),
+                ],
                 confidence: 0.85,
                 applicability_conditions: vec!["is_async".to_string()],
-            }
+            },
         );
 
         // Error handling patterns
@@ -269,7 +279,7 @@ async fn test_{function_name}_timeout() {{
             "error_handling".to_string(),
             TestPattern {
                 pattern_type: PatternType::ErrorHandlingTest,
-                  template: r#"
+                template: r#"
 #[test]
 fn test_{function_name}_error_handling() {{
   // Test error scenarios
@@ -280,11 +290,16 @@ fn test_{function_name}_error_handling() {{
       // Verify error type and message
       assert!(matches!(err, {expected_error_type}));
   }}
-}}"#.to_string(),
-                parameters: vec!["function_name".to_string(), "error_args".to_string(), "expected_error_type".to_string()],
+}}"#
+                .to_string(),
+                parameters: vec![
+                    "function_name".to_string(),
+                    "error_args".to_string(),
+                    "expected_error_type".to_string(),
+                ],
                 confidence: 0.9,
                 applicability_conditions: vec!["returns_result".to_string()],
-            }
+            },
         );
 
         patterns
@@ -306,7 +321,9 @@ fn test_{function_name}_error_handling() {{
         let pattern_analysis = self.perform_pattern_analysis(code).await?;
 
         // Analyze the code structure with AI insights
-        let code_analysis = self.analyze_code_structure_with_ai(code, &semantic_analysis, &pattern_analysis).await?;
+        let code_analysis = self
+            .analyze_code_structure_with_ai(code, &semantic_analysis, &pattern_analysis)
+            .await?;
 
         // Generate unit tests for functions and methods
         for func in &code_analysis.functions {
@@ -365,28 +382,39 @@ fn test_{function_name}_error_handling() {{
 
         match refactoring_type {
             RefactoringType::ExtractFunction => {
-                tests.extend(self.generate_extract_function_tests(&context, &result).await?);
+                tests.extend(
+                    self.generate_extract_function_tests(&context, &result)
+                        .await?,
+                );
             }
             RefactoringType::Rename => {
                 tests.extend(self.generate_rename_tests(&context, &result).await?);
             }
             RefactoringType::InlineVariable => {
-                tests.extend(self.generate_inline_variable_tests(&context, &result).await?);
+                tests.extend(
+                    self.generate_inline_variable_tests(&context, &result)
+                        .await?,
+                );
             }
             RefactoringType::ChangeSignature => {
-                tests.extend(self.generate_signature_change_tests(&context, &result).await?);
+                tests.extend(
+                    self.generate_signature_change_tests(&context, &result)
+                        .await?,
+                );
             }
             _ => {
                 // Generic refactoring test
                 tests.push(GeneratedTest {
                     name: "refactoring_preservation_test".to_string(),
-                    code: format!("
+                    code: format!(
+                        "
 #[test]
 fn test_refactoring_preservation() {{
     // Test that refactoring preserves existing behavior
     // TODO: Implement actual refactoring behavior test
     todo!(\"Implement refactoring behavior test\");
-}}"),
+}}"
+                    ),
                     test_type: TestType::Unit,
                     description: "Test that refactoring preserves existing behavior".to_string(),
                     framework: "cargo-test".to_string(),
@@ -469,10 +497,14 @@ fn test_refactoring_preservation() {{
     }
 
     /// Legacy method for backward compatibility
-    async fn analyze_code_structure(&self, code: &str) -> Result<CodeAnalysis, CodeGenerationError> {
+    async fn analyze_code_structure(
+        &self,
+        code: &str,
+    ) -> Result<CodeAnalysis, CodeGenerationError> {
         let semantic_result = SemanticAnalysisResult::default();
         let pattern_result = PatternAnalysisResult::default();
-        self.analyze_code_structure_with_ai(code, &semantic_result, &pattern_result).await
+        self.analyze_code_structure_with_ai(code, &semantic_result, &pattern_result)
+            .await
     }
 
     /// Generate function-specific tests
@@ -486,15 +518,23 @@ fn test_refactoring_preservation() {{
         // Basic functionality test
         let basic_test = GeneratedTest {
             name: format!("test_{}_basic", function.name),
-            code: format!(r#"
+            code: format!(
+                r#"
 #[test]
 fn test_{}_basic() {{
     // Test basic functionality
     let result = {}({});
     assert!(result.is_ok());
-}}"#, function.name, function.name, self.generate_test_args(&function.parameters)),
+}}"#,
+                function.name,
+                function.name,
+                self.generate_test_args(&function.parameters)
+            ),
             test_type: TestType::Unit,
-            description: format!("Test to verify function {} behaves correctly", function.name),
+            description: format!(
+                "Test to verify function {} behaves correctly",
+                function.name
+            ),
             framework: "cargo-test".to_string(),
             language: ProgrammingLanguage::Rust,
             expected_coverage: vec![],
@@ -508,13 +548,18 @@ fn test_{}_basic() {{
         if function.return_type.contains("Result") || function.return_type.contains("Option") {
             let edge_test = GeneratedTest {
                 name: format!("test_{}_edge_cases", function.name),
-                code: format!(r#"
+                code: format!(
+                    r#"
 #[test]
 fn test_{}_edge_cases() {{
     // Test edge cases
     let error_result = {}({});
     assert!(error_result.is_err());
-}}"#, function.name, function.name, self.generate_invalid_args(&function.parameters)),
+}}"#,
+                    function.name,
+                    function.name,
+                    self.generate_invalid_args(&function.parameters)
+                ),
                 test_type: TestType::Unit,
                 description: format!("Test edge cases for function {}", function.name),
                 framework: "cargo-test".to_string(),
@@ -531,17 +576,23 @@ fn test_{}_edge_cases() {{
     }
 
     /// Generate struct tests
-    async fn generate_struct_tests(&self, struct_info: &StructInfo) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
+    async fn generate_struct_tests(
+        &self,
+        struct_info: &StructInfo,
+    ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         let test = GeneratedTest {
             name: format!("test_{}_creation", struct_info.name),
-            code: format!(r#"
+            code: format!(
+                r#"
 #[test]
 fn test_{}_creation() {{
     // Test struct creation and basic operations
     let instance = {}::default();
     // Add specific field assertions based on struct definition
     // assert_eq!(instance.some_field, expected_value);
-}}"#, struct_info.name, struct_info.name),
+}}"#,
+                struct_info.name, struct_info.name
+            ),
             test_type: TestType::Unit,
             description: format!("Test {} struct creation", struct_info.name),
             framework: "cargo-test".to_string(),
@@ -556,7 +607,10 @@ fn test_{}_creation() {{
     }
 
     /// Generate error handling tests
-    async fn generate_error_handling_tests(&self, analysis: &CodeAnalysis) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
+    async fn generate_error_handling_tests(
+        &self,
+        analysis: &CodeAnalysis,
+    ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         let mut tests = Vec::new();
 
         if analysis.has_error_handling {
@@ -569,7 +623,8 @@ fn test_error_handling() {
     // This would be populated with specific error scenarios
     // based on the code analysis
     // assert!(matches!(error, ExpectedErrorType));
-}"#.to_string(),
+}"#
+                .to_string(),
                 test_type: TestType::Unit,
                 description: "Test error handling scenarios".to_string(),
                 framework: "cargo-test".to_string(),
@@ -586,7 +641,10 @@ fn test_error_handling() {
     }
 
     /// Generate async-specific tests
-    async fn generate_async_tests(&self, analysis: &CodeAnalysis) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
+    async fn generate_async_tests(
+        &self,
+        analysis: &CodeAnalysis,
+    ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         let async_test = GeneratedTest {
             name: "test_async_behavior".to_string(),
             code: r#"
@@ -599,7 +657,8 @@ async fn test_async_behavior() {
     });
     let result = handle.await.unwrap();
     assert_eq!(result, "async_result");
-}"#.to_string(),
+}"#
+            .to_string(),
             test_type: TestType::Unit,
             description: "Test async behavior and concurrency".to_string(),
             framework: "cargo-test".to_string(),
@@ -652,7 +711,8 @@ async fn test_async_behavior() {
         if let Some(param_start) = signature.find('(') {
             if let Some(param_end) = signature[param_start..].find(')') {
                 let params_str = &signature[param_start + 1..param_start + param_end];
-                return params_str.split(',')
+                return params_str
+                    .split(',')
                     .filter(|p| !p.trim().is_empty())
                     .map(|param| {
                         let trimmed = param.trim();
@@ -667,29 +727,36 @@ async fn test_async_behavior() {
 
     fn generate_test_args(&self, params: &[(String, String)]) -> String {
         // Generate test arguments based on parameter types
-        params.iter().map(|(_, ty)| {
-            match ty.as_str() {
+        params
+            .iter()
+            .map(|(_, ty)| match ty.as_str() {
                 "String" => "\"test_value\".to_string()".to_string(),
                 "i32" | "u32" => "42".to_string(),
                 "bool" => "true".to_string(),
                 _ => "Default::default()".to_string(),
-            }
-        }).collect::<Vec<_>>().join(", ")
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
     }
 
     fn generate_invalid_args(&self, params: &[(String, String)]) -> String {
         // Generate invalid arguments for error testing
-        params.iter().map(|(_, ty)| {
-            match ty.as_str() {
+        params
+            .iter()
+            .map(|(_, ty)| match ty.as_str() {
                 "String" => "\"\".to_string()".to_string(),
                 "i32" | "u32" => "-1".to_string(),
                 "bool" => "false".to_string(),
                 _ => "Default::default()".to_string(),
-            }
-        }).collect::<Vec<_>>().join(", ")
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
     }
 
-    async fn generate_integration_tests(&self, analysis: &CodeAnalysis) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
+    async fn generate_integration_tests(
+        &self,
+        analysis: &CodeAnalysis,
+    ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         // Integration test generation logic
         Ok(vec![GeneratedTest {
             name: "integration_test".to_string(),
@@ -705,53 +772,84 @@ async fn test_async_behavior() {
         }])
     }
 
-    async fn generate_property_tests(&self, analysis: &CodeAnalysis) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
+    async fn generate_property_tests(
+        &self,
+        analysis: &CodeAnalysis,
+    ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         // Property-based test generation
         Ok(vec![])
     }
 
-    async fn generate_benchmark_tests(&self, analysis: &CodeAnalysis) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
+    async fn generate_benchmark_tests(
+        &self,
+        analysis: &CodeAnalysis,
+    ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         // Benchmark test generation
         Ok(vec![])
     }
 
-    fn estimate_test_coverage(&self, unit_tests: &[GeneratedTest], integration_tests: &[GeneratedTest]) -> Result<Vec<TestCoverage>, CodeGenerationError> {
+    fn estimate_test_coverage(
+        &self,
+        unit_tests: &[GeneratedTest],
+        integration_tests: &[GeneratedTest],
+    ) -> Result<Vec<TestCoverage>, CodeGenerationError> {
         // Coverage estimation logic
         Ok(vec![])
     }
 
-    async fn generate_extract_function_tests(&self, context: &RefactoringContext, result: &RefactoringResult) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
-        Ok(vec![
-            GeneratedTest {
-                name: "test_function_extraction".to_string(),
-                code: format!("
+    async fn generate_extract_function_tests(
+        &self,
+        context: &RefactoringContext,
+        result: &RefactoringResult,
+    ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
+        Ok(vec![GeneratedTest {
+            name: "test_function_extraction".to_string(),
+            code: format!(
+                "
 #[test]
 fn test_function_extraction() {{
     // Test the extracted function behavior
     let result = {}({});
     assert_eq!(result, expected_value);
-}}", result.extracted_function_name.as_ref().unwrap_or(&"extracted_function".to_string()), "args"),
-                test_type: TestType::Unit,
-                description: "Test the extracted function behavior".to_string(),
-                framework: "cargo-test".to_string(),
-                language: ProgrammingLanguage::Rust,
-                expected_coverage: vec![],
-                dependencies: vec![],
-                tags: vec![],
-                confidence_score: 0.7,
-            }
-        ])
+}}",
+                result
+                    .extracted_function_name
+                    .as_ref()
+                    .unwrap_or(&"extracted_function".to_string()),
+                "args"
+            ),
+            test_type: TestType::Unit,
+            description: "Test the extracted function behavior".to_string(),
+            framework: "cargo-test".to_string(),
+            language: ProgrammingLanguage::Rust,
+            expected_coverage: vec![],
+            dependencies: vec![],
+            tags: vec![],
+            confidence_score: 0.7,
+        }])
     }
 
-    async fn generate_rename_tests(&self, context: &RefactoringContext, result: &RefactoringResult) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
+    async fn generate_rename_tests(
+        &self,
+        context: &RefactoringContext,
+        result: &RefactoringResult,
+    ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         Ok(vec![])
     }
 
-    async fn generate_inline_variable_tests(&self, context: &RefactoringContext, result: &RefactoringResult) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
+    async fn generate_inline_variable_tests(
+        &self,
+        context: &RefactoringContext,
+        result: &RefactoringResult,
+    ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         Ok(vec![])
     }
 
-    async fn generate_signature_change_tests(&self, context: &RefactoringContext, result: &RefactoringResult) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
+    async fn generate_signature_change_tests(
+        &self,
+        context: &RefactoringContext,
+        result: &RefactoringResult,
+    ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         Ok(vec![])
     }
 }

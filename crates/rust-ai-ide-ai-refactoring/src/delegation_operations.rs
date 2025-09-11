@@ -1,6 +1,6 @@
 use crate::types::*;
-use async_trait::async_trait;
 use crate::RefactoringOperation;
+use async_trait::async_trait;
 
 /// Add Delegation operation - adds delegation to a class
 pub struct AddDelegationOperation;

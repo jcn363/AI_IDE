@@ -3,14 +3,14 @@
 //! This module handles real-time diagnostic streaming, cache management,
 //! and subscription-based diagnostic updates.
 
-use crate::modules::shared::diagnostics::*;
-use crate::commands::utils::*;
 use crate::commands::utils::cache::*;
 use crate::commands::utils::errors::*;
-use std::time::{SystemTime, Duration};
+use crate::commands::utils::*;
+use crate::modules::shared::diagnostics::*;
+use std::time::{Duration, SystemTime};
 use tauri::State;
-use uuid;
 use tokio::time;
+use uuid;
 
 /// Subscribe to real-time diagnostic updates
 #[tauri::command]
@@ -61,14 +61,18 @@ pub async fn subscribe_to_diagnostics(
                     // Run diagnostics and emit update
                     if let Ok(diagnostics) = run_cargo_check(&workspace_path).await {
                         // In a real implementation, you would emit this to subscribers
-                        log::debug!("Diagnostic update available for stream: {}", stream_id_clone);
+                        log::debug!(
+                            "Diagnostic update available for stream: {}",
+                            stream_id_clone
+                        );
                     }
                 }
             });
         }
 
         Ok(stream_id)
-    }).await
+    })
+    .await
 }
 
 /// Unsubscribe from diagnostic updates
@@ -93,7 +97,8 @@ pub async fn unsubscribe_from_diagnostics(
         } else {
             Err("Stream not found".to_string())
         }
-    }).await
+    })
+    .await
 }
 
 /// Clear diagnostic cache
@@ -114,7 +119,8 @@ pub async fn clear_diagnostic_cache(
         }
 
         Ok("Caches cleared successfully")
-    }).await
+    })
+    .await
 }
 
 /// Get cache statistics

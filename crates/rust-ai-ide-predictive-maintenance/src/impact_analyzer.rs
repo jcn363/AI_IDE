@@ -1,12 +1,9 @@
 //! Cross-file dependency impact analysis component
 
-use std::collections::{HashMap, HashSet};
+use crate::{errors::*, types::*};
 use async_trait::async_trait;
-use petgraph::{Graph, Directed};
-use crate::{
-    types::*,
-    errors::*,
-};
+use petgraph::{Directed, Graph};
+use std::collections::{HashMap, HashSet};
 
 /// Core impact analyzer
 #[derive(Debug)]

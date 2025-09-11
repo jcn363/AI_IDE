@@ -1,16 +1,15 @@
-use cargo_metadata::DependencyKind;
 /// Analysis algorithms for dependency graphs
-
 use super::models::*;
 use crate::dependency::graph::traversal;
+use anyhow::{anyhow, Result};
+use cargo_metadata::DependencyKind;
 use cargo_metadata::Package;
-use petgraph::graph::{NodeIndex, DiGraph};
 use petgraph::algo::all_simple_paths;
+use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::{Dfs, EdgeRef};
 use petgraph::Direction;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::Path;
-use anyhow::{anyhow, Result};
 
 impl DependencyGraph {
     /// Get a reference to the underlying graph
@@ -37,10 +36,14 @@ impl DependencyGraph {
 
     /// Find all paths between two dependencies
     pub fn find_paths(&self, from: &str, to: &str) -> Result<Vec<Vec<NodeIndex>>> {
-        let from_idx = self.node_indices.get(from)
+        let from_idx = self
+            .node_indices
+            .get(from)
             .ok_or_else(|| anyhow!("Dependency '{}' not found in graph", from))?;
 
-        let to_idx = self.node_indices.get(to)
+        let to_idx = self
+            .node_indices
+            .get(to)
             .ok_or_else(|| anyhow!("Dependency '{}' not found in graph", to))?;
 
         // Find all simple paths (no cycles) from 'from' to 'to'
@@ -49,9 +52,10 @@ impl DependencyGraph {
             &self.graph,
             *from_idx,
             *to_idx,
-            0, // No minimum length
+            0,    // No minimum length
             None, // No maximum length
-        ).collect();
+        )
+        .collect();
 
         Ok(paths)
     }
@@ -97,8 +101,7 @@ impl DependencyGraph {
     }
 }
 
-
-    // Removed duplicate DependencyEdge implementation - now using the canonical one from graph::edge
+// Removed duplicate DependencyEdge implementation - now using the canonical one from graph::edge
 
 /// Builder for constructing a dependency graph from Cargo metadata
 #[derive(Debug)]
@@ -122,9 +125,11 @@ impl DependencyGraphBuilder {
             .manifest_path(project_path.join("Cargo.toml"))
             .exec()?;
 
-        let root_package = metadata.root_package()
+        let root_package = metadata
+            .root_package()
             .ok_or_else(|| anyhow!("No root package found"))?
-            .name.to_string();
+            .name
+            .to_string();
 
         Ok(Self {
             metadata,
@@ -167,18 +172,26 @@ impl DependencyGraphBuilder {
         source_idx: NodeIndex,
     ) -> Result<()> {
         static EMPTY_DEPS: Vec<cargo_metadata::PackageId> = Vec::new();
-        let deps = self.metadata.resolve.as_ref()
+        let deps = self
+            .metadata
+            .resolve
+            .as_ref()
             .and_then(|r| r.nodes.iter().find(|n| n.id == package.id))
             .map(|n| &n.dependencies)
             .unwrap_or(&EMPTY_DEPS);
 
         for dep_id in deps {
             if let Some(&target_idx) = node_indices.get(&dep_id.repr) {
-                let dep_pkg = self.metadata.packages.iter()
+                let dep_pkg = self
+                    .metadata
+                    .packages
+                    .iter()
                     .find(|p| &p.id == dep_id)
                     .ok_or_else(|| anyhow!("Dependency not found: {}", dep_id))?;
 
-                let dep_info = package.dependencies.iter()
+                let dep_info = package
+                    .dependencies
+                    .iter()
                     .find(|d| d.name == dep_pkg.name.to_string())
                     .ok_or_else(|| anyhow!("Dependency info not found: {}", dep_pkg.name))?;
 
@@ -294,11 +307,20 @@ impl DependencyFilter {
 
     fn matches_node(&self, node: &DependencyNode) -> bool {
         // Check type filters
-        if !self.include_types.is_empty() && !node.dependencies.iter().any(|d| self.include_types.contains(&d.dep_type)) {
+        if !self.include_types.is_empty()
+            && !node
+                .dependencies
+                .iter()
+                .any(|d| self.include_types.contains(&d.dep_type))
+        {
             return false;
         }
 
-        if node.dependencies.iter().any(|d| self.exclude_types.contains(&d.dep_type)) {
+        if node
+            .dependencies
+            .iter()
+            .any(|d| self.exclude_types.contains(&d.dep_type))
+        {
             return false;
         }
 
@@ -363,7 +385,8 @@ impl DependencyFilter {
         }
 
         // Remove nodes not in the keep set
-        let to_remove: Vec<_> = graph.graph()
+        let to_remove: Vec<_> = graph
+            .graph()
             .node_indices()
             .filter(|&idx| !keep.contains(&idx))
             .collect();
@@ -376,6 +399,6 @@ impl DependencyFilter {
 
 // Re-export traversal functions
 pub use traversal::depth_first_traverse;
-pub use traversal::find_all_paths;
 pub use traversal::find_all_dependencies;
+pub use traversal::find_all_paths;
 pub use traversal::find_reverse_dependencies;

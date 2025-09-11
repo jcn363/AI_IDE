@@ -5,9 +5,9 @@
 
 use crate::error::TestError;
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::process::Command;
 use std::time::{Duration, Instant};
-use std::path::PathBuf;
 
 /// CI/CD environment detector
 pub struct CIEnvironment {
@@ -50,7 +50,8 @@ impl CIEnvironment {
             CIProvider::Unknown
         };
 
-        let branch = env_vars.get("BRANCH_NAME")
+        let branch = env_vars
+            .get("BRANCH_NAME")
             .or_else(|| env_vars.get("GITHUB_REF_NAME"))
             .or_else(|| env_vars.get("CI_COMMIT_REF_NAME"))
             .or_else(|| env_vars.get("BRANCH"))
@@ -58,7 +59,8 @@ impl CIEnvironment {
             .unwrap_or("unknown")
             .to_string();
 
-        let commit = env_vars.get("COMMIT_SHA")
+        let commit = env_vars
+            .get("COMMIT_SHA")
             .or_else(|| env_vars.get("GITHUB_SHA"))
             .or_else(|| env_vars.get("CI_COMMIT_SHA"))
             .or_else(|| env_vars.get("COMMIT"))
@@ -66,7 +68,8 @@ impl CIEnvironment {
             .unwrap_or("unknown")
             .to_string();
 
-        let build_number = env_vars.get("BUILD_NUMBER")
+        let build_number = env_vars
+            .get("BUILD_NUMBER")
             .or_else(|| env_vars.get("GITHUB_RUN_NUMBER"))
             .or_else(|| env_vars.get("CI_JOB_ID"))
             .or_else(|| env_vars.get("BUILD_ID"))
@@ -74,8 +77,12 @@ impl CIEnvironment {
 
         let is_pull_request = match provider {
             CIProvider::GitHubActions => env_vars.contains_key("GITHUB_HEAD_REF"),
-            CIProvider::GitLabCI => env_vars.get("CI_MERGE_REQUEST_TARGET_BRANCH_NAME").is_some(),
-            _ => env_vars.get("CI_PULL_REQUEST").is_some() || env_vars.get("PULL_REQUEST").is_some(),
+            CIProvider::GitLabCI => env_vars
+                .get("CI_MERGE_REQUEST_TARGET_BRANCH_NAME")
+                .is_some(),
+            _ => {
+                env_vars.get("CI_PULL_REQUEST").is_some() || env_vars.get("PULL_REQUEST").is_some()
+            }
         };
 
         Self {
@@ -89,10 +96,10 @@ impl CIEnvironment {
 
     /// Check if running in CI environment
     pub fn is_ci() -> bool {
-        std::env::var("CI").is_ok() ||
-        std::env::var("CONTINUOUS_INTEGRATION").is_ok() ||
-        std::env::var("GITHUB_ACTIONS").is_ok() ||
-        std::env::var("GITLAB_CI").is_ok()
+        std::env::var("CI").is_ok()
+            || std::env::var("CONTINUOUS_INTEGRATION").is_ok()
+            || std::env::var("GITHUB_ACTIONS").is_ok()
+            || std::env::var("GITLAB_CI").is_ok()
     }
 }
 
@@ -125,7 +132,11 @@ impl CoverageAnalyzer {
     }
 
     /// Add coverage data from a file
-    pub fn add_file_coverage(&mut self, file_path: &str, lines: &[(usize, bool)]) -> Result<(), TestError> {
+    pub fn add_file_coverage(
+        &mut self,
+        file_path: &str,
+        lines: &[(usize, bool)],
+    ) -> Result<(), TestError> {
         let mut covered_lines = 0;
         let mut line_coverage = HashMap::new();
 
@@ -170,12 +181,16 @@ impl CoverageAnalyzer {
     pub fn generate_report(&self) -> CoverageReport {
         let overall_coverage = self.overall_coverage();
 
-        let files = self.coverage_data.values().map(|file| FileCoverageReport {
-            file_path: file.file_path.clone(),
-            coverage_percentage: (file.covered_lines as f64 / file.total_lines as f64) * 100.0,
-            covered_lines: file.covered_lines,
-            total_lines: file.total_lines,
-        }).collect();
+        let files = self
+            .coverage_data
+            .values()
+            .map(|file| FileCoverageReport {
+                file_path: file.file_path.clone(),
+                coverage_percentage: (file.covered_lines as f64 / file.total_lines as f64) * 100.0,
+                covered_lines: file.covered_lines,
+                total_lines: file.total_lines,
+            })
+            .collect();
 
         CoverageReport {
             overall_coverage,
@@ -247,7 +262,11 @@ impl BenchmarkRunner {
     }
 
     /// Run benchmark for a synchronous function
-    pub fn benchmark_sync<F>(&mut self, name: &str, mut function: F) -> Result<BenchmarkResult, TestError>
+    pub fn benchmark_sync<F>(
+        &mut self,
+        name: &str,
+        mut function: F,
+    ) -> Result<BenchmarkResult, TestError>
     where
         F: FnMut(),
     {
@@ -266,8 +285,16 @@ impl BenchmarkRunner {
 
         let total_time: Duration = times.iter().sum();
         let average_time = total_time / self.iterations as u32;
-        let min_time = times.iter().min().copied().unwrap_or(Duration::from_secs(0));
-        let max_time = times.iter().max().copied().unwrap_or(Duration::from_secs(0));
+        let min_time = times
+            .iter()
+            .min()
+            .copied()
+            .unwrap_or(Duration::from_secs(0));
+        let max_time = times
+            .iter()
+            .max()
+            .copied()
+            .unwrap_or(Duration::from_secs(0));
         let throughput = self.iterations as f64 / total_time.as_secs_f64();
 
         let result = BenchmarkResult {
@@ -284,7 +311,11 @@ impl BenchmarkRunner {
     }
 
     /// Run benchmark for an async function
-    pub async fn benchmark_async<F, Fut>(&mut self, name: &str, function: F) -> Result<BenchmarkResult, TestError>
+    pub async fn benchmark_async<F, Fut>(
+        &mut self,
+        name: &str,
+        function: F,
+    ) -> Result<BenchmarkResult, TestError>
     where
         F: Fn() -> Fut,
         Fut: std::future::Future<Output = ()>,
@@ -304,8 +335,16 @@ impl BenchmarkRunner {
 
         let total_time: Duration = times.iter().sum();
         let average_time = total_time / self.iterations as u32;
-        let min_time = times.iter().min().copied().unwrap_or(Duration::from_secs(0));
-        let max_time = times.iter().max().copied().unwrap_or(Duration::from_secs(0));
+        let min_time = times
+            .iter()
+            .min()
+            .copied()
+            .unwrap_or(Duration::from_secs(0));
+        let max_time = times
+            .iter()
+            .max()
+            .copied()
+            .unwrap_or(Duration::from_secs(0));
         let throughput = self.iterations as f64 / total_time.as_secs_f64();
 
         let result = BenchmarkResult {
@@ -387,9 +426,18 @@ impl TestReporter {
 
     /// Add a test suite report
     pub fn add_suite(&mut self, name: &str, tests: Vec<TestCaseReport>) -> TestSuiteReport {
-        let passed = tests.iter().filter(|t| matches!(t.status, TestStatus::Passed)).count();
-        let failed = tests.iter().filter(|t| matches!(t.status, TestStatus::Failed)).count();
-        let skipped = tests.iter().filter(|t| matches!(t.status, TestStatus::Skipped)).count();
+        let passed = tests
+            .iter()
+            .filter(|t| matches!(t.status, TestStatus::Passed))
+            .count();
+        let failed = tests
+            .iter()
+            .filter(|t| matches!(t.status, TestStatus::Failed))
+            .count();
+        let skipped = tests
+            .iter()
+            .filter(|t| matches!(t.status, TestStatus::Skipped))
+            .count();
         let duration = tests.iter().map(|t| t.duration).sum();
 
         let report = TestSuiteReport {
@@ -506,7 +554,8 @@ impl TestReporter {
                     TestStatus::Skipped => "⏭️",
                     TestStatus::Error => "⚠️",
                 };
-                md.push_str(&format!("- {} {} ({}ms)\n",
+                md.push_str(&format!(
+                    "- {} {} ({}ms)\n",
                     status_emoji,
                     test.name,
                     test.duration.as_millis()
@@ -569,13 +618,13 @@ impl CIPipeline {
         }
 
         if !analyzer.meets_threshold() {
-            return Err(TestError::Validation(crate::ValidationError::invalid_setup(
-                format!(
+            return Err(TestError::Validation(
+                crate::ValidationError::invalid_setup(format!(
                     "Coverage {:.2}% is below required threshold {:.2}%",
                     analyzer.overall_coverage(),
                     analyzer.threshold
-                )
-            )));
+                )),
+            ));
         }
 
         println!("Coverage check passed: {:.2}%", analyzer.overall_coverage());
@@ -583,7 +632,11 @@ impl CIPipeline {
     }
 
     /// Run performance regression tests
-    pub fn check_performance_regression(&self, report: &BenchmarkReport, baseline_path: &PathBuf) -> Result<(), TestError> {
+    pub fn check_performance_regression(
+        &self,
+        report: &BenchmarkReport,
+        baseline_path: &PathBuf,
+    ) -> Result<(), TestError> {
         if !baseline_path.exists() {
             // Create baseline for future comparisons
             let json = serde_json::to_string_pretty(report)?;
@@ -599,17 +652,16 @@ impl CIPipeline {
 
         for result in &report.results {
             if let Some(baseline_result) = baseline.results.iter().find(|r| r.name == result.name) {
-                let ratio = result.average_time.as_secs_f64() / baseline_result.average_time.as_secs_f64();
+                let ratio =
+                    result.average_time.as_secs_f64() / baseline_result.average_time.as_secs_f64();
 
                 if ratio > regression_threshold {
-                    return Err(TestError::Validation(crate::ValidationError::invalid_setup(
-                        format!(
+                    return Err(TestError::Validation(
+                        crate::ValidationError::invalid_setup(format!(
                             "Performance regression in '{}': {}x slower (threshold: {}x)",
-                            result.name,
-                            ratio,
-                            regression_threshold
-                        )
-                    )));
+                            result.name, ratio, regression_threshold
+                        )),
+                    ));
                 }
 
                 println!("✅ {}: {:.2}x (improvement)", result.name, ratio);
@@ -652,8 +704,7 @@ impl CICommandRunner {
 
     pub fn run(&self, command: &str, args: &[&str]) -> Result<String, TestError> {
         let mut cmd = Command::new(command);
-        cmd.args(args)
-           .current_dir(&self.working_dir);
+        cmd.args(args).current_dir(&self.working_dir);
 
         for (key, value) in &self.env_vars {
             cmd.env(key, value);
@@ -677,7 +728,16 @@ impl CICommandRunner {
     pub fn run_cargo_test_with_coverage(&self, output_path: &PathBuf) -> Result<(), TestError> {
         if cfg!(feature = "ci") {
             // Assume cargo-tarpaulin is available
-            self.run("cargo", &["tarpaulin", "--out", "Xml", "--output-dir", &output_path.to_string_lossy()])?;
+            self.run(
+                "cargo",
+                &[
+                    "tarpaulin",
+                    "--out",
+                    "Xml",
+                    "--output-dir",
+                    &output_path.to_string_lossy(),
+                ],
+            )?;
         } else {
             // Fallback to regular cargo test
             self.run("cargo", &["test"])?;
@@ -705,7 +765,9 @@ mod tests {
     fn test_coverage_analyzer() {
         let mut analyzer = CoverageAnalyzer::new().with_threshold(80.0);
 
-        analyzer.add_file_coverage("test.rs", &[(1, true), (2, false), (3, true)]).unwrap();
+        analyzer
+            .add_file_coverage("test.rs", &[(1, true), (2, false), (3, true)])
+            .unwrap();
 
         assert_eq!(analyzer.overall_coverage(), 66.67);
         assert!(!analyzer.meets_threshold());
@@ -713,13 +775,13 @@ mod tests {
 
     #[test]
     fn test_benchmark_runner() {
-        let mut runner = BenchmarkRunner::new()
-            .with_iterations(10)
-            .with_warmup(2);
+        let mut runner = BenchmarkRunner::new().with_iterations(10).with_warmup(2);
 
-        let result = runner.benchmark_sync("test_bench", || {
-            std::thread::sleep(Duration::from_millis(1));
-        }).unwrap();
+        let result = runner
+            .benchmark_sync("test_bench", || {
+                std::thread::sleep(Duration::from_millis(1));
+            })
+            .unwrap();
 
         assert!(result.average_time > Duration::from_millis(0));
         assert_eq!(result.name, "test_bench");
@@ -753,6 +815,9 @@ mod tests {
     fn test_ci_environment_detection() {
         let env = CIEnvironment::detect();
         // In test environment, this should detect as Unknown or CI
-        assert!(matches!(env.provider, CIProvider::GitHubActions | CIProvider::GitLabCI | CIProvider::Unknown));
+        assert!(matches!(
+            env.provider,
+            CIProvider::GitHubActions | CIProvider::GitLabCI | CIProvider::Unknown
+        ));
     }
 }

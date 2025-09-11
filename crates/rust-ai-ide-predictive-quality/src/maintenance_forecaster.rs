@@ -3,16 +3,16 @@
 //! Uses technical debt analysis and ML models to forecast maintenance costs
 //! and schedules for codebases, enabling proactive maintenance planning.
 
-use std::sync::Arc;
-use tokio::sync::RwLock;
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
-use crate::types::*;
-use crate::dependency_analyzer::CrossFileDependencyAnalyzer;
 use crate::code_health_scorer::CodeHealthScorer;
+use crate::dependency_analyzer::CrossFileDependencyAnalyzer;
+use crate::types::*;
 
 /// Core maintenance forecaster
 pub struct MaintenanceForecaster {
@@ -30,23 +30,22 @@ impl MaintenanceForecaster {
         dependency_analyzer: Arc<CrossFileDependencyAnalyzer>,
         health_scorer: Arc<CodeHealthScorer>,
     ) -> Self {
-        let technical_debt_predictor = Arc::new(
-            TechnicalDebtPredictor::new(Arc::clone(&dependency_analyzer))
-        );
+        let technical_debt_predictor = Arc::new(TechnicalDebtPredictor::new(Arc::clone(
+            &dependency_analyzer,
+        )));
 
-        let maintenance_impact_analyzer = Arc::new(
-            MaintenanceImpactAnalyzer::new(Arc::clone(&dependency_analyzer))
-        );
+        let maintenance_impact_analyzer = Arc::new(MaintenanceImpactAnalyzer::new(Arc::clone(
+            &dependency_analyzer,
+        )));
 
         let maintenance_cost_estimator = Arc::new(MaintenanceCostEstimator::new());
 
-        let maintenance_priority_scorer = Arc::new(
-            MaintenancePriorityScorer::new(Arc::clone(&health_scorer))
-        );
+        let maintenance_priority_scorer =
+            Arc::new(MaintenancePriorityScorer::new(Arc::clone(&health_scorer)));
 
-        let code_relationship_mapper = Arc::new(
-            CodeRelationshipMapper::new(Arc::clone(&dependency_analyzer))
-        );
+        let code_relationship_mapper = Arc::new(CodeRelationshipMapper::new(Arc::clone(
+            &dependency_analyzer,
+        )));
 
         let forecast_cache: moka::future::Cache<String, MaintenanceForecastResult> =
             moka::future::Cache::builder()
@@ -68,44 +67,50 @@ impl MaintenanceForecaster {
         &self,
         schedule_request: &MaintenanceScheduleRequest,
     ) -> Result<MaintenanceForecastResult> {
-        let cache_key = format!("maintenance_forecast_{}",
-            schedule_request.time_horizon_days);
+        let cache_key = format!(
+            "maintenance_forecast_{}",
+            schedule_request.time_horizon_days
+        );
 
         if let Some(cached) = self.forecast_cache.get(&cache_key).await {
             return Ok(cached);
         }
 
         // 1. Predict technical debt evolution
-        let debt_forecast = self.technical_debt_predictor
-            .forecast_debt(schedule_request).await?;
+        let debt_forecast = self
+            .technical_debt_predictor
+            .forecast_debt(schedule_request)
+            .await?;
 
         // 2. Analyze maintenance impact across dependencies
-        let impact_analysis = self.maintenance_impact_analyzer
-            .analyze_impact(schedule_request).await?;
+        let impact_analysis = self
+            .maintenance_impact_analyzer
+            .analyze_impact(schedule_request)
+            .await?;
 
         // 3. Estimate costs for identified maintenance tasks
-        let cost_estimates = self.maintenance_cost_estimator
-            .estimate_costs(&impact_analysis).await?;
+        let cost_estimates = self
+            .maintenance_cost_estimator
+            .estimate_costs(&impact_analysis)
+            .await?;
 
         // 4. Prioritize maintenance tasks
-        let prioritized_tasks = self.maintenance_priority_scorer
-            .prioritize_tasks(&cost_estimates).await?;
+        let prioritized_tasks = self
+            .maintenance_priority_scorer
+            .prioritize_tasks(&cost_estimates)
+            .await?;
 
         // 5. Generate maintenance schedule
-        let schedule = self.generate_maintenance_schedule(
-            schedule_request,
-            &prioritized_tasks,
-            &impact_analysis
-        ).await;
+        let schedule = self
+            .generate_maintenance_schedule(schedule_request, &prioritized_tasks, &impact_analysis)
+            .await;
 
         // 6. Calculate overall risk assessment
         let risk_assessment = self.assess_overall_risk(&prioritized_tasks, &impact_analysis)?;
 
         // 7. Create forecast result
         let result = MaintenanceForecastResult {
-            total_estimated_cost: cost_estimates.iter()
-                .map(|task| task.estimated_cost)
-                .sum(),
+            total_estimated_cost: cost_estimates.iter().map(|task| task.estimated_cost).sum(),
             tasks_by_priority: prioritized_tasks,
             forecast_by_period: schedule,
             risk_assessment,
@@ -185,7 +190,9 @@ pub struct MaintenanceImpactAnalyzer {
 
 impl MaintenanceImpactAnalyzer {
     fn new(dependency_analyzer: Arc<CrossFileDependencyAnalyzer>) -> Self {
-        Self { dependency_analyzer }
+        Self {
+            dependency_analyzer,
+        }
     }
 
     async fn analyze_impact(
@@ -231,10 +238,7 @@ impl MaintenancePriorityScorer {
         Self { health_scorer }
     }
 
-    async fn prioritize_tasks(
-        &self,
-        _tasks: &[MaintenanceTask],
-    ) -> Result<Vec<MaintenanceTask>> {
+    async fn prioritize_tasks(&self, _tasks: &[MaintenanceTask]) -> Result<Vec<MaintenanceTask>> {
         // TODO: Score and prioritize tasks based on impact, cost, and urgency
         Ok(vec![])
     }
@@ -247,7 +251,9 @@ pub struct CodeRelationshipMapper {
 
 impl CodeRelationshipMapper {
     fn new(dependency_analyzer: Arc<CrossFileDependencyAnalyzer>) -> Self {
-        Self { dependency_analyzer }
+        Self {
+            dependency_analyzer,
+        }
     }
 }
 

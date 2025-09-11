@@ -1,6 +1,6 @@
 //! Forecasting engine for ML-driven predictions
 
-use crate::{types::*, errors::*};
+use crate::{errors::*, types::*};
 
 #[derive(Debug)]
 pub struct ForecastEngine {
@@ -9,6 +9,8 @@ pub struct ForecastEngine {
 
 impl ForecastEngine {
     pub async fn new(config: &MaintenanceConfig) -> MaintenanceResult<Self> {
-        Ok(Self { config: config.clone() })
+        Ok(Self {
+            config: config.clone(),
+        })
     }
 }

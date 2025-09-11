@@ -1,8 +1,8 @@
 //! Code Graph Module
 //! Builds and analyzes the relationship graph of code symbols across files and modules.
 
-use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 /// Code graph representing symbol relationships
 #[derive(Debug, Clone)]
@@ -67,11 +67,14 @@ impl CodeGraph {
     pub fn add_relationship(&mut self, from: &str, to: &str, relationship: CodeRelationship) {
         let from_key = from.to_string();
         if !self.edges.contains_key(&from_key) {
-            self.edges.insert(from_key.clone(), RelationshipGraph {
-                symbol_id: from_key.clone(),
-                relationships: vec![],
-                centrality: 0.0,
-            });
+            self.edges.insert(
+                from_key.clone(),
+                RelationshipGraph {
+                    symbol_id: from_key.clone(),
+                    relationships: vec![],
+                    centrality: 0.0,
+                },
+            );
         }
 
         if let Some(graph) = self.edges.get_mut(&from_key) {

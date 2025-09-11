@@ -6,13 +6,13 @@
 //! - Predictive cache placement using usage patterns
 //! - Fault tolerance with graceful degradation
 
-use async_trait::async_trait;
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::{RwLock, Mutex};
-use std::hash::{Hash, Hasher};
 use crate::{Cache, CacheEntry, CacheStats, IDEResult};
+use async_trait::async_trait;
 use rust_ai_ide_errors::RustAIError;
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
+use std::sync::Arc;
+use tokio::sync::{Mutex, RwLock};
 
 /// Worker node in the distributed cache system
 #[derive(Debug, Clone)]
@@ -96,14 +96,20 @@ impl DistributedWorkStealingCache {
     }
 
     /// Execute work-stealing algorithm
-    async fn steal_work(&self, target_worker: &str, requester_worker: &str, batch_size: usize) -> Vec<(String, CacheEntry<String>)> {
+    async fn steal_work(
+        &self,
+        target_worker: &str,
+        requester_worker: &str,
+        batch_size: usize,
+    ) -> Vec<(String, CacheEntry<String>)> {
         // First, check if work-stealing is needed and collect entries to steal
         let entries_to_steal = {
             let workers = self.workers.read().await;
             if let Some(target) = workers.get(target_worker) {
                 if target.load_factor > self.config.load_balance_threshold {
                     // Select hottest entries for stealing (least recently used)
-                    target.local_cache
+                    target
+                        .local_cache
                         .iter()
                         .take(batch_size)
                         .map(|(k, v)| (k.clone(), v.clone()))
@@ -161,7 +167,9 @@ impl DistributedWorkStealingCache {
         // Perform work-stealing
         for overloaded in overloaded_workers {
             for underloaded in &underloaded_workers {
-                let stolen = self.steal_work(&overloaded, underloaded, self.config.steal_batch_size).await;
+                let stolen = self
+                    .steal_work(&overloaded, underloaded, self.config.steal_batch_size)
+                    .await;
 
                 if !stolen.is_empty() {
                     let mut stats = self.stats.write().await;
@@ -214,7 +222,11 @@ impl Partitioner for HashPartitioner {
 /// Predictive cache placement predictor
 #[async_trait]
 pub trait PredictivePredictor {
-    async fn predict_placement(&self, key: &str, access_history: Vec<chrono::DateTime<chrono::Utc>>) -> Vec<String>;
+    async fn predict_placement(
+        &self,
+        key: &str,
+        access_history: Vec<chrono::DateTime<chrono::Utc>>,
+    ) -> Vec<String>;
 }
 
 #[async_trait]
@@ -233,7 +245,13 @@ impl Cache<String, String> for DistributedWorkStealingCache {
                     } else {
                         // Remove expired entry
                         drop(worker);
-                        self.workers.write().await.get_mut(primary_id).unwrap().local_cache.remove(key);
+                        self.workers
+                            .write()
+                            .await
+                            .get_mut(primary_id)
+                            .unwrap()
+                            .local_cache
+                            .remove(key);
                     }
                 }
             }
@@ -256,7 +274,12 @@ impl Cache<String, String> for DistributedWorkStealingCache {
         Ok(None)
     }
 
-    async fn insert(&self, key: String, value: String, ttl: Option<std::time::Duration>) -> IDEResult<()> {
+    async fn insert(
+        &self,
+        key: String,
+        value: String,
+        ttl: Option<std::time::Duration>,
+    ) -> IDEResult<()> {
         let entry = CacheEntry::new_with_ttl(value, ttl, chrono::Utc::now());
 
         // Determine optimal placement
@@ -269,13 +292,19 @@ impl Cache<String, String> for DistributedWorkStealingCache {
 
         let mut workers = self.workers.write().await;
         if workers.is_empty() {
-            return Err(RustAIError::InternalError("No workers available".to_string()));
+            return Err(RustAIError::InternalError(
+                "No workers available".to_string(),
+            ));
         }
 
         // Insert into target workers
         let targets = if target_workers.is_empty() {
             // Use all active workers as fallback
-            workers.values().filter(|w| w.is_active).map(|w| w.id.clone()).collect()
+            workers
+                .values()
+                .filter(|w| w.is_active)
+                .map(|w| w.id.clone())
+                .collect()
         } else {
             target_workers
         };
@@ -292,7 +321,10 @@ impl Cache<String, String> for DistributedWorkStealingCache {
 
         // Check if load rebalancing is needed
         if self.config.load_balance_threshold > 0.0 {
-            let overloaded_count = workers.values().filter(|w| w.load_factor > self.config.load_balance_threshold).count();
+            let overloaded_count = workers
+                .values()
+                .filter(|w| w.load_factor > self.config.load_balance_threshold)
+                .count();
             if overloaded_count > 0 {
                 drop(workers); // Release lock
                 let _ = self.rebalance_load().await; // Attempt rebalancing

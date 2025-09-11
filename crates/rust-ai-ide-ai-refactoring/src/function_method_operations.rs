@@ -1,11 +1,11 @@
-use std::fs;
-use syn::{visit_mut::VisitMut, Ident};
-use prettyplease;
-use async_trait::async_trait;
+use crate::ast_utils::*;
 use crate::types::*;
 use crate::utils::*;
-use crate::ast_utils::*;
 use crate::RefactoringOperation;
+use async_trait::async_trait;
+use prettyplease;
+use std::fs;
+use syn::{visit_mut::VisitMut, Ident};
 
 /// Extract Function operation with AST safety
 pub struct ExtractFunctionOperation;

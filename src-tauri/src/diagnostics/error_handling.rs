@@ -16,7 +16,10 @@ pub async fn get_cached_error_explanation(
     {
         let cache_guard = explanation_cache.read().await;
         if let Some(cached) = cache_guard.get(error_code) {
-            log::debug!("Returning cached explanation for error code: {}", error_code);
+            log::debug!(
+                "Returning cached explanation for error code: {}",
+                error_code
+            );
             return Ok(cached.explanation.clone());
         }
     }
@@ -44,7 +47,10 @@ pub async fn get_error_code_explanation(error_code: &str) -> Result<ErrorCodeExp
         .map_err(|e| anyhow::anyhow!("Failed to run rustc --explain: {}", e))?;
 
     if !output.status.success() {
-        return Err(anyhow::anyhow!("rustc --explain failed for error code: {}", error_code));
+        return Err(anyhow::anyhow!(
+            "rustc --explain failed for error code: {}",
+            error_code
+        ));
     }
 
     let explanation_text = String::from_utf8_lossy(&output.stdout);
@@ -73,10 +79,7 @@ pub async fn get_error_code_explanation(error_code: &str) -> Result<ErrorCodeExp
 pub fn parse_rustc_explanation(text: &str) -> (String, String, Vec<ErrorExample>) {
     let lines: Vec<&str> = text.lines().collect();
 
-    let title = lines.first()
-        .unwrap_or(&"")
-        .trim()
-        .to_string();
+    let title = lines.first().unwrap_or(&"").trim().to_string();
 
     let explanation = text.to_string();
 
@@ -121,7 +124,8 @@ pub fn extract_related_errors(text: &str) -> Vec<String> {
     for line in text.lines() {
         if let Some(captures) = regex::Regex::new(r"E\d{4}")
             .ok()
-            .and_then(|re| re.find(line)) {
+            .and_then(|re| re.find(line))
+        {
             let error_code = captures.as_str().to_string();
             if !related.contains(&error_code) {
                 related.push(error_code);
@@ -202,7 +206,10 @@ pub fn get_keyword_documentation_links(keyword: &str) -> Vec<DocumentationLink> 
     vec![
         DocumentationLink {
             title: format!("Rust Reference - {}", keyword),
-            url: format!("https://doc.rust-lang.org/reference/keywords.html#{}", keyword),
+            url: format!(
+                "https://doc.rust-lang.org/reference/keywords.html#{}",
+                keyword
+            ),
             description: format!("Official documentation for the '{}' keyword", keyword),
         },
         DocumentationLink {
@@ -217,13 +224,11 @@ pub fn get_keyword_documentation_links(keyword: &str) -> Vec<DocumentationLink> 
 pub fn get_context_documentation_links(context: &str) -> Vec<DocumentationLink> {
     // This would analyze the context and return relevant links
     // For now, return some general helpful links
-    vec![
-        DocumentationLink {
-            title: "Rust Standard Library".to_string(),
-            url: "https://doc.rust-lang.org/std/".to_string(),
-            description: "Standard library documentation".to_string(),
-        },
-    ]
+    vec![DocumentationLink {
+        title: "Rust Standard Library".to_string(),
+        url: "https://doc.rust-lang.org/std/".to_string(),
+        description: "Standard library documentation".to_string(),
+    }]
 }
 
 /// Get general Rust documentation links
@@ -242,7 +247,8 @@ pub fn get_general_documentation_links() -> Vec<DocumentationLink> {
         DocumentationLink {
             title: "Rustlings".to_string(),
             url: "https://github.com/rust-lang/rustlings".to_string(),
-            description: "Small exercises to get you used to reading and writing Rust code".to_string(),
+            description: "Small exercises to get you used to reading and writing Rust code"
+                .to_string(),
         },
         DocumentationLink {
             title: "Rust Community".to_string(),
@@ -264,7 +270,9 @@ pub async fn run_cargo_check(workspace_path: &str) -> Result<String> {
         .spawn()
         .map_err(|e| anyhow::anyhow!("Failed to start cargo check: {}", e))?;
 
-    let stdout = cmd.stdout.take()
+    let stdout = cmd
+        .stdout
+        .take()
         .ok_or_else(|| anyhow::anyhow!("Failed to capture stdout"))?;
 
     let mut reader = tokio::io::BufReader::new(stdout);

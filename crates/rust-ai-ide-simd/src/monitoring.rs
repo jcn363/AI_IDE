@@ -1,9 +1,8 @@
-/// Performance monitoring and metrics for SIMD operations
-
-use std::time::{Duration, Instant};
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
 use crate::error::SIMDError;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+/// Performance monitoring and metrics for SIMD operations
+use std::time::{Duration, Instant};
 
 /// SIMD performance monitoring and metrics
 pub struct SIMDPerformanceMonitor {
@@ -24,8 +23,12 @@ impl SIMDPerformanceMonitor {
     /// Start monitoring an operation
     pub fn start_operation(&mut self, operation_name: &str) {
         let now = Instant::now();
-        self.active_operations.insert(operation_name.to_string(), now);
-        *self.total_operations.entry(operation_name.to_string()).or_insert(0) += 1;
+        self.active_operations
+            .insert(operation_name.to_string(), now);
+        *self
+            .total_operations
+            .entry(operation_name.to_string())
+            .or_insert(0) += 1;
     }
 
     /// End monitoring an operation and record the duration
@@ -52,7 +55,11 @@ impl SIMDPerformanceMonitor {
             if durations.is_empty() {
                 return OperationStats {
                     operation_name: operation_name.to_string(),
-                    total_calls: self.total_operations.get(operation_name).copied().unwrap_or(0),
+                    total_calls: self
+                        .total_operations
+                        .get(operation_name)
+                        .copied()
+                        .unwrap_or(0),
                     avg_duration: Duration::ZERO,
                     min_duration: Duration::ZERO,
                     max_duration: Duration::ZERO,
@@ -65,11 +72,16 @@ impl SIMDPerformanceMonitor {
             let avg_duration = total_duration / durations.len() as u32;
             let min_duration = *durations.iter().min().unwrap();
             let max_duration = *durations.iter().max().unwrap();
-            let total_calls = self.total_operations.get(operation_name).copied().unwrap_or(durations.len());
+            let total_calls = self
+                .total_operations
+                .get(operation_name)
+                .copied()
+                .unwrap_or(durations.len());
 
             // Performance score (arbitrary units, higher is better)
             let performance_score = if avg_duration.as_nanos() > 0 {
-                let ops_per_second = 1_000_000_000.0 / avg_duration.as_nanos() as f64 * total_calls as f64;
+                let ops_per_second =
+                    1_000_000_000.0 / avg_duration.as_nanos() as f64 * total_calls as f64;
                 ops_per_second / 10_000.0 // Normalize to reasonable range
             } else {
                 1000.0 // Very fast operations
@@ -89,7 +101,8 @@ impl SIMDPerformanceMonitor {
 
     /// Get combined statistics for all monitored operations
     pub fn get_all_stats(&self) -> Vec<OperationStats> {
-        self.operation_times.keys()
+        self.operation_times
+            .keys()
             .filter_map(|name| self.get_operation_stats(name))
             .collect()
     }
@@ -138,10 +151,17 @@ impl SIMDFallbackManager {
             });
         }
 
-        *self.fallback_count.entry("vectorized_f32".to_string()).or_insert(0) += 1;
+        *self
+            .fallback_count
+            .entry("vectorized_f32".to_string())
+            .or_insert(0) += 1;
         tracing::debug!("Using scalar fallback for f32 vectorized operations");
 
-        Ok(lhs.iter().zip(rhs.iter()).map(|(a, b)| operation(*a, *b)).collect())
+        Ok(lhs
+            .iter()
+            .zip(rhs.iter())
+            .map(|(a, b)| operation(*a, *b))
+            .collect())
     }
 
     /// Matrix multiplication fallback
@@ -160,14 +180,18 @@ impl SIMDFallbackManager {
             });
         }
 
-        *self.fallback_count.entry("matrix_multiply_f32".to_string()).or_insert(0) += 1;
+        *self
+            .fallback_count
+            .entry("matrix_multiply_f32".to_string())
+            .or_insert(0) += 1;
         tracing::debug!("Using scalar fallback for matrix multiplication");
 
         let mut result = vec![0.0; m * k];
 
         // i-k-j loop order for better cache locality in scalar fallback
         for i in 0..m {
-            for jj in (0..n).step_by(16) { // Small blocking for cache efficiency
+            for jj in (0..n).step_by(16) {
+                // Small blocking for cache efficiency
                 for j in 0..k {
                     let mut sum = result[i * k + j];
                     for l in jj..(jj + 16).min(n) {
@@ -195,7 +219,10 @@ impl SIMDFallbackManager {
             });
         }
 
-        *self.fallback_count.entry("euclidean_distance".to_string()).or_insert(0) += 1;
+        *self
+            .fallback_count
+            .entry("euclidean_distance".to_string())
+            .or_insert(0) += 1;
         tracing::debug!("Using scalar fallback for Euclidean distance");
 
         let num_queries = query.len() / dimension;
@@ -223,7 +250,9 @@ impl SIMDFallbackManager {
     /// Get fallback statistics
     pub fn fallback_stats(&self) -> FallbackStats {
         let total_fallbacks: usize = self.fallback_count.values().sum();
-        let most_common_fallback = self.fallback_count.iter()
+        let most_common_fallback = self
+            .fallback_count
+            .iter()
             .max_by_key(|&(_, v)| v)
             .map(|(k, v)| (k.clone(), *v))
             .unwrap_or_default();
@@ -270,10 +299,7 @@ pub struct SIMDPerformanceAdvisor {
 }
 
 impl SIMDPerformanceAdvisor {
-    pub fn new(
-        monitor: SIMDPerformanceMonitor,
-        fallback_manager: SIMDFallbackManager,
-    ) -> Self {
+    pub fn new(monitor: SIMDPerformanceMonitor, fallback_manager: SIMDFallbackManager) -> Self {
         Self {
             monitor,
             fallback_manager,
@@ -321,11 +347,13 @@ impl SIMDPerformanceAdvisor {
         if fallback_stats.most_common_fallback.1 > 10 {
             recommendations.push(PerformanceRecommendation {
                 category: RecommendationCategory::OptimizationOpportunity,
-                title: format!("Optimize '{}' operation", fallback_stats.most_common_fallback.0),
+                title: format!(
+                    "Optimize '{}' operation",
+                    fallback_stats.most_common_fallback.0
+                ),
                 description: format!(
                     "'{}' operation fell back {} times - consider optimizing for SIMD",
-                    fallback_stats.most_common_fallback.0,
-                    fallback_stats.most_common_fallback.1
+                    fallback_stats.most_common_fallback.0, fallback_stats.most_common_fallback.1
                 ),
                 severity: RecommendationSeverity::Medium,
                 suggestion: "Implement SIMD version of this operation".to_string(),

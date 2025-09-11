@@ -9,11 +9,11 @@ use dashmap::DashMap;
 use tokio::sync::{broadcast, mpsc, RwLock};
 use tokio::task;
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, error, info, warn, instrument};
+use tracing::{debug, error, info, instrument, warn};
 
 use crate::types::{
-    AnalysisResult, AnalysisTrigger, TriggerSource, AnalysisMetadata, TaskPriority,
-    PerformanceMetrics,
+    AnalysisMetadata, AnalysisResult, AnalysisTrigger, PerformanceMetrics, TaskPriority,
+    TriggerSource,
 };
 
 /// Event processing errors
@@ -227,7 +227,11 @@ struct RoutingRule {
 #[async_trait]
 pub trait LspService {
     /// Publish diagnostics to LSP
-    async fn publish_diagnostics(&self, uri: &str, diagnostics: Vec<LspDiagnostic>) -> EventResult<()>;
+    async fn publish_diagnostics(
+        &self,
+        uri: &str,
+        diagnostics: Vec<LspDiagnostic>,
+    ) -> EventResult<()>;
 
     /// Clear diagnostics for URI
     async fn clear_diagnostics(&self, uri: &str) -> EventResult<()>;
@@ -479,9 +483,10 @@ impl EventProcessor {
 
         let mut subscribers = self.inner.subscribers.write().await;
         if subscribers.remove(name).is_none() {
-            return Err(EventError::SubscriberError(
-                format!("Subscriber not found: {}", name)
-            ));
+            return Err(EventError::SubscriberError(format!(
+                "Subscriber not found: {}",
+                name
+            )));
         }
 
         // Remove routing rules for this subscriber
@@ -510,9 +515,10 @@ impl EventProcessor {
 
         // Send to processing loop
         if let Err(e) = self.event_tx.send(event) {
-            return Err(EventError::ChannelError(
-                format!("Failed to send event: {}", e)
-            ));
+            return Err(EventError::ChannelError(format!(
+                "Failed to send event: {}",
+                e
+            )));
         }
 
         Ok(())
@@ -575,7 +581,10 @@ impl EventProcessor {
     }
 
     /// Process a single event
-    async fn process_single_event(inner: &Arc<EventProcessorInner>, event: RealTimeEvent) -> EventResult<()> {
+    async fn process_single_event(
+        inner: &Arc<EventProcessorInner>,
+        event: RealTimeEvent,
+    ) -> EventResult<()> {
         let start_time = Instant::now();
 
         // Update statistics
@@ -591,7 +600,10 @@ impl EventProcessor {
         let routing_result = Self::route_event_to_subscribers(inner, &event).await;
 
         // Handle LSP integration if applicable
-        if matches!(event, RealTimeEvent::AnalysisComplete(_) | RealTimeEvent::LspDiagnosticEvent(_)) {
+        if matches!(
+            event,
+            RealTimeEvent::AnalysisComplete(_) | RealTimeEvent::LspDiagnosticEvent(_)
+        ) {
             if let Err(e) = Self::handle_lsp_integration(inner, &event).await {
                 warn!("LSP integration failed: {}", e);
             }
@@ -604,13 +616,19 @@ impl EventProcessor {
 
         // Update performance metrics
         let processing_time = start_time.elapsed().as_micros() as u64;
-        inner.performance_monitor.record_latency(&Self::event_type_name(&event), processing_time).await;
+        inner
+            .performance_monitor
+            .record_latency(&Self::event_type_name(&event), processing_time)
+            .await;
 
         routing_result
     }
 
     /// Route event to appropriate subscribers
-    async fn route_event_to_subscribers(inner: &Arc<EventProcessorInner>, event: &RealTimeEvent) -> EventResult<()> {
+    async fn route_event_to_subscribers(
+        inner: &Arc<EventProcessorInner>,
+        event: &RealTimeEvent,
+    ) -> EventResult<()> {
         let subscribers = inner.subscribers.read().await;
         let routing_rules = inner.routing_rules.read().await;
 
@@ -633,7 +651,10 @@ impl EventProcessor {
                 tokio::spawn(async move {
                     let mut subscriber = subscriber.clone();
                     if let Err(e) = subscriber.handle_event(&event_clone).await {
-                        error!("Subscriber {} failed to handle event: {}", subscriber_name, e);
+                        error!(
+                            "Subscriber {} failed to handle event: {}",
+                            subscriber_name, e
+                        );
                     }
                 });
             } else {
@@ -645,7 +666,10 @@ impl EventProcessor {
     }
 
     /// Handle LSP integration for events
-    async fn handle_lsp_integration(inner: &Arc<EventProcessorInner>, event: &RealTimeEvent) -> EventResult<()> {
+    async fn handle_lsp_integration(
+        inner: &Arc<EventProcessorInner>,
+        event: &RealTimeEvent,
+    ) -> EventResult<()> {
         if let Some(lsp_service) = inner.lsp_service.read().await.as_ref() {
             match event {
                 RealTimeEvent::AnalysisComplete(analysis_event) => {
@@ -653,17 +677,31 @@ impl EventProcessor {
                         // Create LSP diagnostic for analysis failure
                         let diagnostic = LspDiagnostic {
                             range: LspRange {
-                                start: LspPosition { line: 0, character: 0 },
-                                end: LspPosition { line: 0, character: 0 },
+                                start: LspPosition {
+                                    line: 0,
+                                    character: 0,
+                                },
+                                end: LspPosition {
+                                    line: 0,
+                                    character: 0,
+                                },
                             },
                             severity: Some(LspSeverity::Warning),
                             code: Some("analysis_failed".to_string()),
                             source: Some("rust-ai-ide".to_string()),
-                            message: analysis_event.error_message.clone().unwrap_or("Analysis failed".to_string()),
+                            message: analysis_event
+                                .error_message
+                                .clone()
+                                .unwrap_or("Analysis failed".to_string()),
                             related_information: Vec::new(),
                         };
 
-                        lsp_service.publish_diagnostics(&format!("file:///{}", analysis_event.file_path), vec![diagnostic]).await?;
+                        lsp_service
+                            .publish_diagnostics(
+                                &format!("file:///{}", analysis_event.file_path),
+                                vec![diagnostic],
+                            )
+                            .await?;
                     }
                 }
 
@@ -688,21 +726,31 @@ impl EventProcessor {
                         code: diagnostic_event.code.clone(),
                         source: Some(diagnostic_event.source.clone()),
                         message: diagnostic_event.message.clone(),
-                        related_information: diagnostic_event.related_info.iter().map(|info| {
-                            LspDiagnosticRelatedInformation {
+                        related_information: diagnostic_event
+                            .related_info
+                            .iter()
+                            .map(|info| LspDiagnosticRelatedInformation {
                                 location: LspLocation {
                                     uri: info.location.clone(),
                                     range: LspRange {
-                                        start: LspPosition { line: 0, character: 0 },
-                                        end: LspPosition { line: 0, character: 0 },
+                                        start: LspPosition {
+                                            line: 0,
+                                            character: 0,
+                                        },
+                                        end: LspPosition {
+                                            line: 0,
+                                            character: 0,
+                                        },
                                     },
                                 },
                                 message: info.message.clone(),
-                            }
-                        }).collect(),
+                            })
+                            .collect(),
                     };
 
-                    lsp_service.publish_diagnostics(&diagnostic_event.uri, vec![diagnostic]).await?;
+                    lsp_service
+                        .publish_diagnostics(&diagnostic_event.uri, vec![diagnostic])
+                        .await?;
                 }
 
                 _ => {}
@@ -713,48 +761,45 @@ impl EventProcessor {
     }
 
     /// Handle dashboard integration for events
-    async fn handle_dashboard_integration(inner: &Arc<EventProcessorInner>, event: &RealTimeEvent) -> EventResult<()> {
+    async fn handle_dashboard_integration(
+        inner: &Arc<EventProcessorInner>,
+        event: &RealTimeEvent,
+    ) -> EventResult<()> {
         if let Some(dashboard_updater) = inner.dashboard_updater.read().await.as_ref() {
             let update = match event {
-                RealTimeEvent::AnalysisComplete(completion) => {
-                    DashboardUpdate {
-                        component_type: "analysis_progress".to_string(),
-                        component_id: completion.file_path.clone(),
-                        update_type: "completion".to_string(),
-                        data: serde_json::json!({
-                            "task_id": completion.task_id,
-                            "success": completion.success,
-                            "duration_ms": completion.duration_ms,
-                            "findings_count": completion.findings_count
-                        }),
-                    }
-                }
+                RealTimeEvent::AnalysisComplete(completion) => DashboardUpdate {
+                    component_type: "analysis_progress".to_string(),
+                    component_id: completion.file_path.clone(),
+                    update_type: "completion".to_string(),
+                    data: serde_json::json!({
+                        "task_id": completion.task_id,
+                        "success": completion.success,
+                        "duration_ms": completion.duration_ms,
+                        "findings_count": completion.findings_count
+                    }),
+                },
 
-                RealTimeEvent::PerformanceEvent(perf) => {
-                    DashboardUpdate {
-                        component_type: "performance_metrics".to_string(),
-                        component_id: perf.component.clone(),
-                        update_type: perf.metric_name.clone(),
-                        data: serde_json::json!({
-                            "value": perf.value,
-                            "unit": perf.unit,
-                            "timestamp": perf.timestamp
-                        }),
-                    }
-                }
+                RealTimeEvent::PerformanceEvent(perf) => DashboardUpdate {
+                    component_type: "performance_metrics".to_string(),
+                    component_id: perf.component.clone(),
+                    update_type: perf.metric_name.clone(),
+                    data: serde_json::json!({
+                        "value": perf.value,
+                        "unit": perf.unit,
+                        "timestamp": perf.timestamp
+                    }),
+                },
 
-                RealTimeEvent::HealthEvent(health) => {
-                    DashboardUpdate {
-                        component_type: "system_health".to_string(),
-                        component_id: health.component.clone(),
-                        update_type: "status".to_string(),
-                        data: serde_json::json!({
-                            "status": health.status,
-                            "details": health.details,
-                            "timestamp": health.timestamp
-                        }),
-                    }
-                }
+                RealTimeEvent::HealthEvent(health) => DashboardUpdate {
+                    component_type: "system_health".to_string(),
+                    component_id: health.component.clone(),
+                    update_type: "status".to_string(),
+                    data: serde_json::json!({
+                        "status": health.status,
+                        "details": health.details,
+                        "timestamp": health.timestamp
+                    }),
+                },
 
                 _ => return Ok(()),
             };
@@ -830,7 +875,10 @@ impl PerformanceMonitor {
 
     /// Record processing latency for an event type
     async fn record_latency(&self, event_type: &str, latency_us: u64) {
-        let latencies = self.processing_latencies.entry(event_type.to_string()).or_insert(Vec::new());
+        let latencies = self
+            .processing_latencies
+            .entry(event_type.to_string())
+            .or_insert(Vec::new());
         latencies.push(latency_us);
 
         // Keep only last 1000 measurements
@@ -866,12 +914,11 @@ impl HealthChecker {
             healthy: true,
             last_check: Instant::now(),
             error_message: None,
-            metrics: HashMap::from([
-                ("uptime".to_string(), 1.0),
-            ]),
+            metrics: HashMap::from([("uptime".to_string(), 1.0)]),
         };
 
-        self.component_health.insert("event_processor".to_string(), processor_health);
+        self.component_health
+            .insert("event_processor".to_string(), processor_health);
 
         Ok(())
     }
@@ -930,10 +977,7 @@ mod tests {
         }
 
         fn subscribed_events(&self) -> Vec<String> {
-            vec![
-                "AnalysisComplete".to_string(),
-                "FileChange".to_string(),
-            ]
+            vec!["AnalysisComplete".to_string(), "FileChange".to_string()]
         }
 
         async fn handle_event(&mut self, event: &RealTimeEvent) -> EventResult<()> {

@@ -30,7 +30,9 @@ impl StyleRule {
     /// Get the description of the rule
     pub fn description(&self) -> &'static str {
         match self {
-            StyleRule::NamingConvention => "Enforces consistent naming conventions (snake_case, SCREAMING_SNAKE_CASE)",
+            StyleRule::NamingConvention => {
+                "Enforces consistent naming conventions (snake_case, SCREAMING_SNAKE_CASE)"
+            }
             StyleRule::Indentation => "Ensures consistent indentation (4 spaces, no tabs)",
             StyleRule::LineLength => "Limits line length to 100 characters",
             StyleRule::CommentStyle => "Enforces Rust-style comments over C-style",
@@ -203,7 +205,9 @@ impl<'a, 'ast> syn::visit::Visit<'ast> for FunctionLengthVisitor<'a> {
                     offset: 0,
                 },
                 severity: rust_ai_ide_ai_analysis::Severity::Info,
-                suggestion: Some("Consider breaking this function into smaller functions".to_string()),
+                suggestion: Some(
+                    "Consider breaking this function into smaller functions".to_string(),
+                ),
             });
         }
         syn::visit::visit_item_fn(self, node);
@@ -221,7 +225,11 @@ pub struct StyleRuleStats {
 
 impl StyleRuleStats {
     /// Record a violation
-    pub fn record_violation(&mut self, rule: &StyleRule, severity: rust_ai_ide_ai_analysis::Severity) {
+    pub fn record_violation(
+        &mut self,
+        rule: &StyleRule,
+        severity: rust_ai_ide_ai_analysis::Severity,
+    ) {
         *self.violations_by_rule.entry(rule.clone()).or_insert(0) += 1;
         *self.violations_by_severity.entry(severity).or_insert(0) += 1;
         self.total_violations += 1;
@@ -233,7 +241,8 @@ impl StyleRuleStats {
 
     /// Get most violated rules
     pub fn most_violated_rules(&self, limit: usize) -> Vec<(StyleRule, usize)> {
-        let mut violations: Vec<(StyleRule, usize)> = self.violations_by_rule
+        let mut violations: Vec<(StyleRule, usize)> = self
+            .violations_by_rule
             .iter()
             .map(|(rule, count)| (rule.clone(), *count))
             .collect();
@@ -269,7 +278,10 @@ mod tests {
 
     #[test]
     fn test_rule_categories() {
-        assert_eq!(StyleRule::NamingConvention.category(), StyleCategory::Naming);
+        assert_eq!(
+            StyleRule::NamingConvention.category(),
+            StyleCategory::Naming
+        );
         assert_eq!(StyleRule::Indentation.category(), StyleCategory::Formatting);
     }
 
@@ -283,7 +295,10 @@ mod tests {
     fn test_style_rules_config() {
         let config = StyleRulesConfig::default();
         assert!(config.is_enabled(&StyleRule::NamingConvention));
-        assert_eq!(config.rule_config(&StyleRule::LineLength).severity, rust_ai_ide_ai_analysis::Severity::Warning);
+        assert_eq!(
+            config.rule_config(&StyleRule::LineLength).severity,
+            rust_ai_ide_ai_analysis::Severity::Warning
+        );
     }
 
     #[test]

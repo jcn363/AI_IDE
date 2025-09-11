@@ -1,8 +1,8 @@
-use async_trait::async_trait;
-use tokio::sync::mpsc;
-use std::time::Duration;
 use crate::error::TestError;
 use crate::harness::{TestHarness, TestResult};
+use async_trait::async_trait;
+use std::time::Duration;
+use tokio::sync::mpsc;
 
 /// Integration with debugger async patterns
 pub mod debugger_harness {
@@ -87,21 +87,30 @@ pub mod debugger_harness {
         /// Send a command to the debugger
         pub async fn send_command(&self, command: DebuggerCommand) -> Result<(), TestError> {
             if let Some(sender) = &self.command_sender {
-                sender.send(command)
+                sender
+                    .send(command)
                     .map_err(|_| TestError::Async("Failed to send debugger command".to_string()))?;
             }
             Ok(())
         }
 
         /// Wait for debugger event with timeout
-        pub async fn wait_for_event(&mut self, event_timeout: Duration) -> Result<DebuggerEvent, TestError> {
+        pub async fn wait_for_event(
+            &mut self,
+            event_timeout: Duration,
+        ) -> Result<DebuggerEvent, TestError> {
             use tokio::time::timeout;
 
             if let Some(receiver) = &mut self.event_receiver {
                 match timeout(event_timeout, receiver.recv()).await {
                     Ok(Some(event)) => Ok(event),
-                    Ok(None) => Err(TestError::Async("Debugger event channel closed".to_string())),
-                    Err(_) => Err(TestError::Timeout(format!("No debugger event received within {:?}", event_timeout))),
+                    Ok(None) => Err(TestError::Async(
+                        "Debugger event channel closed".to_string(),
+                    )),
+                    Err(_) => Err(TestError::Timeout(format!(
+                        "No debugger event received within {:?}",
+                        event_timeout
+                    ))),
                 }
             } else {
                 Err(TestError::Async("No event receiver connected".to_string()))
@@ -109,14 +118,22 @@ pub mod debugger_harness {
         }
 
         /// Collect events for a given duration
-        pub async fn collect_events(&mut self, duration: Duration) -> Result<Vec<DebuggerEvent>, TestError> {
+        pub async fn collect_events(
+            &mut self,
+            duration: Duration,
+        ) -> Result<Vec<DebuggerEvent>, TestError> {
             use tokio::time::timeout;
 
             let mut events = Vec::new();
             let start = std::time::Instant::now();
 
             while start.elapsed() < duration {
-                match timeout(Duration::from_millis(100), self.wait_for_event(Duration::from_millis(100))).await {
+                match timeout(
+                    Duration::from_millis(100),
+                    self.wait_for_event(Duration::from_millis(100)),
+                )
+                .await
+                {
                     Ok(Ok(event)) => events.push(event),
                     Ok(Err(_)) => continue,
                     Err(_) => break,
@@ -136,8 +153,9 @@ pub mod debugger_harness {
         async fn setup(&self, input: Self::Input) -> Result<Self::Context, TestError> {
             // Initialize debugger session
             self.send_command(DebuggerCommand::StartSession {
-                config: "test_config".to_string()
-            }).await?;
+                config: "test_config".to_string(),
+            })
+            .await?;
 
             // Send all setup commands
             for command in input {
@@ -153,7 +171,11 @@ pub mod debugger_harness {
             Ok(events)
         }
 
-        async fn validate(&self, context: Self::Context, output: Self::Output) -> Result<TestResult, TestError> {
+        async fn validate(
+            &self,
+            context: Self::Context,
+            output: Self::Output,
+        ) -> Result<TestResult, TestError> {
             // Basic validation - can be extended with specific test logic
             let passed = output.len() > 0 && context.session_active;
 
@@ -165,8 +187,14 @@ pub mod debugger_harness {
                     "Debugger integration test failed".to_string()
                 },
                 details: Some(crate::harness::TestDetails {
-                    assertions_made: vec!["session_active".to_string(), "events_received".to_string()],
-                    expected_vs_actual: Some(("events > 0".to_string(), format!("events = {}", output.len()))),
+                    assertions_made: vec![
+                        "session_active".to_string(),
+                        "events_received".to_string(),
+                    ],
+                    expected_vs_actual: Some((
+                        "events > 0".to_string(),
+                        format!("events = {}", output.len()),
+                    )),
                     additional_data: std::collections::HashMap::new(),
                 }),
                 duration: Duration::from_millis(100),
@@ -201,11 +229,13 @@ pub mod debugger_test_utils {
         /// Test setting and hitting breakpoints asynchronously
         pub async fn test_breakpoint_flow(&self) -> Result<(), TestError> {
             // This would integrate with real debugger breakpoint testing
-            self.context.execute(async {
-                // Simulate breakpoint operations
-                tokio::time::sleep(Duration::from_millis(100)).await;
-                Ok(())
-            }).await?
+            self.context
+                .execute(async {
+                    // Simulate breakpoint operations
+                    tokio::time::sleep(Duration::from_millis(100)).await;
+                    Ok(())
+                })
+                .await?
         }
 
         /// Test stepping operations with timeout
@@ -217,8 +247,9 @@ pub mod debugger_test_utils {
                     tokio::time::sleep(Duration::from_millis(50)).await;
                     Ok(())
                 },
-                Duration::from_secs(2)
-            ).await?
+                Duration::from_secs(2),
+            )
+            .await?
         }
     }
 
@@ -236,19 +267,28 @@ pub mod debugger_test_utils {
 
         pub fn validate_sequence(&self, actual: &[String]) -> Result<(), TestError> {
             if actual.len() != self.expected_transitions.len() {
-                return Err(TestError::Validation(crate::ValidationError::invalid_setup(format!(
-                    "Transition count mismatch: expected {}, got {}",
-                    self.expected_transitions.len(),
-                    actual.len()
-                ))));
+                return Err(TestError::Validation(
+                    crate::ValidationError::invalid_setup(format!(
+                        "Transition count mismatch: expected {}, got {}",
+                        self.expected_transitions.len(),
+                        actual.len()
+                    )),
+                ));
             }
 
-            for (i, (expected, actual)) in self.expected_transitions.iter().zip(actual.iter()).enumerate() {
+            for (i, (expected, actual)) in self
+                .expected_transitions
+                .iter()
+                .zip(actual.iter())
+                .enumerate()
+            {
                 if expected != actual {
-                    return Err(TestError::Validation(crate::ValidationError::invalid_setup(format!(
-                        "Transition {} mismatch: expected '{}', got '{}'",
-                        i, expected, actual
-                    ))));
+                    return Err(TestError::Validation(
+                        crate::ValidationError::invalid_setup(format!(
+                            "Transition {} mismatch: expected '{}', got '{}'",
+                            i, expected, actual
+                        )),
+                    ));
                 }
             }
 
@@ -266,12 +306,10 @@ mod tests {
     #[tokio::test]
     async fn test_debugger_harness_setup() {
         let harness = debugger_harness::DebuggerIntegratedHarness::new();
-        let commands = vec![
-            debugger_harness::DebuggerCommand::AddBreakpoint {
-                file: "test.rs".to_string(),
-                line: 5,
-            }
-        ];
+        let commands = vec![debugger_harness::DebuggerCommand::AddBreakpoint {
+            file: "test.rs".to_string(),
+            line: 5,
+        }];
 
         let context = harness.setup(commands).await.unwrap();
         assert!(!context.session_active); // Test implementation doesn't activate session

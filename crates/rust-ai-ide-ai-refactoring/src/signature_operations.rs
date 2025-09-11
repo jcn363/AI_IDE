@@ -1,5 +1,5 @@
-use crate::RefactoringOperation;
 use crate::types::*;
+use crate::RefactoringOperation;
 use async_trait::async_trait;
 use std::fs;
 
@@ -25,7 +25,9 @@ impl RefactoringOperation for ChangeSignatureOperation {
         println!("Change signature operation executing");
 
         let file_path = &context.file_path;
-        let function_name = context.symbol_name.as_deref()
+        let function_name = context
+            .symbol_name
+            .as_deref()
             .ok_or_else(|| format!("No function name provided for signature change"))?;
 
         // Read and parse file
@@ -53,11 +55,19 @@ impl RefactoringOperation for ChangeSignatureOperation {
             changes,
             error_message: None,
             warnings: vec![
-                format!("Function '{}' signature changed - update all callers", function_name),
+                format!(
+                    "Function '{}' signature changed - update all callers",
+                    function_name
+                ),
                 "Signature changes may break existing code".to_string(),
-            ].into_iter()
-              .chain(caller_updates.into_iter().map(|caller| format!("Update caller: {}", caller)))
-              .collect(),
+            ]
+            .into_iter()
+            .chain(
+                caller_updates
+                    .into_iter()
+                    .map(|caller| format!("Update caller: {}", caller)),
+            )
+            .collect(),
             new_content: Some(content),
         })
     }
@@ -109,7 +119,9 @@ impl RefactoringOperation for RemoveParameterOperation {
         println!("Remove parameter operation executing");
 
         let file_path = &context.file_path;
-        let function_name = context.symbol_name.as_deref()
+        let function_name = context
+            .symbol_name
+            .as_deref()
             .ok_or_else(|| format!("No function name provided for parameter removal"))?;
 
         let parameter_name = self.extract_parameter_name_from_options(options)?;
@@ -119,7 +131,8 @@ impl RefactoringOperation for RemoveParameterOperation {
         let mut syntax: syn::File = syn::parse_file(&content)?;
 
         // Find the function and parameter
-        let (function_info, param_index) = self.find_parameter_to_remove(&syntax, function_name, &parameter_name)?;
+        let (function_info, param_index) =
+            self.find_parameter_to_remove(&syntax, function_name, &parameter_name)?;
 
         // Validate parameter removal
         self.validate_parameter_removal(&function_info, param_index)?;
@@ -136,11 +149,19 @@ impl RefactoringOperation for RemoveParameterOperation {
             changes,
             error_message: None,
             warnings: vec![
-                format!("Parameter '{}' removed from function '{}' - update all callers", parameter_name, function_name),
+                format!(
+                    "Parameter '{}' removed from function '{}' - update all callers",
+                    parameter_name, function_name
+                ),
                 "Removing parameters may break existing code".to_string(),
-            ].into_iter()
-              .chain(caller_updates.into_iter().map(|caller| format!("Update caller: {}", caller)))
-              .collect(),
+            ]
+            .into_iter()
+            .chain(
+                caller_updates
+                    .into_iter()
+                    .map(|caller| format!("Update caller: {}", caller)),
+            )
+            .collect(),
             new_content: Some(content),
         })
     }
@@ -192,7 +213,9 @@ impl RefactoringOperation for IntroduceParameterOperation {
         println!("Introduce parameter operation executing");
 
         let file_path = &context.file_path;
-        let function_name = context.symbol_name.as_deref()
+        let function_name = context
+            .symbol_name
+            .as_deref()
             .ok_or_else(|| format!("No function name provided for parameter introduction"))?;
 
         let new_param = self.extract_new_parameter_from_options(options)?;
@@ -211,7 +234,8 @@ impl RefactoringOperation for IntroduceParameterOperation {
         let changes = self.apply_parameter_introduction(&function_info, &new_param, &syntax)?;
 
         // Find callers that need updates
-        let caller_updates = self.find_callers_to_update_for_intro(&syntax, function_name, &new_param);
+        let caller_updates =
+            self.find_callers_to_update_for_intro(&syntax, function_name, &new_param);
 
         Ok(RefactoringResult {
             id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
@@ -219,11 +243,19 @@ impl RefactoringOperation for IntroduceParameterOperation {
             changes,
             error_message: None,
             warnings: vec![
-                format!("New parameter '{}' introduced to function '{}' - update all callers", new_param.name, function_name),
+                format!(
+                    "New parameter '{}' introduced to function '{}' - update all callers",
+                    new_param.name, function_name
+                ),
                 "Adding parameters may require callers to provide values".to_string(),
-            ].into_iter()
-              .chain(caller_updates.into_iter().map(|caller| format!("Update caller: {}", caller)))
-              .collect(),
+            ]
+            .into_iter()
+            .chain(
+                caller_updates
+                    .into_iter()
+                    .map(|caller| format!("Update caller: {}", caller)),
+            )
+            .collect(),
             new_content: Some(content),
         })
     }
@@ -361,7 +393,11 @@ impl RefactoringOperation for ReplaceConstructorOperation {
 
 impl ChangeSignatureOperation {
     /// Analyze the current function signature
-    fn analyze_function_signature(&self, syntax: &syn::File, function_name: &str) -> Result<FunctionSignatureInfo, Box<dyn std::error::Error + Send + Sync>> {
+    fn analyze_function_signature(
+        &self,
+        syntax: &syn::File,
+        function_name: &str,
+    ) -> Result<FunctionSignatureInfo, Box<dyn std::error::Error + Send + Sync>> {
         for item in &syntax.items {
             match item {
                 syn::Item::Fn(item_fn) => {
@@ -398,21 +434,24 @@ impl ChangeSignatureOperation {
 
     /// Extract parameters from function signature
     fn extract_parameters(&self, sig: &syn::Signature) -> Vec<ParameterInfo> {
-        sig.inputs.iter().filter_map(|arg| {
-            match arg {
-                syn::FnArg::Receiver(_) => None, // Skip self parameter for now
-                syn::FnArg::Typed(pat_type) => {
-                    if let syn::Pat::Ident(pat_ident) = &*pat_type.pat {
-                        Some(ParameterInfo {
-                            name: pat_ident.ident.to_string(),
-                            type_info: format!("{}", quote::quote!(#pat_type.ty)),
-                        })
-                    } else {
-                        None
+        sig.inputs
+            .iter()
+            .filter_map(|arg| {
+                match arg {
+                    syn::FnArg::Receiver(_) => None, // Skip self parameter for now
+                    syn::FnArg::Typed(pat_type) => {
+                        if let syn::Pat::Ident(pat_ident) = &*pat_type.pat {
+                            Some(ParameterInfo {
+                                name: pat_ident.ident.to_string(),
+                                type_info: format!("{}", quote::quote!(#pat_type.ty)),
+                            })
+                        } else {
+                            None
+                        }
                     }
                 }
-            }
-        }).collect()
+            })
+            .collect()
     }
 
     /// Extract return type from function signature
@@ -433,14 +472,21 @@ impl ChangeSignatureOperation {
     }
 
     /// Extract new signature specification from options
-    fn extract_new_signature_from_options(&self, options: &RefactoringOptions) -> Result<NewSignatureSpec, Box<dyn std::error::Error + Send + Sync>> {
+    fn extract_new_signature_from_options(
+        &self,
+        options: &RefactoringOptions,
+    ) -> Result<NewSignatureSpec, Box<dyn std::error::Error + Send + Sync>> {
         // In a real implementation, this would parse options to get new signature
         // For now, return a placeholder
         Err("New signature specification must be provided in options".into())
     }
 
     /// Validate signature change compatibility
-    fn validate_signature_change(&self, current: &FunctionSignatureInfo, new_sig: &NewSignatureSpec) -> Result<(), String> {
+    fn validate_signature_change(
+        &self,
+        current: &FunctionSignatureInfo,
+        new_sig: &NewSignatureSpec,
+    ) -> Result<(), String> {
         // Basic validation - check for incompatible changes
         if current.is_async && !new_sig.is_async {
             return Err("Cannot remove async from an async function".to_string());
@@ -449,7 +495,12 @@ impl ChangeSignatureOperation {
     }
 
     /// Apply signature changes to the AST
-    fn apply_signature_changes(&self, info: &FunctionSignatureInfo, new_sig: &NewSignatureSpec, syntax: &syn::File) -> Result<Vec<CodeChange>, Box<dyn std::error::Error + Send + Sync>> {
+    fn apply_signature_changes(
+        &self,
+        info: &FunctionSignatureInfo,
+        new_sig: &NewSignatureSpec,
+        syntax: &syn::File,
+    ) -> Result<Vec<CodeChange>, Box<dyn std::error::Error + Send + Sync>> {
         // Placeholder implementation - would generate actual AST changes
         Ok(vec![CodeChange {
             file_path: "/target/file.rs".to_string(),
@@ -466,7 +517,12 @@ impl ChangeSignatureOperation {
     }
 
     /// Find all callers that need to be updated
-    fn find_caller_updates(&self, syntax: &syn::File, old_sig: &FunctionSignatureInfo, new_sig: &NewSignatureSpec) -> Vec<String> {
+    fn find_caller_updates(
+        &self,
+        syntax: &syn::File,
+        old_sig: &FunctionSignatureInfo,
+        new_sig: &NewSignatureSpec,
+    ) -> Vec<String> {
         let mut updates = Vec::new();
         // Simplified - would analyze all function calls
         updates.push(format!("Update calls to function '{}'", old_sig.name));
@@ -476,19 +532,35 @@ impl ChangeSignatureOperation {
 
 impl RemoveParameterOperation {
     /// Extract parameter name from options
-    fn extract_parameter_name_from_options(&self, options: &RefactoringOptions) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+    fn extract_parameter_name_from_options(
+        &self,
+        options: &RefactoringOptions,
+    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
         // In a real implementation, this would parse options
         Err("Parameter name must be provided in options".into())
     }
 
     /// Find the parameter to remove and return function info
-    fn find_parameter_to_remove(&self, syntax: &syn::File, function_name: &str, parameter_name: &str) -> Result<(FunctionSignatureInfo, usize), Box<dyn std::error::Error + Send + Sync>> {
+    fn find_parameter_to_remove(
+        &self,
+        syntax: &syn::File,
+        function_name: &str,
+        parameter_name: &str,
+    ) -> Result<(FunctionSignatureInfo, usize), Box<dyn std::error::Error + Send + Sync>> {
         // Simplified - would find the function and parameter index
-        Err(format!("Parameter '{}' not found in function '{}'", parameter_name, function_name).into())
+        Err(format!(
+            "Parameter '{}' not found in function '{}'",
+            parameter_name, function_name
+        )
+        .into())
     }
 
     /// Validate parameter removal
-    fn validate_parameter_removal(&self, function_info: &FunctionSignatureInfo, param_index: usize) -> Result<(), String> {
+    fn validate_parameter_removal(
+        &self,
+        function_info: &FunctionSignatureInfo,
+        param_index: usize,
+    ) -> Result<(), String> {
         if param_index >= function_info.parameters.len() {
             return Err("Parameter index out of bounds".to_string());
         }
@@ -496,7 +568,12 @@ impl RemoveParameterOperation {
     }
 
     /// Apply parameter removal to AST
-    fn apply_parameter_removal(&self, function_info: &FunctionSignatureInfo, param_index: usize, syntax: &syn::File) -> Result<Vec<CodeChange>, Box<dyn std::error::Error + Send + Sync>> {
+    fn apply_parameter_removal(
+        &self,
+        function_info: &FunctionSignatureInfo,
+        param_index: usize,
+        syntax: &syn::File,
+    ) -> Result<Vec<CodeChange>, Box<dyn std::error::Error + Send + Sync>> {
         // Placeholder implementation
         Ok(vec![CodeChange {
             file_path: "/target/file.rs".to_string(),
@@ -513,9 +590,17 @@ impl RemoveParameterOperation {
     }
 
     /// Find callers that need to be updated
-    fn find_callers_to_update(&self, syntax: &syn::File, function_name: &str, param_index: usize) -> Vec<String> {
+    fn find_callers_to_update(
+        &self,
+        syntax: &syn::File,
+        function_name: &str,
+        param_index: usize,
+    ) -> Vec<String> {
         let mut updates = Vec::new();
-        updates.push(format!("Remove argument at position {} from calls to '{}'", param_index, function_name));
+        updates.push(format!(
+            "Remove argument at position {} from calls to '{}'",
+            param_index, function_name
+        ));
         updates
     }
 }

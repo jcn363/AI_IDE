@@ -19,7 +19,7 @@ pub struct CompletionContext {
     pub completion_type: CompletionType,
     pub file_path: String,
     pub project_files: Vec<String>, // All files in the project for context analysis
-    pub recent_edits: Vec<String>, // Recent code changes for relevance
+    pub recent_edits: Vec<String>,  // Recent code changes for relevance
     pub user_patterns: Vec<String>, // User's coding patterns for personalization
 }
 
@@ -45,8 +45,8 @@ pub struct CompletionSuggestion {
     pub additional_info: Option<String>,
     pub context_relevance: f32, // How relevant this completion is to current context
     pub project_usage_count: u32, // How often this pattern is used in the project
-    pub semantic_score: f32, // Semantic similarity to surrounding code
-    pub edit_distance: usize, // Distance from cursor to completion match
+    pub semantic_score: f32,    // Semantic similarity to surrounding code
+    pub edit_distance: usize,   // Distance from cursor to completion match
 }
 
 /// Enhanced completion kind with more categories
@@ -241,41 +241,60 @@ impl CodeCompleter {
         // Multi-stage completion generation with AI intelligence
 
         // Stage 1: Project-wide context analysis
-        let project_context = self.project_analyzer.analyze_project_context(&context).await?;
-        let semantic_context = self.semantic_engine.compute_semantic_context(&context).await?;
+        let project_context = self
+            .project_analyzer
+            .analyze_project_context(&context)
+            .await?;
+        let semantic_context = self
+            .semantic_engine
+            .compute_semantic_context(&context)
+            .await?;
 
         // Stage 2: Pattern-based suggestions
-        let pattern_suggestions = self.pattern_analyzer.generate_pattern_based_suggestions(&context, &project_context).await?;
+        let pattern_suggestions = self
+            .pattern_analyzer
+            .generate_pattern_based_suggestions(&context, &project_context)
+            .await?;
         suggestions.extend(pattern_suggestions);
 
         // Stage 3: Context-aware completions for specific types
         let context_suggestions = match context.completion_type {
             CompletionType::Function => {
-                self.generate_function_completions(&context, &project_context, &semantic_context).await?
+                self.generate_function_completions(&context, &project_context, &semantic_context)
+                    .await?
             }
             CompletionType::Import => {
-                self.generate_import_completions(&context, &project_context).await?
+                self.generate_import_completions(&context, &project_context)
+                    .await?
             }
             CompletionType::Type => {
-                self.generate_type_completions(&context, &project_context).await?
+                self.generate_type_completions(&context, &project_context)
+                    .await?
             }
             CompletionType::Variable => {
-                self.generate_variable_completions(&context, &semantic_context).await?
+                self.generate_variable_completions(&context, &semantic_context)
+                    .await?
             }
             CompletionType::Method => {
-                self.generate_method_completions(&context, &project_context).await?
+                self.generate_method_completions(&context, &project_context)
+                    .await?
             }
             _ => {
-                self.generate_general_completions(&context, &project_context, &semantic_context).await?
+                self.generate_general_completions(&context, &project_context, &semantic_context)
+                    .await?
             }
         };
         suggestions.extend(context_suggestions);
 
         // Stage 4: AI-powered ranking and filtering
-        let ranked_suggestions = self.rank_and_filter_suggestions(suggestions, &context, &project_context).await?;
+        let ranked_suggestions = self
+            .rank_and_filter_suggestions(suggestions, &context, &project_context)
+            .await?;
 
         // Stage 5: Apply personalization based on user patterns
-        let personalized_suggestions = self.apply_personalization(ranked_suggestions, &context).await?;
+        let personalized_suggestions = self
+            .apply_personalization(ranked_suggestions, &context)
+            .await?;
 
         Ok(personalized_suggestions)
     }
@@ -299,8 +318,11 @@ impl CodeCompleter {
                     confidence: 0.9,
                     additional_info: Some("Based on project patterns".to_string()),
                     context_relevance: 0.95,
-                    project_usage_count: project_context.function_signatures.iter()
-                        .filter(|s| *s == signature).count() as u32,
+                    project_usage_count: project_context
+                        .function_signatures
+                        .iter()
+                        .filter(|s| *s == signature)
+                        .count() as u32,
                     semantic_score: semantic_context.similar_functions.len() as f32 / 10.0,
                     edit_distance: 0,
                 };
@@ -314,7 +336,9 @@ impl CodeCompleter {
             kind: CompletionKind::Snippet,
             description: "Async function with error handling".to_string(),
             confidence: 0.8,
-            additional_info: Some("Generates async function with proper error handling".to_string()),
+            additional_info: Some(
+                "Generates async function with proper error handling".to_string(),
+            ),
             context_relevance: 0.7,
             project_usage_count: 0,
             semantic_score: 0.6,
@@ -352,10 +376,25 @@ impl CodeCompleter {
 
         // Add standard imports
         let std_imports = vec![
-            ("use std::collections::HashMap;", "Standard HashMap import", 0.9, 0),
+            (
+                "use std::collections::HashMap;",
+                "Standard HashMap import",
+                0.9,
+                0,
+            ),
             ("use std::{io, fs};", "Multiple std imports", 0.8, 0),
-            ("use std::sync::{Arc, Mutex};", "Concurrent programming imports", 0.85, 0),
-            ("use serde::{Serialize, Deserialize};", "Serialization traits", 0.9, 0),
+            (
+                "use std::sync::{Arc, Mutex};",
+                "Concurrent programming imports",
+                0.85,
+                0,
+            ),
+            (
+                "use serde::{Serialize, Deserialize};",
+                "Serialization traits",
+                0.9,
+                0,
+            ),
         ];
 
         for (import_text, desc, conf, usage) in std_imports {
@@ -385,7 +424,13 @@ impl CodeCompleter {
 
         // Add project-specific types
         for type_def in &project_context.type_definitions {
-            if project_context.type_definitions.iter().filter(|t| *t == type_def).count() > 1 {
+            if project_context
+                .type_definitions
+                .iter()
+                .filter(|t| *t == type_def)
+                .count()
+                > 1
+            {
                 let suggestion = CompletionSuggestion {
                     text: type_def.clone(),
                     kind: CompletionKind::Type,
@@ -393,7 +438,11 @@ impl CodeCompleter {
                     confidence: 0.95,
                     additional_info: Some("Based on project type definitions".to_string()),
                     context_relevance: 0.9,
-                    project_usage_count: project_context.type_definitions.iter().filter(|t| *t == type_def).count() as u32,
+                    project_usage_count: project_context
+                        .type_definitions
+                        .iter()
+                        .filter(|t| *t == type_def)
+                        .count() as u32,
                     semantic_score: 0.85,
                     edit_distance: 0,
                 };
@@ -403,12 +452,42 @@ impl CodeCompleter {
 
         // Add standard Rust container types
         let std_types = vec![
-            ("Vec<T>", "Dynamic array type", 0.9, Some("Generic container for multiple items".to_string())),
-            ("HashMap<K, V>", "Hash-based key-value map", 0.85, Some("Fast lookup table".to_string())),
-            ("Option<T>", "Optional value type", 0.95, Some("Represents presence or absence".to_string())),
-            ("Result<T, E>", "Result type for error handling", 0.9, Some("Success or error outcome".to_string())),
-            ("Arc<Mutex<T>>", "Thread-safe shared mutable data", 0.8, Some("Concurrent programming pattern".to_string())),
-            ("Box<dyn Trait>", "Trait object on heap", 0.85, Some("Dynamic dispatch".to_string())),
+            (
+                "Vec<T>",
+                "Dynamic array type",
+                0.9,
+                Some("Generic container for multiple items".to_string()),
+            ),
+            (
+                "HashMap<K, V>",
+                "Hash-based key-value map",
+                0.85,
+                Some("Fast lookup table".to_string()),
+            ),
+            (
+                "Option<T>",
+                "Optional value type",
+                0.95,
+                Some("Represents presence or absence".to_string()),
+            ),
+            (
+                "Result<T, E>",
+                "Result type for error handling",
+                0.9,
+                Some("Success or error outcome".to_string()),
+            ),
+            (
+                "Arc<Mutex<T>>",
+                "Thread-safe shared mutable data",
+                0.8,
+                Some("Concurrent programming pattern".to_string()),
+            ),
+            (
+                "Box<dyn Trait>",
+                "Trait object on heap",
+                0.85,
+                Some("Dynamic dispatch".to_string()),
+            ),
         ];
 
         for (type_text, desc, conf, info) in std_types {
@@ -447,8 +526,9 @@ impl CodeCompleter {
             (".unwrap_or_else()", "Unwrap with closure", 0.8),
         ];
 
-        let suggestions = methods.into_iter().map(|(method, desc, conf)| {
-            CompletionSuggestion {
+        let suggestions = methods
+            .into_iter()
+            .map(|(method, desc, conf)| CompletionSuggestion {
                 text: method.to_string(),
                 kind: CompletionKind::Method,
                 description: desc.to_string(),
@@ -458,8 +538,8 @@ impl CodeCompleter {
                 project_usage_count: 0,
                 semantic_score: 0.8,
                 edit_distance: 0,
-            }
-        }).collect();
+            })
+            .collect();
 
         Ok(suggestions)
     }
@@ -477,7 +557,14 @@ impl CodeCompleter {
         let words: Vec<&str> = surrounding_text.split_whitespace().collect();
 
         for word in words {
-            if word.starts_with(|c: char| c.is_lowercase()) && word.len() > 2 && !["let", "const", "fn", "struct", "enum", "impl", "use", "mod", "pub", "async", "mut"].contains(&word) {
+            if word.starts_with(|c: char| c.is_lowercase())
+                && word.len() > 2
+                && ![
+                    "let", "const", "fn", "struct", "enum", "impl", "use", "mod", "pub", "async",
+                    "mut",
+                ]
+                .contains(&word)
+            {
                 suggestions.push(CompletionSuggestion {
                     text: word.to_string(),
                     kind: CompletionKind::Variable,
@@ -506,15 +593,30 @@ impl CodeCompleter {
 
         // Control flow statements
         let control_flow = vec![
-            ("if ", "Conditional statement", 0.95, CompletionKind::Keyword),
+            (
+                "if ",
+                "Conditional statement",
+                0.95,
+                CompletionKind::Keyword,
+            ),
             ("match ", "Pattern matching", 0.9, CompletionKind::Keyword),
-            ("while ", "Loop while condition", 0.8, CompletionKind::Keyword),
+            (
+                "while ",
+                "Loop while condition",
+                0.8,
+                CompletionKind::Keyword,
+            ),
             ("for ", "Iterator loop", 0.85, CompletionKind::Keyword),
             ("loop ", "Infinite loop", 0.7, CompletionKind::Keyword),
             ("let ", "Variable binding", 0.95, CompletionKind::Keyword),
             ("const ", "Constant binding", 0.8, CompletionKind::Keyword),
             ("fn ", "Function definition", 0.9, CompletionKind::Keyword),
-            ("struct ", "Struct definition", 0.85, CompletionKind::Keyword),
+            (
+                "struct ",
+                "Struct definition",
+                0.85,
+                CompletionKind::Keyword,
+            ),
             ("enum ", "Enum definition", 0.8, CompletionKind::Keyword),
         ];
 
@@ -547,9 +649,9 @@ impl CodeCompleter {
             let mut score = 0.0;
 
             // Weight different factors
-            score += suggestion.confidence * 0.4;           // Base confidence
-            score += suggestion.context_relevance * 0.3;    // Context relevance
-            score += suggestion.semantic_score * 0.2;       // Semantic similarity
+            score += suggestion.confidence * 0.4; // Base confidence
+            score += suggestion.context_relevance * 0.3; // Context relevance
+            score += suggestion.semantic_score * 0.2; // Semantic similarity
             score += (1.0 - (suggestion.edit_distance as f32 / 10.0).min(1.0)) * 0.1; // Edit distance (inverted)
 
             // Boost frequently used project items
@@ -561,7 +663,11 @@ impl CodeCompleter {
         }
 
         // Sort by score (highest first) and limit results
-        suggestions.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+        suggestions.sort_by(|a, b| {
+            b.confidence
+                .partial_cmp(&a.confidence)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         // Return top 20 suggestions
         Ok(suggestions.into_iter().take(20).collect())
@@ -586,7 +692,11 @@ impl CodeCompleter {
         }
 
         // Re-sort after personalization
-        personalized.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+        personalized.sort_by(|a, b| {
+            b.confidence
+                .partial_cmp(&a.confidence)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         Ok(personalized)
     }
@@ -631,7 +741,10 @@ impl PatternAnalyzer {
                 let suggestion = CompletionSuggestion {
                     text: pattern.to_string(),
                     kind: CompletionKind::Snippet,
-                    description: format!("Pattern suggestion based on your coding style: {}", pattern),
+                    description: format!(
+                        "Pattern suggestion based on your coding style: {}",
+                        pattern
+                    ),
                     confidence: 0.8,
                     additional_info: Some("Personalized suggestion".to_string()),
                     context_relevance: 0.9,
@@ -675,7 +788,9 @@ impl ProjectAnalyzer {
                 let analysis = self.analyze_file(&content, file_path);
                 context_data.relevant_symbols.extend(analysis.symbols);
                 context_data.common_patterns.extend(analysis.patterns);
-                context_data.import_frequency.extend(analysis.imports.into_iter().map(|s| (s, 1)));
+                context_data
+                    .import_frequency
+                    .extend(analysis.imports.into_iter().map(|s| (s, 1)));
             }
         }
 

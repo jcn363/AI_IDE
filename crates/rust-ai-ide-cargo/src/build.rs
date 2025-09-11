@@ -38,29 +38,60 @@ impl std::fmt::Display for BuildStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             BuildStatus::Pending => write!(f, "Pending"),
-            BuildStatus::Building { progress, current_target, jobs_running, jobs_total } => {
+            BuildStatus::Building {
+                progress,
+                current_target,
+                jobs_running,
+                jobs_total,
+            } => {
                 let percentage = (*progress * 100.0) as u32;
                 if let Some(target) = current_target {
-                    write!(f, "Compiling {} ({}% - {}/{})", target, percentage, jobs_running, jobs_total)
+                    write!(
+                        f,
+                        "Compiling {} ({}% - {}/{})",
+                        target, percentage, jobs_running, jobs_total
+                    )
                 } else {
-                    write!(f, "Building ({}% - {}/{})", percentage, jobs_running, jobs_total)
+                    write!(
+                        f,
+                        "Building ({}% - {}/{})",
+                        percentage, jobs_running, jobs_total
+                    )
                 }
-            },
+            }
             BuildStatus::Success { duration, metrics } => {
                 let duration_sec = (*duration / 1000.0) as u32;
                 let warnings_count = metrics.warning_count;
                 if warnings_count > 0 {
-                    write!(f, "Success in {}s ({} warnings)", duration_sec, warnings_count)
+                    write!(
+                        f,
+                        "Success in {}s ({} warnings)",
+                        duration_sec, warnings_count
+                    )
                 } else {
                     write!(f, "Success ({}s)", duration_sec)
                 }
-            },
-            BuildStatus::Failed { error, duration, error_details } => {
+            }
+            BuildStatus::Failed {
+                error,
+                duration,
+                error_details,
+            } => {
                 let duration_sec = (*duration / 1000.0) as u32;
-                let warnings_count = error_details.iter().filter(|e| e.level == ErrorLevel::Warning).count();
-                let errors_count = error_details.iter().filter(|e| e.level == ErrorLevel::Error).count();
-                write!(f, "Failed after {}s: {} ({} warnings, {} errors)", duration_sec, error, warnings_count, errors_count)
-            },
+                let warnings_count = error_details
+                    .iter()
+                    .filter(|e| e.level == ErrorLevel::Warning)
+                    .count();
+                let errors_count = error_details
+                    .iter()
+                    .filter(|e| e.level == ErrorLevel::Error)
+                    .count();
+                write!(
+                    f,
+                    "Failed after {}s: {} ({} warnings, {} errors)",
+                    duration_sec, error, warnings_count, errors_count
+                )
+            }
             BuildStatus::Cancelled => write!(f, "Cancelled"),
         }
     }
@@ -100,9 +131,10 @@ impl BuildStatus {
     pub fn warnings(&self) -> usize {
         match self {
             BuildStatus::Success { metrics, .. } => metrics.warning_count,
-            BuildStatus::Failed { error_details, .. } => {
-                error_details.iter().filter(|e| e.level == ErrorLevel::Warning).count()
-            },
+            BuildStatus::Failed { error_details, .. } => error_details
+                .iter()
+                .filter(|e| e.level == ErrorLevel::Warning)
+                .count(),
             _ => 0,
         }
     }
@@ -112,7 +144,7 @@ impl BuildStatus {
         match self {
             BuildStatus::Failed { error_details, .. } => {
                 error_details.len() // Count all error details as errors for now
-            },
+            }
             _ => 0,
         }
     }

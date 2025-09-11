@@ -3,7 +3,7 @@
 //! Uses iOS's UIDevice battery monitoring APIs through Objective-C runtime
 //! to access battery level, charging state, and battery health information.
 
-use crate::{BatteryState, battery_monitor::PlatformBatteryMonitor};
+use crate::{battery_monitor::PlatformBatteryMonitor, BatteryState};
 use chrono::{DateTime, Utc};
 
 pub struct IOSBatteryMonitor {
@@ -46,8 +46,8 @@ impl IOSBatteryMonitor {
 
         // Placeholder implementation for development
         Ok(BatteryState {
-            level: 0.78, // 78% battery
-            voltage: Some(3.82), // Typical iOS Li-ion voltage
+            level: 0.78,             // 78% battery
+            voltage: Some(3.82),     // Typical iOS Li-ion voltage
             temperature: Some(28.5), // Celsius (iOS-devices generally cooler)
             is_charging: false,
             health_percentage: Some(0.92), // 92% health (iOS reports this differently)
@@ -74,7 +74,8 @@ impl PlatformBatteryMonitor for IOSBatteryMonitor {
         // Rate limiting - iOS battery monitoring is resource-intensive
         if let Some(last_update) = self.last_update {
             let elapsed = Utc::now() - last_update;
-            if elapsed.num_seconds() < 45 { // More conservative for iOS
+            if elapsed.num_seconds() < 45 {
+                // More conservative for iOS
                 return Self::get_cached_battery_state().await;
             }
         }
@@ -92,7 +93,8 @@ impl PlatformBatteryMonitor for IOSBatteryMonitor {
                 // iOS provides more accurate time estimates when available
                 if state.time_remaining_minutes.is_none() && state.level < 0.2 {
                     // Estimate based on typical iOS battery life
-                    state.time_remaining_minutes = Some((state.level * 240.0) as u32); // ~4 hours full
+                    state.time_remaining_minutes = Some((state.level * 240.0) as u32);
+                    // ~4 hours full
                 }
 
                 Ok(state)

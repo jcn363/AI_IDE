@@ -1,11 +1,11 @@
-use std::fs;
-use syn::{visit_mut::VisitMut, Ident};
-use prettyplease;
-use async_trait::async_trait;
+use crate::ast_utils::*;
 use crate::types::*;
 use crate::utils::*;
-use crate::ast_utils::*;
 use crate::RefactoringOperation;
+use async_trait::async_trait;
+use prettyplease;
+use std::fs;
+use syn::{visit_mut::VisitMut, Ident};
 
 /// Convert to Async operation - converts a function to async
 pub struct ConvertToAsyncOperation;
@@ -44,7 +44,11 @@ impl ConvertToAsyncOperation {
                     };
 
                     // Analyze function body for async operations
-                    self.analyze_block_for_async(&item_fn.block, &mut calls_awaitable, &mut callees);
+                    self.analyze_block_for_async(
+                        &item_fn.block,
+                        &mut calls_awaitable,
+                        &mut callees,
+                    );
 
                     break;
                 }
@@ -59,7 +63,11 @@ impl ConvertToAsyncOperation {
                                 syn::ReturnType::Type(_, ty) => Some(*ty.clone()),
                             };
 
-                            self.analyze_block_for_async(&method.block, &mut calls_awaitable, &mut callees);
+                            self.analyze_block_for_async(
+                                &method.block,
+                                &mut calls_awaitable,
+                                &mut callees,
+                            );
 
                             break;
                         }
@@ -117,8 +125,10 @@ impl ConvertToAsyncOperation {
                     if let Some(ident) = path.path.get_ident() {
                         callees.push(ident.to_string());
                         // Consider adding heuristics for known async functions
-                        if matches!(ident.to_string().as_str(),
-                            "tokio" | "async" | "sleep" | "spawn" | "join" | "select") {
+                        if matches!(
+                            ident.to_string().as_str(),
+                            "tokio" | "async" | "sleep" | "spawn" | "join" | "select"
+                        ) {
                             *calls_awaitable = true;
                         }
                     }
@@ -162,7 +172,10 @@ impl ConvertToAsyncOperation {
     /// Validate conversion compatibility
     fn validate_conversion(&self, info: &AsyncConversionInfo) -> Result<(), String> {
         if info.is_already_async {
-            return Err(format!("Function '{}' is already async", info.function_name));
+            return Err(format!(
+                "Function '{}' is already async",
+                info.function_name
+            ));
         }
 
         if info.calls_awaitable {
@@ -189,12 +202,18 @@ impl RefactoringOperation for ConvertToAsyncOperation {
         let mut syntax: syn::File = syn::parse_file(&content)?;
 
         // Get target function name
-        let function_name = context.symbol_name.as_deref()
+        let function_name = context
+            .symbol_name
+            .as_deref()
             .ok_or_else(|| format!("No function name provided for async conversion"))?;
 
         // Validate file type
         if !is_ast_supported(file_path) {
-            return Err(format!("Async conversion only supports Rust (.rs) files, got: {}", file_path).into());
+            return Err(format!(
+                "Async conversion only supports Rust (.rs) files, got: {}",
+                file_path
+            )
+            .into());
         }
 
         // Analyze function for async conversion
@@ -221,14 +240,18 @@ impl RefactoringOperation for ConvertToAsyncOperation {
                             syn::ReturnType::Default => {
                                 i.sig.output = syn::ReturnType::Type(
                                     syn::token::RArrow::default(),
-                                    Box::new(syn::parse_quote!(impl std::future::Future<Output = ()>)),
+                                    Box::new(syn::parse_quote!(
+                                        impl std::future::Future<Output = ()>
+                                    )),
                                 );
                             }
                             syn::ReturnType::Type(_, ty) => {
                                 if !matches!(**ty, syn::Type::ImplTrait(_)) {
                                     i.sig.output = syn::ReturnType::Type(
                                         syn::token::RArrow::default(),
-                                        Box::new(syn::parse_quote!(impl std::future::Future<Output = #ty>)),
+                                        Box::new(
+                                            syn::parse_quote!(impl std::future::Future<Output = #ty>),
+                                        ),
                                     );
                                 }
                             }
@@ -269,12 +292,20 @@ impl RefactoringOperation for ConvertToAsyncOperation {
             }],
             error_message: None,
             warnings: vec![
-                format!("Function '{}' converted to async - update all callers to use .await", function_name),
+                format!(
+                    "Function '{}' converted to async - update all callers to use .await",
+                    function_name
+                ),
                 "May need to adjust error handling for async context".to_string(),
                 "Consider using tokio::spawn for long-running async operations".to_string(),
-            ].into_iter()
-              .chain(caller_updates.into_iter().map(|caller| format!("Update caller in {} to use .await", caller)))
-              .collect(),
+            ]
+            .into_iter()
+            .chain(
+                caller_updates
+                    .into_iter()
+                    .map(|caller| format!("Update caller in {} to use .await", caller)),
+            )
+            .collect(),
             new_content: Some(modified_content),
         })
     }
@@ -310,7 +341,10 @@ impl RefactoringOperation for ConvertToAsyncOperation {
                             "Return type now wrapped in Future<Output = _>.to_string()".to_string(),
                         ]
                     } else {
-                        vec![format!("Callers may need to use .await for \"{}\"", function_name)]
+                        vec![format!(
+                            "Callers may need to use .await for \"{}\"",
+                            function_name
+                        )]
                     },
                     suggestions: vec![
                         "Ensure all async chains properly handle errors ".to_string(),
@@ -330,10 +364,12 @@ impl RefactoringOperation for ConvertToAsyncOperation {
                 potential_impact: RefactoringImpact::High,
                 affected_files: vec![context.file_path.clone()],
                 affected_symbols: vec![function_name],
-                breaking_changes: vec!["Unable to analyze function for async conversion ".to_string()],
+                breaking_changes: vec![
+                    "Unable to analyze function for async conversion ".to_string()
+                ],
                 suggestions: vec!["Verify function exists and is convertible ".to_string()],
                 warnings: vec!["Analysis failed - conversion may be unsafe ".to_string()],
-            }
+            },
         };
 
         Ok(analysis)

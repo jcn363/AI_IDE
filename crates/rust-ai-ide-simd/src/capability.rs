@@ -1,7 +1,6 @@
-/// Runtime SIMD capability detection for optimal instruction set selection
-
-use std::collections::HashSet;
 use crate::error::{SIMDError, SIMDResult};
+/// Runtime SIMD capability detection for optimal instruction set selection
+use std::collections::HashSet;
 
 /// Comprehensive SIMD capability information for the current platform
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
@@ -130,16 +129,18 @@ impl SIMDCapabilities {
             return 1;
         }
 
-        std::mem::size_of::<T>() * match std::mem::size_of::<T>() {
-            1 => 32, // i8/u8
-            2 => 16, // i16/u16
-            4 if self.has_avx512f => 16, // f32/i32 with AVX512
-            4 if self.has_avx2 => 8,     // f32/i32 with AVX2
-            4 if self.has_sse => 4,      // f32/i32 with SSE
-            8 if self.has_avx512f => 8,  // f64/i64 with AVX512
-            8 if self.has_sse2 => 2,     // f64/i64 with SSE2
-            _ => 1,
-        }.min(self.max_vector_width / std::mem::size_of::<T>())
+        std::mem::size_of::<T>()
+            * match std::mem::size_of::<T>() {
+                1 => 32,                     // i8/u8
+                2 => 16,                     // i16/u16
+                4 if self.has_avx512f => 16, // f32/i32 with AVX512
+                4 if self.has_avx2 => 8,     // f32/i32 with AVX2
+                4 if self.has_sse => 4,      // f32/i32 with SSE
+                8 if self.has_avx512f => 8,  // f64/i64 with AVX512
+                8 if self.has_sse2 => 2,     // f64/i64 with SSE2
+                _ => 1,
+            }
+            .min(self.max_vector_width / std::mem::size_of::<T>())
     }
 
     /// Check if a specific data type is supported for SIMD operations
@@ -180,22 +181,50 @@ impl SIMDCapabilities {
         }
 
         let mut features = Vec::new();
-        if self.has_sse { features.push("SSE"); }
-        if self.has_sse2 { features.push("SSE2"); }
-        if self.has_sse3 { features.push("SSE3"); }
-        if self.has_ssse3 { features.push("SSSE3"); }
-        if self.has_sse41 { features.push("SSE4.1"); }
-        if self.has_sse42 { features.push("SSE4.2"); }
-        if self.has_avx { features.push("AVX"); }
-        if self.has_avx2 { features.push("AVX2"); }
-        if self.has_fma { features.push("FMA"); }
+        if self.has_sse {
+            features.push("SSE");
+        }
+        if self.has_sse2 {
+            features.push("SSE2");
+        }
+        if self.has_sse3 {
+            features.push("SSE3");
+        }
+        if self.has_ssse3 {
+            features.push("SSSE3");
+        }
+        if self.has_sse41 {
+            features.push("SSE4.1");
+        }
+        if self.has_sse42 {
+            features.push("SSE4.2");
+        }
+        if self.has_avx {
+            features.push("AVX");
+        }
+        if self.has_avx2 {
+            features.push("AVX2");
+        }
+        if self.has_fma {
+            features.push("FMA");
+        }
         if self.has_avx512f {
             features.push("AVX512");
-            if self.has_avx512vnni { features.push("VNNI"); }
-            if self.has_avx512bw { features.push("BW"); }
-            if self.has_avx512cd { features.push("CD"); }
-            if self.has_avx512dq { features.push("DQ"); }
-            if self.has_avx512vl { features.push("VL"); }
+            if self.has_avx512vnni {
+                features.push("VNNI");
+            }
+            if self.has_avx512bw {
+                features.push("BW");
+            }
+            if self.has_avx512cd {
+                features.push("CD");
+            }
+            if self.has_avx512dq {
+                features.push("DQ");
+            }
+            if self.has_avx512vl {
+                features.push("VL");
+            }
         }
 
         format!(
@@ -221,7 +250,10 @@ pub fn detect_simd_capabilities() -> SIMDResult<SIMDCapabilities> {
     // Update supported data types based on detected features
     update_supported_data_types(&mut caps);
 
-    tracing::info!("Detected SIMD capabilities: {}", caps.describe_capabilities());
+    tracing::info!(
+        "Detected SIMD capabilities: {}",
+        caps.describe_capabilities()
+    );
 
     Ok(caps)
 }
@@ -331,7 +363,9 @@ pub fn get_cached_capabilities() -> &'static SIMDCapabilities {
         CAPABILITY_INIT.call_once(|| {
             CAPABILITY_CACHE = detect_simd_capabilities().ok();
         });
-        CAPABILITY_CACHE.as_ref().unwrap_or(&SIMDCapabilities::default())
+        CAPABILITY_CACHE
+            .as_ref()
+            .unwrap_or(&SIMDCapabilities::default())
     }
 }
 

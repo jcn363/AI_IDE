@@ -58,7 +58,10 @@ impl PerformanceForecaster {
     }
 
     /// Forecast CPU-intensive bottlenecks
-    fn forecast_cpu_bottlenecks(&self, project_path: &str) -> Result<Vec<PerformanceBottleneckForecast>, PredictiveError> {
+    fn forecast_cpu_bottlenecks(
+        &self,
+        project_path: &str,
+    ) -> Result<Vec<PerformanceBottleneckForecast>, PredictiveError> {
         let cpu_patterns = analyze_cpu_bound_patterns(project_path);
 
         let mut forecasts = Vec::new();
@@ -86,7 +89,10 @@ impl PerformanceForecaster {
     }
 
     /// Forecast memory-related bottlenecks
-    fn forecast_memory_bottlenecks(&self, project_path: &str) -> Result<Vec<PerformanceBottleneckForecast>, PredictiveError> {
+    fn forecast_memory_bottlenecks(
+        &self,
+        project_path: &str,
+    ) -> Result<Vec<PerformanceBottleneckForecast>, PredictiveError> {
         let memory_patterns = analyze_memory_patterns(project_path);
 
         let mut forecasts = Vec::new();
@@ -114,7 +120,10 @@ impl PerformanceForecaster {
     }
 
     /// Forecast I/O bottlenecks
-    fn forecast_io_bottlenecks(&self, project_path: &str) -> Result<Vec<PerformanceBottleneckForecast>, PredictiveError> {
+    fn forecast_io_bottlenecks(
+        &self,
+        project_path: &str,
+    ) -> Result<Vec<PerformanceBottleneckForecast>, PredictiveError> {
         let io_patterns = analyze_io_patterns(project_path);
 
         let mut forecasts = Vec::new();
@@ -142,7 +151,10 @@ impl PerformanceForecaster {
     }
 
     /// Forecast concurrency-related bottlenecks
-    fn forecast_concurrency_bottlenecks(&self, project_path: &str) -> Result<Vec<PerformanceBottleneckForecast>, PredictiveError> {
+    fn forecast_concurrency_bottlenecks(
+        &self,
+        project_path: &str,
+    ) -> Result<Vec<PerformanceBottleneckForecast>, PredictiveError> {
         let concurrency_patterns = analyze_concurrency_patterns(project_path);
 
         let mut forecasts = Vec::new();
@@ -157,10 +169,15 @@ impl PerformanceForecaster {
                     severity,
                     confidence,
                     predicted_impact: self.predict_concurrency_impact(&pattern),
-                    description: format!("Predicted concurrency bottleneck: {}", pattern.description),
+                    description: format!(
+                        "Predicted concurrency bottleneck: {}",
+                        pattern.description
+                    ),
                     locations: pattern.locations.clone(),
-                    scaling_recommendations: self.generate_concurrency_scaling_recommendations(pattern),
-                    estimated_mitigation_effort: self.estimate_concurrency_mitigation_effort(&pattern),
+                    scaling_recommendations: self
+                        .generate_concurrency_scaling_recommendations(pattern),
+                    estimated_mitigation_effort: self
+                        .estimate_concurrency_mitigation_effort(&pattern),
                     predicted_time_to_impact: pattern.time_to_impact,
                 });
             }
@@ -170,10 +187,16 @@ impl PerformanceForecaster {
     }
 
     /// Adjust forecasts based on historical performance data
-    fn adjust_forecasts_based_on_history(&self, forecasts: &mut [PerformanceBottleneckForecast], data: &HistoricalData) {
+    fn adjust_forecasts_based_on_history(
+        &self,
+        forecasts: &mut [PerformanceBottleneckForecast],
+        data: &HistoricalData,
+    ) {
         for forecast in forecasts.iter_mut() {
-            let historical_adjustment = analyze_historical_performance_trends(&forecast.bottleneck_type, data);
-            forecast.confidence = (forecast.confidence * 0.8 + historical_adjustment * 0.2).min(1.0);
+            let historical_adjustment =
+                analyze_historical_performance_trends(&forecast.bottleneck_type, data);
+            forecast.confidence =
+                (forecast.confidence * 0.8 + historical_adjustment * 0.2).min(1.0);
         }
     }
 
@@ -314,7 +337,8 @@ impl PerformanceForecaster {
         let mut recommendations = Vec::new();
 
         if pattern.allocation_frequency > 100 {
-            recommendations.push("Implement object pooling for frequently allocated objects".to_string());
+            recommendations
+                .push("Implement object pooling for frequently allocated objects".to_string());
         }
 
         if pattern.memory_sharing_coefficient < 0.3 {
@@ -344,7 +368,10 @@ impl PerformanceForecaster {
         recommendations
     }
 
-    fn generate_concurrency_scaling_recommendations(&self, pattern: &ConcurrencyPattern) -> Vec<String> {
+    fn generate_concurrency_scaling_recommendations(
+        &self,
+        pattern: &ConcurrencyPattern,
+    ) -> Vec<String> {
         let mut recommendations = Vec::new();
 
         if pattern.lock_contentions > 10 {
@@ -368,7 +395,11 @@ impl PerformanceForecaster {
 
         EffortEstimate {
             hours: (complexity_hours + nesting_hours) as u32,
-            difficulty: if pattern.complexity > 40 { EffortDifficulty::High } else { EffortDifficulty::Medium },
+            difficulty: if pattern.complexity > 40 {
+                EffortDifficulty::High
+            } else {
+                EffortDifficulty::Medium
+            },
             team_size: if pattern.complexity > 50 { 2 } else { 1 },
         }
     }
@@ -390,12 +421,19 @@ impl PerformanceForecaster {
 
         EffortEstimate {
             hours: (operation_hours + blocking_penalty) as u32,
-            difficulty: if pattern.is_blocking { EffortDifficulty::Medium } else { EffortDifficulty::Low },
+            difficulty: if pattern.is_blocking {
+                EffortDifficulty::Medium
+            } else {
+                EffortDifficulty::Low
+            },
             team_size: 1,
         }
     }
 
-    fn estimate_concurrency_mitigation_effort(&self, pattern: &ConcurrencyPattern) -> EffortEstimate {
+    fn estimate_concurrency_mitigation_effort(
+        &self,
+        pattern: &ConcurrencyPattern,
+    ) -> EffortEstimate {
         let contention_hours = pattern.lock_contentions as f32 * 0.5;
 
         EffortEstimate {
@@ -595,7 +633,10 @@ fn analyze_concurrency_patterns(_project_path: &str) -> Vec<ConcurrencyPattern> 
     Vec::new()
 }
 
-fn analyze_historical_performance_trends(_bottleneck_type: &BottleneckType, _data: &HistoricalData) -> f32 {
+fn analyze_historical_performance_trends(
+    _bottleneck_type: &BottleneckType,
+    _data: &HistoricalData,
+) -> f32 {
     // Implementation would analyze historical performance data
     0.5
 }

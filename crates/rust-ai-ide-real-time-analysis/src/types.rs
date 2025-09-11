@@ -344,8 +344,8 @@ impl Default for CacheConfig {
     fn default() -> Self {
         Self {
             memory_cache_size: 256 * 1024 * 1024, // 256MB
-            disk_cache_size: 1024 * 1024 * 1024,   // 1GB
-            cache_ttl: Duration::from_secs(3600),  // 1 hour
+            disk_cache_size: 1024 * 1024 * 1024,  // 1GB
+            cache_ttl: Duration::from_secs(3600), // 1 hour
             hit_time_threshold: Duration::from_millis(50),
         }
     }
@@ -384,14 +384,8 @@ impl Default for RateLimitConfig {
 impl Default for PriorityConfig {
     fn default() -> Self {
         Self {
-            high_priority_patterns: vec![
-                r".*\.rs$".into(),
-                r".*Cargo\.toml$".into(),
-            ],
-            medium_priority_patterns: vec![
-                r".*\.md$".into(),
-                r".*\.json$".into(),
-            ],
+            high_priority_patterns: vec![r".*\.rs$".into(), r".*Cargo\.toml$".into()],
+            medium_priority_patterns: vec![r".*\.md$".into(), r".*\.json$".into()],
         }
     }
 }
@@ -411,7 +405,12 @@ impl Default for AnalysisStatistics {
 
 impl AnalysisMetadata {
     /// Create a new analysis metadata with current timestamp
-    pub fn new(task_id: String, file_path: PathBuf, analysis_type: AnalysisType, priority: TaskPriority) -> Self {
+    pub fn new(
+        task_id: String,
+        file_path: PathBuf,
+        analysis_type: AnalysisType,
+        priority: TaskPriority,
+    ) -> Self {
         Self {
             task_id,
             file_path,
@@ -431,7 +430,11 @@ impl AnalysisMetadata {
 
 impl AnalysisResult {
     /// Create a successful analysis result
-    pub fn success(metadata: AnalysisMetadata, findings: Vec<AnalysisFinding>, metrics: PerformanceMetrics) -> Self {
+    pub fn success(
+        metadata: AnalysisMetadata,
+        findings: Vec<AnalysisFinding>,
+        metrics: PerformanceMetrics,
+    ) -> Self {
         Self {
             metadata,
             findings,
@@ -443,7 +446,11 @@ impl AnalysisResult {
     }
 
     /// Create a failed analysis result
-    pub fn failure(metadata: AnalysisMetadata, error: impl Into<String>, metrics: PerformanceMetrics) -> Self {
+    pub fn failure(
+        metadata: AnalysisMetadata,
+        error: impl Into<String>,
+        metrics: PerformanceMetrics,
+    ) -> Self {
         Self {
             metadata,
             findings: Vec::new(),

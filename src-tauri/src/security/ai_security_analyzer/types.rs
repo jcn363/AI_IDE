@@ -9,26 +9,26 @@ use serde::{Deserialize, Serialize};
 /// Security severity levels indicating the urgency of response required
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SecuritySeverity {
-    Critical,  // Immediate security risk requiring urgent attention
-    High,      // High priority security issue
-    Medium,    // Medium priority security issue
-    Low,       // Low priority security issue
-    Info,      // Informational security finding
+    Critical, // Immediate security risk requiring urgent attention
+    High,     // High priority security issue
+    Medium,   // Medium priority security issue
+    Low,      // Low priority security issue
+    Info,     // Informational security finding
 }
 
 /// Categories of security issues organized by attack vectors
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SecurityCategory {
     HardcodedSecrets,    // Hardcoded passwords, API keys, etc.
-    UnsafeCode,         // Use of unsafe code blocks
-    SqlInjection,       // SQL injection vulnerabilities
-    PathTraversal,      // Path traversal attacks
-    InsecureRandom,     // Weak random number generation
-    MemorySafety,       // Memory safety violations
-    CryptographicIssues,// Weak cryptography usage
-    InputValidation,    // Input validation problems
-    CommandInjection,   // Command injection attacks
-    Dependencies,       // Vulnerable dependencies
+    UnsafeCode,          // Use of unsafe code blocks
+    SqlInjection,        // SQL injection vulnerabilities
+    PathTraversal,       // Path traversal attacks
+    InsecureRandom,      // Weak random number generation
+    MemorySafety,        // Memory safety violations
+    CryptographicIssues, // Weak cryptography usage
+    InputValidation,     // Input validation problems
+    CommandInjection,    // Command injection attacks
+    Dependencies,        // Vulnerable dependencies
 }
 
 /// Comprehensive security issue structure
@@ -43,7 +43,7 @@ pub struct SecurityIssue {
     pub column: Option<usize>,
     pub code_snippet: Option<String>,
     pub remediation: String,
-    pub confidence: f32, // 0.0 to 1.0 confidence level
+    pub confidence: f32,     // 0.0 to 1.0 confidence level
     pub cwe_id: Option<u32>, // CWE identifier
 }
 

@@ -3,12 +3,12 @@
 //! This module orchestrates the processing of multiple modalities combining
 //! vision, audio, and text analysis with intelligent fusion.
 
+use crate::audio::AudioProcessor;
 use crate::errors::{MultimodalError, ProcessingError};
 use crate::types::*;
 use crate::vision::VisionProcessor;
-use crate::audio::AudioProcessor;
-use std::sync::Arc;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 /// Multi-modal analyzer that combines different modality processors
 pub struct MultiModalAnalyzer {

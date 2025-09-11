@@ -8,8 +8,8 @@ use tokio::sync::RwLock;
 
 use crate::bridge::LSPAiBridge;
 use crate::frontend::AITauriInterface;
-use crate::router::AiPerformanceRouter;
 use crate::metrics::MetricsCollector;
+use crate::router::AiPerformanceRouter;
 
 /// Main integration layer state
 pub struct IntegrationLayerState {
@@ -223,8 +223,21 @@ impl AIServiceIntegrationLayer {
         let timer = self.metrics_collector.start_timer(
             "ai_request_processing",
             std::collections::HashMap::from([
-                ("user_id".to_string(), request.user_id.clone().unwrap_or_default()),
-                ("model_type".to_string(), format!("{:?}", request.metadata.get("model_type").and_then(|v| v.as_str()).unwrap_or("unknown"))),
+                (
+                    "user_id".to_string(),
+                    request.user_id.clone().unwrap_or_default(),
+                ),
+                (
+                    "model_type".to_string(),
+                    format!(
+                        "{:?}",
+                        request
+                            .metadata
+                            .get("model_type")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("unknown")
+                    ),
+                ),
             ]),
         );
 
@@ -232,7 +245,11 @@ impl AIServiceIntegrationLayer {
         let route = self.performance_router.route_request(&request).await?;
 
         // Process request based on type
-        let response = match request.metadata.get("request_type").and_then(|v| v.as_str()) {
+        let response = match request
+            .metadata
+            .get("request_type")
+            .and_then(|v| v.as_str())
+        {
             Some("completion") => {
                 // Handle code completion request
                 self.handle_completion_request(request.clone()).await?
@@ -253,7 +270,9 @@ impl AIServiceIntegrationLayer {
 
         // Optimize response
         let mut optimized_response = response;
-        self.performance_router.optimize_response(&mut optimized_response, &request).await?;
+        self.performance_router
+            .optimize_response(&mut optimized_response, &request)
+            .await?;
 
         // Stop performance monitoring
         self.metrics_collector.stop_timer(timer).await?;
@@ -275,16 +294,23 @@ impl AIServiceIntegrationLayer {
             let mut health_status = HealthStatus::default();
 
             // Check LSP bridge health
-            health_status.lsp_bridge_healthy = self.check_component_health(Component::LspBridge).await;
+            health_status.lsp_bridge_healthy =
+                self.check_component_health(Component::LspBridge).await;
 
             // Check frontend interface health
-            health_status.frontend_interface_healthy = self.check_component_health(Component::FrontendInterface).await;
+            health_status.frontend_interface_healthy = self
+                .check_component_health(Component::FrontendInterface)
+                .await;
 
             // Check performance router health
-            health_status.performance_router_healthy = self.check_component_health(Component::PerformanceRouter).await;
+            health_status.performance_router_healthy = self
+                .check_component_health(Component::PerformanceRouter)
+                .await;
 
             // Check metrics collector health
-            health_status.metrics_collector_healthy = self.check_component_health(Component::MetricsCollector).await;
+            health_status.metrics_collector_healthy = self
+                .check_component_health(Component::MetricsCollector)
+                .await;
 
             // Update overall health
             health_status.overall_healthy = health_status.lsp_bridge_healthy
@@ -314,7 +340,8 @@ impl AIServiceIntegrationLayer {
                 performance_router_healthy: true,
                 metrics_collector_healthy: true,
                 last_check: state.last_health_check,
-                next_check: now + chrono::Duration::seconds(state.config.health_check_interval_secs as i64),
+                next_check: now
+                    + chrono::Duration::seconds(state.config.health_check_interval_secs as i64),
             })
         }
     }

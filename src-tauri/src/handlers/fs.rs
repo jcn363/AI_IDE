@@ -3,20 +3,20 @@
 //! This module contains handlers for file system related Tauri commands.
 
 // Import validation from unified rust-ai-ide-common
-use rust_ai_ide_common::validation::{validate_secure_path, validate_string_input, validate_file_extension, validate_file_size};
-use rust_ai_ide_common::{IDEResult, ContextualError, IDEError}; // Error types re-exported from common
-// Protocol-specific types not available in current workspace - using local FileInfo
+use rust_ai_ide_common::validation::{
+    validate_file_extension, validate_file_size, validate_secure_path, validate_string_input,
+};
+use rust_ai_ide_common::{ContextualError, IDEError, IDEResult}; // Error types re-exported from common
+                                                                // Protocol-specific types not available in current workspace - using local FileInfo
 use crate::infra::{EventBus, RateLimiter};
-use rust_ai_ide_common::{read_dir, read_file_to_bytes, file_exists, is_directory};
 use crate::FileInfo; // Using local FileInfo definition
-use std::path::Path;
+use rust_ai_ide_common::{file_exists, is_directory, read_dir, read_file_to_bytes};
 use sha2::{Digest, Sha256};
+use std::path::Path;
 
 /// List files in a directory with comprehensive validation
 #[tauri::command]
-pub async fn list_files(
-    path: String,
-) -> Result<Vec<FileInfo>, String> {
+pub async fn list_files(path: String) -> Result<Vec<FileInfo>, String> {
     // Input validation
     if let Err(e) = validate_secure_path(&path, false) {
         return Err(e);
@@ -35,11 +35,14 @@ pub async fn list_files(
 
     // Use consolidated read_dir function
     let entries = read_dir(&path).await.map_err(|e| match e {
-        rust_ai_ide_common::IdeError::Io { message } if message.contains("NotFound") =>
-            format!("Directory does not exist: {}", path),
-        rust_ai_ide_common::IdeError::Permission { message } =>
-            format!("Permission denied accessing '{}'. Check your permissions.", path),
-        _ => format!("Failed to read directory '{}': {}", path, e)
+        rust_ai_ide_common::IdeError::Io { message } if message.contains("NotFound") => {
+            format!("Directory does not exist: {}", path)
+        }
+        rust_ai_ide_common::IdeError::Permission { message } => format!(
+            "Permission denied accessing '{}'. Check your permissions.",
+            path
+        ),
+        _ => format!("Failed to read directory '{}': {}", path, e),
     })?;
 
     let mut files = Vec::new();
@@ -108,7 +111,8 @@ pub async fn get_file_checksum(path: String) -> Result<String, String> {
     }
 
     // Use consolidated read_file_to_bytes function
-    let content = read_file_to_bytes(&path).await
+    let content = read_file_to_bytes(&path)
+        .await
         .map_err(|e| format!("Failed to read file: {}", e))?;
 
     // Calculate SHA-256 hash

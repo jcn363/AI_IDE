@@ -1,7 +1,7 @@
-use std::path::PathBuf;
-use std::collections::HashMap;
 use crate::error::TestError;
 use crate::filesystem::TempWorkspace;
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 /// Generic builder pattern for creating test fixtures
 /// Supports multiple test contexts through type parameter T
@@ -247,7 +247,10 @@ macro_rules! quick_fixture {
 // Backward compatibility for existing TestFixtureBuilder
 impl TestFixtureBuilder<()> {
     /// Convert to old-style non-generic fixture (for backward compatibility)
-    pub fn as_legacy(self, workspace: &TempWorkspace) -> Result<crate::fixtures::TestFixture, TestError> {
+    pub fn as_legacy(
+        self,
+        workspace: &TempWorkspace,
+    ) -> Result<crate::fixtures::TestFixture, TestError> {
         let typed_fixture = self.build(workspace)?;
         Ok(crate::fixtures::TestFixture {
             files: typed_fixture.files,

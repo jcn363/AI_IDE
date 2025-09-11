@@ -3,11 +3,11 @@
 //! This module provides work-stealing algorithms and parallel processing
 //! capabilities with CPU and GPU resource pooling.
 
+use rayon::ThreadPool;
+use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use rayon::ThreadPool;
-use serde::{Deserialize, Serialize};
 
 /// Work-stealing task scheduler
 #[derive(Debug)]
@@ -94,9 +94,9 @@ where
         let processor_clone = processor.clone();
         let queue = Arc::clone(&self.queues[worker_id]);
 
-        let result = tokio::task::spawn_blocking(move || {
-            processor_clone(task_clone)
-        }).await.map_err(|e| format!("Task execution failed: {}", e))?;
+        let result = tokio::task::spawn_blocking(move || processor_clone(task_clone))
+            .await
+            .map_err(|e| format!("Task execution failed: {}", e))?;
 
         let execution_time = start_time.elapsed().as_nanos() as u64;
 
@@ -160,10 +160,14 @@ where
         }
 
         // Update average queue length
-        let total_queues: u64 = self.queues.iter().map(|q| {
-            // This is a blocking call, but simplified for example
-            q.try_lock().map(|q| q.len() as u64).unwrap_or(0)
-        }).sum();
+        let total_queues: u64 = self
+            .queues
+            .iter()
+            .map(|q| {
+                // This is a blocking call, but simplified for example
+                q.try_lock().map(|q| q.len() as u64).unwrap_or(0)
+            })
+            .sum();
 
         stats.average_queue_length = total_queues as f64 / self.queues.len() as f64;
     }
@@ -203,7 +207,10 @@ impl ResourcePool {
 
         // Track active task
         self.active_tasks.lock().await.push(task_id.to_string());
-        self.memory_usage.lock().await.insert(task_id.to_string(), required_mb * 1024 * 1024);
+        self.memory_usage
+            .lock()
+            .await
+            .insert(task_id.to_string(), required_mb * 1024 * 1024);
 
         Ok(())
     }

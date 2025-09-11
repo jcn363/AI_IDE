@@ -93,8 +93,8 @@ impl Default for CacheConfig {
     fn default() -> Self {
         Self {
             package_metadata_ttl: Duration::from_secs(3600), // 1 hour
-            dependency_tree_ttl: Duration::from_secs(1800), // 30 minutes
-            resolution_ttl: Duration::from_secs(600), // 10 minutes
+            dependency_tree_ttl: Duration::from_secs(1800),  // 30 minutes
+            resolution_ttl: Duration::from_secs(600),        // 10 minutes
             max_capacity: 10000,
             enable_compression: true,
         }
@@ -140,7 +140,9 @@ impl GraphCache {
     /// Put package metadata in cache
     pub async fn put_package_metadata(&self, package_name: String, entry: PackageMetadataEntry) {
         info!("Caching package metadata for {}", package_name);
-        self.package_metadata_cache.insert(package_name, entry).await;
+        self.package_metadata_cache
+            .insert(package_name, entry)
+            .await;
     }
 
     /// Get cached dependency tree
@@ -156,7 +158,10 @@ impl GraphCache {
         entry.tree.hash(&mut hasher);
         entry.hash = hasher.finish();
 
-        info!("Caching dependency tree for {} (hash: {})", root_package, entry.hash);
+        info!(
+            "Caching dependency tree for {} (hash: {})",
+            root_package, entry.hash
+        );
         self.dependency_tree_cache.insert(root_package, entry).await;
     }
 
@@ -170,12 +175,19 @@ impl GraphCache {
     }
 
     /// Get cached resolution result
-    pub async fn get_resolution(&self, key: &DependencyResolutionKey) -> Option<DependencyResolutionEntry> {
+    pub async fn get_resolution(
+        &self,
+        key: &DependencyResolutionKey,
+    ) -> Option<DependencyResolutionEntry> {
         self.resolution_cache.get(key).await
     }
 
     /// Put resolution result in cache
-    pub async fn put_resolution(&self, key: DependencyResolutionKey, entry: DependencyResolutionEntry) {
+    pub async fn put_resolution(
+        &self,
+        key: DependencyResolutionKey,
+        entry: DependencyResolutionEntry,
+    ) {
         info!("Caching resolution for {}", key.root_package);
         self.resolution_cache.insert(key, entry).await;
     }
@@ -246,7 +258,10 @@ impl CachedDependencyGraph {
     }
 
     /// Get package metadata with caching
-    pub async fn get_package_metadata_cached(&self, package_name: &str) -> DependencyResult<PackageMetadataEntry> {
+    pub async fn get_package_metadata_cached(
+        &self,
+        package_name: &str,
+    ) -> DependencyResult<PackageMetadataEntry> {
         if let Some(metadata) = self.cache.get_package_metadata(package_name).await {
             info!("Cache hit for package metadata: {}", package_name);
             return Ok(metadata);
@@ -258,7 +273,10 @@ impl CachedDependencyGraph {
     }
 
     /// Get dependency tree with caching
-    pub async fn get_dependency_tree_cached(&self, root_package: &str) -> DependencyResult<DependencyTreeEntry> {
+    pub async fn get_dependency_tree_cached(
+        &self,
+        root_package: &str,
+    ) -> DependencyResult<DependencyTreeEntry> {
         if let Some(tree) = self.cache.get_dependency_tree(root_package).await {
             info!("Cache hit for dependency tree: {}", root_package);
             return Ok(tree);
@@ -269,7 +287,10 @@ impl CachedDependencyGraph {
     }
 
     /// Get resolution with caching
-    pub async fn get_resolution_cached(&self, key: &DependencyResolutionKey) -> Option<DependencyResolutionEntry> {
+    pub async fn get_resolution_cached(
+        &self,
+        key: &DependencyResolutionKey,
+    ) -> Option<DependencyResolutionEntry> {
         self.cache.get_resolution(key).await
     }
 
@@ -293,7 +314,9 @@ impl CachedDependencyGraph {
                 source: "crates.io".to_string(),
             };
 
-            self.cache.put_package_metadata(package.name.clone(), entry).await;
+            self.cache
+                .put_package_metadata(package.name.clone(), entry)
+                .await;
         }
 
         info!("Cache warm-up completed");
@@ -328,9 +351,7 @@ impl std::fmt::Display for CacheStats {
         write!(
             f,
             "Cache Stats {{ packages: {}, trees: {}, resolutions: {} }}",
-            self.package_metadata_entries,
-            self.dependency_tree_entries,
-            self.resolution_entries
+            self.package_metadata_entries, self.dependency_tree_entries, self.resolution_entries
         )
     }
 }
@@ -348,7 +369,10 @@ impl CachedDependencyResolver {
     }
 
     /// Resolve dependencies with caching
-    pub async fn resolve_with_cache(&self, key: DependencyResolutionKey) -> DependencyResult<DependencyResolutionEntry> {
+    pub async fn resolve_with_cache(
+        &self,
+        key: DependencyResolutionKey,
+    ) -> DependencyResult<DependencyResolutionEntry> {
         if let Some(cached_result) = self.cache.get_resolution(&key).await {
             info!("Using cached resolution for {}", key.root_package);
             return Ok(cached_result);
@@ -358,7 +382,12 @@ impl CachedDependencyResolver {
 
         // Perform the resolution
         let resolved_versions = self.resolver.resolve_conflicts().await?;
-        let conflicts = self.resolver.graph.read().await.get_cycles()
+        let conflicts = self
+            .resolver
+            .graph
+            .read()
+            .await
+            .get_cycles()
             .into_iter()
             .flatten()
             .collect();

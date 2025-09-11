@@ -6,8 +6,8 @@
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-use crate::types::*;
 use crate::configuration::DashboardConfiguration;
+use crate::types::*;
 
 #[derive(Clone)]
 pub struct TrendAnalyzer {

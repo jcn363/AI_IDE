@@ -3,10 +3,10 @@
 //! Provides simulated battery behavior for desktop development environments
 //! where actual battery hardware is not available.
 
+use crate::{battery_monitor::PlatformBatteryMonitor, BatteryState};
+use rand::Rng;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use rand::Rng;
-use crate::{BatteryState, battery_monitor::PlatformBatteryMonitor};
 
 pub struct MockBatteryMonitor {
     simulated_state: Arc<RwLock<SimulatedBatteryState>>,
@@ -52,9 +52,17 @@ impl MockBatteryMonitor {
         state.temperature = (state.temperature + temp_change).clamp(15.0, 60.0);
 
         // Occasional plug/unplug
-        if rand::thread_rng().gen_bool(0.001) { // ~1 in 1000 calls
+        if rand::thread_rng().gen_bool(0.001) {
+            // ~1 in 1000 calls
             state.is_plugged = !state.is_plugged;
-            tracing::info!("Mock battery: Power source {}", if state.is_plugged { "connected" } else { "disconnected" });
+            tracing::info!(
+                "Mock battery: Power source {}",
+                if state.is_plugged {
+                    "connected"
+                } else {
+                    "disconnected"
+                }
+            );
         }
     }
 }

@@ -1,10 +1,10 @@
 // AI Audit Trail and Explainability Module
 // Provides complete audit trails for AI decisions and explainability reports
 
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::sync::Mutex;
-use anyhow::Result;
 
 /// Audit event types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -74,17 +74,21 @@ impl AIAuditTrail {
         };
 
         let mut events = self.events.lock().await;
-        events.entry(audit_id.clone()).or_insert_with(Vec::new).push(event);
+        events
+            .entry(audit_id.clone())
+            .or_insert_with(Vec::new)
+            .push(event);
 
         Ok(audit_id)
     }
 
     /// Generate explainability report
-    pub async fn generate_explainability_report(&self, inference_id: &str) -> Result<ExplainabilityReport> {
+    pub async fn generate_explainability_report(
+        &self,
+        inference_id: &str,
+    ) -> Result<ExplainabilityReport> {
         let events = self.events.lock().await;
-        let audit_events = events.get(inference_id)
-            .cloned()
-            .unwrap_or_default();
+        let audit_events = events.get(inference_id).cloned().unwrap_or_default();
 
         // Create explainability report
         let report = ExplainabilityReport {
@@ -108,7 +112,10 @@ impl AIAuditTrail {
     /// Store audit event
     pub async fn store_event(&self, audit_id: &str, event: AIAuditEvent) -> Result<()> {
         let mut events = self.events.lock().await;
-        events.entry(audit_id.to_string()).or_insert_with(Vec::new).push(event);
+        events
+            .entry(audit_id.to_string())
+            .or_insert_with(Vec::new)
+            .push(event);
         Ok(())
     }
 

@@ -1,10 +1,10 @@
 // AI Compliance Automation Module
 // Automates regulatory compliance for AI operations across multiple frameworks
 
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::sync::Mutex;
-use anyhow::Result;
 
 /// Compliance frameworks supported
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -113,7 +113,10 @@ impl AIComplianceEngine {
     }
 
     /// Perform compliance audit on AI operation
-    pub async fn audit_compliance(&self, operation_data: &ComplianceOperationData) -> Result<ComplianceAuditResult> {
+    pub async fn audit_compliance(
+        &self,
+        operation_data: &ComplianceOperationData,
+    ) -> Result<ComplianceAuditResult> {
         let mut violations = vec![];
         let mut recommendations = vec![];
         let mut _score = 1.0;
@@ -129,7 +132,11 @@ impl AIComplianceEngine {
 
         // Check consent management
         if self.config.consent_management {
-            if !self.consent_manager.check_consent(&operation_data.user_id).await {
+            if !self
+                .consent_manager
+                .check_consent(&operation_data.user_id)
+                .await
+            {
                 violations.push("User consent not provided".to_string());
                 recommendations.push("Obtain explicit user consent before processing".to_string());
             }
@@ -256,7 +263,10 @@ impl ConsentManager {
         let user_consents = consents.entry(user_id.to_string()).or_insert(vec![]);
 
         // Check for existing consent
-        if !user_consents.iter().any(|c| c.purpose == purpose && c.granted) {
+        if !user_consents
+            .iter()
+            .any(|c| c.purpose == purpose && c.granted)
+        {
             let consent = ConsentRecord {
                 user_id: user_id.to_string(),
                 purpose: purpose.to_string(),

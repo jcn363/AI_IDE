@@ -1306,7 +1306,6 @@ impl ErrorResolver {
             .await
     }
 
-
     /// Get available error patterns
     pub fn get_error_patterns(&self) -> Vec<&ErrorPattern> {
         // In the full implementation, this would return patterns from all sources

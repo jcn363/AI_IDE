@@ -46,9 +46,10 @@ impl ServiceRegistry {
 
         // Check if service already exists
         if services.contains_key(&registration.id) {
-            return Err(OrchestrationError::ValidationError(
-                format!("Service {} is already registered", registration.id),
-            ));
+            return Err(OrchestrationError::ValidationError(format!(
+                "Service {} is already registered",
+                registration.id
+            )));
         }
 
         // Clone for the event
@@ -69,9 +70,10 @@ impl ServiceRegistry {
         let mut services = self.services.write().await;
 
         if services.remove(service_id).is_none() {
-            return Err(OrchestrationError::UnknownService(
-                format!("Service {} not found", service_id),
-            ));
+            return Err(OrchestrationError::UnknownService(format!(
+                "Service {} not found",
+                service_id
+            )));
         }
 
         // Notify discovery
@@ -107,7 +109,10 @@ impl ServiceRegistry {
     }
 
     /// Get service information by ID
-    pub async fn get_service(&self, service_id: &ServiceId) -> OrchestrationResult<ServiceRegistration> {
+    pub async fn get_service(
+        &self,
+        service_id: &ServiceId,
+    ) -> OrchestrationResult<ServiceRegistration> {
         let services = self.services.read().await;
 
         services.get(service_id).cloned().ok_or_else(|| {
@@ -122,7 +127,10 @@ impl ServiceRegistry {
     }
 
     /// List services by status
-    pub async fn list_services_by_status(&self, status: &ServiceStatus) -> Vec<ServiceRegistration> {
+    pub async fn list_services_by_status(
+        &self,
+        status: &ServiceStatus,
+    ) -> Vec<ServiceRegistration> {
         let services = self.services.read().await;
         services
             .values()
@@ -140,8 +148,14 @@ impl ServiceRegistry {
         services
             .values()
             .filter(|service| {
-                service.capabilities.provides.contains(&capability.to_string())
-                    || service.capabilities.supported_operations.contains(&capability.to_string())
+                service
+                    .capabilities
+                    .provides
+                    .contains(&capability.to_string())
+                    || service
+                        .capabilities
+                        .supported_operations
+                        .contains(&capability.to_string())
             })
             .map(|service| service.clone())
             .collect()
@@ -176,8 +190,14 @@ impl ServiceRegistry {
     pub async fn get_statistics(&self) -> RegistryStatistics {
         let services = self.services.read().await;
         let total_services = services.len();
-        let available_services = services.values().filter(|s| s.status.is_available()).count();
-        let failed_services = services.values().filter(|s| s.status == ServiceStatus::Failed).count();
+        let available_services = services
+            .values()
+            .filter(|s| s.status.is_available())
+            .count();
+        let failed_services = services
+            .values()
+            .filter(|s| s.status == ServiceStatus::Failed)
+            .count();
 
         RegistryStatistics {
             total_services,

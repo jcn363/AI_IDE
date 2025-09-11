@@ -207,7 +207,9 @@ impl SecurityRulesFactory {
             },
             SecretPattern {
                 name: "API Key".to_string(),
-                pattern: Regex::new(r#"(?i)(api[_-]?key|apikey)["'\s]*[:=]["'\s]*[A-Za-z0-9]{20,}"#)?,
+                pattern: Regex::new(
+                    r#"(?i)(api[_-]?key|apikey)["'\s]*[:=]["'\s]*[A-Za-z0-9]{20,}"#,
+                )?,
                 severity: SecuritySeverity::High,
                 confidence: 0.8,
             },

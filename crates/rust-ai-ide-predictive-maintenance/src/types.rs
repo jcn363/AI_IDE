@@ -1,8 +1,8 @@
 //! Core type definitions for predictive maintenance forecasting system
 
-use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Configuration for the predictive maintenance system
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,7 +39,7 @@ impl Default for MaintenanceConfig {
             max_historical_points: 1000,
             confidence_threshold: 0.7,
             forecast_horizons: vec![4, 8, 12, 24], // 1, 2, 3, 6 months
-            min_file_size_threshold: 1024, // 1KB
+            min_file_size_threshold: 1024,         // 1KB
             max_dependency_depth: 10,
             cost_multiplier_base: 1.0,
             database_path: None,

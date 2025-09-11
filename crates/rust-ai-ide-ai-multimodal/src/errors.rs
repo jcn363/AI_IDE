@@ -224,14 +224,18 @@ mod tests {
     fn test_multimodal_error_from_vision() {
         let vision_err = VisionError::OpencvInit("failed".to_string());
         let multimodal_err: MultimodalError = vision_err.into();
-        assert!(multimodal_err.to_string().contains("Vision processing error"));
+        assert!(multimodal_err
+            .to_string()
+            .contains("Vision processing error"));
     }
 
     #[test]
     fn test_multimodal_error_from_audio() {
         let audio_err = AudioError::MicrophoneAccessDenied(String::new());
         let multimodal_err: MultimodalError = audio_err.into();
-        assert!(multimodal_err.to_string().contains("Audio processing error"));
+        assert!(multimodal_err
+            .to_string()
+            .contains("Audio processing error"));
     }
 
     #[test]

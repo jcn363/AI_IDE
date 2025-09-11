@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 /// Battery status information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BatteryStatus {
-    pub level: f32,           // 0.0 to 1.0
+    pub level: f32, // 0.0 to 1.0
     pub is_charging: bool,
     pub time_remaining_secs: Option<u64>,
     pub health_percentage: Option<f32>,
@@ -23,7 +23,7 @@ pub struct LowPowerConfig {
     pub disable_animations: bool,
     pub limit_background_tasks: bool,
     pub reduce_cache_sizes: bool,
-    pub battery_threshold: f32,  // When to enable low-power mode (0.0-1.0)
+    pub battery_threshold: f32, // When to enable low-power mode (0.0-1.0)
 }
 
 /// Battery monitor

@@ -3,9 +3,11 @@
 //! This module provides wrapper types and functions that maintain
 //! the old API while using the new unified test harness internally.
 
+use crate::builder::{
+    TestFixture as GenericTestFixture, TestFixtureBuilder as GenericTestFixtureBuilder,
+};
 use crate::error::TestError;
-use crate::builder::{TestFixtureBuilder as GenericTestFixtureBuilder, TestFixture as GenericTestFixture};
-use crate::fixtures::{TestFixtureBuilder, TestFixture};
+use crate::fixtures::{TestFixture, TestFixtureBuilder};
 use crate::harness::{TestHarness, TestResult};
 use async_trait::async_trait;
 
@@ -23,7 +25,11 @@ impl LegacyTestFixtureBuilder {
     }
 
     /// Add file to fixture
-    pub fn with_file(self, path: impl Into<std::path::PathBuf>, content: impl Into<String>) -> Self {
+    pub fn with_file(
+        self,
+        path: impl Into<std::path::PathBuf>,
+        content: impl Into<String>,
+    ) -> Self {
         Self {
             inner: self.inner.with_file(path, content),
         }
@@ -53,7 +59,10 @@ impl LegacyTestFixtureBuilder {
         }
     }
 
-    pub fn build(self, workspace: &crate::filesystem::TempWorkspace) -> Result<LegacyTestFixture, TestError> {
+    pub fn build(
+        self,
+        workspace: &crate::filesystem::TempWorkspace,
+    ) -> Result<LegacyTestFixture, TestError> {
         Ok(LegacyTestFixture {
             inner: self.inner.build(workspace)?,
         })
@@ -90,7 +99,11 @@ impl FixtureAdapter {
     /// Convert legacy fixture to generic
     pub fn legacy_to_generic<T>(legacy: LegacyTestFixture) -> GenericTestFixture<T> {
         GenericTestFixture {
-            files: legacy.inner.files().map(|path| (path.clone(), "".to_string())).collect::<std::collections::HashMap<_, _>>(),
+            files: legacy
+                .inner
+                .files()
+                .map(|path| (path.clone(), "".to_string()))
+                .collect::<std::collections::HashMap<_, _>>(),
             directories: legacy.inner.directories().cloned().collect(),
             metadata: legacy.inner.metadata.clone(),
             context_data: None,
@@ -98,7 +111,9 @@ impl FixtureAdapter {
     }
 
     /// Convert generic fixture to legacy (with context loss)
-    pub fn generic_to_legacy<T>(generic: GenericTestFixture<T>) -> Result<LegacyTestFixture, TestError> {
+    pub fn generic_to_legacy<T>(
+        generic: GenericTestFixture<T>,
+    ) -> Result<LegacyTestFixture, TestError> {
         Ok(LegacyTestFixture {
             inner: crate::fixtures::TestFixture {
                 files: generic.files,
@@ -177,11 +192,19 @@ where
         self.harness.execute(&()).await
     }
 
-    async fn validate(&self, _context: Self::Context, _output: Self::Output) -> Result<TestResult, TestError> {
+    async fn validate(
+        &self,
+        _context: Self::Context,
+        _output: Self::Output,
+    ) -> Result<TestResult, TestError> {
         let passed = self.harness.validate(&(), ()).await?;
         Ok(TestResult {
             passed,
-            message: if passed { "Test passed".to_string() } else { "Test failed".to_string() },
+            message: if passed {
+                "Test passed".to_string()
+            } else {
+                "Test failed".to_string()
+            },
             details: None,
             duration: std::time::Duration::from_millis(1), // Placeholder duration
         })
@@ -209,7 +232,11 @@ macro_rules! wrap_legacy_harness {
                 Ok("legacy".to_string())
             }
 
-            fn validate(&self, _context: Self::Context, _output: Self::Output) -> Result<TestResult, TestError> {
+            fn validate(
+                &self,
+                _context: Self::Context,
+                _output: Self::Output,
+            ) -> Result<TestResult, TestError> {
                 Ok(TestResult {
                     passed: true,
                     message: "Legacy test passed".to_string(),
@@ -230,12 +257,24 @@ impl TestHarnessMigrator {
         let mut result = code.to_string();
 
         // Replace legacy patterns with new ones
-        result = result.replace("TestFixtureBuilder::new()", "LegacyTestFixtureBuilder::new()");
-        result = result.replace("use shared_test_utils::TestFixtureBuilder", "use shared_test_utils::compatibility::LegacyTestFixtureBuilder");
-        result = result.replace("use shared_test_utils::fixtures::TestFixtureBuilder", "use shared_test_utils::compatibility::LegacyTestFixtureBuilder");
+        result = result.replace(
+            "TestFixtureBuilder::new()",
+            "LegacyTestFixtureBuilder::new()",
+        );
+        result = result.replace(
+            "use shared_test_utils::TestFixtureBuilder",
+            "use shared_test_utils::compatibility::LegacyTestFixtureBuilder",
+        );
+        result = result.replace(
+            "use shared_test_utils::fixtures::TestFixtureBuilder",
+            "use shared_test_utils::compatibility::LegacyTestFixtureBuilder",
+        );
 
         // Add migration comments
-        result = format!("// TODO: Consider migrating to unified test harness\n{}", result);
+        result = format!(
+            "// TODO: Consider migrating to unified test harness\n{}",
+            result
+        );
 
         result
     }
@@ -247,9 +286,11 @@ impl TestHarnessMigrator {
         }
 
         if code.contains("TestFixtureBuilder") && !code.contains("LegacyTestFixtureBuilder") {
-            return Err(TestError::Validation(crate::error::ValidationError::InvalidTestSetup {
-                message: "Code may need migration to new harness".to_string()
-            }));
+            return Err(TestError::Validation(
+                crate::error::ValidationError::InvalidTestSetup {
+                    message: "Code may need migration to new harness".to_string(),
+                },
+            ));
         }
 
         Ok(())

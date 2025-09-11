@@ -23,14 +23,14 @@ This module integrates with:
 - Caching layer for analysis results
 */
 
-use std::sync::Arc;
-use std::collections::HashMap;
-use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 // Re-export common types
-use super::services::{AIService, AIResult, AIError};
+use super::services::{AIError, AIResult, AIService};
 
 // Note: command_templates macros not available in this crate scope
 // When integrating with Tauri, use templates from src-tauri
@@ -145,15 +145,13 @@ impl AnalysisService {
         // TODO: Implement actual AI file analysis logic
         // This is a placeholder implementation
 
-        let issues = vec![
-            AnalysisIssue {
-                severity: "info".to_string(),
-                line: Some(42),
-                message: "Consider using more descriptive variable names".to_string(),
-                category: "style".to_string(),
-                suggestion: Some("Use 'user_input' instead of 'u'".to_string()),
-            }
-        ];
+        let issues = vec![AnalysisIssue {
+            severity: "info".to_string(),
+            line: Some(42),
+            message: "Consider using more descriptive variable names".to_string(),
+            category: "style".to_string(),
+            suggestion: Some("Use 'user_input' instead of 'u'".to_string()),
+        }];
 
         let suggestions = vec![
             "Add more documentation comments".to_string(),
@@ -187,19 +185,20 @@ impl AnalysisService {
     }
 
     /// Analyze entire workspace
-    pub async fn analyze_workspace(&self, request: WorkspaceAnalysisRequest) -> AIResult<AnalysisResult> {
+    pub async fn analyze_workspace(
+        &self,
+        request: WorkspaceAnalysisRequest,
+    ) -> AIResult<AnalysisResult> {
         // TODO: Implement actual AI workspace analysis logic
         // This is a placeholder implementation
 
-        let issues = vec![
-            AnalysisIssue {
-                severity: "warning".to_string(),
-                line: None,
-                message: "Large workspace detected - analysis may be slow".to_string(),
-                category: "performance".to_string(),
-                suggestion: Some("Consider analyzing specific directories instead".to_string()),
-            }
-        ];
+        let issues = vec![AnalysisIssue {
+            severity: "warning".to_string(),
+            line: None,
+            message: "Large workspace detected - analysis may be slow".to_string(),
+            category: "performance".to_string(),
+            suggestion: Some("Consider analyzing specific directories instead".to_string()),
+        }];
 
         let suggestions = vec![
             "Consider modularizing the codebase further".to_string(),
@@ -227,7 +226,10 @@ impl AnalysisService {
     }
 
     /// Assess code quality
-    pub async fn assess_code_quality(&self, request: CodeQualityRequest) -> AIResult<CodeQualityAssessment> {
+    pub async fn assess_code_quality(
+        &self,
+        request: CodeQualityRequest,
+    ) -> AIResult<CodeQualityAssessment> {
         // TODO: Implement actual AI code quality assessment
         // This is a placeholder implementation
 
@@ -479,7 +481,10 @@ mod tests {
         };
 
         // First analysis should cache the result
-        let result1 = analysis_service.analyze_file(request.clone()).await.unwrap();
+        let result1 = analysis_service
+            .analyze_file(request.clone())
+            .await
+            .unwrap();
         let cached_result = analysis_service.get_cached_analysis(file_path).await;
 
         assert!(cached_result.is_some());
@@ -522,7 +527,10 @@ mod tests {
             exclude_patterns: vec![],
         };
 
-        let ws_result = analysis_service.analyze_workspace(ws_request).await.unwrap();
+        let ws_result = analysis_service
+            .analyze_workspace(ws_request)
+            .await
+            .unwrap();
         assert!(!ws_result.issues.is_empty());
     }
 
@@ -570,9 +578,18 @@ mod tests {
         let json = serde_json::to_string(&file_request).unwrap();
         let deserialized: FileAnalysisRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(file_request.file_path, deserialized.file_path);
-        assert_eq!(file_request.analyze_dependencies, deserialized.analyze_dependencies);
-        assert_eq!(file_request.analyze_complexity, deserialized.analyze_complexity);
-        assert_eq!(file_request.include_performance, deserialized.include_performance);
+        assert_eq!(
+            file_request.analyze_dependencies,
+            deserialized.analyze_dependencies
+        );
+        assert_eq!(
+            file_request.analyze_complexity,
+            deserialized.analyze_complexity
+        );
+        assert_eq!(
+            file_request.include_performance,
+            deserialized.include_performance
+        );
 
         let ws_request = WorkspaceAnalysisRequest {
             include_dependencies: false,
@@ -583,7 +600,10 @@ mod tests {
         let ws_json = serde_json::to_string(&ws_request).unwrap();
         let ws_deserialized: WorkspaceAnalysisRequest = serde_json::from_str(&ws_json).unwrap();
         assert_eq!(ws_request.analysis_depth, ws_deserialized.analysis_depth);
-        assert_eq!(ws_request.exclude_patterns, ws_deserialized.exclude_patterns);
+        assert_eq!(
+            ws_request.exclude_patterns,
+            ws_deserialized.exclude_patterns
+        );
     }
 
     #[tokio::test]
@@ -612,7 +632,10 @@ mod tests {
         assert_eq!(result.file_path, deserialized.file_path);
         assert_eq!(result.issues.len(), deserialized.issues.len());
         assert_eq!(result.suggestions, deserialized.suggestions);
-        assert_eq!(result.performance_insights, deserialized.performance_insights);
+        assert_eq!(
+            result.performance_insights,
+            deserialized.performance_insights
+        );
     }
 
     #[tokio::test]

@@ -3,14 +3,14 @@
 //! This module handles fine-tuning job management, dataset preparation,
 //! and training progress monitoring.
 
+use crate::acquire_service_and_execute; // Import exported macro from crate root
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use crate::acquire_service_and_execute; // Import exported macro from crate root
 use std::sync::Arc;
 
 use anyhow::Result;
-use tauri::State;
 use serde::{Deserialize, Serialize};
+use tauri::State;
 use tokio::fs;
 use walkdir::WalkDir;
 
@@ -101,7 +101,10 @@ pub async fn start_finetune_job(
     request: StartFinetuneRequest,
     ai_service: State<'_, super::AIServiceState>,
 ) -> Result<String, String> {
-    log::info!("Starting fine-tuning job for model: {}", request.config.model_name);
+    log::info!(
+        "Starting fine-tuning job for model: {}",
+        request.config.model_name
+    );
 
     acquire_service_and_execute!(ai_service, super::AIServiceState, {
         // In a real implementation, this would start a fine-tuning job
@@ -163,32 +166,28 @@ pub async fn list_finetune_jobs(
         // In a real implementation, this would list all fine-tuning jobs
         log::info!("Listing fine-tuning jobs");
 
-        Ok(vec![
-            FinetuneJob {
-                id: "finetune_123".to_string(),
-                model_name: "gpt-4".to_string(),
-                dataset_path: "/path/to/dataset".to_string(),
-                status: FinetuneStatus::Training,
-                progress_percentage: 45.0,
-                start_time: chrono::Utc::now() - chrono::Duration::hours(2),
-                estimated_completion: Some(chrono::Utc::now() + chrono::Duration::hours(4)),
-                current_epoch: 4,
-                total_epochs: 10,
-                current_step: 2000,
-                total_steps: 5000,
-                loss: Some(0.85),
-                validation_loss: Some(0.95),
-                error_message: None,
-            }
-        ])
+        Ok(vec![FinetuneJob {
+            id: "finetune_123".to_string(),
+            model_name: "gpt-4".to_string(),
+            dataset_path: "/path/to/dataset".to_string(),
+            status: FinetuneStatus::Training,
+            progress_percentage: 45.0,
+            start_time: chrono::Utc::now() - chrono::Duration::hours(2),
+            estimated_completion: Some(chrono::Utc::now() + chrono::Duration::hours(4)),
+            current_epoch: 4,
+            total_epochs: 10,
+            current_step: 2000,
+            total_steps: 5000,
+            loss: Some(0.85),
+            validation_loss: Some(0.95),
+            error_message: None,
+        }])
     })
 }
 
 /// Prepare dataset for fine-tuning
 #[tauri::command]
-pub async fn prepare_dataset(
-    request: PrepareDatasetRequest,
-) -> Result<String, String> {
+pub async fn prepare_dataset(request: PrepareDatasetRequest) -> Result<String, String> {
     log::info!("Preparing dataset from: {}", request.input_path);
 
     // Validate input path exists
@@ -199,7 +198,8 @@ pub async fn prepare_dataset(
     // Create output directory
     let output_path = Path::new(&request.output_path);
     if let Some(parent) = output_path.parent() {
-        fs::create_dir_all(parent).await
+        fs::create_dir_all(parent)
+            .await
             .map_err(|e| format!("Failed to create output directory: {}", e))?;
     }
 
@@ -219,41 +219,38 @@ pub async fn prepare_dataset(
         }
     }
 
-    Ok(format!("Dataset prepared successfully: {}", request.output_path))
+    Ok(format!(
+        "Dataset prepared successfully: {}",
+        request.output_path
+    ))
 }
 
 /// Helper function to prepare JSONL dataset
-async fn prepare_jsonlines_dataset(
-    input_path: &str,
-    output_path: &str
-) -> Result<(), String> {
+async fn prepare_jsonlines_dataset(input_path: &str, output_path: &str) -> Result<(), String> {
     // In a real implementation, this would validate and process JSONL format
     // For now, just copy the file
-    fs::copy(input_path, output_path).await
+    fs::copy(input_path, output_path)
+        .await
         .map_err(|e| format!("Failed to copy dataset: {}", e))?;
     Ok(())
 }
 
 /// Helper function to prepare CSV dataset
-async fn prepare_csv_dataset(
-    input_path: &str,
-    output_path: &str
-) -> Result<(), String> {
+async fn prepare_csv_dataset(input_path: &str, output_path: &str) -> Result<(), String> {
     // In a real implementation, this would validate and process CSV format
     // For now, just copy the file
-    fs::copy(input_path, output_path).await
+    fs::copy(input_path, output_path)
+        .await
         .map_err(|e| format!("Failed to copy dataset: {}", e))?;
     Ok(())
 }
 
 /// Helper function to prepare text dataset
-async fn prepare_text_dataset(
-    input_path: &str,
-    output_path: &str
-) -> Result<(), String> {
+async fn prepare_text_dataset(input_path: &str, output_path: &str) -> Result<(), String> {
     // In a real implementation, this would validate and process text format
     // For now, just copy the file
-    fs::copy(input_path, output_path).await
+    fs::copy(input_path, output_path)
+        .await
         .map_err(|e| format!("Failed to copy dataset: {}", e))?;
     Ok(())
 }

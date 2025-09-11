@@ -3,8 +3,8 @@
 //! This module handles image processing, screenshot analysis, and visual AI tasks
 //! using OpenCV and vision models.
 
-use crate::errors::{MultimodalError, VisionError, ProcessingError};
-use crate::types::{ModalityType, ModalityData, ModalityResult, AnalysisRequest};
+use crate::errors::{MultimodalError, ProcessingError, VisionError};
+use crate::types::{AnalysisRequest, ModalityData, ModalityResult, ModalityType};
 use std::sync::Arc;
 
 /// Vision processor with OpenCV integration

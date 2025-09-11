@@ -30,7 +30,10 @@ pub fn get_keyword_documentation_links(keyword: &str) -> Vec<DocumentationLink> 
     vec![
         DocumentationLink {
             title: format!("Rust Reference - {}", keyword),
-            url: format!("https://doc.rust-lang.org/reference/keywords.html#{}", keyword),
+            url: format!(
+                "https://doc.rust-lang.org/reference/keywords.html#{}",
+                keyword
+            ),
             description: format!("Official documentation for the '{}' keyword", keyword),
             category: "official".to_string(),
         },
@@ -47,14 +50,12 @@ pub fn get_keyword_documentation_links(keyword: &str) -> Vec<DocumentationLink> 
 pub fn get_context_documentation_links(context: &str) -> Vec<DocumentationLink> {
     // This would analyze the context and return relevant links
     // For now, return some general helpful links
-    vec![
-        DocumentationLink {
-            title: "Rust Standard Library".to_string(),
-            url: "https://doc.rust-lang.org/std/".to_string(),
-            description: "Standard library documentation".to_string(),
-            category: "reference".to_string(),
-        },
-    ]
+    vec![DocumentationLink {
+        title: "Rust Standard Library".to_string(),
+        url: "https://doc.rust-lang.org/std/".to_string(),
+        description: "Standard library documentation".to_string(),
+        category: "reference".to_string(),
+    }]
 }
 
 /// Generate general documentation links for Rust learning and reference
@@ -75,7 +76,8 @@ pub fn get_general_documentation_links() -> Vec<DocumentationLink> {
         DocumentationLink {
             title: "Rustlings".to_string(),
             url: "https://github.com/rust-lang/rustlings".to_string(),
-            description: "Small exercises to get you used to reading and writing Rust code".to_string(),
+            description: "Small exercises to get you used to reading and writing Rust code"
+                .to_string(),
             category: "tutorial".to_string(),
         },
         DocumentationLink {

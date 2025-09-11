@@ -260,11 +260,16 @@ impl MetricsCollector {
 
     /// Add a metric collector
     pub fn add_collector(&mut self, collector: Arc<dyn MetricCollector>) {
-        self.collectors.insert(collector.name().to_string(), collector);
+        self.collectors
+            .insert(collector.name().to_string(), collector);
     }
 
     /// Start a performance timer
-    pub fn start_timer(&self, name: &str, labels: std::collections::HashMap<String, String>) -> Timer {
+    pub fn start_timer(
+        &self,
+        name: &str,
+        labels: std::collections::HashMap<String, String>,
+    ) -> Timer {
         Timer {
             start_time: std::time::Instant::now(),
             labels,
@@ -283,13 +288,17 @@ impl MetricsCollector {
             "lsp_completion" => {
                 state.current_metrics.lsp_metrics.completion_requests += 1;
                 state.current_metrics.lsp_metrics.avg_completion_time_ms =
-                    (state.current_metrics.lsp_metrics.avg_completion_time_ms * (state.current_metrics.lsp_metrics.completion_requests - 1) as f64 + duration)
+                    (state.current_metrics.lsp_metrics.avg_completion_time_ms
+                        * (state.current_metrics.lsp_metrics.completion_requests - 1) as f64
+                        + duration)
                         / state.current_metrics.lsp_metrics.completion_requests as f64;
             }
             "frontend_response" => {
                 state.current_metrics.frontend_metrics.request_count += 1;
                 state.current_metrics.frontend_metrics.avg_response_time_ms =
-                    (state.current_metrics.frontend_metrics.avg_response_time_ms * (state.current_metrics.frontend_metrics.request_count - 1) as f64 + duration)
+                    (state.current_metrics.frontend_metrics.avg_response_time_ms
+                        * (state.current_metrics.frontend_metrics.request_count - 1) as f64
+                        + duration)
                         / state.current_metrics.frontend_metrics.request_count as f64;
             }
             _ => {
@@ -318,10 +327,13 @@ impl MetricsCollector {
             alerts.push(PerformanceAlert {
                 alert_type: AlertType::HighResponseTime,
                 severity: AlertSeverity::Warning,
-                message: format!("LSP completion response time ({:.2}ms) exceeds threshold ({}.0ms)",
-                    metrics.lsp_metrics.avg_completion_time_ms, thresholds.max_response_time_ms),
+                message: format!(
+                    "LSP completion response time ({:.2}ms) exceeds threshold ({}.0ms)",
+                    metrics.lsp_metrics.avg_completion_time_ms, thresholds.max_response_time_ms
+                ),
                 affected_component: "lsp_bridge".to_string(),
-                recommendation: "Consider optimizing AI model inference or using load balancing".to_string(),
+                recommendation: "Consider optimizing AI model inference or using load balancing"
+                    .to_string(),
             });
         }
 
@@ -329,8 +341,11 @@ impl MetricsCollector {
             alerts.push(PerformanceAlert {
                 alert_type: AlertType::LowSuccessRate,
                 severity: AlertSeverity::Critical,
-                message: format!("LSP completion success rate ({:.2}%) below threshold ({:.0}%)",
-                    metrics.lsp_metrics.completion_success_rate * 100.0, thresholds.min_success_rate * 100.0),
+                message: format!(
+                    "LSP completion success rate ({:.2}%) below threshold ({:.0}%)",
+                    metrics.lsp_metrics.completion_success_rate * 100.0,
+                    thresholds.min_success_rate * 100.0
+                ),
                 affected_component: "lsp_bridge".to_string(),
                 recommendation: "Investigate model availability and error handling".to_string(),
             });

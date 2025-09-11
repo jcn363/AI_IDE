@@ -11,7 +11,11 @@ impl DeviceManager {
         Self {}
     }
 
-    pub async fn apply_mdm_policy(&self, device_id: &str, policy: &DevicePolicy) -> anyhow::Result<()> {
+    pub async fn apply_mdm_policy(
+        &self,
+        device_id: &str,
+        policy: &DevicePolicy,
+    ) -> anyhow::Result<()> {
         Ok(())
     }
 }

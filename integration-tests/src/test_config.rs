@@ -344,7 +344,10 @@ mod tests {
         assert!(config.global_settings.enable_all_tests);
         assert!(config.lsp_tests.enabled);
         assert!(config.ai_ml_tests.enabled);
-        assert_eq!(config.lsp_tests.performance_targets.completion_latency_ms, 100);
+        assert_eq!(
+            config.lsp_tests.performance_targets.completion_latency_ms,
+            100
+        );
     }
 
     #[test]

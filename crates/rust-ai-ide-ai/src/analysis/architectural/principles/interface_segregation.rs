@@ -1,8 +1,8 @@
-use syn::{visit::Visit, ItemTrait};
 use super::super::types::CodeLocation;
+use syn::{visit::Visit, ItemTrait};
 
 /// Analyzer for the Interface Segregation Principle
-/// 
+///
 /// This analyzer checks for traits that have too many methods or methods with too many
 /// parameters, which might indicate that the trait is doing too much.
 pub struct InterfaceSegregationAnalyzer {
@@ -55,7 +55,9 @@ impl InterfaceSegregationAnalyzer {
 
     /// Analyze a trait definition for interface segregation violations
     pub fn analyze_trait(&mut self, item_trait: &ItemTrait) {
-        let method_count = item_trait.items.iter()
+        let method_count = item_trait
+            .items
+            .iter()
             .filter(|item| matches!(item, syn::TraitItem::Method(_)))
             .count();
 
@@ -78,11 +80,7 @@ impl InterfaceSegregationAnalyzer {
                 let param_count = method.sig.inputs.len();
                 if param_count > self.max_parameters {
                     let violation = InterfaceSegregationViolation {
-                        trait_name: format!(
-                            "{}::{}(...)",
-                            item_trait.ident,
-                            method.sig.ident
-                        ),
+                        trait_name: format!("{}::{}(...)", item_trait.ident, method.sig.ident),
                         method_count: param_count,
                         location: CodeLocation {
                             file_path: String::new(), // Will be filled in by the caller
@@ -128,28 +126,29 @@ mod tests {
                 fn too_many_params(&self, a: i32, b: i32, c: i32, d: i32, e: i32, f: i32);
             }
         "#;
-        
+
         let file = syn::parse_file(code).unwrap();
         let mut analyzer = InterfaceSegregationAnalyzer::new()
             .with_max_methods(10)
             .with_max_parameters(5);
-        
+
         for item in &file.items {
             if let syn::Item::Trait(t) = item {
                 analyzer.analyze_trait(t);
             }
         }
-        
+
         assert_eq!(analyzer.violations().len(), 2);
-        
+
         // Check that we found the too-large trait
-        assert!(analyzer.violations().iter().any(|v| 
-            v.trait_name == "TooLargeTrait" && v.method_count > 10
-        ));
-        
+        assert!(analyzer
+            .violations()
+            .iter()
+            .any(|v| v.trait_name == "TooLargeTrait" && v.method_count > 10));
+
         // Check that we found the method with too many parameters
-        assert!(analyzer.violations().iter().any(|v| 
-            v.trait_name.starts_with("TooManyParameters::too_many_params")
-        ));
+        assert!(analyzer.violations().iter().any(|v| v
+            .trait_name
+            .starts_with("TooManyParameters::too_many_params")));
     }
 }
