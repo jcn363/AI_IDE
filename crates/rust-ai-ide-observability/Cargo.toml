@@ -1,0 +1,54 @@
+[package]
+name = "rust-ai-ide-observability"
+readme = { workspace = true }
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.91.0"
+authors = ["Rust AI IDE Team"]
+license = "MIT OR Apache-2.0"
+publish = false
+
+[features]
+default = ["metrics", "tracing"]
+metrics = ["dep:metrics", "dep:metrics-exporter-prometheus", "dep:tokio-metrics"]
+tracing = ["dep:tracing", "dep:tracing-opentelemetry", "dep:opentelemetry", "dep:opentelemetry-otlp"]
+health-checks = []
+
+[dependencies]
+# Core workspace dependencies
+rust-ai-ide-types = { workspace = true }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-common = { workspace = true }
+
+# Observability dependencies
+tracing = { workspace = true, optional = true }
+tracing-opentelemetry = { workspace = true, optional = true }
+opentelemetry = { workspace = true, optional = true }
+opentelemetry-otlp = { workspace = true, optional = true }
+opentelemetry-semantic-conventions = { workspace = true, optional = true }
+
+# Metrics
+metrics = { workspace = true, optional = true }
+metrics-exporter-prometheus = { workspace = true, optional = true }
+tokio-metrics = { workspace = true, optional = true }
+
+# Core async and utilities
+tokio = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+futures = { workspace = true }
+
+# System monitoring
+sysinfo = { workspace = true }
+
+# Configuration
+dirs-next = { workspace = true }
+
+[dev-dependencies]
+shared-test-utils = { workspace = true }
+tempfile = { workspace = true }
+criterion = { workspace = true }
+assert_fs = { workspace = true }

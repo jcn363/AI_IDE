@@ -11,6 +11,10 @@ This document provides comprehensive usage examples for all AI/ML features in th
 - [Performance Monitoring Examples](#performance-monitoring-examples)
 - [Batch Processing Examples](#batch-processing-examples)
 - [Advanced Integration Patterns](#advanced-integration-patterns)
+- [Real-World Integration Scenarios](#real-world-integration-scenarios)
+- [Performance Optimization Examples](#performance-optimization-examples)
+- [Error Handling and Recovery](#error-handling-and-recovery)
+- [Security-Enhanced AI Operations](#security-enhanced-ai-operations)
 
 ## Code Generation Examples
 
@@ -653,6 +657,484 @@ const collaborationSession = await invoke('start_collaboration_session', {
 // - Real-time AI suggestions
 // - Pair programming support
 // - Session recording and replay
+```
+
+## Real-World Integration Scenarios
+
+### E-commerce Product API Development
+
+```typescript
+// Complete e-commerce product management system
+const productApiSpec = await invoke('generate_code_from_specification', {
+  specification: {
+    type: 'full_stack_api',
+    name: 'ProductManagementAPI',
+    entities: [
+      {
+        name: 'Product',
+        fields: [
+          { name: 'id', type: 'Uuid', required: true },
+          { name: 'name', type: 'String', required: true, validation: ['not_empty', 'max_200'] },
+          { name: 'price', type: 'Decimal', required: true, validation: ['positive'] },
+          { name: 'category', type: 'ProductCategory', required: true },
+          { name: 'inventory_count', type: 'i32', required: true, validation: ['non_negative'] },
+          { name: 'description', type: 'String', required: false, validation: ['max_1000'] },
+          { name: 'images', type: 'Vec<String>', required: false },
+          { name: 'tags', type: 'Vec<String>', required: false },
+          { name: 'created_at', type: 'DateTime<Utc>', required: true },
+          { name: 'updated_at', type: 'DateTime<Utc>', required: true }
+        ],
+        relationships: [
+          { type: 'belongs_to', target: 'Category' },
+          { type: 'has_many', target: 'Review', through: 'product_id' }
+        ]
+      },
+      {
+        name: 'Category',
+        fields: [
+          { name: 'id', type: 'Uuid', required: true },
+          { name: 'name', type: 'String', required: true },
+          { name: 'description', type: 'String', required: false },
+          { name: 'parent_id', type: 'Option<Uuid>', required: false }
+        ]
+      },
+      {
+        name: 'Review',
+        fields: [
+          { name: 'id', type: 'Uuid', required: true },
+          { name: 'product_id', type: 'Uuid', required: true },
+          { name: 'user_id', type: 'Uuid', required: true },
+          { name: 'rating', type: 'i32', required: true, validation: ['range_1_5'] },
+          { name: 'comment', type: 'String', required: false, validation: ['max_500'] },
+          { name: 'created_at', type: 'DateTime<Utc>', required: true }
+        ]
+      }
+    ],
+    endpoints: [
+      {
+        method: 'GET',
+        path: '/api/products',
+        description: 'List products with filtering and pagination',
+        query_params: [
+          { name: 'category', type: 'String', required: false },
+          { name: 'min_price', type: 'Decimal', required: false },
+          { name: 'max_price', type: 'Decimal', required: false },
+          { name: 'search', type: 'String', required: false },
+          { name: 'page', type: 'i32', required: false, default: 1 },
+          { name: 'limit', type: 'i32', required: false, default: 20 }
+        ],
+        response: 'PaginatedResponse<Product>'
+      },
+      {
+        method: 'POST',
+        path: '/api/products',
+        description: 'Create new product',
+        request_body: 'CreateProductRequest',
+        response: 'Product',
+        authentication: 'required',
+        authorization: 'admin_or_merchant'
+      },
+      {
+        method: 'GET',
+        path: '/api/products/{id}',
+        description: 'Get product details',
+        path_params: [{ name: 'id', type: 'Uuid', required: true }],
+        response: 'ProductDetail'
+      },
+      {
+        method: 'PUT',
+        path: '/api/products/{id}',
+        description: 'Update product',
+        path_params: [{ name: 'id', type: 'Uuid', required: true }],
+        request_body: 'UpdateProductRequest',
+        response: 'Product',
+        authentication: 'required',
+        authorization: 'admin_or_owner'
+      },
+      {
+        method: 'POST',
+        path: '/api/products/{id}/reviews',
+        description: 'Add product review',
+        path_params: [{ name: 'id', type: 'Uuid', required: true }],
+        request_body: 'CreateReviewRequest',
+        response: 'Review',
+        authentication: 'required'
+      }
+    ],
+    framework: 'actix-web',
+    database: 'postgresql',
+    orm: 'diesel',
+    features: [
+      'pagination',
+      'search',
+      'filtering',
+      'authentication',
+      'authorization',
+      'validation',
+      'error_handling',
+      'logging',
+      'caching'
+    ]
+  }
+});
+```
+
+### Real-time Chat Application Backend
+
+```typescript
+// Scalable chat application with real-time features
+const chatSystemSpec = await invoke('generate_code_from_specification', {
+  specification: {
+    type: 'realtime_application',
+    name: 'ChatSystem',
+    architecture: 'microservices',
+    components: [
+      {
+        name: 'MessageService',
+        responsibilities: [
+          'Message storage and retrieval',
+          'Real-time message broadcasting',
+          'Message encryption/decryption',
+          'Rate limiting per user/channel'
+        ],
+        technologies: {
+          framework: 'actix-web',
+          database: 'postgresql',
+          cache: 'redis',
+          message_queue: 'nats'
+        }
+      },
+      {
+        name: 'UserService',
+        responsibilities: [
+          'User authentication and authorization',
+          'User profile management',
+          'Presence tracking',
+          'Session management'
+        ]
+      },
+      {
+        name: 'ChannelService',
+        responsibilities: [
+          'Channel creation and management',
+          'Member management',
+          'Permission system',
+          'Channel archiving'
+        ]
+      },
+      {
+        name: 'NotificationService',
+        responsibilities: [
+          'Push notifications',
+          'Email notifications',
+          'In-app notifications',
+          'Notification preferences'
+        ]
+      }
+    ],
+    real_time_features: {
+      websockets: true,
+      server_sent_events: true,
+      long_polling_fallback: true,
+      connection_pooling: true,
+      heartbeat_mechanism: true
+    },
+    data_models: [
+      {
+        name: 'Message',
+        fields: [
+          { name: 'id', type: 'Uuid', required: true },
+          { name: 'channel_id', type: 'Uuid', required: true },
+          { name: 'user_id', type: 'Uuid', required: true },
+          { name: 'content', type: 'EncryptedContent', required: true },
+          { name: 'message_type', type: 'MessageType', required: true },
+          { name: 'reply_to', type: 'Option<Uuid>', required: false },
+          { name: 'created_at', type: 'DateTime<Utc>', required: true },
+          { name: 'updated_at', type: 'DateTime<Utc>', required: false },
+          { name: 'deleted_at', type: 'Option<DateTime<Utc>>', required: false }
+        ]
+      },
+      {
+        name: 'Channel',
+        fields: [
+          { name: 'id', type: 'Uuid', required: true },
+          { name: 'name', type: 'String', required: true },
+          { name: 'description', type: 'Option<String>', required: false },
+          { name: 'channel_type', type: 'ChannelType', required: true },
+          { name: 'owner_id', type: 'Uuid', required: true },
+          { name: 'is_private', type: 'bool', required: true, default: false },
+          { name: 'member_limit', type: 'Option<i32>', required: false },
+          { name: 'created_at', type: 'DateTime<Utc>', required: true }
+        ]
+      }
+    ],
+    scalability_requirements: {
+      concurrent_users: 10000,
+      messages_per_second: 1000,
+      storage_retention_days: 365,
+      horizontal_scaling: true,
+      database_sharding: true
+    }
+  }
+});
+```
+
+## Performance Optimization Examples
+
+### Intelligent Code Caching Strategy
+
+```typescript
+// Advanced caching with AI-driven eviction
+const intelligentCache = await invoke('setup_performance_cache', {
+  request: {
+    cache_type: 'intelligent_ml_cache',
+    configuration: {
+      max_memory_mb: 512,
+      eviction_policy: 'predictive',
+      prediction_model: 'usage_pattern_recognition',
+      features: [
+        'temporal_patterns',
+        'frequency_analysis',
+        'context_similarity',
+        'user_behavior_prediction'
+      ],
+      monitoring: {
+        hit_rate_tracking: true,
+        memory_usage_alerts: true,
+        performance_metrics: true,
+        cache_efficiency_reports: true
+      },
+      optimization: {
+        preemptive_loading: true,
+        batch_operations: true,
+        compression_enabled: true,
+        background_maintenance: true
+      }
+    }
+  }
+});
+
+// Cache usage examples
+const cachedAnalysis = await invoke('get_cached_analysis', {
+  file_path: './src/main.rs',
+  analysis_type: 'complexity',
+  use_ai_prediction: true
+});
+
+console.log('Cache Hit Rate:', cachedAnalysis.cache_metrics.hit_rate);
+console.log('Predicted Next Access:', cachedAnalysis.predictions.next_access_time);
+```
+
+### Adaptive Resource Management
+
+```typescript
+// AI-driven resource allocation
+const resourceManager = await invoke('setup_adaptive_resources', {
+  request: {
+    resource_type: 'ai_processing',
+    adaptation_strategy: 'ml_driven',
+    monitoring: {
+      cpu_usage: true,
+      memory_usage: true,
+      gpu_utilization: true,
+      network_throughput: true,
+      response_times: true
+    },
+    scaling: {
+      min_instances: 1,
+      max_instances: 8,
+      scale_up_threshold: 0.8,
+      scale_down_threshold: 0.3,
+      cooldown_period_seconds: 300
+    },
+    optimization: {
+      model_switching: true,
+      precision_adjustment: true,
+      batch_size_optimization: true,
+      memory_preloading: true
+    }
+  }
+});
+
+// Real-time resource adjustment
+const currentLoad = await invoke('analyze_current_load');
+if (currentLoad.predicted_spike) {
+  await invoke('preemptive_scale_up', {
+    expected_load: currentLoad.prediction,
+    time_window_minutes: 30
+  });
+}
+```
+
+## Error Handling and Recovery
+
+### Intelligent Error Classification
+
+```typescript
+// AI-powered error analysis and recovery
+const errorAnalysis = await invoke('analyze_error_with_ai', {
+  request: {
+    error_message: `error[E0599]: no method named 'unwrap' found for type 'Result<String, std::io::Error>' in the current scope`,
+    code_context: `
+fn read_file() -> String {
+    let result = std::fs::read_to_string("file.txt");
+    result.unwrap()  // Error occurs here
+}
+    `,
+    error_type: 'compilation_error',
+    rust_version: '1.70.0',
+    context_lines: 5
+  }
+});
+
+// AI-generated error analysis
+console.log('Error Classification:', errorAnalysis.classification);
+// Output: "unwrap_usage_without_check"
+
+console.log('Root Cause:', errorAnalysis.root_cause);
+// Output: "Missing error handling for file operations"
+
+console.log('Suggested Fixes:', errorAnalysis.suggestions);
+// Output: ["Use proper error propagation", "Add file existence check", "Use expect with descriptive message"]
+
+// Automated fix application
+const fixResult = await invoke('apply_ai_generated_fix', {
+  error_id: errorAnalysis.id,
+  fix_type: 'comprehensive_error_handling',
+  backup_before_fix: true
+});
+```
+
+### Predictive Error Prevention
+
+```typescript
+// Proactive error detection
+const predictionSystem = await invoke('setup_error_prediction', {
+  request: {
+    prediction_model: 'pattern_based',
+    monitoring: {
+      compilation_errors: true,
+      runtime_panics: true,
+      logical_errors: true,
+      performance_issues: true
+    },
+    prevention_strategies: {
+      static_analysis: true,
+      dynamic_analysis: true,
+      code_pattern_analysis: true,
+      historical_data_analysis: true
+    },
+    alert_configuration: {
+      error_probability_threshold: 0.7,
+      advance_warning_minutes: 30,
+      notification_channels: ['ide_notifications', 'email']
+    }
+  }
+});
+
+// Real-time error prediction
+const predictions = await invoke('get_error_predictions', {
+  file_path: './src/complex_logic.rs',
+  analysis_depth: 'comprehensive'
+});
+
+predictions.forEach(prediction => {
+  if (prediction.probability > 0.8) {
+    console.log(`High-risk error predicted: ${prediction.description}`);
+    console.log(`Location: ${prediction.location}`);
+    console.log(`Prevention: ${prediction.prevention_strategy}`);
+  }
+});
+```
+
+## Security-Enhanced AI Operations
+
+### Code Security Analysis
+
+```typescript
+// Comprehensive security analysis with AI
+const securityAnalysis = await invoke('analyze_code_security', {
+  request: {
+    files: ['src/**/*.rs'],
+    analysis_types: [
+      'input_validation_gaps',
+      'sql_injection_vulnerabilities',
+      'xss_vulnerabilities',
+      'path_traversal_attacks',
+      'command_injection_risks',
+      'unsafe_code_usage',
+      'cryptographic_weaknesses',
+      'authentication_bypasses',
+      'authorization_flaws'
+    ],
+    severity_levels: ['critical', 'high', 'medium'],
+    include_fixes: true,
+    ai_enhancement: true,
+    compliance_frameworks: ['owasp', 'cwe', 'sans_top_25']
+  }
+});
+
+// Security findings with AI-generated insights
+securityAnalysis.findings.forEach(finding => {
+  console.log(`Security Issue: ${finding.title}`);
+  console.log(`Severity: ${finding.severity}`);
+  console.log(`Location: ${finding.file}:${finding.line}`);
+  console.log(`AI Analysis: ${finding.ai_insight}`);
+  console.log(`Suggested Fix: ${finding.ai_fix_suggestion}`);
+  console.log(`Compliance Impact: ${finding.compliance_impact}`);
+});
+
+// Automated security hardening
+const hardeningResult = await invoke('apply_security_hardening', {
+  fixes: securityAnalysis.findings
+    .filter(f => f.severity === 'critical')
+    .map(f => f.ai_fix_suggestion),
+  audit_trail: true,
+  rollback_capability: true
+});
+```
+
+### Privacy-Preserving AI Processing
+
+```typescript
+// Privacy-focused AI operations
+const privacyConfig = await invoke('setup_privacy_preserving_ai', {
+  request: {
+    privacy_level: 'maximum',
+    data_processing: {
+      local_only: true,
+      no_data_transmission: true,
+      memory_only_processing: true,
+      automatic_cleanup: true
+    },
+    model_requirements: {
+      downloaded_locally: true,
+      no_cloud_dependencies: true,
+      auditable_execution: true
+    },
+    monitoring: {
+      data_access_logging: true,
+      processing_audit: true,
+      privacy_compliance: true
+    }
+  }
+});
+
+// Privacy-compliant code analysis
+const privateAnalysis = await invoke('analyze_code_privately', {
+  code: sensitiveCode,
+  analysis_type: 'security_review',
+  privacy_guarantees: {
+    no_external_transmission: true,
+    memory_only: true,
+    automatic_cleanup: true,
+    audit_logging: true
+  }
+});
+
+console.log('Analysis completed with privacy guarantees');
+console.log('Processing time:', privateAnalysis.processing_time_ms);
+console.log('Privacy compliance score:', privateAnalysis.privacy_score);
 ```
 
 This comprehensive examples document demonstrates the versatility and power of the AI/ML features in the Rust AI IDE. The examples cover everything from basic usage patterns to advanced integration scenarios, providing developers with practical guidance for leveraging AI capabilities in their Rust development workflows.

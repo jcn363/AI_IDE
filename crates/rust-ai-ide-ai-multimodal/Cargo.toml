@@ -19,7 +19,7 @@ tokio-util = { version = "0.7", features = ["codec"] }
 
 # Computer vision dependencies
 opencv = { version = "0.91", features = ["contrib", "tbb"] }
-image = { version = "0.24", features = ["jpeg", "png", "tiff", "webp", "bmp"] }
+image = { version = "0.25", features = ["jpeg", "png", "tiff", "webp", "bmp"] }
 tesseract = "0.16"  # OCR functionality
 
 # Natural language processing

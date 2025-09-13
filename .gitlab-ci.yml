@@ -25,46 +25,61 @@ variables:
   RUST_BACKTRACE: "1"
   RUST_NIGHTLY_VERSION: "2025-09-03"
 
-  # Cache configuration
+  # Cache configuration with sccache support
   CARGO_CACHE_DIR: $CI_PROJECT_DIR/.cargo-cache
   NPM_CACHE_DIR: $CI_PROJECT_DIR/.npm-cache
+  SCCACHE_DIR: $CI_PROJECT_DIR/.sccache
+  RUSTC_WRAPPER: sccache
+  SCCACHE_CACHE_SIZE: "10G"
 
-# Global cache configuration
+# Global cache configuration with layering
 cache:
-  key: ${CI_COMMIT_REF_SLUG}
+  key:
+    files:
+      - Cargo.lock
+      - web/package-lock.json
   paths:
     - .cargo/
     - target/
     - web/node_modules/
     - .npm-cache/
+    - .sccache/
     - security-reports/
     - security-backups/
 
 # Setup stage - Prepare environment and tools
 setup:environment:
-  stage: setup
-  image: rust:latest
-  before_script:
-    - apt-get update -qq && apt-get install -y -qq curl wget jq nodejs npm
-    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-${RUST_NIGHTLY_VERSION}
-    - source $HOME/.cargo/env
-    - rustup component add rust-src rustfmt clippy
-    - npm install -g snyk
-  script:
-    - echo "Environment setup completed"
-    - cargo --version
-    - rustc --version
-    - node --version
-    - npm --version
-    - snyk --version || echo "Snyk not available"
-  artifacts:
-    reports:
-      dotenv: setup.env
-    expire_in: 1 hour
-  only:
-    - merge_requests
-    - main
-    - develop
+   stage: setup
+   image: rust:latest
+   before_script:
+     - apt-get update -qq && apt-get install -y -qq curl wget jq nodejs npm clang lld
+     - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-${RUST_NIGHTLY_VERSION}
+     - source $HOME/.cargo/env
+     - rustup component add rust-src rustfmt clippy
+     - npm install -g snyk
+     # Install sccache for build caching
+     - cargo install sccache --locked
+     # Configure sccache
+     - sccache --start-server
+   script:
+     - echo "Environment setup completed"
+     - cargo --version
+     - rustc --version
+     - node --version
+     - npm --version
+     - sccache --version
+     - sccache --show-stats
+     - snyk --version || echo "Snyk not available"
+   after_script:
+     - sccache --show-stats
+   artifacts:
+     reports:
+       dotenv: setup.env
+     expire_in: 1 hour
+   only:
+     - merge_requests
+     - main
+     - develop
 
 # Security scanning stage - Run vulnerability scans
 security:scan:dependencies:
@@ -150,20 +165,40 @@ security:scan:vulnerabilities:
     - apt-get update -qq && apt-get install -y -qq curl jq
     - cargo install cargo-audit cargo-deny 2>/dev/null || echo "Tools already installed"
   script:
-    - echo "Running automated vulnerability scanning..."
+    - echo "Running automated vulnerability scanning with cargo-audit..."
     - mkdir -p ${SECURITY_REPORT_DIR}/vulnerability-scan
     - |
-      # Run vulnerability scanner with configurable severity threshold
-      export SEVERITY_THRESHOLD="${SEVERITY_THRESHOLD:-medium}"
-      export FAIL_ON_CRITICAL="${FAIL_ON_CRITICAL:-false}"
-      export GENERATE_HTML="${GENERATE_HTML:-true}"
-      export SLACK_WEBHOOK="${SLACK_WEBHOOK:-}"
-      export EMAIL_RECIPIENTS="${EMAIL_RECIPIENTS:-}"
+      # Run cargo-audit with JSON output for detailed reporting
+      echo "Generating vulnerability report..."
+      cargo audit --json > ${SECURITY_REPORT_DIR}/vulnerability-scan/audit-report.json
 
-      bash scripts/security/vulnerability_scanner.sh
+      # Extract summary for CI display
+      echo "=== Vulnerability Summary ==="
+      if command -v jq >/dev/null 2>&1; then
+        CRITICAL_COUNT=$(jq '.vulnerabilities.list | map(select(.severity == "Critical")) | length' ${SECURITY_REPORT_DIR}/vulnerability-scan/audit-report.json 2>/dev/null || echo "0")
+        HIGH_COUNT=$(jq '.vulnerabilities.list | map(select(.severity == "High")) | length' ${SECURITY_REPORT_DIR}/vulnerability-scan/audit-report.json 2>/dev/null || echo "0")
+        MEDIUM_COUNT=$(jq '.vulnerabilities.list | map(select(.severity == "Medium")) | length' ${SECURITY_REPORT_DIR}/vulnerability-scan/audit-report.json 2>/dev/null || echo "0")
+        LOW_COUNT=$(jq '.vulnerabilities.list | map(select(.severity == "Low")) | length' ${SECURITY_REPORT_DIR}/vulnerability-scan/audit-report.json 2>/dev/null || echo "0")
 
-      # Copy reports to CI artifacts
-      cp -r security-reports/* ${SECURITY_REPORT_DIR}/vulnerability-scan/ 2>/dev/null || true
+        echo "Critical: $CRITICAL_COUNT"
+        echo "High: $HIGH_COUNT"
+        echo "Medium: $MEDIUM_COUNT"
+        echo "Low: $LOW_COUNT"
+
+        # Fail build if critical vulnerabilities found
+        if [ "$CRITICAL_COUNT" -gt 0 ]; then
+          echo "❌ Critical vulnerabilities found! Failing build."
+          exit 1
+        fi
+      else
+        echo "jq not available, skipping detailed summary"
+      fi
+
+      # Generate HTML report if requested
+      if [ "${GENERATE_HTML:-true}" = "true" ]; then
+        echo "Generating HTML report..."
+        cargo audit --format html > ${SECURITY_REPORT_DIR}/vulnerability-scan/audit-report.html 2>/dev/null || echo "HTML generation failed"
+      fi
   artifacts:
     reports:
       junit: ${SECURITY_REPORT_DIR}/vulnerability-scan/**/junit-*.xml
@@ -307,26 +342,44 @@ security:update:dependencies:
     schedules:
       - cron: "0 2 * * 1"  # Weekly on Monday at 2 AM
 
-# Build and test stage - Standard CI/CD
+# Build and test stage - Optimized CI/CD with parallel compilation
 build:rust:
-  stage: deploy
-  image: rust:latest
-  dependencies:
-    - setup:environment
-  before_script:
-    - source $HOME/.cargo/env
-    - rustup target add x86_64-unknown-linux-gnu
-  script:
-    - echo "Building Rust AI IDE..."
-    - cargo build --workspace --release
-    - cargo test --workspace --release
-  artifacts:
-    paths:
-      - target/release/
-    expire_in: 1 week
-  only:
-    - main
-    - develop
+   stage: deploy
+   image: rust:latest
+   dependencies:
+     - setup:environment
+   variables:
+     # Optimize for CI environment
+     CARGO_BUILD_JOBS: "4"
+     NUM_JOBS: "4"
+   before_script:
+     - source $HOME/.cargo/env
+     - rustup target add x86_64-unknown-linux-gnu
+     - sccache --start-server
+     - cargo install cargo-audit --locked 2>/dev/null || echo "cargo-audit already installed"
+   script:
+     - echo "Running security audit..."
+     - cargo audit --deny warnings || (echo "❌ Security audit failed" && exit 1)
+     - echo "Running code formatting check..."
+     - cargo +nightly fmt --check
+     - echo "Running linting..."
+     - cargo +nightly clippy --workspace --profile ci -- -D warnings
+     - echo "Building Rust AI IDE with optimized settings..."
+     - time cargo build --workspace --profile ci --jobs ${CARGO_BUILD_JOBS}
+     - echo "Running tests with optimized settings..."
+     - time cargo test --workspace --profile ci --jobs ${CARGO_BUILD_JOBS} -- --nocapture
+     - echo "Build and test completed successfully"
+   after_script:
+     - sccache --show-stats
+     - echo "Cache statistics:"
+     - sccache --show-stats | grep -E "(compile_requests|cache_hits|cache_misses)"
+   artifacts:
+     paths:
+       - target/ci/
+     expire_in: 1 week
+   only:
+     - main
+     - develop
 
 build:web:
   stage: deploy

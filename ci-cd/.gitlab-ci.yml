@@ -57,12 +57,31 @@ validate:rust_format:
   script:
     - rustup toolchain install nightly-${NIGHTLY_VERSION} --component rust-src rustfmt clippy
     - rustup default nightly-${NIGHTLY_VERSION}
+    # Check formatting consistency
     - cargo fmt --all -- --check
-    - cargo clippy --workspace --all-targets --all-features -- -D warnings
+    # Auto-apply formatting for CI commits
+    - |
+      if [ "$CI_COMMIT_REF_NAME" != "main" ] && [ "$CI_COMMIT_REF_NAME" != "develop" ]; then
+        echo "Applying rustfmt formatting..."
+        cargo fmt --all
+        git add .
+        git commit -m "Auto-format code with rustfmt" || echo "No formatting changes needed"
+      fi
+    # Enhanced clippy security checks
+    - cargo clippy --workspace --all-targets --all-features \
+        -- -D clippy::unwrap_used \
+        -D clippy::expect_used \
+        -D clippy::panic \
+        -D clippy::unimplemented \
+        -D clippy::todo \
+        -W clippy::pedantic \
+        -W clippy::nursery \
+        -D warnings
   artifacts:
     reports:
       codequality: gl-code-quality-report.json
     expire_in: 1 week
+  allow_failure: false
   only:
     - merge_requests
     - main
@@ -261,25 +280,53 @@ security:dependency_scan:
   stage: security
   image: rust:1.91-slim
   script:
-    - cargo install cargo-audit
+    # Install all security tools
+    - cargo install cargo-audit cargo-deny cargo-geiger
+    - rustup toolchain install nightly-${NIGHTLY_VERSION} --component rust-src
+    - rustup default nightly-${NIGHTLY_VERSION}
+
+    # Comprehensive security scanning
     - cargo audit --format json > cargo-audit-report.json
-    - cargo audit --deny info,warnings > /dev/null || echo "Security issues found"
+    - cargo audit --deny info,warnings > /dev/null || (echo "Security vulnerabilities found - failing build" && exit 1)
+
+    # Enhanced cargo-deny checks with nightly toolchain
+    - cargo deny check --hide-inclusion-graph --show-stats
+    - cargo deny check advisories --format json > cargo-deny-advisories.json
+    - cargo deny check bans --format json > cargo-deny-bans.json
+    - cargo deny check licenses --format json > cargo-deny-licenses.json
+
+    # Static security analysis with cargo-geiger
+    - cargo geiger --format json --output cargo-geiger-report.json
+    - |
+      unsafe_count=$(jq '.metrics.unsafe // 0' cargo-geiger-report.json 2>/dev/null || echo "0")
+      if [ "$unsafe_count" -gt 0 ]; then
+        echo "⚠️  Found $unsafe_count unsafe code instances"
+        cargo geiger --format ascii-table
+      else
+        echo "✅ No unsafe code detected"
+      fi
 
     # Scan web dependencies
     - apt-get update && apt-get install -y nodejs npm
     - cd web && npm audit --audit-level moderate --json > ../npm-audit-report.json
+    - cd web && npm audit --audit-level high || echo "High-severity npm vulnerabilities found"
 
-    # Check for banned crates
-    - cargo install cargo-deny
-    - cargo deny check
+    # Enhanced security reporting
+    - mkdir -p security-reports/comprehensive
+    - cp *.json security-reports/comprehensive/
+    - cp npm-audit-report.json security-reports/comprehensive/
   artifacts:
     reports:
       dependency_scanning: cargo-audit-report.json
+      sast: cargo-geiger-report.json
     paths:
       - cargo-audit-report.json
+      - cargo-*-report.json
       - npm-audit-report.json
+      - security-reports/comprehensive/
     expire_in: 1 week
     when: always
+  allow_failure: false
 
 security:snyk_scan:
   stage: security
@@ -290,6 +337,106 @@ security:snyk_scan:
 
     # Retrieve Snyk credentials from AWS Secrets Manager
     - chmod +x scripts/ci/retrieve-snyk-secrets.sh
+security:static_analysis:
+  stage: security
+  image: rust:1.91-slim
+  script:
+    - rustup toolchain install nightly-${NIGHTLY_VERSION} --component rust-src rustfmt clippy
+    - rustup default nightly-${NIGHTLY_VERSION}
+    - cargo install cargo-geiger
+
+    # Comprehensive static analysis
+    - echo "Running comprehensive static security analysis..."
+    - cargo clippy --workspace --all-targets --all-features \
+        -- -W clippy::all \
+        -D clippy::correctness \
+        -D clippy::suspicious \
+        -D clippy::style \
+        -D clippy::complexity \
+        -D clippy::perf \
+        -W clippy::pedantic \
+        -W clippy::nursery \
+        2>&1 | tee clippy-full-report.log
+
+    # Check for clippy warnings
+    - |
+      if grep -q "warning:" clippy-full-report.log; then
+        echo "⚠️  Clippy warnings found"
+        grep -c "warning:" clippy-full-report.log
+      else
+        echo "✅ No clippy warnings"
+      fi
+
+    # Rustfmt check
+    - cargo fmt --all -- --check || (echo "Code formatting issues found" && exit 1)
+
+    # Additional security lints
+    - cargo clippy --workspace --all-targets --all-features \
+        -- -W clippy::missing_const_for_fn \
+        -W clippy::redundant_clone \
+        -W clippy::string_add_assign \
+        -W clippy::string_add \
+        -W clippy::needless_borrow \
+        2>&1 | tee security-lints.log
+
+  artifacts:
+    paths:
+      - clippy-full-report.log
+      - security-lints.log
+    expire_in: 1 week
+    when: always
+  allow_failure: false
+  only:
+    - merge_requests
+    - main
+    - develop
+
+security:runtime_checks:
+  stage: security
+  image: rust:1.91-slim
+  script:
+    - rustup toolchain install nightly-${NIGHTLY_VERSION} --component rust-src
+    - rustup default nightly-${NIGHTLY_VERSION}
+
+    # Build with security features
+    - cargo build --workspace --release --features security
+    - cargo test --workspace --release --features security -- --nocapture
+
+    # Runtime security checks
+    - echo "Running runtime security validation..."
+    - |
+      # Check for debug assertions in release builds
+      if cargo build --release -v 2>&1 | grep -q "debug_assert"; then
+        echo "⚠️  Debug assertions found in release build"
+      else
+        echo "✅ No debug assertions in release build"
+      fi
+
+    # Memory safety checks
+    - echo "Running memory safety analysis..."
+    - RUSTFLAGS="-Z sanitizer=address" cargo test --workspace --lib --release --features security \
+        --target x86_64-unknown-linux-gnu 2>&1 | tee address-sanitizer.log || true
+
+    # Check for potential security issues in tests
+    - |
+      test_output=$(cargo test --workspace --release --features security -- --nocapture 2>&1)
+      if echo "$test_output" | grep -qi "panic\|unwrap\|expect"; then
+        echo "⚠️  Potential security issues detected in test output"
+        echo "$test_output" | grep -i "panic\|unwrap\|expect" | head -5
+      else
+        echo "✅ No security issues detected in tests"
+      fi
+
+  artifacts:
+    paths:
+      - address-sanitizer.log
+    expire_in: 1 week
+    when: always
+  allow_failure: false
+  only:
+    - main
+    - develop
+
     - source scripts/ci/retrieve-snyk-secrets.sh
 
     # Run Snyk dependency scan using existing script

@@ -2,15 +2,20 @@
 // Provides vectorized computations for performance optimization across AI inference,
 // compilation operations, and numerical computations.
 
-use core_simd::f32x4;
-use core_simd::f32x8;
-use core_simd::f64x4;
-use core_simd::i32x4;
-use core_simd::i32x8;
+// Use std::simd for portable SIMD operations (available since Rust 1.27)
+#[cfg(target_arch = "x86_64")]
+use std::simd::{f32x4, f32x8, f64x4, i32x4, i32x8, SimdFloat, SimdInt};
+#[cfg(target_arch = "aarch64")]
+use std::simd::{f32x4, f64x2, i32x4, SimdFloat, SimdInt};
+#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+// Fallback for other architectures - scalar operations only
+compile_error!("SIMD acceleration not supported on this architecture");
+
 use std::alloc::{alloc, dealloc, Layout};
 use std::mem::size_of;
 use std::ptr::{null_mut, NonNull};
 
+pub mod ai_operations;
 pub mod capability;
 pub mod dispatch;
 pub mod error;
@@ -18,6 +23,7 @@ pub mod memory;
 pub mod monitoring;
 pub mod operations;
 
+pub use ai_operations::*;
 pub use capability::*;
 pub use dispatch::*;
 pub use error::*;

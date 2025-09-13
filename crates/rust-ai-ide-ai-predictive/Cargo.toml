@@ -43,7 +43,6 @@ tokenizers = { workspace = true }
 
 # SQLite dependencies
 rusqlite = { workspace = true }
-libsqlite3-sys = { workspace = true }
 
 # Import internal dependencies
 rust-ai-ide-ai1-semantic = { path = "../rust-ai-ide-ai1-semantic" }

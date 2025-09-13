@@ -68,10 +68,12 @@ members = [
   "crates/rust-ai-ide-monitoring",
   "crates/rust-ai-ide-multi-model-orchestrator",
   "crates/rust-ai-ide-multi-reality",
+  "crates/rust-ai-ide-observability",
   "crates/rust-ai-ide-onnx-runtime",
   "crates/rust-ai-ide-orchestration",
   "crates/rust-ai-ide-parallel-processing",
   "crates/rust-ai-ide-perfdevel-tools",
+  "crates/rust-ai-ide-work-stealing-scheduler",
   "crates/rust-ai-ide-performance",
   "crates/rust-ai-ide-performance-monitoring",
   "crates/rust-ai-ide-plugins",
@@ -102,89 +104,10 @@ members = [
   "workspace-hack",
 ]
 
-[features]
+exclude = [
+  "crates/rust-ai-ide-security/fuzz",
+]
 
-# Feature Flag Documentation
-#
-# This section defines optional features for the Rust AI IDE to reduce binary size
-# by allowing users to compile only the AI/ML components they need.
-#
-# Usage Examples:
-#   cargo build --workspace --features "candle,tokenizers,llm"  # Basic LLM support (~40MB total)
-#   cargo build --workspace --features "candle,ort,cuda"        # GPU-accelerated inference (~90MB total)
-#   cargo build --workspace --no-default-features               # Minimal build (~10MB total)
-#
-# Binary Size Impact (approximate):
-#   Base binary (no AI features): ~10MB
-#   With default features: ~35MB (+25MB)
-#   Full feature set: ~150MB (+140MB)
-#
-# Feature Dependencies:
-#   - llm requires candle + tokenizers
-#   - embedding/classification require candle
-#   - cuda/tensorrt/openvino require ort
-#   - semantic-search requires tantivy + hnsw
-#   - vector-db requires hnsw + memmap2
-
-# Default features - commonly used components for basic AI functionality
-# Reduces binary size by ~30% compared to full feature set
-default = ["candle", "tokenizers", "llm", "embedding"]
-
-# AI Framework Features
-
-# Enables Candle framework for machine learning operations
-# Adds ~15MB to binary size
-candle = ["dep:candle-core", "dep:candle-nn", "dep:candle-transformers"]
-
-# Enables ONNX Runtime for model inference
-# Adds ~20MB to binary size
-ort = ["dep:ort"]
-
-# Enables HuggingFace tokenizers
-# Adds ~5MB to binary size
-tokenizers = ["dep:tokenizers"]
-
-# Optional Hardware Acceleration Components
-
-# Enables CUDA support for GPU acceleration
-# Requires CUDA toolkit, adds ~50MB to binary size
-cuda = ["ort/cuda"]
-
-# Enables TensorRT optimization for NVIDIA GPUs
-# Requires TensorRT, adds ~30MB to binary size
-tensorrt = ["ort/tensorrt"]
-
-# Enables OpenVINO for Intel hardware acceleration
-# Adds ~15MB to binary size
-openvino = ["ort/openvino"]
-
-# Model Type Features
-
-# Enables Large Language Model support
-# Requires candle + tokenizers, adds ~25MB to binary size
-llm = ["candle", "tokenizers"]
-
-# Enables embedding model support
-# Requires candle, adds ~10MB to binary size
-embedding = ["candle"]
-
-# Enables classification model support
-# Requires candle, adds ~8MB to binary size
-classification = ["candle"]
-
-# Optional Service Features
-
-# Enables semantic search capabilities
-# Adds ~12MB to binary size
-semantic-search = ["dep:tantivy", "dep:hnsw"]
-
-# Enables vector database functionality
-# Adds ~8MB to binary size
-vector-db = ["dep:hnsw", "dep:memmap2"]
-
-# Enables real-time analysis features
-# Adds ~5MB to binary size
-real-time-analysis = ["dep:ndarray"]
 
 [workspace.package]
 version = "0.1.0"
@@ -199,11 +122,6 @@ readme = "README.md"
 
 # Explicitly specify SQLite-related dependencies to avoid conflicts
 [workspace.dependencies]
-# Force all crates to use the same SQLite version
-libsqlite3-sys = { version = "0.35.0", default-features = false, features = [
-  "bundled",
-] }
-
 # Cache, security, and shared types dependencies
 rust-ai-ide-cache = { path = "crates/rust-ai-ide-cache", default-features = false }
 rust-ai-ide-security = { path = "crates/rust-ai-ide-security", default-features = false }
@@ -242,6 +160,16 @@ serde = { version = "^1.0.219", default-features = false, features = [
 serde_json = "^1.0.143"
 thiserror = { version = "2.0.16" }
 tracing = { version = "0.1.41" }
+tracing-opentelemetry = { version = "0.30.0" }
+opentelemetry = { version = "0.30.0" }
+opentelemetry-otlp = { version = "0.30.0" }
+opentelemetry-semantic-conventions = { version = "0.30.0" }
+
+# Metrics and monitoring
+metrics = { version = "0.23.0" }
+metrics-exporter-prometheus = { version = "0.15.0" }
+tokio-metrics = { version = "0.4.0" }
+
 uuid = { version = "^1.18.1", default-features = false, features = [
   "v4",
   "serde",
@@ -285,12 +213,12 @@ validator = { version = "^0.20", default-features = false, features = [
 walkdir = { version = "2.5.0" }
 
 # AI/ML dependencies (made optional for feature flags)
-candle-core = { version = "0.9.1", optional = true }
-candle-nn = { version = "0.9.1", optional = true }
-candle-transformers = { version = "0.9.1", optional = true }
-hf-hub = { version = "0.4.3", optional = true }
-tokenizers = { version = "0.22.0", optional = true }
-safetensors = { version = "0.6.2", optional = true }
+candle-core = { version = "0.9.1" }
+candle-nn = { version = "0.9.1" }
+candle-transformers = { version = "0.9.1" }
+hf-hub = { version = "0.4.3" }
+tokenizers = { version = "0.22.0" }
+safetensors = { version = "0.6.2" }
 
 # File system and system utilities
 cargo_metadata = { version = "^0.22.0" }
@@ -308,6 +236,7 @@ tauri-plugin-log = { version = "^2.7", default-features = false, features = [
 # Shared crates within the workspace
 async-trait = { version = "^0.1.89" }
 cargo-deny = { version = "0.18.4" }
+cargo-audit = { version = "0.21.0" }
 cargo-geiger = { version = "0.13.0" }
 color-eyre = { version = "0.6.5" }
 criterion = { version = "0.7.0" }
@@ -352,21 +281,22 @@ parking_lot = { version = "^0.12.4" }
 tracing-subscriber = { version = "^0.3.20", default-features = false, features = [
   "env-filter",
 ] }
+crossbeam-deque = { version = "^0.8.5" }
 
 # Color output library as replacement for unmaintained ansi_term
 nu-ansi-term = { version = "^0.50.1" }
 
 # New AI/ML service dependencies (made optional for feature flags)
-ort = { version = "1.16.3", optional = true, default-features = false, features = [
+ort = { version = "1.16.3", default-features = false, features = [
    "cuda",
    "tensorrt",
    "openvino",
 ] }
-ndarray = { version = "^0.16.1", optional = true, default-features = false }
-tantivy = { version = "0.25.0", optional = true, default-features = false }
-hnsw = { version = "0.11.0", optional = true, default-features = false }
-memmap2 = { version = "^0.9.8", optional = true, default-features = false }
-lz4 = { version = "^1.28.1", optional = true }
+ndarray = { version = "^0.16.1", default-features = false }
+tantivy = { version = "0.25.0", default-features = false }
+hnsw = { version = "0.11.0", default-features = false }
+memmap2 = { version = "^0.9.8", default-features = false }
+lz4 = { version = "^1.28.1" }
 
 # Recently added dependencies
 glob = { version = "^0.3.3" }
@@ -412,6 +342,18 @@ panic = "unwind"
 incremental = true
 codegen-units = 256
 
+# Optimized dev profile with faster compilation
+[profile.dev.package."*"]
+opt-level = 1
+codegen-units = 16
+
+# Fast debug profile for development iteration
+[profile.fast-debug]
+inherits = "dev"
+opt-level = 1
+codegen-units = 16
+debug = "line-tables-only"
+
 [profile.release]
 opt-level = 3
 debug = false
@@ -433,8 +375,24 @@ incremental = false
 codegen-units = 1
 lto = true
 
+# CI-optimized profile for faster builds in CI/CD
+[profile.ci]
+inherits = "release"
+opt-level = 2
+codegen-units = 8
+debug = "line-tables-only"
+strip = false
+incremental = false
+lto = "thin"
+
 # Performance analysis profile
 [profile.perf]
 inherits = "release"
 debug = true
 strip = false
+
+# Workspace-wide optimization for dependency resolution
+[workspace.metadata.cargo-hakari]
+resolver = "2"
+platforms = ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-pc-windows-msvc"]
+output-single-feature = true

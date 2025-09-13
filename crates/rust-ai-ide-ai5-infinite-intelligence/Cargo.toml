@@ -32,7 +32,7 @@ rand = "0.8"
 # Advanced ML frameworks
 candle-core = "0.6"
 linfa = "0.7"
-tch = "0.13"
+tch = "0.17"  # Updated to match rust-bert requirements and resolve torch-sys linking conflicts
 neuronika = "0.2"
 # tract-onnx = { git = "https://github.com/sonos/tract" }
 

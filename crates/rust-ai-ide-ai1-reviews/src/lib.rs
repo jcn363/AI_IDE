@@ -51,7 +51,7 @@ impl CodeReviewEngine {
         }
 
         // Analyze architecture
-        let architecture = self.architecture_engine.analyze_architecture.codebase).await?;
+        let architecture = self.architecture_engine.analyze_architecture(codebase).await?;
         let architecture_findings = self.analyze_architecture_quality(&architecture);
 
         findings.extend(architecture_findings);

@@ -17,10 +17,10 @@ futures = "0.3"
 async-trait = "0.1"
 
 # NLP/ML for code understanding
-tch = { version = "0.12", optional = true }  # PyTorch bindings
+tch = { version = "0.17", optional = true }  # PyTorch bindings - updated to match rust-bert requirements
 #transformer = { version = "0.1", optional = true }
 tokenizers = { version = "0.19", optional = true }
-rust-bert = { version = "0.21", optional = true }
+rust-bert = { version = "0.23", optional = true }  # Updated for security patches (protobuf vulnerability)
 
 # Integration with previous waves
 rust-ai-ide-ai1-semantic = { path = "../rust-ai-ide-ai1-semantic" }

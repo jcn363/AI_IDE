@@ -1,19 +1,63 @@
-//! In-memory cache implementation using DashMap for concurrent access
+//! Advanced in-memory cache implementation using Moka LRU with compression and TTL support
 
 use async_trait::async_trait;
+use moka::future::Cache as MokaCache;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+#[cfg(feature = "compression")]
+use bincode;
 
 use crate::{Cache, CacheConfig, CacheEntry, CacheStats, IDEResult};
 
-/// In-memory cache implementation with O(1) operations
-pub struct InMemoryCache<K: std::hash::Hash + Eq, V> {
-    entries: dashmap::DashMap<K, CacheEntry<V>>,
-    config: CacheConfig,
-    stats: Arc<RwLock<CacheStats>>,
+/// Compressed data wrapper for large cache entries
+#[cfg(feature = "compression")]
+#[derive(Debug, Clone)]
+struct CompressedData {
+    data: Vec<u8>,
+    original_size: usize,
+    compressed_size: usize,
 }
 
-impl<K: std::hash::Hash + Eq, V> InMemoryCache<K, V> {
+#[cfg(feature = "compression")]
+impl CompressedData {
+    fn compress<T: serde::Serialize>(data: &T) -> IDEResult<Self> {
+        let serialized = bincode::serialize(data)?;
+        let original_size = serialized.len();
+        let compressed = zstd::encode_all(&serialized[..], 3)?; // Compression level 3
+        let compressed_size = compressed.len();
+
+        Ok(Self {
+            data: compressed,
+            original_size,
+            compressed_size,
+        })
+    }
+
+    fn decompress<T: serde::de::DeserializeOwned>(&self) -> IDEResult<T> {
+        let decompressed = zstd::decode_all(&self.data[..])?;
+        let result = bincode::deserialize(&decompressed)?;
+        Ok(result)
+    }
+
+    fn compression_ratio(&self) -> f64 {
+        if self.original_size == 0 {
+            0.0
+        } else {
+            self.compressed_size as f64 / self.original_size as f64
+        }
+    }
+}
+
+/// Enhanced in-memory cache implementation with Moka LRU, TTL, and compression
+pub struct InMemoryCache<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static> {
+    cache: MokaCache<K, CacheEntry<V>>,
+    config: CacheConfig,
+    stats: Arc<RwLock<CacheStats>>,
+    #[cfg(feature = "compression")]
+    compressed_cache: Option<MokaCache<String, CompressedData>>,
+}
+
+impl<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static> InMemoryCache<K, V> {
     /// Create a new in-memory cache with the given configuration
     pub fn new(config: &CacheConfig) -> Self {
         let stats = CacheStats {
@@ -22,10 +66,43 @@ impl<K: std::hash::Hash + Eq, V> InMemoryCache<K, V> {
             ..Default::default()
         };
 
+        // Build Moka cache with configuration
+        let mut cache_builder = MokaCache::builder();
+
+        // Set max capacity based on config
+        if let Some(max_entries) = config.max_entries {
+            cache_builder = cache_builder.max_capacity(max_entries as u64);
+        }
+
+        // Set default TTL
+        if let Some(default_ttl) = config.default_ttl {
+            cache_builder = cache_builder.time_to_live(default_ttl);
+        }
+
+        // Enable metrics if configured
+        if config.enable_metrics {
+            cache_builder = cache_builder.enable_statistics();
+        }
+
+        let cache = cache_builder.build();
+
+        // Initialize compressed cache if compression is enabled
+        #[cfg(feature = "compression")]
+        let compressed_cache = if config.compression_threshold_kb.is_some() {
+            Some(MokaCache::builder()
+                .max_capacity(1000) // Separate capacity for compressed entries
+                .time_to_live(config.default_ttl.unwrap_or(std::time::Duration::from_secs(3600)))
+                .build())
+        } else {
+            None
+        };
+
         Self {
-            entries: dashmap::DashMap::new(),
+            cache,
             config: config.clone(),
             stats: Arc::new(RwLock::new(stats)),
+            #[cfg(feature = "compression")]
+            compressed_cache,
         }
     }
 }
@@ -39,22 +116,28 @@ where
     async fn get(&self, key: &K) -> IDEResult<Option<V>> {
         let mut stats = self.stats.write().await;
 
-        if let Some(entry) = self.entries.get(key) {
+        // Check compressed cache first if compression is enabled
+        #[cfg(feature = "compression")]
+        if let Some(compressed_cache) = &self.compressed_cache {
+            let compressed_key = format!("{:?}", key);
+            if let Some(compressed_data) = compressed_cache.get(&compressed_key).await {
+                if let Ok(value) = compressed_data.decompress::<V>() {
+                    stats.record_hit();
+                    return Ok(Some(value));
+                }
+            }
+        }
+
+        // Try main cache
+        if let Some(entry) = self.cache.get(key).await {
             if entry.is_expired() {
-                self.entries.remove(key);
+                self.cache.invalidate(key).await;
                 stats.record_miss();
                 stats.record_eviction();
                 Ok(None)
             } else {
-                // Update access count efficiently
-                let value = entry.value.clone();
-                let _ = entry; // Release the read lock before modifying
-                self.entries.alter(key, |_, mut v| {
-                    v.access();
-                    v
-                });
                 stats.record_hit();
-                Ok(Some(value))
+                Ok(Some(entry.value))
             }
         } else {
             stats.record_miss();
@@ -65,94 +148,145 @@ where
     async fn insert(&self, key: K, value: V, ttl: Option<std::time::Duration>) -> IDEResult<()> {
         let mut stats = self.stats.write().await;
 
-        // Check memory limits
-        if let Some(max_entries) = self.config.max_entries {
-            if self.entries.len() >= max_entries {
-                // Simple eviction: remove oldest entry
-                if let Some(entry) = self.entries.iter().next() {
-                    let old_key = entry.key().clone();
-                    let _ = entry; // Release the read lock
-                    self.entries.remove(&old_key);
-                    stats.record_eviction();
+        // Check if compression should be used
+        #[cfg(feature = "compression")]
+        if let Some(threshold_kb) = self.config.compression_threshold_kb {
+            let data_size_kb = (serde_json::to_string(&value).unwrap_or_default().len() / 1024) as usize;
+            if data_size_kb >= threshold_kb {
+                if let Some(compressed_cache) = &self.compressed_cache {
+                    if let Ok(compressed_data) = CompressedData::compress(&value) {
+                        let compressed_key = format!("{:?}", key);
+                        compressed_cache.insert(compressed_key, compressed_data).await;
+                        stats.record_set();
+                        return Ok(());
+                    }
                 }
             }
         }
 
         let entry = CacheEntry::new_with_ttl(value, ttl, chrono::Utc::now());
-        self.entries.insert(key, entry);
+        self.cache.insert(key, entry).await;
         stats.record_set();
 
         Ok(())
     }
 
     async fn remove(&self, key: &K) -> IDEResult<Option<V>> {
-        let result = self.entries.remove(key);
-        match result {
-            Some((_, entry)) => Ok(Some(entry.value)),
-            None => Ok(None),
+        // Check compressed cache first
+        #[cfg(feature = "compression")]
+        if let Some(compressed_cache) = &self.compressed_cache {
+            let compressed_key = format!("{:?}", key);
+            if let Some(compressed_data) = compressed_cache.remove(&compressed_key).await {
+                if let Ok(value) = compressed_data.decompress::<V>() {
+                    return Ok(Some(value));
+                }
+            }
+        }
+
+        if let Some(entry) = self.cache.remove(key).await {
+            Ok(Some(entry.value))
+        } else {
+            Ok(None)
         }
     }
 
     async fn clear(&self) -> IDEResult<()> {
-        self.entries.clear();
+        self.cache.invalidate_all();
+        self.cache.run_pending_tasks().await;
+
+        #[cfg(feature = "compression")]
+        if let Some(compressed_cache) = &self.compressed_cache {
+            compressed_cache.invalidate_all();
+            compressed_cache.run_pending_tasks().await;
+        }
+
         let mut stats = self.stats.write().await;
         *stats = CacheStats::default();
         Ok(())
     }
 
     async fn size(&self) -> usize {
-        self.entries.len()
+        let mut total_size = self.cache.entry_count();
+
+        #[cfg(feature = "compression")]
+        if let Some(compressed_cache) = &self.compressed_cache {
+            total_size += compressed_cache.entry_count();
+        }
+
+        total_size as usize
     }
 
     async fn contains(&self, key: &K) -> bool {
-        self.entries.contains_key(key)
+        // Check compressed cache first
+        #[cfg(feature = "compression")]
+        if let Some(compressed_cache) = &self.compressed_cache {
+            let compressed_key = format!("{:?}", key);
+            if compressed_cache.contains_key(&compressed_key) {
+                return true;
+            }
+        }
+
+        self.cache.contains_key(key)
     }
 
     async fn stats(&self) -> CacheStats {
         let mut stats = self.stats.read().await.clone();
-        stats.total_entries = self.entries.len();
+        stats.total_entries = self.size().await;
+
+        // Get Moka-specific stats if available
+        if let Ok(moka_stats) = self.cache.stats().await {
+            stats.total_hits = moka_stats.num_hits();
+            stats.total_misses = moka_stats.num_misses();
+            stats.memory_usage_bytes = Some(moka_stats.consumption().bytes);
+        }
+
         stats.uptime_seconds = (chrono::Utc::now() - stats.created_at)
             .as_seconds_f64()
             .abs() as u64;
+
+        stats.update_hit_ratio();
         stats
     }
 
     async fn cleanup_expired(&self) -> IDEResult<usize> {
-        let mut expired_count = 0;
+        // Moka handles TTL-based expiration automatically
+        // We only need to run pending tasks to ensure cleanup
+        self.cache.run_pending_tasks().await;
 
-        // Efficiently remove expired entries while iterating
-        self.entries.retain(|_, entry| {
-            if entry.is_expired() {
-                expired_count += 1;
-                false // Remove this entry
-            } else {
-                true // Keep this entry
-            }
-        });
-
-        if expired_count > 0 {
-            let mut stats = self.stats.write().await;
-            stats.total_evictions += expired_count as u64;
+        #[cfg(feature = "compression")]
+        if let Some(compressed_cache) = &self.compressed_cache {
+            compressed_cache.run_pending_tasks().await;
         }
 
-        Ok(expired_count)
+        // Return 0 since Moka handles expiration internally
+        Ok(0)
     }
 }
 
-impl<K: std::hash::Hash + Eq, V> Drop for InMemoryCache<K, V> {
+impl<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static> Drop for InMemoryCache<K, V> {
     fn drop(&mut self) {
-        // Cleanup on drop
-        self.entries.clear();
+        // Cleanup on drop - Moka handles this automatically
+        // but we can run pending tasks to ensure cleanup
+        let rt = tokio::runtime::Handle::try_current();
+        if let Ok(handle) = rt {
+            handle.block_on(async {
+                self.cache.invalidate_all().await;
+                #[cfg(feature = "compression")]
+                if let Some(compressed_cache) = &self.compressed_cache {
+                    compressed_cache.invalidate_all().await;
+                }
+            });
+        }
     }
 }
 
 /// Hybrid cache that combines in-memory and another storage backend
-pub struct HybridCache<K: std::hash::Hash + Eq, V> {
+pub struct HybridCache<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static> {
     memory_cache: InMemoryCache<K, V>,
     // secondary_cache: Option<Box<dyn Cache<K, V>>>, // For future use
 }
 
-impl<K: std::hash::Hash + Eq, V> HybridCache<K, V> {
+impl<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static> HybridCache<K, V> {
     pub fn new(config: &CacheConfig) -> Self {
         Self {
             memory_cache: InMemoryCache::new(config),
@@ -167,19 +301,11 @@ where
     V: Send + Sync + Clone + serde::Serialize + 'static,
 {
     async fn get(&self, key: &K) -> IDEResult<Option<V>> {
-        // Try memory cache first
-        if let Some(value) = self.memory_cache.get(key).await? {
-            Ok(Some(value))
-        } else {
-            Ok(None) // Secondary cache lookup would go here
-        }
+        self.memory_cache.get(key).await
     }
 
     async fn insert(&self, key: K, value: V, ttl: Option<std::time::Duration>) -> IDEResult<()> {
-        // Populate both caches
-        self.memory_cache.insert(key, value, ttl).await?;
-        // Secondary cache insert would go here
-        Ok(())
+        self.memory_cache.insert(key, value, ttl).await
     }
 
     async fn remove(&self, key: &K) -> IDEResult<Option<V>> {
@@ -187,9 +313,7 @@ where
     }
 
     async fn clear(&self) -> IDEResult<()> {
-        self.memory_cache.clear().await?;
-        // Secondary cache clear would go here
-        Ok(())
+        self.memory_cache.clear().await
     }
 
     async fn size(&self) -> usize {
@@ -208,6 +332,333 @@ where
         self.memory_cache.cleanup_expired().await
     }
 }
+
+impl Default for CompressedData {
+    fn default() -> Self {
+        Self {
+            data: Vec::new(),
+            original_size: 0,
+            compressed_size: 0,
+        }
+    }
+}
+
+/// Specialized cache for AI/ML inference results with compression and TTL
+pub type AiInferenceCache = InMemoryCache<String, serde_json::Value>;
+
+impl AiInferenceCache {
+    /// Create a cache optimized for AI inference results
+    pub fn for_ai_inference() -> Self {
+        let mut config = CacheConfig::default();
+        config.max_entries = Some(5000); // Higher capacity for AI results
+        config.default_ttl = Some(std::time::Duration::from_secs(1800)); // 30 minutes
+        config.compression_threshold_kb = Some(50); // Compress large results
+        config.enable_metrics = true;
+
+        Self::new(&config)
+    }
+
+    /// Cache AI inference result with automatic compression for large data
+    pub async fn cache_inference_result(
+        &self,
+        query_hash: String,
+        result: serde_json::Value,
+        ttl: Option<std::time::Duration>,
+    ) -> IDEResult<()> {
+        let ttl = ttl.or_else(|| Some(std::time::Duration::from_secs(1800)));
+        self.insert(query_hash, result, ttl).await
+    }
+
+    /// Get inference result with performance tracking
+    pub async fn get_inference_result(&self, query_hash: &str) -> IDEResult<Option<serde_json::Value>> {
+        self.get(&query_hash.to_string()).await
+    }
+}
+
+/// Specialized cache for LSP symbol resolution
+pub type LspSymbolCache = InMemoryCache<String, serde_json::Value>;
+
+impl LspSymbolCache {
+    /// Create a cache optimized for LSP operations
+    pub fn for_lsp_symbols() -> Self {
+        let mut config = CacheConfig::default();
+        config.max_entries = Some(10000); // Large capacity for symbols
+        config.default_ttl = Some(std::time::Duration::from_secs(3600)); // 1 hour
+        config.compression_threshold_kb = Some(100); // Compress large symbol data
+        config.enable_metrics = true;
+
+        Self::new(&config)
+    }
+
+    /// Cache LSP symbol resolution result
+    pub async fn cache_symbol_resolution(
+        &self,
+        file_path: String,
+        symbol_data: serde_json::Value,
+        ttl: Option<std::time::Duration>,
+    ) -> IDEResult<()> {
+        let key = format!("symbol:{}", file_path);
+        let ttl = ttl.or_else(|| Some(std::time::Duration::from_secs(3600)));
+        self.insert(key, symbol_data, ttl).await
+    }
+
+    /// Get cached symbol resolution
+    pub async fn get_symbol_resolution(&self, file_path: &str) -> IDEResult<Option<serde_json::Value>> {
+        let key = format!("symbol:{}", file_path);
+        self.get(&key).await
+    }
+
+    /// Cache LSP workspace analysis
+    pub async fn cache_workspace_analysis(
+        &self,
+        workspace_path: String,
+        analysis_data: serde_json::Value,
+        ttl: Option<std::time::Duration>,
+    ) -> IDEResult<()> {
+        let key = format!("workspace:{}", workspace_path);
+        let ttl = ttl.or_else(|| Some(std::time::Duration::from_secs(1800))); // 30 minutes
+        self.insert(key, analysis_data, ttl).await
+    }
+}
+
+/// Specialized cache for cryptographic keys with security features
+pub type CryptoKeyCache = InMemoryCache<String, Vec<u8>>;
+
+impl CryptoKeyCache {
+    /// Create a cache optimized for cryptographic operations
+    pub fn for_crypto_keys() -> Self {
+        let mut config = CacheConfig::default();
+        config.max_entries = Some(1000); // Limited for security
+        config.default_ttl = Some(std::time::Duration::from_secs(1800)); // 30 minutes for security
+        config.compression_threshold_kb = Some(10); // Small threshold for keys
+        config.enable_metrics = true;
+
+        Self::new(&config)
+    }
+
+    /// Cache encrypted key data with security metadata
+    pub async fn cache_encrypted_key(
+        &self,
+        key_id: String,
+        encrypted_data: Vec<u8>,
+        ttl: Option<std::time::Duration>,
+    ) -> IDEResult<()> {
+        let ttl = ttl.or_else(|| Some(std::time::Duration::from_secs(1800)));
+        self.insert(key_id, encrypted_data, ttl).await
+    }
+
+    /// Get cached encrypted key
+    pub async fn get_encrypted_key(&self, key_id: &str) -> IDEResult<Option<Vec<u8>>> {
+        self.get(&key_id.to_string()).await
+    }
+
+    /// Securely invalidate key cache
+    pub async fn invalidate_key(&self, key_id: &str) -> IDEResult<()> {
+        self.remove(&key_id.to_string()).await?;
+        Ok(())
+    }
+}
+
+/// Performance monitoring and metrics for cache operations
+pub struct CachePerformanceMonitor {
+    cache_name: String,
+    metrics: Arc<RwLock<CacheMetrics>>,
+    reporting_interval: std::time::Duration,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CacheMetrics {
+    pub total_operations: u64,
+    pub hit_count: u64,
+    pub miss_count: u64,
+    pub eviction_count: u64,
+    pub compression_ratio_avg: f64,
+    pub average_response_time_ms: f64,
+    pub memory_usage_mb: f64,
+    pub last_updated: chrono::DateTime<chrono::Utc>,
+}
+
+impl Default for CacheMetrics {
+    fn default() -> Self {
+        Self {
+            total_operations: 0,
+            hit_count: 0,
+            miss_count: 0,
+            eviction_count: 0,
+            compression_ratio_avg: 1.0,
+            average_response_time_ms: 0.0,
+            memory_usage_mb: 0.0,
+            last_updated: chrono::Utc::now(),
+        }
+    }
+}
+
+impl CachePerformanceMonitor {
+    pub fn new(cache_name: impl Into<String>) -> Self {
+        Self {
+            cache_name: cache_name.into(),
+            metrics: Arc::new(RwLock::new(CacheMetrics::default())),
+            reporting_interval: std::time::Duration::from_secs(60), // Report every minute
+        }
+    }
+
+    pub async fn record_hit(&self, response_time_ms: f64) {
+        let mut metrics = self.metrics.write().await;
+        metrics.total_operations += 1;
+        metrics.hit_count += 1;
+        metrics.average_response_time_ms = (metrics.average_response_time_ms + response_time_ms) / 2.0;
+        metrics.last_updated = chrono::Utc::now();
+    }
+
+    pub async fn record_miss(&self, response_time_ms: f64) {
+        let mut metrics = self.metrics.write().await;
+        metrics.total_operations += 1;
+        metrics.miss_count += 1;
+        metrics.average_response_time_ms = (metrics.average_response_time_ms + response_time_ms) / 2.0;
+        metrics.last_updated = chrono::Utc::now();
+    }
+
+    pub async fn record_eviction(&self) {
+        let mut metrics = self.metrics.write().await;
+        metrics.eviction_count += 1;
+    }
+
+    pub async fn record_compression_ratio(&self, ratio: f64) {
+        let mut metrics = self.metrics.write().await;
+        metrics.compression_ratio_avg = (metrics.compression_ratio_avg + ratio) / 2.0;
+    }
+
+    pub async fn update_memory_usage(&self, memory_mb: f64) {
+        let mut metrics = self.metrics.write().await;
+        metrics.memory_usage_mb = memory_mb;
+    }
+
+    pub async fn get_metrics(&self) -> CacheMetrics {
+        self.metrics.read().await.clone()
+    }
+
+    pub async fn get_hit_rate(&self) -> f64 {
+        let metrics = self.metrics.read().await;
+        if metrics.total_operations == 0 {
+            0.0
+        } else {
+            metrics.hit_count as f64 / metrics.total_operations as f64
+        }
+    }
+
+    pub async fn get_cache_efficiency_score(&self) -> f64 {
+        let metrics = self.metrics.read().await;
+        let hit_rate = self.get_hit_rate().await;
+        let compression_benefit = metrics.compression_ratio_avg.min(1.0);
+        let memory_efficiency = if metrics.memory_usage_mb > 0.0 {
+            (100.0 / metrics.memory_usage_mb).min(1.0)
+        } else {
+            1.0
+        };
+
+        // Weighted score combining hit rate, compression efficiency, and memory usage
+        (hit_rate * 0.5) + (compression_benefit * 0.3) + (memory_efficiency * 0.2)
+    }
+
+    pub async fn generate_performance_report(&self) -> String {
+        let metrics = self.metrics.read().await;
+        let hit_rate = self.get_hit_rate().await;
+        let efficiency_score = self.get_cache_efficiency_score().await;
+
+        format!(
+            "Cache Performance Report for '{}'\n\
+             ======================================\n\
+             Total Operations: {}\n\
+             Hit Rate: {:.2}%\n\
+             Cache Efficiency Score: {:.3}\n\
+             Average Response Time: {:.2}ms\n\
+             Memory Usage: {:.2}MB\n\
+             Compression Ratio: {:.2}x\n\
+             Evictions: {}\n\
+             Last Updated: {}\n",
+            self.cache_name,
+            metrics.total_operations,
+            hit_rate * 100.0,
+            efficiency_score,
+            metrics.average_response_time_ms,
+            metrics.memory_usage_mb,
+            metrics.compression_ratio_avg,
+            metrics.eviction_count,
+            metrics.last_updated
+        )
+    }
+
+    /// Start background monitoring task
+    pub fn start_monitoring(self: Arc<Self>) {
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(self.reporting_interval);
+            loop {
+                interval.tick().await;
+                let report = self.generate_performance_report().await;
+                tracing::info!("{}", report);
+            }
+        });
+    }
+}
+
+/// Enhanced cache with performance monitoring
+pub struct MonitoredInMemoryCache<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static> {
+    inner: InMemoryCache<K, V>,
+    monitor: Arc<CachePerformanceMonitor>,
+}
+
+impl<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static> MonitoredInMemoryCache<K, V> {
+    pub fn new(cache_name: impl Into<String>, config: &CacheConfig) -> Self {
+        let monitor = Arc::new(CachePerformanceMonitor::new(cache_name));
+        let inner = InMemoryCache::new(config);
+
+        // Start monitoring
+        let monitor_clone = monitor.clone();
+        monitor_clone.start_monitoring();
+
+        Self { inner, monitor }
+    }
+
+    pub async fn get(&self, key: &K) -> IDEResult<Option<V>> {
+        let start_time = std::time::Instant::now();
+        let result = self.inner.get(key).await;
+        let response_time_ms = start_time.elapsed().as_secs_f64() * 1000.0;
+
+        match &result {
+            Ok(Some(_)) => self.monitor.record_hit(response_time_ms).await,
+            Ok(None) => self.monitor.record_miss(response_time_ms).await,
+            _ => {}
+        }
+
+        result
+    }
+
+    pub async fn insert(&self, key: K, value: V, ttl: Option<std::time::Duration>) -> IDEResult<()> {
+        self.inner.insert(key, value, ttl).await
+    }
+
+    pub async fn remove(&self, key: &K) -> IDEResult<Option<V>> {
+        self.inner.remove(key).await
+    }
+
+    pub async fn clear(&self) -> IDEResult<()> {
+        self.inner.clear().await
+    }
+
+    pub async fn size(&self) -> usize {
+        self.inner.size().await
+    }
+
+    pub fn get_monitor(&self) -> Arc<CachePerformanceMonitor> {
+        self.monitor.clone()
+    }
+}
+
+/// Export specialized monitored cache types for different use cases
+pub type AiInferenceCache = MonitoredInMemoryCache<String, serde_json::Value>;
+pub type LspSymbolCache = MonitoredInMemoryCache<String, serde_json::Value>;
+pub type CryptoKeyCache = MonitoredInMemoryCache<String, Vec<u8>>;
+pub type DependencyGraphCache = MonitoredInMemoryCache<String, serde_json::Value>;
 
 #[cfg(test)]
 mod tests {

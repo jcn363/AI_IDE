@@ -10,7 +10,7 @@ keywords = ["quantum", "reality", "development", "framework", "ai"]
 categories = ["development-tools", "science"]
 
 [dependencies]
-rusqlite = { version = "0.32", features = ["bundled"] }
+rusqlite = { workspace = true }
 sandstorm = "0.21.0"
 tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
@@ -42,7 +42,7 @@ flatbuffers = { version = "24", optional = true }
 #qudit = { git = "https://github.com/quantum-circuit/qudit-rs" }
 
 # Neural network frameworks
-tch = "0.13"
+tch = "0.17"  # Updated to match rust-bert requirements and resolve torch-sys linking conflicts
 candle-core = "0.6"
 #tract-onnx = { git = "https://github.com/sonos/tract", features = ["onnx"] }
 

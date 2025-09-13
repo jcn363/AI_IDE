@@ -38,7 +38,7 @@ reqwest = { workspace = true }
 urlencoding = "2.1"
 
 # WebAssembly runtime for plugin execution
-wasmtime = "25.0"
+wasmtime = "36.0"  # Updated for security patches (fd_renumber panic vulnerability)
 
 # UUID for plugin identification
 uuid = { workspace = true }

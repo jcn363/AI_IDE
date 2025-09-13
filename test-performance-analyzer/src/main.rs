@@ -17,7 +17,7 @@
 //! - Fallback mechanisms for unsupported architectures
 
 use std::collections::HashMap;
-use std::simd::{f32x4, f32x8, i32x4, i32x8, SimdFloat, SimdInt};
+use std::simd::{SimdFloat, SimdInt, f32x4, f32x8, i32x4, i32x8};
 
 /// SIMD-accelerated vector mathematics for AI/ML computations
 #[derive(Debug)]
@@ -88,11 +88,7 @@ impl SimdMathAccelerator {
             (0..1024)
                 .map(|i| {
                     let x = (i as f32 - 512.0) / 128.0;
-                    if x > 0.0 {
-                        1.0
-                    } else {
-                        0.0
-                    }
+                    if x > 0.0 { 1.0 } else { 0.0 }
                 })
                 .collect(),
         );

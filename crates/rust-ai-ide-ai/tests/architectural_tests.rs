@@ -39,7 +39,7 @@ fn test_complexity_analysis() {
     };
 
     // Test simple function
-    let findings = analyzer.analyze(&simple_fn, "test.rs", "fn simple() { if true { println!("Hello"); } }");
+    let findings = analyzer.analyze(&simple_fn, "test.rs", "fn simple() { if true { println!(\"Hello\"); } }");
     assert!(findings.is_empty(), "Simple function should have no findings");
 
     // Test complex function

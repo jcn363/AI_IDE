@@ -124,8 +124,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Add custom type mappings
     config.typescript.type_mappings.insert("chrono::DateTime<chrono::Utc>".to_string()".to_string(), "string".to_string());
-    config.typescript.type_mappings.insert("chrono::NaiveDateTime".to_string(), "string".to_string());
-    config.typescript.type_mappings.insert("semver::Version".to_string(), "string".to_string());
+    config.typescript.type_mappings.insert("chrono::NaiveDateTime ".to_string(), "string".to_string());
+    config.typescript.type_mappings.insert("semver::Version ".to_string(), "string".to_string());
 
     println!("✓ Created custom configuration:");
     println!("  - Naming Convention: CamelCase");
@@ -192,6 +192,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("- Output size: {:.1} KB", result.metadata.stats.bytes_generated as f64 / 1024.0);
     println!("- Generation completed successfully: {}", matches!(result.metadata.status, crate::generation::GenerationStatus::Success));
 
-    println!("\n🎉 Advanced configuration example completed successfully!");
+    println!("\n[OK] Advanced configuration example completed successfully!");
     Ok(())
 }

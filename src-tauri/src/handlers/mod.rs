@@ -12,6 +12,7 @@ pub mod monitoring;
 pub mod project;
 pub mod terminal;
 pub mod testing;
+pub mod webauthn;
 
 // Re-export all handlers for Tauri command generation
 //

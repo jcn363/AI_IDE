@@ -9,9 +9,9 @@
 //! 4. **Real-Time Adaptation** - Live performance monitoring and adjustment
 //! 5. **Performance Analytics** - Comprehensive insights and reporting
 
+use chrono::{DateTime, Utc};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use chrono::{DateTime, Utc};
 
 pub use rust_ai_ide_ai_sql_lsp::*;
 
@@ -75,41 +75,41 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Demonstrate Pattern Recognition
     println!("🔍 1. PATTERN RECOGNITION & CLASSIFICATION");
     println!("========================================");
-    await demo_pattern_recognition(&ai_server, &mut demo_metrics).await?;
+    demo_pattern_recognition(&ai_server, &mut demo_metrics).await?;
     println!();
 
     // Demonstrate Context-Aware Analysis
     println!("🧠 2. CONTEXT-AWARE ANALYSIS");
     println!("============================");
-    await demo_context_aware_analysis(&ai_server, &mut demo_metrics).await?;
+    demo_context_aware_analysis(&ai_server, &mut demo_metrics).await?;
     println!();
 
     // Demonstrate Predictive Optimization
     println!("🎯 3. PREDICTIVE OPTIMIZATION SUGGESTIONS");
     println!("=========================================");
-    await demo_predictive_optimization(&ai_server, &mut demo_metrics).await?;
+    demo_predictive_optimization(&ai_server, &mut demo_metrics).await?;
     println!();
 
     // Demonstrate Adaptive Caching
     println!("💾 4. ADAPTIVE CACHING INTELLIGENCE");
     println!("==================================");
-    await demo_adaptive_caching(&ai_server, &mut demo_metrics).await?;
+    demo_adaptive_caching(&ai_server, &mut demo_metrics).await?;
     println!();
 
     // Demonstrate Real-Time Performance
     println!("⚡ 5. REAL-TIME ADAPTIVE PERFORMANCE");
     println!("====================================");
-    await demo_real_time_performance(&ai_server, &mut demo_metrics).await?;
+    demo_real_time_performance(&ai_server, &mut demo_metrics).await?;
     println!();
 
     // Demonstrate Analytics & Insights
     println!("📊 6. ANALYTICS & INSIGHTS");
     println!("===========================");
-    await demo_analytics_insights(&ai_server, &demo_metrics).await?;
+    demo_analytics_insights(&ai_server, &demo_metrics).await?;
     println!();
 
     // Final Performance Summary
-    print_final_summary(&demo_metrics).await;
+    print_final_summary(&demo_metrics);
 
     println!("🎉 Demo completed successfully!");
     println!("===============================");
@@ -193,7 +193,11 @@ async fn demo_pattern_recognition(
             _ => "High",
         };
 
-        println!("   Pattern: {} (confidence: {:.1}%)", pattern_type, confidence * 100.0);
+        println!(
+            "   Pattern: {} (confidence: {:.1}%)",
+            pattern_type,
+            confidence * 100.0
+        );
         println!("   Complexity: {}", complexity);
         println!("   Recommendations: ✓ Index suggestion, ✓ Join optimization");
 
@@ -218,7 +222,14 @@ async fn demo_context_aware_analysis(
 
     println!("📋 Schema Analysis:");
     for table in DEMO_SCHEMA {
-        println!("   Table: {}", table.split('(').next().unwrap().replace("CREATE TABLE ", ""));
+        println!(
+            "   Table: {}",
+            table
+                .split('(')
+                .next()
+                .unwrap()
+                .replace("CREATE TABLE ", "")
+        );
     }
 
     println!("\n🧑 User Behavior Analysis:");
@@ -250,10 +261,25 @@ async fn demo_predictive_optimization(
 
     let suggestions = vec![
         ("Add INDEX on users(email)", 35.7, 0.92, "High"),
-        ("Optimize JOIN order in user-posts query", 28.4, 0.89, "High"),
-        ("Use covered index for COUNT queries", 41.2, 0.95, "Critical"),
+        (
+            "Optimize JOIN order in user-posts query",
+            28.4,
+            0.89,
+            "High",
+        ),
+        (
+            "Use covered index for COUNT queries",
+            41.2,
+            0.95,
+            "Critical",
+        ),
         ("Convert subquery to JOIN", 53.1, 0.87, "Medium"),
-        ("Add PARTITION BY for time-windowed data", 67.2, 0.91, "High"),
+        (
+            "Add PARTITION BY for time-windowed data",
+            67.2,
+            0.91,
+            "High",
+        ),
     ];
 
     for (suggestion, improvement, confidence, priority) in suggestions {
@@ -270,9 +296,18 @@ async fn demo_predictive_optimization(
     metrics.average_prediction_accuracy /= suggestions.len() as f32;
 
     println!("\n✅ Predictive optimization results:");
-    println!("   • {} optimization suggestions generated", suggestions.len());
-    println!("   • Average accuracy: {:.1}%", metrics.average_prediction_accuracy * 100.0);
-    println!("   • Estimated total improvement: {:.0}%", suggestions.iter().map(|(_, imp, _, _)| imp).sum::<f32>());
+    println!(
+        "   • {} optimization suggestions generated",
+        suggestions.len()
+    );
+    println!(
+        "   • Average accuracy: {:.1}%",
+        metrics.average_prediction_accuracy * 100.0
+    );
+    println!(
+        "   • Estimated total improvement: {:.0}%",
+        suggestions.iter().map(|(_, imp, _, _)| imp).sum::<f32>()
+    );
 
     Ok(())
 }
@@ -309,7 +344,10 @@ async fn demo_adaptive_caching(
     metrics.cache_hit_rate_improvement = 12.7; // 12.7% improvement over traditional caching
 
     println!("\n✅ Adaptive caching intelligence:");
-    println!("   • {:.1}% improvement over traditional LRU eviction", metrics.cache_hit_rate_improvement);
+    println!(
+        "   • {:.1}% improvement over traditional LRU eviction",
+        metrics.cache_hit_rate_improvement
+    );
     println!("   • 25% predictive cache warming effectiveness");
     println!("   • 94.2% memory utilization optimization");
 
@@ -377,8 +415,14 @@ async fn demo_analytics_insights(
 
     println!("\n💡 Developer Productivity Insights:");
     println!("   • Queries analyzed: {}", metrics.total_queries_processed);
-    println!("   • AI suggestions generated: {}", metrics.ai_suggestions_generated);
-    println!("   • Performance improvements: {}", metrics.performance_improvements_detected);
+    println!(
+        "   • AI suggestions generated: {}",
+        metrics.ai_suggestions_generated
+    );
+    println!(
+        "   • Performance improvements: {}",
+        metrics.performance_improvements_detected
+    );
     println!("   • Time saved (estimated): 4.2 hours/week");
 
     println!("\n🏢 System Health Analytics:");
@@ -413,11 +457,17 @@ async fn print_final_summary(metrics: &DemoMetrics) {
     );
 
     if metrics.average_prediction_accuracy > 0.0 {
-        println!("🎯 Average AI Prediction Accuracy: {:.1}%", metrics.average_prediction_accuracy * 100.0);
+        println!(
+            "🎯 Average AI Prediction Accuracy: {:.1}%",
+            metrics.average_prediction_accuracy * 100.0
+        );
     }
 
     if metrics.cache_hit_rate_improvement > 0.0 {
-        println!("💾 Cache Efficiency Improvement: {:.1}%", metrics.cache_hit_rate_improvement);
+        println!(
+            "💾 Cache Efficiency Improvement: {:.1}%",
+            metrics.cache_hit_rate_improvement
+        );
     }
 
     println!("\n🎉 AI/ML ENHANCEMENTS IMPACT SUMMARY");
@@ -471,7 +521,7 @@ pub mod utils {
         name: &str,
         value: f64,
         unit: &str,
-        improvement: Option<f32>
+        improvement: Option<f32>,
     ) -> String {
         let base = format!("{}: {:.2}{}", name, value, unit);
         if let Some(imp) = improvement {
@@ -485,7 +535,7 @@ pub mod utils {
     pub fn calculate_ai_roi(
         current_costs: f64,
         optimized_costs: f64,
-        improvement_factor: f32
+        improvement_factor: f32,
     ) -> f64 {
         let savings = current_costs - optimized_costs;
         let yearly_benefit = savings * 365.0 * improvement_factor as f64;
@@ -501,11 +551,13 @@ pub mod utils {
         }
 
         let mut report = String::new();
-        let trend = metrics.windows(2)
-            .map(|w| w[1] - w[0])
-            .sum::<f32>() / metrics.len() as f32;
+        let trend = metrics.windows(2).map(|w| w[1] - w[0]).sum::<f32>() / metrics.len() as f32;
 
-        let direction = if trend > 0.0 { "↑ Improving" } else { "↓ Declining" };
+        let direction = if trend > 0.0 {
+            "↑ Improving"
+        } else {
+            "↓ Declining"
+        };
         report.push_str(&format!("Trend: {:.2}% ({})", trend.abs(), direction));
 
         report

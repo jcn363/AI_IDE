@@ -7,10 +7,12 @@ use std::time::Duration;
 use tokio::time::timeout;
 
 // SIMD acceleration support
-#[cfg(feature = "rust-ai-ide-simd")]
-use rust_ai_ide_simd::memory::PrefetchHint;
-#[cfg(feature = "rust-ai-ide-simd")]
-use rust_ai_ide_simd::{get_simd_processor, SIMDOperations, SIMDProcessor};
+#[cfg(feature = "simd")]
+use rust_ai_ide_simd::ai_operations::{
+    ActivationType, SIMDAIInferenceOps, SIMDConfidenceScorer, SIMDEmbeddingSearch,
+};
+#[cfg(feature = "simd")]
+use rust_ai_ide_simd::get_simd_processor;
 
 /// Inference engine trait for executing AI models
 #[async_trait::async_trait]
@@ -695,11 +697,11 @@ impl InferenceEngine for LocalInferenceEngine {
         let result = self.generate_text(&prompt, &generation_config).await?;
 
         // Calculate confidence based on multiple factors with SIMD optimization
-        #[cfg(feature = "rust-ai-ide-simd")]
+        #[cfg(feature = "simd")]
         let confidence_score =
             self.simd_compute_confidence_score(context, suggestion_quality_factors(&result.text));
 
-        #[cfg(not(feature = "rust-ai-ide-simd"))]
+        #[cfg(not(feature = "simd"))]
         let confidence_score = {
             // Calculate confidence based on multiple factors
             let base_confidence: f32 = 0.75;
@@ -803,97 +805,71 @@ impl InferenceEngine for LocalInferenceEngine {
 
 impl LocalInferenceEngine {
     /// SIMD-accelerated confidence score computation
-    #[cfg(feature = "rust-ai-ide-simd")]
+    #[cfg(feature = "simd")]
     fn simd_compute_confidence_score(
         &self,
         context: &str,
         quality_factors: (f32, f32, f32),
     ) -> f32 {
-        if let Some(simd_proc) = get_simd_processor().ok() {
-            // Prepare factors array for SIMD processing
-            let factors = [
-                0.75,                                         // base_confidence
-                if context.len() > 1000 { 0.1 } else { 0.0 }, // context_length_factor
-                match self.model_info.model_size {
-                    // model_quality_factor
-                    ModelSize::XLarge => 0.15,
-                    ModelSize::Large => 0.1,
-                    ModelSize::Medium => 0.05,
-                    ModelSize::Small => 0.0,
-                    ModelSize::ExtraLarge => 0.2,
-                },
-                quality_factors.0, // syntactic_quality
-                quality_factors.1, // semantic_quality
-                quality_factors.2, // novelty_score
-            ];
+        // Prepare factors array for SIMD processing
+        let factors = [
+            0.75,                                         // base_confidence
+            if context.len() > 1000 { 0.1 } else { 0.0 }, // context_length_factor
+            match self.model_info.model_size {
+                // model_quality_factor
+                ModelSize::XLarge => 0.15,
+                ModelSize::Large => 0.1,
+                ModelSize::Medium => 0.05,
+                ModelSize::Small => 0.0,
+                ModelSize::ExtraLarge => 0.2,
+            },
+            quality_factors.0, // syntactic_quality
+            quality_factors.1, // semantic_quality
+            quality_factors.2, // novelty_score
+        ];
 
-            // Use SIMD to compute weighted confidence score
-            self.fusion_confidence_factors_simd(&factors).min(0.95)
-        } else {
-            // Fallback to scalar computation
-            let confidence_factors = [
-                0.75,
-                if context.len() > 1000 { 0.1 } else { 0.0 },
-                match self.model_info.model_size {
-                    ModelSize::XLarge => 0.15,
-                    ModelSize::Large => 0.1,
-                    ModelSize::Medium => 0.05,
-                    ModelSize::Small => 0.0,
-                    ModelSize::ExtraLarge => 0.2,
-                },
-            ];
-            self.fusion_confidence_factors(&confidence_factors)
-                .min(0.95)
-        }
-    }
-
-    /// SIMD-accelerated confidence factor fusion
-    #[cfg(feature = "rust-ai-ide-simd")]
-    fn fusion_confidence_factors_simd(&self, factors: &[f32]) -> f32 {
-        let weights = [1.0, 0.8, 1.2, 1.1, 0.9, 0.7];
-
-        let weighted_factors: Vec<f32> = factors
-            .iter()
-            .zip(weights.iter())
-            .map(|(f, w)| f * w)
-            .collect();
-
-        // Compute sum with SIMD acceleration
-        if let Some(simd_proc) = get_simd_processor().ok() {
-            let mut sum = 0.0;
-            for chunk in weighted_factors.chunks(8) {
-                let chunk_vec = if chunk.len() >= 8 {
-                    chunk.to_vec()
-                } else {
-                    let mut chunk_padded = chunk.to_vec();
-                    chunk_padded.extend(vec![0.0; 8 - chunk.len()]);
-                    chunk_padded
-                };
-
-                let chunk_sum: f32 = chunk_vec.iter().sum();
-                sum += chunk_sum;
-
-                // Use SIMD for remaining elements if any
-                if chunk.len() < 8 && chunk.len() > 4 {
-                    if let Ok(sse_sum) = self.simd_sum_f32(&chunk[4..]) {
-                        sum += sse_sum;
-                    }
-                }
+        // Use SIMD confidence scorer
+        match SIMDConfidenceScorer::compute_confidence_scores(
+            &factors, &[1.0; 6], // weights
+            &[1.0; 6], // uncertainties (set to 1.0 for now)
+        ) {
+            Ok(scores) => scores
+                .first()
+                .copied()
+                .unwrap_or_else(|| {
+                    // Fallback to scalar computation
+                    let confidence_factors = [
+                        0.75,
+                        if context.len() > 1000 { 0.1 } else { 0.0 },
+                        match self.model_info.model_size {
+                            ModelSize::XLarge => 0.15,
+                            ModelSize::Large => 0.1,
+                            ModelSize::Medium => 0.05,
+                            ModelSize::Small => 0.0,
+                            ModelSize::ExtraLarge => 0.2,
+                        },
+                    ];
+                    self.fusion_confidence_factors(&confidence_factors)
+                        .min(0.95)
+                })
+                .min(0.95),
+            Err(_) => {
+                // Fallback to scalar computation
+                let confidence_factors = [
+                    0.75,
+                    if context.len() > 1000 { 0.1 } else { 0.0 },
+                    match self.model_info.model_size {
+                        ModelSize::XLarge => 0.15,
+                        ModelSize::Large => 0.1,
+                        ModelSize::Medium => 0.05,
+                        ModelSize::Small => 0.0,
+                        ModelSize::ExtraLarge => 0.2,
+                    },
+                ];
+                self.fusion_confidence_factors(&confidence_factors)
+                    .min(0.95)
             }
-            sum
-        } else {
-            weighted_factors.iter().sum()
         }
-    }
-
-    /// Helper for SIMD sum of f32 values
-    #[cfg(feature = "simd")]
-    fn simd_sum_f32(&self, values: &[f32]) -> Result<f32, ()> {
-        let mut sum = 0.0;
-        for &val in values {
-            sum += val;
-        }
-        Ok(sum) // Placeholder - real SIMD implementation would use intrinsics
     }
 
     /// Fallback confidence factor fusion for non-SIMD builds

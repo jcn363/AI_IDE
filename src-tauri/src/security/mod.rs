@@ -30,6 +30,7 @@ pub mod encryption;
 pub mod supply_chain;
 pub mod secrets_detection;
 pub mod siem_integration;
+pub mod rate_limit_middleware;
 
 /// Security configuration for the main security manager
 #[derive(Debug, Clone, Serialize, Deserialize)]

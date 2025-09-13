@@ -38,6 +38,9 @@ base64 = "0.22.1"
 uuid = { version = "1.18.1", features = ["v4", "serde"] }
 chrono = { version = "0.4.41", features = ["serde"] }
 
+# WebAuthn dependencies
+webauthn-rs = { version = "0.5.0", features = ["danger-insecure-allow-software-keys", "danger-allow-state-serialisation"] }
+
 # HTTP client for external services
 reqwest = { version = "0.12.23", features = ["json", "rustls-tls"] }
 
@@ -70,3 +73,7 @@ full = ["full-security"]
 # sqlite-audit = ["sqlx"]
 # postgres-audit = ["sqlx", "sqlx/postgres"]
 # mysql-audit = ["sqlx", "sqlx/mysql"]
+
+[dev-dependencies]
+# Fuzz testing infrastructure
+cargo-fuzz = "0.11.2"

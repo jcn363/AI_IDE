@@ -29,7 +29,9 @@ impl UserService {
 "#;
 
 /// Test helper function to create a physical time ParsedSpecification with functions
-pub fn create_test_user_spec_with_functions(functions: Vec<rust_ai_ide_ai::spec_generation::types::FunctionSpec>) -> rust_ai_ide_ai::spec_generation::types::ParsedSpecification {
+pub fn create_test_user_spec_with_functions(
+    functions: Vec<rust_ai_ide_ai::spec_generation::types::FunctionSpec>,
+) -> rust_ai_ide_ai::spec_generation::types::ParsedSpecification {
     rust_ai_ide_ai::spec_generation::types::ParsedSpecification {
         requirements: vec![],
         patterns: vec![],
@@ -68,27 +70,10 @@ impl TestSpecBuilder {
         self
     }
 
-    pub fn with_function(mut self, function: rust_ai_ide_ai::spec_generation::types::FunctionSpec) -> Self {
-        self.functions.push(function);
-        self
-    }
-
-    pub fn build(self) -> rust_ai_ide_ai::spec_generation::types::ParsedSpecification {
-        rust_ai_ide_ai::spec_generation::types::ParsedSpecification {
-            requirements: vec![],
-            patterns: vec![],
-            entities: self.entities,
-            functions: self.functions,
-        }
-    }
-    }
-
-    pub fn with_entity(mut self, entity: rust_ai_ide_ai::spec_generation::types::Entity) -> Self {
-        self.entities.push(entity);
-        self
-    }
-
-    pub fn with_function(mut self, function: rust_ai_ide_ai::spec_generation::types::FunctionSpec) -> Self {
+    pub fn with_function(
+        mut self,
+        function: rust_ai_ide_ai::spec_generation::types::FunctionSpec,
+    ) -> Self {
         self.functions.push(function);
         self
     }

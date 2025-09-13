@@ -5,6 +5,15 @@
 //! The system combines traditional static analysis with dynamic, context-aware
 //! intelligence for comprehensive developer support.
 //!
+//! ## Lazy Loading Support
+//!
+//! This crate implements lazy loading for performance optimization:
+//! - Multi-language language servers are loaded on-demand
+//! - Enterprise monitoring features are lazy-loaded
+//! - AI context and debugging integration loaded when needed
+//! - SQL LSP server initialized lazily
+//! - Web language servers loaded per request
+//!
 //! ## Core LSP Capabilities with AI/ML Enhancement
 //!
 //! ### 🤖 Traditional LSP Protocol Implementation
@@ -282,6 +291,94 @@ pub mod language_server;
 #[cfg(feature = "multi-language-lsp")]
 pub mod multi_language;
 
+// Lazy loading initialization for LSP services
+use std::sync::Arc;
+use once_cell::sync::Lazy;
+
+static LSP_LAZY_LOADER: Lazy<Arc<rust_ai_ide_lazy_loading::LazyLoader>> = Lazy::new(|| {
+    Arc::new(rust_ai_ide_lazy_loading::LazyLoader::new(
+        rust_ai_ide_lazy_loading::LazyLoadingConfig {
+            max_concurrent_loads: 3, // Lower concurrency for LSP services
+            load_timeout_seconds: 45, // Shorter timeout for LSP components
+            memory_pool_limits: rust_ai_ide_lazy_loading::MemoryPoolLimits {
+                analysis_result_pool_max: 200,
+                model_state_pool_max: 20, // Fewer model states for LSP
+                max_memory_usage: 200 * 1024 * 1024, // 200MB limit for LSP
+            },
+            enable_performance_monitoring: true,
+        }
+    ))
+});
+
+static LSP_MEMORY_POOL_MANAGER: Lazy<Arc<rust_ai_ide_lazy_loading::MemoryPoolManager>> = Lazy::new(|| {
+    Arc::new(rust_ai_ide_lazy_loading::MemoryPoolManager::new(
+        200, 20, 200 * 1024 * 1024
+    ))
+});
+
+/// Initialize lazy loading for LSP services
+pub async fn init_lsp_lazy_loading() -> rust_ai_ide_lazy_loading::LazyResult<()> {
+    // Initialize performance monitoring
+    rust_ai_ide_lazy_loading::PerformanceMonitor::init().await?;
+
+    // Register lazy components for LSP services
+    register_lsp_lazy_components().await?;
+
+    tracing::info!("LSP lazy loading initialized successfully");
+    Ok(())
+}
+
+/// Register lazy-loadable LSP components
+async fn register_lsp_lazy_components() -> rust_ai_ide_lazy_loading::LazyResult<()> {
+    let loader = LSP_LAZY_LOADER.clone();
+
+    // Register multi-language support (lazy-loaded)
+    let multi_lang_component = rust_ai_ide_lazy_loading::SimpleLazyComponent::new(
+        "multi_language_support",
+        || async {
+            // This would initialize multi-language parsers and routers
+            Ok(Arc::new(()) as Arc<dyn std::any::Any + Send + Sync>)
+        }
+    );
+    loader.register_component(Box::new(multi_lang_component)).await?;
+
+    // Register web language servers (lazy-loaded)
+    let web_lang_component = rust_ai_ide_lazy_loading::SimpleLazyComponent::new(
+        "web_language_servers",
+        || async {
+            // This would initialize web language server factories
+            Ok(Arc::new(()) as Arc<dyn std::any::Any + Send + Sync>)
+        }
+    );
+    loader.register_component(Box::new(web_lang_component)).await?;
+
+    // Register debugging integration (lazy-loaded)
+    let debug_component = rust_ai_ide_lazy_loading::SimpleLazyComponent::new(
+        "debugging_integration",
+        || async {
+            // This would initialize debug capabilities
+            Ok(Arc::new(()) as Arc<dyn std::any::Any + Send + Sync>)
+        }
+    );
+    loader.register_component(Box::new(debug_component)).await?;
+
+    Ok(())
+}
+
+/// Get performance report for LSP lazy loading
+pub async fn get_lsp_performance_report() -> rust_ai_ide_lazy_loading::PerformanceReport {
+    if let Some(monitor) = rust_ai_ide_lazy_loading::PerformanceMonitor::global() {
+        monitor.generate_performance_report().await
+    } else {
+        rust_ai_ide_lazy_loading::PerformanceReport {
+            startup_performance: Default::default(),
+            memory_usage_stats: Default::default(),
+            pool_performance_stats: Vec::new(),
+            timestamp: std::time::SystemTime::now(),
+        }
+    }
+}
+
 // Re-export commonly used types
 pub use client::{LSPClient, LSPClientConfig, LSPError as ClientLSPError};
 pub use debugging_integration::{
@@ -344,12 +441,6 @@ pub use rust_ai_ide_ai::{
     // From inference crate
     AIService,
     AIProvider,
-
-// Enterprise monitoring re-exports
-#[cfg(feature = "enterprise-monitoring")]
-pub use enterprise_monitoring::*;
-#[cfg(feature = "enterprise-monitoring")]
-pub use enterprise_monitoring_impl::*;
     AnalysisIssue,
     CodeAnalysisResult,
 

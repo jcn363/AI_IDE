@@ -55,7 +55,7 @@ impl ModelMetrics {
 
     pub fn is_healthy(&self) -> bool {
         self.latency_ms < 5000.0 && // Less than 5 seconds
-        self.error_count as f64 / self.request_count.max(1) as f64 < 0.1 && // Less than 10% error rate
+        (self.error_count as f64 / self.request_count.max(1) as f64) < 0.1 && // Less than 10% error rate
         self.last_updated.elapsed() < Duration::from_secs(60) // Updated within last minute
     }
 }

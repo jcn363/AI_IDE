@@ -241,10 +241,16 @@
 //! **Wave 3 Status**: ✅ **COMPLETE - Legendary Enterprise Security Achieved**
 //! ---
 
+pub mod rate_limiter;
 pub mod secrets;
 pub mod threat_modeling;
+pub mod webauthn;
 
 // Re-export new modules
+pub use rate_limiter::{
+    AuthRateLimiter, AuthRateLimiterConfig, EndpointType, RateLimitConfig,
+    RateLimitHeaders, RateLimitState, UserRole
+};
 pub use secrets::{SecretFinding, SecretType, SecretsScanner, VulnerabilitySeverity};
 pub use threat_modeling::{Asset, StrideCategory, Threat, ThreatModel, ThreatModelingEngine};
 

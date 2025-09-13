@@ -19,9 +19,9 @@ pub use tokio;
 pub use uuid;
 
 // Import internal dependencies
+pub use rust_ai_ide_common::validation::TauriInputSanitizer;
 pub use rust_ai_ide_errors::IDError;
 pub use rust_ai_ide_types::{Language, Position, Range, TextDocument};
-pub use rust_ai_ide_common::validation::TauriInputSanitizer;
 
 // Re-export main modules
 pub mod predictive_development;
@@ -29,15 +29,8 @@ pub use predictive_development::*;
 
 // Explicit re-exports for easier module usage
 pub use predictive_development::{
-    PredictiveDevelopmentEngine,
-    PredictionContext,
-    CodeSuggestion,
-    RefactoringRecommendation,
-    IntentPrediction,
-    PredictionSettings,
-    PerformanceMetrics,
-    CacheEvictionPolicy,
-    AnalysisMode,
+    AnalysisMode, CacheEvictionPolicy, CodeSuggestion, IntentPrediction, PerformanceMetrics,
+    PredictionContext, PredictionSettings, PredictiveDevelopmentEngine, RefactoringRecommendation,
 };
 
 /// Errors specific to predictive development functionality
@@ -108,7 +101,9 @@ impl PerformanceTracker {
         }
 
         // Update rolling average
-        self.average_response_time_ms = (self.average_response_time_ms * (self.total_predictions - 1) as f64 + response_time_ms)
+        self.average_response_time_ms = (self.average_response_time_ms
+            * (self.total_predictions - 1) as f64
+            + response_time_ms)
             / self.total_predictions as f64;
 
         self.last_update = chrono::Utc::now();

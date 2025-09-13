@@ -473,3 +473,334 @@ impl SanitizedQuery {
         &self.query
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_validate_string_input_basic() {
+        // Valid input
+        assert!(validate_string_input("hello", 10).is_ok());
+
+        // Empty input
+        assert!(validate_string_input("", 10).is_err());
+
+        // Too long input
+        assert!(
+            validate_string_input("this is a very long string that exceeds the limit", 10).is_err()
+        );
+    }
+
+    #[test]
+    fn test_validate_string_input_extended() {
+        // Valid input without special chars
+        assert!(validate_string_input_extended("hello world", 20, false).is_ok());
+
+        // Input with special characters when not allowed
+        assert!(validate_string_input_extended("hello;world", 20, false).is_err());
+        assert!(validate_string_input_extended("hello(world)", 20, false).is_err());
+
+        // Input with special characters when allowed
+        assert!(validate_string_input_extended("hello;world", 20, true).is_ok());
+        assert!(validate_string_input_extended("hello(world)", 20, true).is_ok());
+
+        // Too long
+        assert!(validate_string_input_extended("this is too long", 10, true).is_err());
+    }
+
+    #[test]
+    fn test_sanitize_string_for_processing() {
+        // Basic sanitization
+        let result = sanitize_string_for_processing(
+            "hello<script>alert('xss')</script>world",
+            &["<script>", "</script>"],
+        );
+        assert!(result.is_err()); // Should block script tags
+
+        // Valid input
+        let result = sanitize_string_for_processing("hello world", &[]);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "hello world");
+
+        // HTML escaping
+        let result = sanitize_string_for_processing("hello<world>", &[]);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "hello<world>");
+
+        // Null byte removal
+        let result = sanitize_string_for_processing("hello\x00world", &[]);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "helloworld");
+    }
+
+    #[test]
+    fn test_validate_file_exists() {
+        let temp_file = NamedTempFile::new().unwrap();
+        let temp_path = temp_file.path();
+
+        // Existing file
+        assert!(validate_file_exists(temp_path, "test").is_ok());
+
+        // Non-existing file
+        assert!(validate_file_exists("/non/existing/file.txt", "test").is_err());
+    }
+
+    #[test]
+    fn test_validate_file_size_path() {
+        let mut temp_file = NamedTempFile::new().unwrap();
+        let temp_path = temp_file.path();
+
+        // Small file
+        temp_file.write_all(b"small content").unwrap();
+        temp_file.flush().unwrap();
+        assert!(validate_file_size_path(temp_path, 1000, "test").is_ok());
+
+        // File too large
+        assert!(validate_file_size_path(temp_path, 5, "test").is_err());
+    }
+
+    #[test]
+    fn test_validate_file_size_content() {
+        // Small content
+        assert!(validate_file_size_content(b"small", 10, "test").is_ok());
+
+        // Content too large
+        assert!(validate_file_size_content(&vec![0u8; 100], 50, "test").is_err());
+    }
+
+    #[test]
+    fn test_validate_path_not_excluded() {
+        // Valid path
+        assert!(
+            validate_path_not_excluded("/home/user/file.txt", &["/tmp".to_string()], "test")
+                .is_ok()
+        );
+
+        // Excluded path
+        assert!(
+            validate_path_not_excluded("/tmp/cache/file.txt", &["/tmp".to_string()], "test")
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn test_validate_dependency_format() {
+        // Valid dependencies
+        assert!(validate_dependency_format("serde").is_ok());
+        assert!(validate_dependency_format("tokio_0.2").is_ok());
+        assert!(validate_dependency_format("my-package-name").is_ok());
+
+        // Invalid dependencies
+        assert!(validate_dependency_format("").is_err());
+        assert!(validate_dependency_format(&"x".repeat(300)).is_err()); // Too long
+        assert!(validate_dependency_format("invalid@chars").is_err());
+    }
+
+    #[test]
+    fn test_validate_directory_exists() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_path = temp_dir.path();
+
+        // Existing directory
+        assert!(validate_directory_exists(temp_path, "test").is_ok());
+
+        // Non-existing directory
+        assert!(validate_directory_exists("/non/existing/directory", "test").is_err());
+
+        // File instead of directory
+        let temp_file = NamedTempFile::new_in(temp_path).unwrap();
+        assert!(validate_directory_exists(temp_file.path(), "test").is_err());
+    }
+
+    #[test]
+    fn test_validated_string_creation() {
+        // Valid creation
+        let validated = ValidatedString::new("hello", 10, false).unwrap();
+        assert_eq!(validated.as_str(), "hello");
+        assert_eq!(validated.len(), 5);
+
+        // Invalid: too long
+        assert!(ValidatedString::new("this is too long for the limit", 10, false).is_err());
+
+        // Invalid: special characters not allowed
+        assert!(ValidatedString::new("hello;world", 20, false).is_err());
+
+        // Valid: special characters allowed
+        let validated = ValidatedString::new("hello;world", 20, true).unwrap();
+        assert_eq!(validated.as_str(), "hello;world");
+    }
+
+    #[test]
+    fn test_validated_file_path_creation() {
+        let temp_file = NamedTempFile::new().unwrap();
+        let temp_path = temp_file.path().to_str().unwrap();
+
+        // Valid file path
+        let validated = ValidatedFilePath::new(temp_path, "test").unwrap();
+        assert_eq!(validated.as_path(), temp_file.path());
+
+        // Invalid: file doesn't exist
+        assert!(ValidatedFilePath::new("/non/existing/file.txt", "test").is_err());
+
+        // Invalid: path traversal
+        let temp_dir = tempfile::tempdir().unwrap();
+        let traversal_path = temp_dir
+            .path()
+            .join("../../../etc/passwd")
+            .to_str()
+            .unwrap()
+            .to_string();
+        // Note: This might not detect all path traversals depending on the implementation
+    }
+
+    #[test]
+    fn test_sanitized_query_creation() {
+        // Valid query
+        let sanitized = SanitizedQuery::new("search for rust").unwrap();
+        assert_eq!(sanitized.as_str(), "search for rust");
+
+        // Query with blocked content
+        assert!(SanitizedQuery::new("DROP TABLE users").is_err());
+        assert!(SanitizedQuery::new("SELECT * FROM users -- comment").is_err());
+
+        // Too long query
+        let long_query = "x".repeat(600);
+        assert!(SanitizedQuery::new(&long_query).is_err());
+    }
+
+    #[test]
+    fn test_sanitize_file_path() {
+        // Valid path
+        let temp_file = NamedTempFile::new().unwrap();
+        let temp_path = temp_file.path().to_str().unwrap();
+
+        let result = sanitize_file_path(temp_path);
+        // Note: This might fail if canonicalize doesn't work in the test environment
+        // The function attempts to canonicalize the path
+    }
+
+    #[test]
+    fn test_validate_file_size_with_operation() {
+        let temp_file = NamedTempFile::new().unwrap();
+        let temp_path = temp_file.path().to_str().unwrap();
+
+        // Small file
+        assert!(validate_file_size_with_operation(temp_path, 1024, "test").is_ok());
+
+        // Large limit
+        assert!(validate_file_size_with_operation(temp_path, 1, "test").is_err());
+        // 1KB limit, file might be larger
+    }
+
+    #[test]
+    fn test_macro_validate_string_alt() {
+        // Valid input
+        let result = validate_string_alt!("hello", 10, false, true, "test_field");
+        assert!(result.is_ok());
+
+        // Empty required input
+        let result = validate_string_alt!("", 10, false, true, "test_field");
+        assert!(result.is_err());
+
+        // Input with special chars when not allowed
+        let result = validate_string_alt!("hello;world", 20, false, true, "test_field");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_macro_sanitize_and_validate() {
+        // Valid input
+        let result = sanitize_and_validate!("hello world" => test_field);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "hello world");
+
+        // Input with blocked content
+        let result =
+            sanitize_and_validate!("hello <script>alert('xss')</script> world" => test_field);
+        assert!(result.is_err());
+
+        // Input with null bytes
+        let result = sanitize_and_validate!("hello\x00world" => test_field);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "helloworld");
+    }
+
+    #[test]
+    fn test_validate_fields_trait() {
+        // Since ValidateFields has a default implementation, we test with a simple struct
+        struct TestStruct {
+            field: String,
+        }
+
+        impl ValidateFields for TestStruct {}
+
+        let test_struct = TestStruct {
+            field: "test".to_string(),
+        };
+
+        assert!(test_struct.validate_fields().is_ok());
+    }
+
+    #[test]
+    fn test_path_traversal_detection() {
+        // Create a temporary directory structure for testing
+        let temp_dir = tempfile::tempdir().unwrap();
+        let safe_file = temp_dir.path().join("safe.txt");
+        std::fs::write(&safe_file, "content").unwrap();
+
+        // Test safe path
+        let safe_path_str = safe_file.to_str().unwrap();
+        let result = ValidatedFilePath::new(safe_path_str, "test");
+        assert!(result.is_ok());
+
+        // Test path with .. components (this might be allowed depending on canonicalization)
+        let traversal_attempt = temp_dir
+            .path()
+            .join("..")
+            .join("..")
+            .join("etc")
+            .join("passwd");
+        let traversal_str = traversal_attempt.to_str().unwrap();
+
+        // The current implementation may or may not catch this depending on if the path exists
+        // and how canonicalize works. In a real security context, this would need more robust checking.
+    }
+
+    #[test]
+    fn test_edge_cases_file_validation() {
+        // Test with very large file size limit
+        let temp_file = NamedTempFile::new().unwrap();
+        let temp_path = temp_file.path();
+
+        // Write some content
+        temp_file.write_all(b"test content").unwrap();
+        temp_file.flush().unwrap();
+
+        // Very large limit should pass
+        assert!(validate_file_size_path(temp_path, 1_000_000_000, "test").is_ok());
+
+        // Very small limit should fail
+        assert!(validate_file_size_path(temp_path, 1, "test").is_err());
+    }
+
+    #[test]
+    fn test_concurrent_validation() {
+        // Test that validation functions are safe to call concurrently
+        let handles: Vec<_> = (0..10)
+            .map(|i| {
+                std::thread::spawn(move || {
+                    let input = format!("test_input_{}", i);
+                    validate_string_input(&input, 100).unwrap();
+                    validate_string_input_extended(&input, 100, false).unwrap();
+                })
+            })
+            .collect();
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+    }
+}

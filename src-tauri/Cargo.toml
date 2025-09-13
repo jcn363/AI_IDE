@@ -63,12 +63,18 @@ rust-ai-ide-connectors = { path = "../crates/rust-ai-ide-connectors" }
 rust-ai-ide-commands-ai = { path = "../crates/rust-ai-ide-commands-ai" }
 # rust-ai-ide-protocol removed: crate directory exists but missing Cargo.toml
 
+# Observability and monitoring
+rust-ai-ide-observability = { path = "../crates/rust-ai-ide-observability", features = ["metrics", "tracing", "health-checks"] }
+
 # External dependencies for functionality
 dirs = { workspace = true }
 cargo-edit = { workspace = true }
 license-exprs = { workspace = true }
 async-trait = { workspace = true }
 lazy_static = { workspace = true }
+
+# Security components
+rust-ai-ide-security = { path = "../crates/rust-ai-ide-security" }
 
 # Production-ready debugging components
 rust-ai-ide-debugger = { path = "../crates/rust-ai-ide-debugger" }

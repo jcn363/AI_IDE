@@ -13,8 +13,9 @@ readme = { workspace = true }
 [features]
 default = ["conservative"]
 conservative = []
-aggressive = []
+aggressive = ["compression"]
 latest-compatible = []
+compression = ["bincode", "zstd"]
 
 [dependencies]
 # Graph algorithms for dependency resolution
@@ -33,6 +34,10 @@ tokio = { workspace = true, features = ["full"] }
 serde = { workspace = true, features = ["derive"] }
 serde_yaml = { workspace = true }
 toml = { workspace = true }
+
+# Compression support for large cache entries
+bincode = { version = "1.0.1", optional = true }
+zstd = { version = "0.13", optional = true }
 
 # Parallel processing for dependency analysis
 rayon = { workspace = true }

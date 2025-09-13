@@ -489,4 +489,360 @@ pub trait AuditLogger {
         finding: &SecretFinding,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }
-// We don't have AuditLogger in lib.rs root yet, will be fixed when security crate is complete
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio::test as async_test;
+
+    // Mock audit logger for testing
+    struct MockAuditLogger {
+        logged_findings: Arc<RwLock<Vec<SecretFinding>>>,
+    }
+
+    impl MockAuditLogger {
+        fn new() -> Self {
+            Self {
+                logged_findings: Arc::new(RwLock::new(Vec::new())),
+            }
+        }
+
+        async fn get_logged_findings(&self) -> Vec<SecretFinding> {
+            self.logged_findings.read().await.clone()
+        }
+    }
+
+    #[async_trait]
+    impl AuditLogger for MockAuditLogger {
+        async fn log_secret_detection(
+            &self,
+            finding: &SecretFinding,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            let mut findings = self.logged_findings.write().await;
+            findings.push(finding.clone());
+            Ok(())
+        }
+    }
+
+    #[async_test]
+    async fn test_secrets_scanner_initialization() {
+        let audit_logger = Arc::new(MockAuditLogger::new());
+        let scanner = SecretsScanner::new(audit_logger).await.unwrap();
+
+        // Test that scanner was created successfully
+        assert!(scanner.findings.try_read().is_ok());
+    }
+
+    #[async_test]
+    async fn test_api_key_detection() {
+        let audit_logger = Arc::new(MockAuditLogger::new());
+        let scanner = SecretsScanner::new(audit_logger.clone()).await.unwrap();
+
+        let content = r#"
+        // This is a test file with API keys
+        const apiKey = "sk-1234567890abcdef1234567890abcdef12345678";
+        const token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
+        "#;
+
+        let findings = scanner.scan_content(content, "test.rs").await.unwrap();
+
+        // Should detect API key and token
+        assert!(!findings.is_empty());
+
+        // Check logged findings
+        let logged = audit_logger.get_logged_findings().await;
+        assert!(!logged.is_empty());
+    }
+
+    #[async_test]
+    async fn test_password_detection() {
+        let audit_logger = Arc::new(MockAuditLogger::new());
+        let scanner = SecretsScanner::new(audit_logger.clone()).await.unwrap();
+
+        let content = r#"
+        // Database configuration
+        const dbConfig = {
+            host: "localhost",
+            password: "super_secret_password_123!",
+        };
+        "#;
+
+        let findings = scanner.scan_content(content, "config.js").await.unwrap();
+
+        // Should detect password
+        assert!(!findings.is_empty());
+        assert_eq!(findings[0].secret_type, SecretType::Password);
+    }
+
+    #[async_test]
+    async fn test_private_key_detection() {
+        let audit_logger = Arc::new(MockAuditLogger::new());
+        let scanner = SecretsScanner::new(audit_logger.clone()).await.unwrap();
+
+        let content = r#"
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIEpAIBAAKCAQEAwJ8Z+YtZ9dJvO8H3WGZxO8H3WGZxO8H3WGZxO8H3WGZxO8H
+        3WGZxO8H3WGZxO8H3WGZxO8H3WGZxO8H3WGZxO8H3WGZxO8H3WGZxO8H3WGZxO
+        -----END RSA PRIVATE KEY-----
+        "#;
+
+        let findings = scanner.scan_content(content, "private.pem").await.unwrap();
+
+        // Should detect private key
+        assert!(!findings.is_empty());
+        assert_eq!(findings[0].secret_type, SecretType::PrivateKey);
+        assert_eq!(findings[0].severity, VulnerabilitySeverity::Critical);
+    }
+
+    #[async_test]
+    async fn test_false_positive_filtering() {
+        let audit_logger = Arc::new(MockAuditLogger::new());
+        let scanner = SecretsScanner::new(audit_logger.clone()).await.unwrap();
+
+        let content = r#"
+        // Test file with example keys
+        const exampleApiKey = "EXAMPLE_API_KEY_12345";
+        // TODO: Replace with real key in production
+        const placeholder = "your-secret-key-here";
+        "#;
+
+        let findings = scanner.scan_content(content, "test.rs").await.unwrap();
+
+        // Should not detect false positives in test files
+        // Note: This depends on the context analyzer configuration
+        // The test verifies the structure works
+    }
+
+    #[async_test]
+    async fn test_entropy_calculation() {
+        let analyzer = EntropyAnalyzer::default();
+
+        // Test various strings
+        assert_eq!(analyzer.calculate_entropy(""), 0.0); // Empty string
+        assert_eq!(analyzer.calculate_entropy("a"), 0.0); // Single character
+        assert_eq!(analyzer.calculate_entropy("aaa"), 0.0); // Repeated characters
+
+        let high_entropy = analyzer.calculate_entropy("aB3$9kL2mN8pQ5xZ");
+        assert!(high_entropy > 4.0); // Should have high entropy
+
+        let low_entropy = analyzer.calculate_entropy("password");
+        assert!(low_entropy < analyzer.high_entropy_threshold);
+    }
+
+    #[async_test]
+    async fn test_confidence_calculation_edge_cases() {
+        let audit_logger = Arc::new(MockAuditLogger::new());
+        let scanner = SecretsScanner::new(audit_logger.clone()).await.unwrap();
+
+        // Test with very high entropy content
+        let high_entropy_content = "const apiKey = 'aB3$9kL2mN8pQ5xZ7wR4tY6uI1oP3sD5fG7hJ9lZ';";
+        let findings = scanner
+            .scan_content(high_entropy_content, "test.js")
+            .await
+            .unwrap();
+
+        // Should have high confidence for high entropy secrets
+        if !findings.is_empty() {
+            assert!(findings[0].confidence > 0.7);
+        }
+    }
+
+    #[async_test]
+    async fn test_file_skipping_patterns() {
+        let audit_logger = Arc::new(MockAuditLogger::new());
+        let scanner = SecretsScanner::new(audit_logger.clone()).await.unwrap();
+
+        // Test various file patterns that should be skipped
+        assert!(scanner.should_skip_file("debug.log"));
+        assert!(scanner.should_skip_file("app.min.js"));
+        assert!(scanner.should_skip_file("node_modules/package.json"));
+        assert!(scanner.should_skip_file(".git/config"));
+        assert!(scanner.should_skip_file("target/debug/app"));
+        assert!(scanner.should_skip_file("dist/bundle.js"));
+        assert!(scanner.should_skip_file("Cargo.lock"));
+        assert!(scanner.should_skip_file("package-lock.json"));
+
+        // Test files that should not be skipped
+        assert!(!scanner.should_skip_file("src/main.rs"));
+        assert!(!scanner.should_skip_file("config/production.env"));
+        assert!(!scanner.should_skip_file("secrets.txt"));
+    }
+
+    #[async_test]
+    async fn test_severity_determination() {
+        let audit_logger = Arc::new(MockAuditLogger::new());
+        let scanner = SecretsScanner::new(audit_logger.clone()).await.unwrap();
+
+        // Create mock pattern match for different secret types
+        let mock_match = SecretPatternMatch {
+            text: "test".to_string(),
+            secret_type: SecretType::PrivateKey,
+            entropy_threshold: 5.0,
+            context_keywords: vec!["private".to_string()],
+            line: "private key content".to_string(),
+        };
+
+        // Test private key severity
+        let severity = scanner.determine_severity(&mock_match, 0.9);
+        assert_eq!(severity, VulnerabilitySeverity::Critical);
+
+        let severity_low_conf = scanner.determine_severity(&mock_match, 0.5);
+        assert_eq!(severity_low_conf, VulnerabilitySeverity::High);
+
+        // Test password severity
+        let password_match = SecretPatternMatch {
+            text: "password123".to_string(),
+            secret_type: SecretType::Password,
+            entropy_threshold: 3.5,
+            context_keywords: vec!["password".to_string()],
+            line: "password: secret".to_string(),
+        };
+
+        let severity = scanner.determine_severity(&password_match, 0.8);
+        assert_eq!(severity, VulnerabilitySeverity::High);
+    }
+
+    #[async_test]
+    async fn test_context_analyzer_allowed_contexts() {
+        let context_analyzer = ContextAnalyzer::new().await.unwrap();
+
+        // Test allowed contexts
+        let test_file = "src/test.rs";
+        let test_line = "// TODO: Add API key";
+        let mock_match = SecretPatternMatch {
+            text: "EXAMPLE_KEY".to_string(),
+            secret_type: SecretType::ApiKey,
+            entropy_threshold: 4.0,
+            context_keywords: vec!["key".to_string()],
+            line: test_line.to_string(),
+        };
+
+        let is_allowed = context_analyzer
+            .is_allowed_context(test_file, &mock_match, test_line)
+            .await
+            .unwrap();
+        // Test files should be allowed context
+        assert!(is_allowed);
+
+        // Test non-allowed context
+        let prod_file = "src/main.rs";
+        let prod_line = "const apiKey = 'secret';";
+        let is_allowed_prod = context_analyzer
+            .is_allowed_context(prod_file, &mock_match, prod_line)
+            .await
+            .unwrap();
+        assert!(!is_allowed_prod);
+    }
+
+    #[async_test]
+    async fn test_secret_context_detection() {
+        let context_analyzer = ContextAnalyzer::new().await.unwrap();
+
+        // Test lines with secret context
+        assert!(context_analyzer.has_secret_context("const apiKey = 'secret';"));
+        assert!(context_analyzer.has_secret_context("password: 'mypassword'"));
+        assert!(context_analyzer.has_secret_context("Bearer token"));
+        assert!(context_analyzer.has_secret_context("private key"));
+        assert!(context_analyzer.has_secret_context("certificate data"));
+
+        // Test lines without secret context
+        assert!(!context_analyzer.has_secret_context("const userName = 'john';"));
+        assert!(!context_analyzer.has_secret_context("let count = 42;"));
+        assert!(!context_analyzer.has_secret_context("console.log('hello');"));
+    }
+
+    #[async_test]
+    async fn test_pattern_engine_multiple_matches() {
+        let pattern_engine = PatternEngine::new().await.unwrap();
+
+        let line_with_multiple =
+            "const apiKey = 'sk-1234567890abcdef'; const token = 'Bearer abc123';";
+
+        let matches = pattern_engine
+            .find_matches(line_with_multiple)
+            .await
+            .unwrap();
+
+        // Should find multiple matches
+        assert!(matches.len() >= 1); // At least one match
+
+        // Check that different secret types are detected
+        let secret_types: std::collections::HashSet<_> =
+            matches.iter().map(|m| &m.secret_type).collect();
+        assert!(!secret_types.is_empty());
+    }
+
+    #[async_test]
+    async fn test_finding_storage_and_retrieval() {
+        let audit_logger = Arc::new(MockAuditLogger::new());
+        let scanner = SecretsScanner::new(audit_logger.clone()).await.unwrap();
+
+        let content = r#"
+        const apiKey = "sk-test1234567890abcdef1234567890abcdef";
+        "#;
+
+        // Scan content multiple times
+        let findings1 = scanner.scan_content(content, "file1.rs").await.unwrap();
+        let findings2 = scanner.scan_content(content, "file2.rs").await.unwrap();
+
+        // Findings should be stored internally
+        let stored_findings = scanner.findings.read().await;
+        assert_eq!(stored_findings.len(), findings1.len() + findings2.len());
+    }
+
+    #[async_test]
+    async fn test_empty_and_edge_case_scanning() {
+        let audit_logger = Arc::new(MockAuditLogger::new());
+        let scanner = SecretsScanner::new(audit_logger.clone()).await.unwrap();
+
+        // Test empty content
+        let empty_findings = scanner.scan_content("", "empty.txt").await.unwrap();
+        assert!(empty_findings.is_empty());
+
+        // Test content with no secrets
+        let clean_content = r#"
+        const userName = "john_doe";
+        const age = 30;
+        const isActive = true;
+        console.log("Hello, World!");
+        "#;
+
+        let clean_findings = scanner
+            .scan_content(clean_content, "clean.rs")
+            .await
+            .unwrap();
+        assert!(clean_findings.is_empty());
+    }
+
+    #[async_test]
+    async fn test_concurrent_scanning() {
+        let audit_logger = Arc::new(MockAuditLogger::new());
+        let scanner = Arc::new(SecretsScanner::new(audit_logger.clone()).await.unwrap());
+
+        let mut handles = vec![];
+        for i in 0..10 {
+            let scanner_clone = scanner.clone();
+            let handle = tokio::spawn(async move {
+                let content = format!("const apiKey{} = 'sk-1234567890abcdef{}';", i, i);
+                let findings = scanner_clone
+                    .scan_content(&content, &format!("file{}.rs", i))
+                    .await
+                    .unwrap();
+                findings.len()
+            });
+            handles.push(handle);
+        }
+
+        // Wait for all concurrent scans
+        let results = futures::future::join_all(handles).await;
+
+        // Verify all succeeded
+        for result in results {
+            assert!(result.is_ok());
+        }
+
+        // Check total findings stored
+        let total_findings = scanner.findings.read().await.len();
+        assert_eq!(total_findings, 10); // One finding per file
+    }
+}

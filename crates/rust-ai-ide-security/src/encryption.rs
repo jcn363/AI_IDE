@@ -1150,4 +1150,383 @@ mod tests {
         let retrieved = data_manager.get_data_key(&data_key.key_id).await.unwrap();
         assert!(retrieved.is_some());
     }
+
+    #[async_test]
+    async fn test_aes256_gcm_edge_cases() {
+        let crypto = CryptoOps::new(EncryptionAlgorithm::Aes256Gcm);
+
+        // Test with empty data
+        let key = crypto.generate_key(EncryptionAlgorithm::Aes256Gcm).unwrap();
+        let (ciphertext, nonce) = crypto.encrypt(b"", &key, None).unwrap();
+        let decrypted = crypto.decrypt(&ciphertext, &key, &nonce, None).unwrap();
+        assert_eq!(decrypted, b"");
+
+        // Test with large data (1MB)
+        let large_data = vec![0u8; 1024 * 1024];
+        let (ciphertext, nonce) = crypto.encrypt(&large_data, &key, Some(b"aad")).unwrap();
+        let decrypted = crypto.decrypt(&ciphertext, &key, &nonce, Some(b"aad")).unwrap();
+        assert_eq!(decrypted, large_data);
+
+        // Test with associated data
+        let plaintext = b"test message";
+        let aad = b"associated data";
+        let (ciphertext, nonce) = crypto.encrypt(plaintext, &key, Some(aad)).unwrap();
+        let decrypted = crypto.decrypt(&ciphertext, &key, &nonce, Some(aad)).unwrap();
+        assert_eq!(decrypted, plaintext);
+    }
+
+    #[async_test]
+    async fn test_encryption_algorithm_switching() {
+        let aes_crypto = CryptoOps::new(EncryptionAlgorithm::Aes256Gcm);
+        let chacha_crypto = CryptoOps::new(EncryptionAlgorithm::Chacha20Poly1305);
+
+        let key_aes = aes_crypto.generate_key(EncryptionAlgorithm::Aes256Gcm).unwrap();
+        let key_chacha = chacha_crypto.generate_key(EncryptionAlgorithm::Chacha20Poly1305).unwrap();
+
+        let plaintext = b"Hello, World!";
+
+        // Test AES-256-GCM
+        let (aes_ciphertext, aes_nonce) = aes_crypto.encrypt(plaintext, &key_aes, None).unwrap();
+        let aes_decrypted = aes_crypto.decrypt(&aes_ciphertext, &key_aes, &aes_nonce, None).unwrap();
+        assert_eq!(aes_decrypted, plaintext);
+
+        // Test ChaCha20-Poly1305
+        let (chacha_ciphertext, chacha_nonce) = chacha_crypto.encrypt(plaintext, &key_chacha, None).unwrap();
+        let chacha_decrypted = chacha_crypto.decrypt(&chacha_ciphertext, &key_chacha, &chacha_nonce, None).unwrap();
+        assert_eq!(chacha_decrypted, plaintext);
+
+        // Ensure different algorithms produce different ciphertext
+        assert_ne!(aes_ciphertext, chacha_ciphertext);
+    }
+
+    #[async_test]
+    async fn test_encryption_error_conditions() {
+        let crypto = CryptoOps::new(EncryptionAlgorithm::Aes256Gcm);
+
+        // Test with invalid key size
+        let invalid_key = vec![0u8; 16]; // Wrong size for AES-256
+        let plaintext = b"test";
+        let result = crypto.encrypt(plaintext, &invalid_key, None);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), SecurityError::EncryptionError { .. }));
+
+        // Test decryption with wrong key
+        let key = crypto.generate_key(EncryptionAlgorithm::Aes256Gcm).unwrap();
+        let (ciphertext, nonce) = crypto.encrypt(plaintext, &key, None).unwrap();
+        let wrong_key = crypto.generate_key(EncryptionAlgorithm::Aes256Gcm).unwrap();
+        let result = crypto.decrypt(&ciphertext, &wrong_key, &nonce, None);
+        assert!(result.is_err());
+
+        // Test decryption with tampered ciphertext
+        let mut tampered_ciphertext = ciphertext.clone();
+        if !tampered_ciphertext.is_empty() {
+            tampered_ciphertext[0] ^= 1; // Flip a bit
+        }
+        let result = crypto.decrypt(&tampered_ciphertext, &key, &nonce, None);
+        assert!(result.is_err());
+    }
+
+    #[async_test]
+    async fn test_multi_key_management() {
+        let multi_key_manager = MultiKeyManager::new();
+
+        // Test adding key set
+        let primary_key = DataKey {
+            key_id: "primary-1".to_string(),
+            version: 1,
+            encrypted_key_material: vec![1, 2, 3],
+            algorithm: EncryptionAlgorithm::Aes256Gcm,
+            created_at: Utc::now(),
+            expires_at: None,
+            is_active: true,
+        };
+        let backup_keys = vec![
+            DataKey {
+                key_id: "backup-1".to_string(),
+                version: 1,
+                encrypted_key_material: vec![4, 5, 6],
+                algorithm: EncryptionAlgorithm::Aes256Gcm,
+                created_at: Utc::now(),
+                expires_at: None,
+                is_active: true,
+            }
+        ];
+
+        multi_key_manager.add_key_set("test".to_string(), primary_key.clone(), backup_keys).await.unwrap();
+
+        // Test selecting key
+        let selected_key = multi_key_manager.select_key("test").await.unwrap();
+        assert_eq!(selected_key.key_id, "primary-1");
+
+        // Test selecting non-existent purpose
+        let result = multi_key_manager.select_key("nonexistent").await;
+        assert!(result.is_err());
+    }
+
+    #[async_test]
+    async fn test_performance_optimization() {
+        let optimizer = PerformanceOptimizer::new();
+
+        // Test small data optimization
+        let small_optimization = optimizer.optimize_encryption(1024, EncryptionAlgorithm::Aes256Gcm).await.unwrap();
+        assert_eq!(small_optimization.chunk_size, 1024);
+        assert_eq!(small_optimization.concurrent_operations, 1);
+        assert!(!small_optimization.use_hardware_accel);
+
+        // Test large data optimization
+        let large_optimization = optimizer.optimize_encryption(2 * 1024 * 1024, EncryptionAlgorithm::Aes256Gcm).await.unwrap();
+        assert_eq!(large_optimization.chunk_size, 64 * 1024);
+        assert_eq!(large_optimization.concurrent_operations, 2);
+    }
+
+    #[async_test]
+    async fn test_access_control_edge_cases() {
+        let config = EncryptionConfig {
+            algorithm: "aes256-gcm".to_string(),
+            key_rotation_days: 90,
+            password_iterations: 10000,
+            master_key_secure_store: true,
+        };
+
+        let manager = EncryptedConfigManager::new(config).await.unwrap();
+
+        // Test access without policy - should deny for non-admin
+        let regular_user = UserContext {
+            user_id: "user1".to_string(),
+            username: "user1".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            session_id: Some("session123".to_string()),
+            mfa_verified: false,
+        };
+
+        let result = manager.get_config(&regular_user, "nonexistent.key").await;
+        assert!(result.is_err());
+
+        // Test admin access
+        let admin_user = UserContext {
+            user_id: "admin".to_string(),
+            username: "admin".to_string(),
+            roles: vec!["admin".to_string()],
+            permissions: vec![],
+            session_id: Some("session123".to_string()),
+            mfa_verified: true,
+        };
+
+        let result = manager.get_config(&admin_user, "nonexistent.key").await;
+        assert_eq!(result.unwrap(), None);
+    }
+
+    #[async_test]
+    async fn test_key_rotation_scenario() {
+        let master_manager = Arc::new(InMemoryMasterKeyManager::new());
+        let data_manager = Arc::new(InMemoryDataKeyManager::new(master_manager.clone()));
+
+        // Generate initial keys
+        let initial_master = master_manager.generate_master_key().await.unwrap();
+        let data_key = data_manager.generate_data_key("test", EncryptionAlgorithm::Aes256Gcm).await.unwrap();
+
+        // Simulate rotation
+        let new_master = master_manager.generate_master_key().await.unwrap();
+        master_manager.rotate_master_key(new_master).await.unwrap();
+
+        // Verify keys still work (in-memory doesn't actually re-encrypt, but structure is tested)
+        let retrieved = data_manager.get_data_key(&data_key.key_id).await.unwrap();
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().key_id, data_key.key_id);
+    }
+
+    #[async_test]
+    async fn test_secure_random_generation() {
+        let crypto = CryptoOps::new(EncryptionAlgorithm::Aes256Gcm);
+
+        // Test different sizes
+        let random_16 = crypto.generate_secure_random(16).unwrap();
+        let random_32 = crypto.generate_secure_random(32).unwrap();
+        let random_64 = crypto.generate_secure_random(64).unwrap();
+
+        assert_eq!(random_16.len(), 16);
+        assert_eq!(random_32.len(), 32);
+        assert_eq!(random_64.len(), 64);
+
+        // Test that generated values are different (with high probability)
+        assert_ne!(random_32, random_64[..32]);
+    }
+
+    #[async_test]
+    async fn test_post_quantum_placeholder() {
+        let pq_engine = PostQuantumCryptoEngine::new();
+        assert!(!pq_engine.is_ready());
+
+        // Generate placeholder keypair
+        let keypair = pq_engine.generate_hybrid_keypair("test-key").await.unwrap();
+        assert_eq!(keypair.key_id, "test-key");
+        assert_eq!(keypair.algorithm, PQAlgorithm::CRYSTALKyber);
+        // Note: In real implementation, these would be proper cryptographic keys
+        assert_eq!(keypair.public_key.len(), 32);
+        assert_eq!(keypair.private_key.len(), 32);
+    }
+
+    #[async_test]
+    async fn test_encryption_stats_tracking() {
+        let config = EncryptionConfig {
+            algorithm: "aes256-gcm".to_string(),
+            key_rotation_days: 90,
+            password_iterations: 10000,
+            master_key_secure_store: true,
+        };
+
+        let manager = EncryptedConfigManager::new(config).await.unwrap();
+
+        let admin_user = UserContext {
+            user_id: "admin".to_string(),
+            username: "admin".to_string(),
+            roles: vec!["admin".to_string()],
+            permissions: vec![],
+            session_id: Some("session123".to_string()),
+            mfa_verified: true,
+        };
+
+        // Initial stats should be zero
+        let initial_stats = manager.get_stats().await.unwrap();
+        assert_eq!(initial_stats.total_encryptions, 0);
+        assert_eq!(initial_stats.total_decryptions, 0);
+
+        // Perform operations to update stats
+        manager.set_config(&admin_user, "test.key1", "value1", SensitivityLevel::Confidential).await.unwrap();
+        manager.set_config(&admin_user, "test.key2", "value2", SensitivityLevel::Confidential).await.unwrap();
+
+        let retrieved1 = manager.get_config(&admin_user, "test.key1").await.unwrap();
+        let retrieved2 = manager.get_config(&admin_user, "test.key2").await.unwrap();
+
+        assert_eq!(retrieved1, Some("value1".to_string()));
+        assert_eq!(retrieved2, Some("value2".to_string()));
+
+        // Check stats after operations
+        let final_stats = manager.get_stats().await.unwrap();
+        assert_eq!(final_stats.total_encryptions, 2);
+        assert_eq!(final_stats.total_decryptions, 2);
+        assert_eq!(final_stats.cache_misses, 2); // First retrievals are cache misses
+        assert_eq!(final_stats.cache_hits, 0);
+
+        // Test cache hit
+        let retrieved1_again = manager.get_config(&admin_user, "test.key1").await.unwrap();
+        assert_eq!(retrieved1_again, Some("value1".to_string()));
+
+        let cache_hit_stats = manager.get_stats().await.unwrap();
+        assert_eq!(cache_hit_stats.cache_hits, 1);
+    }
+
+    #[async_test]
+    async fn test_chunked_encryption_large_data() {
+        let config = EncryptionConfig {
+            algorithm: "aes256-gcm".to_string(),
+            key_rotation_days: 90,
+            password_iterations: 10000,
+            master_key_secure_store: true,
+        };
+
+        let manager = EncryptedConfigManager::new(config).await.unwrap();
+
+        let admin_user = UserContext {
+            user_id: "admin".to_string(),
+            username: "admin".to_string(),
+            roles: vec!["admin".to_string()],
+            permissions: vec![],
+            session_id: Some("session123".to_string()),
+            mfa_verified: true,
+        };
+
+        // Create large data (100KB)
+        let large_value = "x".repeat(100 * 1024);
+
+        // This should trigger chunked encryption internally
+        manager.set_config(&admin_user, "large.config", &large_value, SensitivityLevel::Confidential).await.unwrap();
+
+        let retrieved = manager.get_config(&admin_user, "large.config").await.unwrap();
+        assert_eq!(retrieved, Some(large_value));
+    }
+
+    #[async_test]
+    async fn test_utf8_encoding_edge_cases() {
+        let config = EncryptionConfig {
+            algorithm: "aes256-gcm".to_string(),
+            key_rotation_days: 90,
+            password_iterations: 10000,
+            master_key_secure_store: true,
+        };
+
+        let manager = EncryptedConfigManager::new(config).await.unwrap();
+
+        let admin_user = UserContext {
+            user_id: "admin".to_string(),
+            username: "admin".to_string(),
+            roles: vec!["admin".to_string()],
+            permissions: vec![],
+            session_id: Some("session123".to_string()),
+            mfa_verified: true,
+        };
+
+        // Test with Unicode characters
+        let unicode_value = "Hello, 世界! 🌍 Test with émojis: 🚀🔒";
+        manager.set_config(&admin_user, "unicode.config", unicode_value, SensitivityLevel::Confidential).await.unwrap();
+
+        let retrieved = manager.get_config(&admin_user, "unicode.config").await.unwrap();
+        assert_eq!(retrieved, Some(unicode_value.to_string()));
+
+        // Test with null bytes (should work since we're storing as String)
+        let null_bytes_value = "Test\x00with\x00null\x00bytes";
+        manager.set_config(&admin_user, "nullbytes.config", null_bytes_value, SensitivityLevel::Confidential).await.unwrap();
+
+        let retrieved_null = manager.get_config(&admin_user, "nullbytes.config").await.unwrap();
+        assert_eq!(retrieved_null, Some(null_bytes_value.to_string()));
+    }
+
+    #[async_test]
+    async fn test_storage_backend_operations() {
+        let storage = InMemoryConfigStorage::new();
+
+        let entry = EncryptedConfigEntry {
+            config_key: "test.key".to_string(),
+            encrypted_value: vec![1, 2, 3, 4],
+            data_key_id: "data-key-1".to_string(),
+            nonce: vec![5, 6, 7, 8],
+            encryption_algorithm: EncryptionAlgorithm::Aes256Gcm,
+            created_at: Utc::now(),
+            modified_at: Utc::now(),
+            owner: "test_user".to_string(),
+            access_list: ["user1".to_string(), "user2".to_string()].into_iter().collect(),
+            sensitivity_level: SensitivityLevel::Confidential,
+            metadata: [("env".to_string(), "test".to_string())].into_iter().collect(),
+            version: 1,
+            previous_versions: vec![],
+        };
+
+        // Test store and retrieve
+        storage.store(&entry).await.unwrap();
+        let retrieved = storage.retrieve("test.key").await.unwrap();
+        assert_eq!(retrieved, Some(entry.clone()));
+
+        // Test list operations
+        let all_entries = storage.list(None, 10).await.unwrap();
+        assert_eq!(all_entries.len(), 1);
+
+        let pattern_entries = storage.list(Some("test"), 10).await.unwrap();
+        assert_eq!(pattern_entries.len(), 1);
+
+        let no_match_entries = storage.list(Some("nonexistent"), 10).await.unwrap();
+        assert_eq!(no_match_entries.len(), 0);
+
+        // Test metadata search
+        let metadata_search = storage.search_by_metadata([("env".to_string(), "test".to_string())].into_iter().collect()).await.unwrap();
+        assert_eq!(metadata_search.len(), 1);
+
+        let no_metadata_match = storage.search_by_metadata([("env".to_string(), "prod".to_string())].into_iter().collect()).await.unwrap();
+        assert_eq!(no_metadata_match.len(), 0);
+
+        // Test delete
+        storage.delete("test.key").await.unwrap();
+        let after_delete = storage.retrieve("test.key").await.unwrap();
+        assert_eq!(after_delete, None);
+    }
 }

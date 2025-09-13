@@ -34,7 +34,7 @@ rand = "0.8"
 # self-awareness-model = { git = "https://github.com/self-awareness-model/self-awareness-model-rs" }
 
 # Deep learning frameworks
-tch = "0.13"
+tch = "0.17"  # Updated to match rust-bert requirements and resolve torch-sys linking conflicts
 candle-core = "0.6"
 linfa = "0.7"
 neuronika = "0.2"

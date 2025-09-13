@@ -1,0 +1,21 @@
+[package]
+name = "rust-ai-ide-lazy-loading"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.91.0"
+
+[dependencies]
+tokio = { version = "1.0", features = ["sync", "rt-multi-thread"] }
+once_cell = "1.19"
+async-trait = "0.1"
+futures = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+
+# Workspace dependencies
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+
+[[bench]]
+name = "lazy_loading_benchmarks"
+harness = false

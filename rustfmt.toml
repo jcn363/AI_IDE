@@ -1,0 +1,81 @@
+# Rustfmt Configuration for Rust AI IDE
+# Enforces consistent code formatting across all crates
+
+edition = "2021"
+max_width = 120
+hard_tabs = false
+tab_spaces = 4
+newline_style = "Auto"
+use_small_heuristics = "Default"
+indent_style = "Block"
+wrap_comments = true
+format_code_in_doc_comments = true
+comment_width = 100
+normalize_comments = true
+normalize_doc_attributes = true
+license_template_path = ""
+format_strings = true
+format_macro_matchers = true
+format_macro_bodies = true
+empty_item_single_line = true
+struct_lit_single_line = true
+fn_single_line = false
+where_single_line = false
+imports_indent = "Block"
+imports_layout = "Mixed"
+imports_granularity = "Module"
+group_imports = "StdExternalCrate"
+merge_imports = true
+allow_missing_explicit_kinds = false
+merge_derives = true
+use_try_shorthand = true
+use_field_init_shorthand = true
+force_explicit_abi = true
+condense_wildcard_suffixes = false
+color = "Auto"
+unstable_features = true
+disable_all_formatting = false
+skip_children = false
+hide_parse_errors = false
+error_on_line_overflow = true
+error_on_unformatted = false
+report_todo = "Never"
+report_fixme = "Never"
+ignore = []
+
+# Custom ordering for imports
+reorder_imports = true
+reorder_modules = true
+reorder_impl_items = false
+
+# String formatting
+hex_literal_case = "Lower"
+multiline_func_args_inherit_width = true
+trailing_comma = "Vertical"
+trailing_semicolon = true
+match_arm_leading_pipes = "Never"
+match_arm_blocks = false
+match_block_trailing_comma = false
+blank_lines_upper_bound = 1
+blank_lines_lower_bound = 0
+brace_style = "SameLineWhere"
+control_brace_style = "AlwaysSameLine"
+needs_comma = true
+needs_semicolon = false
+remove_empty_lines_after_outer_attr = true
+
+# Attribute formatting
+attr_fn_like_width = 70
+struct_field_align_threshold = 20
+enum_discrim_align_threshold = 20
+fn_args_layout = "Tall"
+short_array_element_width_threshold = 10
+
+# Experimental features for nightly
+overflow_delimited_expr = true
+struct_lit_width = 18
+array_width = 60
+chain_width = 60
+single_line_if_else_max_width = 50
+struct_variant_width = 35
+fn_call_width = 60

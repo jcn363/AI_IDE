@@ -1,4 +1,4 @@
-//! Caching layer for dependency graph operations
+//! Caching layer for dependency graph operations with compression support
 
 use moka::future::Cache;
 use serde::{Deserialize, Serialize};
@@ -9,8 +9,48 @@ use std::time::Duration;
 use tokio::sync::RwLock;
 use tracing::{info, warn};
 
+#[cfg(feature = "compression")]
+use bincode;
+#[cfg(feature = "compression")]
+use zstd;
+
 use crate::error::*;
 use crate::graph::*;
+
+/// Compressed data wrapper for large cache entries
+#[cfg(feature = "compression")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct CompressedEntry {
+    data: Vec<u8>,
+    original_size: usize,
+    compressed_size: usize,
+}
+
+#[cfg(feature = "compression")]
+impl CompressedEntry {
+    fn compress<T: Serialize>(data: &T) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        let serialized = bincode::serialize(data)?;
+        let original_size = serialized.len();
+        let compressed = zstd::encode_all(&serialized[..], 3)?;
+        let compressed_size = compressed.len();
+
+        Ok(Self {
+            data: compressed,
+            original_size,
+            compressed_size,
+        })
+    }
+
+    fn decompress<T: serde::de::DeserializeOwned>(self) -> Result<T, Box<dyn std::error::Error + Send + Sync>> {
+        let decompressed = zstd::decode_all(&self.data[..])?;
+        let result = bincode::deserialize(&decompressed)?;
+        Ok(result)
+    }
+
+    fn should_compress(size_kb: usize, threshold_kb: usize) -> bool {
+        size_kb >= threshold_kb
+    }
+}
 
 /// Cache entry for package metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -71,11 +111,13 @@ pub struct DependencyResolutionEntry {
     pub last_updated: chrono::DateTime<chrono::Utc>,
 }
 
-/// Main cache structure for dependency graph operations
+/// Main cache structure for dependency graph operations with compression support
 #[derive(Clone)]
 pub struct GraphCache {
     package_metadata_cache: Cache<String, PackageMetadataEntry>,
     dependency_tree_cache: Cache<String, DependencyTreeEntry>,
+    #[cfg(feature = "compression")]
+    compressed_tree_cache: Option<Cache<String, CompressedEntry>>,
     resolution_cache: Cache<DependencyResolutionKey, DependencyResolutionEntry>,
     config: CacheConfig,
 }
@@ -119,6 +161,16 @@ impl GraphCache {
             .time_to_live(config.dependency_tree_ttl)
             .build();
 
+        #[cfg(feature = "compression")]
+        let compressed_tree_cache = if config.enable_compression {
+            Some(Cache::builder()
+                .max_capacity(config.max_capacity / 20) // Even smaller for compressed
+                .time_to_live(config.dependency_tree_ttl)
+                .build())
+        } else {
+            None
+        };
+
         let resolution_cache = Cache::builder()
             .max_capacity(config.max_capacity / 5) // Medium capacity for resolutions
             .time_to_live(config.resolution_ttl)
@@ -127,6 +179,8 @@ impl GraphCache {
         Self {
             package_metadata_cache,
             dependency_tree_cache,
+            #[cfg(feature = "compression")]
+            compressed_tree_cache,
             resolution_cache,
             config,
         }
@@ -145,12 +199,36 @@ impl GraphCache {
             .await;
     }
 
-    /// Get cached dependency tree
+    /// Get cached dependency tree with compression support
     pub async fn get_dependency_tree(&self, root_package: &str) -> Option<DependencyTreeEntry> {
-        self.dependency_tree_cache.get(root_package).await
+        // First check regular cache
+        if let Some(entry) = self.dependency_tree_cache.get(root_package).await {
+            return Some(entry);
+        }
+
+        // Check compressed cache if available
+        #[cfg(feature = "compression")]
+        if let Some(compressed_cache) = &self.compressed_tree_cache {
+            let compressed_key = format!("compressed:{}", root_package);
+            if let Some(compressed_entry) = compressed_cache.get(&compressed_key).await {
+                match compressed_entry.decompress::<DependencyTreeEntry>() {
+                    Ok(entry) => {
+                        info!("Decompressed dependency tree for {}", root_package);
+                        return Some(entry);
+                    }
+                    Err(e) => {
+                        warn!("Failed to decompress dependency tree for {}: {}", root_package, e);
+                        // Remove corrupted entry
+                        compressed_cache.invalidate(&compressed_key).await;
+                    }
+                }
+            }
+        }
+
+        None
     }
 
-    /// Put dependency tree in cache with hash validation
+    /// Put dependency tree in cache with hash validation and optional compression
     pub async fn put_dependency_tree(&self, root_package: String, mut entry: DependencyTreeEntry) {
         // Generate hash of the tree data for cache validation
         use std::collections::hash_map::DefaultHasher;
@@ -158,9 +236,35 @@ impl GraphCache {
         entry.tree.hash(&mut hasher);
         entry.hash = hasher.finish();
 
+        // Check if compression should be used for large trees
+        let tree_size_kb = (serde_json::to_string(&entry.tree).unwrap_or_default().len() / 1024) as usize;
+
+        #[cfg(feature = "compression")]
+        if self.config.enable_compression && CompressedEntry::should_compress(tree_size_kb, 50) {
+            if let Some(compressed_cache) = &self.compressed_tree_cache {
+                match CompressedEntry::compress(&entry) {
+                    Ok(compressed) => {
+                        info!(
+                            "Compressing and caching dependency tree for {} (hash: {}, size: {}KB, ratio: {:.2})",
+                            root_package,
+                            entry.hash,
+                            tree_size_kb,
+                            compressed.compression_ratio()
+                        );
+                        compressed_cache.insert(format!("compressed:{}", root_package), compressed).await;
+                        return;
+                    }
+                    Err(e) => {
+                        warn!("Failed to compress dependency tree for {}: {}", root_package, e);
+                        // Fall back to uncompressed cache
+                    }
+                }
+            }
+        }
+
         info!(
-            "Caching dependency tree for {} (hash: {})",
-            root_package, entry.hash
+            "Caching dependency tree for {} (hash: {}, size: {}KB)",
+            root_package, entry.hash, tree_size_kb
         );
         self.dependency_tree_cache.insert(root_package, entry).await;
     }
@@ -210,11 +314,17 @@ impl GraphCache {
         self.resolution_cache.run_pending_tasks();
     }
 
-    /// Clear all caches
+    /// Clear all caches including compressed caches
     pub async fn clear_all(&self) {
         warn!("Clearing all caches");
         self.package_metadata_cache.invalidate_all();
         self.dependency_tree_cache.invalidate_all();
+
+        #[cfg(feature = "compression")]
+        if let Some(compressed_cache) = &self.compressed_tree_cache {
+            compressed_cache.invalidate_all();
+        }
+
         self.resolution_cache.invalidate_all();
         self.resolution_cache.run_pending_tasks();
     }

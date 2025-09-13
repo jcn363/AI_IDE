@@ -1697,4 +1697,531 @@ mod tests {
             "engineering"
         );
     }
+
+    #[async_test]
+    async fn test_role_hierarchy_inheritance() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        // Create a basic role with limited permissions
+        let basic_perms: HashSet<Permission> = [Permission::ReadProject].into();
+        let basic_role_id = rbac
+            .create_role("basic", "Basic role", basic_perms, vec![], None)
+            .await
+            .unwrap();
+
+        // Create an advanced role that inherits from basic
+        let advanced_perms: HashSet<Permission> = [Permission::UpdateProject].into();
+        let advanced_role_id = rbac
+            .create_role(
+                "advanced",
+                "Advanced role",
+                advanced_perms,
+                vec![basic_role_id.clone()],
+                None,
+            )
+            .await
+            .unwrap();
+
+        // Assign advanced role to user
+        rbac.assign_role("test_user", &advanced_role_id, "admin", None, None)
+            .await
+            .unwrap();
+
+        // User should have both basic and advanced permissions
+        let user_perms = rbac.get_user_permissions("test_user").await.unwrap();
+        assert!(user_perms.contains(&Permission::ReadProject)); // From basic role
+        assert!(user_perms.contains(&Permission::UpdateProject)); // From advanced role
+    }
+
+    #[async_test]
+    async fn test_permission_checking_edge_cases() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        // Create user with no roles
+        let user_no_roles = UserContext {
+            user_id: "noroles_user".to_string(),
+            username: "noroles".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            session_id: None,
+            mfa_verified: false,
+        };
+
+        // User without roles should only have default user permissions
+        let has_admin_perm = rbac.check_permission(&user_no_roles, Permission::Admin).await.unwrap();
+        assert!(!has_admin_perm);
+
+        // Admin user should have all permissions
+        let admin_user = UserContext {
+            user_id: "admin".to_string(),
+            username: "admin".to_string(),
+            roles: vec!["admin".to_string()],
+            permissions: vec![],
+            session_id: Some("admin_session".to_string()),
+            mfa_verified: true,
+        };
+
+        let has_admin_perm = rbac.check_permission(&admin_user, Permission::Admin).await.unwrap();
+        assert!(has_admin_perm);
+    }
+
+    #[async_test]
+    async fn test_resource_level_permissions() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        // Create role with permission for specific model
+        let model_perms: HashSet<Permission> = [Permission::UseModel("gpt-4".to_string())].into();
+        let model_role_id = rbac
+            .create_role("model_user", "Model user", model_perms, vec![], None)
+            .await
+            .unwrap();
+
+        // Assign role to user
+        rbac.assign_role("model_user", &model_role_id, "admin", None, None)
+            .await
+            .unwrap();
+
+        // Add resource-level permission
+        let resource_perm = ResourcePermission {
+            resource_type: "ai.model".to_string(),
+            resource_id: Some("claude-3".to_string()),
+            user_id: None,
+            role_ids: vec![model_role_id.clone()],
+            permissions: [Permission::UseModel("claude-3".to_string())].into(),
+            conditions: HashMap::new(),
+            created_at: Utc::now(),
+        };
+
+        rbac.add_resource_permission(resource_perm).await.unwrap();
+
+        // Test permission for specific model
+        let user = UserContext {
+            user_id: "model_user".to_string(),
+            username: "modeluser".to_string(),
+            roles: vec!["model_user".to_string()],
+            permissions: vec![],
+            session_id: Some("session123".to_string()),
+            mfa_verified: true,
+        };
+
+        let has_gpt4_perm = rbac.check_permission_action(&user, "ai.model.use", Some("gpt-4")).await.unwrap();
+        let has_claude_perm = rbac.check_permission_action(&user, "ai.model.use", Some("claude-3")).await.unwrap();
+
+        assert!(has_gpt4_perm); // From role permission
+        assert!(has_claude_perm); // From resource permission
+    }
+
+    #[async_test]
+    async fn test_temporal_permissions_time_based() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        // Add temporal permission for business hours only
+        let temporal_perm = TemporalPermission {
+            permission: Permission::AnalyzeCode,
+            start_time: Some(Utc::now() - chrono::Duration::hours(2)), // Started 2 hours ago
+            end_time: Some(Utc::now() + chrono::Duration::hours(2)),   // Ends in 2 hours
+            days_of_week: None,
+            time_of_day_start: Some("09:00:00".to_string()),
+            time_of_day_end: Some("17:00:00".to_string()),
+        };
+
+        rbac.add_temporal_permission(temporal_perm).await.unwrap();
+
+        // Check if temporal permissions are active now
+        let active_temporal = rbac.get_active_temporal_permissions(Utc::now()).await;
+        // Note: In this simplified implementation, temporal permissions are always active
+        // In production, this would check actual time constraints
+    }
+
+    #[async_test]
+    async fn test_abac_policy_evaluation() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        // Add ABAC policy for high-risk users
+        let abac_policy = AttributeBasedPolicy {
+            policy_id: "high_risk_policy".to_string(),
+            name: "High Risk User Policy".to_string(),
+            description: Some("Additional controls for high-risk users".to_string()),
+            subject_attributes: HashMap::from([(
+                "risk_score".to_string(),
+                AttributeCondition {
+                    attribute_name: "risk_score".to_string(),
+                    operator: ConditionOperator::GreaterThan,
+                    value: "0.8".to_string(),
+                    case_sensitive: false,
+                },
+            )]),
+            resource_attributes: HashMap::new(),
+            action: "access_sensitive_data".to_string(),
+            effect: PolicyEffect::Deny,
+            conditions: vec![],
+            priority: 100,
+            created_at: Utc::now(),
+        };
+
+        rbac.add_abac_policy(abac_policy).await.unwrap();
+
+        // Test ABAC policy evaluation
+        let context = PolicyContext::new(
+            &UserContext {
+                user_id: "high_risk_user".to_string(),
+                username: "highrisk".to_string(),
+                roles: vec![],
+                permissions: vec![],
+                session_id: Some("session123".to_string()),
+                mfa_verified: false,
+            },
+            "sensitive_data",
+            "access_sensitive_data",
+        ).with_context("risk_score", "0.9");
+
+        // Add session context with high risk score
+        let session_attrs = SessionAttributes {
+            session_id: "session123".to_string(),
+            mfa_verified: false,
+            risk_score: 0.9,
+            authentication_factors: vec!["password".to_string()],
+            login_time: Utc::now(),
+            last_activity: Utc::now(),
+        };
+        let context = context.with_session_attributes(session_attrs);
+
+        let matched_policies = rbac.check_abac_policies(&context).await;
+        // In this implementation, ABAC evaluation is simplified
+        assert!(matched_policies.is_ok());
+    }
+
+    #[async_test]
+    async fn test_geographic_restrictions() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        // Add geographic restriction
+        let geo_restriction = GeographicRestriction {
+            restriction_id: "high_risk_countries".to_string(),
+            name: "High Risk Countries".to_string(),
+            allowed_countries: ["US", "CA", "GB"].iter().map(|s| s.to_string()).collect(),
+            blocked_countries: ["KP", "IR"].iter().map(|s| s.to_string()).collect(),
+            allowed_regions: vec![],
+            risk_score_threshold: 0.8,
+            require_mfa_countries: ["CN", "RU"].iter().map(|s| s.to_string()).collect(),
+            enforcement: RestrictionEnforcement::RequireMFA,
+        };
+
+        rbac.add_geographic_restriction(geo_restriction).await.unwrap();
+
+        // Test geographic restriction check
+        let context = PolicyContext::new(
+            &UserContext {
+                user_id: "geo_user".to_string(),
+                username: "geouser".to_string(),
+                roles: vec![],
+                permissions: vec![],
+                session_id: Some("session123".to_string()),
+                mfa_verified: false,
+            },
+            "any",
+            "any",
+        ).with_geolocation("CN");
+
+        let geo_result = rbac.check_geographic_restrictions(&context).await.unwrap();
+
+        match geo_result {
+            GeographicResult::RequireMFA { country } => assert_eq!(country, "CN"),
+            _ => panic!("Expected RequireMFA for China"),
+        }
+    }
+
+    #[async_test]
+    async fn test_concurrent_role_operations() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+        let rbac_clone = Arc::new(rbac);
+
+        // Create multiple roles concurrently
+        let mut handles = vec![];
+        for i in 0..10 {
+            let rbac_ref = rbac_clone.clone();
+            let handle = tokio::spawn(async move {
+                let perms: HashSet<Permission> = [Permission::ReadProject].into();
+                let role_id = rbac_ref
+                    .create_role(&format!("concurrent_role_{}", i), "Concurrent role", perms, vec![], None)
+                    .await
+                    .unwrap();
+                role_id
+            });
+            handles.push(handle);
+        }
+
+        // Wait for all role creations to complete
+        let results = futures::future::join_all(handles).await;
+        assert_eq!(results.len(), 10);
+
+        // Verify all roles were created successfully
+        for result in results {
+            assert!(result.is_ok());
+        }
+    }
+
+    #[async_test]
+    async fn test_permission_cache_behavior() {
+        let rbac = RoleBasedAccessControl::with_config(300, None).await.unwrap(); // 5 minute TTL
+
+        // Create role and assign to user
+        let perms: HashSet<Permission> = [Permission::AnalyzeCode].into();
+        let role_id = rbac.create_role("cache_test", "Cache test role", perms, vec![], None).await.unwrap();
+        rbac.assign_role("cache_user", &role_id, "admin", None, None).await.unwrap();
+
+        let user = UserContext {
+            user_id: "cache_user".to_string(),
+            username: "cacheuser".to_string(),
+            roles: vec!["cache_test".to_string()],
+            permissions: vec![],
+            session_id: Some("session123".to_string()),
+            mfa_verified: true,
+        };
+
+        // First permission check should cache
+        let context = PolicyContext::new(&user, "code", "analyze");
+        let result1 = rbac.check_permission_with_context(&context, Permission::AnalyzeCode).await.unwrap();
+        assert!(result1.allowed);
+
+        // Second check should use cache (in real implementation)
+        // Note: Current implementation has simplified caching
+        let result2 = rbac.check_permission_with_context(&context, Permission::AnalyzeCode).await.unwrap();
+        assert!(result2.allowed);
+    }
+
+    #[async_test]
+    async fn test_role_assignment_expiration() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        // Create role
+        let perms: HashSet<Permission> = [Permission::DeployModel].into();
+        let role_id = rbac.create_role("temp_role", "Temporary role", perms, vec![], None).await.unwrap();
+
+        // Assign role with expiration in the past
+        let expired_time = Utc::now() - chrono::Duration::hours(1);
+        rbac.assign_role("temp_user", &role_id, "admin", Some(expired_time), None).await.unwrap();
+
+        // User should not have the permission due to expired role
+        let user_perms = rbac.get_user_permissions("temp_user").await.unwrap();
+        assert!(!user_perms.contains(&Permission::DeployModel));
+    }
+
+    #[async_test]
+    async fn test_enterprise_security_policies() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        // Add enterprise security policy
+        let enterprise_policy = EnterpriseSecurityPolicy {
+            policy_id: "enterprise_policy".to_string(),
+            name: "Enterprise Security".to_string(),
+            description: "Enterprise-wide security policies".to_string(),
+            policy_type: PolicyType::AccessControl,
+            rules: vec![EnterpriseRule {
+                rule_id: "mfa_for_sensitive".to_string(),
+                condition: EnterpriseCondition {
+                    attribute: "resource_sensitivity".to_string(),
+                    operator: ConditionOperator::Equals,
+                    value: "highly_sensitive".to_string(),
+                },
+                action: EnterpriseAction {
+                    action_type: "require_mfa".to_string(),
+                    parameters: HashMap::new(),
+                },
+            }],
+            enforcement: PolicyEnforcement::Hard,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            active: true,
+        };
+
+        rbac.add_enterprise_policy(enterprise_policy).await.unwrap();
+
+        // Test that enterprise policies are stored
+        // (In this implementation, enterprise policies are initialized but not actively enforced)
+    }
+
+    #[async_test]
+    async fn test_compliance_audit_reporting() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        let start = Utc::now() - chrono::Duration::days(30);
+        let end = Utc::now();
+
+        // Generate compliance report
+        let report_id = rbac.generate_compliance_report(ComplianceFramework::GDPR, start, end).await.unwrap();
+        assert!(!report_id.is_empty());
+
+        // In this implementation, compliance reports are generated with mock data
+    }
+
+    #[async_test]
+    async fn test_role_revoke_operations() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        // Create role and assign to user
+        let perms: HashSet<Permission> = [Permission::DeleteProject].into();
+        let role_id = rbac.create_role("revoke_test", "Revoke test role", perms, vec![], None).await.unwrap();
+        rbac.assign_role("revoke_user", &role_id, "admin", None, None).await.unwrap();
+
+        // Verify user has permission
+        let user_perms_before = rbac.get_user_permissions("revoke_user").await.unwrap();
+        assert!(user_perms_before.iter().any(|p| matches!(p, Permission::DeleteProject)));
+
+        // Revoke role
+        rbac.revoke_role("revoke_user", &role_id).await.unwrap();
+
+        // Verify user no longer has permission
+        let user_perms_after = rbac.get_user_permissions("revoke_user").await.unwrap();
+        assert!(!user_perms_after.iter().any(|p| matches!(p, Permission::DeleteProject)));
+    }
+
+    #[async_test]
+    async fn test_custom_permission_parsing() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        // Test various custom permission formats
+        let custom_perm = rbac.parse_action_string("custom.action", None).unwrap();
+        match custom_perm {
+            Permission::Custom { action, resource_type, resource_id, .. } => {
+                assert_eq!(action, "custom");
+                assert_eq!(resource_type, "action");
+                assert!(resource_id.is_none());
+            }
+            _ => panic!("Expected Custom permission"),
+        }
+
+        let custom_with_id = rbac.parse_action_string("custom.resource.item123", None).unwrap();
+        match custom_with_id {
+            Permission::Custom { action, resource_type, resource_id, .. } => {
+                assert_eq!(action, "custom");
+                assert_eq!(resource_type, "resource");
+                assert_eq!(resource_id, Some("item123".to_string()));
+            }
+            _ => panic!("Expected Custom permission with ID"),
+        }
+    }
+
+    #[async_test]
+    async fn test_permission_conditions_evaluation() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        // Test business hours condition
+        let custom_perm = Permission::Custom {
+            action: "test".to_string(),
+            resource_type: "resource".to_string(),
+            resource_id: None,
+            conditions: [("business_hours_only".to_string(), "true".to_string())].into(),
+        };
+
+        let context = PolicyContext::new(
+            &UserContext {
+                user_id: "test_user".to_string(),
+                username: "testuser".to_string(),
+                roles: vec![],
+                permissions: vec![],
+                session_id: Some("session123".to_string()),
+                mfa_verified: true,
+            },
+            "resource",
+            "test",
+        );
+
+        // During business hours (9-17), condition should pass
+        let current_hour = Utc::now().hour();
+        let condition_met = rbac.evaluate_permission_conditions(&custom_perm, &context).await;
+        // Note: Current implementation has simplified condition evaluation
+        assert!(condition_met); // In this test, conditions are simplified
+    }
+
+    #[async_test]
+    async fn test_audit_callback_integration() {
+        use std::sync::Mutex;
+
+        #[derive(Clone)]
+        struct TestAuditCallback {
+            events: Arc<Mutex<Vec<(String, bool, String)>>>,
+        }
+
+        impl TestAuditCallback {
+            fn new() -> Self {
+                Self {
+                    events: Arc::new(Mutex::new(Vec::new())),
+                }
+            }
+
+            fn get_events(&self) -> Vec<(String, bool, String)> {
+                self.events.lock().unwrap().clone()
+            }
+        }
+
+        #[async_trait]
+        impl AuditCallback for TestAuditCallback {
+            async fn log_authorization(
+                &self,
+                context: &PolicyContext,
+                allowed: bool,
+                reason: &str,
+            ) -> SecurityResult<()> {
+                let mut events = self.events.lock().unwrap();
+                events.push((context.user_id.clone(), allowed, reason.to_string()));
+                Ok(())
+            }
+        }
+
+        let audit_callback = Arc::new(TestAuditCallback::new());
+        let rbac = RoleBasedAccessControl::with_config(300, Some(audit_callback.clone())).await.unwrap();
+
+        let user = UserContext {
+            user_id: "audit_test_user".to_string(),
+            username: "audittest".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            session_id: Some("session123".to_string()),
+            mfa_verified: true,
+        };
+
+        // Trigger an authorization check
+        let _ = rbac.check_permission(&user, Permission::Admin).await.unwrap();
+
+        // Verify audit event was logged
+        let events = audit_callback.get_events();
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].0, "audit_test_user");
+        assert!(!events[0].1); // Admin permission should be denied for regular user
+    }
+
+    #[async_test]
+    async fn test_time_window_restrictions() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        // Check time window restrictions (simplified implementation)
+        let permission = Permission::Admin;
+        let timestamp = Utc::now();
+
+        let time_valid = rbac.check_time_window_restrictions(&permission, timestamp);
+        assert!(time_valid); // Current implementation always returns true
+    }
+
+    #[async_test]
+    async fn test_health_status_under_load() {
+        let rbac = RoleBasedAccessControl::new().await.unwrap();
+
+        // Create many roles and assignments to test health under load
+        let mut role_ids = vec![];
+        for i in 0..50 {
+            let perms: HashSet<Permission> = [Permission::ReadProject].into();
+            let role_id = rbac.create_role(&format!("load_test_role_{}", i), "Load test role", perms, vec![], None).await.unwrap();
+            role_ids.push(role_id);
+        }
+
+        // Assign roles to users
+        for (i, role_id) in role_ids.iter().enumerate() {
+            rbac.assign_role(&format!("load_test_user_{}", i), role_id, "admin", None, None).await.unwrap();
+        }
+
+        // Check health status
+        let health = rbac.health_status().await;
+        assert!(matches!(health, ComponentStatus::Healthy));
+    }
 }

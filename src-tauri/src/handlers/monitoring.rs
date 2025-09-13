@@ -597,91 +597,158 @@ impl MonitoringDashboard {
 
 /// Get comprehensive monitoring dashboard data
 #[tauri::command]
-pub async fn get_monitoring_dashboard() -> Result<serde_json::Value, String> {
+pub async fn get_monitoring_dashboard(
+    app_state: tauri::State<'_, crate::state::AppState>,
+) -> Result<serde_json::Value, String> {
     log::info!("Getting comprehensive monitoring dashboard data");
 
-    // TODO: Integrate with actual monitoring system
-    // For now, simulate comprehensive dashboard data
+    // Get real data from observability manager
+    let observability = app_state.get_observability_manager().await;
 
-    let dashboard_data = serde_json::json!({
-        "summary": {
-            "status": "healthy",
-            "uptime_seconds": 3600,
-            "active_alerts": 0,
-            "performance_score": 95,
-            "last_updated": chrono::Utc::now().to_rfc3339()
-        },
-        "system_metrics": {
-            "cpu": {
-                "usage_percent": 45.2,
-                "cores": 8,
-                "load_average": [1.2, 1.5, 1.3]
-            },
-            "memory": {
-                "used_gb": 8.5,
-                "total_gb": 16.0,
-                "swap_used_gb": 1.2,
-                "swap_total_gb": 8.0
-            },
-            "disk": {
-                "usage_percent": 72.0,
-                "read_bytes_per_sec": 1024000,
-                "write_bytes_per_sec": 2048000
-            },
-            "network": {
-                "bytes_sent": 156000000,
-                "bytes_received": 245000000,
-                "connections": 45
-            }
-        },
-        "lsp_servers": {
-            "rust-analyzer": {
-                "status": "active",
-                "requests_total": 1234,
-                "errors_total": 3,
-                "avg_response_time_ms": 15.2,
-                "memory_usage_mb": 256,
-                "uptime_seconds": 3600
-            },
-            "typescript-language-server": {
-                "status": "active",
-                "requests_total": 567,
-                "errors_total": 1,
-                "avg_response_time_ms": 22.8,
-                "memory_usage_mb": 180,
-                "uptime_seconds": 3200
-            }
-        },
-        "memory_analysis": {
-            "heap_usage_mb": 512,
-            "stack_usage_mb": 64,
-            "gc_collections": 25,
-            "avg_heap_growth_mb_per_min": 12.5,
-            "memory_leaks_detected": 0
-        },
-        "active_alerts": [],
-        "performance_trends": {
-            "cpu_history": [42.0, 45.2, 38.7, 47.1, 43.5],
-            "memory_history": [75.0, 78.2, 74.5, 79.8, 77.3],
-            "lsp_response_times": [14.5, 15.2, 16.1, 14.8, 15.2]
-        },
-        "recommendations": [
-            {
-                "type": "performance",
-                "priority": "medium",
-                "message": "Consider enabling LSP caching for improved response times",
-                "actionable": true
-            },
-            {
-                "type": "memory",
-                "priority": "low",
-                "message": "Memory usage is optimal",
-                "actionable": false
-            }
-        ]
-    });
+    if let Some(manager) = observability {
+        // Get health status
+        let health = manager.health_check().await
+            .map_err(|e| format!("Failed to get health status: {}", e))?;
 
-    Ok(dashboard_data)
+        // Get performance metrics
+        let performance = manager.get_performance_metrics().await
+            .map_err(|e| format!("Failed to get performance metrics: {}", e))?;
+
+        // Get system metrics
+        let system_metrics = &performance.system_metrics;
+
+        // Build dashboard data with real metrics
+        let dashboard_data = serde_json::json!({
+            "summary": {
+                "status": match health.overall_status {
+                    rust_ai_ide_observability::health::HealthCheckStatus::Healthy => "healthy",
+                    rust_ai_ide_observability::health::HealthCheckStatus::Degraded => "degraded",
+                    rust_ai_ide_observability::health::HealthCheckStatus::Unhealthy => "unhealthy",
+                },
+                "uptime_seconds": 3600, // TODO: Track actual uptime
+                "active_alerts": health.checks.len(),
+                "performance_score": 95, // TODO: Calculate from metrics
+                "last_updated": system_metrics.timestamp.to_rfc3339()
+            },
+            "system_metrics": {
+                "cpu": {
+                    "usage_percent": system_metrics.cpu_usage_percent,
+                    "cores": num_cpus::get(),
+                    "load_average": system_metrics.load_average
+                },
+                "memory": {
+                    "used_gb": system_metrics.memory_used_mb / 1024.0,
+                    "total_gb": system_metrics.memory_total_mb / 1024.0,
+                    "swap_used_gb": 0.0, // TODO: Add swap metrics
+                    "swap_total_gb": 0.0
+                },
+                "disk": {
+                    "usage_percent": system_metrics.disk_usage_percent,
+                    "read_bytes_per_sec": 0, // TODO: Add disk I/O metrics
+                    "write_bytes_per_sec": 0
+                },
+                "network": {
+                    "bytes_sent": 0, // TODO: Add network metrics
+                    "bytes_received": 0,
+                    "connections": 0
+                }
+            },
+            "lsp_servers": {
+                // TODO: Add real LSP server metrics
+                "rust-analyzer": {
+                    "status": "active",
+                    "requests_total": 1234,
+                    "errors_total": 3,
+                    "avg_response_time_ms": 15.2,
+                    "memory_usage_mb": 256,
+                    "uptime_seconds": 3600
+                }
+            },
+            "memory_analysis": {
+                "heap_usage_mb": system_metrics.memory_used_mb,
+                "stack_usage_mb": 64, // TODO: Add stack usage tracking
+                "gc_collections": 0, // Rust doesn't have GC
+                "avg_heap_growth_mb_per_min": 0.0,
+                "memory_leaks_detected": 0
+            },
+            "active_alerts": [], // TODO: Add real alerts from health checks
+            "performance_trends": {
+                "cpu_history": [system_metrics.cpu_usage_percent], // TODO: Add historical data
+                "memory_history": [system_metrics.memory_usage_percent],
+                "lsp_response_times": [15.2]
+            },
+            "recommendations": [
+                {
+                    "type": "performance",
+                    "priority": "medium",
+                    "message": "System performance is being monitored",
+                    "actionable": false
+                }
+            ]
+        });
+
+        Ok(dashboard_data)
+    } else {
+        // Fallback to basic data if observability not initialized
+        log::warn!("Observability manager not initialized, returning basic dashboard data");
+
+        let dashboard_data = serde_json::json!({
+            "summary": {
+                "status": "unknown",
+                "uptime_seconds": 0,
+                "active_alerts": 0,
+                "performance_score": 0,
+                "last_updated": chrono::Utc::now().to_rfc3339()
+            },
+            "system_metrics": {
+                "cpu": {
+                    "usage_percent": 0.0,
+                    "cores": num_cpus::get(),
+                    "load_average": [0.0, 0.0, 0.0]
+                },
+                "memory": {
+                    "used_gb": 0.0,
+                    "total_gb": 0.0,
+                    "swap_used_gb": 0.0,
+                    "swap_total_gb": 0.0
+                },
+                "disk": {
+                    "usage_percent": 0.0,
+                    "read_bytes_per_sec": 0,
+                    "write_bytes_per_sec": 0
+                },
+                "network": {
+                    "bytes_sent": 0,
+                    "bytes_received": 0,
+                    "connections": 0
+                }
+            },
+            "lsp_servers": {},
+            "memory_analysis": {
+                "heap_usage_mb": 0,
+                "stack_usage_mb": 0,
+                "gc_collections": 0,
+                "avg_heap_growth_mb_per_min": 0.0,
+                "memory_leaks_detected": 0
+            },
+            "active_alerts": [],
+            "performance_trends": {
+                "cpu_history": [],
+                "memory_history": [],
+                "lsp_response_times": []
+            },
+            "recommendations": [
+                {
+                    "type": "system",
+                    "priority": "high",
+                    "message": "Observability system not initialized",
+                    "actionable": false
+                }
+            ]
+        });
+
+        Ok(dashboard_data)
+    }
 }
 
 /// Get real-time performance metrics stream

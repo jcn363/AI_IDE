@@ -25,10 +25,11 @@ sha256 = "1.6.0"
 rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
 rayon = "1.8"          # For parallel cache operations
 uuid = { version = "1.0", features = ["v4", "serde"] }
+zstd = { version = "0.13", optional = true }  # For compression support
 
 [features]
 persistent = ["sled"]
-compression = ["bincode"]
+compression = ["bincode", "zstd"]
 redis-backend = ["redis", "bb8", "bb8-redis"]
 redis-cluster = ["redis", "bb8", "bb8-redis", "redis/cluster"]
 

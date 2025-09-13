@@ -54,14 +54,10 @@ extern crate tracing;
 
 // Core modules for AI-enhanced SQL LSP functionality
 pub mod analysis;
-pub mod models;
-pub mod pipeline;
 pub mod optimization;
 
 // Re-export key types and interfaces
 pub use analysis::*;
-pub use models::*;
-pub use pipeline::*;
 pub use optimization::*;
 
 use std::sync::Arc;

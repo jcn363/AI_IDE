@@ -1115,4 +1115,6 @@ mod comprehensive_tests {
         for operation in edit_ops {
             test_server.server
                 .update_collaborative_session(session_id.clone(), operation)
-                .
+                .await
+                .unwrap();
+        }

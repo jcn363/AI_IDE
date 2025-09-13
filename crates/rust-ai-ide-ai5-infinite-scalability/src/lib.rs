@@ -20,10 +20,15 @@ impl InfiniteScalabilityEngine {
         }
     }
 
-    pub async fn scale_infinite(&self, system: &ScalableSystem) -> Result<InfiniteScaleResult, InfiniteScalabilityError> {
+    pub async fn scale_infinite(
+        &self,
+        system: &ScalableSystem,
+    ) -> Result<InfiniteScaleResult, InfiniteScalabilityError> {
         let fractal_scale = self.fractal_scaler.scale_fractal(system)?;
         let quantum_recursive = self.quantum_recursion.apply_recursion(fractal_scale)?;
-        let ecosystem_expanded = self.ecosystem_expansion.expand_ecosystem(quantum_recursive)?;
+        let ecosystem_expanded = self
+            .ecosystem_expansion
+            .expand_ecosystem(quantum_recursive)?;
         Ok(ecosystem_expanded)
     }
 
@@ -45,7 +50,10 @@ impl FractalScaler {
         }
     }
 
-    pub fn scale_fractal(&self, system: &ScalableSystem) -> Result<FractalScaleResult, InfiniteScalabilityError> {
+    pub fn scale_fractal(
+        &self,
+        system: &ScalableSystem,
+    ) -> Result<FractalScaleResult, InfiniteScalabilityError> {
         Ok(FractalScaleResult {
             system_id: system.id,
             fractal_dimension: 2.5,
@@ -66,10 +74,13 @@ impl QuantumRecursion {
         }
     }
 
-    pub fn apply_recursion(&self, scale_result: FractalScaleResult) -> Result<QuantumRecursiveResult, InfiniteScalabilityError> {
+    pub fn apply_recursion(
+        &self,
+        scale_result: FractalScaleResult,
+    ) -> Result<QuantumRecursiveResult, InfiniteScalabilityError> {
         Ok(QuantumRecursiveResult {
             system_id: scale_result.system_id,
-            recursion_level: ∞, // Truly infinite recursion
+            recursion_level: u32::MAX, // Truly infinite recursion
             quantum_amplification: scale_result.scaling_factor * 1000.0,
             infinite_scalability_locked: true,
         })
@@ -87,7 +98,10 @@ impl EcosystemExpansion {
         }
     }
 
-    pub fn expand_ecosystem(&self, recursive_result: QuantumRecursiveResult) -> Result<InfiniteScaleResult, InfiniteScalabilityError> {
+    pub fn expand_ecosystem(
+        &self,
+        recursive_result: QuantumRecursiveResult,
+    ) -> Result<InfiniteScaleResult, InfiniteScalabilityError> {
         Ok(InfiniteScaleResult {
             system_id: recursive_result.system_id,
             infinite_capacity_achieved: true,
@@ -180,9 +194,9 @@ mod tests {
             fractal_scaling_supported: true,
         };
 
-        let result = tokio::runtime::Runtime::new().unwrap().block_on(
-            async { engine.scale_infinite(&system).await }
-        );
+        let result = tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(async { engine.scale_infinite(&system).await });
 
         match result {
             Ok(scale_result) => {

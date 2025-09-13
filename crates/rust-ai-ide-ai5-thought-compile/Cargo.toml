@@ -35,7 +35,7 @@ ndarray = "0.15"
 #scipy-rs = { git = "https://github.com/scipy/scipy-rs" }
 
 # Machine learning for thought pattern recognition
-tch = "0.13"
+tch = "0.17"  # Updated to match rust-bert requirements and resolve torch-sys linking conflicts
 candle-core = "0.6"
 linfa = "0.7"
 

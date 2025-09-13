@@ -722,6 +722,211 @@ pub async fn get_siem_statistics() -> Result<String, String> {
     })
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use tokio::sync::Mutex;
+
+    #[tokio::test]
+    async fn test_security_scanner_state_initialization() {
+        let state = SecurityScannerState::default();
+        assert!(state.scanner.is_none());
+        assert!(state.last_scan_result.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_scan_request_creation() {
+        let request = ScanRequest {
+            workspace_path: "/tmp/test".to_string(),
+            include_ai_analysis: true,
+            include_supply_chain: false,
+            max_scan_depth: Some(5),
+        };
+
+        assert_eq!(request.workspace_path, "/tmp/test");
+        assert!(request.include_ai_analysis);
+        assert!(!request.include_supply_chain);
+        assert_eq!(request.max_scan_depth, Some(5));
+    }
+
+    #[tokio::test]
+    async fn test_scan_response_creation() {
+        let response = ScanResponse {
+            scan_id: "test-scan-123".to_string(),
+            status: "completed".to_string(),
+            vulnerabilities_found: 5,
+            critical_count: 1,
+            high_count: 2,
+            medium_count: 1,
+            low_count: 1,
+            overall_risk_score: 7.5,
+            scan_duration_ms: 2500,
+        };
+
+        assert_eq!(response.scan_id, "test-scan-123");
+        assert_eq!(response.status, "completed");
+        assert_eq!(response.vulnerabilities_found, 5);
+        assert_eq!(response.overall_risk_score, 7.5);
+    }
+
+    #[tokio::test]
+    async fn test_vulnerability_details_creation() {
+        let details = VulnerabilityDetails {
+            vulnerability_id: "CVE-2023-12345".to_string(),
+            title: "Test Vulnerability".to_string(),
+            description: "A test security vulnerability".to_string(),
+            severity: "High".to_string(),
+            owasp_category: "A01:2021-BrokenAccessControl".to_string(),
+            file_path: "src/main.rs".to_string(),
+            line_number: Some(42),
+            cwe_id: Some("CWE-79".to_string()),
+            raw_cvss_score: Some(8.5),
+            exploitable: true,
+            fix_available: false,
+            remediation_steps: vec!["Update dependencies".to_string()],
+            evidence: vec!["unsafe code pattern".to_string()],
+        };
+
+        assert_eq!(details.vulnerability_id, "CVE-2023-12345");
+        assert_eq!(details.severity, "High");
+        assert!(details.exploitable);
+        assert_eq!(details.line_number, Some(42));
+    }
+
+    #[tokio::test]
+    async fn test_supply_chain_report_creation() {
+        let report = SupplyChainReport {
+            total_dependencies: 150,
+            malicious_packages: 2,
+            license_violations: 5,
+            outdated_dependencies: 12,
+            security_issues_by_registrations: vec![],
+            health_score: 85.0,
+        };
+
+        assert_eq!(report.total_dependencies, 150);
+        assert_eq!(report.malicious_packages, 2);
+        assert_eq!(report.health_score, 85.0);
+    }
+
+    #[tokio::test]
+    async fn test_license_compliance_report_creation() {
+        let report = LicenseComplianceReport {
+            compliant_packages: 145,
+            non_compliant_packages: 5,
+            banned_licenses: vec!["GPL-3.0".to_string()],
+            recommended_actions: vec!["Replace GPL dependencies".to_string()],
+        };
+
+        assert_eq!(report.compliant_packages, 145);
+        assert_eq!(report.non_compliant_packages, 5);
+        assert_eq!(report.banned_licenses.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_registration_issue_creation() {
+        let issue = RegistrationIssue {
+            registry: "crates.io".to_string(),
+            issue_type: "malicious_package".to_string(),
+            package_name: "bad-package".to_string(),
+            package_version: "1.0.0".to_string(),
+            severity: "Critical".to_string(),
+            description: "Package contains malware".to_string(),
+        };
+
+        assert_eq!(issue.registry, "crates.io");
+        assert_eq!(issue.severity, "Critical");
+        assert_eq!(issue.package_name, "bad-package");
+    }
+
+    #[tokio::test]
+    async fn test_policy_context_creation() {
+        use crate::rbac::PolicyContext;
+        use crate::UserContext;
+
+        let user = UserContext {
+            user_id: "test_user".to_string(),
+            username: "testuser".to_string(),
+            roles: vec!["developer".to_string()],
+            permissions: vec!["read".to_string()],
+            session_id: Some("session123".to_string()),
+            mfa_verified: true,
+        };
+
+        let context = PolicyContext::new(&user, "ai.model", "use")
+            .with_resource_id("gpt-4".to_string())
+            .with_context("department", "engineering");
+
+        assert_eq!(context.user_id, "test_user");
+        assert_eq!(context.resource_type, "ai.model");
+        assert_eq!(context.action, "use");
+        assert_eq!(context.resource_id.as_ref().unwrap(), "gpt-4");
+    }
+
+    #[tokio::test]
+    async fn test_owasp_scan_result_creation() {
+        let scan_result = OWASPScanResult {
+            scan_id: "owasp-scan-123".to_string(),
+            timestamp: chrono::Utc::now(),
+            workspace_path: "/tmp/test".to_string(),
+            owasp_categories_covered: vec!["A01".to_string(), "A02".to_string()],
+            total_vulnerabilities: 10,
+            critical_vulnerabilities: 2,
+            high_vulnerabilities: 3,
+            medium_vulnerabilities: 3,
+            low_vulnerabilities: 2,
+            info_vulnerabilities: 0,
+            supply_chain_issues: 1,
+            license_issues: 3,
+            ai_insights: vec!["High risk of injection attacks".to_string()],
+            recommendations: vec!["Implement input validation".to_string()],
+            risk_assessment: "Medium risk".to_string(),
+        };
+
+        assert_eq!(scan_result.scan_id, "owasp-scan-123");
+        assert_eq!(scan_result.total_vulnerabilities, 10);
+        assert_eq!(scan_result.critical_vulnerabilities, 2);
+        assert_eq!(scan_result.owasp_categories_covered.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn test_compliance_finding_creation() {
+        let finding = ComplianceFinding {
+            finding_id: "finding-123".to_string(),
+            rule_id: "gdpr-rule-1".to_string(),
+            severity: crate::audit::AuditEventSeverity::High,
+            description: "Personal data not encrypted".to_string(),
+            affected_entities: vec!["user_profiles".to_string()],
+            status: crate::audit::FindingStatus::Open,
+            remediation_steps: vec!["Implement encryption".to_string()],
+        };
+
+        assert_eq!(finding.finding_id, "finding-123");
+        assert_eq!(finding.rule_id, "gdpr-rule-1");
+        assert_eq!(finding.affected_entities.len(), 1);
+        assert!(matches!(finding.status, crate::audit::FindingStatus::Open));
+    }
+
+    #[tokio::test]
+    async fn test_compliance_report_creation() {
+        let report = ComplianceReport {
+            report_id: "compliance-report-123".to_string(),
+            framework: crate::audit::ComplianceFramework::GDPR,
+            generated_at: chrono::Utc::now(),
+            period_start: chrono::Utc::now() - chrono::Duration::days(30),
+            period_end: chrono::Utc::now(),
+            findings: vec![],
+            overall_compliance_score: 92.5,
+            remediation_required: vec!["Update privacy policy".to_string()],
+        };
+
+        assert_eq!(report.report_id, "compliance-report-123");
+        assert!(matches!(report.framework, crate::audit::ComplianceFramework::GDPR));
+        assert_eq!(report.overall_compliance_score, 92.5);
+    }
+}
+
 // Get active security alerts
 #[tauri::command]
 pub async fn get_active_security_alerts() -> Result<String, String> {

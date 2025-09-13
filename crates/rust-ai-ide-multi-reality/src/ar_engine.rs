@@ -16,7 +16,7 @@
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-//! Augmented Reality Engine for Multi-Reality Coordination
+/// Augmented Reality Engine for Multi-Reality Coordination
 
 use std::sync::Arc;
 use tokio::sync::Mutex;

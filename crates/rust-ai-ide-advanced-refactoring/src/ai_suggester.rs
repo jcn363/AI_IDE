@@ -1,25 +1,25 @@
+use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::sync::RwLock;
 use tokio::time::{timeout, Duration};
-use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-use rust_ai_ide_ai_inference::{AiInferenceService, InferenceRequest, InferenceConfig};
-use rust_ai_ide_lsp::LSPService;
+use rust_ai_ide_ai_inference::{AiInferenceService, InferenceConfig, InferenceRequest};
 use rust_ai_ide_common::validation::TauriInputSanitizer;
+use rust_ai_ide_lsp::LSPService;
 
-use crate::pattern_recognizer::PatternRecognizer;
-use crate::context_analyzer::CodeContextAnalyzer;
-use crate::suggestion_generator::SuggestionGenerator;
-use crate::safety_filter::SafetyFilter;
 use crate::confidence_scorer::ConfidenceScorer;
-use crate::types::{
-    RefactoringSuggestion, RefactoringType, RiskLevel, Complexity,
-    RefactoringTransformation, TransformationOperation
-};
+use crate::context_analyzer::CodeContextAnalyzer;
 use crate::error::{AnalysisError, AnalysisResult, RefactoringError};
+use crate::pattern_recognizer::PatternRecognizer;
+use crate::safety_filter::SafetyFilter;
+use crate::suggestion_generator::SuggestionGenerator;
+use crate::types::{
+    Complexity, RefactoringSuggestion, RefactoringTransformation, RefactoringType, RiskLevel,
+    TransformationOperation,
+};
 
 /// AI-powered refactoring suggestion engine
 pub struct AiRefactoringSuggester {
@@ -66,15 +66,8 @@ impl Default for SuggesterConfig {
 
 impl AiRefactoringSuggester {
     /// Create a new AI refactoring suggester with default configuration
-    pub fn new(
-        ai_service: Arc<AiInferenceService>,
-        lsp_service: Arc<LSPService>,
-    ) -> Self {
-        Self::with_config(
-            ai_service,
-            lsp_service,
-            SuggesterConfig::default(),
-        )
+    pub fn new(ai_service: Arc<AiInferenceService>, lsp_service: Arc<LSPService>) -> Self {
+        Self::with_config(ai_service, lsp_service, SuggesterConfig::default())
     }
 
     /// Create a new AI refactoring suggester with custom configuration
@@ -84,7 +77,7 @@ impl AiRefactoringSuggester {
         config: SuggesterConfig,
     ) -> Self {
         let cache = Arc::new(RwLock::new(lru::LruCache::new(
-            std::num::NonZeroUsize::new(config.cache_size_mb * 1024 * 1024).unwrap()
+            std::num::NonZeroUsize::new(config.cache_size_mb * 1024 * 1024).unwrap(),
         )));
 
         let pattern_recognizer = Arc::new(PatternRecognizer::new(ai_service.clone()));
@@ -114,14 +107,17 @@ impl AiRefactoringSuggester {
         context: AnalysisContext,
     ) -> AnalysisResult<Vec<RefactoringSuggestion>> {
         // Input validation
-        let sanitized_path = TauriInputSanitizer::sanitize_path(file_path)
-            .map_err(|e| AnalysisError::DataProcessing {
+        let sanitized_path = TauriInputSanitizer::sanitize_path(file_path).map_err(|e| {
+            AnalysisError::DataProcessing {
                 stage: format!("Path sanitization failed: {}", e),
-            })?;
+            }
+        })?;
 
-        let sanitized_content = TauriInputSanitizer::sanitize_code_input(file_content)
-            .map_err(|e| AnalysisError::DataProcessing {
-                stage: format!("Content sanitization failed: {}", e),
+        let sanitized_content =
+            TauriInputSanitizer::sanitize_code_input(file_content).map_err(|e| {
+                AnalysisError::DataProcessing {
+                    stage: format!("Content sanitization failed: {}", e),
+                }
             })?;
 
         // Check cache first
@@ -132,10 +128,14 @@ impl AiRefactoringSuggester {
         // Generate suggestions with timeout
         let suggestions = timeout(
             Duration::from_secs(self.config.analysis_timeout_seconds),
-            self.generate_suggestions_internal(&sanitized_path, &sanitized_content, context)
-        ).await
+            self.generate_suggestions_internal(&sanitized_path, &sanitized_content, context),
+        )
+        .await
         .map_err(|_| AnalysisError::DataProcessing {
-            stage: format!("Analysis timeout after {} seconds", self.config.analysis_timeout_seconds),
+            stage: format!(
+                "Analysis timeout after {} seconds",
+                self.config.analysis_timeout_seconds
+            ),
         })??;
 
         // Cache results
@@ -155,12 +155,14 @@ impl AiRefactoringSuggester {
 
         // Step 1: Pattern Recognition
         if self.config.enable_pattern_recognition {
-            let patterns = self.pattern_recognizer
+            let patterns = self
+                .pattern_recognizer
                 .analyze_patterns(file_path, file_content, &context)
                 .await?;
 
             for pattern in patterns {
-                let suggestion = self.suggestion_generator
+                let suggestion = self
+                    .suggestion_generator
                     .generate_from_pattern(pattern, &context)
                     .await?;
                 suggestions.push(suggestion);
@@ -169,12 +171,14 @@ impl AiRefactoringSuggester {
 
         // Step 2: Context Analysis for behavioral preservation
         if self.config.enable_context_analysis {
-            let context_analysis = self.context_analyzer
+            let context_analysis = self
+                .context_analyzer
                 .analyze_context(file_path, file_content, &context)
                 .await?;
 
             for analysis_result in context_analysis {
-                let suggestion = self.suggestion_generator
+                let suggestion = self
+                    .suggestion_generator
                     .generate_from_context(analysis_result, &context)
                     .await?;
                 suggestions.push(suggestion);
@@ -182,12 +186,15 @@ impl AiRefactoringSuggester {
         }
 
         // Step 3: AI-powered suggestion generation
-        let ai_suggestions = self.generate_ai_suggestions(file_path, file_content, &context).await?;
+        let ai_suggestions = self
+            .generate_ai_suggestions(file_path, file_content, &context)
+            .await?;
         suggestions.extend(ai_suggestions);
 
         // Step 4: Confidence scoring
         for suggestion in &mut suggestions {
-            let confidence = self.confidence_scorer
+            let confidence = self
+                .confidence_scorer
                 .score_suggestion(suggestion, file_content, &context)
                 .await?;
             suggestion.confidence_score = confidence;
@@ -195,7 +202,8 @@ impl AiRefactoringSuggester {
 
         // Step 5: Safety filtering
         if self.config.enable_safety_filtering {
-            suggestions = self.safety_filter
+            suggestions = self
+                .safety_filter
                 .filter_suggestions(suggestions, &context)
                 .await?;
         }
@@ -230,18 +238,25 @@ impl AiRefactoringSuggester {
             },
         };
 
-        let response = self.ai_service
+        let response = self
+            .ai_service
             .generate_completion(request)
             .await
             .map_err(|e| AnalysisError::ModelInference {
                 model_name: "refactoring-model".to_string(),
             })?;
 
-        self.parse_ai_suggestions(&response.text, file_path, context).await
+        self.parse_ai_suggestions(&response.text, file_path, context)
+            .await
     }
 
     /// Build AI inference prompt
-    fn build_ai_prompt(&self, file_path: &str, file_content: &str, context: &AnalysisContext) -> String {
+    fn build_ai_prompt(
+        &self,
+        file_path: &str,
+        file_content: &str,
+        context: &AnalysisContext,
+    ) -> String {
         format!(
             "Analyze the following code file for refactoring opportunities:
 
@@ -275,12 +290,13 @@ COMPLEXITY: [complexity]
 BEFORE: [code_before]
 AFTER: [code_after]
 ---
----
-"---</parameter1_name>
-<parameter2_name>           suggestion_risk: suggestion_risk.to_string(),
-            suggestion_complexity: suggestion_complexity.to_string(),
-            file_path,
-        }
+",
+            context.project_root,
+            context.project_type,
+            context.dependencies.join(", "),
+            context.recent_changes.join(", "),
+            context.code_style_preferences.join(", ")
+        )
     }
 
     /// Parse AI response into structured suggestions
@@ -293,7 +309,9 @@ AFTER: [code_after]
         let mut suggestions = Vec::new();
 
         // Split response by suggestion delimiter
-        let suggestion_blocks = ai_response.split("---").filter(|block| !block.trim().is_empty());
+        let suggestion_blocks = ai_response
+            .split("---")
+            .filter(|block| !block.trim().is_empty());
 
         for block in suggestion_blocks {
             let suggestion = self.parse_single_suggestion(block, file_path, context)?;
@@ -310,7 +328,10 @@ AFTER: [code_after]
         file_path: &str,
         context: &AnalysisContext,
     ) -> AnalysisResult<RefactoringSuggestion> {
-        let lines = suggestion_block.lines().map(|l| l.trim()).collect::<Vec<_>>();
+        let lines = suggestion_block
+            .lines()
+            .map(|l| l.trim())
+            .collect::<Vec<_>>();
 
         let mut suggestion_type = None;
         let mut line_number = None;
@@ -371,7 +392,7 @@ AFTER: [code_after]
                 "medium" => Some(RiskLevel::Medium),
                 "high" => Some(RiskLevel::High),
                 _ => Some(RiskLevel::Medium),
-        })
+            })
             .unwrap_or(RiskLevel::Medium);
 
         let complexity = complexity
@@ -382,7 +403,7 @@ AFTER: [code_after]
                 "complex" => Some(Complexity::Complex),
                 "high" | "veryhigh" => Some(Complexity::High),
                 _ => Some(Complexity::Moderate),
-        })
+            })
             .unwrap_or(Complexity::Moderate);
 
         Ok(RefactoringSuggestion {
@@ -469,19 +490,32 @@ mod tests {
 
     #[tokio::test]
     async fn test_parse_refactoring_type() {
-        assert!(matches!(parse_refactoring_type("extract method"), RefactoringType::ExtractMethod));
-        assert!(matches!(parse_refactoring_type("rename"), RefactoringType::RenameSymbol));
-        assert!(matches!(parse_refactoring_type("custom_refactoring"), RefactoringType::Custom(_)));
+        assert!(matches!(
+            parse_refactoring_type("extract method"),
+            RefactoringType::ExtractMethod
+        ));
+        assert!(matches!(
+            parse_refactoring_type("rename"),
+            RefactoringType::RenameSymbol
+        ));
+        assert!(matches!(
+            parse_refactoring_type("custom_refactoring"),
+            RefactoringType::Custom(_)
+        ));
     }
 
     // Mock implementations for testing
     struct MockAiService;
     impl MockAiService {
-        fn new() -> Self { Self }
+        fn new() -> Self {
+            Self
+        }
     }
 
     struct MockLspService;
     impl MockLspService {
-        fn new() -> Self { Self }
+        fn new() -> Self {
+            Self
+        }
     }
-}</parameter2_name>
+}

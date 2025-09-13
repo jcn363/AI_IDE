@@ -8,19 +8,19 @@
 //! - Multi-language support with pattern recognition
 //! - Memory-efficient caching and prediction models
 
-use std::collections::{HashMap, VecDeque, BTreeMap};
-use std::sync::Arc;
-use tokio::sync::{RwLock, mpsc, oneshot};
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use moka::future::Cache;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::sync::Arc;
+use tokio::sync::{mpsc, oneshot, RwLock};
 
 // Import internal dependencies
-use rust_ai_ide_types::{Language, Position, Range, TextDocument, DocumentUri};
-use rust_ai_ide_lsp::Client;
-use rust_ai_ide_shared_types::{ProjectContext, FileChange};
 use rust_ai_ide_common::validation::TauriInputSanitizer;
+use rust_ai_ide_lsp::Client;
+use rust_ai_ide_shared_types::{FileChange, ProjectContext};
+use rust_ai_ide_types::{DocumentUri, Language, Position, Range, TextDocument};
 
 // Re-export types
 pub use crate::{PredictiveError, PredictiveResult, SharedPerformanceTracker};
@@ -819,7 +819,12 @@ impl Default for PredictionSettings {
             cache_size_limit: 10000,
             min_confidence_threshold: 0.5,
             analysis_timeout_ms: 5000,
-            supported_languages: vec![Language::Rust, Language::TypeScript, Language::JavaScript, Language::Python],
+            supported_languages: vec![
+                Language::Rust,
+                Language::TypeScript,
+                Language::JavaScript,
+                Language::Python,
+            ],
             performance_settings: PerformanceSettings::default(),
             memory_limits: MemorySettings::default(),
             security_settings: SecuritySettings::default(),
@@ -866,6 +871,8 @@ pub enum CacheEvictionPolicy {
     SizeBased,
     /// Least Frequently Used
     Lfu,
+}
+
 impl Default for PerformanceSettings {
     fn default() -> Self {
         Self {
@@ -948,7 +955,7 @@ impl PredictiveDevelopmentEngine {
     /// Update configuration
     pub async fn update_configuration(
         &self,
-        new_config: PredictionSettings
+        new_config: PredictionSettings,
     ) -> PredictiveResult<()> {
         // Validate configuration
         self.validate_configuration(&new_config)?;
@@ -968,7 +975,10 @@ impl PredictiveDevelopmentEngine {
     // Internal helper methods
 
     fn generate_cache_key(&self, operation: &str, context: &PredictionContext) -> String {
-        format!("{}:{}:{}", operation, context.document.uri, context.cursor_position.line)
+        format!(
+            "{}:{}:{}",
+            operation, context.document.uri, context.cursor_position.line
+        )
     }
 
     fn start_background_processing(&self, mut receiver: mpsc::UnboundedReceiver<BackgroundTask>) {
@@ -1001,7 +1011,9 @@ impl PredictiveDevelopmentEngine {
             }
             BackgroundTask::RecommendationGeneration(context) => {
                 // Generate and cache recommendations proactively
-                let _recommendations = self.analyze_architecture_patterns_internal(&context).await?;
+                let _recommendations = self
+                    .analyze_architecture_patterns_internal(&context)
+                    .await?;
                 // Cache would be handled by the individual analysis methods
             }
         }
@@ -1010,47 +1022,76 @@ impl PredictiveDevelopmentEngine {
 
     fn validate_configuration(&self, config: &PredictionSettings) -> PredictiveResult<()> {
         if config.cache_size_limit == 0 {
-            return Err(PredictiveError::ConfigurationError("Cache size limit cannot be zero".to_string()));
+            return Err(PredictiveError::ConfigurationError(
+                "Cache size limit cannot be zero".to_string(),
+            ));
         }
         if config.min_confidence_threshold < 0.0 || config.min_confidence_threshold > 1.0 {
-            return Err(PredictiveError::ConfigurationError("Confidence threshold must be between 0.0 and 1.0".to_string()));
+            return Err(PredictiveError::ConfigurationError(
+                "Confidence threshold must be between 0.0 and 1.0".to_string(),
+            ));
         }
         if config.analysis_timeout_ms < 100 {
-            return Err(PredictiveError::ConfigurationError("Analysis timeout too short".to_string()));
+            return Err(PredictiveError::ConfigurationError(
+                "Analysis timeout too short".to_string(),
+            ));
         }
         Ok(())
     }
 
     // Placeholder implementations (simplified for the task demo)
-    async fn analyze_architecture_patterns_internal(&self, _context: &ProjectContext) -> PredictiveResult<Vec<RefactoringRecommendation>> {
+    async fn analyze_architecture_patterns_internal(
+        &self,
+        _context: &ProjectContext,
+    ) -> PredictiveResult<Vec<RefactoringRecommendation>> {
         Ok(vec![RefactoringRecommendation {
             description: "Example: Consider extracting common functionality".to_string(),
             affected_files: vec![],
             priority: RecommendationPriority::Medium,
             effort_estimate: EffortLevel::Moderate,
-            benefits: vec!["Improved maintainability".to_string(), "Reduced duplication".to_string()],
+            benefits: vec![
+                "Improved maintainability".to_string(),
+                "Reduced duplication".to_string(),
+            ],
             success_probability: 0.85,
             prerequisites: vec!["Code analysis complete".to_string()],
         }])
     }
 
-    async fn analyze_architecture_patterns(&self, _context: &PredictionContext) -> PredictiveResult<Vec<RefactoringRecommendation>> {
+    async fn analyze_architecture_patterns(
+        &self,
+        _context: &PredictionContext,
+    ) -> PredictiveResult<Vec<RefactoringRecommendation>> {
         Ok(vec![])
     }
 
-    async fn analyze_performance_patterns(&self, _context: &PredictionContext) -> PredictiveResult<Vec<RefactoringRecommendation>> {
+    async fn analyze_performance_patterns(
+        &self,
+        _context: &PredictionContext,
+    ) -> PredictiveResult<Vec<RefactoringRecommendation>> {
         Ok(vec![])
     }
 
-    async fn analyze_code_quality_patterns(&self, _context: &PredictionContext) -> PredictiveResult<Vec<RefactoringRecommendation>> {
+    async fn analyze_code_quality_patterns(
+        &self,
+        _context: &PredictionContext,
+    ) -> PredictiveResult<Vec<RefactoringRecommendation>> {
         Ok(vec![])
     }
 
-    async fn perform_code_analysis(&self, _context: &PredictionContext, _analysis_mode: AnalysisMode) -> PredictiveResult<serde_json::Value> {
+    async fn perform_code_analysis(
+        &self,
+        _context: &PredictionContext,
+        _analysis_mode: AnalysisMode,
+    ) -> PredictiveResult<serde_json::Value> {
         Ok(serde_json::json!({"status": "analysis_complete", "confidence": 0.8}))
     }
 
-    async fn get_lsp_suggestions(&self, _lsp_client: &Arc<Client>, _context: &PredictionContext) -> PredictiveResult<Vec<CodeSuggestion>> {
+    async fn get_lsp_suggestions(
+        &self,
+        _lsp_client: &Arc<Client>,
+        _context: &PredictionContext,
+    ) -> PredictiveResult<Vec<CodeSuggestion>> {
         Ok(vec![])
     }
 }
@@ -1132,20 +1173,24 @@ impl SuggestionEngine {
         _context: &PredictionContext,
         _analysis_mode: AnalysisMode,
     ) -> PredictiveResult<Vec<CodeSuggestion>> {
-        Ok(vec![
-            CodeSuggestion {
-                text: "Example suggestion".to_string(),
-                description: "Context-aware code completion".to_string(),
-                confidence_score: 0.8,
-                suggestion_type: SuggestionType::Completion,
-                location: Range {
-                    start: Position { line: 0, character: 0 },
-                    end: Position { line: 0, character: 10 }
+        Ok(vec![CodeSuggestion {
+            text: "Example suggestion".to_string(),
+            description: "Context-aware code completion".to_string(),
+            confidence_score: 0.8,
+            suggestion_type: SuggestionType::Completion,
+            location: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
                 },
-                related_actions: vec![],
-                expected_impact: ExpectedImpact::Productivity(ImpactLevel::Moderate),
-            }
-        ])
+                end: Position {
+                    line: 0,
+                    character: 10,
+                },
+            },
+            related_actions: vec![],
+            expected_impact: ExpectedImpact::Productivity(ImpactLevel::Moderate),
+        }])
     }
 }
 
@@ -1237,7 +1282,10 @@ impl PatternRecognitionSystem {
         })
     }
 
-    async fn analyze_patterns(&self, _context: &PredictionContext) -> PredictiveResult<Vec<CodeSuggestion>> {
+    async fn analyze_patterns(
+        &self,
+        _context: &PredictionContext,
+    ) -> PredictiveResult<Vec<CodeSuggestion>> {
         Ok(vec![])
     }
 
@@ -1277,7 +1325,8 @@ impl PredictiveDevelopmentEngine {
         let config = self.config.read().await;
 
         // Filter by confidence threshold
-        let filtered: Vec<_> = suggestions.into_iter()
+        let filtered: Vec<_> = suggestions
+            .into_iter()
             .filter(|s| s.confidence_score >= config.min_confidence_threshold)
             .collect();
 
@@ -1340,7 +1389,10 @@ mod tests {
                 version: 1,
                 content: "// test".to_string(),
             },
-            cursor_position: Position { line: 5, character: 10 },
+            cursor_position: Position {
+                line: 5,
+                character: 10,
+            },
             project_context: rust_ai_ide_shared_types::ProjectContext {
                 workspace: None,
                 project_path: None,
@@ -1376,5 +1428,4 @@ mod tests {
         assert!(security.input_sanitization);
         assert!(security.trusted_sources.contains(&"built-in".to_string()));
     }
-}
 }

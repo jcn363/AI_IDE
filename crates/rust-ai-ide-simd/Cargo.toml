@@ -5,8 +5,8 @@ version = { workspace = true }
 edition = { workspace = true }
 
 [dependencies]
-# SIMD operations and intrinsics
-packed_simd = { version = "0.3.8", features = ["into_bits"] }
+# SIMD operations and intrinsics - std::simd is stable since Rust 1.27
+# No external dependency needed for portable SIMD
 
 # Async runtime and concurrency primitives
 tokio = { workspace = true, features = ["full"] }

@@ -27,42 +27,6 @@ pub mod ai_integration_bridge;
 
 /// Re-exports of key types and functions for convenient access
 pub use coordinator::MultiRealityCoordinator;
-pub use types::RealityMode;
-//! enabling immersive development workflows in AR/VR environments while maintaining compatibility
-//! with traditional desktop IDE patterns and enterprise-grade security requirements.
-//!
-//! ## Architecture Overview
-//!
-//! The system is built around the `MultiRealityCoordinator` which serves as the central hub
-//! for coordinating AR/VR devices, immersive UI interactions, AI assistance, and collaborative
-//! development sessions. The architecture is designed to be:
-//!
-//! - **Modular**: Each component can be used independently or as part of the full ecosystem
-//! - **Asynchronous**: All operations support async execution with proper concurrency controls
-//! - **Secure**: Enterprise-grade security with encryption, access controls, and audit trails
-//! - **Performance-optimized**: Adaptive quality scaling and background processing capabilities
-
-#![warn(missing_docs)]
-
-/// Core types and data structures for multi-reality coordination
-pub mod types;
-/// MultiRealityCoordinator - Central coordination hub for AR/VR functionality
-pub mod coordinator;
-/// AR engine interface for Augmented Reality features
-pub mod ar_engine;
-/// VR engine interface for Virtual Reality features
-pub mod vr_engine;
-/// Collaboration manager for multi-user VR/AR sessions
-pub mod collaboration_manager;
-/// Device orchestrator for cross-reality coordination
-pub mod device_orchestrator;
-/// Immersive UI controller for spatial interactions
-pub mod immersive_ui_controller;
-/// AI integration bridge for spatial AI assistance
-pub mod ai_integration_bridge;
-
-/// Re-exports of key types and functions for convenient access
-pub use coordinator::MultiRealityCoordinator;
 pub use types::{RealityMode, MultiRealityConfig, SpatialPosition, ImmeriveEvent};
 pub use ar_engine::ArEngine;
 pub use vr_engine::VrEngine;

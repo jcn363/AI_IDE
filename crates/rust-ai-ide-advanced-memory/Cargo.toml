@@ -5,12 +5,6 @@ version = { workspace = true }
 edition = { workspace = true }
 publish = { workspace = true }
 
-# Tauri integration for FFI bindings
-[[bin]]
-name = "rust-ai-ide-advanced-memory-bin"
-readme = { workspace = true }
-path = "src/main.rs"
-
 [lib]
 name = "rust_ai_ide_advanced_memory"
 readme = { workspace = true }
@@ -81,15 +75,3 @@ box_vec = "warn"
 large_stack_arrays = "warn"
 rc_buffer = "warn"
 vec_box = "warn"
-
-[[example]]
-name = "advanced_memory_usage"
-readme = { workspace = true }
-path = "examples/advanced_memory_usage.rs"
-required-features = []
-
-[[example]]
-name = "memory_profiling"
-readme = { workspace = true }
-path = "examples/memory_profiling.rs"
-required-features = ["benchmarking"]
