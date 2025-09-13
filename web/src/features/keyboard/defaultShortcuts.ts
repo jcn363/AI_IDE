@@ -8,7 +8,10 @@ export const DEFAULT_KEY_COMBINATIONS: Record<string, KeyCombination[]> = {
   'editor.find-in-files': [{ key: 'f', ctrlKey: true, shiftKey: true }],
   'editor.replace-in-files': [{ key: 'h', ctrlKey: true, shiftKey: true }],
   'editor.undo': [{ key: 'z', ctrlKey: true }],
-  'editor.redo': [{ key: 'y', ctrlKey: true }, { key: 'z', ctrlKey: true, shiftKey: true }],
+  'editor.redo': [
+    { key: 'y', ctrlKey: true },
+    { key: 'z', ctrlKey: true, shiftKey: true },
+  ],
   'editor.copy': [{ key: 'c', ctrlKey: true }],
   'editor.cut': [{ key: 'x', ctrlKey: true }],
   'editor.paste': [{ key: 'v', ctrlKey: true }],

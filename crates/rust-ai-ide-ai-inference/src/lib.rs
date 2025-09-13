@@ -40,9 +40,7 @@ pub mod unloading_policies;
 pub use types::*;
 
 // Re-exports from types module
-pub use types::{
-    EditOperation, SecurityError, SecurityResult,
-};
+pub use types::{EditOperation, SecurityError, SecurityResult};
 
 // Re-export commonly used items for convenience
 pub use inference::{
@@ -52,8 +50,8 @@ pub use loaders::{LoaderConfig, LoaderFactory, ModelLoader as LoaderTrait, Resou
 pub use model_loader::{
     ModelCapabilities, ModelHandle, ModelLoadConfig, ModelLoadError, ModelLoader, ModelLoaderTrait,
 };
+pub use natural_language_to_code::{NLToCodeConverter, NLToCodeInput, NLToCodeResult};
 pub use predictive_completion::{
     CodingStyle, CompletionContext, CompletionSuggestion, CompletionType, ContextRelevance,
     SecurityContext, SymbolContext, SymbolInfo, UserProfile,
 };
-pub use natural_language_to_code::{NLToCodeConverter, NLToCodeInput, NLToCodeResult};

@@ -3,23 +3,23 @@
 //! This crate provides comprehensive performance monitoring with real-time metrics,
 //! cross-platform support, and integration with the EventBus for distributed events.
 
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
+use sysinfo::{CpuExt, ProcessExt, System, SystemExt};
 use tokio::sync::{Mutex, RwLock};
 use tokio::time;
-use serde::{Deserialize, Serialize};
-use sysinfo::{System, SystemExt, ProcessExt, CpuExt};
-use chrono::{DateTime, Utc};
 
+pub mod battery;
 pub mod cross_platform;
 pub mod memory;
-pub mod battery;
 pub mod processing;
 
+pub use battery::*;
 pub use cross_platform::*;
 pub use memory::*;
-pub use battery::*;
 pub use processing::*;
 
 /// Performance metrics collection
@@ -119,7 +119,8 @@ impl PerformanceMonitor {
         let uptime = system.uptime();
 
         // CPU metrics
-        let cpu = system.cpus().iter().map(|cpu| cpu.cpu_usage()).sum::<f64>() / system.cpus().len() as f64;
+        let cpu = system.cpus().iter().map(|cpu| cpu.cpu_usage()).sum::<f64>()
+            / system.cpus().len() as f64;
         let cpus = system.cpus();
 
         // Memory metrics
@@ -136,7 +137,12 @@ impl PerformanceMonitor {
         let network_tx_mb = 0.0;
 
         Ok(SystemMetrics {
-            cpu_usage_percent: cpus.iter().next().unwrap_or(&sysinfo::Cpu::new()).cpu_usage().into(),
+            cpu_usage_percent: cpus
+                .iter()
+                .next()
+                .unwrap_or(&sysinfo::Cpu::new())
+                .cpu_usage()
+                .into(),
             memory_used_mb,
             memory_total_mb,
             memory_usage_percent,
@@ -152,7 +158,10 @@ impl PerformanceMonitor {
     }
 
     /// Get process-specific metrics
-    pub async fn collect_process_metrics(&self, pid: u32) -> Result<Option<ProcessMetrics>, String> {
+    pub async fn collect_process_metrics(
+        &self,
+        pid: u32,
+    ) -> Result<Option<ProcessMetrics>, String> {
         let system = self.system.read().await;
 
         if let Some(process) = system.process(pid) {
@@ -177,8 +186,10 @@ impl PerformanceMonitor {
     /// Check if system is under heavy load
     pub async fn is_heavy_load(&self) -> Result<bool, String> {
         let metrics = self.collect_metrics().await?;
-        Ok(metrics.cpu_usage_percent > self.thresholds.high_cpu_threshold ||
-            metrics.memory_usage_percent > self.thresholds.high_memory_threshold)
+        Ok(
+            metrics.cpu_usage_percent > self.thresholds.high_cpu_threshold
+                || metrics.memory_usage_percent > self.thresholds.high_memory_threshold,
+        )
     }
 
     /// Get performance history
@@ -186,7 +197,8 @@ impl PerformanceMonitor {
         let history = self.history.read().await;
         let cutoff = Utc::now() - duration;
 
-        history.iter()
+        history
+            .iter()
             .filter(|(timestamp, _)| timestamp >= &cutoff)
             .cloned()
             .collect()
@@ -230,7 +242,10 @@ impl PerformanceMonitor {
         }
 
         if metrics.memory_usage_percent > self.thresholds.high_memory_threshold {
-            println!("ALERT: High memory usage: {:.1}%", metrics.memory_usage_percent);
+            println!(
+                "ALERT: High memory usage: {:.1}%",
+                metrics.memory_usage_percent
+            );
         }
 
         Ok(())
@@ -260,7 +275,8 @@ impl PerformanceMonitor {
         }
 
         // Clean up old metrics for processes that no longer exist
-        let existing_pids: std::collections::HashSet<u32> = system.processes().keys().map(|p| p.as_u32()).collect();
+        let existing_pids: std::collections::HashSet<u32> =
+            system.processes().keys().map(|p| p.as_u32()).collect();
         process_metrics.retain(|pid, _| existing_pids.contains(pid));
 
         Ok(())
@@ -307,7 +323,11 @@ mod tests {
     async fn test_collect_metrics() {
         let monitor = PerformanceMonitor::new();
         let result = monitor.collect_metrics().await;
-        assert!(result.is_ok(), "Failed to collect metrics: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "Failed to collect metrics: {:?}",
+            result.err()
+        );
     }
 
     #[tokio::test]

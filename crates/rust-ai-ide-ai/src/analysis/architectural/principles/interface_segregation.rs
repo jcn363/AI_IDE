@@ -121,7 +121,7 @@ mod tests {
                 fn method10(&self);
                 fn method11(&self); // This should trigger the violation
             }
-            
+
             trait TooManyParameters {
                 fn too_many_params(&self, a: i32, b: i32, c: i32, d: i32, e: i32, f: i32);
             }

@@ -3,27 +3,26 @@
 //! This crate provides comprehensive code style consistency checking and architecture pattern suggestions,
 //! ensuring that code follows consistent formatting and design guidelines.
 
-pub mod style;
-pub mod style_rules;
 pub mod formatter;
 pub mod pattern_suggestions;
+pub mod style;
+pub mod style_rules;
 
 // Re-exports
-pub use style::*;
-pub use style_rules::*;
 pub use formatter::*;
 pub use pattern_suggestions::*;
+pub use style::*;
+pub use style_rules::*;
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
+use rust_ai_ide_ai_analysis::{
+    ArchitectureSuggestion, CodeMetrics, CodeSmellType, Location, Severity, Suggestion,
+};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
-use rust_ai_ide_ai_analysis::{
-    CodeMetrics, Suggestion, Location, Severity, ArchitectureSuggestion,
-    CodeSmellType
-};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 /// Main code style checker
 #[derive(Clone)]
@@ -133,7 +132,9 @@ impl CodeStyleChecker {
             StyleRule::Indentation => Ok(self.check_indentation(content, file_path)),
             StyleRule::LineLength => Ok(self.check_line_length(content, file_path)),
             StyleRule::CommentStyle => Ok(self.check_comment_style(content, file_path)),
-            StyleRule::FunctionLength => Ok(self.check_function_length_ast(content, file_path).await?),
+            StyleRule::FunctionLength => {
+                Ok(self.check_function_length_ast(content, file_path).await?)
+            }
             StyleRule::PackageStructure => Ok(self.check_package_structure(content, file_path)),
         }
     }
@@ -153,7 +154,10 @@ impl CodeStyleChecker {
                         issues.push(StyleIssue {
                             id: Uuid::new_v4(),
                             rule: StyleRule::NamingConvention,
-                            message: format!("Constant '{}' should be in SCREAMING_SNAKE_CASE", var_name),
+                            message: format!(
+                                "Constant '{}' should be in SCREAMING_SNAKE_CASE",
+                                var_name
+                            ),
                             location: Location {
                                 file: file_path.to_string(),
                                 line: line_no + 1,
@@ -182,7 +186,9 @@ impl CodeStyleChecker {
                                 offset: line_no,
                             },
                             severity: Severity::Info,
-                            suggestion: Some("Use snake_case for variables and functions".to_string()),
+                            suggestion: Some(
+                                "Use snake_case for variables and functions".to_string(),
+                            ),
                         });
                     }
                 }
@@ -241,11 +247,16 @@ impl CodeStyleChecker {
         const MAX_LINE_LENGTH: usize = 100;
 
         for (line_no, line) in content.lines().enumerate() {
-            if line.len() > MAX_LINE_LENGTH && !line.contains("/// ") { // Skip doc comments
+            if line.len() > MAX_LINE_LENGTH && !line.contains("/// ") {
+                // Skip doc comments
                 issues.push(StyleIssue {
                     id: Uuid::new_v4(),
                     rule: StyleRule::LineLength,
-                    message: format!("Line too long ({} characters, max {})", line.len(), MAX_LINE_LENGTH),
+                    message: format!(
+                        "Line too long ({} characters, max {})",
+                        line.len(),
+                        MAX_LINE_LENGTH
+                    ),
                     location: Location {
                         file: file_path.to_string(),
                         line: line_no + 1,
@@ -303,9 +314,13 @@ impl CodeStyleChecker {
         issues
     }
 
-    async fn check_function_length_ast(&self, content: &str, file_path: &str) -> Result<Vec<StyleIssue>, StyleCheckError> {
-        let ast = syn::parse_file(content)
-            .map_err(|e| StyleCheckError::ParseError(e.to_string()))?;
+    async fn check_function_length_ast(
+        &self,
+        content: &str,
+        file_path: &str,
+    ) -> Result<Vec<StyleIssue>, StyleCheckError> {
+        let ast =
+            syn::parse_file(content).map_err(|e| StyleCheckError::ParseError(e.to_string()))?;
 
         let mut issues = Vec::new();
         let mut visitor = FunctionLengthVisitor {
@@ -350,25 +365,39 @@ impl CodeStyleChecker {
             code_lines,
             comment_lines,
             blank_lines: total_lines - code_lines,
-            comment_ratio: if code_lines > 0 { comment_lines as f64 / code_lines as f64 } else { 0.0 },
+            comment_ratio: if code_lines > 0 {
+                comment_lines as f64 / code_lines as f64
+            } else {
+                0.0
+            },
         })
     }
 
-    async fn generate_style_suggestions(&self, issues: &[StyleIssue]) -> Result<Vec<Suggestion>, StyleCheckError> {
+    async fn generate_style_suggestions(
+        &self,
+        issues: &[StyleIssue],
+    ) -> Result<Vec<Suggestion>, StyleCheckError> {
         let mut suggestions = Vec::new();
 
         // Group issues by type
         let mut rule_groups = std::collections::HashMap::new();
         for issue in issues {
-            rule_groups.entry(&issue.rule).or_insert_with(Vec::new).push(issue);
+            rule_groups
+                .entry(&issue.rule)
+                .or_insert_with(Vec::new)
+                .push(issue);
         }
 
         for (rule, rule_issues) in rule_groups {
-            if rule_issues.len() > 3 { // If there are many issues of the same rule
+            if rule_issues.len() > 3 {
+                // If there are many issues of the same rule
                 suggestions.push(Suggestion {
                     id: Uuid::new_v4(),
                     title: format!("Multiple {} issues found", rule.rule_name()),
-                    description: format!("Found {} style issues that can be auto-fixed", rule_issues.len()),
+                    description: format!(
+                        "Found {} style issues that can be auto-fixed",
+                        rule_issues.len()
+                    ),
                     location: Some(rule_issues[0].location.clone()),
                     actions: vec![],
                     priority: rust_ai_ide_ai_analysis::Priority::Medium,
@@ -399,7 +428,8 @@ impl CodeStyleChecker {
         for pattern in &patterns {
             if let Some(start) = line.find(pattern) {
                 let after_pattern = &line[start + pattern.len()..];
-                if let Some(end) = after_pattern.find(|c: char| !(c.is_alphanumeric() || c == '_')) {
+                if let Some(end) = after_pattern.find(|c: char| !(c.is_alphanumeric() || c == '_'))
+                {
                     return Some(after_pattern[..end].trim().to_string());
                 }
             }
@@ -411,11 +441,17 @@ impl CodeStyleChecker {
         if input.is_empty() || !input.chars().next().unwrap().is_lowercase() {
             return false;
         }
-        !input.contains('_') || input.chars().all(|c| c.is_lowercase() || c.is_alphabetic() || c == '_')
+        !input.contains('_')
+            || input
+                .chars()
+                .all(|c| c.is_lowercase() || c.is_alphabetic() || c == '_')
     }
 
     fn is_screaming_snake_case(&self, input: &str) -> bool {
-        !input.is_empty() && input.chars().all(|c| c.is_uppercase() || c.is_numeric() || c == '_')
+        !input.is_empty()
+            && input
+                .chars()
+                .all(|c| c.is_uppercase() || c.is_numeric() || c == '_')
     }
 }
 
@@ -436,7 +472,10 @@ mod tests {
         let result = checker.check_style(code, "test.rs").await.unwrap();
 
         // Should find naming convention issue
-        assert!(result.issues.iter().any(|i| matches!(i.rule, StyleRule::NamingConvention)));
+        assert!(result
+            .issues
+            .iter()
+            .any(|i| matches!(i.rule, StyleRule::NamingConvention)));
     }
 
     #[tokio::test]
@@ -445,6 +484,9 @@ mod tests {
         let long_line = "let very_long_variable_name_that_exceeds_the_maximum_allowed_line_length_and_should_be_flagged_by_the_style_checker = 42;";
         let result = checker.check_style(long_line, "test.rs").await.unwrap();
 
-        assert!(result.issues.iter().any(|i| matches!(i.rule, StyleRule::LineLength)));
+        assert!(result
+            .issues
+            .iter()
+            .any(|i| matches!(i.rule, StyleRule::LineLength)));
     }
 }

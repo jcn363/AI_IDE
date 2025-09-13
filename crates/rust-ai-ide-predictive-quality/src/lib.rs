@@ -35,30 +35,30 @@
 //! - Performance regression prevention with monitoring integration
 
 // Core async and concurrency
+use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
-use async_trait::async_trait;
 
 // ML infrastructure integration
 use rust_ai_ide_ai_inference::{InferenceEngine, ModelLoadConfig};
-use rust_ai_ide_ai_quantization::{QuantizationEngine, GGUFModel};
 use rust_ai_ide_ai_learning::LearningEngine;
+use rust_ai_ide_ai_quantization::{GGUFModel, QuantizationEngine};
 
 // Performance monitoring integration (Phase 1)
-use rust_ai_ide_performance_monitoring::{PerformanceMonitor, MetricsCollector};
+use rust_ai_ide_performance_monitoring::{MetricsCollector, PerformanceMonitor};
 
 // Security foundation (Phase 1)
-use rust_ai_ide_security::{SecurityEngine, SecurityConfig, AuditLog, audit_logger};
+use rust_ai_ide_security::{audit_logger, AuditLog, SecurityConfig, SecurityEngine};
 
 // Types and serialization
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 // Caching infrastructure
 use moka::future::Cache;
 
 // Statistical analysis
-use statrs::statistics::{Distribution, Continuous};
+use statrs::statistics::{Continuous, Distribution};
 use std::collections::HashMap;
 
 /// Main orchestration engine for predictive quality intelligence
@@ -109,30 +109,31 @@ impl PredictiveQualityEngine {
         performance_monitor: Arc<PerformanceMonitor>,
     ) -> Self {
         // Initialize sub-components with proper thread safety
-        let vulnerability_predictor = Arc::new(
-            MLVulnerabilityPredictor::new(Arc::clone(&inference_engine)).await
-        );
+        let vulnerability_predictor =
+            Arc::new(MLVulnerabilityPredictor::new(Arc::clone(&inference_engine)).await);
 
-        let dependency_analyzer = Arc::new(
-            CrossFileDependencyAnalyzer::new(Arc::clone(&learning_engine)).await
-        );
+        let dependency_analyzer =
+            Arc::new(CrossFileDependencyAnalyzer::new(Arc::clone(&learning_engine)).await);
 
         let model_service = Arc::new(
-            PredictiveModelService::new(Arc::clone(&inference_engine), Arc::clone(&quantization_engine)).await
+            PredictiveModelService::new(
+                Arc::clone(&inference_engine),
+                Arc::clone(&quantization_engine),
+            )
+            .await,
         );
 
         let health_scorer = Arc::new(
-            CodeHealthScorer::new(
-                Arc::clone(&model_service),
-                Arc::clone(&performance_monitor)
-            ).await
+            CodeHealthScorer::new(Arc::clone(&model_service), Arc::clone(&performance_monitor))
+                .await,
         );
 
         let maintenance_forecaster = Arc::new(
             MaintenanceForecaster::new(
                 Arc::clone(&dependency_analyzer),
-                Arc::clone(&health_scorer)
-            ).await
+                Arc::clone(&health_scorer),
+            )
+            .await,
         );
 
         let cache: Cache<String, serde_json::Value> = Cache::builder()
@@ -162,8 +163,9 @@ impl PredictiveQualityEngine {
             serde_json::json!({
                 "analysis_files": analysis.files.len(),
                 "timestamp": Utc::now()
-            })
-        ).await;
+            }),
+        )
+        .await;
 
         // Check cache first
         let cache_key = format!("vul_pred_{}", analysis.cache_hash());
@@ -200,7 +202,10 @@ impl PredictiveQualityEngine {
         // Ensure performance requirements (<300ms)
         let duration = start_time.elapsed();
         if duration > std::time::Duration::from_millis(300) {
-            log::warn!("Health scoring took {}ms - exceeds 300ms requirement", duration.as_millis());
+            log::warn!(
+                "Health scoring took {}ms - exceeds 300ms requirement",
+                duration.as_millis()
+            );
         }
 
         Ok(result)
@@ -232,21 +237,21 @@ pub enum PredictiveError {
 }
 
 // Module declarations
-pub mod vulnerability_predictor;
-pub mod maintenance_forecaster;
 pub mod code_health_scorer;
 pub mod dependency_analyzer;
+pub mod maintenance_forecaster;
+pub mod metrics;
 pub mod model_service;
 pub mod types;
-pub mod metrics;
+pub mod vulnerability_predictor;
 
 // Re-exports for public API
-pub use vulnerability_predictor::MLVulnerabilityPredictor;
-pub use maintenance_forecaster::MaintenanceForecaster;
 pub use code_health_scorer::CodeHealthScorer;
 pub use dependency_analyzer::CrossFileDependencyAnalyzer;
+pub use maintenance_forecaster::MaintenanceForecaster;
 pub use model_service::PredictiveModelService;
 pub use types::*;
+pub use vulnerability_predictor::MLVulnerabilityPredictor;
 
 // Test modules (when built with test features)
 #[cfg(test)]
@@ -275,7 +280,9 @@ lazy_static::lazy_static! {
 #[macro_export]
 macro_rules! track_performance {
     ($operation:expr, $future:expr) => {{
-        let timer = PREDICTION_METRICS.with_label_values(&[$operation]).start_timer();
+        let timer = PREDICTION_METRICS
+            .with_label_values(&[$operation])
+            .start_timer();
         let result = $future.await;
         timer.observe_duration();
         result

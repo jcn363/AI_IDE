@@ -49,7 +49,13 @@ interface FixSuggestion {
   description: string;
   errorId: string;
   priority: 'low' | 'medium' | 'high' | 'critical';
-  fixType: 'quick-fix' | 'refactor' | 'add-missing' | 'remove-unused' | 'type-conversion' | 'pattern-application';
+  fixType:
+    | 'quick-fix'
+    | 'refactor'
+    | 'add-missing'
+    | 'remove-unused'
+    | 'type-conversion'
+    | 'pattern-application';
   changes: CodeChange[];
   confidence: number;
   estimatedEffort: 'trivial' | 'low' | 'medium' | 'high';
@@ -107,15 +113,15 @@ const matcher = new ErrorPatternMatcher();
 
 // Match an error message
 const results = matcher.matchError(
-  "error: unused variable `x`", // error message
-  "let x = 42;",                 // context
-  "rust"                         // language
+  'error: unused variable `x`', // error message
+  'let x = 42;', // context
+  'rust' // language
 );
 
 // Generate suggested fixes
-results.forEach(result => {
+results.forEach((result) => {
   console.log(`Pattern matched with ${result.confidence}% confidence`);
-  result.suggestedFixes.forEach(fix => {
+  result.suggestedFixes.forEach((fix) => {
     console.log(`Fix: ${fix.title} (${fix.confidence}% confidence)`);
   });
 });
@@ -248,15 +254,15 @@ interface LearnedPattern {
 
 ```typescript
 interface ErrorResolutionConfig {
-  confidenceThreshold: number;      // Minimum confidence before suggesting fixes
-  enableAI: boolean;               // Enable AI-powered suggestions
-  enableLearning: boolean;         // Enable learning from applied fixes
-  maxSuggestions: number;          // Max number of suggestions per error
-  includeDocumentation: boolean;   // Include documentation links
-  includeExamples: boolean;        // Include example code
-  preferredLanguages: string[];    // Preferred languages for suggestions
-  excludedPatterns: string[];      // Patterns to ignore
-  riskTolerance: 'low' | 'medium' | 'high';  // Acceptable risk levels
+  confidenceThreshold: number; // Minimum confidence before suggesting fixes
+  enableAI: boolean; // Enable AI-powered suggestions
+  enableLearning: boolean; // Enable learning from applied fixes
+  maxSuggestions: number; // Max number of suggestions per error
+  includeDocumentation: boolean; // Include documentation links
+  includeExamples: boolean; // Include example code
+  preferredLanguages: string[]; // Preferred languages for suggestions
+  excludedPatterns: string[]; // Patterns to ignore
+  riskTolerance: 'low' | 'medium' | 'high'; // Acceptable risk levels
 }
 ```
 
@@ -268,10 +274,10 @@ interface ErrorResolutionConfig {
 const matcher = new ErrorPatternMatcher();
 
 // Match unused variable error
-const results = matcher.matchError("unused variable `result`", "let result = 5;", "rust");
+const results = matcher.matchError('unused variable `result`', 'let result = 5;', 'rust');
 
 // Results contain fix suggestions with confidence scores
-results.forEach(result => {
+results.forEach((result) => {
   const topFix = result.suggestedFixes[0];
   if (topFix.confidence > 0.7) {
     console.log(`Apply: ${topFix.title}`);
@@ -292,7 +298,7 @@ const customPattern: ErrorPattern = {
   frequency: 0,
   lastSeen: new Date().toISOString(),
   confidence: 0.9,
-  language: 'rust'
+  language: 'rust',
 };
 
 matcher.registerPattern(customPattern);

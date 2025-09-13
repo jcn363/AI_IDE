@@ -19,22 +19,22 @@
 //! multiple specialized components working together to provide comprehensive
 //! memory management for large-scale development workflows.
 
-pub mod virtual_memory;
-pub mod memory_mapped_operations;
 pub mod garbage_collection;
 pub mod memory_leak_detection;
+pub mod memory_mapped_operations;
 pub mod resource_monitoring;
+pub mod virtual_memory;
 
 // Re-export the main components for easy access
-pub use virtual_memory::VirtualMemoryInterface;
-pub use memory_mapped_operations::MemoryMappedOperations;
 pub use garbage_collection::GarbageCollectionCoordinator;
 pub use memory_leak_detection::MemoryLeakDetector;
+pub use memory_mapped_operations::MemoryMappedOperations;
 pub use resource_monitoring::ResourceMonitoringIntegration;
+pub use virtual_memory::VirtualMemoryInterface;
 
+use rust_ai_ide_errors::IDEError;
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
-use rust_ai_ide_errors::IDEError;
 
 /// Main Advanced Memory Manager orchestrating all memory management components
 pub struct AdvancedMemoryManager {

@@ -23,8 +23,21 @@ import {
   Paper,
   Alert,
 } from '@mui/material';
-import { ExpandMore, ColorLens, FontDownload, BorderStyle, LightMode, DarkMode, Contrast } from '@mui/icons-material';
-import type { ThemeDefinition, ThemeCustomization, ColorPalette, AccessibilityOptions } from '../types';
+import {
+  ExpandMore,
+  ColorLens,
+  FontDownload,
+  BorderStyle,
+  LightMode,
+  DarkMode,
+  Contrast,
+} from '@mui/icons-material';
+import type {
+  ThemeDefinition,
+  ThemeCustomization,
+  ColorPalette,
+  AccessibilityOptions,
+} from '../types';
 import { useTheme } from '../useTheme';
 
 interface ThemeCustomizerProps {
@@ -65,36 +78,39 @@ const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
     setActiveTab(newValue);
   };
 
-  const updateColor = useCallback((path: string, value: string) => {
-    const newTheme = { ...workingTheme };
-    const pathParts = path.split('.');
-    let current: any = newTheme.colors;
+  const updateColor = useCallback(
+    (path: string, value: string) => {
+      const newTheme = { ...workingTheme };
+      const pathParts = path.split('.');
+      let current: any = newTheme.colors;
 
-    for (let i = 0; i < pathParts.length - 1; i++) {
-      if (!current[pathParts[i]]) {
-        current[pathParts[i]] = {};
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        if (!current[pathParts[i]]) {
+          current[pathParts[i]] = {};
+        }
+        current = current[pathParts[i]];
       }
-      current = current[pathParts[i]];
-    }
-    current[pathParts[pathParts.length - 1]] = value;
-    setWorkingTheme(newTheme);
+      current[pathParts[pathParts.length - 1]] = value;
+      setWorkingTheme(newTheme);
 
-    // Update customization
-    const newCustomization = { ...customization };
-    if (!newCustomization.colorOverrides) {
-      newCustomization.colorOverrides = {};
-    }
-    current = newCustomization.colorOverrides;
-
-    for (let i = 0; i < pathParts.length - 1; i++) {
-      if (!current[pathParts[i]]) {
-        current[pathParts[i]] = {};
+      // Update customization
+      const newCustomization = { ...customization };
+      if (!newCustomization.colorOverrides) {
+        newCustomization.colorOverrides = {};
       }
-      current = current[pathParts[i]];
-    }
-    current[pathParts[pathParts.length - 1]] = value;
-    setCustomization(newCustomization);
-  }, [workingTheme, customization]);
+      current = newCustomization.colorOverrides;
+
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        if (!current[pathParts[i]]) {
+          current[pathParts[i]] = {};
+        }
+        current = current[pathParts[i]];
+      }
+      current[pathParts[pathParts.length - 1]] = value;
+      setCustomization(newCustomization);
+    },
+    [workingTheme, customization]
+  );
 
   const batchGeneratePalette = useCallback(() => {
     const baseColor = workingTheme.colors.primary;
@@ -125,7 +141,9 @@ const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
 
   const renderColorPicker = (label: string, path: string, currentValue: string) => (
     <Box sx={{ mb: 2 }}>
-      <Typography variant="subtitle2" sx={{ mb: 1 }}>{label}</Typography>
+      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+        {label}
+      </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <input
           type="color"
@@ -170,13 +188,15 @@ const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
                 <Typography variant="subtitle1" sx={{ mb: 1, textTransform: 'capitalize' }}>
                   {key.replace(/([A-Z])/g, ' $1').toLowerCase()}
                 </Typography>
-                {Object.entries(value).map(([subKey, subValue]) => (
-                  typeof subValue === 'string' ? renderColorPicker(
-                    subKey.replace(/([A-Z])/g, ' $1').toLowerCase(),
-                    `${section}.${key}.${subKey}`,
-                    subValue
-                  ) : null
-                ))}
+                {Object.entries(value).map(([subKey, subValue]) =>
+                  typeof subValue === 'string'
+                    ? renderColorPicker(
+                        subKey.replace(/([A-Z])/g, ' $1').toLowerCase(),
+                        `${section}.${key}.${subKey}`,
+                        subValue
+                      )
+                    : null
+                )}
               </Box>
             );
           }
@@ -191,9 +211,7 @@ const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <ColorLens />
-          <Typography variant="h6">
-            Customize Theme: {theme.name}
-          </Typography>
+          <Typography variant="h6">Customize Theme: {theme.name}</Typography>
         </Box>
       </DialogTitle>
 
@@ -209,7 +227,8 @@ const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
 
         <TabPanel value={activeTab} index={0}>
           <Alert severity="info" sx={{ mb: 2 }}>
-            Changes here affect the current theme's color palette. Use the "Generate Palette" button to auto-generate harmonious colors from your primary color.
+            Changes here affect the current theme's color palette. Use the "Generate Palette" button
+            to auto-generate harmonious colors from your primary color.
           </Alert>
 
           <Button

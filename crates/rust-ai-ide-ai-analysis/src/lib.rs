@@ -11,16 +11,22 @@ pub mod analysis;
 pub mod architecture_analyzer;
 pub mod code_quality_checker;
 pub mod error_handling;
-pub mod performance_analyzer;
-pub mod security_scanner;
 pub mod multi_ast;
 pub mod pattern_recognition;
+pub mod performance_analyzer;
+pub mod security_scanner;
 
 // Re-exports
-pub use analysis::types::{AnalysisResult, Severity, Location, Suggestion, SuggestionAction, Priority, CodeChange, SecurityIssue, SecurityCategory, PerformanceHint, PerformanceImpact, CodeSmell, CodeSmellType, CodeMetrics, ArchitectureSuggestion};
+pub use analysis::types::{
+    AnalysisResult, ArchitectureSuggestion, CodeChange, CodeMetrics, CodeSmell, CodeSmellType,
+    Location, PerformanceHint, PerformanceImpact, Priority, SecurityCategory, SecurityIssue,
+    Severity, Suggestion, SuggestionAction,
+};
 pub use architecture_analyzer::*;
 pub use code_quality_checker::*;
-pub use error_handling::{AnalysisError, AnalysisResult as ErrorResult, RecoveryStrategy, AnalysisConfig};
+pub use error_handling::{
+    AnalysisConfig, AnalysisError, AnalysisResult as ErrorResult, RecoveryStrategy,
+};
 pub use performance_analyzer::*;
 pub use security_scanner::*;
 
@@ -114,10 +120,7 @@ impl AdvancedCodeAnalyzer {
     }
 
     /// Get analysis results for a specific analysis
-    pub async fn get_analysis_result(
-        &self,
-        analysis_id: &Uuid,
-    ) -> Option<AnalysisResult> {
+    pub async fn get_analysis_result(&self, analysis_id: &Uuid) -> Option<AnalysisResult> {
         let store = self.analysis_store.read().await;
         store.get(analysis_id).cloned()
     }

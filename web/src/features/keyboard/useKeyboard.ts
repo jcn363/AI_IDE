@@ -79,27 +79,39 @@ export function useKeyboard() {
     keyboardService.unregisterShortcut(actionId);
   }, []);
 
-  const setShortcutKeys = useCallback((actionId: string, keys: KeyCombination[]) => {
-    dispatch(setShortcut({ actionId, keys }));
-  }, [dispatch]);
+  const setShortcutKeys = useCallback(
+    (actionId: string, keys: KeyCombination[]) => {
+      dispatch(setShortcut({ actionId, keys }));
+    },
+    [dispatch]
+  );
 
-  const clearShortcutKeys = useCallback((actionId: string) => {
-    dispatch(clearShortcut(actionId));
-  }, [dispatch]);
+  const clearShortcutKeys = useCallback(
+    (actionId: string) => {
+      dispatch(clearShortcut(actionId));
+    },
+    [dispatch]
+  );
 
-  const startShortcutRecording = useCallback((actionId: string) => {
-    dispatch(startRecording(actionId));
-  }, [dispatch]);
+  const startShortcutRecording = useCallback(
+    (actionId: string) => {
+      dispatch(startRecording(actionId));
+    },
+    [dispatch]
+  );
 
   const stopShortcutRecording = useCallback(() => {
     dispatch(stopRecording());
   }, [dispatch]);
 
-  const switchToProfile = useCallback((profileId: string) => {
-    keyboardService.switchProfile(profileId);
-    // Reload profiles to get updated state
-    dispatch(loadProfiles());
-  }, [dispatch]);
+  const switchToProfile = useCallback(
+    (profileId: string) => {
+      keyboardService.switchProfile(profileId);
+      // Reload profiles to get updated state
+      dispatch(loadProfiles());
+    },
+    [dispatch]
+  );
 
   const detectShortcutConflicts = useCallback(() => {
     return keyboardService.detectConflicts();

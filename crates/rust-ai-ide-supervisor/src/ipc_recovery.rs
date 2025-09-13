@@ -1,10 +1,10 @@
 //! IPC Recovery System - Channel health monitoring and automatic reconnection
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{Mutex, mpsc, oneshot};
-use tokio::time::{Duration, timeout, interval};
-use serde::{Serialize, Deserialize};
+use tokio::sync::{mpsc, oneshot, Mutex};
+use tokio::time::{interval, timeout, Duration};
 
 use crate::error::{SupervisorError, SupervisorResult};
 use crate::types::*;
@@ -85,7 +85,10 @@ impl IpcMonitor {
         let mut channels = self.channels.lock().await;
 
         if channels.contains_key(&channel_id) {
-            return Err(SupervisorError::validation_error("channel_id", "Channel already registered"));
+            return Err(SupervisorError::validation_error(
+                "channel_id",
+                "Channel already registered",
+            ));
         }
 
         let (tx, rx) = mpsc::channel(self.recovery_config.message_buffer_size);
@@ -117,10 +120,15 @@ impl IpcMonitor {
     }
 
     /// Send message through a channel
-    pub async fn send_message(&self, channel_id: &ChannelId, message: IpcMessage) -> SupervisorResult<()> {
+    pub async fn send_message(
+        &self,
+        channel_id: &ChannelId,
+        message: IpcMessage,
+    ) -> SupervisorResult<()> {
         let mut channels = self.channels.lock().await;
 
-        let state = channels.get_mut(channel_id)
+        let state = channels
+            .get_mut(channel_id)
             .ok_or_else(|| SupervisorError::validation_error("channel_id", "Channel not found"))?;
 
         if let Some(tx) = &state.tx {
@@ -138,7 +146,7 @@ impl IpcMonitor {
                     state.health.healthy = false;
                     Err(SupervisorError::ipc_recovery_error(
                         channel_id,
-                        "Channel buffer full, message buffered for retry"
+                        "Channel buffer full, message buffered for retry",
                     ))
                 }
                 Err(mpsc::error::TrySendError::Closed(msg)) => {
@@ -148,20 +156,28 @@ impl IpcMonitor {
                     self.trigger_channel_recovery(channel_id).await?;
                     Err(SupervisorError::ipc_recovery_error(
                         channel_id,
-                        "Channel closed, buffering message for recovery"
+                        "Channel closed, buffering message for recovery",
                     ))
                 }
             }
         } else {
-            Err(SupervisorError::ipc_recovery_error(channel_id, "Channel transmitter not available"))
+            Err(SupervisorError::ipc_recovery_error(
+                channel_id,
+                "Channel transmitter not available",
+            ))
         }
     }
 
     /// Receive message from a channel
-    pub async fn receive_message(&self, channel_id: &ChannelId, timeout_duration: Duration) -> SupervisorResult<IpcMessage> {
+    pub async fn receive_message(
+        &self,
+        channel_id: &ChannelId,
+        timeout_duration: Duration,
+    ) -> SupervisorResult<IpcMessage> {
         let mut channels = self.channels.lock().await;
 
-        let state = channels.get_mut(channel_id)
+        let state = channels
+            .get_mut(channel_id)
             .ok_or_else(|| SupervisorError::validation_error("channel_id", "Channel not found"))?;
 
         if let Some(rx) = &mut state.rx {
@@ -173,22 +189,33 @@ impl IpcMonitor {
                 Ok(None) => {
                     // Channel is closed
                     state.health.healthy = false;
-                    Err(SupervisorError::ipc_recovery_error(channel_id, "Channel is closed"))
+                    Err(SupervisorError::ipc_recovery_error(
+                        channel_id,
+                        "Channel is closed",
+                    ))
                 }
-                Err(_) => {
-                    Err(SupervisorError::ipc_recovery_error(channel_id, "Receive timeout"))
-                }
+                Err(_) => Err(SupervisorError::ipc_recovery_error(
+                    channel_id,
+                    "Receive timeout",
+                )),
             }
         } else {
-            Err(SupervisorError::ipc_recovery_error(channel_id, "Channel receiver not available"))
+            Err(SupervisorError::ipc_recovery_error(
+                channel_id,
+                "Channel receiver not available",
+            ))
         }
     }
 
     /// Get channel health status
-    pub async fn get_channel_health(&self, channel_id: &ChannelId) -> SupervisorResult<ChannelHealth> {
+    pub async fn get_channel_health(
+        &self,
+        channel_id: &ChannelId,
+    ) -> SupervisorResult<ChannelHealth> {
         let channels = self.channels.lock().await;
 
-        let state = channels.get(channel_id)
+        let state = channels
+            .get(channel_id)
             .ok_or_else(|| SupervisorError::validation_error("channel_id", "Channel not found"))?;
 
         Ok(state.health.clone())
@@ -197,7 +224,10 @@ impl IpcMonitor {
     /// Get all channel health statuses
     pub async fn get_all_channel_health(&self) -> Vec<ChannelHealth> {
         let channels = self.channels.lock().await;
-        channels.values().map(|state| state.health.clone()).collect()
+        channels
+            .values()
+            .map(|state| state.health.clone())
+            .collect()
     }
 
     /// Manually trigger channel recovery
@@ -232,7 +262,9 @@ impl IpcMonitor {
             loop {
                 interval.tick().await;
 
-                if let Err(e) = Self::perform_channel_monitoring(&channel_id, &channels, &recovery_config).await {
+                if let Err(e) =
+                    Self::perform_channel_monitoring(&channel_id, &channels, &recovery_config).await
+                {
                     log::error!("Channel monitoring failed for {}: {:?}", channel_id, e);
                 }
             }
@@ -248,7 +280,7 @@ impl IpcMonitor {
     async fn perform_channel_monitoring(
         channel_id: &ChannelId,
         channels: &Arc<Mutex<HashMap<ChannelId, ChannelState>>>,
-        config: &RecoveryConfig
+        config: &RecoveryConfig,
     ) -> SupervisorResult<()> {
         let mut channels_guard = channels.lock().await;
 
@@ -264,7 +296,10 @@ impl IpcMonitor {
                 if let Some(tx) = &state.tx {
                     match tx.try_send(buffered_msg.message.clone()) {
                         Ok(()) => {
-                            log::debug!("Retried buffered message successfully for channel {}", channel_id);
+                            log::debug!(
+                                "Retried buffered message successfully for channel {}",
+                                channel_id
+                            );
                             false // Remove from buffer
                         }
                         Err(_) => {
@@ -300,13 +335,14 @@ impl IpcMonitor {
 
         log::warn!("Triggering recovery for channel {}", channel_id);
 
-        let state = channels.get_mut(channel_id)
+        let state = channels
+            .get_mut(channel_id)
             .ok_or_else(|| SupervisorError::validation_error("channel_id", "Channel not found"))?;
 
         if state.reconnect_attempt >= self.recovery_config.max_reconnection_attempts {
             return Err(SupervisorError::ipc_recovery_error(
                 channel_id,
-                "Maximum reconnection attempts exceeded"
+                "Maximum reconnection attempts exceeded",
             ));
         }
 
@@ -315,7 +351,8 @@ impl IpcMonitor {
         state.health.healthy = false;
 
         // Try to reconnect (this would involve channel-specific reconnection logic)
-        self.perform_channel_reconnection(channel_id, &mut *channels).await?;
+        self.perform_channel_reconnection(channel_id, &mut *channels)
+            .await?;
 
         log::info!("Recovery initiated for channel {}", channel_id);
 
@@ -323,7 +360,11 @@ impl IpcMonitor {
     }
 
     /// Perform actual channel reconnection
-    async fn perform_channel_reconnection(&self, channel_id: &ChannelId, channels: &mut HashMap<ChannelId, ChannelState>) -> SupervisorResult<()> {
+    async fn perform_channel_reconnection(
+        &self,
+        channel_id: &ChannelId,
+        channels: &mut HashMap<ChannelId, ChannelState>,
+    ) -> SupervisorResult<()> {
         // This is where specific reconnection logic would go
         // For example:
         // 1. Close existing connections
@@ -332,8 +373,9 @@ impl IpcMonitor {
         // 4. Notify dependent services
 
         let delay = std::cmp::min(
-            self.recovery_config.base_reconnection_delay * (2_u32.pow((channels.get(channel_id).unwrap().reconnect_attempt - 1) as u32)),
-            self.recovery_config.max_reconnection_delay
+            self.recovery_config.base_reconnection_delay
+                * (2_u32.pow((channels.get(channel_id).unwrap().reconnect_attempt - 1) as u32)),
+            self.recovery_config.max_reconnection_delay,
         );
 
         tokio::time::sleep(delay).await;
@@ -355,16 +397,26 @@ impl IpcMonitor {
             }
         }
 
-        log::info!("Channel {} reconnected successfully after {} attempts", channel_id, state.health.reconnection_attempts);
+        log::info!(
+            "Channel {} reconnected successfully after {} attempts",
+            channel_id,
+            state.health.reconnection_attempts
+        );
 
         Ok(())
     }
 
     /// Buffer a message for retry
-    async fn buffer_message(&self, channel_id: &ChannelId, message: IpcMessage, retry_count: usize) -> SupervisorResult<()> {
+    async fn buffer_message(
+        &self,
+        channel_id: &ChannelId,
+        message: IpcMessage,
+        retry_count: usize,
+    ) -> SupervisorResult<()> {
         let mut channels = self.channels.lock().await;
 
-        let state = channels.get_mut(channel_id)
+        let state = channels
+            .get_mut(channel_id)
             .ok_or_else(|| SupervisorError::validation_error("channel_id", "Channel not found"))?;
 
         let buffered_msg = BufferedMessage {
@@ -376,8 +428,12 @@ impl IpcMonitor {
         state.buffer.push(buffered_msg);
 
         if state.buffer.len() > self.recovery_config.message_buffer_size / 2 {
-            log::warn!("Channel {} message buffer is filling up: {}/{}",
-                channel_id, state.buffer.len(), self.recovery_config.message_buffer_size);
+            log::warn!(
+                "Channel {} message buffer is filling up: {}/{}",
+                channel_id,
+                state.buffer.len(),
+                self.recovery_config.message_buffer_size
+            );
         }
 
         Ok(())
@@ -398,15 +454,26 @@ impl RecoveryQueue {
     }
 
     /// Queue a message for recovery
-    pub async fn queue_message(&self, channel_id: &ChannelId, message: IpcMessage) -> SupervisorResult<()> {
+    pub async fn queue_message(
+        &self,
+        channel_id: &ChannelId,
+        message: IpcMessage,
+    ) -> SupervisorResult<()> {
         let mut queues = self.queues.lock().await;
 
         if let Some(tx) = queues.get(channel_id) {
-            tx.send(message).await
-                .map_err(|e| SupervisorError::ipc_recovery_error(channel_id, format!("Queue send failed: {:?}", e)))?;
+            tx.send(message).await.map_err(|e| {
+                SupervisorError::ipc_recovery_error(
+                    channel_id,
+                    format!("Queue send failed: {:?}", e),
+                )
+            })?;
             Ok(())
         } else {
-            Err(SupervisorError::ipc_recovery_error(channel_id, "Queue not found"))
+            Err(SupervisorError::ipc_recovery_error(
+                channel_id,
+                "Queue not found",
+            ))
         }
     }
 
@@ -439,13 +506,19 @@ mod tests {
         let monitor = IpcMonitor::new();
         let channel_id = "test_channel".to_string();
 
-        monitor.register_channel(channel_id.clone()).await.expect("Registration should succeed");
+        monitor
+            .register_channel(channel_id.clone())
+            .await
+            .expect("Registration should succeed");
 
         // Test duplicate registration
         let result = monitor.register_channel(channel_id.clone()).await;
         assert!(result.is_err());
 
-        let health = monitor.get_channel_health(&channel_id).await.expect("Should get health");
+        let health = monitor
+            .get_channel_health(&channel_id)
+            .await
+            .expect("Should get health");
         assert!(health.healthy);
         assert_eq!(health.id, channel_id);
     }
@@ -455,7 +528,10 @@ mod tests {
         let monitor = IpcMonitor::new();
         let channel_id = "test_channel".to_string();
 
-        monitor.register_channel(channel_id.clone()).await.expect("Failed to register channel");
+        monitor
+            .register_channel(channel_id.clone())
+            .await
+            .expect("Failed to register channel");
 
         let message = IpcMessage {
             id: uuid::Uuid::new_v4(),
@@ -466,13 +542,22 @@ mod tests {
         };
 
         // Send should work initially
-        monitor.send_message(&channel_id, message.clone()).await.expect("Send should work");
+        monitor
+            .send_message(&channel_id, message.clone())
+            .await
+            .expect("Send should work");
 
         // Simulate channel failure by triggering recovery
-        monitor.trigger_recovery(&channel_id).await.expect("Recovery should be triggered");
+        monitor
+            .trigger_recovery(&channel_id)
+            .await
+            .expect("Recovery should be triggered");
 
         // Health should reflect recovery state
-        let health = monitor.get_channel_health(&channel_id).await.expect("Should get health");
+        let health = monitor
+            .get_channel_health(&channel_id)
+            .await
+            .expect("Should get health");
         assert!(!health.healthy || health.reconnection_attempts > 0); // Either unhealthy or has attempted recovery
     }
 

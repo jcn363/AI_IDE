@@ -55,9 +55,7 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({
 
       {fullMetadata ? (
         <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
-          <List dense>
-            {renderDependencyTree(fullMetadata.packages)}
-          </List>
+          <List dense>{renderDependencyTree(fullMetadata.packages)}</List>
         </Box>
       ) : (
         <Typography variant="body2" sx={{ mt: 2 }}>

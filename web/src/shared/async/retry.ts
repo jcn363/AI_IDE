@@ -32,7 +32,7 @@ function shouldRetryDefault(error: Error): boolean {
     /not found/i,
   ];
 
-  return !nonRetryableErrors.some(pattern => {
+  return !nonRetryableErrors.some((pattern) => {
     if (typeof pattern === 'string') {
       return error.name === pattern || error.message.includes(pattern);
     }
@@ -136,13 +136,17 @@ export async function retryNetwork<T>(
     initialDelay: 500,
     maxDelay: 5000,
     signal,
-    shouldRetry: shouldRetry || (error => {
-      // Retry network-related errors
-      return error.name === 'TypeError' ||
-             error.name === 'NetworkError' ||
-             error.message.includes('fetch') ||
-             (error.message.includes('5') && error.message.includes('server'));
-    }),
+    shouldRetry:
+      shouldRetry ||
+      ((error) => {
+        // Retry network-related errors
+        return (
+          error.name === 'TypeError' ||
+          error.name === 'NetworkError' ||
+          error.message.includes('fetch') ||
+          (error.message.includes('5') && error.message.includes('server'))
+        );
+      }),
   });
 }
 
@@ -161,11 +165,15 @@ export async function retryRateLimited<T>(
     maxDelay: 10000,
     backoffMultiplier: 1, // Linear
     signal,
-    shouldRetry: shouldRetry || (error => {
-      return error.message.includes('rate limit') ||
-             error.message.includes('429') ||
-             error.message.includes('Too Many Requests');
-    }),
+    shouldRetry:
+      shouldRetry ||
+      ((error) => {
+        return (
+          error.message.includes('rate limit') ||
+          error.message.includes('429') ||
+          error.message.includes('Too Many Requests')
+        );
+      }),
   });
 }
 
@@ -195,9 +203,13 @@ async function cancellableDelay(ms: number, signal?: AbortSignal): Promise<void>
   return new Promise((resolve, reject) => {
     const timeoutId = setTimeout(resolve, ms);
 
-    signal?.addEventListener('abort', () => {
-      clearTimeout(timeoutId);
-      reject(new Error('Delay cancelled'));
-    }, { once: true });
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timeoutId);
+        reject(new Error('Delay cancelled'));
+      },
+      { once: true }
+    );
   });
 }

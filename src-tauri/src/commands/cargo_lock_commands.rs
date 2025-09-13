@@ -1,7 +1,7 @@
+use rust_ai_ide_common::read_file_to_string;
 use serde::Serialize;
 use std::path::PathBuf;
 use toml::Table;
-use rust_ai_ide_common::read_file_to_string;
 
 #[derive(Debug, Serialize)]
 pub struct LockDependency {
@@ -18,24 +18,28 @@ pub async fn parse_cargo_lock(project_path: PathBuf) -> Result<Vec<LockDependenc
         return Err("Cargo.lock not found".to_string());
     }
 
-    let lock_content = read_file_to_string(&lock_path).await
+    let lock_content = read_file_to_string(&lock_path)
+        .await
         .map_err(|e| format!("Failed to read Cargo.lock: {}", e))?;
-    
-    let lock_data: Table = toml::from_str(&lock_content)
-        .map_err(|e| format!("Failed to parse Cargo.lock: {}", e))?;
+
+    let lock_data: Table =
+        toml::from_str(&lock_content).map_err(|e| format!("Failed to parse Cargo.lock: {}", e))?;
 
     let mut dependencies = Vec::new();
-    
+
     // Get direct dependencies from Cargo.toml for reference
-    let direct_deps = get_direct_dependencies(&project_path).await.unwrap_or_default();
-    
+    let direct_deps = get_direct_dependencies(&project_path)
+        .await
+        .unwrap_or_default();
+
     if let Some(packages) = lock_data.get("package").and_then(|v| v.as_array()) {
         for pkg in packages {
             if let (Some(name), Some(version)) = (pkg.get("name"), pkg.get("version")) {
                 let name_str = name.as_str().unwrap_or("").to_string();
                 let version_str = version.as_str().unwrap_or("").to_string();
-                
-                let deps = pkg.get("dependencies")
+
+                let deps = pkg
+                    .get("dependencies")
                     .and_then(|d| d.as_array())
                     .map(|arr| {
                         arr.iter()
@@ -45,7 +49,7 @@ pub async fn parse_cargo_lock(project_path: PathBuf) -> Result<Vec<LockDependenc
                             .collect()
                     })
                     .unwrap_or_default();
-                
+
                 dependencies.push(LockDependency {
                     name: name_str.clone(),
                     version: version_str,
@@ -55,7 +59,7 @@ pub async fn parse_cargo_lock(project_path: PathBuf) -> Result<Vec<LockDependenc
             }
         }
     }
-    
+
     Ok(dependencies)
 }
 
@@ -65,35 +69,42 @@ async fn get_direct_dependencies(project_path: &PathBuf) -> Result<Vec<String>, 
         return Ok(Vec::new());
     }
 
-    let toml_content = read_file_to_string(&toml_path).await
+    let toml_content = read_file_to_string(&toml_path)
+        .await
         .map_err(|e| format!("Failed to read Cargo.toml: {}", e))?;
-    
-    let cargo_toml: Table = toml::from_str(&toml_content)
-        .map_err(|e| format!("Failed to parse Cargo.toml: {}", e))?;
-    
+
+    let cargo_toml: Table =
+        toml::from_str(&toml_content).map_err(|e| format!("Failed to parse Cargo.toml: {}", e))?;
+
     let mut deps = Vec::new();
-    
+
     // Check [dependencies] section
     if let Some(dependencies) = cargo_toml.get("dependencies").and_then(|d| d.as_table()) {
         deps.extend(dependencies.keys().cloned());
     }
-    
+
     // Check [dev-dependencies] section
-    if let Some(dev_deps) = cargo_toml.get("dev-dependencies").and_then(|d| d.as_table()) {
+    if let Some(dev_deps) = cargo_toml
+        .get("dev-dependencies")
+        .and_then(|d| d.as_table())
+    {
         deps.extend(dev_deps.keys().cloned());
     }
-    
+
     // Check [build-dependencies] section
-    if let Some(build_deps) = cargo_toml.get("build-dependencies").and_then(|d| d.as_table()) {
+    if let Some(build_deps) = cargo_toml
+        .get("build-dependencies")
+        .and_then(|d| d.as_table())
+    {
         deps.extend(build_deps.keys().cloned());
     }
-    
+
     // Check workspace dependencies
     if let Some(workspace) = cargo_toml.get("workspace").and_then(|w| w.as_table()) {
         if let Some(workspace_deps) = workspace.get("dependencies").and_then(|d| d.as_table()) {
             deps.extend(workspace_deps.keys().cloned());
         }
     }
-    
+
     Ok(deps)
 }

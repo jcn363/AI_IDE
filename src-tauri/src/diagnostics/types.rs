@@ -205,7 +205,8 @@ pub type DiagnosticCacheState = std::sync::Arc<tokio::sync::RwLock<DiagnosticCac
 pub type ExplanationCacheState = std::sync::Arc<tokio::sync::RwLock<ExplanationCache>>;
 
 /// Real-time diagnostic streaming state type
-pub type DiagnosticStreamState = std::sync::Arc<tokio::sync::RwLock<HashMap<String, DiagnosticStream>>>;
+pub type DiagnosticStreamState =
+    std::sync::Arc<tokio::sync::RwLock<HashMap<String, DiagnosticStream>>>;
 
 // Placeholder structs for state - to be implemented separately
 pub struct DiagnosticCache;

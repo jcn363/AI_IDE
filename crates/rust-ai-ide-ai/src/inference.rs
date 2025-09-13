@@ -1,9 +1,9 @@
 /// Model information is now defined in lib.rs
-use crate::{AIProvider, ModelSize, Quantization, ModelInfo};
+use crate::{AIProvider, ModelInfo, ModelSize, Quantization};
+use reqwest::{Client as HttpClient, Method};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
-use reqwest::{Client as HttpClient, Method};
 use tokio::time::timeout;
 
 /// Inference engine trait for executing AI models
@@ -119,7 +119,6 @@ pub struct InferenceStats {
     pub uptime_seconds: u64,
 }
 
-
 /// Errors that can occur during inference
 #[derive(Debug, thiserror::Error)]
 pub enum InferenceError {
@@ -164,7 +163,10 @@ pub struct ModelClient {
 }
 
 impl ModelClient {
-    pub fn new(base_url: &str, api_key: Option<String>) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(
+        base_url: &str,
+        api_key: Option<String>,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(Self {
             client: HttpClient::builder()
                 .timeout(Duration::from_secs(30))
@@ -177,11 +179,17 @@ impl ModelClient {
     }
 
     /// Send HTTP request to inference server
-    pub async fn send_request(&self, request: InferenceRequest) -> Result<InferenceResponse, InferenceError> {
-        let request_json = serde_json::to_string(&request)
-            .map_err(|e| InferenceError::ParseError { reason: e.to_string() })?;
+    pub async fn send_request(
+        &self,
+        request: InferenceRequest,
+    ) -> Result<InferenceResponse, InferenceError> {
+        let request_json =
+            serde_json::to_string(&request).map_err(|e| InferenceError::ParseError {
+                reason: e.to_string(),
+            })?;
 
-        let mut http_request = self.client
+        let mut http_request = self
+            .client
             .request(Method::POST, format!("{}/completions", self.base_url))
             .json(&request)
             .timeout(self.request_timeout);
@@ -199,12 +207,18 @@ impl ModelClient {
 
         if !response.status().is_success() {
             let status_text = response.status().to_string();
-            return Err(InferenceError::ServerError { details: status_text });
+            return Err(InferenceError::ServerError {
+                details: status_text,
+            });
         }
 
-        let response_json: InferenceResponse = response.json()
-            .await
-            .map_err(|e| InferenceError::ParseError { reason: e.to_string() })?;
+        let response_json: InferenceResponse =
+            response
+                .json()
+                .await
+                .map_err(|e| InferenceError::ParseError {
+                    reason: e.to_string(),
+                })?;
 
         Ok(response_json)
     }
@@ -262,10 +276,7 @@ pub struct CacheEntry {
 
 impl CacheEntry {
     pub fn is_expired(&self, ttl_seconds: u64) -> bool {
-        self.cached_at
-            .elapsed()
-            .unwrap_or_default()
-            .as_secs() > ttl_seconds
+        self.cached_at.elapsed().unwrap_or_default().as_secs() > ttl_seconds
     }
 }
 
@@ -299,35 +310,35 @@ impl PromptTemplates {
         let mut code_llama_templates = HashMap::new();
         code_llama_templates.insert(
             "completion".to_string(),
-            "<fim_prefix>{prefix}<fim_suffix>{suffix}<fim_middle>{middle}".to_string()
+            "<fim_prefix>{prefix}<fim_suffix>{suffix}<fim_middle>{middle}".to_string(),
         );
         code_llama_templates.insert(
             "analysis".to_string(),
-            "Analyze this Rust code and provide suggestions:\n\nCode:\n{}\n\nAnalysis:".to_string()
+            "Analyze this Rust code and provide suggestions:\n\nCode:\n{}\n\nAnalysis:".to_string(),
         );
         code_llama_templates.insert(
             "generation".to_string(),
-            "// Write a Rust function for the following specification:\n// {}\n\n".to_string()
+            "// Write a Rust function for the following specification:\n// {}\n\n".to_string(),
         );
 
         let mut star_coder_templates = HashMap::new();
         star_coder_templates.insert(
             "fim".to_string(),
-            "<task>{task}<context>{context}<prefix>{prefix}<suffix>{suffix}<endofcode>".to_string()
+            "<task>{task}<context>{context}<prefix>{prefix}<suffix>{suffix}<endofcode>".to_string(),
         );
         star_coder_templates.insert(
             "completion".to_string(),
-            "def {function_name}({parameters}):\n\"\"\":{docstring}\"\"\"\n{prefix}".to_string()
+            "def {function_name}({parameters}):\n\"\"\":{docstring}\"\"\"\n{prefix}".to_string(),
         );
 
         let mut general_templates = HashMap::new();
         general_templates.insert(
             "code_explain".to_string(),
-            "Explain this code in simple terms:\n\n```rust\n{}\n```".to_string()
+            "Explain this code in simple terms:\n\n```rust\n{}\n```".to_string(),
         );
         general_templates.insert(
             "bug_find".to_string(),
-            "Find potential bugs in this code:\n\n```rust\n{}\n```".to_string()
+            "Find potential bugs in this code:\n\n```rust\n{}\n```".to_string(),
         );
 
         Self {
@@ -342,7 +353,11 @@ impl PromptTemplates {
         let template = match provider {
             AIProvider::CodeLlamaRust { .. } => self.code_llama_templates.get(task),
             AIProvider::StarCoderRust { .. } => self.star_coder_templates.get(task),
-            AIProvider::Local { .. } => match model_type { "CodeLlama" => self.code_llama_templates.get(task), "StarCoder" => self.star_coder_templates.get(task), _ => None },
+            AIProvider::Local { .. } => match model_type {
+                "CodeLlama" => self.code_llama_templates.get(task),
+                "StarCoder" => self.star_coder_templates.get(task),
+                _ => None,
+            },
             _ => None,
         };
 
@@ -384,7 +399,11 @@ pub struct Choice {
 
 impl LocalInferenceEngine {
     /// Create new local inference engine
-    pub async fn new(provider: &AIProvider, base_url: &str, model_name: &str) -> Result<Self, InferenceError> {
+    pub async fn new(
+        provider: &AIProvider,
+        base_url: &str,
+        model_name: &str,
+    ) -> Result<Self, InferenceError> {
         let client = HttpClient::builder()
             .timeout(Duration::from_secs(60))
             .build()
@@ -413,9 +432,11 @@ impl LocalInferenceEngine {
                 lora_adapters: vec![],
                 memory_usage_mb: 2000, // Reasonable default for local models
             },
-            _ => return Err(InferenceError::ModelNotLoaded {
-                model_id: "Unsupported provider".to_string(),
-            }),
+            _ => {
+                return Err(InferenceError::ModelNotLoaded {
+                    model_id: "Unsupported provider".to_string(),
+                })
+            }
         };
 
         Ok(Self {
@@ -442,12 +463,22 @@ impl InferenceEngine for LocalInferenceEngine {
         let cache_key = format!("text_{}_{}", self.model_name, hash_prompt(prompt));
         if let Some(cached) = self.cache.get(&cache_key) {
             return Ok(GenerationResult {
-                text: cached.choices.first()
-                    .ok_or(InferenceError::ParseError { reason: "No choices in cached response".to_string() })?
-                    .text.clone(),
-                finish_reason: cached.choices.first()
-                    .ok_or(InferenceError::ParseError { reason: "No choices in cached response".to_string() })?
-                    .finish_reason.clone(),
+                text: cached
+                    .choices
+                    .first()
+                    .ok_or(InferenceError::ParseError {
+                        reason: "No choices in cached response".to_string(),
+                    })?
+                    .text
+                    .clone(),
+                finish_reason: cached
+                    .choices
+                    .first()
+                    .ok_or(InferenceError::ParseError {
+                        reason: "No choices in cached response".to_string(),
+                    })?
+                    .finish_reason
+                    .clone(),
                 usage: cached.usage.clone(),
                 generation_time_ms: 0,
             });
@@ -459,14 +490,19 @@ impl InferenceEngine for LocalInferenceEngine {
             max_tokens: config.max_tokens,
             temperature: config.temperature,
             stream: config.stream,
-            stop: if config.stop_sequences.is_empty() { None } else { Some(config.stop_sequences.clone()) },
+            stop: if config.stop_sequences.is_empty() {
+                None
+            } else {
+                Some(config.stop_sequences.clone())
+            },
         };
 
         let start_time = std::time::SystemTime::now();
         let response = self.send_with_retry(request).await?;
         let end_time = std::time::SystemTime::now();
 
-        let generation_time_ms = end_time.duration_since(start_time)
+        let generation_time_ms = end_time
+            .duration_since(start_time)
             .unwrap_or_default()
             .as_millis() as u64;
 
@@ -474,12 +510,22 @@ impl InferenceEngine for LocalInferenceEngine {
         self.cache.put(cache_key, response.clone());
 
         Ok(GenerationResult {
-            text: response.choices.first()
-                .ok_or(InferenceError::ParseError { reason: "No choices in response".to_string() })?
-                .text.clone(),
-            finish_reason: response.choices.first()
-                .ok_or(InferenceError::ParseError { reason: "No choices in response".to_string() })?
-                .finish_reason.clone(),
+            text: response
+                .choices
+                .first()
+                .ok_or(InferenceError::ParseError {
+                    reason: "No choices in response".to_string(),
+                })?
+                .text
+                .clone(),
+            finish_reason: response
+                .choices
+                .first()
+                .ok_or(InferenceError::ParseError {
+                    reason: "No choices in response".to_string(),
+                })?
+                .finish_reason
+                .clone(),
             usage: response.usage,
             generation_time_ms,
         })
@@ -559,7 +605,8 @@ impl InferenceEngine for LocalInferenceEngine {
 
         let result = self.generate_text(&prompt, &config).await?;
         let analysis = result.text;
-        let suggestions = analysis.lines()
+        let suggestions = analysis
+            .lines()
             .filter(|line| !line.trim().is_empty())
             .map(|line| line.to_string())
             .collect();
@@ -602,7 +649,10 @@ impl InferenceEngine for LocalInferenceEngine {
 
 impl LocalInferenceEngine {
     /// Send request with retry logic
-    async fn send_with_retry(&self, request: InferenceRequest) -> Result<InferenceResponse, InferenceError> {
+    async fn send_with_retry(
+        &self,
+        request: InferenceRequest,
+    ) -> Result<InferenceResponse, InferenceError> {
         for attempt in 0..self.retry_config.max_retries {
             match self.send_request(&request).await {
                 Ok(response) => return Ok(response),
@@ -611,45 +661,54 @@ impl LocalInferenceEngine {
                         return Err(e);
                     }
 
-                    let delay = self.retry_config.initial_delay_ms as f32 *
-                               self.retry_config.backoff_multiplier.powf(attempt as f32);
+                    let delay = self.retry_config.initial_delay_ms as f32
+                        * self.retry_config.backoff_multiplier.powf(attempt as f32);
                     tokio::time::sleep(Duration::from_millis(delay as u64)).await;
                 }
             }
         }
-// This should never be reached, but serves as a fallback
-Err(InferenceError::ServerError {
-    details: "Max retries exceeded".to_string()
-})
-}
-
-/// Send single inference request
-async fn send_request(&self, request: &InferenceRequest) -> Result<InferenceResponse, InferenceError> {
-    let http_request = self.client
-        .post(format!("{}/completions", self.base_url))
-        .json(request)
-        .timeout(self.request_timeout);
-
-    let response = timeout(self.request_timeout, http_request.send())
-        .await
-        .map_err(|_| InferenceError::TimeoutError {
-            timeout: self.request_timeout.as_secs(),
-        })?
-        .map_err(|e| InferenceError::NetworkError { source: e })?;
-
-    if !response.status().is_success() {
-        let status_text = response.status().to_string();
-        return Err(InferenceError::ServerError { details: status_text });
+        // This should never be reached, but serves as a fallback
+        Err(InferenceError::ServerError {
+            details: "Max retries exceeded".to_string(),
+        })
     }
 
-    let response_json: InferenceResponse = response.json()
-        .await
-        .map_err(|e| InferenceError::ParseError { reason: e.to_string() })?;
+    /// Send single inference request
+    async fn send_request(
+        &self,
+        request: &InferenceRequest,
+    ) -> Result<InferenceResponse, InferenceError> {
+        let http_request = self
+            .client
+            .post(format!("{}/completions", self.base_url))
+            .json(request)
+            .timeout(self.request_timeout);
 
-    Ok(response_json)
-}
-}
+        let response = timeout(self.request_timeout, http_request.send())
+            .await
+            .map_err(|_| InferenceError::TimeoutError {
+                timeout: self.request_timeout.as_secs(),
+            })?
+            .map_err(|e| InferenceError::NetworkError { source: e })?;
 
+        if !response.status().is_success() {
+            let status_text = response.status().to_string();
+            return Err(InferenceError::ServerError {
+                details: status_text,
+            });
+        }
+
+        let response_json: InferenceResponse =
+            response
+                .json()
+                .await
+                .map_err(|e| InferenceError::ParseError {
+                    reason: e.to_string(),
+                })?;
+
+        Ok(response_json)
+    }
+}
 
 // Utility functions
 
@@ -678,7 +737,7 @@ mod tests {
                 assert_eq!(model_client.base_url, base_url);
                 assert!(model_client.api_key.is_none());
                 assert_eq!(model_client.request_timeout, Duration::from_secs(30));
-            },
+            }
             Err(e) => panic!("Failed to create ModelClient: {:?}", e),
         }
     }
@@ -761,7 +820,10 @@ mod tests {
 
         assert!(cached.is_some());
         if let Some(cached_response) = cached {
-            assert_eq!(cached_response.choices.first().unwrap().text, "test completion");
+            assert_eq!(
+                cached_response.choices.first().unwrap().text,
+                "test completion"
+            );
         }
     }
 
@@ -866,7 +928,10 @@ mod tests {
             memory_usage_mb: 2048,
         };
 
-        assert_eq!(model_info.model_path, std::path::PathBuf::from("/path/to/model"));
+        assert_eq!(
+            model_info.model_path,
+            std::path::PathBuf::from("/path/to/model")
+        );
         assert!(matches!(model_info.model_size, ModelSize::Medium));
         assert_eq!(model_info.quantization, Some(Quantization::Int4));
         assert_eq!(model_info.lora_adapters.len(), 1);

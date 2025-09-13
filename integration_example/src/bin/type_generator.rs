@@ -8,10 +8,10 @@
 //!   cargo run --bin type_generator -- --platform typescript
 //!   cargo run --bin type_generator -- --all-platforms
 
+use clap::{Parser, ValueEnum};
 use rust_ai_ide_shared_types::*;
 use std::fs;
 use std::path::Path;
-use clap::{Parser, ValueEnum};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -79,7 +79,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let type_source = include_str!("../lib.rs");
 
     println!("📖 Reading type definitions from src/lib.rs");
-    println!("🔍 Found {} lines of Rust code\n", type_source.lines().count());
+    println!(
+        "🔍 Found {} lines of Rust code\n",
+        type_source.lines().count()
+    );
 
     let generator = create_typescript_generator()?;
 
@@ -101,7 +104,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     println!("\n🎉 Type generation completed successfully!");
-    println!("📁 Check the '{}' directory for generated files", args.output);
+    println!(
+        "📁 Check the '{}' directory for generated files",
+        args.output
+    );
 
     Ok(())
 }
@@ -141,7 +147,9 @@ async fn generate_for_platform(
 
     // Generate the types
     let start_time = std::time::Instant::now();
-    let result = generator.generate_types_from_source(source, "lib.rs", &[]).await?;
+    let result = generator
+        .generate_types_from_source(source, "lib.rs", &[])
+        .await?;
     let generation_time = start_time.elapsed();
 
     // Determine output file path
@@ -150,7 +158,9 @@ async fn generate_for_platform(
     let platform_dir = output_dir.join(platform);
     fs::create_dir_all(&platform_dir)?;
 
-    let final_output_path = platform_dir.join("types").with_extension(get_file_extension(platform));
+    let final_output_path = platform_dir
+        .join("types")
+        .with_extension(get_file_extension(platform));
 
     // Write the generated code
     fs::write(&final_output_path, &result.content)?;
@@ -163,14 +173,19 @@ async fn generate_for_platform(
     println!("  🔢 Types processed: {}", result.source_types.len());
 
     // Show a preview of the generated code
-    if std::env::var("CI").is_err() { // Don't show preview in CI
+    if std::env::var("CI").is_err() {
+        // Don't show preview in CI
         let preview_lines: Vec<&str> = result.content.lines().take(5).collect();
         println!("  📋 Preview:");
         for (i, line) in preview_lines.iter().enumerate() {
             println!("    {}| {}", i + 1, line);
         }
         if result.content.lines().count() > 5 {
-            println!("    ... ({}, {} total)", "truncated", result.content.lines().count());
+            println!(
+                "    ... ({}, {} total)",
+                "truncated",
+                result.content.lines().count()
+            );
         }
     }
 
@@ -221,7 +236,10 @@ fn get_file_extension(platform: &str) -> &'static str {
     }
 }
 
-fn validate_generated_code(content: &str, platform: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn validate_generated_code(
+    content: &str,
+    platform: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
     match platform {
         "typescript" => {
             // Basic TypeScript syntax validation
@@ -233,7 +251,9 @@ fn validate_generated_code(content: &str, platform: &str) -> Result<(), Box<dyn 
         "python" => {
             // Basic Python syntax validation
             if !content.contains("class ") && !content.contains("from typing import") {
-                eprintln!("⚠️  Warning: Generated Python may not contain expected class definitions");
+                eprintln!(
+                    "⚠️  Warning: Generated Python may not contain expected class definitions"
+                );
             }
             Ok(())
         }
@@ -247,7 +267,9 @@ fn validate_generated_code(content: &str, platform: &str) -> Result<(), Box<dyn 
         "graphql" => {
             // Basic GraphQL syntax validation
             if !content.contains("type ") && !content.contains("schema") {
-                eprintln!("⚠️  Warning: Generated GraphQL may not contain expected schema definitions");
+                eprintln!(
+                    "⚠️  Warning: Generated GraphQL may not contain expected schema definitions"
+                );
             }
             Ok(())
         }

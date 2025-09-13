@@ -1,13 +1,13 @@
 use crate::errors::{IDEError, IDEResult};
-use std::path::{Path, PathBuf};
+use rust_ai_ide_lsp::AIService;
+use std::ffi::OsStr;
 use std::fs;
 use std::io;
+use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::ffi::OsStr;
-use tokio::sync::broadcast;
 use tokio::signal;
-use tokio::time::{Duration, interval};
-use rust_ai_ide_lsp::AIService;
+use tokio::sync::broadcast;
+use tokio::time::{interval, Duration};
 
 // Implement Clone for AIService since it's not Clone in external crate
 impl Clone for AIService {
@@ -29,7 +29,8 @@ pub fn get_model_path() -> String {
 
 /// Get AI endpoint from environment or default
 pub fn get_ai_endpoint() -> String {
-    std::env::var("AI_ENDPOINT").unwrap_or_else(|_| "http://localhost:11434/v1/completions".to_string())
+    std::env::var("AI_ENDPOINT")
+        .unwrap_or_else(|_| "http://localhost:11434/v1/completions".to_string())
 }
 
 use std::process::{Command, Stdio};
@@ -48,7 +49,10 @@ pub fn git_run(dir: &str, args: &[&str]) -> IDEResult<(String, String)> {
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
 
     if !output.status.success() {
-        return Err(IDEError::CommandExecution(format!("git {:?} failed: {}", args, stderr)));
+        return Err(IDEError::CommandExecution(format!(
+            "git {:?} failed: {}",
+            args, stderr
+        )));
     }
 
     Ok((stdout, stderr))
@@ -83,7 +87,10 @@ pub async fn initialize_cache_cleanup_task(
             }
 
             if let Err(e) = shutdown_tx_signal.send(()) {
-                log::warn!("Failed to send shutdown signal: {}. Shutdown may not be properly coordinated.", e);
+                log::warn!(
+                    "Failed to send shutdown signal: {}. Shutdown may not be properly coordinated.",
+                    e
+                );
             } else {
                 log::debug!("Shutdown signal sent successfully to listeners");
             }
@@ -121,7 +128,7 @@ pub async fn initialize_cache_cleanup_task(
 
 /// Initialize AI service on startup
 pub async fn initialize_ai_service_on_startup(
-    ai_service_state: &crate::AIServiceState
+    ai_service_state: &crate::AIServiceState,
 ) -> IDEResult<()> {
     log::info!("Initializing AI service on startup");
 
@@ -151,7 +158,7 @@ pub async fn initialize_ai_service_on_startup(
 }
 
 pub async fn get_or_create_ai_service(
-    ai_service_state: &crate::AIServiceState
+    ai_service_state: &crate::AIServiceState,
 ) -> IDEResult<rust_ai_ide_lsp::AIService> {
     let mut ai_service_guard = ai_service_state.0.lock().await;
     if ai_service_guard.is_none() {
@@ -186,7 +193,9 @@ pub async fn get_or_create_ai_service(
     if let Some(ref service) = *ai_service_guard {
         Ok(service.clone())
     } else {
-        Err(IDEError::AIService("Failed to create AI service".to_string()))
+        Err(IDEError::AIService(
+            "Failed to create AI service".to_string(),
+        ))
     }
 }
 
@@ -195,17 +204,24 @@ pub fn read_file_with_limit(path: &str, max_size: u64) -> IDEResult<String> {
     crate::errors::validate_path_security(path)?;
     crate::errors::validate_file_size(path, max_size)?;
 
-    std::fs::read_to_string(path).map_err(|e| IDEError::FileOperation(format!("Failed to read file: {}", e)))
+    std::fs::read_to_string(path)
+        .map_err(|e| IDEError::FileOperation(format!("Failed to read file: {}", e)))
 }
 
 /// Path existence and type checks
 pub fn ensure_directory_exists<P: AsRef<Path>>(path: P) -> IDEResult<()> {
     let path = path.as_ref();
     if !path.exists() {
-        return Err(IDEError::FileOperation(format!("Directory does not exist: {}", path.display())));
+        return Err(IDEError::FileOperation(format!(
+            "Directory does not exist: {}",
+            path.display()
+        )));
     }
     if !path.is_dir() {
-        return Err(IDEError::FileOperation(format!("Path exists but is not a directory: {}", path.display())));
+        return Err(IDEError::FileOperation(format!(
+            "Path exists but is not a directory: {}",
+            path.display()
+        )));
     }
     Ok(())
 }
@@ -214,7 +230,9 @@ pub fn validate_rust_project<P: AsRef<Path>>(path: P) -> IDEResult<()> {
     let path = path.as_ref();
     ensure_directory_exists(path)?;
     if !path.join("Cargo.toml").exists() {
-        return Err(IDEError::Cargo("Not a valid Rust project - Cargo.toml not found".to_string()));
+        return Err(IDEError::Cargo(
+            "Not a valid Rust project - Cargo.toml not found".to_string(),
+        ));
     }
     Ok(())
 }
@@ -231,13 +249,13 @@ pub fn current_timestamp() -> u64 {
 pub fn is_path_within_directory<P: AsRef<Path>>(path: P, base: P) -> io::Result<bool> {
     let path = fs::canonicalize(path)?;
     let base = fs::canonicalize(base)?;
-    
+
     for ancestor in path.ancestors() {
         if ancestor == base {
             return Ok(true);
         }
     }
-    
+
     Ok(false)
 }
 
@@ -253,10 +271,15 @@ pub fn get_file_extension<P: AsRef<Path>>(path: P) -> Option<String> {
 pub fn create_backup<P: AsRef<Path>>(file_path: P) -> IDEResult<PathBuf> {
     let path = file_path.as_ref();
     let backup_path = path.with_extension(format!("bak.{}", current_timestamp()));
-    
-    fs::copy(path, &backup_path)
-        .map_err(|e| IDEError::FileOperation(format!("Failed to create backup of {}: {}", path.display(), e)))?;
-    
+
+    fs::copy(path, &backup_path).map_err(|e| {
+        IDEError::FileOperation(format!(
+            "Failed to create backup of {}: {}",
+            path.display(),
+            e
+        ))
+    })?;
+
     Ok(backup_path)
 }
 
@@ -266,38 +289,40 @@ pub fn find_files_by_extension<P: AsRef<Path>>(
     extension: &str,
 ) -> io::Result<Vec<PathBuf>> {
     let mut result = Vec::new();
-    
+
     for entry in fs::read_dir(dir)? {
         let entry = entry?;
         let path = entry.path();
-        
+
         if path.is_dir() {
             result.extend(find_files_by_extension(&path, extension)?);
-        } else if path.extension()
+        } else if path
+            .extension()
             .and_then(OsStr::to_str)
-            .map_or(false, |ext| ext.eq_ignore_ascii_case(extension)) {
+            .map_or(false, |ext| ext.eq_ignore_ascii_case(extension))
+        {
             result.push(path);
         }
     }
-    
+
     Ok(result)
 }
 
 /// Calculates the size of a directory recursively
 pub fn calculate_directory_size<P: AsRef<Path>>(path: P) -> io::Result<u64> {
     let mut total_size = 0;
-    
+
     for entry in fs::read_dir(path)? {
         let entry = entry?;
         let metadata = entry.metadata()?;
-        
+
         if metadata.is_dir() {
             total_size += calculate_directory_size(entry.path())?;
         } else {
             total_size += metadata.len();
         }
     }
-    
+
     Ok(total_size)
 }
 
@@ -336,7 +361,7 @@ pub mod input_sanitization {
     impl Default for TauriInputSanitizer {
         fn default() -> Self {
             Self {
-                max_string_length: 50*1024, // 50KB
+                max_string_length: 50 * 1024, // 50KB
                 max_path_length: 4096,
                 allowed_extensions: vec![
                     "rs".to_string(),
@@ -357,7 +382,9 @@ pub mod input_sanitization {
         /// Sanitize file path with security checks
         pub fn sanitize_file_path(&self, input_path: &str) -> IDEResult<String> {
             if input_path.is_empty() {
-                return Err(IDEError::Validation("File path cannot be empty".to_string()));
+                return Err(IDEError::Validation(
+                    "File path cannot be empty".to_string(),
+                ));
             }
 
             if input_path.len() > self.max_path_length {
@@ -376,7 +403,10 @@ pub mod input_sanitization {
 
             for pattern in &dangerous_patterns {
                 if clean_path.contains(pattern) {
-                    return Err(IDEError::Validation(format!("Dangerous pattern '{}' detected in path", pattern)));
+                    return Err(IDEError::Validation(format!(
+                        "Dangerous pattern '{}' detected in path",
+                        pattern
+                    )));
                 }
             }
 
@@ -414,7 +444,10 @@ pub mod input_sanitization {
                 if let Some(ext_str) = ext.to_str() {
                     let ext_lower = ext_str.to_lowercase();
                     if !self.allowed_extensions.contains(&ext_lower) {
-                        return Err(IDEError::Validation(format!("File extension '{}' not allowed", ext_upper)));
+                        return Err(IDEError::Validation(format!(
+                            "File extension '{}' not allowed",
+                            ext_upper
+                        )));
                     }
                 }
             }
@@ -426,8 +459,11 @@ pub mod input_sanitization {
             let mut sanitized = Vec::new();
 
             for arg in args {
-                if arg.len() > self.max_string_length / 16 { // Shorter limit for args
-                    return Err(IDEError::Validation("Command argument too long".to_string()));
+                if arg.len() > self.max_string_length / 16 {
+                    // Shorter limit for args
+                    return Err(IDEError::Validation(
+                        "Command argument too long".to_string(),
+                    ));
                 }
 
                 // Remove shell injection patterns
@@ -447,7 +483,8 @@ pub mod input_sanitization {
 
     /// Global sanitizer function for Tauri commands
     pub fn get_tauri_sanitizer() -> &'static TauriInputSanitizer {
-        static TAURI_SANITIZER: std::sync::OnceLock<TauriInputSanitizer> = std::sync::OnceLock::new();
+        static TAURI_SANITIZER: std::sync::OnceLock<TauriInputSanitizer> =
+            std::sync::OnceLock::new();
         TAURI_SANITIZER.get_or_init(TauriInputSanitizer::default)
     }
 
@@ -468,4 +505,4 @@ pub mod input_sanitization {
 }
 
 /// Re-export common security functions
-pub use input_sanitization::{TauriInputSanitizer, sanitize_tauri_input, SanitizeType};
+pub use input_sanitization::{sanitize_tauri_input, SanitizeType, TauriInputSanitizer};

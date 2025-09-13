@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Typography, FormControl, FormLabel, RadioGroup,
-  FormControlLabel, Radio, Checkbox, TextField, Alert,
-  List, ListItem, ListItemText, Chip, Collapse
+  Box,
+  Typography,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Checkbox,
+  TextField,
+  Alert,
+  List,
+  ListItem,
+  ListItemText,
+  Chip,
+  Collapse,
 } from '@mui/material';
 import { StepComponentProps } from './RefactoringWizard';
 import type { RefactoringContext } from '../../../../types/refactoring';
@@ -32,13 +44,13 @@ export const ExtractInterfaceWizard: React.FC<StepComponentProps> = ({
           );
 
           // Filter to only suitable classes
-          const suitableClasses = result.classes.filter(cls => cls.isSuitableForInterface);
+          const suitableClasses = result.classes.filter((cls) => cls.isSuitableForInterface);
 
           // Map to component expectations
-          const classNames = suitableClasses.map(cls => cls.className);
+          const classNames = suitableClasses.map((cls) => cls.className);
           const analysisMap = new Map();
 
-          suitableClasses.forEach(cls => {
+          suitableClasses.forEach((cls) => {
             analysisMap.set(cls.className, {
               publicMethods: cls.publicMethods.length,
               properties: cls.publicProperties.length,
@@ -53,7 +65,9 @@ export const ExtractInterfaceWizard: React.FC<StepComponentProps> = ({
 
           // Pre-select the most suitable class by default
           if (suitableClasses.length > 0) {
-            const bestClass = suitableClasses.sort((a, b) => b.complexityScore - a.complexityScore)[0];
+            const bestClass = suitableClasses.sort(
+              (a, b) => b.complexityScore - a.complexityScore
+            )[0];
             setSelectedClasses([bestClass.className]);
             setInterfaceName(`I${bestClass.className}`);
           }
@@ -81,18 +95,26 @@ export const ExtractInterfaceWizard: React.FC<StepComponentProps> = ({
       shouldGenerateTests: generateTests,
       targetType: 'interface',
     });
-  }, [selectedClasses, interfaceName, includePublicMethods, includeProperties, generateTests, onConfigChange, onValidation]);
+  }, [
+    selectedClasses,
+    interfaceName,
+    includePublicMethods,
+    includeProperties,
+    generateTests,
+    onConfigChange,
+    onValidation,
+  ]);
 
   const handleClassToggle = (className: string) => {
     const isSelected = selectedClasses.includes(className);
 
     if (isSelected) {
-      setSelectedClasses(prev => prev.filter(c => c !== className));
+      setSelectedClasses((prev) => prev.filter((c) => c !== className));
       if (selectedClasses.length === 1) {
         setInterfaceName('');
       }
     } else {
-      setSelectedClasses(prev => [...prev, className]);
+      setSelectedClasses((prev) => [...prev, className]);
       if (selectedClasses.length === 0) {
         setInterfaceName(`I${className}`);
       }
@@ -110,8 +132,8 @@ export const ExtractInterfaceWizard: React.FC<StepComponentProps> = ({
         Extract Interface Configuration
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Select which classes should have interfaces extracted from them.
-        The wizard will analyze public members and suggest interface contracts.
+        Select which classes should have interfaces extracted from them. The wizard will analyze
+        public members and suggest interface contracts.
       </Typography>
 
       <Box sx={{ mb: 4 }}>
@@ -123,11 +145,23 @@ export const ExtractInterfaceWizard: React.FC<StepComponentProps> = ({
           </Box>
         </Box>
 
-        <List sx={{ maxHeight: 250, overflowY: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+        <List
+          sx={{
+            maxHeight: 250,
+            overflowY: 'auto',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
+          }}
+        >
           {detectedClasses.map((className) => {
             const info = getClassInfo(className);
             return (
-              <ListItem key={className} dense sx={{ flexDirection: 'column', alignItems: 'stretch' }}>
+              <ListItem
+                key={className}
+                dense
+                sx={{ flexDirection: 'column', alignItems: 'stretch' }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                   <FormControlLabel
                     control={
@@ -229,8 +263,8 @@ export const ExtractInterfaceWizard: React.FC<StepComponentProps> = ({
 
       <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
         <Typography variant="body2" color="text.secondary">
-          <strong>Expected Changes:</strong> Extract interface "{interfaceName}"
-          from {selectedClasses.length} class(es). The interface will include
+          <strong>Expected Changes:</strong> Extract interface "{interfaceName}" from{' '}
+          {selectedClasses.length} class(es). The interface will include
           {includePublicMethods ? ' public methods' : ''}
           {includePublicMethods && includeProperties ? ' and' : ''}
           {includeProperties ? ' public properties' : ''}.

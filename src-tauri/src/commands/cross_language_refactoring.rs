@@ -14,10 +14,10 @@
 //! - **Safety Validation**: Comprehensive validation before multi-language changes
 //! - **Rollback Support**: Safe rollback mechanisms for multi-step operations
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
 
 use crate::command_templates::{execute_command, CommandConfig};
 use crate::validation;
@@ -40,9 +40,18 @@ impl CrossLanguageRefactoringEngine {
 
         // Register built-in language adapters
         language_adapters.insert("rust".to_string(), Arc::new(RustRefactoringAdapter::new()));
-        language_adapters.insert("python".to_string(), Arc::new(PythonRefactoringAdapter::new()));
-        language_adapters.insert("javascript".to_string(), Arc::new(JavaScriptRefactoringAdapter::new()));
-        language_adapters.insert("typescript".to_string(), Arc::new(TypeScriptRefactoringAdapter::new()));
+        language_adapters.insert(
+            "python".to_string(),
+            Arc::new(PythonRefactoringAdapter::new()),
+        );
+        language_adapters.insert(
+            "javascript".to_string(),
+            Arc::new(JavaScriptRefactoringAdapter::new()),
+        );
+        language_adapters.insert(
+            "typescript".to_string(),
+            Arc::new(TypeScriptRefactoringAdapter::new()),
+        );
         language_adapters.insert("java".to_string(), Arc::new(JavaRefactoringAdapter::new()));
 
         Self {
@@ -59,7 +68,10 @@ impl CrossLanguageRefactoringEngine {
         &self,
         request: CrossLanguageRefactoringRequest,
     ) -> Result<CrossLanguageRefactoringResult, String> {
-        log::info!("Starting cross-language refactoring: {:?}", request.operation_type);
+        log::info!(
+            "Starting cross-language refactoring: {:?}",
+            request.operation_type
+        );
 
         // Validate all files exist and are accessible
         for file_path in &request.file_paths {
@@ -78,13 +90,17 @@ impl CrossLanguageRefactoringEngine {
         let impact_analysis = self.impact_analyzer.analyze_impact(&request).await?;
 
         // Validate the operation across all languages
-        self.validation_engine.validate_operation(&request, &impact_analysis).await?;
+        self.validation_engine
+            .validate_operation(&request, &impact_analysis)
+            .await?;
 
         // Execute the refactoring in dependency order
         let result = self.execute_refactoring(&request).await?;
 
         // Record for potential rollback
-        self.rollback_manager.record_operation(&request, &result).await?;
+        self.rollback_manager
+            .record_operation(&request, &result)
+            .await?;
 
         log::info!("Cross-language refactoring completed successfully");
 
@@ -117,8 +133,12 @@ impl CrossLanguageRefactoringEngine {
         // Execute in dependency order
         for (language, language_files) in files_by_language {
             if let Some(adapter) = self.language_adapters.get(&language) {
-                let language_operation = self.translate_operation_for_language(&request.operation_type, &language).await?;
-                let language_changes = adapter.execute_operation(&language_operation, &language_files).await?;
+                let language_operation = self
+                    .translate_operation_for_language(&request.operation_type, &language)
+                    .await?;
+                let language_changes = adapter
+                    .execute_operation(&language_operation, &language_files)
+                    .await?;
 
                 results.push(LanguageOperationResult {
                     language,
@@ -155,13 +175,19 @@ impl CrossLanguageRefactoringEngine {
 
         match (operation_type, target_language) {
             (RenameSymbol { old_name, new_name }, "rust") => {
-                self.translation_engine.translate_symbol_rename("rust", old_name, new_name).await
+                self.translation_engine
+                    .translate_symbol_rename("rust", old_name, new_name)
+                    .await
             }
             (RenameSymbol { old_name, new_name }, "python") => {
-                self.translation_engine.translate_symbol_rename("python", old_name, new_name).await
+                self.translation_engine
+                    .translate_symbol_rename("python", old_name, new_name)
+                    .await
             }
             (RenameSymbol { old_name, new_name }, "typescript") => {
-                self.translation_engine.translate_symbol_rename("typescript", old_name, new_name).await
+                self.translation_engine
+                    .translate_symbol_rename("typescript", old_name, new_name)
+                    .await
             }
             (ExtractMethod { .. }, language) => {
                 Err(format!("Extract method not yet supported for {}", language))
@@ -169,9 +195,10 @@ impl CrossLanguageRefactoringEngine {
             (MoveType { from_path, to_path }, language) => {
                 Err(format!("Move type not yet supported for {}", language))
             }
-            (ChangeSignature { .. }, language) => {
-                Err(format!("Change signature not yet supported for {}", language))
-            }
+            (ChangeSignature { .. }, language) => Err(format!(
+                "Change signature not yet supported for {}",
+                language
+            )),
         }
     }
 
@@ -184,7 +211,10 @@ impl CrossLanguageRefactoringEngine {
 
         for file_path in file_paths {
             let language = self.detect_language_from_file(file_path)?;
-            groups.entry(language).or_insert_with(Vec::new).push(file_path.clone());
+            groups
+                .entry(language)
+                .or_insert_with(Vec::new)
+                .push(file_path.clone());
         }
 
         Ok(groups)
@@ -259,7 +289,11 @@ pub trait LanguageRefactoringAdapter: Send + Sync {
     async fn is_applicable(&self, operation: &LanguageSpecificOperation, files: &[String]) -> bool;
 
     /// Validate that an operation will execute safely
-    async fn validate_operation(&self, operation: &LanguageSpecificOperation, files: &[String]) -> Result<(), String>;
+    async fn validate_operation(
+        &self,
+        operation: &LanguageSpecificOperation,
+        files: &[String],
+    ) -> Result<(), String>;
 }
 
 /// Cross-Language Translation Engine
@@ -273,21 +307,54 @@ impl CrossLanguageTranslationEngine {
         let mut type_mappings = HashMap::new();
 
         // Rust to other languages
-        type_mappings.insert(("String".to_string(), "python".to_string()), "str".to_string());
-        type_mappings.insert(("Vec<T>".to_string(), "python".to_string()), "List[T]".to_string());
-        type_mappings.insert(("HashMap<K,V>".to_string(), "python".to_string()), "Dict[K,V]".to_string());
-        type_mappings.insert(("Result<T,E>".to_string(), "python".to_string()), "T".to_string()); // Exception handling
+        type_mappings.insert(
+            ("String".to_string(), "python".to_string()),
+            "str".to_string(),
+        );
+        type_mappings.insert(
+            ("Vec<T>".to_string(), "python".to_string()),
+            "List[T]".to_string(),
+        );
+        type_mappings.insert(
+            ("HashMap<K,V>".to_string(), "python".to_string()),
+            "Dict[K,V]".to_string(),
+        );
+        type_mappings.insert(
+            ("Result<T,E>".to_string(), "python".to_string()),
+            "T".to_string(),
+        ); // Exception handling
 
         // Python to other languages
-        type_mappings.insert(("str".to_string(), "rust".to_string()), "String".to_string());
-        type_mappings.insert(("List[T]".to_string(), "rust".to_string()), "Vec<T>".to_string());
-        type_mappings.insert(("Dict[K,V]".to_string(), "rust".to_string()), "HashMap<K,V>".to_string());
+        type_mappings.insert(
+            ("str".to_string(), "rust".to_string()),
+            "String".to_string(),
+        );
+        type_mappings.insert(
+            ("List[T]".to_string(), "rust".to_string()),
+            "Vec<T>".to_string(),
+        );
+        type_mappings.insert(
+            ("Dict[K,V]".to_string(), "rust".to_string()),
+            "HashMap<K,V>".to_string(),
+        );
 
         // JavaScript/TypeScript to other languages
-        type_mappings.insert(("string".to_string(), "rust".to_string()), "String".to_string());
-        type_mappings.insert(("number".to_string(), "rust".to_string()), "f64".to_string());
-        type_mappings.insert(("boolean".to_string(), "rust".to_string()), "bool".to_string());
-        type_mappings.insert(("Array<T>".to_string(), "rust".to_string()), "Vec<T>".to_string());
+        type_mappings.insert(
+            ("string".to_string(), "rust".to_string()),
+            "String".to_string(),
+        );
+        type_mappings.insert(
+            ("number".to_string(), "rust".to_string()),
+            "f64".to_string(),
+        );
+        type_mappings.insert(
+            ("boolean".to_string(), "rust".to_string()),
+            "bool".to_string(),
+        );
+        type_mappings.insert(
+            ("Array<T>".to_string(), "rust".to_string()),
+            "Vec<T>".to_string(),
+        );
 
         Self {
             type_mappings,
@@ -320,7 +387,12 @@ impl CrossLanguageTranslationEngine {
                 update_interfaces: language == "typescript",
                 update_type_references: language == "typescript",
             },
-            _ => return Err(format!("Symbol rename not supported for language: {}", language)),
+            _ => {
+                return Err(format!(
+                    "Symbol rename not supported for language: {}",
+                    language
+                ))
+            }
         };
 
         Ok(operation)
@@ -335,9 +407,12 @@ impl CrossLanguageTranslationEngine {
     ) -> String {
         let key = (source_type.to_string(), target_language.to_string());
 
-        self.type_mappings.get(&key)
-            .cloned()
-            .unwrap_or_else(|| format!("/* TODO: Translate {} from {} to {} */", source_type, source_language, target_language))
+        self.type_mappings.get(&key).cloned().unwrap_or_else(|| {
+            format!(
+                "/* TODO: Translate {} from {} to {} */",
+                source_type, source_language, target_language
+            )
+        })
     }
 }
 
@@ -371,7 +446,11 @@ impl CrossLanguageImpactAnalyzer {
                 // Check if dependencies are in other languages
                 for dep in dependencies {
                     if let Some(language) = self.detect_language_from_file_path(dep) {
-                        if language != self.detect_language_from_file_path(file_path).unwrap_or_default() {
+                        if language
+                            != self
+                                .detect_language_from_file_path(file_path)
+                                .unwrap_or_default()
+                        {
                             compatibility_concerns.push(format!(
                                 "Cross-language dependency: {} -> {}",
                                 file_path, dep
@@ -395,7 +474,8 @@ impl CrossLanguageImpactAnalyzer {
             breaking_changes,
             compatibility_concerns,
             impact_level,
-            estimated_effort_minutes: self.estimate_effort(&affected_files, &compatibility_concerns),
+            estimated_effort_minutes: self
+                .estimate_effort(&affected_files, &compatibility_concerns),
         })
     }
 
@@ -478,20 +558,29 @@ impl MultiLanguageValidationEngine {
         impact: &CrossLanguageImpact,
     ) -> Result<(), String> {
         if !impact.compatibility_concerns.is_empty() {
-            log::warn!("Cross-language compatibility concerns detected: {:?}", impact.compatibility_concerns);
+            log::warn!(
+                "Cross-language compatibility concerns detected: {:?}",
+                impact.compatibility_concerns
+            );
             // Could suggest breaking into smaller operations or manual review
         }
 
         Ok(())
     }
 
-    async fn validate_resources(&self, request: &CrossLanguageRefactoringRequest) -> Result<(), String> {
+    async fn validate_resources(
+        &self,
+        request: &CrossLanguageRefactoringRequest,
+    ) -> Result<(), String> {
         // Check available memory, processing power, etc.
         // This would be platform-specific
         Ok(())
     }
 
-    async fn validate_rollback_capabilities(&self, request: &CrossLanguageRefactoringRequest) -> Result<(), String> {
+    async fn validate_rollback_capabilities(
+        &self,
+        request: &CrossLanguageRefactoringRequest,
+    ) -> Result<(), String> {
         // Ensure rollback is possible for all involved languages
         Ok(())
     }
@@ -522,7 +611,10 @@ impl MultiLanguageRollbackManager {
         };
 
         let token = self.generate_rollback_token().await?;
-        self.rollback_tokens.lock().await.insert(token, rollback_data);
+        self.rollback_tokens
+            .lock()
+            .await
+            .insert(token, rollback_data);
 
         Ok(())
     }
@@ -555,8 +647,13 @@ impl LanguageRefactoringAdapter for RustRefactoringAdapter {
         files: &[String],
     ) -> Result<Vec<FileChange>, String> {
         match operation {
-            LanguageSpecificOperation::RustRename { old_name, new_name, scope } => {
-                self.execute_rust_rename(old_name, new_name, scope, files).await
+            LanguageSpecificOperation::RustRename {
+                old_name,
+                new_name,
+                scope,
+            } => {
+                self.execute_rust_rename(old_name, new_name, scope, files)
+                    .await
             }
             _ => Err("Unsupported operation for Rust".to_string()),
         }
@@ -567,7 +664,11 @@ impl LanguageRefactoringAdapter for RustRefactoringAdapter {
         files.iter().all(|f| f.ends_with(".rs"))
     }
 
-    async fn validate_operation(&self, operation: &LanguageSpecificOperation, files: &[String]) -> Result<(), String> {
+    async fn validate_operation(
+        &self,
+        operation: &LanguageSpecificOperation,
+        files: &[String],
+    ) -> Result<(), String> {
         // Validate Rust-specific constraints
         Ok(())
     }
@@ -592,7 +693,10 @@ impl RustRefactoringAdapter {
                     file_path: file_path.clone(),
                     original_content: content,
                     new_content,
-                    change_description: format!("Rename '{}' to '{}' in Rust code", old_name, new_name),
+                    change_description: format!(
+                        "Rename '{}' to '{}' in Rust code",
+                        old_name, new_name
+                    ),
                     impact_level: ImpactLevel::Medium,
                 });
             }
@@ -623,8 +727,20 @@ impl LanguageRefactoringAdapter for PythonRefactoringAdapter {
         files: &[String],
     ) -> Result<Vec<FileChange>, String> {
         match operation {
-            LanguageSpecificOperation::PythonRename { old_name, new_name, rename_imports, rename_references } => {
-                self.execute_python_rename(old_name, new_name, *rename_imports, *rename_references, files).await
+            LanguageSpecificOperation::PythonRename {
+                old_name,
+                new_name,
+                rename_imports,
+                rename_references,
+            } => {
+                self.execute_python_rename(
+                    old_name,
+                    new_name,
+                    *rename_imports,
+                    *rename_references,
+                    files,
+                )
+                .await
             }
             _ => Err("Unsupported operation for Python".to_string()),
         }
@@ -634,7 +750,11 @@ impl LanguageRefactoringAdapter for PythonRefactoringAdapter {
         files.iter().all(|f| f.ends_with(".py"))
     }
 
-    async fn validate_operation(&self, operation: &LanguageSpecificOperation, files: &[String]) -> Result<(), String> {
+    async fn validate_operation(
+        &self,
+        operation: &LanguageSpecificOperation,
+        files: &[String],
+    ) -> Result<(), String> {
         Ok(())
     }
 }
@@ -663,7 +783,10 @@ impl PythonRefactoringAdapter {
                     file_path: file_path.clone(),
                     original_content: content,
                     new_content,
-                    change_description: format!("Rename '{}' to '{}' in Python code", old_name, new_name),
+                    change_description: format!(
+                        "Rename '{}' to '{}' in Python code",
+                        old_name, new_name
+                    ),
                     impact_level: ImpactLevel::Medium,
                 });
             }
@@ -701,7 +824,11 @@ impl LanguageRefactoringAdapter for TypeScriptRefactoringAdapter {
         files.iter().all(|f| f.ends_with(".ts"))
     }
 
-    async fn validate_operation(&self, operation: &LanguageSpecificOperation, files: &[String]) -> Result<(), String> {
+    async fn validate_operation(
+        &self,
+        operation: &LanguageSpecificOperation,
+        files: &[String],
+    ) -> Result<(), String> {
         Ok(())
     }
 }
@@ -733,7 +860,11 @@ impl LanguageRefactoringAdapter for JavaRefactoringAdapter {
         files.iter().all(|f| f.ends_with(".java"))
     }
 
-    async fn validate_operation(&self, operation: &LanguageSpecificOperation, files: &[String]) -> Result<(), String> {
+    async fn validate_operation(
+        &self,
+        operation: &LanguageSpecificOperation,
+        files: &[String],
+    ) -> Result<(), String> {
         Ok(())
     }
 }
@@ -765,7 +896,11 @@ impl LanguageRefactoringAdapter for JavaScriptRefactoringAdapter {
         files.iter().all(|f| f.ends_with(".js"))
     }
 
-    async fn validate_operation(&self, operation: &LanguageSpecificOperation, files: &[String]) -> Result<(), String> {
+    async fn validate_operation(
+        &self,
+        operation: &LanguageSpecificOperation,
+        files: &[String],
+    ) -> Result<(), String> {
         Ok(())
     }
 }
@@ -780,12 +915,16 @@ pub async fn perform_cross_language_refactoring_cmd(
 ) -> Result<CrossLanguageRefactoringResult, String> {
     let config = get_cross_language_config();
 
-    execute_command!(stringify!(perform_cross_language_refactoring_cmd), &config, async move || {
-        log::info!("Processing cross-language refactoring request");
+    execute_command!(
+        stringify!(perform_cross_language_refactoring_cmd),
+        &config,
+        async move || {
+            log::info!("Processing cross-language refactoring request");
 
-        let engine = CrossLanguageRefactoringEngine::new();
-        engine.perform_cross_language_refactoring(request).await
-    })
+            let engine = CrossLanguageRefactoringEngine::new();
+            engine.perform_cross_language_refactoring(request).await
+        }
+    )
 }
 
 /// Command to validate cross-language operation
@@ -796,22 +935,26 @@ pub async fn validate_cross_language_operation(
 ) -> Result<CrossLanguageValidationResult, String> {
     let config = get_cross_language_config();
 
-    execute_command!(stringify!(validate_cross_language_operation), &config, async move || {
-        log::info!("Validating cross-language refactoring operation");
+    execute_command!(
+        stringify!(validate_cross_language_operation),
+        &config,
+        async move || {
+            log::info!("Validating cross-language refactoring operation");
 
-        let engine = CrossLanguageRefactoringEngine::new();
-        let (is_valid, concerns) = validate_operation_internal(&request).await?;
+            let engine = CrossLanguageRefactoringEngine::new();
+            let (is_valid, concerns) = validate_operation_internal(&request).await?;
 
-        Ok(CrossLanguageValidationResult {
-            is_valid,
-            concerns,
-            recommended_actions: if is_valid {
-                vec!["Operation can proceed".to_string()]
-            } else {
-                vec!["Review concerns and consider smaller operations".to_string()]
-            },
-        })
-    })
+            Ok(CrossLanguageValidationResult {
+                is_valid,
+                concerns,
+                recommended_actions: if is_valid {
+                    vec!["Operation can proceed".to_string()]
+                } else {
+                    vec!["Review concerns and consider smaller operations".to_string()]
+                },
+            })
+        }
+    )
 }
 
 /// Command to get supported languages
@@ -833,10 +976,7 @@ pub async fn get_supported_languages() -> Result<Vec<LanguageSupportInfo>, Strin
         },
         LanguageSupportInfo {
             language: "python".to_string(),
-            supported_operations: vec![
-                "rename_symbol".to_string(),
-                "extract_function".to_string(),
-            ],
+            supported_operations: vec!["rename_symbol".to_string(), "extract_function".to_string()],
             features: vec![
                 "Dynamic typing support".to_string(),
                 "Import resolution".to_string(),
@@ -857,10 +997,7 @@ pub async fn get_supported_languages() -> Result<Vec<LanguageSupportInfo>, Strin
         },
         LanguageSupportInfo {
             language: "javascript".to_string(),
-            supported_operations: vec![
-                "rename_symbol".to_string(),
-                "extract_function".to_string(),
-            ],
+            supported_operations: vec!["rename_symbol".to_string(), "extract_function".to_string()],
             features: vec![
                 "Modern JS support".to_string(),
                 "Module system awareness".to_string(),
@@ -868,10 +1005,7 @@ pub async fn get_supported_languages() -> Result<Vec<LanguageSupportInfo>, Strin
         },
         LanguageSupportInfo {
             language: "java".to_string(),
-            supported_operations: vec![
-                "rename_symbol".to_string(),
-                "extract_method".to_string(),
-            ],
+            supported_operations: vec!["rename_symbol".to_string(), "extract_method".to_string()],
             features: vec![
                 "Object-oriented refactoring".to_string(),
                 "Package structure awareness".to_string(),
@@ -882,7 +1016,7 @@ pub async fn get_supported_languages() -> Result<Vec<LanguageSupportInfo>, Strin
 
 /// Internal validation function
 async fn validate_operation_internal(
-    request: &CrossLanguageRefactoringRequest
+    request: &CrossLanguageRefactoringRequest,
 ) -> Result<(bool, Vec<String>), String> {
     let mut concerns = Vec::new();
     let mut is_valid = true;
@@ -907,7 +1041,8 @@ async fn validate_operation_internal(
                     "ts" => Some("typescript"),
                     "java" => Some("java"),
                     _ => None,
-                }) {
+                })
+            {
                 langs.insert(lang);
             }
         }
@@ -969,19 +1104,52 @@ pub struct FileChange {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RefactoringOperationType {
-    RenameSymbol { old_name: String, new_name: String },
-    ExtractMethod { code_snippet: String, method_name: String },
-    MoveType { from_path: String, to_path: String },
-    ChangeSignature { old_signature: String, new_signature: String },
+    RenameSymbol {
+        old_name: String,
+        new_name: String,
+    },
+    ExtractMethod {
+        code_snippet: String,
+        method_name: String,
+    },
+    MoveType {
+        from_path: String,
+        to_path: String,
+    },
+    ChangeSignature {
+        old_signature: String,
+        new_signature: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum LanguageSpecificOperation {
-    RustRename { old_name: String, new_name: String, scope: RenameScope },
-    PythonRename { old_name: String, new_name: String, rename_imports: bool, rename_references: bool },
-    TypeScriptRename { old_name: String, new_name: String, update_interfaces: bool, update_type_references: bool },
-    JavaRename { old_name: String, new_name: String, update_imports: bool },
-    JavaScriptRename { old_name: String, new_name: String },
+    RustRename {
+        old_name: String,
+        new_name: String,
+        scope: RenameScope,
+    },
+    PythonRename {
+        old_name: String,
+        new_name: String,
+        rename_imports: bool,
+        rename_references: bool,
+    },
+    TypeScriptRename {
+        old_name: String,
+        new_name: String,
+        update_interfaces: bool,
+        update_type_references: bool,
+    },
+    JavaRename {
+        old_name: String,
+        new_name: String,
+        update_imports: bool,
+    },
+    JavaScriptRename {
+        old_name: String,
+        new_name: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

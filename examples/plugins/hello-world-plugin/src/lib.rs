@@ -1,10 +1,10 @@
 use async_trait::async_trait;
 use rust_ai_ide_plugins::interfaces::{
-    Plugin, PluginMetadata, PluginCapabilities, PluginContext, PluginError
+    Plugin, PluginCapabilities, PluginContext, PluginError, PluginMetadata,
 };
 use rust_ai_ide_plugins::plugin::PluginResult;
-use uuid::Uuid;
 use semver::Version;
+use uuid::Uuid;
 
 // Hello World plugin implementation
 pub struct HelloWorldPlugin {
@@ -69,13 +69,9 @@ impl Plugin for HelloWorldPlugin {
         }
 
         match command {
-            "hello-world" => {
-                Ok("Hello, World!".to_string())
-            }
+            "hello-world" => Ok("Hello, World!".to_string()),
             "hello-user" => {
-                let user = args.get(0)
-                    .map(|s| s.as_str())
-                    .unwrap_or("Anonymous");
+                let user = args.get(0).map(|s| s.as_str()).unwrap_or("Anonymous");
                 Ok(format!("Hello, {}!", user))
             }
             _ => Err(PluginError::CommandNotFound(command.to_string())),

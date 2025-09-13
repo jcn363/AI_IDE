@@ -30,12 +30,12 @@ export function validateFineTuningJob(config: TrainingConfigValidation): Validat
   if (!config.jobName?.trim()) {
     errors.push({
       field: 'jobName',
-      message: 'Job name is required'
+      message: 'Job name is required',
     });
   } else if (config.jobName.length < 3) {
     errors.push({
       field: 'jobName',
-      message: 'Job name must be at least 3 characters'
+      message: 'Job name must be at least 3 characters',
     });
   }
 
@@ -43,7 +43,7 @@ export function validateFineTuningJob(config: TrainingConfigValidation): Validat
   if (!config.description?.trim()) {
     errors.push({
       field: 'description',
-      message: 'Description is required'
+      message: 'Description is required',
     });
   }
 
@@ -51,7 +51,7 @@ export function validateFineTuningJob(config: TrainingConfigValidation): Validat
   if (!config.datasetPath?.trim()) {
     errors.push({
       field: 'datasetPath',
-      message: 'Dataset path is required'
+      message: 'Dataset path is required',
     });
   } else {
     // Basic validation for dataset path
@@ -59,38 +59,35 @@ export function validateFineTuningJob(config: TrainingConfigValidation): Validat
     if (!path.endsWith('.jsonl') && !path.endsWith('.json')) {
       errors.push({
         field: 'datasetPath',
-        message: 'Dataset must be in JSONL or JSON format'
+        message: 'Dataset must be in JSONL or JSON format',
       });
     }
   }
 
   // Validate learning rate
-  if (config.learningRate !== undefined && (
-    config.learningRate <= 0 || config.learningRate > 1e-2
-  )) {
+  if (
+    config.learningRate !== undefined &&
+    (config.learningRate <= 0 || config.learningRate > 1e-2)
+  ) {
     errors.push({
       field: 'learningRate',
-      message: 'Learning rate must be between 0 and 0.01'
+      message: 'Learning rate must be between 0 and 0.01',
     });
   }
 
   // Validate batch size
-  if (config.batchSize !== undefined && (
-    config.batchSize < 1 || config.batchSize > 64
-  )) {
+  if (config.batchSize !== undefined && (config.batchSize < 1 || config.batchSize > 64)) {
     errors.push({
       field: 'batchSize',
-      message: 'Batch size must be between 1 and 64'
+      message: 'Batch size must be between 1 and 64',
     });
   }
 
   // Validate max epochs
-  if (config.maxEpochs !== undefined && (
-    config.maxEpochs < 1 || config.maxEpochs > 20
-  )) {
+  if (config.maxEpochs !== undefined && (config.maxEpochs < 1 || config.maxEpochs > 20)) {
     errors.push({
       field: 'maxEpochs',
-      message: 'Maximum epochs must be between 1 and 20'
+      message: 'Maximum epochs must be between 1 and 20',
     });
   }
 
@@ -116,6 +113,9 @@ export function validateDatasetPath(path: string): boolean {
  * @param constraints - Min and max constraints
  * @returns Whether the value is valid
  */
-export function validateNumeric(value: number, { min, max }: { min: number; max: number }): boolean {
+export function validateNumeric(
+  value: number,
+  { min, max }: { min: number; max: number }
+): boolean {
   return value >= min && value <= max;
 }

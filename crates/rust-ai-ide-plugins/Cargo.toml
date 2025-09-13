@@ -38,7 +38,7 @@ reqwest = { workspace = true }
 urlencoding = "2.1"
 
 # WebAssembly runtime for plugin execution
-wasmtime = "23.0"
+wasmtime = "25.0"
 
 # UUID for plugin identification
 uuid = { workspace = true }

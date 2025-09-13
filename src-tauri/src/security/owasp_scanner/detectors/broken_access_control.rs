@@ -1,11 +1,15 @@
 //! A01:2021 - Broken Access Control Detector
 //! Implementation of OWASP Top 10 A01:2021 Broken Access Control detection
 
-use async_trait::async_trait;
-use std::path::Path;
+use super::{
+    AttackComplexity, AttackVector, AvailabilityImpact, ConfidentialityImpact, DetectionResult,
+    ExploitabilityScore, ImpactScore, IntegrityImpact, OWASPCategory, OWASPDetector,
+    PrivilegesRequired, Scope, UserInteraction,
+};
 use crate::security::*;
-use super::{OWASPCategory, ExploitabilityScore, ImpactScore, AttackVector, AttackComplexity, PrivilegesRequired, UserInteraction, Scope, ConfidentialityImpact, IntegrityImpact, AvailabilityImpact, OWASPDetector, DetectionResult};
+use async_trait::async_trait;
 use regex::Regex;
+use std::path::Path;
 
 pub struct BrokenAccessControlDetector {
     access_patterns: Vec<Regex>,
@@ -28,10 +32,13 @@ impl BrokenAccessControlDetector {
 
     fn initialize_access_patterns() -> Vec<Regex> {
         vec![
-            Regex::new(r"pub\s+(?:struct|fn)\s+(?:get_|set_|add_|remove_|modify_|admin_|super_)\w+").unwrap(), // Public sensitive methods
+            Regex::new(
+                r"pub\s+(?:struct|fn)\s+(?:get_|set_|add_|remove_|modify_|admin_|super_)\w+",
+            )
+            .unwrap(), // Public sensitive methods
             Regex::new(r"allow_anonymous_access\s*:\s*true").unwrap(), // Anonymous access enabled
             Regex::new(r"require_authentication\s*:\s*false").unwrap(), // Missing authentication requirement
-            Regex::new(r"skip_authorization").unwrap(), // Skipped authorization
+            Regex::new(r"skip_authorization").unwrap(),                 // Skipped authorization
             Regex::new(r"\.force_wrap_unchecked\(").unwrap(), // Forced unchecked operations
         ]
     }
@@ -66,11 +73,17 @@ impl OWASPDetector for BrokenAccessControlDetector {
         "Broken Access Control Detector"
     }
 
-    async fn analyze_codebase(&self, workspace_path: &Path) -> Result<Vec<DetectionResult>, Box<dyn std::error::Error>> {
+    async fn analyze_codebase(
+        &self,
+        workspace_path: &Path,
+    ) -> Result<Vec<DetectionResult>, Box<dyn std::error::Error>> {
         use walkdir::WalkDir;
         let mut results = Vec::new();
 
-        for entry in WalkDir::new(workspace_path).into_iter().filter_map(|e| e.ok()) {
+        for entry in WalkDir::new(workspace_path)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
             if entry.path().extension().map_or(false, |ext| ext == "rs") {
                 if let Ok(code) = std::fs::read_to_string(entry.path()) {
                     let file_path = entry.path().to_string_lossy().to_string();
@@ -244,5 +257,7 @@ impl BrokenAccessControlDetector {
         results
     }
 
-    fn supports_ai_enhancement() -> bool { true }
+    fn supports_ai_enhancement() -> bool {
+        true
+    }
 }

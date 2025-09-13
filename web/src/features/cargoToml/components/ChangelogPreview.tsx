@@ -25,13 +25,16 @@ export const ChangelogPreview: React.FC<ChangelogPreviewProps> = ({
   visible,
   onClose,
 }) => {
-  const groupByType = changelog.changes.reduce((acc, change) => {
-    if (!acc[change.type]) {
-      acc[change.type] = [];
-    }
-    acc[change.type].push(change);
-    return acc;
-  }, {} as Record<string, typeof changelog.changes>);
+  const groupByType = changelog.changes.reduce(
+    (acc, change) => {
+      if (!acc[change.type]) {
+        acc[change.type] = [];
+      }
+      acc[change.type].push(change);
+      return acc;
+    },
+    {} as Record<string, typeof changelog.changes>
+  );
 
   return (
     <Modal
@@ -59,9 +62,7 @@ export const ChangelogPreview: React.FC<ChangelogPreviewProps> = ({
         {Object.entries(groupByType).map(([type, changes]) => (
           <div key={type} style={{ marginBottom: 24 }}>
             <Title level={4} style={{ textTransform: 'capitalize' }}>
-              <Tag color={changeTypeColors[type as keyof typeof changeTypeColors]}>
-                {type}
-              </Tag>
+              <Tag color={changeTypeColors[type as keyof typeof changeTypeColors]}>{type}</Tag>
               {changes.length} {changes.length === 1 ? 'change' : 'changes'}
             </Title>
             <ul style={{ paddingLeft: 24 }}>

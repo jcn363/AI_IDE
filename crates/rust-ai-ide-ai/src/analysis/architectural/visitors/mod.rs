@@ -18,10 +18,10 @@ use super::types::{ArchitecturalFinding, CodeLocation, Severity};
 pub trait ArchitecturalVisitor {
     /// Analyze the given syntax tree and return findings
     fn analyze(&mut self, ast: &File) -> Vec<ArchitecturalFinding>;
-    
+
     /// Get a reference to the analyzer configuration
     fn analyzer(&self) -> &ArchitecturalAnalyzer;
-    
+
     /// Helper method to create a finding
     fn create_finding(
         &self,

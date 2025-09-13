@@ -1,13 +1,15 @@
 import React, { Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import { CssBaseline } from '@mui/material';
+import { CssBaseline } from './components/shared/MaterialUI';
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import './styles/debugger.css';
 import { webVitals } from 'web-vitals';
+import { initPerformanceOptimizations } from './utils/preload';
+import { initPerformanceMonitoring } from './utils/performance';
 
 // Error boundary for WebAssembly and other errors
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -57,6 +59,12 @@ const root = createRoot(rootEl);
 // Initialize monitoring
 if (typeof window !== 'undefined') {
   initWebVitals();
+
+  // Initialize performance optimizations
+  initPerformanceOptimizations();
+
+  // Initialize performance monitoring
+  initPerformanceMonitoring();
 
   // Set CSS property for WebGL support
   document.documentElement.style.setProperty('--webgl-supported', checkWebGLSupport() ? '1' : '0');

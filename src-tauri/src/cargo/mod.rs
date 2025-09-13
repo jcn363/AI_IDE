@@ -1,19 +1,22 @@
 //! Cargo build system integration for the Rust AI IDE.
-//! 
+//!
 //! This module provides functionality for managing Cargo builds, including:
 //! - Build task execution
 //! - Build hooks (pre/post build)
 //! - Environment variable management
 //! - Cross-compilation support
 
-pub mod build_task;
 pub mod build_manager;
+pub mod build_task;
 pub mod service;
 
 // Re-exports
 pub use build_manager::BuildManager;
 pub use build_task::{BuildConfig, BuildHooks, BuildTask};
-pub use service::{CargoService, CargoMetadata, CargoManifest, CargoPackage, CargoDependency, PerformanceMetrics, CrateMetrics};
+pub use service::{
+    CargoDependency, CargoManifest, CargoMetadata, CargoPackage, CargoService, CrateMetrics,
+    PerformanceMetrics,
+};
 
 use rust_ai_ide_core::Result;
 use std::path::Path;

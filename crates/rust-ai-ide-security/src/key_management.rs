@@ -50,12 +50,12 @@
 //! ```
 
 use async_trait::async_trait;
+use base64::{engine::general_purpose, Engine as _};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use chrono::{DateTime, Utc};
-use base64::{Engine as _, engine::general_purpose};
 
 use crate::SecurityResult;
 
@@ -246,7 +246,11 @@ pub trait KeyManager: Send + Sync {
     async fn rotate_key(&self, key_id: &str) -> SecurityResult<String>;
 
     /// Schedule key rotation
-    async fn schedule_key_rotation(&self, key_id: &str, schedule: RotationSchedule) -> SecurityResult<()>;
+    async fn schedule_key_rotation(
+        &self,
+        key_id: &str,
+        schedule: RotationSchedule,
+    ) -> SecurityResult<()>;
 
     /// Get key rotation status
     async fn get_rotation_status(&self, key_id: &str) -> SecurityResult<RotationStatus>;
@@ -271,34 +275,55 @@ pub trait KeyManager: Send + Sync {
 #[async_trait]
 pub trait CredentialManager: Send + Sync {
     /// Generate new credential
-    async fn generate_credential(&self, service: &str, account_type: &str) -> SecurityResult<String>;
+    async fn generate_credential(
+        &self,
+        service: &str,
+        account_type: &str,
+    ) -> SecurityResult<String>;
 
     /// Get credential metadata
-    async fn get_credential_metadata(&self, credential_id: &str) -> SecurityResult<Option<CredentialMetadata>>;
+    async fn get_credential_metadata(
+        &self,
+        credential_id: &str,
+    ) -> SecurityResult<Option<CredentialMetadata>>;
 
     /// Retrieve credential (decrypted)
     async fn get_credential(&self, credential_id: &str, requester: &str) -> SecurityResult<String>;
 
     /// Update credential
-    async fn update_credential(&self, credential_id: &str, new_credential: &str) -> SecurityResult<()>;
+    async fn update_credential(
+        &self,
+        credential_id: &str,
+        new_credential: &str,
+    ) -> SecurityResult<()>;
 
     /// Rotate credential
     async fn rotate_credential(&self, credential_id: &str) -> SecurityResult<String>;
 
     /// Schedule credential rotation
-    async fn schedule_credential_rotation(&self, credential_id: &str, schedule: RotationSchedule) -> SecurityResult<()>;
+    async fn schedule_credential_rotation(
+        &self,
+        credential_id: &str,
+        schedule: RotationSchedule,
+    ) -> SecurityResult<()>;
 
     /// Revoke credential
     async fn revoke_credential(&self, credential_id: &str, reason: &str) -> SecurityResult<()>;
 
     /// Audit credential access
-    async fn audit_credential_access(&self, credential_id: &str) -> SecurityResult<Vec<CredentialAccessEvent>>;
+    async fn audit_credential_access(
+        &self,
+        credential_id: &str,
+    ) -> SecurityResult<Vec<CredentialAccessEvent>>;
 
     /// Backup credentials
     async fn backup_credentials(&self) -> SecurityResult<()>;
 
     /// Get rotation status
-    async fn get_credential_rotation_status(&self, credential_id: &str) -> SecurityResult<RotationStatus>;
+    async fn get_credential_rotation_status(
+        &self,
+        credential_id: &str,
+    ) -> SecurityResult<RotationStatus>;
 }
 
 /// Credential access event for audit
@@ -377,18 +402,22 @@ impl SoftwareKeyManager {
             }
             KeyAlgorithm::Rsa2048 => {
                 // Would use RSA library to generate key pair
-                Err(crate::SecurityError::ConfigurationError { config_error: "RSA key generation not implemented".to_string() })
+                Err(crate::SecurityError::ConfigurationError {
+                    config_error: "RSA key generation not implemented".to_string(),
+                })
             }
-            KeyAlgorithm::Rsa4096 => {
-                Err(crate::SecurityError::ConfigurationError { config_error: "RSA4096 key generation not implemented".to_string() })
-            }
+            KeyAlgorithm::Rsa4096 => Err(crate::SecurityError::ConfigurationError {
+                config_error: "RSA4096 key generation not implemented".to_string(),
+            }),
             KeyAlgorithm::EcSecp256r1 => {
                 // Would use ECC library to generate key
-                Err(crate::SecurityError::ConfigurationError { config_error: "EC key generation not implemented".to_string() })
+                Err(crate::SecurityError::ConfigurationError {
+                    config_error: "EC key generation not implemented".to_string(),
+                })
             }
-            KeyAlgorithm::EcEd25519 => {
-                Err(crate::SecurityError::ConfigurationError { config_error: "Ed25519 key generation not implemented".to_string() })
-            }
+            KeyAlgorithm::EcEd25519 => Err(crate::SecurityError::ConfigurationError {
+                config_error: "Ed25519 key generation not implemented".to_string(),
+            }),
         }
     }
 }
@@ -399,7 +428,11 @@ impl KeyManager for SoftwareKeyManager {
         let algorithm = match algorithm {
             "aes256" | "aes256-gcm" => KeyAlgorithm::Aes256Gcm,
             "chacha20" => KeyAlgorithm::Chacha20Poly1305,
-            _ => return Err(crate::SecurityError::ConfigurationError { config_error: format!("Unsupported algorithm: {}", algorithm) }),
+            _ => {
+                return Err(crate::SecurityError::ConfigurationError {
+                    config_error: format!("Unsupported algorithm: {}", algorithm),
+                })
+            }
         };
 
         let purpose_type = match purpose {
@@ -476,14 +509,18 @@ impl KeyManager for SoftwareKeyManager {
 
     async fn encrypt_data(&self, key_id: &str, data: &[u8]) -> SecurityResult<Vec<u8>> {
         let key_storage = self.key_storage.read().await;
-        let key_data = key_storage.get(key_id)
-            .ok_or_else(|| crate::SecurityError::ConfigurationError { config_error: format!("Key not found: {}", key_id) })?;
+        let key_data =
+            key_storage
+                .get(key_id)
+                .ok_or_else(|| crate::SecurityError::ConfigurationError {
+                    config_error: format!("Key not found: {}", key_id),
+                })?;
 
         // Decrypt the key
         let key_material = crate::decrypt_with_backup_key(key_data)?;
 
         // Use the key for encryption (simplified)
-        use aes_gcm::{Aes256Gcm, KeyInit, aead::Aead, Nonce};
+        use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit, Nonce};
         let cipher_key = aes_gcm::Key::<Aes256Gcm>::from_slice(&key_material[0..32]);
         let nonce = Aes256Gcm::generate_nonce(&mut rand::rngs::OsRng);
         let cipher = Aes256Gcm::new(cipher_key);
@@ -508,8 +545,12 @@ impl KeyManager for SoftwareKeyManager {
         }
 
         let key_storage = self.key_storage.read().await;
-        let key_data = key_storage.get(key_id)
-            .ok_or_else(|| crate::SecurityError::ConfigurationError { config_error: format!("Key not found: {}", key_id) })?;
+        let key_data =
+            key_storage
+                .get(key_id)
+                .ok_or_else(|| crate::SecurityError::ConfigurationError {
+                    config_error: format!("Key not found: {}", key_id),
+                })?;
 
         // Decrypt the key
         let key_material = crate::decrypt_with_backup_key(key_data)?;
@@ -520,14 +561,15 @@ impl KeyManager for SoftwareKeyManager {
         let ciphertext = &encrypted_data[12..];
 
         // Use the key for decryption
-        use aes_gcm::{Aes256Gcm, KeyInit, aead::Aead};
+        use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit};
         let cipher = Aes256Gcm::new_from_slice(&key_material).map_err(|_| {
             crate::SecurityError::EncryptionError {
                 source: "Invalid key format".into(),
             }
         })?;
 
-        cipher.decrypt(nonce, ciphertext)
+        cipher
+            .decrypt(nonce, ciphertext)
             .map_err(|e| crate::SecurityError::EncryptionError {
                 source: format!("Decryption failed: {}", e).into(),
             })
@@ -535,8 +577,11 @@ impl KeyManager for SoftwareKeyManager {
 
     async fn rotate_key(&self, key_id: &str) -> SecurityResult<String> {
         let mut keys = self.keys.write().await;
-        let current_key = keys.get_mut(key_id)
-            .ok_or_else(|| crate::SecurityError::ConfigurationError { config_error: format!("Key not found: {}", key_id) })?;
+        let current_key =
+            keys.get_mut(key_id)
+                .ok_or_else(|| crate::SecurityError::ConfigurationError {
+                    config_error: format!("Key not found: {}", key_id),
+                })?;
 
         // Generate new key material
         let algorithm = current_key.algorithm.clone();
@@ -577,13 +622,19 @@ impl KeyManager for SoftwareKeyManager {
         Ok(new_key_id)
     }
 
-    async fn schedule_key_rotation(&self, key_id: &str, schedule: RotationSchedule) -> SecurityResult<()> {
+    async fn schedule_key_rotation(
+        &self,
+        key_id: &str,
+        schedule: RotationSchedule,
+    ) -> SecurityResult<()> {
         let mut policies = self.rotation_policies.write().await;
         if let Some(policy) = policies.get_mut(key_id) {
             policy.rotation_schedule = Some(schedule);
             Ok(())
         } else {
-            Err(crate::SecurityError::ConfigurationError { config_error: format!("Key rotation policy not found: {}", key_id) })
+            Err(crate::SecurityError::ConfigurationError {
+                config_error: format!("Key rotation policy not found: {}", key_id),
+            })
         }
     }
 
@@ -591,11 +642,18 @@ impl KeyManager for SoftwareKeyManager {
         let keys = self.keys.read().await;
         let policies = self.rotation_policies.read().await;
 
-        let key = keys.get(key_id)
-            .ok_or_else(|| crate::SecurityError::ConfigurationError { config_error: format!("Key not found: {}", key_id) })?;
+        let key = keys
+            .get(key_id)
+            .ok_or_else(|| crate::SecurityError::ConfigurationError {
+                config_error: format!("Key not found: {}", key_id),
+            })?;
 
-        let policy = policies.get(key_id)
-            .ok_or_else(|| crate::SecurityError::ConfigurationError { config_error: format!("Rotation policy not found: {}", key_id) })?;
+        let policy =
+            policies
+                .get(key_id)
+                .ok_or_else(|| crate::SecurityError::ConfigurationError {
+                    config_error: format!("Rotation policy not found: {}", key_id),
+                })?;
 
         Ok(RotationStatus {
             scheduled_at: None, // Could be calculated based on policy
@@ -614,13 +672,17 @@ impl KeyManager for SoftwareKeyManager {
             // In real implementation, would write to backup location
             Ok(())
         } else {
-            Err(crate::SecurityError::ConfigurationError { config_error: "Key not found for backup".to_string() })
+            Err(crate::SecurityError::ConfigurationError {
+                config_error: "Key not found for backup".to_string(),
+            })
         }
     }
 
     async fn recover_key(&self, key_id: &str, _backup_location: &str) -> SecurityResult<()> {
         // In real implementation, would read from backup location
-        Err(crate::SecurityError::ConfigurationError { config_error: "Recovery requires HSM or cloud provider".to_string() })
+        Err(crate::SecurityError::ConfigurationError {
+            config_error: "Recovery requires HSM or cloud provider".to_string(),
+        })
     }
 
     async fn revoke_key(&self, key_id: &str, _reason: &str) -> SecurityResult<()> {
@@ -629,11 +691,16 @@ impl KeyManager for SoftwareKeyManager {
             key.status = KeyStatus::Compromised;
             Ok(())
         } else {
-            Err(crate::SecurityError::ConfigurationError { config_error: format!("Key not found: {}", key_id) })
+            Err(crate::SecurityError::ConfigurationError {
+                config_error: format!("Key not found: {}", key_id),
+            })
         }
     }
 
-    async fn list_keys(&self, status_filter: Option<KeyStatus>) -> SecurityResult<Vec<KeyMetadata>> {
+    async fn list_keys(
+        &self,
+        status_filter: Option<KeyStatus>,
+    ) -> SecurityResult<Vec<KeyMetadata>> {
         let keys = self.keys.read().await;
         let mut result: Vec<KeyMetadata> = keys.values().cloned().collect();
 
@@ -647,10 +714,14 @@ impl KeyManager for SoftwareKeyManager {
     async fn health_check(&self) -> SecurityResult<KeyHealthStatus> {
         let keys = self.keys.read().await;
         let total_keys = keys.len() as u32;
-        let active_keys = keys.values().filter(|k| k.status == KeyStatus::Active).count() as u32;
-        let expired_keys = keys.values().filter(|k| {
-            k.expires_at.is_some() && k.expires_at.unwrap() < Utc::now()
-        }).count() as u32;
+        let active_keys = keys
+            .values()
+            .filter(|k| k.status == KeyStatus::Active)
+            .count() as u32;
+        let expired_keys = keys
+            .values()
+            .filter(|k| k.expires_at.is_some() && k.expires_at.unwrap() < Utc::now())
+            .count() as u32;
         let backed_up_keys = keys.values().filter(|k| k.backup_available).count() as u32;
 
         Ok(KeyHealthStatus {
@@ -661,7 +732,7 @@ impl KeyManager for SoftwareKeyManager {
             expired_keys,
             backed_up_keys,
             last_backup_time: Some(Utc::now()), // Simplified
-            alerts: vec![], // Would contain actual alerts
+            alerts: vec![],                     // Would contain actual alerts
         })
     }
 }
@@ -669,7 +740,7 @@ impl KeyManager for SoftwareKeyManager {
 // Utility functions (would be in separate module in real implementation)
 fn encrypt_with_backup_key(data: &[u8]) -> SecurityResult<(Vec<u8>, Vec<u8>)> {
     let backup_key = b"super_secret_backup_key_1234567890123456"; // NEVER USE IN PRODUCTION
-    use aes_gcm::{Aes256Gcm, KeyInit, aead::Aead, Nonce};
+    use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit, Nonce};
 
     let cipher_key = aes_gcm::Key::<Aes256Gcm>::from_slice(backup_key);
     let nonce = Aes256Gcm::generate_nonce(&mut rand::rngs::OsRng);
@@ -691,7 +762,7 @@ fn decrypt_with_backup_key(encrypted_data: &[u8]) -> SecurityResult<Vec<u8>> {
         });
     }
 
-    use aes_gcm::{Aes256Gcm, KeyInit, aead::Aead, Nonce};
+    use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit, Nonce};
     let cipher = Aes256Gcm::new_from_slice(backup_key).map_err(|_| {
         crate::SecurityError::EncryptionError {
             source: "Invalid backup key".into(),
@@ -701,7 +772,8 @@ fn decrypt_with_backup_key(encrypted_data: &[u8]) -> SecurityResult<Vec<u8>> {
     let nonce = Nonce::from_slice(&encrypted_data[0..12]);
     let ciphertext = &encrypted_data[12..];
 
-    cipher.decrypt(nonce, ciphertext)
+    cipher
+        .decrypt(nonce, ciphertext)
         .map_err(|e| crate::SecurityError::EncryptionError {
             source: format!("Backup key decryption failed: {}", e).into(),
         })
@@ -712,17 +784,21 @@ pub async fn create_software_key_manager() -> Arc<dyn KeyManager> {
     Arc::new(SoftwareKeyManager::new())
 }
 
-pub async fn create_hsm_key_manager(_hsm_config: HashMap<String, String>) -> SecurityResult<Arc<dyn KeyManager>> {
+pub async fn create_hsm_key_manager(
+    _hsm_config: HashMap<String, String>,
+) -> SecurityResult<Arc<dyn KeyManager>> {
     // In real implementation, this would create HSM-backed key manager
-    Err(crate::SecurityError::ConfigurationError { 
-        config_error: "HSM key manager not implemented for this demo".to_string() 
+    Err(crate::SecurityError::ConfigurationError {
+        config_error: "HSM key manager not implemented for this demo".to_string(),
     })
 }
 
-pub async fn create_aws_kms_key_manager(_aws_config: HashMap<String, String>) -> SecurityResult<Arc<dyn KeyManager>> {
+pub async fn create_aws_kms_key_manager(
+    _aws_config: HashMap<String, String>,
+) -> SecurityResult<Arc<dyn KeyManager>> {
     // In real implementation, this would create AWS KMS-backed key manager
-    Err(crate::SecurityError::ConfigurationError { 
-        config_error: "AWS KMS key manager not implemented for this demo".to_string() 
+    Err(crate::SecurityError::ConfigurationError {
+        config_error: "AWS KMS key manager not implemented for this demo".to_string(),
     })
 }
 
@@ -783,10 +859,17 @@ mod tests {
     #[async_test]
     async fn test_key_rotation() {
         let key_manager = create_software_key_manager().await;
-        let old_key_id = key_manager.generate_key("production", "aes256").await.unwrap();
+        let old_key_id = key_manager
+            .generate_key("production", "aes256")
+            .await
+            .unwrap();
 
         // Verify original key exists
-        let original_metadata = key_manager.get_key_metadata(&old_key_id).await.unwrap().unwrap();
+        let original_metadata = key_manager
+            .get_key_metadata(&old_key_id)
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(original_metadata.status, KeyStatus::Active);
 
         // Rotate key
@@ -794,12 +877,20 @@ mod tests {
         assert!(!new_key_id.is_empty());
 
         // Verify new key
-        let new_metadata = key_manager.get_key_metadata(&new_key_id).await.unwrap().unwrap();
+        let new_metadata = key_manager
+            .get_key_metadata(&new_key_id)
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(new_metadata.version, 2);
         assert_eq!(new_metadata.status, KeyStatus::Active);
 
         // Verify old key was retired
-        let retired_metadata = key_manager.get_key_metadata(&old_key_id).await.unwrap().unwrap();
+        let retired_metadata = key_manager
+            .get_key_metadata(&old_key_id)
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(retired_metadata.status, KeyStatus::Retired);
         assert!(retired_metadata.rotated_at.is_some());
     }
@@ -826,7 +917,10 @@ mod tests {
         assert_eq!(all_keys.len(), 2);
 
         // List only active keys
-        let active_keys = key_manager.list_keys(Some(KeyStatus::Active)).await.unwrap();
+        let active_keys = key_manager
+            .list_keys(Some(KeyStatus::Active))
+            .await
+            .unwrap();
         assert_eq!(active_keys.len(), 2);
 
         // Verify key IDs
@@ -849,6 +943,8 @@ mod tests {
         assert_eq!(schedule.timezone, "UTC");
         assert_eq!(schedule.maintenance_window_start, "02:00");
         assert_eq!(schedule.maintenance_window_end, "06:00");
-        assert!(schedule.blackout_periods.contains(&"2024-12-25".to_string()));
+        assert!(schedule
+            .blackout_periods
+            .contains(&"2024-12-25".to_string()));
     }
 }

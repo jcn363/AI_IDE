@@ -24,43 +24,43 @@ log = "0.4"
 rand = "0.8"
 
 # Quantum computing for state visualization
-qiskit = { git = "https://github.com/Qiskit/qiskit-rust" }
-quantum-computing = { git = "https://github.com/quantum-computing/quantum-computing-rs" }
-quantum-viz = { git = "https://github.com/quantum-viz/quantum-viz-rs" }
+#qiskit = { git = "https://github.com/Qiskit/qiskit-rust" }
+#quantum-computing = { git = "https://github.com/quantum-computing/quantum-computing-rs" }
+#quantum-viz = { git = "https://github.com/quantum-viz/quantum-viz-rs" }
 
 # Holographic interface framework
-holographic-ui = { git = "https://github.com/holographic-ui/holographic-ui-rs" }
-spatial-computing = { git = "https://github.com/spatial-computing/spatial-computing-rs" }
-ar-vr-integration = { git = "https://github.com/ar-vr-integration/ar-vr-integration-rs" }
+#holographic-ui = { git = "https://github.com/holographic-ui/holographic-ui-rs" }
+#spatial-computing = { git = "https://github.com/spatial-computing/spatial-computing-rs" }
+#ar-vr-integration = { git = "https://github.com/ar-vr-integration/ar-vr-integration-rs" }
 
 # Neural interface for user interaction
-neural-interface = { git = "https://github.com/neural-interface/neural-interface-rs" }
-brain-computer-interface = { git = "https://github.com/bci-framework/bci-framework-rs" }
-gesture-recognition = { git = "https://github.com/gesture-recognition/gesture-recognition-rs" }
+#neural-interface = { git = "https://github.com/neural-interface/neural-interface-rs" }
+#brain-computer-interface = { git = "https://github.com/bci-framework/bci-framework-rs" }
+#gesture-recognition = { git = "https://github.com/gesture-recognition/gesture-recognition-rs" }
 
 # Real-time signal processing
 rustfft = "6.2"
 ndarray = "0.15"
-dsp-rs = { git = "https://github.com/dsp-rs/dsp-rs" }
+#dsp-rs = { git = "https://github.com/dsp-rs/dsp-rs" }
 
 # High-performance graphics and visualization
 wgpu = "0.19"
 taffy = "0.5"
-vello = { git = "https://github.com/linebender/vello" }
+#vello = { git = "https://github.com/linebender/vello" }
 
 # Multi-modal interaction
-voice-interaction = { git = "https://github.com/voice-interaction/voice-interaction-rs" }
-touch-haptics = { git = "https://github.com/touch-haptics/touch-haptics-rs" }
-eye-tracking = { git = "https://github.com/eye-tracking/eye-tracking-rs" }
+#voice-interaction = { git = "https://github.com/voice-interaction/voice-interaction-rs" }
+#touch-haptics = { git = "https://github.com/touch-haptics/touch-haptics-rs" }
+#eye-tracking = { git = "https://github.com/eye-tracking/eye-tracking-rs" }
 
 # Quantum state management
-superposition-engine = { git = "https://github.com/superposition-engine/superposition-engine-rs" }
-entanglement-manager = { git = "https://github.com/entanglement-manager/entanglement-manager-rs" }
-quantum-state-visualizer = { git = "https://github.com/quantum-state-visualizer/quantum-state-visualizer-rs" }
+#superposition-engine = { git = "https://github.com/superposition-engine/superposition-engine-rs" }
+#entanglement-manager = { git = "https://github.com/entanglement-manager/entanglement-manager-rs" }
+#quantum-state-visualizer = { git = "https://github.com/quantum-state-visualizer/quantum-state-visualizer-rs" }
 
 # Spatial audio for 3D interfaces
-spatial-audio = { git = "https://github.com/spatial-audio/spatial-audio-rs" }
-sonic-feedback = { git = "https://github.com/sonic-feedback/sonic-feedback-rs" }
+#spatial-audio = { git = "https://github.com/spatial-audio/spatial-audio-rs" }
+#sonic-feedback = { git = "https://github.com/sonic-feedback/sonic-feedback-rs" }
 
 [dev-dependencies]
 criterion = "0.5"

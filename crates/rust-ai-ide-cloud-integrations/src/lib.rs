@@ -3,11 +3,11 @@ pub mod azure;
 pub mod gcp;
 pub mod types;
 
-use std::fmt::Debug;
+use crate::types::{CloudAuth, CloudConfig, CloudResource};
+use anyhow::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use anyhow::Result;
-use crate::types::{CloudConfig, CloudResource, CloudAuth};
+use std::fmt::Debug;
 
 /// Core trait for cloud provider integrations
 #[async_trait]
@@ -38,17 +38,24 @@ pub struct CloudProviderFactory;
 
 impl CloudProviderFactory {
     /// Create AWS provider
-    pub async fn aws(config: aws::AwsConfig) -> Result<Box<dyn CloudProvider<Config = aws::AwsConfig, Client = aws::AwsClient>>> {
+    pub async fn aws(
+        config: aws::AwsConfig,
+    ) -> Result<Box<dyn CloudProvider<Config = aws::AwsConfig, Client = aws::AwsClient>>> {
         Ok(Box::new(aws::AwsClient::new(config).await?))
     }
 
     /// Create Azure provider
-    pub async fn azure(config: azure::AzureConfig) -> Result<Box<dyn CloudProvider<Config = azure::AzureConfig, Client = azure::AzureClient>>> {
+    pub async fn azure(
+        config: azure::AzureConfig,
+    ) -> Result<Box<dyn CloudProvider<Config = azure::AzureConfig, Client = azure::AzureClient>>>
+    {
         Ok(Box::new(azure::AzureClient::new(config).await?))
     }
 
     /// Create GCP provider
-    pub async fn gcp(config: gcp::GcpConfig) -> Result<Box<dyn CloudProvider<Config = gcp::GcpConfig, Client = gcp::GcpClient>>> {
+    pub async fn gcp(
+        config: gcp::GcpConfig,
+    ) -> Result<Box<dyn CloudProvider<Config = gcp::GcpConfig, Client = gcp::GcpClient>>> {
         Ok(Box::new(gcp::GcpClient::new(config).await?))
     }
 }
@@ -96,7 +103,11 @@ impl CloudServiceManager {
     }
 
     /// Register a cloud provider
-    pub fn register_provider(&mut self, name: impl Into<String>, provider: Box<dyn CloudProviderAny>) {
+    pub fn register_provider(
+        &mut self,
+        name: impl Into<String>,
+        provider: Box<dyn CloudProviderAny>,
+    ) {
         self.providers.insert(name.into(), provider);
     }
 

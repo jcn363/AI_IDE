@@ -54,10 +54,7 @@ const convertBackendMetrics = (data: BackendPerformanceMetrics): PerformanceMetr
       ])
     ),
     dependencies: Object.fromEntries(
-      Object.entries(data.dependencies).map(([name, duration]) => [
-        name,
-        durationToMs(duration)
-      ])
+      Object.entries(data.dependencies).map(([name, duration]) => [name, durationToMs(duration)])
     ),
     features: data.features,
   };
@@ -74,7 +71,7 @@ export const usePerformanceAnalysis = (projectPath: string) => {
         setError('No project path provided');
         return null;
       }
-      
+
       console.log('Analyzing performance with:', { path, release, incremental });
 
       setIsLoading(true);
@@ -88,7 +85,7 @@ export const usePerformanceAnalysis = (projectPath: string) => {
           incremental,
         });
         console.log('Received performance metrics:', result);
-        
+
         const convertedMetrics = convertBackendMetrics(result);
         setMetrics(convertedMetrics);
         return convertedMetrics;

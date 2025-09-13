@@ -4,8 +4,8 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rust_ai_ide_ai::{
     analysis::{
         architectural::{
-            CircularDependencyAnalyzer, DependencyInversionAnalyzer,
-            InterfaceSegregationAnalyzer, LayerViolationDetector,
+            CircularDependencyAnalyzer, DependencyInversionAnalyzer, InterfaceSegregationAnalyzer,
+            LayerViolationDetector,
         },
         AnalysisRegistry, AnalysisType,
     },
@@ -19,10 +19,10 @@ fn benchmark_circular_dependency_analyzer(c: &mut Criterion) {
         mod b { pub fn b() { c::c(); } }
         mod c { pub fn c() { a::a(); } }
     "#;
-    
+
     let ast = create_test_ast(code);
     let analyzer = CircularDependencyAnalyzer::default();
-    
+
     c.bench_function("circular_dependency_analyzer", |b| {
         b.iter(|| {
             let mut findings = Vec::new();
@@ -44,10 +44,10 @@ fn benchmark_layer_violation_detector(c: &mut Criterion) {
             pub struct Database;
         }
     "#;
-    
+
     let ast = create_test_ast(code);
     let detector = LayerViolationDetector::default();
-    
+
     c.bench_function("layer_violation_detector", |b| {
         b.iter(|| {
             let mut findings = Vec::new();
@@ -75,13 +75,13 @@ fn benchmark_full_analysis(c: &mut Criterion) {
             pub fn run() { let _service = Service { repo: DbRepository }; }
         }
     "#;
-    
+
     let mut registry = AnalysisRegistry::default();
     registry.register_architectural_analyzer(CircularDependencyAnalyzer::default());
     registry.register_architectural_analyzer(LayerViolationDetector::default());
     registry.register_architectural_analyzer(InterfaceSegregationAnalyzer::default());
     registry.register_architectural_analyzer(DependencyInversionAnalyzer::default());
-    
+
     c.bench_function("full_analysis_pipeline", |b| {
         b.iter(|| {
             let result = registry.analyze_code(black_box(code), black_box("test.rs"));

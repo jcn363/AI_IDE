@@ -5,8 +5,8 @@
 
 use crate::types::{IntegrationCommandResult, IntegrationStatus};
 use serde::{Deserialize, Serialize};
-use tauri::State;
 use std::sync::Arc;
+use tauri::State;
 use tokio::sync::RwLock;
 
 /// State for managing integrations
@@ -54,20 +54,25 @@ pub async fn webhook_register(
 ) -> Result<IntegrationCommandResult, String> {
     if let Some(webhook_registry) = &state.webhook_registry {
         // Register webhook handler
-        webhook_registry.register_provider(
-            provider.clone(),
-            Arc::new(rust_ai_ide_webhooks::handlers::DefaultWebhookHandler::new(
-                config["secret"].as_str().unwrap_or("").to_string(),
-                match provider.as_str() {
-                    "github" => rust_ai_ide_webhooks::types::Provider::GitHub,
-                    "gitlab" => rust_ai_ide_webhooks::types::Provider::GitLab,
-                    _ => rust_ai_ide_webhooks::types::Provider::Custom {
-                        name: provider.clone(),
-                        signature_header: config["signature_header"].as_str().unwrap_or("X-Signature-256").to_string(),
+        webhook_registry
+            .register_provider(
+                provider.clone(),
+                Arc::new(rust_ai_ide_webhooks::handlers::DefaultWebhookHandler::new(
+                    config["secret"].as_str().unwrap_or("").to_string(),
+                    match provider.as_str() {
+                        "github" => rust_ai_ide_webhooks::types::Provider::GitHub,
+                        "gitlab" => rust_ai_ide_webhooks::types::Provider::GitLab,
+                        _ => rust_ai_ide_webhooks::types::Provider::Custom {
+                            name: provider.clone(),
+                            signature_header: config["signature_header"]
+                                .as_str()
+                                .unwrap_or("X-Signature-256")
+                                .to_string(),
+                        },
                     },
-                },
-            )),
-        ).await;
+                )),
+            )
+            .await;
 
         Ok(IntegrationCommandResult {
             success: true,
@@ -103,7 +108,10 @@ pub async fn connector_send_message(
     state: State<'_, Arc<IntegrationState>>,
 ) -> Result<IntegrationCommandResult, String> {
     if let Some(connector_manager) = &state.connector_manager {
-        match connector_manager.send_message(&connector, &channel, &message).await {
+        match connector_manager
+            .send_message(&connector, &channel, &message)
+            .await
+        {
             Ok(message_id) => Ok(IntegrationCommandResult {
                 success: true,
                 message: format!("Message sent via {} to {}", connector, channel),
@@ -125,7 +133,9 @@ pub async fn connector_get_status(
     state: State<'_, Arc<IntegrationState>>,
 ) -> Result<serde_json::Value, String> {
     if let Some(connector_manager) = &state.connector_manager {
-        let status = connector_manager.get_status_all().await
+        let status = connector_manager
+            .get_status_all()
+            .await
             .map_err(|e| e.to_string())?;
         Ok(status)
     } else {
@@ -151,14 +161,18 @@ pub async fn marketplace_get_plugins(
 pub async fn integrations_overview(
     state: State<'_, Arc<IntegrationState>>,
 ) -> Result<IntegrationStatus, String> {
-    let cloud_resources = cloud_list_resources("".to_string(), "".to_string(), state.clone()).await?;
+    let cloud_resources =
+        cloud_list_resources("".to_string(), "".to_string(), state.clone()).await?;
     let webhook_status = webhook_get_status(state.clone()).await?;
     let connector_status = connector_get_status(state.clone()).await?;
 
     Ok(IntegrationStatus {
         cloud_integrations_available: true,
         webhook_system_active: webhook_status.get("status").is_none(), // If no error in webhook
-        connector_services_count: connector_status.as_object().map(|obj| obj.len()).unwrap_or(0),
+        connector_services_count: connector_status
+            .as_object()
+            .map(|obj| obj.len())
+            .unwrap_or(0),
         marketplace_connected: false, // TODO: Check actual marketplace connection
     })
 }

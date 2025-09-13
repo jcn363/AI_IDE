@@ -1,7 +1,7 @@
 //! Analysis utilities and helper functions
 
+use crate::analysis::types::{AnalysisCategory, Range, Severity};
 use serde::{Deserialize, Serialize};
-use crate::analysis::types::{AnalysisCategory, Severity, Range};
 
 /// Create a standard analysis finding
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,27 +1,21 @@
 //! Tauri commands for plugin management
 
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use tokio::time::Duration;
 
+use rust_ai_ide_common::{validation::TauriInputSanitizer, IDEError, IDEErrorKind};
 use rust_ai_ide_plugins::{
-    plugin_runtime::{PluginRuntime, PluginPermissions},
-    marketplace_integration::MarketplaceIntegration
-};
-use rust_ai_ide_common::{
-    IDEError, IDEErrorKind,
-    validation::TauriInputSanitizer
+    marketplace_integration::MarketplaceIntegration,
+    plugin_runtime::{PluginPermissions, PluginRuntime},
 };
 
 // Command template macros
 use crate::command_templates::{
-    tauri_command_template,
-    acquire_service_and_execute,
-    execute_with_retry,
+    acquire_service_and_execute, execute_with_retry, format_command_error, tauri_command_template,
     CommandConfig,
-    format_command_error,
 };
 
 /// App state for plugin services

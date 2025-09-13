@@ -18,7 +18,8 @@ async fn test_plugin_loading_and_execution() {
     assert!(!plugins.is_empty());
 
     // Check for expected built-in plugins
-    let transformer_names: Vec<String> = plugins.iter()
+    let transformer_names: Vec<String> = plugins
+        .iter()
         .filter_map(|p| {
             if p.instance.as_ref()?.is_transformer() {
                 Some(p.metadata.name.clone())
@@ -28,7 +29,8 @@ async fn test_plugin_loading_and_execution() {
         })
         .collect();
 
-    let generator_names: Vec<String> = plugins.iter()
+    let generator_names: Vec<String> = plugins
+        .iter()
         .filter_map(|p| {
             if p.instance.as_ref()?.is_generator() {
                 Some(p.metadata.name.clone())
@@ -42,7 +44,9 @@ async fn test_plugin_loading_and_execution() {
     assert!(generator_names.contains(&"python-generator".to_string()));
 
     // Test plugin execution
-    let transformer = plugin_system.get_transformer("json-schema-transformer").unwrap();
+    let transformer = plugin_system
+        .get_transformer("json-schema-transformer")
+        .unwrap();
 
     let test_type = ParsedType {
         name: "TestPluginType".to_string(),
@@ -50,16 +54,14 @@ async fn test_plugin_loading_and_execution() {
         documentation: Some("A test type for plugin validation".to_string()),
         visibility: Visibility::Public,
         generics: vec![],
-        fields: vec![
-            Field {
-                name: "id".to_string(),
-                ty: "String".to_string(),
-                documentation: None,
-                visibility: Visibility::Public,
-                is_mutable: false,
-                attributes: vec![],
-            },
-        ],
+        fields: vec![Field {
+            name: "id".to_string(),
+            ty: "String".to_string(),
+            documentation: None,
+            visibility: Visibility::Public,
+            is_mutable: false,
+            attributes: vec![],
+        }],
         variants: vec![],
         associated_items: vec![],
         attributes: vec![],
@@ -81,7 +83,10 @@ async fn test_plugin_loading_and_execution() {
         options: HashMap::new(),
     };
 
-    let result = transformer.transform_type(&test_type, &context).await.unwrap();
+    let result = transformer
+        .transform_type(&test_type, &context)
+        .await
+        .unwrap();
     assert!(result.is_some());
 
     let generated = result.unwrap();
@@ -106,16 +111,14 @@ async fn test_built_in_transformer_plugins() {
         documentation: None,
         visibility: Visibility::Public,
         generics: vec![],
-        fields: vec![
-            Field {
-                name: "name".to_string(),
-                ty: "String".to_string(),
-                documentation: None,
-                visibility: Visibility::Public,
-                is_mutable: false,
-                attributes: vec![],
-            },
-        ],
+        fields: vec![Field {
+            name: "name".to_string(),
+            ty: "String".to_string(),
+            documentation: None,
+            visibility: Visibility::Public,
+            is_mutable: false,
+            attributes: vec![],
+        }],
         variants: vec![],
         associated_items: vec![],
         attributes: vec![],
@@ -137,7 +140,10 @@ async fn test_built_in_transformer_plugins() {
         options: HashMap::new(),
     };
 
-    let result = json_plugin.transform_type(&simple_type, &context).await.unwrap();
+    let result = json_plugin
+        .transform_type(&simple_type, &context)
+        .await
+        .unwrap();
     assert!(result.is_some());
 
     let generated = result.unwrap();
@@ -153,7 +159,9 @@ async fn test_built_in_generator_plugins() {
     let metadata = python_plugin.metadata();
     assert_eq!(metadata.name, "python-generator");
     assert!(metadata.target_platforms.contains(&"python".to_string()));
-    assert!(metadata.supported_formats.contains(&"dataclass".to_string()));
+    assert!(metadata
+        .supported_formats
+        .contains(&"dataclass".to_string()));
 
     // Test dataclass generation
     let test_type = ParsedType {
@@ -194,7 +202,10 @@ async fn test_built_in_generator_plugins() {
     };
 
     let config = serde_json::json!({"format": "dataclass"});
-    let result = python_plugin.generate(&vec![test_type], "python-dataclasses", &config).await.unwrap();
+    let result = python_plugin
+        .generate(&vec![test_type], "python-dataclasses", &config)
+        .await
+        .unwrap();
 
     assert!(result.content.contains("@dataclass"));
     assert!(result.content.contains("class Person"));
@@ -227,7 +238,10 @@ async fn test_plugin_transformation_pipeline() {
 
     // Test through the plugin system
     let generator = create_typescript_generator().unwrap();
-    let result = generator.generate_types_from_source(rust_code, "transform.rs", &[]).await.unwrap();
+    let result = generator
+        .generate_types_from_source(rust_code, "transform.rs", &[])
+        .await
+        .unwrap();
 
     assert!(result.content.contains("id: string"));
     assert!(result.content.contains("count: number"));
@@ -266,7 +280,10 @@ async fn test_plugin_error_handling() {
         options: HashMap::new(),
     };
 
-    let result = json_plugin.transform_type(&empty_type, &context).await.unwrap();
+    let result = json_plugin
+        .transform_type(&empty_type, &context)
+        .await
+        .unwrap();
     assert!(result.is_some());
 
     let generated = result.unwrap();
@@ -290,8 +307,12 @@ fn test_plugin_metadata_validation() {
     // Validate Python plugin metadata
     assert!(!python_metadata.name.is_empty());
     assert!(!python_metadata.version.is_empty());
-    assert!(python_metadata.target_platforms.contains(&"python".to_string()));
-    assert!(python_metadata.supported_formats.contains(&"dataclass".to_string()));
+    assert!(python_metadata
+        .target_platforms
+        .contains(&"python".to_string()));
+    assert!(python_metadata
+        .supported_formats
+        .contains(&"dataclass".to_string()));
 }
 
 #[tokio::test]
@@ -303,14 +324,26 @@ async fn test_plugin_platform_support() {
     assert!(json_plugin.supports_platform("json-schema"));
     assert!(!json_plugin.supports_platform("typescript"));
 
-    assert!(python_plugin.target_platforms().contains(&"python".to_string()));
-    assert!(python_plugin.target_platforms().contains(&"python-dataclasses".to_string()));
-    assert!(!python_plugin.target_platforms().contains(&"invalid-platform".to_string()));
+    assert!(python_plugin
+        .target_platforms()
+        .contains(&"python".to_string()));
+    assert!(python_plugin
+        .target_platforms()
+        .contains(&"python-dataclasses".to_string()));
+    assert!(!python_plugin
+        .target_platforms()
+        .contains(&"invalid-platform".to_string()));
 
     // Test supported formats
-    assert!(python_plugin.supported_formats().contains(&"dataclass".to_string()));
-    assert!(python_plugin.supported_formats().contains(&"pydantic".to_string()));
-    assert!(python_plugin.supported_formats().contains(&"typeddict".to_string()));
+    assert!(python_plugin
+        .supported_formats()
+        .contains(&"dataclass".to_string()));
+    assert!(python_plugin
+        .supported_formats()
+        .contains(&"pydantic".to_string()));
+    assert!(python_plugin
+        .supported_formats()
+        .contains(&"typeddict".to_string()));
 }
 
 #[tokio::test]
@@ -360,7 +393,7 @@ async fn test_plugin_validation() {
 
 #[test]
 fn test_plugin_instance_types() {
-    use crate::plugins::{PluginInstance, TransformerPluginTrait, GeneratorPluginTrait};
+    use crate::plugins::{GeneratorPluginTrait, PluginInstance, TransformerPluginTrait};
 
     let transformer = crate::plugins::JsonTransformerPlugin::new();
     let generator = crate::plugins::PythonGeneratorPlugin::new();
@@ -385,7 +418,9 @@ async fn test_plugin_extensions() {
     let json_plugin = crate::plugins::JsonTransformerPlugin::new();
 
     // Test file extension support
-    assert!(json_plugin.supported_extensions().contains(&"json".to_string()));
+    assert!(json_plugin
+        .supported_extensions()
+        .contains(&"json".to_string()));
 
     // Test multiple types at once
     let types = vec![
@@ -441,6 +476,12 @@ async fn test_plugin_extensions() {
     assert!(result.is_some());
     let generated = result.unwrap();
     let json: serde_json::Value = serde_json::from_str(&generated.content).unwrap();
-    assert!(json["properties"].as_object().unwrap().contains_key("Type1"));
-    assert!(json["properties"].as_object().unwrap().contains_key("Type2"));
+    assert!(json["properties"]
+        .as_object()
+        .unwrap()
+        .contains_key("Type1"));
+    assert!(json["properties"]
+        .as_object()
+        .unwrap()
+        .contains_key("Type2"));
 }

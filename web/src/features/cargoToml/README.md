@@ -52,25 +52,25 @@ dependency management, security scanning, and license compliance.
 ## Usage
 
 ```tsx
-import { CargoTomlEditor } from "./features/cargoToml/CargoTomlEditor";
+import { CargoTomlEditor } from './features/cargoToml/CargoTomlEditor';
 
 function App() {
-  const [toml, setToml] = useState("");
+  const [toml, setToml] = useState('');
 
   // Load your Cargo.toml content
   useEffect(() => {
-    fetch("/path/to/Cargo.toml")
+    fetch('/path/to/Cargo.toml')
       .then((res) => res.text())
       .then(setToml);
   }, []);
 
   const handleSave = async (newToml: string) => {
     // Save the updated Cargo.toml
-    await fetch("/path/to/Cargo.toml", {
-      method: "POST",
+    await fetch('/path/to/Cargo.toml', {
+      method: 'POST',
       body: newToml,
       headers: {
-        "Content-Type": "text/x-toml",
+        'Content-Type': 'text/x-toml',
       },
     });
   };

@@ -281,17 +281,32 @@ export class RangeConverterTest {
     console.log('\n=== Testing Edge Cases ===');
 
     // Empty range (cursor position)
-    const emptyRange: FrontendRange = { startLine: 3, startCharacter: 5, endLine: 3, endCharacter: 5 };
+    const emptyRange: FrontendRange = {
+      startLine: 3,
+      startCharacter: 5,
+      endLine: 3,
+      endCharacter: 5,
+    };
     console.log('Empty range valid:', isValidRange(emptyRange));
     console.log('Empty range length:', getRangeLength(emptyRange));
 
     // Multi-line range
-    const multilineRange: FrontendRange = { startLine: 1, startCharacter: 0, endLine: 5, endCharacter: 10 };
+    const multilineRange: FrontendRange = {
+      startLine: 1,
+      startCharacter: 0,
+      endLine: 5,
+      endCharacter: 10,
+    };
     console.log('Multi-line valid:', isValidRange(multilineRange));
     console.log('Multi-line length:', getRangeLength(multilineRange));
 
     // Invalid range
-    const invalidRange: FrontendRange = { startLine: 5, startCharacter: 10, endLine: 3, endCharacter: 5 };
+    const invalidRange: FrontendRange = {
+      startLine: 5,
+      startCharacter: 10,
+      endLine: 3,
+      endCharacter: 5,
+    };
     console.log('Invalid range (end before start):', isValidRange(invalidRange));
 
     // Position containment

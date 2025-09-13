@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import {
   SearchOptions,
   SearchResult,
@@ -43,7 +43,7 @@ export class SearchService {
         workspace_path: workspacePath,
       };
 
-      const response = await invoke('search_files', { request }) as any;
+      const response = (await invoke('search_files', { request })) as any;
 
       if (response.results && Array.isArray(response.results)) {
         return {
@@ -62,17 +62,14 @@ export class SearchService {
   /**
    * Search for symbols across the workspace
    */
-  async searchSymbols(
-    query: string,
-    workspacePath: string
-  ): Promise<SymbolSearchResult> {
+  async searchSymbols(query: string, workspacePath: string): Promise<SymbolSearchResult> {
     try {
       const request: SearchSymbolsRequest = {
         query,
         workspace_path: workspacePath,
       };
 
-      const response = await invoke('search_symbols', { request }) as any;
+      const response = (await invoke('search_symbols', { request })) as any;
 
       return {
         symbols: response.symbols || [],
@@ -94,7 +91,7 @@ export class SearchService {
         symbol_name: symbolName,
       };
 
-      const response = await invoke('navigate_to_symbol', { request }) as any;
+      const response = (await invoke('navigate_to_symbol', { request })) as any;
 
       return {
         file_path: response.file_path,
@@ -112,11 +109,7 @@ export class SearchService {
   /**
    * Get breadcrumb navigation for a file location
    */
-  async getBreadcrumbs(
-    filePath: string,
-    line: number,
-    column: number
-  ): Promise<NavigationPath> {
+  async getBreadcrumbs(filePath: string, line: number, column: number): Promise<NavigationPath> {
     try {
       const request: GetBreadcrumbsRequest = {
         file_path: filePath,
@@ -124,7 +117,7 @@ export class SearchService {
         column,
       };
 
-      const response = await invoke('get_breadcrumbs', { request }) as any;
+      const response = (await invoke('get_breadcrumbs', { request })) as any;
 
       return {
         path: response.path,
@@ -151,7 +144,7 @@ export class SearchService {
         column,
       };
 
-      const response = await invoke('go_to_definition', { request }) as any;
+      const response = (await invoke('go_to_definition', { request })) as any;
 
       return {
         file_path: response.file_path,
@@ -181,7 +174,7 @@ export class SearchService {
         column,
       };
 
-      const response = await invoke('find_references', { request }) as NavigationLocation[];
+      const response = (await invoke('find_references', { request })) as NavigationLocation[];
 
       return response;
     } catch (error) {
@@ -195,7 +188,7 @@ export class SearchService {
    */
   async getNavigationHistory(): Promise<NavigationLocation[]> {
     try {
-      const response = await invoke('get_navigation_history') as NavigationLocation[];
+      const response = (await invoke('get_navigation_history')) as NavigationLocation[];
       return response;
     } catch (error) {
       console.error('Get navigation history failed:', error);
@@ -208,7 +201,7 @@ export class SearchService {
    */
   async getSearchHistory(): Promise<string[]> {
     try {
-      const response = await invoke('get_search_history') as string[];
+      const response = (await invoke('get_search_history')) as string[];
       return response;
     } catch (error) {
       console.error('Get search history failed:', error);

@@ -1,9 +1,9 @@
 // Memory analysis module
 
+use chrono;
 use std::alloc::Layout;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
-use chrono;
 
 #[derive(Debug, Clone)]
 pub struct AllocationInfo {
@@ -321,9 +321,11 @@ impl EnhancedLeakDetector {
     /// Calculate initial risk score based on allocation size and type
     fn calculate_initial_risk(info: &AllocationInfo) -> f64 {
         // Large allocations are more likely to be leaks if not carefully managed
-        if info.size > (1024 * 1024) { // Larger than 1MB
+        if info.size > (1024 * 1024) {
+            // Larger than 1MB
             0.6
-        } else if info.size > (128 * 1024) { // Larger than 128KB
+        } else if info.size > (128 * 1024) {
+            // Larger than 128KB
             0.4
         } else {
             0.1 // Small allocations usually not problematic
@@ -358,9 +360,11 @@ impl EnhancedLeakDetector {
         let dynamic_risk = self.calculate_dynamic_risk(lifetime);
 
         // Consider allocation size - larger allocations get more scrutiny
-        let size_factor = if lifetime.allocation_info.size > (10 * 1024 * 1024) { // 10MB+
+        let size_factor = if lifetime.allocation_info.size > (10 * 1024 * 1024) {
+            // 10MB+
             1.2
-        } else if lifetime.allocation_info.size > (1024 * 1024) { // 1MB+
+        } else if lifetime.allocation_info.size > (1024 * 1024) {
+            // 1MB+
             1.0
         } else {
             0.8
@@ -376,15 +380,22 @@ impl EnhancedLeakDetector {
         let time_since_access = chrono::Utc::now() - lifetime.last_accessed;
         let age = chrono::Utc::now() - lifetime.first_seen;
 
-        recommendations.push(format!("Allocation {}MB allocated {} hours ago",
-            lifetime.allocation_info.size / (1024 * 1024), age.num_hours()));
+        recommendations.push(format!(
+            "Allocation {}MB allocated {} hours ago",
+            lifetime.allocation_info.size / (1024 * 1024),
+            age.num_hours()
+        ));
 
-        recommendations.push(format!("Last accessed {} hours ago",
-            time_since_access.num_hours()));
+        recommendations.push(format!(
+            "Last accessed {} hours ago",
+            time_since_access.num_hours()
+        ));
 
         if lifetime.access_count < 10 {
-            recommendations.push(format!("Very few accesses ({}) - may be abandoned",
-                lifetime.access_count));
+            recommendations.push(format!(
+                "Very few accesses ({}) - may be abandoned",
+                lifetime.access_count
+            ));
         }
 
         if lifetime.allocation_info.size > (1024 * 1024) {
@@ -395,16 +406,21 @@ impl EnhancedLeakDetector {
     }
 
     /// Suggest appropriate automatic fix action
-    fn suggest_automatic_fix(&self, risk_score: f64, lifetime: &AllocationLifetime) -> AutomaticFixSuggestion {
+    fn suggest_automatic_fix(
+        &self,
+        risk_score: f64,
+        lifetime: &AllocationLifetime,
+    ) -> AutomaticFixSuggestion {
         let time_since_access_hours = (chrono::Utc::now() - lifetime.last_accessed).num_hours();
 
         if risk_score > 0.9 && time_since_access_hours > 24 {
             // Very suspicious allocation that's been idle for a day
             AutomaticFixSuggestion::SafeToDeallocate(risk_score)
         } else if risk_score > 0.8 {
-            AutomaticFixSuggestion::WarnUser(
-                format!("High-risk allocation {} detected - manual review recommended", lifetime.allocation_info.size)
-            )
+            AutomaticFixSuggestion::WarnUser(format!(
+                "High-risk allocation {} detected - manual review recommended",
+                lifetime.allocation_info.size
+            ))
         } else if risk_score > 0.7 {
             AutomaticFixSuggestion::Quarantine
         } else {
@@ -416,9 +432,21 @@ impl EnhancedLeakDetector {
     pub fn get_leak_stats(&self) -> LeakStatistics {
         LeakStatistics {
             total_tracked: self.lifetime_tracking.len(),
-            high_risk_candidates: self.leak_candidates.iter().filter(|c| c.risk_score > 0.8).count(),
-            medium_risk_candidates: self.leak_candidates.iter().filter(|c| c.risk_score > 0.6 && c.risk_score <= 0.8).count(),
-            low_risk_candidates: self.leak_candidates.iter().filter(|c| c.risk_score <= 0.6).count(),
+            high_risk_candidates: self
+                .leak_candidates
+                .iter()
+                .filter(|c| c.risk_score > 0.8)
+                .count(),
+            medium_risk_candidates: self
+                .leak_candidates
+                .iter()
+                .filter(|c| c.risk_score > 0.6 && c.risk_score <= 0.8)
+                .count(),
+            low_risk_candidates: self
+                .leak_candidates
+                .iter()
+                .filter(|c| c.risk_score <= 0.6)
+                .count(),
             auto_fix_enabled: self.auto_fix_enabled,
         }
     }

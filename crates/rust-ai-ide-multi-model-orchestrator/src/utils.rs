@@ -6,8 +6,8 @@ use crate::Result;
 
 /// Utility functions for model ID generation and validation
 pub mod identity {
-    use uuid::Uuid;
     use crate::types::ModelId;
+    use uuid::Uuid;
 
     pub fn generate_model_id() -> ModelId {
         ModelId(Uuid::new_v4())
@@ -48,7 +48,7 @@ pub mod scoring {
 
 /// Configuration validation utilities
 pub mod validation {
-    use crate::config::{OrchestrationConfig, validate_config};
+    use crate::config::{validate_config, OrchestrationConfig};
 
     pub fn validate_orchestration_config(_config: &OrchestrationConfig) -> crate::Result<()> {
         validate_config(_config)

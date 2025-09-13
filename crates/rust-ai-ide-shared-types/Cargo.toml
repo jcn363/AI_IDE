@@ -29,7 +29,7 @@ futures = { workspace = true }
 # TypeScript/JavaScript generation (with conditional features)
 wasm-bindgen = { version = "0.2.100", optional = true }
 js-sys = { version = "0.3.77", optional = true }
-typescript-definitions = { version = "0.1", optional = true }
+#typescript-definitions = { version = "0.1", optional = true }
 
 # Parser dependencies
 syn = { version = "2.0", features = ["full", "extra-traits", "visit-mut"] }
@@ -59,7 +59,7 @@ proptest = { version = "1.0" }
 [features]
 default = ["std"]
 std = []
-typescript = ["dep:typescript-definitions", "dep:handlebars"]
+typescript = ["dep:handlebars"]
 wasm = ["dep:wasm-bindgen", "dep:js-sys", "typescript"]
 plugins = ["dep:libloading", "dep:abi_stable"]
 templates = ["dep:handlebars", "dep:tera"]

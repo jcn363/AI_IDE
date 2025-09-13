@@ -5,8 +5,8 @@
 
 use crate::errors::TypeGenerationError;
 use crate::types::*;
-use syn::{File, Item, Visibility, Type, Fields, Variant as SynVariant, Attribute};
 use std::collections::HashMap;
+use syn::{Attribute, Fields, File, Item, Type, Variant as SynVariant, Visibility};
 
 /// Parser for extracting types from Rust source code
 #[derive(Debug, Clone)]
@@ -56,9 +56,14 @@ impl TypeParser {
     }
 
     /// Parse a Rust source file and extract type information
-    pub fn parse_file(&self, source: &str, file_path: &str) -> Result<Vec<ParsedType>, TypeGenerationError> {
-        let ast: File = syn::parse_str(source)
-            .map_err(|e| TypeGenerationError::AnalysisError(format!("Failed to parse Rust file: {}", e)))?;
+    pub fn parse_file(
+        &self,
+        source: &str,
+        file_path: &str,
+    ) -> Result<Vec<ParsedType>, TypeGenerationError> {
+        let ast: File = syn::parse_str(source).map_err(|e| {
+            TypeGenerationError::AnalysisError(format!("Failed to parse Rust file: {}", e))
+        })?;
 
         let mut types = Vec::new();
 
@@ -72,7 +77,11 @@ impl TypeParser {
     }
 
     /// Parse a single item from the AST
-    fn parse_item(&self, item: &Item, file_path: &str) -> Result<Option<ParsedType>, TypeGenerationError> {
+    fn parse_item(
+        &self,
+        item: &Item,
+        file_path: &str,
+    ) -> Result<Option<ParsedType>, TypeGenerationError> {
         match item {
             Item::Struct(item_struct) => {
                 if self.should_skip_item(&item_struct.attrs) {
@@ -200,7 +209,10 @@ impl TypeParser {
     /// Check if an item should be skipped based on attributes
     fn should_skip_item(&self, attrs: &[Attribute]) -> bool {
         for attr in attrs {
-            let attr_name = attr.path().segments.iter()
+            let attr_name = attr
+                .path()
+                .segments
+                .iter()
                 .map(|seg| seg.ident.to_string())
                 .collect::<Vec<_>>()
                 .join("::");
@@ -219,7 +231,9 @@ impl TypeParser {
             Visibility::Public(_) => TypesVisibility::Public,
             Visibility::Restricted(restricted) => {
                 // Check if it's crate-level restricted visibility
-                if restricted.path.segments.len() == 1 && restricted.path.segments[0].ident == "crate" {
+                if restricted.path.segments.len() == 1
+                    && restricted.path.segments[0].ident == "crate"
+                {
                     TypesVisibility::Crate
                 } else {
                     TypesVisibility::Module
@@ -231,40 +245,45 @@ impl TypeParser {
 
     /// Parse generic parameters
     fn parse_generics(&self, generics: &syn::Generics) -> Vec<String> {
-        generics.params.iter().filter_map(|param| {
-            match param {
-                syn::GenericParam::Type(type_param) => {
-                    Some(type_param.ident.to_string())
-                }
-                syn::GenericParam::Const(const_param) => {
-                    Some(const_param.ident.to_string())
-                }
+        generics
+            .params
+            .iter()
+            .filter_map(|param| match param {
+                syn::GenericParam::Type(type_param) => Some(type_param.ident.to_string()),
+                syn::GenericParam::Const(const_param) => Some(const_param.ident.to_string()),
                 syn::GenericParam::Lifetime(lifetime_param) => {
                     Some(lifetime_param.lifetime.ident.to_string())
                 }
-            }
-        }).collect()
+            })
+            .collect()
     }
 
     /// Parse struct fields
     fn parse_struct_fields(&self, fields: &Fields) -> Vec<Field> {
         match fields {
             Fields::Named(fields_named) => {
-                fields_named.named.iter().map(|field| {
-                    let type_str = self.type_to_string(&field.ty);
-                    Field {
-                        name: field.ident.as_ref().unwrap().to_string(),
-                        ty: type_str.clone(),
-                        field_type: type_str,
-                        documentation: self.extract_documentation(&field.attrs),
-                        visibility: self.convert_visibility(&field.vis),
-                        is_mutable: false, // Can't determine from struct fields
-                        attributes: self.parse_attributes(&field.attrs),
-                    }
-                }).collect()
+                fields_named
+                    .named
+                    .iter()
+                    .map(|field| {
+                        let type_str = self.type_to_string(&field.ty);
+                        Field {
+                            name: field.ident.as_ref().unwrap().to_string(),
+                            ty: type_str.clone(),
+                            field_type: type_str,
+                            documentation: self.extract_documentation(&field.attrs),
+                            visibility: self.convert_visibility(&field.vis),
+                            is_mutable: false, // Can't determine from struct fields
+                            attributes: self.parse_attributes(&field.attrs),
+                        }
+                    })
+                    .collect()
             }
-            Fields::Unnamed(fields_unnamed) => {
-                fields_unnamed.unnamed.iter().enumerate().map(|(index, field)| {
+            Fields::Unnamed(fields_unnamed) => fields_unnamed
+                .unnamed
+                .iter()
+                .enumerate()
+                .map(|(index, field)| {
                     let type_str = self.type_to_string(&field.ty);
                     Field {
                         name: format!("field_{}", index),
@@ -275,49 +294,60 @@ impl TypeParser {
                         is_mutable: false,
                         attributes: self.parse_attributes(&field.attrs),
                     }
-                }).collect()
-            }
+                })
+                .collect(),
             Fields::Unit => vec![],
         }
     }
 
     /// Parse enum variants
-    fn parse_enum_variants(&self, variants: &syn::punctuated::Punctuated<SynVariant, syn::Token![,]>)
-        -> Vec<Variant> {
-        variants.iter().map(|variant| {
-            let fields = match &variant.fields {
-                Fields::Named(fields_named) => {
-                    fields_named.named.iter().map(|field| {
-                        let type_str = self.type_to_string(&field.ty);
-                        VariantField {
-                            name: field.ident.as_ref().map(|id| id.to_string()),
-                            ty: type_str.clone(),
-                            field_type: type_str,
-                        }
-                    }).collect()
-                }
-                Fields::Unnamed(fields_unnamed) => {
-                    fields_unnamed.unnamed.iter().map(|field| {
-                        let type_str = self.type_to_string(&field.ty);
-                        VariantField {
-                            name: None,
-                            ty: type_str.clone(),
-                            field_type: type_str,
-                        }
-                    }).collect()
-                }
-                Fields::Unit => vec![],
-            };
+    fn parse_enum_variants(
+        &self,
+        variants: &syn::punctuated::Punctuated<SynVariant, syn::Token![,]>,
+    ) -> Vec<Variant> {
+        variants
+            .iter()
+            .map(|variant| {
+                let fields = match &variant.fields {
+                    Fields::Named(fields_named) => fields_named
+                        .named
+                        .iter()
+                        .map(|field| {
+                            let type_str = self.type_to_string(&field.ty);
+                            VariantField {
+                                name: field.ident.as_ref().map(|id| id.to_string()),
+                                ty: type_str.clone(),
+                                field_type: type_str,
+                            }
+                        })
+                        .collect(),
+                    Fields::Unnamed(fields_unnamed) => fields_unnamed
+                        .unnamed
+                        .iter()
+                        .map(|field| {
+                            let type_str = self.type_to_string(&field.ty);
+                            VariantField {
+                                name: None,
+                                ty: type_str.clone(),
+                                field_type: type_str,
+                            }
+                        })
+                        .collect(),
+                    Fields::Unit => vec![],
+                };
 
-            Variant {
-                name: variant.ident.to_string(),
-                documentation: self.extract_documentation(&variant.attrs),
-                fields,
-                discriminant: variant.discriminant.as_ref()
-                    .map(|(_, expr)| self.expr_to_string(expr)),
-                attributes: self.parse_attributes(&variant.attrs),
-            }
-        }).collect()
+                Variant {
+                    name: variant.ident.to_string(),
+                    documentation: self.extract_documentation(&variant.attrs),
+                    fields,
+                    discriminant: variant
+                        .discriminant
+                        .as_ref()
+                        .map(|(_, expr)| self.expr_to_string(expr)),
+                    attributes: self.parse_attributes(&variant.attrs),
+                }
+            })
+            .collect()
     }
 
     /// Extract documentation from attributes
@@ -332,8 +362,10 @@ impl TypeParser {
             if attr.path().is_ident("doc") {
                 if let syn::Meta::NameValue(meta) = &attr.meta {
                     if let syn::Expr::Lit(syn::ExprLit {
-                        lit: syn::Lit::Str(lit_str), ..
-                    }) = &meta.value {
+                        lit: syn::Lit::Str(lit_str),
+                        ..
+                    }) = &meta.value
+                    {
                         docs.push(lit_str.value());
                     }
                 }
@@ -349,12 +381,17 @@ impl TypeParser {
 
     /// Parse attributes into strings
     fn parse_attributes(&self, attrs: &[Attribute]) -> Vec<String> {
-        attrs.iter().map(|attr| {
-            attr.path().segments.iter()
-                .map(|seg| seg.ident.to_string())
-                .collect::<Vec<_>>()
-                .join("::")
-        }).collect()
+        attrs
+            .iter()
+            .map(|attr| {
+                attr.path()
+                    .segments
+                    .iter()
+                    .map(|seg| seg.ident.to_string())
+                    .collect::<Vec<_>>()
+                    .join("::")
+            })
+            .collect()
     }
 
     /// Extract source location information
@@ -392,8 +429,10 @@ impl TypeParser {
     }
 
     /// Extract dependencies from enum variants
-    fn extract_dependencies_from_variants(&self, variants: &syn::punctuated::Punctuated<SynVariant, syn::Token![,]>)
-        -> Vec<String> {
+    fn extract_dependencies_from_variants(
+        &self,
+        variants: &syn::punctuated::Punctuated<SynVariant, syn::Token![,]>,
+    ) -> Vec<String> {
         let mut deps = Vec::new();
 
         for variant in variants {
@@ -546,7 +585,11 @@ mod tests {
 
         assert_eq!(types.len(), 1);
         let ty = &types[0];
-        assert!(ty.documentation.as_ref().unwrap().contains("This is a test struct"));
+        assert!(ty
+            .documentation
+            .as_ref()
+            .unwrap()
+            .contains("This is a test struct"));
     }
 
     #[test]

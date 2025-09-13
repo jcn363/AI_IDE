@@ -56,7 +56,8 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
           <Typography variant="h6">Conflict Resolution</Typography>
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          {conflict.filePath} - Lines {conflict.localChange.position.startLine} to {conflict.localChange.position.endLine}
+          {conflict.filePath} - Lines {conflict.localChange.position.startLine} to{' '}
+          {conflict.localChange.position.endLine}
         </Typography>
       </DialogTitle>
 
@@ -82,7 +83,9 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
             </Paper>
 
             <Divider sx={{ my: 2 }}>
-              <Typography variant="caption" color="text.secondary">VS</Typography>
+              <Typography variant="caption" color="text.secondary">
+                VS
+              </Typography>
             </Divider>
 
             <Paper sx={{ p: 2, bgcolor: 'info.light' }}>
@@ -110,11 +113,7 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
               helperText="Combine both changes manually or modify as needed"
             />
             {mergedContent && (
-              <Button
-                onClick={() => setMergedContent('')}
-                size="small"
-                sx={{ mt: 1 }}
-              >
+              <Button onClick={() => setMergedContent('')} size="small" sx={{ mt: 1 }}>
                 Clear
               </Button>
             )}
@@ -152,11 +151,7 @@ export const ConflictResolver: React.FC<ConflictResolverProps> = ({
         </Button>
 
         {!showManualMerge && (
-          <Button
-            onClick={() => setShowManualMerge(true)}
-            variant="text"
-            size="small"
-          >
+          <Button onClick={() => setShowManualMerge(true)} variant="text" size="small">
             Manual Merge
           </Button>
         )}

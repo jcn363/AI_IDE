@@ -9,13 +9,16 @@ interface FeatureUsage {
 
 export async function analyzeFeatureFlags(manifest: CargoManifest): Promise<FeatureUsage[]> {
   const features = manifest.features || {};
-  const dependencies = { ...(manifest.dependencies || {}), ...(manifest['dev-dependencies'] || {}) };
+  const dependencies = {
+    ...(manifest.dependencies || {}),
+    ...(manifest['dev-dependencies'] || {}),
+  };
   const featureUsages: FeatureUsage[] = [];
 
   // Analyze each feature
   for (const [featureName, featureDeps] of Object.entries(features)) {
     const usedBy: string[] = [];
-    
+
     // Check if feature is used by any dependency
     for (const [depName, depInfo] of Object.entries(dependencies)) {
       const depFeatures = typeof depInfo === 'object' ? depInfo.features || [] : [];
@@ -25,7 +28,11 @@ export async function analyzeFeatureFlags(manifest: CargoManifest): Promise<Feat
         usedBy.push(depName);
       } else if (typeof depFeatures === 'string' && depFeatures === featureName) {
         usedBy.push(depName);
-      } else if (typeof depFeatures === 'boolean' && depFeatures === true && featureName === 'default') {
+      } else if (
+        typeof depFeatures === 'boolean' &&
+        depFeatures === true &&
+        featureName === 'default'
+      ) {
         usedBy.push(depName);
       }
     }
@@ -45,7 +52,10 @@ export async function analyzeFeatureFlags(manifest: CargoManifest): Promise<Feat
   return featureUsages;
 }
 
-export function optimizeFeatureFlags(manifest: CargoManifest, features: FeatureUsage[]): CargoManifest {
+export function optimizeFeatureFlags(
+  manifest: CargoManifest,
+  features: FeatureUsage[]
+): CargoManifest {
   const optimizedManifest: CargoManifest = {
     ...manifest,
     features: manifest.features ? { ...manifest.features } : manifest.features,
@@ -53,19 +63,19 @@ export function optimizeFeatureFlags(manifest: CargoManifest, features: FeatureU
   };
 
   // Remove unused features
-  const unusedFeatures = features.filter(f => !f.isUsed);
-  unusedFeatures.forEach(feature => {
+  const unusedFeatures = features.filter((f) => !f.isUsed);
+  unusedFeatures.forEach((feature) => {
     if (optimizedManifest.features) {
       delete optimizedManifest.features[feature.name];
     }
   });
 
   // Optimize default features
-  const defaultFeatures = features.filter(f => f.enabledByDefault && !f.isUsed);
+  const defaultFeatures = features.filter((f) => f.enabledByDefault && !f.isUsed);
   if (defaultFeatures.length > 0 && optimizedManifest.package) {
-    optimizedManifest.package.defaultFeatures =
-      (optimizedManifest.package.defaultFeatures || [])
-        .filter((f: string) => !defaultFeatures.some(df => df.name === f));
+    optimizedManifest.package.defaultFeatures = (
+      optimizedManifest.package.defaultFeatures || []
+    ).filter((f: string) => !defaultFeatures.some((df) => df.name === f));
   }
 
   return optimizedManifest;
@@ -73,16 +83,18 @@ export function optimizeFeatureFlags(manifest: CargoManifest, features: FeatureU
 
 export function getFeatureFlagSuggestions(features: FeatureUsage[] | undefined): string[] {
   const suggestions: string[] = [];
-  
+
   if (!features || !Array.isArray(features)) {
     return suggestions;
   }
-  
-  features.forEach(feature => {
+
+  features.forEach((feature) => {
     if (!feature.isUsed && !feature.enabledByDefault) {
       suggestions.push(`Unused feature "${feature.name}" can be safely removed`);
     } else if (feature.enabledByDefault && feature.usedBy.length === 0) {
-      suggestions.push(`Default feature "${feature.name}" is not used by any dependency and can be disabled by default`);
+      suggestions.push(
+        `Default feature "${feature.name}" is not used by any dependency and can be disabled by default`
+      );
     }
   });
 

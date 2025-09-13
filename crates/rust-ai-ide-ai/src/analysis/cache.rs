@@ -61,10 +61,10 @@ impl CacheKey {
     pub fn new(file_path: &Path, key: &str, version: u32, content: &str, config: &impl Serialize) -> Result<Self> {
         let content_hash = Self::calculate_hash(content);
         let config_hash = Self::calculate_hash(&serde_json::to_string(config)?);
-        
-        Ok(Self { 
-            file_path: file_path.to_path_buf(), 
-            key: key.to_string(), 
+
+        Ok(Self {
+            file_path: file_path.to_path_buf(),
+            key: key.to_string(),
             version,
             content_hash,
             config_hash,
@@ -170,13 +170,13 @@ pub fn get_cached<T: DeserializeOwned>(key: &CacheKey) -> Result<Option<T>> {
         trace!("Cache miss: file does not exist: {:?}", cache_file);
         return Ok(None);
     }
-    
+
     let content = fs::read_to_string(&cache_file)
         .with_context(|| format!("Failed to read cache file: {:?}", cache_file))?;
-    
+
     let entry: CacheEntry<T> = serde_json::from_str(&content)
         .with_context(|| format!("Failed to deserialize cache entry: {:?}", cache_file))?;
-    
+
     // Check if entry is expired
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -189,12 +189,12 @@ pub fn get_cached<T: DeserializeOwned>(key: &CacheKey) -> Result<Option<T>> {
         let _ = fs::remove_file(cache_file);
         return Ok(None);
     }
-    
+
     // Update last accessed time
     if let Err(e) = update_access_time(&cache_file) {
         warn!("Failed to update access time for {:?}: {}", cache_file, e);
     }
-    
+
     debug!("Cache hit for key: {}", key.key);
     Ok(Some(entry.data))
 }
@@ -240,9 +240,9 @@ pub fn set_cached<T: Serialize>(
         version: key.version,
         metadata: metadata.unwrap_or_else(|| serde_json::json!({})),
     };
-    
+
     let content = serde_json::to_vec_pretty(&entry)?;
-    
+
     // Write to temp file first, then rename atomically
     let temp_file = cache_file.with_extension(".tmp");
     fs::write(&temp_file, &content)?;
@@ -257,13 +257,13 @@ pub fn set_cached<T: Serialize>(
             }
         })
         .with_context(|| format!("Failed to write cache file: {:?}", cache_file))?;
-    
-    debug!("Cached result for key: {} (TTL: {}s)", 
-        key.key, 
+
+    debug!("Cached result for key: {} (TTL: {}s)",
+        key.key,
         ttl.map(|t| t.as_secs().to_string())
            .unwrap_or_else(|| "∞".to_string())
     );
-    
+
     Ok(())
 }
 
@@ -273,17 +273,17 @@ pub fn invalidate_cache(pattern: &str) -> Result<usize> {
         .map_err(|_| anyhow!("Cache not initialized"))?
         .clone()
         .ok_or_else(|| anyhow!("Cache directory not set"))?;
-    
+
     if !cache_dir.exists() {
         return Ok(0);
     }
-    
+
     let mut count = 0;
-    
+
     for entry in fs::read_dir(&cache_dir)? {
         let entry = entry?;
         let path = entry.path();
-        
+
         if let Some(name) = path.file_name() {
             if let Some(name_str) = name.to_str() {
                 if name_str.contains(pattern) {
@@ -297,7 +297,7 @@ pub fn invalidate_cache(pattern: &str) -> Result<usize> {
             }
         }
     }
-    
+
     debug!("Invalidated {} cache entries matching: {}", count, pattern);
     Ok(count)
 }
@@ -308,25 +308,25 @@ pub fn cleanup_expired() -> Result<usize> {
         .map_err(|_| anyhow!("Cache not initialized"))?
         .clone()
         .ok_or_else(|| anyhow!("Cache directory not set"))?;
-    
+
     if !cache_dir.exists() {
         return Ok(0);
     }
-    
+
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_err(|_| anyhow!("System time is before UNIX EPOCH"))?;
-    
+
     let mut count = 0;
-    
+
     for entry in fs::read_dir(&cache_dir)? {
         let entry = entry?;
         let path = entry.path();
-        
+
         if path.extension().and_then(|e| e.to_str()) != Some("json") {
             continue;
         }
-        
+
         // Skip if we can't read the file (might be locked by another process)
         let content = match fs::read_to_string(&path) {
             Ok(c) => c,
@@ -335,7 +335,7 @@ pub fn cleanup_expired() -> Result<usize> {
                 continue;
             }
         };
-        
+
         // Try to parse the entry, skip if invalid
         if let Ok(entry) = serde_json::from_str::<CacheEntry<serde_json::Value>>(&content) {
             if (entry.expires_at as u128) < now.as_secs() as u128 {
@@ -348,7 +348,7 @@ pub fn cleanup_expired() -> Result<usize> {
             }
         }
     }
-    
+
     debug!("Cleaned up {} expired cache entries", count);
     Ok(count)
 }
@@ -359,27 +359,27 @@ pub fn get_stats() -> Result<CacheStats> {
         .map_err(|_| anyhow!("Cache not initialized"))?
         .clone()
         .ok_or_else(|| anyhow!("Cache directory not set"))?;
-    
+
     if !cache_dir.exists() {
         return Ok(CacheStats::default());
     }
-    
+
     let mut stats = CacheStats::default();
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_err(|_| anyhow!("System time is before UNIX EPOCH"))?;
-    
+
     for entry in fs::read_dir(&cache_dir)? {
         let entry = entry?;
         let path = entry.path();
-        
+
         if path.extension().and_then(|e| e.to_str()) != Some("json") {
             continue;
         }
-        
+
         stats.total_entries += 1;
         stats.total_size += fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
-        
+
         if let Ok(content) = fs::read_to_string(&path) {
             if let Ok(entry) = serde_json::from_str::<CacheEntry<serde_json::Value>>(&content) {
                 if (entry.expires_at as u128) < now.as_secs() as u128 {
@@ -388,7 +388,7 @@ pub fn get_stats() -> Result<CacheStats> {
             }
         }
     }
-    
+
     Ok(stats)
 }
 
@@ -407,15 +407,15 @@ mod tests {
     use serde_json::json;
     use std::thread;
     use std::time::Duration as StdDuration;
-    
+
     #[test]
     fn test_cache_operations() -> Result<()> {
         let temp_dir = tempdir()?;
         let cache_dir = temp_dir.path().join("test_cache");
-        
+
         // Initialize cache
         init_cache(Some(cache_dir.clone()), Some(Duration::from_secs(1)))?;
-        
+
         // Create a test key
         let key = CacheKey::new(
             Path::new("test.rs"),
@@ -424,29 +424,29 @@ mod tests {
             "test content",
             &json!({ "test": true }),
         )?;
-        
+
         // Test set and get
         set_cached(&key, &42, None, None)?;
         let cached: Option<i32> = get_cached(&key)?;
         assert_eq!(cached, Some(42));
-        
+
         // Test TTL expiration
         thread::sleep(StdDuration::from_secs(2));
         let cached: Option<i32> = get_cached(&key)?;
         assert_eq!(cached, None);
-        
+
         // Test invalidation
         set_cached(&key, &42, None, None)?;
         assert_eq!(invalidate_cache("test")?, 1);
         let cached: Option<i32> = get_cached(&key)?;
         assert_eq!(cached, None);
-        
+
         // Test cleanup
         set_cached(&key, &42, Some(Duration::from_millis(1)), None)?;
         thread::sleep(StdDuration::from_millis(10));
         let cleaned = cleanup_expired()?;
         assert!(cleaned > 0);
-        
+
         Ok(())
     }
 }

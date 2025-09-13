@@ -1,5 +1,26 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Box, IconButton, Alert, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, TextField, List, ListItem, ListItemText, Paper, FormControlLabel, Switch, CircularProgress, SelectChangeEvent, } from '@mui/material';
+import {
+  Box,
+  IconButton,
+  Alert,
+  Tabs,
+  Tab,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  TextField,
+  List,
+  ListItem,
+  ListItemText,
+  Paper,
+  FormControlLabel,
+  Switch,
+  CircularProgress,
+  SelectChangeEvent,
+} from '@mui/material';
 import { Speed as SpeedIcon, Close as CloseIcon, Add as AddIcon } from '@mui/icons-material';
 
 import { useSelector } from 'react-redux';
@@ -17,7 +38,7 @@ import {
   selectCargoCommands,
   clearError,
   type CargoCommandName,
-  CargoCommand
+  CargoCommand,
 } from '../../store/slices/cargoSlice';
 
 // Import new modular components
@@ -58,7 +79,10 @@ const CargoPanel: React.FC = () => {
   const dispatch = useAppDispatch();
   const commands = useSelector((state: RootState) => selectCargoCommands(state));
   const currentProjectPath = useSelector((state: RootState) => selectCurrentProjectPath(state));
-  const manifestPath = useMemo(() => (currentProjectPath ? `${currentProjectPath}/Cargo.toml` : null), [currentProjectPath]);
+  const manifestPath = useMemo(
+    () => (currentProjectPath ? `${currentProjectPath}/Cargo.toml` : null),
+    [currentProjectPath]
+  );
 
   const [depTab, setDepTab] = useState<number>(0); // 0=Graph,1=Lock,2=Features,3=Conflicts,4=Update
   const [fullMetadata, setFullMetadata] = useState<any | null>(null);
@@ -68,7 +92,7 @@ const CargoPanel: React.FC = () => {
 
   const loadConflicts = async () => {
     if (!currentProjectPath) return;
-    
+
     setDepLoading(true);
     try {
       const result = await invoke<string>('execute_command', {
@@ -78,10 +102,10 @@ const CargoPanel: React.FC = () => {
       });
 
       if (result) {
-        const conflictLines = result.split('\n').filter(line => line.includes('(*)'));
+        const conflictLines = result.split('\n').filter((line) => line.includes('(*)'));
         const conflictMap = new Map<string, Set<string>>();
 
-        conflictLines.forEach(line => {
+        conflictLines.forEach((line) => {
           const match = line.match(/^([^\s]+) v([\d.]+)/);
           if (match) {
             const [, name, version] = match;
@@ -96,21 +120,23 @@ const CargoPanel: React.FC = () => {
           .filter(([_, versions]) => versions.size > 1)
           .map(([name, versions]) => ({
             name,
-            versions: Array.from(versions)
+            versions: Array.from(versions),
           }));
 
         setConflicts(conflicts);
       }
     } catch (error) {
       console.error('Error loading conflicts:', error);
-      setDepError(`Failed to load conflicts: ${error instanceof Error ? error.message : String(error)}`);
+      setDepError(
+        `Failed to load conflicts: ${error instanceof Error ? error.message : String(error)}`
+      );
     } finally {
       setDepLoading(false);
     }
   };
   const updateDependencies = async (packageName?: string) => {
     if (!currentProjectPath) return;
-    
+
     setDepLoading(true);
     try {
       const args = packageName ? ['-p', packageName] : [];
@@ -119,14 +145,16 @@ const CargoPanel: React.FC = () => {
         args: args.join(' '),
         cwd: currentProjectPath,
       });
-      
+
       // Refresh the UI after update
       if (depTab === 3) {
         loadConflicts();
       }
     } catch (error) {
       console.error('Error updating dependencies:', error);
-      setDepError(`Failed to update ${packageName || 'dependencies'}: ${error instanceof Error ? error.message : String(error)}`);
+      setDepError(
+        `Failed to update ${packageName || 'dependencies'}: ${error instanceof Error ? error.message : String(error)}`
+      );
     } finally {
       setDepLoading(false);
     }
@@ -134,9 +162,15 @@ const CargoPanel: React.FC = () => {
 
   const [depLoading, setDepLoading] = useState<boolean>(false);
   const [depError, setDepError] = useState<string>('');
-  const [featureEdit, setFeatureEdit] = useState<{ depName: string; features: string; defaultFeatures: boolean }>({ depName: '', features: '', defaultFeatures: true });
+  const [featureEdit, setFeatureEdit] = useState<{
+    depName: string;
+    features: string;
+    defaultFeatures: boolean;
+  }>({ depName: '', features: '', defaultFeatures: true });
   const isCargoAvailable = useSelector((state: RootState) => selectIsCargoAvailable(state));
-  const { isLoading, error: cargoError } = useSelector((state: RootState) => selectCargoState(state));
+  const { isLoading, error: cargoError } = useSelector((state: RootState) =>
+    selectCargoState(state)
+  );
   const isRunning = isLoading;
   const error = cargoError || localError;
 
@@ -168,13 +202,13 @@ const CargoPanel: React.FC = () => {
     try {
       const lockfilePath = `${currentProjectPath}/Cargo.lock`;
       const result = await invoke('read_file', { path: lockfilePath });
-      
+
       if (result && typeof result === 'string') {
         // Simple parsing of Cargo.lock file
         const packages: any[] = [];
         let currentPkg: any = {};
-        
-        result.split('\n').forEach(line => {
+
+        result.split('\n').forEach((line) => {
           line = line.trim();
           if (line.startsWith('[[')) {
             if (currentPkg.name) packages.push(currentPkg);
@@ -192,7 +226,7 @@ const CargoPanel: React.FC = () => {
             }
           }
         });
-        
+
         if (currentPkg.name) packages.push(currentPkg);
         setLockfile({ packages });
       } else {
@@ -200,12 +234,13 @@ const CargoPanel: React.FC = () => {
       }
     } catch (error) {
       console.error('Error loading lockfile:', error);
-      setDepError(`Failed to load lockfile: ${error instanceof Error ? error.message : String(error)}`);
+      setDepError(
+        `Failed to load lockfile: ${error instanceof Error ? error.message : String(error)}`
+      );
     } finally {
       setDepLoading(false);
     }
   };
-
 
   const loadFullMetadata = async () => {
     if (!currentProjectPath) {
@@ -222,7 +257,7 @@ const CargoPanel: React.FC = () => {
         args: '--format-version=1 --no-deps',
         cwd: currentProjectPath,
       });
-      
+
       if (result && typeof result === 'string') {
         const metadata = JSON.parse(result);
         setFullMetadata(metadata);
@@ -231,7 +266,9 @@ const CargoPanel: React.FC = () => {
       }
     } catch (error) {
       console.error('Error loading metadata:', error);
-      setDepError(`Failed to load metadata: ${error instanceof Error ? error.message : String(error)}`);
+      setDepError(
+        `Failed to load metadata: ${error instanceof Error ? error.message : String(error)}`
+      );
     } finally {
       setDepLoading(false);
     }
@@ -250,25 +287,27 @@ const CargoPanel: React.FC = () => {
       // Build the features string
       const features = featureEdit.features
         .split(',')
-        .map(f => f.trim())
-        .filter(f => f.length > 0);
+        .map((f) => f.trim())
+        .filter((f) => f.length > 0);
 
       // Update Cargo.toml using the Tauri backend
       await invoke('update_dependency_features', {
         manifestPath: `${currentProjectPath}/Cargo.toml`,
         dependencyName: featureEdit.depName,
         features,
-        defaultFeatures: featureEdit.defaultFeatures
+        defaultFeatures: featureEdit.defaultFeatures,
       });
 
       // Reload features after update
       await loadFeatures();
-      
+
       // Reset the form
       setFeatureEdit({ depName: '', features: '', defaultFeatures: true });
     } catch (error) {
       console.error('Error updating features:', error);
-      setDepError(`Failed to update features: ${error instanceof Error ? error.message : String(error)}`);
+      setDepError(
+        `Failed to update features: ${error instanceof Error ? error.message : String(error)}`
+      );
     } finally {
       setDepLoading(false);
     }
@@ -290,11 +329,11 @@ const CargoPanel: React.FC = () => {
         args: '--format-version=1 --no-deps',
         cwd: currentProjectPath,
       });
-      
+
       if (result && typeof result === 'string') {
         const metadata = JSON.parse(result);
         const featuresMap: Record<string, string[]> = {};
-        
+
         // Extract features from workspace members
         if (metadata.workspace_members) {
           for (const pkgId of metadata.workspace_members) {
@@ -304,7 +343,7 @@ const CargoPanel: React.FC = () => {
             }
           }
         }
-        
+
         // If no workspace members, check root package
         if (Object.keys(featuresMap).length === 0 && metadata.packages) {
           const rootPkg = metadata.packages.find((p: any) => !p.id.includes(' '));
@@ -312,14 +351,16 @@ const CargoPanel: React.FC = () => {
             featuresMap[rootPkg.name] = Object.keys(rootPkg.features);
           }
         }
-        
+
         setFeaturesMap(featuresMap);
       } else {
         setDepError('Failed to parse metadata');
       }
     } catch (error) {
       console.error('Error loading features:', error);
-      setDepError(`Failed to load features: ${error instanceof Error ? error.message : String(error)}`);
+      setDepError(
+        `Failed to load features: ${error instanceof Error ? error.message : String(error)}`
+      );
       setFeaturesMap(null);
     } finally {
       setDepLoading(false);
@@ -332,8 +373,8 @@ const CargoPanel: React.FC = () => {
       return;
     }
 
-    const args = commandArgs ? commandArgs.split(' ').filter(arg => arg.trim() !== '') : [];
-    const jsonCapable = ['build','check','test','clippy','run'];
+    const args = commandArgs ? commandArgs.split(' ').filter((arg) => arg.trim() !== '') : [];
+    const jsonCapable = ['build', 'check', 'test', 'clippy', 'run'];
     if (useJsonDiagnostics && jsonCapable.includes(selectedCommand)) {
       if (!args.includes('--message-format=json')) args.unshift('--message-format=json');
     }
@@ -387,17 +428,22 @@ const CargoPanel: React.FC = () => {
         args.push('--features', newDependency.features);
       }
 
-      const result = await dispatch(
+      const result = (await dispatch(
         executeCargoCommand({
           command: command as CargoCommandName,
           args,
           cwd: currentProjectPath,
         })
-      ) as unknown as { type: string; error?: { message?: string } };
+      )) as unknown as { type: string; error?: { message?: string } };
 
       // Check if the action was rejected by checking the action type
-      if (result && typeof result === 'object' && 'type' in result &&
-        typeof result.type === 'string' && result.type.endsWith('/rejected')) {
+      if (
+        result &&
+        typeof result === 'object' &&
+        'type' in result &&
+        typeof result.type === 'string' &&
+        result.type.endsWith('/rejected')
+      ) {
         throw new Error(result.error?.message || 'Failed to add dependency');
       }
 
@@ -406,7 +452,7 @@ const CargoPanel: React.FC = () => {
       setNewDependency({
         name: '',
         version: '',
-        features: ''
+        features: '',
       });
 
       // Show success message or update UI as needed
@@ -437,7 +483,7 @@ const CargoPanel: React.FC = () => {
         console.error('Failed to get project path:', error);
       }
     };
-    
+
     getProjectPath();
   }, []);
 
@@ -510,7 +556,11 @@ const CargoPanel: React.FC = () => {
         {depTab === 0 && (
           <Box>
             <Box sx={{ mb: 2 }}>
-              <Button variant="contained" onClick={loadFullMetadata} disabled={!currentProjectPath || depLoading}>
+              <Button
+                variant="contained"
+                onClick={loadFullMetadata}
+                disabled={!currentProjectPath || depLoading}
+              >
                 {depLoading ? 'Loading...' : 'Reload Graph'}
               </Button>
             </Box>
@@ -520,7 +570,9 @@ const CargoPanel: React.FC = () => {
                   <ListItem key={`${p.name}@${p.version}`} alignItems="flex-start">
                     <ListItemText
                       primary={`${p.name} @ ${p.version}`}
-                      secondary={(p.dependencies || []).map((d: any) => d.name).join(', ') || 'No deps'}
+                      secondary={
+                        (p.dependencies || []).map((d: any) => d.name).join(', ') || 'No deps'
+                      }
                     />
                   </ListItem>
                 ))}
@@ -535,10 +587,20 @@ const CargoPanel: React.FC = () => {
         {depTab === 1 && (
           <Box>
             <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
-              <Button variant="contained" onClick={loadLockfile} disabled={!currentProjectPath || depLoading}>
+              <Button
+                variant="contained"
+                onClick={loadLockfile}
+                disabled={!currentProjectPath || depLoading}
+              >
                 {depLoading ? 'Loading...' : 'Load Cargo.lock'}
               </Button>
-              <Button variant="outlined" onClick={() => lockfile && setLockfile(null)} disabled={!lockfile}>Clear</Button>
+              <Button
+                variant="outlined"
+                onClick={() => lockfile && setLockfile(null)}
+                disabled={!lockfile}
+              >
+                Clear
+              </Button>
             </Box>
             {lockfile ? (
               <Paper sx={{ p: 2, maxHeight: 360, overflow: 'auto' }}>
@@ -554,26 +616,46 @@ const CargoPanel: React.FC = () => {
         {depTab === 2 && (
           <Box>
             <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Button variant="contained" onClick={loadFeatures} disabled={!manifestPath || depLoading}>
+              <Button
+                variant="contained"
+                onClick={loadFeatures}
+                disabled={!manifestPath || depLoading}
+              >
                 {depLoading ? 'Loading...' : 'Load Features'}
               </Button>
               <TextField
                 label="Dependency name"
                 size="small"
                 value={featureEdit.depName}
-                onChange={(e) => setFeatureEdit({ ...featureEdit, depName: (e.target as any).value })}
+                onChange={(e) =>
+                  setFeatureEdit({ ...featureEdit, depName: (e.target as any).value })
+                }
               />
               <TextField
                 label="Features (comma-separated)"
                 size="small"
                 value={featureEdit.features}
-                onChange={(e) => setFeatureEdit({ ...featureEdit, features: (e.target as any).value })}
+                onChange={(e) =>
+                  setFeatureEdit({ ...featureEdit, features: (e.target as any).value })
+                }
               />
               <FormControlLabel
-                control={<Switch size="small" checked={featureEdit.defaultFeatures} onChange={(_, v) => setFeatureEdit({ ...featureEdit, defaultFeatures: v })} />}
+                control={
+                  <Switch
+                    size="small"
+                    checked={featureEdit.defaultFeatures}
+                    onChange={(_, v) => setFeatureEdit({ ...featureEdit, defaultFeatures: v })}
+                  />
+                }
                 label={<Typography variant="caption">default-features</Typography>}
               />
-              <Button variant="outlined" onClick={applyDependencyFeatures} disabled={!featureEdit.depName || depLoading}>Apply</Button>
+              <Button
+                variant="outlined"
+                onClick={applyDependencyFeatures}
+                disabled={!featureEdit.depName || depLoading}
+              >
+                Apply
+              </Button>
             </Box>
             {featuresMap ? (
               <List dense>
@@ -593,17 +675,33 @@ const CargoPanel: React.FC = () => {
         {depTab === 3 && (
           <Box>
             <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
-              <Button variant="contained" onClick={loadConflicts} disabled={!currentProjectPath || depLoading}>
+              <Button
+                variant="contained"
+                onClick={loadConflicts}
+                disabled={!currentProjectPath || depLoading}
+              >
                 {depLoading ? 'Scanning...' : 'Scan Conflicts'}
               </Button>
             </Box>
             {conflicts.length > 0 ? (
               <List dense>
                 {conflicts.map((c) => (
-                  <ListItem key={c.name} secondaryAction={
-                    <Button size="small" variant="outlined" onClick={() => updateDependencies(c.name)}>Update -p {c.name}</Button>
-                  }>
-                    <ListItemText primary={c.name} secondary={`versions: ${c.versions.join(', ')}`} />
+                  <ListItem
+                    key={c.name}
+                    secondaryAction={
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => updateDependencies(c.name)}
+                      >
+                        Update -p {c.name}
+                      </Button>
+                    }
+                  >
+                    <ListItemText
+                      primary={c.name}
+                      secondary={`versions: ${c.versions.join(', ')}`}
+                    />
                   </ListItem>
                 ))}
               </List>
@@ -617,17 +715,27 @@ const CargoPanel: React.FC = () => {
         {depTab === 4 && (
           <Box>
             <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center' }}>
-              <Button variant="contained" onClick={() => updateDependencies(undefined)} disabled={!currentProjectPath || depLoading}>
+              <Button
+                variant="contained"
+                onClick={() => updateDependencies(undefined)}
+                disabled={!currentProjectPath || depLoading}
+              >
                 {depLoading ? 'Updating...' : 'Update All'}
               </Button>
-              <TextField size="small" label="Package (optional)" onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const val = (e.target as any).value?.trim();
-                  updateDependencies(val || undefined);
-                }
-              }} />
+              <TextField
+                size="small"
+                label="Package (optional)"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const val = (e.target as any).value?.trim();
+                    updateDependencies(val || undefined);
+                  }
+                }}
+              />
             </Box>
-            <Typography variant="body2">Run cargo update for all deps or a specific package using -p.</Typography>
+            <Typography variant="body2">
+              Run cargo update for all deps or a specific package using -p.
+            </Typography>
           </Box>
         )}
       </SharedTabPanel>
@@ -682,11 +790,7 @@ const CargoPanel: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsAddDependencyDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleAddDependency}
-            variant="contained"
-            disabled={!newDependency.name}
-          >
+          <Button onClick={handleAddDependency} variant="contained" disabled={!newDependency.name}>
             Add
           </Button>
         </DialogActions>

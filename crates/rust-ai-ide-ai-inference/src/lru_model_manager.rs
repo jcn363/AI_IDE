@@ -1,9 +1,9 @@
-use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::time::{Duration, Instant};
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
 use moka::future::Cache;
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use tokio::sync::{Mutex, RwLock};
 use tokio::task::spawn_blocking;
 
 /// Least Recently Used (LRU) model management for AI models
@@ -103,7 +103,10 @@ impl LRUModelManager {
         Ok(())
     }
 
-    pub async fn evict_oldest_models_until_space(&self, required_space: usize) -> Result<usize, IDEError> {
+    pub async fn evict_oldest_models_until_space(
+        &self,
+        required_space: usize,
+    ) -> Result<usize, IDEError> {
         let mut total_evicted = 0;
         let model_access = self.model_access.read().await;
         let model_sizes = self.model_sizes.read().await;
@@ -112,8 +115,9 @@ impl LRUModelManager {
         let mut keys_to_evict = Vec::new();
 
         while !access_order.is_empty()
-            && (self.get_current_memory_usage().await + required_space - total_evicted > self.max_memory_usage) {
-
+            && (self.get_current_memory_usage().await + required_space - total_evicted
+                > self.max_memory_usage)
+        {
             if let Some(oldest_key) = access_order.front().cloned() {
                 if let Some(size) = model_sizes.get(&oldest_key) {
                     keys_to_evict.push(oldest_key.clone());
@@ -219,7 +223,11 @@ impl LRUModelManager {
             }
 
             if !evicted_models.is_empty() {
-                println!("Proactively evicted {} models, freed {} bytes", evicted_models.len(), total_evicted_size);
+                println!(
+                    "Proactively evicted {} models, freed {} bytes",
+                    evicted_models.len(),
+                    total_evicted_size
+                );
             }
         }
 
@@ -263,7 +271,7 @@ pub struct MemoryPressureDetector {
 impl MemoryPressureDetector {
     pub fn new() -> Self {
         Self {
-            pressure_threshold: 0.85, // 85% usage
+            pressure_threshold: 0.85,                    // 85% usage
             measurement_window: Duration::from_secs(60), // 1 minute window
             measurements: Arc::new(Mutex::new(VecDeque::new())),
         }
@@ -332,11 +340,13 @@ impl EvictionPolicy {
 
     pub async fn record_access(&self, model_key: &str) {
         let mut patterns = self.access_patterns.lock().await;
-        let pattern = patterns.entry(model_key.to_string()).or_insert(AccessPattern {
-            frequency: 1.0,
-            recency: Instant::now(),
-            utility_score: 1.0,
-        });
+        let pattern = patterns
+            .entry(model_key.to_string())
+            .or_insert(AccessPattern {
+                frequency: 1.0,
+                recency: Instant::now(),
+                utility_score: 1.0,
+            });
 
         pattern.frequency += 1.0;
         pattern.recency = Instant::now();
@@ -364,8 +374,8 @@ impl EvictionPolicy {
             let time_since_access = now.duration_since(pattern.recency);
 
             // Retain if recently accessed or high utility
-            time_since_access < Duration::from_secs(300) ||
-            pattern.utility_score > self.predictive_threshold
+            time_since_access < Duration::from_secs(300)
+                || pattern.utility_score > self.predictive_threshold
         } else {
             false
         }
@@ -404,7 +414,8 @@ impl EvictionPolicy {
             0.0
         };
 
-        let high_utility_count = patterns.values()
+        let high_utility_count = patterns
+            .values()
             .filter(|p| p.utility_score > self.predictive_threshold)
             .count();
 
@@ -448,10 +459,12 @@ impl ModelPreloader {
 
     pub async fn record_usage(&self, model_key: &str) {
         let mut patterns = self.usage_patterns.lock().await;
-        let pattern = patterns.entry(model_key.to_string()).or_insert(UsagePattern {
-            access_history: VecDeque::new(),
-            confidence_score: 0.5,
-        });
+        let pattern = patterns
+            .entry(model_key.to_string())
+            .or_insert(UsagePattern {
+                access_history: VecDeque::new(),
+                confidence_score: 0.5,
+            });
 
         pattern.access_history.push_back(Instant::now());
 
@@ -476,7 +489,8 @@ impl ModelPreloader {
             // Score based on recent access
             if let Some(last_access) = pattern.access_history.back() {
                 let time_since_access = now.duration_since(*last_access).as_secs_f64();
-                if time_since_access < 3600.0 { // Within last hour
+                if time_since_access < 3600.0 {
+                    // Within last hour
                     score += 1.0 - (time_since_access / 3600.0); // Higher score for more recent
                 }
             }
@@ -484,7 +498,8 @@ impl ModelPreloader {
             // Multiply by confidence
             score *= pattern.confidence_score;
 
-            if score > 0.3 { // Only include reasonably confident predictions
+            if score > 0.3 {
+                // Only include reasonably confident predictions
                 predictions.push((key.clone(), score));
             }
         }
@@ -497,7 +512,11 @@ impl ModelPreloader {
 
     pub async fn queue_preloads(&self, lru_manager: &LRUModelManager) {
         let predictions = self.predict_next_usage().await;
-        let registered_models: HashSet<String> = lru_manager.get_registered_models().await.into_iter().collect();
+        let registered_models: HashSet<String> = lru_manager
+            .get_registered_models()
+            .await
+            .into_iter()
+            .collect();
 
         let mut queue = self.preload_queue.lock().await;
 
@@ -521,7 +540,8 @@ impl ModelPreloader {
         let total_count = pattern.access_history.len();
 
         // Simple confidence calculation based on recent activity
-        let recent_count = pattern.access_history
+        let recent_count = pattern
+            .access_history
             .iter()
             .filter(|&&access_time| {
                 Instant::now().duration_since(access_time).as_secs() < 86400 // Last 24 hours

@@ -29,7 +29,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
 }) => {
   const handleEditorMount = (
     editor: monaco.editor.IStandaloneCodeEditor,
-    monacoInstance: typeof monaco,
+    monacoInstance: typeof monaco
   ) => {
     if (editorRef) {
       editorRef.current = editor;
@@ -41,24 +41,34 @@ const EditorContent: React.FC<EditorContentProps> = ({
   };
 
   return (
-    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+    <Box
+      sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        position: 'relative',
+      }}
+    >
       {!isEditorReady ? (
-        <Box sx={{ 
-          position: 'absolute', 
-          top: 0, 
-          left: 0, 
-          right: 0, 
-          bottom: 0, 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          zIndex: 1,
-        }}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 1,
+          }}
+        >
           <CircularProgress />
         </Box>
       ) : null}
-      
+
       <MonacoEditorWrapper
         key={activeFile || 'empty'}
         language={language}

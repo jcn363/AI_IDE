@@ -5,7 +5,9 @@ import { BasePanelProps, PANEL_CONSTANTS } from '../../utils/consolidated';
 /**
  * Extended panel props combining base props with Paper props
  */
-export interface ExtendedPanelProps extends BasePanelProps, Omit<PaperProps, keyof BasePanelProps> {}
+export interface ExtendedPanelProps
+  extends BasePanelProps,
+    Omit<PaperProps, keyof BasePanelProps> {}
 
 /**
  * BasePanel - A foundational component for all panels
@@ -50,13 +52,7 @@ export const BasePanel: React.FC<ExtendedPanelProps> = ({
   };
 
   return (
-    <Paper
-      className={className}
-      style={style}
-      data-testid={testId}
-      {...paperProps}
-      sx={baseStyles}
-    >
+    <Paper className={className} style={style} data-testid={testId} {...paperProps} sx={baseStyles}>
       {/* Optional Header Section */}
       {(title || headerActions) && (
         <Box sx={headerStyles}>
@@ -65,18 +61,12 @@ export const BasePanel: React.FC<ExtendedPanelProps> = ({
               {title}
             </Typography>
           )}
-          {headerActions && (
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {headerActions}
-            </Box>
-          )}
+          {headerActions && <Box sx={{ display: 'flex', gap: 1 }}>{headerActions}</Box>}
         </Box>
       )}
 
       {/* Content Area */}
-      <Box sx={contentStyles}>
-        {children}
-      </Box>
+      <Box sx={contentStyles}>{children}</Box>
     </Paper>
   );
 };
@@ -91,13 +81,7 @@ export const PanelSection: React.FC<
     padded?: boolean;
     sx?: SxProps<Theme>;
   }>
-> = ({
-  title,
-  actions,
-  children,
-  padded = true,
-  sx = {},
-}) => {
+> = ({ title, actions, children, padded = true, sx = {} }) => {
   const sectionStyles: SxProps<Theme> = {
     mb: 3,
     '&:last-child': { mb: 0 },
@@ -107,28 +91,24 @@ export const PanelSection: React.FC<
   return (
     <Box sx={sectionStyles}>
       {(title || actions) && (
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 2,
-          minHeight: PANEL_CONSTANTS.TOOLBAR_HEIGHT * 0.75,
-        }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2,
+            minHeight: PANEL_CONSTANTS.TOOLBAR_HEIGHT * 0.75,
+          }}
+        >
           {title && (
             <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
               {title}
             </Typography>
           )}
-          {actions && (
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {actions}
-            </Box>
-          )}
+          {actions && <Box sx={{ display: 'flex', gap: 1 }}>{actions}</Box>}
         </Box>
       )}
-      <Box sx={{ p: padded ? 1 : 0 }}>
-        {children}
-      </Box>
+      <Box sx={{ p: padded ? 1 : 0 }}>{children}</Box>
     </Box>
   );
 };

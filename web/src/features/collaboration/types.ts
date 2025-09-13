@@ -67,7 +67,14 @@ export interface Conflict {
 }
 
 export interface CollaborationEvent {
-  type: 'user_joined' | 'user_left' | 'user_moved' | 'file_opened' | 'file_closed' | 'change' | 'conflict';
+  type:
+    | 'user_joined'
+    | 'user_left'
+    | 'user_moved'
+    | 'file_opened'
+    | 'file_closed'
+    | 'change'
+    | 'conflict';
   sessionId: string;
   userId: string;
   timestamp: number;
@@ -120,7 +127,11 @@ export interface CollaborationService {
 
   // Conflict resolution
   detectConflict(localChange: ChangeOperation, remoteChange: ChangeOperation): Conflict | null;
-  resolveConflict(conflictId: string, resolution: 'local' | 'remote' | 'merge', mergedContent?: string): void;
+  resolveConflict(
+    conflictId: string,
+    resolution: 'local' | 'remote' | 'merge',
+    mergedContent?: string
+  ): void;
   getPendingConflicts(): Conflict[];
 
   // File synchronization

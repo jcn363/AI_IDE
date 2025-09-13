@@ -43,16 +43,16 @@ where
     F: FnOnce() -> R,
 {
     use std::time::Instant;
-    
+
     let start = Instant::now();
     let result = f();
     let duration = start.elapsed();
-    
+
     if cfg!(feature = "metrics_export") {
         // In a real implementation, this would export the metrics
         println!("Benchmark '{}' took: {:?}", name, duration);
     }
-    
+
     result
 }
 
@@ -65,7 +65,7 @@ mod tests {
         let metrics = PerformanceMetrics::new("test_operation")
             .with_duration(Duration::from_millis(100))
             .with_metadata("key", "value");
-            
+
         assert_eq!(metrics.operation, "test_operation");
         assert_eq!(metrics.duration.as_millis(), 100);
         assert_eq!(metrics.metadata.get("key").unwrap(), "value");

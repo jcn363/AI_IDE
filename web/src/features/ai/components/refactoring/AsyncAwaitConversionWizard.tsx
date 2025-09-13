@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Typography, FormControl, FormLabel, RadioGroup,
-  FormControlLabel, Radio, Checkbox, TextField, Alert,
-  List, ListItem, ListItemText, Chip, Collapse
+  Box,
+  Typography,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Checkbox,
+  TextField,
+  Alert,
+  List,
+  ListItem,
+  ListItemText,
+  Chip,
+  Collapse,
 } from '@mui/material';
 import { StepComponentProps } from './RefactoringWizard';
 import type { RefactoringContext } from '../../../../types/refactoring';
@@ -31,13 +43,13 @@ export const AsyncAwaitConversionWizard: React.FC<StepComponentProps> = ({
           );
 
           // Filter to only convertible functions
-          const convertibleFunctions = result.functions.filter(func => func.isConvertibleToAsync);
+          const convertibleFunctions = result.functions.filter((func) => func.isConvertibleToAsync);
 
           // Map to component expectations
-          const functionNames = convertibleFunctions.map(func => `${func.functionName}()`);
+          const functionNames = convertibleFunctions.map((func) => `${func.functionName}()`);
           const analysisMap = new Map();
 
-          convertibleFunctions.forEach(func => {
+          convertibleFunctions.forEach((func) => {
             analysisMap.set(`${func.functionName}()`, {
               isConvertible: func.isConvertibleToAsync,
               canBeAwaited: func.canBeAwaited,
@@ -72,17 +84,22 @@ export const AsyncAwaitConversionWizard: React.FC<StepComponentProps> = ({
 
     onConfigChange({
       conversionTargets: selectedTargets,
-      customFunctionNames: customFunctions.split('\n').filter(s => s.trim()),
+      customFunctionNames: customFunctions.split('\n').filter((s) => s.trim()),
       shouldGenerateTests: generateTests,
       analyzeDependencies,
     });
-  }, [selectedTargets, customFunctions, generateTests, analyzeDependencies, onConfigChange, onValidation]);
+  }, [
+    selectedTargets,
+    customFunctions,
+    generateTests,
+    analyzeDependencies,
+    onConfigChange,
+    onValidation,
+  ]);
 
   const handleTargetToggle = (target: string) => {
-    setSelectedTargets(prev =>
-      prev.includes(target)
-        ? prev.filter(t => t !== target)
-        : [...prev, target]
+    setSelectedTargets((prev) =>
+      prev.includes(target) ? prev.filter((t) => t !== target) : [...prev, target]
     );
   };
 
@@ -105,8 +122,8 @@ export const AsyncAwaitConversionWizard: React.FC<StepComponentProps> = ({
         Async/Await Conversion Configuration
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Select which functions should be converted to async/await pattern.
-        The wizard will automatically identify promise-based functions.
+        Select which functions should be converted to async/await pattern. The wizard will
+        automatically identify promise-based functions.
       </Typography>
 
       <Box sx={{ mb: 4 }}>
@@ -135,7 +152,15 @@ export const AsyncAwaitConversionWizard: React.FC<StepComponentProps> = ({
           />
         </Box>
 
-        <List sx={{ maxHeight: 200, overflowY: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+        <List
+          sx={{
+            maxHeight: 200,
+            overflowY: 'auto',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
+          }}
+        >
           {conversionTargets.map((target) => {
             const info = getFunctionInfo(target);
             return (
@@ -157,12 +182,7 @@ export const AsyncAwaitConversionWizard: React.FC<StepComponentProps> = ({
                     sx={{ flex: 1 }}
                   />
                   <Box sx={{ display: 'flex', gap: 1, ml: 1 }}>
-                    <Chip
-                      label={info.complexity}
-                      size="small"
-                      variant="outlined"
-                      color="warning"
-                    />
+                    <Chip label={info.complexity} size="small" variant="outlined" color="warning" />
                   </Box>
                 </Box>
                 {info.blockingOperations.length > 0 && (

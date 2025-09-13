@@ -4,9 +4,9 @@
 //! such as path traversal, unauthorized access, and file system exploits.
 
 use crate::errors::{IDEError, IDEResult};
-use std::path::{Path, PathBuf};
 use std::fs;
 use std::io;
+use std::path::{Path, PathBuf};
 
 /// Secure file operations with validation
 pub struct SecureFileOperations {
@@ -19,8 +19,8 @@ impl Default for SecureFileOperations {
     fn default() -> Self {
         Self {
             allowed_base_paths: vec![
-                PathBuf::from("./"), // Current working directory
-                PathBuf::from("../"), // Parent directory
+                PathBuf::from("./"),                 // Current working directory
+                PathBuf::from("../"),                // Parent directory
                 PathBuf::from(std::env::temp_dir()), // System temp directory
             ],
             max_file_size: 100 * 1024 * 1024, // 100MB
@@ -60,13 +60,16 @@ impl SecureFileOperations {
 
         // Validate content size
         if content.len() as u64 > self.max_file_size {
-            return Err(IDEError::Validation("Content exceeds maximum allowed size".to_string()));
+            return Err(IDEError::Validation(
+                "Content exceeds maximum allowed size".to_string(),
+            ));
         }
 
         // Create parent directories if they don't exist
         if let Some(parent) = Path::new(file_path).parent() {
-            fs::create_dir_all(parent)
-                .map_err(|e| IDEError::FileOperation(format!("Failed to create parent directories: {}", e)))?;
+            fs::create_dir_all(parent).map_err(|e| {
+                IDEError::FileOperation(format!("Failed to create parent directories: {}", e))
+            })?;
         }
 
         // Write the file
@@ -87,13 +90,13 @@ impl SecureFileOperations {
 
         // Additional check: ensure we're not deleting critical system files
         let path_obj = Path::new(file_path);
-        let file_name = path_obj.file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("");
+        let file_name = path_obj.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
         // Block deletion of critical files
         if file_name.is_empty() || file_name.starts_with('.') {
-            return Err(IDEError::Validation("Deletion of hidden or system files is blocked".to_string()));
+            return Err(IDEError::Validation(
+                "Deletion of hidden or system files is blocked".to_string(),
+            ));
         }
 
         fs::remove_file(file_path)
@@ -103,7 +106,9 @@ impl SecureFileOperations {
     /// Validate file path against security rules
     fn validate_file_path(&self, file_path: &str) -> IDEResult<()> {
         if file_path.is_empty() {
-            return Err(IDEError::Validation("File path cannot be empty".to_string()));
+            return Err(IDEError::Validation(
+                "File path cannot be empty".to_string(),
+            ));
         }
 
         // Limit path length
@@ -121,12 +126,17 @@ impl SecureFileOperations {
                     if let Some(part_str) = part.to_str() {
                         // Block double dots (path traversal)
                         if part_str.contains("..") {
-                            return Err(IDEError::Validation("Path traversal detected".to_string()));
+                            return Err(IDEError::Validation(
+                                "Path traversal detected".to_string(),
+                            ));
                         }
                         // Block dangerous characters
                         for &ch in &['<', '>', '|', '"', '*', '?'] {
                             if part_str.contains(ch) {
-                                return Err(IDEError::Validation(format!("Dangerous character '{}' in path", ch)));
+                                return Err(IDEError::Validation(format!(
+                                    "Dangerous character '{}' in path",
+                                    ch
+                                )));
                             }
                         }
                     }
@@ -136,7 +146,8 @@ impl SecureFileOperations {
         }
 
         // Check if path is within allowed directories
-        let canonical_path = path_obj.canonicalize()
+        let canonical_path = path_obj
+            .canonicalize()
             .map_err(|_| IDEError::Validation("Cannot canonicalize path".to_string()))?;
 
         self.validate_path_in_allowed_directories(&canonical_path)?;
@@ -145,7 +156,10 @@ impl SecureFileOperations {
         if let Some(ext) = path_obj.extension() {
             if let Some(ext_str) = ext.to_str() {
                 if self.blocked_extensions.contains(&ext_str.to_lowercase()) {
-                    return Err(IDEError::Validation(format!("File extension '{}' is blocked", ext_str)));
+                    return Err(IDEError::Validation(format!(
+                        "File extension '{}' is blocked",
+                        ext_str
+                    )));
                 }
             }
         }
@@ -163,18 +177,23 @@ impl SecureFileOperations {
             }
         }
 
-        Err(IDEError::Validation("Path is outside of allowed directories".to_string()))
+        Err(IDEError::Validation(
+            "Path is outside of allowed directories".to_string(),
+        ))
     }
 
     /// Validate file access permissions for the operation
     fn validate_file_access(&self, file_path: &str, operation: OperationType) -> IDEResult<()> {
         let path_obj = Path::new(file_path);
-        let metadata = path_obj.metadata()
+        let metadata = path_obj
+            .metadata()
             .map_err(|_| IDEError::Validation("Cannot access file metadata".to_string()))?;
 
         // Check file size limits
         if metadata.len() > self.max_file_size {
-            return Err(IDEError::Validation("File size exceeds maximum allowed".to_string()));
+            return Err(IDEError::Validation(
+                "File size exceeds maximum allowed".to_string(),
+            ));
         }
 
         // Additional operation-specific checks can go here

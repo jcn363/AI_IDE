@@ -78,19 +78,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("\n=== Generation Metadata ===");
     println!("- Target Platform: {}", result.target_platform);
-    println!("- Types Processed: {}", result.metadata.stats.types_processed);
-    println!("- Types Generated: {}", result.metadata.stats.types_generated);
-    println!("- Generation Time: {}ms", result.metadata.stats.generation_time_ms);
+    println!(
+        "- Types Processed: {}",
+        result.metadata.stats.types_processed
+    );
+    println!(
+        "- Types Generated: {}",
+        result.metadata.stats.types_generated
+    );
+    println!(
+        "- Generation Time: {}ms",
+        result.metadata.stats.generation_time_ms
+    );
     println!("- Status: {:?}", result.metadata.status);
 
     // Validate cross-platform compatibility
     println!("\n=== Cross-Platform Validation ===");
-    let validation_result = validate_cross_platform(&result.source_types, &default_config()).await?;
-    println!("✓ Compatibility Score: {:.2}%", validation_result.compatibility_score * 100.0);
+    let validation_result =
+        validate_cross_platform(&result.source_types, &default_config()).await?;
+    println!(
+        "✓ Compatibility Score: {:.2}%",
+        validation_result.compatibility_score * 100.0
+    );
     println!("✓ Compatible: {}", validation_result.compatible);
 
     if !validation_result.issues.is_empty() {
-        println!("⚠️  Found {} validation issues:", validation_result.issues.len());
+        println!(
+            "⚠️  Found {} validation issues:",
+            validation_result.issues.len()
+        );
         for issue in &validation_result.issues {
             println!("  - {}: {}", issue.source_type, issue.description);
         }

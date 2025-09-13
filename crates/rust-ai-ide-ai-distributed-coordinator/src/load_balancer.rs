@@ -13,8 +13,8 @@ use tokio::sync::RwLock;
 use tracing::info;
 
 use super::{
-    LoadBalancingStrategy, WorkerNode, WorkerStatus,
-    WorkerCapabilities, DistributedInferenceRequest, DistributedAIConfig
+    DistributedAIConfig, DistributedInferenceRequest, LoadBalancingStrategy, WorkerCapabilities,
+    WorkerNode, WorkerStatus,
 };
 
 /// Trait for load balancing algorithms
@@ -106,7 +106,7 @@ impl LeastLoadedBalancer {
                 }
             }
             WorkerStatus::Busy => 0.9, // Nearly full
-            _ => 1.0, // Offline/maintenance - don't use
+            _ => 1.0,                  // Offline/maintenance - don't use
         }
     }
 }
@@ -127,11 +127,13 @@ impl LoadBalancer for LeastLoadedBalancer {
         let loads = self.worker_load.read().await;
 
         for worker in available_workers {
-            let load = loads.get(&worker.id)
+            let load = loads
+                .get(&worker.id)
                 .copied()
                 .unwrap_or_else(|| self.calculate_worker_load(worker));
 
-            if load < 0.95 { // Don't use workers >95% load
+            if load < 0.95 {
+                // Don't use workers >95% load
                 worker_loads.push((worker.id.clone(), load, worker.clone()));
             }
         }
@@ -142,7 +144,8 @@ impl LoadBalancer for LeastLoadedBalancer {
 
         // Sort by load (ascending) and take top max_workers
         worker_loads.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
-        let selected: Vec<_> = worker_loads.into_iter()
+        let selected: Vec<_> = worker_loads
+            .into_iter()
             .take(max_workers)
             .map(|(_, _, worker)| worker)
             .collect();
@@ -185,7 +188,11 @@ impl GPUOptimizedBalancer {
         }
     }
 
-    fn calculate_gpu_score(&self, worker: &WorkerNode, request: &DistributedInferenceRequest) -> f64 {
+    fn calculate_gpu_score(
+        &self,
+        worker: &WorkerNode,
+        request: &DistributedInferenceRequest,
+    ) -> f64 {
         let base_score = if worker.capabilities.has_gpu {
             match self.is_gpu_intensive_request(request) {
                 true => 1.0,  // GPU-intensive: prefer GPU workers
@@ -264,7 +271,8 @@ impl LoadBalancer for GPUOptimizedBalancer {
 
         // Sort by score (descending) and take top max_workers
         scored_workers.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-        let selected: Vec<_> = scored_workers.into_iter()
+        let selected: Vec<_> = scored_workers
+            .into_iter()
             .take(max_workers)
             .map(|(_, _, worker)| worker)
             .collect();
@@ -351,30 +359,44 @@ impl LoadBalancer for AdaptiveLoadBalancer {
         let selected = match strategy {
             LoadBalancingStrategy::RoundRobin => {
                 let mut rr_lb = RoundRobinLoadBalancer::new();
-                rr_lb.select_workers(request, available_workers, max_workers).await?
+                rr_lb
+                    .select_workers(request, available_workers, max_workers)
+                    .await?
             }
             LoadBalancingStrategy::LeastLoaded => {
                 let mut ll_lb = LeastLoadedBalancer::new();
-                ll_lb.select_workers(request, available_workers, max_workers).await?
+                ll_lb
+                    .select_workers(request, available_workers, max_workers)
+                    .await?
             }
             LoadBalancingStrategy::GPUOptimized => {
                 let mut gpu_lb = GPUOptimizedBalancer::new();
-                gpu_lb.select_workers(request, available_workers, max_workers).await?
+                gpu_lb
+                    .select_workers(request, available_workers, max_workers)
+                    .await?
             }
             _ => {
                 let mut rr_lb = RoundRobinLoadBalancer::new();
-                rr_lb.select_workers(request, available_workers, max_workers).await?
+                rr_lb
+                    .select_workers(request, available_workers, max_workers)
+                    .await?
             }
         };
 
-        info!("Adaptive balancer selected strategy {:?}, {} workers", strategy, selected.len());
+        info!(
+            "Adaptive balancer selected strategy {:?}, {} workers",
+            strategy,
+            selected.len()
+        );
         Ok(selected)
     }
 
     async fn update_state(&mut self, worker_id: &str, success: bool, latency_ms: u64) {
         let mut history = self.performance_history.write().await;
 
-        let records = history.entry(worker_id.to_string()).or_insert_with(Vec::new);
+        let records = history
+            .entry(worker_id.to_string())
+            .or_insert_with(Vec::new);
         records.push(PerformanceRecord {
             timestamp: std::time::Instant::now(),
             latency_ms,
@@ -398,27 +420,19 @@ pub fn create_load_balancer(
     config: Option<DistributedAIConfig>,
 ) -> Box<dyn LoadBalancer> {
     match strategy {
-        LoadBalancingStrategy::RoundRobin => {
-            Box::new(RoundRobinLoadBalancer::new())
-        }
-        LoadBalancingStrategy::LeastLoaded => {
-            Box::new(LeastLoadedBalancer::new())
-        }
-        LoadBalancingStrategy::GPUOptimized => {
-            Box::new(GPUOptimizedBalancer::new())
-        }
-        LoadBalancingStrategy::Adaptive => {
-            Box::new(AdaptiveLoadBalancer::new(
-                config.unwrap_or_else(DistributedAIConfig::default)
-            ))
-        }
+        LoadBalancingStrategy::RoundRobin => Box::new(RoundRobinLoadBalancer::new()),
+        LoadBalancingStrategy::LeastLoaded => Box::new(LeastLoadedBalancer::new()),
+        LoadBalancingStrategy::GPUOptimized => Box::new(GPUOptimizedBalancer::new()),
+        LoadBalancingStrategy::Adaptive => Box::new(AdaptiveLoadBalancer::new(
+            config.unwrap_or_else(DistributedAIConfig::default),
+        )),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{WorkerNode, WorkerCapabilities, WorkerStatus, GenerationConfig};
+    use crate::{GenerationConfig, WorkerCapabilities, WorkerNode, WorkerStatus};
 
     fn create_test_workers() -> Vec<WorkerNode> {
         vec![
@@ -520,13 +534,22 @@ mod tests {
     #[tokio::test]
     async fn test_create_load_balancer() {
         let rr_lb = create_load_balancer(&LoadBalancingStrategy::RoundRobin, None);
-        assert!(rr_lb.as_ref().downcast_ref::<RoundRobinLoadBalancer>().is_some());
+        assert!(rr_lb
+            .as_ref()
+            .downcast_ref::<RoundRobinLoadBalancer>()
+            .is_some());
 
         let gpu_lb = create_load_balancer(&LoadBalancingStrategy::GPUOptimized, None);
-        assert!(gpu_lb.as_ref().downcast_ref::<GPUOptimizedBalancer>().is_some());
+        assert!(gpu_lb
+            .as_ref()
+            .downcast_ref::<GPUOptimizedBalancer>()
+            .is_some());
 
         let config = DistributedAIConfig::default();
         let adaptive_lb = create_load_balancer(&LoadBalancingStrategy::Adaptive, Some(config));
-        assert!(adaptive_lb.as_ref().downcast_ref::<AdaptiveLoadBalancer>().is_some());
+        assert!(adaptive_lb
+            .as_ref()
+            .downcast_ref::<AdaptiveLoadBalancer>()
+            .is_some());
     }
 }

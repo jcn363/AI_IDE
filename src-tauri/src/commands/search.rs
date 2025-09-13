@@ -3,18 +3,20 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use tauri::State;
+use tokio::sync::Mutex;
 
 use rust_ai_ide_common::validation::validate_secure_path;
 
+use crate::command_templates::{
+    acquire_service_and_execute, spawn_background_task, TAURI_COMMAND_TEMPLATE,
+};
 use crate::errors::IDError;
 use crate::infra::EventBus;
-use crate::command_templates::{acquire_service_and_execute, spawn_background_task, TAURI_COMMAND_TEMPLATE};
 use crate::infra::RateLimiter;
 use crate::modules::shared::{
     diagnostics::DiagnosticCache,
-    types::{FileMetadata, SymbolInfo, WorkspaceMetadata}
+    types::{FileMetadata, SymbolInfo, WorkspaceMetadata},
 };
 
 // Search state structure
@@ -117,7 +119,10 @@ impl SearchService {
 
         results.push(SearchResult {
             id: "result_1".to_string(),
-            file_path: workspace_path.join("src/main.rs").to_string_lossy().to_string(),
+            file_path: workspace_path
+                .join("src/main.rs")
+                .to_string_lossy()
+                .to_string(),
             line_number: 42,
             column_start: 5,
             column_end: 10,
@@ -128,9 +133,7 @@ impl SearchService {
                 "fn main() {".to_string(),
                 "    let message = \"Hello, World!\";".to_string(),
             ],
-            context_after: vec![
-                "}".to_string(),
-            ],
+            context_after: vec!["}".to_string()],
         });
 
         Ok(results)
@@ -150,19 +153,20 @@ impl SearchService {
         // 2. Index workspace symbols across all files
         // 3. Support fuzzy matching and ranking
 
-        let symbols = vec![
-            SymbolInfo {
-                name: "main".to_string(),
-                kind: "function".to_string(),
-                location: rust_ai_ide_common::types::Location {
-                    file_path: workspace_path.join("src/main.rs").to_string_lossy().to_string(),
-                    line: 40,
-                    column: 0,
-                },
-                container_name: Some("main.rs".to_string()),
-                documentation: Some("Main entry point".to_string()),
+        let symbols = vec![SymbolInfo {
+            name: "main".to_string(),
+            kind: "function".to_string(),
+            location: rust_ai_ide_common::types::Location {
+                file_path: workspace_path
+                    .join("src/main.rs")
+                    .to_string_lossy()
+                    .to_string(),
+                line: 40,
+                column: 0,
             },
-        ];
+            container_name: Some("main.rs".to_string()),
+            documentation: Some("Main entry point".to_string()),
+        }];
 
         let search_time = start_time.elapsed().as_millis() as u64;
 

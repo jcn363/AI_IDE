@@ -22,7 +22,7 @@ describe('DependencyConflictResolver', () => {
     };
 
     const conflicts = detectAndResolveConflicts(manifest as any, lockfile);
-    
+
     expect(conflicts).toHaveLength(1);
     expect(conflicts[0].package).toBe('dep-a');
     expect(conflicts[0].requestedVersions).toHaveLength(2);
@@ -74,7 +74,7 @@ describe('DependencyConflictResolver', () => {
     const conflicts = detectAndResolveConflicts(manifest as any, lockfile, {
       preferStable: true,
     });
-    
+
     // Should pick the highest stable version (1.5.0) over the pre-release (2.0.0-alpha.1)
     expect(conflicts[0].resolution?.version).toBe('1.5.0');
   });

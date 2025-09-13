@@ -1,17 +1,17 @@
 //! Service Supervisor implementation - Process monitoring and restart logic
 
 use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use tokio::time::{self, Duration, timeout};
-use tokio::process::{Command, Child};
 use std::process::Stdio;
+use std::sync::Arc;
+use tokio::process::{Child, Command};
+use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
+use tokio::time::{self, timeout, Duration};
 
-use crate::error::{SupervisorError, SupervisorResult, SupervisorErrorUtils, ErrorAggregator};
+use crate::error::{ErrorAggregator, SupervisorError, SupervisorErrorUtils, SupervisorResult};
 use crate::types::{
-    ServiceConfig, ServiceState, ServiceId, HealthCheckResult, ServiceMetrics,
-    SharedSupervisorState, SupervisorState, ServiceInfo, RestartPolicy
+    HealthCheckResult, RestartPolicy, ServiceConfig, ServiceId, ServiceInfo, ServiceMetrics,
+    ServiceState, SharedSupervisorState, SupervisorState,
 };
 
 /// Main Service Supervisor type
@@ -51,7 +51,7 @@ impl Supervisor {
         if state.services.contains_key(&config.id) {
             return Err(SupervisorError::validation_error(
                 "service_id",
-                "Service already registered"
+                "Service already registered",
             ));
         }
 
@@ -83,7 +83,9 @@ impl Supervisor {
         // Start background monitoring for each service
         for (service_id, service_info) in &mut state.services {
             if service_info.monitor_task.is_none() {
-                let monitor_handle = self.start_service_monitor(service_id.clone(), self.state.clone()).await?;
+                let monitor_handle = self
+                    .start_service_monitor(service_id.clone(), self.state.clone())
+                    .await?;
                 service_info.monitor_task = Some(monitor_handle);
             }
         }
@@ -97,7 +99,9 @@ impl Supervisor {
     pub async fn start_service(&self, service_id: &ServiceId) -> SupervisorResult<()> {
         let mut state = self.state.lock().await;
 
-        let service = state.services.get_mut(service_id)
+        let service = state
+            .services
+            .get_mut(service_id)
             .ok_or_else(|| SupervisorError::validation_error("service_id", "Service not found"))?;
 
         if service.state.is_running() {
@@ -122,11 +126,14 @@ impl Supervisor {
     pub async fn stop_service(&self, service_id: &ServiceId) -> SupervisorResult<()> {
         let mut state = self.state.lock().await;
 
-        let service = state.services.get_mut(service_id)
+        let service = state
+            .services
+            .get_mut(service_id)
             .ok_or_else(|| SupervisorError::validation_error("service_id", "Service not found"))?;
 
         if let Some(process_handler) = &mut service.process_handler {
-            self.terminate_process_gracefully(process_handler, service.config.shutdown_timeout).await?;
+            self.terminate_process_gracefully(process_handler, service.config.shutdown_timeout)
+                .await?;
             service.process_handler = None;
         }
 
@@ -139,10 +146,15 @@ impl Supervisor {
     }
 
     /// Get service health status
-    pub async fn get_service_health(&self, service_id: &ServiceId) -> SupervisorResult<HealthCheckResult> {
+    pub async fn get_service_health(
+        &self,
+        service_id: &ServiceId,
+    ) -> SupervisorResult<HealthCheckResult> {
         let state = self.state.lock().await;
 
-        let service = state.services.get(service_id)
+        let service = state
+            .services
+            .get(service_id)
             .ok_or_else(|| SupervisorError::validation_error("service_id", "Service not found"))?;
 
         if let Some(health_check) = &service.last_health_check {
@@ -150,7 +162,7 @@ impl Supervisor {
         } else {
             Ok(HealthCheckResult::failure(
                 std::time::Duration::new(0, 0),
-                "No health check performed yet".to_string()
+                "No health check performed yet".to_string(),
             ))
         }
     }
@@ -170,7 +182,11 @@ impl Supervisor {
     // Private methods
 
     /// Start background monitoring task for a service
-    async fn start_service_monitor(&self, service_id: ServiceId, state: SharedSupervisorState) -> SupervisorResult<JoinHandle<()>> {
+    async fn start_service_monitor(
+        &self,
+        service_id: ServiceId,
+        state: SharedSupervisorState,
+    ) -> SupervisorResult<JoinHandle<()>> {
         let handle = tokio::spawn(async move {
             let mut interval = time::interval(std::time::Duration::from_secs(5));
 
@@ -187,10 +203,16 @@ impl Supervisor {
     }
 
     /// Perform actual service monitoring (health checks, restarts, etc.)
-    async fn perform_service_monitoring(&self, service_id: &ServiceId, shared_state: &SharedSupervisorState) -> SupervisorResult<()> {
+    async fn perform_service_monitoring(
+        &self,
+        service_id: &ServiceId,
+        shared_state: &SharedSupervisorState,
+    ) -> SupervisorResult<()> {
         let mut state = shared_state.lock().await;
 
-        let service = state.services.get_mut(service_id)
+        let service = state
+            .services
+            .get_mut(service_id)
             .ok_or_else(|| SupervisorError::validation_error("service_id", "Service not found"))?;
 
         match service.state {
@@ -205,13 +227,15 @@ impl Supervisor {
                             service.state = ServiceState::Running; // Ensure healthy state
                         } else {
                             state.stats.total_failed_checks += 1;
-                            self.handle_service_failure(&service_id, shared_state).await?;
+                            self.handle_service_failure(&service_id, shared_state)
+                                .await?;
                         }
                     }
                     Err(e) => {
                         log::warn!("Health check failed for service {}: {:?}", service_id, e);
                         state.stats.total_failed_checks += 1;
-                        self.handle_service_failure(&service_id, shared_state).await?;
+                        self.handle_service_failure(&service_id, shared_state)
+                            .await?;
                     }
                 }
             }
@@ -223,8 +247,12 @@ impl Supervisor {
                             if exit_status.success() {
                                 service.state = ServiceState::Running;
                             } else {
-                                service.state = ServiceState::Failed(format!("Exit code: {}", exit_status.code().unwrap_or(-1)));
-                                self.handle_service_failure(&service_id, shared_state).await?;
+                                service.state = ServiceState::Failed(format!(
+                                    "Exit code: {}",
+                                    exit_status.code().unwrap_or(-1)
+                                ));
+                                self.handle_service_failure(&service_id, shared_state)
+                                    .await?;
                             }
                         }
                         Ok(Err(e)) => {
@@ -238,7 +266,8 @@ impl Supervisor {
                 }
             }
             ServiceState::Failed(_) | ServiceState::Stopped => {
-                self.handle_service_failure(&service_id, shared_state).await?;
+                self.handle_service_failure(&service_id, shared_state)
+                    .await?;
             }
             _ => {
                 // Other states (Restarting, Stopping, Recovering) - no action needed
@@ -250,7 +279,10 @@ impl Supervisor {
     }
 
     /// Perform health check on a service
-    async fn perform_health_check(&self, service_config: &ServiceConfig) -> SupervisorResult<HealthCheckResult> {
+    async fn perform_health_check(
+        &self,
+        service_config: &ServiceConfig,
+    ) -> SupervisorResult<HealthCheckResult> {
         let start_time = std::time::Instant::now();
 
         // Simple health check: try to execute the command with --health-check flag
@@ -264,30 +296,49 @@ impl Supervisor {
                 if status.success() {
                     Ok(HealthCheckResult::success(duration, 1.0))
                 } else {
-                    Ok(HealthCheckResult::failure(duration, format!("Health check failed with exit code: {}", status.code().unwrap_or(-1))))
+                    Ok(HealthCheckResult::failure(
+                        duration,
+                        format!(
+                            "Health check failed with exit code: {}",
+                            status.code().unwrap_or(-1)
+                        ),
+                    ))
                 }
             }
             Ok(Err(e)) => {
                 let duration = start_time.elapsed();
-                Ok(HealthCheckResult::failure(duration, format!("Health check execution failed: {:?}", e)))
+                Ok(HealthCheckResult::failure(
+                    duration,
+                    format!("Health check execution failed: {:?}", e),
+                ))
             }
             Err(_) => {
                 let duration = start_time.elapsed();
-                Ok(HealthCheckResult::failure(duration, "Health check timeout".to_string()))
+                Ok(HealthCheckResult::failure(
+                    duration,
+                    "Health check timeout".to_string(),
+                ))
             }
         }
     }
 
     /// Handle service failure according to restart policy
-    async fn handle_service_failure(&self, service_id: &ServiceId, shared_state: &SharedSupervisorState) -> SupervisorResult<()> {
+    async fn handle_service_failure(
+        &self,
+        service_id: &ServiceId,
+        shared_state: &SharedSupervisorState,
+    ) -> SupervisorResult<()> {
         let mut state = shared_state.lock().await;
 
-        let service = state.services.get_mut(service_id)
+        let service = state
+            .services
+            .get_mut(service_id)
             .ok_or_else(|| SupervisorError::validation_error("service_id", "Service not found"))?;
 
         match &service.config.restart_policy {
             RestartPolicy::Never => {
-                service.state = ServiceState::Failed("Service failure - restart disabled".to_string());
+                service.state =
+                    ServiceState::Failed("Service failure - restart disabled".to_string());
             }
             RestartPolicy::Always => {
                 service.state = ServiceState::Restarting;
@@ -298,36 +349,51 @@ impl Supervisor {
                     }
                 });
             }
-            RestartPolicy::ExponentialBackoff { base_delay, max_delay, max_attempts } => {
+            RestartPolicy::ExponentialBackoff {
+                base_delay,
+                max_delay,
+                max_attempts,
+            } => {
                 if service.metrics.restart_count >= *max_attempts as u32 {
-                    service.state = ServiceState::Failed("Maximum restart attempts exceeded".to_string());
+                    service.state =
+                        ServiceState::Failed("Maximum restart attempts exceeded".to_string());
                 } else {
                     service.state = ServiceState::Restarting;
                     let delay = std::cmp::min(
                         base_delay * 2_u32.pow(service.metrics.restart_count),
-                        *max_delay
+                        *max_delay,
                     );
 
                     let service_id_clone = service_id.clone();
                     let shared_state_clone = Arc::clone(shared_state);
                     tokio::spawn(async move {
                         tokio::time::sleep(delay).await;
-                        if let Err(e) = self.restart_service_process(&service_id_clone, &shared_state_clone).await {
+                        if let Err(e) = self
+                            .restart_service_process(&service_id_clone, &shared_state_clone)
+                            .await
+                        {
                             log::error!("Failed to restart service {}: {:?}", service_id_clone, e);
                         }
                     });
                 }
             }
-            RestartPolicy::FixedDelay { delay, max_attempts } => {
+            RestartPolicy::FixedDelay {
+                delay,
+                max_attempts,
+            } => {
                 if service.metrics.restart_count >= *max_attempts as u32 {
-                    service.state = ServiceState::Failed("Maximum restart attempts exceeded".to_string());
+                    service.state =
+                        ServiceState::Failed("Maximum restart attempts exceeded".to_string());
                 } else {
                     service.state = ServiceState::Restarting;
                     let service_id_clone = service_id.clone();
                     let shared_state_clone = Arc::clone(shared_state);
                     tokio::spawn(async move {
                         tokio::time::sleep(*delay).await;
-                        if let Err(e) = self.restart_service_process(&service_id_clone, &shared_state_clone).await {
+                        if let Err(e) = self
+                            .restart_service_process(&service_id_clone, &shared_state_clone)
+                            .await
+                        {
                             log::error!("Failed to restart service {}: {:?}", service_id_clone, e);
                         }
                     });
@@ -339,15 +405,23 @@ impl Supervisor {
     }
 
     /// Restart a service process
-    async fn restart_service_process(&self, service_id: &ServiceId, shared_state: &SharedSupervisorState) -> SupervisorResult<()> {
+    async fn restart_service_process(
+        &self,
+        service_id: &ServiceId,
+        shared_state: &SharedSupervisorState,
+    ) -> SupervisorResult<()> {
         let mut state = shared_state.lock().await;
 
-        let service = state.services.get_mut(service_id)
+        let service = state
+            .services
+            .get_mut(service_id)
             .ok_or_else(|| SupervisorError::validation_error("service_id", "Service not found"))?;
 
         // Kill existing process if running
         if let Some(process_handler) = &mut service.process_handler {
-            let _ = self.terminate_process_gracefully(process_handler, Duration::from_secs(5)).await;
+            let _ = self
+                .terminate_process_gracefully(process_handler, Duration::from_secs(5))
+                .await;
             service.process_handler = None;
         }
 
@@ -358,7 +432,11 @@ impl Supervisor {
         service.metrics.restart_count += 1;
         state.stats.total_restarts += 1;
 
-        log::info!("Restarted service: {} (attempt {})", service_id, service.metrics.restart_count);
+        log::info!(
+            "Restarted service: {} (attempt {})",
+            service_id,
+            service.metrics.restart_count
+        );
 
         Ok(())
     }
@@ -379,14 +457,19 @@ impl Supervisor {
             command.env(key, value);
         }
 
-        let child = command.spawn()
-            .map_err(|e| SupervisorError::process_error(format!("Failed to spawn process: {:?}", e)))?;
+        let child = command.spawn().map_err(|e| {
+            SupervisorError::process_error(format!("Failed to spawn process: {:?}", e))
+        })?;
 
         Ok(child)
     }
 
     /// Terminate a process gracefully with timeout
-    async fn terminate_process_gracefully(&self, process: &mut Child, timeout: Duration) -> SupervisorResult<()> {
+    async fn terminate_process_gracefully(
+        &self,
+        process: &mut Child,
+        timeout: Duration,
+    ) -> SupervisorResult<()> {
         // First, try to send SIGTERM and wait for graceful shutdown
         if let Some(pid) = process.id() {
             // Note: tokio::process doesn't have direct signal sending, so we use std::process::Command
@@ -467,7 +550,10 @@ mod tests {
             critical: false,
         };
 
-        supervisor.register_service(config).await.expect("Failed to register service");
+        supervisor
+            .register_service(config)
+            .await
+            .expect("Failed to register service");
         assert!(supervisor.is_ready().await);
     }
 
@@ -489,7 +575,10 @@ mod tests {
         };
 
         // Test successful registration
-        supervisor.register_service(config).await.expect("Registration should succeed");
+        supervisor
+            .register_service(config)
+            .await
+            .expect("Registration should succeed");
 
         // Test duplicate registration
         let duplicate_config = ServiceConfig {
@@ -526,18 +615,30 @@ mod tests {
             critical: false,
         };
 
-        supervisor.register_service(config).await.expect("Failed to register service");
+        supervisor
+            .register_service(config)
+            .await
+            .expect("Failed to register service");
 
         // Start service
-        supervisor.start_service("echo_service").await.expect("Failed to start service");
+        supervisor
+            .start_service("echo_service")
+            .await
+            .expect("Failed to start service");
 
         // Check if service is running
-        let health = supervisor.get_service_health("echo_service").await.expect("Failed to get health");
+        let health = supervisor
+            .get_service_health("echo_service")
+            .await
+            .expect("Failed to get health");
         // Note: This will likely be a failure since echo doesn't support --health-check
         assert!(health.healthy == false || health.healthy == true); // Either result is fine for test
 
         // Stop service
-        supervisor.stop_service("echo_service").await.expect("Failed to stop service");
+        supervisor
+            .stop_service("echo_service")
+            .await
+            .expect("Failed to stop service");
     }
 
     #[test]

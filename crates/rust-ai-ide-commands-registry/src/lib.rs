@@ -89,7 +89,8 @@ pub enum CommandDomain {
 }
 
 /// Type-erased command function
-pub type CommandFunction = fn(tauri::Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>>;
+pub type CommandFunction =
+    fn(tauri::Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>>;
 
 /// Dynamic command registry
 pub struct CommandRegistry {
@@ -133,7 +134,10 @@ impl CommandRegistry {
         };
 
         self.registry.insert(name.to_string(), (function, metadata));
-        self.domains.entry(domain).or_insert(Vec::new()).push(name.to_string());
+        self.domains
+            .entry(domain)
+            .or_insert(Vec::new())
+            .push(name.to_string());
 
         Ok(())
     }
@@ -271,7 +275,9 @@ impl CommandHandler {
     }
 
     /// Build the invoke handler for Tauri
-    pub fn build_invoke_handler(&self) -> impl Fn(tauri::Invoke<tauri::Wry>) -> bool + Clone + Send + Sync + 'static {
+    pub fn build_invoke_handler(
+        &self,
+    ) -> impl Fn(tauri::Invoke<tauri::Wry>) -> bool + Clone + Send + Sync + 'static {
         let registry = Arc::clone(&self.registry);
 
         move |invoke| {
@@ -313,7 +319,9 @@ mod tests {
         let mut registry = CommandRegistry::new();
 
         // Mock command function
-        fn mock_command(_invoke: tauri::Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>> {
+        fn mock_command(
+            _invoke: tauri::Invoke<tauri::Wry>,
+        ) -> Option<Box<dyn std::any::Any + Send + Sync>> {
             None
         }
 
@@ -340,20 +348,24 @@ mod tests {
     fn test_duplicate_command_registration() {
         let mut registry = CommandRegistry::new();
 
-        fn mock_command(_invoke: tauri::Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>> {
+        fn mock_command(
+            _invoke: tauri::Invoke<tauri::Wry>,
+        ) -> Option<Box<dyn std::any::Any + Send + Sync>> {
             None
         }
 
         // Register command once
-        registry.register_command(
-            "duplicate_test",
-            CommandDomain::AI,
-            "Duplicate test command",
-            vec![],
-            "()",
-            vec![],
-            mock_command,
-        ).unwrap();
+        registry
+            .register_command(
+                "duplicate_test",
+                CommandDomain::AI,
+                "Duplicate test command",
+                vec![],
+                "()",
+                vec![],
+                mock_command,
+            )
+            .unwrap();
 
         // Try to register again - should fail
         let result = registry.register_command(

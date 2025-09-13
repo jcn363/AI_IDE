@@ -5,7 +5,7 @@ import {
   KeyCombination,
   ShortcutAction,
   UserShortcutProfile,
-  KeybindingConflict
+  KeybindingConflict,
 } from '../types';
 import './KeybindingSettings.css';
 
@@ -62,29 +62,32 @@ const KeybindingSettings: React.FC<KeybindingSettingsProps> = ({ onClose }) => {
     });
   };
 
-  const handleKeyPress = useCallback((event: KeyboardEvent) => {
-    if (!recordingFor) return;
+  const handleKeyPress = useCallback(
+    (event: KeyboardEvent) => {
+      if (!recordingFor) return;
 
-    event.preventDefault();
-    event.stopPropagation();
+      event.preventDefault();
+      event.stopPropagation();
 
-    const combination: KeyCombination = {
-      key: event.key.toLowerCase(),
-      ctrlKey: event.ctrlKey,
-      altKey: event.altKey,
-      shiftKey: event.shiftKey,
-      metaKey: event.metaKey
-    };
+      const combination: KeyCombination = {
+        key: event.key.toLowerCase(),
+        ctrlKey: event.ctrlKey,
+        altKey: event.altKey,
+        shiftKey: event.shiftKey,
+        metaKey: event.metaKey,
+      };
 
-    // Update the keybinding for the recording action
-    keybindingManager.setShortcut(recordingFor, [combination]);
-    setRecordingFor(null);
+      // Update the keybinding for the recording action
+      keybindingManager.setShortcut(recordingFor, [combination]);
+      setRecordingFor(null);
 
-    // Update conflicts
-    if (currentProfile) {
-      loadConficts(currentProfile.id);
-    }
-  }, [recordingFor, currentProfile]);
+      // Update conflicts
+      if (currentProfile) {
+        loadConficts(currentProfile.id);
+      }
+    },
+    [recordingFor, currentProfile]
+  );
 
   useEffect(() => {
     if (recordingFor) {
@@ -117,7 +120,7 @@ const KeybindingSettings: React.FC<KeybindingSettingsProps> = ({ onClose }) => {
         newProfileName.trim(),
         newProfileDescription.trim()
       );
-      setProfiles(prev => [...prev, profile]);
+      setProfiles((prev) => [...prev, profile]);
       setNewProfileName('');
       setNewProfileDescription('');
     } catch (error) {
@@ -200,16 +203,16 @@ const KeybindingSettings: React.FC<KeybindingSettingsProps> = ({ onClose }) => {
   };
 
   const isConflicted = (actionId: string): boolean => {
-    return conflicts.some(conflict =>
-      conflict.actions.some(action => action === actionId)
-    );
+    return conflicts.some((conflict) => conflict.actions.some((action) => action === actionId));
   };
 
   return (
     <div className="keybinding-settings">
       <div className="keybinding-header">
         <h2>Keyboard Shortcuts</h2>
-        <button onClick={onClose} className="close-button">×</button>
+        <button onClick={onClose} className="close-button">
+          ×
+        </button>
       </div>
 
       <div className="keybinding-content">
@@ -222,7 +225,7 @@ const KeybindingSettings: React.FC<KeybindingSettingsProps> = ({ onClose }) => {
               onChange={(e) => handleProfileSwitch(e.target.value)}
               className="profile-select"
             >
-              {profiles.map(profile => (
+              {profiles.map((profile) => (
                 <option key={profile.id} value={profile.id}>
                   {profile.name} {profile.isDefault ? '(Default)' : ''}
                 </option>
@@ -279,19 +282,18 @@ const KeybindingSettings: React.FC<KeybindingSettingsProps> = ({ onClose }) => {
 
         {/* Search */}
         <div className="search-section">
-          <input
-            type="text"
-            placeholder="Search shortcuts..."
-            className="search-input"
-          />
+          <input type="text" placeholder="Search shortcuts..." className="search-input" />
         </div>
 
         {/* Shortcuts List */}
         <div className="shortcuts-section">
           <h3>Keyboard Shortcuts</h3>
           <div className="shortcuts-grid">
-            {availableActions.map(action => (
-              <div key={action.id} className={`shortcut-item ${isConflicted(action.id) ? 'conflicted' : ''}`}>
+            {availableActions.map((action) => (
+              <div
+                key={action.id}
+                className={`shortcut-item ${isConflicted(action.id) ? 'conflicted' : ''}`}
+              >
                 <div className="shortcut-info">
                   <span className="action-name">{action.name}</span>
                   <span className="action-description">{action.description}</span>
@@ -339,12 +341,7 @@ const KeybindingSettings: React.FC<KeybindingSettingsProps> = ({ onClose }) => {
           <div className="modal-content">
             <h3>Import Keybindings</h3>
             <p>Select a JSON file containing your keybinding configuration.</p>
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleImportFile}
-              className="file-input"
-            />
+            <input type="file" accept=".json" onChange={handleImportFile} className="file-input" />
             <div className="modal-buttons">
               <button onClick={() => setShowImportDialog(false)}>Cancel</button>
             </div>

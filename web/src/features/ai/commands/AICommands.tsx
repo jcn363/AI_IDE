@@ -89,8 +89,8 @@ export const useAICommands = () => {
     {
       id: 'ai.toggle-suggestions',
       name: isPanelVisible ? 'AI: Hide Suggestions' : 'AI: Show Suggestions',
-      description: isPanelVisible 
-        ? 'Hide the AI suggestions panel' 
+      description: isPanelVisible
+        ? 'Hide the AI suggestions panel'
         : 'Show the AI suggestions panel',
       icon: 'lightbulb',
       handler: async () => {
@@ -105,9 +105,7 @@ export const useAICommands = () => {
   ];
 
   // Only include the toggle command if there are suggestions
-  return hasSuggestions 
-    ? commands 
-    : commands.filter(cmd => cmd.id !== 'ai.toggle-suggestions');
+  return hasSuggestions ? commands : commands.filter((cmd) => cmd.id !== 'ai.toggle-suggestions');
 };
 
 export default useAICommands;

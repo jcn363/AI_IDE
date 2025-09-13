@@ -196,12 +196,22 @@ export interface BootstrapService {
   uploadTemplate(template: ProjectTemplate): Promise<void>;
 
   // Bootstrap functionality
-  validateBootstrapOptions(options: BootstrapOptions): { isValid: boolean; errors: string[]; warnings: string[] };
+  validateBootstrapOptions(options: BootstrapOptions): {
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+  };
   bootstrapTemplate(templateId: string, options: BootstrapOptions): Promise<BootstrapResult>;
-  previewTemplate(templateId: string, options?: Partial<BootstrapOptions>): { files: string[]; dependencies: string[] };
+  previewTemplate(
+    templateId: string,
+    options?: Partial<BootstrapOptions>
+  ): { files: string[]; dependencies: string[] };
 
   // Workflow automation
-  setupAutomation(templateId: string, options: BootstrapOptions): Promise<{ setupCommands: string[]; configFiles: string[] }>;
+  setupAutomation(
+    templateId: string,
+    options: BootstrapOptions
+  ): Promise<{ setupCommands: string[]; configFiles: string[] }>;
   generateWorkflows(templateId: string, workflows: string[]): Promise<Record<string, string>>;
   configureCI(templateId: string, ciProvider: string): Promise<string>;
 }

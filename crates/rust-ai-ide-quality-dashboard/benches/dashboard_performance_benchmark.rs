@@ -4,7 +4,7 @@ use std::time::Duration;
 
 fn dashboard_performance_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("dashboard_performance");
-    
+
     // Benchmark dashboard rendering with different data sizes
     for &data_size in &[100, 1000, 10000] {
         group.bench_function(format!("render_with_{}_data_points", data_size), |b| {
@@ -18,14 +18,14 @@ fn dashboard_performance_benchmark(c: &mut Criterion) {
                         tags: vec![format!("tag_{}", i % 5)],
                     })
                     .collect();
-                
+
                 // Simulate dashboard rendering
                 let dashboard = Dashboard::new(metrics);
                 dashboard.render()
             });
         });
     }
-    
+
     // Benchmark dashboard updates
     group.bench_function("update_dashboard", |b| {
         let mut dashboard = Dashboard::new(Vec::new());
@@ -39,7 +39,7 @@ fn dashboard_performance_benchmark(c: &mut Criterion) {
             dashboard.update(metric);
         });
     });
-    
+
     group.finish();
 }
 

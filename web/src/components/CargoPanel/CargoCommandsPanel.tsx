@@ -25,7 +25,11 @@ import {
 } from '@mui/icons-material';
 import { invoke } from '@tauri-apps/api/core';
 import { useAppDispatch } from '../../store/store';
-import { executeCargoStream, selectCargoState, selectCargoCommands } from '../../store/slices/cargoSlice';
+import {
+  executeCargoStream,
+  selectCargoState,
+  selectCargoCommands,
+} from '../../store/slices/cargoSlice';
 
 interface CargoCommandsPanelProps {
   selectedCommand: string;
@@ -126,12 +130,7 @@ export const CargoCommandsPanel: React.FC<CargoCommandsPanelProps> = ({
           sx={{ mb: 2 }}
           onClose={onClearError}
           action={
-            <IconButton
-              aria-label="close"
-              color="inherit"
-              size="small"
-              onClick={onClearError}
-            >
+            <IconButton aria-label="close" color="inherit" size="small" onClick={onClearError}>
               <CloseIcon fontSize="inherit" />
             </IconButton>
           }

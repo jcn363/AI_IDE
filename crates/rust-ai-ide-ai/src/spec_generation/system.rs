@@ -211,26 +211,26 @@ mod tests {
         let request = SpecificationRequest {
             description: r#"
             // A simple user management system
-            
+
             // Requirements:
             // - The system must store user information
             // - Users should be able to update their profile
-            
+
             struct User {
                 id: String,
                 name: String,
                 email: String,
             }
-            
+
             trait UserRepository {
                 fn save_user(&self, user: &User) -> Result<(), String>;
                 fn find_user_by_id(&self, id: &str) -> Option<User>;
             }
-            
+
             struct UserService {
                 repository: Box<dyn UserRepository>,
             }
-            
+
             impl UserService {
                 fn update_user_email(&self, user_id: &str, new_email: &str) -> Result<(), String> {
                     // Implementation
@@ -255,20 +255,20 @@ mod tests {
         let generator = IntelligentSpecGenerator::new();
         let spec_text = r#"
         // A simple counter component
-        
+
         struct Counter {
             value: i32,
         }
-        
+
         impl Counter {
             fn new() -> Self {
                 Counter { value: 0 }
             }
-            
+
             fn increment(&mut self) {
                 self.value += 1;
             }
-            
+
             fn value(&self) -> i32 {
                 self.value
             }
@@ -317,7 +317,7 @@ mod tests {
 
         let code = r#"
         // This is a test file
-        
+
         fn main() {
             println!("Hello, world!");
         }

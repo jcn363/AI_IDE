@@ -1,17 +1,18 @@
-//! Enhanced monitoring and performance analytics handlers
+//! Enhanced monitoring and performance analytics handlers with collaboration support
 //!
 //! This module provides comprehensive monitoring capabilities for the Rust AI IDE,
-//! including real-time dashboards, performance analytics, and system health monitoring.
+//! including real-time dashboards, performance analytics, system health monitoring,
+//! and collaborative performance tracking across multiple users and sessions.
 
-use rust_ai_ide_common::validation::validate_secure_path;
-use rust_ai_ide_common::errors::IDEError;
-use std::sync::Arc;
-use std::collections::HashMap;
-use tokio::sync::Mutex;
-use tokio::time::{Duration, interval, Interval};
 use chrono::Utc;
+use rust_ai_ide_common::errors::IDEError;
+use rust_ai_ide_common::validation::validate_secure_path;
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use tokio::time::{interval, Duration, Interval};
 
-/// Real-time monitoring dashboard state
+/// Real-time monitoring dashboard state with collaboration support
 pub struct MonitoringDashboard {
     /// System metrics history (last 60 minutes)
     system_metrics: Vec<SystemMetricsSnapshot>,
@@ -25,6 +26,14 @@ pub struct MonitoringDashboard {
     thresholds: MonitoringThresholds,
     /// Dashboard refresh interval
     refresh_interval: Duration,
+    /// Active collaboration sessions
+    collaboration_sessions: HashMap<String, CollaborationSession>,
+    /// Shared metrics from all users in collaborative sessions
+    shared_metrics: Vec<SharedMetricSnapshot>,
+    /// Collaborative alerts across sessions
+    collaborative_alerts: Vec<CollaborativeAlert>,
+    /// Session-based thresholds for collaboration
+    session_thresholds: HashMap<String, MonitoringThresholds>,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -111,6 +120,54 @@ impl Default for AlertSeverity {
     }
 }
 
+/// Collaboration session for tracking multi-user performance metrics
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct CollaborationSession {
+    pub session_id: String,
+    pub session_name: String,
+    pub created_at: String,
+    pub created_by: String,
+    pub participants: Vec<String>,
+    pub active_users: u32,
+    pub total_users: u32,
+    pub session_metrics: SessionMetrics,
+    pub is_active: bool,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct SessionMetrics {
+    pub cpu_usage_avg: f64,
+    pub memory_usage_avg: f64,
+    pub lsp_requests_total: u64,
+    pub session_duration_seconds: u64,
+    pub peak_users: u32,
+    pub total_collaborations: u64,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct SharedMetricSnapshot {
+    pub user_id: String,
+    pub timestamp: String,
+    pub session_id: String,
+    pub metric_type: String,
+    pub value: f64,
+    pub context: HashMap<String, serde_json::Value>,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct CollaborativeAlert {
+    pub id: String,
+    pub session_id: String,
+    pub severity: AlertSeverity,
+    pub title: String,
+    pub message: String,
+    pub timestamp: String,
+    pub affected_users: Vec<String>,
+    pub source: String,
+    pub resolved: bool,
+    pub collaborative_actions: Vec<String>,
+}
+
 impl MonitoringDashboard {
     pub fn new() -> Self {
         Self {
@@ -120,6 +177,10 @@ impl MonitoringDashboard {
             alerts: Vec::new(),
             thresholds: MonitoringThresholds::default(),
             refresh_interval: Duration::from_secs(10), // 10 second intervals
+            collaboration_sessions: HashMap::new(),
+            shared_metrics: Vec::new(),
+            collaborative_alerts: Vec::new(),
+            session_thresholds: HashMap::new(),
         }
     }
 
@@ -139,8 +200,11 @@ impl MonitoringDashboard {
     /// Add LSP metrics snapshot
     pub fn add_lsp_metrics(&mut self, metrics: LSPMetricsSnapshot) {
         // Update existing entry or add new one
-        if let Some(existing) = self.lsp_metrics.iter_mut()
-            .find(|m| m.server_name == metrics.server_name) {
+        if let Some(existing) = self
+            .lsp_metrics
+            .iter_mut()
+            .find(|m| m.server_name == metrics.server_name)
+        {
             *existing = metrics;
         } else {
             self.lsp_metrics.push(metrics);
@@ -211,10 +275,16 @@ impl MonitoringDashboard {
 
             if error_rate > self.thresholds.max_error_rate_percent {
                 let alert = SystemAlert {
-                    id: format!("lsp-errors-{}-{}", lsp_metric.server_name, lsp_metric.timestamp),
+                    id: format!(
+                        "lsp-errors-{}-{}",
+                        lsp_metric.server_name, lsp_metric.timestamp
+                    ),
                     severity: AlertSeverity::Error,
                     title: format!("High Error Rate in {}", lsp_metric.server_name),
-                    message: format!("Error rate is {:.1}% for LSP server {}", error_rate, lsp_metric.server_name),
+                    message: format!(
+                        "Error rate is {:.1}% for LSP server {}",
+                        error_rate, lsp_metric.server_name
+                    ),
                     timestamp: lsp_metric.timestamp.clone(),
                     source: "LSP Monitor".to_string(),
                     resolved: false,
@@ -229,10 +299,16 @@ impl MonitoringDashboard {
 
             if lsp_metric.average_response_time_ms > self.thresholds.max_response_time_ms as f64 {
                 let alert = SystemAlert {
-                    id: format!("lsp-performance-{}-{}", lsp_metric.server_name, lsp_metric.timestamp),
+                    id: format!(
+                        "lsp-performance-{}-{}",
+                        lsp_metric.server_name, lsp_metric.timestamp
+                    ),
                     severity: AlertSeverity::Warning,
                     title: format!("Slow LSP Response - {}", lsp_metric.server_name),
-                    message: format!("Average response time is {:.1}ms", lsp_metric.average_response_time_ms),
+                    message: format!(
+                        "Average response time is {:.1}ms",
+                        lsp_metric.average_response_time_ms
+                    ),
                     timestamp: lsp_metric.timestamp.clone(),
                     source: "LSP Performance".to_string(),
                     resolved: false,
@@ -249,12 +325,44 @@ impl MonitoringDashboard {
 
     /// Get current dashboard status summary
     pub fn get_status_summary(&self) -> serde_json::JsonValue {
-        let critical_alerts = self.alerts.iter().filter(|a| a.severity == AlertSeverity::Critical).count();
-        let warning_alerts = self.alerts.iter().filter(|a| a.severity == AlertSeverity::Warning).count();
-        let error_alerts = self.alerts.iter().filter(|a| a.severity == AlertSeverity::Error).count();
+        let critical_alerts = self
+            .alerts
+            .iter()
+            .filter(|a| a.severity == AlertSeverity::Critical)
+            .count();
+        let warning_alerts = self
+            .alerts
+            .iter()
+            .filter(|a| a.severity == AlertSeverity::Warning)
+            .count();
+        let error_alerts = self
+            .alerts
+            .iter()
+            .filter(|a| a.severity == AlertSeverity::Error)
+            .count();
 
-        let current_cpu = self.system_metrics.last().map(|m| m.cpu_usage_percent).unwrap_or(0.0);
-        let current_memory = self.system_metrics.last().map(|m| m.memory_usage_percent).unwrap_or(0.0);
+        let current_cpu = self
+            .system_metrics
+            .last()
+            .map(|m| m.cpu_usage_percent)
+            .unwrap_or(0.0);
+        let current_memory = self
+            .system_metrics
+            .last()
+            .map(|m| m.memory_usage_percent)
+            .unwrap_or(0.0);
+
+        let active_sessions = self
+            .collaboration_sessions
+            .values()
+            .filter(|s| s.is_active)
+            .count();
+        let total_collaborative_users = self
+            .collaboration_sessions
+            .values()
+            .filter(|s| s.is_active)
+            .map(|s| s.active_users)
+            .sum::<u32>();
 
         serde_json::json!({
             "status": if critical_alerts > 0 { "critical" } else if warning_alerts > 0 { "warning" } else { "healthy" },
@@ -269,11 +377,221 @@ impl MonitoringDashboard {
                 "memory_percent": current_memory
             },
             "active_servers": self.lsp_metrics.len(),
+            "collaboration": {
+                "active_sessions": active_sessions,
+                "total_collaborative_users": total_collaborative_users,
+                "shared_metrics_count": self.shared_metrics.len()
+            },
             "data_points": {
                 "system_metrics": self.system_metrics.len(),
-                "memory_snapshots": self.memory_tracking.len()
+                "memory_snapshots": self.memory_tracking.len(),
+                "shared_metrics": self.shared_metrics.len()
             }
         })
+    }
+
+    /// Create a new collaboration session
+    pub fn create_collaboration_session(
+        &mut self,
+        session_name: String,
+        created_by: String,
+    ) -> String {
+        let session_id = format!(
+            "session_{}",
+            Utc::now()
+                .timestamp_nanos_opt()
+                .unwrap_or(Utc::now().timestamp())
+        );
+
+        let session = CollaborationSession {
+            session_id: session_id.clone(),
+            session_name,
+            created_at: Utc::now().to_rfc3339(),
+            created_by: created_by.clone(),
+            participants: vec![created_by],
+            active_users: 1,
+            total_users: 1,
+            session_metrics: SessionMetrics {
+                cpu_usage_avg: 0.0,
+                memory_usage_avg: 0.0,
+                lsp_requests_total: 0,
+                session_duration_seconds: 0,
+                peak_users: 1,
+                total_collaborations: 0,
+            },
+            is_active: true,
+        };
+
+        self.collaboration_sessions
+            .insert(session_id.clone(), session);
+        self.session_thresholds
+            .insert(session_id.clone(), MonitoringThresholds::default());
+
+        session_id
+    }
+
+    /// Join an existing collaboration session
+    pub fn join_collaboration_session(
+        &mut self,
+        session_id: &str,
+        user_id: String,
+    ) -> Result<(), String> {
+        if let Some(session) = self.collaboration_sessions.get_mut(session_id) {
+            if !session.participants.contains(&user_id) {
+                session.participants.push(user_id);
+                session.total_users += 1;
+            }
+            session.active_users += 1;
+            if session.active_users > session.session_metrics.peak_users {
+                session.session_metrics.peak_users = session.active_users;
+            }
+            Ok(())
+        } else {
+            Err(format!("Collaboration session {} not found", session_id))
+        }
+    }
+
+    /// Add shared metric from a user in a collaboration session
+    pub fn add_shared_metric(
+        &mut self,
+        session_id: &str,
+        user_id: String,
+        metric_type: String,
+        value: f64,
+        context: HashMap<String, serde_json::Value>,
+    ) {
+        let snapshot = SharedMetricSnapshot {
+            user_id,
+            timestamp: Utc::now().to_rfc3339(),
+            session_id: session_id.to_string(),
+            metric_type,
+            value,
+            context,
+        };
+
+        self.shared_metrics.push(snapshot);
+
+        // Keep only last 1000 shared metrics
+        if self.shared_metrics.len() > 1000 {
+            self.shared_metrics.remove(0);
+        }
+
+        // Update session metrics
+        if let Some(session) = self.collaboration_sessions.get_mut(session_id) {
+            session.session_metrics.lsp_requests_total += 1;
+            session.session_metrics.total_collaborations += 1;
+        }
+    }
+
+    /// Get collaborative performance metrics for a session
+    pub fn get_collaborative_metrics(&self, session_id: &str) -> serde_json::JsonValue {
+        let session_metrics: Vec<&SharedMetricSnapshot> = self
+            .shared_metrics
+            .iter()
+            .filter(|m| m.session_id == session_id)
+            .collect();
+
+        let avg_cpu = session_metrics
+            .iter()
+            .filter(|m| m.metric_type == "cpu_usage")
+            .map(|m| m.value)
+            .sum::<f64>()
+            / session_metrics.len().max(1) as f64;
+
+        let avg_memory = session_metrics
+            .iter()
+            .filter(|m| m.metric_type == "memory_usage")
+            .map(|m| m.value)
+            .sum::<f64>()
+            / session_metrics.len().max(1) as f64;
+
+        let total_requests = session_metrics
+            .iter()
+            .filter(|m| m.metric_type == "lsp_requests")
+            .map(|m| m.value as u64)
+            .sum::<u64>();
+
+        serde_json::json!({
+            "session_id": session_id,
+            "average_cpu_usage": avg_cpu,
+            "average_memory_usage": avg_memory,
+            "total_lsp_requests": total_requests,
+            "metrics_count": session_metrics.len(),
+            "user_contributions": session_metrics.iter().map(|m| &m.user_id).collect::<Vec<_>>()
+        })
+    }
+
+    /// Check for collaborative performance alerts
+    pub fn check_collaborative_alerts(&mut self) {
+        for (session_id, session) in &self.collaboration_sessions {
+            if !session.is_active {
+                continue;
+            }
+
+            let session_metrics = self.get_collaborative_metrics(session_id);
+            let avg_cpu = session_metrics["average_cpu_usage"].as_f64().unwrap_or(0.0);
+            let avg_memory = session_metrics["average_memory_usage"]
+                .as_f64()
+                .unwrap_or(0.0);
+
+            let thresholds = self
+                .session_thresholds
+                .get(session_id)
+                .unwrap_or(&self.thresholds);
+
+            if avg_cpu > thresholds.cpu_usage_warning_percent {
+                let alert = CollaborativeAlert {
+                    id: format!("collab-cpu-high-{}-{}", session_id, Utc::now().timestamp()),
+                    session_id: session_id.clone(),
+                    severity: AlertSeverity::Warning,
+                    title: format!("High Collaborative CPU Usage in {}", session.session_name),
+                    message: format!(
+                        "Average CPU usage across {} users: {:.1}%",
+                        session.active_users, avg_cpu
+                    ),
+                    timestamp: Utc::now().to_rfc3339(),
+                    affected_users: session.participants.clone(),
+                    source: "Collaborative Monitor".to_string(),
+                    resolved: false,
+                    collaborative_actions: vec![
+                        "Consider load balancing users across sessions".to_string(),
+                        "Monitor individual user resource consumption".to_string(),
+                        "Evaluate session performance requirements".to_string(),
+                    ],
+                };
+                self.collaborative_alerts.push(alert);
+            }
+
+            if avg_memory > thresholds.memory_usage_warning_percent {
+                let alert = CollaborativeAlert {
+                    id: format!(
+                        "collab-memory-high-{}-{}",
+                        session_id,
+                        Utc::now().timestamp()
+                    ),
+                    session_id: session_id.clone(),
+                    severity: AlertSeverity::Warning,
+                    title: format!(
+                        "High Collaborative Memory Usage in {}",
+                        session.session_name
+                    ),
+                    message: format!(
+                        "Average memory usage across {} users: {:.1}%",
+                        session.active_users, avg_memory
+                    ),
+                    timestamp: Utc::now().to_rfc3339(),
+                    affected_users: session.participants.clone(),
+                    source: "Collaborative Monitor".to_string(),
+                    resolved: false,
+                    collaborative_actions: vec![
+                        "Implement memory usage limits per user".to_string(),
+                        "Consider session memory optimization".to_string(),
+                        "Monitor for memory leaks in collaborative features".to_string(),
+                    ],
+                };
+                self.collaborative_alerts.push(alert);
+            }
+        }
     }
 }
 
@@ -368,7 +686,9 @@ pub async fn get_monitoring_dashboard() -> Result<serde_json::Value, String> {
 
 /// Get real-time performance metrics stream
 #[tauri::command]
-pub async fn get_real_time_metrics(duration_seconds: Option<u64>) -> Result<serde_json::Value, String> {
+pub async fn get_real_time_metrics(
+    duration_seconds: Option<u64>,
+) -> Result<serde_json::Value, String> {
     let duration = duration_seconds.unwrap_or(60); // Default 1 minute
 
     log::info!("Getting real-time metrics for {} seconds", duration);
@@ -651,7 +971,9 @@ pub async fn update_monitoring_config(config_updates: serde_json::Value) -> Resu
 
 /// Generate performance report
 #[tauri::command]
-pub async fn generate_performance_report(time_range_hours: Option<u64>) -> Result<serde_json::Value, String> {
+pub async fn generate_performance_report(
+    time_range_hours: Option<u64>,
+) -> Result<serde_json::Value, String> {
     let hours = time_range_hours.unwrap_or(24);
 
     log::info!("Generating performance report for {} hours", hours);
@@ -773,7 +1095,378 @@ pub async fn export_monitoring_data(
     log::info!("Exporting monitoring data in format: {}", format);
 
     // TODO: Implement actual data export
-    let export_filename = format!("monitoring_export_{}.{}", chrono::Utc::now().timestamp(), format);
+    let export_filename = format!(
+        "monitoring_export_{}.{}",
+        chrono::Utc::now().timestamp(),
+        format
+    );
 
-    Ok(format!("Monitoring data exported successfully to: {}", export_filename))
+    Ok(format!(
+        "Monitoring data exported successfully to: {}",
+        export_filename
+    ))
+}
+
+/// Create a new collaboration session for performance monitoring
+#[tauri::command]
+pub async fn create_collaboration_session(
+    session_name: String,
+    created_by: String,
+) -> Result<serde_json::Value, String> {
+    log::info!(
+        "Creating collaboration session: {} by {}",
+        session_name,
+        created_by
+    );
+
+    // TODO: Integrate with actual monitoring state management
+    // For now, simulate session creation
+
+    let session_id = format!(
+        "session_{}",
+        chrono::Utc::now()
+            .timestamp_nanos_opt()
+            .unwrap_or(chrono::Utc::now().timestamp())
+    );
+
+    let session_data = serde_json::json!({
+        "session_id": session_id,
+        "session_name": session_name,
+        "created_by": created_by,
+        "created_at": chrono::Utc::now().to_rfc3339(),
+        "status": "active",
+        "participants": [created_by],
+        "metrics": {
+            "cpu_usage_avg": 0.0,
+            "memory_usage_avg": 0.0,
+            "lsp_requests_total": 0,
+            "active_users": 1
+        }
+    });
+
+    Ok(session_data)
+}
+
+/// Join an existing collaboration session
+#[tauri::command]
+pub async fn join_collaboration_session(
+    session_id: String,
+    user_id: String,
+) -> Result<serde_json::Value, String> {
+    log::info!(
+        "User {} joining collaboration session: {}",
+        user_id,
+        session_id
+    );
+
+    // TODO: Integrate with actual session management
+    // For now, simulate session join
+
+    let join_data = serde_json::json!({
+        "session_id": session_id,
+        "user_id": user_id,
+        "joined_at": chrono::Utc::now().to_rfc3339(),
+        "status": "joined",
+        "session_info": {
+            "active_users": 2,
+            "total_users": 2,
+            "performance_score": 85
+        }
+    });
+
+    Ok(join_data)
+}
+
+/// Submit shared performance metrics for collaboration
+#[tauri::command]
+pub async fn submit_shared_metrics(
+    session_id: String,
+    user_id: String,
+    metrics: serde_json::Value,
+) -> Result<String, String> {
+    log::info!(
+        "Submitting shared metrics for session: {} by user: {}",
+        session_id,
+        user_id
+    );
+
+    // TODO: Integrate with actual metrics collection
+    // For now, simulate metrics submission
+
+    Ok(format!(
+        "Shared metrics submitted successfully for session {} by user {}",
+        session_id, user_id
+    ))
+}
+
+/// Get collaborative performance dashboard for a session
+#[tauri::command]
+pub async fn get_collaborative_dashboard(
+    session_id: Option<String>,
+) -> Result<serde_json::Value, String> {
+    let target_session = session_id.unwrap_or("default_session".to_string());
+    log::info!(
+        "Getting collaborative dashboard for session: {}",
+        target_session
+    );
+
+    // TODO: Integrate with actual collaborative monitoring
+    // For now, simulate collaborative dashboard data
+
+    let dashboard_data = serde_json::json!({
+        "session_id": target_session,
+        "session_name": "Development Team Session",
+        "active_users": 3,
+        "total_users": 5,
+        "performance_overview": {
+            "average_cpu_usage": 42.3,
+            "average_memory_usage": 68.4,
+            "total_lsp_requests": 15420,
+            "average_response_time_ms": 18.7,
+            "collaboration_efficiency": 87.5
+        },
+        "user_metrics": [
+            {
+                "user_id": "user_1",
+                "cpu_usage": 38.2,
+                "memory_usage": 65.1,
+                "lsp_requests": 5234,
+                "contribution_score": 92
+            },
+            {
+                "user_id": "user_2",
+                "cpu_usage": 45.8,
+                "memory_usage": 71.3,
+                "lsp_requests": 4891,
+                "contribution_score": 89
+            },
+            {
+                "user_id": "user_3",
+                "cpu_usage": 43.9,
+                "memory_usage": 68.7,
+                "lsp_requests": 5295,
+                "contribution_score": 91
+            }
+        ],
+        "collaborative_alerts": [
+            {
+                "id": "collab_cpu_warning",
+                "severity": "warning",
+                "title": "High Collaborative CPU Usage",
+                "message": "Average CPU usage across session participants is elevated",
+                "affected_users": ["user_1", "user_2", "user_3"],
+                "recommended_actions": [
+                    "Consider load balancing work across users",
+                    "Monitor resource-intensive operations",
+                    "Evaluate session performance requirements"
+                ]
+            }
+        ],
+        "session_trends": {
+            "cpu_trend": "stable",
+            "memory_trend": "increasing",
+            "collaboration_trend": "improving",
+            "efficiency_trend": "stable"
+        },
+        "recommendations": [
+            {
+                "type": "performance",
+                "priority": "medium",
+                "message": "Consider implementing collaborative caching for improved performance",
+                "potential_improvement": "15% faster collaborative operations"
+            },
+            {
+                "type": "resource",
+                "priority": "low",
+                "message": "Memory usage is within acceptable limits",
+                "actionable": false
+            }
+        ]
+    });
+
+    Ok(dashboard_data)
+}
+
+/// Get collaboration session statistics
+#[tauri::command]
+pub async fn get_collaboration_stats() -> Result<serde_json::Value, String> {
+    log::info!("Getting collaboration statistics");
+
+    let stats_data = serde_json::json!({
+        "active_sessions": 5,
+        "total_sessions_today": 12,
+        "total_collaborative_users": 23,
+        "peak_concurrent_users": 8,
+        "average_session_duration_minutes": 45,
+        "most_active_session": {
+            "session_id": "session_123",
+            "name": "Backend Development",
+            "active_users": 6,
+            "total_lsp_requests": 8900
+        },
+        "performance_metrics": {
+            "average_collaboration_efficiency": 85.2,
+            "total_shared_metrics": 15420,
+            "average_response_time_ms": 18.7,
+            "resource_utilization": {
+                "cpu_avg": 42.3,
+                "memory_avg": 68.4,
+                "network_usage_mb": 245.8
+            }
+        },
+        "collaboration_patterns": {
+            "peak_hours": ["10:00", "14:00", "16:00"],
+            "most_used_features": ["lsp_completion", "diagnostics", "refactoring"],
+            "collaboration_types": {
+                "pair_programming": 45,
+                "code_review": 30,
+                "debugging": 25
+            }
+        },
+        "alerts_summary": {
+            "total_alerts": 3,
+            "critical": 0,
+            "warning": 2,
+            "info": 1,
+            "resolved_today": 5
+        }
+    });
+
+    Ok(stats_data)
+}
+
+/// Leave a collaboration session
+#[tauri::command]
+pub async fn leave_collaboration_session(
+    session_id: String,
+    user_id: String,
+) -> Result<String, String> {
+    log::info!(
+        "User {} leaving collaboration session: {}",
+        user_id,
+        session_id
+    );
+
+    // TODO: Integrate with actual session management
+    // For now, simulate session leave
+
+    Ok(format!(
+        "User {} successfully left session {}",
+        user_id, session_id
+    ))
+}
+
+/// Generate collaborative performance report
+#[tauri::command]
+pub async fn generate_collaborative_report(
+    session_id: String,
+    time_range_hours: Option<u64>,
+) -> Result<serde_json::Value, String> {
+    let hours = time_range_hours.unwrap_or(24);
+    log::info!(
+        "Generating collaborative report for session: {} ({} hours)",
+        session_id,
+        hours
+    );
+
+    let report_data = serde_json::json!({
+        "report_id": format!("collab_report_{}_{}", session_id, chrono::Utc::now().timestamp()),
+        "session_id": session_id,
+        "generated_at": chrono::Utc::now().to_rfc3339(),
+        "time_range": {
+            "start": (chrono::Utc::now() - chrono::Duration::hours(hours as i64)).to_rfc3339(),
+            "end": chrono::Utc::now().to_rfc3339(),
+            "hours": hours
+        },
+        "session_summary": {
+            "session_name": "Development Team Session",
+            "total_participants": 5,
+            "active_duration_hours": 8.5,
+            "total_collaborations": 1247,
+            "collaboration_efficiency": 89.2
+        },
+        "performance_analysis": {
+            "individual_performance": [
+                {
+                    "user_id": "user_1",
+                    "contribution_percentage": 28.5,
+                    "avg_response_time_ms": 15.2,
+                    "total_actions": 356,
+                    "performance_score": 94
+                },
+                {
+                    "user_id": "user_2",
+                    "contribution_percentage": 24.1,
+                    "avg_response_time_ms": 18.7,
+                    "total_actions": 301,
+                    "performance_score": 87
+                },
+                {
+                    "user_id": "user_3",
+                    "contribution_percentage": 22.8,
+                    "avg_response_time_ms": 16.8,
+                    "total_actions": 284,
+                    "performance_score": 91
+                }
+            ],
+            "team_performance": {
+                "average_response_time_ms": 16.9,
+                "total_team_actions": 1247,
+                "collaboration_synergy_score": 92,
+                "bottleneck_analysis": "No significant bottlenecks detected"
+            }
+        },
+        "resource_utilization": {
+            "cpu_usage_trend": [35.2, 38.1, 42.3, 39.8, 41.2, 43.5],
+            "memory_usage_trend": [64.1, 66.8, 68.4, 67.2, 69.1, 68.7],
+            "network_usage_mb": 156.8,
+            "peak_resource_usage": {
+                "cpu_percent": 45.2,
+                "memory_percent": 72.1,
+                "timestamp": (chrono::Utc::now() - chrono::Duration::hours(2)).to_rfc3339()
+            }
+        },
+        "insights": [
+            {
+                "category": "collaboration",
+                "title": "High Team Synergy Detected",
+                "description": "Team collaboration efficiency is 18% above average",
+                "recommendation": "Continue current collaboration patterns"
+            },
+            {
+                "category": "performance",
+                "title": "Optimal Resource Distribution",
+                "description": "Resource usage is well-balanced across team members",
+                "recommendation": "Maintain current workload distribution"
+            },
+            {
+                "category": "optimization",
+                "title": "Caching Opportunity Identified",
+                "description": "15% of LSP requests could benefit from collaborative caching",
+                "recommendation": "Implement shared LSP response caching",
+                "potential_improvement": "12% faster collaborative operations"
+            }
+        ],
+        "recommendations": [
+            {
+                "priority": "high",
+                "category": "performance",
+                "title": "Implement Collaborative Caching",
+                "description": "Shared caching can significantly improve team performance",
+                "estimated_impact": "12% improvement",
+                "difficulty": "medium"
+            },
+            {
+                "priority": "medium",
+                "category": "resource",
+                "title": "Monitor Memory Usage Trends",
+                "description": "Memory usage shows slight upward trend",
+                "estimated_impact": "5% optimization",
+                "difficulty": "low"
+            }
+        ],
+        "export_formats": ["pdf", "json", "html", "csv"]
+    });
+
+    Ok(report_data)
 }

@@ -16,13 +16,13 @@ impl<'a> InterfaceSegregationVisitor<'a> {
             violations: Vec::new(),
         }
     }
-    
+
     /// Check if a type is an I/O-related type that might justify more methods
     fn is_io_type(ty: &Type) -> bool {
         // Check for common I/O types that might have many methods
         let type_str = format!("{:?}", ty);
-        type_str.contains("File") || 
-        type_str.contains("Tcp") || 
+        type_str.contains("File") ||
+        type_str.contains("Tcp") ||
         type_str.contains("Udp") ||
         type_str.contains("Buf") ||
         type_str.contains("Read") ||
@@ -37,7 +37,7 @@ impl<'a> visit::Visit<'a> for InterfaceSegregationVisitor<'a> {
         let method_count = node.items.iter()
             .filter(|item| matches!(item, TraitItem::Method(_)))
             .count();
-            
+
         // Check if the trait has too many methods
         if method_count > self.analyzer.max_methods_per_interface {
             self.violations.push(ArchitecturalFinding {
@@ -57,12 +57,12 @@ impl<'a> visit::Visit<'a> for InterfaceSegregationVisitor<'a> {
                 rule_id: "ISP_VIOLATION_TOO_MANY_METHODS".to_string(),
             });
         }
-        
+
         // Check for methods with too many parameters
         for item in &node.items {
             if let TraitItem::Method(method) = item {
                 let param_count = method.sig.inputs.len();
-                
+
                 // Skip the &self parameter
                 let non_self_params = if method.sig.inputs.iter().next()
                     .map_or(false, |input| {
@@ -72,7 +72,7 @@ impl<'a> visit::Visit<'a> for InterfaceSegregationVisitor<'a> {
                 } else {
                     param_count
                 };
-                
+
                 // Check for too many parameters
                 if non_self_params > self.analyzer.max_parameters_per_method {
                     // Skip I/O related methods that might naturally have more parameters
@@ -83,7 +83,7 @@ impl<'a> visit::Visit<'a> for InterfaceSegregationVisitor<'a> {
                             false
                         }
                     });
-                    
+
                     if !is_io_related {
                         self.violations.push(ArchitecturalFinding {
                             id: format!("too_many_params_{}_{}", node.ident, method.sig.ident),
@@ -105,7 +105,7 @@ impl<'a> visit::Visit<'a> for InterfaceSegregationVisitor<'a> {
                 }
             }
         }
-        
+
         // Continue visiting child nodes
         visit::visit_item_trait(self, node);
     }
@@ -123,9 +123,9 @@ mod tests {
             max_parameters_per_method: 5,
             ..Default::default()
         };
-        
+
         let mut visitor = InterfaceSegregationVisitor::new(&analyzer);
-        
+
         // This trait has 6 methods, which exceeds the limit of 5
         let code = r#"
             pub trait TooLargeTrait {
@@ -137,14 +137,14 @@ mod tests {
                 fn method6(&self); // This should trigger a violation
             }
         "#;
-        
+
         let ast: syn::File = syn::parse_str(code).unwrap();
         visitor.visit_file(&ast);
-        
+
         assert_eq!(visitor.violations.len(), 1);
         assert!(visitor.violations[0].message.contains("has 6 methods"));
     }
-    
+
     #[test]
     test_too_many_parameters() {
         let analyzer = ArchitecturalAnalyzer {
@@ -152,23 +152,23 @@ mod tests {
             max_parameters_per_method: 3,
             ..Default::default()
         };
-        
+
         let mut visitor = InterfaceSegregationVisitor::new(&analyzer);
-        
+
         // This method has 4 parameters, which exceeds the limit of 3
         let code = r#"
             pub trait SomeTrait {
                 fn too_many_params(&self, a: i32, b: i32, c: i32, d: i32);
             }
         "#;
-        
+
         let ast: syn::File = syn::parse_str(code).unwrap();
         visitor.visit_file(&ast);
-        
+
         assert_eq!(visitor.violations.len(), 1);
         assert!(visitor.violations[0].message.contains("has 4 parameters"));
     }
-    
+
     #[test]
     fn test_io_methods_exempt() {
         let analyzer = ArchitecturalAnalyzer {
@@ -176,19 +176,19 @@ mod tests {
             max_parameters_per_method: 3,
             ..Default::default()
         };
-        
+
         let mut visitor = InterfaceSegregationVisitor::new(&analyzer);
-        
+
         // This method has 4 parameters, but they're I/O related so it should be allowed
         let code = r#"
             pub trait IoInterface {
                 fn read(&mut self, buf: &mut [u8], offset: u64, len: usize) -> std::io::Result<usize>;
             }
         "#;
-        
+
         let ast: syn::File = syn::parse_str(code).unwrap();
         visitor.visit_file(&ast);
-        
+
         // Should not have any violations because it's I/O related
         assert!(visitor.violations.is_empty());
     }

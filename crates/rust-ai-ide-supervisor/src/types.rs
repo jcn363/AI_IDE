@@ -1,9 +1,9 @@
 //! Core type definitions for the supervisor system
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Service identifier type
@@ -335,7 +335,13 @@ impl ServiceState {
     }
 
     pub fn is_transient(&self) -> bool {
-        matches!(self, ServiceState::Starting | ServiceState::Restarting | ServiceState::Stopping | ServiceState::Recovering)
+        matches!(
+            self,
+            ServiceState::Starting
+                | ServiceState::Restarting
+                | ServiceState::Stopping
+                | ServiceState::Recovering
+        )
     }
 }
 
@@ -393,16 +399,13 @@ mod tests {
 
     #[test]
     fn test_health_check_result_creation() {
-        let success_result = HealthCheckResult::success(
-            std::time::Duration::from_millis(100),
-            1.0
-        );
+        let success_result = HealthCheckResult::success(std::time::Duration::from_millis(100), 1.0);
         assert!(success_result.healthy);
         assert_eq!(success_result.score, 1.0);
 
         let failure_result = HealthCheckResult::failure(
             std::time::Duration::from_millis(50),
-            "Connection failed".to_string()
+            "Connection failed".to_string(),
         );
         assert!(!failure_result.healthy);
         assert_eq!(failure_result.error_message.unwrap(), "Connection failed");

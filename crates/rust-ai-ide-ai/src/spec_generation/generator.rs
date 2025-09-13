@@ -168,7 +168,7 @@ pub trait {{name}} {
                 #[cfg(test)]
                 mod {}_tests {{
                     use super::*;
-                    
+
                     #[test]
                     fn test_{}_creation() {{
                         // TODO: Add test implementation for {}

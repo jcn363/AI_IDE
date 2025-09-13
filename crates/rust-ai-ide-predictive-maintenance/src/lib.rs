@@ -4,18 +4,18 @@
 //! This crate provides comprehensive technical debt analysis, cost estimation,
 //! and automated maintenance prioritization for large-scale Rust development.
 
-mod types;
-mod errors;
-mod debt_predictor;
+mod cache;
 mod cost_estimator;
+mod debt_predictor;
+mod errors;
+mod forecast;
 mod impact_analyzer;
 mod priority_scorer;
 mod recommender;
-mod forecast;
-mod cache;
+mod types;
 
-pub use types::*;
 pub use errors::*;
+pub use types::*;
 
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -94,16 +94,22 @@ impl PredictiveMaintenanceEngine {
         analysis_context: &AnalysisContext,
     ) -> MaintenanceResult<MaintenanceForecast> {
         // Analyze technical debt evolution
-        let debt_forecast = self.analyze_debt_forecast(workspace, analysis_context).await?;
+        let debt_forecast = self
+            .analyze_debt_forecast(workspace, analysis_context)
+            .await?;
 
         // Estimate costs for maintenance tasks
         let cost_estimation = self.estimate_maintenance_costs(&debt_forecast).await?;
 
         // Analyze cross-file dependency impacts
-        let impact_analysis = self.analyze_dependency_impacts(workspace, analysis_context).await?;
+        let impact_analysis = self
+            .analyze_dependency_impacts(workspace, analysis_context)
+            .await?;
 
         // Score and prioritize maintenance tasks
-        let prioritized_tasks = self.prioritize_tasks(&debt_forecast, &cost_estimation, &impact_analysis).await?;
+        let prioritized_tasks = self
+            .prioritize_tasks(&debt_forecast, &cost_estimation, &impact_analysis)
+            .await?;
 
         // Generate automated recommendations
         let recommendations = self.generate_recommendations(&prioritized_tasks).await?;
@@ -170,12 +176,15 @@ impl PredictiveMaintenanceEngine {
         let mut prioritized = Vec::new();
 
         for (index, _) in debt_forecast.projected_debt.iter().enumerate() {
-            let cost = cost_estimation.breakdown.get(index).unwrap_or(&CostBreakdown {
-                estimated_effort_hours: 0.0,
-                risk_factor: 0.5,
-                complexity_multiplier: 1.0,
-                urgency_score: 0.5,
-            });
+            let cost = cost_estimation
+                .breakdown
+                .get(index)
+                .unwrap_or(&CostBreakdown {
+                    estimated_effort_hours: 0.0,
+                    risk_factor: 0.5,
+                    complexity_multiplier: 1.0,
+                    urgency_score: 0.5,
+                });
 
             if let Some(impact) = impact_analysis.impacts.get(index) {
                 let priority = scorer.calculate_priority(impact, cost).await?;
@@ -203,7 +212,9 @@ impl PredictiveMaintenanceEngine {
         prioritized_tasks: &PrioritizedTaskList,
     ) -> MaintenanceResult<MaintenanceRecommendations> {
         let recommender = self.recommender.read().await;
-        recommender.generate_recommendations(prioritized_tasks).await
+        recommender
+            .generate_recommendations(prioritized_tasks)
+            .await
     }
 
     /// Calculate overall confidence score for the forecast
@@ -215,7 +226,12 @@ impl PredictiveMaintenanceEngine {
         // Simple weighted average of confidence scores
         let debt_confidence = debt_forecast.confidence_score;
         let cost_confidence = if cost_estimation.total_estimated_cost > 0.0 {
-            cost_estimation.breakdown.iter().map(|c| c.urgency_score).sum::<f64>() / cost_estimation.breakdown.len() as f64
+            cost_estimation
+                .breakdown
+                .iter()
+                .map(|c| c.urgency_score)
+                .sum::<f64>()
+                / cost_estimation.breakdown.len() as f64
         } else {
             0.8
         };

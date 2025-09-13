@@ -201,10 +201,7 @@ pub enum PerformanceProfileEvent {
     /// Flame graph generated
     FlameGraphGenerated(FlameGraph),
     /// Profiling session started
-    ProfilingSessionStarted {
-        session_id: String,
-        start_time: u64,
-    },
+    ProfilingSessionStarted { session_id: String, start_time: u64 },
     /// Profiling session completed
     ProfilingSessionCompleted {
         session_id: String,
@@ -255,7 +252,13 @@ pub struct FunctionStats {
 impl PerformanceProfiler {
     /// Create a new performance profiler instance
     pub fn new(event_sender: Option<mpsc::UnboundedSender<PerformanceProfileEvent>>) -> Self {
-        let session_id = format!("perf_session_{}", std::time::SystemTime::now().duration_since(std::time::SystemTime::UNIX_EPOCH).unwrap().as_millis());
+        let session_id = format!(
+            "perf_session_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_millis()
+        );
 
         Self {
             call_tree: None,
@@ -271,7 +274,10 @@ impl PerformanceProfiler {
     }
 
     /// Send an event to the profiling system
-    fn send_event(&self, event: PerformanceProfileEvent) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    fn send_event(
+        &self,
+        event: PerformanceProfileEvent,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(sender) = &self.event_sender {
             sender.send(event)?;
         }
@@ -281,7 +287,10 @@ impl PerformanceProfiler {
     /// Start profiling session
     pub fn start_profiling(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.profiling_start = Instant::now();
-        self.session_id = format!("perf_session_{}", self.profiling_start.elapsed().as_millis());
+        self.session_id = format!(
+            "perf_session_{}",
+            self.profiling_start.elapsed().as_millis()
+        );
 
         self.send_event(PerformanceProfileEvent::ProfilingSessionStarted {
             session_id: self.session_id.clone(),
@@ -292,7 +301,9 @@ impl PerformanceProfiler {
     }
 
     /// Stop profiling session and perform analysis
-    pub fn stop_profiling(&mut self) -> Result<BottleneckAnalysis, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn stop_profiling(
+        &mut self,
+    ) -> Result<BottleneckAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         let end_time = self.profiling_start.elapsed().as_micros() as u64;
 
         // Generate flame graph
@@ -302,18 +313,29 @@ impl PerformanceProfiler {
         let analysis = self.analyze_bottlenecks();
         self.bottleneck_analysis = Some(analysis.clone());
 
-        self.send_event(PerformanceProfileEvent::BottleneckDetected(analysis.clone()))?;
+        self.send_event(PerformanceProfileEvent::BottleneckDetected(
+            analysis.clone(),
+        ))?;
         self.send_event(PerformanceProfileEvent::ProfilingSessionCompleted {
             session_id: self.session_id.clone(),
             end_time,
-            summary: format!("Profiling session completed. Detected {} bottlenecks.", analysis.bottlenecks.len()),
+            summary: format!(
+                "Profiling session completed. Detected {} bottlenecks.",
+                analysis.bottlenecks.len()
+            ),
         })?;
 
         Ok(analysis)
     }
 
     /// Track function call start
-    pub fn start_function_call(&mut self, function_name: String, location: String, thread_id: Option<u32>, depth: usize) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn start_function_call(
+        &mut self,
+        function_name: String,
+        location: String,
+        thread_id: Option<u32>,
+        depth: usize,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let start_time = self.profiling_start.elapsed().as_micros() as u64;
 
         let call = Arc::new(FunctionCall {
@@ -329,17 +351,21 @@ impl PerformanceProfiler {
             parent: self.active_calls.get("main").map(|c| c.name.clone()), // Simplified parent tracking
         });
 
-        self.active_calls.insert(function_name.clone(), call.clone());
+        self.active_calls
+            .insert(function_name.clone(), call.clone());
 
         // Update function statistics
-        let stats = self.function_stats.entry(function_name).or_insert(FunctionStats {
-            call_count: 0,
-            total_time: Duration::new(0, 0),
-            average_time: Duration::new(0, 0),
-            max_time: Duration::new(0, 0),
-            min_time: Duration::new(0, 0),
-            self_time: Duration::new(0, 0),
-        });
+        let stats = self
+            .function_stats
+            .entry(function_name)
+            .or_insert(FunctionStats {
+                call_count: 0,
+                total_time: Duration::new(0, 0),
+                average_time: Duration::new(0, 0),
+                max_time: Duration::new(0, 0),
+                min_time: Duration::new(0, 0),
+                self_time: Duration::new(0, 0),
+            });
         stats.call_count += 1;
 
         self.send_event(PerformanceProfileEvent::FunctionCallStart((*call).clone()))?;
@@ -347,7 +373,10 @@ impl PerformanceProfiler {
     }
 
     /// Track function call end
-    pub fn end_function_call(&mut self, function_name: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn end_function_call(
+        &mut self,
+        function_name: String,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(call_arc) = self.active_calls.remove(&function_name) {
             let mut call = Arc::try_unwrap(call_arc).unwrap_or_else(|_| {
                 // If Arc has multiple references, create a new instance
@@ -380,7 +409,14 @@ impl PerformanceProfiler {
     }
 
     /// Add CPU sample
-    pub fn add_cpu_sample(&mut self, timestamp: u64, stack: Vec<String>, thread_id: u32, count: usize, cpu_usage: f64) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn add_cpu_sample(
+        &mut self,
+        timestamp: u64,
+        stack: Vec<String>,
+        thread_id: u32,
+        count: usize,
+        cpu_usage: f64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let sample = CpuSample {
             timestamp,
             stack,
@@ -419,7 +455,10 @@ impl PerformanceProfiler {
 
         // Convert active calls to referenced calls for processing
         for call in self.active_calls.values() {
-            stack_paths.entry(call.location.clone()).or_insert(Vec::new()).push(call);
+            stack_paths
+                .entry(call.location.clone())
+                .or_insert(Vec::new())
+                .push(call);
         }
 
         // Build flame graph nodes
@@ -428,7 +467,11 @@ impl PerformanceProfiler {
             let self_time = total_time; // Simplified - in real implementation would need to subtract child times
 
             let node = FlameNode {
-                name: stack_path.split(':').next().unwrap_or("unknown").to_string(),
+                name: stack_path
+                    .split(':')
+                    .next()
+                    .unwrap_or("unknown")
+                    .to_string(),
                 stack_path,
                 left: 0.0,
                 width: self_time as f64,
@@ -503,7 +546,8 @@ impl PerformanceProfiler {
             return None;
         }
 
-        let avg_cpu_usage: f64 = self.cpu_samples.iter().map(|s| s.cpu_usage).sum::<f64>() / self.cpu_samples.len() as f64;
+        let avg_cpu_usage: f64 = self.cpu_samples.iter().map(|s| s.cpu_usage).sum::<f64>()
+            / self.cpu_samples.len() as f64;
 
         if avg_cpu_usage > 85.0 {
             Some(Bottleneck {
@@ -527,7 +571,9 @@ impl PerformanceProfiler {
     fn analyze_memory_bottlenecks(&self) -> Option<Bottleneck> {
         // This would analyze memory allocation patterns in a real implementation
         // For this example, we'll create a placeholder based on function call patterns
-        let total_function_time = self.function_stats.values()
+        let total_function_time = self
+            .function_stats
+            .values()
             .map(|s| s.total_time)
             .sum::<Duration>();
 
@@ -557,7 +603,8 @@ impl PerformanceProfiler {
 
     /// Assess system throughput
     fn assess_throughput(&self) -> ThroughputAssessment {
-        let cpu_usage = self.cpu_samples.iter().map(|s| s.cpu_usage).sum::<f64>() / self.cpu_samples.len().max(1) as f64;
+        let cpu_usage = self.cpu_samples.iter().map(|s| s.cpu_usage).sum::<f64>()
+            / self.cpu_samples.len().max(1) as f64;
         let dominant_bottleneck = if cpu_usage > 85.0 {
             Some(BottleneckType::CpuBound)
         } else {
@@ -567,7 +614,7 @@ impl PerformanceProfiler {
         ThroughputAssessment {
             performance_rating: 1.0 - (cpu_usage / 100.0),
             cpu_utilization: cpu_usage,
-            io_utilization: 0.0, // Would be measured in real implementation
+            io_utilization: 0.0,  // Would be measured in real implementation
             memory_pressure: 0.0, // Would be measured in real implementation
             dominant_bottleneck,
         }
@@ -627,9 +674,12 @@ impl PerformanceProfiler {
     }
 
     /// Import profiling data from JSON string
-    pub fn import_from_json(&mut self, json_data: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn import_from_json(
+        &mut self,
+        json_data: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let _import_data: HashMap<String, String> = serde_json::from_str(json_data)?; // Would contain all profiling data
-        // Apply imported data to profiler state
+                                                                                      // Apply imported data to profiler state
         Ok(())
     }
 }

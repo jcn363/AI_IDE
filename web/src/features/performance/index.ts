@@ -13,6 +13,6 @@ export const initializePerformanceModule = () => {
     const { metricsCollector } = require('./services/MetricsCollector');
     metricsCollector.start();
   }
-  
+
   console.log('Performance module initialized');
 };

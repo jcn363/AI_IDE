@@ -26,7 +26,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ projectId }) => {
         <Typography variant="body1" color="text.secondary" paragraph>
           Review performance metrics and optimization recommendations for your project dependencies.
         </Typography>
-        
+
         <Box mt={4}>
           <PerformanceDashboard />
         </Box>

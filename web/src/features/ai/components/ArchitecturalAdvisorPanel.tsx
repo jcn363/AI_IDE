@@ -5,14 +5,16 @@ import type {
   RiskAssessment,
   PriorityAction,
   ArchitecturalRoadmap,
-  DecisionStatus
+  DecisionStatus,
 } from '../types';
 
 interface ArchitecturalAdvisorPanelProps {
   className?: string;
 }
 
-export const ArchitecturalAdvisorPanel: React.FC<ArchitecturalAdvisorPanelProps> = ({ className }) => {
+export const ArchitecturalAdvisorPanel: React.FC<ArchitecturalAdvisorPanelProps> = ({
+  className,
+}) => {
   const [analysis, setAnalysis] = useState<string>('');
   const [recommendations, setRecommendations] = useState<ArchitecturalRecommendation[]>([]);
   const [decisions, setDecisions] = useState<ArchitecturalDecision[]>([]);
@@ -32,74 +34,77 @@ export const ArchitecturalAdvisorPanel: React.FC<ArchitecturalAdvisorPanelProps>
     try {
       // This would call the actual Tauri command
       // For now, create mock recommendations
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       const mockRecommendations: ArchitecturalRecommendation = {
         primary_recommendations: [
           {
             title: 'Implement Repository Pattern',
-            description: 'Separate data access logic into dedicated repository classes to improve testability and maintainability.',
+            description:
+              'Separate data access logic into dedicated repository classes to improve testability and maintainability.',
             impact: 'High',
             effort: 'Medium',
-            rationale: 'This pattern will decouple business logic from data access, making the system more modular and easier to test.'
+            rationale:
+              'This pattern will decouple business logic from data access, making the system more modular and easier to test.',
           },
           {
             title: 'Add Comprehensive Error Handling',
-            description: 'Implement structured error handling with custom error types and proper error propagation.',
+            description:
+              'Implement structured error handling with custom error types and proper error propagation.',
             impact: 'Medium',
             effort: 'Low',
-            rationale: 'Proper error handling improves system reliability and provides better debugging capabilities.'
-          }
+            rationale:
+              'Proper error handling improves system reliability and provides better debugging capabilities.',
+          },
         ],
         secondary_suggestions: [
           {
             title: 'Consider adding caching layer',
             description: 'Implement caching for frequently accessed data to improve performance.',
-            rationale: 'This will reduce database load and improve response times.'
-          }
+            rationale: 'This will reduce database load and improve response times.',
+          },
         ],
         risk_assessment: {
           overall_risk: 0.15,
           risk_factors: [
             'Potential breaking changes during refactoring',
-            'Increased complexity with new architectural patterns'
+            'Increased complexity with new architectural patterns',
           ],
           mitigation_strategies: [
             'Implement changes incrementally',
-            'Maintain backward compatibility during transition'
-          ]
+            'Maintain backward compatibility during transition',
+          ],
         },
         priority_actions: [
           {
             action: 'Create repository interfaces',
             timeline: 'Week 1',
-            rationale: 'Foundation for data access abstraction'
+            rationale: 'Foundation for data access abstraction',
           },
           {
             action: 'Implement error handling patterns',
             timeline: 'Week 1-2',
-            rationale: 'Improve system reliability immediately'
-          }
+            rationale: 'Improve system reliability immediately',
+          },
         ],
         roadmap: {
           short_term: [
             'Implement repository pattern for data access',
-            'Add proper error handling throughout the application'
+            'Add proper error handling throughout the application',
           ],
           medium_term: [
             'Introduce dependency injection container',
-            'Implement comprehensive logging and monitoring'
+            'Implement comprehensive logging and monitoring',
           ],
           long_term: [
             'Consider microservices architecture if system grows significantly',
-            'Implement distributed caching and high availability patterns'
-          ]
-        }
+            'Implement distributed caching and high availability patterns',
+          ],
+        },
       };
 
       setRecommendations([mockRecommendations]);
       setActiveTab('recommendations');
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed');
     } finally {
@@ -201,7 +206,9 @@ What architectural patterns should we consider?'"
           <div className="risk-summary">
             <div className="overall-risk">
               <span className="risk-label">Overall Risk Level:</span>
-              <span className={`risk-value risk-${recommendation.risk_assessment.overall_risk < 0.3 ? 'low' : recommendation.risk_assessment.overall_risk < 0.6 ? 'medium' : 'high'}`}>
+              <span
+                className={`risk-value risk-${recommendation.risk_assessment.overall_risk < 0.3 ? 'low' : recommendation.risk_assessment.overall_risk < 0.6 ? 'medium' : 'high'}`}
+              >
                 {Math.round(recommendation.risk_assessment.overall_risk * 100)}%
               </span>
             </div>
@@ -331,7 +338,9 @@ What architectural patterns should we consider?'"
     <div className={`architectural-advisor-panel ${className || ''}`}>
       <div className="panel-header">
         <h3>Architectural Advisor</h3>
-        <p className="panel-subtitle">Get architectural recommendations and document design decisions</p>
+        <p className="panel-subtitle">
+          Get architectural recommendations and document design decisions
+        </p>
       </div>
 
       <div className="panel-tabs">
@@ -400,7 +409,9 @@ What architectural patterns should we consider?'"
           background: #f7fafc;
           color: #4a5568;
           cursor: pointer;
-          transition: background-color 0.2s, color 0.2s;
+          transition:
+            background-color 0.2s,
+            color 0.2s;
         }
 
         .panel-tabs button.active {
@@ -474,7 +485,8 @@ What architectural patterns should we consider?'"
           cursor: not-allowed;
         }
 
-        .no-recommendations, .no-decisions {
+        .no-recommendations,
+        .no-decisions {
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -484,7 +496,8 @@ What architectural patterns should we consider?'"
           text-align: center;
         }
 
-        .no-recommendations p, .no-decisions p {
+        .no-recommendations p,
+        .no-decisions p {
           margin: 0 0 8px 0;
           font-size: 16px;
         }
@@ -503,21 +516,26 @@ What architectural patterns should we consider?'"
           padding-bottom: 8px;
         }
 
-        .primary-recommendations, .secondary-suggestions,
-        .risk-assessment, .priority-actions, .roadmap {
+        .primary-recommendations,
+        .secondary-suggestions,
+        .risk-assessment,
+        .priority-actions,
+        .roadmap {
           background: white;
           padding: 16px;
           border-radius: 6px;
           border: 1px solid #e1e5e9;
         }
 
-        .recommendation-card, .suggestion-item {
+        .recommendation-card,
+        .suggestion-item {
           margin-bottom: 16px;
           padding-bottom: 16px;
           border-bottom: 1px solid #f1f5f9;
         }
 
-        .recommendation-card:last-child, .suggestion-item:last-child {
+        .recommendation-card:last-child,
+        .suggestion-item:last-child {
           margin-bottom: 0;
           padding-bottom: 0;
           border-bottom: none;
@@ -530,7 +548,8 @@ What architectural patterns should we consider?'"
           margin-bottom: 12px;
         }
 
-        .recommendation-header h5, .suggestion-item h5 {
+        .recommendation-header h5,
+        .suggestion-item h5 {
           margin: 0;
           color: #2d3748;
           font-size: 16px;
@@ -550,15 +569,34 @@ What architectural patterns should we consider?'"
           text-transform: uppercase;
         }
 
-        .badge.impact-high { background: #c6f6d5; color: #276749; }
-        .badge.impact-medium { background: #fef5e7; color: #d69e2e; }
-        .badge.impact-low { background: #bee3f8; color: #2c3338; }
+        .badge.impact-high {
+          background: #c6f6d5;
+          color: #276749;
+        }
+        .badge.impact-medium {
+          background: #fef5e7;
+          color: #d69e2e;
+        }
+        .badge.impact-low {
+          background: #bee3f8;
+          color: #2c3338;
+        }
 
-        .badge.effort-high { background: #fed7d7; color: #c53030; }
-        .badge.effort-medium { background: #feebc8; color: #7b341e; }
-        .badge.effort-low { background: #c6f6d5; color: #276749; }
+        .badge.effort-high {
+          background: #fed7d7;
+          color: #c53030;
+        }
+        .badge.effort-medium {
+          background: #feebc8;
+          color: #7b341e;
+        }
+        .badge.effort-low {
+          background: #c6f6d5;
+          color: #276749;
+        }
 
-        .description, .rationale {
+        .description,
+        .rationale {
           color: #4a5568;
           line-height: 1.5;
           margin-bottom: 8px;
@@ -595,9 +633,15 @@ What architectural patterns should we consider?'"
           font-size: 16px;
         }
 
-        .risk-value.risk-low { color: #38a169; }
-        .risk-value.risk-medium { color: #d69e2e; }
-        .risk-value.risk-high { color: #e53e3e; }
+        .risk-value.risk-low {
+          color: #38a169;
+        }
+        .risk-value.risk-medium {
+          color: #d69e2e;
+        }
+        .risk-value.risk-high {
+          color: #e53e3e;
+        }
 
         .risk-details {
           display: grid;
@@ -605,14 +649,16 @@ What architectural patterns should we consider?'"
           gap: 20px;
         }
 
-        .risk-factors h5, .mitigation h5 {
+        .risk-factors h5,
+        .mitigation h5 {
           margin: 0 0 8px 0;
           color: #2d3748;
           font-size: 14px;
           font-weight: 600;
         }
 
-        .risk-factors ul, .mitigation ul {
+        .risk-factors ul,
+        .mitigation ul {
           margin: 0;
           padding-left: 20px;
           color: #4a5568;
@@ -751,12 +797,30 @@ What architectural patterns should we consider?'"
           text-transform: uppercase;
         }
 
-        .decision-status.status-proposed { background: #e2e8f0; color: #4a5568; }
-        .decision-status.status-accepted { background: #c6f6d5; color: #276749; }
-        .decision-status.status-implement { background: #fef5e7; color: #d69e2e; }
-        .decision-status.status-implemented { background: #c6f6d5; color: #276749; }
-        .decision-status.status-rejected { background: #fed7d7; color: #c53030; }
-        .decision-status.status-deprecated { background: #e2e8f0; color: #4a5568; }
+        .decision-status.status-proposed {
+          background: #e2e8f0;
+          color: #4a5568;
+        }
+        .decision-status.status-accepted {
+          background: #c6f6d5;
+          color: #276749;
+        }
+        .decision-status.status-implement {
+          background: #fef5e7;
+          color: #d69e2e;
+        }
+        .decision-status.status-implemented {
+          background: #c6f6d5;
+          color: #276749;
+        }
+        .decision-status.status-rejected {
+          background: #fed7d7;
+          color: #c53030;
+        }
+        .decision-status.status-deprecated {
+          background: #e2e8f0;
+          color: #4a5568;
+        }
 
         .decision-content {
           display: flex;
@@ -764,7 +828,8 @@ What architectural patterns should we consider?'"
           gap: 8px;
         }
 
-        .decision-problem, .decision-solution {
+        .decision-problem,
+        .decision-solution {
           color: #4a5568;
           line-height: 1.5;
         }

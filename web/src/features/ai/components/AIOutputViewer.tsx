@@ -1,5 +1,13 @@
 import { Close, Code, Error as ErrorIcon, Lightbulb } from '@mui/icons-material';
-import { Alert, AlertTitle, Box, CircularProgress, IconButton, Paper, Typography } from '@mui/material';
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  CircularProgress,
+  IconButton,
+  Paper,
+  Typography,
+} from '@mui/material';
 import React from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -10,16 +18,9 @@ interface AIOutputViewerProps {
   maxHeight?: string | number;
 }
 
-const AIOutputViewer: React.FC<AIOutputViewerProps> = ({ 
-  onClose, 
-  maxHeight = '300px', 
-}) => {
-  const { 
-    generatedContent, 
-    generationError, 
-    isGenerating, 
-    clearGeneratedContent, 
-  } = useAIAssistant();
+const AIOutputViewer: React.FC<AIOutputViewerProps> = ({ onClose, maxHeight = '300px' }) => {
+  const { generatedContent, generationError, isGenerating, clearGeneratedContent } =
+    useAIAssistant();
 
   const handleClose = () => {
     clearGeneratedContent();
@@ -33,7 +34,7 @@ const AIOutputViewer: React.FC<AIOutputViewerProps> = ({
   // Simple check if the content looks like code
   const isLikelyCode = (content: string) => {
     const codeIndicators = ['{', '}', ';', 'fn ', 'let ', 'const ', 'import ', 'export '];
-    return codeIndicators.some(indicator => content.includes(indicator));
+    return codeIndicators.some((indicator) => content.includes(indicator));
   };
 
   const renderContent = () => {
@@ -50,9 +51,9 @@ const AIOutputViewer: React.FC<AIOutputViewerProps> = ({
 
     if (generationError) {
       return (
-        <Alert 
-          severity="error" 
-          sx={{ 
+        <Alert
+          severity="error"
+          sx={{
             borderRadius: 1,
             mb: 2,
             '& .MuiAlert-message': {
@@ -70,22 +71,19 @@ const AIOutputViewer: React.FC<AIOutputViewerProps> = ({
 
     if (isLikelyCode(generatedContent)) {
       return (
-        <Box sx={{ 
-          position: 'relative',
-          '& pre': {
-            margin: 0,
-            padding: '16px !important',
-            borderRadius: '4px',
-            maxHeight,
-            overflow: 'auto',
-          },
-        }}>
-          <SyntaxHighlighter 
-            language="rust" 
-            style={vscDarkPlus}
-            showLineNumbers
-            wrapLines
-          >
+        <Box
+          sx={{
+            position: 'relative',
+            '& pre': {
+              margin: 0,
+              padding: '16px !important',
+              borderRadius: '4px',
+              maxHeight,
+              overflow: 'auto',
+            },
+          }}
+        >
+          <SyntaxHighlighter language="rust" style={vscDarkPlus} showLineNumbers wrapLines>
             {generatedContent}
           </SyntaxHighlighter>
         </Box>
@@ -94,22 +92,24 @@ const AIOutputViewer: React.FC<AIOutputViewerProps> = ({
 
     // Render as markdown or plain text
     return (
-      <Box sx={{ 
-        p: 2, 
-        whiteSpace: 'pre-wrap',
-        maxHeight,
-        overflow: 'auto',
-        '& p': {
-          margin: '0 0 8px 0',
-        },
-        '& code': {
-          backgroundColor: 'rgba(0,0,0,0.1)',
-          padding: '2px 4px',
-          borderRadius: 3,
-          fontFamily: 'monospace',
-          fontSize: '0.9em',
-        },
-      }}>
+      <Box
+        sx={{
+          p: 2,
+          whiteSpace: 'pre-wrap',
+          maxHeight,
+          overflow: 'auto',
+          '& p': {
+            margin: '0 0 8px 0',
+          },
+          '& code': {
+            backgroundColor: 'rgba(0,0,0,0.1)',
+            padding: '2px 4px',
+            borderRadius: 3,
+            fontFamily: 'monospace',
+            fontSize: '0.9em',
+          },
+        }}
+      >
         {generatedContent.split('\n').map((line, i) => (
           <p key={i}>{line || <br />}</p>
         ))}
@@ -118,9 +118,9 @@ const AIOutputViewer: React.FC<AIOutputViewerProps> = ({
   };
 
   return (
-    <Paper 
-      elevation={3} 
-      sx={{ 
+    <Paper
+      elevation={3}
+      sx={{
         position: 'relative',
         mt: 2,
         borderRadius: 1,
@@ -129,11 +129,11 @@ const AIOutputViewer: React.FC<AIOutputViewerProps> = ({
         borderColor: 'divider',
       }}
     >
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          px: 2, 
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          px: 2,
           py: 1,
           bgcolor: 'background.paper',
           borderBottom: '1px solid',
@@ -151,20 +151,16 @@ const AIOutputViewer: React.FC<AIOutputViewerProps> = ({
             <Lightbulb color="primary" fontSize="small" sx={{ mr: 1 }} />
           )}
           <Typography variant="subtitle2" color="text.primary">
-            {generationError 
-              ? 'Error' 
-              : isGenerating 
-                ? 'Generating...' 
-                : isLikelyCode(generatedContent || '') 
-                  ? 'Generated Code' 
+            {generationError
+              ? 'Error'
+              : isGenerating
+                ? 'Generating...'
+                : isLikelyCode(generatedContent || '')
+                  ? 'Generated Code'
                   : 'AI Suggestion'}
           </Typography>
         </Box>
-        <IconButton 
-          size="small" 
-          onClick={handleClose}
-          sx={{ ml: 1 }}
-        >
+        <IconButton size="small" onClick={handleClose} sx={{ ml: 1 }}>
           <Close fontSize="small" />
         </IconButton>
       </Box>

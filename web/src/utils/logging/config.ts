@@ -9,7 +9,10 @@ const isTest = process.env.NODE_ENV === 'test';
 const defaultConfig: LoggerOptions = {
   minLevel: isDevelopment ? 'debug' : 'info', // More verbose in development
   serviceName: 'rust-ai-ide',
-  environment: (isDevelopment ? 'development' : isTest ? 'test' : 'production') as 'development' | 'production' | 'test',
+  environment: (isDevelopment ? 'development' : isTest ? 'test' : 'production') as
+    | 'development'
+    | 'production'
+    | 'test',
   enableConsole: !isTest, // Disable console logs in tests
   enableTelemetry: !isTest, // Disable telemetry in tests
   context: {
@@ -22,7 +25,7 @@ export const logger = new Logger(defaultConfig);
 
 // Export a function to create a scoped logger
 export const createScopedLogger = (component: string, context: Record<string, any> = {}) => {
-  return logger.child({ 
+  return logger.child({
     component,
     ...context,
   });

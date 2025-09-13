@@ -4,16 +4,17 @@
 //! It provides intelligent analysis of performance bottlenecks and automated optimization
 //! suggestions across multiple programming languages.
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
 
 use crate::command_templates::{execute_command, CommandConfig};
 use crate::validation;
 
 /// Global configuration for performance optimization
-static PERFORMANCE_OPTIMIZER_CONFIG: std::sync::OnceLock<CommandConfig> = std::sync::OnceLock::new();
+static PERFORMANCE_OPTIMIZER_CONFIG: std::sync::OnceLock<CommandConfig> =
+    std::sync::OnceLock::new();
 
 /// Automated Performance Optimization Engine
 pub struct AutomatedPerformanceOptimizer {
@@ -26,7 +27,10 @@ impl AutomatedPerformanceOptimizer {
     pub fn new() -> Self {
         let mut language_analyzers = HashMap::new();
         language_analyzers.insert("rust".to_string(), Arc::new(RustPerformanceAnalyzer::new()));
-        language_analyzers.insert("python".to_string(), Arc::new(PythonPerformanceAnalyzer::new()));
+        language_analyzers.insert(
+            "python".to_string(),
+            Arc::new(PythonPerformanceAnalyzer::new()),
+        );
 
         Self {
             language_analyzers,
@@ -73,7 +77,10 @@ impl AutomatedPerformanceOptimizer {
         request: RealTimePerformanceRequest,
     ) -> Result<RealTimePerformanceInsights, String> {
         let system_metrics = self.monitoring_engine.get_system_metrics().await?;
-        let recommendations = self.suggestion_engine.get_real_time_recommendations().await?;
+        let recommendations = self
+            .suggestion_engine
+            .get_real_time_recommendations()
+            .await?;
 
         Ok(RealTimePerformanceInsights {
             timestamp: chrono::Utc::now().timestamp(),
@@ -84,7 +91,10 @@ impl AutomatedPerformanceOptimizer {
         })
     }
 
-    async fn group_files_by_language(&self, files: &[String]) -> Result<HashMap<String, Vec<String>>, String> {
+    async fn group_files_by_language(
+        &self,
+        files: &[String],
+    ) -> Result<HashMap<String, Vec<String>>, String> {
         let mut grouped: HashMap<String, Vec<String>> = HashMap::new();
 
         for file in files {
@@ -110,7 +120,11 @@ impl AutomatedPerformanceOptimizer {
 
 #[async_trait::async_trait]
 pub trait PerformanceAnalyzer: Send + Sync {
-    async fn analyze_assets(&self, files: &[String], request: &PerformanceAnalysisRequest) -> Result<PerformanceResult, String>;
+    async fn analyze_assets(
+        &self,
+        files: &[String],
+        request: &PerformanceAnalysisRequest,
+    ) -> Result<PerformanceResult, String>;
 }
 
 macro_rules! impl_performance_analyzer {
@@ -118,12 +132,18 @@ macro_rules! impl_performance_analyzer {
         pub struct $name;
 
         impl $name {
-            pub fn new() -> Self { Self }
+            pub fn new() -> Self {
+                Self
+            }
         }
 
         #[async_trait::async_trait]
         impl PerformanceAnalyzer for $name {
-            async fn analyze_assets(&self, files: &[String], request: &PerformanceAnalysisRequest) -> Result<PerformanceResult, String> {
+            async fn analyze_assets(
+                &self,
+                files: &[String],
+                request: &PerformanceAnalysisRequest,
+            ) -> Result<PerformanceResult, String> {
                 Ok(PerformanceResult {
                     language: $language.to_string(),
                     analyzed_files: files.len(),
@@ -142,7 +162,9 @@ impl_performance_analyzer!(PythonPerformanceAnalyzer, "python");
 pub struct MonitoringEngine;
 
 impl MonitoringEngine {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 
     async fn get_system_metrics(&self) -> Result<SystemMetrics, String> {
         Ok(SystemMetrics {
@@ -159,18 +181,18 @@ impl MonitoringEngine {
 pub struct SuggestionEngine;
 
 impl SuggestionEngine {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 
     async fn get_real_time_recommendations(&self) -> Result<Vec<RealTimeRecommendation>, String> {
-        Ok(vec![
-            RealTimeRecommendation {
-                id: "cpu_opt".to_string(),
-                message: "Consider optimizing CPU-bound operations".to_string(),
-                category: "performance".to_string(),
-                confidence: 0.85,
-                suggested_action: Some("Review algorithm complexity".to_string()),
-            }
-        ])
+        Ok(vec![RealTimeRecommendation {
+            id: "cpu_opt".to_string(),
+            message: "Consider optimizing CPU-bound operations".to_string(),
+            category: "performance".to_string(),
+            confidence: 0.85,
+            suggested_action: Some("Review algorithm complexity".to_string()),
+        }])
     }
 }
 
@@ -191,10 +213,14 @@ pub async fn analyze_performance_cmd(
 ) -> Result<PerformanceAnalysisResult, String> {
     let config = get_optimizer_config();
 
-    execute_command!(stringify!(analyze_performance_cmd), &config, async move || {
-        let optimizer = AutomatedPerformanceOptimizer::new();
-        optimizer.analyze_performance(request).await
-    })
+    execute_command!(
+        stringify!(analyze_performance_cmd),
+        &config,
+        async move || {
+            let optimizer = AutomatedPerformanceOptimizer::new();
+            optimizer.analyze_performance(request).await
+        }
+    )
 }
 
 /// Command: Get real-time performance insights
@@ -202,10 +228,16 @@ pub async fn analyze_performance_cmd(
 pub async fn get_real_time_performance_insights() -> Result<RealTimePerformanceInsights, String> {
     let config = get_optimizer_config();
 
-    execute_command!(stringify!(get_real_time_performance_insights), &config, async move || {
-        let optimizer = AutomatedPerformanceOptimizer::new();
-        optimizer.get_real_time_insights(RealTimePerformanceRequest::default()).await
-    })
+    execute_command!(
+        stringify!(get_real_time_performance_insights),
+        &config,
+        async move || {
+            let optimizer = AutomatedPerformanceOptimizer::new();
+            optimizer
+                .get_real_time_insights(RealTimePerformanceRequest::default())
+                .await
+        }
+    )
 }
 
 /// Command: Get supported performance metrics
@@ -248,7 +280,11 @@ pub enum PerformanceAnalysisType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum AnalysisDepth { Surface, Intermediate, Deep }
+pub enum AnalysisDepth {
+    Surface,
+    Intermediate,
+    Deep,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceContext {
@@ -283,7 +319,12 @@ pub struct Bottleneck {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum BottleneckSeverity { Low, Medium, High, Critical }
+pub enum BottleneckSeverity {
+    Low,
+    Medium,
+    High,
+    Critical,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PerformanceMetrics {
@@ -341,7 +382,11 @@ pub struct BottleneckAlert {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum AlertSeverity { Info, Warning, Critical }
+pub enum AlertSeverity {
+    Info,
+    Warning,
+    Critical,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RealTimeRecommendation {

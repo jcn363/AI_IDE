@@ -35,7 +35,18 @@ export interface SearchOptions {
 
 export interface SymbolInfo {
   name: string;
-  kind: 'function' | 'struct' | 'enum' | 'trait' | 'module' | 'constant' | 'field' | 'method' | 'type' | 'macro' | 'variable';
+  kind:
+    | 'function'
+    | 'struct'
+    | 'enum'
+    | 'trait'
+    | 'module'
+    | 'constant'
+    | 'field'
+    | 'method'
+    | 'type'
+    | 'macro'
+    | 'variable';
   location: {
     file_path: string;
     line: number;
@@ -63,7 +74,16 @@ export interface NavigationLocation {
 
 export interface BreadcrumbItem {
   name: string;
-  kind: 'file' | 'directory' | 'function' | 'struct' | 'enum' | 'trait' | 'module' | 'class' | 'method';
+  kind:
+    | 'file'
+    | 'directory'
+    | 'function'
+    | 'struct'
+    | 'enum'
+    | 'trait'
+    | 'module'
+    | 'class'
+    | 'method';
   location: NavigationLocation;
 }
 

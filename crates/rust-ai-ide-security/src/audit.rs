@@ -11,17 +11,14 @@
 //! - **Data Retention**: Configurable retention policies and automatic cleanup
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-use tokio::sync::{RwLock, mpsc};
-use tracing::{info, warn, error};
-use chrono::{DateTime, Utc};
+use tokio::sync::{mpsc, RwLock};
+use tracing::{error, info, warn};
 
-use crate::{
-    SecurityResult, OperationContext, AuditConfig,
-    ComponentStatus,
-};
+use crate::{AuditConfig, ComponentStatus, OperationContext, SecurityResult};
 
 /// Audit event types for comprehensive tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -117,7 +114,12 @@ pub struct AuditEventContext {
 }
 
 impl AuditEventContext {
-    pub fn new(event_type: AuditEventType, resource_type: &str, resource_id: &str, action: &str) -> Self {
+    pub fn new(
+        event_type: AuditEventType,
+        resource_type: &str,
+        resource_id: &str,
+        action: &str,
+    ) -> Self {
         Self {
             event_type,
             severity: AuditEventSeverity::Medium, // Default
@@ -192,9 +194,9 @@ pub struct AlertRule {
 pub enum AlertCondition {
     EventType(AuditEventType),
     SeverityAbove(AuditEventSeverity),
-    UserActivity(String, u32), // user_id, max_events_per_window
+    UserActivity(String, u32),   // user_id, max_events_per_window
     ResourceAccess(String, u32), // resource_id, max_accesses_per_window
-    FailedAuthentications(u32), // max_failures_per_window
+    FailedAuthentications(u32),  // max_failures_per_window
     SuspiciousAccessPattern,
 }
 
@@ -310,7 +312,13 @@ impl AuditLogger {
     }
 
     /// Log an audit event with full context
-    pub async fn log_event(&self, context: &OperationContext, event_ctx: AuditEventContext, success: bool, error_msg: Option<String>) -> SecurityResult<String> {
+    pub async fn log_event(
+        &self,
+        context: &OperationContext,
+        event_ctx: AuditEventContext,
+        success: bool,
+        error_msg: Option<String>,
+    ) -> SecurityResult<String> {
         let event = AuditEvent {
             id: uuid::Uuid::new_v4().to_string(),
             timestamp: Utc::now(),
@@ -347,13 +355,22 @@ impl AuditLogger {
         // Check compliance rules
         self.check_compliance_rules(&event).await?;
 
-        info!("Audit event logged: {} - {} - {}", event.id, event.event_type, event.user_id.as_deref().unwrap_or("unknown"));
+        info!(
+            "Audit event logged: {} - {} - {}",
+            event.id,
+            event.event_type,
+            event.user_id.as_deref().unwrap_or("unknown")
+        );
 
         Ok(event.id)
     }
 
     /// Log an operation based on context
-    pub async fn log_operation(&self, context: &OperationContext, result: &(impl std::fmt::Debug + Send + Sync)) -> SecurityResult<()> {
+    pub async fn log_operation(
+        &self,
+        context: &OperationContext,
+        result: &(impl std::fmt::Debug + Send + Sync),
+    ) -> SecurityResult<()> {
         let event_ctx = self.operation_to_event_context(context);
 
         let success = true; // In practice, you'd determine this from the result
@@ -403,7 +420,10 @@ impl AuditLogger {
 
     /// Perform scheduled cleanup
     pub async fn maintenance_cleanup(&self) -> SecurityResult<usize> {
-        let cleaned = self.storage_backend.cleanup_old_events(self.config.retention_days).await?;
+        let cleaned = self
+            .storage_backend
+            .cleanup_old_events(self.config.retention_days)
+            .await?;
 
         let mut stats = self.stats.write().await;
         stats.last_cleanup_timestamp = Some(Utc::now());
@@ -428,9 +448,9 @@ impl AuditLogger {
         let mut flags = HashSet::new();
 
         match context.resource_context.sensitivity_level {
-            crate::SensitivityLevel::Confidential |
-            crate::SensitivityLevel::Restricted |
-            crate::SensitivityLevel::HighlySensitive => {
+            crate::SensitivityLevel::Confidential
+            | crate::SensitivityLevel::Restricted
+            | crate::SensitivityLevel::HighlySensitive => {
                 flags.insert("GDPR-personal-data".to_string());
                 flags.insert("CCPA-protected-data".to_string());
             }
@@ -453,11 +473,19 @@ impl AuditLogger {
             DataExport => (DataExported, AuditEventSeverity::High),
         };
 
-        AuditEventContext::new(event_type, &context.resource_context.resource_type, &context.resource_context.resource_id, &context.resource_context.action)
-            .with_severity(severity)
-            .with_metadata("operation_type", &format!("{:?}", context.operation_type))
-            .with_metadata("sensitivity_level", &format!("{:?}", context.resource_context.sensitivity_level))
-            .with_metadata("user_roles", &context.user_context.roles.join(","))
+        AuditEventContext::new(
+            event_type,
+            &context.resource_context.resource_type,
+            &context.resource_context.resource_id,
+            &context.resource_context.action,
+        )
+        .with_severity(severity)
+        .with_metadata("operation_type", &format!("{:?}", context.operation_type))
+        .with_metadata(
+            "sensitivity_level",
+            &format!("{:?}", context.resource_context.sensitivity_level),
+        )
+        .with_metadata("user_roles", &context.user_context.roles.join(","))
     }
 
     async fn check_alert_rules(&self, event: &AuditEvent) -> SecurityResult<()> {
@@ -470,7 +498,10 @@ impl AuditLogger {
                     timestamp: Utc::now(),
                     alert_type: rule.name.clone(),
                     severity: rule.severity.clone(),
-                    description: format!("Alert rule '{}' triggered for event: {}", rule.rule_id, event.id),
+                    description: format!(
+                        "Alert rule '{}' triggered for event: {}",
+                        rule.rule_id, event.id
+                    ),
                     affected_users: event.user_id.iter().cloned().collect(),
                     affected_resources: vec![event.resource_id.clone()],
                     recommended_actions: vec![
@@ -496,11 +527,17 @@ impl AuditLogger {
         let rules = self.compliance_rules.read().await.clone();
 
         for rule in &rules {
-            let events = self.storage_backend.query_events(&rule.monitoring_query).await?;
+            let events = self
+                .storage_backend
+                .query_events(&rule.monitoring_query)
+                .await?;
             let event_count = events.len() as u32;
 
             if event_count > rule.escalation_threshold {
-                warn!("Compliance rule '{}' violated: {} events detected", rule.rule_id, event_count);
+                warn!(
+                    "Compliance rule '{}' violated: {} events detected",
+                    rule.rule_id, event_count
+                );
 
                 let mut stats = self.stats.write().await;
                 stats.compliance_violations += 1;
@@ -517,7 +554,11 @@ impl AuditLogger {
                 name: "Multiple Failed Authentications".to_string(),
                 condition: AlertCondition::FailedAuthentications(5),
                 severity: AuditEventSeverity::High,
-                threshold: AlertThreshold { count: 5, percentage: None, custom_condition: None },
+                threshold: AlertThreshold {
+                    count: 5,
+                    percentage: None,
+                    custom_condition: None,
+                },
                 time_window_seconds: 3600,
             },
             AlertRule {
@@ -525,7 +566,11 @@ impl AuditLogger {
                 name: "Administrative Operation".to_string(),
                 condition: AlertCondition::EventType(AuditEventType::UserManagement),
                 severity: AuditEventSeverity::High,
-                threshold: AlertThreshold { count: 1, percentage: None, custom_condition: None },
+                threshold: AlertThreshold {
+                    count: 1,
+                    percentage: None,
+                    custom_condition: None,
+                },
                 time_window_seconds: 0,
             },
             AlertRule {
@@ -533,7 +578,11 @@ impl AuditLogger {
                 name: "Sensitive Data Export".to_string(),
                 condition: AlertCondition::EventType(AuditEventType::DataExported),
                 severity: AuditEventSeverity::High,
-                threshold: AlertThreshold { count: 1, percentage: None, custom_condition: None },
+                threshold: AlertThreshold {
+                    count: 1,
+                    percentage: None,
+                    custom_condition: None,
+                },
                 time_window_seconds: 0,
             },
         ];
@@ -544,24 +593,24 @@ impl AuditLogger {
     }
 
     async fn register_compliance_rules(&self) -> SecurityResult<()> {
-        let rules = vec![
-            ComplianceRule {
-                rule_id: "gdpr-data-access".to_string(),
-                name: "GDPR Data Access Monitoring".to_string(),
-                compliance_type: "GDPR".to_string(),
-                description: "Monitor access to personal data".to_string(),
-                monitoring_query: AuditQuery {
-                    compliance_flags: Some(vec!["GDPR-personal-data".to_string()].into_iter().collect()),
-                    ..Default::default()
-                },
-                required_actions: vec![
-                    "Verify data access consent".to_string(),
-                    "Log data processing activities".to_string(),
-                    "Implement data minimization".to_string(),
-                ],
-                escalation_threshold: 1000,
+        let rules = vec![ComplianceRule {
+            rule_id: "gdpr-data-access".to_string(),
+            name: "GDPR Data Access Monitoring".to_string(),
+            compliance_type: "GDPR".to_string(),
+            description: "Monitor access to personal data".to_string(),
+            monitoring_query: AuditQuery {
+                compliance_flags: Some(
+                    vec!["GDPR-personal-data".to_string()].into_iter().collect(),
+                ),
+                ..Default::default()
             },
-        ];
+            required_actions: vec![
+                "Verify data access consent".to_string(),
+                "Log data processing activities".to_string(),
+                "Implement data minimization".to_string(),
+            ],
+            escalation_threshold: 1000,
+        }];
 
         let mut compliance_rules = self.compliance_rules.write().await;
         compliance_rules.extend(rules);
@@ -574,13 +623,17 @@ impl AuditLogger {
                 std::mem::discriminant(expected_type) == std::mem::discriminant(&event.event_type)
             }
             AlertCondition::SeverityAbove(expected_severity) => {
-                matches!((event.severity, expected_severity),
-                    (AuditEventSeverity::High | AuditEventSeverity::Critical, AuditEventSeverity::Medium) |
-                    (AuditEventSeverity::Critical, AuditEventSeverity::High))
+                matches!(
+                    (event.severity, expected_severity),
+                    (
+                        AuditEventSeverity::High | AuditEventSeverity::Critical,
+                        AuditEventSeverity::Medium
+                    ) | (AuditEventSeverity::Critical, AuditEventSeverity::High)
+                )
             }
             AlertCondition::FailedAuthentications(threshold) => {
-                matches!(&event.event_type, AuditEventType::AuthenticationFailure) &&
-                rule.threshold.count >= *threshold
+                matches!(&event.event_type, AuditEventType::AuthenticationFailure)
+                    && rule.threshold.count >= *threshold
             }
             _ => false, // Implement other conditions as needed
         }
@@ -763,20 +816,29 @@ pub mod compliance {
             })
         }
 
-        pub async fn validate_operation_compliance(&self, context: &OperationContext) -> SecurityResult<()> {
+        pub async fn validate_operation_compliance(
+            &self,
+            context: &OperationContext,
+        ) -> SecurityResult<()> {
             // Validate GDPR compliance
             if !self.is_gdpr_compliant(context) {
-                warn!("GDPR compliance violation for operation: {:?}", context.operation_type);
+                warn!(
+                    "GDPR compliance violation for operation: {:?}",
+                    context.operation_type
+                );
                 return Err(crate::SecurityError::ComplianceViolation {
-                    policy: "GDPR".to_string()
+                    policy: "GDPR".to_string(),
                 });
             }
 
             // Validate CCPA compliance
             if !self.is_ccpa_compliant(context) {
-                warn!("CCPA compliance violation for operation: {:?}", context.operation_type);
+                warn!(
+                    "CCPA compliance violation for operation: {:?}",
+                    context.operation_type
+                );
                 return Err(crate::SecurityError::ComplianceViolation {
-                    policy: "CCPA".to_string()
+                    policy: "CCPA".to_string(),
                 });
             }
 
@@ -786,11 +848,12 @@ pub mod compliance {
         fn is_gdpr_compliant(&self, context: &OperationContext) -> bool {
             // Check if personal data is being processed
             match context.resource_context.sensitivity_level {
-                crate::SensitivityLevel::HighlySensitive |
-                crate::SensitivityLevel::Restricted |
-                crate::SensitivityLevel::Confidential => {
+                crate::SensitivityLevel::HighlySensitive
+                | crate::SensitivityLevel::Restricted
+                | crate::SensitivityLevel::Confidential => {
                     // Require explicit user consent for sensitive data processing
-                    context.user_context.mfa_verified && self.gdpr_compliance.data_processing_consent
+                    context.user_context.mfa_verified
+                        && self.gdpr_compliance.data_processing_consent
                 }
                 _ => true,
             }
@@ -798,8 +861,15 @@ pub mod compliance {
 
         fn is_ccpa_compliant(&self, context: &OperationContext) -> bool {
             // CCPA compliance checks
-            if matches!(context.resource_context.sensitivity_level, crate::SensitivityLevel::Restricted) {
-                if context.user_context.roles.contains(&"california_user".to_string()) {
+            if matches!(
+                context.resource_context.sensitivity_level,
+                crate::SensitivityLevel::Restricted
+            ) {
+                if context
+                    .user_context
+                    .roles
+                    .contains(&"california_user".to_string())
+                {
                     return self.ccpa_compliance.opt_out_enabled;
                 }
             }
@@ -863,10 +933,13 @@ mod tests {
             AuditEventType::AIModelInference,
             "ai_model",
             "test_model",
-            "inference"
+            "inference",
         );
 
-        let event_id = auditor.log_event(&context, event_ctx, true, None).await.unwrap();
+        let event_id = auditor
+            .log_event(&context, event_ctx, true, None)
+            .await
+            .unwrap();
 
         assert!(!event_id.is_empty());
 
@@ -911,10 +984,13 @@ mod tests {
             AuditEventType::AIModelInference,
             "ai_model",
             "test_model",
-            "inference"
+            "inference",
         );
 
-        auditor.log_event(&context, event_ctx, true, None).await.unwrap();
+        auditor
+            .log_event(&context, event_ctx, true, None)
+            .await
+            .unwrap();
 
         // Query events
         let query = AuditQuery {
@@ -939,7 +1015,11 @@ mod tests {
             name: "Test Alert".to_string(),
             condition: AlertCondition::EventType(AuditEventType::AIModelInference),
             severity: AuditEventSeverity::Low,
-            threshold: AlertThreshold { count: 1, percentage: None, custom_condition: None },
+            threshold: AlertThreshold {
+                count: 1,
+                percentage: None,
+                custom_condition: None,
+            },
             time_window_seconds: 0,
         };
 
@@ -976,10 +1056,13 @@ mod tests {
             AuditEventType::AIModelInference,
             "ai_model",
             "test_model",
-            "inference"
+            "inference",
         );
 
-        auditor.log_event(&context, event_ctx, true, None).await.unwrap();
+        auditor
+            .log_event(&context, event_ctx, true, None)
+            .await
+            .unwrap();
 
         // Check for alerts
         let alerts = auditor.get_pending_alerts(10).await.unwrap();

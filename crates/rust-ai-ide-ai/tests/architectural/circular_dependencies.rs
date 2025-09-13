@@ -9,7 +9,7 @@ fn test_no_circular_dependencies() {
         mod a {
             pub fn a() {}
         }
-        
+
         mod b {
             use super::a;
             pub fn b() { a::a(); }
@@ -33,7 +33,7 @@ fn test_direct_circular_dependency() {
             use super::b;
             pub fn a() { b::b(); }
         }
-        
+
         mod b {
             use super::a;
             pub fn b() { a::a(); }
@@ -58,12 +58,12 @@ fn test_indirect_circular_dependency() {
             use super::b;
             pub fn a() { b::b(); }
         }
-        
+
         mod b {
             use super::c;
             pub fn b() { c::c(); }
         }
-        
+
         mod c {
             use super::a;
             pub fn c() { a::a(); }

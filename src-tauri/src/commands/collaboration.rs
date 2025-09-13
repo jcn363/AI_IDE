@@ -1,11 +1,11 @@
 //! Collaboration commands for real-time collaboration system.
 //!
 //! Provides Tauri command handlers for collaborative editing, session management,
-//! AI coaching, and real-time communication operations.
+//! AI coaching, and real-time communication operations with enhanced features.
 
-use rust_ai_ide_collaboration::*;
-use rust_ai_ide_ai_inference::{InferenceEngine, CodeCompletionResult};
 use crate::command_templates::*;
+use rust_ai_ide_ai_inference::{CodeCompletionResult, InferenceEngine};
+use rust_ai_ide_collaboration::*;
 use rust_ai_ide_common::validation::TauriInputSanitizer;
 use rust_ai_ide_security::audit_logger;
 use serde::{Deserialize, Serialize};
@@ -15,6 +15,9 @@ use tokio::sync::RwLock;
 /// State for collaboration services
 pub type CollaborationState = Arc<RwLock<Option<CollaborationService>>>;
 pub type AICoachingState = Arc<RwLock<Option<AICoachingService>>>;
+pub type EnhancedCollaborationState = Arc<RwLock<Option<EnhancedCollaborationService>>>;
+pub type PresenceState = Arc<RwLock<Option<PresenceService>>>;
+pub type TeamManagementState = Arc<RwLock<Option<TeamManagementService>>>;
 
 static CONFIG: CommandConfig = CommandConfig {
     enable_logging: true,
@@ -445,6 +448,273 @@ tauri_command_template! {
     payload: EndSessionPayload
 }
 
+// Enhanced collaboration commands using new modules
+
+/// Create authenticated session with enhanced features
+tauri_command_template! {
+    collaboration_create_authenticated_session,
+    async {
+        validate_commands! {
+            rust_ai_ide_common::validation::validate_not_empty(&payload.user_id, "user_id")?;
+            rust_ai_ide_common::validation::validate_not_empty(&payload.username, "username")?;
+            rust_ai_ide_common::validation::validate_not_empty(&payload.document_id, "document_id")?;
+        };
+
+        // Sanitize inputs
+        let sanitized_username = TauriInputSanitizer::sanitize_string(&payload.username);
+
+        acquire_service_and_execute!(enhanced_collaboration_state, EnhancedCollaborationState, {
+            let service = enhanced_collaboration_state.read().await;
+            match service.as_ref() {
+                Some(enhanced_service) => {
+                    let session_id = enhanced_service.create_authenticated_session(
+                        payload.user_id.clone(),
+                        sanitized_username,
+                        payload.document_id.clone(),
+                        payload.user_role.unwrap_or(UserRole::Editor),
+                    ).await?;
+
+                    Ok(serde_json::json!({
+                        "session_id": session_id,
+                        "status": "authenticated_session_created",
+                        "user_id": payload.user_id,
+                        "document_id": payload.document_id
+                    }).to_string())
+                }
+                None => Err(format_command_error("Enhanced collaboration service not initialized", "create_authenticated_session")),
+            }
+        })
+    },
+    service = EnhancedCollaborationState,
+    state = enhanced_collaboration_state,
+    payload: CreateAuthenticatedSessionPayload
+}
+
+/// Update user presence
+tauri_command_template! {
+    collaboration_update_presence,
+    async {
+        validate_commands! {
+            rust_ai_ide_common::validation::validate_not_empty(&payload.user_id, "user_id")?;
+            rust_ai_ide_common::validation::validate_not_empty(&payload.username, "username")?;
+        };
+
+        acquire_service_and_execute!(presence_state, PresenceState, {
+            let service = presence_state.read().await;
+            match service.as_ref() {
+                Some(presence_service) => {
+                    presence_service.update_presence(
+                        payload.user_id.clone(),
+                        payload.username.clone(),
+                        payload.status.unwrap_or(PresenceStatus::Online),
+                        payload.document_id.clone(),
+                        payload.session_id.clone(),
+                        payload.activity_type.unwrap_or(ActivityType::SessionJoined),
+                    ).await?;
+
+                    Ok(serde_json::json!({
+                        "user_id": payload.user_id,
+                        "status": "presence_updated",
+                        "presence_status": format!("{:?}", payload.status.unwrap_or(PresenceStatus::Online))
+                    }).to_string())
+                }
+                None => Err(format_command_error("Presence service not initialized", "update_presence")),
+            }
+        })
+    },
+    service = PresenceState,
+    state = presence_state,
+    payload: UpdatePresencePayload
+}
+
+/// Update cursor position for real-time collaboration
+tauri_command_template! {
+    collaboration_update_cursor,
+    async {
+        validate_commands! {
+            rust_ai_ide_common::validation::validate_not_empty(&payload.user_id, "user_id")?;
+            rust_ai_ide_common::validation::validate_not_empty(&payload.document_id, "document_id")?;
+        };
+
+        acquire_service_and_execute!(presence_state, PresenceState, {
+            let service = presence_state.read().await;
+            match service.as_ref() {
+                Some(presence_service) => {
+                    presence_service.update_cursor_position(
+                        payload.user_id.clone(),
+                        payload.document_id.clone(),
+                        payload.line,
+                        payload.column,
+                        payload.selection_start,
+                        payload.selection_end,
+                    ).await?;
+
+                    Ok(serde_json::json!({
+                        "user_id": payload.user_id,
+                        "document_id": payload.document_id,
+                        "status": "cursor_updated",
+                        "line": payload.line,
+                        "column": payload.column
+                    }).to_string())
+                }
+                None => Err(format_command_error("Presence service not initialized", "update_cursor")),
+            }
+        })
+    },
+    service = PresenceState,
+    state = presence_state,
+    payload: UpdateCursorPayload
+}
+
+/// Get collaboration indicators for session
+tauri_command_template! {
+    collaboration_get_indicators,
+    async {
+        validate_commands! {
+            rust_ai_ide_common::validation::validate_not_empty(&payload.session_id, "session_id")?;
+            rust_ai_ide_common::validation::validate_not_empty(&payload.document_id, "document_id")?;
+        };
+
+        acquire_service_and_execute!(presence_state, PresenceState, {
+            let service = presence_state.read().await;
+            match service.as_ref() {
+                Some(presence_service) => {
+                    let indicators = presence_service.get_collaboration_indicators(
+                        &payload.session_id,
+                        &payload.document_id,
+                    ).await?;
+
+                    Ok(serde_json::to_string(&indicators).unwrap())
+                }
+                None => Err(format_command_error("Presence service not initialized", "get_indicators")),
+            }
+        })
+    },
+    service = PresenceState,
+    state = presence_state,
+    payload: GetIndicatorsPayload
+}
+
+/// Create team for project sharing
+tauri_command_template! {
+    collaboration_create_team,
+    async {
+        validate_commands! {
+            rust_ai_ide_common::validation::validate_not_empty(&payload.name, "name")?;
+            rust_ai_ide_common::validation::validate_not_empty(&payload.owner_id, "owner_id")?;
+        };
+
+        let sanitized_name = TauriInputSanitizer::sanitize_string(&payload.name);
+        let sanitized_description = payload.description.as_ref()
+            .map(|desc| TauriInputSanitizer::sanitize_string(desc))
+            .unwrap_or_default();
+
+        acquire_service_and_execute!(team_state, TeamManagementState, {
+            let service = team_state.read().await;
+            match service.as_ref() {
+                Some(team_service) => {
+                    let team_id = team_service.create_team(
+                        sanitized_name,
+                        sanitized_description,
+                        payload.owner_id.clone(),
+                        payload.settings,
+                    ).await?;
+
+                    Ok(serde_json::json!({
+                        "team_id": team_id,
+                        "status": "team_created",
+                        "owner_id": payload.owner_id
+                    }).to_string())
+                }
+                None => Err(format_command_error("Team management service not initialized", "create_team")),
+            }
+        })
+    },
+    service = TeamManagementState,
+    state = team_state,
+    payload: CreateTeamPayload
+}
+
+/// Invite user to team
+tauri_command_template! {
+    collaboration_invite_to_team,
+    async {
+        validate_commands! {
+            rust_ai_ide_common::validation::validate_not_empty(&payload.team_id, "team_id")?;
+            rust_ai_ide_common::validation::validate_not_empty(&payload.invited_by, "invited_by")?;
+            rust_ai_ide_common::validation::validate_not_empty(&payload.invited_user_email, "invited_user_email")?;
+        };
+
+        let sanitized_email = TauriInputSanitizer::sanitize_string(&payload.invited_user_email);
+        let sanitized_message = payload.message.as_ref()
+            .map(|msg| TauriInputSanitizer::sanitize_string(msg))
+            .unwrap_or_default();
+
+        acquire_service_and_execute!(team_state, TeamManagementState, {
+            let service = team_state.read().await;
+            match service.as_ref() {
+                Some(team_service) => {
+                    let invitation_id = team_service.invite_user_to_team(
+                        payload.team_id.clone(),
+                        payload.invited_by.clone(),
+                        sanitized_email,
+                        payload.role.unwrap_or(UserRole::Editor),
+                        if sanitized_message.is_empty() { None } else { Some(sanitized_message) },
+                    ).await?;
+
+                    Ok(serde_json::json!({
+                        "invitation_id": invitation_id,
+                        "status": "invitation_sent",
+                        "team_id": payload.team_id
+                    }).to_string())
+                }
+                None => Err(format_command_error("Team management service not initialized", "invite_to_team")),
+            }
+        })
+    },
+    service = TeamManagementState,
+    state = team_state,
+    payload: InviteToTeamPayload
+}
+
+/// Share project with team
+tauri_command_template! {
+    collaboration_share_project,
+    async {
+        validate_commands! {
+            rust_ai_ide_common::validation::validate_not_empty(&payload.project_id, "project_id")?;
+            rust_ai_ide_common::validation::validate_not_empty(&payload.shared_by, "shared_by")?;
+            rust_ai_ide_common::validation::validate_not_empty(&payload.team_id, "team_id")?;
+        };
+
+        acquire_service_and_execute!(team_state, TeamManagementState, {
+            let service = team_state.read().await;
+            match service.as_ref() {
+                Some(team_service) => {
+                    team_service.share_project_with_team(
+                        payload.project_id.clone(),
+                        payload.shared_by.clone(),
+                        payload.team_id.clone(),
+                        payload.permissions.clone().unwrap_or(vec![Permission::ReadDocument]),
+                        payload.share_type.unwrap_or(ShareType::ReadWrite),
+                        payload.expires_at,
+                    ).await?;
+
+                    Ok(serde_json::json!({
+                        "project_id": payload.project_id,
+                        "team_id": payload.team_id,
+                        "status": "project_shared"
+                    }).to_string())
+                }
+                None => Err(format_command_error("Team management service not initialized", "share_project")),
+            }
+        })
+    },
+    service = TeamManagementState,
+    state = team_state,
+    payload: ShareProjectPayload
+}
+
 // Supporting payload structures and conversions
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -594,7 +864,9 @@ impl CRDTOperation {
         match payload.operation_type {
             CRDTOperationType::Insert => Ok(CRDTOperation::Insert {
                 pos: payload.position,
-                char: payload.content.as_ref()
+                char: payload
+                    .content
+                    .as_ref()
                     .and_then(|c| c.chars().next())
                     .unwrap_or(' '),
                 lamport_clock: std::time::SystemTime::now()
@@ -665,4 +937,67 @@ impl From<String> for ExperienceLevel {
             _ => ExperienceLevel::Beginner,
         }
     }
+}
+
+// Payload structures for enhanced collaboration commands
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct CreateAuthenticatedSessionPayload {
+    pub user_id: String,
+    pub username: String,
+    pub document_id: String,
+    pub user_role: Option<UserRole>,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct UpdatePresencePayload {
+    pub user_id: String,
+    pub username: String,
+    pub status: Option<PresenceStatus>,
+    pub document_id: Option<String>,
+    pub session_id: Option<String>,
+    pub activity_type: Option<ActivityType>,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct UpdateCursorPayload {
+    pub user_id: String,
+    pub document_id: String,
+    pub line: usize,
+    pub column: usize,
+    pub selection_start: Option<(usize, usize)>,
+    pub selection_end: Option<(usize, usize)>,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct GetIndicatorsPayload {
+    pub session_id: String,
+    pub document_id: String,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct CreateTeamPayload {
+    pub name: String,
+    pub description: Option<String>,
+    pub owner_id: String,
+    pub settings: Option<TeamSettings>,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct InviteToTeamPayload {
+    pub team_id: String,
+    pub invited_by: String,
+    pub invited_user_email: String,
+    pub role: Option<UserRole>,
+    pub message: Option<String>,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct ShareProjectPayload {
+    pub project_id: String,
+    pub shared_by: String,
+    pub team_id: String,
+    pub permissions: Option<Vec<Permission>>,
+    pub share_type: Option<ShareType>,
+    pub expires_at: Option<std::time::SystemTime>,
 }

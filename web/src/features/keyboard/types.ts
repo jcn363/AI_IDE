@@ -57,10 +57,12 @@ export interface KeyboardService {
   getShortcut(actionId: string): KeyCombination[] | undefined;
   setShortcut(actionId: string, keys: KeyCombination[]): void;
   clearShortcut(actionId: string): void;
-  createProfile(profile: Omit<UserShortcutProfile, 'id' | 'createdAt' | 'updatedAt'>): UserShortcutProfile;
+  createProfile(
+    profile: Omit<UserShortcutProfile, 'id' | 'createdAt' | 'updatedAt'>
+  ): UserShortcutProfile;
   switchProfile(profileId: string): void;
   deleteProfile(profileId: string): void;
-  detectConflicts(): Array<{keys: string; actions: string[]}>;
+  detectConflicts(): Array<{ keys: string; actions: string[] }>;
   loadUserShortcuts(): Promise<void>;
   saveUserShortcuts(): Promise<void>;
 }

@@ -2,7 +2,6 @@
 ///
 /// This module provides AI-powered code analysis, documentation,
 /// refactoring, and contextual help features.
-
 use crate::commands::ai::services::AIServiceState;
 use crate::utils;
 
@@ -52,7 +51,7 @@ pub async fn ai_explain_code(
         file_name: None,
         cursor_position: None,
         selection: Some(sel.clone()),
-        project_context: Default::default()
+        project_context: Default::default(),
     };
 
     let task = if sel.is_empty() {
@@ -116,17 +115,20 @@ pub async fn ai_doc_assist(
         file_name: None,
         cursor_position: None,
         selection: None,
-        project_context: Default::default()
+        project_context: Default::default(),
     };
 
-    let task = format!("Write comprehensive Rust documentation for the symbol `{}`. Include:
+    let task = format!(
+        "Write comprehensive Rust documentation for the symbol `{}`. Include:
 1. Brief summary of what it does
 2. Parameter descriptions (if applicable)
 3. Return value description (if applicable)
 4. Usage examples
 5. Important notes or considerations
 
-Format the documentation using standard Rust doc comment conventions.", symbol);
+Format the documentation using standard Rust doc comment conventions.",
+        symbol
+    );
 
     log::debug!("AI documentation task: {}", task);
 
@@ -157,7 +159,10 @@ pub async fn ai_refactor_code(
     instruction: String,
     ai_service_state: tauri::State<'_, AIServiceState>,
 ) -> Result<String, String> {
-    log::info!("Code refactoring requested with instruction: {}", instruction);
+    log::info!(
+        "Code refactoring requested with instruction: {}",
+        instruction
+    );
 
     // Validate input
     if code.is_empty() {
@@ -178,7 +183,7 @@ pub async fn ai_refactor_code(
         file_name: None,
         cursor_position: None,
         selection: None,
-        project_context: Default::default()
+        project_context: Default::default(),
     };
 
     let task = format!("Refactor the following Rust code according to this instruction: {}\n\nRespond with the fully refactored code only. Ensure the code is syntactically correct and follows Rust best practices.", instruction);
@@ -240,7 +245,7 @@ pub async fn ai_context_help(
         file_name,
         cursor_position: None,
         selection: None,
-        project_context: Default::default()
+        project_context: Default::default(),
     };
 
     let task = format!("Question: {}\n\nProvide helpful, context-aware guidance for Rust development. Include practical examples where relevant and consider best practices.", question);

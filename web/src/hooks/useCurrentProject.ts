@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from '../store/store';
-import { Project, setCurrentProject, setError , setLoading } from '../store/slices/projectsSlice';
+import { Project, setCurrentProject, setError, setLoading } from '../store/slices/projectsSlice';
 
 export const useCurrentProject = () => {
   const dispatch = useAppDispatch();
@@ -19,7 +19,7 @@ export const useCurrentProject = () => {
   const setErrorState = (errorMessage: string | null) => {
     dispatch(setError(errorMessage));
   };
-  
+
   return {
     currentProject,
     projects,

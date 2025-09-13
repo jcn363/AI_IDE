@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import type {
-  CodeSpecification,
-  GeneratedCode,
-  GeneratedFile,
-  ValidationResult
-} from '../types';
+import type { CodeSpecification, GeneratedCode, GeneratedFile, ValidationResult } from '../types';
 import styles from './SpecificationGeneratorPanel.module.css';
 
 interface SpecificationGeneratorPanelProps {
   className?: string;
 }
 
-export const SpecificationGeneratorPanel: React.FC<SpecificationGeneratorPanelProps> = ({ className }) => {
+export const SpecificationGeneratorPanel: React.FC<SpecificationGeneratorPanelProps> = ({
+  className,
+}) => {
   const [specification, setSpecification] = useState('');
   const [language, setLanguage] = useState('rust');
   const [generatedCode, setGeneratedCode] = useState<GeneratedCode | null>(null);
@@ -32,7 +29,7 @@ export const SpecificationGeneratorPanel: React.FC<SpecificationGeneratorPanelPr
     try {
       // This would call the Tauri command for specification-based generation
       // For now, create a mock response
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate generation time
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate generation time
 
       const mockGeneratedCode: GeneratedCode = {
         main_file: {
@@ -43,23 +40,25 @@ fn main() {
     println!("Specification: {}", specification);
 }`,
           file_type: 'SourceCode',
-          description: 'Main application file generated from specification'
+          description: 'Main application file generated from specification',
         },
         modules: [
           {
             name: 'utils',
             description: 'Utility module',
-            files: [{
-              path: 'src/utils.rs',
-              content: `pub mod utils {
+            files: [
+              {
+                path: 'src/utils.rs',
+                content: `pub mod utils {
     pub fn helper_function() -> String {
         "Helper function".to_string()
     }
 }`,
-              file_type: 'SourceCode',
-              description: 'Utilities module'
-            }]
-          }
+                file_type: 'SourceCode',
+                description: 'Utilities module',
+              },
+            ],
+          },
         ],
         supporting_files: [
           {
@@ -72,7 +71,7 @@ edition = "2021"
 [dependencies]
 serde = "1.0"`,
             file_type: 'Configuration',
-            description: 'Package configuration'
+            description: 'Package configuration',
           },
           {
             path: 'README.md',
@@ -85,24 +84,17 @@ This application was generated from specification: ${specification}
 - Ready to build and run
 `,
             file_type: 'Documentation',
-            description: 'Project documentation'
-          }
+            description: 'Project documentation',
+          },
         ],
         dependencies: ['serde', 'tokio'],
-        build_instructions: [
-          'cargo build',
-          'cargo test',
-          'cargo run'
-        ],
+        build_instructions: ['cargo build', 'cargo test', 'cargo run'],
         validation_report: {
           is_valid: true,
           score: 0.9,
           issues: [],
-          suggestions: [
-            'Consider adding more error handling',
-            'Add comprehensive tests'
-          ]
-        }
+          suggestions: ['Consider adding more error handling', 'Add comprehensive tests'],
+        },
       };
 
       setGeneratedCode(mockGeneratedCode);
@@ -180,8 +172,12 @@ The server should:
     return (
       <div className="generated-output">
         <div className={styles.validationSummary}>
-          <div className={`validation-status ${generatedCode.validation_report.is_valid ? 'valid' : 'invalid'}`}>
-            <span className="status-icon">{generatedCode.validation_report.is_valid ? '✓' : '⚠'}</span>
+          <div
+            className={`validation-status ${generatedCode.validation_report.is_valid ? 'valid' : 'invalid'}`}
+          >
+            <span className="status-icon">
+              {generatedCode.validation_report.is_valid ? '✓' : '⚠'}
+            </span>
             <span>Validation: {generatedCode.validation_report.score * 100}%</span>
           </div>
 
@@ -189,9 +185,11 @@ The server should:
             <div className={styles.suggestions}>
               <h4>Suggestions:</h4>
               <ul>
-                {generatedCode.validation_report.suggestions.map((suggestion: string, index: number) => (
-                  <li key={index}>{suggestion}</li>
-                ))}
+                {generatedCode.validation_report.suggestions.map(
+                  (suggestion: string, index: number) => (
+                    <li key={index}>{suggestion}</li>
+                  )
+                )}
               </ul>
             </div>
           )}
@@ -323,7 +321,6 @@ The server should:
       <div className="panel-content">
         {activeTab === 'input' ? renderInputTab() : renderOutputTab()}
       </div>
-
     </div>
   );
 };

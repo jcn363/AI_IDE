@@ -3,12 +3,12 @@
 //! This module provides mechanisms for handling performance alerts,
 //! including notification channels, alert policies, and escalation procedures.
 
+use crate::{AlertSeverity, PerformanceAlert};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use tokio::sync::mpsc;
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
-use crate::{PerformanceAlert, AlertSeverity};
 
 /// Alert policy configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -104,14 +104,12 @@ impl AlertManager {
                 severity_thresholds: HashMap::new(),
                 cooldown_seconds: 300, // 5 minutes
                 max_alerts_per_hour: 5,
-                channels: vec![
-                    NotificationChannel {
-                        channel_type: ChannelType::Console,
-                        config: HashMap::new(),
-                        enabled: true,
-                    }
-                ],
-            }
+                channels: vec![NotificationChannel {
+                    channel_type: ChannelType::Console,
+                    config: HashMap::new(),
+                    enabled: true,
+                }],
+            },
         );
 
         // Default policy for threshold exceeded
@@ -122,14 +120,12 @@ impl AlertManager {
                 severity_thresholds: HashMap::new(),
                 cooldown_seconds: 600, // 10 minutes
                 max_alerts_per_hour: 10,
-                channels: vec![
-                    NotificationChannel {
-                        channel_type: ChannelType::Console,
-                        config: HashMap::new(),
-                        enabled: true,
-                    }
-                ],
-            }
+                channels: vec![NotificationChannel {
+                    channel_type: ChannelType::Console,
+                    config: HashMap::new(),
+                    enabled: true,
+                }],
+            },
         );
 
         Self {
@@ -252,10 +248,12 @@ impl AlertManager {
     /// Check rate limits
     async fn check_rate_limit(&self, alert_type: &str, policy: &AlertPolicy) -> bool {
         let mut counters = self.alert_counters.write().unwrap();
-        let counter = counters.entry(alert_type.to_string()).or_insert(AlertCounter {
-            count: 0,
-            hour_start: Utc::now(),
-        });
+        let counter = counters
+            .entry(alert_type.to_string())
+            .or_insert(AlertCounter {
+                count: 0,
+                hour_start: Utc::now(),
+            });
 
         let now = Utc::now();
         let hour_duration = now.signed_duration_since(counter.hour_start).num_hours();
@@ -295,14 +293,20 @@ impl AlertManager {
                 let title = format!("Performance Regression: {}", metric_name);
                 let description = format!(
                     "Performance degraded by {:.1}% for {}. Baseline: {:.2}, Current: {:.2}",
-                    degradation_percent * 100.0, metric_name, baseline_value, current_value
+                    degradation_percent * 100.0,
+                    metric_name,
+                    baseline_value,
+                    current_value
                 );
 
                 let mut details = HashMap::new();
                 details.insert("metric".to_string(), metric_name);
                 details.insert("baseline_value".to_string(), baseline_value.to_string());
                 details.insert("current_value".to_string(), current_value.to_string());
-                details.insert("degradation_percent".to_string(), format!("{:.1}", degradation_percent * 100.0));
+                details.insert(
+                    "degradation_percent".to_string(),
+                    format!("{:.1}", degradation_percent * 100.0),
+                );
 
                 NotificationMessage {
                     title,
@@ -362,7 +366,11 @@ impl AlertManager {
     }
 
     /// Send notification to channel
-    async fn send_notification(&self, channel: &NotificationChannel, message: &NotificationMessage) {
+    async fn send_notification(
+        &self,
+        channel: &NotificationChannel,
+        message: &NotificationMessage,
+    ) {
         match channel.channel_type {
             ChannelType::Console => {
                 self.send_to_console(message);
@@ -397,7 +405,10 @@ impl AlertManager {
             AlertSeverity::Critical => "🚨",
         };
 
-        println!("{} [{}] {}", severity_icon, message.timestamp, message.title);
+        println!(
+            "{} [{}] {}",
+            severity_icon, message.timestamp, message.title
+        );
         println!("  {}", message.description);
 
         if !message.details.is_empty() {
@@ -490,13 +501,11 @@ mod tests {
             severity_thresholds: HashMap::new(),
             cooldown_seconds: 0, // No cooldown for this test
             max_alerts_per_hour: 2,
-            channels: vec![
-                NotificationChannel {
-                    channel_type: ChannelType::Console,
-                    config: HashMap::new(),
-                    enabled: true,
-                }
-            ],
+            channels: vec![NotificationChannel {
+                channel_type: ChannelType::Console,
+                config: HashMap::new(),
+                enabled: true,
+            }],
         };
 
         manager.update_policy("test_type".to_string(), policy);

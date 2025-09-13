@@ -14,7 +14,7 @@ export const VersionCompatibilityDisplay: React.FC<VersionCompatibilityProps> = 
   showDetails = true,
 }) => {
   const { isCompatible, compatibilityScore, breakingChanges, recommendedVersion } = compatibility;
-  
+
   const getStatusColor = () => {
     if (compatibilityScore >= 90) return '#52c41a'; // green
     if (compatibilityScore >= 70) return '#faad14'; // orange
@@ -28,12 +28,14 @@ export const VersionCompatibilityDisplay: React.FC<VersionCompatibilityProps> = 
   );
 
   const statusText = isCompatible ? 'Compatible' : 'Potential Issues';
-  
+
   return (
     <div className="version-compatibility">
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: showDetails ? 8 : 0 }}>
         {statusIcon}
-        <Text strong style={{ marginRight: 8 }}>{statusText}</Text>
+        <Text strong style={{ marginRight: 8 }}>
+          {statusText}
+        </Text>
         <Progress
           percent={compatibilityScore}
           size="small"
@@ -53,7 +55,7 @@ export const VersionCompatibilityDisplay: React.FC<VersionCompatibilityProps> = 
               <Tag color="blue">{recommendedVersion}</Tag>
             </div>
           )}
-          
+
           {breakingChanges.length > 0 && (
             <div>
               <Text strong style={{ display: 'block', marginBottom: 4 }}>

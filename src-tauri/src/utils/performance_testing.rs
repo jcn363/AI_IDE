@@ -4,14 +4,14 @@
 //! built-in integration to the rust-ai-ide-performance-monitoring system.
 
 use crate::utils::test_utils::utils;
-use rust_ai_ide_performance_monitoring::{PerformanceMonitor, MetricsCollector};
+use rust_ai_ide_performance_monitoring::{MetricsCollector, PerformanceMonitor};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, Instant};
-use tokio::process::Command as AsyncCommand;
-use serde::{Deserialize, Serialize};
 use sysinfo;
+use tokio::process::Command as AsyncCommand;
 
 /// Enhanced Performance test configuration with monitoring integration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -106,7 +106,10 @@ impl WorkspaceMetricsCollector {
 
         let crates_dir = self.workspace_path.join("crates");
         if !crates_dir.exists() {
-            return Err(anyhow::anyhow!("Crates directory not found: {}", crates_dir.display()));
+            return Err(anyhow::anyhow!(
+                "Crates directory not found: {}",
+                crates_dir.display()
+            ));
         }
 
         let crate_dirs = self.discover_crate_directories(&crates_dir)?;
@@ -118,7 +121,8 @@ impl WorkspaceMetricsCollector {
             all_metrics = self.collect_metrics_parallel(crate_dirs).await?;
         } else {
             for crate_path in crate_dirs {
-                let crate_name = crate_path.file_name()
+                let crate_name = crate_path
+                    .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("unknown")
                     .to_string();
@@ -141,7 +145,10 @@ impl WorkspaceMetricsCollector {
             }
         }
 
-        println!("📊 Successfully collected metrics for {} crates", all_metrics.len());
+        println!(
+            "📊 Successfully collected metrics for {} crates",
+            all_metrics.len()
+        );
         Ok(all_metrics)
     }
 
@@ -167,8 +174,12 @@ impl WorkspaceMetricsCollector {
     }
 
     /// Collect metrics for a single crate
-    async fn collect_single_crate_metrics(&self, crate_path: PathBuf) -> anyhow::Result<CrateMetrics> {
-        let crate_name = crate_path.file_name()
+    async fn collect_single_crate_metrics(
+        &self,
+        crate_path: PathBuf,
+    ) -> anyhow::Result<CrateMetrics> {
+        let crate_name = crate_path
+            .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("unknown")
             .to_string();
@@ -218,10 +229,14 @@ impl WorkspaceMetricsCollector {
     }
 
     /// Collect metrics in parallel for better performance
-    async fn collect_metrics_parallel(&self, crate_paths: Vec<PathBuf>) -> anyhow::Result<HashMap<String, CrateMetrics>> {
+    async fn collect_metrics_parallel(
+        &self,
+        crate_paths: Vec<PathBuf>,
+    ) -> anyhow::Result<HashMap<String, CrateMetrics>> {
         use futures::future::join_all;
 
-        let tasks: Vec<_> = crate_paths.into_iter()
+        let tasks: Vec<_> = crate_paths
+            .into_iter()
             .filter_map(|path| {
                 let crate_name = path.file_name()?.to_str()?.to_string();
                 if self.collection_config.excluded_crates.contains(&crate_name) {
@@ -251,7 +266,8 @@ impl WorkspaceMetricsCollector {
 
     /// Create basic metrics when detailed collection fails
     fn create_basic_metrics(&self, crate_path: PathBuf) -> CrateMetrics {
-        let crate_name = crate_path.file_name()
+        let crate_name = crate_path
+            .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("unknown")
             .to_string();
@@ -376,9 +392,13 @@ impl WorkspaceMetricsCollector {
                 .lines()
                 .map(|line| {
                     let line = line.trim();
-                    if line.starts_with("if ") || line.starts_with("else if") ||
-                       line.starts_with("while ") || line.starts_with("for ") ||
-                       line.starts_with("loop ") || line.starts_with("match ") {
+                    if line.starts_with("if ")
+                        || line.starts_with("else if")
+                        || line.starts_with("while ")
+                        || line.starts_with("for ")
+                        || line.starts_with("loop ")
+                        || line.starts_with("match ")
+                    {
                         1.0
                     } else {
                         0.0
@@ -398,7 +418,10 @@ impl WorkspaceMetricsCollector {
     }
 
     /// Get last modified timestamp for a crate
-    fn get_last_modified(&self, crate_path: &Path) -> anyhow::Result<Option<chrono::DateTime<chrono::Utc>>> {
+    fn get_last_modified(
+        &self,
+        crate_path: &Path,
+    ) -> anyhow::Result<Option<chrono::DateTime<chrono::Utc>>> {
         let src_path = crate_path.join("src");
         if !src_path.exists() {
             return Ok(None);
@@ -522,7 +545,8 @@ impl EnhancedPerformanceAnalyzer {
             if baseline_file.exists() {
                 let data = tokio::fs::read_to_string(baseline_file).await?;
                 let baselines: Vec<BaselineData> = serde_json::from_str(&data)?;
-                self.baseline_data = baselines.into_iter()
+                self.baseline_data = baselines
+                    .into_iter()
                     .map(|b| (b.test_name.clone(), b))
                     .collect();
             }
@@ -541,7 +565,11 @@ impl EnhancedPerformanceAnalyzer {
     }
 
     /// Perform baseline comparison
-    fn perform_baseline_comparison(&self, test_name: &str, current_ops: f64) -> Option<BaselineComparison> {
+    fn perform_baseline_comparison(
+        &self,
+        test_name: &str,
+        current_ops: f64,
+    ) -> Option<BaselineComparison> {
         if let Some(baseline) = self.baseline_data.get(test_name) {
             let baseline_ops = baseline.avg_ops_per_second;
             let percentage_change = if baseline_ops > 0.0 {
@@ -549,7 +577,8 @@ impl EnhancedPerformanceAnalyzer {
             } else {
                 0.0
             };
-            let regression_threshold_exceeded = percentage_change.abs() > self.config.regression_threshold;
+            let regression_threshold_exceeded =
+                percentage_change.abs() > self.config.regression_threshold;
 
             Some(BaselineComparison {
                 baseline_ops_per_second: baseline_ops,
@@ -569,12 +598,21 @@ impl EnhancedPerformanceAnalyzer {
             let system_metrics = HashMap::from([
                 ("cpu_usage".to_string(), metrics.cpu_usage_percent),
                 ("memory_used_mb".to_string(), metrics.memory_used_mb as f64),
-                ("memory_available_mb".to_string(), (metrics.memory_total_mb - metrics.memory_used_mb) as f64),
+                (
+                    "memory_available_mb".to_string(),
+                    (metrics.memory_total_mb - metrics.memory_used_mb) as f64,
+                ),
             ]);
 
             let memory_profile = HashMap::from([
-                ("heap_used".to_string(), metrics.memory_used_mb * 1024 * 1024),
-                ("heap_total".to_string(), metrics.memory_total_mb * 1024 * 1024),
+                (
+                    "heap_used".to_string(),
+                    metrics.memory_used_mb * 1024 * 1024,
+                ),
+                (
+                    "heap_total".to_string(),
+                    metrics.memory_total_mb * 1024 * 1024,
+                ),
             ]);
 
             Ok(Some(MonitoringData {
@@ -589,18 +627,26 @@ impl EnhancedPerformanceAnalyzer {
     }
 
     /// Update baseline data with new results
-    pub async fn update_baseline(&mut self, test_name: &str, new_result: f64) -> anyhow::Result<()> {
-        let baseline = self.baseline_data.entry(test_name.to_string()).or_insert(BaselineData {
-            test_name: test_name.to_string(),
-            environment: self.config.environment.clone(),
-            avg_ops_per_second: new_result,
-            last_updated: chrono::Utc::now(),
-            sample_count: 0,
-        });
+    pub async fn update_baseline(
+        &mut self,
+        test_name: &str,
+        new_result: f64,
+    ) -> anyhow::Result<()> {
+        let baseline = self
+            .baseline_data
+            .entry(test_name.to_string())
+            .or_insert(BaselineData {
+                test_name: test_name.to_string(),
+                environment: self.config.environment.clone(),
+                avg_ops_per_second: new_result,
+                last_updated: chrono::Utc::now(),
+                sample_count: 0,
+            });
 
         // Simple moving average update
         let alpha = 0.1; // Learning rate
-        baseline.avg_ops_per_second = baseline.avg_ops_per_second * (1.0 - alpha) + new_result * alpha;
+        baseline.avg_ops_per_second =
+            baseline.avg_ops_per_second * (1.0 - alpha) + new_result * alpha;
         baseline.last_updated = chrono::Utc::now();
         baseline.sample_count += 1;
 
@@ -609,12 +655,19 @@ impl EnhancedPerformanceAnalyzer {
     }
 
     /// Run enhanced performance test suite with monitoring and baseline comparison
-    pub async fn run_enhanced_performance_test_suite(&mut self) -> anyhow::Result<Vec<EnhancedPerformanceTestResult>> {
-        println!("=== Running Enhanced Performance Test Suite: {} ===", self.config.test_name);
-        println!("Environment: {}, Monitoring: {}, Baseline Comparison: {}",
-                 self.config.environment,
-                 self.config.monitoring_integration,
-                 self.config.enable_baseline_comparison);
+    pub async fn run_enhanced_performance_test_suite(
+        &mut self,
+    ) -> anyhow::Result<Vec<EnhancedPerformanceTestResult>> {
+        println!(
+            "=== Running Enhanced Performance Test Suite: {} ===",
+            self.config.test_name
+        );
+        println!(
+            "Environment: {}, Monitoring: {}, Baseline Comparison: {}",
+            self.config.environment,
+            self.config.monitoring_integration,
+            self.config.enable_baseline_comparison
+        );
 
         let mut results = Vec::new();
         let timestamp = chrono::Utc::now();
@@ -623,7 +676,9 @@ impl EnhancedPerformanceAnalyzer {
         self.initialize_monitoring().await?;
 
         // Run build performance analysis first
-        let build_metrics = self.analyze_build_performance(self.config.enable_incremental).await?;
+        let build_metrics = self
+            .analyze_build_performance(self.config.enable_incremental)
+            .await?;
         println!("Build analysis complete: {:?}", build_metrics);
 
         // Collect monitoring data during tests
@@ -634,7 +689,10 @@ impl EnhancedPerformanceAnalyzer {
         let sync_ops_per_second = self.calculate_ops_per_second(sync_result as u64, sync_duration);
 
         let sync_baseline_comparison = if self.config.enable_baseline_comparison {
-            self.perform_baseline_comparison(&format!("{}_sync", self.config.test_name), sync_ops_per_second)
+            self.perform_baseline_comparison(
+                &format!("{}_sync", self.config.test_name),
+                sync_ops_per_second,
+            )
         } else {
             None
         };
@@ -663,15 +721,23 @@ impl EnhancedPerformanceAnalyzer {
 
         // Update baseline if no regression detected and enabled
         if !sync_regression_detected && self.config.enable_baseline_comparison {
-            self.update_baseline(&format!("{}_sync", self.config.test_name), sync_ops_per_second).await?;
+            self.update_baseline(
+                &format!("{}_sync", self.config.test_name),
+                sync_ops_per_second,
+            )
+            .await?;
         }
 
         // Run I/O-bound workload test with enhanced results
         let (async_result, async_duration) = self.run_async_performance_workload().await?;
-        let async_ops_per_second = self.calculate_ops_per_second(async_result as u64, async_duration);
+        let async_ops_per_second =
+            self.calculate_ops_per_second(async_result as u64, async_duration);
 
         let async_baseline_comparison = if self.config.enable_baseline_comparison {
-            self.perform_baseline_comparison(&format!("{}_async", self.config.test_name), async_ops_per_second)
+            self.perform_baseline_comparison(
+                &format!("{}_async", self.config.test_name),
+                async_ops_per_second,
+            )
         } else {
             None
         };
@@ -700,7 +766,11 @@ impl EnhancedPerformanceAnalyzer {
 
         // Update baseline if no regression detected and enabled
         if !async_regression_detected && self.config.enable_baseline_comparison {
-            self.update_baseline(&format!("{}_async", self.config.test_name), async_ops_per_second).await?;
+            self.update_baseline(
+                &format!("{}_async", self.config.test_name),
+                async_ops_per_second,
+            )
+            .await?;
         }
 
         // Generate enhanced comparison report
@@ -721,15 +791,20 @@ impl EnhancedPerformanceAnalyzer {
 
     /// Check for regressions and trigger alerts
     fn check_and_alert_regressions(&self, results: &[EnhancedPerformanceTestResult]) {
-        let regressions: Vec<_> = results.iter()
-            .filter(|r| r.regression_detected)
-            .collect();
+        let regressions: Vec<_> = results.iter().filter(|r| r.regression_detected).collect();
 
         if !regressions.is_empty() {
             println!("🚨 PERFORMANCE REGRESSIONS DETECTED!");
             for regression in regressions {
-                println!("  - {}: {:.2}% performance change", regression.test_name,
-                        regression.baseline_comparison.as_ref().unwrap().percentage_change);
+                println!(
+                    "  - {}: {:.2}% performance change",
+                    regression.test_name,
+                    regression
+                        .baseline_comparison
+                        .as_ref()
+                        .unwrap()
+                        .percentage_change
+                );
             }
 
             if self.config.alert_on_regression {
@@ -742,7 +817,10 @@ impl EnhancedPerformanceAnalyzer {
     }
 
     /// Analyze build performance metrics
-    pub async fn analyze_build_performance(&self, enable_incremental: bool) -> anyhow::Result<BuildPerformanceMetrics> {
+    pub async fn analyze_build_performance(
+        &self,
+        enable_incremental: bool,
+    ) -> anyhow::Result<BuildPerformanceMetrics> {
         // Clean the project first
         utils::clean_and_prepare_project(&self.project_path)?;
 
@@ -805,13 +883,19 @@ impl EnhancedPerformanceAnalyzer {
 
     /// Print enhanced performance result
     fn print_enhanced_performance_result(&self, result: &EnhancedPerformanceTestResult) {
-        println!("\n=== {} Enhanced Performance Results ===", result.test_name);
+        println!(
+            "\n=== {} Enhanced Performance Results ===",
+            result.test_name
+        );
         println!("Environment: {}", result.environment);
         println!("Profile: {}", result.profile);
         println!("Result: {}", result.iteration_result);
         println!("Duration: {:.2?}", result.total_duration);
         println!("Ops/second: {:.2}", result.ops_per_second);
-        println!("Avg iteration time: {:.2}ms", result.avg_iteration_time * 1000.0);
+        println!(
+            "Avg iteration time: {:.2}ms",
+            result.avg_iteration_time * 1000.0
+        );
         println!("Timestamp: {}", result.timestamp.to_rfc3339());
 
         if let Some(mem) = result.memory_usage {
@@ -820,8 +904,14 @@ impl EnhancedPerformanceAnalyzer {
 
         if let Some(comparison) = &result.baseline_comparison {
             println!("Baseline comparison:");
-            println!("  Previous: {:.2} ops/sec", comparison.baseline_ops_per_second);
-            println!("  Current: {:.2} ops/sec", comparison.current_ops_per_second);
+            println!(
+                "  Previous: {:.2} ops/sec",
+                comparison.baseline_ops_per_second
+            );
+            println!(
+                "  Current: {:.2} ops/sec",
+                comparison.current_ops_per_second
+            );
             println!("  Change: {:.2}%", comparison.percentage_change);
             if comparison.regression_threshold_exceeded {
                 println!("  ⚠️  REGRESSION DETECTED!");
@@ -948,9 +1038,13 @@ impl EnhancedPerformanceAnalyzer {
     }
 
     /// Export enhanced results to JSON file
-    pub async fn export_enhanced_results(&self, results: &[EnhancedPerformanceTestResult], output_file: &Path) -> anyhow::Result<()> {
-        use tokio::fs;
+    pub async fn export_enhanced_results(
+        &self,
+        results: &[EnhancedPerformanceTestResult],
+        output_file: &Path,
+    ) -> anyhow::Result<()> {
         use serde_json;
+        use tokio::fs;
 
         let export_data = EnhancedPerfExportData {
             test_name: self.config.test_name.clone(),
@@ -967,12 +1061,17 @@ impl EnhancedPerformanceAnalyzer {
         let json = serde_json::to_string_pretty(&export_data)?;
         fs::write(output_file, json.as_bytes()).await?;
 
-        println!("📊 Exported enhanced performance results to: {}", output_file.display());
+        println!(
+            "📊 Exported enhanced performance results to: {}",
+            output_file.display()
+        );
         Ok(())
     }
 
     /// Collect comprehensive workspace metrics
-    pub async fn collect_workspace_metrics(&mut self) -> anyhow::Result<HashMap<String, CrateMetrics>> {
+    pub async fn collect_workspace_metrics(
+        &mut self,
+    ) -> anyhow::Result<HashMap<String, CrateMetrics>> {
         let collector = self.create_workspace_collector();
         collector.collect_all_crate_metrics().await
     }
@@ -984,7 +1083,10 @@ impl EnhancedPerformanceAnalyzer {
         // Basic system information
         info.insert("os".to_string(), std::env::consts::OS.to_string());
         info.insert("arch".to_string(), std::env::consts::ARCH.to_string());
-        info.insert("rust_version".to_string(), rustc_version::version().unwrap_or_default().to_string());
+        info.insert(
+            "rust_version".to_string(),
+            rustc_version::version().unwrap_or_default().to_string(),
+        );
 
         // CPU information
         if let Ok(cpu_count) = num_cpus::get() {
@@ -993,8 +1095,14 @@ impl EnhancedPerformanceAnalyzer {
 
         // Memory information
         if let Ok(mem_info) = sysinfo::System::new().memory() {
-            info.insert("total_memory_mb".to_string(), (mem_info.total / 1024 / 1024).to_string());
-            info.insert("available_memory_mb".to_string(), (mem_info.available / 1024 / 1024).to_string());
+            info.insert(
+                "total_memory_mb".to_string(),
+                (mem_info.total / 1024 / 1024).to_string(),
+            );
+            info.insert(
+                "available_memory_mb".to_string(),
+                (mem_info.available / 1024 / 1024).to_string(),
+            );
         }
 
         info
@@ -1076,8 +1184,11 @@ impl PerformanceReportGenerator {
         for result in results {
             report.push_str(&format!(
                 "Test: {}\nProfile: {}\nResult: {}\nDuration: {:.2?}\nOps/second: {:.2}\n\n",
-                result.test_name, result.profile, result.iteration_result,
-                result.total_duration, result.ops_per_second
+                result.test_name,
+                result.profile,
+                result.iteration_result,
+                result.total_duration,
+                result.ops_per_second
             ));
         }
 
@@ -1087,7 +1198,10 @@ impl PerformanceReportGenerator {
     /// Generate a simple markdown report
     pub fn generate_markdown_report(results: &[PerformanceTestResult]) -> String {
         let mut report = "# Performance Test Report\n\n".to_string();
-        report.push_str(&format!("Generated: {}\n\n", chrono::Utc::now().to_rfc3339()));
+        report.push_str(&format!(
+            "Generated: {}\n\n",
+            chrono::Utc::now().to_rfc3339()
+        ));
         report.push_str("| Test | Profile | Duration | Ops/second |\n");
         report.push_str("|------|---------|----------|------------|\n");
 
@@ -1114,7 +1228,8 @@ impl TempPerformanceProject {
         fs::create_dir_all(project_path.join("src"))?;
 
         // Create Cargo.toml
-        let cargo_toml = format!(r#"
+        let cargo_toml = format!(
+            r#"
 [package]
 name = "{}"
 version = "0.1.0"
@@ -1122,7 +1237,9 @@ edition = "2021"
 
 [dependencies]
 tokio = {{ version = "1", features = ["full"] }}
-"#, name);
+"#,
+            name
+        );
 
         fs::write(project_path.join("Cargo.toml"), cargo_toml)?;
 
@@ -1183,7 +1300,8 @@ mod tests {
 
         // If the project doesn't exist, create a minimal one
         if !project_path.exists() {
-            TempPerformanceProject::create_minimal_project("test_performance_project", &temp_dir).unwrap();
+            TempPerformanceProject::create_minimal_project("test_performance_project", &temp_dir)
+                .unwrap();
         }
 
         let config = EnhancedPerformanceTestConfig {
@@ -1231,13 +1349,16 @@ mod tests {
         let mut analyzer = EnhancedPerformanceAnalyzer::new(temp_dir.join("test_project"), config);
 
         // Add baseline data
-        analyzer.baseline_data.insert("baseline_test_sync".to_string(), BaselineData {
-            test_name: "baseline_test_sync".to_string(),
-            environment: "test".to_string(),
-            avg_ops_per_second: 100.0,
-            last_updated: chrono::Utc::now(),
-            sample_count: 1,
-        });
+        analyzer.baseline_data.insert(
+            "baseline_test_sync".to_string(),
+            BaselineData {
+                test_name: "baseline_test_sync".to_string(),
+                environment: "test".to_string(),
+                avg_ops_per_second: 100.0,
+                last_updated: chrono::Utc::now(),
+                sample_count: 1,
+            },
+        );
 
         // Test baseline comparison
         let comparison = analyzer.perform_baseline_comparison("baseline_test_sync", 95.0);
@@ -1263,22 +1384,20 @@ mod tests {
 
     #[test]
     fn test_performance_report_generation() {
-        let results = vec![
-            EnhancedPerformanceTestResult {
-                test_name: "test1".to_string(),
-                iteration_result: 1000,
-                total_duration: Duration::from_millis(100),
-                ops_per_second: 10.0,
-                avg_iteration_time: 0.1,
-                memory_usage: None,
-                profile: "debug".to_string(),
-                environment: "test".to_string(),
-                timestamp: chrono::Utc::now(),
-                baseline_comparison: None,
-                regression_detected: false,
-                monitoring_data: None,
-            }
-        ];
+        let results = vec![EnhancedPerformanceTestResult {
+            test_name: "test1".to_string(),
+            iteration_result: 1000,
+            total_duration: Duration::from_millis(100),
+            ops_per_second: 10.0,
+            avg_iteration_time: 0.1,
+            memory_usage: None,
+            profile: "debug".to_string(),
+            environment: "test".to_string(),
+            timestamp: chrono::Utc::now(),
+            baseline_comparison: None,
+            regression_detected: false,
+            monitoring_data: None,
+        }];
 
         let text_report = PerformanceReportGenerator::generate_text_report(&results);
         assert!(text_report.contains("Performance Test Report"));
@@ -1289,30 +1408,34 @@ mod tests {
 
     #[test]
     fn test_regression_detection() {
-        let results = vec![
-            EnhancedPerformanceTestResult {
-                test_name: "test_reg".to_string(),
-                iteration_result: 1000,
-                total_duration: Duration::from_millis(100),
-                ops_per_second: 10.0,
-                avg_iteration_time: 0.1,
-                memory_usage: None,
-                profile: "debug".to_string(),
-                environment: "test".to_string(),
-                timestamp: chrono::Utc::now(),
-                baseline_comparison: Some(BaselineComparison {
-                    baseline_ops_per_second: 15.0,
-                    current_ops_per_second: 10.0,
-                    percentage_change: -33.33,
-                    regression_threshold_exceeded: true,
-                }),
-                regression_detected: true,
-                monitoring_data: None,
-            }
-        ];
+        let results = vec![EnhancedPerformanceTestResult {
+            test_name: "test_reg".to_string(),
+            iteration_result: 1000,
+            total_duration: Duration::from_millis(100),
+            ops_per_second: 10.0,
+            avg_iteration_time: 0.1,
+            memory_usage: None,
+            profile: "debug".to_string(),
+            environment: "test".to_string(),
+            timestamp: chrono::Utc::now(),
+            baseline_comparison: Some(BaselineComparison {
+                baseline_ops_per_second: 15.0,
+                current_ops_per_second: 10.0,
+                percentage_change: -33.33,
+                regression_threshold_exceeded: true,
+            }),
+            regression_detected: true,
+            monitoring_data: None,
+        }];
 
         // Test that regression is properly detected
         assert!(results[0].regression_detected);
-        assert!(results[0].baseline_comparison.as_ref().unwrap().regression_threshold_exceeded);
+        assert!(
+            results[0]
+                .baseline_comparison
+                .as_ref()
+                .unwrap()
+                .regression_threshold_exceeded
+        );
     }
 }

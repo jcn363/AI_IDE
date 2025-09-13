@@ -1,15 +1,12 @@
 //! Tauri command integration for supervisor operations
 
-use tauri::{State, AppHandle};
 use std::sync::Arc;
+use tauri::{AppHandle, State};
 use tokio::sync::Mutex;
 
 use crate::{
-    service_supervisor::Supervisor,
-    state_persistence::StatePersistence,
-    ipc_recovery::IpcMonitor,
-    types::*,
-    error::SupervisorResult,
+    error::SupervisorResult, ipc_recovery::IpcMonitor, service_supervisor::Supervisor,
+    state_persistence::StatePersistence, types::*,
 };
 use rust_ai_ide_common::validation::TauriInputSanitizer;
 
@@ -22,7 +19,10 @@ pub struct SupervisorState {
 
 /// Initialize supervisor system
 #[tauri::command]
-pub async fn init_supervisor(state: State<'_, Arc<Mutex<SupervisorState>>>, config_path: String) -> Result<String, String> {
+pub async fn init_supervisor(
+    state: State<'_, Arc<Mutex<SupervisorState>>>,
+    config_path: String,
+) -> Result<String, String> {
     let config_path = TauriInputSanitizer::sanitize_path(&config_path)
         .map_err(|e| format!("Path sanitization failed: {:?}", e))?;
 
@@ -31,8 +31,10 @@ pub async fn init_supervisor(state: State<'_, Arc<Mutex<SupervisorState>>>, conf
     // Initialize persistence layer
     let persistence = StatePersistence::new(
         &format!("{}/supervisor.db", config_path),
-        &format!("{}/checkpoints", config_path)
-    ).await.map_err(|e| format!("Failed to initialize persistence: {:?}", e))?;
+        &format!("{}/checkpoints", config_path),
+    )
+    .await
+    .map_err(|e| format!("Failed to initialize persistence: {:?}", e))?;
 
     guard.persistence = Some(persistence);
 
@@ -40,7 +42,8 @@ pub async fn init_supervisor(state: State<'_, Arc<Mutex<SupervisorState>>>, conf
     guard.ipc_monitor = Some(IpcMonitor::new());
 
     // Initialize supervisor (requires persistence to be available)
-    let supervisor = Supervisor::new().map_err(|e| format!("Failed to create supervisor: {:?}", e))?;
+    let supervisor =
+        Supervisor::new().map_err(|e| format!("Failed to create supervisor: {:?}", e))?;
     guard.supervisor = Some(supervisor);
 
     Ok(serde_json::json!({"status": "initialized"}).to_string())
@@ -57,13 +60,17 @@ pub async fn register_service(
     restart_policy: String,
 ) -> Result<String, String> {
     let mut guard = state.lock().await;
-    let supervisor = guard.supervisor.as_mut().ok_or("Supervisor not initialized")?;
+    let supervisor = guard
+        .supervisor
+        .as_mut()
+        .ok_or("Supervisor not initialized")?;
 
     let service_config = ServiceConfig {
         id: service_id,
         name: service_name,
         command: TauriInputSanitizer::sanitize_path(&command).map_err(|e| format!("{:?}", e))?,
-        args: args.into_iter()
+        args: args
+            .into_iter()
             .map(|arg| TauriInputSanitizer::sanitize_string(&arg))
             .collect::<Result<_, _>>()
             .map_err(|e| format!("{:?}", e))?,
@@ -88,7 +95,9 @@ pub async fn register_service(
         critical: false,
     };
 
-    supervisor.register_service(service_config).await
+    supervisor
+        .register_service(service_config)
+        .await
         .map_err(|e| format!("Failed to register service: {:?}", e))?;
 
     Ok(serde_json::json!({"status": "registered"}).to_string())
@@ -96,15 +105,24 @@ pub async fn register_service(
 
 /// Start monitoring all services
 #[tauri::command]
-pub async fn start_supervisor_monitoring(state: State<'_, Arc<Mutex<SupervisorState>>>) -> Result<String, String> {
+pub async fn start_supervisor_monitoring(
+    state: State<'_, Arc<Mutex<SupervisorState>>>,
+) -> Result<String, String> {
     let mut guard = state.lock().await;
-    let supervisor = guard.supervisor.as_mut().ok_or("Supervisor not initialized")?;
+    let supervisor = guard
+        .supervisor
+        .as_mut()
+        .ok_or("Supervisor not initialized")?;
 
-    supervisor.start_monitoring().await
+    supervisor
+        .start_monitoring()
+        .await
         .map_err(|e| format!("Failed to start monitoring: {:?}", e))?;
 
     if let Some(ipc_monitor) = &mut guard.ipc_monitor {
-        ipc_monitor.start_monitoring().await
+        ipc_monitor
+            .start_monitoring()
+            .await
             .map_err(|e| format!("Failed to start IPC monitoring: {:?}", e))?;
     }
 
@@ -113,66 +131,97 @@ pub async fn start_supervisor_monitoring(state: State<'_, Arc<Mutex<SupervisorSt
 
 /// Get supervisor health status
 #[tauri::command]
-pub async fn get_supervisor_health(state: State<'_, Arc<Mutex<SupervisorState>>>) -> Result<String, String> {
+pub async fn get_supervisor_health(
+    state: State<'_, Arc<Mutex<SupervisorState>>>,
+) -> Result<String, String> {
     let guard = state.lock().await;
-    let supervisor = guard.supervisor.as_ref().ok_or("Supervisor not initialized")?;
+    let supervisor = guard
+        .supervisor
+        .as_ref()
+        .ok_or("Supervisor not initialized")?;
 
-    let stats = supervisor.get_supervisor_health().await
+    let stats = supervisor
+        .get_supervisor_health()
+        .await
         .map_err(|e| format!("Failed to get health: {:?}", e))?;
 
-    serde_json::to_string(&stats)
-        .map_err(|e| format!("Failed to serialize health data: {:?}", e))
+    serde_json::to_string(&stats).map_err(|e| format!("Failed to serialize health data: {:?}", e))
 }
 
 /// Create a checkpoint
 #[tauri::command]
-pub async fn create_checkpoint(state: State<'_, Arc<Mutex<SupervisorState>>>) -> Result<String, String> {
+pub async fn create_checkpoint(
+    state: State<'_, Arc<Mutex<SupervisorState>>>,
+) -> Result<String, String> {
     let mut guard = state.lock().await;
-    let persistence = guard.persistence.as_ref().ok_or("Persistence not initialized")?;
-    let supervisor = guard.supervisor.as_ref().ok_or("Supervisor not initialized")?;
+    let persistence = guard
+        .persistence
+        .as_ref()
+        .ok_or("Persistence not initialized")?;
+    let supervisor = guard
+        .supervisor
+        .as_ref()
+        .ok_or("Supervisor not initialized")?;
 
     // Get current service states
     let services = HashMap::new(); // This would be populated from actual service states
     let operations = vec![]; // This would be populated from pending operations
 
-    let checkpoint_id = persistence.create_checkpoint(&services, &operations).await
+    let checkpoint_id = persistence
+        .create_checkpoint(&services, &operations)
+        .await
         .map_err(|e| format!("Failed to create checkpoint: {:?}", e))?;
 
     Ok(serde_json::json!({
         "status": "checkpoint_created",
         "checkpoint_id": checkpoint_id.to_string()
-    }).to_string())
+    })
+    .to_string())
 }
 
 /// Load latest checkpoint
 #[tauri::command]
-pub async fn load_checkpoint(state: State<'_, Arc<Mutex<SupervisorState>>>) -> Result<String, String> {
+pub async fn load_checkpoint(
+    state: State<'_, Arc<Mutex<SupervisorState>>>,
+) -> Result<String, String> {
     let mut guard = state.lock().await;
-    let persistence = guard.persistence.as_ref().ok_or("Persistence not initialized")?;
+    let persistence = guard
+        .persistence
+        .as_ref()
+        .ok_or("Persistence not initialized")?;
 
-    let snapshot = persistence.load_latest_checkpoint().await
+    let snapshot = persistence
+        .load_latest_checkpoint()
+        .await
         .map_err(|e| format!("Failed to load checkpoint: {:?}", e))?;
 
-    serde_json::to_string(&snapshot)
-        .map_err(|e| format!("Failed to serialize snapshot: {:?}", e))
+    serde_json::to_string(&snapshot).map_err(|e| format!("Failed to serialize snapshot: {:?}", e))
 }
 
 /// Get database statistics
 #[tauri::command]
-pub async fn get_database_stats(state: State<'_, Arc<Mutex<SupervisorState>>>) -> Result<String, String> {
+pub async fn get_database_stats(
+    state: State<'_, Arc<Mutex<SupervisorState>>>,
+) -> Result<String, String> {
     let guard = state.lock().await;
-    let persistence = guard.persistence.as_ref().ok_or("Persistence not initialized")?;
+    let persistence = guard
+        .persistence
+        .as_ref()
+        .ok_or("Persistence not initialized")?;
 
-    let stats = persistence.get_statistics().await
+    let stats = persistence
+        .get_statistics()
+        .await
         .map_err(|e| format!("Failed to get statistics: {:?}", e))?;
 
-    serde_json::to_string(&stats)
-        .map_err(|e| format!("Failed to serialize statistics: {:?}", e))
+    serde_json::to_string(&stats).map_err(|e| format!("Failed to serialize statistics: {:?}", e))
 }
 
 /// Stop supervisor system
 #[tauri::command]
-pub async fn stop_supervisor(state: State<'_, Arc<Mutex<SupervisorState>>>) -> Result<String, String> {
+pub async fn stop_supervisor(
+    state: State<'_, Arc<Mutex<SupervisorState>>>,
+) -> Result<String, String> {
     let mut guard = state.lock().await;
 
     if let Some(supervisor) = &guard.supervisor {

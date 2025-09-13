@@ -17,13 +17,16 @@ const keyboardSlice = createSlice({
   reducers: {
     setCurrentProfile: (state, action: PayloadAction<string>) => {
       const profileId = action.payload;
-      if (keyboardService.getAllProfiles().find(p => p.id === profileId)) {
+      if (keyboardService.getAllProfiles().find((p) => p.id === profileId)) {
         state.currentProfile = profileId;
         keyboardService.switchProfile(profileId);
       }
     },
 
-    createProfile: (state, action: PayloadAction<Omit<UserShortcutProfile, 'id' | 'createdAt' | 'updatedAt'>>) => {
+    createProfile: (
+      state,
+      action: PayloadAction<Omit<UserShortcutProfile, 'id' | 'createdAt' | 'updatedAt'>>
+    ) => {
       const profile = keyboardService.createProfile(action.payload);
       state.profiles[profile.id] = profile;
     },
@@ -84,7 +87,7 @@ const keyboardSlice = createSlice({
     loadProfiles: (state) => {
       const profiles = keyboardService.getAllProfiles();
       state.profiles = {};
-      profiles.forEach(profile => {
+      profiles.forEach((profile) => {
         if (!profile.isDefault) {
           state.profiles[profile.id] = profile;
         }
@@ -123,13 +126,16 @@ export default keyboardSlice.reducer;
 export const selectKeyboard = (state: any) => state.keyboard;
 export const selectCurrentProfile = (state: any) => {
   const profiles = keyboardService.getAllProfiles();
-  return profiles.find(p => p.id === state.keyboard.currentProfile) || profiles.find(p => p.isDefault);
+  return (
+    profiles.find((p) => p.id === state.keyboard.currentProfile) ||
+    profiles.find((p) => p.isDefault)
+  );
 };
 export const selectProfiles = (state: any) => {
   const profiles = keyboardService.getAllProfiles();
   return {
-    default: profiles.find(p => p.isDefault),
-    user: profiles.filter(p => !p.isDefault),
+    default: profiles.find((p) => p.isDefault),
+    user: profiles.filter((p) => !p.isDefault),
   };
 };
 export const selectShortcuts = (state: any) => {

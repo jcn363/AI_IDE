@@ -3,11 +3,11 @@
 //! This module provides Tauri commands for managing AI models, fine-tuning jobs,
 //! and related operations for the Rust AI IDE.
 
-use crate::state::AppState;
 use crate::commands::ai::services::{AIAnalysisConfig, AIServiceState};
+use crate::state::AppState;
 use rust_ai_ide_ai::finetune;
-use rust_ai_ide_ai::model_loader;
 use rust_ai_ide_ai::inference;
+use rust_ai_ide_ai::model_loader;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -252,9 +252,7 @@ pub struct ModelManagementState {
 
 /// Get list of available models
 #[tauri::command]
-pub async fn list_available_models(
-    _state: State<'_, AppState>,
-) -> Result<Vec<ModelInfo>, String> {
+pub async fn list_available_models(_state: State<'_, AppState>) -> Result<Vec<ModelInfo>, String> {
     // Get models from model registry
     let registry = finetune::create_orchestrator()
         .map_err(|e| format!("Failed to create orchestrator: {}", e))?;
@@ -304,9 +302,7 @@ pub async fn list_available_models(
 
 /// Get list of downloaded models
 #[tauri::command]
-pub async fn list_downloaded_models(
-    _state: State<'_, AppState>,
-) -> Result<Vec<ModelInfo>, String> {
+pub async fn list_downloaded_models(_state: State<'_, AppState>) -> Result<Vec<ModelInfo>, String> {
     // List models in the local model directory
     let models_dir = dirs::home_dir()
         .ok_or("Could not find home directory")?
@@ -350,9 +346,7 @@ pub async fn list_downloaded_models(
 
 /// Get loaded models
 #[tauri::command]
-pub async fn get_loaded_models(
-    _state: State<'_, AppState>,
-) -> Result<Vec<ModelInfo>, String> {
+pub async fn get_loaded_models(_state: State<'_, AppState>) -> Result<Vec<ModelInfo>, String> {
     // Get loaded models from model loader
     // Placeholder implementation
     Ok(vec![])
@@ -368,7 +362,10 @@ pub async fn load_model(
 
     // Validate request parameters
     if !request.model_path.exists() {
-        return Err(format!("Model path does not exist: {:?}", request.model_path));
+        return Err(format!(
+            "Model path does not exist: {:?}",
+            request.model_path
+        ));
     }
 
     // Create model config
@@ -409,10 +406,7 @@ pub async fn load_model(
 
 /// Unload a model
 #[tauri::command]
-pub async fn unload_model(
-    _state: State<'_, AppState>,
-    model_id: String,
-) -> Result<(), String> {
+pub async fn unload_model(_state: State<'_, AppState>, model_id: String) -> Result<(), String> {
     log::info!("Unloading model: {}", model_id);
 
     // Placeholder: In real implementation, this would unload the model
@@ -450,7 +444,10 @@ pub async fn start_finetune_job(
 
     // Validate dataset path
     if !request.dataset_path.exists() {
-        return Err(format!("Dataset path does not exist: {:?}", request.dataset_path));
+        return Err(format!(
+            "Dataset path does not exist: {:?}",
+            request.dataset_path
+        ));
     }
 
     // Create fine-tuning job
@@ -661,9 +658,7 @@ pub async fn prepare_dataset(
 
 /// Get resource usage status
 #[tauri::command]
-pub async fn get_resource_status(
-    _state: State<'_, AppState>,
-) -> Result<ResourceStatus, String> {
+pub async fn get_resource_status(_state: State<'_, AppState>) -> Result<ResourceStatus, String> {
     // Placeholder implementation
     Ok(ResourceStatus {
         memory_usage_gb: 4.2,
@@ -687,7 +682,10 @@ pub async fn validate_model_config(
 
     // Check model path
     if !request.model_path.exists() {
-        return Err(format!("Model path does not exist: {:?}", request.model_path));
+        return Err(format!(
+            "Model path does not exist: {:?}",
+            request.model_path
+        ));
     }
 
     // Check memory requirements
@@ -710,7 +708,10 @@ pub async fn validate_model_config(
     // Check LoRA adapters
     for adapter in &request.lora_adapters {
         if !adapter.ends_with(".bin") && !adapter.ends_with(".safetensors") {
-            warnings.push(format!("LoRA adapter {} may have incorrect format", adapter));
+            warnings.push(format!(
+                "LoRA adapter {} may have incorrect format",
+                adapter
+            ));
         }
     }
 
@@ -738,7 +739,11 @@ pub async fn download_model(
     _state: State<'_, AppState>,
     request: ModelDownloadRequest,
 ) -> Result<String, String> {
-    log::info!("Downloading model: {:?} {:?}", request.model_type, request.model_size);
+    log::info!(
+        "Downloading model: {:?} {:?}",
+        request.model_type,
+        request.model_size
+    );
 
     // Determine model identifier
     let model_identifier = match (request.model_type, request.model_size) {
@@ -759,7 +764,11 @@ pub async fn download_model(
     });
 
     // Placeholder: In real implementation, this would download the model
-    log::info!("Would download model {} to {:?}", model_identifier, destination_path);
+    log::info!(
+        "Would download model {} to {:?}",
+        model_identifier,
+        destination_path
+    );
 
     let download_id = format!("dl_{}", uuid::Uuid::new_v4());
 
@@ -780,7 +789,8 @@ fn parse_model_name(model_name: &str) -> (ModelType, ModelSize) {
 
     let model_size = if lower_name.contains("large") || lower_name.contains("13b") {
         ModelSize::Large
-    } else if lower_name.contains("small") || lower_name.contains("1b") || lower_name.contains("3b") {
+    } else if lower_name.contains("small") || lower_name.contains("1b") || lower_name.contains("3b")
+    {
         ModelSize::Small
     } else {
         ModelSize::Medium

@@ -1,9 +1,9 @@
 import { TextEdit } from 'vscode-languageserver';
 import type { Range } from 'vscode-languageserver-types';
 import { invoke } from '@tauri-apps/api/core';
-import type { 
-  CodeGenerationOptions as CodeGenOpts, 
-  GeneratedCode, 
+import type {
+  CodeGenerationOptions as CodeGenOpts,
+  GeneratedCode,
   AIContext,
   AnalysisPreferences,
   Dependency,
@@ -12,7 +12,7 @@ import type {
   PerformanceHint,
   StyleViolation,
   ArchitectureSuggestion,
-  CodeSmell
+  CodeSmell,
 } from '../types';
 
 export type { GeneratedCode };
@@ -92,7 +92,7 @@ export class CodeGenerator {
   private templates = new Map<string, CodeTemplate>();
   private projectContext: ProjectContext | null = null;
   private defaultStylePreferences: StylePreferences;
-  
+
   private constructor() {
     this.defaultStylePreferences = {
       naming_convention: 'snake_case',
@@ -112,17 +112,17 @@ export class CodeGenerator {
 
   public async initialize(): Promise<void> {
     if (this.isInitialized) return;
-    
+
     try {
       // Initialize AI service if not already done
       await this.ensureAIServiceInitialized();
-      
+
       // Load project context
       await this.loadProjectContext();
-      
+
       // Initialize code templates
       await this.loadCodeTemplates();
-      
+
       this.isInitialized = true;
       console.log('CodeGenerator initialized successfully');
     } catch (error) {
@@ -170,7 +170,7 @@ export class CodeGenerator {
           explanation_cache_ttl_hours: 24,
         },
       };
-      
+
       await invoke('initialize_ai_service', { config: defaultConfig });
     }
   }
@@ -224,7 +224,14 @@ mod tests {
 /// # Errors
 ///
 /// {{error_conditions}}`,
-      variables: ['brief_description', 'detailed_description', 'parameter_docs', 'return_description', 'example_code', 'error_conditions'],
+      variables: [
+        'brief_description',
+        'detailed_description',
+        'parameter_docs',
+        'return_description',
+        'example_code',
+        'error_conditions',
+      ],
       language: 'rust',
     });
 
@@ -248,7 +255,16 @@ impl {{struct_name}} {
 }
 
 {{trait_implementations}}`,
-      variables: ['struct_description', 'struct_name', 'additional_derives', 'fields', 'constructor_params', 'field_assignments', 'additional_methods', 'trait_implementations'],
+      variables: [
+        'struct_description',
+        'struct_name',
+        'additional_derives',
+        'fields',
+        'constructor_params',
+        'field_assignments',
+        'additional_methods',
+        'trait_implementations',
+      ],
       language: 'rust',
     });
   }
@@ -393,12 +409,18 @@ impl {{struct_name}} {
     }
   }
 
-  public async generateStub(interfaceText: string, options: CodeGenerationOptions): Promise<GeneratedCode> {
+  public async generateStub(
+    interfaceText: string,
+    options: CodeGenerationOptions
+  ): Promise<GeneratedCode> {
     if (!this.isInitialized) {
       await this.initialize();
     }
 
-    const enhancedOptions = { ...options, context: `${options.context}\n\nInterface to implement:\n${interfaceText}` };
+    const enhancedOptions = {
+      ...options,
+      context: `${options.context}\n\nInterface to implement:\n${interfaceText}`,
+    };
     const cacheKey = this.generateCacheKey('stub', enhancedOptions);
     const cached = this.getCachedResult(cacheKey);
     if (cached) {
@@ -457,7 +479,7 @@ impl {{struct_name}} {
     try {
       // Call the backend code generation command (to be implemented in backend)
       const result = await invoke('generate_code', request);
-      
+
       return {
         content: result.content,
         range: this.calculateInsertionRange(request),
@@ -477,23 +499,23 @@ impl {{struct_name}} {
     try {
       // Start incremental generation (to be implemented in backend)
       const generationId = await invoke('start_incremental_generation', request);
-      
+
       let isComplete = false;
       let chunkIndex = 0;
-      
+
       while (!isComplete) {
         // Poll for next chunk
-        const progress: GenerationProgress = await invoke('get_generation_progress', { 
-          generation_id: generationId 
+        const progress: GenerationProgress = await invoke('get_generation_progress', {
+          generation_id: generationId,
         });
-        
+
         if (progress.status === 'failed') {
           throw new Error('Incremental generation failed');
         }
-        
+
         if (progress.generated_so_far && progress.current_chunk !== chunkIndex) {
           chunkIndex = progress.current_chunk || 0;
-          
+
           yield {
             content: progress.generated_so_far,
             range: this.calculateInsertionRange(request),
@@ -502,12 +524,12 @@ impl {{struct_name}} {
             type: request.generation_type,
           };
         }
-        
+
         if (progress.status === 'completed') {
           isComplete = true;
         } else {
           // Wait before polling again
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
       }
     } catch (error) {
@@ -517,12 +539,12 @@ impl {{struct_name}} {
   }
 
   private async generateWithTemplate(
-    type: string, 
+    type: string,
     options: CodeGenerationOptions
   ): Promise<GeneratedCode> {
     const templateKey = `${options.language || 'rust'}_${type}`;
     const template = this.templates.get(templateKey);
-    
+
     if (!template) {
       // Fallback to basic generation
       return this.generateBasicFallback(type, options);
@@ -530,11 +552,18 @@ impl {{struct_name}} {
 
     const variables = await this.extractTemplateVariables(template, options);
     const content = this.fillTemplate(template.pattern, variables);
-    
+
     return {
       content,
-      range: this.calculateInsertionRange({ generation_type: type as any, context: await this.buildAIContext(options), options: {} }),
-      edits: this.createEditsFromContent({ generation_type: type as any, context: await this.buildAIContext(options), options: {} }, content),
+      range: this.calculateInsertionRange({
+        generation_type: type as any,
+        context: await this.buildAIContext(options),
+        options: {},
+      }),
+      edits: this.createEditsFromContent(
+        { generation_type: type as any, context: await this.buildAIContext(options), options: {} },
+        content
+      ),
       confidence: 0.7, // Lower confidence for template-based generation
       type: type as any,
     };
@@ -543,7 +572,7 @@ impl {{struct_name}} {
   private async buildAIContext(options: CodeGenerationOptions): Promise<AIContext> {
     const workspaceStructure = this.projectContext?.workspace_structure || {};
     const dependencies = this.projectContext?.dependencies || [];
-    
+
     // Analyze current code for better context
     let analysisPreferences: AnalysisPreferences = {
       enable_code_smells: true,
@@ -556,21 +585,23 @@ impl {{struct_name}} {
     };
 
     // Extract cursor position if available
-    const cursorPosition: [number, number] | undefined = options.cursorPosition 
+    const cursorPosition: [number, number] | undefined = options.cursorPosition
       ? [options.cursorPosition.line, options.cursorPosition.character]
       : undefined;
 
     // Build project context from recent analysis
     const projectContext: Record<string, string> = {};
     if (this.projectContext?.recent_analysis) {
-      projectContext.code_quality_score = this.projectContext.recent_analysis.metrics?.maintainability?.toString() || '0';
-      projectContext.complexity_score = this.projectContext.recent_analysis.metrics?.complexity?.toString() || '0';
-      
+      projectContext.code_quality_score =
+        this.projectContext.recent_analysis.metrics?.maintainability?.toString() || '0';
+      projectContext.complexity_score =
+        this.projectContext.recent_analysis.metrics?.complexity?.toString() || '0';
+
       // Add insights from recent analysis
       if (this.projectContext.recent_analysis.suggestions) {
         const commonIssues = this.projectContext.recent_analysis.suggestions
           .slice(0, 3)
-          .map(s => s.message)
+          .map((s) => s.message)
           .join('; ');
         projectContext.common_issues = commonIssues;
       }
@@ -579,7 +610,7 @@ impl {{struct_name}} {
     // Add existing code patterns
     if (this.projectContext?.existing_patterns) {
       const patterns = this.projectContext.existing_patterns
-        .map(p => `${p.pattern_type}: ${p.name}`)
+        .map((p) => `${p.pattern_type}: ${p.name}`)
         .join(', ');
       projectContext.existing_patterns = patterns;
     }
@@ -597,11 +628,11 @@ impl {{struct_name}} {
   }
 
   private async extractTemplateHints(
-    options: CodeGenerationOptions, 
+    options: CodeGenerationOptions,
     type: string
   ): Promise<TemplateHints> {
     const hints: TemplateHints = {};
-    
+
     // Extract function signature from context
     if (options.context) {
       const functionMatch = options.context.match(/fn\s+(\w+)\s*\([^)]*\)\s*(?:->\s*([^{]+))?/);
@@ -609,18 +640,18 @@ impl {{struct_name}} {
         hints.function_signature = functionMatch[0];
         hints.expected_return_type = functionMatch[2]?.trim();
       }
-      
+
       // Extract parameter types
       const paramMatches = options.context.matchAll(/(\w+):\s*([^,)]+)/g);
       hints.parameter_types = {};
       for (const match of paramMatches) {
         hints.parameter_types[match[1]] = match[2].trim();
       }
-      
+
       // Extract imports
       const importMatches = options.context.matchAll(/use\s+([^;]+);/g);
-      hints.imports_needed = Array.from(importMatches, m => m[1].trim());
-      
+      hints.imports_needed = Array.from(importMatches, (m) => m[1].trim());
+
       // Determine error handling style
       if (options.context.includes('Result<')) {
         hints.error_handling_style = 'result';
@@ -630,7 +661,7 @@ impl {{struct_name}} {
         hints.error_handling_style = 'panic';
       }
     }
-    
+
     return hints;
   }
 
@@ -644,16 +675,24 @@ impl {{struct_name}} {
         code_style: 'idiomatic',
       };
     }
-    
+
     return this.defaultStylePreferences;
   }
 
-  private inferNamingConvention(styleGuide: StyleGuide): 'snake_case' | 'camelCase' | 'PascalCase' | 'kebab-case' {
+  private inferNamingConvention(
+    styleGuide: StyleGuide
+  ): 'snake_case' | 'camelCase' | 'PascalCase' | 'kebab-case' {
     const conventions = styleGuide.naming_conventions;
-    if (conventions.function?.includes('snake_case') || conventions.variable?.includes('snake_case')) {
+    if (
+      conventions.function?.includes('snake_case') ||
+      conventions.variable?.includes('snake_case')
+    ) {
       return 'snake_case';
     }
-    if (conventions.function?.includes('camelCase') || conventions.variable?.includes('camelCase')) {
+    if (
+      conventions.function?.includes('camelCase') ||
+      conventions.variable?.includes('camelCase')
+    ) {
       return 'camelCase';
     }
     if (conventions.type?.includes('PascalCase') || conventions.struct?.includes('PascalCase')) {
@@ -662,11 +701,13 @@ impl {{struct_name}} {
     return 'snake_case'; // Default for Rust
   }
 
-  private inferTestFramework(options: CodeGenerationOptions): 'built_in' | 'jest' | 'mocha' | 'pytest' | 'custom' {
+  private inferTestFramework(
+    options: CodeGenerationOptions
+  ): 'built_in' | 'jest' | 'mocha' | 'pytest' | 'custom' {
     if (options.language === 'rust') return 'built_in';
     if (options.language === 'javascript' || options.language === 'typescript') {
       // Check if jest is in dependencies
-      const hasJest = this.projectContext?.dependencies.some(d => d.name === 'jest');
+      const hasJest = this.projectContext?.dependencies.some((d) => d.name === 'jest');
       return hasJest ? 'jest' : 'mocha';
     }
     if (options.language === 'python') return 'pytest';
@@ -677,16 +718,16 @@ impl {{struct_name}} {
     try {
       // Load workspace structure
       const workspaceStructure = await this.getWorkspaceStructure();
-      
+
       // Load dependencies
       const dependencies = await this.getDependencies();
-      
+
       // Analyze existing code patterns
       const existingPatterns = await this.analyzeExistingPatterns();
-      
+
       // Load style guide if available
       const styleGuide = await this.loadStyleGuide();
-      
+
       this.projectContext = {
         workspace_structure: workspaceStructure,
         dependencies,
@@ -747,7 +788,7 @@ impl {{struct_name}} {
     try {
       // Load additional templates from project or user preferences
       const customTemplates = await invoke('get_code_templates');
-      
+
       for (const template of customTemplates) {
         this.templates.set(template.name, template);
       }
@@ -766,7 +807,7 @@ impl {{struct_name}} {
     if (cached) {
       const age = Date.now() - cached.timestamp;
       const maxAge = 10 * 60 * 1000; // 10 minutes
-      
+
       if (age < maxAge) {
         return cached.result;
       } else {
@@ -781,7 +822,7 @@ impl {{struct_name}} {
       result,
       timestamp: Date.now(),
     });
-    
+
     // Clean up old cache entries
     if (this.cache.size > 50) {
       const entries = Array.from(this.cache.entries());
@@ -794,14 +835,14 @@ impl {{struct_name}} {
   private calculateInsertionRange(request: CodeGenerationRequest): Range {
     const options = request.context;
     const type = request.generation_type;
-    
+
     if (!options.file_name || !options.current_code) {
       return { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } };
     }
 
     const lines = options.current_code.split('\n');
     const cursorLine = options.cursor_position?.[0] || 0;
-    
+
     switch (type) {
       case 'test':
         // Insert at end of file for tests
@@ -809,7 +850,7 @@ impl {{struct_name}} {
           start: { line: lines.length, character: 0 },
           end: { line: lines.length, character: 0 },
         };
-        
+
       case 'documentation':
         // Insert before the current function/struct
         const docLine = this.findDocumentationInsertionPoint(options.current_code, cursorLine);
@@ -817,7 +858,7 @@ impl {{struct_name}} {
           start: { line: docLine, character: 0 },
           end: { line: docLine, character: 0 },
         };
-        
+
       case 'boilerplate':
       case 'stub':
         // Insert at cursor position
@@ -825,14 +866,14 @@ impl {{struct_name}} {
           start: { line: cursorLine, character: options.cursor_position?.[1] || 0 },
           end: { line: cursorLine, character: options.cursor_position?.[1] || 0 },
         };
-        
+
       case 'example':
         // Insert at end of file
         return {
           start: { line: lines.length, character: 0 },
           end: { line: lines.length, character: 0 },
         };
-        
+
       default:
         return {
           start: { line: cursorLine, character: 0 },
@@ -844,21 +885,21 @@ impl {{struct_name}} {
   private createEditsFromContent(request: CodeGenerationRequest, content: string): TextEdit[] {
     const range = this.calculateInsertionRange(request);
     const type = request.generation_type;
-    
+
     switch (type) {
       case 'test':
         return [TextEdit.insert(range.start, `\n${content}\n`)];
-        
+
       case 'documentation':
         return [TextEdit.insert(range.start, `${content}\n`)];
-        
+
       case 'boilerplate':
       case 'stub':
         return [TextEdit.replace(range, content)];
-        
+
       case 'example':
         return [TextEdit.insert(range.start, `\n// Example usage:\n${content}\n`)];
-        
+
       default:
         return [TextEdit.insert(range.start, content)];
     }
@@ -866,39 +907,45 @@ impl {{struct_name}} {
 
   private findDocumentationInsertionPoint(code: string, cursorLine: number): number {
     const lines = code.split('\n');
-    
+
     // Look backwards from cursor to find function/struct definition
     for (let i = cursorLine; i >= 0; i--) {
       const line = lines[i].trim();
-      if (line.startsWith('fn ') || line.startsWith('pub fn ') || 
-          line.startsWith('struct ') || line.startsWith('pub struct ') ||
-          line.startsWith('enum ') || line.startsWith('pub enum ') ||
-          line.startsWith('trait ') || line.startsWith('pub trait ')) {
+      if (
+        line.startsWith('fn ') ||
+        line.startsWith('pub fn ') ||
+        line.startsWith('struct ') ||
+        line.startsWith('pub struct ') ||
+        line.startsWith('enum ') ||
+        line.startsWith('pub enum ') ||
+        line.startsWith('trait ') ||
+        line.startsWith('pub trait ')
+      ) {
         return i;
       }
     }
-    
+
     return cursorLine;
   }
 
   private async extractTemplateVariables(
-    template: CodeTemplate, 
+    template: CodeTemplate,
     options: CodeGenerationOptions
   ): Promise<Record<string, string>> {
     const variables: Record<string, string> = {};
-    
+
     // Extract function name from context
     const functionMatch = options.context.match(/fn\s+(\w+)/);
     if (functionMatch) {
       variables.function_name = functionMatch[1];
     }
-    
+
     // Extract struct name
     const structMatch = options.context.match(/struct\s+(\w+)/);
     if (structMatch) {
       variables.struct_name = structMatch[1];
     }
-    
+
     // Generate descriptions based on context
     if (template.name.includes('documentation')) {
       variables.brief_description = this.generateBriefDescription(options.context);
@@ -908,34 +955,34 @@ impl {{struct_name}} {
       variables.example_code = this.generateExampleCode(options.context);
       variables.error_conditions = this.generateErrorConditions(options.context);
     }
-    
+
     if (template.name.includes('test')) {
       variables.test_setup = this.generateTestSetup(options.context);
       variables.function_call = this.generateFunctionCall(options.context);
       variables.assertions = this.generateAssertions(options.context);
       variables.additional_tests = this.generateAdditionalTests(options.context);
     }
-    
+
     return variables;
   }
 
   private fillTemplate(pattern: string, variables: Record<string, string>): string {
     let result = pattern;
-    
+
     for (const [key, value] of Object.entries(variables)) {
       const placeholder = `{{${key}}}`;
       result = result.replace(new RegExp(placeholder, 'g'), value);
     }
-    
+
     // Clean up any remaining placeholders
     result = result.replace(/\{\{[^}]+\}\}/g, '// TODO: Fill in this section');
-    
+
     return result;
   }
 
   private generateBasicFallback(type: string, options: CodeGenerationOptions): GeneratedCode {
     let content = '';
-    
+
     switch (type) {
       case 'test':
         content = `#[cfg(test)]
@@ -949,7 +996,7 @@ mod tests {
     }
 }`;
         break;
-        
+
       case 'documentation':
         content = `/// TODO: Add description
 ///
@@ -967,7 +1014,7 @@ mod tests {
 /// // TODO: Add example
 /// \`\`\``;
         break;
-        
+
       case 'boilerplate':
         content = `// TODO: Add implementation
 pub struct NewStruct {
@@ -982,15 +1029,26 @@ impl NewStruct {
     }
 }`;
         break;
-        
+
       default:
         content = `// TODO: Generated ${type} code`;
     }
-    
+
     return {
       content,
-      range: this.calculateInsertionRange({ generation_type: type as any, context: { current_code: options.fileContent || '', file_name: options.filePath }, options: {} }),
-      edits: this.createEditsFromContent({ generation_type: type as any, context: { current_code: options.fileContent || '', file_name: options.filePath }, options: {} }, content),
+      range: this.calculateInsertionRange({
+        generation_type: type as any,
+        context: { current_code: options.fileContent || '', file_name: options.filePath },
+        options: {},
+      }),
+      edits: this.createEditsFromContent(
+        {
+          generation_type: type as any,
+          context: { current_code: options.fileContent || '', file_name: options.filePath },
+          options: {},
+        },
+        content
+      ),
       confidence: 0.5,
       type: type as any,
     };
@@ -1012,11 +1070,11 @@ impl NewStruct {
   private generateParameterDocs(context: string): string {
     const paramMatches = context.matchAll(/(\w+):\s*([^,)]+)/g);
     const docs = [];
-    
+
     for (const match of paramMatches) {
       docs.push(`/// * \`${match[1]}\` - TODO: Describe ${match[1]} parameter`);
     }
-    
+
     return docs.length > 0 ? docs.join('\n') : '/// No parameters';
   }
 
@@ -1082,7 +1140,7 @@ impl NewStruct {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return hash.toString(36);
@@ -1102,8 +1160,8 @@ impl NewStruct {
 
   public getCacheStats(): { size: number; oldestEntry: number; newestEntry: number } {
     const entries = Array.from(this.cache.values());
-    const timestamps = entries.map(entry => entry.timestamp);
-    
+    const timestamps = entries.map((entry) => entry.timestamp);
+
     return {
       size: this.cache.size,
       oldestEntry: timestamps.length > 0 ? Math.min(...timestamps) : 0,
@@ -1127,7 +1185,7 @@ impl NewStruct {
 
   public async addCustomTemplate(template: CodeTemplate): Promise<void> {
     this.templates.set(template.name, template);
-    
+
     try {
       await invoke('save_custom_template', { template });
     } catch (error) {

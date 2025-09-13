@@ -33,17 +33,14 @@
 //! ```
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-use crate::{
-    SecurityResult, SecurityError,
-    ComponentStatus, AuditTrail, UserContext,
-};
+use crate::{AuditTrail, ComponentStatus, SecurityError, SecurityResult, UserContext};
 
 /// Supported compliance frameworks
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -84,7 +81,7 @@ pub enum RiskSeverity {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceMetrics {
     pub framework: ComplianceFramework,
-    pub overall_score: f64,     // 0-100 percentage
+    pub overall_score: f64, // 0-100 percentage
     pub controls_total: u32,
     pub controls_passed: u32,
     pub controls_failed: u32,
@@ -92,7 +89,7 @@ pub struct ComplianceMetrics {
     pub critical_findings: u32,
     pub last_assessment: DateTime<Utc>,
     pub next_assessment: DateTime<Utc>,
-    pub risk_score: f64,        // Overall risk score
+    pub risk_score: f64, // Overall risk score
 }
 
 /// Compliance finding/issue
@@ -131,12 +128,12 @@ pub struct DataSubjectRequest {
 /// DSAR request types
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DSARType {
-    Access,     // Right to access personal data
+    Access,        // Right to access personal data
     Rectification, // Right to correct personal data
-    Erasure,    // Right to be forgotten
-    Restriction, // Right to restrict processing
-    Portability, // Right to data portability
-    Objection,  // Right to object to processing
+    Erasure,       // Right to be forgotten
+    Restriction,   // Right to restrict processing
+    Portability,   // Right to data portability
+    Objection,     // Right to object to processing
 }
 
 /// DSAR status
@@ -160,7 +157,7 @@ pub struct ComplianceControl {
     pub category: String,
     pub automated_check: bool,
     pub manual_evidence_required: bool,
-    pub frequency_days: u32,    // How often to check this control
+    pub frequency_days: u32, // How often to check this control
     pub criticality: RiskSeverity,
 }
 
@@ -272,8 +269,8 @@ pub enum AlertType {
 pub struct ComplianceTrend {
     pub period_months: u32,
     pub framework: ComplianceFramework,
-    pub scores: Vec<TrendPoint>, // Monthly scores
-    pub risk_levels: Vec<TrendPoint>, // Monthly risk levels
+    pub scores: Vec<TrendPoint>,         // Monthly scores
+    pub risk_levels: Vec<TrendPoint>,    // Monthly risk levels
     pub finding_counts: Vec<TrendPoint>, // Monthly finding counts
 }
 
@@ -362,13 +359,18 @@ impl ComplianceDashboard {
     }
 
     /// Add GDPR compliance controls
-    async fn add_gdpr_controls(&self, controls: &mut HashMap<String, ComplianceControl>) -> SecurityResult<()> {
+    async fn add_gdpr_controls(
+        &self,
+        controls: &mut HashMap<String, ComplianceControl>,
+    ) -> SecurityResult<()> {
         let gdpr_controls = vec![
             ComplianceControl {
                 control_id: "gdpr_data_inventory".to_string(),
                 framework: ComplianceFramework::GDPR,
                 title: "Data Inventory and Mapping".to_string(),
-                description: "Maintain comprehensive inventory of personal data processing activities".to_string(),
+                description:
+                    "Maintain comprehensive inventory of personal data processing activities"
+                        .to_string(),
                 category: "Data Protection".to_string(),
                 automated_check: true,
                 manual_evidence_required: false,
@@ -379,7 +381,8 @@ impl ComplianceDashboard {
                 control_id: "gdpr_consent_management".to_string(),
                 framework: ComplianceFramework::GDPR,
                 title: "Consent Management".to_string(),
-                description: "Implement lawful basis for data processing and consent management".to_string(),
+                description: "Implement lawful basis for data processing and consent management"
+                    .to_string(),
                 category: "Legal Basis".to_string(),
                 automated_check: true,
                 manual_evidence_required: true,
@@ -390,7 +393,8 @@ impl ComplianceDashboard {
                 control_id: "gdpr_data_subject_rights".to_string(),
                 framework: ComplianceFramework::GDPR,
                 title: "Data Subject Rights".to_string(),
-                description: "Implement processes for handling data subject access requests".to_string(),
+                description: "Implement processes for handling data subject access requests"
+                    .to_string(),
                 category: "Data Subject Rights".to_string(),
                 automated_check: true,
                 manual_evidence_required: false,
@@ -412,7 +416,8 @@ impl ComplianceDashboard {
                 control_id: "gdpr_data_breach_notification".to_string(),
                 framework: ComplianceFramework::GDPR,
                 title: "Data Breach Notification".to_string(),
-                description: "Implement 72-hour breach notification to supervisory authority".to_string(),
+                description: "Implement 72-hour breach notification to supervisory authority"
+                    .to_string(),
                 category: "Incident Response".to_string(),
                 automated_check: true,
                 manual_evidence_required: true,
@@ -423,7 +428,8 @@ impl ComplianceDashboard {
                 control_id: "gdpr_privacy_by_design".to_string(),
                 framework: ComplianceFramework::GDPR,
                 title: "Privacy by Design".to_string(),
-                description: "Implement privacy-by-design principles in system development".to_string(),
+                description: "Implement privacy-by-design principles in system development"
+                    .to_string(),
                 category: "Privacy".to_string(),
                 automated_check: false,
                 manual_evidence_required: true,
@@ -440,7 +446,10 @@ impl ComplianceDashboard {
     }
 
     /// Add HIPAA compliance controls
-    async fn add_hipaa_controls(&self, controls: &mut HashMap<String, ComplianceControl>) -> SecurityResult<()> {
+    async fn add_hipaa_controls(
+        &self,
+        controls: &mut HashMap<String, ComplianceControl>,
+    ) -> SecurityResult<()> {
         let hipaa_controls = vec![
             ComplianceControl {
                 control_id: "hipaa_security_risk_analysis".to_string(),
@@ -468,7 +477,9 @@ impl ComplianceDashboard {
                 control_id: "hipaa_encryption".to_string(),
                 framework: ComplianceFramework::HIPAA,
                 title: "Data Encryption".to_string(),
-                description: "Implement encryption for protected health information at rest and in transit".to_string(),
+                description:
+                    "Implement encryption for protected health information at rest and in transit"
+                        .to_string(),
                 category: "Technical Safeguards".to_string(),
                 automated_check: true,
                 manual_evidence_required: false,
@@ -501,7 +512,8 @@ impl ComplianceDashboard {
                 control_id: "hipaa_incident_response".to_string(),
                 framework: ComplianceFramework::HIPAA,
                 title: "Incident Response Plan".to_string(),
-                description: "Develop and maintain HIPAA-compliant incident response plan".to_string(),
+                description: "Develop and maintain HIPAA-compliant incident response plan"
+                    .to_string(),
                 category: "Incident Response".to_string(),
                 automated_check: false,
                 manual_evidence_required: true,
@@ -518,7 +530,10 @@ impl ComplianceDashboard {
     }
 
     /// Add SOC2 compliance controls
-    async fn add_soc2_controls(&self, controls: &mut HashMap<String, ComplianceControl>) -> SecurityResult<()> {
+    async fn add_soc2_controls(
+        &self,
+        controls: &mut HashMap<String, ComplianceControl>,
+    ) -> SecurityResult<()> {
         let soc2_controls = vec![
             ComplianceControl {
                 control_id: "soc2_security".to_string(),
@@ -568,7 +583,8 @@ impl ComplianceDashboard {
                 control_id: "soc2_privacy".to_string(),
                 framework: ComplianceFramework::SOC2,
                 title: "Privacy".to_string(),
-                description: "Collect, use, and disclose personal information appropriately".to_string(),
+                description: "Collect, use, and disclose personal information appropriately"
+                    .to_string(),
                 category: "Privacy".to_string(),
                 automated_check: true,
                 manual_evidence_required: true,
@@ -585,22 +601,28 @@ impl ComplianceDashboard {
     }
 
     /// Get compliance status for a framework
-    pub async fn get_compliance_status(&self, framework: ComplianceFramework) -> SecurityResult<ComplianceMetrics> {
+    pub async fn get_compliance_status(
+        &self,
+        framework: ComplianceFramework,
+    ) -> SecurityResult<ComplianceMetrics> {
         let controls_map = self.controls.read().await;
         let findings_map = self.findings.read().await;
 
         // Count controls for this framework
-        let controls_count = controls_map.values()
+        let controls_count = controls_map
+            .values()
             .filter(|c| c.framework == framework)
             .count() as u32;
 
         // Count findings for this framework
-        let failed_controls = findings_map.values()
+        let failed_controls = findings_map
+            .values()
             .filter(|f| f.framework == framework && f.status == ComplianceStatus::NonCompliant)
             .count() as u32;
 
         let passed_controls = controls_count - failed_controls;
-        let critical_findings = findings_map.values()
+        let critical_findings = findings_map
+            .values()
             .filter(|f| f.framework == framework && f.severity == RiskSeverity::Critical)
             .count() as u32;
 
@@ -635,25 +657,38 @@ impl ComplianceDashboard {
     }
 
     /// Generate compliance report
-    pub async fn generate_compliance_report(&self, framework: ComplianceFramework, period_start: DateTime<Utc>, period_end: DateTime<Utc>) -> SecurityResult<serde_json::Value> {
+    pub async fn generate_compliance_report(
+        &self,
+        framework: ComplianceFramework,
+        period_start: DateTime<Utc>,
+        period_end: DateTime<Utc>,
+    ) -> SecurityResult<serde_json::Value> {
         let controls_map = self.controls.read().await;
         let findings_map = self.findings.read().await;
         let evidence_map = self.evidence.read().await;
 
         // Filter controls and findings for the framework
-        let framework_controls: Vec<_> = controls_map.values()
+        let framework_controls: Vec<_> = controls_map
+            .values()
             .filter(|c| c.framework == framework)
             .collect();
 
-        let framework_findings: Vec<_> = findings_map.values()
-            .filter(|f| f.framework == framework &&
-                     f.created_at >= period_start &&
-                     f.created_at <= period_end)
+        let framework_findings: Vec<_> = findings_map
+            .values()
+            .filter(|f| {
+                f.framework == framework
+                    && f.created_at >= period_start
+                    && f.created_at <= period_end
+            })
             .collect();
 
-        let framework_evidence: Vec<_> = evidence_map.values()
+        let framework_evidence: Vec<_> = evidence_map
+            .values()
             .filter(|e| {
-                if let Some(control_id) = framework_controls.iter().find(|c| c.control_id == e.control_id) {
+                if let Some(control_id) = framework_controls
+                    .iter()
+                    .find(|c| c.control_id == e.control_id)
+                {
                     true
                 } else {
                     false
@@ -711,45 +746,73 @@ impl ComplianceDashboard {
     }
 
     /// Generate recommendations based on findings
-    async fn generate_recommendations(&self, _framework: ComplianceFramework, findings: &[&ComplianceFinding]) -> Vec<String> {
+    async fn generate_recommendations(
+        &self,
+        _framework: ComplianceFramework,
+        findings: &[&ComplianceFinding],
+    ) -> Vec<String> {
         let mut recommendations = Vec::new();
 
-        let critical_count = findings.iter().filter(|f| f.severity == RiskSeverity::Critical).count();
+        let critical_count = findings
+            .iter()
+            .filter(|f| f.severity == RiskSeverity::Critical)
+            .count();
         if critical_count > 0 {
-            recommendations.push(format!("Address {} critical compliance findings immediately", critical_count));
+            recommendations.push(format!(
+                "Address {} critical compliance findings immediately",
+                critical_count
+            ));
         }
 
-        let high_count = findings.iter().filter(|f| f.severity == RiskSeverity::High).count();
+        let high_count = findings
+            .iter()
+            .filter(|f| f.severity == RiskSeverity::High)
+            .count();
         if high_count > 0 {
-            recommendations.push(format!("Prioritize remediation of {} high-severity findings within 30 days", high_count));
+            recommendations.push(format!(
+                "Prioritize remediation of {} high-severity findings within 30 days",
+                high_count
+            ));
         }
 
         if findings.len() > 10 {
-            recommendations.push("Consider implementing automated compliance monitoring to reduce manual efforts".to_string());
+            recommendations.push(
+                "Consider implementing automated compliance monitoring to reduce manual efforts"
+                    .to_string(),
+            );
         }
 
         if recommendations.is_empty() {
-            recommendations.push("Compliance status is excellent. Continue regular monitoring and updates.".to_string());
+            recommendations.push(
+                "Compliance status is excellent. Continue regular monitoring and updates."
+                    .to_string(),
+            );
         }
 
         recommendations
     }
 
     /// Check DSAR compliance status
-    pub async fn check_dsar_compliance(&self) -> SecurityResult<HashMap<String, serde_json::Value>> {
+    pub async fn check_dsar_compliance(
+        &self,
+    ) -> SecurityResult<HashMap<String, serde_json::Value>> {
         let requests = self.dsar_requests.read().await;
         let mut status = HashMap::new();
 
         let total_requests = requests.len();
-        let completed_requests = requests.iter()
-            .filter(|r| matches!(r.status, DSARStatus::Completed | DSARStatus::AutomatedResponse))
+        let completed_requests = requests
+            .iter()
+            .filter(|r| {
+                matches!(
+                    r.status,
+                    DSARStatus::Completed | DSARStatus::AutomatedResponse
+                )
+            })
             .count();
 
-        let overdue_requests = requests.iter()
-            .filter(|r| {
-                r.status != DSARStatus::Completed &&
-                r.due_date < Utc::now()
-            })
+        let overdue_requests = requests
+            .iter()
+            .filter(|r| r.status != DSARStatus::Completed && r.due_date < Utc::now())
             .count();
 
         status.insert("summary".to_string(), serde_json::json!({
@@ -797,11 +860,16 @@ impl ComplianceDashboard {
         requests.push_back(request);
 
         // Audit the request
-        self.audit_trail.log_event("dsar_submitted", &serde_json::json!({
-            "request_id": request_id.clone(),
-            "subject_id": request.subject_id,
-            "request_type": format!("{:?}", request.request_type)
-        })).await?;
+        self.audit_trail
+            .log_event(
+                "dsar_submitted",
+                &serde_json::json!({
+                    "request_id": request_id.clone(),
+                    "subject_id": request.subject_id,
+                    "request_type": format!("{:?}", request.request_type)
+                }),
+            )
+            .await?;
 
         Ok(request_id)
     }
@@ -817,11 +885,16 @@ impl ComplianceDashboard {
             // Simulate automated processing
             // In reality, this would trigger actual data processing workflows
 
-            self.audit_trail.log_event("dsar_processing_started", &serde_json::json!({
-                "request_id": request_id,
-                "processor": processor,
-                "automated": true
-            })).await?;
+            self.audit_trail
+                .log_event(
+                    "dsar_processing_started",
+                    &serde_json::json!({
+                        "request_id": request_id,
+                        "processor": processor,
+                        "automated": true
+                    }),
+                )
+                .await?;
         }
 
         Ok(())
@@ -852,11 +925,16 @@ impl ComplianceDashboard {
         findings.insert(finding_id.clone(), finding);
 
         // Audit the finding
-        self.audit_trail.log_event("compliance_finding_added", &serde_json::json!({
-            "finding_id": finding_id.clone(),
-            "framework": format!("{:?}", findings.get(&finding_id).unwrap().framework),
-            "severity": format!("{:?}", findings.get(&finding_id).unwrap().severity)
-        })).await?;
+        self.audit_trail
+            .log_event(
+                "compliance_finding_added",
+                &serde_json::json!({
+                    "finding_id": finding_id.clone(),
+                    "framework": format!("{:?}", findings.get(&finding_id).unwrap().framework),
+                    "severity": format!("{:?}", findings.get(&finding_id).unwrap().severity)
+                }),
+            )
+            .await?;
 
         Ok(finding_id)
     }
@@ -867,20 +945,32 @@ impl ComplianceDashboard {
         let evidence_id = evidence.evidence_id.clone();
         evidence_map.insert(evidence_id.clone(), evidence);
 
-        self.audit_trail.log_event("evidence_added", &serde_json::json!({
-            "evidence_id": evidence_id.clone(),
-            "control_id": evidence_map.get(&evidence_id).unwrap().control_id.clone()
-        })).await?;
+        self.audit_trail
+            .log_event(
+                "evidence_added",
+                &serde_json::json!({
+                    "evidence_id": evidence_id.clone(),
+                    "control_id": evidence_map.get(&evidence_id).unwrap().control_id.clone()
+                }),
+            )
+            .await?;
 
         Ok(evidence_id)
     }
 
     /// Get compliance alerts
-    pub async fn get_compliance_alerts(&self, framework: Option<ComplianceFramework>) -> SecurityResult<Vec<ComplianceAlert>> {
+    pub async fn get_compliance_alerts(
+        &self,
+        framework: Option<ComplianceFramework>,
+    ) -> SecurityResult<Vec<ComplianceAlert>> {
         let alerts = self.alerts.read().await;
 
         let filtered_alerts: Vec<ComplianceAlert> = if let Some(fw) = framework {
-            alerts.iter().filter(|a| a.framework == fw).cloned().collect()
+            alerts
+                .iter()
+                .filter(|a| a.framework == fw)
+                .cloned()
+                .collect()
         } else {
             alerts.clone()
         };
@@ -889,7 +979,11 @@ impl ComplianceDashboard {
     }
 
     /// Generate compliance trends
-    pub async fn generate_trends(&self, framework: ComplianceFramework, months: u32) -> SecurityResult<ComplianceTrend> {
+    pub async fn generate_trends(
+        &self,
+        framework: ComplianceFramework,
+        months: u32,
+    ) -> SecurityResult<ComplianceTrend> {
         // This would typically query historical compliance data
         // For demo purposes, generate sample trend data
 
@@ -969,7 +1063,10 @@ impl AuditTrail for NoOpAuditTrail {
         Ok(())
     }
 
-    async fn query_events(&self, _filters: std::collections::HashMap<String, String>) -> SecurityResult<Vec<serde_json::Value>> {
+    async fn query_events(
+        &self,
+        _filters: std::collections::HashMap<String, String>,
+    ) -> SecurityResult<Vec<serde_json::Value>> {
         Ok(Vec::new())
     }
 }
@@ -987,7 +1084,10 @@ mod tests {
     #[tokio::test]
     async fn test_compliance_status() {
         let dashboard = ComplianceDashboard::new().await.unwrap();
-        let status = dashboard.get_compliance_status(ComplianceFramework::GDPR).await.unwrap();
+        let status = dashboard
+            .get_compliance_status(ComplianceFramework::GDPR)
+            .await
+            .unwrap();
         assert!(status.overall_score >= 0.0 && status.overall_score <= 100.0);
     }
 
@@ -1023,7 +1123,10 @@ mod tests {
         let period_start = Utc::now() - chrono::Duration::days(30);
         let period_end = Utc::now();
 
-        let report = dashboard.generate_compliance_report(ComplianceFramework::GDPR, period_start, period_end).await.unwrap();
+        let report = dashboard
+            .generate_compliance_report(ComplianceFramework::GDPR, period_start, period_end)
+            .await
+            .unwrap();
 
         // Verify report structure
         assert!(report["framework"].as_str().is_some());
@@ -1037,7 +1140,10 @@ mod tests {
     #[tokio::test]
     async fn test_trend_generation() {
         let dashboard = ComplianceDashboard::new().await.unwrap();
-        let trends = dashboard.generate_trends(ComplianceFramework::HIPAA, 6).await.unwrap();
+        let trends = dashboard
+            .generate_trends(ComplianceFramework::HIPAA, 6)
+            .await
+            .unwrap();
 
         assert_eq!(trends.period_months, 6);
         assert_eq!(trends.scores.len(), 6);

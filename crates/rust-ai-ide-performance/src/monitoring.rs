@@ -17,8 +17,14 @@ impl SystemMonitor {
         let mut metrics = PerformanceMetrics::new();
         metrics.rates.cpu_usage_percent = Some(0.0);
         metrics.resources.memory_bytes = Some(0);
-        metrics.extensions.insert("disk_io_mb_per_sec".to_string(), rust_ai_ide_shared_types::MetricValue::Float(0.0));
-        metrics.extensions.insert("network_io_mb_per_sec".to_string(), rust_ai_ide_shared_types::MetricValue::Float(0.0));
+        metrics.extensions.insert(
+            "disk_io_mb_per_sec".to_string(),
+            rust_ai_ide_shared_types::MetricValue::Float(0.0),
+        );
+        metrics.extensions.insert(
+            "network_io_mb_per_sec".to_string(),
+            rust_ai_ide_shared_types::MetricValue::Float(0.0),
+        );
         metrics.timing.response_time_ns = Some(0);
         metrics.rates.throughput_ops_per_sec = Some(0.0);
         metrics
@@ -61,8 +67,14 @@ impl Monitor for DefaultSystemMonitor {
         let mut metrics = PerformanceMetrics::new();
         metrics.rates.cpu_usage_percent = Some(0.0);
         metrics.resources.memory_bytes = Some(0);
-        metrics.extensions.insert("disk_io_mb_per_sec".to_string(), rust_ai_ide_shared_types::MetricValue::Float(0.0));
-        metrics.extensions.insert("network_io_mb_per_sec".to_string(), rust_ai_ide_shared_types::MetricValue::Float(0.0));
+        metrics.extensions.insert(
+            "disk_io_mb_per_sec".to_string(),
+            rust_ai_ide_shared_types::MetricValue::Float(0.0),
+        );
+        metrics.extensions.insert(
+            "network_io_mb_per_sec".to_string(),
+            rust_ai_ide_shared_types::MetricValue::Float(0.0),
+        );
         metrics.timing.response_time_ns = Some(0);
         metrics.rates.throughput_ops_per_sec = Some(0.0);
         metrics

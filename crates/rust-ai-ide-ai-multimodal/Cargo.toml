@@ -10,7 +10,7 @@ tokio = { version = "1.0", features = ["full", "macros", "rt-multi-thread"] }
 futures = "0.3"
 
 # Common utilities
-rust-ai-ide-common = { path = "../../rust-ai-ide-common" }
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
@@ -28,11 +28,11 @@ transformers = { version = "0.3", features = ["mkl", "cudnn"] }
 
 # Audio processing
 rodio = { version = "0.17", features = ["symphonia-mp3", "symphonia-wav", "symphonia-flac"] }
-cpal = { version = "0.15", features = ["jack"] }
-whisper-rs = "0.3"  # Speech recognition
+cpal = { version = "0.15", features = ["jack"], optional = true }
+whisper-rs = { version = "0.3", optional = true }  # Speech recognition
 
 # Image segmentation and object detection
-tch = { version = "0.11", features = ["vision"] }  # PyTorch integration for vision models
+tch = { version = "0.11", features = ["vision"], optional = true }  # PyTorch integration for vision models
 
 # Multi-modal model inference
 candle-core = "0.6"

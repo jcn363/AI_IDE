@@ -3,22 +3,22 @@
 //! This crate provides intelligent energy management strategies for mobile platforms,
 //! focusing on balancing performance with battery life while maintaining AI capabilities.
 
-pub mod battery_monitor;
-pub mod energy_manager;
-pub mod platform;
 pub mod ai_optimization;
-pub mod task_scheduler;
-pub mod performance_scaler;
-pub mod learning_system;
-pub mod enterprise;
-pub mod device_manager;
-pub mod remote_monitoring;
 pub mod analytics;
+pub mod battery_monitor;
 pub mod commands;
+pub mod device_manager;
+pub mod energy_manager;
+pub mod enterprise;
+pub mod learning_system;
+pub mod performance_scaler;
+pub mod platform;
+pub mod remote_monitoring;
+pub mod task_scheduler;
 
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 
 /// Battery optimization service
 pub struct BatteryOptimizationService {
@@ -52,7 +52,7 @@ impl BatteryOptimizationService {
 /// Current battery state
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BatteryState {
-    pub level: f32,          // 0.0 to 1.0
+    pub level: f32, // 0.0 to 1.0
     pub voltage: Option<f32>,
     pub temperature: Option<f32>,
     pub is_charging: bool,

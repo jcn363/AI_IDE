@@ -3,4 +3,4 @@ pub mod policy;
 
 // Re-exports for easier access
 pub use compliance_checker::LicenseComplianceChecker;
-pub use policy::{LicensePolicy, LicenseCompliance};
+pub use policy::{LicenseCompliance, LicensePolicy};

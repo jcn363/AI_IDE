@@ -3,15 +3,15 @@
 //! This module provides various storage backends for performance metrics
 //! with historical tracking and trend analysis capabilities.
 
+use chrono::{DateTime, Duration as ChronoDuration, Timelike, Utc};
+use rust_ai_ide_shared_types::PerformanceMetrics;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter, Write};
 use std::path::Path;
 use std::sync::{Arc, RwLock};
 use tokio::sync::mpsc;
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc, Duration as ChronoDuration, Timelike};
-use rust_ai_ide_shared_types::PerformanceMetrics;
 
 /// Storage configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -130,13 +130,21 @@ pub trait MetricsStorage: Send + Sync {
     async fn store_metrics(&self, metrics: &PerformanceMetrics) -> Result<(), StorageError>;
 
     /// Retrieve metrics for a time range
-    async fn get_metrics(&self, start: DateTime<Utc>, end: DateTime<Utc>) -> Result<Vec<PerformanceMetrics>, StorageError>;
+    async fn get_metrics(
+        &self,
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
+    ) -> Result<Vec<PerformanceMetrics>, StorageError>;
 
     /// Get aggregated metrics for time buckets
-    async fn get_aggregated_metrics(&self, bucket_hours: i64) -> Result<Vec<(DateTime<Utc>, AggregatedMetrics)>, StorageError>;
+    async fn get_aggregated_metrics(
+        &self,
+        bucket_hours: i64,
+    ) -> Result<Vec<(DateTime<Utc>, AggregatedMetrics)>, StorageError>;
 
     /// Get trend analysis
-    async fn get_trends(&self, metric_name: &str, days: i64) -> Result<TrendAnalysis, StorageError>;
+    async fn get_trends(&self, metric_name: &str, days: i64)
+        -> Result<TrendAnalysis, StorageError>;
 
     /// Cleanup old data based on retention policy
     async fn cleanup(&self) -> Result<(), StorageError>;
@@ -219,7 +227,11 @@ impl MetricsStorage for InMemoryStorage {
         Ok(())
     }
 
-    async fn get_metrics(&self, start: DateTime<Utc>, end: DateTime<Utc>) -> Result<Vec<PerformanceMetrics>, StorageError> {
+    async fn get_metrics(
+        &self,
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
+    ) -> Result<Vec<PerformanceMetrics>, StorageError> {
         let buffer = self.buffer.read().unwrap();
         let start_ts = start.timestamp() as u64;
         let end_ts = end.timestamp() as u64;
@@ -232,7 +244,10 @@ impl MetricsStorage for InMemoryStorage {
         Ok(metrics)
     }
 
-    async fn get_aggregated_metrics(&self, _bucket_hours: i64) -> Result<Vec<(DateTime<Utc>, AggregatedMetrics)>, StorageError> {
+    async fn get_aggregated_metrics(
+        &self,
+        _bucket_hours: i64,
+    ) -> Result<Vec<(DateTime<Utc>, AggregatedMetrics)>, StorageError> {
         let snapshots = self.snapshots.read().unwrap();
         let result: Vec<(DateTime<Utc>, AggregatedMetrics)> = snapshots
             .iter()
@@ -245,7 +260,11 @@ impl MetricsStorage for InMemoryStorage {
         Ok(result)
     }
 
-    async fn get_trends(&self, metric_name: &str, days: i64) -> Result<TrendAnalysis, StorageError> {
+    async fn get_trends(
+        &self,
+        metric_name: &str,
+        days: i64,
+    ) -> Result<TrendAnalysis, StorageError> {
         let buffer = self.buffer.read().unwrap();
         let cutoff = Utc::now() - ChronoDuration::days(days);
 
@@ -258,7 +277,10 @@ impl MetricsStorage for InMemoryStorage {
             .collect();
 
         if values.len() < 2 {
-            return Err(StorageError::NotFound(format!("Insufficient data for trend analysis of {}", metric_name)));
+            return Err(StorageError::NotFound(format!(
+                "Insufficient data for trend analysis of {}",
+                metric_name
+            )));
         }
 
         // Simple linear regression for trend
@@ -308,19 +330,26 @@ impl MetricsStorage for InMemoryStorage {
         match format {
             ExportFormat::Json => {
                 let buffer = self.buffer.read().unwrap();
-                serde_json::to_vec(&*buffer).map_err(|e| StorageError::SerializationError(e.to_string()))
+                serde_json::to_vec(&*buffer)
+                    .map_err(|e| StorageError::SerializationError(e.to_string()))
             }
             ExportFormat::Csv => {
                 // TODO: Implement CSV export
-                Err(StorageError::InvalidConfig("CSV export not implemented yet".to_string()))
+                Err(StorageError::InvalidConfig(
+                    "CSV export not implemented yet".to_string(),
+                ))
             }
             ExportFormat::Parquet => {
                 // TODO: Implement parquet export when tokio-parquet is available
-                Err(StorageError::InvalidConfig("Parquet export not implemented yet".to_string()))
+                Err(StorageError::InvalidConfig(
+                    "Parquet export not implemented yet".to_string(),
+                ))
             }
             ExportFormat::Prometheus => {
                 // TODO: Implement Prometheus format export
-                Err(StorageError::InvalidConfig("Prometheus export not implemented yet".to_string()))
+                Err(StorageError::InvalidConfig(
+                    "Prometheus export not implemented yet".to_string(),
+                ))
             }
         }
     }
@@ -343,7 +372,9 @@ impl InMemoryStorage {
         let hour = (metrics.timestamp / 3600) as i64;
         let mut snapshots = self.snapshots.write().unwrap();
 
-        let entry = snapshots.entry(hour).or_insert_with(AggregatedMetrics::default);
+        let entry = snapshots
+            .entry(hour)
+            .or_insert_with(AggregatedMetrics::default);
         self.aggregate_metric(entry, &metrics);
     }
 
@@ -353,31 +384,55 @@ impl InMemoryStorage {
 
         // CPU aggregation
         if let Some(cpu) = metrics.rates.cpu_usage_percent {
-            self.update_aggregation(&mut aggregated.averages.rates.cpu_usage_percent,
-                                   &mut aggregated.mins.rates.cpu_usage_percent,
-                                   &mut aggregated.maxs.rates.cpu_usage_percent,
-                                   Some(cpu), cpu, cpu);
+            self.update_aggregation(
+                &mut aggregated.averages.rates.cpu_usage_percent,
+                &mut aggregated.mins.rates.cpu_usage_percent,
+                &mut aggregated.maxs.rates.cpu_usage_percent,
+                Some(cpu),
+                cpu,
+                cpu,
+            );
         }
 
         // Memory aggregation - convert u64 to f64 for aggregation
         if let Some(mem) = metrics.resources.memory_bytes {
             let mem_f64 = mem as f64;
-            self.update_aggregation_memory(&mut aggregated.averages.resources.memory_bytes,
-                                          &mut aggregated.mins.resources.memory_bytes,
-                                          &mut aggregated.maxs.resources.memory_bytes,
-                                          Some(mem), mem, mem);
+            self.update_aggregation_memory(
+                &mut aggregated.averages.resources.memory_bytes,
+                &mut aggregated.mins.resources.memory_bytes,
+                &mut aggregated.maxs.resources.memory_bytes,
+                Some(mem),
+                mem,
+                mem,
+            );
         }
     }
 
     /// Update aggregation values for f64 metrics
-    fn update_aggregation(&self, avg: &mut Option<f64>, min: &mut Option<f64>, max: &mut Option<f64>, current: Option<f64>, min_val: f64, max_val: f64) {
+    fn update_aggregation(
+        &self,
+        avg: &mut Option<f64>,
+        min: &mut Option<f64>,
+        max: &mut Option<f64>,
+        current: Option<f64>,
+        min_val: f64,
+        max_val: f64,
+    ) {
         if let Some(current_val) = current {
             self.update_aggregation_inner(avg, min, max, current_val, min_val, max_val);
         }
     }
 
     /// Update aggregation values for u64 metrics (like memory_bytes)
-    fn update_aggregation_u64(&self, avg: &mut Option<f64>, min: &mut Option<f64>, max: &mut Option<f64>, current: Option<u64>, min_val: u64, max_val: u64) {
+    fn update_aggregation_u64(
+        &self,
+        avg: &mut Option<f64>,
+        min: &mut Option<f64>,
+        max: &mut Option<f64>,
+        current: Option<u64>,
+        min_val: u64,
+        max_val: u64,
+    ) {
         if let Some(current_val) = current {
             let current_f64 = current_val as f64;
             let min_val_f64 = min_val as f64;
@@ -387,7 +442,15 @@ impl InMemoryStorage {
     }
 
     /// Update aggregation for memory (u64) fields in PerformanceMetrics
-    fn update_aggregation_memory(&self, avg: &mut Option<u64>, min: &mut Option<u64>, max: &mut Option<u64>, current: Option<u64>, min_val: u64, max_val: u64) {
+    fn update_aggregation_memory(
+        &self,
+        avg: &mut Option<u64>,
+        min: &mut Option<u64>,
+        max: &mut Option<u64>,
+        current: Option<u64>,
+        min_val: u64,
+        max_val: u64,
+    ) {
         if let Some(current_val) = current {
             // Average (weighted) - convert to f64 internally for calculation
             let count = if avg.is_some() { 1.0 } else { 0.0 };
@@ -395,7 +458,7 @@ impl InMemoryStorage {
                 Some(cur_avg) => {
                     let cur_f64 = cur_avg as f64;
                     ((cur_f64 * count + current_val as f64) / (count + 1.0)) as u64
-                },
+                }
                 None => current_val,
             };
             *avg = Some(new_avg);
@@ -415,7 +478,15 @@ impl InMemoryStorage {
     }
 
     /// Inner aggregation logic for f64 values
-    fn update_aggregation_inner(&self, avg: &mut Option<f64>, min: &mut Option<f64>, max: &mut Option<f64>, current_val: f64, min_val: f64, max_val: f64) {
+    fn update_aggregation_inner(
+        &self,
+        avg: &mut Option<f64>,
+        min: &mut Option<f64>,
+        max: &mut Option<f64>,
+        current_val: f64,
+        min_val: f64,
+        max_val: f64,
+    ) {
         // Average (weighted)
         let count = match avg {
             Some(_) => 1.0,
@@ -461,7 +532,11 @@ impl InMemoryStorage {
         }
 
         let slope = (n * sum_xy - sum_x * sum_y) / (n * sum_xx - sum_x * sum_x);
-        let confidence = if !slope.is_nan() && slope.is_finite() { 0.8 } else { 0.0 };
+        let confidence = if !slope.is_nan() && slope.is_finite() {
+            0.8
+        } else {
+            0.0
+        };
 
         (if slope.is_nan() { 0.0 } else { slope }, confidence)
     }
@@ -486,24 +561,31 @@ impl FileStorage {
     /// Save metrics to file
     async fn save_to_file(&self, metrics: &PerformanceMetrics) -> Result<(), StorageError> {
         // Ensure directory exists
-        tokio::fs::create_dir_all(&self.config.data_directory).await
+        tokio::fs::create_dir_all(&self.config.data_directory)
+            .await
             .map_err(|e| StorageError::IoError(e.to_string()))?;
 
-        let filename = format!("{}/metrics_{}.json",
-                              self.config.data_directory,
-                              metrics.timestamp);
+        let filename = format!(
+            "{}/metrics_{}.json",
+            self.config.data_directory, metrics.timestamp
+        );
 
         let data = serde_json::to_string_pretty(metrics)
             .map_err(|e| StorageError::SerializationError(e.to_string()))?;
 
-        tokio::fs::write(&filename, data).await
+        tokio::fs::write(&filename, data)
+            .await
             .map_err(|e| StorageError::IoError(e.to_string()))?;
 
         Ok(())
     }
 
     /// Load metrics from file (future implementation)
-    async fn load_from_file(&self, _start: DateTime<Utc>, _end: DateTime<Utc>) -> Result<Vec<PerformanceMetrics>, StorageError> {
+    async fn load_from_file(
+        &self,
+        _start: DateTime<Utc>,
+        _end: DateTime<Utc>,
+    ) -> Result<Vec<PerformanceMetrics>, StorageError> {
         // TODO: Implement file loading
         Ok(Vec::new())
     }
@@ -521,7 +603,11 @@ impl MetricsStorage for FileStorage {
         Ok(())
     }
 
-    async fn get_metrics(&self, start: DateTime<Utc>, end: DateTime<Utc>) -> Result<Vec<PerformanceMetrics>, StorageError> {
+    async fn get_metrics(
+        &self,
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
+    ) -> Result<Vec<PerformanceMetrics>, StorageError> {
         // First try memory
         let mut metrics = self.in_memory.get_metrics(start, end).await?;
 
@@ -535,11 +621,18 @@ impl MetricsStorage for FileStorage {
         Ok(metrics)
     }
 
-    async fn get_aggregated_metrics(&self, bucket_hours: i64) -> Result<Vec<(DateTime<Utc>, AggregatedMetrics)>, StorageError> {
+    async fn get_aggregated_metrics(
+        &self,
+        bucket_hours: i64,
+    ) -> Result<Vec<(DateTime<Utc>, AggregatedMetrics)>, StorageError> {
         self.in_memory.get_aggregated_metrics(bucket_hours).await
     }
 
-    async fn get_trends(&self, metric_name: &str, days: i64) -> Result<TrendAnalysis, StorageError> {
+    async fn get_trends(
+        &self,
+        metric_name: &str,
+        days: i64,
+    ) -> Result<TrendAnalysis, StorageError> {
         self.in_memory.get_trends(metric_name, days).await
     }
 
@@ -590,9 +683,7 @@ impl StorageFactory {
             StorageBackend::InMemory => {
                 Box::new(InMemoryStorage::new(config.max_in_memory_metrics))
             }
-            StorageBackend::File => {
-                Box::new(FileStorage::new(config))
-            }
+            StorageBackend::File => Box::new(FileStorage::new(config)),
             StorageBackend::Database => {
                 // For now, fall back to in-memory with database placeholder
                 // TODO: Implement actual database storage
@@ -626,7 +717,10 @@ mod tests {
         let values = vec![1.0, 2.0, 3.0, 4.0, 5.0];
 
         let (slope, confidence) = storage.linear_regression(&values);
-        assert!(slope > 0.9 && slope < 1.1, "Slope should be approximately 1.0");
+        assert!(
+            slope > 0.9 && slope < 1.1,
+            "Slope should be approximately 1.0"
+        );
         assert!(confidence > 0.5, "Confidence should be reasonable");
     }
 

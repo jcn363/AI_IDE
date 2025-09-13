@@ -2,8 +2,8 @@
 //! This module provides the central orchestration for memory optimization,
 //! leak detection, and performance monitoring.
 
-mod manager;
 mod config;
+mod manager;
 
-pub use manager::MemoryOptimizationManager;
 pub use config::MemoryOptimizationConfig;
+pub use manager::MemoryOptimizationManager;

@@ -8,24 +8,18 @@ import {
   SecurityIssue,
   SeverityLevel,
   StyleViolation,
-} from "../types";
-import type { CodeAction } from "vscode-languageserver";
-import { CodeActionKind } from "vscode-languageserver";
+} from '../types';
+import type { CodeAction } from 'vscode-languageserver';
+import { CodeActionKind } from 'vscode-languageserver';
 
 export const sampleAnalysisConfig: AnalysisConfiguration = {
-  enabledCategories: [
-    "code-smell",
-    "performance",
-    "security",
-    "style",
-    "architecture",
-  ],
-  severityThreshold: "warning",
+  enabledCategories: ['code-smell', 'performance', 'security', 'style', 'architecture'],
+  severityThreshold: 'warning',
   realTimeAnalysis: true,
   analysisOnSave: true,
   maxSuggestions: 50,
   aiProvider: {
-    type: "mock",
+    type: 'mock',
   },
   analysisPreferences: {
     enableCodeSmells: true,
@@ -38,18 +32,18 @@ export const sampleAnalysisConfig: AnalysisConfiguration = {
     timeoutSeconds: 30,
     includeExplanations: true,
     includeExamples: false,
-    privacyMode: "opt-in",
+    privacyMode: 'opt-in',
   },
   learningPreferences: {
     enableLearning: true,
-    privacyMode: "opt-out",
+    privacyMode: 'opt-out',
     shareAnonymousData: true,
     retainPersonalData: false,
     dataRetentionDays: 365,
     allowModelTraining: true,
   },
   confidenceThreshold: 0.8,
-  excludePatterns: ["**/node_modules/**", "**/dist/**", "**/.git/**"],
+  excludePatterns: ['**/node_modules/**', '**/dist/**', '**/.git/**'],
   maxFileSizeKb: 1024,
   timeoutSeconds: 60,
   customRules: [],
@@ -98,7 +92,7 @@ export const sampleAnalysisConfig: AnalysisConfiguration = {
 };
 
 export const sampleFixSuggestion: CodeAction = {
-  title: "Fix issue",
+  title: 'Fix issue',
   kind: CodeActionKind.QuickFix,
   edit: {
     changes: {},
@@ -106,25 +100,25 @@ export const sampleFixSuggestion: CodeAction = {
 };
 
 export const sampleCodeSmell: CodeSmell = {
-  id: "cs-001",
-  smellType: "long-method",
-  severity: "warning" as SeverityLevel,
-  message: "Method is too long and should be refactored",
-  filePath: "src/main.rs",
+  id: 'cs-001',
+  smellType: 'long-method',
+  severity: 'warning' as SeverityLevel,
+  message: 'Method is too long and should be refactored',
+  filePath: 'src/main.rs',
   lineRange: [10, 50] as [number, number],
   columnRange: [0, 80] as [number, number],
-  suggestion: "Consider breaking this method into smaller functions",
+  suggestion: 'Consider breaking this method into smaller functions',
   confidence: 0.85,
-  explanation: "Long methods are harder to understand and maintain",
-  examples: ["fn process_data() { /* 40+ lines */ }"],
+  explanation: 'Long methods are harder to understand and maintain',
+  examples: ['fn process_data() { /* 40+ lines */ }'],
 };
 
 export const sampleStyleViolation: StyleViolation = {
-  id: "sv-001",
-  violationType: "naming-convention",
-  severity: "warning" as SeverityLevel,
-  message: "Variable name should use snake_case",
-  filePath: "src/lib.rs",
+  id: 'sv-001',
+  violationType: 'naming-convention',
+  severity: 'warning' as SeverityLevel,
+  message: 'Variable name should use snake_case',
+  filePath: 'src/lib.rs',
   lineRange: [5, 5] as [number, number],
   columnRange: [8, 15] as [number, number],
   suggestion: 'Rename "myVar" to "my_var"',
@@ -133,33 +127,33 @@ export const sampleStyleViolation: StyleViolation = {
 };
 
 export const sampleLearnedPattern: LearnedPattern = {
-  id: "learned-pattern-1",
+  id: 'learned-pattern-1',
   errorPattern: {
-    id: "console-log-pattern",
-    errorType: "console-statement",
-    pattern: "console\\.(log|warn|error|info)\\s*\\(",
-    context: "JavaScript/TypeScript production code",
+    id: 'console-log-pattern',
+    errorType: 'console-statement',
+    pattern: 'console\\.(log|warn|error|info)\\s*\\(',
+    context: 'JavaScript/TypeScript production code',
     frequency: 5,
     lastSeen: new Date().toISOString(),
     confidence: 0.9,
   },
   successfulFix: {
-    id: "fix-1",
-    title: "Replace console.log with logger",
-    description: "Replace console.log with a proper logger instance",
-    fixType: "quick-fix",
+    id: 'fix-1',
+    title: 'Replace console.log with logger',
+    description: 'Replace console.log with a proper logger instance',
+    fixType: 'quick-fix',
     changes: [],
     confidence: 0.9,
-    estimatedEffort: "low",
-    benefits: ["Better logging infrastructure", "Consistent logging format"],
-    risks: ["Potential performance impact"],
+    estimatedEffort: 'low',
+    benefits: ['Better logging infrastructure', 'Consistent logging format'],
+    risks: ['Potential performance impact'],
   },
   successCount: 5,
   failureCount: 0,
   confidence: 0.9,
   lastUsed: new Date().toISOString(),
   userFeedback: null,
-  context: "Replace console statements with proper logging",
+  context: 'Replace console statements with proper logging',
 };
 
 export const sampleEnhancedAnalysisResult: EnhancedCodeAnalysisResult = {
@@ -170,10 +164,10 @@ export const sampleEnhancedAnalysisResult: EnhancedCodeAnalysisResult = {
   architectureSuggestions: [],
   qualityScore: 85,
   metadata: {
-    analysisId: "analysis-123",
+    analysisId: 'analysis-123',
     timestamp: new Date().toISOString(),
     durationMs: 1250,
-    analyzerVersion: "1.0.0",
+    analyzerVersion: '1.0.0',
     fileCount: 24,
     linesAnalyzed: 1000,
   },

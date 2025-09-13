@@ -45,16 +45,11 @@ export interface ApiCallConfig {
 export async function invokeCommand<T>(
   command: string,
   args: Record<string, any> = {},
-  config: ApiCallConfig = {},
+  config: ApiCallConfig = {}
 ): Promise<ApiResponse<T>> {
-  const {
-    timeout = 30000,
-    retryCount = 3,
-    retryDelay = 1000,
-    onError,
-  } = config;
+  const { timeout = 30000, retryCount = 3, retryDelay = 1000, onError } = config;
 
-  for (let attempt = 0; attempt <= retryCount; attempt+=1) {
+  for (let attempt = 0; attempt <= retryCount; attempt += 1) {
     try {
       const startTime = Date.now();
 
@@ -74,7 +69,6 @@ export async function invokeCommand<T>(
         data: result,
         timestamp: endTime,
       };
-
     } catch (error) {
       const isLastAttempt = attempt === retryCount;
       const apiError: ApiError = {
@@ -96,7 +90,9 @@ export async function invokeCommand<T>(
 
       // Wait before retrying
       if (retryDelay > 0 && !isLastAttempt) {
-        await new Promise(resolve => {setTimeout(resolve, retryDelay);});
+        await new Promise((resolve) => {
+          setTimeout(resolve, retryDelay);
+        });
       }
     }
   }
@@ -121,11 +117,9 @@ export async function invokeBatch<T = any>(
     name: string;
     args?: Record<string, any>;
   }>,
-  config: ApiCallConfig = {},
+  config: ApiCallConfig = {}
 ): Promise<ApiResponse<T>[]> {
-  const promises = commands.map(({ name, args }) =>
-    invokeCommand<T>(name, args, config),
-  );
+  const promises = commands.map(({ name, args }) => invokeCommand<T>(name, args, config));
 
   return Promise.all(promises);
 }
@@ -143,7 +137,7 @@ export async function invokeAndTransform<TInput, TOutput>(
   command: string,
   args: Record<string, any>,
   transformer: (data: TInput) => TOutput,
-  config: ApiCallConfig = {},
+  config: ApiCallConfig = {}
 ): Promise<ApiResponse<TOutput>> {
   const response = await invokeCommand<TInput>(command, args, config);
 
@@ -189,7 +183,11 @@ export const Commands = {
   },
 
   // Generic write operations
-  async writeFile(path: string, content: string, config?: ApiCallConfig): Promise<ApiResponse<void>> {
+  async writeFile(
+    path: string,
+    content: string,
+    config?: ApiCallConfig
+  ): Promise<ApiResponse<void>> {
     return invokeCommand<void>('write_file', { path, content }, config);
   },
 
@@ -198,17 +196,18 @@ export const Commands = {
     command: string,
     args: string[],
     cwd: string,
-    config?: ApiCallConfig,
+    config?: ApiCallConfig
   ): Promise<ApiResponse<any>> {
     return invokeCommand<any>('execute_command', { command, args, cwd }, config);
   },
 
   // Diagnostic operations
-  async getDiagnostics(
-    workspacePath: string,
-    config?: ApiCallConfig,
-  ): Promise<ApiResponse<any>> {
-    return invokeCommand<any>('get_compiler_diagnostics', { workspace_path: workspacePath }, config);
+  async getDiagnostics(workspacePath: string, config?: ApiCallConfig): Promise<ApiResponse<any>> {
+    return invokeCommand<any>(
+      'get_compiler_diagnostics',
+      { workspace_path: workspacePath },
+      config
+    );
   },
 
   async explainError(errorCode: string, config?: ApiCallConfig): Promise<ApiResponse<any>> {
@@ -252,7 +251,11 @@ export function createApiClient(baseConfig: ApiCallConfig = {}) {
      */
     project: {
       async run(command: string, args: string[], cwd: string, config?: ApiCallConfig) {
-        return invokeCommand<any>('execute_command', { command, args, cwd }, { ...baseConfig, ...config });
+        return invokeCommand<any>(
+          'execute_command',
+          { command, args, cwd },
+          { ...baseConfig, ...config }
+        );
       },
 
       async getLifestyle() {
@@ -282,14 +285,18 @@ export function createApiClient(baseConfig: ApiCallConfig = {}) {
         args: string[],
         directory: string,
         id?: string,
-        config?: ApiCallConfig,
+        config?: ApiCallConfig
       ) {
-        return invokeCommand<void>('terminal_execute_stream', {
-          program,
-          args,
-          directory,
-          id,
-        }, { ...baseConfig, ...config });
+        return invokeCommand<void>(
+          'terminal_execute_stream',
+          {
+            program,
+            args,
+            directory,
+            id,
+          },
+          { ...baseConfig, ...config }
+        );
       },
     },
   };

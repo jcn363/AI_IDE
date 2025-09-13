@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
 
-use syn::{visit, Expr, File, Item, ItemFn, ItemMod, ItemStruct, ItemTrait, ItemImpl, Stmt};
 use syn::visit::Visit;
+use syn::{visit, Expr, File, Item, ItemFn, ItemImpl, ItemMod, ItemStruct, ItemTrait, Stmt};
 
 /// Comprehensive code metrics for a Rust file
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -116,7 +116,7 @@ impl Default for HalsteadMetrics {
 /// Calculate metrics for a Rust file
 pub fn calculate_metrics(syntax_tree: &File, source: &str) -> CodeMetrics {
     let mut metrics = CodeMetrics::default();
-    
+
     // Count lines and comments
     metrics.lines_of_code = source.lines().count();
     metrics.comment_count = count_comment_lines(source);
@@ -125,14 +125,14 @@ pub fn calculate_metrics(syntax_tree: &File, source: &str) -> CodeMetrics {
     } else {
         0.0
     };
-    
+
     // Count doc comments
     metrics.doc_comment_count = count_doc_comment_lines(source);
-    
+
     // Count items
     let mut visitor = MetricsVisitor::new();
     visitor.visit_file(syntax_tree);
-    
+
     metrics.function_count = visitor.function_count;
     metrics.struct_count = visitor.struct_count;
     metrics.trait_count = visitor.trait_count;
@@ -142,7 +142,7 @@ pub fn calculate_metrics(syntax_tree: &File, source: &str) -> CodeMetrics {
     metrics.unsafe_block_count = visitor.unsafe_block_count;
     metrics.public_item_count = visitor.public_item_count;
     metrics.private_item_count = visitor.private_item_count;
-    
+
     // Calculate cyclomatic complexity
     let total_cyclomatic = visitor.cyclomatic_complexity.iter().sum::<usize>();
     metrics.average_cyclomatic_complexity = if !visitor.cyclomatic_complexity.is_empty() {
@@ -150,29 +150,30 @@ pub fn calculate_metrics(syntax_tree: &File, source: &str) -> CodeMetrics {
     } else {
         1.0
     };
-    metrics.max_cyclomatic_complexity = visitor.cyclomatic_complexity.into_iter().max().unwrap_or(1);
-    
+    metrics.max_cyclomatic_complexity =
+        visitor.cyclomatic_complexity.into_iter().max().unwrap_or(1);
+
     // Calculate Halstead metrics
     let (volume, difficulty, effort) = calculate_halstead_metrics(syntax_tree);
-    
+
     metrics.halstead = HalsteadMetrics {
-        vocabulary: 0.0, // Will be calculated
-        length: 0.0,    // Will be calculated
+        vocabulary: 0.0,        // Will be calculated
+        length: 0.0,            // Will be calculated
         calculated_length: 0.0, // Will be calculated
         volume,
         difficulty,
         effort,
-        time: effort / 18.0, // Standard time calculation
+        time: effort / 18.0,                   // Standard time calculation
         bugs: volume.powf(2.0 / 3.0) / 3000.0, // Standard bug calculation
     };
-    
+
     // Calculate maintainability index
     metrics.maintainability_index = calculate_maintainability_index(
         metrics.lines_of_code,
         metrics.average_cyclomatic_complexity,
         metrics.halstead.volume,
     );
-    
+
     metrics
 }
 
@@ -207,7 +208,7 @@ impl MetricsVisitor {
             in_unsafe_block: false,
         }
     }
-    
+
     fn visit_visibility(&mut self, vis: &syn::Visibility) {
         if let syn::Visibility::Public(_) = vis {
             self.public_item_count += 1;
@@ -220,54 +221,55 @@ impl MetricsVisitor {
 impl<'ast> Visit<'ast> for MetricsVisitor {
     fn visit_item_fn(&mut self, node: &'ast syn::ItemFn) {
         // Check if it's a test function
-        let is_test = node.attrs.iter().any(|attr| {
-            attr.path.is_ident("test") || attr.path.is_ident("tokio::test")
-        });
-        
+        let is_test = node
+            .attrs
+            .iter()
+            .any(|attr| attr.path.is_ident("test") || attr.path.is_ident("tokio::test"));
+
         if is_test {
             self.test_function_count += 1;
         } else {
             self.function_count += 1;
-            
+
             // Calculate cyclomatic complexity for non-test functions
             let complexity = calculate_cyclomatic_complexity(node);
             self.cyclomatic_complexity.push(complexity);
         }
-        
+
         // Visit visibility
         self.visit_visibility(&node.vis);
-        
+
         // Continue visiting the function body
         syn::visit::visit_item_fn(self, node);
     }
-    
+
     fn visit_item_struct(&mut self, node: &'ast syn::ItemStruct) {
         self.struct_count += 1;
         self.visit_visibility(&node.vis);
         syn::visit::visit_item_struct(self, node);
     }
-    
+
     fn visit_item_trait(&mut self, node: &'ast syn::ItemTrait) {
         self.trait_count += 1;
         self.visit_visibility(&node.vis);
         syn::visit::visit_item_trait(self, node);
     }
-    
+
     fn visit_item_impl(&mut self, node: &'ast syn::ItemImpl) {
         self.impl_count += 1;
         syn::visit::visit_item_impl(self, node);
     }
-    
+
     fn visit_item_mod(&mut self, node: &'ast syn::ItemMod) {
         self.module_count += 1;
         self.visit_visibility(&node.vis);
-        
+
         // Only visit the module if it's not a mod declaration without a block
         if node.content.is_some() {
             syn::visit::visit_item_mod(self, node);
         }
     }
-    
+
     fn visit_expr_unsafe(&mut self, node: &'ast syn::ExprUnsafe) {
         self.unsafe_block_count += 1;
         let was_in_unsafe = self.in_unsafe_block;
@@ -283,7 +285,7 @@ fn count_comment_lines(content: &str) -> usize {
         .lines()
         .filter(|line| {
             let trimmed = line.trim();
-            trimmed.starts_with("//") || trimmed.starts_with("/*") || trimmed.ends_with("*/") 
+            trimmed.starts_with("//") || trimmed.starts_with("/*") || trimmed.ends_with("*/")
         })
         .count()
 }
@@ -306,7 +308,7 @@ fn calculate_halstead_metrics(syntax_tree: &syn::File) -> (f64, f64, f64) {
     let mut operands = 0;
     let mut unique_operators = HashSet::new();
     let mut unique_operands = HashSet::new();
-    
+
     for node in syntax_tree.items.iter() {
         match node {
             syn::Item::Fn(func) => {
@@ -319,18 +321,16 @@ fn calculate_halstead_metrics(syntax_tree: &syn::File) -> (f64, f64, f64) {
                         _ => {}
                     }
                 }
-                
+
                 for statement in &func.block.stmts {
                     match statement {
-                        syn::Stmt::Expr(expr) => {
-                            match expr {
-                                syn::Expr::Binary(bin_expr) => {
-                                    operators += 1;
-                                    unique_operators.insert(bin_expr.op.to_token_stream().to_string());
-                                }
-                                _ => {}
+                        syn::Stmt::Expr(expr) => match expr {
+                            syn::Expr::Binary(bin_expr) => {
+                                operators += 1;
+                                unique_operators.insert(bin_expr.op.to_token_stream().to_string());
                             }
-                        }
+                            _ => {}
+                        },
                         _ => {}
                     }
                 }
@@ -338,17 +338,24 @@ fn calculate_halstead_metrics(syntax_tree: &syn::File) -> (f64, f64, f64) {
             _ => {}
         }
     }
-    
-    let volume = (operators + operands) as f64 * (unique_operators.len() + unique_operands.len()) as f64;
-    let difficulty = (unique_operators.len() as f64 / 2.0) * (operands as f64 / unique_operands.len() as f64);
+
+    let volume =
+        (operators + operands) as f64 * (unique_operators.len() + unique_operands.len()) as f64;
+    let difficulty =
+        (unique_operators.len() as f64 / 2.0) * (operands as f64 / unique_operands.len() as f64);
     let effort = difficulty * volume;
-    
+
     (volume, difficulty, effort)
 }
 
 /// Calculate maintainability index
-fn calculate_maintainability_index(lines_of_code: usize, average_cyclomatic_complexity: f64, volume: f64) -> f64 {
-    let mut index = 171.0 - 5.2 * (average_cyclomatic_complexity).ln() - 0.23 * lines_of_code as f64;
+fn calculate_maintainability_index(
+    lines_of_code: usize,
+    average_cyclomatic_complexity: f64,
+    volume: f64,
+) -> f64 {
+    let mut index =
+        171.0 - 5.2 * (average_cyclomatic_complexity).ln() - 0.23 * lines_of_code as f64;
     index += 16.2 * (lines_of_code as f64 / (lines_of_code + volume)) * 100.0;
     index.max(0.0).min(100.0)
 }
@@ -356,24 +363,22 @@ fn calculate_maintainability_index(lines_of_code: usize, average_cyclomatic_comp
 /// Calculate cyclomatic complexity for a given function
 fn calculate_cyclomatic_complexity(node: &syn::ItemFn) -> usize {
     let mut complexity = 1;
-    
+
     for statement in &node.block.stmts {
         match statement {
-            syn::Stmt::Expr(expr) => {
-                match expr {
-                    syn::Expr::Binary(bin_expr) => {
-                        complexity += 1;
-                    }
-                    _ => {}
+            syn::Stmt::Expr(expr) => match expr {
+                syn::Expr::Binary(bin_expr) => {
+                    complexity += 1;
                 }
-            }
+                _ => {}
+            },
             syn::Stmt::If(if_stmt) => {
                 complexity += 1;
             }
             _ => {}
         }
     }
-    
+
     complexity
 }
 
@@ -381,18 +386,18 @@ fn calculate_cyclomatic_complexity(node: &syn::ItemFn) -> usize {
 mod tests {
     use super::*;
     use syn::parse_quote;
-    
+
     #[test]
     fn test_calculate_metrics() {
         let source = r#"
         // This is a test module
-        
+
         /// This is a doc comment
         pub struct TestStruct {
             pub field1: i32,
             field2: String,
         }
-        
+
         impl TestStruct {
             pub fn new() -> Self {
                 Self {
@@ -400,7 +405,7 @@ mod tests {
                     field2: String::new(),
                 }
             }
-            
+
             pub fn do_something(&self, x: i32) -> i32 {
                 if x > 0 {
                     x * 2
@@ -409,17 +414,17 @@ mod tests {
                 }
             }
         }
-        
+
         #[test]
         fn test_do_something() {
             let s = TestStruct::new();
             assert_eq!(s.do_something(2), 4);
         }
         "#;
-        
+
         let syntax_tree: syn::File = syn::parse_str(source).unwrap();
         let metrics = calculate_metrics(&syntax_tree, source);
-        
+
         assert_eq!(metrics.struct_count, 1);
         assert_eq!(metrics.function_count, 2); // new() and do_something()
         assert_eq!(metrics.test_function_count, 1);

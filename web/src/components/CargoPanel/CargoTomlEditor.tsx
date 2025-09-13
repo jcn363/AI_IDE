@@ -48,7 +48,10 @@ interface CargoTomlData {
     version?: string;
     [key: string]: unknown;
   };
-  dependencies?: Record<string, string | { version?: string; features?: string[]; [key: string]: unknown }>;
+  dependencies?: Record<
+    string,
+    string | { version?: string; features?: string[]; [key: string]: unknown }
+  >;
   [key: string]: unknown;
 }
 
@@ -61,7 +64,10 @@ const setupMonaco = (monaco: Monaco) => {
     escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
     tokenizer: {
       root: [
-        [/(\[\s*)([^\[\s]+)(\s*\])/, ['delimiter.bracket.toml', 'type.toml', 'delimiter.bracket.toml']],
+        [
+          /(\[\s*)([^\[\s]+)(\s*\])/,
+          ['delimiter.bracket.toml', 'type.toml', 'delimiter.bracket.toml'],
+        ],
         [/([^\[\s]\s*)(=)(\s*)/, ['key.toml', 'delimiter.toml', '']],
         [/("[^\n"]*$)|("[^\n"]*\")/, 'string.invalid.toml'],
         [/("[^\n"]*\")/, 'string.toml'],
@@ -110,61 +116,67 @@ const CargoTomlEditor: React.FC = () => {
   const [loadingDocs, setLoadingDocs] = useState<Record<string, boolean>>({});
 
   // Fetch documentation for a dependency
-  const fetchDependencyDocs = useCallback(async (name: string) => {
-    if (dependencyDocs[name] || loadingDocs[name]) return;
-    
-    setLoadingDocs(prev => ({ ...prev, [name]: true }));
-    
-    try {
-      const response = await fetch(`https://crates.io/api/v1/crates/${name}`);
-      if (response.ok) {
-        const data = await response.json();
-        setDependencyDocs(prev => ({
-          ...prev,
-          [name]: data.crate
-        }));
+  const fetchDependencyDocs = useCallback(
+    async (name: string) => {
+      if (dependencyDocs[name] || loadingDocs[name]) return;
+
+      setLoadingDocs((prev) => ({ ...prev, [name]: true }));
+
+      try {
+        const response = await fetch(`https://crates.io/api/v1/crates/${name}`);
+        if (response.ok) {
+          const data = await response.json();
+          setDependencyDocs((prev) => ({
+            ...prev,
+            [name]: data.crate,
+          }));
+        }
+      } catch (error) {
+        console.error(`Failed to fetch docs for ${name}:`, error);
+      } finally {
+        setLoadingDocs((prev) => ({ ...prev, [name]: false }));
       }
-    } catch (error) {
-      console.error(`Failed to fetch docs for ${name}:`, error);
-    } finally {
-      setLoadingDocs(prev => ({ ...prev, [name]: false }));
-    }
-  }, [dependencyDocs, loadingDocs]);
+    },
+    [dependencyDocs, loadingDocs]
+  );
 
   // Parse dependencies from TOML content
-  const parseDependencies = useCallback((content: string) => {
-    try {
-      const parsed = tomlParser.parse(content) as unknown as CargoTomlData;
-      const deps: Dependency[] = [];
-      
-      // Extract dependencies from different sections
-      const sections = ['dependencies', 'dev-dependencies', 'build-dependencies'];
-      sections.forEach(section => {
-        if (parsed[section]) {
-          Object.entries(parsed[section]).forEach(([name, info]) => {
-            if (typeof info === 'string') {
-              deps.push({ name, version: info, features: [] });
-              fetchDependencyDocs(name);
-            } else if (info && typeof info === 'object') {
-              deps.push({
-                name,
-                version: info.version || '*',
-                features: info.features || [],
-                optional: info.optional,
-                'default-features': info['default-features']
-              });
-              fetchDependencyDocs(name);
-            }
-          });
-        }
-      });
-      
-      setDependencies(deps);
-    } catch (error) {
-      console.error('Error parsing dependencies:', error);
-      setError('Failed to parse Cargo.toml dependencies');
-    }
-  }, [fetchDependencyDocs]);
+  const parseDependencies = useCallback(
+    (content: string) => {
+      try {
+        const parsed = tomlParser.parse(content) as unknown as CargoTomlData;
+        const deps: Dependency[] = [];
+
+        // Extract dependencies from different sections
+        const sections = ['dependencies', 'dev-dependencies', 'build-dependencies'];
+        sections.forEach((section) => {
+          if (parsed[section]) {
+            Object.entries(parsed[section]).forEach(([name, info]) => {
+              if (typeof info === 'string') {
+                deps.push({ name, version: info, features: [] });
+                fetchDependencyDocs(name);
+              } else if (info && typeof info === 'object') {
+                deps.push({
+                  name,
+                  version: info.version || '*',
+                  features: info.features || [],
+                  optional: info.optional,
+                  'default-features': info['default-features'],
+                });
+                fetchDependencyDocs(name);
+              }
+            });
+          }
+        });
+
+        setDependencies(deps);
+      } catch (error) {
+        console.error('Error parsing dependencies:', error);
+        setError('Failed to parse Cargo.toml dependencies');
+      }
+    },
+    [fetchDependencyDocs]
+  );
 
   // Load Cargo.toml content
   const loadCargoToml = useCallback(async () => {
@@ -182,7 +194,7 @@ const CargoTomlEditor: React.FC = () => {
       setTomlContent(response);
       parseDependencies(response);
       setIsDirty(false);
-      
+
       if (editorRef.current) {
         editorRef.current.setValue(response);
       }
@@ -208,7 +220,7 @@ const CargoTomlEditor: React.FC = () => {
         content,
         encoding: 'utf-8',
       });
-      
+
       setTomlContent(content);
       parseDependencies(content);
       setIsDirty(false);
@@ -226,30 +238,32 @@ const CargoTomlEditor: React.FC = () => {
       provideCodeActions: (model, range, context) => {
         const codeActions: any[] = [];
         const lineContent = model.getLineContent(range.startLineNumber);
-        
+
         // Check for missing quotes around version numbers
         const versionMatch = lineContent.match(/^(\s*[a-zA-Z0-9_-]+\s*=\s*)([^\s"'].*)$/);
         if (versionMatch && !lineContent.includes('{') && !lineContent.includes('}')) {
           const version = versionMatch[2].split(/[\s,#]/)[0];
-          if (version && !version.startsWith('"') && !version.startsWith('\'')) {
+          if (version && !version.startsWith('"') && !version.startsWith("'")) {
             codeActions.push({
               title: 'Add quotes around version',
               kind: 'quickfix',
               edit: {
-                edits: [{
-                  resource: model.uri,
-                  edit: {
-                    range: new monaco.Range(
-                      range.startLineNumber,
-                      versionMatch[1].length + 1,
-                      range.startLineNumber,
-                      versionMatch[1].length + version.length + 1
-                    ),
-                    text: `"${version}"`
-                  }
-                }]
+                edits: [
+                  {
+                    resource: model.uri,
+                    edit: {
+                      range: new monaco.Range(
+                        range.startLineNumber,
+                        versionMatch[1].length + 1,
+                        range.startLineNumber,
+                        versionMatch[1].length + version.length + 1
+                      ),
+                      text: `"${version}"`,
+                    },
+                  },
+                ],
               },
-              isPreferred: true
+              isPreferred: true,
             });
           }
         }
@@ -261,19 +275,21 @@ const CargoTomlEditor: React.FC = () => {
             title: 'Add version specifier',
             kind: 'quickfix',
             edit: {
-              edits: [{
-                resource: model.uri,
-                edit: {
-                  range: new monaco.Range(
-                    range.startLineNumber,
-                    missingVersionMatch[1].length + 1,
-                    range.startLineNumber,
-                    missingVersionMatch[1].length + 1
-                  ),
-                  text: '"*"  # Latest version'
-                }
-              }]
-            }
+              edits: [
+                {
+                  resource: model.uri,
+                  edit: {
+                    range: new monaco.Range(
+                      range.startLineNumber,
+                      missingVersionMatch[1].length + 1,
+                      range.startLineNumber,
+                      missingVersionMatch[1].length + 1
+                    ),
+                    text: '"*"  # Latest version',
+                  },
+                },
+              ],
+            },
           });
         }
 
@@ -288,17 +304,22 @@ const CargoTomlEditor: React.FC = () => {
                 title: 'Add missing commas to array',
                 kind: 'quickfix',
                 edit: {
-                  edits: [{
-                    resource: model.uri,
-                    edit: {
-                      range: model.getFullModelRange(),
-                      text: model.getValue().replace(/\[([^\]]+)\]/g, (_, p1) => 
-                        `[${p1.split(/\s+/).filter(Boolean).join(', ')}]`
-                      )
-                    }
-                  }]
+                  edits: [
+                    {
+                      resource: model.uri,
+                      edit: {
+                        range: model.getFullModelRange(),
+                        text: model
+                          .getValue()
+                          .replace(
+                            /\[([^\]]+)\]/g,
+                            (_, p1) => `[${p1.split(/\s+/).filter(Boolean).join(', ')}]`
+                          ),
+                      },
+                    },
+                  ],
                 },
-                isPreferred: true
+                isPreferred: true,
               });
             }
           }
@@ -306,9 +327,9 @@ const CargoTomlEditor: React.FC = () => {
 
         return {
           actions: codeActions,
-          dispose: () => {}
+          dispose: () => {},
         };
-      }
+      },
     });
   }, []);
 
@@ -323,7 +344,7 @@ const CargoTomlEditor: React.FC = () => {
           startLineNumber: 1,
           startColumn: 1,
           endLineNumber: position.lineNumber,
-          endColumn: position.column
+          endColumn: position.column,
         });
 
         // Check if we're in the dependencies section
@@ -338,11 +359,11 @@ const CargoTomlEditor: React.FC = () => {
           // Provide crate name suggestions
           const match = lineUntilPosition.match(/([a-zA-Z0-9_-]*)$/);
           const word = match ? match[1] : '';
-          
+
           const suggestions = await crateService.searchCrates(word);
-          
+
           return {
-            suggestions: suggestions.map(suggestion => ({
+            suggestions: suggestions.map((suggestion) => ({
               label: suggestion.name,
               kind: monaco.languages.CompletionItemKind.Module,
               documentation: suggestion.description,
@@ -352,8 +373,8 @@ const CargoTomlEditor: React.FC = () => {
                 position.column - word.length,
                 position.lineNumber,
                 position.column
-              )
-            }))
+              ),
+            })),
           };
         }
 
@@ -364,17 +385,17 @@ const CargoTomlEditor: React.FC = () => {
             startLineNumber: position.lineNumber,
             startColumn: 1,
             endLineNumber: position.lineNumber,
-            endColumn: position.column
+            endColumn: position.column,
           });
-          
+
           const crateNameMatch = lineTillPosition.match(/^\s*([a-zA-Z0-9_-]+)\s*=/);
           if (!crateNameMatch) return { suggestions: [] };
-          
+
           const crateName = crateNameMatch[1];
           const versions = await crateService.getCrateVersions(crateName);
-          
+
           return {
-            suggestions: versions.slice(0, 10).map(version => ({
+            suggestions: versions.slice(0, 10).map((version) => ({
               label: version.num,
               kind: monaco.languages.CompletionItemKind.Value,
               insertText: `"${version.num}"`,
@@ -383,8 +404,8 @@ const CargoTomlEditor: React.FC = () => {
                 position.column,
                 position.lineNumber,
                 position.column
-              )
-            }))
+              ),
+            })),
           };
         }
 
@@ -395,17 +416,17 @@ const CargoTomlEditor: React.FC = () => {
             startLineNumber: 1,
             startColumn: 1,
             endLineNumber: position.lineNumber,
-            endColumn: position.column
+            endColumn: position.column,
           });
-          
+
           const crateMatch = lineTillPosition.match(/^\s*([a-zA-Z0-9_-]+)\s*=/m);
           if (!crateMatch) return { suggestions: [] };
-          
+
           const crateName = crateMatch[1];
           const features = await crateService.getCrateFeatures(crateName);
-          
+
           return {
-            suggestions: Object.keys(features).map(feature => ({
+            suggestions: Object.keys(features).map((feature) => ({
               label: feature,
               kind: monaco.languages.CompletionItemKind.Enum,
               insertText: `"${feature}"`,
@@ -415,39 +436,42 @@ const CargoTomlEditor: React.FC = () => {
                 position.lineNumber,
                 position.column
               ),
-              documentation: features[feature]?.join('\n') || 'No description available'
-            }))
+              documentation: features[feature]?.join('\n') || 'No description available',
+            })),
           };
         }
 
         return { suggestions: [] };
-      }
+      },
     });
   }, []);
 
   // Handle editor mount
-  const handleEditorDidMount = useCallback((editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
-    editorRef.current = editor;
-    setupMonaco(monaco);
-    
-    // Register providers
-    const intellisenseDisposable = setupIntelliSense(monaco);
-    const quickFixesDisposable = registerQuickFixes(monaco);
-    
-    monaco.editor.setTheme(theme.palette.mode === 'dark' ? 'vs-dark' : 'vs-light');
-    
-    // Add listener for content changes
-    const contentChangeDisposable = editor.onDidChangeModelContent(() => {
-      setIsDirty(true);
-    });
-    
-    return () => {
-      // Cleanup disposables
-      intellisenseDisposable?.dispose();
-      quickFixesDisposable?.dispose();
-      contentChangeDisposable.dispose();
-    };
-  }, [theme.palette.mode, setupIntelliSense, registerQuickFixes]);
+  const handleEditorDidMount = useCallback(
+    (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
+      editorRef.current = editor;
+      setupMonaco(monaco);
+
+      // Register providers
+      const intellisenseDisposable = setupIntelliSense(monaco);
+      const quickFixesDisposable = registerQuickFixes(monaco);
+
+      monaco.editor.setTheme(theme.palette.mode === 'dark' ? 'vs-dark' : 'vs-light');
+
+      // Add listener for content changes
+      const contentChangeDisposable = editor.onDidChangeModelContent(() => {
+        setIsDirty(true);
+      });
+
+      return () => {
+        // Cleanup disposables
+        intellisenseDisposable?.dispose();
+        quickFixesDisposable?.dispose();
+        contentChangeDisposable.dispose();
+      };
+    },
+    [theme.palette.mode, setupIntelliSense, registerQuickFixes]
+  );
 
   // Format markdown for tooltip content
   const formatTooltipContent = (dep: Dependency, doc: any) => {
@@ -459,9 +483,11 @@ const CargoTomlEditor: React.FC = () => {
       doc?.repository ? `\n[Repository](${doc.repository})` : '',
       `\n---\n**Features:** ${dep.features.length > 0 ? dep.features.join(', ') : 'None'}`,
       dep.optional ? '\n**Optional:** Yes' : '',
-      dep['default-features'] !== undefined ? `\n**Default Features:** ${dep['default-features'] ? 'Enabled' : 'Disabled'}` : ''
+      dep['default-features'] !== undefined
+        ? `\n**Default Features:** ${dep['default-features'] ? 'Enabled' : 'Disabled'}`
+        : '',
     ];
-    
+
     return lines.join('\n');
   };
 
@@ -472,19 +498,23 @@ const CargoTomlEditor: React.FC = () => {
         const doc = dependencyDocs[dep.name];
         const isLoading = loadingDocs[dep.name];
         const hasDocs = !!doc;
-        
+
         return (
-          <Tooltip 
-            key={dep.name} 
+          <Tooltip
+            key={dep.name}
             title={
               <Box sx={{ maxWidth: 400 }}>
                 {isLoading ? (
-                  <Box p={1}><CircularProgress size={20} /></Box>
+                  <Box p={1}>
+                    <CircularProgress size={20} />
+                  </Box>
                 ) : hasDocs ? (
                   <Markdown>{formatTooltipContent(dep, doc)}</Markdown>
                 ) : (
                   <Box p={1}>
-                    <Typography variant="subtitle2">{dep.name} {dep.version}</Typography>
+                    <Typography variant="subtitle2">
+                      {dep.name} {dep.version}
+                    </Typography>
                     <Typography variant="body2">No additional information available</Typography>
                     <Typography variant="caption">Click to edit</Typography>
                   </Box>
@@ -507,9 +537,9 @@ const CargoTomlEditor: React.FC = () => {
                   }
                   secondary={`${dep.version} ${dep.optional ? '(optional)' : ''}`}
                 />
-                <IconButton 
-                  edge="end" 
-                  size="small" 
+                <IconButton
+                  edge="end"
+                  size="small"
                   onClick={(e) => {
                     e.stopPropagation();
                     // Handle edit
@@ -570,18 +600,8 @@ const CargoTomlEditor: React.FC = () => {
         onChange={(_, newValue) => setActiveTab(newValue)}
         sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
       >
-        <Tab 
-          icon={<CodeIcon />} 
-          label="Editor" 
-          value="editor" 
-          iconPosition="start"
-        />
-        <Tab 
-          icon={<ListIcon />} 
-          label="Dependencies" 
-          value="dependencies" 
-          iconPosition="start"
-        />
+        <Tab icon={<CodeIcon />} label="Editor" value="editor" iconPosition="start" />
+        <Tab icon={<ListIcon />} label="Dependencies" value="dependencies" iconPosition="start" />
       </Tabs>
 
       {error && (

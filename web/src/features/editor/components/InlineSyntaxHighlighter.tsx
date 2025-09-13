@@ -55,7 +55,7 @@ const InlineSyntaxHighlighter: React.FC<InlineSyntaxHighlighterProps> = ({
   content,
   language,
   aiEnabled = true,
-  aiConfig
+  aiConfig,
 }) => {
   const [syntaxErrors, setSyntaxErrors] = React.useState<SyntaxError[]>([]);
   const [highlights, setHighlights] = React.useState<SyntaxHighlight[]>([]);
@@ -80,16 +80,20 @@ const InlineSyntaxHighlighter: React.FC<InlineSyntaxHighlighterProps> = ({
         if (model && monaco) {
           // Get Monaco markers (built-in diagnostics)
           const markers = monaco.editor.getModelMarkers({ resource: model.uri });
-          markers.forEach(marker => {
+          markers.forEach((marker) => {
             errors.push({
               id: `lsp-${marker.startLineNumber}-${marker.startColumn}`,
               line: marker.startLineNumber,
               column: marker.startColumn,
               endColumn: marker.endColumn,
-              severity: marker.severity === monaco.MarkerSeverity.Error ? 'error' :
-                       marker.severity === monaco.MarkerSeverity.Warning ? 'warning' : 'info',
+              severity:
+                marker.severity === monaco.MarkerSeverity.Error
+                  ? 'error'
+                  : marker.severity === monaco.MarkerSeverity.Warning
+                    ? 'warning'
+                    : 'info',
               message: marker.message,
-              source: 'lsp'
+              source: 'lsp',
             });
           });
 
@@ -100,12 +104,13 @@ const InlineSyntaxHighlighter: React.FC<InlineSyntaxHighlighterProps> = ({
               const analysis = await aiService.analyzeCode({
                 code: content,
                 analysisType: 'security',
-                context: `Analysis of ${language} code`
+                context: `Analysis of ${language} code`,
               });
 
               if (analysis.errors) {
                 analysis.errors.forEach((error: any, index: number) => {
-                  const line = content.substring(0, error.loc?.start?.index || 0).split('\n').length || 1;
+                  const line =
+                    content.substring(0, error.loc?.start?.index || 0).split('\n').length || 1;
                   errors.push({
                     id: `ai-${index}`,
                     line,
@@ -114,7 +119,7 @@ const InlineSyntaxHighlighter: React.FC<InlineSyntaxHighlighterProps> = ({
                     message: error.message || 'AI detected potential issue',
                     source: 'ai',
                     confidence: error.confidence || 0.7,
-                    suggestions: error.suggestions || []
+                    suggestions: error.suggestions || [],
                   });
                 });
               }
@@ -131,11 +136,10 @@ const InlineSyntaxHighlighter: React.FC<InlineSyntaxHighlighterProps> = ({
                     endLine: suggestion.line,
                     endColumn: content.split('\n')[suggestion.line - 1]?.length || 0,
                     color: HIGHLIGHT_COLORS.suggestion,
-                    tooltip: suggestion.content
+                    tooltip: suggestion.content,
                   });
                 }
               });
-
             } catch (aiError) {
               console.warn('AI analysis failed:', aiError);
             }
@@ -167,15 +171,20 @@ const InlineSyntaxHighlighter: React.FC<InlineSyntaxHighlighterProps> = ({
     const decorations: monaco.editor.IModelDeltaDecoration[] = [];
 
     // Add decorations for highlights
-    highlights.forEach(highlight => {
+    highlights.forEach((highlight) => {
       decorations.push({
-        range: new monaco.Range(highlight.line, highlight.column + 1, highlight.endLine, (highlight.endColumn || highlight.column) + 1),
+        range: new monaco.Range(
+          highlight.line,
+          highlight.column + 1,
+          highlight.endLine,
+          (highlight.endColumn || highlight.column) + 1
+        ),
         options: {
           className: 'custom-highlight',
           hoverMessage: { value: highlight.tooltip },
           inlineClassName: `inline-highlight-${highlight.type}`,
-          stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
-        }
+          stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+        },
       });
     });
 
@@ -191,64 +200,69 @@ const InlineSyntaxHighlighter: React.FC<InlineSyntaxHighlighterProps> = ({
   }, [editor, monaco]);
 
   const getErrorsForLine = (lineNumber: number) =>
-    syntaxErrors.filter(error => error.line === lineNumber);
+    syntaxErrors.filter((error) => error.line === lineNumber);
 
   const getHighlightsForLine = (lineNumber: number) =>
-    highlights.filter(highlight => highlight.line === lineNumber);
+    highlights.filter((highlight) => highlight.line === lineNumber);
 
   if (!editor) return null;
 
   return (
     <>
       {isAnalyzing && (
-        <Box sx={{
-          position: 'fixed',
-          top: 20,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 1,
-          padding: 1,
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1
-        }}>
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
+            padding: 1,
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
           <Typography variant="caption">Analyzing code...</Typography>
         </Box>
       )}
 
       {/* Error and warning overlays on the gutter */}
-      {syntaxErrors.map(error => (
-        <Tooltip key={error.id} title={
-          <div>
-            <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
-              {error.message}
-            </Typography>
-            {error.suggestions && error.suggestions.length > 0 && (
-              <div>
-                <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-                  Suggestions:
-                </Typography>
-                {error.suggestions.slice(0, 3).map((suggestion, idx) => (
-                  <Typography key={idx} variant="caption" sx={{ display: 'block', ml: 1 }}>
-                    • {suggestion}
+      {syntaxErrors.map((error) => (
+        <Tooltip
+          key={error.id}
+          title={
+            <div>
+              <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
+                {error.message}
+              </Typography>
+              {error.suggestions && error.suggestions.length > 0 && (
+                <div>
+                  <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                    Suggestions:
                   </Typography>
-                ))}
-              </div>
-            )}
-            {error.source === 'ai' && error.confidence && (
-              <Chip
-                label={`${Math.round(error.confidence * 100)}% confidence`}
-                size="small"
-                variant="outlined"
-                sx={{ mt: 1 }}
-              />
-            )}
-          </div>
-        }>
+                  {error.suggestions.slice(0, 3).map((suggestion, idx) => (
+                    <Typography key={idx} variant="caption" sx={{ display: 'block', ml: 1 }}>
+                      • {suggestion}
+                    </Typography>
+                  ))}
+                </div>
+              )}
+              {error.source === 'ai' && error.confidence && (
+                <Chip
+                  label={`${Math.round(error.confidence * 100)}% confidence`}
+                  size="small"
+                  variant="outlined"
+                  sx={{ mt: 1 }}
+                />
+              )}
+            </div>
+          }
+        >
           <Box
             sx={{
               position: 'absolute',
@@ -263,14 +277,14 @@ const InlineSyntaxHighlighter: React.FC<InlineSyntaxHighlighterProps> = ({
               '&:hover': {
                 width: 12,
                 height: 12,
-              }
+              },
             }}
           />
         </Tooltip>
       ))}
 
       {/* Highlight overlays on the editor */}
-      {highlights.map(highlight => {
+      {highlights.map((highlight) => {
         const lineHeight = 24; // Approximate Monaco line height
         const top = (highlight.line - 1) * lineHeight;
 
@@ -286,7 +300,7 @@ const InlineSyntaxHighlighter: React.FC<InlineSyntaxHighlighterProps> = ({
               backgroundColor: highlight.color,
               pointerEvents: 'none',
               cursor: highlight.action ? 'pointer' : 'default',
-              zIndex: 5
+              zIndex: 5,
             }}
             onClick={highlight.action}
           />

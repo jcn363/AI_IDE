@@ -2,10 +2,10 @@
 //!
 //! Quantum-entangled communication systems for development across parallel universes.
 
+use chrono::Utc;
+use petgraph::Graph;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use petgraph::Graph;
-use chrono::Utc;
 
 pub struct RealityCollaborationHub {
     pub participants: std::collections::HashMap<Uuid, RealityCollaborator>,
@@ -22,9 +22,19 @@ impl RealityCollaborationHub {
         }
     }
 
-    pub async fn establish_reality_bridge(&mut self, participant_a: Uuid, participant_b: Uuid) -> Result<(), RealityCollaborationError> {
-        self.quantum_communicator.create_entanglement(participant_a, participant_b).await?;
-        log::info!("Established reality bridge between {} and {}", participant_a, participant_b);
+    pub async fn establish_reality_bridge(
+        &mut self,
+        participant_a: Uuid,
+        participant_b: Uuid,
+    ) -> Result<(), RealityCollaborationError> {
+        self.quantum_communicator
+            .create_entanglement(participant_a, participant_b)
+            .await?;
+        log::info!(
+            "Established reality bridge between {} and {}",
+            participant_a,
+            participant_b
+        );
         Ok(())
     }
 }
@@ -40,7 +50,11 @@ impl QuantumCommunicator {
         }
     }
 
-    pub async fn create_entanglement(&mut self, a: Uuid, b: Uuid) -> Result<(), RealityCollaborationError> {
+    pub async fn create_entanglement(
+        &mut self,
+        a: Uuid,
+        b: Uuid,
+    ) -> Result<(), RealityCollaborationError> {
         let entanglement = Entanglement {
             strength: 1.0,
             established_at: Utc::now(),

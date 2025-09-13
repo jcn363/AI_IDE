@@ -55,7 +55,7 @@ describe('RefactoringService - Integration Tests', () => {
 
     // Verify all requests completed and returned consistent results
     expect(results).toHaveLength(4);
-    results.forEach(result => {
+    results.forEach((result) => {
       expect(result).toEqual(mockCapabilities);
     });
 
@@ -166,19 +166,17 @@ describe('RefactoringService - Integration Tests', () => {
     mockInvoke.mockImplementation(async () => {
       callCount++;
       // Simulate some processing time
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       return mockCapabilities;
     });
 
     // Create more concurrent calls to stress test
-    const promises = Array.from({ length: 10 }, () =>
-      refactoringService.getBackendCapabilities()
-    );
+    const promises = Array.from({ length: 10 }, () => refactoringService.getBackendCapabilities());
 
     const results = await Promise.all(promises);
 
     // All should return same result
-    results.forEach(result => {
+    results.forEach((result) => {
       expect(result).toEqual(mockCapabilities);
     });
 

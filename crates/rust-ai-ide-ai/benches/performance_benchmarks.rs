@@ -26,12 +26,12 @@ fn benchmark_small_code_analysis(c: &mut Criterion) {
             use super::b;
             pub fn a() { b::b(); }
         }
-        
+
         mod b {
             use super::a;
             pub fn b() { a::a(); }
         }
-        
+
         fn main() {
             a::a();
         }
@@ -199,27 +199,27 @@ fn benchmark_security_analyzers(c: &mut Criterion) {
     let code = r#"
         // Hardcoded secret
         const API_KEY: &str = "sk_test_1234567890abcdef12345678";
-        
+
         // Insecure crypto
         fn hash_password(password: &str) -> String {
             use md5;
             let hash = md5::compute(password.as_bytes());
             format!("{:x}", hash)
         }
-        
+
         // SQL injection
         fn get_user(pool: &sqlx::PgPool, user_id: &str) -> Result<(), sqlx::Error> {
             let query = format!("SELECT * FROM users WHERE id = {}", user_id);
             sqlx::query(&query).fetch_one(pool).await?;
             Ok(())
         }
-        
+
         // Hardcoded credentials
         struct DatabaseConfig {
             username: &'static str,
             password: &'static str,
         }
-        
+
         impl DatabaseConfig {
             fn new() -> Self {
                 Self {
@@ -288,35 +288,35 @@ fn benchmark_full_pipeline(c: &mut Criterion) {
         // Circular dependency
         mod a { pub fn a() { b::b(); } }
         mod b { pub fn b() { a::a(); } }
-        
+
         // Layer violation
         mod domain {
             use super::infrastructure::Database;
             pub struct Service { db: Database }
         }
-        
+
         mod infrastructure {
             use super::domain::Service;
             pub struct Database;
         }
-        
+
         // Insecure crypto
         fn hash_password(pwd: &str) -> String {
             use md5;
             let hash = md5::compute(pwd.as_bytes());
             format!("{:x}", hash)
         }
-        
+
         // Hardcoded secret
         const API_KEY: &str = "sk_test_1234567890";
-        
+
         // SQL injection
         fn get_user(pool: &sqlx::PgPool, user_id: &str) -> Result<(), sqlx::Error> {
             let query = format!("SELECT * FROM users WHERE id = {}", user_id);
             sqlx::query(&query).fetch_one(pool).await?;
             Ok(())
         }
-        
+
         // High complexity function
         fn complex_function(x: i32) -> i32 {
             let mut result = 0;

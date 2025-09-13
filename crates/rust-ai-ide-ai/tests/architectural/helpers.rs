@@ -13,13 +13,13 @@ use crate::analysis::{
 /// Create a test analysis registry with all architectural analyzers registered
 pub fn create_test_registry() -> AnalysisRegistry {
     let mut registry = AnalysisRegistry::default();
-    
+
     // Register all architectural analyzers
     registry.register_architectural_analyzer(CircularDependencyAnalyzer::default());
     registry.register_architectural_analyzer(LayerViolationDetector::default());
     registry.register_architectural_analyzer(InterfaceSegregationAnalyzer::default());
     registry.register_architectural_analyzer(DependencyInversionAnalyzer::default());
-    
+
     registry
 }
 
@@ -29,9 +29,7 @@ macro_rules! assert_finding {
     ($result:expr, $type:expr, $severity:expr, $message:expr) => {
         assert!(
             $result.findings.iter().any(|f| {
-                f.analysis_type == $type
-                    && f.severity == $severity
-                    && f.message.contains($message)
+                f.analysis_type == $type && f.severity == $severity && f.message.contains($message)
             }),
             "Expected finding with type {:?}, severity {:?} and message containing '{}' in {:?}",
             $type,
@@ -48,9 +46,7 @@ macro_rules! assert_no_finding {
     ($result:expr, $type:expr, $severity:expr, $message:expr) => {
         assert!(
             !$result.findings.iter().any(|f| {
-                f.analysis_type == $type
-                    && f.severity == $severity
-                    && f.message.contains($message)
+                f.analysis_type == $type && f.severity == $severity && f.message.contains($message)
             }),
             "Unexpected finding with type {:?}, severity {:?} and message containing '{}' in {:?}",
             $type,
@@ -70,10 +66,10 @@ pub fn test_file_path(module: &str, file_name: &str) -> String {
         .unwrap()
         .join("test-fixtures")
         .join(module);
-    
+
     std::fs::create_dir_all(&path).unwrap();
     path = path.join(file_name);
-    
+
     path.to_string_lossy().into_owned()
 }
 
@@ -108,8 +104,15 @@ pub fn assert_has_errors(result: &AnalysisResult, expected_errors: usize) {
 }
 
 /// Helper function to check for specific findings
-pub fn has_findings(result: &AnalysisResult, analysis_type: AnalysisType, severity: Severity) -> bool {
-    result.findings.iter().any(|f| f.analysis_type == analysis_type && f.severity == severity)
+pub fn has_findings(
+    result: &AnalysisResult,
+    analysis_type: AnalysisType,
+    severity: Severity,
+) -> bool {
+    result
+        .findings
+        .iter()
+        .any(|f| f.analysis_type == analysis_type && f.severity == severity)
 }
 
 /// Create a test AST from source code
@@ -133,7 +136,7 @@ pub fn cleanup_test_files(module: &str) {
         .unwrap()
         .join("test-fixtures")
         .join(module);
-    
+
     if path.exists() {
         std::fs::remove_dir_all(&path).expect("Failed to clean up test files");
     }
@@ -148,13 +151,13 @@ pub fn create_test_project(project_name: &str, files: &[(&str, &str)]) -> String
         .unwrap()
         .join("test-fixtures")
         .join(project_name);
-    
+
     if project_path.exists() {
         std::fs::remove_dir_all(&project_path).expect("Failed to clean up test project");
     }
-    
+
     std::fs::create_dir_all(&project_path).expect("Failed to create test project directory");
-    
+
     for (file_path, content) in files {
         let file_path = project_path.join(file_path);
         if let Some(parent) = file_path.parent() {
@@ -162,6 +165,6 @@ pub fn create_test_project(project_name: &str, files: &[(&str, &str)]) -> String
         }
         std::fs::write(&file_path, content).expect("Failed to write test file");
     }
-    
+
     project_path.to_string_lossy().into_owned()
 }

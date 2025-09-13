@@ -2,11 +2,11 @@
 //!
 //! Advanced architecture analysis and modernization capabilities for evolutionary software design.
 
-use std::collections::{HashMap, HashSet, BTreeMap, VecDeque};
-use serde::{Deserialize, Serialize};
-use petgraph::{Graph, Directed};
+use petgraph::{Directed, Graph};
 use rayon::prelude::*;
-use rust_ai_ide_ai1_semantic::{SemanticUnderstandingEngine, SemanticConfig, SemanticAnalysis};
+use rust_ai_ide_ai1_semantic::{SemanticAnalysis, SemanticConfig, SemanticUnderstandingEngine};
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use tokio::sync::Mutex;
 
 /// Architecture modernization engine
@@ -30,7 +30,10 @@ impl ArchitectureModernizationEngine {
     }
 
     /// Analyze architecture and generate modernization plan
-    pub async fn analyze_and_modernize(&self, codebase: &Codebase) -> Result<ModernizationPlan, ArchitectureError> {
+    pub async fn analyze_and_modernize(
+        &self,
+        codebase: &Codebase,
+    ) -> Result<ModernizationPlan, ArchitectureError> {
         // Analyze current architecture
         let architecture = self.analyzer.analyze_architecture(codebase).await?;
 
@@ -41,21 +44,27 @@ impl ArchitectureModernizationEngine {
         let opportunities = self.modernizer.identify_opportunities(&architecture).await;
 
         // Create modernization plan
-        let plan = self.refactoring_planner.create_modernization_plan(
-            &architecture,
-            &opportunities,
-            &quality_scores
-        ).await?;
+        let plan = self
+            .refactoring_planner
+            .create_modernization_plan(&architecture, &opportunities, &quality_scores)
+            .await?;
 
         Ok(plan)
     }
 
     /// Execute modernization refactoring steps
-    pub async fn execute_modernization(&self, plan: &ModernizationPlan, codebase: &mut Codebase) -> Result<ExecutionResult, ArchitectureError> {
+    pub async fn execute_modernization(
+        &self,
+        plan: &ModernizationPlan,
+        codebase: &mut Codebase,
+    ) -> Result<ExecutionResult, ArchitectureError> {
         let mut results = ExecutionResult::default();
 
         for step in &plan.steps {
-            let result = self.refactoring_planner.execute_step(step, codebase).await?;
+            let result = self
+                .refactoring_planner
+                .execute_step(step, codebase)
+                .await?;
             results.executed_steps.push(result);
 
             if !result.success {
@@ -68,13 +77,19 @@ impl ArchitectureModernizationEngine {
     }
 
     /// Generate architecture visualization
-    pub async fn generate_architecture_visualization(&self, architecture: &Architecture) -> Result<String, ArchitectureError> {
+    pub async fn generate_architecture_visualization(
+        &self,
+        architecture: &Architecture,
+    ) -> Result<String, ArchitectureError> {
         // Generate GraphViz or similar format for architecture visualization
         let mut viz = String::from("digraph Architecture {\n");
 
         // Add nodes for modules
         for (module_name, module) in &architecture.modules {
-            viz.push_str(&format!("    \"{}\" [label=\"{}\"];\n", module_name, module_name));
+            viz.push_str(&format!(
+                "    \"{}\" [label=\"{}\"];\n",
+                module_name, module_name
+            ));
 
             // Add connections
             for dependency in &module.dependencies {
@@ -90,7 +105,10 @@ impl ArchitectureModernizationEngine {
     }
 
     /// Analyze architectural smells and anti-patterns
-    pub async fn detect_architecture_smells(&self, architecture: &Architecture) -> Result<Vec<ArchitectureSmell>, ArchitectureError> {
+    pub async fn detect_architecture_smells(
+        &self,
+        architecture: &Architecture,
+    ) -> Result<Vec<ArchitectureSmell>, ArchitectureError> {
         let mut smells = Vec::new();
 
         // Detect god object anti-pattern
@@ -100,7 +118,10 @@ impl ArchitectureModernizationEngine {
                     smell_type: ArchitectureSmellType::GodObject,
                     location: module_name.clone(),
                     severity: SmellSeverity::High,
-                    description: format!("Module '{}' has high complexity and too many dependencies", module_name),
+                    description: format!(
+                        "Module '{}' has high complexity and too many dependencies",
+                        module_name
+                    ),
                     impact: "Makes code difficult to understand and maintain".to_string(),
                     resolution: "Break down into smaller, focused modules".to_string(),
                 });
@@ -114,7 +135,10 @@ impl ArchitectureModernizationEngine {
                 smell_type: ArchitectureSmellType::CircularDependency,
                 location: format!("{} ↔ {}", module1, module2),
                 severity: SmellSeverity::Medium,
-                description: format!("Circular dependency between '{}' and '{}'", module1, module2),
+                description: format!(
+                    "Circular dependency between '{}' and '{}'",
+                    module1, module2
+                ),
                 impact: "Creates tight coupling and makes testing difficult".to_string(),
                 resolution: "Introduce interfaces or mediator pattern".to_string(),
             });
@@ -138,14 +162,20 @@ impl ArchitectureAnalyzer {
     }
 
     /// Perform comprehensive architecture analysis
-    pub async fn analyze_architecture(&self, codebase: &Codebase) -> Result<Architecture, ArchitectureError> {
+    pub async fn analyze_architecture(
+        &self,
+        codebase: &Codebase,
+    ) -> Result<Architecture, ArchitectureError> {
         let mut modules = HashMap::new();
         let mut relationships = Vec::new();
 
         // Analyze each file/module
         for file in &codebase.files {
             let module_name = self.extract_module_name(file);
-            let analysis = self.semantic_engine.analyze_code(&file.content, &file.language).await?;
+            let analysis = self
+                .semantic_engine
+                .analyze_code(&file.content, &file.language)
+                .await?;
 
             let module = ModuleInfo {
                 name: module_name.clone(),
@@ -187,7 +217,8 @@ impl ArchitectureAnalyzer {
         // Build dependency graph
         let mut graph = HashMap::new();
         for relation in &architecture.relationships {
-            graph.entry(relation.from.clone())
+            graph
+                .entry(relation.from.clone())
                 .or_insert_with(Vec::new)
                 .push(relation.to.clone());
         }
@@ -215,7 +246,13 @@ impl ArchitectureAnalyzer {
         circular_deps
     }
 
-    fn has_cycle(&self, node: &str, graph: &HashMap<String, Vec<String>>, visited: &mut HashSet<String>, path: &mut Vec<String>) -> bool {
+    fn has_cycle(
+        &self,
+        node: &str,
+        graph: &HashMap<String, Vec<String>>,
+        visited: &mut HashSet<String>,
+        path: &mut Vec<String>,
+    ) -> bool {
         visited.insert(node.to_string());
         path.push(node.to_string());
 
@@ -244,7 +281,11 @@ impl ArchitectureAnalyzer {
             .to_string()
     }
 
-    fn extract_dependencies(&self, _analysis: &SemanticAnalysis, _codebase: &Codebase) -> HashSet<String> {
+    fn extract_dependencies(
+        &self,
+        _analysis: &SemanticAnalysis,
+        _codebase: &Codebase,
+    ) -> HashSet<String> {
         // Extract dependencies from semantic analysis
         // This would examine imports, function calls, etc.
         HashSet::new()
@@ -271,7 +312,10 @@ impl ArchitectureAnalyzer {
         0.3 // Placeholder
     }
 
-    fn infer_architecture_layers(&self, modules: &HashMap<String, ModuleInfo>) -> Vec<ArchitectureLayer> {
+    fn infer_architecture_layers(
+        &self,
+        modules: &HashMap<String, ModuleInfo>,
+    ) -> Vec<ArchitectureLayer> {
         // Infer architectural layers based on module names and dependencies
         // Simple categorization
         let mut presentation = Vec::new();
@@ -280,9 +324,15 @@ impl ArchitectureAnalyzer {
 
         for (name, _) in modules {
             let name_lower = name.to_lowercase();
-            if name_lower.contains("ui") || name_lower.contains("view") || name_lower.contains("controller") {
+            if name_lower.contains("ui")
+                || name_lower.contains("view")
+                || name_lower.contains("controller")
+            {
                 presentation.push(name.clone());
-            } else if name_lower.contains("service") || name_lower.contains("business") || name_lower.contains("logic") {
+            } else if name_lower.contains("service")
+                || name_lower.contains("business")
+                || name_lower.contains("logic")
+            {
                 business.push(name.clone());
             } else {
                 data.push(name.clone());
@@ -290,9 +340,18 @@ impl ArchitectureAnalyzer {
         }
 
         vec![
-            ArchitectureLayer { name: "Presentation".to_string(), modules: presentation },
-            ArchitectureLayer { name: "Business Logic".to_string(), modules: business },
-            ArchitectureLayer { name: "Data Access".to_string(), modules: data },
+            ArchitectureLayer {
+                name: "Presentation".to_string(),
+                modules: presentation,
+            },
+            ArchitectureLayer {
+                name: "Business Logic".to_string(),
+                modules: business,
+            },
+            ArchitectureLayer {
+                name: "Data Access".to_string(),
+                modules: data,
+            },
         ]
     }
 }
@@ -307,7 +366,10 @@ impl CodeModernizer {
     }
 
     /// Identify modernization opportunities
-    pub async fn identify_opportunities(&self, architecture: &Architecture) -> Vec<ModernizationOpportunity> {
+    pub async fn identify_opportunities(
+        &self,
+        architecture: &Architecture,
+    ) -> Vec<ModernizationOpportunity> {
         let mut opportunities = Vec::new();
 
         // Look for patterns that can be modernized
@@ -370,9 +432,12 @@ impl QualityScorer {
     fn calculate_maintainability(&self, architecture: &Architecture) -> f64 {
         // Based on Lines of Code, Cyclomatic Complexity, Halstead metrics
         let total_loc: usize = architecture.modules.values().map(|m| m.lines_of_code).sum();
-        let avg_complexity: f64 = architecture.modules.values()
+        let avg_complexity: f64 = architecture
+            .modules
+            .values()
             .map(|m| m.complexity_score)
-            .sum::<f64>() / architecture.modules.len() as f64;
+            .sum::<f64>()
+            / architecture.modules.len() as f64;
 
         // Maintainability index formula (simplified)
         171.0 - 5.2 * (total_loc as f64).ln() - 0.23 * avg_complexity * 10.0
@@ -381,8 +446,10 @@ impl QualityScorer {
     fn calculate_architecture_quality(&self, architecture: &Architecture) -> f64 {
         // Based on D (Distance from Main Sequence)
         let modules: Vec<&ModuleInfo> = architecture.modules.values().collect();
-        let avg_abstractness: f64 = modules.iter().map(|m| m.abstractness).sum::<f64>() / modules.len() as f64;
-        let avg_instability: f64 = modules.iter().map(|m| m.instability).sum::<f64>() / modules.len() as f64;
+        let avg_abstractness: f64 =
+            modules.iter().map(|m| m.abstractness).sum::<f64>() / modules.len() as f64;
+        let avg_instability: f64 =
+            modules.iter().map(|m| m.instability).sum::<f64>() / modules.len() as f64;
 
         // D = |A + I - 1| (normalized)
         let d = (avg_abstractness + avg_instability - 1.0).abs();
@@ -444,7 +511,11 @@ impl RefactoringPlanner {
     }
 
     /// Execute a single modernization step
-    pub async fn execute_step(&self, step: &ModernizationStep, _codebase: &mut Codebase) -> Result<StepExecution, ArchitectureError> {
+    pub async fn execute_step(
+        &self,
+        step: &ModernizationStep,
+        _codebase: &mut Codebase,
+    ) -> Result<StepExecution, ArchitectureError> {
         Ok(StepExecution {
             step_id: 0,
             success: true,

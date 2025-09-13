@@ -15,7 +15,7 @@ export const ID_PREFIXES = {
   GRAPH_NODE: 'graph-node',
   VALIDATION_ERROR: 'validation-err',
   TAB_PANEL: 'tab-panel',
-  COMMAND_OUTPUT: 'cmd-output'
+  COMMAND_OUTPUT: 'cmd-output',
 } as const;
 
 /**
@@ -29,7 +29,11 @@ export function generateCargoCommandId(action: string, index?: number): string {
 /**
  * Generates a unique ID for dependency table elements
  */
-export function generateDependencyTableId(tableName: string, row?: number, column?: string): string {
+export function generateDependencyTableId(
+  tableName: string,
+  row?: number,
+  column?: string
+): string {
   let id = `${ID_PREFIXES.DEPENDENCY_TABLE}-${tableName}`;
   if (row !== undefined) id += `-${row}`;
   if (column) id += `-${column}`;
@@ -114,7 +118,10 @@ export function generateFormElementName(formName: string, fieldName: string): st
 /**
  * Generates an ID for related form elements (label-input pairs)
  */
-export function generateFormAssociationIds(formName: string, fieldName: string): {
+export function generateFormAssociationIds(
+  formName: string,
+  fieldName: string
+): {
   labelId: string;
   inputId: string;
   errorId: string;

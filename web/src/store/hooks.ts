@@ -5,9 +5,7 @@ import { UnknownAction } from '@reduxjs/toolkit';
 import store from './store';
 
 type AppDispatch = ThunkDispatch<RootState, unknown, UnknownAction> & {
-  <Returned = unknown, Arg = unknown>(
-    asyncAction: AppThunk<Returned, Arg>
-  ): Promise<Returned>;
+  <Returned = unknown, Arg = unknown>(asyncAction: AppThunk<Returned, Arg>): Promise<Returned>;
 };
 
 // Use throughout your app instead of plain `useDispatch` and `useSelector`

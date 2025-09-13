@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use rust_ai_ide_ai_codegen::*;
 use rust_ai_ide_shared_codegen::generator::*;
+use std::collections::HashMap;
 
 #[cfg(test)]
 mod code_generation_tests {
@@ -43,7 +43,9 @@ mod code_generation_tests {
         let context = CodeGenerationContext::test_context(TargetLanguage::Rust);
 
         // Generate test suite
-        let test_suite = generator.generate_test_suite("&baseline_input", &context).await;
+        let test_suite = generator
+            .generate_test_suite("&baseline_input", &context)
+            .await;
         assert!(test_suite.is_ok());
 
         if let Ok(suite) = test_suite {
@@ -91,17 +93,17 @@ mod code_generation_tests {
         let typescript = TargetLanguage::TypeScript;
 
         match rust {
-            TargetLanguage::Rust => {},
+            TargetLanguage::Rust => {}
             _ => panic!("Expected Rust"),
         }
 
         match python {
-            TargetLanguage::Python => {},
+            TargetLanguage::Python => {}
             _ => panic!("Expected Python"),
         }
 
         match typescript {
-            TargetLanguage::TypeScript => {},
+            TargetLanguage::TypeScript => {}
             _ => panic!("Expected TypeScript"),
         }
     }
@@ -149,7 +151,7 @@ mod code_generation_tests {
         }
 
         match invalid_language {
-            CodeGenerationError::UnsupportedLanguage(TargetLanguage::Rust) => {},
+            CodeGenerationError::UnsupportedLanguage(TargetLanguage::Rust) => {}
             _ => panic!("Expected UnsupportedLanguage"),
         }
     }

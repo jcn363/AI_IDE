@@ -65,7 +65,7 @@ interface RefactoringPanelProps {
  */
 const getRefactoringIcon = (type: RefactoringType): React.ReactElement => {
   const iconMap: Record<string, React.ReactElement> = {
-    'rename': <Transform sx={{ fontSize: 20 }} />,
+    rename: <Transform sx={{ fontSize: 20 }} />,
     'extract-function': <Build sx={{ fontSize: 20 }} />,
     'extract-variable': <Build sx={{ fontSize: 20 }} />,
     'extract-interface': <Code sx={{ fontSize: 20 }} />,
@@ -84,7 +84,7 @@ const getRefactoringIcon = (type: RefactoringType): React.ReactElement => {
  */
 const getRefactoringDisplayName = (type: RefactoringType): string => {
   const nameMap: Record<string, string> = {
-    'rename': 'Rename',
+    rename: 'Rename',
     'extract-function': 'Extract Function',
     'extract-variable': 'Extract Variable',
     'extract-interface': 'Extract Interface',
@@ -103,7 +103,7 @@ const getRefactoringDisplayName = (type: RefactoringType): string => {
  */
 const getRefactoringDescription = (type: RefactoringType): string => {
   const descMap: Record<string, string> = {
-    'rename': 'Safely rename symbols, variables, functions, or classes',
+    rename: 'Safely rename symbols, variables, functions, or classes',
     'extract-function': 'Extract selected code into a new function',
     'extract-variable': 'Replace expression with a meaningful variable',
     'extract-interface': 'Extract common methods into an interface',
@@ -140,27 +140,15 @@ export const RefactoringPanel: React.FC<RefactoringPanelProps> = ({
   // Categorize refactorings
   const refactoringsByCategory = useMemo(() => {
     const categories: Record<string, RefactoringType[]> = {
-      'Basic Operations': [
-        'rename',
-        'extract-function',
-        'extract-variable',
-      ],
-      'Advanced Operations': [
-        'extract-interface',
-        'move-method',
-        'move-class',
-      ],
-      'Code Improvement': [
-        'inline-method',
-        'convert-to-async',
-        'pattern-conversion',
-      ],
+      'Basic Operations': ['rename', 'extract-function', 'extract-variable'],
+      'Advanced Operations': ['extract-interface', 'move-method', 'move-class'],
+      'Code Improvement': ['inline-method', 'convert-to-async', 'pattern-conversion'],
     };
 
     // Filter categories based on available refactorings
     const filtered: Record<string, RefactoringType[]> = {};
     Object.entries(categories).forEach(([category, types]) => {
-      const availableInCategory = types.filter(type => availableRefactorings.includes(type));
+      const availableInCategory = types.filter((type) => availableRefactorings.includes(type));
       if (availableInCategory.length > 0) {
         filtered[category] = availableInCategory;
       }
@@ -170,12 +158,15 @@ export const RefactoringPanel: React.FC<RefactoringPanelProps> = ({
   }, [availableRefactorings]);
 
   // Event handlers
-  const handleConfigurationUpdate = useCallback((updates: Partial<RefactoringConfiguration>) => {
-    onConfigurationUpdate(updates);
-  }, [onConfigurationUpdate]);
+  const handleConfigurationUpdate = useCallback(
+    (updates: Partial<RefactoringConfiguration>) => {
+      onConfigurationUpdate(updates);
+    },
+    [onConfigurationUpdate]
+  );
 
   const toggleCategory = useCallback((category: string) => {
-    setExpandedCategories(prev => {
+    setExpandedCategories((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(category)) {
         newSet.delete(category);
@@ -186,26 +177,29 @@ export const RefactoringPanel: React.FC<RefactoringPanelProps> = ({
     });
   }, []);
 
-  const handleRefactoringSelect = useCallback(async (type: RefactoringType) => {
-    if (!currentContext) return;
+  const handleRefactoringSelect = useCallback(
+    async (type: RefactoringType) => {
+      if (!currentContext) return;
 
-    try {
-      setSelectedType(type);
-      setRefactoringInProgress(type);
+      try {
+        setSelectedType(type);
+        setRefactoringInProgress(type);
 
-      // Execute refactoring with default options
-      await onApplyRefactoring(type, currentContext, {
-        createBackup: true,
-        scope: configuration.defaultOptions?.scope ?? 'file',
-      });
+        // Execute refactoring with default options
+        await onApplyRefactoring(type, currentContext, {
+          createBackup: true,
+          scope: configuration.defaultOptions?.scope ?? 'file',
+        });
 
-      setSelectedType(null);
-    } catch (error) {
-      console.error('Refactoring operation failed:', error);
-    } finally {
-      setRefactoringInProgress(null);
-    }
-  }, [currentContext, configuration, onApplyRefactoring]);
+        setSelectedType(null);
+      } catch (error) {
+        console.error('Refactoring operation failed:', error);
+      } finally {
+        setRefactoringInProgress(null);
+      }
+    },
+    [currentContext, configuration, onApplyRefactoring]
+  );
 
   // Don't render if not visible
   if (!visible) return null;
@@ -242,11 +236,7 @@ export const RefactoringPanel: React.FC<RefactoringPanelProps> = ({
           <Typography variant="h6" component="h2">
             Code Refactoring
           </Typography>
-          <Chip
-            label={`${availableRefactorings.length} Available`}
-            color="primary"
-            size="small"
-          />
+          <Chip label={`${availableRefactorings.length} Available`} color="primary" size="small" />
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Tooltip title="Advanced Configuration">
@@ -304,9 +294,11 @@ export const RefactoringPanel: React.FC<RefactoringPanelProps> = ({
               control={
                 <Switch
                   checked={configuration.previewBeforeApply ?? false}
-                  onChange={(e) => handleConfigurationUpdate({
-                    previewBeforeApply: e.target.checked
-                  })}
+                  onChange={(e) =>
+                    handleConfigurationUpdate({
+                      previewBeforeApply: e.target.checked,
+                    })
+                  }
                   size="small"
                 />
               }
@@ -317,9 +309,11 @@ export const RefactoringPanel: React.FC<RefactoringPanelProps> = ({
               control={
                 <Switch
                   checked={configuration.confirmDestructiveChanges ?? true}
-                  onChange={(e) => handleConfigurationUpdate({
-                    confirmDestructiveChanges: e.target.checked
-                  })}
+                  onChange={(e) =>
+                    handleConfigurationUpdate({
+                      confirmDestructiveChanges: e.target.checked,
+                    })
+                  }
                   size="small"
                 />
               }
@@ -330,12 +324,14 @@ export const RefactoringPanel: React.FC<RefactoringPanelProps> = ({
               control={
                 <Switch
                   checked={configuration.defaultOptions?.createBackup ?? true}
-                  onChange={(e) => handleConfigurationUpdate({
-                    defaultOptions: {
-                      ...configuration.defaultOptions,
-                      createBackup: e.target.checked,
-                    },
-                  })}
+                  onChange={(e) =>
+                    handleConfigurationUpdate({
+                      defaultOptions: {
+                        ...configuration.defaultOptions,
+                        createBackup: e.target.checked,
+                      },
+                    })
+                  }
                   size="small"
                 />
               }
@@ -347,12 +343,14 @@ export const RefactoringPanel: React.FC<RefactoringPanelProps> = ({
               <Select
                 value={configuration.defaultOptions?.scope ?? 'file'}
                 label="Default Scope"
-                onChange={(e) => handleConfigurationUpdate({
-                  defaultOptions: {
-                    ...configuration.defaultOptions,
-                    scope: e.target.value as string,
-                  },
-                })}
+                onChange={(e) =>
+                  handleConfigurationUpdate({
+                    defaultOptions: {
+                      ...configuration.defaultOptions,
+                      scope: e.target.value as string,
+                    },
+                  })
+                }
               >
                 <MenuItem value="file">Current File</MenuItem>
                 <MenuItem value="module">Current Module</MenuItem>
@@ -399,12 +397,14 @@ export const RefactoringPanel: React.FC<RefactoringPanelProps> = ({
                   sx={{ '&:before': { display: 'none' } }}
                 >
                   <AccordionSummary expandIcon={<ExpandMore />}>
-                    <Box sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      width: '100%'
-                    }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        width: '100%',
+                      }}
+                    >
                       <Typography variant="subtitle2" sx={{ flex: 1 }}>
                         {category}
                       </Typography>

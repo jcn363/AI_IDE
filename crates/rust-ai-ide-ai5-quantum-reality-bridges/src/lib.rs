@@ -20,15 +20,28 @@ impl QuantumRealityBridge {
         }
     }
 
-    pub async fn establish_bridge(&mut self, source_reality: &Reality, target_reality: &Reality) -> Result<BridgeConnection, QuantumBridgeError> {
-        let tunnel = self.tunneling_engine.create_tunnel(source_reality, target_reality).await?;
+    pub async fn establish_bridge(
+        &mut self,
+        source_reality: &Reality,
+        target_reality: &Reality,
+    ) -> Result<BridgeConnection, QuantumBridgeError> {
+        let tunnel = self
+            .tunneling_engine
+            .create_tunnel(source_reality, target_reality)
+            .await?;
         let connection = self.dimension_connector.connect_dimensions(tunnel).await?;
         Ok(connection)
     }
 
-    pub async fn synchronize_state(&self, connection: &BridgeConnection) -> Result<(), QuantumBridgeError> {
+    pub async fn synchronize_state(
+        &self,
+        connection: &BridgeConnection,
+    ) -> Result<(), QuantumBridgeError> {
         self.reality_synchronizer.synchronize(connection).await?;
-        log::info!("Synchronized reality states across bridge {}", connection.id);
+        log::info!(
+            "Synchronized reality states across bridge {}",
+            connection.id
+        );
         Ok(())
     }
 }
@@ -44,7 +57,11 @@ impl TunnelingEngine {
         }
     }
 
-    pub async fn create_tunnel(&mut self, source: &Reality, target: &Reality) -> Result<QuantumTunnel, QuantumBridgeError> {
+    pub async fn create_tunnel(
+        &mut self,
+        source: &Reality,
+        target: &Reality,
+    ) -> Result<QuantumTunnel, QuantumBridgeError> {
         let tunnel_id = Uuid::new_v4();
         let tunnel = QuantumTunnel {
             id: tunnel_id,
@@ -69,7 +86,10 @@ impl RealitySynchronizer {
         }
     }
 
-    pub async fn synchronize(&self, connection: &BridgeConnection) -> Result<(), QuantumBridgeError> {
+    pub async fn synchronize(
+        &self,
+        connection: &BridgeConnection,
+    ) -> Result<(), QuantumBridgeError> {
         // Implement quantum state synchronization
         log::debug!("Synchronized bridge connection {}", connection.id);
         Ok(())
@@ -87,7 +107,10 @@ impl DimensionConnector {
         }
     }
 
-    pub async fn connect_dimensions(&mut self, tunnel: QuantumTunnel) -> Result<BridgeConnection, QuantumBridgeError> {
+    pub async fn connect_dimensions(
+        &mut self,
+        tunnel: QuantumTunnel,
+    ) -> Result<BridgeConnection, QuantumBridgeError> {
         let connection = BridgeConnection {
             id: Uuid::new_v4(),
             tunnel_id: tunnel.id,
@@ -164,7 +187,10 @@ mod tests {
             reality_type: "digital".to_string(),
         };
 
-        let connection = bridge.establish_bridge(&source_reality, &target_reality).await.unwrap();
+        let connection = bridge
+            .establish_bridge(&source_reality, &target_reality)
+            .await
+            .unwrap();
         assert!(connection.stability > 0.8);
     }
 }

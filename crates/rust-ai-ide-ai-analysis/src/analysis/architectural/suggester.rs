@@ -5,7 +5,7 @@
 //! refactoring recommendations.
 
 use crate::analysis::architectural::{detectors::*, patterns::*};
-use rust_ai_ide_common::{IdeResult, IdeError};
+use rust_ai_ide_common::{IdeError, IdeResult};
 use std::collections::HashMap;
 
 /// Advanced suggestion generator with context awareness
@@ -141,7 +141,9 @@ impl AdvancedSuggestionGenerator {
 
         // Generate suggestions from anti-patterns
         for anti_pattern in &analysis_result.detected_anti_patterns {
-            if let Some(suggestion_set) = self.generate_anti_pattern_suggestions(anti_pattern, context)? {
+            if let Some(suggestion_set) =
+                self.generate_anti_pattern_suggestions(anti_pattern, context)?
+            {
                 suggestions.extend(suggestion_set);
             }
         }
@@ -179,14 +181,19 @@ impl AdvancedSuggestionGenerator {
         let mut suggestions = Vec::new();
 
         // Get relevant refactoring rules
-        if let Some(rule) = self.refactoring_rules.get_anti_pattern_rule(&anti_pattern.anti_pattern_type) {
+        if let Some(rule) = self
+            .refactoring_rules
+            .get_anti_pattern_rule(&anti_pattern.anti_pattern_type)
+        {
             if self.check_rule_applicability(rule, anti_pattern, context)? {
                 suggestions.extend(self.apply_refactoring_rule(rule, anti_pattern, context)?);
             }
         }
 
         // Add template-based suggestions
-        if let Some(template_suggestions) = self.apply_suggestion_templates(anti_pattern, context)? {
+        if let Some(template_suggestions) =
+            self.apply_suggestion_templates(anti_pattern, context)?
+        {
             suggestions.extend(template_suggestions);
         }
 
@@ -202,7 +209,10 @@ impl AdvancedSuggestionGenerator {
         let mut suggestions = Vec::new();
 
         // Get enhancement rules
-        if let Some(rule) = self.refactoring_rules.get_pattern_rule(&pattern.pattern_type) {
+        if let Some(rule) = self
+            .refactoring_rules
+            .get_pattern_rule(&pattern.pattern_type)
+        {
             suggestions.extend(self.apply_enhancement_rule(rule, pattern, context)?);
         }
 
@@ -247,7 +257,9 @@ impl AdvancedSuggestionGenerator {
         for condition in &rule.conditions {
             match condition {
                 RefactoringCondition::ComplexityAbove(threshold) => {
-                    if anti_pattern.context.structural_info.cyclomatic_complexity as f32 <= *threshold {
+                    if anti_pattern.context.structural_info.cyclomatic_complexity as f32
+                        <= *threshold
+                    {
                         return Ok(false);
                     }
                 }
@@ -293,8 +305,10 @@ impl AdvancedSuggestionGenerator {
                 self.map_to_refactoring_type(&anti_pattern.anti_pattern_type),
             )
             .with_benefits(rule.expected_outcomes.clone())
-            .with_guidance(format!("Expected refactoring effort: {} days",
-                                 anti_pattern.metrics.refactoring_effort_days));
+            .with_guidance(format!(
+                "Expected refactoring effort: {} days",
+                anti_pattern.metrics.refactoring_effort_days
+            ));
 
             suggestions.push(suggestion);
         }
@@ -345,7 +359,10 @@ impl AdvancedSuggestionGenerator {
         pattern: &DetectedPattern,
         _context: &AnalysisContext,
     ) -> IdeResult<Option<Vec<IntelligenceSuggestion>>> {
-        if let Some(template) = self.suggestion_templates.get(&format!("{:?}", pattern.pattern_type)) {
+        if let Some(template) = self
+            .suggestion_templates
+            .get(&format!("{:?}", pattern.pattern_type))
+        {
             let suggestion = IntelligenceSuggestion::new(
                 SuggestionCategory::Architecture,
                 format!("Improve {}", pattern.pattern_type.description()),
@@ -363,9 +380,13 @@ impl AdvancedSuggestionGenerator {
     }
 
     /// Prioritize suggestions based on multiple factors
-    fn prioritize_suggestions(&self, suggestions: Vec<IntelligenceSuggestion>) -> Vec<IntelligenceSuggestion> {
+    fn prioritize_suggestions(
+        &self,
+        suggestions: Vec<IntelligenceSuggestion>,
+    ) -> Vec<IntelligenceSuggestion> {
         // Sort by composite score: confidence * priority_weight * context_relevance
-        let mut scored_suggestions: Vec<(IntelligenceSuggestion, f32)> = suggestions.into_iter()
+        let mut scored_suggestions: Vec<(IntelligenceSuggestion, f32)> = suggestions
+            .into_iter()
             .map(|s| {
                 let priority_score = match s.priority {
                     Priority::Critical => 1.0,
@@ -380,20 +401,26 @@ impl AdvancedSuggestionGenerator {
             })
             .collect();
 
-        scored_suggestions.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        scored_suggestions
+            .sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
 
         scored_suggestions.into_iter().map(|(s, _)| s).collect()
     }
 
     /// Filter similar or duplicate suggestions
-    fn filter_similar_suggestions(&self, suggestions: Vec<IntelligenceSuggestion>) -> Vec<IntelligenceSuggestion> {
+    fn filter_similar_suggestions(
+        &self,
+        suggestions: Vec<IntelligenceSuggestion>,
+    ) -> Vec<IntelligenceSuggestion> {
         let mut filtered = Vec::new();
 
         for suggestion in suggestions {
             let is_duplicate = filtered.iter().any(|existing| {
-                existing.suggestion_type == suggestion.suggestion_type &&
-                existing.location.file_path == suggestion.location.file_path &&
-                (existing.location.start_line as i32 - suggestion.location.start_line as i32).abs() < 10
+                existing.suggestion_type == suggestion.suggestion_type
+                    && existing.location.file_path == suggestion.location.file_path
+                    && (existing.location.start_line as i32 - suggestion.location.start_line as i32)
+                        .abs()
+                        < 10
             });
 
             if !is_duplicate {
@@ -405,11 +432,21 @@ impl AdvancedSuggestionGenerator {
     }
 
     /// Create a summary of the suggestion set
-    fn create_suggestion_summary(&self, suggestions: &[IntelligenceSuggestion]) -> SuggestionSummary {
-        let critical_count = suggestions.iter().filter(|s| matches!(s.priority, Priority::Critical)).count();
-        let high_priority_count = suggestions.iter().filter(|s| matches!(s.priority, Priority::High)).count();
+    fn create_suggestion_summary(
+        &self,
+        suggestions: &[IntelligenceSuggestion],
+    ) -> SuggestionSummary {
+        let critical_count = suggestions
+            .iter()
+            .filter(|s| matches!(s.priority, Priority::Critical))
+            .count();
+        let high_priority_count = suggestions
+            .iter()
+            .filter(|s| matches!(s.priority, Priority::High))
+            .count();
 
-        let total_effort: f32 = suggestions.iter()
+        let total_effort: f32 = suggestions
+            .iter()
             .map(|s| self.estimate_refactoring_effort(s))
             .sum();
 
@@ -464,19 +501,33 @@ impl AdvancedSuggestionGenerator {
     }
 
     // Placeholder methods for performance suggestions
-    fn suggest_memory_optimization(&self, _analysis_result: &AnalysisResult) -> IdeResult<Option<IntelligenceSuggestion>> {
+    fn suggest_memory_optimization(
+        &self,
+        _analysis_result: &AnalysisResult,
+    ) -> IdeResult<Option<IntelligenceSuggestion>> {
         Ok(None)
     }
 
-    fn suggest_async_improvements(&self, _analysis_result: &AnalysisResult) -> IdeResult<Option<IntelligenceSuggestion>> {
+    fn suggest_async_improvements(
+        &self,
+        _analysis_result: &AnalysisResult,
+    ) -> IdeResult<Option<IntelligenceSuggestion>> {
         Ok(None)
     }
 
-    fn suggest_algorithm_improvements(&self, _analysis_result: &AnalysisResult) -> IdeResult<Option<IntelligenceSuggestion>> {
+    fn suggest_algorithm_improvements(
+        &self,
+        _analysis_result: &AnalysisResult,
+    ) -> IdeResult<Option<IntelligenceSuggestion>> {
         Ok(None)
     }
 
-    fn evaluate_custom_condition(&self, _condition: &str, _anti_pattern: &DetectedAntiPattern, _context: &AnalysisContext) -> IdeResult<bool> {
+    fn evaluate_custom_condition(
+        &self,
+        _condition: &str,
+        _anti_pattern: &DetectedAntiPattern,
+        _context: &AnalysisContext,
+    ) -> IdeResult<bool> {
         Ok(true)
     }
 
@@ -535,7 +586,7 @@ impl RefactoringRuleEngine {
                     "Easier testing".to_string(),
                     "Better maintainability".to_string(),
                 ],
-            }
+            },
         );
 
         rules.insert(
@@ -556,7 +607,7 @@ impl RefactoringRuleEngine {
                     "Improved testability".to_string(),
                     "Reduced complexity".to_string(),
                 ],
-            }
+            },
         );
 
         rules
@@ -579,7 +630,7 @@ impl RefactoringRuleEngine {
                     "Improved maintainability".to_string(),
                     "Enhanced scalability".to_string(),
                 ],
-            }
+            },
         );
 
         rules

@@ -1,0 +1,1031 @@
+git commit -m "Security improvements"
+🚀 Running pre-commit checks...
+🔧 Running code formatter...
+==> Checking for rustfmt...
+✓ rustfmt is already installed
+==> Checking Rust toolchain...
+✓ Using rustc 1.91.0-nightly (5eda692e7 2025-09-11) (rustfmt rustfmt 1.8.0-nightly (5eda692e73 2025-09-11))
+==> Cleaning up trailing whitespace...
+==> Checking code formatting...
+
+⚠ Some files failed to format. Check the output for details.
+==> Checking for Prettier and ESLint in web/ directory...
+✓ Prettier and ESLint are available in web/ directory
+==> Formatting TypeScript/JavaScript files in web/ directory...
+⚠ Prettier formatting issues found in web/ directory
+⚠ ESLint issues found in web/ directory
+⚠ Some TypeScript/JavaScript formatting issues were found
+⚠ Code formatting issues found. Fixing them...
+==> Cleaning up trailing whitespace...
+==> Formatting code...
+error[E0753]: expected outer doc comment
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-shared-types/src/plugins.rs:11:1
+   |
+11 | //! OpenAPI plugin for generating REST API specifications
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+12 | pub mod openapi_plugin;
+   | ----------------------- the inner doc comment doesn't annotate this module
+   |
+help: to annotate the module, change the doc comment from inner to outer style
+   |
+11 - //! OpenAPI plugin for generating REST API specifications
+11 + /// OpenAPI plugin for generating REST API specifications
+   |
+
+Error writing files: failed to resolve mod `plugins`: cannot parse /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-shared-types/src/plugins.rs
+error: mismatched closing delimiter: `}`
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-advanced-refactoring/src/ai_suggester.rs:245:16
+    |
+245 |         format!(
+    |                ^ unclosed delimiter
+...
+283 |         }
+    |         ^ mismatched closing delimiter
+
+error: unexpected closing delimiter: `}`
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-advanced-refactoring/src/ai_suggester.rs:420:1
+    |
+244 |     fn build_ai_prompt(&self, file_path: &str, file_content: &str, context: &AnalysisContext) -> String {
+    |                                                                                                         - this delimiter might not be properly closed...
+...
+283 |         }
+    |         - ...as it matches this but it has different indentation
+...
+420 | }
+    | ^ unexpected closing delimiter
+
+Error writing files: failed to resolve mod `ai_suggester`: cannot parse /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-advanced-refactoring/src/ai_suggester.rs
+error: mismatched closing delimiter: `}`
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-advanced-refactoring/src/ai_suggester.rs:245:16
+    |
+245 |         format!(
+    |                ^ unclosed delimiter
+...
+283 |         }
+    |         ^ mismatched closing delimiter
+
+error: unexpected closing delimiter: `}`
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-advanced-refactoring/src/ai_suggester.rs:420:1
+    |
+244 |     fn build_ai_prompt(&self, file_path: &str, file_content: &str, context: &AnalysisContext) -> String {
+    |                                                                                                         - this delimiter might not be properly closed...
+...
+283 |         }
+    |         - ...as it matches this but it has different indentation
+...
+420 | }
+    | ^ unexpected closing delimiter
+
+error: expected `where`, `{`, `(`, or `;` after struct name, found `CacheTask`
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/src/model_cache.rs:63:11
+   |
+63 | struct ев CacheTask {
+   |           ^^^^^^^^^ expected `where`, `{`, `(`, or `;` after struct name
+
+error: missing `fn` for function definition
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/src/analysis/architectural/visitors/interface_segregation_visitor.rs:149:5
+    |
+149 |     test_too_many_parameters() {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: add `fn` here to parse `test_too_many_parameters` as a function
+    |
+149 |     fn test_too_many_parameters() {
+    |     ++
+
+Error writing files: failed to resolve mod `interface_segregation_visitor`: cannot parse /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/src/analysis/architectural/visitors/interface_segregation_visitor.rs
+error[E0762]: unterminated character literal
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/src/analysis/security.rs:395:44
+    |
+395 |             Regex::new(r"const.*KEY.*=.*[\"']")?,
+    |                                            ^^^^^^
+
+error: missing `fn` for function definition
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/src/analysis/architectural/visitors/interface_segregation_visitor.rs:149:5
+    |
+149 |     test_too_many_parameters() {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: add `fn` here to parse `test_too_many_parameters` as a function
+    |
+149 |     fn test_too_many_parameters() {
+    |     ++
+
+error: missing `fn` for function definition
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/src/analysis/architectural/visitors/interface_segregation_visitor.rs:149:5
+    |
+149 |     test_too_many_parameters() {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: add `fn` here to parse `test_too_many_parameters` as a function
+    |
+149 |     fn test_too_many_parameters() {
+    |     ++
+
+Error writing files: failed to resolve mod `interface_segregation_visitor`: cannot parse /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/src/analysis/architectural/visitors/interface_segregation_visitor.rs
+error: expected one of `!` or `::`, found `:`
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/src/analysis/cache.rs:18:11
+   |
+18 | start_line:19
+   |           ^ expected one of `!` or `::`
+
+error: missing `fn` for function definition
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/src/analysis/architectural/visitors/interface_segregation_visitor.rs:149:5
+    |
+149 |     test_too_many_parameters() {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: add `fn` here to parse `test_too_many_parameters` as a function
+    |
+149 |     fn test_too_many_parameters() {
+    |     ++
+
+Error writing files: failed to resolve mod `interface_segregation_visitor`: cannot parse /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/src/analysis/architectural/visitors/interface_segregation_visitor.rs
+error: expected one of `)`, `,`, `.`, `?`, or an operator, found `"); } }"`
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/tests/architectural_tests.rs:42:100
+   |
+42 |     let findings = analyzer.analyze(&simple_fn, "test.rs", "fn simple() { if true { println!("Hello"); } }");
+   |                                                                                                    -^^^^^^^
+   |                                                                                                    |
+   |                                                                                                    expected one of `)`, `,`, `.`, `?`, or an operator
+   |                                                                                                    help: missing `,`
+
+Error writing files: failed to resolve mod `mock_data`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/tests/common/mock_data.rs does not exist
+error: unexpected closing delimiter: `}`
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/tests/test_fixtures.rs:104:1
+    |
+ 58 | impl TestSpecBuilder {
+    |                      - this delimiter might not be properly closed...
+...
+ 84 |     }
+    |     - ...as it matches this but it has different indentation
+...
+104 | }
+    | ^ unexpected closing delimiter
+
+error: unexpected closing delimiter: `}`
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/tests/test_fixtures.rs:104:1
+    |
+ 58 | impl TestSpecBuilder {
+    |                      - this delimiter might not be properly closed...
+...
+ 84 |     }
+    |     - ...as it matches this but it has different indentation
+...
+104 | }
+    | ^ unexpected closing delimiter
+
+Error writing files: failed to resolve mod `test_fixtures`: cannot parse /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/tests/test_fixtures.rs
+Error writing files: failed to resolve mod `ai_lsp_integration_tests`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai/tests/integration/ai_lsp_integration_tests.rs does not exist
+error: incorrect use of `await`
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-sql-lsp/examples/demo_sql_ai_enhancements.rs:78:5
+   |
+78 |     await demo_pattern_recognition(&ai_server, &mut demo_metrics).await?;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: `await` is a postfix operation
+   |
+78 -     await demo_pattern_recognition(&ai_server, &mut demo_metrics).await?;
+78 +     demo_pattern_recognition(&ai_server, &mut demo_metrics).await?.await;
+   |
+
+error: incorrect use of `await`
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-sql-lsp/examples/demo_sql_ai_enhancements.rs:84:5
+   |
+84 |     await demo_context_aware_analysis(&ai_server, &mut demo_metrics).await?;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: `await` is a postfix operation
+   |
+84 -     await demo_context_aware_analysis(&ai_server, &mut demo_metrics).await?;
+84 +     demo_context_aware_analysis(&ai_server, &mut demo_metrics).await?.await;
+   |
+
+error: incorrect use of `await`
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-sql-lsp/examples/demo_sql_ai_enhancements.rs:90:5
+   |
+90 |     await demo_predictive_optimization(&ai_server, &mut demo_metrics).await?;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: `await` is a postfix operation
+   |
+90 -     await demo_predictive_optimization(&ai_server, &mut demo_metrics).await?;
+90 +     demo_predictive_optimization(&ai_server, &mut demo_metrics).await?.await;
+   |
+
+error: incorrect use of `await`
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-sql-lsp/examples/demo_sql_ai_enhancements.rs:96:5
+   |
+96 |     await demo_adaptive_caching(&ai_server, &mut demo_metrics).await?;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: `await` is a postfix operation
+   |
+96 -     await demo_adaptive_caching(&ai_server, &mut demo_metrics).await?;
+96 +     demo_adaptive_caching(&ai_server, &mut demo_metrics).await?.await;
+   |
+
+error: incorrect use of `await`
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-sql-lsp/examples/demo_sql_ai_enhancements.rs:102:5
+    |
+102 |     await demo_real_time_performance(&ai_server, &mut demo_metrics).await?;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: `await` is a postfix operation
+    |
+102 -     await demo_real_time_performance(&ai_server, &mut demo_metrics).await?;
+102 +     demo_real_time_performance(&ai_server, &mut demo_metrics).await?.await;
+    |
+
+error: incorrect use of `await`
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-sql-lsp/examples/demo_sql_ai_enhancements.rs:108:5
+    |
+108 |     await demo_analytics_insights(&ai_server, &demo_metrics).await?;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: `await` is a postfix operation
+    |
+108 -     await demo_analytics_insights(&ai_server, &demo_metrics).await?;
+108 +     demo_analytics_insights(&ai_server, &demo_metrics).await?.await;
+    |
+
+Error writing files: failed to resolve mod `predictive_optimization`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-sql-lsp/src/optimization/predictive_optimization.rs does not exist
+Error writing files: failed to resolve mod `context_aware`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-sql-lsp/src/analysis/context_aware.rs does not exist
+Error writing files: failed to resolve mod `context_aware`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-sql-lsp/src/analysis/context_aware.rs does not exist
+Error writing files: failed to resolve mod `dummy_cache`: file for module found at both "/home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-analysis/src/analysis/architectural/dummy_cache.rs" and "/home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-analysis/src/analysis/architectural/dummy_cache/mod.rs"
+error: this file contains an unclosed delimiter
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-debugger/src/debugger/types.rs:234:7
+    |
+224 | impl Default for DebuggerConfig {
+    |                                 - unclosed delimiter
+...
+234 |     }
+    |      ^
+
+error: expected one of `!` or `::`, found `:`
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-debugger/src/debugger/mod.rs:68:20
+   |
+68 |     thread_debugger: ThreadDebugger,
+   |                    ^ expected one of `!` or `::`
+
+error: expected one of `!` or `::`, found `:`
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-debugger/src/debugger/mod.rs:68:20
+   |
+68 |     thread_debugger: ThreadDebugger,
+   |                    ^ expected one of `!` or `::`
+
+Error writing files: failed to resolve mod `debugger`: cannot parse /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-debugger/src/debugger/mod.rs
+error: unmatched angle bracket
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-debugger/src/mi_protocol.rs:15:70
+   |
+15 |     pub(crate) writer: Arc<Mutex<Option<tokio::process::ChildStdin>>>>,
+   |                                                                      ^
+   |
+help: remove extra angle bracket
+   |
+15 -     pub(crate) writer: Arc<Mutex<Option<tokio::process::ChildStdin>>>>,
+15 +     pub(crate) writer: Arc<Mutex<Option<tokio::process::ChildStdin>>>,
+   |
+
+error: unknown start of token: \u{221e}
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai5-infinite-scalability/src/lib.rs:72:30
+   |
+72 |             recursion_level: ∞, // Truly infinite recursion
+   |                              ^
+
+error: expected expression, found `,`
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai5-infinite-scalability/src/lib.rs:72:31
+   |
+70 |         Ok(QuantumRecursiveResult {
+   |            ---------------------- while parsing this struct
+71 |             system_id: scale_result.system_id,
+72 |             recursion_level: ∞, // Truly infinite recursion
+   |                               ^ expected expression
+
+error: expected `{`, found `Remuneration`
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-webhooks/src/middleware.rs:47:16
+   |
+47 |         if req Remuneration.body().size_hint();
+   |                ^^^^^^^^^^^^ expected `{`
+   |
+note: the `if` expression is missing a block after this condition
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-webhooks/src/middleware.rs:47:12
+   |
+47 |         if req Remuneration.body().size_hint();
+   |            ^^^
+help: you might have meant to write this as part of a block
+   |
+47 |         if req { Remuneration.body().size_hint() };
+   |                +                                 +
+
+error: expected `{`, found `Remuneration`
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-webhooks/src/middleware.rs:47:16
+   |
+47 |         if req Remuneration.body().size_hint();
+   |                ^^^^^^^^^^^^ expected `{`
+   |
+note: the `if` expression is missing a block after this condition
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-webhooks/src/middleware.rs:47:12
+   |
+47 |         if req Remuneration.body().size_hint();
+   |            ^^^
+help: you might have meant to write this as part of a block
+   |
+47 |         if req { Remuneration.body().size_hint() };
+   |                +                                 +
+
+Error writing files: failed to resolve mod `middleware`: cannot parse /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-webhooks/src/middleware.rs
+error: expressions must be enclosed in braces to be used as const generic arguments
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-multi-model-orchestrator/src/types.rs:58:70
+   |
+58 |           self.error_count as f64 / self.request_count.max(1) as f64 < 0.1 && // Less than 10% error rate
+   |  ______________________________________________________________________^
+59 | |         self.last_updated.elapsed() < Duration::from_secs(60) // Updated within last minute
+   | |_____________________________________________________________^
+   |
+help: enclose the `const` expression in braces
+   |
+58 ~         self.error_count as f64 / self.request_count.max(1) as f64 < { 0.1 && // Less than 10% error rate
+59 ~         self.last_updated.elapsed() < Duration::from_secs(60) } // Updated within last minute
+   |
+
+error: `<` is interpreted as a start of generic arguments for `f64`, not a comparison
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-multi-model-orchestrator/src/types.rs:58:68
+   |
+58 |           self.error_count as f64 / self.request_count.max(1) as f64 < 0.1 && // Less than 10% error rate
+   |  ____________________________________________________________________^_-
+   | |                                                                    |
+   | |                                                                    not interpreted as comparison
+59 | |         self.last_updated.elapsed() < Duration::from_secs(60) // Updated within last minute
+60 | |     }
+   | |_____- interpreted as generic arguments
+   |
+help: try comparing the cast value
+   |
+58 |         self.error_count as f64 / (self.request_count.max(1) as f64) < 0.1 && // Less than 10% error rate
+   |                                   +                                +
+
+Error writing files: failed to resolve mod `types`: cannot parse /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-multi-model-orchestrator/src/types.rs
+error: expressions must be enclosed in braces to be used as const generic arguments
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-multi-model-orchestrator/src/types.rs:58:70
+   |
+58 |           self.error_count as f64 / self.request_count.max(1) as f64 < 0.1 && // Less than 10% error rate
+   |  ______________________________________________________________________^
+59 | |         self.last_updated.elapsed() < Duration::from_secs(60) // Updated within last minute
+   | |_____________________________________________________________^
+   |
+help: enclose the `const` expression in braces
+   |
+58 ~         self.error_count as f64 / self.request_count.max(1) as f64 < { 0.1 && // Less than 10% error rate
+59 ~         self.last_updated.elapsed() < Duration::from_secs(60) } // Updated within last minute
+   |
+
+error: `<` is interpreted as a start of generic arguments for `f64`, not a comparison
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-multi-model-orchestrator/src/types.rs:58:68
+   |
+58 |           self.error_count as f64 / self.request_count.max(1) as f64 < 0.1 && // Less than 10% error rate
+   |  ____________________________________________________________________^_-
+   | |                                                                    |
+   | |                                                                    not interpreted as comparison
+59 | |         self.last_updated.elapsed() < Duration::from_secs(60) // Updated within last minute
+60 | |     }
+   | |_____- interpreted as generic arguments
+   |
+help: try comparing the cast value
+   |
+58 |         self.error_count as f64 / (self.request_count.max(1) as f64) < 0.1 && // Less than 10% error rate
+   |                                   +                                +
+
+Error writing files: failed to resolve mod `test_generator`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-code-generator/src/generators/test_generator.rs does not exist
+Error writing files: failed to resolve mod `test_generator`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-code-generator/src/generators/test_generator.rs does not exist
+error: unexpected closing delimiter: `}`
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai1-reviews/src/lib.rs:353:1
+    |
+ 34 |     pub async fn review_codebase(&self, codebase: &Codebase) -> Result<CodeReviewReport, ReviewError> {
+    |                                                                                                       - the nearest open delimiter
+...
+ 54 |         let architecture = self.architecture_engine.analyze_architecture.codebase).await?;
+    |                                                                                  - missing open `(` for this delimiter
+...
+353 | }
+    | ^ unexpected closing delimiter
+
+error: this file contains an unclosed delimiter
+    --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/encryption.rs:1153:2
+     |
+ 670 | impl EncryptedConfigManager {
+     |                             - unclosed delimiter
+ 671 |     /// Create a new encrypted configuration manager with Wave 3 enhancements
+ 672 |     pub async fn new(config: EncryptionConfig) -> SecurityResult<Self> {
+     |                                                                        - this delimiter might not be properly closed...
+...
+ 961 | }
+     | - ...as it matches this but it has different indentation
+...
+1153 | }
+     |  ^
+
+error: unexpected closing delimiter: `}`
+    --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/zero_trust.rs:1061:1
+     |
+1053 | pub struct ContinuousVerificationResult {
+     |                                         - this opening brace...
+...
+1060 | }
+     | - ...matches this closing brace
+1061 | }
+     | ^ unexpected closing delimiter
+
+error: prefix `source` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:279:67
+    |
+279 |                     recommendation: "Reject model and investigate source".to_string(),
+    |                                                                   ^^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+279 |                     recommendation: "Reject model and investigate source ".to_string(),
+    |                                                                         +
+
+error: prefix `filtering` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:298:66
+    |
+298 |                     recommendation: "Implement adversarial input filtering".to_string(),
+    |                                                                  ^^^^^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+298 |                     recommendation: "Implement adversarial input filtering ".to_string(),
+    |                                                                           +
+
+error: prefix `embeddings` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:344:67
+    |
+344 |             description: "Potential gender bias detected in model embeddings".to_string(),
+    |                                                                   ^^^^^^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+344 |             description: "Potential gender bias detected in model embeddings ".to_string(),
+    |                                                                             +
+
+error: prefix `bias` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:350:80
+    |
+350 |             recommendation: "Retrain model with balanced dataset and audit for bias".to_string(),
+    |                                                                                ^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+350 |             recommendation: "Retrain model with balanced dataset and audit for bias ".to_string(),
+    |                                                                                    +
+
+error: unknown start of token: \
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:404:58
+    |
+404 |         let mut report = format!("Model Validation Report\n========================\n\n");
+    |                                                          ^
+
+error: unknown start of token: \
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:404:84
+    |
+404 |         let mut report = format!("Model Validation Report\n========================\n\n");
+    |                                                                                    ^
+
+error: unknown start of token: \
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:404:86
+    |
+404 |         let mut report = format!("Model Validation Report\n========================\n\n");
+    |                                                                                      ^
+
+error: prefix `n` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:404:87
+    |
+404 |         let mut report = format!("Model Validation Report\n========================\n\n");
+    |                                                                                       ^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+404 |         let mut report = format!("Model Validation Report\n========================\n\n ");
+    |                                                                                        +
+
+error: unknown start of token: \
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:405:48
+    |
+405 |         report.push_str(&format!("Model: {} v{}\n", result.model_info.name, result.model_info.version));
+    |                                                ^
+
+error: prefix `n` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:405:49
+    |
+405 |         report.push_str(&format!("Model: {} v{}\n", result.model_info.name, result.model_info.version));
+    |                                                 ^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+405 |         report.push_str(&format!("Model: {} v{}\n ", result.model_info.name, result.model_info.version));
+    |                                                  +
+
+error: unknown start of token: \
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:406:43
+    |
+406 |         report.push_str(&format!("Safe: {}\n", result.is_safe));
+    |                                           ^
+
+error: prefix `n` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:406:44
+    |
+406 |         report.push_str(&format!("Safe: {}\n", result.is_safe));
+    |                                            ^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+406 |         report.push_str(&format!("Safe: {}\n ", result.is_safe));
+    |                                             +
+
+error: unknown start of token: \
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:407:56
+    |
+407 |         report.push_str(&format!("Overall Score: {:.2}%\n", result.overall_score * 100.0));
+    |                                                        ^
+
+error: prefix `n` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:407:57
+    |
+407 |         report.push_str(&format!("Overall Score: {:.2}%\n", result.overall_score * 100.0));
+    |                                                         ^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+407 |         report.push_str(&format!("Overall Score: {:.2}%\n ", result.overall_score * 100.0));
+    |                                                          +
+
+error: unknown start of token: \
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:408:56
+    |
+408 |         report.push_str(&format!("Validation Time: {}ms\n\n", result.validation_duration_ms));
+    |                                                        ^
+
+error: unknown start of token: \
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:408:58
+    |
+408 |         report.push_str(&format!("Validation Time: {}ms\n\n", result.validation_duration_ms));
+    |                                                          ^
+
+error: prefix `n` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:408:59
+    |
+408 |         report.push_str(&format!("Validation Time: {}ms\n\n", result.validation_duration_ms));
+    |                                                           ^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+408 |         report.push_str(&format!("Validation Time: {}ms\n\n ", result.validation_duration_ms));
+    |                                                            +
+
+error: unknown start of token: \
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:411:43
+    |
+411 |             report.push_str("Issues Found:\n---------------\n");
+    |                                           ^
+
+error: unknown start of token: \
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:411:60
+    |
+411 |             report.push_str("Issues Found:\n---------------\n");
+    |                                                            ^
+
+error: prefix `n` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:411:61
+    |
+411 |             report.push_str("Issues Found:\n---------------\n");
+    |                                                             ^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+411 |             report.push_str("Issues Found:\n---------------\n ");
+    |                                                              +
+
+error: unknown start of token: \
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:420:48
+    |
+420 |                 report.push_str(&format!("{} {}\n", severity_icon, issue.description));
+    |                                                ^
+
+error: prefix `n` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:420:49
+    |
+420 |                 report.push_str(&format!("{} {}\n", severity_icon, issue.description));
+    |                                                 ^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+420 |                 report.push_str(&format!("{} {}\n ", severity_icon, issue.description));
+    |                                                  +
+
+error: unknown start of token: \
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:422:68
+    |
+422 |                     report.push_str(&format!("   Recommendation: {}\n", issue.recommendation));
+    |                                                                    ^
+
+error: prefix `n` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:422:69
+    |
+422 |                     report.push_str(&format!("   Recommendation: {}\n", issue.recommendation));
+    |                                                                     ^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+422 |                     report.push_str(&format!("   Recommendation: {}\n ", issue.recommendation));
+    |                                                                      +
+
+error: prefix `co` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:455:30
+    |
+455 |                 "huggingface.co".to_string(),
+    |                              ^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+455 |                 "huggingface.co ".to_string(),
+    |                                +
+
+error: prefix `com` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:456:25
+    |
+456 |                 "github.com".to_string(),
+    |                         ^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+456 |                 "github.com ".to_string(),
+    |                            +
+
+error: prefix `com` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:457:25
+    |
+457 |                 "gitlab.com".to_string(),
+    |                         ^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+457 |                 "gitlab.com ".to_string(),
+    |                            +
+
+error: prefix `clause` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:497:24
+    |
+497 |                 "bsd-3-clause".to_string(),
+    |                        ^^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+497 |                 "bsd-3-clause ".to_string(),
+    |                              +
+
+error: prefix `MB` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:579:63
+    |
+579 |                 description: format!("Model file too large: {}MB", model_data.len() / (1024 * 1024)),
+    |                                                               ^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+579 |                 description: format!("Model file too large: {}MB ", model_data.len() / (1024 * 1024)),
+    |                                                                 +
+
+error: prefix `architectures` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:582:72
+    |
+582 |                 recommendation: "Consider model compression or smaller architectures".to_string(),
+    |                                                                        ^^^^^^^^^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+582 |                 recommendation: "Consider model compression or smaller architectures ".to_string(),
+    |                                                                                     +
+
+error: prefix `content` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:600:80
+    |
+600 |                     recommendation: "Reject model due to potentially malicious content".to_string(),
+    |                                                                                ^^^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+600 |                     recommendation: "Reject model due to potentially malicious content ".to_string(),
+    |                                                                                       +
+
+error: prefix `rf` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:614:18
+    |
+614 |             "rm -rf",
+    |                  ^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+614 |             "rm -rf ",
+    |                    +
+
+error: prefix `TABLE` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:616:19
+    |
+616 |             "DROP TABLE",
+    |                   ^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+616 |             "DROP TABLE ",
+    |                        +
+
+error: prefix `source` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:632:67
+    |
+632 |                     recommendation: "Reject model and investigate source".to_string(),
+    |                                                                   ^^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+632 |                     recommendation: "Reject model and investigate source ".to_string(),
+    |                                                                         +
+
+error: prefix `size` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:658:90
+    |
+658 |                 recommendation: "Consider quantization or model distillation for smaller size".to_string(),
+    |                                                                                          ^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+658 |                 recommendation: "Consider quantization or model distillation for smaller size ".to_string(),
+    |                                                                                              +
+
+error: prefix `malware` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:789:48
+    |
+789 |         let model_data = b"this model contains malware".to_vec();
+    |                                                ^^^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+789 |         let model_data = b"this model contains malware ".to_vec();
+    |                                                       +
+
+error: prefix `issue` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:812:36
+    |
+812 |             description: "Critical issue".to_string(),
+    |                                    ^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+812 |             description: "Critical issue ".to_string(),
+    |                                         +
+
+error: prefix `immediately` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:815:34
+    |
+815 |             recommendation: "Fix immediately".to_string(),
+    |                                  ^^^^^^^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+815 |             recommendation: "Fix immediately ".to_string(),
+    |                                             +
+
+error[E0765]: unterminated double quote string
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security/src/model_validation.rs:850:31
+    |
+850 |               checksum_sha256: "".to_string(),
+    |  _______________________________^
+851 | |             metadata: HashMap::new(),
+...   |
+854 | | }
+    | |_^
+
+Error writing files: failed to resolve mod `test_utils`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-specgen/src/test_utils.rs does not exist
+Error writing files: failed to resolve mod `engine`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-phase4-ai-applications/src/engine.rs does not exist
+error: expected `:`, found `}`
+  --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-phase4-ai-applications/src/types.rs:86:19
+   |
+86 |     InProgress{f64}, // Progress percentage
+   |     ----------    ^ expected `:`
+   |     |
+   |     while parsing this struct
+
+error: expected identifier, found keyword `impl`
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-predictive/src/predictive_development.rs:869:1
+    |
+860 | pub enum CacheEvictionPolicy {
+    |          ------------------- while parsing this enum
+...
+869 | impl Default for PerformanceSettings {
+    | ^^^^ expected identifier, found keyword
+    |
+    = help: enum variants can be `Variant`, `Variant = <integer>`, `Variant(Type, ..., TypeN)` or `Variant { fields: Types }`
+
+error: expected identifier, found keyword `impl`
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-predictive/src/predictive_development.rs:869:1
+    |
+860 | pub enum CacheEvictionPolicy {
+    |          ------------------- while parsing this enum
+...
+869 | impl Default for PerformanceSettings {
+    | ^^^^ expected identifier, found keyword
+    |
+    = help: enum variants can be `Variant`, `Variant = <integer>`, `Variant(Type, ..., TypeN)` or `Variant { fields: Types }`
+
+Error writing files: failed to resolve mod `predictive_development`: cannot parse /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-predictive/src/predictive_development.rs
+Error writing files: failed to resolve mod `detector`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-memory-optimization/src/leak_detection/detector.rs does not exist
+Error writing files: failed to resolve mod `detector`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-memory-optimization/src/leak_detection/detector.rs does not exist
+error: prefix `model` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai3-quantum/src/lib.rs:307:39
+    |
+307 |                 classical_complexity: model's_hacian_complexity(&training_data),
+    |                                       ^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+307 |                 classical_complexity: model 's_hacian_complexity(&training_data),
+    |                                            +
+
+error: prefix `model` is unknown
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai3-quantum/src/lib.rs:763:4
+    |
+763 | fn model's_hacian_complexity(data: &TrainingDataset) -> f64 {
+    |    ^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+763 | fn model 's_hacian_complexity(data: &TrainingDataset) -> f64 {
+    |         +
+
+error: expected one of `!`, `,`, `.`, `::`, `?`, `{`, `}`, or an operator, found `'s_hacian_complexity`
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai3-quantum/src/lib.rs:307:44
+    |
+306 |             quantum_advantage_metrics: QuantumAdvantageMetrics {
+    |                                        ----------------------- while parsing this struct
+307 |                 classical_complexity: model's_hacian_complexity(&training_data),
+    |                                            -^^^^^^^^^^^^^^^^^^^
+    |                                            |
+    |                                            expected one of 8 possible tokens
+    |                                            help: try adding a comma: `,`
+
+error: missing parameters for function definition
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai3-quantum/src/lib.rs:763:9
+    |
+763 | fn model's_hacian_complexity(data: &TrainingDataset) -> f64 {
+    |         ^
+    |
+help: add a parameter list
+    |
+763 | fn model()'s_hacian_complexity(data: &TrainingDataset) -> f64 {
+    |         ++
+
+error: expected one of `->`, `<`, `where`, or `{`, found `'s_hacian_complexity`
+   --> /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai3-quantum/src/lib.rs:763:9
+    |
+763 | fn model's_hacian_complexity(data: &TrainingDataset) -> f64 {
+    |         ^^^^^^^^^^^^^^^^^^^^ expected one of `->`, `<`, `where`, or `{`
+
+Error writing files: failed to resolve mod `coordinator`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-ai-distributed-coordinator/src/coordinator.rs does not exist
+Error writing files: failed to resolve mod `migration`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-supervisor/src/migration.rs does not exist
+Error writing files: failed to resolve mod `collectors`: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-security-monitoring/src/collectors.rs does not exist
+Error: `/home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-lsp` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-multi-reality` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-validate/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-changed-files/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-runner/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-runtime/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-validate/node_modules/pretty-format/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/three/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/core/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/core/node_modules/pretty-format/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/environment/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/schemas/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/globals/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/test-sequencer/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/expect-utils/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/types/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/diff-sequences/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/fake-timers/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/expect/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/console/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/snapshot-utils/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/pattern/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/environment-jsdom-abstract/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/reporters/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/transform/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/get-type/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/test-result/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@jest/source-map/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/y18n/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/pretty-format/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-watcher/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-resolve/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-cli/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-snapshot/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/yargs-parser/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-snapshot/node_modules/pretty-format/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-diff/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-util/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/rrweb-cssom/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/assert/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-diff/node_modules/pretty-format/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-config/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-config/node_modules/pretty-format/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-haste-map/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-leak-detector/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-resolve-dependencies/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-leak-detector/node_modules/pretty-format/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/babel-plugin-jest-hoist/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@types/three/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@types/jest/node_modules/pretty-format/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/expect/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-docblock/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@sinclair/typebox/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-matcher-utils/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/@isaacs/cliui/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-each/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-matcher-utils/node_modules/pretty-format/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-each/node_modules/pretty-format/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/lines-and-columns/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/babel-jest/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-environment-jsdom/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/human-signals/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-environment-node/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-regex-util/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/yargs/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-circus/node_modules/pretty-format/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-circus/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-message-util/node_modules/pretty-format/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-message-util/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-worker/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/cliui/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/web/node_modules/jest-mock/build` is a directory
+Error: `/home/user/Desktop/RUST_AI_IDE/target` is a directory
+⚠ Some files failed to format. Check the output for details.
+==> Checking for Prettier and ESLint in web/ directory...
+✓ Prettier and ESLint are available in web/ directory
+==> Formatting TypeScript/JavaScript files in web/ directory...
+[error] src/components/templates/RefactoringTemplateManager.tsx: SyntaxError: Declaration or statement expected. (447:13)
+[error]   445 |             .map(id => allTemplates.find(t => t.id === id))
+[error]   446 |             .filter(Boolean) as RefactoringTemplate[]
+[error] > 447 |             .sort((a, b) => {
+[error]       |             ^
+[error]   448 |                 const scoreA = this.getTemplateScore(a || {} as any, context);
+[error]   449 |                 const scoreB = this.getTemplateScore(b || {} as any, context);
+[error]   450 |                 return scoreB - scoreA;
+⚠ Prettier formatting failed or timed out in web/ directory
+(node:681870) ESLintIgnoreWarning: The ".eslintignore" file is no longer supported. Switch to using the "ignores" property in "eslint.config.js": https://eslint.org/docs/latest/use/configure/migration-guide#ignoring-files
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+Oops! Something went wrong! :(
+
+ESLint: 9.34.0
+
+ESLint couldn't find an eslint.config.(js|mjs|cjs) file.
+
+From ESLint v9.0.0, the default configuration file is now eslint.config.js.
+If you are using a .eslintrc.* file, please follow the migration guide
+to update your configuration file to the new format:
+
+https://eslint.org/docs/latest/use/configure/migration-guide
+
+If you still have problems after following the migration guide, please stop by
+https://eslint.org/chat/help to chat with the team.
+
+⚠ ESLint fixing failed or timed out in web/ directory
+⚠ Some TypeScript/JavaScript formatting issues were found
+✗ Error: Failed to format code. Please check the output above for errors.
+❌ Code formatting issues found. Please review and stage the changes.

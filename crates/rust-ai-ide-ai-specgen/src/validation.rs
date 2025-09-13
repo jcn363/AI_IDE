@@ -1,7 +1,7 @@
 //! Validation module - stub implementation
 
-use crate::types::{ParsedSpecification, ValidationResult};
 use crate::error::Result;
+use crate::types::{ParsedSpecification, ValidationResult};
 
 /// Code validator - placeholder implementation
 pub struct CodeValidator;

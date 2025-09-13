@@ -25,9 +25,9 @@ nalgebra = "0.32"
 
 # Simulated quantum computing (since actual QC hardware is unavailable)
 # In practice, these would be quantum hardware SDKs
-qcs-sdk = { version = "0.1", optional = true }
-qubits = { version = "0.1", optional = true }
-quantum-crypto = { version = "0.1", optional = true }
+#qcs-sdk = { version = "0.1", optional = true }
+#qubits = { version = "0.1", optional = true }
+#quantum-crypto = { version = "0.1", optional = true }
 
 # Wave 1 & 2 integration
 rust-ai-ide-ai1-semantic = { path = "../rust-ai-ide-ai1-semantic" }
@@ -40,4 +40,4 @@ rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
 [features]
 default = ["simulation"]
 simulation = []
-quantum_hardware = ["qcs-sdk", "qubits", "quantum-crypto"]
+quantum_hardware = []

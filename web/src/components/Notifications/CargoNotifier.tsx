@@ -1,5 +1,17 @@
 import React from 'react';
-import { Snackbar, Alert, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, Chip, Link } from '@mui/material';
+import {
+  Snackbar,
+  Alert,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography,
+  Box,
+  Chip,
+  Link,
+} from '@mui/material';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { selectCargoState } from '../../store/slices/cargoSlice';
 import { editorActions } from '../../store/slices/editorSlice';
@@ -57,10 +69,16 @@ export default function CargoNotifier() {
     for (const c of cmds) {
       if ((c.status === 'success' || c.status === 'error') && !announcedRef.current.has(c.id)) {
         announcedRef.current.add(c.id);
-        const diagCount = settings.showDiagCount && c.diagnostics?.length ? ` • diagnostics: ${c.diagnostics.length}` : '';
+        const diagCount =
+          settings.showDiagCount && c.diagnostics?.length
+            ? ` • diagnostics: ${c.diagnostics.length}`
+            : '';
         const args = c.args?.length ? ' ' + c.args.join(' ') : '';
         const message = `${c.command}${args} ${c.status}${diagCount}`;
-        setQueue((q) => [...q, { id: c.id, severity: c.status === 'success' ? 'success' : 'error', message }]);
+        setQueue((q) => [
+          ...q,
+          { id: c.id, severity: c.status === 'success' ? 'success' : 'error', message },
+        ]);
       }
     }
   }, [cargo.commands, settings.enabled, settings.showDiagCount]);
@@ -123,20 +141,47 @@ export default function CargoNotifier() {
 
       <Dialog open={detailsOpen} onClose={handleCloseDetails} maxWidth="md" fullWidth>
         <DialogTitle>
-          {currentCommand ? `${currentCommand.command} ${currentCommand.args?.join(' ') || ''}`.trim() : 'Command details'}
+          {currentCommand
+            ? `${currentCommand.command} ${currentCommand.args?.join(' ') || ''}`.trim()
+            : 'Command details'}
         </DialogTitle>
         <DialogContent dividers>
           {currentCommand && (
             <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-              <Chip size="small" label={`Status: ${currentCommand.status}`} color={currentCommand.status === 'success' ? 'success' : currentCommand.status === 'error' ? 'error' : 'default'} />
+              <Chip
+                size="small"
+                label={`Status: ${currentCommand.status}`}
+                color={
+                  currentCommand.status === 'success'
+                    ? 'success'
+                    : currentCommand.status === 'error'
+                      ? 'error'
+                      : 'default'
+                }
+              />
               <Chip size="small" label={`CWD: ${currentCommand.cwd || '-'}`} variant="outlined" />
-              <Chip size="small" label={`Diagnostics: ${currentCommand.diagnostics?.length || 0}`} variant="outlined" />
+              <Chip
+                size="small"
+                label={`Diagnostics: ${currentCommand.diagnostics?.length || 0}`}
+                variant="outlined"
+              />
             </Box>
           )}
           <Typography variant="subtitle2" gutterBottom>
             Output
           </Typography>
-          <Box component="pre" sx={{ bgcolor: 'background.default', color: 'text.primary', p: 1.5, borderRadius: 1, maxHeight: 360, overflow: 'auto', whiteSpace: 'pre-wrap' }}>
+          <Box
+            component="pre"
+            sx={{
+              bgcolor: 'background.default',
+              color: 'text.primary',
+              p: 1.5,
+              borderRadius: 1,
+              maxHeight: 360,
+              overflow: 'auto',
+              whiteSpace: 'pre-wrap',
+            }}
+          >
             {currentCommand?.output || 'No output'}
           </Box>
           {currentCommand?.diagnostics && currentCommand.diagnostics.length > 0 && (
@@ -164,7 +209,12 @@ export default function CargoNotifier() {
                       <Typography variant="body2">
                         [{d.level}] {d.message}{' '}
                         {hasSpan && (
-                          <Link component="button" type="button" onClick={handleOpen} sx={{ ml: 1 }}>
+                          <Link
+                            component="button"
+                            type="button"
+                            onClick={handleOpen}
+                            sx={{ ml: 1 }}
+                          >
                             Open
                           </Link>
                         )}
@@ -194,16 +244,22 @@ export default function CargoNotifier() {
             onClick={async () => {
               try {
                 const w = globalThis as any;
-                const json = currentCommand ? JSON.stringify({
-                  id: currentCommand.id,
-                  command: currentCommand.command,
-                  args: currentCommand.args,
-                  cwd: currentCommand.cwd,
-                  status: currentCommand.status,
-                  output: currentCommand.output,
-                  diagnostics: currentCommand.diagnostics,
-                  timestamp: currentCommand.timestamp,
-                }, null, 2) : '{}';
+                const json = currentCommand
+                  ? JSON.stringify(
+                      {
+                        id: currentCommand.id,
+                        command: currentCommand.command,
+                        args: currentCommand.args,
+                        cwd: currentCommand.cwd,
+                        status: currentCommand.status,
+                        output: currentCommand.output,
+                        diagnostics: currentCommand.diagnostics,
+                        timestamp: currentCommand.timestamp,
+                      },
+                      null,
+                      2
+                    )
+                  : '{}';
                 await w.navigator?.clipboard?.writeText(json);
                 setCopiedOpen(true);
               } catch {

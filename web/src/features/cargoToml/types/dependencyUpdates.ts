@@ -38,36 +38,46 @@ export interface DependencyUpdate {
 // Helper function to determine update type
 export const getUpdateType = (current: string, latest: string): UpdateType => {
   if (!current || !latest || current === latest) return 'patch';
-  
+
   // Handle pre-release versions
   if (latest.includes('-')) return 'prerelease';
-  
+
   const currentParts = current.split('.').map(Number);
   const latestParts = latest.split('.').map(Number);
-  
+
   if (currentParts[0] < latestParts[0]) return 'major';
   if (currentParts[1] < latestParts[1]) return 'minor';
   if (currentParts[2] < latestParts[2]) return 'patch';
-  
+
   return 'patch';
 };
 
 export const getUpdateTypeLabel = (type: UpdateType): string => {
   switch (type) {
-    case 'major': return 'Major Update';
-    case 'minor': return 'Minor Update';
-    case 'patch': return 'Patch Update';
-    case 'prerelease': return 'Pre-release';
-    default: return 'Update';
+    case 'major':
+      return 'Major Update';
+    case 'minor':
+      return 'Minor Update';
+    case 'patch':
+      return 'Patch Update';
+    case 'prerelease':
+      return 'Pre-release';
+    default:
+      return 'Update';
   }
 };
 
 export const getUpdateTypeColor = (type: UpdateType): string => {
   switch (type) {
-    case 'major': return 'red';
-    case 'minor': return 'orange';
-    case 'patch': return 'green';
-    case 'prerelease': return 'purple';
-    default: return 'blue';
+    case 'major':
+      return 'red';
+    case 'minor':
+      return 'orange';
+    case 'patch':
+      return 'green';
+    case 'prerelease':
+      return 'purple';
+    default:
+      return 'blue';
   }
 };

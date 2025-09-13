@@ -164,7 +164,7 @@
     margin-top: 16px;
     max-height: none;
   }
-  
+
   .graph-controls {
     padding: 8px;
   }
@@ -172,8 +172,12 @@
 
 /* Animation for graph elements */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .node circle {
@@ -423,11 +427,11 @@
     max-height: 40%;
     margin-top: 16px;
   }
-  
+
   .graph-wrapper {
     flex-direction: column;
   }
-  
+
   .graph-legend {
     position: static;
     margin: 12px;
@@ -437,11 +441,18 @@
 
 /* Animation for graph elements */
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.node, .link {
+.node,
+.link {
   animation: fadeIn 0.3s ease-out;
 }
 

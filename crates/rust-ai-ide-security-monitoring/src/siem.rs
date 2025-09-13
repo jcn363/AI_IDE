@@ -8,20 +8,30 @@
 //! - Scalable log storage with retention policies
 
 use async_trait::async_trait;
-use std::sync::Arc;
-use tokio::sync::{RwLock, mpsc};
-use serde::{Deserialize, Serialize};
-use tracing::{info, warn, error};
-use moka::future::Cache;
 use chrono::{DateTime, Utc};
+use moka::future::Cache;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use tokio::sync::{mpsc, RwLock};
+use tracing::{error, info, warn};
 use uuid::Uuid;
 
-use crate::{SecurityEvent, EventSeverity, MonitoringError, Result};
+use crate::{EventSeverity, MonitoringError, Result, SecurityEvent};
 
 pub trait SiemGateway {
-    fn store_event(&self, event: &SecurityEvent) -> impl std::future::Future<Output = Result<()>> + Send;
-    fn search_events(&self, query: &str, limit: usize) -> impl std::future::Future<Output = Result<Vec<SecurityEvent>>> + Send;
-    fn aggregate_events(&self, timeframe: std::time::Duration) -> impl std::future::Future<Output = Result<EventAggregate>> + Send;
+    fn store_event(
+        &self,
+        event: &SecurityEvent,
+    ) -> impl std::future::Future<Output = Result<()>> + Send;
+    fn search_events(
+        &self,
+        query: &str,
+        limit: usize,
+    ) -> impl std::future::Future<Output = Result<Vec<SecurityEvent>>> + Send;
+    fn aggregate_events(
+        &self,
+        timeframe: std::time::Duration,
+    ) -> impl std::future::Future<Output = Result<EventAggregate>> + Send;
 }
 
 #[async_trait]
@@ -121,7 +131,7 @@ impl SiemIntegrationManager {
         let event_cache = Arc::new(
             Cache::builder()
                 .time_to_live(std::time::Duration::from_secs(7200))
-                .build()
+                .build(),
         );
 
         let collectors = Arc::new(RwLock::new(Vec::new()));
@@ -138,7 +148,10 @@ impl SiemIntegrationManager {
         })
     }
 
-    pub async fn register_collector(&self, collector: Arc<dyn EventCollector + Send + Sync>) -> Result<()> {
+    pub async fn register_collector(
+        &self,
+        collector: Arc<dyn EventCollector + Send + Sync>,
+    ) -> Result<()> {
         let mut collectors = self.collectors.write().await;
         collectors.push(collector);
         Ok(())
@@ -153,7 +166,7 @@ impl SiemIntegrationManager {
         if let Err(e) = self.event_sender.send(event) {
             error!("Failed to send event to processing channel: {:?}", e);
             return Err(MonitoringError::ProcessingError(
-                "Event channel is full".to_string()
+                "Event channel is full".to_string(),
             ));
         }
 
@@ -200,15 +213,16 @@ impl SiemIntegrationManager {
         // Count events from cache
         for (_, event) in self.event_cache.iter() {
             total_events += 1;
-            *severity_breakdown.entry(event.severity.clone()).or_insert(0) += 1;
+            *severity_breakdown
+                .entry(event.severity.clone())
+                .or_insert(0) += 1;
 
             if let Some(source) = &event.source {
                 *source_counts.entry(source.clone()).or_insert(0) += 1;
             }
         }
 
-        let mut top_sources: Vec<_> = source_counts.into_iter()
-            .collect();
+        let mut top_sources: Vec<_> = source_counts.into_iter().collect();
         top_sources.sort_by(|a, b| b.1.cmp(&a.1));
         top_sources.truncate(10);
 
@@ -268,26 +282,26 @@ impl EventCondition {
             ConditionOperator::Contains => field_value.contains(&self.value),
             ConditionOperator::GreaterThan => {
                 // Numeric comparison
-                field_value.parse::<f64>()
+                field_value
+                    .parse::<f64>()
                     .ok()
                     .zip(self.value.parse::<f64>().ok())
                     .map(|(a, b)| a > b)
                     .unwrap_or(false)
-            },
-            ConditionOperator::LessThan => {
-                field_value.parse::<f64>()
-                    .ok()
-                    .zip(self.value.parse::<f64>().ok())
-                    .map(|(a, b)| a < b)
-                    .unwrap_or(false)
-            },
+            }
+            ConditionOperator::LessThan => field_value
+                .parse::<f64>()
+                .ok()
+                .zip(self.value.parse::<f64>().ok())
+                .map(|(a, b)| a < b)
+                .unwrap_or(false),
             ConditionOperator::Regex => {
                 if let Ok(regex) = regex::Regex::new(&self.value) {
                     regex.is_match(field_value)
                 } else {
                     false
                 }
-            },
+            }
         }
     }
 }
@@ -331,23 +345,23 @@ impl AlertDispatcher {
             match action {
                 AlertAction::Log => {
                     info!("Security alert logged");
-                },
+                }
                 AlertAction::Email => {
                     // TODO: Implement email alert
                     warn!("Email alert not yet implemented");
-                },
+                }
                 AlertAction::Notification => {
                     // TODO: Send system notification
                     info!("System notification sent");
-                },
+                }
                 AlertAction::Webhook(url) => {
                     // TODO: Send webhook
                     info!("Webhook sent to: {}", url);
-                },
+                }
                 AlertAction::ExecuteCommand(cmd) => {
                     // TODO: Execute command securely
                     warn!("Command execution not yet implemented: {}", cmd);
-                },
+                }
             }
         }
 

@@ -30,7 +30,7 @@ class ErrorBoundary extends Component<Props, State> {
       stack: error.stack,
       componentStack: errorInfo.componentStack,
     };
-    
+
     logger.error('Error in React component', error, context);
 
     this.setState({ error, errorInfo });

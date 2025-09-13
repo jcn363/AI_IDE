@@ -17,7 +17,7 @@ import type {
   SecurityIssue,
   SeverityLevel,
   StyleViolation,
-  AIProvider
+  AIProvider,
 } from '../types/index';
 
 // Enhanced types for better analysis results
@@ -195,7 +195,7 @@ export class AIService {
   private static instance: AIService;
   private codeAnalyzer: CodeAnalyzer;
   private isInitialized = false;
-  
+
   private constructor() {
     this.codeAnalyzer = CodeAnalyzer.getInstance();
     // Initialize other services
@@ -210,14 +210,14 @@ export class AIService {
 
   public async initialize(): Promise<void> {
     if (this.isInitialized) return;
-    
+
     try {
       // Initialize all AI services
       await Promise.all([
         this.codeAnalyzer.initialize(),
         // Initialize other services when available
       ]);
-      
+
       this.isInitialized = true;
       console.log('AIService initialized successfully');
     } catch (error) {
@@ -227,21 +227,21 @@ export class AIService {
   }
 
   public async analyzeAndFix(
-    code: string, 
+    code: string,
     filePath: string,
     options: { autoFix?: boolean; signal?: AbortSignal } = {}
   ): Promise<{ analysis: CodeAnalysisResult; appliedFixes?: string[] }> {
     const { autoFix = false, signal } = options;
-    
+
     // Perform comprehensive analysis
     const analysis = await this.codeAnalyzer.analyzeCode(code, filePath, { signal });
-    
+
     const result: { analysis: CodeAnalysisResult; appliedFixes?: string[] } = { analysis };
-    
+
     // Apply automatic fixes if requested
     if (autoFix) {
       const appliedFixes: string[] = [];
-      
+
       for (const suggestion of analysis.suggestions) {
         if (suggestion.fix_action && suggestion.fix_action.is_preferred) {
           try {
@@ -256,10 +256,10 @@ export class AIService {
           }
         }
       }
-      
+
       result.appliedFixes = appliedFixes;
     }
-    
+
     return result;
   }
 
@@ -279,26 +279,29 @@ export class AIService {
   ): Promise<{ generatedCode: string; confidence: number }> {
     // Enhanced code generation using analysis context
     let enhancedPrompt = options.prompt;
-    
+
     if (context.analysisResult) {
       const issues = context.analysisResult.suggestions
-        .filter(s => s.severity === DiagnosticSeverity.Error || s.severity === DiagnosticSeverity.Warning)
-        .map(s => s.message)
+        .filter(
+          (s) =>
+            s.severity === DiagnosticSeverity.Error || s.severity === DiagnosticSeverity.Warning
+        )
+        .map((s) => s.message)
         .slice(0, 5); // Top 5 issues
-      
+
       if (issues.length > 0) {
         enhancedPrompt += `\n\nPlease address these code quality issues:\n${issues.join('\n')}`;
       }
-      
+
       if (context.analysisResult.metrics) {
         enhancedPrompt += `\n\nCurrent code metrics - Complexity: ${context.analysisResult.metrics.complexity}, Maintainability: ${context.analysisResult.metrics.maintainability}`;
       }
     }
-    
+
     if (context.currentCode) {
       enhancedPrompt += `\n\nCurrent code context:\n\`\`\`${options.language || 'typescript'}\n${context.currentCode}\n\`\`\``;
     }
-    
+
     // This would integrate with the actual code generation service
     // For now, return a placeholder
     return {
@@ -317,7 +320,7 @@ export class AIService {
         workspace_path: workspacePath,
         config: this.codeAnalyzer.getConfig(),
       });
-      
+
       return suggestions.map((suggestion: any) => ({
         message: suggestion.description,
         severity: this.mapRustSeverityToDiagnostic(suggestion.impact),
@@ -341,12 +344,8 @@ export class AIService {
       runAIAnalysis?: boolean;
     } = {}
   ): Promise<any> {
-    const {
-      runClippy = true,
-      runRustfmt = true,
-      runAIAnalysis = true,
-    } = options;
-    
+    const { runClippy = true, runRustfmt = true, runAIAnalysis = true } = options;
+
     try {
       return await invoke('run_code_quality_check', {
         target_path: targetPath,
@@ -369,11 +368,8 @@ export class AIService {
       signal?: AbortSignal;
     } = {}
   ): Promise<string> {
-    const {
-      includeDependencies = true,
-      includeSecurityScan = true,
-    } = options;
-    
+    const { includeDependencies = true, includeSecurityScan = true } = options;
+
     try {
       return await invoke('analyze_workspace', {
         workspace_path: workspacePath,
@@ -452,7 +448,13 @@ export class AIService {
     userFeedback?: 'positive' | 'negative' | 'neutral',
     context?: string
   ): Promise<boolean> {
-    return this.codeAnalyzer.recordSuccessfulFix(errorPattern, appliedFix, success, userFeedback, context);
+    return this.codeAnalyzer.recordSuccessfulFix(
+      errorPattern,
+      appliedFix,
+      success,
+      userFeedback,
+      context
+    );
   }
 
   public async getLearnedPatterns(errorContext: string): Promise<LearnedPattern[]> {
@@ -470,7 +472,10 @@ export class AIService {
       includeExplanations?: boolean;
       includeSuggestedFixes?: boolean;
     } = {}
-  ): Promise<{ diagnostics: CompilerDiagnostic[]; explanations: Record<string, ErrorCodeExplanation> }> {
+  ): Promise<{
+    diagnostics: CompilerDiagnostic[];
+    explanations: Record<string, ErrorCodeExplanation>;
+  }> {
     return this.codeAnalyzer.getCompilerDiagnostics(workspacePath, options);
   }
 
@@ -517,7 +522,7 @@ export class CodeAnalyzer {
   private debounceTimers = new Map<string, NodeJS.Timeout>();
   private config: AIAnalysisConfigExtended;
   private isInitialized = false;
-  
+
   private constructor() {
     this.config = this.getDefaultConfig();
   }
@@ -536,7 +541,7 @@ export class CodeAnalyzer {
 
   public async initialize(): Promise<void> {
     if (this.isInitialized) return;
-    
+
     try {
       // Initialize AI service with default config
       await invoke('initialize_ai_service', { config: this.config });
@@ -550,11 +555,11 @@ export class CodeAnalyzer {
 
   public async updateConfig(newConfig: Partial<AIAnalysisConfigExtended>): Promise<void> {
     this.config = { ...this.config, ...newConfig };
-    
+
     try {
       await invoke('update_ai_config', { config: this.config });
       console.log('AI configuration updated successfully');
-      
+
       // Clear cache when configuration changes to ensure fresh analysis
       this.clearCache();
     } catch (error) {
@@ -605,22 +610,22 @@ export class CodeAnalyzer {
   }
 
   public async analyzeCode(
-    code: string, 
-    filePath: string, 
-    options: { 
-      useCache?: boolean; 
-      debounceMs?: number; 
+    code: string,
+    filePath: string,
+    options: {
+      useCache?: boolean;
+      debounceMs?: number;
       signal?: AbortSignal;
       analysisTypes?: AnalysisCategory[];
     } = {}
   ): Promise<CodeAnalysisResult> {
-    const { 
-      useCache = true, 
-      debounceMs = 300, 
+    const {
+      useCache = true,
+      debounceMs = 300,
       signal,
-      analysisTypes = ['code-smell', 'performance', 'security', 'style', 'architecture']
+      analysisTypes = ['code-smell', 'performance', 'security', 'style', 'architecture'],
     } = options;
-    
+
     if (!this.isInitialized) {
       await this.initialize();
     }
@@ -635,7 +640,7 @@ export class CodeAnalyzer {
       const cached = this.cache.get(cacheKey)!;
       const cacheAge = Date.now() - cached.timestamp;
       const maxCacheAge = 5 * 60 * 1000; // 5 minutes
-      
+
       if (cacheAge < maxCacheAge) {
         console.log('Returning cached analysis result for', filePath, 'with types:', analysisTypes);
         return cached.result;
@@ -666,13 +671,18 @@ export class CodeAnalyzer {
           signal,
           resolvers: [resolve],
           rejecters: [reject],
-          timer: null as any
+          timer: null as any,
         };
 
         // Set (or reset) the timer
         entry.timer = setTimeout(async () => {
           try {
-            const result = await this.performAnalysis(entry.code, filePath, entry.signal, entry.analysisTypes);
+            const result = await this.performAnalysis(
+              entry.code,
+              filePath,
+              entry.signal,
+              entry.analysisTypes
+            );
             entry.resolvers.forEach((r: any) => r(result));
           } catch (error) {
             entry.rejecters.forEach((r: any) => r(error));
@@ -700,13 +710,19 @@ export class CodeAnalyzer {
   }
 
   private async performAnalysis(
-    code: string, 
-    filePath: string, 
+    code: string,
+    filePath: string,
     signal?: AbortSignal,
-    analysisTypes: AnalysisCategory[] = ['code-smell', 'performance', 'security', 'style', 'architecture']
+    analysisTypes: AnalysisCategory[] = [
+      'code-smell',
+      'performance',
+      'security',
+      'style',
+      'architecture',
+    ]
   ): Promise<CodeAnalysisResult> {
     const requestId = `${filePath}:${Date.now()}`;
-    
+
     // Check if there's already a pending request for this file
     const existingRequest = this.pendingRequests.get(filePath);
     if (existingRequest) {
@@ -715,7 +731,7 @@ export class CodeAnalyzer {
     }
 
     const controller = new AbortController();
-    
+
     try {
       // Create analysis request with enhanced configuration
       const enhancedConfig = {
@@ -727,7 +743,7 @@ export class CodeAnalyzer {
           enable_security: analysisTypes.includes('security'),
           enable_style: analysisTypes.includes('style'),
           enable_architecture: analysisTypes.includes('architecture'),
-        }
+        },
       };
 
       const request: FileAnalysisRequest = {
@@ -753,10 +769,15 @@ export class CodeAnalyzer {
       }
 
       const rustResult = await analysisPromise;
-      
+
       // Process the result from Rust backend
-      const processedResult = await this.processBackendResult(rustResult, code, filePath, analysisTypes);
-      
+      const processedResult = await this.processBackendResult(
+        rustResult,
+        code,
+        filePath,
+        analysisTypes
+      );
+
       // Cache the result with analysis type information
       const contentHash = this.generateHash(code);
       const analysisTypesKey = analysisTypes.sort().join(',');
@@ -782,9 +803,9 @@ export class CodeAnalyzer {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Analysis was cancelled');
       }
-      
+
       console.error('Analysis failed for', filePath, ':', error);
-      
+
       // Return fallback result with basic analysis
       return this.getFallbackAnalysisResult(code, filePath, error as Error, analysisTypes);
     } finally {
@@ -792,10 +813,7 @@ export class CodeAnalyzer {
     }
   }
 
-  private async callRustAnalysis(
-    request: FileAnalysisRequest, 
-    signal: AbortSignal
-  ): Promise<any> {
+  private async callRustAnalysis(request: FileAnalysisRequest, signal: AbortSignal): Promise<any> {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         reject(new Error('Analysis timeout'));
@@ -819,8 +837,8 @@ export class CodeAnalyzer {
   }
 
   private async processBackendResult(
-    rustResult: any, 
-    code: string, 
+    rustResult: any,
+    code: string,
     filePath: string,
     analysisTypes: AnalysisCategory[]
   ): Promise<CodeAnalysisResult> {
@@ -894,27 +912,39 @@ export class CodeAnalyzer {
       // New properties for StatusBar compatibility
       summary: {
         totalIssues: diagnostics.length + suggestions.length,
-        timestamp: rustResult.metadata?.timestamp ? new Date(rustResult.metadata.timestamp).getTime() : undefined
+        timestamp: rustResult.metadata?.timestamp
+          ? new Date(rustResult.metadata.timestamp).getTime()
+          : undefined,
       },
       codeSmells: rustResult.codeSmells,
       style: rustResult.styleViolations,
-      security: rustResult.securityIssues ? {
-        vulnerabilities: rustResult.securityIssues
-      } : undefined,
-      architecture: rustResult.architectureSuggestions ? {
-        patterns: rustResult.architectureSuggestions
-      } : undefined,
+      security: rustResult.securityIssues
+        ? {
+            vulnerabilities: rustResult.securityIssues,
+          }
+        : undefined,
+      architecture: rustResult.architectureSuggestions
+        ? {
+            patterns: rustResult.architectureSuggestions,
+          }
+        : undefined,
       progress: 100,
     };
   }
   private getFallbackAnalysisResult(
-    code: string, 
-    filePath: string, 
+    code: string,
+    filePath: string,
     error: Error,
-    analysisTypes: AnalysisCategory[] = ['code-smell', 'performance', 'security', 'style', 'architecture']
+    analysisTypes: AnalysisCategory[] = [
+      'code-smell',
+      'performance',
+      'security',
+      'style',
+      'architecture',
+    ]
   ): CodeAnalysisResult {
     console.warn('Using fallback analysis for', filePath, 'due to error:', error.message);
-    
+
     const diagnostics: Diagnostic[] = [];
     const suggestions: CodeSuggestion[] = [];
 
@@ -937,9 +967,9 @@ export class CodeAnalyzer {
 
     const metrics = this.calculateBasicMetrics(code);
 
-    return { 
-      diagnostics, 
-      suggestions, 
+    return {
+      diagnostics,
+      suggestions,
       metrics,
       metadata: {
         analysisId: `fallback-${Date.now()}`,
@@ -948,7 +978,7 @@ export class CodeAnalyzer {
         analyzerVersion: 'fallback-1.0.0',
         fileCount: 1,
         linesAnalyzed: this.countLinesOfCode(code),
-      }
+      },
     };
   }
 
@@ -958,9 +988,9 @@ export class CodeAnalyzer {
     diagnostics: Diagnostic[],
     suggestions: CodeSuggestion[]
   ): void {
-    codeSmells.forEach(smell => {
+    codeSmells.forEach((smell) => {
       const severity = this.mapSeverityLevelToDiagnostic(smell.severity);
-      
+
       diagnostics.push({
         range: this.convertRangeFromBackend(smell.lineRange, smell.columnRange),
         severity,
@@ -986,9 +1016,9 @@ export class CodeAnalyzer {
     diagnostics: Diagnostic[],
     suggestions: CodeSuggestion[]
   ): void {
-    performanceHints.forEach(hint => {
+    performanceHints.forEach((hint) => {
       const severity = this.mapSeverityLevelToDiagnostic(hint.severity);
-      
+
       diagnostics.push({
         range: this.convertRangeFromBackend(hint.lineRange, hint.columnRange),
         severity,
@@ -1014,9 +1044,9 @@ export class CodeAnalyzer {
     diagnostics: Diagnostic[],
     suggestions: CodeSuggestion[]
   ): void {
-    securityIssues.forEach(issue => {
+    securityIssues.forEach((issue) => {
       const severity = this.mapSeverityLevelToDiagnostic(issue.severity);
-      
+
       diagnostics.push({
         range: this.convertRangeFromBackend(issue.lineRange, issue.columnRange),
         severity,
@@ -1032,7 +1062,7 @@ export class CodeAnalyzer {
         suggestion: issue.recommendation || 'Consider fixing this security issue',
         category: 'security',
         confidence_score: issue.confidence,
-        detailed_explanation: issue.cweId 
+        detailed_explanation: issue.cweId
           ? `${issue.message}\n\nCWE ID: ${issue.cweId}\nRecommendation: ${issue.recommendation}`
           : `${issue.message}\n\nRecommendation: ${issue.recommendation}`,
       });
@@ -1045,7 +1075,7 @@ export class CodeAnalyzer {
     suggestions: CodeSuggestion[],
     filePath: string
   ): void {
-    styleViolations.forEach(violation => {
+    styleViolations.forEach((violation) => {
       diagnostics.push({
         range: this.convertRangeFromBackend(violation.lineRange, violation.columnRange),
         severity: DiagnosticSeverity.Information,
@@ -1054,21 +1084,25 @@ export class CodeAnalyzer {
         code: violation.violationType,
       });
 
-      const quickFix: QuickFix | undefined = violation.autoFixable ? {
-        title: `Fix ${violation.violationType}`,
-        changes: [{
-          file_path: filePath,
-          range: [
-            violation.lineRange[0],
-            violation.columnRange[0],
-            violation.lineRange[1],
-            violation.columnRange[1],
-          ],
-          new_text: violation.suggestion || '',
-          change_type: 'replace',
-        }],
-        is_preferred: true,
-      } : undefined;
+      const quickFix: QuickFix | undefined = violation.autoFixable
+        ? {
+            title: `Fix ${violation.violationType}`,
+            changes: [
+              {
+                file_path: filePath,
+                range: [
+                  violation.lineRange[0],
+                  violation.columnRange[0],
+                  violation.lineRange[1],
+                  violation.columnRange[1],
+                ],
+                new_text: violation.suggestion || '',
+                change_type: 'replace',
+              },
+            ],
+            is_preferred: true,
+          }
+        : undefined;
 
       suggestions.push({
         message: violation.message,
@@ -1086,12 +1120,13 @@ export class CodeAnalyzer {
     architectureSuggestions: ArchitectureSuggestion[],
     suggestions: CodeSuggestion[]
   ): void {
-    architectureSuggestions.forEach(suggestion => {
+    architectureSuggestions.forEach((suggestion) => {
       suggestions.push({
         message: suggestion.message,
         severity: this.mapSeverityLevelToDiagnostic(suggestion.severity),
         range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
-        suggestion: suggestion.recommendation || 'Consider implementing this architectural improvement',
+        suggestion:
+          suggestion.recommendation || 'Consider implementing this architectural improvement',
         category: 'architecture',
         confidence_score: suggestion.confidence,
         detailed_explanation: `${suggestion.message}\n\nRationale: ${suggestion.rationale}\nRecommendation: ${suggestion.recommendation}`,
@@ -1103,7 +1138,7 @@ export class CodeAnalyzer {
     learnedPatterns: LearnedPattern[],
     suggestions: CodeSuggestion[]
   ): void {
-    learnedPatterns.forEach(pattern => {
+    learnedPatterns.forEach((pattern) => {
       suggestions.push({
         message: `Learned pattern: ${pattern.successfulFix.title}`,
         severity: DiagnosticSeverity.Information,
@@ -1123,15 +1158,15 @@ export class CodeAnalyzer {
     diagnostics: Diagnostic[],
     suggestions: CodeSuggestion[]
   ): void {
-    compilerDiagnostics.forEach(diagnostic => {
+    compilerDiagnostics.forEach((diagnostic) => {
       const severity = this.mapCompilerLevelToDiagnostic(diagnostic.level);
-      
-      diagnostic.spans.forEach(span => {
+
+      diagnostic.spans.forEach((span) => {
         if (span.isMainSpan) {
           diagnostics.push({
             range: {
               start: { line: span.lineStart - 1, character: span.columnStart - 1 },
-              end: { line: span.lineEnd - 1, character: span.columnEnd - 1 }
+              end: { line: span.lineEnd - 1, character: span.columnEnd - 1 },
             },
             severity,
             message: diagnostic.message,
@@ -1142,13 +1177,20 @@ export class CodeAnalyzer {
           if (span.suggestedReplacement) {
             const quickFix: QuickFix = {
               title: 'Apply compiler suggestion',
-              changes: [{
-                file_path: span.fileName,
-                range: [span.lineStart - 1, span.columnStart - 1, span.lineEnd - 1, span.columnEnd - 1],
-                new_text: span.suggestedReplacement,
-                old_text: span.text.join(''),
-                change_type: 'replace',
-              }],
+              changes: [
+                {
+                  file_path: span.fileName,
+                  range: [
+                    span.lineStart - 1,
+                    span.columnStart - 1,
+                    span.lineEnd - 1,
+                    span.columnEnd - 1,
+                  ],
+                  new_text: span.suggestedReplacement,
+                  old_text: span.text.join(''),
+                  change_type: 'replace',
+                },
+              ],
               is_preferred: span.suggestionApplicability === 'machine-applicable',
             };
 
@@ -1157,7 +1199,7 @@ export class CodeAnalyzer {
               severity,
               range: {
                 start: { line: span.lineStart - 1, character: span.columnStart - 1 },
-                end: { line: span.lineEnd - 1, character: span.columnEnd - 1 }
+                end: { line: span.lineEnd - 1, character: span.columnEnd - 1 },
               },
               suggestion: span.suggestedReplacement,
               category: 'code-smell',
@@ -1179,33 +1221,33 @@ export class CodeAnalyzer {
     suggestions: CodeSuggestion[]
   ): void {
     const lines = code.split('\n');
-    
+
     // Detect long methods (basic heuristic)
     let currentFunctionStart = -1;
     let braceCount = 0;
-    
+
     lines.forEach((line, index) => {
       const trimmed = line.trim();
-      
+
       // Simple function detection
       if (trimmed.includes('function ') || trimmed.includes('fn ') || trimmed.includes('def ')) {
         currentFunctionStart = index;
         braceCount = 0;
       }
-      
+
       // Count braces
       braceCount += (line.match(/{/g) || []).length;
       braceCount -= (line.match(/}/g) || []).length;
-      
+
       // Function ended
       if (currentFunctionStart >= 0 && braceCount === 0 && trimmed.includes('}')) {
         const functionLength = index - currentFunctionStart + 1;
         if (functionLength > 50) {
           const range: Range = {
             start: { line: currentFunctionStart, character: 0 },
-            end: { line: index, character: line.length }
+            end: { line: index, character: line.length },
           };
-          
+
           diagnostics.push({
             range,
             severity: DiagnosticSeverity.Warning,
@@ -1213,7 +1255,7 @@ export class CodeAnalyzer {
             source: 'basic-analysis',
             code: 'long-method',
           });
-          
+
           suggestions.push({
             message: `This method is ${functionLength} lines long, consider breaking it into smaller functions`,
             severity: DiagnosticSeverity.Warning,
@@ -1225,18 +1267,18 @@ export class CodeAnalyzer {
         }
         currentFunctionStart = -1;
       }
-      
+
       // Detect magic numbers
       const magicNumberRegex = /\b(?!0|1|2|10|100|1000)\d{2,}\b/g;
       const matches = line.match(magicNumberRegex);
       if (matches) {
-        matches.forEach(match => {
+        matches.forEach((match) => {
           const column = line.indexOf(match);
           const range: Range = {
             start: { line: index, character: column },
-            end: { line: index, character: column + match.length }
+            end: { line: index, character: column + match.length },
           };
-          
+
           suggestions.push({
             message: `Magic number detected: ${match}`,
             severity: DiagnosticSeverity.Information,
@@ -1257,17 +1299,17 @@ export class CodeAnalyzer {
     suggestions: CodeSuggestion[]
   ): void {
     const lines = code.split('\n');
-    
+
     lines.forEach((line, index) => {
       const trimmed = line.trim();
-      
+
       // Detect nested loops (basic)
       if (trimmed.includes('for ') && code.substring(0, code.indexOf(line)).includes('for ')) {
         const range: Range = {
           start: { line: index, character: 0 },
-          end: { line: index, character: line.length }
+          end: { line: index, character: line.length },
         };
-        
+
         suggestions.push({
           message: 'Nested loop detected - potential performance concern',
           severity: DiagnosticSeverity.Information,
@@ -1277,14 +1319,14 @@ export class CodeAnalyzer {
           confidence_score: 0.5,
         });
       }
-      
+
       // Detect synchronous operations that might block
       if (trimmed.includes('readFileSync') || trimmed.includes('writeFileSync')) {
         const range: Range = {
           start: { line: index, character: 0 },
-          end: { line: index, character: line.length }
+          end: { line: index, character: line.length },
         };
-        
+
         suggestions.push({
           message: 'Synchronous file operation detected',
           severity: DiagnosticSeverity.Warning,
@@ -1305,10 +1347,10 @@ export class CodeAnalyzer {
   ): void {
     void filePath; // Ensure filePath parameter is recognized as used
     const lines = code.split('\n');
-    
+
     lines.forEach((line, index) => {
       const trimmed = line.trim();
-      
+
       // Detect potential hardcoded secrets
       const secretPatterns = [
         /password\s*[:=]\s*["'][^"']+["']/i,
@@ -1316,17 +1358,17 @@ export class CodeAnalyzer {
         /secret\s*[:=]\s*["'][^"']+["']/i,
         /token\s*[:=]\s*["'][^"']+["']/i,
       ];
-      
-      secretPatterns.forEach(pattern => {
+
+      secretPatterns.forEach((pattern) => {
         if (pattern.test(line)) {
           const match = line.match(pattern);
           if (match) {
             const column = line.indexOf(match[0]);
             const range: Range = {
               start: { line: index, character: column },
-              end: { line: index, character: column + match[0].length }
+              end: { line: index, character: column + match[0].length },
             };
-            
+
             diagnostics.push({
               range,
               severity: DiagnosticSeverity.Error,
@@ -1334,7 +1376,7 @@ export class CodeAnalyzer {
               source: 'basic-security',
               code: 'hardcoded-secret',
             });
-            
+
             suggestions.push({
               message: 'Hardcoded secret detected',
               severity: DiagnosticSeverity.Error,
@@ -1346,15 +1388,15 @@ export class CodeAnalyzer {
           }
         }
       });
-      
+
       // Detect eval usage
       if (trimmed.includes('eval(')) {
         const column = line.indexOf('eval(');
         const range: Range = {
           start: { line: index, character: column },
-          end: { line: index, character: column + 5 }
+          end: { line: index, character: column + 5 },
         };
-        
+
         suggestions.push({
           message: 'Use of eval() detected',
           severity: DiagnosticSeverity.Warning,
@@ -1367,21 +1409,17 @@ export class CodeAnalyzer {
     });
   }
 
-  private checkBasicCodeStyle(
-    code: string,
-    filePath: string,
-    suggestions: CodeSuggestion[]
-  ): void {
+  private checkBasicCodeStyle(code: string, filePath: string, suggestions: CodeSuggestion[]): void {
     const lines = code.split('\n');
-    
+
     lines.forEach((line, index) => {
       // Check for trailing whitespace
       if (line.endsWith(' ') || line.endsWith('\t')) {
         const range: Range = {
           start: { line: index, character: line.trimEnd().length },
-          end: { line: index, character: line.length }
+          end: { line: index, character: line.length },
         };
-        
+
         suggestions.push({
           message: 'Trailing whitespace detected',
           severity: DiagnosticSeverity.Information,
@@ -1391,23 +1429,25 @@ export class CodeAnalyzer {
           confidence_score: 1.0,
           fix_action: {
             title: 'Remove trailing whitespace',
-            changes: [{
-              file_path: filePath,
-              range: [index, line.trimEnd().length, index, line.length],
-              new_text: '',
-            }],
+            changes: [
+              {
+                file_path: filePath,
+                range: [index, line.trimEnd().length, index, line.length],
+                new_text: '',
+              },
+            ],
             is_preferred: true,
           },
         });
       }
-      
+
       // Check for very long lines
       if (line.length > 120) {
         const range: Range = {
           start: { line: index, character: 120 },
-          end: { line: index, character: line.length }
+          end: { line: index, character: line.length },
         };
-        
+
         suggestions.push({
           message: `Line too long (${line.length} characters)`,
           severity: DiagnosticSeverity.Information,
@@ -1423,10 +1463,11 @@ export class CodeAnalyzer {
   // Enhanced metrics calculation using Rust backend data
   private calculateEnhancedMetrics(rustResult: any, code: string): CodeMetrics {
     const baseMetrics = this.calculateBasicMetrics(code);
-    
+
     // Use data from Rust analysis if available
     const complexity = rustResult.metrics?.cyclomatic_complexity || baseMetrics.complexity;
-    const maintainability = rustResult.metrics?.maintainability_index || baseMetrics.maintainability;
+    const maintainability =
+      rustResult.metrics?.maintainability_index || baseMetrics.maintainability;
     const securityScore = this.calculateSecurityScoreFromVulnerabilities(
       rustResult.security_vulnerabilities || []
     );
@@ -1458,20 +1499,32 @@ export class CodeAnalyzer {
   private calculateCyclomaticComplexity(code: string): number {
     // Count decision points in the code
     const decisionKeywords = [
-      'if', 'else', 'elif', 'while', 'for', 'switch', 'case', 
-      'catch', 'try', '&&', '||', '?', 'match', 'when'
+      'if',
+      'else',
+      'elif',
+      'while',
+      'for',
+      'switch',
+      'case',
+      'catch',
+      'try',
+      '&&',
+      '||',
+      '?',
+      'match',
+      'when',
     ];
-    
+
     let complexity = 1; // Base complexity
-    
-    decisionKeywords.forEach(keyword => {
+
+    decisionKeywords.forEach((keyword) => {
       const regex = new RegExp(`\\b${keyword}\\b`, 'g');
       const matches = code.match(regex);
       if (matches) {
         complexity += matches.length;
       }
     });
-    
+
     return Math.min(complexity, 50); // Cap at 50 for sanity
   }
 
@@ -1479,19 +1532,23 @@ export class CodeAnalyzer {
     const linesOfCode = this.countLinesOfCode(code);
     const cyclomaticComplexity = this.calculateCyclomaticComplexity(code);
     const halsteadVolume = this.estimateHalsteadVolume(code);
-    
+
     // Simplified maintainability index calculation
     // Real formula: 171 - 5.2 * ln(Halstead Volume) - 0.23 * (Cyclomatic Complexity) - 16.2 * ln(Lines of Code)
-    const maintainabilityIndex = Math.max(0, 
-      171 - 5.2 * Math.log(halsteadVolume) - 0.23 * cyclomaticComplexity - 16.2 * Math.log(linesOfCode)
+    const maintainabilityIndex = Math.max(
+      0,
+      171 -
+        5.2 * Math.log(halsteadVolume) -
+        0.23 * cyclomaticComplexity -
+        16.2 * Math.log(linesOfCode)
     );
-    
+
     return Math.min(100, maintainabilityIndex);
   }
 
   private calculateSecurityScore(code: string): number {
     let score = 100;
-    
+
     // Deduct points for potential security issues
     const securityPatterns = [
       { pattern: /eval\s*\(/g, penalty: 20 },
@@ -1502,20 +1559,20 @@ export class CodeAnalyzer {
       { pattern: /\.exec\s*\(/g, penalty: 10 },
       { pattern: /setTimeout\s*\(\s*["'][^"']*["']/g, penalty: 10 },
     ];
-    
+
     securityPatterns.forEach(({ pattern, penalty }) => {
       const matches = code.match(pattern);
       if (matches) {
         score -= penalty * matches.length;
       }
     });
-    
+
     return Math.max(0, score);
   }
 
   private calculatePerformanceScore(code: string): number {
     let score = 100;
-    
+
     // Deduct points for potential performance issues
     const performancePatterns = [
       { pattern: /for\s*\([^)]*\)\s*{[^}]*for\s*\(/g, penalty: 20 }, // Nested loops
@@ -1525,21 +1582,23 @@ export class CodeAnalyzer {
       { pattern: /new\s+RegExp\s*\(/g, penalty: 5 },
       { pattern: /\+\s*=.*\+/g, penalty: 5 }, // String concatenation in loops
     ];
-    
+
     performancePatterns.forEach(({ pattern, penalty }) => {
       const matches = code.match(pattern);
       if (matches) {
         score -= penalty * matches.length;
       }
     });
-    
+
     return Math.max(0, score);
   }
 
-  private calculateSecurityScoreFromVulnerabilities(vulnerabilities: SecurityVulnerability[]): number {
+  private calculateSecurityScoreFromVulnerabilities(
+    vulnerabilities: SecurityVulnerability[]
+  ): number {
     let score = 100;
-    
-    vulnerabilities.forEach(vuln => {
+
+    vulnerabilities.forEach((vuln) => {
       switch (vuln.severity) {
         case 'Critical':
           score -= 25;
@@ -1555,14 +1614,14 @@ export class CodeAnalyzer {
           break;
       }
     });
-    
+
     return Math.max(0, score);
   }
 
   private calculatePerformanceScoreFromIssues(issues: PerformanceIssue[]): number {
     let score = 100;
-    
-    issues.forEach(issue => {
+
+    issues.forEach((issue) => {
       switch (issue.impact) {
         case 'Critical':
           score -= 25;
@@ -1578,13 +1637,13 @@ export class CodeAnalyzer {
           break;
       }
     });
-    
+
     return Math.max(0, score);
   }
 
   private calculateTechnicalDebt(rustResult: any): number {
     let debtMinutes = 0;
-    
+
     // Calculate debt from code smells
     if (rustResult.code_smells) {
       debtMinutes += rustResult.code_smells.reduce(
@@ -1592,48 +1651,46 @@ export class CodeAnalyzer {
         0
       );
     }
-    
+
     // Add debt from security vulnerabilities (estimated)
     if (rustResult.security_vulnerabilities) {
       debtMinutes += rustResult.security_vulnerabilities.length * 30; // 30 min per vulnerability
     }
-    
+
     // Add debt from performance issues (estimated)
     if (rustResult.performance_issues) {
       debtMinutes += rustResult.performance_issues.length * 45; // 45 min per performance issue
     }
-    
+
     return debtMinutes;
   }
 
   private countLinesOfCode(code: string): number {
-    return code.split('\n').filter(line => line.trim().length > 0).length;
+    return code.split('\n').filter((line) => line.trim().length > 0).length;
   }
 
   private estimateHalsteadVolume(code: string): number {
     // Simplified Halstead volume estimation
     const operators = code.match(/[+\-*/%=<>!&|^~?:;,(){}[\]]/g) || [];
     const operands = code.match(/\b[a-zA-Z_$][a-zA-Z0-9_$]*\b/g) || [];
-    
+
     const uniqueOperators = new Set(operators).size;
     const uniqueOperands = new Set(operands).size;
     const totalOperators = operators.length;
     const totalOperands = operands.length;
-    
+
     const vocabulary = uniqueOperators + uniqueOperands;
     const length = totalOperators + totalOperands;
-    
+
     return length * Math.log2(vocabulary || 1);
   }
-
-
 
   private generateHash(content: string): string {
     // Simple hash function for caching
     let hash = 0;
     for (let i = 0; i < content.length; i++) {
       const char = content.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return hash.toString(36);
@@ -1646,7 +1703,7 @@ export class CodeAnalyzer {
       request.controller.abort();
       this.pendingRequests.delete(filePath);
     }
-    
+
     const timer = this.debounceTimers.get(filePath);
     if (timer) {
       clearTimeout(timer);
@@ -1661,8 +1718,8 @@ export class CodeAnalyzer {
 
   public getCacheStats(): { size: number; oldestEntry: number; newestEntry: number } {
     const entries = Array.from(this.cache.values());
-    const timestamps = entries.map(entry => entry.timestamp);
-    
+    const timestamps = entries.map((entry) => entry.timestamp);
+
     return {
       size: this.cache.size,
       oldestEntry: timestamps.length > 0 ? Math.min(...timestamps) : 0,
@@ -1715,10 +1772,10 @@ export class CodeAnalyzer {
       const diagnostics: Diagnostic[] = [];
       const suggestions: CodeSuggestion[] = [];
       this.checkBasicCodeStyle(code, filePath, suggestions);
-      
+
       return suggestions
-        .filter(s => s.category === 'style')
-        .map(s => ({
+        .filter((s) => s.category === 'style')
+        .map((s) => ({
           id: `style-${Date.now()}-${Math.random()}`,
           violationType: 'basic-style-check' as any,
           severity: 'info' as SeverityLevel,
@@ -1825,9 +1882,11 @@ export class CodeAnalyzer {
 
   public async updateLearningPreferences(preferences: Partial<LearningPreferences>): Promise<void> {
     this.config.learning_preferences = { ...this.config.learning_preferences, ...preferences };
-    
+
     try {
-      await invoke('update_learning_preferences', { preferences: this.config.learning_preferences });
+      await invoke('update_learning_preferences', {
+        preferences: this.config.learning_preferences,
+      });
     } catch (error) {
       console.error('Failed to update learning preferences:', error);
       throw error;
@@ -1841,7 +1900,10 @@ export class CodeAnalyzer {
       includeExplanations?: boolean;
       includeSuggestedFixes?: boolean;
     } = {}
-  ): Promise<{ diagnostics: CompilerDiagnostic[]; explanations: Record<string, ErrorCodeExplanation> }> {
+  ): Promise<{
+    diagnostics: CompilerDiagnostic[];
+    explanations: Record<string, ErrorCodeExplanation>;
+  }> {
     try {
       const result = await invoke('get_compiler_diagnostics', {
         workspace_path: workspacePath,
@@ -1869,10 +1931,13 @@ export class CodeAnalyzer {
   }
 
   // Enhanced utility methods
-  private convertRangeFromBackend(lineRange: [number, number], columnRange: [number, number]): Range {
+  private convertRangeFromBackend(
+    lineRange: [number, number],
+    columnRange: [number, number]
+  ): Range {
     return {
       start: { line: lineRange[0], character: columnRange[0] },
-      end: { line: lineRange[1], character: columnRange[1] }
+      end: { line: lineRange[1], character: columnRange[1] },
     };
   }
 
@@ -1915,12 +1980,12 @@ export class CodeAnalyzer {
     suggestions: CodeSuggestion[]
   ): void {
     const lines = code.split('\n');
-    
+
     // Check for potential circular dependencies (basic heuristic)
     const imports = lines
-      .filter(line => line.trim().startsWith('import ') || line.trim().startsWith('use '))
-      .map(line => line.trim());
-    
+      .filter((line) => line.trim().startsWith('import ') || line.trim().startsWith('use '))
+      .map((line) => line.trim());
+
     if (imports.length > 20) {
       suggestions.push({
         message: `High number of imports detected (${imports.length})`,
@@ -1929,7 +1994,8 @@ export class CodeAnalyzer {
         suggestion: 'Consider organizing imports and reducing dependencies',
         category: 'architecture',
         confidence_score: 0.6,
-        detailed_explanation: 'Too many imports can indicate tight coupling and make the code harder to maintain.',
+        detailed_explanation:
+          'Too many imports can indicate tight coupling and make the code harder to maintain.',
       });
     }
 
@@ -1943,7 +2009,8 @@ export class CodeAnalyzer {
         suggestion: 'Consider breaking this file into smaller, more focused modules',
         category: 'architecture',
         confidence_score: 0.7,
-        detailed_explanation: 'Large files can be difficult to maintain and may violate the Single Responsibility Principle.',
+        detailed_explanation:
+          'Large files can be difficult to maintain and may violate the Single Responsibility Principle.',
       });
     }
   }
@@ -1952,18 +2019,18 @@ export class CodeAnalyzer {
   public getCacheStatsByType(): Record<AnalysisCategory, { count: number; avgAge: number }> {
     const stats: Record<AnalysisCategory, { count: number; avgAge: number }> = {
       'code-smell': { count: 0, avgAge: 0 },
-      'performance': { count: 0, avgAge: 0 },
-      'security': { count: 0, avgAge: 0 },
-      'style': { count: 0, avgAge: 0 },
-      'architecture': { count: 0, avgAge: 0 },
+      performance: { count: 0, avgAge: 0 },
+      security: { count: 0, avgAge: 0 },
+      style: { count: 0, avgAge: 0 },
+      architecture: { count: 0, avgAge: 0 },
     };
 
     const now = Date.now();
     const entries = Array.from(this.cache.values());
 
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
       const age = now - entry.timestamp;
-      entry.analysisType.forEach(type => {
+      entry.analysisType.forEach((type) => {
         if (stats[type]) {
           stats[type].count++;
           stats[type].avgAge = (stats[type].avgAge + age) / 2;
@@ -1976,14 +2043,14 @@ export class CodeAnalyzer {
 
   public clearCacheByType(analysisType: AnalysisCategory): void {
     const keysToDelete: string[] = [];
-    
+
     this.cache.forEach((entry, key) => {
       if (entry.analysisType.includes(analysisType)) {
         keysToDelete.push(key);
       }
     });
 
-    keysToDelete.forEach(key => this.cache.delete(key));
+    keysToDelete.forEach((key) => this.cache.delete(key));
     console.log(`Cleared ${keysToDelete.length} cache entries for analysis type: ${analysisType}`);
   }
 }

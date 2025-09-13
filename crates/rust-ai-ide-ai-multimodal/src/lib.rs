@@ -16,18 +16,18 @@
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
 
+pub mod audio;
 pub mod errors;
+pub mod metrics;
+pub mod multimodal;
 pub mod types;
 pub mod vision;
-pub mod audio;
-pub mod multimodal;
-pub mod metrics;
 
-pub use errors::{MultimodalError, VisionError, AudioError, ProcessingError};
-pub use types::{ProcessingResult, AnalysisRequest, AnalysisResponse, ModalityType};
-pub use multimodal::MultiModalAnalyzer;
-pub use vision::VisionProcessor;
 pub use audio::AudioProcessor;
+pub use errors::{AudioError, MultimodalError, ProcessingError, VisionError};
+pub use multimodal::MultiModalAnalyzer;
+pub use types::{AnalysisRequest, AnalysisResponse, ModalityType, ProcessingResult};
+pub use vision::VisionProcessor;
 
 /// Main multi-modal AI service that orchestrates all modalities
 ///
@@ -47,24 +47,19 @@ impl MultiModalAiService {
     /// # Errors
     /// Returns an error if any component fails to initialize
     pub async fn new() -> Result<Self, errors::MultimodalError> {
-        let vision_processor = std::sync::Arc::new(
-            vision::VisionProcessor::new().await?
-        );
+        let vision_processor = std::sync::Arc::new(vision::VisionProcessor::new().await?);
 
-        let audio_processor = std::sync::Arc::new(
-            audio::AudioProcessor::new().await?
-        );
+        let audio_processor = std::sync::Arc::new(audio::AudioProcessor::new().await?);
 
         let multimodal_analyzer = std::sync::Arc::new(
             multimodal::MultiModalAnalyzer::new(
                 std::sync::Arc::clone(&vision_processor),
-                std::sync::Arc::clone(&audio_processor)
-            ).await?
+                std::sync::Arc::clone(&audio_processor),
+            )
+            .await?,
         );
 
-        let metrics_collector = std::sync::Arc::new(
-            metrics::MetricsCollector::new().await?
-        );
+        let metrics_collector = std::sync::Arc::new(metrics::MetricsCollector::new().await?);
 
         Ok(Self {
             vision_processor,
@@ -107,13 +102,17 @@ impl MultiModalAiService {
         request: types::AnalysisRequest,
     ) -> Result<types::AnalysisResponse, errors::MultimodalError> {
         // Record metrics
-        self.metrics_collector.record_request(request.modality_types.len()).await;
+        self.metrics_collector
+            .record_request(request.modality_types.len())
+            .await;
 
         // Process through multimodal analyzer
         let result = self.multimodal_analyzer.analyze(request).await?;
 
         // Record completion
-        self.metrics_collector.record_completion(result.confidence_score).await;
+        self.metrics_collector
+            .record_completion(result.confidence_score)
+            .await;
 
         Ok(result)
     }
@@ -127,7 +126,10 @@ mod tests {
     #[tokio::test]
     async fn test_multimodal_service_creation() {
         let service = MultiModalAiService::new().await;
-        assert!(service.is_ok(), "Multi-modal service should initialize successfully");
+        assert!(
+            service.is_ok(),
+            "Multi-modal service should initialize successfully"
+        );
     }
 
     #[tokio::test]
@@ -149,6 +151,9 @@ mod tests {
 
         let result = service.process_request(request).await;
         // Should complete without panic (may return placeholder result)
-        assert!(result.is_ok() || result.is_err(), "Request should be processed");
+        assert!(
+            result.is_ok() || result.is_err(),
+            "Request should be processed"
+        );
     }
 }

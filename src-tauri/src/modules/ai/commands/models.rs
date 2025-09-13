@@ -2,7 +2,6 @@
 ///
 /// This module handles direct AI model interactions, messaging,
 /// and model-specific operations through the LSP service interface.
-
 use crate::commands::ai::services::AIServiceState;
 use crate::utils;
 use std::collections::HashMap;
@@ -44,7 +43,11 @@ pub async fn send_ai_message(
     let ai_service = utils::get_or_create_ai_service(&ai_service_state).await?;
 
     // Validate and extract current_code
-    let current_code = match context.get("current_code").and_then(|v| v.as_str()).map(|s| s.to_string()) {
+    let current_code = match context
+        .get("current_code")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+    {
         Some(code) => {
             if code.is_empty() {
                 log::info!("Empty current_code provided, using default");
@@ -78,14 +81,22 @@ pub async fn send_ai_message(
         .and_then(|v| v.as_str().map(|s| s.to_string()));
 
     // Extract project context
-    let project_context: HashMap<String, String> = match context.get("project_context").and_then(|v| v.as_object()) {
+    let project_context: HashMap<String, String> = match context
+        .get("project_context")
+        .and_then(|v| v.as_object())
+    {
         Some(obj) => {
-            let ctx_result: HashMap<String, String> = obj.iter()
-                .filter_map(|(k, v)| {
-                    match v.as_str().map(|s| (k.clone(), s.to_string())) {
+            let ctx_result: HashMap<String, String> = obj
+                .iter()
+                .filter_map(
+                    |(k, v)| match v.as_str().map(|s| (k.clone(), s.to_string())) {
                         Some((key, val)) => {
                             if key.is_empty() || val.is_empty() {
-                                log::warn!("Empty key/value pair in project_context: key={}, val={}", key, val);
+                                log::warn!(
+                                    "Empty key/value pair in project_context: key={}, val={}",
+                                    key,
+                                    val
+                                );
                             }
                             Some((key, val))
                         }
@@ -93,8 +104,8 @@ pub async fn send_ai_message(
                             log::error!("Invalid string value in project_context for key: {}", k);
                             Some((k.clone(), String::new()))
                         }
-                    }
-                })
+                    },
+                )
                 .collect();
 
             if ctx_result.is_empty() {
@@ -122,13 +133,10 @@ pub async fn send_ai_message(
     log::debug!("Created AI context: {:#?}", ai_context);
 
     // Process the message through AI completions
-    let completions = ai_service
-        .get_completions(ai_context)
-        .await
-        .map_err(|e| {
-            log::error!("AI processing error for message '{}': {}", message, e);
-            format!("AI processing error: {}", e)
-        })?;
+    let completions = ai_service.get_completions(ai_context).await.map_err(|e| {
+        log::error!("AI processing error for message '{}': {}", message, e);
+        format!("AI processing error: {}", e)
+    })?;
 
     // Get the first completion
     let response = match completions.first() {

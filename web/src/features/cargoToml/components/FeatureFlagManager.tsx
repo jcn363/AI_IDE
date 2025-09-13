@@ -1,8 +1,26 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, Button, Card, Space, Switch, Table, Tag, Tooltip, Typography, Modal, Form, Input, message } from 'antd';
+import {
+  Alert,
+  Button,
+  Card,
+  Space,
+  Switch,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+  Modal,
+  Form,
+  Input,
+  message,
+} from 'antd';
 import { DeleteOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { CargoManifest, FeatureUsage } from '../../../types/cargo';
-import { analyzeFeatureFlags, getFeatureFlagSuggestions, optimizeFeatureFlags } from '../featureFlags';
+import {
+  analyzeFeatureFlags,
+  getFeatureFlagSuggestions,
+  optimizeFeatureFlags,
+} from '../featureFlags';
 
 const { Text } = Typography;
 
@@ -35,7 +53,7 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
 
   const [isAddFeatureModalOpen, setIsAddFeatureModalOpen] = useState(false);
   const [form] = Form.useForm();
-  
+
   const { features, suggestions } = featuresState;
 
   // Use useEffect for side effects like data fetching
@@ -46,7 +64,7 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
       try {
         const features = await analyzeFeatureFlags(manifest);
         const suggestions = getFeatureFlagSuggestions(features);
-        
+
         // Only update state if component is still mounted
         if (isMounted) {
           setFeaturesState({
@@ -74,7 +92,7 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
   const dataSource = useMemo<FeatureRow[]>(() => {
     const featuresMap = (Array.isArray(features) ? features : []).reduce(
       (acc, f) => (f?.name ? { ...acc, [f.name]: f } : acc),
-      {} as Record<string, FeatureUsage>,
+      {} as Record<string, FeatureUsage>
     );
 
     return Object.entries(manifest.features || {})
@@ -103,7 +121,7 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
 
   const handleToggleFeature = (name: string, enabled: boolean) => {
     const updatedManifest = { ...manifest };
-    
+
     // Ensure package exists with proper type
     if (!updatedManifest.package) {
       updatedManifest.package = {};
@@ -126,7 +144,8 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
       }
     }
 
-    updatedManifest.package.defaultFeatures = defaultFeatures.length > 0 ? defaultFeatures : undefined;
+    updatedManifest.package.defaultFeatures =
+      defaultFeatures.length > 0 ? defaultFeatures : undefined;
     onChange(updatedManifest);
   };
 
@@ -148,8 +167,11 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
 
     // Remove from default features
     if (updatedManifest.package.defaultFeatures) {
-      const defaultFeatures = updatedManifest.package.defaultFeatures.filter((f: string) => f !== name);
-      updatedManifest.package.defaultFeatures = defaultFeatures.length > 0 ? defaultFeatures : undefined;
+      const defaultFeatures = updatedManifest.package.defaultFeatures.filter(
+        (f: string) => f !== name
+      );
+      updatedManifest.package.defaultFeatures =
+        defaultFeatures.length > 0 ? defaultFeatures : undefined;
     }
 
     onChange(updatedManifest);
@@ -177,10 +199,10 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
       title: 'Used By',
       dataIndex: 'usedBy',
       key: 'usedBy',
-      render: (usedBy: string[]) => (
+      render: (usedBy: string[]) =>
         usedBy.length > 0 ? (
           <Space size={[0, 4]} wrap>
-            {usedBy.map(dep => (
+            {usedBy.map((dep) => (
               <Tag key={dep} color="geekblue">
                 {dep}
               </Tag>
@@ -188,8 +210,7 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
           </Space>
         ) : (
           <Text type="secondary">Not used by any dependency</Text>
-        )
-      ),
+        ),
     },
     {
       title: 'Status',
@@ -199,7 +220,7 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
       render: (enabled: boolean, record: FeatureRow) => (
         <Switch
           checked={enabled}
-          onChange={checked => handleToggleFeature(record.name, checked)}
+          onChange={(checked) => handleToggleFeature(record.name, checked)}
           disabled={record.isDefault}
         />
       ),
@@ -239,10 +260,7 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
             Add Feature
           </Button>
 
-          <Button
-            onClick={handleOptimizeFeatures}
-            disabled={suggestions.length === 0}
-          >
+          <Button onClick={handleOptimizeFeatures} disabled={suggestions.length === 0}>
             Optimize Features
           </Button>
 
@@ -291,7 +309,8 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
         />
       </Card>
 
-      <style jsx global>{`n        .unused-feature {
+      <style jsx global>{`
+        n .unused-feature {
           opacity: 0.7;
         }
         .unused-feature:hover {

@@ -120,7 +120,7 @@ fn insecure_function() {
     let password = "hardcoded_password123";
     let api_key = "sk-1234567890abcdef";
     let query = format!("SELECT * FROM users WHERE id = {}", user_input);
-    
+
     unsafe {
         let ptr = std::ptr::null_mut();
         *ptr = 42;
@@ -136,7 +136,7 @@ fn inefficient_function(data: &[String]) -> String {
         let cloned = item.clone(); // Unnecessary clone
         println!("{}", cloned.to_string()); // Unnecessary to_string
     }
-    
+
     // Nested loops
     for i in 0..data.len() {
         for j in 0..data.len() {
@@ -145,7 +145,7 @@ fn inefficient_function(data: &[String]) -> String {
             }
         }
     }
-    
+
     result
 }
 "#;
@@ -201,7 +201,7 @@ impl TightlyCoupledStruct {
         self.update_cache();
         self.send_notifications();
     }
-    
+
     fn read_file(&mut self) { }
     fn process_network(&mut self) { }
     fn update_cache(&mut self) { }
@@ -217,7 +217,7 @@ fn calculate_user_score(user: &User) -> f64 {
     let multiplier = user.get_multiplier();
     let level = user.get_level();
     let experience = user.get_experience();
-    
+
     // This function is overly dependent on User's internals
     (base_score + bonus - penalty) * multiplier * level as f64 + experience
 }
@@ -228,9 +228,9 @@ async fn problematic_async_function() {
     let mut file = std::fs::File::open("data.txt").unwrap(); // Blocking in async
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap(); // Blocking in async
-    
+
     std::thread::sleep(std::time::Duration::from_secs(1)); // Blocking in async
-    
+
     println!("{}", contents);
 }
 "#;
@@ -240,11 +240,11 @@ fn function_with_errors() {
     let x: i32 = "not a number"; // Type mismatch
     let y = undefined_variable; // Undefined variable
     let z = x.some_method(); // Method doesn't exist
-    
+
     if x = 5 { // Assignment instead of comparison
         println!("x is 5");
     }
-    
+
     let vec = Vec::new();
     vec.push(1); // Cannot borrow as mutable
 }
@@ -258,7 +258,7 @@ mod module1 {
         field2: i32,
         field3: Vec<String>,
     }
-    
+
     impl LargeStruct1 {
         pub fn method1(&self) -> String { self.field1.clone() }
         pub fn method2(&self) -> i32 { self.field2 }
@@ -270,16 +270,16 @@ mod module2 {
     pub struct LargeStruct2 {
         data: std::collections::HashMap<String, i32>,
     }
-    
+
     impl LargeStruct2 {
         pub fn new() -> Self {
             Self { data: std::collections::HashMap::new() }
         }
-        
+
         pub fn insert(&mut self, key: String, value: i32) {
             self.data.insert(key, value);
         }
-        
+
         pub fn get(&self, key: &str) -> Option<&i32> {
             self.data.get(key)
         }

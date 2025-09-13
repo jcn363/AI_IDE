@@ -34,17 +34,17 @@ pub mod variable_operations;
 
 // Re-exports for external use
 pub use confidence::ConfidenceScorer;
+pub use enhanced_backup::EnhancedBackupManager;
+pub use logging::{RefactoringLogger, SessionStatus, SessionType};
 pub use progress::ProgressTracker;
 pub use safety::SafetyAnalyzer;
-pub use logging::{RefactoringLogger, SessionType, SessionStatus};
-pub use suggestions::SuggestionEngineImpl;
 pub use suggestions::SuggestionEngine;
-pub use enhanced_backup::EnhancedBackupManager;
+pub use suggestions::SuggestionEngineImpl;
 
 // Core AI Refactoring Service - Main Integration Point
 pub use service::RefactoringService;
 
 // Re-export core traits and types
 pub use core_traits::RefactoringOperation;
-pub use types::*;
 pub use operations::*;
+pub use types::*;

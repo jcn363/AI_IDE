@@ -12,77 +12,88 @@
 //! - File system testing abstractions
 //! - Test fixtures and factories
 
-pub mod error;
-pub mod validation;
-pub mod filesystem;
-pub mod async_utils;
-pub mod fixtures;
-pub mod builder;
-pub mod harness;
-pub mod compatibility;
-pub mod debugger_integration;
-pub mod macros;
-pub mod command_tests;
-pub mod integration;
-pub mod test_generation;
-pub mod data_generator;
-pub mod setup;
 pub mod assertions;
+pub mod async_utils;
+pub mod builder;
+pub mod command_tests;
+pub mod compatibility;
+pub mod data_generator;
+pub mod debugger_integration;
+pub mod error;
+pub mod filesystem;
+pub mod fixtures;
+pub mod harness;
+pub mod integration;
+pub mod macros;
+pub mod setup;
+pub mod test_generation;
+pub mod validation;
 
 // New enhanced testing modules
-pub mod database;
 pub mod cache;
-pub mod lsp;
-pub mod mock;
 #[cfg(feature = "ci")]
 pub mod ci;
+pub mod database;
+pub mod lsp;
+pub mod mock;
 
 // Re-export commonly used types
-pub use error::{TestError, ValidationError};
-pub use validation::ValidationUtils;
-pub use filesystem::TempWorkspace;
-pub use async_utils::{with_timeout, timeout_task, run_concurrent, AsyncContext};
-pub use fixtures::TestFixtureBuilder;
+pub use async_utils::{run_concurrent, timeout_task, with_timeout, AsyncContext};
 pub use builder::TestFixtureBuilder as GenericTestFixtureBuilder; // Generic builder
-pub use harness::{TestHarness, TestResult, TestHarnessMetadata, TestHarnessFactory, TestHarnessSuite}; // Export specific harness types
-pub use compatibility::*; // Export compatibility layer
 pub use command_tests::CommandTestRunner;
+pub use compatibility::*; // Export compatibility layer
+pub use error::{TestError, ValidationError};
+pub use filesystem::TempWorkspace;
+pub use fixtures::TestFixtureBuilder;
+pub use harness::{
+    TestHarness, TestHarnessFactory, TestHarnessMetadata, TestHarnessSuite, TestResult,
+}; // Export specific harness types
 pub use integration::IntegrationContext;
 pub use test_generation::{
-    UnifiedTestGenerator, TestGenerationContext, RefactoringContext, RefactoringResult,
-    ProgrammingLanguage, TestType, RefactoringType, GeneratedTest, GeneratedTests,
-    LanguageDetector, TestGenerationConfig,
-    LanguageTestGenerator, LanguageGeneratorRegistry, UnifiedLanguageTestGenerator,
-    TestFramework, TestTemplateSet, LanguageGeneratorFactory
+    GeneratedTest, GeneratedTests, LanguageDetector, LanguageGeneratorFactory,
+    LanguageGeneratorRegistry, LanguageTestGenerator, ProgrammingLanguage, RefactoringContext,
+    RefactoringResult, RefactoringType, TestFramework, TestGenerationConfig, TestGenerationContext,
+    TestTemplateSet, TestType, UnifiedLanguageTestGenerator, UnifiedTestGenerator,
 };
+pub use validation::ValidationUtils;
 
 // Enhanced async testing utilities
 pub use async_utils::{
-    ConcurrencyTester, AsyncScheduler, AsyncStressTester, AsyncTestHooks, DeadlockDetector,
-    TokioTestUtils, AsyncTestHelper,
+    AsyncScheduler, AsyncStressTester, AsyncTestHelper, AsyncTestHooks, ConcurrencyTester,
+    DeadlockDetector, TokioTestUtils,
 };
 
 // Database testing utilities
 #[cfg(feature = "database")]
-pub use database::{DatabaseFixture, DatabaseConfig, MockDatabase, DatabaseTransaction, DatabaseFixtures};
+pub use database::{
+    DatabaseConfig, DatabaseFixture, DatabaseFixtures, DatabaseTransaction, MockDatabase,
+};
 
 // Cache testing utilities
-pub use cache::{MockCache, CacheFixture, CacheFixtures, CachePerformanceTester, MultiLevelCacheFixture};
+pub use cache::{
+    CacheFixture, CacheFixtures, CachePerformanceTester, MockCache, MultiLevelCacheFixture,
+};
 
 // LSP testing utilities
-pub use lsp::{MockLSPServer, MockLSPClient, LSPFixture, LSPFixtures, LSPMessageBuilder, LSPAssertions};
+pub use lsp::{
+    LSPAssertions, LSPFixture, LSPFixtures, LSPMessageBuilder, MockLSPClient, MockLSPServer,
+};
 
 // Mock framework utilities
-pub use mock::{GenericMock, MockBehaviors, MockFactory, MockScenario, MockPresets, HttpMock, FileSystemMock};
+pub use mock::{
+    FileSystemMock, GenericMock, HttpMock, MockBehaviors, MockFactory, MockPresets, MockScenario,
+};
 
 // CI/CD integration utilities
 #[cfg(feature = "ci")]
-pub use ci::{CIEnvironment, CoverageAnalyzer, BenchmarkRunner, TestReporter, CIPipeline, CICommandRunner};
+pub use ci::{
+    BenchmarkRunner, CICommandRunner, CIEnvironment, CIPipeline, CoverageAnalyzer, TestReporter,
+};
 
 // Re-export migrated utilities
+pub use assertions::*;
 pub use data_generator::*;
 pub use setup::*;
-pub use assertions::*;
 
 // Usage Pattern: Basic Test Fixture Creation
 // ```ignore

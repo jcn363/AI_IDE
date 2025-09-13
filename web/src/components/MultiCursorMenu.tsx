@@ -16,7 +16,7 @@ import {
   RemoveCircleOutline as RemoveCursorIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 
 // Multi-cursor related interfaces matching Rust types
 interface CursorPosition {
@@ -43,10 +43,7 @@ interface MultiCursorMenuProps {
   editor?: any; // Monaco editor instance
 }
 
-const MultiCursorMenu: React.FC<MultiCursorMenuProps> = ({
-  documentUri,
-  editor,
-}) => {
+const MultiCursorMenu: React.FC<MultiCursorMenuProps> = ({ documentUri, editor }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [cursorState, setCursorState] = useState<MultiCursorState | null>(null);
   const [loading, setLoading] = useState(false);
@@ -128,10 +125,14 @@ const MultiCursorMenu: React.FC<MultiCursorMenuProps> = ({
     }
   };
 
-  const findAllOccurrences = async (query: string = '', caseSensitive: boolean = false, wholeWord: boolean = false) => {
+  const findAllOccurrences = async (
+    query: string = '',
+    caseSensitive: boolean = false,
+    wholeWord: boolean = false
+  ) => {
     try {
       const config: FindMatchConfig = {
-        query: query || (editor?.getSelection()?.getText() || ''),
+        query: query || editor?.getSelection()?.getText() || '',
         case_sensitive: caseSensitive,
         whole_word: wholeWord,
         regex: false,
@@ -144,7 +145,7 @@ const MultiCursorMenu: React.FC<MultiCursorMenuProps> = ({
 
       if (result.status === 'success' && result.positions && editor) {
         // Add cursors at all positions
-        const selections = result.positions.map(pos => {
+        const selections = result.positions.map((pos) => {
           const startPos = { lineNumber: pos.line, column: pos.column };
           const endPos = { lineNumber: pos.line, column: pos.column + query.length };
           return monaco.Range.fromPositions(startPos, endPos);
@@ -169,7 +170,7 @@ const MultiCursorMenu: React.FC<MultiCursorMenuProps> = ({
       );
 
       if (result.status === 'success' && result.positions && editor) {
-        const selections = result.positions.map(pos => {
+        const selections = result.positions.map((pos) => {
           const position = { lineNumber: pos.line, column: pos.column };
           return monaco.Range.fromPositions(position, position);
         });
@@ -193,7 +194,7 @@ const MultiCursorMenu: React.FC<MultiCursorMenuProps> = ({
           onClick={handleMenuOpen}
           size="small"
           sx={{
-            color: cursorState?.secondary_cursors?.length ? 'primary.main' : 'text.secondary'
+            color: cursorState?.secondary_cursors?.length ? 'primary.main' : 'text.secondary',
           }}
         >
           <AddIcon fontSize="small" />
@@ -234,9 +235,7 @@ const MultiCursorMenu: React.FC<MultiCursorMenuProps> = ({
           Cursors on Line Ends (Lines 1-10)
         </MenuItem>
 
-        {cursorState?.secondary_cursors?.length && (
-          <Divider sx={{ my: 1 }} />
-        )}
+        {cursorState?.secondary_cursors?.length && <Divider sx={{ my: 1 }} />}
 
         {cursorState?.secondary_cursors?.length && (
           <MenuItem onClick={removeSecondaryCursors}>

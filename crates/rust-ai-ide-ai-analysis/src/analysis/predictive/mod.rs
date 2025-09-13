@@ -1,9 +1,9 @@
 // Module declarations
-pub mod vulnerability;
-pub mod performance;
 pub mod health;
-pub mod recommendations;
 pub mod metrics;
+pub mod performance;
+pub mod recommendations;
+pub mod vulnerability;
 
 // Core types for predictive analysis
 
@@ -38,10 +38,10 @@ impl Default for PredictiveConfig {
 }
 
 // Re-export submodules
-pub use vulnerability::*;
-pub use performance::*;
 pub use health::*;
+pub use performance::*;
 pub use recommendations::*;
+pub use vulnerability::*;
 
 /// Predictive Quality Intelligence Engine
 ///
@@ -82,32 +82,52 @@ impl PredictiveQualityEngine {
 
         // Vulnerability prediction
         if self.config.enable_vulnerability_prediction {
-            vulnerabilities = self.vulnerability_predictor
+            vulnerabilities = self
+                .vulnerability_predictor
                 .predict_vulnerabilities(project_path, historical_data)
                 .await
-                .map_err(|e| PredictiveError::AnalysisFailed(format!("Vulnerability prediction failed: {}", e)))?;
+                .map_err(|e| {
+                    PredictiveError::AnalysisFailed(format!(
+                        "Vulnerability prediction failed: {}",
+                        e
+                    ))
+                })?;
         }
 
         // Performance forecasting
         if self.config.enable_performance_forecasting {
-            performance_bottlenecks = self.performance_forecaster
+            performance_bottlenecks = self
+                .performance_forecaster
                 .forecast_bottlenecks(project_path, historical_data)
                 .await
-                .map_err(|e| PredictiveError::AnalysisFailed(format!("Performance forecasting failed: {}", e)))?;
+                .map_err(|e| {
+                    PredictiveError::AnalysisFailed(format!(
+                        "Performance forecasting failed: {}",
+                        e
+                    ))
+                })?;
         }
 
         // Code health scoring
         if self.config.enable_health_scoring {
-            health_scores = self.health_scorer
+            health_scores = self
+                .health_scorer
                 .score_project_health(project_path)
                 .await
-                .map_err(|e| PredictiveError::AnalysisFailed(format!("Health scoring failed: {}", e)))?;
+                .map_err(|e| {
+                    PredictiveError::AnalysisFailed(format!("Health scoring failed: {}", e))
+                })?;
         }
 
         // Generate recommendations
         if self.config.enable_recommendations {
-            recommendations = self.recommendation_engine
-                .generate_recommendations(&vulnerabilities, &performance_bottlenecks, &health_scores)
+            recommendations = self
+                .recommendation_engine
+                .generate_recommendations(
+                    &vulnerabilities,
+                    &performance_bottlenecks,
+                    &health_scores,
+                )
                 .await?;
         }
 

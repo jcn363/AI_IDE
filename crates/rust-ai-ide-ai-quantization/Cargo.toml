@@ -32,6 +32,7 @@ rust-ai-ide-cache = { path = "../rust-ai-ide-cache" }
 rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
 rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
 rust-ai-ide-security = { path = "../rust-ai-ide-security" }
+num_cpus = { workspace = true }
 
 # Common validation utilities
 rust-ai-ide-common = { path = "../rust-ai-ide-common", features = ["validation"] }

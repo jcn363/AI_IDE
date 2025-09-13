@@ -71,7 +71,7 @@ pub fn generate_html_report(metrics: &BuildMetrics, output_path: &Path) -> Resul
         <h2>Summary</h2>
         <p>Total build time: {:.2?}</p>
         <p>Number of crates: {}</p>
-        
+
         <h2>Crate Metrics</h2>
         <table>
             <tr>

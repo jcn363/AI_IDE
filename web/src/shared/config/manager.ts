@@ -13,7 +13,7 @@ import {
   type IHotReloadMonitor,
   type IPathResolver,
   type LoadOptions,
-  type ValidationResult
+  type ValidationResult,
 } from './types';
 
 /**
@@ -23,7 +23,7 @@ function createLogger(context: string) {
   return {
     info: (message: string) => console.log(`[${context}] ${message}`),
     warn: (message: string) => console.warn(`[${context}] ${message}`),
-    error: (message: string) => console.error(`[${context}] ${message}`)
+    error: (message: string) => console.error(`[${context}] ${message}`),
   };
 }
 
@@ -47,7 +47,7 @@ export class ConfigManager<T> implements IConfigManager<T> {
     this.config = {
       data: defaultConfig,
       priority: SourcePriority.DEFAULT,
-      loadedAt: new Date()
+      loadedAt: new Date(),
     };
   }
 
@@ -58,7 +58,7 @@ export class ConfigManager<T> implements IConfigManager<T> {
       enableHotReload: false,
       hotReloadDebounceMs: 500,
       searchIncludes: ['*.json', '*.yaml', '*.yml'],
-      searchExcludes: ['node_modules/**', '.git/**', 'dist/**', 'build/**']
+      searchExcludes: ['node_modules/**', '.git/**', 'dist/**', 'build/**'],
     };
   }
 
@@ -81,7 +81,7 @@ export class ConfigManager<T> implements IConfigManager<T> {
         ...this.config,
         data: newConfig,
         loadedAt: new Date(),
-        priority: SourcePriority.RUNTIME
+        priority: SourcePriority.RUNTIME,
       };
 
       // Notify subscribers
@@ -89,7 +89,7 @@ export class ConfigManager<T> implements IConfigManager<T> {
         path: 'runtime-update',
         previousConfig: previousData,
         newConfig: newConfig,
-        changeTime: new Date()
+        changeTime: new Date(),
       };
 
       this.notifySubscribers(change);
@@ -118,8 +118,8 @@ export class ConfigManager<T> implements IConfigManager<T> {
         {
           data: this.defaultConfig,
           priority: SourcePriority.DEFAULT,
-          loadedAt: new Date()
-        }
+          loadedAt: new Date(),
+        },
       ];
 
       for (const path of configPaths) {
@@ -130,7 +130,7 @@ export class ConfigManager<T> implements IConfigManager<T> {
             priority: SourcePriority.PROJECT,
             sourcePath: path,
             loadedAt: new Date(),
-            format: this.detectFormat(path)
+            format: this.detectFormat(path),
           });
         } catch (error) {
           logger.warn(`Failed to load config from ${path}: ${error}`);
@@ -142,7 +142,7 @@ export class ConfigManager<T> implements IConfigManager<T> {
 
       this.config = {
         ...mergedConfig,
-        loadedAt: new Date()
+        loadedAt: new Date(),
       };
 
       // Setup hot reload if enabled
@@ -157,7 +157,6 @@ export class ConfigManager<T> implements IConfigManager<T> {
 
       logger.info(`Configuration loaded for ${this.appName} from ${sources.length} sources`);
       return this.config.data;
-
     } catch (error) {
       logger.error(`Failed to load configuration for ${this.appName}: ${error}`);
       return this.defaultConfig;
@@ -191,16 +190,18 @@ export class ConfigManager<T> implements IConfigManager<T> {
       const envSource: ConfigSource<T> = {
         data: overrideConfig,
         priority: SourcePriority.ENVIRONMENT,
-        loadedAt: new Date()
+        loadedAt: new Date(),
       };
 
       // Re-merge with environment overrides taking precedence
       this.config = {
         ...envSource,
-        loadedAt: new Date()
+        loadedAt: new Date(),
       };
 
-      logger.info(`Applied ${Object.keys(envOverrides).length} environment overrides for ${this.appName}`);
+      logger.info(
+        `Applied ${Object.keys(envOverrides).length} environment overrides for ${this.appName}`
+      );
     }
 
     return this.config.data;
@@ -261,17 +262,20 @@ export class ConfigManager<T> implements IConfigManager<T> {
     return {
       isValid: true,
       errors: [],
-      warnings: []
+      warnings: [],
     };
   }
 
   private detectFormat(path: string): ConfigFormat {
     const ext = path.toLowerCase().split('.').pop();
     switch (ext) {
-      case 'json': return 'json';
+      case 'json':
+        return 'json';
       case 'yaml':
-      case 'yml': return 'yaml';
-      default: return 'auto';
+      case 'yml':
+        return 'yaml';
+      default:
+        return 'auto';
     }
   }
 
@@ -340,7 +344,10 @@ export class ConfigManager<T> implements IConfigManager<T> {
 /**
  * Merge configuration sources based on priority
  */
-function mergeConfigs<T>(sources: ConfigSource<T>[], strategy: 'priority-take' | 'deep-merge' | ((high: any, low: any) => any) = 'priority-take'): ConfigSource<T> {
+function mergeConfigs<T>(
+  sources: ConfigSource<T>[],
+  strategy: 'priority-take' | 'deep-merge' | ((high: any, low: any) => any) = 'priority-take'
+): ConfigSource<T> {
   if (sources.length === 0) {
     throw new Error('No config sources provided');
   }
@@ -365,7 +372,7 @@ function mergeConfigs<T>(sources: ConfigSource<T>[], strategy: 'priority-take' |
   return {
     ...sortedSources[0], // Base metadata from highest priority
     data: mergedData,
-    loadedAt: new Date()
+    loadedAt: new Date(),
   };
 }
 
@@ -496,9 +503,7 @@ class EnvResolver implements IEnvResolver {
   getValue(key: string): string | null {
     // In browser, environment variables are typically not available
     // We could check for global variables or URL parameters as fallback
-    return this.getFromURLSearchParams(key) ||
-           this.getFromGlobalVar(key) ||
-           null;
+    return this.getFromURLSearchParams(key) || this.getFromGlobalVar(key) || null;
   }
 
   getWithPrefix(prefix: string = this.prefix): Record<string, string> {
@@ -590,7 +595,7 @@ class HotReloadMonitor implements IHotReloadMonitor {
               path,
               previousConfig: {},
               newConfig: {},
-              changeTime: new Date()
+              changeTime: new Date(),
             };
 
             onChange(change);
@@ -628,8 +633,5 @@ export function createValidatingConfig<T extends Configurable>(
   const instance = new ConfigClass();
   const appNameToUse = appName || instance.FILE_PREFIX;
 
-  return createConfigManager(
-    appNameToUse,
-    instance.getDefaultConfig() as T
-  );
+  return createConfigManager(appNameToUse, instance.getDefaultConfig() as T);
 }

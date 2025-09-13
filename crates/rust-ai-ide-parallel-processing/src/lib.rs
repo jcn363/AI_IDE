@@ -158,7 +158,7 @@ impl WorkStealingScheduler {
             rayon::ThreadPoolBuilder::new()
                 .num_threads(config.max_workers)
                 .build()
-                .expect("Failed to create scheduler thread pool")
+                .expect("Failed to create scheduler thread pool"),
         );
 
         let concurrency_control = Arc::new(AdaptiveConcurrencyControl::new(config.clone()));
@@ -187,7 +187,10 @@ impl WorkStealingScheduler {
         *running = true;
         drop(running);
 
-        info!("Starting work-stealing scheduler with {} workers", self.config.max_workers);
+        info!(
+            "Starting work-stealing scheduler with {} workers",
+            self.config.max_workers
+        );
 
         // Start worker threads
         for i in 0..self.config.max_workers {
@@ -200,7 +203,16 @@ impl WorkStealingScheduler {
             self.thread_pool.spawn(move || {
                 let mmap_mgr = mmap_manager.clone();
                 let zc_pool = zero_copy_pool.clone();
-                Self::worker_loop(i, stealer, injector, task_registry, resource_manager, concurrency_control, mmap_mgr, zc_pool);
+                Self::worker_loop(
+                    i,
+                    stealer,
+                    injector,
+                    task_registry,
+                    resource_manager,
+                    concurrency_control,
+                    mmap_mgr,
+                    zc_pool,
+                );
             });
         }
 
@@ -245,7 +257,10 @@ impl WorkStealingScheduler {
                         zero_copy_pool.as_ref(),
                         task_id,
                     ) {
-                        warn!("Worker {} failed to execute task {}: {}", worker_id, task_id.0, e);
+                        warn!(
+                            "Worker {} failed to execute task {}: {}",
+                            worker_id, task_id.0, e
+                        );
                     }
                 }
             }
@@ -260,7 +275,10 @@ impl WorkStealingScheduler {
                         zero_copy_pool.as_ref(),
                         task_id,
                     ) {
-                        warn!("Worker {} failed to execute task {}: {}", worker_id, task_id.0, e);
+                        warn!(
+                            "Worker {} failed to execute task {}: {}",
+                            worker_id, task_id.0, e
+                        );
                     }
                 }
             }
@@ -278,7 +296,9 @@ impl WorkStealingScheduler {
         task_id: TaskId,
     ) -> IDEResult<()> {
         // Acquire resources
-        let resources = resource_manager.acquire_resources(&task.required_resources()).await?;
+        let resources = resource_manager
+            .acquire_resources(&task.required_resources())
+            .await?;
 
         // Setup zero-copy buffers if available
         let mut mmap_files: Vec<String> = Vec::new();
@@ -319,16 +339,27 @@ impl WorkStealingScheduler {
     }
 
     /// Register memory-mapped files for automatic cleanup
-    pub async fn register_mmap_cleanup(&self, file_ids: Vec<String>, cleanup_time: std::time::Instant) -> IDEResult<()> {
+    pub async fn register_mmap_cleanup(
+        &self,
+        file_ids: Vec<String>,
+        cleanup_time: std::time::Instant,
+    ) -> IDEResult<()> {
         let mut scheduler = self.mmap_cleanup_scheduler.lock();
-        scheduler.entry(cleanup_time).or_insert_with(VecDeque::new).extend(file_ids);
+        scheduler
+            .entry(cleanup_time)
+            .or_insert_with(VecDeque::new)
+            .extend(file_ids);
         Ok(())
     }
 
     /// Clean up expired memory-mapped files
-    pub async fn cleanup_expired_mmaps(&self, current_time: std::time::Instant) -> IDEResult<usize> {
+    pub async fn cleanup_expired_mmaps(
+        &self,
+        current_time: std::time::Instant,
+    ) -> IDEResult<usize> {
         let mut scheduler = self.mmap_cleanup_scheduler.lock();
-        let expired_keys: Vec<std::time::Instant> = scheduler.range(..=current_time).map(|(k, _)| *k).collect();
+        let expired_keys: Vec<std::time::Instant> =
+            scheduler.range(..=current_time).map(|(k, _)| *k).collect();
 
         let mut cleaned_count = 0;
         for key in expired_keys {
@@ -365,7 +396,9 @@ impl WorkStealingScheduler {
     }
 
     pub fn get_task_state(&self, task_id: TaskId) -> Option<TaskState> {
-        self.task_registry.read().get(&task_id)
+        self.task_registry
+            .read()
+            .get(&task_id)
             .map(|task| task.get_state())
     }
 }
@@ -447,7 +480,10 @@ impl TaskPartitioner {
 
         for item in data {
             let locality_key = locality_fn(&item);
-            groups.entry(locality_key).or_insert_with(Vec::new).push(item);
+            groups
+                .entry(locality_key)
+                .or_insert_with(Vec::new)
+                .push(item);
         }
 
         let mut partitions = Vec::new();
@@ -487,9 +523,15 @@ impl ResourcePoolManager {
         }
     }
 
-    pub async fn acquire_resources(&self, requirements: &ResourceRequirements) -> IDEResult<ResourceHandle> {
+    pub async fn acquire_resources(
+        &self,
+        requirements: &ResourceRequirements,
+    ) -> IDEResult<ResourceHandle> {
         // Acquire CPU cores
-        let cpu_permits = self.cpu_pool.acquire_many(requirements.cpu_cores as u32).await
+        let cpu_permits = self
+            .cpu_pool
+            .acquire_many(requirements.cpu_cores as u32)
+            .await
             .map_err(|_| RustAIError::Concurrency("Failed to acquire CPU resources".into()))?;
 
         // Acquire memory
@@ -505,8 +547,9 @@ impl ResourcePoolManager {
         let gpu_permits = if requirements.gpu_memory_mb > 0 {
             let gpu_lock = self.gpu_pool.read();
             if let Some(gpu) = gpu_lock.get("default") {
-                Some(gpu.acquire().await
-                    .map_err(|_| RustAIError::Concurrency("Failed to acquire GPU resources".into()))?)
+                Some(gpu.acquire().await.map_err(|_| {
+                    RustAIError::Concurrency("Failed to acquire GPU resources".into())
+                })?)
             } else {
                 None
             }
@@ -516,8 +559,9 @@ impl ResourcePoolManager {
 
         // Acquire network if needed
         let network_permits = if requirements.network_bandwidth > 0 {
-            Some(self.network_pool.acquire().await
-                .map_err(|_| RustAIError::Concurrency("Failed to acquire network resources".into()))?)
+            Some(self.network_pool.acquire().await.map_err(|_| {
+                RustAIError::Concurrency("Failed to acquire network resources".into())
+            })?)
         } else {
             None
         };
@@ -576,7 +620,7 @@ impl DistributedTaskQueue {
         let local_queues = Arc::new(
             (0..num_queues)
                 .map(|_| Mutex::new(VecDeque::new()))
-                .collect::<Vec<_>>()
+                .collect::<Vec<_>>(),
         );
 
         Self {
@@ -644,11 +688,7 @@ struct LoadBalancer {
 impl LoadBalancer {
     fn new(num_queues: usize) -> Self {
         Self {
-            queue_loads: Arc::new(
-                (0..num_queues)
-                    .map(|_| Mutex::new(0))
-                    .collect()
-            ),
+            queue_loads: Arc::new((0..num_queues).map(|_| Mutex::new(0)).collect()),
         }
     }
 
@@ -689,12 +729,12 @@ impl AdaptiveConcurrencyControl {
     }
 
     pub async fn acquire_slot(&self) -> IDEResult<ConcurrencySlot> {
-        let permit = self.semaphore.acquire().await
-            .map_err(|_| RustAIError::Concurrency("Failed to acquire concurrency slot".into()))?;
+        let permit =
+            self.semaphore.acquire().await.map_err(|_| {
+                RustAIError::Concurrency("Failed to acquire concurrency slot".into())
+            })?;
 
-        Ok(ConcurrencySlot {
-            _permit: permit,
-        })
+        Ok(ConcurrencySlot { _permit: permit })
     }
 
     pub fn record_throughput(&self, tasks_completed: usize, duration: std::time::Duration) {
@@ -710,7 +750,8 @@ impl AdaptiveConcurrencyControl {
         }
 
         if self.config.adaptive_scaling_enabled {
-            self.adjust_concurrency().unwrap_or_else(|e| warn!("Failed to adjust concurrency: {}", e));
+            self.adjust_concurrency()
+                .unwrap_or_else(|e| warn!("Failed to adjust concurrency: {}", e));
         }
     }
 
@@ -739,7 +780,10 @@ impl AdaptiveConcurrencyControl {
         *last_adjustment = std::time::Instant::now();
 
         if new_permits != current_permits {
-            info!("Adjusting concurrency from {} to {}", current_permits, new_permits);
+            info!(
+                "Adjusting concurrency from {} to {}",
+                current_permits, new_permits
+            );
             // Note: In real implementation, we'd adjust the semaphore capacity
             // For now, we just log the intended change
         }
@@ -822,7 +866,11 @@ pub mod utils {
 
         let mut results = Vec::new();
         for handle in handles {
-            results.push(handle.await.map_err(|e| RustAIError::Concurrency(e.to_string()))?);
+            results.push(
+                handle
+                    .await
+                    .map_err(|e| RustAIError::Concurrency(e.to_string()))?,
+            );
         }
 
         Ok(results)
@@ -831,7 +879,7 @@ pub mod utils {
 
 // Export commonly used types
 pub use futures::Future;
-pub use tracing::{debug, info, warn, error};
+pub use tracing::{debug, error, info, warn};
 
 #[cfg(test)]
 mod tests {
@@ -876,7 +924,9 @@ mod tests {
 }
 
 /// Helper function to convert ResourceRequirements to mmap resource mappings
-fn resources_as_mmap_resources(req: &ResourceRequirements) -> Option<Vec<(std::path::PathBuf, usize)>> {
+fn resources_as_mmap_resources(
+    req: &ResourceRequirements,
+) -> Option<Vec<(std::path::PathBuf, usize)>> {
     // For demonstration, assume memory_mb corresponds to mmap file sizes with temp paths
     if req.memory_mb > 0 {
         let temp_path = std::env::temp_dir().join(format!("mmap_{}", req.memory_mb));

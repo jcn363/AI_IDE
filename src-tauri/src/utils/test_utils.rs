@@ -8,8 +8,8 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use tokio::process::Command as AsyncCommand;
+use tokio::sync::Mutex;
 
 /// Test environment state for managing test execution
 #[derive(Debug, Clone)]
@@ -51,11 +51,15 @@ pub struct TestConfig {
 /// Consolidated test utilities module
 pub mod utils {
     use super::*;
-    use std::time::Instant;
     use sha2::{Digest, Sha256};
+    use std::time::Instant;
 
     /// Run a command synchronously with performance tracking
-    pub fn run_command_blocking(cmd: &str, args: &[&str], cwd: &Path) -> anyhow::Result<CommandResult> {
+    pub fn run_command_blocking(
+        cmd: &str,
+        args: &[&str],
+        cwd: &Path,
+    ) -> anyhow::Result<CommandResult> {
         println!("Running: {} {}", cmd, args.join(" "));
         let start = Instant::now();
 
@@ -76,7 +80,11 @@ pub mod utils {
     }
 
     /// Run a command asynchronously
-    pub async fn run_command_async(cmd: &str, args: &[&str], cwd: &Path) -> anyhow::Result<CommandResult> {
+    pub async fn run_command_async(
+        cmd: &str,
+        args: &[&str],
+        cwd: &Path,
+    ) -> anyhow::Result<CommandResult> {
         println!("Running async: {} {}", cmd, args.join(" "));
         let start = Instant::now();
 
@@ -111,7 +119,8 @@ pub mod utils {
 
     /// Extract test names from cargo test --list output
     pub fn parse_cargo_test_list(output: &str) -> Vec<String> {
-        output.lines()
+        output
+            .lines()
             .filter(|line| line.starts_with("test "))
             .filter_map(|line| {
                 line.strip_prefix("test ")
@@ -133,8 +142,13 @@ pub mod utils {
         }
 
         let src_dir = project_path.join("src");
-        if !src_dir.exists() || !src_dir.join("lib.rs").exists() && !src_dir.join("main.rs").exists() {
-            anyhow::bail!("src/lib.rs or src/main.rs not found in: {}", project_path.display());
+        if !src_dir.exists()
+            || !src_dir.join("lib.rs").exists() && !src_dir.join("main.rs").exists()
+        {
+            anyhow::bail!(
+                "src/lib.rs or src/main.rs not found in: {}",
+                project_path.display()
+            );
         }
 
         Ok(())
@@ -148,12 +162,15 @@ pub mod utils {
         std::fs::create_dir_all(project_path.join("src"))?;
 
         // Create Cargo.toml
-        let cargo_toml = format!(r#"
+        let cargo_toml = format!(
+            r#"
 [package]
 name = "{}"
 version = "0.1.0"
 edition = "2021"
-"#, name);
+"#,
+            name
+        );
 
         std::fs::write(project_path.join("Cargo.toml"), cargo_toml)?;
 
@@ -317,7 +334,10 @@ pub mod integration {
     }
 
     /// Run integration test with fixture
-    pub async fn run_integration_test(fixture: &TestFixture, workspace_path: &Path) -> anyhow::Result<TestResult> {
+    pub async fn run_integration_test(
+        fixture: &TestFixture,
+        workspace_path: &Path,
+    ) -> anyhow::Result<TestResult> {
         let mut results = HashMap::new();
 
         // Setup phase
@@ -410,7 +430,11 @@ pub mod coverage {
             .map(|o| o.status.success())
             .unwrap_or(false);
 
-        CoverageTools { has_llvm_cov, has_tarpaulin, has_grcov }
+        CoverageTools {
+            has_llvm_cov,
+            has_tarpaulin,
+            has_grcov,
+        }
     }
 
     /// Available coverage tools
@@ -440,25 +464,31 @@ pub mod coverage {
     }
 
     /// Run coverage analysis
-    pub async fn run_coverage(project_path: &Path, config: &TestConfig) -> anyhow::Result<CoverageResult> {
+    pub async fn run_coverage(
+        project_path: &Path,
+        config: &TestConfig,
+    ) -> anyhow::Result<CoverageResult> {
         let tools = check_coverage_availability();
 
         if !tools.any_available() {
-            anyhow::bail!("No coverage tools available. Install cargo-llvm-cov, cargo-tarpaulin, or grcov");
+            anyhow::bail!(
+                "No coverage tools available. Install cargo-llvm-cov, cargo-tarpaulin, or grcov"
+            );
         }
 
         let tool = tools.best_available().unwrap();
         let output = match tool {
             "llvm-cov" => {
                 utils::run_command_async("cargo", &["llvm-cov", "--json"], project_path).await?
-            },
+            }
             "tarpaulin" => {
-                utils::run_command_async("cargo", &["tarpaulin", "--out", "Stdout"], project_path).await?
-            },
+                utils::run_command_async("cargo", &["tarpaulin", "--out", "Stdout"], project_path)
+                    .await?
+            }
             "grcov" => {
                 // grcov requires additional setup, assume JSON output
                 utils::run_command_async("grcov", &[".", "--json"], project_path).await?
-            },
+            }
             _ => anyhow::bail!("Unsupported coverage tool"),
         };
 
@@ -495,7 +525,10 @@ impl TestEnvironmentManager {
     }
 
     /// Create a new test environment
-    pub async fn create_environment(&mut self, name: &str) -> anyhow::Result<Arc<Mutex<TestEnvironment>>> {
+    pub async fn create_environment(
+        &mut self,
+        name: &str,
+    ) -> anyhow::Result<Arc<Mutex<TestEnvironment>>> {
         let env_path = self.base_temp_dir.join(name);
         std::fs::create_dir_all(&env_path)?;
 

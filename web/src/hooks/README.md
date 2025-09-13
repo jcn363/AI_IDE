@@ -26,13 +26,10 @@ import withErrorBoundary from '@/hooks/hocs/ErrorBoundary';
 Manages async operations with consistent loading/error/success states.
 
 ```tsx
-const { execute, isLoading, error, data } = useAsync(
-  (userId: string) => api.getUser(userId),
-  {
-    onSuccess: (user) => setSelectedUser(user),
-    immediate: true
-  }
-);
+const { execute, isLoading, error, data } = useAsync((userId: string) => api.getUser(userId), {
+  onSuccess: (user) => setSelectedUser(user),
+  immediate: true,
+});
 
 // Execute operation
 await execute('123');
@@ -62,7 +59,7 @@ const { data, loading, refresh, clear } = useDataLoader({
   enableCache: true,
   cacheKey: 'users',
   refreshInterval: 30000, // 30 seconds
-  transform: (data) => data.filter(user => user.active)
+  transform: (data) => data.filter((user) => user.active),
 });
 
 // Access data with built-in loading states
@@ -93,22 +90,22 @@ const form = useFormManager<FormData>({
   fields: {
     name: {
       initialValue: '',
-      rules: [{ validate: (val) => val.length > 0, message: 'Name is required' }]
+      rules: [{ validate: (val) => val.length > 0, message: 'Name is required' }],
     },
     email: {
       initialValue: '',
-      rules: [{ validate: (val) => /\S+@\S+\.\S+/.test(val), message: 'Invalid email' }]
+      rules: [{ validate: (val) => /\S+@\S+\.\S+/.test(val), message: 'Invalid email' }],
     },
     age: {
       initialValue: 18,
-      rules: [{ validate: (val) => val >= 18, message: 'Must be 18+' }]
-    }
+      rules: [{ validate: (val) => val >= 18, message: 'Must be 18+' }],
+    },
   },
   onSubmit: async (data) => {
     await api.createUser(data);
   },
   validateOnChange: true,
-  validateOnBlur: false
+  validateOnBlur: false,
 });
 
 // Use in JSX
@@ -142,15 +139,15 @@ Authentication wrapper that assumes auth context exists.
 const ProtectedComponent = withAuth(Dashboard, {
   requiredRoles: ['admin'],
   fallbackComponent: LoginComponent,
-  showLoginButton: true
+  showLoginButton: true,
 });
 
 const AdminOnlyComponent = withRoles(AdminPanel, ['admin'], {
-  fallbackComponent: AccessDeniedComponent
+  fallbackComponent: AccessDeniedComponent,
 });
 
 const WriterComponent = withPermissions(WriterPanel, ['write'], {
-  redirectTo: '/login'
+  redirectTo: '/login',
 });
 ```
 
@@ -177,19 +174,17 @@ const EnhancedDataTable = withLoading(DataTable, {
   loadingConfig: {
     type: 'spinner',
     message: 'Loading table data...',
-    size: 'large'
+    size: 'large',
   },
   showRetryButton: true,
-  onRetry: () => refetchData()
+  onRetry: () => refetchData(),
 });
 
 // Synchronous usage
-const LoadingWrapper = withSyncLoading(
-  MyComponent,
-  isLoading,
-  errorMessage,
-  { type: 'skeleton', skeletonLines: 3 }
-);
+const LoadingWrapper = withSyncLoading(MyComponent, isLoading, errorMessage, {
+  type: 'skeleton',
+  skeletonLines: 3,
+});
 ```
 
 **Features:**
@@ -207,13 +202,13 @@ Enhanced error boundary HOC with better logging and recovery.
 const SafeComponent = withErrorBoundary(MyComponent, {
   fallback: <div>Something went wrong. Please refresh the page.</div>,
   context: { component: 'MyComponent', props },
-  enableRetry: true
+  enableRetry: true,
 });
 
 // Functional component error boundary
 <ErrorBoundary fallback={<ErrorFallback />} context={{ component: 'Dashboard' }}>
   <DashboardComponent />
-</ErrorBoundary>
+</ErrorBoundary>;
 ```
 
 **Features:**
@@ -265,7 +260,8 @@ const [error, setError] = useState(null);
 
 useEffect(() => {
   setLoading(true);
-  api.getData()
+  api
+    .getData()
     .then(setData)
     .catch((err) => {
       console.error('Error in component:', err);
@@ -277,7 +273,7 @@ useEffect(() => {
 // NEW: useDataLoader
 const { data, loading, error } = useDataLoader({
   fetchFn: () => api.getData(),
-  immediate: true
+  immediate: true,
 });
 ```
 
@@ -293,7 +289,7 @@ const UserList = ({ users, loading }) => {
 
 // NEW: Enhanced with HOC
 export default withLoading(UserList, {
-  loadingConfig: { type: 'skeleton', skeletonLines: 5 }
+  loadingConfig: { type: 'skeleton', skeletonLines: 5 },
 });
 ```
 
@@ -316,9 +312,7 @@ import { useAsync } from '@/hooks/shared';
 test('useAsync handles success', async () => {
   const mockApi = vi.fn().mockResolvedValue({ id: 1, name: 'John' });
 
-  const { result } = renderHook(() =>
-    useAsync(() => mockApi(), { immediate: true })
-  );
+  const { result } = renderHook(() => useAsync(() => mockApi(), { immediate: true }));
 
   expect(result.current.isLoading).toBe(true);
 

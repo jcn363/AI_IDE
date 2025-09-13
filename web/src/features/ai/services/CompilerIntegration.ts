@@ -51,12 +51,15 @@ export class CompilerIntegrationService {
   /**
    * Run cargo check with JSON output and parse diagnostics
    */
-  async runCargoCheck(workspacePath: string, targetFile?: string): Promise<CompilerIntegrationResult> {
+  async runCargoCheck(
+    workspacePath: string,
+    targetFile?: string
+  ): Promise<CompilerIntegrationResult> {
     try {
       const result = await invoke<CompilerCheckResult>('run_cargo_check', {
         workspacePath,
         targetFile,
-        messageFormat: 'json'
+        messageFormat: 'json',
       });
 
       if (!result.success) {
@@ -72,7 +75,7 @@ export class CompilerIntegrationService {
         diagnostics,
         explanations,
         suggestedFixes,
-        learnedPatterns
+        learnedPatterns,
       };
     } catch (error) {
       console.error('Error running cargo check:', error);
@@ -84,8 +87,8 @@ export class CompilerIntegrationService {
         timestamp: Date.now(),
         context: {
           operation: 'cargo_check',
-          file: targetFile
-        }
+          file: targetFile,
+        },
       });
     }
   }
@@ -95,8 +98,8 @@ export class CompilerIntegrationService {
    */
   private parseDiagnostics(rawDiagnostics: any[]): CompilerDiagnostic[] {
     return rawDiagnostics
-      .filter(item => item.reason === 'compiler-message')
-      .map(item => this.parseCompilerMessage(item.message))
+      .filter((item) => item.reason === 'compiler-message')
+      .map((item) => this.parseCompilerMessage(item.message))
       .filter(Boolean);
   }
 
@@ -110,13 +113,17 @@ export class CompilerIntegrationService {
       return {
         level: message.level as 'error' | 'warning' | 'note' | 'help',
         message: message.message || '',
-        code: message.code ? {
-          code: message.code.code || '',
-          explanation: message.code.explanation
-        } : undefined,
+        code: message.code
+          ? {
+              code: message.code.code || '',
+              explanation: message.code.explanation,
+            }
+          : undefined,
         spans: this.parseSpans(message.spans || []),
-        children: (message.children || []).map((child: any) => this.parseCompilerMessage(child)).filter(Boolean),
-        rendered: message.rendered
+        children: (message.children || [])
+          .map((child: any) => this.parseCompilerMessage(child))
+          .filter(Boolean),
+        rendered: message.rendered,
       };
     } catch (error) {
       console.error('Error parsing compiler message:', error);
@@ -128,7 +135,7 @@ export class CompilerIntegrationService {
    * Parse compiler spans
    */
   private parseSpans(spans: any[]): CompilerSpan[] {
-    return spans.map(span => ({
+    return spans.map((span) => ({
       fileName: span.file_name || '',
       byteStart: span.byte_start || 0,
       byteEnd: span.byte_end || 0,
@@ -140,14 +147,16 @@ export class CompilerIntegrationService {
       text: span.text || [],
       label: span.label,
       suggestedReplacement: span.suggested_replacement,
-      suggestionApplicability: span.suggestion_applicability
+      suggestionApplicability: span.suggestion_applicability,
     }));
   }
 
   /**
    * Get detailed explanations for error codes in diagnostics
    */
-  async getExplanationsForDiagnostics(diagnostics: CompilerDiagnostic[]): Promise<Record<string, ErrorCodeExplanation>> {
+  async getExplanationsForDiagnostics(
+    diagnostics: CompilerDiagnostic[]
+  ): Promise<Record<string, ErrorCodeExplanation>> {
     const explanations: Record<string, ErrorCodeExplanation> = {};
     const errorCodes = new Set<string>();
 
@@ -195,7 +204,7 @@ export class CompilerIntegrationService {
 
     try {
       const result = await invoke<RustcExplainResult>('rustc_explain_error', {
-        errorCode
+        errorCode,
       });
 
       if (!result.success) {
@@ -204,12 +213,12 @@ export class CompilerIntegrationService {
       }
 
       const explanation = this.parseErrorExplanation(errorCode, result.explanation);
-      
+
       // Cache the result
       this.diagnosticCache[errorCode] = {
         data: explanation,
         timestamp: Date.now(),
-        ttl: this.CACHE_TTL
+        ttl: this.CACHE_TTL,
       };
 
       return explanation;
@@ -226,14 +235,15 @@ export class CompilerIntegrationService {
     // Extract title (first line)
     const lines = explanationText.split('\n');
     const title = lines[0]?.replace(/^error\[E\d+\]:\s*/, '') || `Error ${errorCode}`;
-    
+
     // Extract main explanation (everything before examples)
-    const exampleStartIndex = lines.findIndex(line => 
-      line.toLowerCase().includes('example') || 
-      line.includes('```') ||
-      line.toLowerCase().includes('this code')
+    const exampleStartIndex = lines.findIndex(
+      (line) =>
+        line.toLowerCase().includes('example') ||
+        line.includes('```') ||
+        line.toLowerCase().includes('this code')
     );
-    
+
     const explanationEndIndex = exampleStartIndex > 0 ? exampleStartIndex : lines.length;
     const explanation = lines.slice(1, explanationEndIndex).join('\n').trim();
 
@@ -248,7 +258,7 @@ export class CompilerIntegrationService {
       title,
       explanation,
       examples,
-      documentationLinks
+      documentationLinks,
     };
   }
 
@@ -316,7 +326,7 @@ export class CompilerIntegrationService {
             currentExample = {
               description: 'Example',
               code: '',
-              explanation: ''
+              explanation: '',
             };
           }
           continue;
@@ -332,7 +342,7 @@ export class CompilerIntegrationService {
           currentExample = {
             description: 'Example',
             code: '',
-            explanation: ''
+            explanation: '',
           };
         }
       } else if (line.trim() && !currentExample) {
@@ -340,7 +350,7 @@ export class CompilerIntegrationService {
         currentExample = {
           description: line.trim(),
           code: '',
-          explanation: ''
+          explanation: '',
         };
       } else if (line.trim() && currentExample && !capturingExplanation) {
         // New description implies previous example had no explanation
@@ -348,7 +358,7 @@ export class CompilerIntegrationService {
         currentExample = {
           description: line.trim(),
           code: '',
-          explanation: ''
+          explanation: '',
         };
       }
     }
@@ -375,7 +385,7 @@ export class CompilerIntegrationService {
     links.push({
       title: `Error ${errorCode} in Error Index`,
       url: `${this.ERROR_INDEX_URL}#${errorCode.toLowerCase()}`,
-      description: 'Official Rust error index entry'
+      description: 'Official Rust error index entry',
     });
 
     // Generate contextual links based on error type
@@ -390,7 +400,7 @@ export class CompilerIntegrationService {
    */
   private categorizeError(errorCode: string, title: string): string {
     const titleLower = title.toLowerCase();
-    
+
     if (titleLower.includes('borrow') || titleLower.includes('lifetime')) {
       return 'borrowing';
     } else if (titleLower.includes('trait') || titleLower.includes('impl')) {
@@ -417,66 +427,66 @@ export class CompilerIntegrationService {
         {
           title: 'Understanding Ownership',
           url: `${this.RUST_BOOK_URL}/ch04-00-understanding-ownership.html`,
-          description: 'Rust Book chapter on ownership and borrowing'
+          description: 'Rust Book chapter on ownership and borrowing',
         },
         {
           title: 'References and Borrowing',
           url: `${this.RUST_BOOK_URL}/ch04-02-references-and-borrowing.html`,
-          description: 'Detailed guide on references and borrowing'
-        }
+          description: 'Detailed guide on references and borrowing',
+        },
       ],
       traits: [
         {
           title: 'Traits: Defining Shared Behavior',
           url: `${this.RUST_BOOK_URL}/ch10-02-traits.html`,
-          description: 'Rust Book chapter on traits'
+          description: 'Rust Book chapter on traits',
         },
         {
           title: 'Trait Objects',
           url: `${this.RUST_BOOK_URL}/ch17-02-trait-objects.html`,
-          description: 'Advanced trait usage with trait objects'
-        }
+          description: 'Advanced trait usage with trait objects',
+        },
       ],
       types: [
         {
           title: 'Generic Types, Traits, and Lifetimes',
           url: `${this.RUST_BOOK_URL}/ch10-00-generics.html`,
-          description: 'Comprehensive guide to Rust\'s type system'
-        }
+          description: "Comprehensive guide to Rust's type system",
+        },
       ],
       macros: [
         {
           title: 'Macros',
           url: `${this.RUST_BOOK_URL}/ch19-06-macros.html`,
-          description: 'Rust Book chapter on macros'
-        }
+          description: 'Rust Book chapter on macros',
+        },
       ],
       modules: [
         {
           title: 'Managing Growing Projects with Packages, Crates, and Modules',
           url: `${this.RUST_BOOK_URL}/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html`,
-          description: 'Module system and project organization'
-        }
+          description: 'Module system and project organization',
+        },
       ],
       patterns: [
         {
           title: 'Patterns and Matching',
           url: `${this.RUST_BOOK_URL}/ch18-00-patterns.html`,
-          description: 'Pattern matching in Rust'
-        }
+          description: 'Pattern matching in Rust',
+        },
       ],
       general: [
         {
           title: 'The Rust Programming Language',
           url: this.RUST_BOOK_URL,
-          description: 'The official Rust Book'
+          description: 'The official Rust Book',
         },
         {
           title: 'Rust Reference',
           url: this.RUST_REFERENCE_URL,
-          description: 'Comprehensive language reference'
-        }
-      ]
+          description: 'Comprehensive language reference',
+        },
+      ],
     };
 
     return linkMap[category] || linkMap.general;
@@ -510,17 +520,24 @@ export class CompilerIntegrationService {
           title: this.generateFixTitle(diagnostic, span),
           description: diagnostic.message,
           fixType: this.determineFixType(span.suggestionApplicability),
-          changes: [{
-            filePath: span.fileName,
-            range: [span.lineStart - 1, span.columnStart - 1, span.lineEnd - 1, span.columnEnd - 1],
-            oldText: span.text.map(t => t.text).join(''),
-            newText: span.suggestedReplacement,
-            changeType: 'replace'
-          }],
+          changes: [
+            {
+              filePath: span.fileName,
+              range: [
+                span.lineStart - 1,
+                span.columnStart - 1,
+                span.lineEnd - 1,
+                span.columnEnd - 1,
+              ],
+              oldText: span.text.map((t) => t.text).join(''),
+              newText: span.suggestedReplacement,
+              changeType: 'replace',
+            },
+          ],
           confidence: this.calculateFixConfidence(span.suggestionApplicability),
           estimatedEffort: this.estimateFixEffort(span.suggestionApplicability),
           benefits: [this.generateBenefitDescription(diagnostic)],
-          risks: this.generateRiskAssessment(span.suggestionApplicability)
+          risks: this.generateRiskAssessment(span.suggestionApplicability),
         });
       }
     }
@@ -540,17 +557,19 @@ export class CompilerIntegrationService {
     if (span.label) {
       return `Fix: ${span.label}`;
     }
-    
+
     const level = diagnostic.level;
     const message = diagnostic.message.split('.')[0]; // First sentence
-    
+
     return `${level === 'error' ? 'Fix error' : 'Apply suggestion'}: ${message}`;
   }
 
   /**
    * Determine fix type based on suggestion applicability
    */
-  private determineFixType(applicability: string): 'quick-fix' | 'refactoring' | 'code-generation' | 'documentation' {
+  private determineFixType(
+    applicability: string
+  ): 'quick-fix' | 'refactoring' | 'code-generation' | 'documentation' {
     switch (applicability) {
       case 'machine-applicable':
         return 'quick-fix';
@@ -572,17 +591,19 @@ export class CompilerIntegrationService {
       case 'has-placeholders':
         return 0.75;
       case 'maybe-incorrect':
-        return 0.60;
+        return 0.6;
       case 'unspecified':
       default:
-        return 0.50;
+        return 0.5;
     }
   }
 
   /**
    * Estimate effort required for fix
    */
-  private estimateFixEffort(applicability: string): 'trivial' | 'low' | 'medium' | 'high' | 'very-high' {
+  private estimateFixEffort(
+    applicability: string
+  ): 'trivial' | 'low' | 'medium' | 'high' | 'very-high' {
     switch (applicability) {
       case 'machine-applicable':
         return 'trivial';
@@ -632,14 +653,16 @@ export class CompilerIntegrationService {
   /**
    * Get learned patterns for diagnostics from the learning system
    */
-  async getLearnedPatternsForDiagnostics(diagnostics: CompilerDiagnostic[]): Promise<LearnedPattern[]> {
+  async getLearnedPatternsForDiagnostics(
+    diagnostics: CompilerDiagnostic[]
+  ): Promise<LearnedPattern[]> {
     try {
       const patterns = await invoke<LearnedPattern[]>('get_learned_patterns_for_diagnostics', {
-        diagnostics: diagnostics.map(d => ({
+        diagnostics: diagnostics.map((d) => ({
           errorType: d.code?.code || 'unknown',
           message: d.message,
-          level: d.level
-        }))
+          level: d.level,
+        })),
       });
 
       return patterns || [];
@@ -658,7 +681,7 @@ export class CompilerIntegrationService {
   ): Promise<CompilerDiagnostic> {
     try {
       const enhancedDiagnostic = { ...diagnostic };
-      
+
       // Add project-specific context
       const context = await this.getProjectContext(projectPath, diagnostic);
       if (context) {
@@ -675,13 +698,16 @@ export class CompilerIntegrationService {
   /**
    * Get project-specific context for an error
    */
-  private async getProjectContext(projectPath: string, diagnostic: CompilerDiagnostic): Promise<string | null> {
+  private async getProjectContext(
+    projectPath: string,
+    diagnostic: CompilerDiagnostic
+  ): Promise<string | null> {
     try {
       // This could be enhanced to analyze project structure, dependencies, etc.
       const context = await invoke<string>('get_project_context_for_error', {
         projectPath,
         errorCode: diagnostic.code?.code,
-        filePath: diagnostic.spans[0]?.fileName
+        filePath: diagnostic.spans[0]?.fileName,
       });
 
       return context;
@@ -711,7 +737,7 @@ export class CompilerIntegrationService {
               diagnostics,
               explanations,
               suggestedFixes,
-              learnedPatterns
+              learnedPatterns,
             });
           } catch (error) {
             onError({
@@ -721,11 +747,11 @@ export class CompilerIntegrationService {
               retryable: true,
               timestamp: Date.now(),
               context: {
-                operation: 'real_time_diagnostics'
-              }
+                operation: 'real_time_diagnostics',
+              },
             });
           }
-        }
+        },
       });
 
       return unlisten;
@@ -737,8 +763,8 @@ export class CompilerIntegrationService {
         retryable: true,
         timestamp: Date.now(),
         context: {
-          operation: 'start_real_time_diagnostics'
-        }
+          operation: 'start_real_time_diagnostics',
+        },
       });
     }
   }
@@ -767,8 +793,8 @@ export class CompilerIntegrationService {
     return {
       diagnosticCacheSize: diagnosticEntries.length,
       documentationCacheSize: docEntries.length,
-      oldestEntry: allEntries.length > 0 ? Math.min(...allEntries.map(e => e.timestamp)) : null,
-      newestEntry: allEntries.length > 0 ? Math.max(...allEntries.map(e => e.timestamp)) : null
+      oldestEntry: allEntries.length > 0 ? Math.min(...allEntries.map((e) => e.timestamp)) : null,
+      newestEntry: allEntries.length > 0 ? Math.max(...allEntries.map((e) => e.timestamp)) : null,
     };
   }
 }

@@ -4,7 +4,16 @@
  * @jest-environment jsdom
  */
 
-import { jest, describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from '@jest/globals';
+import {
+  jest,
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  beforeAll,
+  afterAll,
+} from '@jest/globals';
 import { TEST_CONFIG, testUtils, performanceMonitor } from './config.test';
 import { invoke } from '@tauri-apps/api/core';
 
@@ -83,18 +92,20 @@ describe('End-to-End Refactoring Workflow Tests', () => {
           id: 'end-to-end-test-123',
           type: 'rename',
           success: true,
-          changes: [{
-            filePath: 'src/main.rs',
-            range: {
-              startLine: 10,
-              startCharacter: 4,
-              endLine: 10,
-              endCharacter: 15,
+          changes: [
+            {
+              filePath: 'src/main.rs',
+              range: {
+                startLine: 10,
+                startCharacter: 4,
+                endLine: 10,
+                endCharacter: 15,
+              },
+              oldText: 'oldVariable',
+              newText: newName,
+              changeType: 'Replacement',
             },
-            oldText: 'oldVariable',
-            newText: newName,
-            changeType: 'Replacement',
-          }],
+          ],
           timestamp: new Date().toISOString(),
           duration: 150,
           affected_files: 1,
@@ -122,7 +133,6 @@ describe('End-to-End Refactoring Workflow Tests', () => {
         expect(duration).toBeLessThan(1000); // Should complete within 1 second
 
         console.log(`✅ End-to-end rename workflow completed in ${duration}ms`);
-
       } catch (error) {
         testTimer.end();
         throw error;
@@ -136,9 +146,15 @@ describe('End-to-End Refactoring Workflow Tests', () => {
 
       try {
         // 1. Setup initial service failure
-        (invoke as jest.MockedFunction<typeof invoke>).mockRejectedValueOnce(new Error('Service temporarily unavailable'));
-        (invoke as jest.MockedFunction<typeof invoke>).mockRejectedValueOnce(new Error('Network timeout'));
-        (invoke as jest.MockedFunction<typeof invoke>).mockRejectedValueOnce(new Error('Connection reset'));
+        (invoke as jest.MockedFunction<typeof invoke>).mockRejectedValueOnce(
+          new Error('Service temporarily unavailable')
+        );
+        (invoke as jest.MockedFunction<typeof invoke>).mockRejectedValueOnce(
+          new Error('Network timeout')
+        );
+        (invoke as jest.MockedFunction<typeof invoke>).mockRejectedValueOnce(
+          new Error('Connection reset')
+        );
 
         // 2. Setup recovery
         (invoke as jest.MockedFunction<typeof invoke>).mockResolvedValueOnce({
@@ -171,7 +187,6 @@ describe('End-to-End Refactoring Workflow Tests', () => {
         expect(invoke).toHaveBeenCalledTimes(4); // 3 failures + 1 success
 
         testTimer.end();
-
       } catch (error) {
         testTimer.end();
         throw error;
@@ -189,14 +204,16 @@ describe('End-to-End Refactoring Workflow Tests', () => {
       };
 
       // 2. Mock permission denied error
-      (invoke as jest.MockedFunction<typeof invoke>).mockRejectedValueOnce(new Error(
-        'BackendError({"code": "PERMISSION_DENIED", "message": "Cannot modify read-only file", "details": "File is locked or marked as read-only", "recoverable": false})'
-      ));
+      (invoke as jest.MockedFunction<typeof invoke>).mockRejectedValueOnce(
+        new Error(
+          'BackendError({"code": "PERMISSION_DENIED", "message": "Cannot modify read-only file", "details": "File is locked or marked as read-only", "recoverable": false})'
+        )
+      );
 
       // 3. Execute and verify error handling
-      await expect(executeRefactoringWorkflow(readOnlyFileContext))
-        .rejects
-        .toThrow('Cannot modify read-only file');
+      await expect(executeRefactoringWorkflow(readOnlyFileContext)).rejects.toThrow(
+        'Cannot modify read-only file'
+      );
 
       // 4. Verify proper error categorization
       try {
@@ -227,13 +244,15 @@ describe('End-to-End Refactoring Workflow Tests', () => {
           (invoke as jest.MockedFunction<typeof invoke>).mockResolvedValueOnce({
             id: `result-${index}`,
             success: true,
-            changes: [{
-              filePath: `src/file${index}.rs`,
-              range: { startLine: 1, startCharacter: 0, endLine: 1, endCharacter: 10 },
-              oldText: 'oldName',
-              newText: 'newName',
-              changeType: 'Replacement',
-            }],
+            changes: [
+              {
+                filePath: `src/file${index}.rs`,
+                range: { startLine: 1, startCharacter: 0, endLine: 1, endCharacter: 10 },
+                oldText: 'oldName',
+                newText: 'newName',
+                changeType: 'Replacement',
+              },
+            ],
             timestamp: new Date().toISOString(),
             duration: 50 + Math.random() * 100, // 50-150ms random variation
             affected_files: 1,
@@ -241,22 +260,23 @@ describe('End-to-End Refactoring Workflow Tests', () => {
         });
 
         // 3. Execute concurrent operations
-        const promises = operations.map(op => executeRefactoringWorkflow(op));
+        const promises = operations.map((op) => executeRefactoringWorkflow(op));
         const results = await Promise.all(promises);
 
         // 4. Verify all operations succeeded
-        const successfulResults = results.filter(r => r.success);
+        const successfulResults = results.filter((r) => r.success);
         expect(successfulResults).toHaveLength(10);
 
         // 5. Verify performance
         const totalDuration = testTimer.end();
         const averageDuration = totalDuration / 10;
 
-        console.log(`📊 Performance test: ${totalDuration}ms total, ${averageDuration}ms average per operation`);
+        console.log(
+          `📊 Performance test: ${totalDuration}ms total, ${averageDuration}ms average per operation`
+        );
 
         // Should be reasonably fast for simulated operations
         expect(averageDuration).toBeLessThan(200);
-
       } catch (error) {
         testTimer.end();
         throw error;
@@ -300,7 +320,7 @@ describe('End-to-End Refactoring Workflow Tests', () => {
         const endTime = Date.now();
 
         // 3. Verify all results are identical (from cache)
-        results.forEach(result => {
+        results.forEach((result) => {
           expect(result).toEqual(capabilitiesResponse);
         });
 
@@ -312,7 +332,6 @@ describe('End-to-End Refactoring Workflow Tests', () => {
         expect(totalDuration).toBeLessThan(100);
 
         testTimer.end();
-
       } catch (error) {
         testTimer.end();
         throw error;
@@ -367,12 +386,13 @@ describe('End-to-End Refactoring Workflow Tests', () => {
       expect(result.aiInsights).toBeDefined();
       expect(result.aiInsights.complexityScore).toBeGreaterThan(0.5);
       expect(result.suggestions).toContain('Consider using a more functional approach');
-
     });
 
     it('should gracefully fallback to basic analysis when AI fails', async () => {
       // 1. Setup scenario where AI services fail
-      (invoke as jest.MockedFunction<typeof invoke>).mockRejectedValueOnce(new Error('AI service timeout'));
+      (invoke as jest.MockedFunction<typeof invoke>).mockRejectedValueOnce(
+        new Error('AI service timeout')
+      );
       (invoke as jest.MockedFunction<typeof invoke>).mockResolvedValueOnce({
         applicableRefactorings: ['rename'],
         confidenceScores: { rename: 0.8 },
@@ -431,7 +451,6 @@ async function performRenameWorkflow(context: any, newName: string) {
     console.log(`✅ Full rename workflow completed successfully in ${duration}ms`);
 
     return result;
-
   } catch (error) {
     throw error;
   }
@@ -468,7 +487,9 @@ async function performAnalysisWithAIFailure() {
   };
 
   // Force AI failure
-  (invoke as jest.MockedFunction<typeof invoke>).mockRejectedValueOnce(new Error('AI service unavailable'));
+  (invoke as jest.MockedFunction<typeof invoke>).mockRejectedValueOnce(
+    new Error('AI service unavailable')
+  );
 
   return invoke('analyze_refactoring_context_enhanced', {
     filePath: context.filePath,
@@ -476,8 +497,7 @@ async function performAnalysisWithAIFailure() {
     context,
     includeAI: true,
     includeLSP: false,
-  })
-  .catch(async () => {
+  }).catch(async () => {
     // Fallback to basic analysis on AI failure
     return invoke('analyze_refactoring_context', {
       filePath: context.filePath,
@@ -502,7 +522,7 @@ async function executeWithRetry<T>(
       lastError = error as Error;
 
       if (attempt <= maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, delayMs * attempt)); // Exponential backoff
+        await new Promise((resolve) => setTimeout(resolve, delayMs * attempt)); // Exponential backoff
       }
     }
   }

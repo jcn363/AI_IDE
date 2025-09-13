@@ -106,12 +106,12 @@ impl QualityScore {
         let cross_platform = Self::calculate_cross_platform_score(metrics);
 
         // Weighted overall score
-        let overall = (static_analysis * 0.25) +
-                     (performance * 0.20) +
-                     (security * 0.15) +
-                     (code_quality * 0.25) +
-                     (dependencies * 0.10) +
-                     (cross_platform * 0.05);
+        let overall = (static_analysis * 0.25)
+            + (performance * 0.20)
+            + (security * 0.15)
+            + (code_quality * 0.25)
+            + (dependencies * 0.10)
+            + (cross_platform * 0.05);
 
         Self {
             overall,
@@ -292,13 +292,14 @@ impl MetricsAggregator {
         }
 
         // Severity values: Critical=100, High=75, Medium=50, Low=25, Info=10, None=0
-        let total_severity_score = (self.metrics.critical_issues * 100) +
-                                  (self.metrics.high_issues * 75) +
-                                  (self.metrics.medium_issues * 50) +
-                                  (self.metrics.low_issues * 25) +
-                                  (self.metrics.info_issues * 10);
+        let total_severity_score = (self.metrics.critical_issues * 100)
+            + (self.metrics.high_issues * 75)
+            + (self.metrics.medium_issues * 50)
+            + (self.metrics.low_issues * 25)
+            + (self.metrics.info_issues * 10);
 
-        self.metrics.average_severity = total_severity_score as f64 / self.metrics.total_issues as f64;
+        self.metrics.average_severity =
+            total_severity_score as f64 / self.metrics.total_issues as f64;
     }
 
     /// Get the accumulated metrics

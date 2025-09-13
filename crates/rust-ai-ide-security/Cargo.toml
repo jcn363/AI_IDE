@@ -33,7 +33,7 @@ aes-gcm = "0.10.3"
 chacha20poly1305 = "0.10.1"
 generic-array = "1.2.0"
 argon2 = "0.5.3"
-rsa = { version = "0.9.8", features = ["pem"] }
+rsa = "0.10.0-rc.6"
 base64 = "0.22.1"
 uuid = { version = "1.18.1", features = ["v4", "serde"] }
 chrono = { version = "0.4.41", features = ["serde"] }
@@ -64,6 +64,7 @@ encrypted-config = []
 # Enterprise features
 compliance = ["audit-logging", "rbac", "key-management", "encrypted-config"]
 full-security = ["compliance", "zero-trust"]  # Removed sqlx from default full-security
+full = ["full-security"]
 
 # Database backends (temporarily disabled)
 # sqlite-audit = ["sqlx"]

@@ -32,7 +32,7 @@ const WorkspaceInheritanceGraph: React.FC<WorkspaceInheritanceGraphProps> = ({
       .forceSimulation()
       .force(
         'link',
-        d3.forceLink().id((d: any) => d.id),
+        d3.forceLink().id((d: any) => d.id)
       )
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(width / 2, height / 2))
@@ -97,21 +97,13 @@ const WorkspaceInheritanceGraph: React.FC<WorkspaceInheritanceGraphProps> = ({
       .data(nodes)
       .enter()
       .append('g')
-      .call(
-        d3
-          .drag()
-          .on('start', dragstarted)
-          .on('drag', dragged)
-          .on('end', dragended) as any,
-      );
+      .call(d3.drag().on('start', dragstarted).on('drag', dragged).on('end', dragended) as any);
 
     // Add circles for nodes
     node
       .append('circle')
       .attr('r', 20)
-      .attr('fill', (d: any) =>
-        (d.type === 'workspace' ? '#9C27B0' : '#3F51B5'),
-      );
+      .attr('fill', (d: any) => (d.type === 'workspace' ? '#9C27B0' : '#3F51B5'));
 
     // Add text labels
     node
@@ -158,7 +150,7 @@ const WorkspaceInheritanceGraph: React.FC<WorkspaceInheritanceGraphProps> = ({
     node
       .on('mouseover', (event: any, d: any) => {
         let html = `<strong>${d.name}</strong>`;
-        
+
         if (d.type === 'member') {
           const member = analysis.members.find((m) => m.name === d.name);
           if (member) {
@@ -166,7 +158,7 @@ const WorkspaceInheritanceGraph: React.FC<WorkspaceInheritanceGraphProps> = ({
             Object.entries(member.directDependencies).forEach(([name, version]) => {
               html += `<br/>${name} = "${version}"`;
             });
-            
+
             if (Object.keys(member.inheritedDependencies).length > 0) {
               html += '<br/><br/><strong>Inherited Dependencies:</strong>';
               Object.entries(member.inheritedDependencies).forEach(([name, version]) => {
@@ -180,7 +172,7 @@ const WorkspaceInheritanceGraph: React.FC<WorkspaceInheritanceGraphProps> = ({
             html += `<br/>${name} = "${version}"`;
           });
         }
-        
+
         tooltip
           .html(html)
           .style('opacity', 1)
@@ -189,9 +181,7 @@ const WorkspaceInheritanceGraph: React.FC<WorkspaceInheritanceGraphProps> = ({
       })
       .on('mousemove', (event: any) => {
         const [x, y] = d3.pointer(event);
-        tooltip
-          .style('left', `${x + 10}px`)
-          .style('top', `${y + 10}px`);
+        tooltip.style('left', `${x + 10}px`).style('top', `${y + 10}px`);
       })
       .on('mouseout', () => {
         tooltip.style('opacity', 0);
@@ -254,12 +244,7 @@ const WorkspaceInheritanceGraph: React.FC<WorkspaceInheritanceGraphProps> = ({
           <span>Dependency</span>
         </div>
       </div>
-      <svg
-        ref={svgRef}
-        width={width}
-        height={height}
-        className="border rounded-lg bg-white"
-      ></svg>
+      <svg ref={svgRef} width={width} height={height} className="border rounded-lg bg-white"></svg>
     </div>
   );
 };

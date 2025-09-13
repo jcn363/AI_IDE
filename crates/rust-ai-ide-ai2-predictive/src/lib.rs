@@ -3,18 +3,14 @@
 //! Revolutionary AI-powered development assistant that predicts issues,
 //! suggests optimizations, and enhances productivity through machine learning.
 
-use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
-use serde::{Deserialize, Serialize};
-use tokio::sync::RwLock;
-use std::sync::Arc;
-use rust_ai_ide_ai1_semantic::{
-    SemanticUnderstandingEngine,
-    SemanticConfig,
-    SemanticAnalysis
-};
-use rust_ai_ide_ai1_architecture::ArchitectureModernizationEngine;
 #[cfg(feature = "ml_backend")]
 use ml_framework::{Model, ModelOutput};
+use rust_ai_ide_ai1_architecture::ArchitectureModernizationEngine;
+use rust_ai_ide_ai1_semantic::{SemanticAnalysis, SemanticConfig, SemanticUnderstandingEngine};
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 /// Main predictive AI development engine
 #[derive(Debug)]
@@ -46,45 +42,47 @@ impl PredictiveAIDevelopmentEngine {
         current_code: &str,
         cursor_position: usize,
         project_context: &ProjectContext,
-        user_actions: &[DeveloperAction]
+        user_actions: &[DeveloperAction],
     ) -> Result<PredictionResult, PredictiveError> {
         // Analyze current development context
-        let semantic_analysis = self.semantic_engine.analyze_code(
-            current_code,
-            project_context.language
-        ).await?;
+        let semantic_analysis = self
+            .semantic_engine
+            .analyze_code(current_code, project_context.language)
+            .await?;
 
         // Predict potential errors and issues
-        let error_predictions = self.predictive_analyzer.predict_errors(
-            &semantic_analysis,
-            current_code,
-            cursor_position
-        ).await;
+        let error_predictions = self
+            .predictive_analyzer
+            .predict_errors(&semantic_analysis, current_code, cursor_position)
+            .await;
 
         // Generate performance predictions
-        let performance_predictions = self.predictive_analyzer.analyze_performance_impact(
-            &semantic_analysis
-        ).await;
+        let performance_predictions = self
+            .predictive_analyzer
+            .analyze_performance_impact(&semantic_analysis)
+            .await;
 
         // Provide intelligent code completions
-        let intelligent_completions = self.generate_intelligent_completions(
-            current_code,
-            cursor_position,
-            project_context,
-            &semantic_analysis
-        ).await?;
+        let intelligent_completions = self
+            .generate_intelligent_completions(
+                current_code,
+                cursor_position,
+                project_context,
+                &semantic_analysis,
+            )
+            .await?;
 
         // Generate optimization suggestions
-        let optimization_suggestions = self.predictive_analyzer.generate_optimization_suggestions(
-            current_code,
-            &semantic_analysis
-        ).await?;
+        let optimization_suggestions = self
+            .predictive_analyzer
+            .generate_optimization_suggestions(current_code, &semantic_analysis)
+            .await?;
 
         // Predict future development needs
-        let development_predictions = self.predictive_analyzer.predict_development_trajectory(
-            project_context,
-            user_actions
-        ).await?;
+        let development_predictions = self
+            .predictive_analyzer
+            .predict_development_trajectory(project_context, user_actions)
+            .await?;
 
         Ok(PredictionResult {
             error_predictions,
@@ -102,30 +100,28 @@ impl PredictiveAIDevelopmentEngine {
         &self,
         project_state: &ProjectState,
         recent_changes: &[CodeChange],
-        team_context: &TeamContext
+        team_context: &TeamContext,
     ) -> Result<ProactiveAssistance, PredictiveError> {
         // Analyze team patterns for insights
         let team_insights = self.analyze_team_patterns(team_context);
 
         // Identify architectural drift
-        let architectural_insights = self.architecture_engine.analyze_architecture(
-            &project_state.codebase
-        ).await
+        let architectural_insights = self
+            .architecture_engine
+            .analyze_architecture(&project_state.codebase)
+            .await
             .map(|arch| self.identify_architectural_drift(&arch))
             .unwrap_or_default();
 
         // Predict development conflicts
-        let conflict_predictions = self.predict_development_conflicts(
-            project_state,
-            recent_changes,
-            team_context
-        );
+        let conflict_predictions =
+            self.predict_development_conflicts(project_state, recent_changes, team_context);
 
         // Generate proactive recommendations
         let recommendations = self.generate_proactive_recommendations(
             &team_insights,
             &architectural_insights,
-            &conflict_predictions
+            &conflict_predictions,
         );
 
         Ok(ProactiveAssistance {
@@ -140,26 +136,28 @@ impl PredictiveAIDevelopmentEngine {
     /// Apply machine learning to development patterns
     pub async fn apply_machine_learning_insights(
         &mut self,
-        historical_data: &[HistoricalDevelopmentData]
+        historical_data: &[HistoricalDevelopmentData],
     ) -> Result<MLInsights, PredictiveError> {
         // Analyze historical patterns
         let pattern_insights = self.learning_assistant.analyze_patterns(historical_data)?;
 
         // Predict errors based on patterns
-        let pattern_based_predictions = self.learning_assistant.predict_based_on_patterns(
-            historical_data
-        )?;
+        let pattern_based_predictions = self
+            .learning_assistant
+            .predict_based_on_patterns(historical_data)?;
 
         // Generate personalized recommendations
-        let personalized_recommendations = self.learning_assistant.generate_personalized_recommendations(
-            historical_data
-        )?;
+        let personalized_recommendations = self
+            .learning_assistant
+            .generate_personalized_recommendations(historical_data)?;
 
         Ok(MLInsights {
             pattern_insights,
             pattern_based_predictions,
             personalized_recommendations,
-            confidence_levels: self.learning_assistant.calculate_confidence_levels(historical_data),
+            confidence_levels: self
+                .learning_assistant
+                .calculate_confidence_levels(historical_data),
         })
     }
 
@@ -169,33 +167,38 @@ impl PredictiveAIDevelopmentEngine {
         code: &str,
         position: usize,
         context: &ProjectContext,
-        analysis: &SemanticAnalysis
+        analysis: &SemanticAnalysis,
     ) -> Result<Vec<CompletionSuggestion>, PredictiveError> {
         let mut suggestions = Vec::new();
 
         // Context-aware API completions
-        if let Some(api_suggestions) = self.generate_api_suggestions(
-            code, position, context, analysis
-        ).await? {
+        if let Some(api_suggestions) = self
+            .generate_api_suggestions(code, position, context, analysis)
+            .await?
+        {
             suggestions.extend(api_suggestions);
         }
 
         // Pattern-based code completions
-        let pattern_completions = self.generate_pattern_completions(
-            code, position, analysis
-        ).await?;
+        let pattern_completions = self
+            .generate_pattern_completions(code, position, analysis)
+            .await?;
 
         suggestions.extend(pattern_completions);
 
         // Error prevention completions
-        let preventive_completions = self.generate_preventive_completions(
-            code, position, analysis
-        ).await?;
+        let preventive_completions = self
+            .generate_preventive_completions(code, position, analysis)
+            .await?;
 
         suggestions.extend(preventive_completions);
 
         // Sort by predicted usefulness
-        suggestions.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        suggestions.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         // Limit to top N suggestions (configurable)
         suggestions.truncate(10);
@@ -208,7 +211,7 @@ impl PredictiveAIDevelopmentEngine {
         _code: &str,
         _position: usize,
         context: &ProjectContext,
-        analysis: &SemanticAnalysis
+        analysis: &SemanticAnalysis,
     ) -> Result<Option<Vec<CompletionSuggestion>>, PredictiveError> {
         // Analyze API usage patterns in the project
         let mut suggestions = Vec::new();
@@ -237,7 +240,7 @@ impl PredictiveAIDevelopmentEngine {
         &self,
         code: &str,
         position: usize,
-        analysis: &SemanticAnalysis
+        analysis: &SemanticAnalysis,
     ) -> Result<Vec<CompletionSuggestion>, PredictiveError> {
         let mut suggestions = Vec::new();
 
@@ -257,7 +260,13 @@ impl PredictiveAIDevelopmentEngine {
             }
 
             // Pattern: error handling completion
-            if current_line.contains("?") && !lines.iter().skip(position).take(5).any(|line| line.contains("match ")) {
+            if current_line.contains("?")
+                && !lines
+                    .iter()
+                    .skip(position)
+                    .take(5)
+                    .any(|line| line.contains("match "))
+            {
                 suggestions.push(CompletionSuggestion {
                     completion_type: CompletionType::ErrorHandling,
                     text: ".unwrap_or_else(|e| { /* handle error */ })".to_string(),
@@ -275,7 +284,7 @@ impl PredictiveAIDevelopmentEngine {
         &self,
         code: &str,
         position: usize,
-        analysis: &SemanticAnalysis
+        analysis: &SemanticAnalysis,
     ) -> Result<Vec<CompletionSuggestion>, PredictiveError> {
         let mut suggestions = Vec::new();
 
@@ -292,7 +301,12 @@ impl PredictiveAIDevelopmentEngine {
         }
 
         // Complex function detection
-        if analysis.context.complexity_metrics.average_function_complexity > 10.0 {
+        if analysis
+            .context
+            .complexity_metrics
+            .average_function_complexity
+            > 10.0
+        {
             suggestions.push(CompletionSuggestion {
                 completion_type: CompletionType::Optimization,
                 text: "// TODO: Consider breaking down complex functions".to_string(),
@@ -310,9 +324,7 @@ impl PredictiveAIDevelopmentEngine {
             0.95 // High confidence if no errors predicted
         } else {
             // Weighted average of prediction confidence
-            let total_confidence: f64 = error_predictions.iter()
-                .map(|pred| pred.confidence)
-                .sum();
+            let total_confidence: f64 = error_predictions.iter().map(|pred| pred.confidence).sum();
             total_confidence / error_predictions.len() as f64
         }
     }
@@ -320,22 +332,30 @@ impl PredictiveAIDevelopmentEngine {
     fn analyze_team_patterns(&self, team_context: &TeamContext) -> TeamInsights {
         // Analyze team development patterns
         TeamInsights {
-            most_active_contributors: team_context.contributors.clone().into_iter().take(5).collect(),
+            most_active_contributors: team_context
+                .contributors
+                .clone()
+                .into_iter()
+                .take(5)
+                .collect(),
             common_patterns: vec![
                 "Test-Driven Development".to_string(),
                 "Pair Programming".to_string(),
-                "Continuous Integration".to_string()
+                "Continuous Integration".to_string(),
             ],
             improvement_suggestions: vec![
                 "Increase code review frequency".to_string(),
                 "Adopt stricter linting rules".to_string(),
-                "Implement automated testing".to_string()
+                "Implement automated testing".to_string(),
             ],
             collaboration_score: 0.87,
         }
     }
 
-    fn identify_architectural_drift(&self, architecture: &rust_ai_ide_ai1_architecture::Architecture) -> ArchitecturalInsights {
+    fn identify_architectural_drift(
+        &self,
+        architecture: &rust_ai_ide_ai1_architecture::Architecture,
+    ) -> ArchitecturalInsights {
         // Identify deviations from intended architecture
         let mut insight_messages = Vec::new();
 
@@ -353,12 +373,12 @@ impl PredictiveAIDevelopmentEngine {
             drift_score: 0.35,
             problematic_areas: vec![
                 "cross-cutting concerns".to_string(),
-                "data access layer coupling".to_string()
+                "data access layer coupling".to_string(),
             ],
             recommendations: vec![
                 "Introduce dependency inversion".to_string(),
                 "Implement interface segregation".to_string(),
-                "Create separate business logic layer".to_string()
+                "Create separate business logic layer".to_string(),
             ],
             confidence_level: 0.78,
         }
@@ -368,19 +388,20 @@ impl PredictiveAIDevelopmentEngine {
         &self,
         project_state: &ProjectState,
         recent_changes: &[CodeChange],
-        team_context: &TeamContext
+        team_context: &TeamContext,
     ) -> ConflictPredictions {
         // Analyze potential merge conflicts and development conflicts
         ConflictPredictions {
             merge_conflict_probability: 0.25,
-            conflicting_changes: recent_changes.iter()
+            conflicting_changes: recent_changes
+                .iter()
                 .filter(|change| change.conflicts_with.is_some())
                 .map(|change| format!("{} conflicts with team changes", change.file_path))
                 .collect(),
             resolution_suggestions: vec![
                 "Review conflicting changes before merging".to_string(),
                 "Implement feature flags for conflicting functionality".to_string(),
-                "Schedule team meetings for conflict resolution".to_string()
+                "Schedule team meetings for conflict resolution".to_string(),
             ],
             risk_assessment: "Medium".to_string(),
         }
@@ -390,14 +411,15 @@ impl PredictiveAIDevelopmentEngine {
         &self,
         team_insights: &TeamInsights,
         architectural_insights: &ArchitecturalInsights,
-        conflict_predictions: &ConflictPredictions
+        conflict_predictions: &ConflictPredictions,
     ) -> Vec<ProactiveRecommendation> {
         let mut recommendations = Vec::new();
 
         if team_insights.collaboration_score < 0.8 {
             recommendations.push(ProactiveRecommendation {
                 recommendation_type: RecommendationType::Teamwork,
-                description: "Increase team collaboration through more frequent code reviews".to_string(),
+                description: "Increase team collaboration through more frequent code reviews"
+                    .to_string(),
                 priority: Priority::High,
                 expected_impact: "Improved code quality and team knowledge sharing".to_string(),
             });
@@ -415,9 +437,11 @@ impl PredictiveAIDevelopmentEngine {
         if conflict_predictions.merge_conflict_probability > 0.3 {
             recommendations.push(ProactiveRecommendation {
                 recommendation_type: RecommendationType::Development,
-                description: "Implement more frequent integrations to reduce merge conflict risk".to_string(),
+                description: "Implement more frequent integrations to reduce merge conflict risk"
+                    .to_string(),
                 priority: Priority::Medium,
-                expected_impact: "Smoother development process and fewer merge conflicts".to_string(),
+                expected_impact: "Smoother development process and fewer merge conflicts"
+                    .to_string(),
             });
         }
 
@@ -596,7 +620,7 @@ impl AdaptiveLearningAssistant {
 
     pub fn analyze_patterns(
         &self,
-        historical_data: &[HistoricalDevelopmentData]
+        historical_data: &[HistoricalDevelopmentData],
     ) -> Result<PatternInsights, PredictiveError> {
         Ok(PatternInsights {
             error_patterns: vec![],
@@ -608,14 +632,14 @@ impl AdaptiveLearningAssistant {
 
     pub fn predict_based_on_patterns(
         &self,
-        _historical_data: &[HistoricalDevelopmentData]
+        _historical_data: &[HistoricalDevelopmentData],
     ) -> Result<Vec<PatternPrediction>, PredictiveError> {
         Ok(vec![])
     }
 
     pub fn generate_personalized_recommendations(
         &self,
-        _historical_data: &[HistoricalDevelopmentData]
+        _historical_data: &[HistoricalDevelopmentData],
     ) -> Result<Vec<String>, PredictiveError> {
         Ok(vec![
             "Consider using async/await patterns".to_string(),
@@ -626,7 +650,7 @@ impl AdaptiveLearningAssistant {
 
     pub fn calculate_confidence_levels(
         &self,
-        _historical_data: &[HistoricalDevelopmentData]
+        _historical_data: &[HistoricalDevelopmentData],
     ) -> HashMap<String, f64> {
         let mut confidence_levels = HashMap::new();
         confidence_levels.insert("error_prediction".to_string(), 0.85);
@@ -649,7 +673,7 @@ impl PredictiveCodeAnalyzer {
         &self,
         semantic_analysis: &SemanticAnalysis,
         code: &str,
-        _cursor_position: usize
+        _cursor_position: usize,
     ) -> Vec<ErrorPrediction> {
         // Analyze potential errors in the code
         let mut predictions = Vec::new();
@@ -677,7 +701,12 @@ impl PredictiveCodeAnalyzer {
         }
 
         // Check code complexity predictions
-        if semantic_analysis.context.complexity_metrics.average_function_complexity > 15.0 {
+        if semantic_analysis
+            .context
+            .complexity_metrics
+            .average_function_complexity
+            > 15.0
+        {
             predictions.push(ErrorPrediction {
                 error_type: "High Complexity Function".to_string(),
                 location: CodeLocation {
@@ -703,7 +732,7 @@ impl PredictiveCodeAnalyzer {
 
     pub async fn analyze_performance_impact(
         &self,
-        semantic_analysis: &SemanticAnalysis
+        semantic_analysis: &SemanticAnalysis,
     ) -> Vec<PerformancePrediction> {
         let mut predictions = Vec::new();
 
@@ -732,7 +761,7 @@ impl PredictiveCodeAnalyzer {
     pub async fn generate_optimization_suggestions(
         &self,
         code: &str,
-        semantic_analysis: &SemanticAnalysis
+        semantic_analysis: &SemanticAnalysis,
     ) -> Result<Vec<OptimizationSuggestion>, PredictiveError> {
         let mut suggestions = Vec::new();
 
@@ -749,7 +778,8 @@ impl PredictiveCodeAnalyzer {
                 },
                 impact_score: 7,
                 implementation_effort: 3,
-                description: "Consider using alternative data structures for memory efficiency".to_string(),
+                description: "Consider using alternative data structures for memory efficiency"
+                    .to_string(),
                 predicted_improvement: 25.0,
             });
         }
@@ -767,7 +797,9 @@ impl PredictiveCodeAnalyzer {
                 },
                 impact_score: 8,
                 implementation_effort: 5,
-                description: "Nested loops may cause performance bottlenecks - consider optimization".to_string(),
+                description:
+                    "Nested loops may cause performance bottlenecks - consider optimization"
+                        .to_string(),
                 predicted_improvement: 40.0,
             });
         }
@@ -778,21 +810,21 @@ impl PredictiveCodeAnalyzer {
     pub async fn predict_development_trajectory(
         &self,
         _project_context: &ProjectContext,
-        _user_actions: &[DeveloperAction]
+        _user_actions: &[DeveloperAction],
     ) -> Result<Vec<DevelopmentPrediction>, PredictiveError> {
-        Ok(vec![
-            DevelopmentPrediction {
-                prediction_type: "Technical Debt Increase".to_string(),
-                confidence: 0.75,
-                timeframe_months: 6,
-                description: "Projected increase in technical debt based on current development patterns".to_string(),
-                preparation_suggestions: vec![
-                    "Schedule regular refactoring sprints".to_string(),
-                    "Implement stricter code reviews".to_string(),
-                    "Add automated testing coverage".to_string(),
-                ],
-            },
-        ])
+        Ok(vec![DevelopmentPrediction {
+            prediction_type: "Technical Debt Increase".to_string(),
+            confidence: 0.75,
+            timeframe_months: 6,
+            description:
+                "Projected increase in technical debt based on current development patterns"
+                    .to_string(),
+            preparation_suggestions: vec![
+                "Schedule regular refactoring sprints".to_string(),
+                "Implement stricter code reviews".to_string(),
+                "Add automated testing coverage".to_string(),
+            ],
+        }])
     }
 }
 

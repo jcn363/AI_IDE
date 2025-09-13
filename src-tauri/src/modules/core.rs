@@ -34,9 +34,7 @@ impl CoreService {
     /// Validate workspace path
     pub fn validate_workspace(&self, path: &PathBuf) -> Result<(), IDEServiceError> {
         if !path.exists() {
-            return Err(IDEServiceError::WorkspaceNotFound {
-                path: path.clone(),
-            });
+            return Err(IDEServiceError::WorkspaceNotFound { path: path.clone() });
         }
         Ok(())
     }

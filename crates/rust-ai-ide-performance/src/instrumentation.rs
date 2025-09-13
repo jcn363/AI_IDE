@@ -4,13 +4,13 @@
 //! including automatic timing, memory tracking, and integration with
 //! Prometheus metrics collection.
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 
-use crate::metrics::{MetricsRegistry, PrometheusMetric, MetricType, MetricValue};
+use crate::metrics::{MetricType, MetricValue, MetricsRegistry, PrometheusMetric};
 
 /// Instrumentation configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -74,15 +74,22 @@ impl PerformanceInstrumentor {
     }
 
     /// Start tracking an operation
-    pub async fn start_operation(&self, operation_name: &str) -> Result<String, InstrumentationError> {
+    pub async fn start_operation(
+        &self,
+        operation_name: &str,
+    ) -> Result<String, InstrumentationError> {
         if !self.should_sample() {
             return Err(InstrumentationError::SamplingSkipped);
         }
 
-        let operation_id = format!("{}_{}", operation_name, std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_millis());
+        let operation_id = format!(
+            "{}_{}",
+            operation_name,
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_millis()
+        );
 
         let data = InstrumentationData {
             operation_name: operation_name.to_string(),
@@ -104,7 +111,10 @@ impl PerformanceInstrumentor {
     }
 
     /// End tracking an operation
-    pub async fn end_operation(&self, operation_id: &str) -> Result<InstrumentationData, InstrumentationError> {
+    pub async fn end_operation(
+        &self,
+        operation_id: &str,
+    ) -> Result<InstrumentationData, InstrumentationError> {
         let mut operations = self.active_operations.write().await;
 
         if let Some(mut data) = operations.remove(operation_id) {
@@ -112,7 +122,8 @@ impl PerformanceInstrumentor {
 
             if self.config.enable_memory_tracking {
                 if let Some(start_memory) = data.memory_used {
-                    data.memory_used = Some(self.get_current_memory_usage().saturating_sub(start_memory));
+                    data.memory_used =
+                        Some(self.get_current_memory_usage().saturating_sub(start_memory));
                 }
             }
 
@@ -132,12 +143,18 @@ impl PerformanceInstrumentor {
 
             Ok(data)
         } else {
-            Err(InstrumentationError::OperationNotFound(operation_id.to_string()))
+            Err(InstrumentationError::OperationNotFound(
+                operation_id.to_string(),
+            ))
         }
     }
 
     /// Time a synchronous operation
-    pub async fn time_sync_operation<F, T>(&self, operation_name: &str, operation: F) -> Result<(T, Duration), InstrumentationError>
+    pub async fn time_sync_operation<F, T>(
+        &self,
+        operation_name: &str,
+        operation: F,
+    ) -> Result<(T, Duration), InstrumentationError>
     where
         F: FnOnce() -> T,
     {
@@ -154,7 +171,11 @@ impl PerformanceInstrumentor {
     }
 
     /// Time an asynchronous operation
-    pub async fn time_async_operation<F, Fut, T>(&self, operation_name: &str, operation: F) -> Result<(T, Duration), InstrumentationError>
+    pub async fn time_async_operation<F, Fut, T>(
+        &self,
+        operation_name: &str,
+        operation: F,
+    ) -> Result<(T, Duration), InstrumentationError>
     where
         F: FnOnce() -> Fut,
         Fut: std::future::Future<Output = T>,
@@ -172,22 +193,32 @@ impl PerformanceInstrumentor {
     }
 
     /// Add tags to an active operation
-    pub async fn add_tags(&self, operation_id: &str, tags: HashMap<String, String>) -> Result<(), InstrumentationError> {
+    pub async fn add_tags(
+        &self,
+        operation_id: &str,
+        tags: HashMap<String, String>,
+    ) -> Result<(), InstrumentationError> {
         let mut operations = self.active_operations.write().await;
 
         if let Some(data) = operations.get_mut(operation_id) {
             data.tags.extend(tags);
             Ok(())
         } else {
-            Err(InstrumentationError::OperationNotFound(operation_id.to_string()))
+            Err(InstrumentationError::OperationNotFound(
+                operation_id.to_string(),
+            ))
         }
     }
 
     /// Get operation statistics
-    pub async fn get_operation_stats(&self, operation_name: &str) -> HashMap<String, serde_json::Value> {
+    pub async fn get_operation_stats(
+        &self,
+        operation_name: &str,
+    ) -> HashMap<String, serde_json::Value> {
         let completed = self.completed_operations.read().await;
 
-        let operations: Vec<&InstrumentationData> = completed.iter()
+        let operations: Vec<&InstrumentationData> = completed
+            .iter()
             .filter(|data| data.operation_name == operation_name)
             .collect();
 
@@ -195,9 +226,7 @@ impl PerformanceInstrumentor {
             return HashMap::new();
         }
 
-        let durations: Vec<Duration> = operations.iter()
-            .filter_map(|data| data.duration)
-            .collect();
+        let durations: Vec<Duration> = operations.iter().filter_map(|data| data.duration).collect();
 
         if durations.is_empty() {
             return HashMap::new();
@@ -210,10 +239,22 @@ impl PerformanceInstrumentor {
 
         let mut stats = HashMap::new();
         stats.insert("count".to_string(), serde_json::json!(operations.len()));
-        stats.insert("total_duration_ms".to_string(), serde_json::json!(total_duration.as_millis()));
-        stats.insert("avg_duration_ms".to_string(), serde_json::json!(avg_duration.as_millis()));
-        stats.insert("min_duration_ms".to_string(), serde_json::json!(min_duration.as_millis()));
-        stats.insert("max_duration_ms".to_string(), serde_json::json!(max_duration.as_millis()));
+        stats.insert(
+            "total_duration_ms".to_string(),
+            serde_json::json!(total_duration.as_millis()),
+        );
+        stats.insert(
+            "avg_duration_ms".to_string(),
+            serde_json::json!(avg_duration.as_millis()),
+        );
+        stats.insert(
+            "min_duration_ms".to_string(),
+            serde_json::json!(min_duration.as_millis()),
+        );
+        stats.insert(
+            "max_duration_ms".to_string(),
+            serde_json::json!(max_duration.as_millis()),
+        );
 
         stats
     }
@@ -230,10 +271,17 @@ impl PerformanceInstrumentor {
     }
 
     /// Update Prometheus metrics based on instrumentation data
-    async fn update_metrics(&self, registry: &MetricsRegistry, data: &InstrumentationData) -> Result<(), InstrumentationError> {
+    async fn update_metrics(
+        &self,
+        registry: &MetricsRegistry,
+        data: &InstrumentationData,
+    ) -> Result<(), InstrumentationError> {
         if let Some(duration) = data.duration {
             // Create operation-specific metric name
-            let metric_name = format!("rust_ai_ide_operation_duration_{}", sanitize_metric_name(&data.operation_name));
+            let metric_name = format!(
+                "rust_ai_ide_operation_duration_{}",
+                sanitize_metric_name(&data.operation_name)
+            );
 
             // Try to update existing metric or create new one
             if let Err(_) = registry.update_counter(&metric_name, 1).await {
@@ -276,7 +324,10 @@ pub struct ScopedInstrumentation<'a> {
 }
 
 impl<'a> ScopedInstrumentation<'a> {
-    pub async fn new(instrumentor: &'a PerformanceInstrumentor, operation_name: &str) -> Result<Self, InstrumentationError> {
+    pub async fn new(
+        instrumentor: &'a PerformanceInstrumentor,
+        operation_name: &str,
+    ) -> Result<Self, InstrumentationError> {
         let operation_id = instrumentor.start_operation(operation_name).await.ok();
 
         Ok(Self {
@@ -319,7 +370,9 @@ impl std::fmt::Display for InstrumentationError {
             InstrumentationError::OperationNotFound(id) => write!(f, "Operation not found: {}", id),
             InstrumentationError::SamplingSkipped => write!(f, "Operation skipped due to sampling"),
             InstrumentationError::MetricsError(msg) => write!(f, "Metrics error: {}", msg),
-            InstrumentationError::ConfigurationError(msg) => write!(f, "Configuration error: {}", msg),
+            InstrumentationError::ConfigurationError(msg) => {
+                write!(f, "Configuration error: {}", msg)
+            }
         }
     }
 }
@@ -329,7 +382,13 @@ impl std::error::Error for InstrumentationError {}
 /// Sanitize metric name for Prometheus
 fn sanitize_metric_name(name: &str) -> String {
     name.chars()
-        .map(|c| if c.is_alphanumeric() || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_alphanumeric() || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect::<String>()
         .to_lowercase()
 }
@@ -351,7 +410,10 @@ mod tests {
     async fn test_operation_timing() {
         let instrumentor = PerformanceInstrumentor::new(InstrumentationConfig::default());
 
-        let operation_id = instrumentor.start_operation("test_operation").await.unwrap();
+        let operation_id = instrumentor
+            .start_operation("test_operation")
+            .await
+            .unwrap();
 
         // Simulate some work
         tokio::time::sleep(Duration::from_millis(10)).await;
@@ -366,10 +428,13 @@ mod tests {
     async fn test_sync_operation_timing() {
         let instrumentor = PerformanceInstrumentor::new(InstrumentationConfig::default());
 
-        let (result, duration) = instrumentor.time_sync_operation("sync_test", || {
-            std::thread::sleep(Duration::from_millis(5));
-            42
-        }).await.unwrap();
+        let (result, duration) = instrumentor
+            .time_sync_operation("sync_test", || {
+                std::thread::sleep(Duration::from_millis(5));
+                42
+            })
+            .await
+            .unwrap();
 
         assert_eq!(result, 42);
         assert!(duration >= Duration::from_millis(5));

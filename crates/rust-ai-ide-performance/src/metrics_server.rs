@@ -3,13 +3,13 @@
 //! This module provides an HTTP server that exposes performance metrics
 //! in Prometheus-compatible format for scraping.
 
+use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use warp::Filter;
-use serde::{Deserialize, Serialize};
 
-use crate::metrics::{PrometheusExporter, MetricsRegistry};
+use crate::metrics::{MetricsRegistry, PrometheusExporter};
 use crate::UnifiedPerformanceCollector;
 
 /// Configuration for the metrics server
@@ -75,7 +75,9 @@ impl MetricsServer {
                 .and_then(Self::handle_health)
                 .boxed()
         } else {
-            warp::any().map(|| warp::reply::with_status("Not Found", warp::http::StatusCode::NOT_FOUND)).boxed()
+            warp::any()
+                .map(|| warp::reply::with_status("Not Found", warp::http::StatusCode::NOT_FOUND))
+                .boxed()
         };
 
         // Combine routes
@@ -88,33 +90,33 @@ impl MetricsServer {
                 log::info!("{} {} {}", info.method(), info.path(), info.status());
             }));
 
-        warp::serve(routes)
-            .run(addr)
-            .await;
+        warp::serve(routes).run(addr).await;
 
         Ok(())
     }
 
-    async fn handle_metrics(exporter: Arc<PrometheusExporter>) -> Result<impl warp::Reply, warp::Rejection> {
+    async fn handle_metrics(
+        exporter: Arc<PrometheusExporter>,
+    ) -> Result<impl warp::Reply, warp::Rejection> {
         match exporter.collect_and_export().await {
-            Ok(metrics) => {
-                Ok(warp::reply::with_header(
-                    metrics,
-                    "Content-Type",
-                    "text/plain; version=0.0.4; charset=utf-8"
-                ))
-            }
+            Ok(metrics) => Ok(warp::reply::with_header(
+                metrics,
+                "Content-Type",
+                "text/plain; version=0.0.4; charset=utf-8",
+            )),
             Err(e) => {
                 log::error!("Failed to collect metrics: {}", e);
                 Ok(warp::reply::with_status(
                     format!("Error collecting metrics: {}", e),
-                    warp::http::StatusCode::INTERNAL_SERVER_ERROR
+                    warp::http::StatusCode::INTERNAL_SERVER_ERROR,
                 ))
             }
         }
     }
 
-    async fn handle_health(exporter: Arc<PrometheusExporter>) -> Result<impl warp::Reply, warp::Rejection> {
+    async fn handle_health(
+        exporter: Arc<PrometheusExporter>,
+    ) -> Result<impl warp::Reply, warp::Rejection> {
         // Simple health check - just verify we can access the exporter
         let registry = exporter.get_registry();
         let metrics_count = registry.export_all().await.lines().count();

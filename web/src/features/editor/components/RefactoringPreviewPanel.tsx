@@ -11,7 +11,7 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Divider
+  Divider,
 } from '@mui/material';
 import {
   ExpandMore,
@@ -22,7 +22,7 @@ import {
   Code,
   Warning,
   CheckCircle,
-  Error as ErrorIcon
+  Error as ErrorIcon,
 } from '@mui/icons-material';
 import type * as monaco from 'monaco-editor';
 import { RefactoringService } from '../../ai/services/RefactoringService';
@@ -43,7 +43,13 @@ type RefactoringSuggestion = {
   description: string;
   confidence: number;
   impact: 'low' | 'medium' | 'high';
-  type: 'extract-method' | 'rename-variable' | 'inline-function' | 'move-method' | 'change-signature' | 'custom';
+  type:
+    | 'extract-method'
+    | 'rename-variable'
+    | 'inline-function'
+    | 'move-method'
+    | 'change-signature'
+    | 'custom';
   ranges: {
     startLine: number;
     startColumn: number;
@@ -82,7 +88,7 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
   aiEnabled = true,
   aiConfig,
   onRefactoringApplied,
-  onRefactoringRejected
+  onRefactoringRejected,
 }) => {
   const [suggestions, setSuggestions] = React.useState<RefactoringSuggestion[]>([]);
   const [loading, setLoading] = React.useState(false);
@@ -109,7 +115,9 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
 
           if (refactorResponse && typeof refactorResponse === 'object') {
             // Process AI response into suggestions
-            const aiSuggestions = Array.isArray(refactorResponse) ? refactorResponse : [refactorResponse];
+            const aiSuggestions = Array.isArray(refactorResponse)
+              ? refactorResponse
+              : [refactorResponse];
 
             for (const suggestion of aiSuggestions) {
               if (suggestion && suggestion.title && suggestion.before && suggestion.after) {
@@ -122,26 +130,31 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
                   confidence: suggestion.confidence || 0.7,
                   impact: suggestion.impact || 'medium',
                   type: suggestion.type || 'custom',
-                  ranges: [selection ? {
-                    startLine: selection.startLineNumber,
-                    startColumn: selection.startColumn,
-                    endLine: selection.endLineNumber,
-                    endColumn: selection.endColumn
-                  } : {
-                    startLine: 1,
-                    startColumn: 1,
-                    endLine: selectedCode.split('\n').length,
-                    endColumn: selectedCode.length
-                  }],
+                  ranges: [
+                    selection
+                      ? {
+                          startLine: selection.startLineNumber,
+                          startColumn: selection.startColumn,
+                          endLine: selection.endLineNumber,
+                          endColumn: selection.endColumn,
+                        }
+                      : {
+                          startLine: 1,
+                          startColumn: 1,
+                          endLine: selectedCode.split('\n').length,
+                          endColumn: selectedCode.length,
+                        },
+                  ],
                   before: suggestion.before,
                   after: suggestion.after,
                   diffs,
                   metadata: {
-                    explanation: suggestion.explanation || 'AI-suggested refactoring to improve code quality.',
+                    explanation:
+                      suggestion.explanation || 'AI-suggested refactoring to improve code quality.',
                     risks: suggestion.risks || [],
                     dependencies: suggestion.dependencies || [],
-                    complexity: suggestion.complexity || 1
-                  }
+                    complexity: suggestion.complexity || 1,
+                  },
                 });
               }
             }
@@ -162,12 +175,11 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
       setSuggestions(generatedSuggestions);
 
       // Auto-expand high-confidence suggestions
-      const highConfidence = generatedSuggestions.filter(s => s.confidence > 0.8);
+      const highConfidence = generatedSuggestions.filter((s) => s.confidence > 0.8);
       if (highConfidence.length > 0) {
-        const ids = highConfidence.map(s => s.id);
+        const ids = highConfidence.map((s) => s.id);
         setExpandedItems(new Set(ids));
       }
-
     } catch (error) {
       console.error('Refactoring generation failed:', error);
     } finally {
@@ -191,13 +203,13 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
         diffs.push({
           lineNumber: i + 1,
           type: 'add',
-          content: afterLine
+          content: afterLine,
         });
       } else if (beforeLine && !afterLine) {
         diffs.push({
           lineNumber: i + 1,
           type: 'remove',
-          content: beforeLine
+          content: beforeLine,
         });
       } else if (beforeLine !== afterLine) {
         diffs.push({
@@ -205,13 +217,13 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
           type: 'context',
           content: afterLine || beforeLine,
           oldContent: beforeLine,
-          newContent: afterLine
+          newContent: afterLine,
         });
       } else {
         diffs.push({
           lineNumber: i + 1,
           type: 'context',
-          content: beforeLine
+          content: beforeLine,
         });
       }
     }
@@ -227,7 +239,11 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
     const standardSuggestions: RefactoringSuggestion[] = [];
 
     // Extract method/function suggestion
-    if (code.length > 100 && code.includes('function') || code.includes('def') || code.includes('fn')) {
+    if (
+      (code.length > 100 && code.includes('function')) ||
+      code.includes('def') ||
+      code.includes('fn')
+    ) {
       const before = code;
       const after = `// Extracted method\nextractedMethod();\n\n// Remaining code goes here`;
 
@@ -238,12 +254,16 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
         confidence: 0.85,
         impact: 'high',
         type: 'extract-method',
-        ranges: selection ? [{
-          startLine: selection.startLineNumber,
-          startColumn: selection.startColumn,
-          endLine: selection.endLineNumber,
-          endColumn: selection.endColumn
-        }] : [],
+        ranges: selection
+          ? [
+              {
+                startLine: selection.startLineNumber,
+                startColumn: selection.startColumn,
+                endLine: selection.endLineNumber,
+                endColumn: selection.endColumn,
+              },
+            ]
+          : [],
         before,
         after,
         diffs: generateDiffs(before, after),
@@ -251,14 +271,20 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
           explanation: 'Method extraction improves code organization and reusability.',
           risks: ['Potential naming conflicts', 'Scope changes'],
           dependencies: [],
-          complexity: 3
-        }
+          complexity: 3,
+        },
       });
     }
 
     // Variable renaming suggestion
-    if (code.includes('var ') || code.includes('let ') || code.includes('const ') ||
-        code.includes('int ') || code.includes('String ') || code.includes('let ')) {
+    if (
+      code.includes('var ') ||
+      code.includes('let ') ||
+      code.includes('const ') ||
+      code.includes('int ') ||
+      code.includes('String ') ||
+      code.includes('let ')
+    ) {
       standardSuggestions.push({
         id: `standard-rename-${Date.now()}`,
         title: 'Rename Variable',
@@ -266,12 +292,16 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
         confidence: 0.9,
         impact: 'low',
         type: 'rename-variable',
-        ranges: selection ? [{
-          startLine: selection.startLineNumber,
-          startColumn: selection.startColumn,
-          endLine: selection.endLineNumber,
-          endColumn: selection.endColumn
-        }] : [],
+        ranges: selection
+          ? [
+              {
+                startLine: selection.startLineNumber,
+                startColumn: selection.startColumn,
+                endLine: selection.endLineNumber,
+                endColumn: selection.endColumn,
+              },
+            ]
+          : [],
         before: code,
         after: code, // Would be modified in actual implementation
         diffs: [],
@@ -279,49 +309,56 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
           explanation: 'Clear variable names improve code maintainability.',
           risks: ['Breaking changes if variables are exported'],
           dependencies: [],
-          complexity: 1
-        }
+          complexity: 1,
+        },
       });
     }
 
     return standardSuggestions;
   };
 
-  const applyRefactoring = React.useCallback(async (suggestion: RefactoringSuggestion) => {
-    if (!editor) return;
+  const applyRefactoring = React.useCallback(
+    async (suggestion: RefactoringSuggestion) => {
+      if (!editor) return;
 
-    try {
-      const model = editor.getModel();
-      if (!model || suggestion.ranges.length === 0) return;
+      try {
+        const model = editor.getModel();
+        if (!model || suggestion.ranges.length === 0) return;
 
-      const range = suggestion.ranges[0];
-      const monacoRange = new monaco.Range(
-        range.startLine,
-        range.startColumn,
-        range.endLine,
-        range.endColumn
-      );
+        const range = suggestion.ranges[0];
+        const monacoRange = new monaco.Range(
+          range.startLine,
+          range.startColumn,
+          range.endLine,
+          range.endColumn
+        );
 
-      editor.executeEdits('refactoring-application', [{
-        range: monacoRange,
-        text: suggestion.after
-      }]);
+        editor.executeEdits('refactoring-application', [
+          {
+            range: monacoRange,
+            text: suggestion.after,
+          },
+        ]);
 
-      onRefactoringApplied?.(suggestion);
-      setSuggestions(prev => prev.filter(s => s.id !== suggestion.id));
+        onRefactoringApplied?.(suggestion);
+        setSuggestions((prev) => prev.filter((s) => s.id !== suggestion.id));
+      } catch (error) {
+        console.error('Refactoring application failed:', error);
+      }
+    },
+    [editor, onRefactoringApplied]
+  );
 
-    } catch (error) {
-      console.error('Refactoring application failed:', error);
-    }
-  }, [editor, onRefactoringApplied]);
-
-  const rejectSuggestion = React.useCallback((suggestionId: string) => {
-    onRefactoringRejected?.(suggestionId);
-    setSuggestions(prev => prev.filter(s => s.id !== suggestionId));
-  }, [onRefactoringRejected]);
+  const rejectSuggestion = React.useCallback(
+    (suggestionId: string) => {
+      onRefactoringRejected?.(suggestionId);
+      setSuggestions((prev) => prev.filter((s) => s.id !== suggestionId));
+    },
+    [onRefactoringRejected]
+  );
 
   const toggleExpanded = React.useCallback((id: string) => {
-    setExpandedItems(prev => {
+    setExpandedItems((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
         newSet.delete(id);
@@ -340,32 +377,42 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
             key={index}
             sx={{
               display: 'flex',
-              backgroundColor: diff.type === 'add' ? 'success.main' :
-                              diff.type === 'remove' ? 'error.main' : 'transparent',
+              backgroundColor:
+                diff.type === 'add'
+                  ? 'success.main'
+                  : diff.type === 'remove'
+                    ? 'error.main'
+                    : 'transparent',
               opacity: 0.8,
               p: 0.25,
-              borderRadius: 0.5
+              borderRadius: 0.5,
             }}
           >
-            <Box sx={{
-              minWidth: 40,
-              color: 'text.secondary',
-              textAlign: 'right',
-              pr: 1,
-              borderRight: 1,
-              borderColor: 'divider'
-            }}>
+            <Box
+              sx={{
+                minWidth: 40,
+                color: 'text.secondary',
+                textAlign: 'right',
+                pr: 1,
+                borderRight: 1,
+                borderColor: 'divider',
+              }}
+            >
               {diff.lineNumber}
             </Box>
-            <Box sx={{
-              ml: 1,
-              color: diff.type === 'add' ? 'success.contrastText' :
-                     diff.type === 'remove' ? 'error.contrastText' : 'text.primary'
-            }}>
+            <Box
+              sx={{
+                ml: 1,
+                color:
+                  diff.type === 'add'
+                    ? 'success.contrastText'
+                    : diff.type === 'remove'
+                      ? 'error.contrastText'
+                      : 'text.primary',
+              }}
+            >
               {diff.type === 'add' && '+'}
-              {diff.type === 'remove' && '-'}
-              {' '}
-              {diff.content}
+              {diff.type === 'remove' && '-'} {diff.content}
             </Box>
           </Box>
         ))}
@@ -405,7 +452,9 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
           </Button>
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Selected {selection ? `${selection.endLineNumber - selection.startLineNumber + 1} lines` : 'code'} for refactoring
+          Selected{' '}
+          {selection ? `${selection.endLineNumber - selection.startLineNumber + 1} lines` : 'code'}{' '}
+          for refactoring
         </Typography>
       </Box>
 
@@ -416,7 +465,7 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
           </Alert>
         )}
 
-        {suggestions.map(suggestion => (
+        {suggestions.map((suggestion) => (
           <Accordion
             key={suggestion.id}
             expanded={expandedItems.has(suggestion.id)}
@@ -425,22 +474,32 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
           >
             <AccordionSummary expandIcon={<ExpandMore />}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-                <Typography variant="subtitle2">
-                  {suggestion.title}
-                </Typography>
+                <Typography variant="subtitle2">{suggestion.title}</Typography>
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <Chip
                     label={`${Math.round(suggestion.confidence * 100)}%`}
                     size="small"
-                    color={suggestion.confidence > 0.8 ? 'success' : suggestion.confidence > 0.6 ? 'warning' : 'default'}
+                    color={
+                      suggestion.confidence > 0.8
+                        ? 'success'
+                        : suggestion.confidence > 0.6
+                          ? 'warning'
+                          : 'default'
+                    }
                     variant="outlined"
                   />
 
                   <Chip
                     label={suggestion.impact.toUpperCase()}
                     size="small"
-                    color={suggestion.impact === 'high' ? 'error' : suggestion.impact === 'medium' ? 'warning' : 'info'}
+                    color={
+                      suggestion.impact === 'high'
+                        ? 'error'
+                        : suggestion.impact === 'medium'
+                          ? 'warning'
+                          : 'info'
+                    }
                   />
 
                   <Chip
@@ -464,9 +523,7 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
                     sx={{ mb: 2 }}
                     icon={suggestion.metadata.risks.length > 0 ? <Warning /> : <CheckCircle />}
                   >
-                    <Typography variant="body2">
-                      {suggestion.metadata.explanation}
-                    </Typography>
+                    <Typography variant="body2">{suggestion.metadata.explanation}</Typography>
                   </Alert>
 
                   {suggestion.metadata.risks.length > 0 && (
@@ -475,7 +532,11 @@ const RefactoringPreviewPanel: React.FC<RefactoringPreviewPanelProps> = ({
                         Potential risks:
                       </Typography>
                       {suggestion.metadata.risks.map((risk, index) => (
-                        <Typography key={index} variant="body2" sx={{ ml: 2, color: 'warning.main' }}>
+                        <Typography
+                          key={index}
+                          variant="body2"
+                          sx={{ ml: 2, color: 'warning.main' }}
+                        >
                           • {risk}
                         </Typography>
                       ))}

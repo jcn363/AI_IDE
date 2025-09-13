@@ -25,14 +25,14 @@ num-traits = "0.2"
 nalgebra = "0.32"
 
 # Neuroscience-inspired computation
-neuronika = { version = "0.1", optional = true }
+#neuronika = { version = "0.1", optional = true }
 norse = { version = "0.7", optional = true }
-spiking-neural-networks = { version = "0.1", optional = true }
+#spiking-neural-networks = { version = "0.1", optional = true }
 
 # Quantum consciousness models
-qiskit = { version = "0.1", optional = true }
-qmcpack = { version = "0.1", optional = true }
-cognizant = { version = "0.1", optional = true }
+#qiskit = { version = "0.1", optional = true }
+#qmcpack = { version = "0.1", optional = true }
+#cognizant = { version = "0.1", optional = true }
 
 # Multi-dimensional interfaces
 glium = { version = "0.32", optional = true }

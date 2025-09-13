@@ -1,5 +1,5 @@
-use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId, black_box};
-use packed_simd::f32x8;  // Using f32x8 for 256-bit SIMD (8 f32 lanes)
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use packed_simd::f32x8; // Using f32x8 for 256-bit SIMD (8 f32 lanes)
 use std::mem;
 use std::ptr;
 
@@ -8,12 +8,12 @@ fn generate_test_data(size: usize) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
     let mut a = Vec::with_capacity(size);
     let mut b = Vec::with_capacity(size);
     let mut result = vec![0.0; size];
-    
+
     for i in 0..size {
         a.push(i as f32);
         b.push((i * 2) as f32);
     }
-    
+
     (a, b, result)
 }
 
@@ -21,24 +21,24 @@ fn generate_test_data(size: usize) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
 fn simd_vector_add(a: &[f32], b: &[f32], result: &mut [f32]) {
     assert_eq!(a.len(), b.len());
     assert_eq!(a.len(), result.len());
-    
+
     let len = a.len();
     let mut i = 0;
-    
+
     // Process 8 floats at a time (256-bit SIMD registers)
     while i + 8 <= len {
         // Load 8 f32 values into SIMD vectors
-        let a_simd = f32x8::from_slice_unaligned(&a[i..i+8]);
-        let b_simd = f32x8::from_slice_unaligned(&b[i..i+8]);
-        
+        let a_simd = f32x8::from_slice_unaligned(&a[i..i + 8]);
+        let b_simd = f32x8::from_slice_unaligned(&b[i..i + 8]);
+
         // Perform SIMD addition
         let sum = a_simd + b_simd;
-        
+
         // Store the result
-        sum.write_to_slice_unaligned(&mut result[i..i+8]);
+        sum.write_to_slice_unaligned(&mut result[i..i + 8]);
         i += 8;
     }
-    
+
     // Process remaining elements
     while i < len {
         result[i] = a[i] + b[i];
@@ -55,17 +55,17 @@ fn scalar_vector_add(a: &[f32], b: &[f32], result: &mut [f32]) {
 
 fn simd_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("SIMD Operations");
-    
+
     // Test different vector sizes
     let sizes = [
-        ("small", 1_000),      // 1K elements
-        ("medium", 10_000),    // 10K elements
-        ("large", 1_000_000),  // 1M elements
+        ("small", 1_000),     // 1K elements
+        ("medium", 10_000),   // 10K elements
+        ("large", 1_000_000), // 1M elements
     ];
-    
+
     for (size_name, size) in &sizes {
         let (a, b, mut result) = generate_test_data(*size);
-        
+
         // Benchmark SIMD vector addition
         group.bench_with_input(
             BenchmarkId::new("SIMD Vector Add", size_name),
@@ -77,7 +77,7 @@ fn simd_benchmark(c: &mut Criterion) {
                 });
             },
         );
-        
+
         // Benchmark scalar vector addition for comparison
         group.bench_with_input(
             BenchmarkId::new("Scalar Vector Add", size_name),
@@ -90,7 +90,7 @@ fn simd_benchmark(c: &mut Criterion) {
             },
         );
     }
-    
+
     // Benchmark matrix multiplication
     group.bench_function("SIMD Matrix Multiplication", |b| {
         // 64x64 matrices
@@ -98,7 +98,7 @@ fn simd_benchmark(c: &mut Criterion) {
         let a = vec![1.0f32; N * N];
         let b = vec![2.0f32; N * N];
         let mut result = vec![0.0f32; N * N];
-        
+
         b.iter(|| {
             // Simple matrix multiplication (can be optimized further with SIMD)
             for i in 0..N {
@@ -112,12 +112,12 @@ fn simd_benchmark(c: &mut Criterion) {
             black_box(&mut result);
         });
     });
-    
+
     // Benchmark memory operations
     group.bench_function("SIMD Memory Copy", |b| {
         let src = vec![1.0f32; 1024 * 1024]; // 1MB of data
         let mut dst = vec![0.0f32; 1024 * 1024];
-        
+
         b.iter(|| {
             unsafe {
                 std::ptr::copy_nonoverlapping(
@@ -129,7 +129,7 @@ fn simd_benchmark(c: &mut Criterion) {
             black_box(&mut dst);
         });
     });
-    
+
     group.finish();
 }
 

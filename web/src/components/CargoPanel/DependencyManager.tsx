@@ -38,7 +38,11 @@ interface DependencyManagerProps {
   onApplyFeatures: () => void;
   onUpdateDependencies: (packageName?: string) => void;
   onAddDependency: () => void;
-  onFeatureEditChange: (edit: { depName: string; features: string; defaultFeatures: boolean }) => void;
+  onFeatureEditChange: (edit: {
+    depName: string;
+    features: string;
+    defaultFeatures: boolean;
+  }) => void;
   onNewDependencyChange: (dep: { name: string; version: string; features: string }) => void;
 }
 
@@ -114,20 +118,24 @@ export const DependencyManager: React.FC<DependencyManagerProps> = ({
               label="Dependency name"
               size="small"
               value={featureEdit.depName}
-              onChange={(e) => onFeatureEditChange({
-                ...featureEdit,
-                depName: (e.target as any).value
-              })}
+              onChange={(e) =>
+                onFeatureEditChange({
+                  ...featureEdit,
+                  depName: (e.target as any).value,
+                })
+              }
             />
 
             <TextField
               label="Features (comma-separated)"
               size="small"
               value={featureEdit.features}
-              onChange={(e) => onFeatureEditChange({
-                ...featureEdit,
-                features: (e.target as any).value
-              })}
+              onChange={(e) =>
+                onFeatureEditChange({
+                  ...featureEdit,
+                  features: (e.target as any).value,
+                })
+              }
             />
 
             <FormControlLabel
@@ -135,10 +143,12 @@ export const DependencyManager: React.FC<DependencyManagerProps> = ({
                 <Switch
                   size="small"
                   checked={featureEdit.defaultFeatures}
-                  onChange={(_, checked) => onFeatureEditChange({
-                    ...featureEdit,
-                    defaultFeatures: checked
-                  })}
+                  onChange={(_, checked) =>
+                    onFeatureEditChange({
+                      ...featureEdit,
+                      defaultFeatures: checked,
+                    })
+                  }
                 />
               }
               label={<Typography variant="caption">default-features</Typography>}
@@ -158,10 +168,7 @@ export const DependencyManager: React.FC<DependencyManagerProps> = ({
               <List dense>
                 {Object.entries(features).map(([name, feat]) => (
                   <ListItem key={name}>
-                    <ListItemText
-                      primary={name}
-                      secondary={(feat as string[]).join(', ')}
-                    />
+                    <ListItemText primary={name} secondary={(feat as string[]).join(', ')} />
                   </ListItem>
                 ))}
               </List>
@@ -208,9 +215,7 @@ export const DependencyManager: React.FC<DependencyManagerProps> = ({
               ))}
             </List>
           ) : (
-            <Typography variant="body2">
-              No conflicts found or not scanned.
-            </Typography>
+            <Typography variant="body2">No conflicts found or not scanned.</Typography>
           )}
         </Box>
       )}
@@ -249,18 +254,18 @@ export const DependencyManager: React.FC<DependencyManagerProps> = ({
       <Dialog open={addDialogOpen} onClose={onAddDialogClose}>
         <DialogTitle>Add New Dependency</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Add a new crate dependency to your project.
-          </DialogContentText>
+          <DialogContentText>Add a new crate dependency to your project.</DialogContentText>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
             <TextField
               label="Package name"
               value={newDependency.name}
-              onChange={(e) => onNewDependencyChange({
-                ...newDependency,
-                name: (e.target as any).value
-              })}
+              onChange={(e) =>
+                onNewDependencyChange({
+                  ...newDependency,
+                  name: (e.target as any).value,
+                })
+              }
               fullWidth
               required
             />
@@ -268,10 +273,12 @@ export const DependencyManager: React.FC<DependencyManagerProps> = ({
             <TextField
               label="Version (optional)"
               value={newDependency.version}
-              onChange={(e) => onNewDependencyChange({
-                ...newDependency,
-                version: (e.target as any).value
-              })}
+              onChange={(e) =>
+                onNewDependencyChange({
+                  ...newDependency,
+                  version: (e.target as any).value,
+                })
+              }
               fullWidth
               placeholder="latest or 1.0.0"
             />
@@ -279,10 +286,12 @@ export const DependencyManager: React.FC<DependencyManagerProps> = ({
             <TextField
               label="Features (comma-separated, optional)"
               value={newDependency.features}
-              onChange={(e) => onNewDependencyChange({
-                ...newDependency,
-                features: (e.target as any).value
-              })}
+              onChange={(e) =>
+                onNewDependencyChange({
+                  ...newDependency,
+                  features: (e.target as any).value,
+                })
+              }
               fullWidth
               placeholder="derive,rc"
             />
@@ -291,11 +300,7 @@ export const DependencyManager: React.FC<DependencyManagerProps> = ({
 
         <DialogActions>
           <Button onClick={onAddDialogClose}>Cancel</Button>
-          <Button
-            onClick={onAddDependency}
-            variant="contained"
-            disabled={!newDependency.name}
-          >
+          <Button onClick={onAddDependency} variant="contained" disabled={!newDependency.name}>
             Add
           </Button>
         </DialogActions>

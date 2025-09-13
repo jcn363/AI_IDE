@@ -36,18 +36,18 @@
 //! - Memory usage tracking and optimization
 //! - Concurrent operation throughput testing
 
-pub mod common;
-pub mod lsp_integration;
 pub mod ai_ml_integration;
 pub mod cargo_dependency_integration;
+pub mod common;
+pub mod coverage_analysis;
 pub mod cross_crate_integration;
+pub mod e2e_user_workflows;
+pub mod lsp_integration;
+pub mod performance_gates;
 pub mod performance_regression;
 pub mod quality_gates;
-pub mod coverage_analysis;
-pub mod performance_gates;
-pub mod e2e_user_workflows;
-pub mod ui_testing;
 pub mod ui_test_scenarios;
+pub mod ui_testing;
 
 /// Test execution configuration and helpers
 pub mod test_config;

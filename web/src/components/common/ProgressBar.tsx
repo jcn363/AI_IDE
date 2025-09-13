@@ -49,9 +49,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       {(label || showPercentage) && (
         <div className="progress-header">
           {label && <span className="progress-label">{label}</span>}
-          {showPercentage && (
-            <span className="progress-percentage">{percentage.toFixed(1)}%</span>
-          )}
+          {showPercentage && <span className="progress-percentage">{percentage.toFixed(1)}%</span>}
         </div>
       )}
 

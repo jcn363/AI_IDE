@@ -1,16 +1,16 @@
 import React, { useState, useMemo, KeyboardEvent } from 'react';
-import { 
-  Box, 
-  Button, 
-  Divider, 
-  IconButton, 
-  List, 
-  ListItemButton, 
-  ListItemIcon, 
-  ListItemText, 
-  Paper, 
-  Tooltip, 
-  Typography, 
+import {
+  Box,
+  Button,
+  Divider,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+  Tooltip,
+  Typography,
   useTheme,
   styled,
   ListItemButtonProps,
@@ -59,11 +59,9 @@ interface VersionResolution {
   resolutionNote?: string;
 }
 
-export const VisualConflictResolutionAssistant: React.FC<VisualConflictResolutionAssistantProps> = ({
-  alignment,
-  onResolve,
-  onCancel,
-}) => {
+export const VisualConflictResolutionAssistant: React.FC<
+  VisualConflictResolutionAssistantProps
+> = ({ alignment, onResolve, onCancel }) => {
   const theme = useTheme();
   const [selectedVersion, setSelectedVersion] = useState(alignment.suggestedVersion);
 
@@ -91,7 +89,7 @@ export const VisualConflictResolutionAssistant: React.FC<VisualConflictResolutio
       <Typography variant="h6" gutterBottom>
         Resolve Version Conflict: {alignment.dependencyName}
       </Typography>
-      
+
       <Typography variant="body2" color="text.secondary" paragraph>
         The following packages are using different versions of this dependency:
       </Typography>
@@ -123,7 +121,7 @@ export const VisualConflictResolutionAssistant: React.FC<VisualConflictResolutio
                       <Typography variant="body1" component="span" fontWeight={500}>
                         {pkg}
                       </Typography>
-                      <Tooltip 
+                      <Tooltip
                         title={`Version details for ${pkg}@${version}`}
                         arrow
                         placement="right"
@@ -171,12 +169,14 @@ export const VisualConflictResolutionAssistant: React.FC<VisualConflictResolutio
         <Button variant="outlined" onClick={onCancel}>
           Cancel
         </Button>
-        <Button 
-          variant="contained" 
+        <Button
+          variant="contained"
           color="primary"
-          onClick={() => onResolve({
-            selectedVersion: alignment.suggestedVersion,
-          })}
+          onClick={() =>
+            onResolve({
+              selectedVersion: alignment.suggestedVersion,
+            })
+          }
         >
           Apply Resolution
         </Button>

@@ -2,10 +2,7 @@ import * as React from 'react';
 import { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type * as monaco from 'monaco-editor';
 
-// MUI Components
-import { Alert, Box, CircularProgress, Snackbar, styled, useTheme } from '@mui/material';
-
-// Monaco Editor
+// Monaco Editor types - imported dynamically
 import type { OnMount } from '@monaco-editor/react';
 
 // Components
@@ -28,26 +25,121 @@ import { extToLanguageId } from '../features/editor/utils';
 // Types
 import { SnackbarState } from '../features/editor/types';
 
-// Styled components
-const EditorContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  height: '100vh',
-  width: '100%',
-  backgroundColor: theme.palette.background.default,
-}));
+// Create styled components once components are loaded
+const createStyledComponents = (muiComponents: any) => {
+  if (!muiComponents.styled || !muiComponents.Box) return {};
 
-const EditorWrapper = styled(Box)({
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  overflow: 'hidden',
-  position: 'relative',
-});
+  const { styled, Box } = muiComponents;
+
+  const EditorContainer = styled(Box)(({ theme }: any) => ({
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    width: '100%',
+    backgroundColor: theme.palette.background.default,
+  }));
+
+  const EditorWrapper = styled(Box)({
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    position: 'relative',
+  });
+
+  return { EditorContainer, EditorWrapper };
+};
 
 const EditorPage: React.FC = (): ReactElement => {
-  const theme = useTheme();
+  // Dynamic imports for heavy libraries
+  const [muiComponents, setMuiComponents] = useState<{
+    Alert?: any;
+    Box?: any;
+    CircularProgress?: any;
+    Snackbar?: any;
+    styled?: any;
+    useTheme?: any;
+  }>({});
+  const [monacoComponents, setMonacoComponents] = useState<{
+    Editor?: any;
+    loader?: any;
+  }>({});
+
+  // Load Material UI components dynamically
+  useEffect(() => {
+    const loadMuiComponents = async () => {
+      try {
+        // Tree shaking: Import only specific components needed
+        const [
+          { default: Alert },
+          { default: Box },
+          { default: CircularProgress },
+          { default: Snackbar },
+          { default: styled },
+          { default: useTheme },
+        ] = await Promise.all([
+          import('@mui/material/Alert'),
+          import('@mui/material/Box'),
+          import('@mui/material/CircularProgress'),
+          import('@mui/material/Snackbar'),
+          import('@mui/system/styled'),
+          import('@mui/material/styles/useTheme'),
+        ]);
+
+        setMuiComponents({
+          Alert: Alert.default || Alert,
+          Box: Box.default || Box,
+          CircularProgress: CircularProgress.default || CircularProgress,
+          Snackbar: Snackbar.default || Snackbar,
+          styled: styled.default || styled,
+          useTheme: useTheme.default || useTheme,
+        });
+      } catch (error) {
+        console.error('Failed to load Material UI components:', error);
+      }
+    };
+
+    loadMuiComponents();
+  }, []);
+
+  // Load Monaco Editor components dynamically
+  useEffect(() => {
+    const loadMonacoComponents = async () => {
+      try {
+        const [{ default: Editor }, { loader }] = await Promise.all([
+          import('@monaco-editor/react'),
+          import('@monaco-editor/loader'),
+        ]);
+
+        setMonacoComponents({
+          Editor,
+          loader,
+        });
+      } catch (error) {
+        console.error('Failed to load Monaco Editor components:', error);
+      }
+    };
+
+    loadMonacoComponents();
+  }, []);
+
+  // Early return if components haven't loaded yet
+  if (!muiComponents.Box || !muiComponents.CircularProgress) {
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
+      >
+        <div>Loading editor...</div>
+      </div>
+    );
+  }
+
+  const { Alert, Box, CircularProgress, Snackbar } = muiComponents;
+  const theme = muiUseTheme();
   const dispatch = useAppDispatch();
+
+  // Create styled components
+  const { EditorContainer, EditorWrapper } = createStyledComponents(muiComponents);
 
   // Editor slice
   const editorState = useAppSelector((state: RootState) => state.editor);
@@ -99,11 +191,11 @@ const EditorPage: React.FC = (): ReactElement => {
         tabManagementActions.openFileInPane({
           paneId: activePaneId,
           filePath,
-        }),
+        })
       );
       dispatch(editorActions.setCurrentFile(filePath));
     },
-    [activePaneId, dispatch],
+    [activePaneId, dispatch]
   );
 
   const handleTabClose = useCallback(
@@ -113,16 +205,18 @@ const EditorPage: React.FC = (): ReactElement => {
         tabManagementActions.closeFileInPane({
           paneId: activePaneId,
           filePath,
-        }),
+        })
       );
     },
-    [activePaneId, dispatch],
+    [activePaneId, dispatch]
   );
 
   const renderEditorTabs = useCallback(() => {
     if (!activePaneId) return null;
     const files = (activePane?.files || []).map((f) =>
-      (typeof f === 'string' ? { path: f, isPinned: false } : { path: f.path, isPinned: Boolean(f.isPinned) }),
+      typeof f === 'string'
+        ? { path: f, isPinned: false }
+        : { path: f.path, isPinned: Boolean(f.isPinned) }
     );
 
     return (
@@ -145,10 +239,10 @@ const EditorPage: React.FC = (): ReactElement => {
         editorActions.updateFileContent({
           filePath: activePane.activeFile,
           content,
-        }),
+        })
       );
     },
-    [activePane?.activeFile, dispatch],
+    [activePane?.activeFile, dispatch]
   );
 
   // Open a file from disk
@@ -182,7 +276,7 @@ const EditorPage: React.FC = (): ReactElement => {
         editorActions.updateFileContent({
           filePath: activeFilePath,
           content,
-        }),
+        })
       );
       dispatch(editorActions.saveFileSuccess(activeFilePath));
       setSnackbar({
@@ -222,7 +316,7 @@ const EditorPage: React.FC = (): ReactElement => {
       setIsEditorReady(true);
       onMountWithBreakpoints(editor, monacoInstance);
     },
-    [onMountWithBreakpoints],
+    [onMountWithBreakpoints]
   );
 
   // Respond to navigation target
@@ -277,7 +371,14 @@ const EditorPage: React.FC = (): ReactElement => {
             monacoRef={monacoRef}
           >
             {isLoading && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: '100%',
+                }}
+              >
                 <CircularProgress />
               </Box>
             )}

@@ -5,10 +5,10 @@
  * Types of changes that can be applied to resolve errors
  */
 export enum ChangeType {
-  Insert = 'insert',     // Insert new code/text
-  Delete = 'delete',     // Remove code/text
-  Replace = 'replace',   // Replace existing code/text
-  Move = 'move'          // Move code/text to different location
+  Insert = 'insert', // Insert new code/text
+  Delete = 'delete', // Remove code/text
+  Replace = 'replace', // Replace existing code/text
+  Move = 'move', // Move code/text to different location
 }
 
 /**
@@ -52,7 +52,13 @@ export interface FixSuggestion {
   description: string;
   errorId: string;
   priority: 'low' | 'medium' | 'high' | 'critical';
-  fixType: 'quick-fix' | 'refactor' | 'add-missing' | 'remove-unused' | 'type-conversion' | 'pattern-application';
+  fixType:
+    | 'quick-fix'
+    | 'refactor'
+    | 'add-missing'
+    | 'remove-unused'
+    | 'type-conversion'
+    | 'pattern-application';
   changes: CodeChange[];
   confidence: number;
   estimatedEffort: 'trivial' | 'low' | 'medium' | 'high';
@@ -295,7 +301,7 @@ export enum ErrorCategory {
   Documentation = 'documentation',
   TestingIssue = 'testing',
   ConcurrencyIssue = 'concurrency',
-  Generic = 'generic'
+  Generic = 'generic',
 }
 
 /**

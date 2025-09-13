@@ -39,7 +39,7 @@ export class BatchExecutor<T = any> {
       maxConcurrency: 5,
       timeout: 30000, // 30s
       continueOnError: true,
-      ...options
+      ...options,
     };
   }
 
@@ -80,7 +80,7 @@ export class BatchExecutor<T = any> {
             result,
             duration: endTime - startTime,
             startTime,
-            endTime
+            endTime,
           } as TaskResult<T>;
         } catch (error) {
           const endTime = performance.now();
@@ -91,7 +91,7 @@ export class BatchExecutor<T = any> {
             error: taskError,
             duration: endTime - startTime,
             startTime,
-            endTime
+            endTime,
           } as TaskResult<T>;
         }
       });
@@ -142,14 +142,18 @@ export class BatchExecutor<T = any> {
  * Rate limiter for controlling concurrent executions
  */
 export class RateLimiter {
-  private queue: Array<{ resolve: (value: any) => void; reject: (reason?: any) => void; fn: () => Promise<any>; }> = [];
+  private queue: Array<{
+    resolve: (value: any) => void;
+    reject: (reason?: any) => void;
+    fn: () => Promise<any>;
+  }> = [];
   private activeCount = 0;
   private options: RateLimitOptions;
 
   constructor(options: RateLimitOptions) {
     this.options = {
       queueLimit: Infinity,
-      ...options
+      ...options,
     };
   }
 
@@ -221,19 +225,19 @@ export class ParallelExecutor {
   async execute<T>(functions: (() => Promise<T>)[], options: BatchOptions = {}): Promise<T[]> {
     const tasks: Task<T>[] = functions.map((fn, index) => ({
       id: `task-${index}`,
-      execute: fn
+      execute: fn,
     }));
 
     const executor = new BatchExecutor<T>({
       maxConcurrency: this.maxConcurrency,
       continueOnError: true,
-      ...options
+      ...options,
     });
 
     executor.addTasks(tasks);
     const results = await executor.execute();
 
-    return results.map(result => {
+    return results.map((result) => {
       if (result.error) {
         throw result.error;
       }
@@ -250,28 +254,28 @@ export class ParallelExecutor {
   ): Promise<T[]> {
     const { maxRetries = this.retryAttempts, retryDelay = 1000 } = retryOptions;
 
-    const executeWithRetry = (fn: () => Promise<T>): () => Promise<T> => {
-    return async () => {
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-          return await fn();
-        } catch (error) {
-          if (attempt === maxRetries) {
-            throw error;
+    const executeWithRetry = (fn: () => Promise<T>): (() => Promise<T>) => {
+      return async () => {
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+          try {
+            return await fn();
+          } catch (error) {
+            if (attempt === maxRetries) {
+              throw error;
+            }
+            await this.delay(retryDelay);
           }
-          await this.delay(retryDelay);
         }
-      }
-      throw new Error('Should not reach here');
+        throw new Error('Should not reach here');
+      };
     };
-  };
 
     const retriedFunctions = functions.map(executeWithRetry);
     return this.execute(retriedFunctions);
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
@@ -289,7 +293,7 @@ export function batchProcess<T, R>(
     items.forEach((item, index) => {
       executor.addTask({
         id: `batch-item-${index}`,
-        execute: () => processor(item)
+        execute: () => processor(item),
       });
     });
 
@@ -300,10 +304,7 @@ export function batchProcess<T, R>(
 /**
  * Utility function for rate-limited execution
  */
-export function rateLimit<T>(
-  fn: () => Promise<T>,
-  rateLimiter: RateLimiter
-): () => Promise<T> {
+export function rateLimit<T>(fn: () => Promise<T>, rateLimiter: RateLimiter): () => Promise<T> {
   return () => rateLimiter.execute(fn);
 }
 

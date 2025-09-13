@@ -13,24 +13,24 @@
 //! - Integration with existing LSP service and AI infrastructure
 //!
 
+pub mod commands;
 pub mod error;
-pub mod service_registry;
-pub mod message_router;
 pub mod health_monitor;
 pub mod lifecycle_manager;
+pub mod message_router;
 pub mod orchestrator;
+pub mod service_registry;
 pub mod types;
-pub mod commands;
 
 pub use error::OrchestrationError;
-pub use service_registry::ServiceRegistry;
-pub use message_router::MessageRouter;
 pub use health_monitor::HealthMonitor;
 pub use lifecycle_manager::LifecycleManager;
+pub use message_router::MessageRouter;
 pub use orchestrator::ServiceOrchestrator;
+pub use service_registry::ServiceRegistry;
 pub use types::*;
 
 // Re-export commonly used items from dependencies
-pub use tokio::sync::{mpsc, oneshot};
 pub use serde::{Deserialize, Serialize};
+pub use tokio::sync::{mpsc, oneshot};
 pub use tracing::{debug, error, info, warn};

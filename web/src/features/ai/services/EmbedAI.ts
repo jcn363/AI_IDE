@@ -82,11 +82,7 @@ export class EmbedAIService {
     }
   }
 
-  async suggestRefactoring(
-    code: string,
-    context: string,
-    config: AIAnalysisConfig
-  ): Promise<any> {
+  async suggestRefactoring(code: string, context: string, config: AIAnalysisConfig): Promise<any> {
     try {
       return await window.electron.invoke('suggest_refactoring', {
         code,
@@ -99,11 +95,7 @@ export class EmbedAIService {
     }
   }
 
-  async generateTests(
-    code: string,
-    context: string,
-    config: AIAnalysisConfig
-  ): Promise<string[]> {
+  async generateTests(code: string, context: string, config: AIAnalysisConfig): Promise<string[]> {
     try {
       return await window.electron.invoke<string[]>('generate_tests', {
         code,
@@ -116,11 +108,7 @@ export class EmbedAIService {
     }
   }
 
-  async detectPatterns(
-    code: string,
-    patterns: string[],
-    config: AIAnalysisConfig
-  ): Promise<any> {
+  async detectPatterns(code: string, patterns: string[], config: AIAnalysisConfig): Promise<any> {
     try {
       return await window.electron.invoke('detect_patterns', {
         code,

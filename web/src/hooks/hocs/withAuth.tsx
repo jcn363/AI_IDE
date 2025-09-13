@@ -84,7 +84,7 @@ export function withAuth<P extends object>(
     fallbackComponent: FallbackComponent,
     loadingComponent: LoadingComponent,
     redirectTo,
-    showLoginButton = true
+    showLoginButton = true,
   } = options;
 
   const AuthenticatedComponent: React.FC<P> = (props) => {
@@ -119,7 +119,7 @@ export function withAuth<P extends object>(
 
     // Check required roles
     if (requiredRoles.length > 0) {
-      const hasRequiredRole = requiredRoles.some(role => auth.hasRole(role));
+      const hasRequiredRole = requiredRoles.some((role) => auth.hasRole(role));
       if (!hasRequiredRole) {
         return (
           <Alert severity="error" sx={{ m: 2 }}>
@@ -131,7 +131,7 @@ export function withAuth<P extends object>(
 
     // Check required permissions
     if (requiredPermissions.length > 0) {
-      const hasRequiredPermission = requiredPermissions.some(permission =>
+      const hasRequiredPermission = requiredPermissions.some((permission) =>
         auth.hasPermission(permission)
       );
       if (!hasRequiredPermission) {
@@ -173,18 +173,21 @@ export interface WithAuthOptions {
  * Default authentication fallback component
  */
 const DefaultAuthFallback: React.FC<{ showLoginButton?: boolean }> = ({
-  showLoginButton = true
+  showLoginButton = true,
 }) => (
-  <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="300px" p={3}>
+  <Box
+    display="flex"
+    flexDirection="column"
+    alignItems="center"
+    justifyContent="center"
+    minHeight="300px"
+    p={3}
+  >
     <Alert severity="warning" sx={{ mb: 2, maxWidth: 400 }}>
       You need to be logged in to access this resource.
     </Alert>
     {showLoginButton && (
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => window.location.href = '/login'}
-      >
+      <Button variant="contained" color="primary" onClick={() => (window.location.href = '/login')}>
         Go to Login
       </Button>
     )}
@@ -249,11 +252,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user: null,
     isAuthenticated: false,
     isLoading: false,
-    error: null
+    error: null,
   });
 
   const login = async (email: string, password: string): Promise<void> => {
-    setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+    setAuthState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
       // Placeholder login logic - replace with actual API call
@@ -263,14 +266,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           name: 'John Doe',
           email,
           roles: ['user'],
-          permissions: ['read', 'write']
+          permissions: ['read', 'write'],
         };
 
         setAuthState({
           user: mockUser,
           isAuthenticated: true,
           isLoading: false,
-          error: null
+          error: null,
         });
 
         localStorage.setItem('auth_user', JSON.stringify(mockUser));
@@ -278,10 +281,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Invalid credentials');
       }
     } catch (error) {
-      setAuthState(prev => ({
+      setAuthState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Login failed'
+        error: error instanceof Error ? error.message : 'Login failed',
       }));
       throw error;
     }
@@ -292,13 +295,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       user: null,
       isAuthenticated: false,
       isLoading: false,
-      error: null
+      error: null,
     });
     localStorage.removeItem('auth_user');
   };
 
   const checkAuth = async (): Promise<void> => {
-    setAuthState(prev => ({ ...prev, isLoading: true }));
+    setAuthState((prev) => ({ ...prev, isLoading: true }));
 
     try {
       // Check stored auth data - replace with actual validation
@@ -309,16 +312,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           user,
           isAuthenticated: true,
           isLoading: false,
-          error: null
+          error: null,
         });
       } else {
-        setAuthState(prev => ({ ...prev, isLoading: false }));
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
       }
     } catch (error) {
-      setAuthState(prev => ({
+      setAuthState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Auth check failed'
+        error: error instanceof Error ? error.message : 'Auth check failed',
       }));
     }
   };
@@ -337,14 +340,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     checkAuth,
     hasRole,
-    hasPermission
+    hasPermission,
   };
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
 
 // Export the context for advanced usage

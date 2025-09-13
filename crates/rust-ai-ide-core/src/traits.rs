@@ -9,7 +9,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use super::ai::{AIProvider, AIContext, AnalysisResult, AnalysisConfig, ComponentStatus, ModelConfig, ModelState};
+use super::ai::{
+    AIContext, AIProvider, AnalysisConfig, AnalysisResult, ComponentStatus, ModelConfig, ModelState,
+};
 use super::analysis::AnalysisTarget;
 use super::config::AppConfig;
 use super::error::IDEResult;
@@ -227,11 +229,7 @@ pub trait AnalysisTrait: ComponentLifecycle {
 #[async_trait]
 pub trait CodeGenerationTrait: ComponentLifecycle {
     /// Generate code based on specification
-    async fn generate(
-        &self,
-        spec: CodeGenSpec,
-        context: AIContext,
-    ) -> IDEResult<CodeGenResult>;
+    async fn generate(&self, spec: CodeGenSpec, context: AIContext) -> IDEResult<CodeGenResult>;
 
     /// Validate generated code
     async fn validate(&self, code: String, language: &str) -> IDEResult<ValidationResult>;
@@ -274,13 +272,22 @@ pub struct ValidationResult {
 #[async_trait]
 pub trait RefactoringTrait: ComponentLifecycle {
     /// Analyze refactoring possibilities
-    async fn analyze_opportunities(&self, target: AnalysisTarget) -> IDEResult<Vec<RefactoringOpportunity>>;
+    async fn analyze_opportunities(
+        &self,
+        target: AnalysisTarget,
+    ) -> IDEResult<Vec<RefactoringOpportunity>>;
 
     /// Execute a refactoring
-    async fn execute_refactoring(&self, opportunity: RefactoringOpportunity) -> IDEResult<RefactoringResult>;
+    async fn execute_refactoring(
+        &self,
+        opportunity: RefactoringOpportunity,
+    ) -> IDEResult<RefactoringResult>;
 
     /// Preview refactoring changes
-    async fn preview_refactoring(&self, opportunity: RefactoringOpportunity) -> IDEResult<RefactoringPreview>;
+    async fn preview_refactoring(
+        &self,
+        opportunity: RefactoringOpportunity,
+    ) -> IDEResult<RefactoringPreview>;
 }
 
 /// Refactoring opportunity
@@ -374,7 +381,8 @@ pub struct PluginCommand {
 #[async_trait]
 pub trait ComponentRegistry: Send + Sync {
     /// Register a component
-    async fn register_component(&self, component: Box<dyn ComponentLifecycle>) -> IDEResult<String>;
+    async fn register_component(&self, component: Box<dyn ComponentLifecycle>)
+        -> IDEResult<String>;
 
     /// Unregister a component
     async fn unregister_component(&self, id: &str) -> IDEResult<()>;

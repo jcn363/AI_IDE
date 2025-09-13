@@ -3,9 +3,9 @@
 //! This plugin generates OpenAPI 3.0 specifications from Rust types,
 //! enabling automatic REST API documentation.
 
-use async_trait::async_trait;
 use crate::plugins::*;
-use crate::{ParsedType, TransformationContext, serde_json};
+use crate::{serde_json, ParsedType, TransformationContext};
+use async_trait::async_trait;
 
 /// OpenAPI generator plugin
 #[derive(Debug)]
@@ -19,10 +19,16 @@ impl OpenAPIGeneratorPlugin {
 
 #[async_trait]
 impl GeneratorPluginTrait for OpenAPIGeneratorPlugin {
-    fn name(&self) -> &str { "openapi-generator" }
+    fn name(&self) -> &str {
+        "openapi-generator"
+    }
 
     fn target_platforms(&self) -> Vec<String> {
-        vec!["openapi".to_string(), "swagger".to_string(), "rest".to_string()]
+        vec![
+            "openapi".to_string(),
+            "swagger".to_string(),
+            "rest".to_string(),
+        ]
     }
 
     fn supported_formats(&self) -> Vec<String> {
@@ -35,19 +41,23 @@ impl GeneratorPluginTrait for OpenAPIGeneratorPlugin {
         platform: &str,
         config: &serde_json::Value,
     ) -> Result<GeneratedCode, PluginError> {
-        let openapi_version = config.get("openapi_version")
+        let openapi_version = config
+            .get("openapi_version")
             .and_then(|v| v.as_str())
             .unwrap_or("3.0.3");
 
-        let title = config.get("title")
+        let title = config
+            .get("title")
             .and_then(|v| v.as_str())
             .unwrap_or("API");
 
-        let version = config.get("version")
+        let version = config
+            .get("version")
             .and_then(|v| v.as_str())
             .unwrap_or("1.0.0");
 
-        let include_responses = config.get("responses")
+        let include_responses = config
+            .get("responses")
             .unwrap_or(&serde_json::Value::Bool(true))
             .as_bool()
             .unwrap_or(true);
@@ -74,10 +84,13 @@ impl GeneratorPluginTrait for OpenAPIGeneratorPlugin {
         }
 
         // Add example paths if requested
-        if include_responses && config.get("example_paths")
-            .unwrap_or(&serde_json::Value::Bool(false))
-            .as_bool()
-            .unwrap_or(false) {
+        if include_responses
+            && config
+                .get("example_paths")
+                .unwrap_or(&serde_json::Value::Bool(false))
+                .as_bool()
+                .unwrap_or(false)
+        {
             self.add_example_paths(&mut spec, types);
         }
 
@@ -282,8 +295,17 @@ mod tests {
 
         // Check required fields (email is optional)
         let required = &user_schema["required"];
-        assert!(required.as_array().unwrap().contains(&serde_json::json!("id")));
-        assert!(required.as_array().unwrap().contains(&serde_json::json!("name")));
-        assert!(!required.as_array().unwrap().contains(&serde_json::json!("email")));
+        assert!(required
+            .as_array()
+            .unwrap()
+            .contains(&serde_json::json!("id")));
+        assert!(required
+            .as_array()
+            .unwrap()
+            .contains(&serde_json::json!("name")));
+        assert!(!required
+            .as_array()
+            .unwrap()
+            .contains(&serde_json::json!("email")));
     }
 }

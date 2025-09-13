@@ -1,20 +1,20 @@
-use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use rust_ai_ide_perfdevel_tools::*;
 use std::time::Duration;
 
 fn memory_usage_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("memory_usage");
-    
+
     // Test memory allocation with different sizes
     let allocation_sizes = [
-        ("small", 1_000),     // 1 KB
+        ("small", 1_000),      // 1 KB
         ("medium", 1_000_000), // 1 MB
         ("large", 10_000_000), // 10 MB
     ];
-    
+
     for (size_name, bytes) in &allocation_sizes {
         group.throughput(criterion::Throughput::Bytes(*bytes as u64));
-        
+
         group.bench_with_input(
             BenchmarkId::new("allocate_memory", size_name),
             bytes,
@@ -26,10 +26,10 @@ fn memory_usage_benchmark(c: &mut Criterion) {
             },
         );
     }
-    
+
     // Test memory usage with different numbers of small allocations
     let allocation_counts = [100, 1_000, 10_000];
-    
+
     for &count in &allocation_counts {
         group.bench_with_input(
             BenchmarkId::new("multiple_allocations", count),
@@ -46,7 +46,7 @@ fn memory_usage_benchmark(c: &mut Criterion) {
             },
         );
     }
-    
+
     // Test string memory usage
     group.bench_function("string_allocations", |b| {
         b.iter(|| {
@@ -57,7 +57,7 @@ fn memory_usage_benchmark(c: &mut Criterion) {
             s
         });
     });
-    
+
     // Test memory fragmentation
     group.bench_function("memory_fragmentation", |b| {
         b.iter(|| {
@@ -69,14 +69,15 @@ fn memory_usage_benchmark(c: &mut Criterion) {
                 for j in 0..size {
                     v.push(j as u8);
                 }
-                if i % 3 != 0 {  // Keep some allocations
+                if i % 3 != 0 {
+                    // Keep some allocations
                     vecs.push(v);
                 }
             }
             vecs
         });
     });
-    
+
     group.finish();
 }
 

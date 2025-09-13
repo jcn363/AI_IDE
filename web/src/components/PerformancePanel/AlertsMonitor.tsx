@@ -67,7 +67,7 @@ const AlertsMonitor: React.FC<AlertsMonitorProps> = ({
   }, [autoRefreshInterval, onRefresh]);
 
   const toggleAlertExpansion = (alertId: string) => {
-    setExpandedAlerts(prev => {
+    setExpandedAlerts((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(alertId)) {
         newSet.delete(alertId);
@@ -117,21 +117,21 @@ const AlertsMonitor: React.FC<AlertsMonitorProps> = ({
   };
 
   // Filter alerts based on selected severity
-  const filteredAlerts = alerts.filter(alert => {
+  const filteredAlerts = alerts.filter((alert) => {
     if (filterSeverity === 'all') return true;
     return alert.severity === filterSeverity;
   });
 
   // Group alerts by status
-  const activeAlerts = filteredAlerts.filter(alert => !alert.resolved);
-  const resolvedAlerts = filteredAlerts.filter(alert => alert.resolved);
+  const activeAlerts = filteredAlerts.filter((alert) => !alert.resolved);
+  const resolvedAlerts = filteredAlerts.filter((alert) => alert.resolved);
 
   // Calculate alert statistics
   const stats = {
-    critical: alerts.filter(a => a.severity === 'critical' && !a.resolved).length,
-    high: alerts.filter(a => a.severity === 'high' && !a.resolved).length,
-    medium: alerts.filter(a => a.severity === 'medium' && !a.resolved).length,
-    low: alerts.filter(a => a.severity === 'low' && !a.resolved).length,
+    critical: alerts.filter((a) => a.severity === 'critical' && !a.resolved).length,
+    high: alerts.filter((a) => a.severity === 'high' && !a.resolved).length,
+    medium: alerts.filter((a) => a.severity === 'medium' && !a.resolved).length,
+    low: alerts.filter((a) => a.severity === 'low' && !a.resolved).length,
   };
 
   return (
@@ -154,7 +154,15 @@ const AlertsMonitor: React.FC<AlertsMonitorProps> = ({
                 label={`${label}${count > 0 ? ` (${count})` : ''}`}
                 onClick={() => setFilterSeverity(key)}
                 variant={filterSeverity === key ? 'filled' : 'outlined'}
-                color={key === 'critical' ? 'error' : key === 'high' ? 'error' : key === 'medium' ? 'warning' : 'default'}
+                color={
+                  key === 'critical'
+                    ? 'error'
+                    : key === 'high'
+                      ? 'error'
+                      : key === 'medium'
+                        ? 'warning'
+                        : 'default'
+                }
                 size="small"
               />
             ))}
@@ -169,7 +177,9 @@ const AlertsMonitor: React.FC<AlertsMonitorProps> = ({
 
       {/* Alert Statistics */}
       <Box mb={3}>
-        <Typography variant="h6" gutterBottom>Active Alerts Summary</Typography>
+        <Typography variant="h6" gutterBottom>
+          Active Alerts Summary
+        </Typography>
         <Box display="flex" gap={2} flexWrap="wrap">
           {stats.critical > 0 && (
             <Alert severity="error" variant="outlined">
@@ -224,7 +234,7 @@ const AlertsMonitor: React.FC<AlertsMonitorProps> = ({
                         '&:hover': {
                           bgcolor: 'action.hover',
                         },
-                        cursor: 'pointer'
+                        cursor: 'pointer',
                       }}
                       onClick={() => toggleAlertExpansion(alertId)}
                       secondaryAction={
@@ -258,15 +268,11 @@ const AlertsMonitor: React.FC<AlertsMonitorProps> = ({
                         </Box>
                       }
                     >
-                      <ListItemIcon>
-                        {getSeverityIcon(alert.severity)}
-                      </ListItemIcon>
+                      <ListItemIcon>{getSeverityIcon(alert.severity)}</ListItemIcon>
                       <ListItemText
                         primary={
                           <Box display="flex" alignItems="center" gap={1}>
-                            <Typography variant="subtitle1">
-                              {alert.title}
-                            </Typography>
+                            <Typography variant="subtitle1">{alert.title}</Typography>
                             <Chip
                               label={alert.severity.toUpperCase()}
                               size="small"
@@ -305,7 +311,11 @@ const AlertsMonitor: React.FC<AlertsMonitorProps> = ({
                             </Typography>
                             {Object.entries(alert.details).map(([key, value]) => (
                               <Box key={key} display="flex" gap={1} alignItems="center" mb={1}>
-                                <Typography variant="body2" color="text.secondary" sx={{ minWidth: 120 }}>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{ minWidth: 120 }}
+                                >
                                   {key}:
                                 </Typography>
                                 <Typography variant="body2">{value}</Typography>
@@ -346,15 +356,8 @@ const AlertsMonitor: React.FC<AlertsMonitorProps> = ({
                   <ListItemText
                     primary={
                       <Box display="flex" alignItems="center" gap={1}>
-                        <Typography variant="body2">
-                          {alert.title}
-                        </Typography>
-                        <Chip
-                          label="RESOLVED"
-                          size="small"
-                          color="success"
-                          variant="outlined"
-                        />
+                        <Typography variant="body2">{alert.title}</Typography>
+                        <Chip label="RESOLVED" size="small" color="success" variant="outlined" />
                       </Box>
                     }
                     secondary={`${alert.message} • Resolved ${formatTimestamp(alert.resolvedAt || '')}`}

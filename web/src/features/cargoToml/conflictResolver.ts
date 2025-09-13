@@ -61,7 +61,7 @@ export class DependencyConflictResolver {
    * Resolve all conflicts using the current strategy
    */
   resolveConflicts(conflicts: VersionConflict[]): VersionConflict[] {
-    return conflicts.map(conflict => ({
+    return conflicts.map((conflict) => ({
       ...conflict,
       resolution: this.resolveConflict(conflict),
     }));
@@ -71,41 +71,41 @@ export class DependencyConflictResolver {
    * Resolve a single conflict using the current strategy
    */
   private resolveConflict(conflict: VersionConflict): { version: string; reason: string } {
-    const versions = conflict.requestedVersions.map(v => v.version);
-    
+    const versions = conflict.requestedVersions.map((v) => v.version);
+
     // Try to find a version that satisfies all constraints
-    const allRanges = versions.map(v => new semver.Range(v));
+    const allRanges = versions.map((v) => new semver.Range(v));
     const allVersions = this.getAllVersions(conflict.package);
-    
+
     // Sort versions according to strategy
     const sortedVersions = [...allVersions].sort((a, b) => {
       if (this.strategy.preferStable) {
         if (semver.prerelease(a) && !semver.prerelease(b)) return 1;
         if (!semver.prerelease(a) && semver.prerelease(b)) return -1;
       }
-      
+
       if (this.strategy.preferHighest) {
         return semver.rcompare(a, b);
       }
-      
+
       if (this.strategy.preferLowest) {
         return semver.compare(a, b);
       }
-      
+
       // Default: prefer highest version that satisfies all constraints
       return semver.rcompare(a, b);
     });
-    
+
     // Find the first version that satisfies all constraints
     for (const version of sortedVersions) {
-      if (allRanges.every(range => semver.satisfies(version, range))) {
+      if (allRanges.every((range) => semver.satisfies(version, range))) {
         return {
           version,
           reason: `Version ${version} satisfies all constraints and is ${this.strategy.preferStable ? 'stable' : 'the latest'}`,
         };
       }
     }
-    
+
     // If no version satisfies all constraints, use the highest version
     return {
       version: sortedVersions[0],
@@ -118,24 +118,24 @@ export class DependencyConflictResolver {
    */
   private collectDependencies(): Record<string, Map<string, Set<string>>> {
     const deps: Record<string, Map<string, Set<string>>> = {};
-    
+
     const addDependency = (name: string, version: string, requester: string) => {
       if (!deps[name]) {
         deps[name] = new Map();
       }
-      
+
       if (!deps[name].has(version)) {
         deps[name].set(version, new Set());
       }
-      
+
       deps[name].get(version)?.add(requester);
     };
-    
+
     // Process direct dependencies
     this.processDependencySection(this.manifest.dependencies, 'root', addDependency);
     this.processDependencySection(this.manifest['dev-dependencies'], 'root', addDependency);
     this.processDependencySection(this.manifest['build-dependencies'], 'root', addDependency);
-    
+
     // Process lockfile if available
     if (this.lockfile.package) {
       for (const pkg of this.lockfile.package) {
@@ -146,17 +146,17 @@ export class DependencyConflictResolver {
         }
       }
     }
-    
+
     return deps;
   }
-  
+
   private processDependencySection(
     deps: Record<string, CargoDependency> | undefined,
     requester: string,
-    callback: (name: string, version: string, requester: string) => void,
+    callback: (name: string, version: string, requester: string) => void
   ) {
     if (!deps) return;
-    
+
     for (const [name, dep] of Object.entries(deps)) {
       if (typeof dep === 'string') {
         callback(name, dep, requester);
@@ -166,13 +166,13 @@ export class DependencyConflictResolver {
       }
     }
   }
-  
+
   /**
    * Get all available versions for a package from the lockfile
    */
   private getAllVersions(packageName: string): string[] {
     if (!this.lockfile.package) return [];
-    
+
     return this.lockfile.package
       .filter((pkg: any) => pkg.name === packageName)
       .map((pkg: any) => pkg.version)

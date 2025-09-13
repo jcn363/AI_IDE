@@ -4,16 +4,16 @@
 //! organizing commands into focused submodules and providing delegation bridges
 //! to the rust-ai-ide-commands-ai crate.
 
-pub mod services;
 pub mod analysis;
 pub mod learning;
+pub mod services;
 
-use std::{collections::HashMap, sync::Arc};
 use crate::commands::ai::services::AIServiceState;
 use crate::utils;
+use std::{collections::HashMap, sync::Arc};
 
 // Import delegations to rust-ai-ide-commands-ai for better implementations
-use rust_ai_ide_commands_ai::{models::ModelManager, analysis::AnalysisService};
+use rust_ai_ide_commands_ai::{analysis::AnalysisService, models::ModelManager};
 
 // Type aliases for state management bridge
 /// Bridge state that holds both the original AIServiceState (Mutex) and new RwLock-based services
@@ -43,7 +43,7 @@ impl AIStateBridge {
         // Create analysis service (requires an AI service instance)
         if let Some(model_mgr) = &bridge.model_manager {
             let ai_service = Arc::new(tokio::sync::RwLock::new(
-                rust_ai_ide_commands_ai::services::AIService::new().await?
+                rust_ai_ide_commands_ai::services::AIService::new().await?,
             ));
 
             if let Ok(analysis_svc) = AnalysisService::new(ai_service).await {
@@ -57,7 +57,8 @@ impl AIStateBridge {
     /// Get ModelManager reference, initializing if needed
     pub async fn model_manager(&mut self) -> Result<Arc<ModelManager>, String> {
         if self.model_manager.is_none() {
-            let manager = ModelManager::new().await
+            let manager = ModelManager::new()
+                .await
                 .map_err(|e| format!("Failed to initialize ModelManager: {}", e))?;
             self.model_manager = Some(Arc::new(manager));
         }
@@ -71,11 +72,13 @@ impl AIStateBridge {
             // Ensure we have a model manager for analysis service
             let model_mgr = self.model_manager().await?;
             let ai_service = Arc::new(tokio::sync::RwLock::new(
-                rust_ai_ide_commands_ai::services::AIService::new().await
-                    .map_err(|e| format!("Failed to create AI service: {}", e))?
+                rust_ai_ide_commands_ai::services::AIService::new()
+                    .await
+                    .map_err(|e| format!("Failed to create AI service: {}", e))?,
             ));
 
-            let analysis_svc = AnalysisService::new(ai_service).await
+            let analysis_svc = AnalysisService::new(ai_service)
+                .await
                 .map_err(|e| format!("Failed to initialize AnalysisService: {}", e))?;
             self.analysis_service = Some(Arc::new(analysis_svc));
         }
@@ -109,48 +112,27 @@ pub type AIBridgeState = Arc<tokio::sync::Mutex<AIStateBridge>>;
 
 // AI service management commands
 pub use services::{
-    initialize_ai_service,
-    get_ai_config,
-    update_ai_config,
-    get_loaded_models,
-    load_model,
-    unload_model,
-    get_model_status,
-    get_resource_status,
-    validate_model_config,
-    download_model,
+    download_model, get_ai_config, get_loaded_models, get_model_status, get_resource_status,
+    initialize_ai_service, load_model, unload_model, update_ai_config, validate_model_config,
 };
 
 // Fine-tuning commands
 pub use services::finetune::{
+    cancel_finetune_job, get_finetune_progress, list_finetune_jobs, prepare_dataset,
     start_finetune_job,
-    get_finetune_progress,
-    cancel_finetune_job,
-    list_finetune_jobs,
-    prepare_dataset,
 };
 
 // Code analysis commands
-pub use analysis::{
-    analyze_file,
-    get_performance_suggestions,
-    apply_ai_suggestion,
-};
+pub use analysis::{analyze_file, apply_ai_suggestion, get_performance_suggestions};
 
 // Diagnostics commands
 pub use analysis::diagnostics::{
-    get_compiler_diagnostics,
-    resolve_errors_with_ai,
-    explain_error_code,
+    explain_error_code, get_compiler_diagnostics, resolve_errors_with_ai,
 };
 
 // Learning system commands
 pub use learning::{
-    record_successful_fix,
-    get_learned_patterns,
+    analyze_learning_patterns, apply_learned_pattern, get_learned_patterns,
+    get_learning_statistics, get_learning_system_health, record_successful_fix,
     update_learning_preferences,
-    get_learning_statistics,
-    analyze_learning_patterns,
-    apply_learned_pattern,
-    get_learning_system_health,
 };

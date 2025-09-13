@@ -75,7 +75,7 @@ export function useAsync<TData = any, TArgs extends any[] = []>(
     onError,
     immediate = false,
     initialData,
-    errorContext = 'operation'
+    errorContext = 'operation',
   } = options;
 
   const [state, setState] = useState<AsyncState<TData>>(
@@ -84,25 +84,30 @@ export function useAsync<TData = any, TArgs extends any[] = []>(
 
   const [lastArgs, setLastArgs] = useState<TArgs | null>(null);
 
-  const execute = useCallback(async (...args: TArgs): Promise<TData | null> => {
-    setLastArgs(args as TArgs);
-    setState({ status: 'loading' });
+  const execute = useCallback(
+    async (...args: TArgs): Promise<TData | null> => {
+      setLastArgs(args as TArgs);
+      setState({ status: 'loading' });
 
-    try {
-      const data = await asyncFn(...args);
-      setState({ status: 'success', data });
-      onSuccess?.(data);
-      return data;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
-      setState({ status: 'error', error: errorMessage });
-      onError?.(errorMessage);
-      return null;
-    }
-  }, [asyncFn, onSuccess, onError]);
+      try {
+        const data = await asyncFn(...args);
+        setState({ status: 'success', data });
+        onSuccess?.(data);
+        return data;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+        setState({ status: 'error', error: errorMessage });
+        onError?.(errorMessage);
+        return null;
+      }
+    },
+    [asyncFn, onSuccess, onError]
+  );
 
   const reset = useCallback(() => {
-    setState(initialData !== undefined ? { status: 'success', data: initialData } : { status: 'idle' });
+    setState(
+      initialData !== undefined ? { status: 'success', data: initialData } : { status: 'idle' }
+    );
     setLastArgs(null);
   }, [initialData]);
 
@@ -146,7 +151,7 @@ export function useLazyAsync<TData = any, TArgs extends any[] = []>(
 
   return {
     ...hook,
-    called: hook.state.status !== 'idle'
+    called: hook.state.status !== 'idle',
   };
 }
 
@@ -156,19 +161,22 @@ export function useLazyAsync<TData = any, TArgs extends any[] = []>(
 export function useAsyncMultiple<TData = any>() {
   const [state, setState] = useState<AsyncState<TData[]>>({ status: 'idle' });
 
-  const execute = useCallback(async (operations: Array<() => Promise<TData>>): Promise<TData[] | null> => {
-    setState({ status: 'loading' });
+  const execute = useCallback(
+    async (operations: Array<() => Promise<TData>>): Promise<TData[] | null> => {
+      setState({ status: 'loading' });
 
-    try {
-      const results = await Promise.all(operations.map(op => op()));
-      setState({ status: 'success', data: results });
-      return results;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
-      setState({ status: 'error', error: errorMessage });
-      return null;
-    }
-  }, []);
+      try {
+        const results = await Promise.all(operations.map((op) => op()));
+        setState({ status: 'success', data: results });
+        return results;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+        setState({ status: 'error', error: errorMessage });
+        return null;
+      }
+    },
+    []
+  );
 
   const reset = useCallback(() => {
     setState({ status: 'idle' });

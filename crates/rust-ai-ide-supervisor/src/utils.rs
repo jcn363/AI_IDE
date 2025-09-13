@@ -1,9 +1,9 @@
 //! Utility functions for supervisor operations
 
-use std::path::Path;
-use std::time::Duration;
 use chrono::{DateTime, Utc};
 use rust_ai_ide_common::validation::{validate_secure_path, TauriInputSanitizer};
+use std::path::Path;
+use std::time::Duration;
 
 use crate::error::{SupervisorError, SupervisorResult};
 
@@ -17,12 +17,19 @@ impl PathValidator {
             .map_err(|e| SupervisorError::security_error("database_path", &e.to_string()))?;
 
         // Ensure path doesn't contain dangerous characters or patterns
-        let sanitized = TauriInputSanitizer::sanitize_path(path)
-            .map_err(|e| SupervisorError::security_error("database_path", &format!("Path sanitization failed: {:?}", e)))?;
+        let sanitized = TauriInputSanitizer::sanitize_path(path).map_err(|e| {
+            SupervisorError::security_error(
+                "database_path",
+                &format!("Path sanitization failed: {:?}", e),
+            )
+        })?;
 
         // Additional validation: must end with .db extension for safety
         if !sanitized.ends_with(".db") {
-            return Err(SupervisorError::security_error("database_path", "Database path must end with .db extension"));
+            return Err(SupervisorError::security_error(
+                "database_path",
+                "Database path must end with .db extension",
+            ));
         }
 
         Ok(sanitized)
@@ -33,12 +40,19 @@ impl PathValidator {
         validate_secure_path(Path::new(path), "checkpoint directory")
             .map_err(|e| SupervisorError::security_error("checkpoint_dir", &e.to_string()))?;
 
-        let sanitized = TauriInputSanitizer::sanitize_path(path)
-            .map_err(|e| SupervisorError::security_error("checkpoint_dir", &format!("Path sanitization failed: {:?}", e)))?;
+        let sanitized = TauriInputSanitizer::sanitize_path(path).map_err(|e| {
+            SupervisorError::security_error(
+                "checkpoint_dir",
+                &format!("Path sanitization failed: {:?}", e),
+            )
+        })?;
 
         // Ensure it's a directory path (doesn't end with file extensions)
         if sanitized.ends_with(".db") || sanitized.ends_with(".json") || sanitized.contains(".") {
-            return Err(SupervisorError::security_error("checkpoint_dir", "Checkpoint directory should not have file extensions"));
+            return Err(SupervisorError::security_error(
+                "checkpoint_dir",
+                "Checkpoint directory should not have file extensions",
+            ));
         }
 
         Ok(sanitized)
@@ -50,12 +64,19 @@ pub struct TimeUtils;
 
 impl TimeUtils {
     /// Calculate exponential backoff delay
-    pub fn calculate_exponential_backoff(attempt: u32, base_delay: Duration, max_delay: Duration) -> Duration {
+    pub fn calculate_exponential_backoff(
+        attempt: u32,
+        base_delay: Duration,
+        max_delay: Duration,
+    ) -> Duration {
         let delay_ms = base_delay.as_millis() as u64;
         let multiplier = 2_u64.pow(attempt.saturating_sub(1).min(20)); // Cap at 2^20 to prevent overflow
         let calculated_delay_ms = delay_ms.saturating_mul(multiplier);
 
-        Duration::from_millis(std::cmp::min(calculated_delay_ms, max_delay.as_millis() as u64))
+        Duration::from_millis(std::cmp::min(
+            calculated_delay_ms,
+            max_delay.as_millis() as u64,
+        ))
     }
 
     /// Check if a timestamp is within a time window
@@ -71,13 +92,20 @@ impl TimeUtils {
     }
 
     /// Calculate time until next health check
-    pub fn time_until_next_check(last_check: Option<DateTime<Utc>>, interval: Duration) -> Duration {
+    pub fn time_until_next_check(
+        last_check: Option<DateTime<Utc>>,
+        interval: Duration,
+    ) -> Duration {
         if let Some(last) = last_check {
-            let next_check_due = last + chrono::Duration::from_std(interval).unwrap_or_else(|_| chrono::Duration::minutes(5));
+            let next_check_due = last
+                + chrono::Duration::from_std(interval)
+                    .unwrap_or_else(|_| chrono::Duration::minutes(5));
             let now = Utc::now();
 
             if next_check_due > now {
-                (next_check_due - now).to_std().unwrap_or(Duration::from_secs(0))
+                (next_check_due - now)
+                    .to_std()
+                    .unwrap_or(Duration::from_secs(0))
             } else {
                 Duration::from_secs(0) // Overdue
             }
@@ -105,22 +133,37 @@ impl ServiceValidator {
     /// Validate service name format
     pub fn validate_service_name(name: &str) -> SupervisorResult<()> {
         if name.is_empty() {
-            return Err(SupervisorError::validation_error("service_name", "Service name cannot be empty"));
+            return Err(SupervisorError::validation_error(
+                "service_name",
+                "Service name cannot be empty",
+            ));
         }
 
         if name.len() > 100 {
-            return Err(SupervisorError::validation_error("service_name", "Service name too long (max 100 characters)"));
+            return Err(SupervisorError::validation_error(
+                "service_name",
+                "Service name too long (max 100 characters)",
+            ));
         }
 
         // Allow only alphanumeric characters, hyphens, and underscores
-        if !name.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
-            return Err(SupervisorError::validation_error("service_name", "Service name contains invalid characters"));
+        if !name
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
+        {
+            return Err(SupervisorError::validation_error(
+                "service_name",
+                "Service name contains invalid characters",
+            ));
         }
 
         // Check for reserved names
         let reserved_names = ["system", "internal", "supervisor", "local"];
         if reserved_names.contains(&name.to_lowercase().as_str()) {
-            return Err(SupervisorError::validation_error("service_name", "Service name is reserved"));
+            return Err(SupervisorError::validation_error(
+                "service_name",
+                "Service name is reserved",
+            ));
         }
 
         Ok(())
@@ -132,7 +175,10 @@ impl ServiceValidator {
             if arg.contains("&&") || arg.contains("||") || arg.contains("|") || arg.contains(";") {
                 return Err(SupervisorError::security_error(
                     "command_args",
-                    &format!("Potentially dangerous command argument at index {}: {}", index, arg)
+                    &format!(
+                        "Potentially dangerous command argument at index {}: {}",
+                        index, arg
+                    ),
                 ));
             }
         }
@@ -152,9 +198,17 @@ impl ResourceMonitor {
     }
 
     /// Check if system resource limits are exceeded
-    pub fn check_resource_limits(current: u64, limit: u64, resource_name: &str) -> SupervisorResult<()> {
+    pub fn check_resource_limits(
+        current: u64,
+        limit: u64,
+        resource_name: &str,
+    ) -> SupervisorResult<()> {
         if current >= limit {
-            return Err(SupervisorError::resource_limit_exceeded(resource_name, current, limit));
+            return Err(SupervisorError::resource_limit_exceeded(
+                resource_name,
+                current,
+                limit,
+            ));
         }
         Ok(())
     }
@@ -189,16 +243,28 @@ impl SupervisorLogger {
     /// Log checkpoint operation
     pub fn log_checkpoint_operation(operation: &str, checkpoint_id: &str, success: bool) {
         if success {
-            log::info!("Checkpoint operation '{}' succeeded for checkpoint {}", operation, checkpoint_id);
+            log::info!(
+                "Checkpoint operation '{}' succeeded for checkpoint {}",
+                operation,
+                checkpoint_id
+            );
         } else {
-            log::error!("Checkpoint operation '{}' failed for checkpoint {}", operation, checkpoint_id);
+            log::error!(
+                "Checkpoint operation '{}' failed for checkpoint {}",
+                operation,
+                checkpoint_id
+            );
         }
     }
 
     /// Log recovery operation
     pub fn log_recovery_operation(operation: &str, target: &str, success: bool) {
         if success {
-            log::info!("Recovery operation '{}' succeeded for {}", operation, target);
+            log::info!(
+                "Recovery operation '{}' succeeded for {}",
+                operation,
+                target
+            );
         } else {
             log::warn!("Recovery operation '{}' failed for {}", operation, target);
         }
@@ -237,7 +303,11 @@ impl MetricsCalculator {
     }
 
     /// Calculate health score based on various metrics
-    pub fn calculate_health_score(available_time_percent: f64, error_rate: f64, response_time_ms: f64) -> f64 {
+    pub fn calculate_health_score(
+        available_time_percent: f64,
+        error_rate: f64,
+        response_time_ms: f64,
+    ) -> f64 {
         let availability_weight = 0.5;
         let error_weight = 0.3;
         let performance_weight = 0.2;
@@ -252,9 +322,9 @@ impl MetricsCalculator {
             (1000.0 / response_time_ms).max(0.0) * 100.0
         };
 
-        availability_weight * available_time_percent +
-        error_weight * error_score +
-        performance_weight * performance_score
+        availability_weight * available_time_percent
+            + error_weight * error_score
+            + performance_weight * performance_score
     }
 }
 
@@ -291,7 +361,8 @@ mod tests {
         assert!(ServiceValidator::validate_service_name("").is_err());
         assert!(ServiceValidator::validate_service_name(&"a".repeat(101)).is_err());
         assert!(ServiceValidator::validate_service_name("system").is_err());
-        assert!(ServiceValidator::validate_service_name("test service").is_err()); // spaces
+        assert!(ServiceValidator::validate_service_name("test service").is_err());
+        // spaces
     }
 
     #[test]
@@ -322,10 +393,20 @@ mod tests {
     #[test]
     fn test_command_args_validation() {
         // Valid args
-        assert!(ServiceValidator::validate_command_args(&["--help".to_string(), "--verbose".to_string()]).is_ok());
+        assert!(ServiceValidator::validate_command_args(&[
+            "--help".to_string(),
+            "--verbose".to_string()
+        ])
+        .is_ok());
 
         // Dangerous args
-        assert!(ServiceValidator::validate_command_args(&["rm -rf /tmp && true".to_string()]).is_err());
-        assert!(ServiceValidator::validate_command_args(&["echo".to_string(), "test | cat".to_string()]).is_err());
+        assert!(
+            ServiceValidator::validate_command_args(&["rm -rf /tmp && true".to_string()]).is_err()
+        );
+        assert!(ServiceValidator::validate_command_args(&[
+            "echo".to_string(),
+            "test | cat".to_string()
+        ])
+        .is_err());
     }
 }

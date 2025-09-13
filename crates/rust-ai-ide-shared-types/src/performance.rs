@@ -268,7 +268,7 @@ impl PerformanceMetrics {
                 self.cpu_usage_percent = Some(value);
             }
             RateType::MemoryUsage => self.rates.memory_usage_percent = Some(value),
-            RateType::CacheHitRate=> self.rates.cache_hit_rate = Some(value),
+            RateType::CacheHitRate => self.rates.cache_hit_rate = Some(value),
             RateType::SuccessRate => self.rates.success_rate = Some(value),
             RateType::Throughput => {
                 self.rates.throughput_ops_per_sec = Some(value);
@@ -294,7 +294,10 @@ impl PerformanceMetrics {
 
     /// Calculate success rate from success/failure counters
     pub fn calculate_success_rate(&mut self) {
-        if let (Some(success), Some(failed)) = (self.counters.successful_operations, self.counters.failed_operations) {
+        if let (Some(success), Some(failed)) = (
+            self.counters.successful_operations,
+            self.counters.failed_operations,
+        ) {
             let total = success + failed;
             if total > 0 {
                 self.rates.success_rate = Some(success as f64 / total as f64);
@@ -304,7 +307,9 @@ impl PerformanceMetrics {
 
     /// Calculate throughput from operations and time
     pub fn calculate_throughput(&mut self) {
-        if let (Some(ops), Some(time_ns)) = (self.counters.total_operations, self.timing.total_time_ns) {
+        if let (Some(ops), Some(time_ns)) =
+            (self.counters.total_operations, self.timing.total_time_ns)
+        {
             if time_ns > 0 {
                 let time_sec = time_ns as f64 / 1_000_000_000.0;
                 self.rates.throughput_ops_per_sec = Some(ops as f64 / time_sec);
@@ -322,13 +327,27 @@ impl PerformanceMetrics {
         self.timing.latency_ns.extend(&other.timing.latency_ns);
 
         // Add counters
-        self.counters.total_operations = add_options(self.counters.total_operations, other.counters.total_operations);
-        self.counters.successful_operations = add_options(self.counters.successful_operations, other.counters.successful_operations);
-        self.counters.failed_operations = add_options(self.counters.failed_operations, other.counters.failed_operations);
+        self.counters.total_operations = add_options(
+            self.counters.total_operations,
+            other.counters.total_operations,
+        );
+        self.counters.successful_operations = add_options(
+            self.counters.successful_operations,
+            other.counters.successful_operations,
+        );
+        self.counters.failed_operations = add_options(
+            self.counters.failed_operations,
+            other.counters.failed_operations,
+        );
         self.counters.cache_hits = add_options(self.counters.cache_hits, other.counters.cache_hits);
-        self.counters.cache_misses = add_options(self.counters.cache_misses, other.counters.cache_misses);
-        self.counters.allocations_analyzed = add_options(self.counters.allocations_analyzed, other.counters.allocations_analyzed);
-        self.counters.error_count = add_options(self.counters.error_count, other.counters.error_count);
+        self.counters.cache_misses =
+            add_options(self.counters.cache_misses, other.counters.cache_misses);
+        self.counters.allocations_analyzed = add_options(
+            self.counters.allocations_analyzed,
+            other.counters.allocations_analyzed,
+        );
+        self.counters.error_count =
+            add_options(self.counters.error_count, other.counters.error_count);
 
         // For extensions, union with overwrite
         for (key, value) in &other.extensions {
@@ -459,10 +478,15 @@ impl Default for MetricsBuilder {
 impl TryFrom<&rust_ai_ide_common::perf_utils::PerformanceMetrics> for PerformanceMetrics {
     type Error = String;
 
-    fn try_from(old: &rust_ai_ide_common::perf_utils::PerformanceMetrics) -> Result<Self, Self::Error> {
+    fn try_from(
+        old: &rust_ai_ide_common::perf_utils::PerformanceMetrics,
+    ) -> Result<Self, Self::Error> {
         let mut metrics = PerformanceMetrics::new();
         metrics.timing.total_time_ns = Some(old.duration.as_nanos() as u64);
-        metrics.add_extension("operation_name", MetricValue::String(old.operation_name.clone()));
+        metrics.add_extension(
+            "operation_name",
+            MetricValue::String(old.operation_name.clone()),
+        );
         Ok(metrics)
     }
 }

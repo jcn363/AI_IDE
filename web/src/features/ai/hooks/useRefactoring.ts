@@ -23,7 +23,11 @@ interface UseRefactoringState {
 
 interface UseRefactoringActions {
   // Core operations
-  executeRefactoring: (type: RefactoringType, context: RefactoringContext, options?: Partial<RefactoringOptions>) => Promise<RefactoringResult>;
+  executeRefactoring: (
+    type: RefactoringType,
+    context: RefactoringContext,
+    options?: Partial<RefactoringOptions>
+  ) => Promise<RefactoringResult>;
 
   // Analysis operations
   analyzeContext: (context: RefactoringContext) => Promise<AnalysisResult>;
@@ -67,7 +71,9 @@ const defaultConfiguration: RefactoringConfiguration = {
   excludePatterns: ['node_modules/**', 'target/**', 'build/**'],
 };
 
-export const useRefactoring = (initialConfig?: Partial<RefactoringConfiguration>): UseRefactoringHook => {
+export const useRefactoring = (
+  initialConfig?: Partial<RefactoringConfiguration>
+): UseRefactoringHook => {
   const [state, setState] = useState<UseRefactoringState>({
     isAnalyzing: false,
     currentOperation: null,
@@ -80,94 +86,103 @@ export const useRefactoring = (initialConfig?: Partial<RefactoringConfiguration>
   });
 
   // Core execution function - now uses RefactoringService
-  const executeRefactoring = useCallback(async (
-    type: RefactoringType,
-    context: RefactoringContext,
-    options?: Partial<RefactoringOptions>,
-  ): Promise<RefactoringResult> => {
-    setState(prev => ({
-      ...prev,
-      currentOperation: type,
-      error: null,
-    }));
-
-    try {
-      const mergedOptions = { ...state.configuration.defaultOptions, ...options };
-
-      // Simulate progress during execution
-      setState(prev => ({ ...prev, progress: 25 }));
-
-      setState(prev => ({ ...prev, progress: 75 }));
-
-      // Execute the refactoring using RefactoringService (which handles impact analysis and validation)
-      const result = await refactoringService.executeRefactoring(type, context, mergedOptions);
-
-      setState(prev => ({
+  const executeRefactoring = useCallback(
+    async (
+      type: RefactoringType,
+      context: RefactoringContext,
+      options?: Partial<RefactoringOptions>
+    ): Promise<RefactoringResult> => {
+      setState((prev) => ({
         ...prev,
-        progress: 100,
-        currentOperation: null,
-        error: result.success ? null : result.errorMessage || 'Unknown error occurred',
+        currentOperation: type,
+        error: null,
       }));
 
-      return result;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      setState(prev => ({
-        ...prev,
-        error: errorMessage,
-        currentOperation: null,
-        progress: 0,
-      }));
-      throw error;
-    }
-  }, [state.configuration]);
+      try {
+        const mergedOptions = { ...state.configuration.defaultOptions, ...options };
+
+        // Simulate progress during execution
+        setState((prev) => ({ ...prev, progress: 25 }));
+
+        setState((prev) => ({ ...prev, progress: 75 }));
+
+        // Execute the refactoring using RefactoringService (which handles impact analysis and validation)
+        const result = await refactoringService.executeRefactoring(type, context, mergedOptions);
+
+        setState((prev) => ({
+          ...prev,
+          progress: 100,
+          currentOperation: null,
+          error: result.success ? null : result.errorMessage || 'Unknown error occurred',
+        }));
+
+        return result;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        setState((prev) => ({
+          ...prev,
+          error: errorMessage,
+          currentOperation: null,
+          progress: 0,
+        }));
+        throw error;
+      }
+    },
+    [state.configuration]
+  );
 
   // Analyze context for available refactorings using RefactoringService
-  const analyzeContext = useCallback(async (context: RefactoringContext): Promise<AnalysisResult> => {
-    setState(prev => ({ ...prev, isAnalyzing: true, context, error: null }));
+  const analyzeContext = useCallback(
+    async (context: RefactoringContext): Promise<AnalysisResult> => {
+      setState((prev) => ({ ...prev, isAnalyzing: true, context, error: null }));
 
-    try {
-      // Use RefactoringService instead of direct Tauri invoke - await the promise
-      const analysis = await refactoringService.analyzeRefactoringContext(context);
+      try {
+        // Use RefactoringService instead of direct Tauri invoke - await the promise
+        const analysis = await refactoringService.analyzeRefactoringContext(context);
 
-      setState(prev => ({
-        ...prev,
-        isAnalyzing: false,
-        analysisResult: analysis,
-        availableRefactorings: (analysis.applicableRefactorings || []) as RefactoringType[],
-      }));
+        setState((prev) => ({
+          ...prev,
+          isAnalyzing: false,
+          analysisResult: analysis,
+          availableRefactorings: (analysis.applicableRefactorings || []) as RefactoringType[],
+        }));
 
-      return analysis;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Analysis failed';
-      setState(prev => ({
-        ...prev,
-        isAnalyzing: false,
-        error: errorMessage,
-        analysisResult: null,
-      }));
-      throw error;
-    }
-  }, []);
+        return analysis;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Analysis failed';
+        setState((prev) => ({
+          ...prev,
+          isAnalyzing: false,
+          error: errorMessage,
+          analysisResult: null,
+        }));
+        throw error;
+      }
+    },
+    []
+  );
 
   // Get available refactorings for context using RefactoringService
-  const getAvailableRefactorings = useCallback(async (context: RefactoringContext): Promise<RefactoringType[]> => {
-    try {
-      // Use RefactoringService instead of direct Tauri invoke
-      const result = await refactoringService.getAvailableRefactorings(context);
+  const getAvailableRefactorings = useCallback(
+    async (context: RefactoringContext): Promise<RefactoringType[]> => {
+      try {
+        // Use RefactoringService instead of direct Tauri invoke
+        const result = await refactoringService.getAvailableRefactorings(context);
 
-      setState(prev => ({
-        ...prev,
-        availableRefactorings: result,
-      }));
+        setState((prev) => ({
+          ...prev,
+          availableRefactorings: result,
+        }));
 
-      return result;
-    } catch (error) {
-      console.error('Failed to get available refactorings:', error);
-      // Return default enabled refactorings on error
-      return state.configuration.enabledRefactorings;
-    }
-  }, [state.configuration]);
+        return result;
+      } catch (error) {
+        console.error('Failed to get available refactorings:', error);
+        // Return default enabled refactorings on error
+        return state.configuration.enabledRefactorings;
+      }
+    },
+    [state.configuration]
+  );
 
   // Execute batch of refactoring operations
   const executeBatch = useCallback(async (operations: any[], batchConfig?: any): Promise<any> => {
@@ -175,14 +190,14 @@ export const useRefactoring = (initialConfig?: Partial<RefactoringConfiguration>
       const result = await refactoringService.executeBatchRefactoring(operations);
 
       // Generate tests if requested - this could be moved to service
-      if (operations.some(op => op.options?.generateTests)) {
+      if (operations.some((op) => op.options?.generateTests)) {
         // Note: test generation should be handled by the service, not the hook
         console.warn('Test generation should be implemented in RefactoringService');
       }
 
       return result;
     } catch (error) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         error: error instanceof Error ? error.message : 'Batch execution failed',
       }));
@@ -192,7 +207,7 @@ export const useRefactoring = (initialConfig?: Partial<RefactoringConfiguration>
 
   // Update configuration
   const updateConfiguration = useCallback((config: Partial<RefactoringConfiguration>) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       configuration: { ...prev.configuration, ...config },
     }));
@@ -200,7 +215,7 @@ export const useRefactoring = (initialConfig?: Partial<RefactoringConfiguration>
 
   // Reset state
   const reset = useCallback(() => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       currentOperation: null,
       analysisResult: null,
@@ -219,7 +234,7 @@ export const useRefactoring = (initialConfig?: Partial<RefactoringConfiguration>
   useEffect(() => {
     if (state.error) {
       const timer = setTimeout(() => {
-        setState(prev => ({ ...prev, error: null }));
+        setState((prev) => ({ ...prev, error: null }));
       }, 5000);
 
       return () => clearTimeout(timer);

@@ -15,7 +15,7 @@ import {
   CircularProgress,
   Alert,
   useTheme,
-  Chip
+  Chip,
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
 import {
@@ -24,7 +24,7 @@ import {
   ZoomIn as ZoomInIcon,
   ZoomOut as ZoomOutIcon,
   PlayArrow as PlayIcon,
-  Pause as PauseIcon
+  Pause as PauseIcon,
 } from '@mui/icons-material';
 import WebGLCanvas from './WebGLCanvas';
 
@@ -69,7 +69,7 @@ const TIME_RANGES = [
   { label: '15 minutes', value: 15 * 60 * 1000 },
   { label: '1 hour', value: 60 * 60 * 1000 },
   { label: '4 hours', value: 4 * 60 * 60 * 1000 },
-  { label: '24 hours', value: 24 * 60 * 60 * 1000 }
+  { label: '24 hours', value: 24 * 60 * 60 * 1000 },
 ];
 
 // WebGL shader programs for GPU metrics visualization
@@ -136,77 +136,85 @@ export const GPUMetricsVisualizer: React.FC<GPUMetricsVisualizerProps> = ({
       gpu: {
         current: recentMetrics[recentMetrics.length - 1]?.gpuUtilization || 0,
         average: recentMetrics.reduce((sum, m) => sum + m.gpuUtilization, 0) / recentMetrics.length,
-        peak: Math.max(...recentMetrics.map(m => m.gpuUtilization)),
-        trend: recentMetrics.length > 1 ?
-          recentMetrics[recentMetrics.length - 1].gpuUtilization - recentMetrics[0].gpuUtilization : 0
+        peak: Math.max(...recentMetrics.map((m) => m.gpuUtilization)),
+        trend:
+          recentMetrics.length > 1
+            ? recentMetrics[recentMetrics.length - 1].gpuUtilization -
+              recentMetrics[0].gpuUtilization
+            : 0,
       },
       memory: {
         used: recentMetrics[recentMetrics.length - 1]?.memoryUsage || 0,
         total: data.metrics[0]?.memoryTotal || 1,
-        percentage: ((recentMetrics[recentMetrics.length - 1]?.memoryUsage || 0) /
-                    (data.metrics[0]?.memoryTotal || 1)) * 100
-      }
+        percentage:
+          ((recentMetrics[recentMetrics.length - 1]?.memoryUsage || 0) /
+            (data.metrics[0]?.memoryTotal || 1)) *
+          100,
+      },
     };
   }, [data]);
 
   // WebGL render function
-  const handleWebGLRender = useCallback((gl: WebGLRenderingContext, time: number) => {
-    if (!data?.metrics.length) return;
+  const handleWebGLRender = useCallback(
+    (gl: WebGLRenderingContext, time: number) => {
+      if (!data?.metrics.length) return;
 
-    // Set viewport
-    gl.viewport(0, 0, width, height);
+      // Set viewport
+      gl.viewport(0, 0, width, height);
 
-    // Clear canvas
-    const baseColor = theme === 'dark' ? [0.1, 0.1, 0.15, 1.0] : [0.95, 0.95, 0.98, 1.0];
-    gl.clearColor(...baseColor);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      // Clear canvas
+      const baseColor = theme === 'dark' ? [0.1, 0.1, 0.15, 1.0] : [0.95, 0.95, 0.98, 1.0];
+      gl.clearColor(...baseColor);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    // Render metric chart (simplified vertex-based rendering)
-    const metrics = data.metrics.slice(-100); // Render last 100 points
-    if (metrics.length > 0) {
-      const vertices: number[] = [];
-      const colors: number[] = [];
+      // Render metric chart (simplified vertex-based rendering)
+      const metrics = data.metrics.slice(-100); // Render last 100 points
+      if (metrics.length > 0) {
+        const vertices: number[] = [];
+        const colors: number[] = [];
 
-      metrics.forEach((metric, i) => {
-        const x = (i / metrics.length) * width * zoom;
-        let value = metric.gpuUtilization;
-
-        if (selectedMetric === 'memory') {
-          value = (metric.memoryUsage / metric.memoryTotal) * 100;
-        } else if (selectedMetric === 'temperature' && metric.temperature) {
-          value = (metric.temperature / 100) * 100; // Assume max temp 100°C
-        }
-
-        const y = (value / 100) * height;
-
-        // Create line segments
-        if (i > 0) {
-          const prevMetric = metrics[i - 1];
-          let prevValue = prevMetric.gpuUtilization;
+        metrics.forEach((metric, i) => {
+          const x = (i / metrics.length) * width * zoom;
+          let value = metric.gpuUtilization;
 
           if (selectedMetric === 'memory') {
-            prevValue = (prevMetric.memoryUsage / prevMetric.memoryTotal) * 100;
-          } else if (selectedMetric === 'temperature' && prevMetric.temperature) {
-            prevValue = (prevMetric.temperature / 100) * 100;
+            value = (metric.memoryUsage / metric.memoryTotal) * 100;
+          } else if (selectedMetric === 'temperature' && metric.temperature) {
+            value = (metric.temperature / 100) * 100; // Assume max temp 100°C
           }
 
-          const prevX = ((i - 1) / metrics.length) * width * zoom;
-          const prevY = (prevValue / 100) * height;
+          const y = (value / 100) * height;
 
-          // Previous point
-          vertices.push(prevX, prevY);
-          colors.push(0.2, 0.6, 1.0, 1.0);
+          // Create line segments
+          if (i > 0) {
+            const prevMetric = metrics[i - 1];
+            let prevValue = prevMetric.gpuUtilization;
 
-          // Current point
-          vertices.push(x, y);
-          colors.push(0.2, 0.6, 1.0, 1.0);
-        }
-      });
+            if (selectedMetric === 'memory') {
+              prevValue = (prevMetric.memoryUsage / prevMetric.memoryTotal) * 100;
+            } else if (selectedMetric === 'temperature' && prevMetric.temperature) {
+              prevValue = (prevMetric.temperature / 100) * 100;
+            }
 
-      // Render using WebGL (simplified)
-      // In a real implementation, this would set up buffers and shaders for actual rendering
-    }
-  }, [data, width, height, zoom, selectedMetric, theme]);
+            const prevX = ((i - 1) / metrics.length) * width * zoom;
+            const prevY = (prevValue / 100) * height;
+
+            // Previous point
+            vertices.push(prevX, prevY);
+            colors.push(0.2, 0.6, 1.0, 1.0);
+
+            // Current point
+            vertices.push(x, y);
+            colors.push(0.2, 0.6, 1.0, 1.0);
+          }
+        });
+
+        // Render using WebGL (simplified)
+        // In a real implementation, this would set up buffers and shaders for actual rendering
+      }
+    },
+    [data, width, height, zoom, selectedMetric, theme]
+  );
 
   // Handle time range selection
   const handleTimeRangeChange = (event: SelectChangeEvent<number>) => {
@@ -214,7 +222,7 @@ export const GPUMetricsVisualizer: React.FC<GPUMetricsVisualizerProps> = ({
     setSelectedTimeRange(value);
     onMetricsRequest?.({
       start: Date.now() - value,
-      end: Date.now()
+      end: Date.now(),
     });
   };
 
@@ -230,11 +238,11 @@ export const GPUMetricsVisualizer: React.FC<GPUMetricsVisualizerProps> = ({
 
   // Zoom controls
   const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev * 1.2, 5.0));
+    setZoom((prev) => Math.min(prev * 1.2, 5.0));
   };
 
   const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev / 1.2, 0.5));
+    setZoom((prev) => Math.max(prev / 1.2, 0.5));
   };
 
   // Periodic data refresh
@@ -244,7 +252,7 @@ export const GPUMetricsVisualizer: React.FC<GPUMetricsVisualizerProps> = ({
     const interval = setInterval(() => {
       onMetricsRequest?.({
         start: Date.now() - selectedTimeRange,
-        end: Date.now()
+        end: Date.now(),
       });
     }, 5000); // Update every 5 seconds
 
@@ -257,7 +265,7 @@ export const GPUMetricsVisualizer: React.FC<GPUMetricsVisualizerProps> = ({
       setIsLoading(true);
       onMetricsRequest({
         start: Date.now() - selectedTimeRange,
-        end: Date.now()
+        end: Date.now(),
       }).finally(() => setIsLoading(false));
     }
   }, [onMetricsRequest]);
@@ -289,7 +297,9 @@ export const GPUMetricsVisualizer: React.FC<GPUMetricsVisualizerProps> = ({
                 )}
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'flex-end' }}>
+                <Box
+                  sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'flex-end' }}
+                >
                   <FormControl size="small" sx={{ minWidth: 120 }}>
                     <InputLabel>Time Range</InputLabel>
                     <Select
@@ -297,7 +307,7 @@ export const GPUMetricsVisualizer: React.FC<GPUMetricsVisualizerProps> = ({
                       onChange={handleTimeRangeChange}
                       label="Time Range"
                     >
-                      {TIME_RANGES.map(range => (
+                      {TIME_RANGES.map((range) => (
                         <MenuItem key={range.value} value={range.value}>
                           {range.label}
                         </MenuItem>

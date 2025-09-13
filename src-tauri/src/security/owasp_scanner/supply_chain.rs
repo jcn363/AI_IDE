@@ -3,15 +3,15 @@
 //! Comprehensive supply chain analysis integrating with existing dependency
 //! vulnerability scanners, license compliance, and SBOM generation.
 
-use std::path::Path;
-use std::collections::{HashMap, HashSet};
-use serde::{Deserialize, Serialize};
-use chrono::prelude::*;
-use tokio::sync::RwLock;
-use moka::future::Cache;
 use crate::dependency::models::{DependencyGraph, LicenseInfo};
-use crate::rustsec_integration::RustsecScanner;
 use crate::license::compliance_checker::LicenseComplianceChecker;
+use crate::rustsec_integration::RustsecScanner;
+use chrono::prelude::*;
+use moka::future::Cache;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
+use std::path::Path;
+use tokio::sync::RwLock;
 
 // Supply chain analysis types and enums
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -175,7 +175,10 @@ impl SupplyChainScanner {
     }
 
     /// Comprehensive supply chain analysis of a workspace
-    pub async fn analyze_dependencies(&self, workspace_path: &Path) -> Result<DependencyAnalysis, Box<dyn std::error::Error>> {
+    pub async fn analyze_dependencies(
+        &self,
+        workspace_path: &Path,
+    ) -> Result<DependencyAnalysis, Box<dyn std::error::Error>> {
         let manifest_path = workspace_path.join("Cargo.toml");
 
         if !manifest_path.exists() {
@@ -191,15 +194,17 @@ impl SupplyChainScanner {
         )?;
 
         // Calculate security metrics
-        let dependency_chain_risk_score = self.calculate_dependency_risk_score(&vulnerabilities, &malicious_packages);
+        let dependency_chain_risk_score =
+            self.calculate_dependency_risk_score(&vulnerabilities, &malicious_packages);
         let supply_chain_health_score = self.calculate_supply_chain_health_score(
-            &vulnerabilities, &malicious_packages, &license_issues
+            &vulnerabilities,
+            &malicious_packages,
+            &license_issues,
         );
 
         // Generate recommendations
-        let recommendations = self.generate_recommendations(
-            &vulnerabilities, &malicious_packages, &license_issues
-        );
+        let recommendations =
+            self.generate_recommendations(&vulnerabilities, &malicious_packages, &license_issues);
 
         Ok(DependencyAnalysis {
             vulnerabilities,
@@ -213,7 +218,10 @@ impl SupplyChainScanner {
     }
 
     /// Scan for vulnerabilities using multiple sources
-    async fn scan_vulnerabilities(&self, manifest_path: &Path) -> Result<Vec<SupplyChainVulnerability>, Box<dyn std::error::Error>> {
+    async fn scan_vulnerabilities(
+        &self,
+        manifest_path: &Path,
+    ) -> Result<Vec<SupplyChainVulnerability>, Box<dyn std::error::Error>> {
         let cache_key = format!("vuls_{}", manifest_path.display());
         if let Some(cached) = self.vulnerability_cache.get(&cache_key).await {
             return Ok(cached);
@@ -236,7 +244,7 @@ impl SupplyChainScanner {
                         cvss_score: report.cvss,
                         severity: self.map_rustsec_severity(&report.severity),
                         published_date: Utc::now(), // Placeholder - should come from advisory
-                        last_modified: Utc::now(), // Placeholder
+                        last_modified: Utc::now(),  // Placeholder
                         description: report.description,
                         fix_available: self.check_fix_available(&report),
                         remediation_available: None,
@@ -250,12 +258,17 @@ impl SupplyChainScanner {
         // - NVD database
         // - OpenSSF Scorecard
 
-        self.vulnerability_cache.insert(cache_key, vulnerabilities.clone()).await;
+        self.vulnerability_cache
+            .insert(cache_key, vulnerabilities.clone())
+            .await;
         Ok(vulnerabilities)
     }
 
     /// Scan for malicious packages using reputation analysis
-    async fn scan_malicious_packages(&self, manifest_path: &Path) -> Result<Vec<MaliciousPackageIndicator>, Box<dyn std::error::Error>> {
+    async fn scan_malicious_packages(
+        &self,
+        manifest_path: &Path,
+    ) -> Result<Vec<MaliciousPackageIndicator>, Box<dyn std::error::Error>> {
         // Placeholder implementation - would integrate with:
         // - OpenSSF Scorecard
         // - Sonatype OSS Index
@@ -270,17 +283,27 @@ impl SupplyChainScanner {
         // For now, return empty vector - would implement real scanning
         let malicious = Vec::new();
 
-        self.reputation_cache.insert(cache_key, Some(malicious.clone())).await;
+        self.reputation_cache
+            .insert(cache_key, Some(malicious.clone()))
+            .await;
         Ok(malicious)
     }
 
     /// Check license compliance across all dependencies
-    async fn check_license_compliance(&self, workspace_path: &Path) -> Result<Vec<LicenseComplianceIssue>, Box<dyn std::error::Error>> {
-        self.license_checker.check_workspace_compliance(workspace_path).await
+    async fn check_license_compliance(
+        &self,
+        workspace_path: &Path,
+    ) -> Result<Vec<LicenseComplianceIssue>, Box<dyn std::error::Error>> {
+        self.license_checker
+            .check_workspace_compliance(workspace_path)
+            .await
     }
 
     /// Generate Software Bill of Materials
-    async fn generate_sbom(&self, manifest_path: &Path) -> Result<SoftwareBillOfMaterials, Box<dyn std::error::Error>> {
+    async fn generate_sbom(
+        &self,
+        manifest_path: &Path,
+    ) -> Result<SoftwareBillOfMaterials, Box<dyn std::error::Error>> {
         use std::process::Command;
 
         // Use cargo tree to get dependency information
@@ -321,12 +344,15 @@ impl SupplyChainScanner {
                     });
 
                     checksums.insert(name.clone(), "placeholder_checksum".to_string());
-                    provenance.insert(name, ProvenanceData {
-                        creator: "unknown".to_string(),
-                        created: Utc::now(),
-                        verified: false,
-                        build_info: None,
-                    });
+                    provenance.insert(
+                        name,
+                        ProvenanceData {
+                            creator: "unknown".to_string(),
+                            created: Utc::now(),
+                            verified: false,
+                            build_info: None,
+                        },
+                    );
                 }
             }
         }
@@ -361,13 +387,20 @@ impl SupplyChainScanner {
         }
     }
 
-    fn check_fix_available(&self, report: &crate::rustsec_integration::VulnerabilityReport) -> bool {
+    fn check_fix_available(
+        &self,
+        report: &crate::rustsec_integration::VulnerabilityReport,
+    ) -> bool {
         !report.patched_versions.is_empty()
     }
 
-    fn calculate_dependency_risk_score(&self, vulnerabilities: &[SupplyChainVulnerability],
-                                     malicious_packages: &[MaliciousPackageIndicator]) -> f32 {
-        let vuln_score: f32 = vulnerabilities.iter()
+    fn calculate_dependency_risk_score(
+        &self,
+        vulnerabilities: &[SupplyChainVulnerability],
+        malicious_packages: &[MaliciousPackageIndicator],
+    ) -> f32 {
+        let vuln_score: f32 = vulnerabilities
+            .iter()
             .map(|v| match v.severity {
                 SupplyChainRiskLevel::Critical => 10.0,
                 SupplyChainRiskLevel::High => 7.0,
@@ -378,7 +411,8 @@ impl SupplyChainScanner {
             })
             .sum();
 
-        let malicious_score: f32 = malicious_packages.iter()
+        let malicious_score: f32 = malicious_packages
+            .iter()
             .map(|m| m.confidence_score * 10.0)
             .sum();
 
@@ -387,34 +421,46 @@ impl SupplyChainScanner {
         (total_score.min(100.0) / 10.0).min(10.0)
     }
 
-    fn calculate_supply_chain_health_score(&self,
-                                         vulnerabilities: &[SupplyChainVulnerability],
-                                         malicious_packages: &[MaliciousPackageIndicator],
-                                         license_issues: &[LicenseComplianceIssue]) -> f32 {
+    fn calculate_supply_chain_health_score(
+        &self,
+        vulnerabilities: &[SupplyChainVulnerability],
+        malicious_packages: &[MaliciousPackageIndicator],
+        license_issues: &[LicenseComplianceIssue],
+    ) -> f32 {
         let total_issues = vulnerabilities.len() + malicious_packages.len() + license_issues.len();
 
         if total_issues == 0 {
             return 10.0; // Perfect score
         }
 
-        let critical_count = vulnerabilities.iter()
+        let critical_count = vulnerabilities
+            .iter()
             .filter(|v| matches!(v.severity, SupplyChainRiskLevel::Critical))
             .count();
 
-        let banned_license_count = license_issues.iter()
-            .filter(|l| matches!(l.compliance_category, LicenseComplianceCategory::BannedLicense))
+        let banned_license_count = license_issues
+            .iter()
+            .filter(|l| {
+                matches!(
+                    l.compliance_category,
+                    LicenseComplianceCategory::BannedLicense
+                )
+            })
             .count();
 
         // Calculate health score as inverse of weighted issues
-        let weighted_issues = critical_count as f32 * 3.0 + total_issues as f32 + banned_license_count as f32 * 5.0;
+        let weighted_issues =
+            critical_count as f32 * 3.0 + total_issues as f32 + banned_license_count as f32 * 5.0;
 
         (10.0 - weighted_issues.min(10.0)).max(0.0)
     }
 
-    fn generate_recommendations(&self,
-                              vulnerabilities: &[SupplyChainVulnerability],
-                              malicious_packages: &[MaliciousPackageIndicator],
-                              license_issues: &[LicenseComplianceIssue]) -> Vec<SupplyChainRecommendation> {
+    fn generate_recommendations(
+        &self,
+        vulnerabilities: &[SupplyChainVulnerability],
+        malicious_packages: &[MaliciousPackageIndicator],
+        license_issues: &[LicenseComplianceIssue],
+    ) -> Vec<SupplyChainRecommendation> {
         let mut recommendations = Vec::new();
 
         // Generate vulnerability fix recommendations
@@ -428,7 +474,10 @@ impl SupplyChainScanner {
                         _ => 2,
                     },
                     category: RecommendationCategory::SecurityUpdate,
-                    title: format!("Update {} to address {}", vuln.dependency_name, vuln.vulnerability_id),
+                    title: format!(
+                        "Update {} to address {}",
+                        vuln.dependency_name, vuln.vulnerability_id
+                    ),
                     description: vuln.description.clone(),
                     estimated_effort: EffortLevel::Low,
                     impact_score: match vuln.severity {
@@ -454,7 +503,10 @@ impl SupplyChainScanner {
                 },
                 category: RecommendationCategory::LicenseChange,
                 title: format!("Address license compliance for {}", issue.dependency_name),
-                description: format!("{} license may have compliance issues", issue.problematic_license),
+                description: format!(
+                    "{} license may have compliance issues",
+                    issue.problematic_license
+                ),
                 estimated_effort: match issue.compliance_category {
                     LicenseComplianceCategory::BannedLicense => EffortLevel::High,
                     _ => EffortLevel::Medium,
@@ -465,9 +517,8 @@ impl SupplyChainScanner {
         }
 
         // Sort by priority and impact
-        recommendations.sort_by(|a, b| {
-            (b.priority, b.impact_score).cmp(&(a.priority, a.impact_score))
-        });
+        recommendations
+            .sort_by(|a, b| (b.priority, b.impact_score).cmp(&(a.priority, a.impact_score)));
 
         recommendations
     }

@@ -9,7 +9,7 @@ fn test_debugger_error_display() {
 
     let proc_err = DebuggerError::process_error("process failed");
     assert_eq!(
-        format!("{}", proc_err), 
+        format!("{}", proc_err),
         "Debugger process error: process failed"
     );
 }

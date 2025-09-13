@@ -36,7 +36,6 @@ tracing = { version = "0.1.41", features = ["log"] }
 tracing-subscriber = { workspace = true }
 
 # Internal crates
-paste = "1.0"  # Required for macro token concatenation
 rust-ai-ide-errors = { workspace = true }
 
 [features]

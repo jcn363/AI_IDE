@@ -225,10 +225,10 @@ export interface RefactoringContext {
   selectedText?: string;
   symbolName?: string;
   selection?: {
-    start: { line: number; character: number; };
-    end: { line: number; character: number; };
+    start: { line: number; character: number };
+    end: { line: number; character: number };
   };
-  cursorPosition?: { line: number; character: number; };
+  cursorPosition?: { line: number; character: number };
   usages?: any[]; // For tracking multiple usages of a symbol
 }
 
@@ -276,8 +276,8 @@ export interface RefactoringTarget {
   type: string;
   name: string;
   range: {
-    start: { line: number; character: number; };
-    end: { line: number; character: number; };
+    start: { line: number; character: number };
+    end: { line: number; character: number };
   };
   analysis: {
     isSafe: boolean;
@@ -307,8 +307,8 @@ export interface CodeChange {
 }
 
 export interface LSPRefactoringRequest {
-  textDocument: { uri: string; };
-  range: { start: { line: number; character: number; }; end: { line: number; character: number; }; };
+  textDocument: { uri: string };
+  range: { start: { line: number; character: number }; end: { line: number; character: number } };
   refactoringKind: RefactoringType;
   params: any;
 }
@@ -324,19 +324,19 @@ export interface LSPRefactoringResponse {
 
 export interface TextEdit {
   range: {
-    start: { line: number; character: number; };
-    end: { line: number; character: number; };
+    start: { line: number; character: number };
+    end: { line: number; character: number };
   };
   newText: string;
 }
 
 export interface WorkspaceEdit {
-  changes?: { [uri: string]: TextEdit[]; };
+  changes?: { [uri: string]: TextEdit[] };
   documentChanges?: DocumentChange[];
 }
 
 export interface DocumentChange {
-  textDocument: { uri: string; version?: number; };
+  textDocument: { uri: string; version?: number };
   edits: TextEdit[];
 }
 
@@ -732,7 +732,7 @@ export interface PerformanceAnalysis {
   issues: Array<{
     type: 'complexity' | 'loops' | 'recursion' | 'memory' | 'algorithm';
     severity: SeverityLevel;
-    location: { line: number; column: number; };
+    location: { line: number; column: number };
     suggestion: string;
   }>;
   recommendations: string[];

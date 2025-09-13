@@ -10,8 +10,8 @@ const mockAlignment: VersionAlignment = {
   id: 'serde',
   dependencyName: 'serde',
   currentVersions: {
-    'crate1': '1.0.0',
-    'crate2': '1.1.0',
+    crate1: '1.0.0',
+    crate2: '1.1.0',
   },
   suggestedVersion: '1.2.0',
   severity: 'medium',
@@ -21,24 +21,16 @@ const mockAlignment: VersionAlignment = {
 const theme = createTheme();
 
 const renderWithTheme = (component: React.ReactElement) => {
-  return render(
-    <ThemeProvider theme={theme}>
-      {component}
-    </ThemeProvider>,
-  );
+  return render(<ThemeProvider theme={theme}>{component}</ThemeProvider>);
 };
 
 describe('VersionAlignmentItem', () => {
   it('renders the dependency name and suggested version', () => {
     const onApply = vi.fn();
     const onIgnore = vi.fn();
-    
+
     renderWithTheme(
-      <VersionAlignmentItem 
-        alignment={mockAlignment} 
-        onApply={onApply} 
-        onIgnore={onIgnore} 
-      />,
+      <VersionAlignmentItem alignment={mockAlignment} onApply={onApply} onIgnore={onIgnore} />
     );
 
     expect(screen.getByText('serde')).toBeInTheDocument();
@@ -48,13 +40,9 @@ describe('VersionAlignmentItem', () => {
   it('renders all current versions', () => {
     const onApply = vi.fn();
     const onIgnore = vi.fn();
-    
+
     renderWithTheme(
-      <VersionAlignmentItem 
-        alignment={mockAlignment} 
-        onApply={onApply} 
-        onIgnore={onIgnore} 
-      />,
+      <VersionAlignmentItem alignment={mockAlignment} onApply={onApply} onIgnore={onIgnore} />
     );
 
     expect(screen.getByText('crate1: 1.0.0')).toBeInTheDocument();
@@ -64,13 +52,9 @@ describe('VersionAlignmentItem', () => {
   it('calls onApply when apply button is clicked', () => {
     const onApply = vi.fn();
     const onIgnore = vi.fn();
-    
+
     renderWithTheme(
-      <VersionAlignmentItem 
-        alignment={mockAlignment} 
-        onApply={onApply} 
-        onIgnore={onIgnore} 
-      />,
+      <VersionAlignmentItem alignment={mockAlignment} onApply={onApply} onIgnore={onIgnore} />
     );
 
     fireEvent.click(screen.getByText('Apply'));
@@ -80,13 +64,9 @@ describe('VersionAlignmentItem', () => {
   it('calls onIgnore when ignore button is clicked', () => {
     const onApply = vi.fn();
     const onIgnore = vi.fn();
-    
+
     renderWithTheme(
-      <VersionAlignmentItem 
-        alignment={mockAlignment} 
-        onApply={onApply} 
-        onIgnore={onIgnore} 
-      />,
+      <VersionAlignmentItem alignment={mockAlignment} onApply={onApply} onIgnore={onIgnore} />
     );
 
     fireEvent.click(screen.getByText('Ignore'));

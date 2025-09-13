@@ -5,13 +5,13 @@
 
 use crate::{
     dependency::{
-        graph::{self, Graph, Node, Edge},
-        DependencyUpdate, DependencyUpdater, DependencyUpdateChecker, DependencyInfo
+        graph::{self, Edge, Graph, Node},
+        DependencyInfo, DependencyUpdate, DependencyUpdateChecker, DependencyUpdater,
     },
     license::LicenseComplianceChecker,
     security::VulnerabilityScanner,
 };
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tauri::State;
@@ -40,7 +40,10 @@ pub async fn update_dependencies(
     dry_run: bool,
 ) -> Result<Vec<DependencyUpdate>, String> {
     let updater = DependencyUpdater::new(manifest_path);
-    updater.update_dependencies(dry_run).await.map_err(|e| e.to_string())
+    updater
+        .update_dependencies(dry_run)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -86,16 +89,15 @@ pub struct DependencyGraphData {
 }
 
 #[tauri::command]
-pub async fn get_dependency_graph(
-    project_path: PathBuf,
-) -> Result<DependencyGraphData, String> {
+pub async fn get_dependency_graph(project_path: PathBuf) -> Result<DependencyGraphData, String> {
     // Build the dependency graph
     let graph = graph::GraphBuilder::new(project_path.clone())
         .build()
         .map_err(|e| format!("Failed to build dependency graph: {}", e))?;
 
     // Convert nodes
-    let nodes = graph.nodes()
+    let nodes = graph
+        .nodes()
         .values()
         .map(|node| {
             GraphNode {
@@ -109,14 +111,13 @@ pub async fn get_dependency_graph(
         .collect();
 
     // Convert edges
-    let links = graph.edges()
+    let links = graph
+        .edges()
         .iter()
-        .map(|edge| {
-            GraphLink {
-                source: edge.source().to_string(),
-                target: edge.target().to_string(),
-                label: edge.label().map(|s| s.to_string()),
-            }
+        .map(|edge| GraphLink {
+            source: edge.source().to_string(),
+            target: edge.target().to_string(),
+            label: edge.label().map(|s| s.to_string()),
         })
         .collect();
 

@@ -19,7 +19,7 @@ The Rust AI IDE is a comprehensive development environment that combines AI-powe
 - **AI-Powered Development**: Context-aware code suggestions, automated testing, and intelligent debugging
 - **Enterprise-Grade Security**: Multi-factor authentication, encrypted data storage, and compliance frameworks
 - **High Performance**: Sub-second cold startup, <2GB memory usage for workspaces up to 1M LOC, and parallel processing
-- **Multi-Language Support**: Rust, TypeScript, Python, JavaScript, and more
+- **Multi-Language Support**: Rust, TypeScript, Python, JavaScript, Go, Java, C++, SQL, HTML, CSS, and more
 - **Collaborative Tools**: Real-time editing, AI-mediated conflict resolution, and team synchronization
 - **Extensible Architecture**: Plugin system with WebAssembly runtime and marketplace
 

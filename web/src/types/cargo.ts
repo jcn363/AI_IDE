@@ -48,6 +48,37 @@ export type {
   BenchConfig,
 };
 
+// ===== COLLABORATION-ENHANCED CARGO TYPES =====
+
+// Collaborative Cargo Session Types
+export interface CollaborativeCargoSession {
+  sessionId: string;
+  participants: string[];
+  sessionState: 'active' | 'paused' | 'terminated';
+  createdAt: Date;
+  lastActivity: Date;
+}
+
+// Shared Dependency Types
+export interface SharedCargoDependency extends CargoDependency {
+  sharedBy: string;
+  sharedAt: Date;
+  locked: boolean;
+  collaborators: string[];
+}
+
+// Collaborative Build Types
+export interface CollaborativeBuild {
+  buildId: string;
+  sessionId: string;
+  buildCommand: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  participants: string[];
+  logs: string[];
+  startedAt: Date;
+  completedAt?: Date;
+}
+
 // ===== PRESERVED UNIQUE FUNCTIONS (NOT CONSOLIDATED) =====
 // These functions are specific to this file and provide TOML parsing functionality
 
@@ -138,7 +169,10 @@ function parseTOMLValue(value: string): any {
 
   // Array
   if (value.startsWith('[') && value.endsWith(']')) {
-    const items = value.slice(1, -1).split(',').map(item => parseTOMLValue(item.trim()));
+    const items = value
+      .slice(1, -1)
+      .split(',')
+      .map((item) => parseTOMLValue(item.trim()));
     return items;
   }
 

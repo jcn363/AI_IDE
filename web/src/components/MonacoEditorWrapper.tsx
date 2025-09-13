@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from 'react';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress } from './shared/MaterialUI';
 
 // Direct import with type checking disabled
 const MonacoEditor = React.lazy(() => import('@monaco-editor/react'));
@@ -26,16 +26,18 @@ const MonacoEditorWrapper = ({
   onMount,
   options,
   loading,
-  onEditorReady
+  onEditorReady,
 }: MonacoEditorWrapperProps) => {
   const defaultLoading = (
-    <Box sx={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100%',
-      width: '100%'
-    }}>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100%',
+        width: '100%',
+      }}
+    >
       <CircularProgress />
     </Box>
   );

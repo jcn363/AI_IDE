@@ -12,32 +12,32 @@ fn test_proper_dependency_inversion() {
                 fn do_something(&self);
             }
         }
-        
+
         // High-level module depending on abstraction
         mod client {
             use super::interfaces::Service;
-            
+
             pub struct Client<T: Service> {
                 service: T,
             }
-            
+
             impl<T: Service> Client<T> {
                 pub fn new(service: T) -> Self {
                     Client { service }
                 }
-                
+
                 pub fn execute(&self) {
                     self.service.do_something();
                 }
             }
         }
-        
+
         // Low-level implementation
         mod service_impl {
             use super::interfaces::Service;
-            
+
             pub struct ServiceImpl;
-            
+
             impl Service for ServiceImpl {
                 fn do_something(&self) {
                     // Implementation
@@ -66,33 +66,33 @@ fn test_violation_direct_concrete_dependency() {
         // High-level module directly depending on low-level module
         mod client {
             use super::concrete_service::ConcreteService;
-            
+
             pub struct Client {
                 service: ConcreteService,
             }
-            
+
             impl Client {
                 pub fn new() -> Self {
-                    Client { 
-                        service: ConcreteService::new() 
+                    Client {
+                        service: ConcreteService::new()
                     }
                 }
-                
+
                 pub fn execute(&self) {
                     self.service.do_something();
                 }
             }
         }
-        
+
         // Low-level module
         mod concrete_service {
             pub struct ConcreteService;
-            
+
             impl ConcreteService {
                 pub fn new() -> Self {
                     ConcreteService
                 }
-                
+
                 pub fn do_something(&self) {
                     // Implementation
                 }
@@ -120,15 +120,15 @@ fn test_violation_concrete_dependency_in_method() {
                 service.do_something();
             }
         }
-        
+
         mod concrete {
             pub struct ConcreteService;
-            
+
             impl ConcreteService {
                 pub fn new() -> Self {
                     ConcreteService
                 }
-                
+
                 pub fn do_something(&self) {}
             }
         }
@@ -152,26 +152,26 @@ fn test_dependency_inversion_with_generics() {
         pub trait Storage {
             fn save(&self, data: &str) -> Result<(), String>;
         }
-        
+
         // High-level module depending on abstraction
         pub struct DataManager<T: Storage> {
             storage: T,
         }
-        
+
         impl<T: Storage> DataManager<T> {
             pub fn new(storage: T) -> Self {
                 DataManager { storage }
             }
-            
+
             pub fn process_data(&self, data: &str) -> Result<(), String> {
                 // Process data...
                 self.storage.save(data)
             }
         }
-        
+
         // Low-level implementation
         pub struct FileStorage;
-        
+
         impl Storage for FileStorage {
             fn save(&self, _data: &str) -> Result<(), String> {
                 // Implementation for file storage

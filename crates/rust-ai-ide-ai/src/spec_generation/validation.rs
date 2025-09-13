@@ -483,7 +483,7 @@ mod tests {
             path: "src/main.rs".to_string(),
             content: r#"
             // This is a test file
-            
+
             fn main() {
                 println!("Hello, world!");
             }

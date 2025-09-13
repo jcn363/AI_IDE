@@ -14,10 +14,10 @@ import type {
  */
 export class SpecificationService {
   validateSpec(description: string) {
-      throw new Error('Method not implemented.');
+    throw new Error('Method not implemented.');
   }
   enhanceCode(generatedCode: GeneratedCode, enhancements: string[]) {
-      throw new Error('Method not implemented.');
+    throw new Error('Method not implemented.');
   }
   private static instance: SpecificationService;
 
@@ -37,7 +37,7 @@ export class SpecificationService {
     description: string,
     language = 'rust',
     framework?: string,
-    context?: string[],
+    context?: string[]
   ): Promise<GeneratedCode> {
     try {
       const specification: SpecificationRequest = {
@@ -127,12 +127,16 @@ export class SpecificationService {
         issues.push('Specification is too short (minimum 10 characters)');
       }
 
-      if (!description.includes('function') && !description.includes('method') &&
-          !description.includes('class') && !description.includes('struct')) {
+      if (
+        !description.includes('function') &&
+        !description.includes('method') &&
+        !description.includes('class') &&
+        !description.includes('struct')
+      ) {
         issues.push('Specification should describe software components (functions, classes, etc.)');
       }
 
-      const score = issues.length === 0 ? 0.9 : Math.max(0.3, 1.0 - (issues.length * 0.2));
+      const score = issues.length === 0 ? 0.9 : Math.max(0.3, 1.0 - issues.length * 0.2);
 
       return {
         isValid: issues.length === 0,
@@ -191,7 +195,7 @@ export class SpecificationService {
    */
   async enhanceGeneratedCode(
     generatedCode: GeneratedCode,
-    enhancements: string[],
+    enhancements: string[]
   ): Promise<GeneratedCode> {
     try {
       let enhancedCode = { ...generatedCode };
@@ -237,10 +241,7 @@ export class SpecificationService {
         // Add slight variations to the description for different implementations
         const variedDescription = `${description} (variation ${i + 1}: ${this.getVariationStyle(i)})`;
 
-        const variation = await this.generateFromSpecification(
-          variedDescription,
-          language
-        );
+        const variation = await this.generateFromSpecification(variedDescription, language);
 
         variations.push(variation);
       }

@@ -1,13 +1,13 @@
 #![feature(impl_trait_in_bindings)]
 
+use candle_core::{DType, Device, Error as CandleError, Tensor};
+use candle_nn::VarBuilder;
+pub use rust_ai_ide_errors::RustAIError as IDEError;
+use rust_ai_ide_errors::{IDEResult, RustAIError};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use candle_core::{DType, Device, Tensor, Error as CandleError};
-use candle_nn::VarBuilder;
-use rust_ai_ide_errors::{RustAIError, IDEResult};
-pub use rust_ai_ide_errors::RustAIError as IDEError;
 
 /// Stub implementation for validate_secure_path
 pub fn validate_secure_path(_path: &str) -> IDEResult<()> {
@@ -18,37 +18,43 @@ pub fn validate_secure_path(_path: &str) -> IDEResult<()> {
 impl From<candle_core::Error> for IDEError {
     fn from(error: candle_core::Error) -> Self {
         match error {
-            candle_core::Error::Msg(msg) => IDEError::Generic(format!("Candle core error: {}", msg)),
-            candle_core::Error::Wrapper(err) => IDEError::InternalError(format!("Candle core wrapper error: {}", err)),
+            candle_core::Error::Msg(msg) => {
+                IDEError::Generic(format!("Candle core error: {}", msg))
+            }
+            candle_core::Error::Wrapper(err) => {
+                IDEError::InternalError(format!("Candle core wrapper error: {}", err))
+            }
             _ => IDEError::InternalError("Unknown candle core error".into()),
         }
     }
 }
-use rust_ai_ide_cache::{Cache, CacheConfig};
 use moka::future::Cache as MokaCache;
+use rust_ai_ide_cache::{Cache, CacheConfig};
 use std::time::Duration;
 
 // Public module exports
-pub mod quantizer;
+pub mod benchmark;
+pub mod context_window;
 pub mod formats;
-pub mod performance;
-pub mod validation;
+pub mod gguf_optimization;
 pub mod integration;
 pub mod memory_manager;
-pub mod context_window;
-pub mod gguf_optimization;
-pub mod benchmark;
 pub mod orchestration_integration;
+pub mod performance;
+pub mod quantizer;
+pub mod validation;
 
 // Re-export main types
-pub use quantizer::{Quantizer, QuantizationConfig, QuantizedModel, QuantizationStrategy};
+pub use benchmark::{BenchmarkResults, PerformanceTargets, QuantizationBenchmarkSuite};
+pub use context_window::{
+    ContextWindowConfig, ContextWindowManager, ContextWindowPerformanceMetrics, WindowState,
+};
 pub use formats::*;
+pub use gguf_optimization::{DeployedGGUFModel, GGUFConfig, GGUFOptimizationEngine};
+pub use memory_manager::{AllocatorStats, MemoryManagerConfig, QuantizedMemoryManager};
 pub use performance::*;
+pub use quantizer::{QuantizationConfig, QuantizationStrategy, QuantizedModel, Quantizer};
 pub use validation::*;
-pub use memory_manager::{QuantizedMemoryManager, MemoryManagerConfig, AllocatorStats};
-pub use context_window::{ContextWindowManager, ContextWindowConfig, WindowState, ContextWindowPerformanceMetrics};
-pub use gguf_optimization::{GGUFOptimizationEngine, GGUFConfig, DeployedGGUFModel};
-pub use benchmark::{QuantizationBenchmarkSuite, BenchmarkResults, PerformanceTargets};
 
 /// Main quantization service that handles model quantization with caching
 #[derive(Clone)]
@@ -98,7 +104,7 @@ impl QuantizationService {
     pub async fn quantize_model(
         &self,
         model_path: &Path,
-        config: QuantizationConfig
+        config: QuantizationConfig,
     ) -> Result<Arc<QuantizedModel>, IDEError> {
         // Security check
         validate_secure_path(model_path)?;
@@ -115,7 +121,9 @@ impl QuantizationService {
         let quantized = self.perform_quantization(model_path, &config).await?;
 
         let quantized_arc = Arc::new(quantized);
-        self.cache.insert(model_key, Arc::clone(&quantized_arc)).await;
+        self.cache
+            .insert(model_key, Arc::clone(&quantized_arc))
+            .await;
 
         // Update metrics
         let mut metrics = self.metrics.as_ref().clone();
@@ -133,7 +141,7 @@ impl QuantizationService {
     async fn perform_quantization(
         &self,
         model_path: &Path,
-        config: &QuantizationConfig
+        config: &QuantizationConfig,
     ) -> Result<QuantizedModel, IDEError> {
         let start_time = std::time::Instant::now();
 
@@ -144,21 +152,27 @@ impl QuantizationService {
         let quantized_tensors = match config.strategy {
             QuantizationStrategy::GGUF_Q4_0 => self.quantize_to_gguf_q4(&tensors, config)?,
             QuantizationStrategy::GGUF_Q5_0 => self.quantize_to_gguf_q5(&tensors, config)?,
-            QuantizationStrategy::SafeTensorOptimized => self.optimize_safetensors(&tensors, config)?,
+            QuantizationStrategy::SafeTensorOptimized => {
+                self.optimize_safetensors(&tensors, config)?
+            }
         };
 
         let quantization_time = start_time.elapsed().as_millis() as f64;
 
         // Update metrics
         let mut metrics = self.metrics.as_ref().clone();
-        metrics.average_quantization_time_ms = (metrics.average_quantization_time_ms + quantization_time) / 2.0;
+        metrics.average_quantization_time_ms =
+            (metrics.average_quantization_time_ms + quantization_time) / 2.0;
 
         Ok(QuantizedModel {
             tensors: quantized_tensors,
             original_path: model_path.to_path_buf(),
             strategy: config.strategy,
             quantization_time_ms: quantization_time,
-            size_bytes: quantized_tensors.iter().map(|(_, t)| t.dims().iter().product::<usize>() * 4).sum(), // Estimate size
+            size_bytes: quantized_tensors
+                .iter()
+                .map(|(_, t)| t.dims().iter().product::<usize>() * 4)
+                .sum(), // Estimate size
         })
     }
 
@@ -166,7 +180,7 @@ impl QuantizationService {
     fn quantize_to_gguf_q4(
         &self,
         tensors: &HashMap<String, Tensor>,
-        _config: &QuantizationConfig
+        _config: &QuantizationConfig,
     ) -> Result<HashMap<String, Tensor>, IDEError> {
         let mut quantized = HashMap::new();
 
@@ -183,7 +197,7 @@ impl QuantizationService {
     fn quantize_to_gguf_q5(
         &self,
         tensors: &HashMap<String, Tensor>,
-        _config: &QuantizationConfig
+        _config: &QuantizationConfig,
     ) -> Result<HashMap<String, Tensor>, IDEError> {
         let mut quantized = HashMap::new();
 
@@ -200,7 +214,7 @@ impl QuantizationService {
     fn optimize_safetensors(
         &self,
         tensors: &HashMap<String, Tensor>,
-        _config: &QuantizationConfig
+        _config: &QuantizationConfig,
     ) -> Result<HashMap<String, Tensor>, IDEError> {
         // For SafeTensors, we mainly optimize by reducing precision where safe
         let mut optimized = HashMap::new();
@@ -221,7 +235,8 @@ impl QuantizationService {
         let data = tensor.to_vec2::<f32>()?;
         // Apply quantization scaling and convert to 4-bit
         // This is a placeholder - real implementation would do proper Q4_0 quantization
-        let quantized_data = data.into_iter()
+        let quantized_data = data
+            .into_iter()
             .flatten()
             .map(|x| (x * 16.0).clamp(0.0, 255.0) as u8)
             .collect::<Vec<_>>();
@@ -236,7 +251,8 @@ impl QuantizationService {
     fn apply_q5_quantization(&self, tensor: &Tensor) -> Result<Tensor, IDEError> {
         // Simplified Q5_0 quantization implementation
         let data = tensor.to_vec2::<f32>()?;
-        let quantized_data = data.into_iter()
+        let quantized_data = data
+            .into_iter()
             .flatten()
             .map(|x| (x * 32.0).clamp(0.0, 255.0) as u8)
             .collect::<Vec<_>>();
@@ -250,9 +266,9 @@ impl QuantizationService {
     fn optimize_tensor_precision(&self, tensor: &Tensor) -> Result<Tensor, IDEError> {
         // For SafeTensors optimization, we can reduce precision for less critical tensors
         // This is a simplified example - real implementation would be more sophisticated
-        tensor.to_dtype(DType::F16).map_err(|e| {
-            IDEError::InvalidArgument(format!("Precision optimization failed: {}", e))
-        })
+        tensor
+            .to_dtype(DType::F16)
+            .map_err(|e| IDEError::InvalidArgument(format!("Precision optimization failed: {}", e)))
     }
 }
 

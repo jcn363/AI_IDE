@@ -11,19 +11,19 @@ use std::alloc::{alloc, dealloc, Layout};
 use std::mem::size_of;
 use std::ptr::{null_mut, NonNull};
 
-pub mod memory;
-pub mod operations;
 pub mod capability;
 pub mod dispatch;
 pub mod error;
+pub mod memory;
 pub mod monitoring;
+pub mod operations;
 
-pub use memory::*;
-pub use operations::*;
 pub use capability::*;
 pub use dispatch::*;
 pub use error::*;
+pub use memory::*;
 pub use monitoring::*;
+pub use operations::*;
 
 /// SIMD processor for managing vectorized computation operations
 pub struct SIMDProcessor {
@@ -78,10 +78,10 @@ impl SIMDProcessor {
         &mut self,
         lhs: &[f32],
         rhs: &[f32],
-        operation: F
+        operation: F,
     ) -> Result<Vec<f32>, SIMDError>
     where
-        F: Fn(f32, f32) -> f32
+        F: Fn(f32, f32) -> f32,
     {
         self.performance_monitor.start_operation("f32_vectorized");
 
@@ -90,7 +90,8 @@ impl SIMDProcessor {
         } else if self.capabilities.has_sse() && lhs.len() >= 4 {
             self.vectorized_f32x4_operations(lhs, rhs, operation)
         } else {
-            self.fallback_manager.vectorized_f32_fallback(lhs, rhs, operation)
+            self.fallback_manager
+                .vectorized_f32_fallback(lhs, rhs, operation)
         };
 
         self.performance_monitor.end_operation("f32_vectorized");
@@ -106,15 +107,18 @@ impl SIMDProcessor {
         n: usize,
         k: usize,
     ) -> Result<Vec<f32>, SIMDError> {
-        self.performance_monitor.start_operation("matrix_multiply_f32");
+        self.performance_monitor
+            .start_operation("matrix_multiply_f32");
 
         let result = if self.capabilities.has_acclerated_matrix_ops() {
             self.vectorized_matrix_multiply(a, b, m, n, k)
         } else {
-            self.fallback_manager.matrix_multiply_fallback_f32(a, b, m, n, k)
+            self.fallback_manager
+                .matrix_multiply_fallback_f32(a, b, m, n, k)
         };
 
-        self.performance_monitor.end_operation("matrix_multiply_f32");
+        self.performance_monitor
+            .end_operation("matrix_multiply_f32");
         result
     }
 
@@ -125,17 +129,20 @@ impl SIMDProcessor {
         database: &[f32],
         dimension: usize,
     ) -> Result<Vec<f32>, SIMDError> {
-        self.performance_monitor.start_operation("distance_computation");
+        self.performance_monitor
+            .start_operation("distance_computation");
 
         let result = if self.capabilities.has_avx512() && dimension % 16 == 0 {
             self.avx512_distance_computation(query, database, dimension)
         } else if self.capabilities.has_avx2() && dimension % 8 == 0 {
             self.avx2_distance_computation(query, database, dimension)
         } else {
-            self.fallback_manager.euclidean_distance_fallback(query, database, dimension)
+            self.fallback_manager
+                .euclidean_distance_fallback(query, database, dimension)
         };
 
-        self.performance_monitor.end_operation("distance_computation");
+        self.performance_monitor
+            .end_operation("distance_computation");
         result
     }
 }
@@ -146,10 +153,10 @@ impl SIMDProcessor {
         &mut self,
         lhs: &[f32],
         rhs: &[f32],
-        operation: F
+        operation: F,
     ) -> Result<Vec<f32>, SIMDError>
     where
-        F: Fn(f32, f32) -> f32
+        F: Fn(f32, f32) -> f32,
     {
         self.vector_dispatcher.dispatch_f32x8(lhs, rhs, &operation)
     }
@@ -158,10 +165,10 @@ impl SIMDProcessor {
         &mut self,
         lhs: &[f32],
         rhs: &[f32],
-        operation: F
+        operation: F,
     ) -> Result<Vec<f32>, SIMDError>
     where
-        F: Fn(f32, f32) -> f32
+        F: Fn(f32, f32) -> f32,
     {
         self.vector_dispatcher.dispatch_f32x4(lhs, rhs, &operation)
     }
@@ -174,7 +181,8 @@ impl SIMDProcessor {
         n: usize,
         k: usize,
     ) -> Result<Vec<f32>, SIMDError> {
-        self.vector_dispatcher.matrix_multiply_dispatch(a, b, m, n, k)
+        self.vector_dispatcher
+            .matrix_multiply_dispatch(a, b, m, n, k)
     }
 
     fn avx512_distance_computation(
@@ -183,7 +191,8 @@ impl SIMDProcessor {
         database: &[f32],
         dimension: usize,
     ) -> Result<Vec<f32>, SIMDError> {
-        self.vector_dispatcher.avx512_distance_dispatch(query, database, dimension)
+        self.vector_dispatcher
+            .avx512_distance_dispatch(query, database, dimension)
     }
 
     fn avx2_distance_computation(
@@ -192,7 +201,8 @@ impl SIMDProcessor {
         database: &[f32],
         dimension: usize,
     ) -> Result<Vec<f32>, SIMDError> {
-        self.vector_dispatcher.avx2_distance_dispatch(query, database, dimension)
+        self.vector_dispatcher
+            .avx2_distance_dispatch(query, database, dimension)
     }
 }
 
@@ -232,10 +242,8 @@ unsafe impl<T> Sync for SIMDVector<T> {}
 impl<T> Drop for SIMDVector<T> {
     fn drop(&mut self) {
         if self.capacity > 0 {
-            let layout = Layout::from_size_align(
-                self.capacity * size_of::<T>(),
-                self.alignment
-            ).unwrap();
+            let layout =
+                Layout::from_size_align(self.capacity * size_of::<T>(), self.alignment).unwrap();
             unsafe {
                 dealloc(self.ptr.cast().as_ptr(), layout);
             }
@@ -253,13 +261,11 @@ lazy_static::lazy_static! {
 /// Get or initialize global SIMD processor instance
 pub fn get_simd_processor() -> Result<&'static SIMDProcessor, SIMDError> {
     unsafe {
-        SIMD_PROC_INIT.call_once(|| {
-            match SIMDProcessor::new() {
-                Ok(processor) => SIMD_PROCESSOR = Some(processor),
-                Err(e) => {
-                    tracing::warn!("Failed to initialize SIMD processor: {:?}", e);
-                    tracing::warn!("SIMD acceleration will be disabled");
-                }
+        SIMD_PROC_INIT.call_once(|| match SIMDProcessor::new() {
+            Ok(processor) => SIMD_PROCESSOR = Some(processor),
+            Err(e) => {
+                tracing::warn!("Failed to initialize SIMD processor: {:?}", e);
+                tracing::warn!("SIMD acceleration will be disabled");
             }
         });
         SIMD_PROCESSOR.as_ref().ok_or(SIMDError::SIMDUnavailable)

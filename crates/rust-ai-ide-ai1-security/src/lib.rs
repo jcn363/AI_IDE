@@ -3,9 +3,9 @@
 //! Comprehensive security scanning and vulnerability analysis system for codebases,
 //! providing intelligent threat detection, risk assessment, and remediation suggestions.
 
-use std::collections::{HashMap, HashSet};
-use serde::{Deserialize, Serialize};
 use regex::Regex;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 /// Security vulnerability scanner
 #[derive(Debug)]
@@ -25,12 +25,17 @@ impl SecurityScanner {
         }
     }
 
-    pub async fn scan_code(&self, code: &str, language: &str) -> Result<SecurityReport, SecurityError> {
+    pub async fn scan_code(
+        &self,
+        code: &str,
+        language: &str,
+    ) -> Result<SecurityReport, SecurityError> {
         let mut vulnerabilities = Vec::new();
 
         // Scan for each security rule
         for rule in &self.rules {
-            if rule.languages.contains(&language.to_string()) || rule.languages.contains(&"generic") {
+            if rule.languages.contains(&language.to_string()) || rule.languages.contains(&"generic")
+            {
                 let results = rule.scan_code(code)?;
                 vulnerabilities.extend(results);
             }
@@ -85,7 +90,9 @@ impl SecurityScanner {
                 cwe_id: Some(120),
                 description: "Potential buffer overflow vulnerability".to_string(),
                 languages: vec!["c".to_string(), "cpp".to_string(), "rust".to_string()],
-                patterns: vec![SecurityPattern::Regex(r#"unsafe \{.*\[.*\].*=.*\}"#.to_string())],
+                patterns: vec![SecurityPattern::Regex(
+                    r#"unsafe \{.*\[.*\].*=.*\}"#.to_string(),
+                )],
                 recommendations: vec![
                     "Use safe Rust abstractions instead of unsafe code".to_string(),
                     "Implement bounds checking".to_string(),
@@ -256,10 +263,12 @@ impl RiskAssessmentEngine {
 
     pub fn assess_overall_risk(&self, vulnerabilities: &[Vulnerability]) -> RiskAssessment {
         let vulnerability_count = vulnerabilities.len();
-        let high_severity_count = vulnerabilities.iter()
+        let high_severity_count = vulnerabilities
+            .iter()
             .filter(|v| matches!(v.severity, Severity::High))
             .count();
-        let critical_severity_count = vulnerabilities.iter()
+        let critical_severity_count = vulnerabilities
+            .iter()
             .filter(|v| matches!(v.severity, Severity::Critical))
             .count();
 
@@ -267,7 +276,8 @@ impl RiskAssessmentEngine {
         let risk_score = if vulnerability_count == 0 {
             0.0
         } else {
-            (critical_severity_count * 10 + high_severity_count * 5 + vulnerability_count) as f64 * 2.0
+            (critical_severity_count * 10 + high_severity_count * 5 + vulnerability_count) as f64
+                * 2.0
         };
 
         let overall_risk = if risk_score > 80.0 {

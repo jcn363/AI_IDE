@@ -46,14 +46,14 @@
 #![warn(clippy::all, clippy::nursery)]
 #![warn(missing_debug_implementations)]
 
+pub mod audit;
 pub mod core;
+pub mod data_management;
 pub mod engine;
 pub mod gdpr;
 pub mod hipaa;
 pub mod policy;
-pub mod audit;
 pub mod risk;
-pub mod data_management;
 
 // Re-exports for easier access
 pub use core::*;
@@ -68,9 +68,9 @@ pub use hipaa::*;
 
 // Audit and reporting components
 pub use audit::*;
+pub use data_management::*;
 pub use policy::*;
 pub use risk::*;
-pub use data_management::*;
 
 /// Version information
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

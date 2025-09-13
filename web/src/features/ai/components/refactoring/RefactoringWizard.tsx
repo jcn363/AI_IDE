@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Button,
-  Typography,
-  Paper,
-} from '@mui/material';
+import { Box, Button, Typography, Paper } from '@mui/material';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 
 export interface StepComponentProps {
@@ -39,7 +34,7 @@ export const WizardStepCard: React.FC<WizardStepProps> = ({
   description,
   content,
   isActive,
-  isCompleted
+  isCompleted,
 }) => {
   return (
     <Box
@@ -87,7 +82,9 @@ export const WizardStepCard: React.FC<WizardStepProps> = ({
         </Box>
       </Box>
       {isActive && (
-        <Box sx={{ px: 2, pb: 2, pl: '66px' }}> {/* Account for indicator width */}
+        <Box sx={{ px: 2, pb: 2, pl: '66px' }}>
+          {' '}
+          {/* Account for indicator width */}
           {content}
         </Box>
       )}
@@ -115,7 +112,7 @@ export const RefactoringWizard: React.FC<RefactoringWizardProps> = ({
   onComplete,
   onCancel,
   onClose,
-  onConfigChange
+  onConfigChange,
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [wizardConfig, setWizardConfig] = useState<Record<string, any>>({});
@@ -226,7 +223,12 @@ export const RefactoringWizard: React.FC<RefactoringWizardProps> = ({
                 width: 8,
                 height: 8,
                 borderRadius: '50%',
-                bgcolor: index === currentStep ? 'primary.main' : index < currentStep ? 'success.main' : 'grey.300',
+                bgcolor:
+                  index === currentStep
+                    ? 'primary.main'
+                    : index < currentStep
+                      ? 'success.main'
+                      : 'grey.300',
               }}
             />
           ))}
@@ -234,27 +236,15 @@ export const RefactoringWizard: React.FC<RefactoringWizardProps> = ({
 
         {/* Navigation buttons */}
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            onClick={onClose}
-            variant="outlined"
-            color="inherit"
-          >
+          <Button onClick={onClose} variant="outlined" color="inherit">
             Cancel
           </Button>
           {currentStep > 0 && (
-            <Button
-              onClick={handlePrevious}
-              variant="outlined"
-              color="inherit"
-            >
+            <Button onClick={handlePrevious} variant="outlined" color="inherit">
               Previous
             </Button>
           )}
-          <Button
-            onClick={handleNext}
-            variant="contained"
-            color="primary"
-          >
+          <Button onClick={handleNext} variant="contained" color="primary">
             {currentStep === steps.length - 1 ? 'Complete' : 'Next'}
           </Button>
         </Box>

@@ -110,7 +110,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     config.typescript.generate_type_guards = true;
     config.typescript.strict_null_checks = true;
 
-    let base_result = generator.generate_types_from_source(showcase_types, "showcase.rs", &[]).await?;
+    let base_result = generator
+        .generate_types_from_source(showcase_types, "showcase.rs", &[])
+        .await?;
     println!("📦 Generated Base TypeScript:");
     println!("   - {} lines of code", base_result.content.lines().count());
     println!("   - {} types processed", base_result.source_types.len());
@@ -120,7 +122,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Demonstrate validation system
     let validation = validate_cross_platform(&types, &default_config()).await?;
     println!("🔍 Cross-Platform Validation:");
-    println!("   - Compatibility Score: {:.1}%", validation.compatibility_score * 100.0);
+    println!(
+        "   - Compatibility Score: {:.1}%",
+        validation.compatibility_score * 100.0
+    );
     println!("   - Issues Found: {}", validation.issues.len());
     println!();
 
@@ -207,10 +212,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("   ✅ Loaded {} plugins:", plugins.len());
 
-    let transformer_count = plugins.iter()
+    let transformer_count = plugins
+        .iter()
         .filter(|p| p.instance.as_ref().unwrap().is_transformer())
         .count();
-    let generator_count = plugins.iter()
+    let generator_count = plugins
+        .iter()
         .filter(|p| p.instance.as_ref().unwrap().is_generator())
         .count();
 

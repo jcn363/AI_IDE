@@ -3,9 +3,9 @@
 //! This plugin generates Go struct definitions from Rust types,
 //! providing seamless interoperability between Go and Rust services.
 
-use async_trait::async_trait;
 use crate::plugins::*;
-use crate::{ParsedType, TransformationContext, serde_json, Field};
+use crate::{serde_json, Field, ParsedType, TransformationContext};
+use async_trait::async_trait;
 
 /// Go generator plugin
 #[derive(Debug)]
@@ -19,7 +19,9 @@ impl GoGeneratorPlugin {
 
 #[async_trait]
 impl GeneratorPluginTrait for GoGeneratorPlugin {
-    fn name(&self) -> &str { "go-generator" }
+    fn name(&self) -> &str {
+        "go-generator"
+    }
 
     fn target_platforms(&self) -> Vec<String> {
         vec!["go".to_string(), "golang".to_string()]
@@ -35,21 +37,25 @@ impl GeneratorPluginTrait for GoGeneratorPlugin {
         platform: &str,
         config: &serde_json::Value,
     ) -> Result<GeneratedCode, PluginError> {
-        let package_name = config.get("package")
+        let package_name = config
+            .get("package")
             .and_then(|v| v.as_str())
             .unwrap_or("types");
 
-        let with_json_tags = config.get("json_tags")
+        let with_json_tags = config
+            .get("json_tags")
             .unwrap_or(&serde_json::Value::Bool(true))
             .as_bool()
             .unwrap_or(true);
 
-        let with_bson_tags = config.get("bson_tags")
+        let with_bson_tags = config
+            .get("bson_tags")
             .unwrap_or(&serde_json::Value::Bool(false))
             .as_bool()
             .unwrap_or(false);
 
-        let generate_getters = config.get("generate_getters")
+        let generate_getters = config
+            .get("generate_getters")
             .unwrap_or(&serde_json::Value::Bool(false))
             .as_bool()
             .unwrap_or(false);
@@ -130,19 +136,31 @@ impl GeneratorPluginTrait for GoGeneratorPlugin {
 }
 
 impl GoGeneratorPlugin {
-    fn generate_go_type(&self, content: &mut String, rust_type: &ParsedType, json_tags: bool, bson_tags: bool) {
+    fn generate_go_type(
+        &self,
+        content: &mut String,
+        rust_type: &ParsedType,
+        json_tags: bool,
+        bson_tags: bool,
+    ) {
         // Add documentation
         if let Some(ref docs) = rust_type.documentation {
             content.push_str(&format!("// {}\n", docs.replace("\n", "\n// ")));
         }
 
         // Generate struct
-        content.push_str(&format!("type {} struct {{\n", self.rust_type_to_go_type(&rust_type.name)));
+        content.push_str(&format!(
+            "type {} struct {{\n",
+            self.rust_type_to_go_type(&rust_type.name)
+        ));
 
         // Generate fields
         for field in &rust_type.fields {
             if let Some(ref field_docs) = field.documentation {
-                content.push_str(&format!("    // {}\n", field_docs.replace("\n", "\n    // ")));
+                content.push_str(&format!(
+                    "    // {}\n",
+                    field_docs.replace("\n", "\n    // ")
+                ));
             }
 
             let go_type = self.rust_field_to_go_type(&field.ty);
@@ -166,7 +184,13 @@ impl GoGeneratorPlugin {
                 format!(" `{}`", tag_parts.join(" "))
             };
 
-            content.push_str(&format!("    {}{} {}{}\n", go_field_name, tag, go_type, self.get_field_suffix(&field.ty)));
+            content.push_str(&format!(
+                "    {}{} {}{}\n",
+                go_field_name,
+                tag,
+                go_type,
+                self.get_field_suffix(&field.ty)
+            ));
         }
 
         content.push_str("}\n");
@@ -183,24 +207,29 @@ impl GoGeneratorPlugin {
             let field_suffix = self.get_field_suffix(&field.ty);
 
             // Generate getter
-            content.push_str(&format!("func (t *{}) Get{}() {}{} {{\n",
-                go_type_name,
-                go_field_name,
-                go_type,
-                field_suffix
+            content.push_str(&format!(
+                "func (t *{}) Get{}() {}{} {{\n",
+                go_type_name, go_field_name, go_type, field_suffix
             ));
 
             if field.ty.contains("Option<") {
-                let inner_type = field.ty
+                let inner_type = field
+                    .ty
                     .trim_start_matches("Option<")
                     .trim_end_matches(">")
                     .trim();
                 let go_inner_type = self.rust_field_to_go_type(inner_type);
 
                 if go_inner_type == "string" {
-                    content.push_str(&format!("    if t.{} == nil {{\n        return \"\"\n", go_field_name));
+                    content.push_str(&format!(
+                        "    if t.{} == nil {{\n        return \"\"\n",
+                        go_field_name
+                    ));
                 } else {
-                    content.push_str(&format!("    if t.{} == nil {{\n        return 0\n", go_field_name));
+                    content.push_str(&format!(
+                        "    if t.{} == nil {{\n        return 0\n",
+                        go_field_name
+                    ));
                 }
                 content.push_str(&format!("    }}\n"));
                 content.push_str(&format!("    return *t.{}\n", go_field_name));
@@ -223,7 +252,8 @@ impl GoGeneratorPlugin {
             "bool" => "bool",
             "char" => "rune",
             t => t, // Keep as-is for custom types
-        }.to_string()
+        }
+        .to_string()
     }
 
     fn rust_field_to_go_type(&self, rust_type: &str) -> String {
@@ -246,7 +276,10 @@ impl GoGeneratorPlugin {
             .map(|part| {
                 let mut chars = part.chars();
                 match chars.next() {
-                    Some(first) => first.to_uppercase().chain(chars.as_str().chars()).collect::<String>(),
+                    Some(first) => first
+                        .to_uppercase()
+                        .chain(chars.as_str().chars())
+                        .collect::<String>(),
                     None => String::new(),
                 }
             })

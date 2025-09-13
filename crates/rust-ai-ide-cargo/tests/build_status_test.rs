@@ -1,6 +1,6 @@
 use rust_ai_ide_cargo::build::BuildStatus;
-use rust_ai_ide_cargo::models::BuildMetrics;
 use rust_ai_ide_cargo::build::{BuildError, ErrorLevel};
+use rust_ai_ide_cargo::models::BuildMetrics;
 
 #[test]
 fn test_build_status_display() {
@@ -82,10 +82,7 @@ fn test_build_status_display() {
     );
 
     // Test Cancelled
-    assert_eq!(
-        BuildStatus::Cancelled.to_string(),
-        "Cancelled"
-    );
+    assert_eq!(BuildStatus::Cancelled.to_string(), "Cancelled");
 }
 
 #[test]

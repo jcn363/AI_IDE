@@ -40,7 +40,7 @@ export class CollaborationManager implements CollaborationService {
     const session: EditingSession = {
       sessionId,
       filePath,
-      users: users?.map(userId => this.mockUsers.get(userId)!).filter(Boolean) || [],
+      users: users?.map((userId) => this.mockUsers.get(userId)!).filter(Boolean) || [],
       isActive: true,
       startTime: Date.now(),
       lastActivity: Date.now(),
@@ -89,7 +89,7 @@ export class CollaborationManager implements CollaborationService {
     if (!this.currentSession || !this.userPresence) return;
 
     const session = this.currentSession;
-    session.users = session.users.filter(user => user.userId !== this.userPresence!.userId);
+    session.users = session.users.filter((user) => user.userId !== this.userPresence!.userId);
 
     const event: CollaborationEvent = {
       type: 'user_left',
@@ -116,12 +116,12 @@ export class CollaborationManager implements CollaborationService {
     this.userPresence = { ...this.userPresence, ...update };
 
     // Broadcast presence update
-    this.presenceCallbacks.forEach(callback => callback(this.userPresence!));
+    this.presenceCallbacks.forEach((callback) => callback(this.userPresence!));
   }
 
   getUsersInFile(filePath: string): UserPresence[] {
     return Array.from(this.mockUsers.values()).filter(
-      user => user.currentFile === filePath && user.status === 'online'
+      (user) => user.currentFile === filePath && user.status === 'online'
     );
   }
 
@@ -136,17 +136,17 @@ export class CollaborationManager implements CollaborationService {
     // Detect conflicts with simulated remote operations
     const remoteOps = this.simulateRemoteOperation(operation);
     if (remoteOps.length > 0) {
-      remoteOps.forEach(remoteOp => {
+      remoteOps.forEach((remoteOp) => {
         const conflict = this.detectConflict(operation, remoteOp);
         if (conflict) {
           this.pendingConficts.push(conflict);
-          this.conflictCallbacks.forEach(callback => callback(conflict));
+          this.conflictCallbacks.forEach((callback) => callback(conflict));
         }
       });
     }
 
     // Notify listeners
-    this.changeCallbacks.forEach(callback => callback(operation));
+    this.changeCallbacks.forEach((callback) => callback(operation));
   }
 
   broadcastCursor(position: any): void {
@@ -191,8 +191,10 @@ export class CollaborationManager implements CollaborationService {
     const overlaps = !(
       localRange.endLine < remoteRange.startLine ||
       localRange.startLine > remoteRange.endLine ||
-      (localRange.endLine === remoteRange.startLine && localRange.endColumn < remoteRange.startColumn) ||
-      (localRange.startLine === remoteRange.endLine && localRange.startColumn > remoteRange.endColumn)
+      (localRange.endLine === remoteRange.startLine &&
+        localRange.endColumn < remoteRange.startColumn) ||
+      (localRange.startLine === remoteRange.endLine &&
+        localRange.startColumn > remoteRange.endColumn)
     );
 
     if (overlaps && localChange.type !== remoteChange.type) {
@@ -213,8 +215,12 @@ export class CollaborationManager implements CollaborationService {
     return null;
   }
 
-  resolveConflict(conflictId: string, resolution: 'local' | 'remote' | 'merge', mergedContent?: string): void {
-    const conflict = this.pendingConficts.find(c => c.id === conflictId);
+  resolveConflict(
+    conflictId: string,
+    resolution: 'local' | 'remote' | 'merge',
+    mergedContent?: string
+  ): void {
+    const conflict = this.pendingConficts.find((c) => c.id === conflictId);
     if (!conflict) return;
 
     conflict.resolved = true;
@@ -224,7 +230,7 @@ export class CollaborationManager implements CollaborationService {
     }
 
     // Remove from pending conflicts
-    this.pendingConficts = this.pendingConficts.filter(c => c.id !== conflictId);
+    this.pendingConficts = this.pendingConficts.filter((c) => c.id !== conflictId);
 
     console.log(`Resolved conflict ${conflictId} with resolution: ${resolution}`);
   }
@@ -235,7 +241,7 @@ export class CollaborationManager implements CollaborationService {
 
   async pullChanges(filePath: string): Promise<ChangeOperation[]> {
     // Simulate pulling changes from server
-    return this.operationsHistory.filter(op => op.filePath === filePath);
+    return this.operationsHistory.filter((op) => op.filePath === filePath);
   }
 
   async pushChanges(filePath: string): Promise<void> {
@@ -245,11 +251,11 @@ export class CollaborationManager implements CollaborationService {
 
   async syncFile(filePath: string): Promise<string> {
     // Simulate file synchronization
-    const changes = this.operationsHistory.filter(op => op.filePath === filePath);
+    const changes = this.operationsHistory.filter((op) => op.filePath === filePath);
 
     // Apply changes in order to get final content
     let content = '';
-    changes.forEach(change => {
+    changes.forEach((change) => {
       if (change.type === 'insert' && change.content) {
         content = this.applyOperation(content, change);
       }
@@ -258,7 +264,9 @@ export class CollaborationManager implements CollaborationService {
     return content;
   }
 
-  async createRoom(roomData: Omit<CollaborationRoom, 'id' | 'createdAt'>): Promise<CollaborationRoom> {
+  async createRoom(
+    roomData: Omit<CollaborationRoom, 'id' | 'createdAt'>
+  ): Promise<CollaborationRoom> {
     const room: CollaborationRoom = {
       ...roomData,
       id: `room_${Date.now()}`,
@@ -303,7 +311,18 @@ export class CollaborationManager implements CollaborationService {
 
   // Private methods
   private generateColor(seed: string): string {
-    const colors = ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39'];
+    const colors = [
+      '#e91e63',
+      '#9c27b0',
+      '#673ab7',
+      '#3f51b5',
+      '#2196f3',
+      '#00bcd4',
+      '#009688',
+      '#4caf50',
+      '#8bc34a',
+      '#cddc39',
+    ];
     let hash = 0;
     for (let i = 0; i < seed.length; i++) {
       hash = seed.charCodeAt(i) + ((hash << 5) - hash);
@@ -333,7 +352,7 @@ export class CollaborationManager implements CollaborationService {
       },
     ];
 
-    mockUsers.forEach(user => {
+    mockUsers.forEach((user) => {
       const presence: UserPresence = {
         ...user,
         color: this.generateColor(user.userId),
@@ -345,27 +364,30 @@ export class CollaborationManager implements CollaborationService {
 
   private simulateRemoteOperation(localOperation: ChangeOperation): ChangeOperation[] {
     // Randomly simulate remote operations for demo purposes
-    if (Math.random() < 0.1) { // 10% chance
-      return [{
-        id: `remote_${Date.now()}`,
-        userId: 'user_simulated',
-        filePath: localOperation.filePath,
-        timestamp: Date.now() + 100,
-        type: 'insert',
-        position: {
-          startLine: localOperation.position.startLine,
-          startColumn: localOperation.position.startColumn + 5,
-          endLine: localOperation.position.endLine,
-          endColumn: localOperation.position.endColumn + 5,
+    if (Math.random() < 0.1) {
+      // 10% chance
+      return [
+        {
+          id: `remote_${Date.now()}`,
+          userId: 'user_simulated',
+          filePath: localOperation.filePath,
+          timestamp: Date.now() + 100,
+          type: 'insert',
+          position: {
+            startLine: localOperation.position.startLine,
+            startColumn: localOperation.position.startColumn + 5,
+            endLine: localOperation.position.endLine,
+            endColumn: localOperation.position.endColumn + 5,
+          },
+          content: '// Simulated remote change\n',
         },
-        content: '// Simulated remote change\n',
-      }];
+      ];
     }
     return [];
   }
 
   private broadcastEvent(event: CollaborationEvent): void {
-    this.eventCallbacks.forEach(callback => callback(event));
+    this.eventCallbacks.forEach((callback) => callback(event));
   }
 
   private applyOperation(currentContent: string, operation: ChangeOperation): string {

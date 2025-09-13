@@ -132,15 +132,15 @@ export const BasePanel: React.FC<EnhancedPanelProps> = ({
     display: 'flex',
     flexDirection: 'column',
     transition: 'all 0.2s ease-in-out',
-    ...panelStyle === 'card' && {
+    ...(panelStyle === 'card' && {
       borderRadius: 3,
       overflow: 'hidden',
-    },
-    ...panelStyle === 'minimal' && {
+    }),
+    ...(panelStyle === 'minimal' && {
       boxShadow: 'none',
       border: 1,
       borderColor: 'divider',
-    },
+    }),
     ...sx,
   };
 
@@ -193,11 +193,16 @@ export const BasePanel: React.FC<EnhancedPanelProps> = ({
     if (statusIcon) return statusIcon;
 
     switch (status) {
-      case 'success': return <SuccessIcon color="success" />;
-      case 'warning': return <WarningIcon color="warning" />;
-      case 'error': return <ErrorIcon color="error" />;
-      case 'info': return <InfoIcon color="info" />;
-      default: return null;
+      case 'success':
+        return <SuccessIcon color="success" />;
+      case 'warning':
+        return <WarningIcon color="warning" />;
+      case 'error':
+        return <ErrorIcon color="error" />;
+      case 'info':
+        return <InfoIcon color="info" />;
+      default:
+        return null;
     }
   };
 
@@ -224,11 +229,7 @@ export const BasePanel: React.FC<EnhancedPanelProps> = ({
           {/* Title with badge and collapsible */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {collapsible && title && (
-              <IconButton
-                size="small"
-                onClick={() => setCollapsed(!collapsed)}
-                sx={{ p: 0.5 }}
-              >
+              <IconButton size="small" onClick={() => setCollapsed(!collapsed)} sx={{ p: 0.5 }}>
                 {collapsed ? (
                   <ExpandMoreIcon sx={{ fontSize: 18 }} />
                 ) : (
@@ -243,13 +244,7 @@ export const BasePanel: React.FC<EnhancedPanelProps> = ({
                   {title}
                 </Typography>
 
-                {badge && (
-                  <Badge
-                    badgeContent={badge}
-                    color="primary"
-                    sx={{ ml: 1 }}
-                  />
-                )}
+                {badge && <Badge badgeContent={badge} color="primary" sx={{ ml: 1 }} />}
               </Box>
             )}
 
@@ -258,12 +253,7 @@ export const BasePanel: React.FC<EnhancedPanelProps> = ({
               <Box sx={statusIndicatorStyles}>
                 {getStatusIcon()}
                 {statusMessage && (
-                  <Chip
-                    label={statusMessage}
-                    size="small"
-                    color={status}
-                    variant="outlined"
-                  />
+                  <Chip label={statusMessage} size="small" color={status} variant="outlined" />
                 )}
               </Box>
             )}
@@ -287,27 +277,17 @@ export const BasePanel: React.FC<EnhancedPanelProps> = ({
       )}
 
       {/* Toolbar Area */}
-      {toolbar && (
-        <Box sx={toolbarStyles}>
-          {toolbar}
-        </Box>
-      )}
+      {toolbar && <Box sx={toolbarStyles}>{toolbar}</Box>}
 
       {/* Content Area */}
       {children && (
         <Collapse in={!collapsed} timeout="auto">
-          <Box sx={contentStyles}>
-            {children}
-          </Box>
+          <Box sx={contentStyles}>{children}</Box>
         </Collapse>
       )}
 
       {/* Footer */}
-      {footer && (
-        <Box sx={footerStyles}>
-          {footer}
-        </Box>
-      )}
+      {footer && <Box sx={footerStyles}>{footer}</Box>}
 
       {/* Loading overlay */}
       {loading && (

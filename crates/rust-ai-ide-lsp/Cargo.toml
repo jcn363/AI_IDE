@@ -51,7 +51,8 @@ hyper = { version = "1.4.1", features = ["full"], optional = true } # HTTP load 
 # Security Enhancement Dependencies
 regex = "1.10" # SQL injection pattern matching
 uuid = { version = "1.6", features = ["v4"] } # Secure session IDs
-ring = "0.17.8" # Cryptographic functions
+rustls = "0.23.0" # Secure cryptographic functions
+rustls-pemfile = "2.0.0"
 
 # Development and Testing Dependencies
 criterion = "0.5" # Performance benchmarking

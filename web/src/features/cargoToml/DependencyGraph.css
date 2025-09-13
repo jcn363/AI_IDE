@@ -30,8 +30,8 @@
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 12px;
   pointer-events: none;
-  text-shadow: 
-    -1px -1px 3px white,  
+  text-shadow:
+    -1px -1px 3px white,
     1px -1px 3px white,
     -1px 1px 3px white,
     1px 1px 3px white;
@@ -104,7 +104,7 @@
   .dependency-graph-container .node text {
     font-size: 8px;
   }
-  
+
   .dependency-tooltip {
     max-width: 200px;
     font-size: 11px;

@@ -3,14 +3,14 @@
 //! This module provides comprehensive layout management for split views,
 //! tabbed interfaces, and panel organization in the IDE.
 
+use lazy_static::lazy_static;
+use rust_ai_ide_core::security::{audit_action, audit_logger};
 use rust_ai_ide_core::validation::validate_secure_path;
-use rust_ai_ide_core::security::{audit_logger, audit_action};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
-use std::fmt;
-use lazy_static::lazy_static;
-use std::collections::HashMap;
 
 use crate::command_templates::*;
 
@@ -125,7 +125,7 @@ impl SplitViewManager {
                 layout.layout_version += 1;
                 Ok(())
             }
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 
@@ -165,7 +165,9 @@ impl SplitViewManager {
             }
             PanelNode::Split(split_config) => {
                 for child in &mut split_config.children {
-                    if let Ok(_) = self.find_and_split_panel(child, target_id, orientation, size_ratio) {
+                    if let Ok(_) =
+                        self.find_and_split_panel(child, target_id, orientation, size_ratio)
+                    {
                         return Ok(());
                     }
                 }
@@ -192,7 +194,7 @@ impl SplitViewManager {
                 layout.layout_version += 1;
                 Ok(())
             }
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 
@@ -249,9 +251,11 @@ impl SplitViewManager {
     fn count_panels(&self, node: &PanelNode) -> usize {
         match node {
             PanelNode::Leaf(_) => 1,
-            PanelNode::Split(split_config) => {
-                split_config.children.iter().map(|child| self.count_panels(child)).sum()
-            }
+            PanelNode::Split(split_config) => split_config
+                .children
+                .iter()
+                .map(|child| self.count_panels(child))
+                .sum(),
         }
     }
 
@@ -268,7 +272,7 @@ impl SplitViewManager {
                 layout.layout_version += 1;
                 Ok(())
             }
-            None => Err(format!("Panel '{}' not found", panel_id))
+            None => Err(format!("Panel '{}' not found", panel_id)),
         }
     }
 
@@ -285,7 +289,7 @@ impl SplitViewManager {
                 layout.layout_version += 1;
                 Ok(())
             }
-            None => Err(format!("Panel '{}' not found", panel_id))
+            None => Err(format!("Panel '{}' not found", panel_id)),
         }
     }
 
@@ -329,7 +333,7 @@ impl SplitViewManager {
                     .as_secs();
                 Ok(())
             }
-            None => Err(format!("Layout '{}' not found", name))
+            None => Err(format!("Layout '{}' not found", name)),
         }
     }
 

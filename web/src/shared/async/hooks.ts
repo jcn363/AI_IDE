@@ -28,7 +28,10 @@ export class HookManager {
    * Register a hook to run before the main operation
    */
   addBeforeHook<T>(hook: HookFunction<T>, options: HookOptions = {}): void {
-    this.beforeHooks.push({ fn: hook, options: { timeout: 5000, continueOnError: true, priority: 0, ...options } });
+    this.beforeHooks.push({
+      fn: hook,
+      options: { timeout: 5000, continueOnError: true, priority: 0, ...options },
+    });
     this.beforeHooks.sort((a, b) => (b.options.priority || 0) - (a.options.priority || 0));
   }
 
@@ -36,7 +39,10 @@ export class HookManager {
    * Register a hook to run after the main operation
    */
   addAfterHook<T>(hook: HookFunction<T>, options: HookOptions = {}): void {
-    this.afterHooks.push({ fn: hook, options: { timeout: 5000, continueOnError: true, priority: 0, ...options } });
+    this.afterHooks.push({
+      fn: hook,
+      options: { timeout: 5000, continueOnError: true, priority: 0, ...options },
+    });
     this.afterHooks.sort((a, b) => (b.options.priority || 0) - (a.options.priority || 0));
   }
 
@@ -44,7 +50,10 @@ export class HookManager {
    * Register a hook to run when an error occurs
    */
   addErrorHook(hook: HookFunction<void>, options: HookOptions = {}): void {
-    this.errorHooks.push({ fn: hook, options: { timeout: 5000, continueOnError: true, priority: 0, ...options } });
+    this.errorHooks.push({
+      fn: hook,
+      options: { timeout: 5000, continueOnError: true, priority: 0, ...options },
+    });
     this.errorHooks.sort((a, b) => (b.options.priority || 0) - (a.options.priority || 0));
   }
 
@@ -58,10 +67,13 @@ export class HookManager {
     const context: AsyncHookContext = {
       name: operationName,
       startTime: performance.now(),
-      metadata
+      metadata,
     };
 
-    return this.executeHooks<T>(this.beforeHooks as Array<{ fn: HookFunction<T>; options: HookOptions }>, context);
+    return this.executeHooks<T>(
+      this.beforeHooks as Array<{ fn: HookFunction<T>; options: HookOptions }>,
+      context
+    );
   }
 
   /**
@@ -76,10 +88,13 @@ export class HookManager {
       name: operationName,
       startTime: performance.now(),
       metadata: { ...metadata, result },
-      result
+      result,
     };
 
-    return this.executeHooks<T>(this.afterHooks as Array<{ fn: HookFunction<T>; options: HookOptions }>, context);
+    return this.executeHooks<T>(
+      this.afterHooks as Array<{ fn: HookFunction<T>; options: HookOptions }>,
+      context
+    );
   }
 
   /**
@@ -94,7 +109,7 @@ export class HookManager {
       name: operationName,
       startTime: performance.now(),
       metadata: { ...metadata, error },
-      error
+      error,
     };
 
     return this.executeHooks<void>(this.errorHooks, context);
@@ -140,10 +155,7 @@ export class HookManager {
 
     for (const hook of hooks) {
       try {
-        const result = await this.withTimeout(
-          hook.fn(context),
-          hook.options.timeout!
-        );
+        const result = await this.withTimeout(hook.fn(context), hook.options.timeout!);
         results.push(result);
       } catch (error) {
         if (!hook.options.continueOnError!) {
@@ -180,7 +192,7 @@ export class HookManager {
     return {
       before: this.beforeHooks.length,
       after: this.afterHooks.length,
-      error: this.errorHooks.length
+      error: this.errorHooks.length,
     };
   }
 
@@ -211,8 +223,8 @@ class GlobalHookRegistry {
   }
 
   /**
-    * Register a global hook
-    */
+   * Register a global hook
+   */
   addGlobalHook<T = void>(
     namespace: string,
     type: 'before' | 'after' | 'error',
@@ -243,7 +255,7 @@ class GlobalHookRegistry {
     operationName: string,
     params?: any
   ): Promise<void> {
-    const promises = namespaces.map(namespace => {
+    const promises = namespaces.map((namespace) => {
       const manager = this.registries.get(namespace);
       if (!manager) return Promise.resolve();
 
@@ -268,24 +280,18 @@ export const globalHookRegistry = new GlobalHookRegistry();
 /**
  * Decorator for adding hooks to methods
  */
-export function withHooks(
-  operationName: string,
-  metadata?: Record<string, any>
-) {
-  return function (
-    target: any,
-    propertyName: string,
-    descriptor: PropertyDescriptor
-  ) {
+export function withHooks(operationName: string, metadata?: Record<string, any>) {
+  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
     const hookManager = new HookManager();
 
     descriptor.value = async function (...args: any[]) {
-      return hookManager.withHooks(
-        operationName,
-        () => method.apply(this, args),
-        { ...metadata, target: target.constructor.name, method: propertyName, args }
-      );
+      return hookManager.withHooks(operationName, () => method.apply(this, args), {
+        ...metadata,
+        target: target.constructor.name,
+        method: propertyName,
+        args,
+      });
     };
   };
 }

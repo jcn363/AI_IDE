@@ -33,24 +33,23 @@
 //! - **Error handling**: Intelligent error and exception generation
 //! - **Performance optimization**: Optimize generated code for performance
 
-pub mod completion;
-pub mod function_generation;
-pub mod test_generation;
-pub mod document_gen;
 pub mod architectural;
+pub mod completion;
+pub mod document_gen;
+pub mod function_generation;
 pub mod language_specific;
-pub mod quality_assurance;
 pub mod patterns;
+pub mod quality_assurance;
+pub mod test_generation;
 pub mod validation;
 
 // Re-export commonly used types for convenience
-pub use function_generation::{FunctionGenerator, GeneratedFunction};
+pub use architectural::ArchitecturalGenerator;
 pub use completion::{CodeCompleter, CompletionContext};
-pub use architectural::{ArchitecturalGenerator};
-pub use test_generation::{TestGenerator, GeneratedTests};
-pub use document_gen::{DocumentationGenerator};
-pub use quality_assurance::{CodeQualityValidator};
-
+pub use document_gen::DocumentationGenerator;
+pub use function_generation::{FunctionGenerator, GeneratedFunction};
+pub use quality_assurance::CodeQualityValidator;
+pub use test_generation::{GeneratedTests, TestGenerator};
 
 // Core context for code generation
 #[derive(Debug, Clone)]
@@ -219,7 +218,8 @@ pub enum CodeGenerationError {
 /// Main code generation service
 #[derive(Debug)]
 pub struct CodeGenerationService {
-    function_generators: std::collections::HashMap<TargetLanguage, Vec<function_generation::FunctionGenerator>>,
+    function_generators:
+        std::collections::HashMap<TargetLanguage, Vec<function_generation::FunctionGenerator>>,
 }
 
 impl CodeGenerationService {
@@ -231,16 +231,30 @@ impl CodeGenerationService {
     }
 
     /// Register a function generator for a specific language
-    pub fn register_function_generator(&mut self, language: TargetLanguage, generator: function_generation::FunctionGenerator) -> Result<(), CodeGenerationError> {
-        let generators = self.function_generators.entry(language).or_insert_with(Vec::new);
+    pub fn register_function_generator(
+        &mut self,
+        language: TargetLanguage,
+        generator: function_generation::FunctionGenerator,
+    ) -> Result<(), CodeGenerationError> {
+        let generators = self
+            .function_generators
+            .entry(language)
+            .or_insert_with(Vec::new);
         generators.push(generator);
         Ok(())
     }
 
     /// Generate code using the appropriate generator
-    pub async fn generate_code(&self, context: CodeGenerationContext) -> Result<String, CodeGenerationError> {
-        let generators = self.function_generators.get(&context.language)
-            .ok_or_else(|| CodeGenerationError::UnsupportedLanguage(format!("{:?}", context.language)))?;
+    pub async fn generate_code(
+        &self,
+        context: CodeGenerationContext,
+    ) -> Result<String, CodeGenerationError> {
+        let generators = self
+            .function_generators
+            .get(&context.language)
+            .ok_or_else(|| {
+                CodeGenerationError::UnsupportedLanguage(format!("{:?}", context.language))
+            })?;
 
         // For now, use the first available generator
         // In a more sophisticated implementation, we might rank/select generators
@@ -248,25 +262,35 @@ impl CodeGenerationService {
             // Create function generation context from general context
             let function_context = function_generation::FunctionGenerationContext::default();
 
-            let result = generator.generate_function(function_context).await.map_err(|_| {
-                CodeGenerationError::InternalError("Generator failed".to_string())
-            })?;
+            let result = generator
+                .generate_function(function_context)
+                .await
+                .map_err(|_| CodeGenerationError::InternalError("Generator failed".to_string()))?;
 
             // Validate generated code quality
-            let quality = generator.validate(&result.signature)
+            let quality = generator
+                .validate(&result.signature)
                 .map_err(|e| CodeGenerationError::QualityValidationFailed(format!("{:?}", e)))?;
 
             // Log quality assessment
-            log::info!("Generated code quality: {}%", (quality.overall_score * 100.0) as i32);
+            log::info!(
+                "Generated code quality: {}%",
+                (quality.overall_score * 100.0) as i32
+            );
 
             Ok(result.signature)
         } else {
-            Err(CodeGenerationError::InternalError("No generator available for language".to_string()))
+            Err(CodeGenerationError::InternalError(
+                "No generator available for language".to_string(),
+            ))
         }
     }
 
     /// Get available generators for a language
-    pub fn get_function_generators(&self, language: &TargetLanguage) -> Option<&Vec<function_generation::FunctionGenerator>> {
+    pub fn get_function_generators(
+        &self,
+        language: &TargetLanguage,
+    ) -> Option<&Vec<function_generation::FunctionGenerator>> {
         self.function_generators.get(language)
     }
 
@@ -283,16 +307,15 @@ impl Default for CodeGenerationService {
 }
 
 // Global code generation service instance
-static SERVICE: once_cell::sync::Lazy<CodeGenerationService> =
-    once_cell::sync::Lazy::new(|| {
-        let service = CodeGenerationService::new();
+static SERVICE: once_cell::sync::Lazy<CodeGenerationService> = once_cell::sync::Lazy::new(|| {
+    let service = CodeGenerationService::new();
 
-        // Register default generators
-        // These would be implemented in the respective modules
-        // For now, we'll leave this as a placeholder
+    // Register default generators
+    // These would be implemented in the respective modules
+    // For now, we'll leave this as a placeholder
 
-        service
-    });
+    service
+});
 
 /// Get the global code generation service instance
 pub fn get_global_service() -> &'static CodeGenerationService {

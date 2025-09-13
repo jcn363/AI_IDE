@@ -17,8 +17,8 @@ futures = { workspace = true }
 async-trait = { workspace = true }
 
 # Large language models (placeholder for actual LM integrations)
-gpt2 = { version = "0.1", optional = true }
-bert = { version = "0.1", optional = true }
+#gpt2 = { version = "0.1", optional = true }
+#bert = { version = "0.1", optional = true }
 llama = { version = "0.14.2", optional = true }
 
 # Code-specific processing

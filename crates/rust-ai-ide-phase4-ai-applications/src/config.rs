@@ -488,15 +488,23 @@ impl ConfigurationManager {
 
     /// Load configuration from file
     pub async fn load_from_file(&mut self, path: &str) -> crate::errors::Phase4Result<()> {
-        let content = tokio::fs::read_to_string(path).await
-            .map_err(|e| crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::FileAccess(format!("Failed to read config file: {}", e))
-            ))?;
+        let content = tokio::fs::read_to_string(path).await.map_err(|e| {
+            crate::errors::Phase4Error::Configuration(
+                crate::errors::ConfigurationError::FileAccess(format!(
+                    "Failed to read config file: {}",
+                    e
+                )),
+            )
+        })?;
 
-        let config: Phase4Config = serde_json::from_str(&content)
-            .map_err(|e| crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::ParseError(format!("Failed to parse config: {}", e))
-            ))?;
+        let config: Phase4Config = serde_json::from_str(&content).map_err(|e| {
+            crate::errors::Phase4Error::Configuration(
+                crate::errors::ConfigurationError::ParseError(format!(
+                    "Failed to parse config: {}",
+                    e
+                )),
+            )
+        })?;
 
         self.validate_configuration(&config)?;
         *self.config.write().unwrap() = config;
@@ -508,16 +516,24 @@ impl ConfigurationManager {
     /// Save configuration to file
     pub async fn save_to_file(&self) -> crate::errors::Phase4Result<()> {
         let config = self.config.read().unwrap().clone();
-        let content = serde_json::to_string_pretty(&config)
-            .map_err(|e| crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::ParseError(format!("Failed to serialize config: {}", e))
-            ))?;
+        let content = serde_json::to_string_pretty(&config).map_err(|e| {
+            crate::errors::Phase4Error::Configuration(
+                crate::errors::ConfigurationError::ParseError(format!(
+                    "Failed to serialize config: {}",
+                    e
+                )),
+            )
+        })?;
 
         if let Some(path) = &self.config_path {
-            tokio::fs::write(path, content).await
-                .map_err(|e| crate::errors::Phase4Error::Configuration(
-                    crate::errors::ConfigurationError::FileAccess(format!("Failed to write config file: {}", e))
-                ))?;
+            tokio::fs::write(path, content).await.map_err(|e| {
+                crate::errors::Phase4Error::Configuration(
+                    crate::errors::ConfigurationError::FileAccess(format!(
+                        "Failed to write config file: {}",
+                        e
+                    )),
+                )
+            })?;
         }
 
         Ok(())
@@ -540,19 +556,27 @@ impl ConfigurationManager {
         // Basic validation rules
         if config.performance.memory_limit_mb == 0 {
             return Err(crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::InvalidValue("Memory limit cannot be zero".to_string())
+                crate::errors::ConfigurationError::InvalidValue(
+                    "Memory limit cannot be zero".to_string(),
+                ),
             ));
         }
 
         if config.workflow_orchestration.max_concurrent_workflows == 0 {
             return Err(crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::InvalidValue("Max concurrent workflows cannot be zero".to_string())
+                crate::errors::ConfigurationError::InvalidValue(
+                    "Max concurrent workflows cannot be zero".to_string(),
+                ),
             ));
         }
 
-        if config.development_assistance.confidence_threshold < 0.0 || config.development_assistance.confidence_threshold > 1.0 {
+        if config.development_assistance.confidence_threshold < 0.0
+            || config.development_assistance.confidence_threshold > 1.0
+        {
             return Err(crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::InvalidValue("Confidence threshold must be between 0.0 and 1.0".to_string())
+                crate::errors::ConfigurationError::InvalidValue(
+                    "Confidence threshold must be between 0.0 and 1.0".to_string(),
+                ),
             ));
         }
 
@@ -581,7 +605,9 @@ pub struct SecurityValidationRule;
 impl ValidationRule for SecurityValidationRule {
     fn validate(&self, config: &Phase4Config) -> crate::errors::Phase4Result<()> {
         // Ensure security settings are reasonable
-        if config.security.security_scanning && config.security.vulnerability_check_frequency == CheckFrequency::Weekly {
+        if config.security.security_scanning
+            && config.security.vulnerability_check_frequency == CheckFrequency::Weekly
+        {
             // This is a warning, but still valid
         }
         Ok(())
@@ -596,13 +622,17 @@ impl ValidationRule for PerformanceValidationRule {
         // Validate performance settings
         if config.caching.enabled && config.caching.cache_size_mb == 0 {
             return Err(crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::InvalidValue("Cache size must be greater than 0 when caching is enabled".to_string())
+                crate::errors::ConfigurationError::InvalidValue(
+                    "Cache size must be greater than 0 when caching is enabled".to_string(),
+                ),
             ));
         }
 
         if config.performance.cpu_limit_percent > 100.0 {
             return Err(crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::InvalidValue("CPU limit percentage cannot exceed 100%".to_string())
+                crate::errors::ConfigurationError::InvalidValue(
+                    "CPU limit percentage cannot exceed 100%".to_string(),
+                ),
             ));
         }
 

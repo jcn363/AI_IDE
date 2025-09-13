@@ -24,42 +24,42 @@ log = "0.4"
 rand = "0.8"
 
 # Meta-learning framework
-automl = { git = "https://github.com/automl-rs/automl-rs" }
-meta-learning = { git = "https://github.com/meta-learning/meta-learning-rs" }
-adaptive-learning = { git = "https://github.com/adaptive-learning/adaptive-learning-rs" }
+# automl = { git = "https://github.com/automl-rs/automl-rs" }
+# meta-learning = { git = "https://github.com/meta-learning/meta-learning-rs" }
+# adaptive-learning = { git = "https://github.com/adaptive-learning/adaptive-learning-rs" } # Temporarily commented out due to auth issues
 
 # Consciousness simulation
-consciousness-sim = { git = "https://github.com/consciousness-sim/consciousness-sim-rs" }
-neural-correlates = { git = "https://github.com/neural-correlates/neural-correlates-rs" }
-self-awareness-model = { git = "https://github.com/self-awareness-model/self-awareness-model-rs" }
+# consciousness-sim = { git = "https://github.com/consciousness-sim/consciousness-sim-rs" }
+# neural-correlates = { git = "https://github.com/neural-correlates/neural-correlates-rs" }
+# self-awareness-model = { git = "https://github.com/self-awareness-model/self-awareness-model-rs" }
 
 # Deep learning frameworks
 tch = "0.13"
-candle = "0.6"
+candle-core = "0.6"
 linfa = "0.7"
-neuronika = "0.4"
+neuronika = "0.2"
 
 # Pattern recognition and analysis
 ndarray = "0.15"
 rustfft = "6.2"
-time-series = { git = "https://github.com/time-series/time-series-rs" }
+# time-series = { git = "https://github.com/time-series/time-series-rs" }
 
 # Natural language understanding
 tokenizers = "0.20"
-transformers = { git = "https://github.com/huggingface/transformers-rust" }
+# transformers = { git = "https://github.com/huggingface/transformers-rust" }
 hf-hub = "0.3"
 
 # Quantum entanglement for consciousness
-qiskit = { git = "https://github.com/Qiskit/qiskit-rust" }
-quantum-mind = { git = "https://github.com/quantum-mind/quantum-mind-rs" }
+# qiskit = { git = "https://github.com/Qiskit/qiskit-rust" }
+# quantum-mind = { git = "https://github.com/quantum-mind/quantum-mind-rs" }
 
 # Memory and attention systems
-memory-systems = { git = "https://github.com/memory-systems/memory-systems-rs" }
-attention-mechanisms = { git = "https://github.com/attention-mechanisms/attention-mechanisms-rs" }
+# memory-systems = { git = "https://github.com/memory-systems/memory-systems-rs" }
+# attention-mechanisms = { git = "https://github.com/attention-mechanisms/attention-mechanisms-rs" }
 
 # Self-reflective systems
-reflection-engine = { git = "https://github.com/reflection-engine/reflection-engine-rs" }
-introspection-core = { git = "https://github.com/introspection-core/introspection-core-rs" }
+# reflection-engine = { git = "https://github.com/reflection-engine/reflection-engine-rs" }
+# introspection-core = { git = "https://github.com/introspection-core/introspection-core-rs" }
 
 [dev-dependencies]
 criterion = "0.5"

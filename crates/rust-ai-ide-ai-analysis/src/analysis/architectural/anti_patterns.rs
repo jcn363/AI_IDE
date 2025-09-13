@@ -6,9 +6,9 @@
 
 use crate::analysis::architectural::patterns::*;
 use crate::analysis::{AnalysisCategory, Severity};
-use rust_ai_ide_common::{IdeResult, IdeError};
-use std::collections::{HashMap, HashSet};
 use regex::Regex;
+use rust_ai_ide_common::{IdeError, IdeResult};
+use std::collections::{HashMap, HashSet};
 
 /// Anti-pattern detector with configurable thresholds
 pub struct AntiPatternDetector {
@@ -113,7 +113,8 @@ impl AntiPatternDetector {
                 let line_count = method_content.lines().count();
 
                 if line_count > self.config.max_method_lines {
-                    let cyclomatic_complexity = self.complexity_analyzer
+                    let cyclomatic_complexity = self
+                        .complexity_analyzer
                         .calculate_cyclomatic_complexity(method_content);
                     let location = CodeLocation {
                         file_path: file_path.to_string(),
@@ -181,9 +182,9 @@ impl AntiPatternDetector {
                 let field_count = self.count_fields_in_class(tree, range);
                 let line_count = class_content.lines().count();
 
-                let is_large = method_count > self.config.max_methods_per_class ||
-                              field_count > self.config.max_fields_per_class ||
-                              line_count > 300; // Default large class threshold
+                let is_large = method_count > self.config.max_methods_per_class
+                    || field_count > self.config.max_fields_per_class
+                    || line_count > 300; // Default large class threshold
 
                 if is_large {
                     let location = CodeLocation {
@@ -197,7 +198,8 @@ impl AntiPatternDetector {
                     };
 
                     let metrics = AntiPatternMetrics {
-                        violation_score: (method_count as f32 / self.config.max_methods_per_class as f32)
+                        violation_score: (method_count as f32
+                            / self.config.max_methods_per_class as f32)
                             .max(field_count as f32 / self.config.max_fields_per_class as f32),
                         maintainability_impact: 1.0,
                         testability_impact: 0.8,
@@ -212,9 +214,13 @@ impl AntiPatternDetector {
                         confidence: 0.0,
                         location,
                         suggestions: vec![
-                            format!("Extract responsibilities from class {} into separate classes", class_name),
+                            format!(
+                                "Extract responsibilities from class {} into separate classes",
+                                class_name
+                            ),
                             "Consider using composition instead of inheritance".to_string(),
-                            "Create smaller, focused classes with single responsibilities".to_string(),
+                            "Create smaller, focused classes with single responsibilities"
+                                .to_string(),
                         ],
                         context: self.build_context(content, range),
                         metrics,
@@ -323,7 +329,8 @@ impl AntiPatternDetector {
             for (class_name, range) in class_ranges {
                 let method_count = self.count_methods_in_class(tree, range);
                 let field_count = self.count_fields_in_class(tree, range);
-                let responsibility_indicators = self.calculate_responsibility_indicators(tree, range);
+                let responsibility_indicators =
+                    self.calculate_responsibility_indicators(tree, range);
 
                 if responsibility_indicators > 10 || method_count > 20 {
                     let location = CodeLocation {
@@ -382,9 +389,7 @@ impl AntiPatternDetector {
             let imports = self.extract_imports(tree, _content);
             let method_calls = self.extract_method_calls(tree, _content);
 
-            if imports.len() > self.config.max_dependencies_per_module ||
-               method_calls.len() > 50 {
-
+            if imports.len() > self.config.max_dependencies_per_module || method_calls.len() > 50 {
                 // Create a general tight coupling detection
                 let location = CodeLocation {
                     file_path: file_path.to_string(),
@@ -397,8 +402,8 @@ impl AntiPatternDetector {
                 };
 
                 let metrics = AntiPatternMetrics {
-                    violation_score: (imports.len().max(method_calls.len()) as f32 /
-                                    self.config.max_dependencies_per_module.max(50) as f32),
+                    violation_score: (imports.len().max(method_calls.len()) as f32
+                        / self.config.max_dependencies_per_module.max(50) as f32),
                     maintainability_impact: 0.8,
                     testability_impact: 0.7,
                     performance_impact: 0.4,
@@ -451,7 +456,8 @@ impl AntiPatternDetector {
         content: &str,
         file_path: &str,
     ) -> IdeResult<Vec<DetectedAntiPattern>> {
-        let primitive_regex = Regex::new(r"\b(fn\s+\w+\([^)]*\b(i32|u32|String|bool|f32|f64)\b").unwrap();
+        let primitive_regex =
+            Regex::new(r"\b(fn\s+\w+\([^)]*\b(i32|u32|String|bool|f32|f64)\b").unwrap();
         let primitive_usage = primitive_regex.find_iter(content).count();
 
         if primitive_usage > 10 {
@@ -529,15 +535,22 @@ impl AntiPatternDetector {
         let mut fragments = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
-        for i in 0..lines.len().saturating_sub(self.duplication_detector.min_fragment_lines) {
+        for i in 0..lines
+            .len()
+            .saturating_sub(self.duplication_detector.min_fragment_lines)
+        {
             for j in self.duplication_detector.min_fragment_lines..=10.min(lines.len() - i) {
-                let fragment_lines: Vec<&str> = lines[i..i+j].to_vec();
+                let fragment_lines: Vec<&str> = lines[i..i + j].to_vec();
                 let fragment_content = fragment_lines.join("\n");
 
                 // Skip fragments that are mostly comments or whitespace
-                if fragment_content.trim().is_empty() ||
-                   fragment_content.chars().filter(|c| *c == '/' || *c == '*').count() >
-                   fragment_content.len() / 2 {
+                if fragment_content.trim().is_empty()
+                    || fragment_content
+                        .chars()
+                        .filter(|c| *c == '/' || *c == '*')
+                        .count()
+                        > fragment_content.len() / 2
+                {
                     continue;
                 }
 
@@ -602,12 +615,13 @@ impl AntiPatternDetector {
 
         for i in 1..=len1 {
             for j in 1..=len2 {
-                let cost = if s1_chars[i-1] == s2_chars[j-1] { 0 } else { 1 };
-                matrix[i][j] = (matrix[i-1][j] + 1).min(
-                    (matrix[i][j-1] + 1).min(
-                        matrix[i-1][j-1] + cost
-                    )
-                );
+                let cost = if s1_chars[i - 1] == s2_chars[j - 1] {
+                    0
+                } else {
+                    1
+                };
+                matrix[i][j] = (matrix[i - 1][j] + 1)
+                    .min((matrix[i][j - 1] + 1).min(matrix[i - 1][j - 1] + cost));
             }
         }
 
@@ -615,24 +629,44 @@ impl AntiPatternDetector {
     }
 
     // Helper methods for parsing (would need tree-sitter integration)
-    fn extract_method_ranges(&self, _tree: &TreeSitterParseTree, _content: &str) -> IdeResult<Vec<(String, tree_sitter::Range)>> {
+    fn extract_method_ranges(
+        &self,
+        _tree: &TreeSitterParseTree,
+        _content: &str,
+    ) -> IdeResult<Vec<(String, tree_sitter::Range)>> {
         // Placeholder - would use tree-sitter to extract method definitions
         Ok(Vec::new())
     }
 
-    fn extract_class_ranges(&self, _tree: &TreeSitterParseTree, _content: &str) -> IdeResult<Vec<(String, tree_sitter::Range)>> {
+    fn extract_class_ranges(
+        &self,
+        _tree: &TreeSitterParseTree,
+        _content: &str,
+    ) -> IdeResult<Vec<(String, tree_sitter::Range)>> {
         Ok(Vec::new())
     }
 
-    fn count_methods_in_class(&self, _tree: &TreeSitterParseTree, _range: tree_sitter::Range) -> usize {
+    fn count_methods_in_class(
+        &self,
+        _tree: &TreeSitterParseTree,
+        _range: tree_sitter::Range,
+    ) -> usize {
         0 // Placeholder
     }
 
-    fn count_fields_in_class(&self, _tree: &TreeSitterParseTree, _range: tree_sitter::Range) -> usize {
+    fn count_fields_in_class(
+        &self,
+        _tree: &TreeSitterParseTree,
+        _range: tree_sitter::Range,
+    ) -> usize {
         0 // Placeholder
     }
 
-    fn calculate_responsibility_indicators(&self, _tree: &TreeSitterParseTree, _range: tree_sitter::Range) -> usize {
+    fn calculate_responsibility_indicators(
+        &self,
+        _tree: &TreeSitterParseTree,
+        _range: tree_sitter::Range,
+    ) -> usize {
         5 // Placeholder
     }
 
@@ -640,7 +674,11 @@ impl AntiPatternDetector {
         Vec::new() // Placeholder
     }
 
-    fn extract_method_calls(&self, _tree: &TreeSitterParseTree, _content: &str) -> Vec<(String, usize)> {
+    fn extract_method_calls(
+        &self,
+        _tree: &TreeSitterParseTree,
+        _content: &str,
+    ) -> Vec<(String, usize)> {
         Vec::new() // Placeholder
     }
 
@@ -649,8 +687,8 @@ impl AntiPatternDetector {
             code_snippet: content[range.start_byte..range.end_byte].to_string(),
             surrounding_context: content.to_string(),
             structural_info: StructuralInfo {
-                lines_of_code: range.end_byte.saturating_sub(range.start_byte) /
-                              content.lines().next().unwrap_or("").len().max(1),
+                lines_of_code: range.end_byte.saturating_sub(range.start_byte)
+                    / content.lines().next().unwrap_or("").len().max(1),
                 cyclomatic_complexity: 1,
                 nesting_depth: 0,
                 method_count: 1,
@@ -666,7 +704,11 @@ impl AntiPatternDetector {
         }
     }
 
-    fn regex_based_long_method_detection(&self, content: &str, file_path: &str) -> IdeResult<Vec<DetectedAntiPattern>> {
+    fn regex_based_long_method_detection(
+        &self,
+        content: &str,
+        file_path: &str,
+    ) -> IdeResult<Vec<DetectedAntiPattern>> {
         let mut anti_patterns = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -686,7 +728,10 @@ impl AntiPatternDetector {
                     '{' => brace_count += 1,
                     '}' => {
                         brace_count = brace_count.saturating_sub(1);
-                        if brace_count == 0 && i > current_function_start && (i - current_function_start) > self.config.max_method_lines {
+                        if brace_count == 0
+                            && i > current_function_start
+                            && (i - current_function_start) > self.config.max_method_lines
+                        {
                             // Found a long method
                             let location = CodeLocation {
                                 file_path: file_path.to_string(),
@@ -700,7 +745,8 @@ impl AntiPatternDetector {
 
                             let method_lines = i - current_function_start;
                             let metrics = AntiPatternMetrics {
-                                violation_score: method_lines as f32 / self.config.max_method_lines as f32,
+                                violation_score: method_lines as f32
+                                    / self.config.max_method_lines as f32,
                                 maintainability_impact: 0.8,
                                 testability_impact: 0.6,
                                 performance_impact: 0.0,
@@ -739,7 +785,7 @@ impl AntiPatternDetector {
                                 metrics,
                             });
                         }
-                    },
+                    }
                     _ => {}
                 }
             }

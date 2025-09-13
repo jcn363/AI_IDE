@@ -1,13 +1,13 @@
 //! Shared types for Rust AI IDE frontend and backend
 
-pub mod cargo;
 pub mod ai;
+pub mod cargo;
+pub mod diagnostics;
 pub mod editor;
 pub mod lsp;
-pub mod diagnostics;
+pub mod performance;
 pub mod project;
 pub mod user_interface;
-pub mod performance;
 
 /// Core types that are serialized/deserialized between frontend and backend
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

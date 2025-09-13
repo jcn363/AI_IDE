@@ -3,14 +3,14 @@
 //! This module provides comprehensive keybinding management for the IDE,
 //! including customizable keymaps, conflict resolution, and cross-platform support.
 
+use lazy_static::lazy_static;
+use rust_ai_ide_core::security::{audit_action, audit_logger};
 use rust_ai_ide_core::validation::validate_secure_path;
-use rust_ai_ide_core::security::{audit_logger, audit_action};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
-use std::fmt;
-use lazy_static::lazy_static;
 
 use crate::command_templates::*;
 
@@ -101,10 +101,12 @@ impl KeybindingManager {
             is_default: true,
             created_at: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default().as_secs(),
+                .unwrap_or_default()
+                .as_secs(),
             updated_at: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default().as_secs(),
+                .unwrap_or_default()
+                .as_secs(),
         };
 
         profiles.insert("default".to_string(), default_profile);
@@ -253,7 +255,10 @@ impl KeybindingManager {
         });
     }
 
-    pub fn create_default_shortcuts(&self, actions: &[ShortcutAction]) -> HashMap<String, Vec<KeyCombination>> {
+    pub fn create_default_shortcuts(
+        &self,
+        actions: &[ShortcutAction],
+    ) -> HashMap<String, Vec<KeyCombination>> {
         let mut shortcuts = HashMap::new();
 
         for action in actions {
@@ -295,11 +300,14 @@ impl KeybindingManager {
 
     pub async fn create_profile(&self, profile_data: serde_json::Value) -> Result<String, String> {
         let name: String = match profile_data.get("name") {
-            Some(n) => serde_json::from_value(n.clone()).map_err(|e| format!("Invalid name: {}", e))?,
+            Some(n) => {
+                serde_json::from_value(n.clone()).map_err(|e| format!("Invalid name: {}", e))?
+            }
             None => return Err("Profile name is required".to_string()),
         };
 
-        let description: Option<String> = profile_data.get("description")
+        let description: Option<String> = profile_data
+            .get("description")
             .and_then(|d| serde_json::from_value(d.clone()).ok());
 
         let profile_id = format!("profile_{}", uuid::Uuid::new_v4().to_string());
@@ -312,10 +320,12 @@ impl KeybindingManager {
             is_default: false,
             created_at: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default().as_secs(),
+                .unwrap_or_default()
+                .as_secs(),
             updated_at: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default().as_secs(),
+                .unwrap_or_default()
+                .as_secs(),
         };
 
         let mut profiles = self.profiles.lock().await;
@@ -352,7 +362,8 @@ impl KeybindingManager {
         for (action_id, keys) in &profiles.shortcuts {
             for key_combo in keys {
                 let key_str = format_key_combo(key_combo);
-                reverse_map.entry(key_str)
+                reverse_map
+                    .entry(key_str)
                     .or_insert_with(Vec::new)
                     .push(action_id.clone());
             }

@@ -2,15 +2,17 @@
 //!
 //! This module provides the primary interface for the multi-model orchestration system.
 
-use async_trait::async_trait;
-use std::sync::Arc;
-use crate::model_selector::PerformanceBasedModelSelector;
-use crate::load_balancer::ModelLoadBalancer;
 use crate::consensus_engine::ModelConsensusEngine;
 use crate::fallback_manager::ModelFallbackManager;
 use crate::health_monitor::ModelHealthMonitor;
-use crate::types::{OrchestrationConfig, ModelRecommendation, LoadDecision, ConsensusResult, RequestContext};
-use crate::{Result, OrchestrationError};
+use crate::load_balancer::ModelLoadBalancer;
+use crate::model_selector::PerformanceBasedModelSelector;
+use crate::types::{
+    ConsensusResult, LoadDecision, ModelRecommendation, OrchestrationConfig, RequestContext,
+};
+use crate::{OrchestrationError, Result};
+use async_trait::async_trait;
+use std::sync::Arc;
 
 /// Main Multi-Model Orchestrator
 #[derive(Debug)]
@@ -40,10 +42,7 @@ impl MultiModelOrchestrator {
     }
 
     /// Process a request through the multi-model orchestration pipeline
-    pub async fn process_request(
-        &self,
-        context: &RequestContext,
-    ) -> Result<OrchestrationResult> {
+    pub async fn process_request(&self, context: &RequestContext) -> Result<OrchestrationResult> {
         // Step 1: Select best model based on performance
         let model_recommendation = self.model_selector.select_model(context).await?;
 
@@ -54,10 +53,12 @@ impl MultiModelOrchestrator {
         // This would collect outputs from multiple models (placeholder)
         let consensus_result = if load_decision.load_factor > 0.8 {
             // High load - use consensus approach
-            self.consensus_engine.process_consensus(
-                std::collections::HashMap::new(), // Placeholder for actual model outputs
-                context
-            ).await?
+            self.consensus_engine
+                .process_consensus(
+                    std::collections::HashMap::new(), // Placeholder for actual model outputs
+                    context,
+                )
+                .await?
         } else {
             // Use selected model directly
             ConsensusResult {
@@ -70,7 +71,10 @@ impl MultiModelOrchestrator {
         };
 
         // Step 4: Ensure offline availability
-        let offline_status = self.fallback_manager.ensure_offline_availability(&model_recommendation.model_id).await?;
+        let offline_status = self
+            .fallback_manager
+            .ensure_offline_availability(&model_recommendation.model_id)
+            .await?;
 
         Ok(OrchestrationResult {
             model_recommendation,
@@ -84,11 +88,11 @@ impl MultiModelOrchestrator {
     /// Get orchestrator health status
     pub async fn get_health_status(&self) -> OrchestratorHealth {
         OrchestratorHealth {
-            model_selector_health: true, // Placeholder
-            load_balancer_health: true,  // Placeholder
+            model_selector_health: true,   // Placeholder
+            load_balancer_health: true,    // Placeholder
             consensus_engine_health: true, // Placeholder
             fallback_manager_health: true, // Placeholder
-            overall_health: true, // Placeholder
+            overall_health: true,          // Placeholder
         }
     }
 }
@@ -117,7 +121,7 @@ pub struct OrchestratorHealth {
 mod tests {
     use super::*;
     use crate::config::OrchestrationConfigBuilder;
-    use crate::types::{ModelTask, RequestPriority, Complexity};
+    use crate::types::{Complexity, ModelTask, RequestPriority};
 
     #[tokio::test]
     async fn test_orchestrator_creation() {

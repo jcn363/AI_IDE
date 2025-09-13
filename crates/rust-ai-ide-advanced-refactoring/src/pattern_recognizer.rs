@@ -1,8 +1,8 @@
-use std::sync::Arc;
-use async_trait::async_trait;
-use rust_ai_ide_ai_inference::AiInferenceService;
 use crate::ai_suggester::AnalysisContext;
 use crate::error::{AnalysisError, AnalysisResult};
+use async_trait::async_trait;
+use rust_ai_ide_ai_inference::AiInferenceService;
+use std::sync::Arc;
 
 /// Pattern recognition data structure
 #[derive(Debug, Clone)]

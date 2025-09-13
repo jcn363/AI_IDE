@@ -107,7 +107,7 @@ export class CargoService {
     return this.dispatch('doc', projectPath, ['--open', ...args]);
   }
 
-static async addDependency(
+  static async addDependency(
     projectPath: string,
     crateName: string,
     version?: string,

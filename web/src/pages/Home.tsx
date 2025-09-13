@@ -7,7 +7,7 @@ const features = [
   'Integrated Rust analyzer',
   'Built-in terminal',
   'Version control integration',
-  'Customizable interface'
+  'Customizable interface',
 ];
 
 export function Home() {
@@ -19,33 +19,37 @@ export function Home() {
         <Typography variant="h3" component="h1" gutterBottom>
           Welcome to Rust AI IDE
         </Typography>
-        
+
         <Typography variant="h5" component="h2" gutterBottom>
           A modern development environment for Rust with AI assistance
         </Typography>
 
         <Box sx={{ my: 4 }}>
-          <Button 
-            variant="contained" 
-            size="large" 
+          <Button
+            variant="contained"
+            size="large"
             color="primary"
             onClick={() => navigate('/editor')}
             sx={{ mr: 2 }}
           >
             Open Editor
           </Button>
-          
-          <Button 
-            variant="outlined" 
+
+          <Button
+            variant="outlined"
             size="large"
-            onClick={() => (window as any).open('https://github.com/yourusername/rust-ai-ide', '_blank')}
+            onClick={() =>
+              (window as any).open('https://github.com/yourusername/rust-ai-ide', '_blank')
+            }
           >
             View on GitHub
           </Button>
         </Box>
 
         <Box sx={{ mt: 6, textAlign: 'left', maxWidth: 600, mx: 'auto' }}>
-          <Typography variant="h5" gutterBottom>Features:</Typography>
+          <Typography variant="h5" gutterBottom>
+            Features:
+          </Typography>
           <ul>
             {features.map((feature, index) => (
               <li key={index}>

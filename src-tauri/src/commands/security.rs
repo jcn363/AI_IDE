@@ -1,17 +1,18 @@
-//! OWASP Top 10 Security Scanning Commands
+//! Comprehensive Security Commands
 //!
-//! Tauri commands for comprehensive security scanning, OWASP Top 10 detection,
-//! supply chain analysis, and AI-enhanced vulnerability assessment.
+//! Tauri commands for security management including encryption, secrets detection,
+//! SIEM integration, security scanning, and policy enforcement.
 
-use std::path::Path;
-use tauri::State;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use tauri::State;
+use tokio::sync::{Mutex, RwLock};
 
 use crate::commands::command_templates::*;
-use crate::security::*;
+use crate::errors::{IDEError, IDEResult};
 use crate::security::owasp_scanner::*;
+use crate::security::*;
 
 // State shared between commands
 #[derive(Clone)]
@@ -145,7 +146,8 @@ pub async fn initialize_owasp_scanner(
                             "A09:2021-SecurityLoggingFailures",
                             "A10:2021-ServerSideRequestForgery"
                         ]
-                    }).to_string())
+                    })
+                    .to_string())
                 }
                 Err(e) => Err(format!("Failed to initialize OWASP scanner: {}", e)),
             }
@@ -167,7 +169,9 @@ pub async fn perform_owasp_security_scan(
 
     execute_command!("perform_owasp_security_scan", &config, async move || {
         acquire_service_and_execute!(state, SecurityScannerState, {
-            let scanner_arc = service.scanner.as_ref()
+            let scanner_arc = service
+                .scanner
+                .as_ref()
                 .ok_or("OWASP scanner not initialized - call initialize_owasp_scanner first")?;
 
             let workspace_path_buf = Path::new(&workspace_path);
@@ -179,7 +183,8 @@ pub async fn perform_owasp_security_scan(
             rust_ai_ide_common::validation::validate_secure_path(
                 workspace_path_buf,
                 "security_scan",
-            ).map_err(|e| e.to_string())?;
+            )
+            .map_err(|e| e.to_string())?;
 
             // Perform the scan
             let scanner = scanner_arc.read().await;
@@ -220,10 +225,14 @@ pub async fn get_vulnerability_details(
 
     execute_command!("get_vulnerability_details", &config, async move || {
         acquire_service_and_execute!(state, SecurityScannerState, {
-            let scan_result = service.last_scan_result.as_ref()
+            let scan_result = service
+                .last_scan_result
+                .as_ref()
                 .ok_or("No scan results available - perform scan first")?;
 
-            let vulnerabilities: Vec<VulnerabilityDetails> = scan_result.vulnerabilities.iter()
+            let vulnerabilities: Vec<VulnerabilityDetails> = scan_result
+                .vulnerabilities
+                .iter()
                 .map(|v| VulnerabilityDetails {
                     vulnerability_id: v.security_issue.title.clone(),
                     title: v.security_issue.title.clone(),
@@ -234,13 +243,17 @@ pub async fn get_vulnerability_details(
                     line_number: v.security_issue.line_number,
                     cwe_id: v.security_issue.cwe_id.map(|id| format!("CWE-{}", id)),
                     raw_cvss_score: Some(v.risk_score),
-                    exploitable: v.exploitability.attack_vector != owasp_scanner::AttackVector::Local,
-                    fix_available: v.security_issue.remediation.contains("update") ||
-                                   v.security_issue.remediation.contains("upgrade"),
+                    exploitable: v.exploitability.attack_vector
+                        != owasp_scanner::AttackVector::Local,
+                    fix_available: v.security_issue.remediation.contains("update")
+                        || v.security_issue.remediation.contains("upgrade"),
                     remediation_steps: vec![v.security_issue.remediation.clone()],
-                    evidence: vec![
-                        v.security_issue.code_snippet.as_ref().unwrap_or(&"No code sample".to_string()).clone(),
-                    ],
+                    evidence: vec![v
+                        .security_issue
+                        .code_snippet
+                        .as_ref()
+                        .unwrap_or(&"No code sample".to_string())
+                        .clone()],
                 })
                 .collect();
 
@@ -259,7 +272,9 @@ pub async fn get_supply_chain_report(
 
     execute_command!("get_supply_chain_report", &config, async move || {
         acquire_service_and_execute!(state, SecurityScannerState, {
-            let scan_result = service.last_scan_result.as_ref()
+            let scan_result = service
+                .last_scan_result
+                .as_ref()
                 .ok_or("No scan results available - perform scan first")?;
 
             let supply_chain_report = SupplyChainReport {
@@ -286,12 +301,14 @@ pub async fn get_license_compliance_report(
 
     execute_command!("get_license_compliance_report", &config, async move || {
         acquire_service_and_execute!(state, SecurityScannerState, {
-            let scan_result = service.last_scan_result.as_ref()
+            let scan_result = service
+                .last_scan_result
+                .as_ref()
                 .ok_or("No scan results available - perform scan first")?;
 
             let license_report = LicenseComplianceReport {
                 compliant_packages: scan_result.supply_chain_report.dependencies.len()
-                                   - scan_result.supply_chain_report.license_issues.len(),
+                    - scan_result.supply_chain_report.license_issues.len(),
                 non_compliant_packages: scan_result.supply_chain_report.license_issues.len(),
                 banned_licenses: vec![], // Would extract from license_issues
                 recommended_actions: vec![
@@ -317,7 +334,9 @@ pub async fn scan_owasp_category(
 
     execute_command!("scan_owasp_category", &config, async move || {
         acquire_service_and_execute!(state, SecurityScannerState, {
-            let scanner_arc = service.scanner.as_ref()
+            let scanner_arc = service
+                .scanner
+                .as_ref()
                 .ok_or("OWASP scanner not initialized")?;
 
             let workspace_path_buf = Path::new(&workspace_path);
@@ -325,15 +344,29 @@ pub async fn scan_owasp_category(
 
             // Map category string to OWASP category enum
             let owasp_category = match category.as_str() {
-                "A01" | "access_control" => owasp_scanner::OWASPCategory::A01_2021_BrokenAccessControl,
-                "A02" | "cryptographic_failures" => owasp_scanner::OWASPCategory::A02_2021_CryptographicFailures,
+                "A01" | "access_control" => {
+                    owasp_scanner::OWASPCategory::A01_2021_BrokenAccessControl
+                }
+                "A02" | "cryptographic_failures" => {
+                    owasp_scanner::OWASPCategory::A02_2021_CryptographicFailures
+                }
                 "A03" | "injection" => owasp_scanner::OWASPCategory::A03_2021_Injection,
                 "A04" | "insecure_design" => owasp_scanner::OWASPCategory::A04_2021_InsecureDesign,
-                "A05" | "security_misconfiguration" => owasp_scanner::OWASPCategory::A05_2021_SecurityMisconfiguration,
-                "A06" | "vulnerable_components" => owasp_scanner::OWASPCategory::A06_2021_VulnerableOutdatedComponents,
-                "A07" | "identification_authentication" => owasp_scanner::OWASPCategory::A07_2021_IDAuthenticationFailures,
-                "A08" | "software_integrity" => owasp_scanner::OWASPCategory::A08_2021_SoftwareDataIntegrityFailures,
-                "A09" | "logging_failures" => owasp_scanner::OWASPCategory::A09_2021_SecurityLoggingFailures,
+                "A05" | "security_misconfiguration" => {
+                    owasp_scanner::OWASPCategory::A05_2021_SecurityMisconfiguration
+                }
+                "A06" | "vulnerable_components" => {
+                    owasp_scanner::OWASPCategory::A06_2021_VulnerableOutdatedComponents
+                }
+                "A07" | "identification_authentication" => {
+                    owasp_scanner::OWASPCategory::A07_2021_IDAuthenticationFailures
+                }
+                "A08" | "software_integrity" => {
+                    owasp_scanner::OWASPCategory::A08_2021_SoftwareDataIntegrityFailures
+                }
+                "A09" | "logging_failures" => {
+                    owasp_scanner::OWASPCategory::A09_2021_SecurityLoggingFailures
+                }
                 "A10" | "ssrf" => owasp_scanner::OWASPCategory::A10_2021_ServerSideRequestForgery,
                 _ => return Err(format!("Unknown OWASP category: {}", category)),
             };
@@ -361,7 +394,9 @@ pub async fn get_ai_security_insights(
 
     execute_command!("get_ai_security_insights", &config, async move || {
         acquire_service_and_execute!(state, SecurityScannerState, {
-            let scan_result = service.last_scan_result.as_ref()
+            let scan_result = service
+                .last_scan_result
+                .as_ref()
                 .ok_or("No scan results available")?;
 
             let insights = scan_result.ai_insights.clone();
@@ -379,14 +414,18 @@ pub async fn update_security_scan_config(
 ) -> Result<String, String> {
     let command_config = CommandConfig::default();
 
-    execute_command!("update_security_scan_config", &command_config, async move || {
-        // Validate and parse configuration
-        let _: serde_json::Value = serde_json::from_str(&config)
-            .map_err(|e| format!("Invalid configuration JSON: {}", e))?;
+    execute_command!(
+        "update_security_scan_config",
+        &command_config,
+        async move || {
+            // Validate and parse configuration
+            let _: serde_json::Value = serde_json::from_str(&config)
+                .map_err(|e| format!("Invalid configuration JSON: {}", e))?;
 
-        // Placeholder - would update scan configuration
-        Ok(serde_json::json!({"status": "configuration_updated"}).to_string())
-    })
+            // Placeholder - would update scan configuration
+            Ok(serde_json::json!({"status": "configuration_updated"}).to_string())
+        }
+    )
 }
 
 // Export security scan report
@@ -401,25 +440,27 @@ pub async fn export_security_scan_report(
 
     execute_command!("export_security_scan_report", &config, async move || {
         acquire_service_and_execute!(state, SecurityScannerState, {
-            let scan_result = service.last_scan_result.as_ref()
+            let scan_result = service
+                .last_scan_result
+                .as_ref()
                 .ok_or("No scan results available")?;
 
             // Validate output path for security
             rust_ai_ide_common::validation::validate_secure_path(
                 Path::new(&output_path),
                 "security_report_export",
-            ).map_err(|e| e.to_string())?;
+            )
+            .map_err(|e| e.to_string())?;
 
             // Placeholder - would export scan results in requested format
             match format.as_str() {
-                "json" | "html" | "pdf" | "csv" => {
-                    Ok(serde_json::json!({
-                        "status": "export_completed",
-                        "format": format,
-                        "output_path": output_path,
-                        "file_size_bytes": scan_result.vulnerabilities.len() * 100
-                    }).to_string())
-                },
+                "json" | "html" | "pdf" | "csv" => Ok(serde_json::json!({
+                    "status": "export_completed",
+                    "format": format,
+                    "output_path": output_path,
+                    "file_size_bytes": scan_result.vulnerabilities.len() * 100
+                })
+                .to_string()),
                 _ => Err(format!("Unsupported export format: {}", format)),
             }
         })
@@ -441,5 +482,363 @@ pub async fn cleanup_security_scanner(
 
             Ok(serde_json::json!({"status": "cleanup_completed"}).to_string())
         })
+    })
+}
+
+// ===== NEW SECURITY MANAGER COMMANDS =====
+
+// Initialize the comprehensive security manager
+#[tauri::command]
+pub async fn initialize_security_manager(config_json: String) -> Result<String, String> {
+    let config = CommandConfig {
+        enable_logging: true,
+        log_level: log::Level::Info,
+        enable_validation: true,
+        async_timeout_secs: Some(30),
+    };
+
+    execute_command!("initialize_security_manager", &config, async move || {
+        // Parse configuration
+        let security_config: SecurityManagerConfig = serde_json::from_str(&config_json)
+            .map_err(|e| format!("Invalid security configuration: {}", e))?;
+
+        // Initialize global security manager
+        init_global_security_manager(security_config)
+            .await
+            .map_err(|e| format!("Failed to initialize security manager: {:?}", e))?;
+
+        Ok(serde_json::json!({
+            "status": "initialized",
+            "message": "Security manager initialized successfully"
+        })
+        .to_string())
+    })
+}
+
+// Get comprehensive security status
+#[tauri::command]
+pub async fn get_security_status() -> Result<String, String> {
+    let config = CommandConfig::default();
+
+    execute_command!("get_security_status", &config, async move || {
+        let manager = get_global_security_manager();
+        let status = manager
+            .lock()
+            .await
+            .get_security_status()
+            .await
+            .map_err(|e| format!("Failed to get security status: {:?}", e))?;
+
+        Ok(serde_json::to_string(&status)
+            .map_err(|e| format!("Failed to serialize status: {}", e))?)
+    })
+}
+
+// Perform comprehensive security scan using SecurityManager
+#[tauri::command]
+pub async fn perform_comprehensive_security_scan(directory_path: String) -> Result<String, String> {
+    let config = CommandConfig {
+        enable_logging: true,
+        log_level: log::Level::Info,
+        enable_validation: true,
+        async_timeout_secs: Some(300), // 5 minute timeout for scans
+    };
+
+    execute_command!(
+        "perform_comprehensive_security_scan",
+        &config,
+        async move || {
+            // Validate input path
+            use rust_ai_ide_common::validation::TauriInputSanitizer;
+            let sanitized_path = TauriInputSanitizer::sanitize_path(&directory_path)
+                .map_err(|e| format!("Invalid path: {}", e))?;
+
+            let directory = Path::new(&sanitized_path);
+
+            let manager = get_global_security_manager();
+            let scan_result = manager
+                .lock()
+                .await
+                .perform_security_scan(directory)
+                .await
+                .map_err(|e| format!("Security scan failed: {:?}", e))?;
+
+            Ok(serde_json::to_string(&scan_result)
+                .map_err(|e| format!("Failed to serialize scan result: {}", e))?)
+        }
+    )
+}
+
+// Encrypt data using the global security manager
+#[tauri::command]
+pub async fn encrypt_data(data: String) -> Result<String, String> {
+    let config = CommandConfig::default();
+
+    execute_command!("encrypt_data", &config, async move || {
+        // Validate input data
+        use rust_ai_ide_common::validation::TauriInputSanitizer;
+        let sanitized_data = TauriInputSanitizer::sanitize_string(&data)
+            .map_err(|e| format!("Invalid data: {}", e))?;
+
+        let data_bytes = sanitized_data.as_bytes();
+
+        let manager = get_global_security_manager();
+        let encrypted = manager
+            .lock()
+            .await
+            .encrypt_data(data_bytes)
+            .await
+            .map_err(|e| format!("Encryption failed: {}", e))?;
+
+        Ok(serde_json::to_string(&encrypted)
+            .map_err(|e| format!("Failed to serialize encrypted data: {}", e))?)
+    })
+}
+
+// Decrypt data using the global security manager
+#[tauri::command]
+pub async fn decrypt_data(encrypted_json: String) -> Result<String, String> {
+    let config = CommandConfig::default();
+
+    execute_command!("decrypt_data", &config, async move || {
+        // Validate input
+        use rust_ai_ide_common::validation::TauriInputSanitizer;
+        let sanitized_json = TauriInputSanitizer::sanitize_string(&encrypted_json)
+            .map_err(|e| format!("Invalid encrypted data: {}", e))?;
+
+        let encrypted: encryption::EncryptedPayload = serde_json::from_str(&sanitized_json)
+            .map_err(|e| format!("Invalid encrypted payload format: {}", e))?;
+
+        let manager = get_global_security_manager();
+        let decrypted_bytes = manager
+            .lock()
+            .await
+            .decrypt_data(&encrypted)
+            .await
+            .map_err(|e| format!("Decryption failed: {}", e))?;
+
+        let decrypted_string = String::from_utf8(decrypted_bytes)
+            .map_err(|e| format!("Invalid UTF-8 in decrypted data: {}", e))?;
+
+        Ok(decrypted_string)
+    })
+}
+
+// Encrypt IPC payload for secure communication
+#[tauri::command]
+pub async fn encrypt_ipc_payload(payload_json: String) -> Result<String, String> {
+    let config = CommandConfig::default();
+
+    execute_command!("encrypt_ipc_payload", &config, async move || {
+        // Validate input
+        use rust_ai_ide_common::validation::TauriInputSanitizer;
+        let sanitized_json = TauriInputSanitizer::sanitize_string(&payload_json)
+            .map_err(|e| format!("Invalid payload: {}", e))?;
+
+        let payload: serde_json::Value = serde_json::from_str(&sanitized_json)
+            .map_err(|e| format!("Invalid JSON payload: {}", e))?;
+
+        let manager = get_global_security_manager();
+        let encrypted = manager
+            .lock()
+            .await
+            .encrypt_ipc_payload(&payload)
+            .await
+            .map_err(|e| format!("IPC encryption failed: {}", e))?;
+
+        Ok(encrypted)
+    })
+}
+
+// Decrypt IPC payload from secure communication
+#[tauri::command]
+pub async fn decrypt_ipc_payload(encrypted_data: String) -> Result<String, String> {
+    let config = CommandConfig::default();
+
+    execute_command!("decrypt_ipc_payload", &config, async move || {
+        // Validate input
+        use rust_ai_ide_common::validation::TauriInputSanitizer;
+        let sanitized_data = TauriInputSanitizer::sanitize_string(&encrypted_data)
+            .map_err(|e| format!("Invalid encrypted data: {}", e))?;
+
+        let manager = get_global_security_manager();
+        let decrypted = manager
+            .lock()
+            .await
+            .decrypt_ipc_payload(&sanitized_data)
+            .await
+            .map_err(|e| format!("IPC decryption failed: {}", e))?;
+
+        Ok(serde_json::to_string(&decrypted)
+            .map_err(|e| format!("Failed to serialize decrypted payload: {}", e))?)
+    })
+}
+
+// Scan for secrets in a directory
+#[tauri::command]
+pub async fn scan_for_secrets(directory_path: String) -> Result<String, String> {
+    let config = CommandConfig {
+        enable_logging: true,
+        log_level: log::Level::Info,
+        enable_validation: true,
+        async_timeout_secs: Some(120), // 2 minute timeout
+    };
+
+    execute_command!("scan_for_secrets", &config, async move || {
+        // Validate input path
+        use rust_ai_ide_common::validation::TauriInputSanitizer;
+        let sanitized_path = TauriInputSanitizer::sanitize_path(&directory_path)
+            .map_err(|e| format!("Invalid path: {}", e))?;
+
+        let directory = Path::new(&sanitized_path);
+
+        let manager = get_global_security_manager();
+        let findings = manager
+            .lock()
+            .await
+            .scan_for_secrets(directory)
+            .await
+            .map_err(|e| format!("Secrets scan failed: {:?}", e))?;
+
+        Ok(serde_json::to_string(&findings)
+            .map_err(|e| format!("Failed to serialize findings: {}", e))?)
+    })
+}
+
+// Get SIEM processing statistics
+#[tauri::command]
+pub async fn get_siem_statistics() -> Result<String, String> {
+    let config = CommandConfig::default();
+
+    execute_command!("get_siem_statistics", &config, async move || {
+        let siem = GLOBAL_SIEM_INTEGRATION.lock().await;
+        if let Some(ref siem) = *siem {
+            let stats = siem.get_processing_stats();
+            Ok(serde_json::to_string(&stats)
+                .map_err(|e| format!("Failed to serialize SIEM stats: {}", e))?)
+        } else {
+            Err("SIEM integration not initialized".to_string())
+        }
+    })
+}
+
+// Get active security alerts
+#[tauri::command]
+pub async fn get_active_security_alerts() -> Result<String, String> {
+    let config = CommandConfig::default();
+
+    execute_command!("get_active_security_alerts", &config, async move || {
+        let siem = GLOBAL_SIEM_INTEGRATION.lock().await;
+        if let Some(ref siem) = *siem {
+            let alerts = siem.get_active_alerts();
+            Ok(serde_json::to_string(&alerts)
+                .map_err(|e| format!("Failed to serialize alerts: {}", e))?)
+        } else {
+            Err("SIEM integration not initialized".to_string())
+        }
+    })
+}
+
+// Acknowledge a security alert
+#[tauri::command]
+pub async fn acknowledge_security_alert(alert_id: String) -> Result<String, String> {
+    let config = CommandConfig::default();
+
+    execute_command!("acknowledge_security_alert", &config, async move || {
+        // Validate input
+        use rust_ai_ide_common::validation::TauriInputSanitizer;
+        let sanitized_id = TauriInputSanitizer::sanitize_string(&alert_id)
+            .map_err(|e| format!("Invalid alert ID: {}", e))?;
+
+        let mut siem = GLOBAL_SIEM_INTEGRATION.lock().await;
+        if let Some(ref mut siem) = *siem {
+            siem.acknowledge_alert(&sanitized_id)
+                .await
+                .map_err(|e| format!("Failed to acknowledge alert: {}", e))?;
+
+            Ok(serde_json::json!({
+                "status": "acknowledged",
+                "alert_id": sanitized_id
+            })
+            .to_string())
+        } else {
+            Err("SIEM integration not initialized".to_string())
+        }
+    })
+}
+
+// Rotate encryption keys for forward secrecy
+#[tauri::command]
+pub async fn rotate_encryption_keys() -> Result<String, String> {
+    let config = CommandConfig::default();
+
+    execute_command!("rotate_encryption_keys", &config, async move || {
+        let manager = get_global_security_manager();
+        manager
+            .lock()
+            .await
+            .rotate_encryption_keys()
+            .await
+            .map_err(|e| format!("Key rotation failed: {}", e))?;
+
+        Ok(serde_json::json!({
+            "status": "rotated",
+            "message": "Encryption keys rotated successfully"
+        })
+        .to_string())
+    })
+}
+
+// Validate a file path for security (path traversal protection)
+#[tauri::command]
+pub async fn validate_secure_path(path: String) -> Result<String, String> {
+    let config = CommandConfig::default();
+
+    execute_command!("validate_secure_path", &config, async move || {
+        // Validate input
+        use rust_ai_ide_common::validation::TauriInputSanitizer;
+        let sanitized_path = TauriInputSanitizer::sanitize_path(&path)
+            .map_err(|e| format!("Invalid path: {}", e))?;
+
+        let path_obj = Path::new(&sanitized_path);
+
+        let manager = get_global_security_manager();
+        manager
+            .lock()
+            .await
+            .validate_secure_path(path_obj)
+            .map_err(|e| format!("Path validation failed: {:?}", e))?;
+
+        Ok(serde_json::json!({
+            "status": "valid",
+            "path": sanitized_path
+        })
+        .to_string())
+    })
+}
+
+// Generate a compliance report
+#[tauri::command]
+pub async fn generate_compliance_report(framework_name: String) -> Result<String, String> {
+    let config = CommandConfig::default();
+
+    execute_command!("generate_compliance_report", &config, async move || {
+        // Validate input
+        use rust_ai_ide_common::validation::TauriInputSanitizer;
+        let sanitized_framework = TauriInputSanitizer::sanitize_string(&framework_name)
+            .map_err(|e| format!("Invalid framework name: {}", e))?;
+
+        let siem = GLOBAL_SIEM_INTEGRATION.lock().await;
+        if let Some(ref siem) = *siem {
+            let report = siem
+                .generate_compliance_report(&sanitized_framework)
+                .await
+                .map_err(|e| format!("Compliance report generation failed: {}", e))?;
+
+            Ok(serde_json::to_string(&report)
+                .map_err(|e| format!("Failed to serialize compliance report: {}", e))?)
+        } else {
+            Err("SIEM integration not initialized".to_string())
+        }
     })
 }

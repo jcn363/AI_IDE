@@ -13,7 +13,17 @@ import {
   Chip,
   LinearProgress,
 } from '@mui/material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+} from 'recharts';
 import { TrendingUp, TrendingDown, TrendingFlat } from '@mui/icons-material';
 
 // Trend data interface (matches Rust TrendAnalysis)
@@ -44,12 +54,12 @@ const TrendsVisualizer: React.FC<TrendsVisualizerProps> = ({
   trends,
   historicalData,
   isLoading = false,
-  onMetricSelect
+  onMetricSelect,
 }) => {
   const [selectedMetric, setSelectedMetric] = useState<string>('');
 
   // Find selected trend data
-  const selectedTrend = trends.find(t => t.metric_name === selectedMetric);
+  const selectedTrend = trends.find((t) => t.metric_name === selectedMetric);
   const selectedData = historicalData[selectedMetric];
 
   // Get trend direction icon and color
@@ -124,7 +134,7 @@ const TrendsVisualizer: React.FC<TrendsVisualizerProps> = ({
                   elevation={2}
                   sx={{
                     cursor: 'pointer',
-                    '&:hover': { elevation: 4 }
+                    '&:hover': { elevation: 4 },
                   }}
                   onClick={() => {
                     setSelectedMetric(trend.metric_name);
@@ -174,8 +184,8 @@ const TrendsVisualizer: React.FC<TrendsVisualizerProps> = ({
             {/* Trend Alert */}
             <Alert severity="info" sx={{ mb: 3 }}>
               <Typography variant="body2">
-                {selectedTrend.description} with {formatConfidence(selectedTrend.confidence)} confidence.
-                {' '}Next predicted value: {selectedTrend.next_prediction.toFixed(2)}
+                {selectedTrend.description} with {formatConfidence(selectedTrend.confidence)}{' '}
+                confidence. Next predicted value: {selectedTrend.next_prediction.toFixed(2)}
               </Typography>
             </Alert>
 
@@ -191,8 +201,8 @@ const TrendsVisualizer: React.FC<TrendsVisualizerProps> = ({
                   <AreaChart data={selectedData}>
                     <defs>
                       <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1}/>
+                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -205,7 +215,7 @@ const TrendsVisualizer: React.FC<TrendsVisualizerProps> = ({
                       labelFormatter={(value) => new Date(value).toLocaleString()}
                       formatter={(value: number, name: string) => [
                         value.toFixed(2),
-                        name.replace('_', ' ').toUpperCase()
+                        name.replace('_', ' ').toUpperCase(),
                       ]}
                     />
                     <Area
@@ -217,17 +227,19 @@ const TrendsVisualizer: React.FC<TrendsVisualizerProps> = ({
                       strokeWidth={2}
                     />
                     {/* Prediction line for future values */}
-                    {selectedData.filter(d => d.isPredicted).map((point, index) => (
-                      <Line
-                        key={`pred-${index}`}
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#ff7300"
-                        strokeDasharray="5 5"
-                        dot={{ fill: '#ff7300', strokeWidth: 2, r: 4 }}
-                        connectNulls={false}
-                      />
-                    ))}
+                    {selectedData
+                      .filter((d) => d.isPredicted)
+                      .map((point, index) => (
+                        <Line
+                          key={`pred-${index}`}
+                          type="monotone"
+                          dataKey="value"
+                          stroke="#ff7300"
+                          strokeDasharray="5 5"
+                          dot={{ fill: '#ff7300', strokeWidth: 2, r: 4 }}
+                          connectNulls={false}
+                        />
+                      ))}
                   </AreaChart>
                 </ResponsiveContainer>
               </Grid>
@@ -241,8 +253,21 @@ const TrendsVisualizer: React.FC<TrendsVisualizerProps> = ({
                   <Typography variant="body2" color="text.secondary">
                     Direction
                   </Typography>
-                  <Typography variant="h6" color={selectedTrend.trend_coefficient > 0 ? 'success.main' : selectedTrend.trend_coefficient < 0 ? 'error.main' : 'text.primary'}>
-                    {selectedTrend.trend_coefficient > 0 ? 'Improving' : selectedTrend.trend_coefficient < 0 ? 'Degrading' : 'Stable'}
+                  <Typography
+                    variant="h6"
+                    color={
+                      selectedTrend.trend_coefficient > 0
+                        ? 'success.main'
+                        : selectedTrend.trend_coefficient < 0
+                          ? 'error.main'
+                          : 'text.primary'
+                    }
+                  >
+                    {selectedTrend.trend_coefficient > 0
+                      ? 'Improving'
+                      : selectedTrend.trend_coefficient < 0
+                        ? 'Degrading'
+                        : 'Stable'}
                   </Typography>
                 </Box>
 
@@ -264,34 +289,29 @@ const TrendsVisualizer: React.FC<TrendsVisualizerProps> = ({
                   <Typography variant="body2" color="text.secondary">
                     Trend Coefficient
                   </Typography>
-                  <Typography variant="h6">
-                    {selectedTrend.trend_coefficient.toFixed(3)}
-                  </Typography>
+                  <Typography variant="h6">{selectedTrend.trend_coefficient.toFixed(3)}</Typography>
                 </Box>
 
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="body2" color="text.secondary">
                     Next Prediction
                   </Typography>
-                  <Typography variant="h6">
-                    {selectedTrend.next_prediction.toFixed(2)}
-                  </Typography>
+                  <Typography variant="h6">{selectedTrend.next_prediction.toFixed(2)}</Typography>
                 </Box>
 
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="body2" color="text.secondary">
                     Data Points
                   </Typography>
-                  <Typography variant="h6">
-                    {selectedData.length}
-                  </Typography>
+                  <Typography variant="h6">{selectedData.length}</Typography>
                 </Box>
 
                 {/* Predicted vs Actual comparison if available */}
-                {selectedData.some(d => d.isPredicted) && (
+                {selectedData.some((d) => d.isPredicted) && (
                   <Alert severity="info">
                     <Typography variant="body2">
-                      Forecasting: {selectedData.filter(d => d.isPredicted).length} predicted value(s) shown in orange
+                      Forecasting: {selectedData.filter((d) => d.isPredicted).length} predicted
+                      value(s) shown in orange
                     </Typography>
                   </Alert>
                 )}

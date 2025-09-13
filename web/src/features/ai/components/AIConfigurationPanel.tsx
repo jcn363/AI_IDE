@@ -6,19 +6,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Switch,
   Slider,
@@ -36,7 +25,7 @@ import {
 } from '@/components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import {
   Settings,
   Brain,
@@ -158,9 +147,7 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
   currentConfig,
   onConfigChange,
 }) => {
-  const [config, setConfig] = useState<AnalysisConfiguration>(
-    currentConfig || DEFAULT_CONFIG
-  );
+  const [config, setConfig] = useState<AnalysisConfiguration>(currentConfig || DEFAULT_CONFIG);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
@@ -206,17 +193,26 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
 
     // Validate thresholds
     if (config.confidenceThreshold < 0 || config.confidenceThreshold > 1) {
-      errors.push({ field: 'confidenceThreshold', message: 'Confidence threshold must be between 0 and 1' });
+      errors.push({
+        field: 'confidenceThreshold',
+        message: 'Confidence threshold must be between 0 and 1',
+      });
     }
 
     // Validate timeouts
     if (config.timeoutSeconds < 1 || config.timeoutSeconds > 300) {
-      errors.push({ field: 'timeoutSeconds', message: 'Timeout must be between 1 and 300 seconds' });
+      errors.push({
+        field: 'timeoutSeconds',
+        message: 'Timeout must be between 1 and 300 seconds',
+      });
     }
 
     // Validate file size limits
     if (config.maxFileSizeKb < 1 || config.maxFileSizeKb > 10240) {
-      errors.push({ field: 'maxFileSizeKb', message: 'File size limit must be between 1KB and 10MB' });
+      errors.push({
+        field: 'maxFileSizeKb',
+        message: 'File size limit must be between 1KB and 10MB',
+      });
     }
 
     return errors;
@@ -257,21 +253,21 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
   };
 
   const updateConfig = (updates: Partial<AnalysisConfiguration>) => {
-    setConfig(prev => ({ ...prev, ...updates }));
+    setConfig((prev) => ({ ...prev, ...updates }));
   };
 
   const updateNestedConfig = <T extends keyof AnalysisConfiguration>(
     section: T,
     updates: Partial<AnalysisConfiguration[T]>
   ) => {
-    setConfig(prev => ({
+    setConfig((prev) => ({
       ...prev,
-      [section]: { ...prev[section], ...updates }
+      [section]: { ...prev[section], ...updates },
     }));
   };
 
   const getValidationError = (field: string) => {
-    return validationErrors.find(error => error.field === field)?.message;
+    return validationErrors.find((error) => error.field === field)?.message;
   };
 
   const renderAnalysisToggles = () => (
@@ -281,9 +277,7 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
           <Brain className="h-5 w-5" />
           Analysis Types
         </CardTitle>
-        <CardDescription>
-          Enable or disable specific types of code analysis
-        </CardDescription>
+        <CardDescription>Enable or disable specific types of code analysis</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -365,15 +359,11 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label className="text-sm font-medium">Real-time Analysis</Label>
-              <p className="text-xs text-muted-foreground">
-                Analyze code as you type
-              </p>
+              <p className="text-xs text-muted-foreground">Analyze code as you type</p>
             </div>
             <Switch
               checked={config.realTimeAnalysis}
-              onCheckedChange={(checked) =>
-                updateConfig({ realTimeAnalysis: checked })
-              }
+              onCheckedChange={(checked) => updateConfig({ realTimeAnalysis: checked })}
             />
           </div>
         </div>
@@ -412,7 +402,8 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
 
         <div className="space-y-2">
           <Label className="text-sm font-medium">
-            Learning System Threshold: {Math.round(config.learning.confidenceThresholdForLearning * 100)}%
+            Learning System Threshold:{' '}
+            {Math.round(config.learning.confidenceThresholdForLearning * 100)}%
           </Label>
           <Slider
             value={[config.learning.confidenceThresholdForLearning]}
@@ -439,9 +430,7 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
           <Settings className="h-5 w-5" />
           AI Provider Configuration
         </CardTitle>
-        <CardDescription>
-          Configure your AI analysis provider
-        </CardDescription>
+        <CardDescription>Configure your AI analysis provider</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
@@ -450,7 +439,7 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
             value={config.aiProvider.type}
             onValueChange={(value: 'openai' | 'anthropic' | 'local' | 'mock') =>
               updateConfig({
-                aiProvider: { type: value }
+                aiProvider: { type: value },
               })
             }
           >
@@ -479,8 +468,8 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
                   updateConfig({
                     aiProvider: {
                       ...config.aiProvider,
-                      openai: { ...config.aiProvider.openai, apiKey: e.target.value }
-                    }
+                      openai: { ...config.aiProvider.openai, apiKey: e.target.value },
+                    },
                   })
                 }
               />
@@ -496,8 +485,8 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
                   updateConfig({
                     aiProvider: {
                       ...config.aiProvider,
-                      openai: { ...config.aiProvider.openai, model: value }
-                    }
+                      openai: { ...config.aiProvider.openai, model: value },
+                    },
                   })
                 }
               >
@@ -527,8 +516,8 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
                   updateConfig({
                     aiProvider: {
                       ...config.aiProvider,
-                      anthropic: { ...config.aiProvider.anthropic, apiKey: e.target.value }
-                    }
+                      anthropic: { ...config.aiProvider.anthropic, apiKey: e.target.value },
+                    },
                   })
                 }
               />
@@ -544,8 +533,8 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
                   updateConfig({
                     aiProvider: {
                       ...config.aiProvider,
-                      anthropic: { ...config.aiProvider.anthropic, model: value }
-                    }
+                      anthropic: { ...config.aiProvider.anthropic, model: value },
+                    },
                   })
                 }
               >
@@ -574,8 +563,8 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
                   updateConfig({
                     aiProvider: {
                       ...config.aiProvider,
-                      local: { ...config.aiProvider.local, modelPath: e.target.value }
-                    }
+                      local: { ...config.aiProvider.local, modelPath: e.target.value },
+                    },
                   })
                 }
               />
@@ -593,8 +582,8 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
                   updateConfig({
                     aiProvider: {
                       ...config.aiProvider,
-                      local: { ...config.aiProvider.local, endpoint: e.target.value }
-                    }
+                      local: { ...config.aiProvider.local, endpoint: e.target.value },
+                    },
                   })
                 }
               />
@@ -635,9 +624,7 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
           <Brain className="h-5 w-5" />
           Learning System
         </CardTitle>
-        <CardDescription>
-          Configure AI learning and privacy preferences
-        </CardDescription>
+        <CardDescription>Configure AI learning and privacy preferences</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
@@ -718,7 +705,7 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
                   value={config.learningPreferences.dataRetentionDays}
                   onChange={(e) =>
                     updateNestedConfig('learningPreferences', {
-                      dataRetentionDays: parseInt(e.target.value) || 30
+                      dataRetentionDays: parseInt(e.target.value) || 30,
                     })
                   }
                 />
@@ -737,9 +724,7 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
           <Clock className="h-5 w-5" />
           Performance Settings
         </CardTitle>
-        <CardDescription>
-          Configure analysis performance and resource limits
-        </CardDescription>
+        <CardDescription>Configure analysis performance and resource limits</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -751,9 +736,7 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
               min="1"
               max="300"
               value={config.timeoutSeconds}
-              onChange={(e) =>
-                updateConfig({ timeoutSeconds: parseInt(e.target.value) || 30 })
-              }
+              onChange={(e) => updateConfig({ timeoutSeconds: parseInt(e.target.value) || 30 })}
             />
             {getValidationError('timeoutSeconds') && (
               <p className="text-sm text-destructive">{getValidationError('timeoutSeconds')}</p>
@@ -768,9 +751,7 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
               min="1"
               max="10240"
               value={config.maxFileSizeKb}
-              onChange={(e) =>
-                updateConfig({ maxFileSizeKb: parseInt(e.target.value) || 1024 })
-              }
+              onChange={(e) => updateConfig({ maxFileSizeKb: parseInt(e.target.value) || 1024 })}
             />
             {getValidationError('maxFileSizeKb') && (
               <p className="text-sm text-destructive">{getValidationError('maxFileSizeKb')}</p>
@@ -786,9 +767,7 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
             min="1"
             max="200"
             value={config.maxSuggestions}
-            onChange={(e) =>
-              updateConfig({ maxSuggestions: parseInt(e.target.value) || 50 })
-            }
+            onChange={(e) => updateConfig({ maxSuggestions: parseInt(e.target.value) || 50 })}
           />
         </div>
 
@@ -800,7 +779,7 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
             value={config.excludePatterns.join('\n')}
             onChange={(e) =>
               updateConfig({
-                excludePatterns: e.target.value.split('\n').filter(p => p.trim())
+                excludePatterns: e.target.value.split('\n').filter((p) => p.trim()),
               })
             }
             rows={4}
@@ -813,15 +792,11 @@ export const AIConfigurationPanel: React.FC<AIConfigurationPanelProps> = ({
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label className="text-sm font-medium">Analysis on Save</Label>
-            <p className="text-xs text-muted-foreground">
-              Automatically analyze files when saved
-            </p>
+            <p className="text-xs text-muted-foreground">Automatically analyze files when saved</p>
           </div>
           <Switch
             checked={config.analysisOnSave}
-            onCheckedChange={(checked) =>
-              updateConfig({ analysisOnSave: checked })
-            }
+            onCheckedChange={(checked) => updateConfig({ analysisOnSave: checked })}
           />
         </div>
       </CardContent>

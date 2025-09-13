@@ -112,7 +112,7 @@ export class InMemoryCache<K = string, V = any> implements ICache<K, V> {
   }
 
   private evictEntries(keys: string[]): void {
-    keys.forEach(key => {
+    keys.forEach((key) => {
       this.data.delete(key);
       this.statsData.totalEvictions++;
     });
@@ -138,7 +138,10 @@ export class InMemoryCache<K = string, V = any> implements ICache<K, V> {
       }
     };
 
-    this.cleanupInterval = setInterval(cleanup, this.config.backgroundCleanupIntervalSeconds * 1000);
+    this.cleanupInterval = setInterval(
+      cleanup,
+      this.config.backgroundCleanupIntervalSeconds * 1000
+    );
   }
 
   private updateHitRatio(): void {
@@ -208,7 +211,8 @@ export class InMemoryCache<K = string, V = any> implements ICache<K, V> {
   }
 
   async stats(): Promise<CacheStats> {
-    this.statsData.uptimeSeconds = (new Date().getTime() - this.statsData.createdAt.getTime()) / 1000;
+    this.statsData.uptimeSeconds =
+      (new Date().getTime() - this.statsData.createdAt.getTime()) / 1000;
     this.statsData.totalEntries = this.data.size;
     return { ...this.statsData };
   }

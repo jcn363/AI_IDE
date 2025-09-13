@@ -40,7 +40,8 @@ impl FileSystemService {
 
         while let Some(entry) = dir_entries.next_entry().await? {
             let metadata = entry.metadata().await?;
-            let modified = metadata.modified()
+            let modified = metadata
+                .modified()
                 .ok()
                 .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
                 .map(|d| d.as_secs());
@@ -65,7 +66,8 @@ impl FileSystemService {
             });
         }
 
-        async_fs::read_to_string(path).await
+        async_fs::read_to_string(path)
+            .await
             .map_err(|e| IDEServiceError::IOError {
                 message: e.to_string(),
             })
@@ -73,7 +75,8 @@ impl FileSystemService {
 
     /// Write file content
     pub async fn write_file(&self, path: &Path, content: &str) -> Result<(), IDEServiceError> {
-        async_fs::write(path, content).await
+        async_fs::write(path, content)
+            .await
             .map_err(|e| IDEServiceError::IOError {
                 message: e.to_string(),
             })

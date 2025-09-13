@@ -30,7 +30,9 @@
   background: #f7fafc;
   color: #4a5568;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
 .panelTabs button.active {
@@ -261,7 +263,8 @@
   border-top: 1px solid #e1e5e9;
 }
 
-.module, .supportingFile {
+.module,
+.supportingFile {
   margin-bottom: 20px;
 }
 
@@ -275,7 +278,8 @@
   color: #718096;
 }
 
-.moduleFile, .supportingFile {
+.moduleFile,
+.supportingFile {
   margin-left: 20px;
 }
 
@@ -336,7 +340,7 @@
 
 .modulesList.empty:before,
 .supportingFilesList.empty:before {
-  content: "No files generated for this category";
+  content: 'No files generated for this category';
   color: #718096;
   font-style: italic;
 }

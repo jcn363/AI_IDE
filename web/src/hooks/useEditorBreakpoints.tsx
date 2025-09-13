@@ -16,62 +16,36 @@ export function useEditorBreakpoints(params: {
   const { activeFilePath, currentFileContent, editorRef, monacoRef } = params;
 
   const dbgBreakpoints = useAppSelector(
-    (state: RootState) => state.debugger.breakpoints as Array<Breakpoint>,
+    (state: RootState) => state.debugger.breakpoints as Array<Breakpoint>
   );
 
-  const breakpointCollectionsRef = useRef<Record<number, monaco.editor.IEditorDecorationsCollection>>({});
+  const breakpointCollectionsRef = useRef<
+    Record<number, monaco.editor.IEditorDecorationsCollection>
+  >({});
   const breakpointMapRef = useRef<Map<string, number>>(new Map());
 
   // Maintain file:line -> breakpoint id map
-useEffect(() => {
-  const m = new Map<string, number>();
-  for (const b of dbgBreakpoints) {
-    if (typeof b.id === 'number') {
-      m.set(`${b.file}:${b.line}`, b.id);
+  useEffect(() => {
+    const m = new Map<string, number>();
+    for (const b of dbgBreakpoints) {
+      if (typeof b.id === 'number') {
+        m.set(`${b.file}:${b.line}`, b.id);
+      }
     }
-  }
-  breakpointMapRef.current = m;
+    breakpointMapRef.current = m;
 
-  return () => {
-    breakpointMapRef.current = new Map();
-  };
-}, [dbgBreakpoints]);
+    return () => {
+      breakpointMapRef.current = new Map();
+    };
+  }, [dbgBreakpoints]);
 
   // Sync gutter glyphs with debugger breakpoints
-useEffect(() => {
-  const editor = editorRef.current;
-  const mi = monacoRef.current;
-  if (!editor || !mi) return;
+  useEffect(() => {
+    const editor = editorRef.current;
+    const mi = monacoRef.current;
+    if (!editor || !mi) return;
 
-  // Clear existing decorations
-  Object.values(breakpointCollectionsRef.current).forEach((c) => {
-    try {
-      c.clear();
-    } catch {
-      // no-op
-    }
-  });
-  breakpointCollectionsRef.current = {};
-
-  if (!activeFilePath) return;
-
-  // Add current decorations
-  (dbgBreakpoints || []).forEach((b) => {
-    if (!(b.file === activeFilePath && (b.enabled ?? true))) return;
-    const coll = editor.createDecorationsCollection([
-      {
-        range: new mi.Range(b.line, 1, b.line, 1),
-        options: {
-          isWholeLine: false,
-          glyphMarginClassName: 'breakpoint-glyph',
-          glyphMarginHoverMessage: { value: 'Breakpoint' },
-        },
-      },
-    ]);
-    breakpointCollectionsRef.current[b.line] = coll;
-  });
-
-  return () => {
+    // Clear existing decorations
     Object.values(breakpointCollectionsRef.current).forEach((c) => {
       try {
         c.clear();
@@ -80,12 +54,42 @@ useEffect(() => {
       }
     });
     breakpointCollectionsRef.current = {};
-  };
-}, [dbgBreakpoints, activeFilePath]);
+
+    if (!activeFilePath) return;
+
+    // Add current decorations
+    (dbgBreakpoints || []).forEach((b) => {
+      if (!(b.file === activeFilePath && (b.enabled ?? true))) return;
+      const coll = editor.createDecorationsCollection([
+        {
+          range: new mi.Range(b.line, 1, b.line, 1),
+          options: {
+            isWholeLine: false,
+            glyphMarginClassName: 'breakpoint-glyph',
+            glyphMarginHoverMessage: { value: 'Breakpoint' },
+          },
+        },
+      ]);
+      breakpointCollectionsRef.current[b.line] = coll;
+    });
+
+    return () => {
+      Object.values(breakpointCollectionsRef.current).forEach((c) => {
+        try {
+          c.clear();
+        } catch {
+          // no-op
+        }
+      });
+      breakpointCollectionsRef.current = {};
+    };
+  }, [dbgBreakpoints, activeFilePath]);
 
   const onEditorDidMount: OnMount = (editor, monacoInstance) => {
     // Register basic Rust language if not present
-    if (!monacoInstance.languages.getLanguages().some((lang: { id: string }) => lang.id === 'rust')) {
+    if (
+      !monacoInstance.languages.getLanguages().some((lang: { id: string }) => lang.id === 'rust')
+    ) {
       monacoInstance.languages.register({ id: 'rust', extensions: ['.rs'] });
       monacoInstance.languages.setLanguageConfiguration('rust', {
         comments: {
@@ -132,7 +136,7 @@ useEffect(() => {
         } catch (err) {
           console.error('Breakpoint toggle failed', err);
         }
-      }),
+      })
     );
 
     // Clear any existing markers for rust-analyzer

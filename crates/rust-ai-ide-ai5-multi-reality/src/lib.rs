@@ -1,10 +1,10 @@
+use chrono::{DateTime, Utc};
+use futures::future::join_all;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use futures::future::join_all;
 
 /// Represents a quantum state in superposition across multiple realities
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -53,7 +53,11 @@ impl QuantumState {
         let entropy = rand::random::<f64>();
         self.coherence_level *= entropy;
 
-        log::info!("Quantum state collapsed to reality {} with entanglement level {}", target_reality, self.coherence_level);
+        log::info!(
+            "Quantum state collapsed to reality {} with entanglement level {}",
+            target_reality,
+            self.coherence_level
+        );
         Ok(())
     }
 }
@@ -107,7 +111,12 @@ impl RealityBranch {
         self.entropy_level = (self_state.coherence_level + other_state.coherence_level) / 2.0;
         self.convergence_probability += 0.1;
 
-        log::info!("Reality branches merged: {} <-> {}, convergence at {}", self.name, other.name, self.convergence_probability);
+        log::info!(
+            "Reality branches merged: {} <-> {}, convergence at {}",
+            self.name,
+            other.name,
+            self.convergence_probability
+        );
         Ok(())
     }
 }
@@ -169,35 +178,62 @@ impl MultiRealityCoordinator {
         // Parallel synchronization across all realities
         let sync_tasks = branch_ids.iter().map(|&id| {
             let handler = Arc::clone(&self.synchronization_handler);
-            async move {
-                handler.sync_reality_branch(id).await
-            }
+            async move { handler.sync_reality_branch(id).await }
         });
 
         let results = join_all(sync_tasks).await;
         let successful_syncs = results.iter().filter(|r| r.is_ok()).count();
 
-        log::info!("Synchronized {} reality branches out of {}", successful_syncs, branch_ids.len());
+        log::info!(
+            "Synchronized {} reality branches out of {}",
+            successful_syncs,
+            branch_ids.len()
+        );
         Ok(())
     }
 
-    pub async fn quantum_entangle_codebases(&self, branch_a: Uuid, branch_b: Uuid) -> Result<(), QuantumError> {
+    pub async fn quantum_entangle_codebases(
+        &self,
+        branch_a: Uuid,
+        branch_b: Uuid,
+    ) -> Result<(), QuantumError> {
         let mut entanglement_mgr = self.entanglement_manager.write().await;
-        entanglement_mgr.create_entanglement(branch_a, branch_b).await?;
+        entanglement_mgr
+            .create_entanglement(branch_a, branch_b)
+            .await?;
 
         // Update quantum states in both branches
-        if let (Some(branch_a_state), Some(branch_b_state)) = self.get_branch_pair_states(branch_a, branch_b).await {
-            self.quantum_engine.entangle_states(branch_a_state, branch_b_state).await?;
+        if let (Some(branch_a_state), Some(branch_b_state)) =
+            self.get_branch_pair_states(branch_a, branch_b).await
+        {
+            self.quantum_engine
+                .entangle_states(branch_a_state, branch_b_state)
+                .await?;
         }
 
-        log::info!("Quantum entanglement established between reality branches {} and {}", branch_a, branch_b);
+        log::info!(
+            "Quantum entanglement established between reality branches {} and {}",
+            branch_a,
+            branch_b
+        );
         Ok(())
     }
 
-    async fn get_branch_pair_states(&self, branch_a: Uuid, branch_b: Uuid) -> (Option<Arc<RwLock<QuantumState>>>, Option<Arc<RwLock<QuantumState>>>) {
+    async fn get_branch_pair_states(
+        &self,
+        branch_a: Uuid,
+        branch_b: Uuid,
+    ) -> (
+        Option<Arc<RwLock<QuantumState>>>,
+        Option<Arc<RwLock<QuantumState>>>,
+    ) {
         let branches = self.reality_branches.read().await;
-        let state_a = branches.get(&branch_a).map(|b| Arc::clone(&b.quantum_state));
-        let state_b = branches.get(&branch_b).map(|b| Arc::clone(&b.quantum_state));
+        let state_a = branches
+            .get(&branch_a)
+            .map(|b| Arc::clone(&b.quantum_state));
+        let state_b = branches
+            .get(&branch_b)
+            .map(|b| Arc::clone(&b.quantum_state));
         (state_a, state_b)
     }
 }
@@ -220,7 +256,11 @@ impl QuantumProcessor {
         Ok(())
     }
 
-    pub async fn entangle_states(&self, state_a: Arc<RwLock<QuantumState>>, state_b: Arc<RwLock<QuantumState>>) -> Result<(), QuantumError> {
+    pub async fn entangle_states(
+        &self,
+        state_a: Arc<RwLock<QuantumState>>,
+        state_b: Arc<RwLock<QuantumState>>,
+    ) -> Result<(), QuantumError> {
         // Implement quantum entanglement logic
         let mut state_a_lock = state_a.write().await;
         let mut state_b_lock = state_b.write().await;
@@ -244,7 +284,11 @@ impl QuantumEntangleManager {
         }
     }
 
-    pub async fn create_entanglement(&mut self, branch_a: Uuid, branch_b: Uuid) -> Result<(), QuantumError> {
+    pub async fn create_entanglement(
+        &mut self,
+        branch_a: Uuid,
+        branch_b: Uuid,
+    ) -> Result<(), QuantumError> {
         let key = (branch_a, branch_b);
         let entanglement = Entanglement::new();
         self.entanglement_pairs.insert(key, entanglement);
@@ -337,7 +381,10 @@ mod tests {
     #[tokio::test]
     async fn test_multi_reality_coordination() {
         let coordinator = MultiRealityCoordinator::new().await;
-        let branch_id = coordinator.create_reality_branch("coordination_test".to_string()).await.unwrap();
+        let branch_id = coordinator
+            .create_reality_branch("coordination_test".to_string())
+            .await
+            .unwrap();
 
         let branches = coordinator.reality_branches.read().await;
         assert!(branches.contains_key(&branch_id));

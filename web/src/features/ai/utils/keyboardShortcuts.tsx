@@ -29,11 +29,11 @@ export const useAIShortcuts = (editorRef: RefObject<any>) => {
   // Get the current editor content and selection
   const getEditorContext = useCallback(() => {
     if (!editorRef.current) return { code: '', selection: null, path: 'current_file.rs' };
-    
+
     const editor = editorRef.current;
     const model = editor.getModel();
     const selection = editor.getSelection();
-    
+
     return {
       code: selection ? model?.getValueInRange(selection) || '' : editor.getValue(),
       selection,
@@ -95,7 +95,7 @@ export const useAIShortcuts = (editorRef: RefObject<any>) => {
         e.preventDefault();
         togglePanel();
       },
-    }
+    },
   };
 
   // Check if a keyboard event matches any of the defined shortcuts
@@ -103,14 +103,14 @@ export const useAIShortcuts = (editorRef: RefObject<any>) => {
     return keys.some((key) => {
       const parts = key.split('+');
       const keyChar = parts.pop()?.toLowerCase() || '';
-      
+
       const expectedModifiers = {
-        ctrl: parts.some(p => p.toLowerCase() === 'ctrl'),
-        cmd: parts.some(p => p.toLowerCase() === 'cmd'),
-        alt: parts.some(p => p.toLowerCase() === 'alt'),
-        shift: parts.some(p => p.toLowerCase() === 'shift'),
+        ctrl: parts.some((p) => p.toLowerCase() === 'ctrl'),
+        cmd: parts.some((p) => p.toLowerCase() === 'cmd'),
+        alt: parts.some((p) => p.toLowerCase() === 'alt'),
+        shift: parts.some((p) => p.toLowerCase() === 'shift'),
       };
-      
+
       return (
         e.ctrlKey === expectedModifiers.ctrl &&
         e.metaKey === expectedModifiers.cmd &&

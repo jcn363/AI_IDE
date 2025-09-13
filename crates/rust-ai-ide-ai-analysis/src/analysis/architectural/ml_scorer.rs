@@ -4,7 +4,7 @@
 //! anti-pattern analysis, and suggestion prioritization.
 
 use crate::analysis::architectural::patterns::*;
-use rust_ai_ide_common::{IdeResult, IdeError};
+use rust_ai_ide_common::{IdeError, IdeResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -148,7 +148,9 @@ impl MLScorer {
 
     /// Score an anti-pattern detection with ML-enhanced confidence
     pub fn score_anti_pattern(&mut self, anti_pattern: &DetectedAntiPattern) -> IdeResult<f32> {
-        let features = self.feature_extractors.extract_anti_pattern_features(anti_pattern)?;
+        let features = self
+            .feature_extractors
+            .extract_anti_pattern_features(anti_pattern)?;
         let key = self.cache_key_for_anti_pattern(anti_pattern);
 
         if let Some(cached) = self.prediction_cache.get(&key) {
@@ -169,7 +171,9 @@ impl MLScorer {
 
     /// Enhance suggestion prioritization with ML scoring
     pub fn enhance_suggestion(&mut self, suggestion: &mut IntelligenceSuggestion) -> IdeResult<()> {
-        let base_features = self.feature_extractors.extract_suggestion_features(suggestion)?;
+        let base_features = self
+            .feature_extractors
+            .extract_suggestion_features(suggestion)?;
         let enhancement = self.calculate_enhancement_factor(&base_features)?;
         suggestion.confidence = (suggestion.confidence + enhancement).min(1.0);
         Ok(())
@@ -309,9 +313,7 @@ impl MLScorer {
     fn cache_key_for_pattern(&self, pattern: &DetectedPattern) -> String {
         format!(
             "pattern:{:?}:{:?}:{:?}",
-            pattern.pattern_type,
-            pattern.location.file_path,
-            pattern.location.start_line
+            pattern.pattern_type, pattern.location.file_path, pattern.location.start_line
         )
     }
 
@@ -367,15 +369,13 @@ impl MLScorer {
 
     /// Calculate enhancement factor for suggestions
     fn calculate_enhancement_factor(&self, features: &FeatureVector) -> IdeResult<f32> {
-        let enhancement = features.normalized
-            .get("complexity_score")
-            .unwrap_or(&0.5) * 0.3 +
-        features.normalized
-            .get("coupling_score")
-            .unwrap_or(&0.5) * 0.4 +
-        features.normalized
-            .get("maintainability_score")
-            .unwrap_or(&0.5) * 0.3;
+        let enhancement = features.normalized.get("complexity_score").unwrap_or(&0.5) * 0.3
+            + features.normalized.get("coupling_score").unwrap_or(&0.5) * 0.4
+            + features
+                .normalized
+                .get("maintainability_score")
+                .unwrap_or(&0.5)
+                * 0.3;
 
         Ok(enhancement.min(0.4)) // Cap enhancement at 40%
     }
@@ -454,8 +454,14 @@ impl FeatureExtractors {
         features.extend(self.semantic_extractor.extract(&pattern.context));
 
         // Add pattern-specific features
-        features.insert("pattern_complexity".to_string(), pattern.context.structural_info.cyclomatic_complexity as f32 / 10.0);
-        features.insert("pattern_methods".to_string(), pattern.context.structural_info.method_count as f32 / 5.0);
+        features.insert(
+            "pattern_complexity".to_string(),
+            pattern.context.structural_info.cyclomatic_complexity as f32 / 10.0,
+        );
+        features.insert(
+            "pattern_methods".to_string(),
+            pattern.context.structural_info.method_count as f32 / 5.0,
+        );
 
         // Normalize features
         let normalized = self.normalize_features(&features);
@@ -467,7 +473,10 @@ impl FeatureExtractors {
         })
     }
 
-    fn extract_anti_pattern_features(&self, anti_pattern: &DetectedAntiPattern) -> IdeResult<FeatureVector> {
+    fn extract_anti_pattern_features(
+        &self,
+        anti_pattern: &DetectedAntiPattern,
+    ) -> IdeResult<FeatureVector> {
         let mut features = HashMap::new();
         let mut metadata = HashMap::new();
 
@@ -477,9 +486,18 @@ impl FeatureExtractors {
         features.extend(self.semantic_extractor.extract(&anti_pattern.context));
 
         // Add anti-pattern specific metrics
-        features.insert("violation_score".to_string(), anti_pattern.metrics.violation_score);
-        features.insert("maintainability_impact".to_string(), anti_pattern.metrics.maintainability_impact);
-        features.insert("affected_lines_normalized".to_string(), anti_pattern.metrics.affected_lines as f32 / 100.0);
+        features.insert(
+            "violation_score".to_string(),
+            anti_pattern.metrics.violation_score,
+        );
+        features.insert(
+            "maintainability_impact".to_string(),
+            anti_pattern.metrics.maintainability_impact,
+        );
+        features.insert(
+            "affected_lines_normalized".to_string(),
+            anti_pattern.metrics.affected_lines as f32 / 100.0,
+        );
 
         // Normalize features
         let normalized = self.normalize_features(&features);
@@ -491,7 +509,10 @@ impl FeatureExtractors {
         })
     }
 
-    fn extract_suggestion_features(&self, suggestion: &IntelligenceSuggestion) -> IdeResult<FeatureVector> {
+    fn extract_suggestion_features(
+        &self,
+        suggestion: &IntelligenceSuggestion,
+    ) -> IdeResult<FeatureVector> {
         let mut features = HashMap::new();
         let mut metadata = HashMap::new();
 
@@ -499,23 +520,29 @@ impl FeatureExtractors {
         features.insert("confidence_base".to_string(), suggestion.confidence);
 
         // Priority-based features
-        features.insert("priority_score".to_string(), match suggestion.priority {
-            Priority::Critical => 1.0,
-            Priority::High => 0.8,
-            Priority::Medium => 0.6,
-            Priority::Low => 0.4,
-            Priority::Info => 0.2,
-        });
+        features.insert(
+            "priority_score".to_string(),
+            match suggestion.priority {
+                Priority::Critical => 1.0,
+                Priority::High => 0.8,
+                Priority::Medium => 0.6,
+                Priority::Low => 0.4,
+                Priority::Info => 0.2,
+            },
+        );
 
         // Category-specific features
-        features.insert("complexity_score".to_string(), match suggestion.category {
-            SuggestionCategory::Performance => 0.9,
-            SuggestionCategory::Security => 0.9,
-            SuggestionCategory::Maintainability => 0.7,
-            SuggestionCategory::Reliability => 0.8,
-            SuggestionCategory::Readability => 0.5,
-            SuggestionCategory::Architecture => 0.8,
-        });
+        features.insert(
+            "complexity_score".to_string(),
+            match suggestion.category {
+                SuggestionCategory::Performance => 0.9,
+                SuggestionCategory::Security => 0.9,
+                SuggestionCategory::Maintainability => 0.7,
+                SuggestionCategory::Reliability => 0.8,
+                SuggestionCategory::Readability => 0.5,
+                SuggestionCategory::Architecture => 0.8,
+            },
+        );
 
         features.insert("coupling_score".to_string(), 0.5); // Placeholder
         features.insert("maintainability_score".to_string(), 0.6); // Placeholder
@@ -530,7 +557,8 @@ impl FeatureExtractors {
     }
 
     fn normalize_features(&self, features: &HashMap<String, f32>) -> HashMap<String, f32> {
-        features.iter()
+        features
+            .iter()
             .map(|(k, v)| (k.clone(), v.min(1.0).max(0.0)))
             .collect()
     }
@@ -540,12 +568,18 @@ impl ComplexityFeatureExtractor {
     fn extract(&self, context: &PatternContext) -> HashMap<String, f32> {
         let mut features = HashMap::new();
 
-        features.insert("cyclomatic_complexity".to_string(),
-                       context.structural_info.cyclomatic_complexity as f32 / 10.0);
-        features.insert("nesting_depth".to_string(),
-                       context.structural_info.nesting_depth as f32 / 5.0);
-        features.insert("lines_of_code".to_string(),
-                       context.structural_info.lines_of_code as f32 / 100.0);
+        features.insert(
+            "cyclomatic_complexity".to_string(),
+            context.structural_info.cyclomatic_complexity as f32 / 10.0,
+        );
+        features.insert(
+            "nesting_depth".to_string(),
+            context.structural_info.nesting_depth as f32 / 5.0,
+        );
+        features.insert(
+            "lines_of_code".to_string(),
+            context.structural_info.lines_of_code as f32 / 100.0,
+        );
 
         features
     }
@@ -555,12 +589,18 @@ impl StructuralFeatureExtractor {
     fn extract(&self, context: &PatternContext) -> HashMap<String, f32> {
         let mut features = HashMap::new();
 
-        features.insert("method_count".to_string(),
-                       context.structural_info.method_count as f32 / 10.0);
-        features.insert("field_count".to_string(),
-                       context.structural_info.field_count as f32 / 20.0);
-        features.insert("dependency_count".to_string(),
-                       context.structural_info.dependency_count as f32 / 5.0);
+        features.insert(
+            "method_count".to_string(),
+            context.structural_info.method_count as f32 / 10.0,
+        );
+        features.insert(
+            "field_count".to_string(),
+            context.structural_info.field_count as f32 / 20.0,
+        );
+        features.insert(
+            "dependency_count".to_string(),
+            context.structural_info.dependency_count as f32 / 5.0,
+        );
 
         features
     }

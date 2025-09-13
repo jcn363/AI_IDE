@@ -25,9 +25,9 @@ pub mod metrics;
 pub mod router;
 pub mod types;
 
-pub use layer::AIServiceIntegrationLayer;
 pub use bridge::LSPAiBridge;
 pub use frontend::AITauriInterface;
+pub use layer::AIServiceIntegrationLayer;
 pub use router::AiPerformanceRouter;
 
 /// Main integration layer that orchestrates all AI service components
@@ -47,15 +47,21 @@ impl AIServiceIntegrationLayer {
     /// Returns an error if any component fails to initialize
     pub async fn new() -> Result<Self, errors::IntegrationError> {
         let lsp_bridge = std::sync::Arc::new(
-            bridge::LSPAiBridge::new().await.map_err(errors::IntegrationError::LspBridge)?
+            bridge::LSPAiBridge::new()
+                .await
+                .map_err(errors::IntegrationError::LspBridge)?,
         );
 
         let frontend_interface = std::sync::Arc::new(
-            frontend::AITauriInterface::new().await.map_err(errors::IntegrationError::Frontend)?
+            frontend::AITauriInterface::new()
+                .await
+                .map_err(errors::IntegrationError::Frontend)?,
         );
 
         let performance_router = std::sync::Arc::new(
-            router::AiPerformanceRouter::new().await.map_err(errors::IntegrationError::Router)?
+            router::AiPerformanceRouter::new()
+                .await
+                .map_err(errors::IntegrationError::Router)?,
         );
 
         Ok(Self {
@@ -91,7 +97,10 @@ mod tests {
     #[tokio::test]
     async fn test_integration_layer_creation() {
         let layer = AIServiceIntegrationLayer::new().await;
-        assert!(layer.is_ok(), "Integration layer should initialize successfully");
+        assert!(
+            layer.is_ok(),
+            "Integration layer should initialize successfully"
+        );
     }
 
     #[tokio::test]

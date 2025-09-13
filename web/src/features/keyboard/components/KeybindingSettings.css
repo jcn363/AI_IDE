@@ -60,7 +60,7 @@
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .profiles-section h3 {
@@ -139,7 +139,7 @@
   color: #856404;
   margin-bottom: 8px;
   padding: 8px;
-  background: rgba(255,255,255,0.5);
+  background: rgba(255, 255, 255, 0.5);
   border-radius: 4px;
 }
 
@@ -165,7 +165,7 @@
   background: white;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .shortcuts-section h3 {
@@ -188,7 +188,7 @@
 
 .shortcut-item.conflicted .shortcut-info .action-name::before,
 .shortcut-item.conflicted .shortcut-keys::before {
-  content: "⚠️ ";
+  content: '⚠️ ';
   color: #dc3545;
 }
 
@@ -220,9 +220,10 @@
   border-radius: 4px;
   padding: 4px 8px;
   font-size: 12px;
-  font-family: 'SF Mono', Monaco, Inconsolata, 'Fira Code', 'Droid Sans Mono', 'Source Code Pro', monospace;
+  font-family:
+    'SF Mono', Monaco, Inconsolata, 'Fira Code', 'Droid Sans Mono', 'Source Code Pro', monospace;
   color: #495057;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .shortcut-actions {
@@ -276,7 +277,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

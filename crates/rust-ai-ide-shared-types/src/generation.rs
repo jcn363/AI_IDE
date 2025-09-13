@@ -5,8 +5,8 @@
 
 use crate::config::{GenerationConfig, TypeScriptConfig};
 use crate::errors::TypeGenerationError;
-use crate::types::*;
 use crate::parsing::TypeParser;
+use crate::types::*;
 use async_trait::async_trait;
 use std::collections::HashMap;
 
@@ -27,7 +27,11 @@ pub struct TypeGenerator {
 #[async_trait]
 pub trait CodeGenerator: Send + Sync + std::fmt::Debug {
     /// Generate code for a set of types
-    async fn generate(&self, types: &[ParsedType], config: &GenerationConfig) -> Result<GeneratedCode, TypeGenerationError>;
+    async fn generate(
+        &self,
+        types: &[ParsedType],
+        config: &GenerationConfig,
+    ) -> Result<GeneratedCode, TypeGenerationError>;
 
     /// Get the target platform name
     fn target_platform(&self) -> String;
@@ -72,7 +76,8 @@ impl TypeGenerator {
         type_names: &[&str],
     ) -> Result<GeneratedCode, TypeGenerationError> {
         let content = std::fs::read_to_string(file_path)?;
-        self.generate_types_from_source(&content, file_path, type_names).await
+        self.generate_types_from_source(&content, file_path, type_names)
+            .await
     }
 
     /// Generate types from Rust source code
@@ -89,14 +94,16 @@ impl TypeGenerator {
         let filtered_types: Vec<ParsedType> = if type_names.is_empty() {
             all_types
         } else {
-            all_types.into_iter()
+            all_types
+                .into_iter()
                 .filter(|ty| type_names.contains(&ty.name.as_str()))
                 .collect()
         };
 
         // Generate code using TypeScript generator (for now)
-        let generator = self.generators.get("typescript")
-            .ok_or_else(|| TypeGenerationError::AnalysisError("TypeScript generator not found".to_string()))?;
+        let generator = self.generators.get("typescript").ok_or_else(|| {
+            TypeGenerationError::AnalysisError("TypeScript generator not found".to_string())
+        })?;
 
         generator.generate(&filtered_types, &self.config).await
     }
@@ -112,7 +119,8 @@ impl TypeGenerator {
         let filtered_types: Vec<ParsedType> = if type_names.is_empty() {
             all_types
         } else {
-            all_types.into_iter()
+            all_types
+                .into_iter()
                 .filter(|ty| type_names.contains(&ty.name.as_str()))
                 .collect()
         };
@@ -265,7 +273,10 @@ impl TypeScriptGenerator {
         // Generate fields
         for field in &parsed_type.fields {
             if config.generate_docs && field.documentation.is_some() {
-                output.push_str(&format!("  /** {} */\n", field.documentation.as_ref().unwrap()));
+                output.push_str(&format!(
+                    "  /** {} */\n",
+                    field.documentation.as_ref().unwrap()
+                ));
             }
 
             let mut ts_type = self.transform_type(&field.ty);
@@ -274,8 +285,15 @@ impl TypeScriptGenerator {
                 ts_type = ts_type.replace(" | undefined", "");
             }
 
-            let optional_marker = if field.ty.contains("Option<") && config.strict_null_checks { "" } else { "?" };
-            output.push_str(&format!("  {}{}: {};\n", field.name, optional_marker, ts_type));
+            let optional_marker = if field.ty.contains("Option<") && config.strict_null_checks {
+                ""
+            } else {
+                "?"
+            };
+            output.push_str(&format!(
+                "  {}{}: {};\n",
+                field.name, optional_marker, ts_type
+            ));
         }
 
         output.push_str("}\n\n");
@@ -305,7 +323,11 @@ impl TypeScriptGenerator {
             // Generate union type for enum with data
             output.push_str(&format!("export type {} =\n", parsed_type.name));
             for (index, variant) in parsed_type.variants.iter().enumerate() {
-                let separator = if index == parsed_type.variants.len() - 1 { ";" } else { " |" };
+                let separator = if index == parsed_type.variants.len() - 1 {
+                    ";"
+                } else {
+                    " |"
+                };
 
                 if variant.fields.is_empty() {
                     output.push_str(&format!("  {{ type: '{}' }}{}\n", variant.name, separator));
@@ -313,7 +335,10 @@ impl TypeScriptGenerator {
                     output.push_str(&format!("  {{ type: '{}', ", variant.name));
                     for (field_index, field) in variant.fields.iter().enumerate() {
                         let ts_type = self.transform_type(&field.ty);
-                        let field_name = field.name.clone().unwrap_or_else(|| format!("field{}", field_index));
+                        let field_name = field
+                            .name
+                            .clone()
+                            .unwrap_or_else(|| format!("field{}", field_index));
                         output.push_str(&format!("{}: {}", field_name, ts_type));
                         if field_index < variant.fields.len() - 1 {
                             output.push_str(", ");
@@ -326,7 +351,11 @@ impl TypeScriptGenerator {
             // Generate simple union type for unit-only enum
             output.push_str(&format!("export type {} =\n", parsed_type.name));
             for (index, variant) in parsed_type.variants.iter().enumerate() {
-                let separator = if index == parsed_type.variants.len() - 1 { ";" } else { " |" };
+                let separator = if index == parsed_type.variants.len() - 1 {
+                    ";"
+                } else {
+                    " |"
+                };
                 output.push_str(&format!("  '{}'{}\n", variant.name, separator));
             }
         }
@@ -344,7 +373,11 @@ impl TypeScriptGenerator {
 
 #[async_trait]
 impl CodeGenerator for TypeScriptGenerator {
-    async fn generate(&self, types: &[ParsedType], config: &GenerationConfig) -> Result<GeneratedCode, TypeGenerationError> {
+    async fn generate(
+        &self,
+        types: &[ParsedType],
+        config: &GenerationConfig,
+    ) -> Result<GeneratedCode, TypeGenerationError> {
         let mut content = String::new();
         let mut dependencies = Vec::new();
 
@@ -418,8 +451,14 @@ impl TypeScriptGenerator {
         output.push_str("// Index file for generated types\n\n");
 
         for parsed_type in types {
-            output.push_str(&format!("export type {{{}}} from './types';\n", parsed_type.name));
-            output.push_str(&format!("export {{{}}} from './types';\n", parsed_type.name));
+            output.push_str(&format!(
+                "export type {{{}}} from './types';\n",
+                parsed_type.name
+            ));
+            output.push_str(&format!(
+                "export {{{}}} from './types';\n",
+                parsed_type.name
+            ));
         }
 
         output.push_str("\n");
@@ -489,7 +528,10 @@ mod tests {
         assert_eq!(transformer.transform_type("i32"), "number");
         assert_eq!(transformer.transform_type("bool"), "boolean");
         assert_eq!(transformer.transform_type("Vec<String>"), "Array");
-        assert_eq!(transformer.transform_type("Option<String>").as_str(), "string | undefined");
+        assert_eq!(
+            transformer.transform_type("Option<String>").as_str(),
+            "string | undefined"
+        );
     }
 
     #[tokio::test]
@@ -504,7 +546,10 @@ mod tests {
             }
         "#;
 
-        let result = generator.generate_types_from_source(source, "test.rs", &["User"]).await.unwrap();
+        let result = generator
+            .generate_types_from_source(source, "test.rs", &["User"])
+            .await
+            .unwrap();
         assert!(result.content.contains("export interface User"));
         assert!(result.content.contains("email?: string"));
     }

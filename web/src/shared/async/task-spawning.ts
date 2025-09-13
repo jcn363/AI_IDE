@@ -35,19 +35,19 @@ export class BackgroundTaskManager {
       id,
       name,
       promise: taskPromise,
-      abortController
+      abortController,
     };
 
     this.tasks.set(id, task);
 
     // Set up completion handler
     taskPromise
-      .then(result => {
+      .then((result) => {
         if (!this.shutdownInitiated) {
           onComplete?.(result);
         }
       })
-      .catch(error => {
+      .catch((error) => {
         if (!this.shutdownInitiated) {
           onError?.(error);
         }
@@ -81,7 +81,7 @@ export class BackgroundTaskManager {
    */
   cancelAll(): void {
     const taskIds = Array.from(this.tasks.keys());
-    taskIds.forEach(id => this.cancel(id));
+    taskIds.forEach((id) => this.cancel(id));
   }
 
   /**
@@ -96,13 +96,13 @@ export class BackgroundTaskManager {
 
     console.debug(`[TaskManager] Waiting for ${activeTasks.length} tasks to complete`);
 
-    const promises = activeTasks.map(task => task.promise);
+    const promises = activeTasks.map((task) => task.promise);
 
     await Promise.race([
       Promise.all(promises),
       new Promise<void>((_, reject) => {
         setTimeout(() => reject(new Error('Timeout waiting for tasks to complete')), timeoutMs);
-      })
+      }),
     ]);
   }
 
@@ -140,9 +140,9 @@ export class BackgroundTaskManager {
    * Get information about active tasks
    */
   getActiveTasks(): Array<{ id: string; name: string }> {
-    return Array.from(this.tasks.values()).map(task => ({
+    return Array.from(this.tasks.values()).map((task) => ({
       id: task.id,
-      name: task.name
+      name: task.name,
     }));
   }
 

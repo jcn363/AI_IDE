@@ -41,12 +41,12 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ projectPath }) => {
   const [error, setError] = useState<string | null>(null);
   const [releaseMode, setReleaseMode] = useState(false);
   const [incremental, setIncremental] = useState(true);
-  
-  const { 
-    isLoading, 
-    error: analysisError, 
-    metrics, 
-    analyzePerformance 
+
+  const {
+    isLoading,
+    error: analysisError,
+    metrics,
+    analyzePerformance,
   } = usePerformanceAnalysis(projectPath);
 
   const handleAnalyze = async () => {
@@ -57,35 +57,35 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ projectPath }) => {
     try {
       const result = await analyzePerformance(projectPath, releaseMode, incremental);
       setError(null);
-      
+
       // Generate optimization suggestions
       const suggestionsList: OptimizationSuggestion[] = [];
-      
+
       // Check for long build times (threshold: 10 seconds)
       if (result?.total_time && result.total_time > 10_000) {
         suggestionsList.push({
           type: 'build_time',
           message: 'Long build time detected',
           details: `Total build time is ${(result.total_time / 1000).toFixed(2)}s. Consider optimizing your build.`,
-          severity: 'warning'
+          severity: 'warning',
         });
       }
-      
+
       // Check for crates with long build times
       if (result?.crates) {
         const totalTime = result.total_time || 1;
         for (const [name, crate] of Object.entries(result.crates)) {
-          if (crate.build_time && (crate.build_time / totalTime) > 0.3) {
+          if (crate.build_time && crate.build_time / totalTime > 0.3) {
             suggestionsList.push({
               type: 'crate_build_time',
               message: `Crate '${name}' is taking ${((crate.build_time / totalTime) * 100).toFixed(1)}% of build time`,
               details: 'Consider optimizing this crate or its dependencies.',
-              severity: 'warning'
+              severity: 'warning',
             });
           }
         }
       }
-      
+
       setSuggestions(suggestionsList);
     } catch (err) {
       console.error('Error analyzing performance:', err);
@@ -98,9 +98,9 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ projectPath }) => {
   };
 
   const toggleCrateExpansion = (crateName: string) => {
-    setExpandedCrates(prev => ({
+    setExpandedCrates((prev) => ({
       ...prev,
-      [crateName]: !prev[crateName]
+      [crateName]: !prev[crateName],
     }));
   };
 
@@ -113,7 +113,7 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ projectPath }) => {
   const getTotalBuildTime = (): number => {
     if (!metrics?.crates) return 0;
     return Object.values(metrics.crates).reduce(
-      (total, crate) => total + (crate?.build_time || 0), 
+      (total, crate) => total + (crate?.build_time || 0),
       0
     );
   };
@@ -202,20 +202,30 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ projectPath }) => {
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <Paper sx={{ p: 2, height: '100%' }}>
-                  <Typography variant="subtitle2" color="text.secondary">Total Build Time</Typography>
-                  <Typography variant="h4">{formatTime(metrics?.total_time ?? getTotalBuildTime())}</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Total Build Time
+                  </Typography>
+                  <Typography variant="h4">
+                    {formatTime(metrics?.total_time ?? getTotalBuildTime())}
+                  </Typography>
                 </Paper>
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <Paper sx={{ p: 2, height: '100%' }}>
-                  <Typography variant="subtitle2" color="text.secondary">Crates Built</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Crates Built
+                  </Typography>
                   <Typography variant="h4">{Object.keys(metrics.crates || {}).length}</Typography>
                 </Paper>
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <Paper sx={{ p: 2, height: '100%' }}>
-                  <Typography variant="subtitle2" color="text.secondary">Dependencies</Typography>
-                  <Typography variant="h4">{Object.keys(metrics.dependencies || {}).length}</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Dependencies
+                  </Typography>
+                  <Typography variant="h4">
+                    {Object.keys(metrics.dependencies || {}).length}
+                  </Typography>
                 </Paper>
               </Grid>
             </Grid>
@@ -223,7 +233,9 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ projectPath }) => {
             <Box sx={{ textAlign: 'center', p: 4 }}>
               <InfoIcon color="action" sx={{ fontSize: 48, mb: 2 }} />
               <Typography variant="body1" color="text.secondary">
-                {isLoading ? 'Analyzing build performance...' : 'Run performance analysis to view build summary'}
+                {isLoading
+                  ? 'Analyzing build performance...'
+                  : 'Run performance analysis to view build summary'}
               </Typography>
             </Box>
           )}
@@ -245,10 +257,7 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ projectPath }) => {
                         <InfoIcon color="info" />
                       )}
                     </ListItemIcon>
-                    <ListItemText
-                      primary={suggestion.message}
-                      secondary={suggestion.details}
-                    />
+                    <ListItemText primary={suggestion.message} secondary={suggestion.details} />
                   </ListItem>
                 ))}
               </List>
@@ -274,23 +283,30 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ projectPath }) => {
                         bgcolor: expandedCrates[name] ? 'action.hover' : 'transparent',
                         cursor: 'pointer',
                         '&:hover': {
-                          bgcolor: 'action.hover'
+                          bgcolor: 'action.hover',
                         },
                         borderLeftWidth: 3,
                         borderLeftStyle: 'solid',
-                        borderLeftColor: getCratePercentage(crateMetrics) > 20 ? 'error.main' : 'primary.main',
+                        borderLeftColor:
+                          getCratePercentage(crateMetrics) > 20 ? 'error.main' : 'primary.main',
                         mb: 1,
-                        borderRadius: 1
+                        borderRadius: 1,
                       }}
                     >
                       <ListItemText
                         primary={
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
                             <Typography variant="subtitle1">{name}</Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              <Chip 
-                                label={`${getCratePercentage(crateMetrics).toFixed(1)}%`} 
-                                size="small" 
+                              <Chip
+                                label={`${getCratePercentage(crateMetrics).toFixed(1)}%`}
+                                size="small"
                                 color={getCratePercentage(crateMetrics) > 20 ? 'error' : 'default'}
                                 variant="outlined"
                               />
@@ -303,20 +319,20 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ projectPath }) => {
                         secondary={
                           <Box sx={{ mt: 1 }}>
                             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                              <Chip 
-                                label={`${crateMetrics?.codegen_units || 0} codegen units`} 
-                                size="small" 
+                              <Chip
+                                label={`${crateMetrics?.codegen_units || 0} codegen units`}
+                                size="small"
                                 variant="outlined"
                               />
-                              <Chip 
-                                label={`${crateMetrics?.dependencies?.length || 0} deps`} 
-                                size="small" 
+                              <Chip
+                                label={`${crateMetrics?.dependencies?.length || 0} deps`}
+                                size="small"
                                 variant="outlined"
                               />
                               {crateMetrics?.incremental && (
-                                <Chip 
-                                  label="Incremental" 
-                                  size="small" 
+                                <Chip
+                                  label="Incremental"
+                                  size="small"
                                   color="success"
                                   variant="outlined"
                                 />
@@ -338,8 +354,10 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ projectPath }) => {
                       <Box sx={{ pl: 4, pr: 2, pb: 1, mt: 1 }}>
                         <Grid container spacing={2}>
                           <Grid size={{ xs: 12, sm: 6 }}>
-                          <Paper sx={{ p: 2, height: '100%' }}>
-                          <Typography variant="subtitle2" gutterBottom>Build Metrics</Typography>
+                            <Paper sx={{ p: 2, height: '100%' }}>
+                              <Typography variant="subtitle2" gutterBottom>
+                                Build Metrics
+                              </Typography>
                               <List dense disablePadding>
                                 <ListItem>
                                   <ListItemText
@@ -364,9 +382,9 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ projectPath }) => {
                           </Grid>
                           {crateMetrics?.dependencies && crateMetrics.dependencies.length > 0 && (
                             <Grid size={{ xs: 12, sm: 6 }}>
-                            <Paper sx={{ p: 2, height: '100%' }}>
-                            <Typography variant="subtitle2" gutterBottom>
-                            Dependencies ({crateMetrics.dependencies.length})
+                              <Paper sx={{ p: 2, height: '100%' }}>
+                                <Typography variant="subtitle2" gutterBottom>
+                                  Dependencies ({crateMetrics.dependencies.length})
                                 </Typography>
                                 <Box sx={{ maxHeight: 150, overflow: 'auto' }}>
                                   <List dense disablePadding>
@@ -393,7 +411,9 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ projectPath }) => {
             <Box sx={{ textAlign: 'center', p: 4 }}>
               <InfoIcon color="action" sx={{ fontSize: 48, mb: 2 }} />
               <Typography variant="body1" color="text.secondary">
-                {isLoading ? 'Analyzing build performance...' : 'Run performance analysis to view crate metrics'}
+                {isLoading
+                  ? 'Analyzing build performance...'
+                  : 'Run performance analysis to view crate metrics'}
               </Typography>
             </Box>
           )}
@@ -433,7 +453,9 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ projectPath }) => {
             <Box sx={{ textAlign: 'center', p: 4 }}>
               <InfoIcon color="action" sx={{ fontSize: 48, mb: 2 }} />
               <Typography variant="body1" color="text.secondary">
-                {isLoading ? 'Analyzing build performance...' : 'Run performance analysis to view dependency metrics'}
+                {isLoading
+                  ? 'Analyzing build performance...'
+                  : 'Run performance analysis to view dependency metrics'}
               </Typography>
             </Box>
           )}

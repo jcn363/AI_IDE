@@ -32,7 +32,7 @@ core_extensions = { version = "1", default-features = false, features = ["iterat
 criterion = { version = "0.7", features = ["html_reports"] }
 crossbeam-epoch = { version = "0.9" }
 crossbeam-utils = { version = "0.8" }
-crypto-common = { version = "0.1", default-features = false, features = ["getrandom", "std"] }
+#crypto-common = { version = "0.1", default-features = false, features = ["getrandom", "std"] }
 dashmap = { version = "6", default-features = false, features = ["serde"] }
 der = { version = "0.7", default-features = false, features = ["oid", "pem", "std"] }
 deranged = { version = "0.5", features = ["powerfmt", "serde"] }
@@ -53,7 +53,7 @@ half = { version = "2", features = ["bytemuck", "num-traits", "rand_distr", "use
 hashbrown = { version = "0.15" }
 hmac = { version = "0.12", default-features = false, features = ["reset"] }
 hyper = { version = "1", features = ["full"] }
-hyper-util = { version = "0.1", features = ["client-legacy", "client-proxy", "server-auto", "service"] }
+#hyper-util = { version = "0.1", features = ["client-legacy", "client-proxy", "server-auto", "service"] }
 idna = { version = "1" }
 indexmap-dff4ba8e3ae991db = { package = "indexmap", version = "1", default-features = false, features = ["serde-1"] }
 indexmap-f595c2ba2a3f28df = { package = "indexmap", version = "2", features = ["serde"] }
@@ -69,8 +69,8 @@ miniz_oxide = { version = "0.8", features = ["simd"] }
 moka = { version = "0.12", features = ["future"] }
 num-bigint = { version = "0.4", default-features = false, features = ["std"] }
 num-complex = { version = "0.4", default-features = false, features = ["bytemuck", "std"] }
-num-integer = { version = "0.1", features = ["i128"] }
-num-iter = { version = "0.1", default-features = false, features = ["i128", "std"] }
+#num-integer = { version = "0.1", features = ["i128"] }
+#num-iter = { version = "0.1", default-features = false, features = ["i128", "std"] }
 num-traits = { version = "0.2", features = ["i128", "libm"] }
 once_cell = { version = "1" }
 parking_lot = { version = "0.12", features = ["serde"] }
@@ -95,8 +95,8 @@ regex = { version = "1" }
 regex-automata = { version = "0.4", default-features = false, features = ["dfa", "hybrid", "meta", "nfa", "perf", "std", "unicode"] }
 regex-syntax = { version = "0.8" }
 reqwest = { version = "0.12", features = ["blocking", "json", "macos-system-configuration", "multipart", "rustls-tls", "stream"] }
-rustls = { version = "0.23", default-features = false, features = ["logging", "prefer-post-quantum", "ring", "std", "tls12"] }
-rustls-webpki = { version = "0.103", default-features = false, features = ["aws-lc-rs", "ring", "std"] }
+rustls = { version = "0.23", default-features = false, features = ["logging", "prefer-post-quantum", "aws-lc-rs", "std", "tls12"] }
+rustls-webpki = { version = "0.103", default-features = false, features = ["aws-lc-rs", "std"] }
 schemars = { version = "0.8", features = ["preserve_order", "url", "uuid1"] }
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["alloc", "derive", "rc"] }
@@ -115,15 +115,15 @@ tauri-runtime-wry = { version = "2", default-features = false, features = ["comm
 tauri-utils = { version = "2", default-features = false, features = ["build", "compression", "resources"] }
 time = { version = "0.3", features = ["local-offset", "macros", "serde-well-known"] }
 tokio = { version = "1", features = ["full", "test-util"] }
-tokio-stream = { version = "0.1", features = ["full"] }
+#tokio-stream = { version = "0.1", features = ["full"] }
 tokio-tungstenite = { version = "0.27", features = ["native-tls"] }
 tokio-util = { version = "0.7", features = ["codec", "io"] }
 toml_datetime = { version = "0.6", default-features = false, features = ["serde"] }
 toml_edit = { version = "0.22", default-features = false, features = ["display", "parse", "serde"] }
 tower-9fbad63c4bcf4a8f = { package = "tower", version = "0.4", features = ["balance", "buffer", "filter", "limit", "timeout", "util"] }
 tower-d8f496e17d97b5cb = { package = "tower", version = "0.5", default-features = false, features = ["log", "make", "util"] }
-tracing = { version = "0.1", features = ["log"] }
-tracing-core = { version = "0.1" }
+#tracing = { version = "0.1", features = ["log"] }
+#tracing-core = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = ["chrono", "env-filter"] }
 tungstenite = { version = "0.27", features = ["native-tls"] }
 typenum = { version = "1", default-features = false, features = ["const-generics"] }
@@ -150,7 +150,7 @@ core_extensions = { version = "1", default-features = false, features = ["iterat
 criterion = { version = "0.7", features = ["html_reports"] }
 crossbeam-epoch = { version = "0.9" }
 crossbeam-utils = { version = "0.8" }
-crypto-common = { version = "0.1", default-features = false, features = ["getrandom", "std"] }
+#crypto-common = { version = "0.1", default-features = false, features = ["getrandom", "std"] }
 dashmap = { version = "6", default-features = false, features = ["serde"] }
 der = { version = "0.7", default-features = false, features = ["oid", "pem", "std"] }
 deranged = { version = "0.5", features = ["powerfmt", "serde"] }
@@ -171,7 +171,7 @@ half = { version = "2", features = ["bytemuck", "num-traits", "rand_distr", "use
 hashbrown = { version = "0.15" }
 hmac = { version = "0.12", default-features = false, features = ["reset"] }
 hyper = { version = "1", features = ["full"] }
-hyper-util = { version = "0.1", features = ["client-legacy", "client-proxy", "server-auto", "service"] }
+#hyper-util = { version = "0.1", features = ["client-legacy", "client-proxy", "server-auto", "service"] }
 idna = { version = "1" }
 indexmap-dff4ba8e3ae991db = { package = "indexmap", version = "1", default-features = false, features = ["serde-1"] }
 indexmap-f595c2ba2a3f28df = { package = "indexmap", version = "2", features = ["serde"] }
@@ -187,8 +187,8 @@ miniz_oxide = { version = "0.8", features = ["simd"] }
 moka = { version = "0.12", features = ["future"] }
 num-bigint = { version = "0.4", default-features = false, features = ["std"] }
 num-complex = { version = "0.4", default-features = false, features = ["bytemuck", "std"] }
-num-integer = { version = "0.1", features = ["i128"] }
-num-iter = { version = "0.1", default-features = false, features = ["i128", "std"] }
+#num-integer = { version = "0.1", features = ["i128"] }
+#num-iter = { version = "0.1", default-features = false, features = ["i128", "std"] }
 num-traits = { version = "0.2", features = ["i128", "libm"] }
 once_cell = { version = "1" }
 parking_lot = { version = "0.12", features = ["serde"] }
@@ -213,8 +213,8 @@ regex = { version = "1" }
 regex-automata = { version = "0.4", default-features = false, features = ["dfa", "hybrid", "meta", "nfa", "perf", "std", "unicode"] }
 regex-syntax = { version = "0.8" }
 reqwest = { version = "0.12", features = ["blocking", "json", "macos-system-configuration", "multipart", "rustls-tls", "stream"] }
-rustls = { version = "0.23", default-features = false, features = ["logging", "prefer-post-quantum", "ring", "std", "tls12"] }
-rustls-webpki = { version = "0.103", default-features = false, features = ["aws-lc-rs", "ring", "std"] }
+rustls = { version = "0.23", default-features = false, features = ["logging", "prefer-post-quantum", "aws-lc-rs", "std", "tls12"] }
+rustls-webpki = { version = "0.103", default-features = false, features = ["aws-lc-rs", "std"] }
 schemars = { version = "0.8", features = ["preserve_order", "url", "uuid1"] }
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["alloc", "derive", "rc"] }
@@ -235,15 +235,15 @@ tauri-utils = { version = "2", default-features = false, features = ["build", "c
 time = { version = "0.3", features = ["local-offset", "macros", "serde-well-known"] }
 time-macros = { version = "0.2", default-features = false, features = ["formatting", "parsing", "serde"] }
 tokio = { version = "1", features = ["full", "test-util"] }
-tokio-stream = { version = "0.1", features = ["full"] }
+#tokio-stream = { version = "0.1", features = ["full"] }
 tokio-tungstenite = { version = "0.27", features = ["native-tls"] }
 tokio-util = { version = "0.7", features = ["codec", "io"] }
 toml_datetime = { version = "0.6", default-features = false, features = ["serde"] }
 toml_edit = { version = "0.22", default-features = false, features = ["display", "parse", "serde"] }
 tower-9fbad63c4bcf4a8f = { package = "tower", version = "0.4", features = ["balance", "buffer", "filter", "limit", "timeout", "util"] }
 tower-d8f496e17d97b5cb = { package = "tower", version = "0.5", default-features = false, features = ["log", "make", "util"] }
-tracing = { version = "0.1", features = ["log"] }
-tracing-core = { version = "0.1" }
+#tracing = { version = "0.1", features = ["log"] }
+#tracing-core = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = ["chrono", "env-filter"] }
 tungstenite = { version = "0.27", features = ["native-tls"] }
 typenum = { version = "1", default-features = false, features = ["const-generics"] }

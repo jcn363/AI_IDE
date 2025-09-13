@@ -33,70 +33,103 @@ export const useEditorState = () => {
   } = useSelector((state: RootState) => state.editor);
 
   // Actions
-  const setTheme = useCallback((theme: EditorTheme) => {
-    dispatch(editorActions.setTheme(theme));
-  }, [dispatch]);
+  const setTheme = useCallback(
+    (theme: EditorTheme) => {
+      dispatch(editorActions.setTheme(theme));
+    },
+    [dispatch]
+  );
 
-  const setFontSize = useCallback((size: number) => {
-    dispatch(editorActions.setFontSize(size));
-  }, [dispatch]);
+  const setFontSize = useCallback(
+    (size: number) => {
+      dispatch(editorActions.setFontSize(size));
+    },
+    [dispatch]
+  );
 
-  const setWordWrap = useCallback((enabled: boolean) => {
-    dispatch(editorActions.setWordWrap(enabled));
-  }, [dispatch]);
+  const setWordWrap = useCallback(
+    (enabled: boolean) => {
+      dispatch(editorActions.setWordWrap(enabled));
+    },
+    [dispatch]
+  );
 
-  const setMinimap = useCallback((enabled: boolean) => {
-    dispatch(editorActions.setMinimap(enabled));
-  }, [dispatch]);
+  const setMinimap = useCallback(
+    (enabled: boolean) => {
+      dispatch(editorActions.setMinimap(enabled));
+    },
+    [dispatch]
+  );
 
-  const setLineNumbers = useCallback((enabled: boolean) => {
-    dispatch(editorActions.setLineNumbers(enabled));
-  }, [dispatch]);
+  const setLineNumbers = useCallback(
+    (enabled: boolean) => {
+      dispatch(editorActions.setLineNumbers(enabled));
+    },
+    [dispatch]
+  );
 
-  const setTabSize = useCallback((size: number) => {
-    dispatch(editorActions.setTabSize(size));
-  }, [dispatch]);
+  const setTabSize = useCallback(
+    (size: number) => {
+      dispatch(editorActions.setTabSize(size));
+    },
+    [dispatch]
+  );
 
-  const setCurrentFile = useCallback((filePath: string) => {
-    dispatch(editorActions.setCurrentFile(filePath));
-  }, [dispatch]);
+  const setCurrentFile = useCallback(
+    (filePath: string) => {
+      dispatch(editorActions.setCurrentFile(filePath));
+    },
+    [dispatch]
+  );
 
-  const closeFile = useCallback((filePath: string) => {
-    dispatch(editorActions.closeFile(filePath));
-  }, [dispatch]);
+  const closeFile = useCallback(
+    (filePath: string) => {
+      dispatch(editorActions.closeFile(filePath));
+    },
+    [dispatch]
+  );
 
-  const switchToFile = useCallback((filePath: string) => {
-    dispatch(editorActions.switchToFile(filePath));
-  }, [dispatch]);
+  const switchToFile = useCallback(
+    (filePath: string) => {
+      dispatch(editorActions.switchToFile(filePath));
+    },
+    [dispatch]
+  );
 
-  const updateFileContent = useCallback((filePath: string, content: string) => {
-    dispatch(editorActions.updateFileContent({ filePath, content }));
-  }, [dispatch]);
+  const updateFileContent = useCallback(
+    (filePath: string, content: string) => {
+      dispatch(editorActions.updateFileContent({ filePath, content }));
+    },
+    [dispatch]
+  );
 
-  const saveFile = useCallback(async (filePath: string, content: string) => {
-    try {
-      dispatch(editorActions.saveFileStart(filePath));
-      // Here you would typically make an API call to save the file
-      // await api.saveFile(filePath, content);
-      dispatch(editorActions.saveFileSuccess(filePath));
-      setSnackbar({
-        open: true,
-        message: 'File saved successfully',
-        severity: 'success',
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save file';
-      dispatch(editorActions.saveFileFailure(errorMessage));
-      setSnackbar({
-        open: true,
-        message: `Error: ${errorMessage}`,
-        severity: 'error',
-      });
-    }
-  }, [dispatch]);
+  const saveFile = useCallback(
+    async (filePath: string, content: string) => {
+      try {
+        dispatch(editorActions.saveFileStart(filePath));
+        // Here you would typically make an API call to save the file
+        // await api.saveFile(filePath, content);
+        dispatch(editorActions.saveFileSuccess(filePath));
+        setSnackbar({
+          open: true,
+          message: 'File saved successfully',
+          severity: 'success',
+        });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to save file';
+        dispatch(editorActions.saveFileFailure(errorMessage));
+        setSnackbar({
+          open: true,
+          message: `Error: ${errorMessage}`,
+          severity: 'error',
+        });
+      }
+    },
+    [dispatch]
+  );
 
   const handleCloseSnackbar = useCallback(() => {
-    setSnackbar(prev => ({ ...prev, open: false }));
+    setSnackbar((prev) => ({ ...prev, open: false }));
   }, []);
 
   return {
@@ -118,7 +151,7 @@ export const useEditorState = () => {
     fileTree,
     isLoading,
     snackbar,
-    
+
     // Actions
     setTheme,
     setFontSize,

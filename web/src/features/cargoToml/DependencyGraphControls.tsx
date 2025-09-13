@@ -43,8 +43,8 @@ export function DependencyGraphControls({
   };
 
   return (
-    <Card 
-      size="small" 
+    <Card
+      size="small"
       title={
         <Space>
           <FilterOutlined />
@@ -52,8 +52,8 @@ export function DependencyGraphControls({
         </Space>
       }
       extra={
-        <Button 
-          icon={<SyncOutlined spin={isLoading} />} 
+        <Button
+          icon={<SyncOutlined spin={isLoading} />}
           onClick={onRefresh}
           loading={isLoading}
           size="small"
@@ -72,7 +72,7 @@ export function DependencyGraphControls({
             onPressEnter={handleSearch}
             style={{ width: 200 }}
           />
-          
+
           <Select
             value={dependencyType}
             onChange={(value) => setDependencyType(value as DependencyType)}
@@ -86,11 +86,7 @@ export function DependencyGraphControls({
             <Option value="workspace">Workspace</Option>
           </Select>
 
-          <Button 
-            type="primary" 
-            onClick={handleSearch}
-            icon={<SearchOutlined />}
-          >
+          <Button type="primary" onClick={handleSearch} icon={<SearchOutlined />}>
             Apply Filters
           </Button>
         </Space>
@@ -98,7 +94,7 @@ export function DependencyGraphControls({
         <Divider style={{ margin: '8px 0' }} />
 
         <Space>
-          <Checkbox 
+          <Checkbox
             checked={showFeatures}
             onChange={(e) => {
               setShowFeatures(e.target.checked);
@@ -107,8 +103,8 @@ export function DependencyGraphControls({
           >
             Show Features
           </Checkbox>
-          
-          <Checkbox 
+
+          <Checkbox
             checked={showTransitive}
             onChange={(e) => {
               setShowTransitive(e.target.checked);
@@ -123,25 +119,13 @@ export function DependencyGraphControls({
 
         <Space>
           <span>Export as:</span>
-          <Button 
-            size="small" 
-            icon={<ExportOutlined />}
-            onClick={() => handleExport('svg')}
-          >
+          <Button size="small" icon={<ExportOutlined />} onClick={() => handleExport('svg')}>
             SVG
           </Button>
-          <Button 
-            size="small" 
-            icon={<ExportOutlined />}
-            onClick={() => handleExport('png')}
-          >
+          <Button size="small" icon={<ExportOutlined />} onClick={() => handleExport('png')}>
             PNG
           </Button>
-          <Button 
-            size="small" 
-            icon={<ExportOutlined />}
-            onClick={() => handleExport('json')}
-          >
+          <Button size="small" icon={<ExportOutlined />} onClick={() => handleExport('json')}>
             JSON
           </Button>
         </Space>

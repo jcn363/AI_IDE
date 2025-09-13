@@ -1,12 +1,17 @@
-use axum::{routing::{post, any}, Router, middleware, extract::State};
-use std::sync::Arc;
-use std::net::SocketAddr;
-use tokio::net::TcpListener;
-use tokio::task::JoinHandle;
-use tokio::sync::RwLock;
-use std::collections::HashMap;
-use crate::types::{WebhookPayload, EventHandlerResponse};
 use crate::handlers::default_webhook_handler;
+use crate::types::{EventHandlerResponse, WebhookPayload};
+use axum::{
+    extract::State,
+    middleware,
+    routing::{any, post},
+    Router,
+};
+use std::collections::HashMap;
+use std::net::SocketAddr;
+use std::sync::Arc;
+use tokio::net::TcpListener;
+use tokio::sync::RwLock;
+use tokio::task::JoinHandle;
 
 /// Webhook server state
 pub struct ServerState {
@@ -50,7 +55,11 @@ impl WebhookServer {
     }
 
     /// Register a webhook handler for a specific provider
-    pub async fn register_handler(&self, provider_name: String, provider: Arc<dyn crate::WebhookProvider>) {
+    pub async fn register_handler(
+        &self,
+        provider_name: String,
+        provider: Arc<dyn crate::WebhookProvider>,
+    ) {
         let mut providers = self.state.providers.write().await;
         providers.insert(provider_name, provider);
     }

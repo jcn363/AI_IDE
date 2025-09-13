@@ -6,11 +6,11 @@
 //! - Alert escalation and de-duplication
 //! - Automated remediation actions
 
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
-use tracing::{info, warn, error};
-use chrono::{DateTime, Utc};
+use tracing::{error, info, warn};
 
 use crate::{MonitoringError, Result};
 
@@ -98,14 +98,20 @@ impl AlertingEngine {
         }
     }
 
-    pub async fn process_correlations(&self, correlations: &[correlation::CorrelationResult]) -> Result<()> {
+    pub async fn process_correlations(
+        &self,
+        correlations: &[correlation::CorrelationResult],
+    ) -> Result<()> {
         for correlation in correlations {
             self.evaluate_alert_rules(correlation).await?;
         }
         Ok(())
     }
 
-    async fn evaluate_alert_rules(&self, correlation: &correlation::CorrelationResult) -> Result<()> {
+    async fn evaluate_alert_rules(
+        &self,
+        correlation: &correlation::CorrelationResult,
+    ) -> Result<()> {
         let rules = self.rules.read().await.clone();
 
         for rule in rules {
@@ -128,7 +134,11 @@ impl AlertingEngine {
                     rule_id: rule.id.clone(),
                     title: format!("Security Event Correlation: {}", correlation.description),
                     description: correlation.description.clone(),
-                    severity: correlation.events.first().map(|e| e.severity.clone()).unwrap_or(crate::EventSeverity::Medium),
+                    severity: correlation
+                        .events
+                        .first()
+                        .map(|e| e.severity.clone())
+                        .unwrap_or(crate::EventSeverity::Medium),
                     status: AlertStatus::Active,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
@@ -158,27 +168,27 @@ impl AlertingEngine {
             match action {
                 AlertAction::Log => {
                     info!("Alert logged: {}", alert.title);
-                },
+                }
                 AlertAction::Email => {
                     // TODO: Implement email notification
                     warn!("Email alert not implemented: {}", alert.title);
-                },
+                }
                 AlertAction::Notification => {
                     // TODO: Send system notification
                     info!("System notification sent for alert: {}", alert.title);
-                },
+                }
                 AlertAction::Webhook(url) => {
                     // TODO: Send webhook
                     info!("Webhook sent to {} for alert: {}", url, alert.title);
-                },
+                }
                 AlertAction::ExecuteCommand(cmd) => {
                     // TODO: Execute command securely (with validation)
                     warn!("Command execution not implemented: {}", cmd);
-                },
+                }
                 AlertAction::CreateTicket => {
                     // TODO: Create issue/ticket in tracking system
                     info!("Ticket creation for alert: {}", alert.title);
-                },
+                }
             }
         }
 
@@ -190,7 +200,9 @@ impl AlertingEngine {
         if let Some(alert) = active_alerts.iter_mut().find(|a| a.id == alert_id) {
             alert.status = AlertStatus::Acknowledged;
             alert.updated_at = Utc::now();
-            alert.actions_taken.push(format!("Acknowledged by {}", user));
+            alert
+                .actions_taken
+                .push(format!("Acknowledged by {}", user));
         }
 
         Ok(())

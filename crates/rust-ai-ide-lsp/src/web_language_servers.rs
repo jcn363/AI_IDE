@@ -228,7 +228,7 @@ macro_rules! impl_web_language_server {
 
             fn get_initialization_options(&self, _root_path: &PathBuf) -> Value {
                 match self.language_kind() {
-                    LanguageServerKind::Html => json!({ 
+                    LanguageServerKind::Html => json!({
                         "html": {
                             "suggest": {},
                             "format": {},
@@ -238,7 +238,7 @@ macro_rules! impl_web_language_server {
                             }
                         }
                     }),
-                    LanguageServerKind::Css => json!({ 
+                    LanguageServerKind::Css => json!({
                         "css": {
                             "validate": true,
                             "lint": {},
@@ -256,7 +256,7 @@ macro_rules! impl_web_language_server {
                             "lint": {}
                         }
                     }),
-                    LanguageServerKind::Sql => json!({ 
+                    LanguageServerKind::Sql => json!({
                         "sql": {
                             "format": {
                                 "indentSize": 4,

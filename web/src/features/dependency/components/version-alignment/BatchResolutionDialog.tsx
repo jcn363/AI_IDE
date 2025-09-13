@@ -1,4 +1,9 @@
-import { Check as CheckIcon, Error as ErrorIcon, Info as InfoIcon, Warning as WarningIcon } from '@mui/icons-material';
+import {
+  Check as CheckIcon,
+  Error as ErrorIcon,
+  Info as InfoIcon,
+  Warning as WarningIcon,
+} from '@mui/icons-material';
 import {
   Alert,
   AlertTitle,
@@ -40,20 +45,23 @@ const BatchResolutionDialog: React.FC<BatchResolutionDialogProps> = ({
 }) => {
   const theme = useTheme();
   const [selectedResolutions, setSelectedResolutions] = useState<Record<string, string>>({});
-  
-  const selectedAlignments = alignments.filter(align => selectedIds.includes(align.id));
-  
+
+  const selectedAlignments = alignments.filter((align) => selectedIds.includes(align.id));
+
   // Initialize selected resolutions with suggested versions
   React.useEffect(() => {
-    const initialResolutions = selectedAlignments.reduce((acc, align) => ({
-      ...acc,
-      [align.id]: align.suggestedVersion,
-    }), {} as Record<string, string>);
+    const initialResolutions = selectedAlignments.reduce(
+      (acc, align) => ({
+        ...acc,
+        [align.id]: align.suggestedVersion,
+      }),
+      {} as Record<string, string>
+    );
     setSelectedResolutions(initialResolutions);
   }, [selectedIds, alignments]);
 
   const handleVersionSelect = (alignmentId: string, version: string) => {
-    setSelectedResolutions(prev => ({
+    setSelectedResolutions((prev) => ({
       ...prev,
       [alignmentId]: version,
     }));
@@ -81,28 +89,27 @@ const BatchResolutionDialog: React.FC<BatchResolutionDialogProps> = ({
   };
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
       maxWidth="md"
       fullWidth
       aria-labelledby="batch-resolution-dialog-title"
     >
-      <DialogTitle id="batch-resolution-dialog-title">
-        Batch Resolve Conflicts
-      </DialogTitle>
-      
+      <DialogTitle id="batch-resolution-dialog-title">Batch Resolve Conflicts</DialogTitle>
+
       <DialogContent dividers>
         <Alert severity="info" sx={{ mb: 2 }}>
           <AlertTitle>Resolving {selectedAlignments.length} Dependencies</AlertTitle>
-          Review and confirm the version changes below. You can modify the selected version for each dependency.
+          Review and confirm the version changes below. You can modify the selected version for each
+          dependency.
         </Alert>
-        
+
         <Paper variant="outlined" sx={{ maxHeight: 400, overflow: 'auto', mb: 2 }}>
           <List dense>
             {selectedAlignments.map((alignment, index) => (
               <React.Fragment key={alignment.id}>
-                <ListItem 
+                <ListItem
                   alignItems="flex-start"
                   secondaryAction={
                     <Box display="flex" alignItems="center">
@@ -120,13 +127,12 @@ const BatchResolutionDialog: React.FC<BatchResolutionDialogProps> = ({
                   </ListItemIcon>
                   <ListItemText
                     primary={
-                      <Typography variant="subtitle2">
-                        {alignment.dependencyName}
-                      </Typography>
+                      <Typography variant="subtitle2">{alignment.dependencyName}</Typography>
                     }
                     secondary={
                       <Typography variant="caption" color="text.secondary">
-                        {alignment.affectedPackages.length} package{alignment.affectedPackages.length !== 1 ? 's' : ''}
+                        {alignment.affectedPackages.length} package
+                        {alignment.affectedPackages.length !== 1 ? 's' : ''}
                       </Typography>
                     }
                   />
@@ -136,7 +142,7 @@ const BatchResolutionDialog: React.FC<BatchResolutionDialogProps> = ({
             ))}
           </List>
         </Paper>
-        
+
         {isApplying && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -146,13 +152,9 @@ const BatchResolutionDialog: React.FC<BatchResolutionDialogProps> = ({
           </Box>
         )}
       </DialogContent>
-      
+
       <DialogActions sx={{ p: 2 }}>
-        <Button 
-          onClick={onClose}
-          color="inherit"
-          disabled={isApplying}
-        >
+        <Button onClick={onClose} color="inherit" disabled={isApplying}>
           Cancel
         </Button>
         <Button

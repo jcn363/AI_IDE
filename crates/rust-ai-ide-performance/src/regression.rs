@@ -3,11 +3,11 @@
 //! This module provides automated detection of performance regressions
 //! using statistical analysis and trend detection algorithms.
 
-use chrono::{DateTime, Utc, TimeZone};
-use std::collections::{HashMap, VecDeque};
-use serde::{Deserialize, Serialize};
-use rust_ai_ide_shared_types::PerformanceMetrics;
 use crate::PerformanceAlert as LocalPerformanceAlert;
+use chrono::{DateTime, TimeZone, Utc};
+use rust_ai_ide_shared_types::PerformanceMetrics;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, VecDeque};
 
 /// Configuration for regression detection
 #[derive(Debug, Clone)]
@@ -92,7 +92,11 @@ impl RegressionDetector {
     }
 
     /// Detect regressions compared to baseline
-    pub fn detect_regressions(&self, current: &PerformanceMetrics, history: &[PerformanceMetrics]) -> Vec<LocalPerformanceAlert> {
+    pub fn detect_regressions(
+        &self,
+        current: &PerformanceMetrics,
+        history: &[PerformanceMetrics],
+    ) -> Vec<LocalPerformanceAlert> {
         let mut alerts = Vec::new();
 
         if history.is_empty() {
@@ -122,7 +126,8 @@ impl RegressionDetector {
         if let Some(base_response) = baseline_avg.timing.response_time_ns {
             if let Some(current_response) = current.timing.response_time_ns {
                 if self.is_regression_response_time(base_response, current_response) {
-                    let degradation = (current_response as f64 - base_response as f64) / base_response as f64;
+                    let degradation =
+                        (current_response as f64 - base_response as f64) / base_response as f64;
                     alerts.push(LocalPerformanceAlert::RegressionDetected {
                         metric_name: "response_time_ns".to_string(),
                         baseline_value: base_response as f64,
@@ -138,7 +143,8 @@ impl RegressionDetector {
         if let Some(base_memory) = baseline_avg.resources.memory_bytes {
             if let Some(current_memory) = current.resources.memory_bytes {
                 if self.is_regression_memory(base_memory, current_memory) {
-                    let degradation = (current_memory as f64 - base_memory as f64) / base_memory as f64;
+                    let degradation =
+                        (current_memory as f64 - base_memory as f64) / base_memory as f64;
                     alerts.push(LocalPerformanceAlert::ThresholdExceeded {
                         metric_name: "memory_bytes".to_string(),
                         current_value: current_memory as f64,
@@ -168,10 +174,12 @@ impl RegressionDetector {
         for metrics in &self.baseline_metrics {
             // Sum up the metrics
             if let Some(cpu) = metrics.rates.cpu_usage_percent {
-                sum.rates.cpu_usage_percent = Some(sum.rates.cpu_usage_percent.unwrap_or(0.0) + cpu);
+                sum.rates.cpu_usage_percent =
+                    Some(sum.rates.cpu_usage_percent.unwrap_or(0.0) + cpu);
             }
             if let Some(response) = metrics.timing.response_time_ns {
-                sum.timing.response_time_ns = Some(sum.timing.response_time_ns.unwrap_or(0) + response);
+                sum.timing.response_time_ns =
+                    Some(sum.timing.response_time_ns.unwrap_or(0) + response);
             }
             if let Some(memory) = metrics.resources.memory_bytes {
                 sum.resources.memory_bytes = Some(sum.resources.memory_bytes.unwrap_or(0) + memory);
@@ -218,7 +226,11 @@ impl RegressionDetector {
     }
 
     /// Detect regressions based on trend analysis
-    fn detect_trend_regressions(&self, _current: &PerformanceMetrics, _history: &[PerformanceMetrics]) -> Vec<LocalPerformanceAlert> {
+    fn detect_trend_regressions(
+        &self,
+        _current: &PerformanceMetrics,
+        _history: &[PerformanceMetrics],
+    ) -> Vec<LocalPerformanceAlert> {
         // TODO: Implement sophisticated trend analysis using linear regression
         // and statistical tests to detect performance degradation trends
 
@@ -239,12 +251,14 @@ impl RegressionDetector {
 
     /// Recalculate CPU usage baseline statistics
     fn recalculate_cpu_baseline(&mut self) {
-        let cpu_values: Vec<f64> = self.baseline_metrics
+        let cpu_values: Vec<f64> = self
+            .baseline_metrics
             .iter()
             .filter_map(|m| m.rates.cpu_usage_percent)
             .collect();
 
-        if cpu_values.len() >= 3 { // Need at least 3 points for meaningful stats
+        if cpu_values.len() >= 3 {
+            // Need at least 3 points for meaningful stats
             let (mean, std_dev) = self.calculate_mean_and_std(&cpu_values);
             let trend = self.calculate_trend_coefficient(&cpu_values);
 
@@ -255,14 +269,15 @@ impl RegressionDetector {
                     std_dev,
                     sample_count: cpu_values.len(),
                     trend_coefficient: trend,
-                }
+                },
             );
         }
     }
 
     /// Recalculate response time baseline statistics
     fn recalculate_response_time_baseline(&mut self) {
-        let rt_values: Vec<f64> = self.baseline_metrics
+        let rt_values: Vec<f64> = self
+            .baseline_metrics
             .iter()
             .filter_map(|m| m.timing.response_time_ns.map(|v| v as f64))
             .collect();
@@ -278,14 +293,15 @@ impl RegressionDetector {
                     std_dev,
                     sample_count: rt_values.len(),
                     trend_coefficient: trend,
-                }
+                },
             );
         }
     }
 
     /// Recalculate memory usage baseline statistics
     fn recalculate_memory_baseline(&mut self) {
-        let mem_values: Vec<f64> = self.baseline_metrics
+        let mem_values: Vec<f64> = self
+            .baseline_metrics
             .iter()
             .filter_map(|m| m.resources.memory_bytes.map(|v| v as f64))
             .collect();
@@ -301,7 +317,7 @@ impl RegressionDetector {
                     std_dev,
                     sample_count: mem_values.len(),
                     trend_coefficient: trend,
-                }
+                },
             );
         }
     }
@@ -311,9 +327,8 @@ impl RegressionDetector {
         let sum: f64 = values.iter().sum();
         let mean = sum / values.len() as f64;
 
-        let variance = values.iter()
-            .map(|v| (v - mean).powi(2))
-            .sum::<f64>() / (values.len() - 1) as f64;
+        let variance =
+            values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / (values.len() - 1) as f64;
         let std_dev = variance.sqrt();
 
         (mean, std_dev)
@@ -438,12 +453,18 @@ mod tests {
         // Increasing trend: should have positive coefficient
         let values = vec![1.0, 2.0, 3.0, 4.0, 5.0];
         let trend = detector.calculate_trend_coefficient(&values);
-        assert!(trend > 0.0, "Increasing sequence should have positive trend");
+        assert!(
+            trend > 0.0,
+            "Increasing sequence should have positive trend"
+        );
 
         // Decreasing trend: should have negative coefficient
         let values = vec![5.0, 4.0, 3.0, 2.0, 1.0];
         let trend = detector.calculate_trend_coefficient(&values);
-        assert!(trend < 0.0, "Decreasing sequence should have negative trend");
+        assert!(
+            trend < 0.0,
+            "Decreasing sequence should have negative trend"
+        );
     }
 
     #[test]

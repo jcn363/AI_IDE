@@ -1,4 +1,10 @@
-import { Check as CheckIcon, Close as CloseIcon, Refresh as RefreshIcon, Speed as SpeedIcon, Warning as WarningIcon } from '@mui/icons-material';
+import {
+  Check as CheckIcon,
+  Close as CloseIcon,
+  Refresh as RefreshIcon,
+  Speed as SpeedIcon,
+  Warning as WarningIcon,
+} from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -76,11 +82,7 @@ function TabPanel(props: TabPanelProps) {
       style={{ height: '100%' }}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 0, height: '100%' }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 0, height: '100%' }}>{children}</Box>}
     </div>
   );
 }
@@ -100,17 +102,13 @@ export const VersionAlignmentView: React.FC = () => {
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
-  const { 
-    filteredAlignments,
-    selectedCount,
-    status, 
-    error,
-  } = useAppSelector(selectVersionAlignment);
-  
+  const { filteredAlignments, selectedCount, status, error } =
+    useAppSelector(selectVersionAlignment);
+
   const selectedAlignments = useAppSelector(selectSelectedAlignments);
-  const [snackbar, setSnackbar] = useState<{ 
-    open: boolean; 
-    message: string; 
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
     severity: 'success' | 'error' | 'info' | 'warning';
     action?: React.ReactNode;
   }>({
@@ -129,21 +127,26 @@ export const VersionAlignmentView: React.FC = () => {
   const handleApplyAlignment = async (alignment: VersionAlignment) => {
     try {
       setIsApplying(true);
-      const result = await (dispatch(applyVersionAlignment([alignment.id])) as unknown as Promise<{ updatedCount: number }>).then(
+      const result = await (
+        dispatch(applyVersionAlignment([alignment.id])) as unknown as Promise<{
+          updatedCount: number;
+        }>
+      ).then(
         (res) => res,
         (err) => {
           throw err;
-        },
+        }
       );
-      
+
       setSnackbar({
         open: true,
-        message: result.updatedCount > 0
-          ? 'Version alignment applied successfully'
-          : 'No changes were made',
+        message:
+          result.updatedCount > 0
+            ? 'Version alignment applied successfully'
+            : 'No changes were made',
         severity: result.updatedCount > 0 ? 'success' : 'info',
       });
-      
+
       // Refresh the alignments to show updated state
       await dispatch(analyzeVersionAlignment() as any);
       dispatch(clearSelectedAlignments());
@@ -163,31 +166,35 @@ export const VersionAlignmentView: React.FC = () => {
 
   const handleBulkApply = async () => {
     if (selectedCount === 0) return;
-    
+
     try {
       setIsBulkApplying(true);
-      const result = await (dispatch(
-        applyVersionAlignment(selectedAlignments.map(a => a.id)),
-      ) as unknown as Promise<{ updatedCount: number; failedCount: number }>).then(
+      const result = await (
+        dispatch(applyVersionAlignment(selectedAlignments.map((a) => a.id))) as unknown as Promise<{
+          updatedCount: number;
+          failedCount: number;
+        }>
+      ).then(
         (res) => res,
         (err) => {
           throw err;
-        },
+        }
       );
-      
+
       setSnackbar({
         open: true,
-        message: result.failedCount > 0
-          ? `Applied ${result.updatedCount} of ${selectedCount} alignments. ${result.failedCount} failed.`
-          : `Successfully applied ${result.updatedCount} version alignments`,
+        message:
+          result.failedCount > 0
+            ? `Applied ${result.updatedCount} of ${selectedCount} alignments. ${result.failedCount} failed.`
+            : `Successfully applied ${result.updatedCount} version alignments`,
         severity: result.failedCount > 0 ? 'warning' : 'success',
       });
-      
+
       if (result.updatedCount > 0) {
         // Refresh the alignments to show updated state
         await dispatch(analyzeVersionAlignment() as any);
       }
-      
+
       dispatch(clearSelectedAlignments());
     } catch (err) {
       setSnackbar({
@@ -202,21 +209,23 @@ export const VersionAlignmentView: React.FC = () => {
 
   const handleIgnoreAlignment = async (alignment: VersionAlignment) => {
     try {
-      const result = await (dispatch(toggleIgnoreAlignment(alignment.id)) as unknown as Promise<{ ignored: boolean }>).then(
+      const result = await (
+        dispatch(toggleIgnoreAlignment(alignment.id)) as unknown as Promise<{ ignored: boolean }>
+      ).then(
         (res) => res,
         (err) => {
           throw err;
-        },
+        }
       );
-      
+
       setSnackbar({
         open: true,
-        message: result.ignored 
+        message: result.ignored
           ? `Ignored version alignment for ${alignment.dependencyName}`
           : `Stopped ignoring version alignment for ${alignment.dependencyName}`,
         severity: 'info',
       });
-      
+
       // Refresh the alignments to show updated state
       await dispatch(analyzeVersionAlignment() as any);
     } catch (err) {
@@ -232,12 +241,12 @@ export const VersionAlignmentView: React.FC = () => {
     if (selectedCount === filteredAlignments.length) {
       dispatch(clearSelectedAlignments());
     } else {
-      dispatch(selectAllAlignments(filteredAlignments.map(a => a.id)));
+      dispatch(selectAllAlignments(filteredAlignments.map((a) => a.id)));
     }
   };
 
   const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   const handleSelectAlignment = (id: string) => {
@@ -250,7 +259,7 @@ export const VersionAlignmentView: React.FC = () => {
 
   const stats = useMemo(() => {
     const stats = { high: 0, medium: 0, low: 0 };
-    filteredAlignments.forEach(a => {
+    filteredAlignments.forEach((a) => {
       if (!a.isIgnored) stats[a.severity as keyof typeof stats] += 1;
     });
     return stats;
@@ -264,41 +273,41 @@ export const VersionAlignmentView: React.FC = () => {
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={handleCloseSnackbar} 
-          severity={snackbar.severity} 
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
           sx={{ width: '100%' }}
           variant="filled"
         >
           {snackbar.message}
         </Alert>
       </Snackbar>
-      
+
       <Container maxWidth="xl" sx={{ py: 4, height: 'calc(100vh - 100px)' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 3 }}>
           <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs 
-                value={tabValue} 
-                onChange={handleTabChange} 
+              <Tabs
+                value={tabValue}
+                onChange={handleTabChange}
                 aria-label="version alignment tabs"
                 variant="fullWidth"
               >
-                <Tab 
-                  icon={<CheckIcon />} 
-                  iconPosition="start" 
-                  label="Version Alignment" 
-                  {...a11yProps(0)} 
+                <Tab
+                  icon={<CheckIcon />}
+                  iconPosition="start"
+                  label="Version Alignment"
+                  {...a11yProps(0)}
                 />
-                <Tab 
-                  icon={<SpeedIcon />} 
-                  iconPosition="start" 
-                  label="Performance" 
-                  {...a11yProps(1)} 
+                <Tab
+                  icon={<SpeedIcon />}
+                  iconPosition="start"
+                  label="Performance"
+                  {...a11yProps(1)}
                 />
               </Tabs>
             </Box>
-            
+
             <Box sx={{ flex: 1, overflow: 'auto' }}>
               <TabPanel value={tabValue} index={0}>
                 <CardContent>
@@ -323,9 +332,9 @@ export const VersionAlignmentView: React.FC = () => {
                       </Button>
                     </Box>
                   </Box>
-                  
+
                   <VersionAlignmentToolbar />
-                  
+
                   {status === 'succeeded' ? (
                     <Box display="flex" justifyContent="center" my={4}>
                       <CircularProgress />
@@ -335,9 +344,9 @@ export const VersionAlignmentView: React.FC = () => {
                       {error}
                     </Alert>
                   ) : (
-                    <VersionAlignmentList 
+                    <VersionAlignmentList
                       alignments={filteredAlignments}
-                      selectedIds={selectedAlignments.map(a => a.id)}
+                      selectedIds={selectedAlignments.map((a) => a.id)}
                       loading={status === 'loading'}
                       onSelect={handleSelectAll}
                       onSelectOne={handleSelectAlignment}
@@ -349,7 +358,7 @@ export const VersionAlignmentView: React.FC = () => {
                   )}
                 </CardContent>
               </TabPanel>
-              
+
               <TabPanel value={tabValue} index={1}>
                 <CardContent>
                   <PerformanceTab projectId="current" />

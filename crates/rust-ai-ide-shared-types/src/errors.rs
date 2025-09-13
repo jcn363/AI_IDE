@@ -167,12 +167,13 @@ mod tests {
     #[test]
     fn test_error_creation() {
         let analysis_error = TypeGenerationError::AnalysisError("Test error".to_string());
-        assert_eq!(analysis_error.to_string(), "Type analysis failed: Test error");
+        assert_eq!(
+            analysis_error.to_string(),
+            "Type analysis failed: Test error"
+        );
 
-        let io_error = TypeGenerationError::from(io::Error::new(
-            io::ErrorKind::NotFound,
-            "File not found"
-        ));
+        let io_error =
+            TypeGenerationError::from(io::Error::new(io::ErrorKind::NotFound, "File not found"));
         assert!(io_error.to_string().contains("File operation failed"));
     }
 

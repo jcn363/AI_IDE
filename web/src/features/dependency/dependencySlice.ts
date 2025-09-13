@@ -1,10 +1,10 @@
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../../store';
 import { invoke } from '@tauri-apps/api/core';
-import { 
-  BulkActionResponse, 
-  Severity, 
-  VersionAlignment, 
+import {
+  BulkActionResponse,
+  Severity,
+  VersionAlignment,
   VersionAlignmentFilter,
   VersionAlignmentState,
   WorkspaceAlignmentResult,
@@ -12,35 +12,36 @@ import {
 
 // Helper function to filter and sort alignments
 const filterAndSortAlignments = (
-  alignments: VersionAlignment[], 
-  filter: VersionAlignmentFilter,
+  alignments: VersionAlignment[],
+  filter: VersionAlignmentFilter
 ): VersionAlignment[] => {
   let result = [...alignments];
-  
+
   // Apply filters
   if (filter.severity && filter.severity !== 'all') {
-    result = result.filter(a => a.severity === filter.severity);
+    result = result.filter((a) => a.severity === filter.severity);
   }
-  
+
   if (filter.searchTerm) {
     const term = filter.searchTerm.toLowerCase();
-    result = result.filter(a => 
-      a.dependencyName.toLowerCase().includes(term) ||
-      a.suggestedVersion.toLowerCase().includes(term) ||
-      a.affectedPackages.some(pkg => pkg.toLowerCase().includes(term)),
+    result = result.filter(
+      (a) =>
+        a.dependencyName.toLowerCase().includes(term) ||
+        a.suggestedVersion.toLowerCase().includes(term) ||
+        a.affectedPackages.some((pkg) => pkg.toLowerCase().includes(term))
     );
   }
-  
+
   if (filter.showIgnored !== undefined) {
     result = result.filter((a: VersionAlignment) => a.isIgnored === filter.showIgnored);
   }
-  
+
   // Apply sorting
   if (filter.sortBy) {
     const sortOrder = filter.sortOrder === 'desc' ? -1 : 1;
     result.sort((a, b) => {
       let compare = 0;
-      
+
       switch (filter.sortBy) {
         case 'severity':
           const severityOrder: Record<Severity, number> = { high: 2, medium: 1, low: 0 };
@@ -53,11 +54,11 @@ const filterAndSortAlignments = (
           compare = a.suggestedVersion.localeCompare(b.suggestedVersion) * sortOrder;
           break;
       }
-      
+
       return compare || a.dependencyName.localeCompare(b.dependencyName);
     });
   }
-  
+
   return result;
 };
 
@@ -108,83 +109,78 @@ export const analyzeWorkspaceAlignment = createAsyncThunk<
   WorkspaceAlignmentResult,
   void,
   { state: RootState }
->(
-  'versionAlignment/analyzeWorkspace',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await invoke<AnalyzeWorkspaceAlignmentResponse>('analyze_workspace_alignment');
-      
-      // Map the response to add id and affectedPackages
-      const alignments = response.alignments.map(align => ({
-        ...align,
-        id: `${align.dependencyName}-${align.suggestedVersion}`,
-        affectedPackages: Object.keys(align.currentVersions),
-      }));
-      
-      return {
-        alignments,
-        stats: response.stats,
-      };
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Failed to analyze workspace alignment');
-    }
+>('versionAlignment/analyzeWorkspace', async (_, { rejectWithValue }) => {
+  try {
+    const response = await invoke<AnalyzeWorkspaceAlignmentResponse>('analyze_workspace_alignment');
+
+    // Map the response to add id and affectedPackages
+    const alignments = response.alignments.map((align) => ({
+      ...align,
+      id: `${align.dependencyName}-${align.suggestedVersion}`,
+      affectedPackages: Object.keys(align.currentVersions),
+    }));
+
+    return {
+      alignments,
+      stats: response.stats,
+    };
+  } catch (error) {
+    return rejectWithValue(
+      error instanceof Error ? error.message : 'Failed to analyze workspace alignment'
+    );
   }
-);
+});
 
 export const analyzeVersionAlignment = createAsyncThunk<
   VersionAlignment[],
   void,
   { state: RootState }
->(
-  'versionAlignment/analyze',
-  async (_, { getState }) => {
-    const state = getState().dependency.versionAlignment;
-    const response = await invoke<AnalyzeVersionAlignmentResponse>('analyze_version_alignment');
-    
-    // Map the response to add id and affectedPackages
-    return response.map(align => ({
-      ...align,
-      id: `${align.dependencyName}-${align.suggestedVersion}`,
-      affectedPackages: Object.keys(align.currentVersions),
-    }));
-  },
-);
+>('versionAlignment/analyze', async (_, { getState }) => {
+  const state = getState().dependency.versionAlignment;
+  const response = await invoke<AnalyzeVersionAlignmentResponse>('analyze_version_alignment');
+
+  // Map the response to add id and affectedPackages
+  return response.map((align) => ({
+    ...align,
+    id: `${align.dependencyName}-${align.suggestedVersion}`,
+    affectedPackages: Object.keys(align.currentVersions),
+  }));
+});
 
 export const applyWorkspaceAlignment = createAsyncThunk<
   ApplyWorkspaceAlignmentResponse,
   string[] | undefined, // Optional array of alignment IDs to apply, or undefined to apply all
   { state: RootState }
->(
-  'versionAlignment/applyWorkspace',
-  async (alignmentIds, { getState, rejectWithValue }) => {
-    try {
-      const state = getState().dependency.versionAlignment;
-      const alignmentsToApply = alignmentIds 
-        ? state.alignments.filter(a => alignmentIds.includes(a.id))
-        : state.alignments;
-      
-      if (alignmentsToApply.length === 0) {
-        return {
-          success: true,
-          updatedCount: 0,
-          failedCount: 0,
-          message: 'No alignments to apply',
-        };
-      }
-      
-      const response = await invoke<ApplyWorkspaceAlignmentResponse>('apply_workspace_alignment', {
-        alignments: alignmentsToApply.map(align => ({
-          dependency_name: align.dependencyName,
-          version: align.suggestedVersion,
-        })),
-      });
-      
-      return response;
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Failed to apply workspace alignment');
+>('versionAlignment/applyWorkspace', async (alignmentIds, { getState, rejectWithValue }) => {
+  try {
+    const state = getState().dependency.versionAlignment;
+    const alignmentsToApply = alignmentIds
+      ? state.alignments.filter((a) => alignmentIds.includes(a.id))
+      : state.alignments;
+
+    if (alignmentsToApply.length === 0) {
+      return {
+        success: true,
+        updatedCount: 0,
+        failedCount: 0,
+        message: 'No alignments to apply',
+      };
     }
+
+    const response = await invoke<ApplyWorkspaceAlignmentResponse>('apply_workspace_alignment', {
+      alignments: alignmentsToApply.map((align) => ({
+        dependency_name: align.dependencyName,
+        version: align.suggestedVersion,
+      })),
+    });
+
+    return response;
+  } catch (error) {
+    return rejectWithValue(
+      error instanceof Error ? error.message : 'Failed to apply workspace alignment'
+    );
   }
-);
+});
 
 // Define the return type for the apply_version_alignment Tauri command
 interface ApplyVersionAlignmentResponse {
@@ -197,36 +193,33 @@ interface ApplyVersionAlignmentResponse {
 // Properly typed async thunk for applying version alignment
 export const applyVersionAlignment = createAsyncThunk<
   BulkActionResponse, // Return type
-  string[],           // First argument type (array of IDs)
+  string[], // First argument type (array of IDs)
   { state: RootState } // ThunkAPI type
->(
-  'versionAlignment/apply',
-  async (ids, { getState }) => {
-    const state = getState().dependency.versionAlignment;
-    const alignments = state.alignments.filter(a => ids.includes(a.id));
-    const response = await Promise.all(
-      alignments.map(align => 
-        invoke<ApplyVersionAlignmentResponse>('apply_version_alignment', {
-          dependencyName: align.dependencyName,
-          version: align.suggestedVersion,
-        }),
-      ),
-    );
-    
-    const success = response.every(r => r.success);
-    const updatedCount = response.filter(r => r.success).length;
-    const failedCount = response.length - updatedCount;
-    
-    return {
-      success,
-      message: success 
-        ? `Successfully updated ${updatedCount} dependencies` 
-        : `Failed to update ${failedCount} dependencies`,
-      updatedCount,
-      failedCount,
-    } as BulkActionResponse;
-  },
-);
+>('versionAlignment/apply', async (ids, { getState }) => {
+  const state = getState().dependency.versionAlignment;
+  const alignments = state.alignments.filter((a) => ids.includes(a.id));
+  const response = await Promise.all(
+    alignments.map((align) =>
+      invoke<ApplyVersionAlignmentResponse>('apply_version_alignment', {
+        dependencyName: align.dependencyName,
+        version: align.suggestedVersion,
+      })
+    )
+  );
+
+  const success = response.every((r) => r.success);
+  const updatedCount = response.filter((r) => r.success).length;
+  const failedCount = response.length - updatedCount;
+
+  return {
+    success,
+    message: success
+      ? `Successfully updated ${updatedCount} dependencies`
+      : `Failed to update ${failedCount} dependencies`,
+    updatedCount,
+    failedCount,
+  } as BulkActionResponse;
+});
 
 const initialState: VersionAlignmentState = {
   alignments: [],
@@ -263,7 +256,10 @@ const versionAlignmentSlice = createSlice({
       state.status = 'idle';
       state.error = null;
     },
-    setFilter: (state: VersionAlignmentState, action: PayloadAction<Partial<VersionAlignmentFilter>>) => {
+    setFilter: (
+      state: VersionAlignmentState,
+      action: PayloadAction<Partial<VersionAlignmentFilter>>
+    ) => {
       state.filter = { ...state.filter, ...action.payload };
       state.filteredAlignments = filterAndSortAlignments(state.alignments, state.filter);
     },
@@ -306,7 +302,7 @@ const versionAlignmentSlice = createSlice({
       })
       .addCase(analyzeWorkspaceAlignment.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.payload as string || 'Failed to analyze workspace alignment';
+        state.error = (action.payload as string) || 'Failed to analyze workspace alignment';
       })
       .addCase(analyzeVersionAlignment.pending, (state) => {
         state.status = 'loading';
@@ -328,9 +324,7 @@ const versionAlignmentSlice = createSlice({
       .addCase(applyVersionAlignment.fulfilled, (state, action) => {
         state.status = 'succeeded';
         // Remove applied alignments from the list
-        state.alignments = state.alignments.filter(
-          (a) => !action.meta.arg.includes(a.id)
-        );
+        state.alignments = state.alignments.filter((a) => !action.meta.arg.includes(a.id));
         state.filteredAlignments = filterAndSortAlignments(state.alignments, state.filter);
         state.selectedIds = state.selectedIds.filter((id) => !action.meta.arg.includes(id));
       })
@@ -346,32 +340,35 @@ const versionAlignmentSlice = createSlice({
         // Refresh the alignments after applying
         if (action.payload.updatedCount > 0) {
           state.alignments = state.alignments.filter(
-            (a) => !action.meta.arg || action.meta.arg.length === 0 || !action.meta.arg.includes(a.id)
+            (a) =>
+              !action.meta.arg || action.meta.arg.length === 0 || !action.meta.arg.includes(a.id)
           );
           state.filteredAlignments = filterAndSortAlignments(state.alignments, state.filter);
           state.selectedIds = state.selectedIds.filter(
-            (id) => !action.meta.arg || action.meta.arg.length === 0 || !action.meta.arg.includes(id)
+            (id) =>
+              !action.meta.arg || action.meta.arg.length === 0 || !action.meta.arg.includes(id)
           );
         }
       })
       .addCase(applyWorkspaceAlignment.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.payload as string || 'Failed to apply workspace alignment';
+        state.error = (action.payload as string) || 'Failed to apply workspace alignment';
       });
   },
 });
 
-export const { 
-  clearVersionAlignment, 
-  setFilter, 
-  toggleSelectAlignment, 
-  selectAllAlignments, 
+export const {
+  clearVersionAlignment,
+  setFilter,
+  toggleSelectAlignment,
+  selectAllAlignments,
   clearSelectedAlignments,
   toggleIgnoreAlignment,
 } = versionAlignmentSlice.actions;
 
 // Extend the VersionAlignmentState with computed properties
-interface VersionAlignmentSelectorResult extends Omit<VersionAlignmentState, 'selectedIds' | 'filteredAlignments'> {
+interface VersionAlignmentSelectorResult
+  extends Omit<VersionAlignmentState, 'selectedIds' | 'filteredAlignments'> {
   selectedCount: number;
   totalCount: number;
   hasSelection: boolean;
@@ -381,7 +378,7 @@ interface VersionAlignmentSelectorResult extends Omit<VersionAlignmentState, 'se
 }
 
 export const selectVersionAlignment = (state: RootState): VersionAlignmentSelectorResult => {
-  const {versionAlignment} = state.dependency;
+  const { versionAlignment } = state.dependency;
   return {
     ...versionAlignment,
     selectedCount: versionAlignment.selectedIds.length,
@@ -391,7 +388,7 @@ export const selectVersionAlignment = (state: RootState): VersionAlignmentSelect
   };
 };
 
-export const selectAlignmentById = (state: RootState, id: string) => 
+export const selectAlignmentById = (state: RootState, id: string) =>
   state.dependency.versionAlignment.alignments.find((a: VersionAlignment) => a.id === id);
 
 export const selectSelectedAlignments = (state: RootState) => {

@@ -67,7 +67,7 @@ export const JobProgressTracker: React.FC<JobProgressTrackerProps> = ({
   const fetchRealTimeMetrics = async () => {
     try {
       const metrics = await invoke<RealTimeMetrics>('get_finetune_job_metrics', {
-        jobId: job.jobId
+        jobId: job.jobId,
       });
       setRealTimeMetrics(metrics);
     } catch (error) {
@@ -96,9 +96,13 @@ export const JobProgressTracker: React.FC<JobProgressTrackerProps> = ({
   const renderProgressBar = (progress: TrainingProgress) => {
     const percentage = getProgressPercentage(progress);
     const color =
-      percentage < 25 ? '#e53e3e' :
-      percentage < 75 ? '#dd6b20' :
-      percentage === 100 ? '#38a169' : '#3182ce';
+      percentage < 25
+        ? '#e53e3e'
+        : percentage < 75
+          ? '#dd6b20'
+          : percentage === 100
+            ? '#38a169'
+            : '#3182ce';
 
     return (
       <div className="progress-container">
@@ -107,12 +111,14 @@ export const JobProgressTracker: React.FC<JobProgressTrackerProps> = ({
             className="progress-fill"
             style={{
               width: `${percentage}%`,
-              backgroundColor: color
+              backgroundColor: color,
             }}
           />
         </div>
         <div className="progress-text">
-          <span>Epoch {progress.epoch}/{progress.totalEpochs}</span>
+          <span>
+            Epoch {progress.epoch}/{progress.totalEpochs}
+          </span>
           <span>({percentage.toFixed(1)}%)</span>
         </div>
       </div>
@@ -157,7 +163,9 @@ export const JobProgressTracker: React.FC<JobProgressTrackerProps> = ({
           </div>
           <div className="metric-item">
             <span className="metric-label">Memory:</span>
-            <span className="metric-value">{(realTimeMetrics.memoryUsage / 1024).toFixed(1)} GB</span>
+            <span className="metric-value">
+              {(realTimeMetrics.memoryUsage / 1024).toFixed(1)} GB
+            </span>
           </div>
           <div className="metric-item">
             <span className="metric-label">Current Loss:</span>
@@ -169,7 +177,9 @@ export const JobProgressTracker: React.FC<JobProgressTrackerProps> = ({
           </div>
           <div className="metric-item">
             <span className="metric-label">Samples Processed:</span>
-            <span className="metric-value">{realTimeMetrics.samplesProcessed.toLocaleString()}</span>
+            <span className="metric-value">
+              {realTimeMetrics.samplesProcessed.toLocaleString()}
+            </span>
           </div>
           {realTimeMetrics.eta && (
             <div className="metric-item">
@@ -218,9 +228,7 @@ export const JobProgressTracker: React.FC<JobProgressTrackerProps> = ({
     <div className="job-progress-tracker">
       <div className="progress-header">
         <h3>{job.name} - Training Progress</h3>
-        <span className={`status-badge status-${job.status.toLowerCase()}`}>
-          {job.status}
-        </span>
+        <span className={`status-badge status-${job.status.toLowerCase()}`}>{job.status}</span>
       </div>
 
       {job.progress && renderProgressBar(job.progress)}
@@ -245,14 +253,14 @@ export const JobProgressTracker: React.FC<JobProgressTrackerProps> = ({
                 </div>
                 <div className="detail-item">
                   <span className="detail-label">Loss:</span>
-                  <span className="detail-value">
-                    {job.progress.loss?.toFixed(6) || 'N/A'}
-                  </span>
+                  <span className="detail-value">{job.progress.loss?.toFixed(6) || 'N/A'}</span>
                 </div>
                 <div className="detail-item">
                   <span className="detail-label">ETA:</span>
                   <span className="detail-value">
-                    {job.progress.estimatedTimeRemaining ? formatDuration(job.progress.estimatedTimeRemaining) : 'N/A'}
+                    {job.progress.estimatedTimeRemaining
+                      ? formatDuration(job.progress.estimatedTimeRemaining)
+                      : 'N/A'}
                   </span>
                 </div>
               </div>
@@ -302,10 +310,18 @@ export const JobProgressTracker: React.FC<JobProgressTrackerProps> = ({
           text-transform: uppercase;
         }
 
-        .status-completed { background: #38a169; }
-        .status-training { background: #3182ce; }
-        .status-failed { background: #e53e3e; }
-        .status-paused { background: #dd6b20; }
+        .status-completed {
+          background: #38a169;
+        }
+        .status-training {
+          background: #3182ce;
+        }
+        .status-failed {
+          background: #e53e3e;
+        }
+        .status-paused {
+          background: #dd6b20;
+        }
 
         .progress-container {
           margin-bottom: 16px;
@@ -320,7 +336,9 @@ export const JobProgressTracker: React.FC<JobProgressTrackerProps> = ({
 
         .progress-fill {
           height: 100%;
-          transition: width 0.3s ease, background-color 0.3s ease;
+          transition:
+            width 0.3s ease,
+            background-color 0.3s ease;
         }
 
         .progress-text {

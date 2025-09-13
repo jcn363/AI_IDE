@@ -20,7 +20,12 @@ jest.mock('../dependencyGraph', () => ({
 const mockUseDependencyGraph = jest.spyOn(dependencyGraph, 'useDependencyGraph') as jest.Mock;
 
 // Create mock data with proper types
-const createMockCrate = (name: string, version: string, isRoot = false, isDirect = false): CrateDependencyNode => ({
+const createMockCrate = (
+  name: string,
+  version: string,
+  isRoot = false,
+  isDirect = false
+): CrateDependencyNode => ({
   id: `${name}@${version}`,
   name,
   version,
@@ -30,7 +35,12 @@ const createMockCrate = (name: string, version: string, isRoot = false, isDirect
   features: [],
 });
 
-const createMockFeature = (name: string, version: string, isRoot = false, isDirect = false): FeatureDependencyNode => ({
+const createMockFeature = (
+  name: string,
+  version: string,
+  isRoot = false,
+  isDirect = false
+): FeatureDependencyNode => ({
   id: `${name}@${version}`,
   name,
   version,
@@ -40,7 +50,12 @@ const createMockFeature = (name: string, version: string, isRoot = false, isDire
   parentId: 'parent',
 });
 
-const createMockWorkspace = (name: string, version: string, isRoot = false, isDirect = false): WorkspaceDependencyNode => ({
+const createMockWorkspace = (
+  name: string,
+  version: string,
+  isRoot = false,
+  isDirect = false
+): WorkspaceDependencyNode => ({
   id: `${name}@${version}`,
   name,
   version,
@@ -51,7 +66,11 @@ const createMockWorkspace = (name: string, version: string, isRoot = false, isDi
 });
 
 // Create mock links with proper typing
-const createMockLink = (source: string, target: string, type: 'depends' | 'feature' | 'optional' | 'default' = 'depends'): DependencyLink => ({
+const createMockLink = (
+  source: string,
+  target: string,
+  type: 'depends' | 'feature' | 'optional' | 'default' = 'depends'
+): DependencyLink => ({
   source,
   target,
   type,
@@ -102,13 +121,9 @@ beforeEach(() => {
 describe('DependencyGraphVisualization', () => {
   it('should render the graph container with correct dimensions', () => {
     const { container } = render(
-      <DependencyGraphVisualization 
-        projectPath="/test/path" 
-        width={800} 
-        height={600} 
-      />,
+      <DependencyGraphVisualization projectPath="/test/path" width={800} height={600} />
     );
-    
+
     // Use screen.getByRole for better testing-library practices
     const svg = screen.getByRole('graphics-document');
     expect(svg).toBeInTheDocument();
@@ -124,15 +139,9 @@ describe('DependencyGraphVisualization', () => {
     }));
 
     await act(async () => {
-      render(
-        <DependencyGraphVisualization 
-          projectPath="/test/path"
-          width={800}
-          height={600}
-        />,
-      );
+      render(<DependencyGraphVisualization projectPath="/test/path" width={800} height={600} />);
     });
-    
+
     // Check for loading indicator using testing-library queries
     const loadingIndicator = screen.getByRole('status');
     expect(loadingIndicator).toBeInTheDocument();
@@ -155,15 +164,9 @@ describe('DependencyGraphVisualization', () => {
     }));
 
     await act(async () => {
-      render(
-        <DependencyGraphVisualization 
-          projectPath="/test/path"
-          width={800}
-          height={600}
-        />,
-      );
+      render(<DependencyGraphVisualization projectPath="/test/path" width={800} height={600} />);
     });
-    
+
     // Check for error message in the component's error display
     const errorElement = screen.getByText(errorMessage);
     expect(errorElement).toBeInTheDocument();
@@ -172,15 +175,15 @@ describe('DependencyGraphVisualization', () => {
   it('renders with controls when showControls is true', async () => {
     await act(async () => {
       render(
-        <DependencyGraphVisualization 
+        <DependencyGraphVisualization
           projectPath="/test/path"
           width={800}
           height={600}
           showControls={true}
-        />,
+        />
       );
     });
-    
+
     // Check if controls are rendered using testing-library queries
     const controls = screen.getByRole('button', { name: /reload/i });
     expect(controls).toBeInTheDocument();

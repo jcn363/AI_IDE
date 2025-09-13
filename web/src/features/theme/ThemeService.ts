@@ -29,7 +29,7 @@ export class ThemeServiceImpl implements ThemeService {
 
   constructor() {
     // Load built-in themes
-    BUILTIN_THEMES.forEach(theme => {
+    BUILTIN_THEMES.forEach((theme) => {
       this.themes.set(theme.id, theme);
     });
 
@@ -340,7 +340,7 @@ export class ThemeServiceImpl implements ThemeService {
   }
 
   private initializeMonacoThemes(): void {
-    this.themes.forEach(theme => {
+    this.themes.forEach((theme) => {
       if (theme.monacoTheme) {
         this.registerMonacoTheme(theme);
       }
@@ -367,7 +367,10 @@ export class ThemeServiceImpl implements ThemeService {
 
       const storedAccessibility = localStorage.getItem('accessibility-options');
       if (storedAccessibility) {
-        this.accessibilityOptions = { ...this.accessibilityOptions, ...JSON.parse(storedAccessibility) };
+        this.accessibilityOptions = {
+          ...this.accessibilityOptions,
+          ...JSON.parse(storedAccessibility),
+        };
       }
 
       const storedCustomThemes = localStorage.getItem('custom-themes');

@@ -26,16 +26,16 @@
 //! - [`MetricCollector`]: Comprehensive metric collection and aggregation
 //! - [`UiIntegration`]: Seamless frontend integration with responsive UI components
 
+pub mod collaboration;
+pub mod configuration;
 pub mod dashboard;
 pub mod engine;
-pub mod trends;
-pub mod collaboration;
-pub mod visualization;
-pub mod metrics;
-pub mod ui_integration;
-pub mod types;
 pub mod errors;
-pub mod configuration;
+pub mod metrics;
+pub mod trends;
+pub mod types;
+pub mod ui_integration;
+pub mod visualization;
 
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
@@ -117,14 +117,14 @@ pub struct DashboardPerformanceMetrics {
     pub error_rate: f32,
 }
 
-use engine::DashboardEngine;
-use trends::TrendAnalyzer;
 use collaboration::CollaborationHub;
-use visualization::VisualizationManager;
-use metrics::MetricCollector;
-use ui_integration::UiIntegration;
 use configuration::DashboardConfiguration;
+use engine::DashboardEngine;
 use errors::{DashboardError, DashboardResult};
+use metrics::MetricCollector;
+use trends::TrendAnalyzer;
+use ui_integration::UiIntegration;
+use visualization::VisualizationManager;
 
 impl QualityIntelligenceDashboard {
     /// Initialize the quality intelligence dashboard with default configuration
@@ -177,8 +177,14 @@ impl QualityIntelligenceDashboard {
         let state = Arc::new(RwLock::new(initial_state));
 
         // Initialize each component with the configuration
-        let (dashboard_engine, trend_analyzer, collaboration_hub,
-             visualization_manager, metric_collector, ui_integration) = tokio::try_join!(
+        let (
+            dashboard_engine,
+            trend_analyzer,
+            collaboration_hub,
+            visualization_manager,
+            metric_collector,
+            ui_integration,
+        ) = tokio::try_join!(
             DashboardEngine::new(configuration.clone(), state.clone()),
             TrendAnalyzer::new(configuration.clone()),
             CollaborationHub::new(configuration.clone()),
@@ -235,7 +241,11 @@ impl QualityIntelligenceDashboard {
     /// Returns an error if dashboard startup fails.
     pub async fn start(&self) -> DashboardResult<()> {
         // Start metric collection
-        self.metric_collector.write().await.start_collection().await?;
+        self.metric_collector
+            .write()
+            .await
+            .start_collection()
+            .await?;
 
         // Initialize UI integration
         self.ui_integration.write().await.initialize_ui().await?;
@@ -265,7 +275,11 @@ impl QualityIntelligenceDashboard {
         self.dashboard_engine.lock().await.stop_engine().await?;
 
         // Stop metric collection
-        self.metric_collector.write().await.stop_collection().await?;
+        self.metric_collector
+            .write()
+            .await
+            .stop_collection()
+            .await?;
 
         // Finalize UI integration
         self.ui_integration.write().await.finalize_ui().await?;
@@ -293,7 +307,10 @@ impl QualityIntelligenceDashboard {
     /// # Errors
     ///
     /// Returns an error if configuration update fails.
-    pub async fn update_configuration(&self, new_config: DashboardConfiguration) -> DashboardResult<()> {
+    pub async fn update_configuration(
+        &self,
+        new_config: DashboardConfiguration,
+    ) -> DashboardResult<()> {
         // Validate new configuration
         new_config.validate()?;
 
@@ -304,9 +321,21 @@ impl QualityIntelligenceDashboard {
         self.state.write().await.current_config = new_config;
 
         // Propagate configuration changes to components
-        self.dashboard_engine.lock().await.update_config(new_config.clone()).await?;
-        self.trend_analyzer.write().await.update_config(new_config.clone()).await?;
-        self.collaboration_hub.write().await.update_config(new_config).await?;
+        self.dashboard_engine
+            .lock()
+            .await
+            .update_config(new_config.clone())
+            .await?;
+        self.trend_analyzer
+            .write()
+            .await
+            .update_config(new_config.clone())
+            .await?;
+        self.collaboration_hub
+            .write()
+            .await
+            .update_config(new_config)
+            .await?;
 
         Ok(())
     }
@@ -315,7 +344,10 @@ impl QualityIntelligenceDashboard {
 impl std::fmt::Debug for QualityIntelligenceDashboard {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("QualityIntelligenceDashboard")
-            .field("is_active", &self.state.try_read().map(|s| s.is_active).unwrap_or(false))
+            .field(
+                "is_active",
+                &self.state.try_read().map(|s| s.is_active).unwrap_or(false),
+            )
             .finish()
     }
 }
@@ -326,7 +358,9 @@ pub async fn initialize_default_dashboard() -> DashboardResult<QualityIntelligen
 }
 
 /// Convenience function to initialize dashboard with configuration
-pub async fn initialize_with_config(config: DashboardConfiguration) -> DashboardResult<QualityIntelligenceDashboard> {
+pub async fn initialize_with_config(
+    config: DashboardConfiguration,
+) -> DashboardResult<QualityIntelligenceDashboard> {
     QualityIntelligenceDashboard::with_config(config).await
 }
 
@@ -351,6 +385,9 @@ mod tests {
     async fn test_dashboard_state() {
         let dashboard = initialize_default_dashboard().await.unwrap();
         let state = dashboard.get_state().await;
-        assert!(!state.is_active, "Dashboard should be inactive after initialization");
+        assert!(
+            !state.is_active,
+            "Dashboard should be inactive after initialization"
+        );
     }
 }

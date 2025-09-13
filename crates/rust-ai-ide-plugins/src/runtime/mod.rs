@@ -3,12 +3,12 @@
 //! This module provides the PluginRuntime struct that handles loading,
 //! executing, and managing plugins during the editor's runtime.
 
+use crate::interfaces::{Plugin, PluginContext, PluginError, PluginResult};
+use crate::registry::PluginRegistry;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use crate::interfaces::{Plugin, PluginContext, PluginError, PluginResult};
-use crate::registry::PluginRegistry;
 
 /// Configuration for the plugin runtime
 #[derive(Debug, Clone)]
@@ -173,7 +173,13 @@ impl EditorInterface for StubEditor {
         Ok("test.rs".to_string())
     }
 
-    async fn set_selection(&self, _start_line: u32, _start_col: u32, _end_line: u32, _end_col: u32) -> Result<(), Box<dyn std::error::Error>> {
+    async fn set_selection(
+        &self,
+        _start_line: u32,
+        _start_col: u32,
+        _end_line: u32,
+        _end_col: u32,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         Ok(())
     }
 }

@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests {
     use async_trait::async_trait;
-    use std::collections::HashMap;
     use rust_ai_ide_ai_refactoring::core_traits::RefactoringOperation;
     use rust_ai_ide_ai_refactoring::types::*;
+    use std::collections::HashMap;
 
     // Mock implementation for testing
     struct MockRefactoringOperation {
@@ -52,7 +52,10 @@ mod tests {
                     new_content: Some("mock content".to_string()),
                 })
             } else {
-                Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Mock error")))
+                Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Mock error",
+                )))
             }
         }
 
@@ -72,7 +75,10 @@ mod tests {
                     warnings: vec![],
                 })
             } else {
-                Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Analysis failed")))
+                Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Analysis failed",
+                )))
             }
         }
 
@@ -133,7 +139,10 @@ mod tests {
             true,
             true,
         );
-        assert_eq!(operation.refactoring_type(), RefactoringType::ExtractFunction);
+        assert_eq!(
+            operation.refactoring_type(),
+            RefactoringType::ExtractFunction
+        );
     }
 
     #[tokio::test]
@@ -269,7 +278,10 @@ mod tests {
 
         let context = RefactoringContext::default();
         let options = RefactoringOptions::default();
-        let applicable = operation.is_applicable(&context, Some(&options)).await.unwrap();
+        let applicable = operation
+            .is_applicable(&context, Some(&options))
+            .await
+            .unwrap();
         assert!(applicable);
     }
 

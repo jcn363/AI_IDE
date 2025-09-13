@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 
 interface PluginInfo {
   id: string;
@@ -68,7 +68,7 @@ const PluginMarketplace: React.FC<PluginMarketplaceProps> = ({ className = '' })
         result = await invoke('search_marketplace', { payload });
       } else {
         result = await invoke('list_installed_plugins', {
-          payload: { includeMetadata: true }
+          payload: { includeMetadata: true },
         });
       }
 
@@ -88,7 +88,7 @@ const PluginMarketplace: React.FC<PluginMarketplaceProps> = ({ className = '' })
   const installPlugin = async (pluginId: string, version?: string) => {
     if (installingPlugins.has(pluginId)) return;
 
-    setInstallingPlugins(prev => new Set(prev).add(pluginId));
+    setInstallingPlugins((prev) => new Set(prev).add(pluginId));
     setError(null);
 
     try {
@@ -105,7 +105,7 @@ const PluginMarketplace: React.FC<PluginMarketplaceProps> = ({ className = '' })
       console.error('Plugin installation error:', err);
       setError('Failed to install plugin');
     } finally {
-      setInstallingPlugins(prev => {
+      setInstallingPlugins((prev) => {
         const newSet = new Set(prev);
         newSet.delete(pluginId);
         return newSet;
@@ -116,7 +116,7 @@ const PluginMarketplace: React.FC<PluginMarketplaceProps> = ({ className = '' })
   const uninstallPlugin = async (pluginId: string) => {
     try {
       const result: any = await invoke('uninstall_plugin', {
-        payload: { pluginId }
+        payload: { pluginId },
       });
 
       if (result.success) {
@@ -133,7 +133,7 @@ const PluginMarketplace: React.FC<PluginMarketplaceProps> = ({ className = '' })
   const executePluginCommand = async (pluginId: string, command: string, args: any) => {
     try {
       const result: any = await invoke('execute_plugin_command', {
-        payload: { pluginId, command, args }
+        payload: { pluginId, command, args },
       });
 
       if (!result.success) {
@@ -162,7 +162,7 @@ const PluginMarketplace: React.FC<PluginMarketplaceProps> = ({ className = '' })
   const scanPluginSecurity = async (pluginId: string) => {
     try {
       const result: any = await invoke('scan_plugin_security', {
-        payload: { pluginId }
+        payload: { pluginId },
       });
 
       if (result.success && result.data) {
@@ -178,11 +178,16 @@ const PluginMarketplace: React.FC<PluginMarketplaceProps> = ({ className = '' })
   };
 
   const renderPluginCard = (plugin: PluginInfo) => (
-    <div key={plugin.id} className="plugin-card bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
+    <div
+      key={plugin.id}
+      className="plugin-card bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors"
+    >
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-white">{plugin.name}</h3>
-          <p className="text-sm text-gray-400">by {plugin.author} • v{plugin.version}</p>
+          <p className="text-sm text-gray-400">
+            by {plugin.author} • v{plugin.version}
+          </p>
         </div>
         {plugin.rating && (
           <div className="flex items-center">
@@ -195,7 +200,7 @@ const PluginMarketplace: React.FC<PluginMarketplaceProps> = ({ className = '' })
       <p className="text-gray-300 text-sm mb-3 line-clamp-2">{plugin.description}</p>
 
       <div className="flex flex-wrap gap-1 mb-3">
-        {plugin.tags.slice(0, 3).map(tag => (
+        {plugin.tags.slice(0, 3).map((tag) => (
           <span key={tag} className="px-2 py-1 bg-blue-600 text-xs text-white rounded">
             {tag}
           </span>
@@ -205,9 +210,11 @@ const PluginMarketplace: React.FC<PluginMarketplaceProps> = ({ className = '' })
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4 text-sm text-gray-400">
           <span>📥 {plugin.downloadCount.toLocaleString()} downloads</span>
-          <span className={`px-2 py-1 rounded text-xs ${
-            plugin.license.includes('MIT') ? 'bg-green-600' : 'bg-orange-600'
-          } text-white`}>
+          <span
+            className={`px-2 py-1 rounded text-xs ${
+              plugin.license.includes('MIT') ? 'bg-green-600' : 'bg-orange-600'
+            } text-white`}
+          >
             {plugin.license}
           </span>
         </div>
@@ -304,7 +311,7 @@ const PluginMarketplace: React.FC<PluginMarketplaceProps> = ({ className = '' })
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="px-4 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
             >
-              {categories.map(category => (
+              {categories.map((category) => (
                 <option key={category} value={category}>
                   {category.charAt(0).toUpperCase() + category.slice(1)}
                 </option>
@@ -326,8 +333,7 @@ const PluginMarketplace: React.FC<PluginMarketplaceProps> = ({ className = '' })
             <div className="col-span-full text-center py-12 text-gray-400">
               {currentTab === 'discover'
                 ? 'No plugins found matching your search.'
-                : 'No plugins installed yet.'
-              }
+                : 'No plugins installed yet.'}
             </div>
           )}
         </div>

@@ -4,7 +4,7 @@
 //! results for AI-powered code analysis.
 
 use crate::analysis::{AnalysisCategory, Severity};
-use rust_ai_ide_common::{IdeResult, IdeError};
+use rust_ai_ide_common::{IdeError, IdeResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -300,7 +300,9 @@ impl AntiPattern {
     pub fn default_severity(&self) -> Severity {
         match self {
             AntiPattern::GodObject | AntiPattern::CircularDependency => Severity::Error,
-            AntiPattern::LongMethod | AntiPattern::LargeClass | AntiPattern::CodeDuplication => Severity::Warning,
+            AntiPattern::LongMethod | AntiPattern::LargeClass | AntiPattern::CodeDuplication => {
+                Severity::Warning
+            }
             AntiPattern::TightCoupling | AntiPattern::SynchronousBlocking => Severity::Error,
             _ => Severity::Info,
         }

@@ -175,9 +175,11 @@ export const selectCurrentTheme = (state: any) => themeService.getCurrent();
 export const selectCustomization = (state: any) => themeService.getCustomization();
 export const selectAccessibility = (state: any) => themeService.getAccessibilityOptions();
 export const selectAllThemes = (state: any) => {
-  const available = themeService.getCurrent() ? {
-    [themeService.getCurrent()!.id]: themeService.getCurrent()
-  } : {};
+  const available = themeService.getCurrent()
+    ? {
+        [themeService.getCurrent()!.id]: themeService.getCurrent(),
+      }
+    : {};
   return {
     available,
     custom: {},

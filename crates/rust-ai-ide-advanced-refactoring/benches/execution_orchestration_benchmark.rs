@@ -4,7 +4,7 @@ use std::time::Duration;
 
 fn execution_orchestration_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("execution_orchestration");
-    
+
     // Benchmark orchestration with different numbers of tasks
     for &num_tasks in &[10, 100, 1000] {
         group.bench_function(format!("orchestrate_{}_tasks", num_tasks), |b| {
@@ -17,7 +17,7 @@ fn execution_orchestration_benchmark(c: &mut Criterion) {
                         i * 2
                     })
                     .collect();
-                
+
                 // Execute tasks in parallel
                 let rt = tokio::runtime::Runtime::new().unwrap();
                 rt.block_on(async {
@@ -27,7 +27,7 @@ fn execution_orchestration_benchmark(c: &mut Criterion) {
             });
         });
     }
-    
+
     group.finish();
 }
 

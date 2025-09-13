@@ -5,11 +5,11 @@ import {
   sampleAnalysisConfig,
   sampleEnhancedAnalysisResult,
   sampleCodeSmell,
-  sampleStyleViolation
+  sampleStyleViolation,
 } from './test-data';
 
 // Mock Tauri commands
-jest.mock('@tauri-apps/api/tauri', () => ({
+jest.mock('@tauri-apps/api/core', () => ({
   invoke: jest.fn(),
 }));
 
@@ -18,7 +18,10 @@ type InvokeFunction = <T = unknown>(command: string, args?: Record<string, unkno
 const mockInvoke = invoke as jest.MockedFunction<InvokeFunction>;
 
 // Mock the analyzeCode function
-const analyzeCode = async (config: AnalysisConfiguration, code?: string): Promise<EnhancedCodeAnalysisResult> => {
+const analyzeCode = async (
+  config: AnalysisConfiguration,
+  code?: string
+): Promise<EnhancedCodeAnalysisResult> => {
   const result = await mockInvoke<EnhancedCodeAnalysisResult>('analyze_code', { config, code });
   if (!result) {
     throw new Error('Analysis failed');
@@ -32,7 +35,7 @@ describe('Enhanced Code Analysis', () => {
   beforeEach(() => {
     // Setup default mock implementation
     testConfig = { ...sampleAnalysisConfig };
-    
+
     mockInvoke.mockImplementation(async <T>(command: string): Promise<T> => {
       if (command === 'analyze_code') {
         return Promise.resolve(sampleEnhancedAnalysisResult as unknown as T);
@@ -47,7 +50,7 @@ describe('Enhanced Code Analysis', () => {
 
   test('should analyze code and return results', async () => {
     const result = await analyzeCode(testConfig);
-    
+
     expect(result).toBeDefined();
     expect(result).toHaveProperty('codeSmells');
     expect(result).toHaveProperty('styleViolations');
@@ -59,7 +62,7 @@ describe('Enhanced Code Analysis', () => {
   test('should handle analysis errors', async () => {
     const errorMessage = 'Analysis failed';
     mockInvoke.mockRejectedValueOnce(new Error(errorMessage));
-    
+
     await expect(analyzeCode(testConfig)).rejects.toThrow(errorMessage);
     expect(mockInvoke).toHaveBeenCalledWith('analyze_code', {
       config: testConfig,
@@ -68,7 +71,7 @@ describe('Enhanced Code Analysis', () => {
 
   test('should include code smells in results', async () => {
     const result = await analyzeCode(testConfig);
-    
+
     expect(result.codeSmells).toBeDefined();
     expect(result.codeSmells).toContainEqual(
       expect.objectContaining({
@@ -80,7 +83,7 @@ describe('Enhanced Code Analysis', () => {
 
   test('should include style violations in results', async () => {
     const result = await analyzeCode(testConfig);
-    
+
     expect(result.styleViolations).toBeDefined();
     expect(result.styleViolations).toContainEqual(
       expect.objectContaining({
@@ -97,11 +100,11 @@ describe('Enhanced Code Analysis', () => {
       styleViolations: [],
       securityIssues: [],
       performanceHints: [],
-      architectureSuggestions: []
+      architectureSuggestions: [],
     });
-    
+
     const result = await analyzeCode(testConfig);
-    
+
     expect(result).toBeDefined();
     expect(result.codeSmells).toHaveLength(0);
     expect(result.styleViolations).toHaveLength(0);
@@ -113,9 +116,9 @@ describe('Enhanced Code Analysis', () => {
       enabledCategories: ['code-smell', 'style'],
       severityThreshold: 'warning',
     };
-    
+
     await analyzeCode(customConfig);
-    
+
     expect(mockInvoke).toHaveBeenCalledWith('analyze_code', {
       config: customConfig,
     });
@@ -124,18 +127,20 @@ describe('Enhanced Code Analysis', () => {
   test('should handle different analysis categories', async () => {
     const customResult = {
       ...sampleEnhancedAnalysisResult,
-      performanceHints: [{
-        id: 'ph-002',
-        hintType: 'inefficient-string-ops',
-        severity: 'warning',
-        message: 'Consider using string references instead of cloning',
-        filePath: 'src/perf_test.rs',
-        lineRange: [4, 4],
-        columnRange: [20, 35],
-        optimization: 'Use &str or avoid cloning',
-        estimatedImpact: 'high',
-        confidence: 0.85
-      }]
+      performanceHints: [
+        {
+          id: 'ph-002',
+          hintType: 'inefficient-string-ops',
+          severity: 'warning',
+          message: 'Consider using string references instead of cloning',
+          filePath: 'src/perf_test.rs',
+          lineRange: [4, 4],
+          columnRange: [20, 35],
+          optimization: 'Use &str or avoid cloning',
+          estimatedImpact: 'high',
+          confidence: 0.85,
+        },
+      ],
     };
 
     mockInvoke.mockResolvedValueOnce(customResult);
@@ -148,18 +153,20 @@ describe('Enhanced Code Analysis', () => {
   test('should handle security analysis results', async () => {
     const securityResult = {
       ...sampleEnhancedAnalysisResult,
-      securityIssues: [{
-        id: 'sec-001',
-        issueType: 'untrusted-input',
-        severity: 'high',
-        message: 'Untrusted input used in file operation',
-        filePath: 'src/security.rs',
-        lineRange: [5, 5],
-        columnRange: [20, 40],
-        cweId: 'CWE-22',
-        recommendation: 'Validate and sanitize input paths',
-        confidence: 0.9
-      }]
+      securityIssues: [
+        {
+          id: 'sec-001',
+          issueType: 'untrusted-input',
+          severity: 'high',
+          message: 'Untrusted input used in file operation',
+          filePath: 'src/security.rs',
+          lineRange: [5, 5],
+          columnRange: [20, 40],
+          cweId: 'CWE-22',
+          recommendation: 'Validate and sanitize input paths',
+          confidence: 0.9,
+        },
+      ],
     };
 
     mockInvoke.mockResolvedValueOnce(securityResult);
@@ -181,7 +188,7 @@ describe('Error Handling and Edge Cases', () => {
   test('should handle API errors gracefully', async () => {
     const errorMessage = 'API error';
     mockInvoke.mockRejectedValueOnce(new Error(errorMessage));
-    
+
     await expect(analyzeCode(testConfig)).rejects.toThrow(errorMessage);
   });
 
@@ -189,7 +196,7 @@ describe('Error Handling and Edge Cases', () => {
     const invalidCode = 'invalid code';
     const errorMessage = 'Invalid code syntax';
     mockInvoke.mockRejectedValueOnce(new Error(errorMessage));
-    
+
     await expect(analyzeCode(testConfig, invalidCode)).rejects.toThrow(errorMessage);
   });
 });

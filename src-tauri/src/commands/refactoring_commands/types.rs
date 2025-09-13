@@ -4,8 +4,8 @@
 //! refactoring command handlers, ensuring proper serialization
 //! between Rust and the frontend.
 
-use serde::{Deserialize, Serialize};
 use rust_ai_ide_ai_refactoring::types::*;
+use serde::{Deserialize, Serialize};
 
 /// Request to execute a refactoring operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -251,7 +251,7 @@ impl TryFrom<RefactoringContextDTO> for RefactoringContext {
             cursor_line: dto.cursor_line,
             cursor_character: dto.cursor_character,
             selection: dto.selection.map(|s| s.into()),
-            context_lines: vec![], // Not provided in DTO
+            context_lines: vec![],               // Not provided in DTO
             language: ProgrammingLanguage::Rust, // Default for now
             project_root: dto.project_root,
         })
@@ -267,13 +267,13 @@ impl TryFrom<RefactoringOptionsDTO> for RefactoringOptions {
             preview_changes: false, // DTO doesn't provide this
             backup_original: dto.create_backup,
             generate_tests: dto.generate_tests,
-            preserve_references: true, // Default
+            preserve_references: true,       // Default
             apply_to_all_occurrences: false, // Default
-            extra_options: None, // Not provided in DTO
+            extra_options: None,             // Not provided in DTO
             timeout_seconds: dto.timeout_seconds.unwrap_or(30),
-            max_memory_mb: 512, // Default
-            allow_partial: false, // Default
-            validate_after: true, // Default
+            max_memory_mb: 512,        // Default
+            allow_partial: false,      // Default
+            validate_after: true,      // Default
             rollback_on_failure: true, // Default
         })
     }

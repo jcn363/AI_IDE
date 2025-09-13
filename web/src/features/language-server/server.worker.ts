@@ -11,26 +11,26 @@ async function initialize() {
   try {
     // Dynamic import for Web Worker compatibility (avoid top-level await)
     const wasmWasiWorker = await import('@vscode/wasm-wasi/worker');
-    const { initializeWasm } = (wasmWasiWorker as unknown as {
+    const { initializeWasm } = wasmWasiWorker as unknown as {
       initializeWasm: () => Promise<{ wasi: unknown }>;
-    });
+    };
 
     // Initialize WASM
     const wasm = await initializeWasm();
-    
+
     // Create the language server and start listening
     const server = createServer(wasm as any, (message) => {
       port.postMessage(message);
     });
     server.listen();
-    
+
     // Forward messages between the worker and the language server
     port.onmessage = (event) => {
       if (server.onMessage) {
         server.onMessage(event.data);
       }
     };
-    
+
     console.log('Rust Analyzer Web Worker initialized');
   } catch (error) {
     console.error('Failed to initialize Rust Analyzer:', error);
@@ -39,8 +39,8 @@ async function initialize() {
       method: 'window/showMessage',
       params: {
         type: 1, // Error
-        message: `Failed to initialize Rust Analyzer: ${String(error)}`
-      }
+        message: `Failed to initialize Rust Analyzer: ${String(error)}`,
+      },
     });
   }
 }

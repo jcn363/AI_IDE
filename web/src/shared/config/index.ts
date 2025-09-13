@@ -33,7 +33,7 @@ export class ConfigManager<T> {
     return {
       isValid: true,
       errors: [],
-      warnings: []
+      warnings: [],
     };
   }
 
@@ -49,5 +49,5 @@ export function createConfigManager<T>(appName: string, config: T): ConfigManage
 
 export default {
   ConfigManager,
-  createConfigManager
+  createConfigManager,
 };

@@ -80,7 +80,7 @@ impl FileWatcher {
         // Create a channel for the stop signal
         let (stop_signal_tx, stop_signal_rx) = oneshot::channel();
         let stop_signal_tx = Arc::new(Mutex::new(Some(stop_signal_tx)));
-        
+
         let path_clone = path.clone();
         let watcher_clone = Arc::clone(&watcher);
         let event_tx_clone = event_tx.clone();

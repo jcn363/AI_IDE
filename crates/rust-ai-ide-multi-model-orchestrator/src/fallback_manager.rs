@@ -2,11 +2,11 @@
 //!
 //! This module handles offline model management and graceful degradation.
 
+use crate::types::{ModelId, ModelMetrics, OfflineStatus};
+use crate::{OrchestrationError, Result};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use crate::types::{ModelId, OfflineStatus, ModelMetrics};
-use crate::{Result, OrchestrationError};
 
 /// Network status detector
 #[derive(Debug)]
@@ -119,6 +119,8 @@ impl ModelFallbackManager {
 
         // Try to restore from cache or download
         // Placeholder implementation
-        Err(OrchestrationError::FallbackError("Model not available offline".to_string()))
+        Err(OrchestrationError::FallbackError(
+            "Model not available offline".to_string(),
+        ))
     }
 }

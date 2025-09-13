@@ -5,13 +5,19 @@ use std::collections::HashMap;
 #[async_trait::async_trait]
 pub trait SpecificationGenerator: Send + Sync {
     /// Generate code from a specification request
-    async fn generate_from_spec(&self, request: &SpecificationRequest) -> crate::error::Result<GeneratedCode>;
+    async fn generate_from_spec(
+        &self,
+        request: &SpecificationRequest,
+    ) -> crate::error::Result<GeneratedCode>;
 
     /// Parse a natural language specification into a structured format
     async fn parse_specification(&self, text: &str) -> crate::error::Result<ParsedSpecification>;
 
     /// Generate a code template for a specific architectural pattern
-    async fn generate_pattern(&self, pattern: &ArchitecturalPattern) -> crate::error::Result<GeneratedCode>;
+    async fn generate_pattern(
+        &self,
+        pattern: &ArchitecturalPattern,
+    ) -> crate::error::Result<GeneratedCode>;
 
     /// Validate generated code against the specification
     async fn validate_generation(

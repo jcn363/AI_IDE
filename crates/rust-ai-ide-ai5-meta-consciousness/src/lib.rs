@@ -20,10 +20,17 @@ impl MetaConsciousnessEngine {
         }
     }
 
-    pub fn achieve_meta_consciousness(&self, context: &CognitiveContext) -> Result<MetaConsciousnessState, MetaConsciousnessError> {
+    pub fn achieve_meta_consciousness(
+        &self,
+        context: &CognitiveContext,
+    ) -> Result<MetaConsciousnessState, MetaConsciousnessError> {
         let higher_state = self.higher_order_cognition.process_cognition(context)?;
-        let augmented = self.consciousness_augmentation.augment_cognition(higher_state)?;
-        let orchestrated = self.cognitive_orchestration.orchestrate_cognition(augmented)?;
+        let augmented = self
+            .consciousness_augmentation
+            .augment_cognition(higher_state)?;
+        let orchestrated = self
+            .cognitive_orchestration
+            .orchestrate_cognition(augmented)?;
         Ok(orchestrated)
     }
 }
@@ -39,7 +46,10 @@ impl HigherOrderCognition {
         }
     }
 
-    pub fn process_cognition(&self, _context: &CognitiveContext) -> Result<MetaConsciousnessState, MetaConsciousnessError> {
+    pub fn process_cognition(
+        &self,
+        _context: &CognitiveContext,
+    ) -> Result<MetaConsciousnessState, MetaConsciousnessError> {
         Ok(MetaConsciousnessState {
             self_awareness_level: 0.95,
             cognitive_architecture_complexity: 0.9,
@@ -59,7 +69,10 @@ impl ConsciousnessAugmentation {
         }
     }
 
-    pub fn augment_cognition(&self, _state: MetaConsciousnessState) -> Result<MetaConsciousnessState, MetaConsciousnessError> {
+    pub fn augment_cognition(
+        &self,
+        _state: MetaConsciousnessState,
+    ) -> Result<MetaConsciousnessState, MetaConsciousnessError> {
         Ok(MetaConsciousnessState {
             self_awareness_level: 0.97,
             cognitive_architecture_complexity: 0.95,
@@ -79,7 +92,10 @@ impl CognitiveOrchestration {
         }
     }
 
-    pub fn orchestrate_cognition(&self, _state: MetaConsciousnessState) -> Result<MetaConsciousnessState, MetaConsciousnessError> {
+    pub fn orchestrate_cognition(
+        &self,
+        _state: MetaConsciousnessState,
+    ) -> Result<MetaConsciousnessState, MetaConsciousnessError> {
         Ok(MetaConsciousnessState {
             self_awareness_level: 1.0,
             cognitive_architecture_complexity: 1.0,

@@ -326,8 +326,12 @@ impl_display! {
 impl fmt::Display for Phase4Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Phase4Error::DevelopmentAssistance(e) => write!(f, "Development assistance error: {}", e),
-            Phase4Error::WorkflowOrchestration(e) => write!(f, "Workflow orchestration error: {}", e),
+            Phase4Error::DevelopmentAssistance(e) => {
+                write!(f, "Development assistance error: {}", e)
+            }
+            Phase4Error::WorkflowOrchestration(e) => {
+                write!(f, "Workflow orchestration error: {}", e)
+            }
             Phase4Error::InsightsAnalysis(e) => write!(f, "Insights analysis error: {}", e),
             Phase4Error::CodeUnderstanding(e) => write!(f, "Code understanding error: {}", e),
             Phase4Error::LifecycleManagement(e) => write!(f, "Lifecycle management error: {}", e),
@@ -427,7 +431,8 @@ mod tests {
 
     #[test]
     fn test_error_display() {
-        let error = Phase4Error::Configuration(ConfigurationError::InvalidValue("test".to_string()));
+        let error =
+            Phase4Error::Configuration(ConfigurationError::InvalidValue("test".to_string()));
         let display = format!("{}", error);
         assert!(display.contains("Configuration error"));
         assert!(display.contains("test"));
@@ -442,9 +447,13 @@ mod tests {
 
     #[test]
     fn test_workflow_orchestration_error() {
-        let error = WorkflowOrchestrationError::WorkflowExecutionFailed("execution failed".to_string());
+        let error =
+            WorkflowOrchestrationError::WorkflowExecutionFailed("execution failed".to_string());
         let phase4_error: Phase4Error = error.into();
-        assert!(matches!(phase4_error, Phase4Error::WorkflowOrchestration(_)));
+        assert!(matches!(
+            phase4_error,
+            Phase4Error::WorkflowOrchestration(_)
+        ));
     }
 
     #[test]

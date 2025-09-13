@@ -7,8 +7,8 @@ use crate::{
     metrics::{MetricsAggregator, QualityScore},
     types::AnalysisReport,
 };
-use std::path::Path;
 use chrono::Utc;
+use std::path::Path;
 
 /// Main monitoring orchestrator
 pub struct Monitor {
@@ -88,7 +88,10 @@ impl Monitor {
         if let Some(analyzer) = self.analyzers.get(name) {
             analyzer.analyze(&self.config.workspace_root).await
         } else {
-            Err(MonitoringError::analysis(format!("Analyzer '{}' not found", name)))
+            Err(MonitoringError::analysis(format!(
+                "Analyzer '{}' not found",
+                name
+            )))
         }
     }
 

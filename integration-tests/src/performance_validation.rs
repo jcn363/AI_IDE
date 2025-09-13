@@ -7,12 +7,12 @@
 //! - Cross-platform performance validation
 //! - Real-time monitoring and analytics
 
-use std::collections::HashMap;
-use std::time::{Duration, Instant};
-use std::sync::atomic::{AtomicU64, Ordering};
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use rust_ai_ide_errors::IdeResult;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{Duration, Instant};
 
 /// Performance metric types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -374,7 +374,10 @@ mod tests {
         assert!(report.metrics.contains_key("parallel_compilation_speedup"));
 
         let speedup_metric = report.metrics.get("parallel_compilation_speedup").unwrap();
-        assert!(speedup_metric.value > 1.0, "Parallel compilation should provide speedup");
+        assert!(
+            speedup_metric.value > 1.0,
+            "Parallel compilation should provide speedup"
+        );
 
         Ok(())
     }
@@ -401,7 +404,9 @@ mod tests {
         assert_eq!(report.test_name, "Cross-Platform Performance Validation");
 
         // Should have cross-platform comparison
-        assert!(report.metrics.contains_key("cross_platform_performance_ratio"));
+        assert!(report
+            .metrics
+            .contains_key("cross_platform_performance_ratio"));
 
         Ok(())
     }

@@ -8,10 +8,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+pub use config::TrainingConfig;
 /// Re-export key fine-tuning types for convenient access
 pub use dataset::DatasetBuilder;
 pub use orchestrator::TrainingOrchestrator;
-pub use config::TrainingConfig;
 
 /// Fine-tuning job definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -85,10 +85,10 @@ pub struct TrainingMetrics {
     pub code_bleu_score: Option<f32>,
 }
 
+pub mod config;
 /// Re-exports from submodules
 pub mod dataset;
 pub mod orchestrator;
-pub mod config;
 
 /// Common constants and utilities for fine-tuning
 pub mod constants {

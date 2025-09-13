@@ -1,15 +1,14 @@
-use tauri::{AppHandle, State, async_runtime};
 use serde_json::json;
-use tokio::sync::Mutex;
 use std::sync::Arc;
+use tauri::{async_runtime, AppHandle, State};
+use tokio::sync::Mutex;
 
+use rust_ai_ide_ai_codegen;
 use rust_ai_ide_common::validation::TauriInputSanitizer;
 use rust_ai_ide_shared_types::{
-    VectorSearchRequest, InferenceRequest, CodeSearchRequest,
-    VectorSearchResult, InferenceResult, CodeSearchResult,
-    ABTestConfiguration, ABTestResults, PerformanceMetrics
+    ABTestConfiguration, ABTestResults, CodeSearchRequest, CodeSearchResult, InferenceRequest,
+    InferenceResult, PerformanceMetrics, VectorSearchRequest, VectorSearchResult,
 };
-use rust_ai_ide_ai_codegen;
 
 // State management for AI services
 #[derive(Default)]
@@ -101,10 +100,17 @@ pub async fn configure_ab_test(
     let services_lock = services.inner().lock().await;
 
     if let Some(onnx_service) = &services_lock.onnx_service {
-        if let Some(ab_service) = onnx_service.downcast_ref::<rust_ai_ide_onnx_runtime::ONNXInferenceService>() {
-            ab_service.configure_ab_test(&test_name, config).await.map_err(Into::into)
+        if let Some(ab_service) =
+            onnx_service.downcast_ref::<rust_ai_ide_onnx_runtime::ONNXInferenceService>()
+        {
+            ab_service
+                .configure_ab_test(&test_name, config)
+                .await
+                .map_err(Into::into)
         } else {
-            Err(tauri::Error::Anyhow(anyhow::anyhow!("Service does not support A/B testing")))
+            Err(tauri::Error::Anyhow(anyhow::anyhow!(
+                "Service does not support A/B testing"
+            )))
         }
     } else {
         // Dummy implementation - would normally configure in database
@@ -121,7 +127,9 @@ pub async fn get_ab_test_results(
     let services_lock = services.inner().lock().await;
 
     if let Some(onnx_service) = &services_lock.onnx_service {
-        if let Some(ab_service) = onnx_service.downcast_ref::<rust_ai_ide_onnx_runtime::ONNXInferenceService>() {
+        if let Some(ab_service) =
+            onnx_service.downcast_ref::<rust_ai_ide_onnx_runtime::ONNXInferenceService>()
+        {
             let results = ab_service.get_ab_test_results(&test_name).await?;
             Ok(serde_json::from_value(results).unwrap_or_default())
         } else {
@@ -143,7 +151,9 @@ pub async fn get_performance_metrics(
     let mut gpu_metrics = Vec::new();
 
     if let Some(onnx_service) = &services_lock.onnx_service {
-        if let Some(onx_service) = onnx_service.downcast_ref::<rust_ai_ide_onnx_runtime::ONNXInferenceService>() {
+        if let Some(onx_service) =
+            onnx_service.downcast_ref::<rust_ai_ide_onnx_runtime::ONNXInferenceService>()
+        {
             if let Ok(metrics) = onx_service.get_performance_metrics().await {
                 // Parse CPU/memory stats from ONNX metrics
                 // This would be populated with actual GPU metrics in production
@@ -177,7 +187,9 @@ pub async fn index_codebase(
     _sanitizer.validate_path(&path)?;
 
     if let Some(search_engine) = &services_lock.semantic_search {
-        search_engine.index_codebase(std::path::Path::new(&path), false).await?;
+        search_engine
+            .index_codebase(std::path::Path::new(&path), false)
+            .await?;
     }
 
     Ok(())
@@ -191,7 +203,10 @@ pub async fn get_indexing_status(
     let services_lock = services.inner().lock().await;
 
     if let Some(search_engine) = &services_lock.semantic_search {
-        search_engine.get_indexing_status().await.map_err(Into::into)
+        search_engine
+            .get_indexing_status()
+            .await
+            .map_err(Into::into)
     } else {
         Ok(json!({"is_indexing": false, "progress": 0.0}))
     }
@@ -211,7 +226,11 @@ pub async fn switch_model_version(
     // - Validate model compatibility before switching
     // - Preserve placeholder functionality during gradual integration
 
-    log::info!("MODEL/TRAINING Command marked for AI service connection: Switching model {} to version {}", model_id, version);
+    log::info!(
+        "MODEL/TRAINING Command marked for AI service connection: Switching model {} to version {}",
+        model_id,
+        version
+    );
 
     // Try to use commands-ai ModelManager for actual model versioning (when ready)
     // if let Ok(mut bridge_guard) = bridge.lock().await {
@@ -245,10 +264,17 @@ pub async fn get_model_versions(
     // - Integrate with model registry system
     // - Preserve placeholder during gradual integration
 
-    log::info!("MODEL/TRAINING Command marked for AI service connection: Getting versions for model {}", model_id);
+    log::info!(
+        "MODEL/TRAINING Command marked for AI service connection: Getting versions for model {}",
+        model_id
+    );
 
     // Return dummy versions for now - will be replaced with real implementation
-    Ok(vec!["1.0.0".to_string(), "1.1.0".to_string(), "2.0.0".to_string()])
+    Ok(vec![
+        "1.0.0".to_string(),
+        "1.1.0".to_string(),
+        "2.0.0".to_string(),
+    ])
 }
 
 #[tauri::command]
@@ -290,9 +316,14 @@ pub async fn batch_analyze(
     let services_lock = services.inner().lock().await;
 
     // Extract files to analyze from request
-    let files: Vec<String> = request.get("files")
+    let files: Vec<String> = request
+        .get("files")
         .and_then(|f| f.as_array())
-        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
         .unwrap_or_default();
 
     if files.is_empty() {
@@ -308,7 +339,11 @@ pub async fn batch_analyze(
 
             if let Ok(content) = tokio::fs::read_to_string(&file_path).await {
                 let inference_req = InferenceRequest {
-                    model_name: request.get("model").and_then(|m| m.as_str()).unwrap_or("batch_analyzer").to_string(),
+                    model_name: request
+                        .get("model")
+                        .and_then(|m| m.as_str())
+                        .unwrap_or("batch_analyzer")
+                        .to_string(),
                     input_data: json!({
                         "content": content,
                         "file_path": file_path
@@ -383,14 +418,28 @@ pub async fn semantic_inference(
             match analysis_svc.analyze_file(semantic_request).await {
                 Ok(analysis_result) => {
                     // Create enhanced semantic output based on analysis
-                    let semantic_entities: Vec<String> = if let Some(metrics) = analysis_result.metrics.get("cyclomatic_complexity") {
+                    let semantic_entities: Vec<String> = if let Some(metrics) =
+                        analysis_result.metrics.get("cyclomatic_complexity")
+                    {
                         if *metrics > 5.0 {
-                            vec!["complex_function".to_string(), "high_complexity_block".to_string(), "nested_loops".to_string()]
+                            vec![
+                                "complex_function".to_string(),
+                                "high_complexity_block".to_string(),
+                                "nested_loops".to_string(),
+                            ]
                         } else {
-                            vec!["simple_function".to_string(), "clean_code".to_string(), "moderate_complexity".to_string()]
+                            vec![
+                                "simple_function".to_string(),
+                                "clean_code".to_string(),
+                                "moderate_complexity".to_string(),
+                            ]
                         }
                     } else {
-                        vec!["function".to_string(), "class".to_string(), "variable".to_string()]
+                        vec![
+                            "function".to_string(),
+                            "class".to_string(),
+                            "variable".to_string(),
+                        ]
                     };
 
                     let semantic_result = InferenceResult {
@@ -416,9 +465,12 @@ pub async fn semantic_inference(
                     };
 
                     return Ok(semantic_result);
-                },
+                }
                 Err(e) => {
-                    log::warn!("Enhanced semantic inference failed via commands-ai, falling back: {}", e);
+                    log::warn!(
+                        "Enhanced semantic inference failed via commands-ai, falling back: {}",
+                        e
+                    );
                 }
             }
         }
@@ -446,7 +498,7 @@ pub async fn semantic_inference(
                     ..result
                 };
                 Ok(enhanced_result)
-            },
+            }
             Err(e) => Ok(InferenceResult {
                 output: json!({"error": format!("Semantic inference failed: {}", e)}),
                 inference_time_ms: 0,
@@ -484,7 +536,8 @@ pub async fn vector_index_file(
     _sanitizer: State<'_, TauriInputSanitizer>,
 ) -> Result<serde_json::Value, tauri::Error> {
     // Extract file path and options
-    let file_path: String = request.get("file_path")
+    let file_path: String = request
+        .get("file_path")
         .and_then(|p| p.as_str())
         .unwrap_or("")
         .to_string();
@@ -514,7 +567,9 @@ pub async fn vector_index_file(
                             let services_lock = services.inner().lock().await;
 
                             if let Some(vector_db) = &services_lock.vector_database {
-                                let result = vector_db.index_file(std::path::Path::new(&file_path), &content).await
+                                let result = vector_db
+                                    .index_file(std::path::Path::new(&file_path), &content)
+                                    .await
                                     .map_err(|e| format!("Indexing failed: {}", e))?;
 
                                 // Enhance result with analysis insights
@@ -548,10 +603,12 @@ pub async fn vector_index_file(
                                     "learning_patterns": ["analyzed", "indexed", "enhanced"]
                                 }));
                             }
-                        },
-                        Err(e) => return Ok(json!({"error": format!("Failed to read file: {}", e)})),
+                        }
+                        Err(e) => {
+                            return Ok(json!({"error": format!("Failed to read file: {}", e)}))
+                        }
                     }
-                },
+                }
                 Err(e) => {
                     log::warn!("Failed to enhance indexing via commands-ai, falling back to basic indexing: {}", e);
                 }
@@ -566,7 +623,9 @@ pub async fn vector_index_file(
         // Read and index the file content
         match tokio::fs::read_to_string(&file_path).await {
             Ok(content) => {
-                let result = vector_db.index_file(std::path::Path::new(&file_path), &content).await
+                let result = vector_db
+                    .index_file(std::path::Path::new(&file_path), &content)
+                    .await
                     .map_err(|e| format!("Indexing failed: {}", e))?;
 
                 Ok(json!({
@@ -577,7 +636,7 @@ pub async fn vector_index_file(
                     "chunks_count": result.chunks_processed,
                     "ai_service_enhanced": false
                 }))
-            },
+            }
             Err(e) => Ok(json!({"error": format!("Failed to read file: {}", e)})),
         }
     } else {
@@ -604,17 +663,23 @@ pub async fn vector_query(
     if let Ok(mut bridge_guard) = bridge.lock().await {
         if let Ok(analysis_svc) = bridge_guard.analysis_service().await {
             // Enhanced query with semantic understanding
-            let analysis_results = analysis_svc.analyze_workspace(
-                rust_ai_ide_commands_ai::analysis::WorkspaceAnalysisRequest {
-                    include_dependencies: true,
-                    analysis_depth: 3,
-                    exclude_patterns: vec!["target/*".to_string(), "node_modules/*".to_string()],
-                }
-            ).await;
+            let analysis_results = analysis_svc
+                .analyze_workspace(
+                    rust_ai_ide_commands_ai::analysis::WorkspaceAnalysisRequest {
+                        include_dependencies: true,
+                        analysis_depth: 3,
+                        exclude_patterns: vec![
+                            "target/*".to_string(),
+                            "node_modules/*".to_string(),
+                        ],
+                    },
+                )
+                .await;
 
             if let Ok(workspace_results) = analysis_results {
                 // Extract semantic enhancements from workspace analysis
-                let semantic_enhancements: Vec<String> = workspace_results.suggestions
+                let semantic_enhancements: Vec<String> = workspace_results
+                    .suggestions
                     .iter()
                     .take(3)
                     .map(|s| format!("suggested_{}", s))
@@ -624,7 +689,11 @@ pub async fn vector_query(
                 let services_lock = services.inner().lock().await;
                 if let Some(vector_db) = &services_lock.vector_database {
                     let mut enhanced_request = request.clone();
-                    enhanced_request.query = format!("semantic:{} {}", request.query, semantic_enhancements.join(" "));
+                    enhanced_request.query = format!(
+                        "semantic:{} {}",
+                        request.query,
+                        semantic_enhancements.join(" ")
+                    );
 
                     match vector_db.search(enhanced_request).await {
                         Ok(results) => return Ok(results),
@@ -635,18 +704,18 @@ pub async fn vector_query(
                 }
 
                 // Return enhanced dummy data with workspace insights
-                let results: Vec<VectorSearchResult> = (0..5).map(|i| {
-                    VectorSearchResult {
+                let results: Vec<VectorSearchResult> = (0..5)
+                    .map(|i| VectorSearchResult {
                         file_path: format!("/src/enhanced_example{}.rs", i),
                         score: 0.90 - (i as f64 * 0.03),
                         context: format!("Enhanced semantic context with workspace insights {}", i),
                         line_number: 10 + i * 5,
                         matches: vec![
                             format!("semantic_match_{}", i),
-                            format!("workspace_insight_{}", i)
+                            format!("workspace_insight_{}", i),
                         ],
-                    }
-                }).collect();
+                    })
+                    .collect();
 
                 return Ok(results);
             }
@@ -664,15 +733,15 @@ pub async fn vector_query(
         vector_db.search(enhanced_request).await.map_err(Into::into)
     } else {
         // Return enhanced dummy data with semantic insights
-        let results: Vec<VectorSearchResult> = (0..5).map(|i| {
-            VectorSearchResult {
+        let results: Vec<VectorSearchResult> = (0..5)
+            .map(|i| VectorSearchResult {
                 file_path: format!("/src/example{}.rs", i),
                 score: 0.85 - (i as f64 * 0.05),
                 context: format!("Semantic context for result {}", i),
                 line_number: 10 + i * 5,
                 matches: vec![format!("semantic_match_{}", i)],
-            }
-        }).collect();
+            })
+            .collect();
 
         Ok(results)
     }
@@ -685,7 +754,8 @@ pub async fn pattern_analysis(
     bridge: State<'_, crate::commands::ai::AIBridgeState>,
     _sanitizer: State<'_, TauriInputSanitizer>,
 ) -> Result<serde_json::Value, tauri::Error> {
-    let file_path: String = request.get("file_path")
+    let file_path: String = request
+        .get("file_path")
         .and_then(|p| p.as_str())
         .unwrap_or("")
         .to_string();
@@ -718,7 +788,7 @@ pub async fn pattern_analysis(
                         "observer_pattern".to_string(),
                         "command_pattern".to_string(),
                         "factory_pattern".to_string(),
-                        "singleton_pattern".to_string()
+                        "singleton_pattern".to_string(),
                     ];
 
                     // Try to enhance with learning patterns
@@ -726,19 +796,21 @@ pub async fn pattern_analysis(
                     let enhanced_patterns = vec![
                         "async_trait_pattern".to_string(),
                         "builder_pattern".to_string(),
-                        "strategy_pattern".to_string()
+                        "strategy_pattern".to_string(),
                     ];
                     patterns.extend(enhanced_patterns);
 
                     // Extract code smells from analysis result
-                    let code_smells = result.issues
+                    let code_smells = result
+                        .issues
                         .iter()
                         .filter(|issue| issue.category == "smell" || issue.category == "style")
                         .map(|issue| format!("{}_{}", issue.category, issue.severity))
                         .collect::<Vec<String>>();
 
                     // Generate refactoring suggestions from issues
-                    let suggestions = result.suggestions
+                    let suggestions = result
+                        .suggestions
                         .iter()
                         .map(|s| s.to_string())
                         .collect::<Vec<String>>();
@@ -754,7 +826,7 @@ pub async fn pattern_analysis(
                         "complexity_score": result.metrics.get("cyclomatic_complexity"),
                         "timestamp": chrono::Utc::now().timestamp()
                     }));
-                },
+                }
                 Err(e) => {
                     log::warn!("Failed to analyze patterns via commands-ai, falling back to placeholder: {}", e);
                 }
@@ -767,19 +839,15 @@ pub async fn pattern_analysis(
         "observer_pattern",
         "command_pattern",
         "factory_pattern",
-        "singleton_pattern"
+        "singleton_pattern",
     ];
 
-    let code_smells = vec![
-        "long_method",
-        "duplicate_code",
-        "missing_docs"
-    ];
+    let code_smells = vec!["long_method", "duplicate_code", "missing_docs"];
 
     let suggestions = vec![
         "Extract method for database operations",
         "Use builder pattern for config objects",
-        "Add error handling for edge cases"
+        "Add error handling for edge cases",
     ];
 
     Ok(json!({
@@ -803,17 +871,20 @@ pub async fn code_refactor(
     // Try to use the commands-ai implementation, fallback to placeholder
     if let Ok(mut bridge_guard) = bridge.lock().await {
         // Extract refactoring parameters
-        let code: String = request.get("code")
+        let code: String = request
+            .get("code")
             .and_then(|c| c.as_str())
             .unwrap_or("")
             .to_string();
 
-        let language: String = request.get("language")
+        let language: String = request
+            .get("language")
             .and_then(|l| l.as_str())
             .unwrap_or("")
             .to_string();
 
-        let refactoring_type: String = request.get("refactoring_type")
+        let refactoring_type: String = request
+            .get("refactoring_type")
             .and_then(|t| t.as_str())
             .unwrap_or("extract_method")
             .to_string();
@@ -829,12 +900,14 @@ pub async fn code_refactor(
     }
 
     // Fallback to existing placeholder implementation
-    let file_path: String = request.get("file_path")
+    let file_path: String = request
+        .get("file_path")
         .and_then(|p| p.as_str())
         .unwrap_or("")
         .to_string();
 
-    let refactoring_type: String = request.get("refactoring_type")
+    let refactoring_type: String = request
+        .get("refactoring_type")
         .and_then(|t| t.as_str())
         .unwrap_or("extract_method")
         .to_string();
@@ -859,7 +932,7 @@ pub async fn code_refactor(
                 "new_lines": [10, 15],
                 "refactored_code": "let result = perform_calculation(inputs)?;"
             })
-        },
+        }
         "inline_variable" => {
             json!({
                 "refactoring_type": "inline_variable",
@@ -867,7 +940,7 @@ pub async fn code_refactor(
                 "original_expression": "compute_intermediate_value()",
                 "inlined_occurences": 3
             })
-        },
+        }
         "rename_method" => {
             json!({
                 "refactoring_type": "rename_method",
@@ -875,7 +948,7 @@ pub async fn code_refactor(
                 "new_name": "calculate_result",
                 "usage_locations": [10, 20, 35]
             })
-        },
+        }
         _ => {
             json!({
                 "refactoring_type": "general",
@@ -901,12 +974,14 @@ pub async fn generate_tests(
     services: State<'_, Arc<Mutex<AIServices>>>,
     _sanitizer: State<'_, TauriInputSanitizer>,
 ) -> Result<serde_json::Value, tauri::Error> {
-    let file_path: String = request.get("file_path")
+    let file_path: String = request
+        .get("file_path")
         .and_then(|p| p.as_str())
         .unwrap_or("")
         .to_string();
 
-    let test_type: String = request.get("test_type")
+    let test_type: String = request
+        .get("test_type")
         .and_then(|t| t.as_str())
         .unwrap_or("unit")
         .to_string();
@@ -935,17 +1010,23 @@ pub async fn generate_tests(
     let generation_context = ai_codegen_generate_code_context();
 
     // Generate comprehensive test suite
-    match test_generator.generate_test_suite(&content, &generation_context).await {
+    match test_generator
+        .generate_test_suite(&content, &generation_context)
+        .await
+    {
         Ok(test_results) => {
-            let test_cases: Vec<serde_json::Value> = test_results.unit_tests
+            let test_cases: Vec<serde_json::Value> = test_results
+                .unit_tests
                 .iter()
-                .map(|test| json!({
-                    "test_name": test.name,
-                    "description": format!("AI-generated test for {}", test.name),
-                    "test_code": test.code,
-                    "coverage": test.assertions,
-                    "ai_enhanced": ai_services.is_some()
-                }))
+                .map(|test| {
+                    json!({
+                        "test_name": test.name,
+                        "description": format!("AI-generated test for {}", test.name),
+                        "test_code": test.code,
+                        "coverage": test.assertions,
+                        "ai_enhanced": ai_services.is_some()
+                    })
+                })
                 .collect();
 
             let coverage_estimate = match &test_results.coverage_estimates.first() {
@@ -964,7 +1045,7 @@ pub async fn generate_tests(
                 "ai_services_enabled": ai_services.is_some(),
                 "timestamp": chrono::Utc::now().timestamp()
             }))
-        },
+        }
         Err(e) => {
             // Fallback to basic test generation
             let test_cases = vec![
@@ -979,7 +1060,7 @@ pub async fn generate_tests(
                     "description": "Test error condition handling",
                     "test_code": "#[test]\nfn test_error_handling() {\n    // Arrange\n    let invalid_input = create_invalid_input();\n    \n    // Act & Assert\n    let result = perform_operation(invalid_input);\n    assert!(result.is_err());\n}",
                     "coverage": ["error_handling", "input_validation"]
-                })
+                }),
             ];
 
             Ok(json!({
@@ -1000,7 +1081,7 @@ pub async fn generate_tests(
 
 // Helper function to create AI services for test generation
 async fn generate_ai_test_services(
-    services: State<'_, Arc<Mutex<AIServices>>>
+    services: State<'_, Arc<Mutex<AIServices>>>,
 ) -> Option<Arc<Mutex<rust_ai_ide_ai_codegen::AIInferenceServices>>> {
     let services_guard = services.lock().await;
 
@@ -1040,14 +1121,12 @@ fn ai_codegen_generate_code_context() -> rust_ai_ide_ai_codegen::CodeGenerationC
 // Register all AI commands
 pub fn register_commands(app: &mut tauri::App) -> Result<(), tauri::Error> {
     // Initialize original AI services
-    let ai_services = async_runtime::block_on(async {
-        initialize_ai_services(app.handle()).await
-    })?;
+    let ai_services =
+        async_runtime::block_on(async { initialize_ai_services(app.handle()).await })?;
 
     // Initialize new AI bridge state
-    let ai_bridge = async_runtime::block_on(async {
-        crate::commands::ai::AIStateBridge::new().await
-    })?;
+    let ai_bridge =
+        async_runtime::block_on(async { crate::commands::ai::AIStateBridge::new().await })?;
 
     // Register AI services in app state (original state)
     app.manage(Arc::new(Mutex::new(ai_services)));

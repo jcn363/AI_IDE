@@ -299,8 +299,9 @@ impl CargoJsonParser {
             return Ok(None);
         }
 
-        let raw_message: RawCargoMessage = serde_json::from_str(line)
-            .map_err(|e| MonitoringError::cargo_parse(format!("JSON parse error: {} (line: {})", e, line)))?;
+        let raw_message: RawCargoMessage = serde_json::from_str(line).map_err(|e| {
+            MonitoringError::cargo_parse(format!("JSON parse error: {} (line: {})", e, line))
+        })?;
 
         match raw_message.message {
             Some(message) => Ok(Some(message)),
@@ -309,7 +310,11 @@ impl CargoJsonParser {
     }
 
     /// Build results summary
-    fn build_summary(&self, diagnostics: &[CargoDiagnostic], build_scripts: usize) -> ResultsSummary {
+    fn build_summary(
+        &self,
+        diagnostics: &[CargoDiagnostic],
+        build_scripts: usize,
+    ) -> ResultsSummary {
         let mut summary = ResultsSummary {
             build_scripts,
             ..Default::default()
@@ -371,8 +376,7 @@ impl CargoJsonParser {
             .map(|code| code.code.clone())
             .unwrap_or_else(|| "unknown".to_string());
 
-        let suggestion = primary_span
-            .and_then(|span| span.suggested_replacement.clone());
+        let suggestion = primary_span.and_then(|span| span.suggested_replacement.clone());
 
         Some(Finding {
             file,

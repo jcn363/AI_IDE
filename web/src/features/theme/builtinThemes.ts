@@ -1,4 +1,12 @@
-import type { ThemeDefinition, ColorPalette, TypographyScale, SpacingScale, BorderRadiusScale, ShadowScale, TransitionScale } from './types';
+import type {
+  ThemeDefinition,
+  ColorPalette,
+  TypographyScale,
+  SpacingScale,
+  BorderRadiusScale,
+  ShadowScale,
+  TransitionScale,
+} from './types';
 
 // Common base values
 const typographyBase: TypographyScale = {

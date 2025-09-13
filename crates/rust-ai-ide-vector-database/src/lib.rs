@@ -1,15 +1,15 @@
-use std::{collections::HashMap, path::Path, sync::Arc};
-use tokio::sync::RwLock;
-use ndarray::{ArrayD, ArrayViewD, IxDynImpl};
 use memmap2::MmapMut;
+use ndarray::{ArrayD, ArrayViewD, IxDynImpl};
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, path::Path, sync::Arc};
+use tokio::sync::RwLock;
 
-use rust_ai_ide_shared_types::{
-    VectorSearchRequest, VectorSearchResult, SearchFilter, FilterOperator
-};
-use rust_ai_ide_common::validation::validate_secure_path;
 use rust_ai_ide_cache::strategies::AdaptiveCache;
+use rust_ai_ide_common::validation::validate_secure_path;
+use rust_ai_ide_shared_types::{
+    FilterOperator, SearchFilter, VectorSearchRequest, VectorSearchResult,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VectorIndexConfig {
@@ -22,10 +22,10 @@ pub struct VectorIndexConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum IndexType {
-    HNSW,      // Hierarchical Navigable Small World
-    IVF,       // Inverted File with Product Quantization
-    PQ,        // Product Quantization
-    LSH,       // Locality Sensitive Hashing
+    HNSW, // Hierarchical Navigable Small World
+    IVF,  // Inverted File with Product Quantization
+    PQ,   // Product Quantization
+    LSH,  // Locality Sensitive Hashing
 }
 
 #[derive(Clone)]
@@ -74,7 +74,10 @@ impl VectorDatabase {
     }
 
     /// Memory-map the vector storage file for zero-copy operations
-    pub async fn load_from_disk(&mut self, file_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn load_from_disk(
+        &mut self,
+        file_path: &Path,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         validate_secure_path(file_path.to_str().unwrap())?;
 
         if file_path.exists() {
@@ -94,7 +97,10 @@ impl VectorDatabase {
     }
 
     /// Persist vectors to disk using memory mapping
-    pub async fn save_to_disk(&mut self, file_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn save_to_disk(
+        &mut self,
+        file_path: &Path,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         validate_secure_path(file_path.to_str().unwrap())?;
 
         let serialized = self.serialize_vectors()?;
@@ -113,7 +119,10 @@ impl VectorDatabase {
     }
 
     /// Add multiple vectors in batch for optimal performance
-    pub async fn add_batch(&self, documents: Vec<VectorDocument>) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn add_batch(
+        &self,
+        documents: Vec<VectorDocument>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut vectors_lock = self.vectors.lock();
         let mut index_lock = self.index.write().await;
 
@@ -123,8 +132,12 @@ impl VectorDatabase {
             }
 
             if doc.vector.len() != self.config.dimensionality {
-                return Err(format!("Vector dimension mismatch: expected {}, got {}",
-                            self.config.dimensionality, doc.vector.len()).into());
+                return Err(format!(
+                    "Vector dimension mismatch: expected {}, got {}",
+                    self.config.dimensionality,
+                    doc.vector.len()
+                )
+                .into());
             }
 
             vectors_lock.insert(doc.id.clone(), doc.clone());
@@ -140,10 +153,17 @@ impl VectorDatabase {
     }
 
     /// Perform vector similarity search
-    pub async fn search(&self, request: VectorSearchRequest) -> Result<Vec<VectorSearchResult>, Box<dyn std::error::Error>> {
+    pub async fn search(
+        &self,
+        request: VectorSearchRequest,
+    ) -> Result<Vec<VectorSearchResult>, Box<dyn std::error::Error>> {
         if request.query_vector.len() != self.config.dimensionality {
-            return Err(format!("Query vector dimension mismatch: expected {}, got {}",
-                        self.config.dimensionality, request.query_vector.len()).into());
+            return Err(format!(
+                "Query vector dimension mismatch: expected {}, got {}",
+                self.config.dimensionality,
+                request.query_vector.len()
+            )
+            .into());
         }
 
         let index = self.index.read().await;
@@ -160,7 +180,11 @@ impl VectorDatabase {
                     Some(VectorSearchResult {
                         id: doc.id.clone(),
                         score,
-                        content: request.config.include_content.then(|| doc.content.clone()).flatten(),
+                        content: request
+                            .config
+                            .include_content
+                            .then(|| doc.content.clone())
+                            .flatten(),
                         metadata: doc.metadata.clone(),
                         ..Default::default()
                     })
@@ -172,7 +196,11 @@ impl VectorDatabase {
             .collect();
 
         // Sort by score (similarity, descending)
-        results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         Ok(results)
     }
@@ -194,10 +222,18 @@ impl VectorDatabase {
     }
 
     /// Update vector in-place
-    pub async fn update(&self, id: &str, new_vector: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn update(
+        &self,
+        id: &str,
+        new_vector: Vec<f32>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         if new_vector.len() != self.config.dimensionality {
-            return Err(format!("Vector dimension mismatch: expected {}, got {}",
-                        self.config.dimensionality, new_vector.len()).into());
+            return Err(format!(
+                "Vector dimension mismatch: expected {}, got {}",
+                self.config.dimensionality,
+                new_vector.len()
+            )
+            .into());
         }
 
         let mut vectors_lock = self.vectors.lock();
@@ -246,7 +282,7 @@ impl VectorDatabase {
                     FilterOperator::GreaterThan => {
                         if let (Some(doc_val), Some(filter_val)) = (
                             doc.metadata.get(&filter.field).and_then(|v| v.as_f64()),
-                            filter.value.as_f64()
+                            filter.value.as_f64(),
                         ) {
                             if doc_val <= filter_val {
                                 return false;
@@ -256,7 +292,7 @@ impl VectorDatabase {
                     FilterOperator::LessThan => {
                         if let (Some(doc_val), Some(filter_val)) = (
                             doc.metadata.get(&filter.field).and_then(|v| v.as_f64()),
-                            filter.value.as_f64()
+                            filter.value.as_f64(),
                         ) {
                             if doc_val >= filter_val {
                                 return false;
@@ -266,7 +302,7 @@ impl VectorDatabase {
                     FilterOperator::Contains => {
                         if let (Some(doc_val), Some(filter_str)) = (
                             doc.metadata.get(&filter.field).and_then(|v| v.as_str()),
-                            filter.value.as_str()
+                            filter.value.as_str(),
                         ) {
                             if !doc_val.contains(filter_str) {
                                 return false;
@@ -321,8 +357,13 @@ impl HNSWIndex {
         self.nodes.insert(id, vector);
     }
 
-    fn search(&self, query: &[f32], top_k: usize) -> Result<Vec<(String, f32)>, Box<dyn std::error::Error>> {
-        let mut results: Vec<(String, f32)> = self.nodes
+    fn search(
+        &self,
+        query: &[f32],
+        top_k: usize,
+    ) -> Result<Vec<(String, f32)>, Box<dyn std::error::Error>> {
+        let mut results: Vec<(String, f32)> = self
+            .nodes
             .iter()
             .map(|(id, vector)| (id.clone(), cosine_similarity(query, vector)))
             .collect();

@@ -3,19 +3,19 @@
 //! This module provides the unified performance metrics collector that aggregates
 //! performance data from all crates and components in the Rust AI IDE system.
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use tokio::sync::mpsc;
 use tokio::time::{self, Duration};
-use serde::{Deserialize, Serialize};
 
-use rust_ai_ide_shared_types::PerformanceMetrics;
 use crate::alerting::AlertManager;
+use crate::instrumentation::{InstrumentationConfig, PerformanceInstrumentor};
+use crate::metrics::{MetricsError, MetricsRegistry, PrometheusExporter};
+use crate::metrics_server::{MetricsServer, MetricsServerBuilder, MetricsServerConfig};
 use crate::monitoring::SystemMonitor;
 use crate::regression::RegressionDetector;
-use crate::metrics::{MetricsRegistry, PrometheusExporter, MetricsError};
-use crate::metrics_server::{MetricsServer, MetricsServerBuilder, MetricsServerConfig};
-use crate::instrumentation::{PerformanceInstrumentor, InstrumentationConfig};
+use rust_ai_ide_shared_types::PerformanceMetrics;
 
 /// Configuration for the performance collector
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -120,7 +120,9 @@ impl std::fmt::Display for CollectionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CollectionError::SourceUnavailable(msg) => write!(f, "Source unavailable: {}", msg),
-            CollectionError::MetricComputation(msg) => write!(f, "Metric computation error: {}", msg),
+            CollectionError::MetricComputation(msg) => {
+                write!(f, "Metric computation error: {}", msg)
+            }
             CollectionError::Timeout(msg) => write!(f, "Timeout: {}", msg),
             CollectionError::PermissionDenied(msg) => write!(f, "Permission denied: {}", msg),
         }
@@ -208,7 +210,8 @@ impl UnifiedPerformanceCollector {
                 // Collect from registered providers - clone the providers to avoid lifetime issues
                 {
                     let collectors = crate_collectors.read().unwrap();
-                    let providers_refs: Vec<&Box<dyn MetricsProvider>> = collectors.values().collect();
+                    let providers_refs: Vec<&Box<dyn MetricsProvider>> =
+                        collectors.values().collect();
 
                     for provider in providers_refs {
                         match provider.collect_metrics().await {
@@ -216,7 +219,11 @@ impl UnifiedPerformanceCollector {
                                 aggregated_metrics.merge(&metrics);
                             }
                             Err(e) => {
-                                eprintln!("Failed to collect metrics from {}: {}", provider.name(), e);
+                                eprintln!(
+                                    "Failed to collect metrics from {}: {}",
+                                    provider.name(),
+                                    e
+                                );
                             }
                         }
                     }
@@ -240,7 +247,10 @@ impl UnifiedPerformanceCollector {
     }
 
     /// Register a new metrics provider at runtime
-    pub fn register_provider(&self, provider: Box<dyn MetricsProvider>) -> Result<(), anyhow::Error> {
+    pub fn register_provider(
+        &self,
+        provider: Box<dyn MetricsProvider>,
+    ) -> Result<(), anyhow::Error> {
         let mut collectors = self.crate_collectors.write().unwrap();
         collectors.insert(provider.name().to_string(), provider);
         Ok(())
@@ -260,7 +270,7 @@ impl UnifiedPerformanceCollector {
     pub fn get_metrics_in_range(
         &self,
         start: chrono::DateTime<chrono::Utc>,
-        end: chrono::DateTime<chrono::Utc>
+        end: chrono::DateTime<chrono::Utc>,
     ) -> Vec<PerformanceMetrics> {
         let start_ts = start.timestamp_millis() as u64;
         let end_ts = end.timestamp_millis() as u64;

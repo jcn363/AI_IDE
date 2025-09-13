@@ -322,3 +322,115 @@ export type AIServiceEvent =
   | SearchCompleteEvent
   | IndexingProgressEvent
   | ABTestUpdateEvent;
+
+// AI Feedback and Learning Types
+export interface AIFeedback {
+  id: string;
+  generationId: string;
+  timestamp: number;
+  rating: number; // 1-5 scale
+  feedbackType: AIFeedbackType;
+  corrections: string[];
+  suggestions: string[];
+  comments: string;
+  wouldUseAgain: boolean | null;
+  userContext: UserContext;
+  metadata: FeedbackMetadata;
+}
+
+export enum AIFeedbackType {
+  General = 'general',
+  Correction = 'correction',
+  Suggestion = 'suggestion',
+  Bug = 'bug',
+}
+
+export interface UserContext {
+  userId: string;
+  sessionId: string;
+  environment: string;
+}
+
+export interface FeedbackMetadata {
+  browser: string;
+  platform: string;
+  language: string;
+  screenSize?: string;
+  timezone?: string;
+}
+
+export interface LearningMetrics {
+  totalGenerations: number;
+  averageRating: number;
+  patternAccuracy: number;
+  contextImprovement: number;
+  lastUpdated: string;
+  improvementRate: number;
+}
+
+export interface UserPattern {
+  id: string;
+  patternType: string;
+  confidence: number;
+  frequency: number;
+  lastUsed: string;
+  contextExamples: string[];
+  successRate: number;
+}
+
+export interface ConfidenceMetrics {
+  baseConfidence: number;
+  patternBonus: number;
+  contextBonus: number;
+  feedbackBonus: number;
+  finalConfidence: number;
+  factors: string[];
+}
+
+export interface SuggestionRanking {
+  suggestionId: string;
+  content: string;
+  confidence: number;
+  userPreferenceScore: number;
+  patternMatchScore: number;
+  finalRank: number;
+  reasoning: string[];
+}
+
+// Learning Progress Tracking
+export interface LearningProgress {
+  learningSessionId: string;
+  startTime: number;
+  endTime?: number;
+  improvements: LearningImprovement[];
+  metrics: LearningMetrics;
+  userEngagement: UserEngagementStats;
+}
+
+export interface LearningImprovement {
+  timestamp: number;
+  metric: string;
+  previousValue: number;
+  newValue: number;
+  improvement: number;
+  trigger: string;
+}
+
+export interface UserEngagementStats {
+  feedbackProvided: number;
+  suggestionsAccepted: number;
+  correctionsApplied: number;
+  sessionDuration: number;
+  interactionFrequency: number;
+}
+
+// Enhanced AI Generation Context
+export interface EnhancedGenerationContext {
+  originalRequest: any;
+  userPatterns: UserPattern[];
+  previousFeedback: AIFeedback[];
+  contextHistory: string[];
+  confidenceMetrics: ConfidenceMetrics;
+  learningInsights: LearningMetrics;
+  timestamp: number;
+}

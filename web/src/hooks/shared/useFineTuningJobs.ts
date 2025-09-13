@@ -41,7 +41,9 @@ interface UseFineTuningJobsReturn {
   pollJobMetrics: (jobId: string) => Promise<void>;
 }
 
-export const useFineTuningJobs = (options: UseFineTuningJobsOptions = {}): UseFineTuningJobsReturn => {
+export const useFineTuningJobs = (
+  options: UseFineTuningJobsOptions = {}
+): UseFineTuningJobsReturn => {
   const { autoPoll = true, pollInterval = 5000 } = options;
 
   const [jobs, setJobs] = useState<FineTuneJobInfo[]>([]);
@@ -61,11 +63,11 @@ export const useFineTuningJobs = (options: UseFineTuningJobsOptions = {}): UseFi
 
       // Start polling for active jobs
       if (autoPoll) {
-        const activeJobs = fetchedJobs.filter(job =>
-          job.status === 'Training' || job.status === 'Initializing'
+        const activeJobs = fetchedJobs.filter(
+          (job) => job.status === 'Training' || job.status === 'Initializing'
         );
 
-        activeJobs.forEach(job => {
+        activeJobs.forEach((job) => {
           if (!pollTimers[job.jobId]) {
             startPollingJob(job.jobId);
           }
@@ -83,111 +85,143 @@ export const useFineTuningJobs = (options: UseFineTuningJobsOptions = {}): UseFi
   }, [autoPoll, pollTimers]);
 
   // Start polling a specific job
-  const startPollingJob = useCallback((jobId: string) => {
-    const timer = setInterval(() => {
-      pollJobMetrics(jobId);
-    }, pollInterval);
+  const startPollingJob = useCallback(
+    (jobId: string) => {
+      const timer = setInterval(() => {
+        pollJobMetrics(jobId);
+      }, pollInterval);
 
-    setPollTimers(prev => ({ ...prev, [jobId]: timer }));
-  }, [pollInterval]);
+      setPollTimers((prev) => ({ ...prev, [jobId]: timer }));
+    },
+    [pollInterval]
+  );
 
   // Stop polling a specific job
-  const stopPollingJob = useCallback((jobId: string) => {
-    if (pollTimers[jobId]) {
-      clearInterval(pollTimers[jobId]!);
-      setPollTimers(prev => ({ ...prev, [jobId]: null }));
-    }
-  }, [pollTimers]);
+  const stopPollingJob = useCallback(
+    (jobId: string) => {
+      if (pollTimers[jobId]) {
+        clearInterval(pollTimers[jobId]!);
+        setPollTimers((prev) => ({ ...prev, [jobId]: null }));
+      }
+    },
+    [pollTimers]
+  );
 
   // Poll metrics for a job
-  const pollJobMetrics = useCallback(async (jobId: string) => {
-    try {
-      const realTimeMetrics = await invoke<RealTimeMetrics>('get_finetune_job_metrics', { jobId });
-      setMetrics(prev => ({ ...prev, [jobId]: realTimeMetrics }));
-    } catch (err) {
-      console.error(`Failed to fetch real-time metrics for job ${jobId}:`, err);
-      if (err instanceof Error && err.message.includes('not found')) {
-        stopPollingJob(jobId);
+  const pollJobMetrics = useCallback(
+    async (jobId: string) => {
+      try {
+        const realTimeMetrics = await invoke<RealTimeMetrics>('get_finetune_job_metrics', {
+          jobId,
+        });
+        setMetrics((prev) => ({ ...prev, [jobId]: realTimeMetrics }));
+      } catch (err) {
+        console.error(`Failed to fetch real-time metrics for job ${jobId}:`, err);
+        if (err instanceof Error && err.message.includes('not found')) {
+          stopPollingJob(jobId);
+        }
       }
-    }
-  }, [stopPollingJob]);
+    },
+    [stopPollingJob]
+  );
 
   // Job control operations
-  const startJob = useCallback(async (jobId: string) => {
-    try {
-      await invoke('start_finetune_job', { jobId });
-      await refetchJobs(); // Refresh job list
-    } catch (err) {
-      const errorMessage = `Failed to start job: ${err instanceof Error ? err.message : String(err)}`;
-      setError(errorMessage);
-      throw err;
-    }
-  }, [refetchJobs]);
+  const startJob = useCallback(
+    async (jobId: string) => {
+      try {
+        await invoke('start_finetune_job', { jobId });
+        await refetchJobs(); // Refresh job list
+      } catch (err) {
+        const errorMessage = `Failed to start job: ${err instanceof Error ? err.message : String(err)}`;
+        setError(errorMessage);
+        throw err;
+      }
+    },
+    [refetchJobs]
+  );
 
-  const stopJob = useCallback(async (jobId: string) => {
-    try {
-      await invoke('cancel_finetune_job', { jobId });
-      await refetchJobs(); // Refresh job list
-      stopPollingJob(jobId);
-    } catch (err) {
-      const errorMessage = `Failed to stop job: ${err instanceof Error ? err.message : String(err)}`;
-      setError(errorMessage);
-      throw err;
-    }
-  }, [refetchJobs, stopPollingJob]);
+  const stopJob = useCallback(
+    async (jobId: string) => {
+      try {
+        await invoke('cancel_finetune_job', { jobId });
+        await refetchJobs(); // Refresh job list
+        stopPollingJob(jobId);
+      } catch (err) {
+        const errorMessage = `Failed to stop job: ${err instanceof Error ? err.message : String(err)}`;
+        setError(errorMessage);
+        throw err;
+      }
+    },
+    [refetchJobs, stopPollingJob]
+  );
 
-  const pauseJob = useCallback(async (jobId: string) => {
-    try {
-      await invoke('pause_finetune_job', { jobId });
-      await refetchJobs(); // Refresh job list
-      stopPollingJob(jobId);
-    } catch (err) {
-      const errorMessage = `Failed to pause job: ${err instanceof Error ? err.message : String(err)}`;
-      setError(errorMessage);
-      throw err;
-    }
-  }, [refetchJobs, stopPollingJob]);
+  const pauseJob = useCallback(
+    async (jobId: string) => {
+      try {
+        await invoke('pause_finetune_job', { jobId });
+        await refetchJobs(); // Refresh job list
+        stopPollingJob(jobId);
+      } catch (err) {
+        const errorMessage = `Failed to pause job: ${err instanceof Error ? err.message : String(err)}`;
+        setError(errorMessage);
+        throw err;
+      }
+    },
+    [refetchJobs, stopPollingJob]
+  );
 
-  const resumeJob = useCallback(async (jobId: string) => {
-    try {
-      await invoke('resume_finetune_job', { jobId });
-      await refetchJobs(); // Refresh job list
-      startPollingJob(jobId);
-    } catch (err) {
-      const errorMessage = `Failed to resume job: ${err instanceof Error ? err.message : String(err)}`;
-      setError(errorMessage);
-      throw err;
-    }
-  }, [refetchJobs, startPollingJob]);
+  const resumeJob = useCallback(
+    async (jobId: string) => {
+      try {
+        await invoke('resume_finetune_job', { jobId });
+        await refetchJobs(); // Refresh job list
+        startPollingJob(jobId);
+      } catch (err) {
+        const errorMessage = `Failed to resume job: ${err instanceof Error ? err.message : String(err)}`;
+        setError(errorMessage);
+        throw err;
+      }
+    },
+    [refetchJobs, startPollingJob]
+  );
 
-  const cancelJob = useCallback(async (jobId: string) => {
-    try {
-      await invoke('cancel_finetune_job', { jobId });
-      await refetchJobs(); // Refresh job list
-      stopPollingJob(jobId);
-    } catch (err) {
-      const errorMessage = `Failed to cancel job: ${err instanceof Error ? err.message : String(err)}`;
-      setError(errorMessage);
-      throw err;
-    }
-  }, [refetchJobs, stopPollingJob]);
+  const cancelJob = useCallback(
+    async (jobId: string) => {
+      try {
+        await invoke('cancel_finetune_job', { jobId });
+        await refetchJobs(); // Refresh job list
+        stopPollingJob(jobId);
+      } catch (err) {
+        const errorMessage = `Failed to cancel job: ${err instanceof Error ? err.message : String(err)}`;
+        setError(errorMessage);
+        throw err;
+      }
+    },
+    [refetchJobs, stopPollingJob]
+  );
 
-  const deleteJob = useCallback(async (jobId: string) => {
-    try {
-      await invoke('delete_finetune_job', { jobId });
-      await refetchJobs(); // Refresh job list
-      stopPollingJob(jobId);
-    } catch (err) {
-      const errorMessage = `Failed to delete job: ${err instanceof Error ? err.message : String(err)}`;
-      setError(errorMessage);
-      throw err;
-    }
-  }, [refetchJobs, stopPollingJob]);
+  const deleteJob = useCallback(
+    async (jobId: string) => {
+      try {
+        await invoke('delete_finetune_job', { jobId });
+        await refetchJobs(); // Refresh job list
+        stopPollingJob(jobId);
+      } catch (err) {
+        const errorMessage = `Failed to delete job: ${err instanceof Error ? err.message : String(err)}`;
+        setError(errorMessage);
+        throw err;
+      }
+    },
+    [refetchJobs, stopPollingJob]
+  );
 
   // Utility functions
-  const getJobById = useCallback((jobId: string) => {
-    return jobs.find(job => job.jobId === jobId);
-  }, [jobs]);
+  const getJobById = useCallback(
+    (jobId: string) => {
+      return jobs.find((job) => job.jobId === jobId);
+    },
+    [jobs]
+  );
 
   const formatDuration = useCallback((seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -199,7 +233,7 @@ export const useFineTuningJobs = (options: UseFineTuningJobsOptions = {}): UseFi
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      Object.values(pollTimers).forEach(timer => {
+      Object.values(pollTimers).forEach((timer) => {
         if (timer) clearInterval(timer);
       });
     };

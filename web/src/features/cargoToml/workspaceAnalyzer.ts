@@ -39,18 +39,21 @@ async function parseCargoToml(filePath: string): Promise<CargoManifest> {
 /**
  * Get the list of workspace members by parsing the Cargo.toml files
  */
-async function getWorkspaceMembers(rootPath: string, rootManifest: CargoManifest): Promise<WorkspaceMember[]> {
+async function getWorkspaceMembers(
+  rootPath: string,
+  rootManifest: CargoManifest
+): Promise<WorkspaceMember[]> {
   if (!rootManifest.workspace?.members) {
     return [];
   }
 
   const members: WorkspaceMember[] = [];
-  
+
   for (const memberPath of rootManifest.workspace.members) {
     try {
       const fullPath = `${rootPath}/${memberPath}/Cargo.toml`;
       const manifest = await parseCargoToml(fullPath);
-      
+
       members.push({
         name: manifest.package?.name || memberPath.split('/').pop() || memberPath,
         path: memberPath,
@@ -63,7 +66,7 @@ async function getWorkspaceMembers(rootPath: string, rootManifest: CargoManifest
       console.error(`Error processing workspace member ${memberPath}:`, error);
     }
   }
-  
+
   return members;
 }
 
@@ -72,10 +75,10 @@ async function getWorkspaceMembers(rootPath: string, rootManifest: CargoManifest
  */
 function getDependencies(manifest: CargoManifest): Record<string, string> {
   const deps: Record<string, string> = {};
-  
+
   const addDeps = (depsObj: Record<string, CargoDependency> | undefined) => {
     if (!depsObj) return;
-    
+
     Object.entries(depsObj).forEach(([name, dep]) => {
       if (typeof dep === 'string') {
         deps[name] = dep;
@@ -84,11 +87,11 @@ function getDependencies(manifest: CargoManifest): Record<string, string> {
       }
     });
   };
-  
+
   addDeps(manifest.dependencies);
   addDeps(manifest['dev-dependencies']);
   addDeps(manifest['build-dependencies']);
-  
+
   return deps;
 }
 
@@ -97,14 +100,14 @@ function getDependencies(manifest: CargoManifest): Record<string, string> {
  */
 async function analyzeWorkspaceInheritance(
   rootPath: string,
-  rootManifest: CargoManifest,
+  rootManifest: CargoManifest
 ): Promise<WorkspaceAnalysis> {
   const members = await getWorkspaceMembers(rootPath, rootManifest);
   const inheritanceGraph: Record<string, string[]> = {};
-  
+
   // First pass: build inheritance graph and collect workspace dependencies
   const workspaceDependencies: Record<string, string> = {};
-  
+
   // Add root workspace dependencies
   if (rootManifest.dependencies) {
     Object.entries(rootManifest.dependencies).forEach(([name, dep]) => {
@@ -115,28 +118,28 @@ async function analyzeWorkspaceInheritance(
       }
     });
   }
-  
+
   // Process each member
   for (const member of members) {
     inheritanceGraph[member.name] = [];
-    
+
     // Check for workspace inheritance
     if (member.manifest.workspace) {
       // This member inherits from the workspace
       inheritanceGraph[member.name].push('workspace');
-      
+
       // Copy workspace dependencies to inheritedDependencies
       member.inheritedDependencies = { ...workspaceDependencies };
     }
-    
+
     // Check for member-to-member dependencies
     for (const depName of Object.keys(member.directDependencies)) {
-      const depMember = members.find(m => m.name === depName);
+      const depMember = members.find((m) => m.name === depName);
       if (depMember) {
         inheritanceGraph[member.name].push(depName);
       }
     }
-    
+
     // Merge direct and inherited dependencies
     member.dependencies = [
       ...new Set([
@@ -145,7 +148,7 @@ async function analyzeWorkspaceInheritance(
       ]),
     ];
   }
-  
+
   return {
     root: rootManifest,
     members,
@@ -163,7 +166,7 @@ async function getLatestVersion(crateName: string): Promise<string> {
     if (!response.ok) {
       throw new Error(`Failed to fetch crate info for ${crateName}`);
     }
-    
+
     const data = await response.json();
     return data.crate?.newest_version || 'unknown';
   } catch (error) {
@@ -177,12 +180,12 @@ async function getLatestVersion(crateName: string): Promise<string> {
  */
 async function checkForOutdatedDependencies(analysis: WorkspaceAnalysis) {
   const allDeps = new Set<string>();
-  
+
   // Collect all unique dependencies
-  analysis.members.forEach(member => {
-    Object.keys(member.directDependencies).forEach(dep => allDeps.add(dep));
+  analysis.members.forEach((member) => {
+    Object.keys(member.directDependencies).forEach((dep) => allDeps.add(dep));
   });
-  
+
   // Check each dependency
   const updates: Array<{
     name: string;
@@ -190,21 +193,21 @@ async function checkForOutdatedDependencies(analysis: WorkspaceAnalysis) {
     latestVersion: string;
     usedIn: Array<{ member: string; version: string }>;
   }> = [];
-  
+
   for (const dep of Array.from(allDeps)) {
     // Skip workspace members
-    if (analysis.members.some(m => m.name === dep)) continue;
-    
+    if (analysis.members.some((m) => m.name === dep)) continue;
+
     // Find all versions used in the workspace
     const usages: Array<{ member: string; version: string }> = [];
-    
+
     for (const member of analysis.members) {
       const version = member.directDependencies[dep];
       if (version) {
         usages.push({ member: member.name, version });
       }
     }
-    
+
     if (usages.length > 0) {
       const latestVersion = await getLatestVersion(dep);
       updates.push({
@@ -215,7 +218,7 @@ async function checkForOutdatedDependencies(analysis: WorkspaceAnalysis) {
       });
     }
   }
-  
+
   return updates;
 }
 

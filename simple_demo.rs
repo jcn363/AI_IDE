@@ -78,7 +78,10 @@ pub enum Status {
     Ok(())
 }
 
-fn demonstrate_typescript(rust_code: &str, demo_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+fn demonstrate_typescript(
+    rust_code: &str,
+    demo_dir: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🎯 TYPESCRIPT GENERATION");
     println!("========================");
 
@@ -121,7 +124,10 @@ export type Status =
 "#;
 
     fs::write(&ts_output, typescript_code)?;
-    println!("✅ TypeScript: Generated 25 lines, {} bytes", typescript_code.len());
+    println!(
+        "✅ TypeScript: Generated 25 lines, {} bytes",
+        typescript_code.len()
+    );
     println!("📄 {}", ts_output.display());
     println!("   • Interfaces with JSDoc comments");
     println!("   • Optional types with union syntax");
@@ -297,7 +303,10 @@ type Mutation {
 "#;
 
     fs::write(&gql_output, graphql_code)?;
-    println!("✅ GraphQL: Generated 48 lines, {} bytes", graphql_code.len());
+    println!(
+        "✅ GraphQL: Generated 48 lines, {} bytes",
+        graphql_code.len()
+    );
     println!("📄 {}", gql_output.display());
     println!("   • Complete schema with queries and mutations");
     println!("   • GraphQL documentation comments");
@@ -336,7 +345,10 @@ fn demonstrate_openapi(rust_code: &str, demo_dir: &Path) -> Result<(), Box<dyn s
 }"#;
 
     fs::write(&openapi_output, openapi_code)?;
-    println!("✅ OpenAPI: Generated 47 lines, {} bytes", openapi_code.len());
+    println!(
+        "✅ OpenAPI: Generated 47 lines, {} bytes",
+        openapi_code.len()
+    );
     println!("📄 {}", openapi_output.display());
     println!("   • OpenAPI 3.0.3 specification");
     println!("   • Complete schema definitions");
@@ -373,12 +385,21 @@ fn show_final_summary(demo_dir: &Path) -> Result<(), Box<dyn std::error::Error>>
             total_files += 1;
             total_size += size;
 
-            println!("   ✅ {:<12} {:>6} bytes ({})", format!("{}.{}", platform, ext), size, path.display());
+            println!(
+                "   ✅ {:<12} {:>6} bytes ({})",
+                format!("{}.{}", platform, ext),
+                size,
+                path.display()
+            );
         }
     }
 
-    println!("   📊 Total: {} files, {} bytes ({:.1} KB)",
-             total_files, total_size, total_size as f64 / 1024.0);
+    println!(
+        "   📊 Total: {} files, {} bytes ({:.1} KB)",
+        total_files,
+        total_size,
+        total_size as f64 / 1024.0
+    );
 
     println!("\n✅ SUCCESS METRICS:");
     println!("   • Complete type transformation for 5 platforms");

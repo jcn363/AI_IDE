@@ -23,14 +23,14 @@
 //! 6. **Architecture Improvements**: Suggest architectural improvements
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
-use chrono::{DateTime, Utc};
 
-use crate::types::{Position, Range, Diagnostic, EditOperation};
+use crate::types::{Diagnostic, EditOperation, Position, Range};
 use crate::SecurityResult;
 
 /// Refactoring operation types supported
@@ -105,10 +105,10 @@ impl std::fmt::Display for RefactoringType {
 /// Confidence level for AI suggestions
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ConfidenceLevel {
-    High,       // > 90% confidence, very likely safe and beneficial
-    Medium,     // 70-90% confidence, proceed with caution
-    Low,        // 50-70% confidence, manual review recommended
-    Uncertain,  // < 50% confidence, significant manual review required
+    High,      // > 90% confidence, very likely safe and beneficial
+    Medium,    // 70-90% confidence, proceed with caution
+    Low,       // 50-70% confidence, manual review recommended
+    Uncertain, // < 50% confidence, significant manual review required
 }
 
 /// Refactoring suggestion with detailed analysis
@@ -133,9 +133,9 @@ pub struct RefactoringSuggestion {
 /// Impact assessment for refactoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefactoringImpact {
-    pub performance_delta: f64,    // Expected performance change (positive = faster)
+    pub performance_delta: f64, // Expected performance change (positive = faster)
     pub maintainability_delta: i8, // Maintainability improvement (-5 to +5 scale)
-    pub safety_score: u8,         // Safety/confidence score (0-100)
+    pub safety_score: u8,       // Safety/confidence score (0-100)
     pub risk_level: RiskLevel,
     pub affected_lines: u32,
     pub breaking_changes: bool,
@@ -154,11 +154,11 @@ pub enum RiskLevel {
 /// Effort required to migrate
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MigrationEffort {
-    Minimal,     // < 1 hour total
-    Low,         // 1-4 hours total
-    Medium,      // 4-8 hours total
-    High,        // 8+ hours total
-    Unknown,     // Cannot estimate
+    Minimal, // < 1 hour total
+    Low,     // 1-4 hours total
+    Medium,  // 4-8 hours total
+    High,    // 8+ hours total
+    Unknown, // Cannot estimate
 }
 
 /// Dependency relationship for refactorings
@@ -263,13 +263,22 @@ pub struct RefactoringMetrics {
 #[async_trait]
 pub trait RefactoringSafetyValidator: Send + Sync {
     /// Validate if a refactoring is safe to apply
-    async fn validate_safety(&self, suggestion: &RefactoringSuggestion) -> SecurityResult<SafetyAssessment>;
+    async fn validate_safety(
+        &self,
+        suggestion: &RefactoringSuggestion,
+    ) -> SecurityResult<SafetyAssessment>;
 
     /// Check for regressions after applying refactoring
-    async fn check_regressions(&self, applied_changes: &[EditOperation]) -> SecurityResult<Vec<Regression>>;
+    async fn check_regressions(
+        &self,
+        applied_changes: &[EditOperation],
+    ) -> SecurityResult<Vec<Regression>>;
 
     /// Assess performance impact of refactoring
-    async fn assess_performance_impact(&self, suggestion: &RefactoringSuggestion) -> SecurityResult<PerformanceImpact>;
+    async fn assess_performance_impact(
+        &self,
+        suggestion: &RefactoringSuggestion,
+    ) -> SecurityResult<PerformanceImpact>;
 }
 
 /// AI reasoning engine for intelligent refactoring
@@ -291,7 +300,10 @@ pub trait AIReasoningEngine: Send + Sync {
     ) -> SecurityResult<ImpactAnalysis>;
 
     /// Generate human-readable explanations
-    async fn explain_refactoring(&self, suggestion: &RefactoringSuggestion) -> SecurityResult<String>;
+    async fn explain_refactoring(
+        &self,
+        suggestion: &RefactoringSuggestion,
+    ) -> SecurityResult<String>;
 }
 
 /// Context information for refactoring analysis
@@ -368,10 +380,10 @@ pub enum RegressionSeverity {
 /// Performance impact analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceImpact {
-    pub expected_improvement: f64,  // Percentage improvement
-    pub risk_of_degradation: f64,   // Risk percentage
-    pub memory_usage_change: i64,   // Bytes change (negative = reduction)
-    pub cpu_usage_estimate: f64,    // Percentage change
+    pub expected_improvement: f64, // Percentage improvement
+    pub risk_of_degradation: f64,  // Risk percentage
+    pub memory_usage_change: i64,  // Bytes change (negative = reduction)
+    pub cpu_usage_estimate: f64,   // Percentage change
 }
 
 /// Detailed impact analysis
@@ -419,7 +431,11 @@ impl AutonomousRefactorer {
     }
 
     /// Generate refactoring suggestions for a file
-    pub async fn analyze_file(&self, file_path: &PathBuf, content: &str) -> SecurityResult<Vec<RefactoringSuggestion>> {
+    pub async fn analyze_file(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> SecurityResult<Vec<RefactoringSuggestion>> {
         let start_time = std::time::Instant::now();
 
         // Analyze code structure and complexity
@@ -429,14 +445,19 @@ impl AutonomousRefactorer {
         let mut suggestions = Vec::new();
 
         if let Some(ai_engine) = &self.ai_engine {
-            let ai_suggestions = ai_engine.generate_refactoring_suggestions(content, file_path, &context).await?;
+            let ai_suggestions = ai_engine
+                .generate_refactoring_suggestions(content, file_path, &context)
+                .await?;
             suggestions.extend(ai_suggestions);
         }
 
         // Apply safety validation
         for suggestion in &mut suggestions {
             let safety = self.safety_validator.validate_safety(suggestion).await?;
-            suggestion.validation_results.push(format!("Safety score: {:.1}%", safety.confidence_score * 100.0));
+            suggestion.validation_results.push(format!(
+                "Safety score: {:.1}%",
+                safety.confidence_score * 100.0
+            ));
 
             // Adjust confidence based on safety assessment
             if !safety.is_safe {
@@ -448,7 +469,9 @@ impl AutonomousRefactorer {
         suggestions.sort_by(|a, b| {
             let confidence_cmp = a.confidence.cmp(&b.confidence).reverse(); // High first
             if confidence_cmp == std::cmp::Ordering::Equal {
-                b.potential_impact.maintainability_delta.cmp(&a.potential_impact.maintainability_delta)
+                b.potential_impact
+                    .maintainability_delta
+                    .cmp(&a.potential_impact.maintainability_delta)
             } else {
                 confidence_cmp
             }
@@ -470,20 +493,28 @@ impl AutonomousRefactorer {
     }
 
     /// Apply a refactoring suggestion
-    pub async fn apply_refactoring(&self, suggestion_id: &str) -> SecurityResult<AppliedRefactoring> {
+    pub async fn apply_refactoring(
+        &self,
+        suggestion_id: &str,
+    ) -> SecurityResult<AppliedRefactoring> {
         // Find the suggestion in cache
         let cache = self.suggestion_cache.read().await;
-        let suggestion = cache.values()
+        let suggestion = cache
+            .values()
             .flatten()
             .find(|s| s.id == suggestion_id)
-            .ok_or_else(|| crate::SecurityError::ConfigurationError("Suggestion not found".to_string()))?
+            .ok_or_else(|| {
+                crate::SecurityError::ConfigurationError("Suggestion not found".to_string())
+            })?
             .clone();
 
         // Validate safety before applying
         let safety = self.safety_validator.validate_safety(&suggestion).await?;
 
         if !safety.is_safe && self.config.confidence_threshold == ConfidenceLevel::High {
-            return Err(crate::SecurityError::ConfigurationError("Refactoring deemed unsafe".to_string()));
+            return Err(crate::SecurityError::ConfigurationError(
+                "Refactoring deemed unsafe".to_string(),
+            ));
         }
 
         // Create session for tracking
@@ -495,7 +526,11 @@ impl AutonomousRefactorer {
             status: SessionStatus::Active,
             applied_suggestions: vec![suggestion_id.to_string()],
             failed_suggestions: vec![],
-            rollback_operations: suggestion.edit_operations.iter().map(|op| op.clone().invert()).collect(),
+            rollback_operations: suggestion
+                .edit_operations
+                .iter()
+                .map(|op| op.clone().invert())
+                .collect(),
             performance_metrics: HashMap::new(),
         };
 
@@ -504,7 +539,10 @@ impl AutonomousRefactorer {
 
         // Here we would actually apply the edit operations
         // For now, we simulate the application
-        info!("Applied refactoring: {} - {}", suggestion.title, suggestion.description);
+        info!(
+            "Applied refactoring: {} - {}",
+            suggestion.title, suggestion.description
+        );
 
         Ok(AppliedRefactoring {
             session_id,
@@ -516,7 +554,11 @@ impl AutonomousRefactorer {
     }
 
     /// Create a refactoring group from multiple suggestions
-    pub async fn create_refactoring_group(&self, suggestions: Vec<RefactoringSuggestion>, group_name: &str) -> SecurityResult<RefactoringGroup> {
+    pub async fn create_refactoring_group(
+        &self,
+        suggestions: Vec<RefactoringSuggestion>,
+        group_name: &str,
+    ) -> SecurityResult<RefactoringGroup> {
         // Analyze dependencies and create ordering constraints
         let mut constraints = Vec::new();
 
@@ -528,8 +570,13 @@ impl AutonomousRefactorer {
                     let suggestion_b = &suggestions[j];
 
                     // If suggestion_a affects the same file as suggestion_b depends on
-                    if suggestion_b.dependencies.iter().any(|dep| dep.reference == suggestion_a.file_path.to_string_lossy()) {
-                        if suggestion_a.refactoring_type != RefactoringType::ExtractFunction { // Extract functions first
+                    if suggestion_b
+                        .dependencies
+                        .iter()
+                        .any(|dep| dep.reference == suggestion_a.file_path.to_string_lossy())
+                    {
+                        if suggestion_a.refactoring_type != RefactoringType::ExtractFunction {
+                            // Extract functions first
                             constraints.push(OrderingConstraint {
                                 before_refactoring_id: suggestion_a.id.clone(),
                                 after_refactoring_id: suggestion_b.id.clone(),
@@ -542,7 +589,10 @@ impl AutonomousRefactorer {
         }
 
         // Estimate total effort
-        let total_complexity: u32 = suggestions.iter().map(|s| s.estimated_complexity as u32).sum();
+        let total_complexity: u32 = suggestions
+            .iter()
+            .map(|s| s.estimated_complexity as u32)
+            .sum();
         let estimated_effort = match total_complexity {
             0..=10 => MigrationEffort::Minimal,
             11..=30 => MigrationEffort::Low,
@@ -568,7 +618,11 @@ impl AutonomousRefactorer {
 
     // Private methods
 
-    async fn analyze_context(&self, file_path: &PathBuf, content: &str) -> SecurityResult<RefactoringContext> {
+    async fn analyze_context(
+        &self,
+        file_path: &PathBuf,
+        content: &str,
+    ) -> SecurityResult<RefactoringContext> {
         // Basic context analysis
         let language = self.detect_language(file_path, content);
         let framework_detected = self.detect_frameworks(content);
@@ -580,7 +634,8 @@ impl AutonomousRefactorer {
 
         Ok(RefactoringContext {
             language,
-            file_type: file_path.extension()
+            file_type: file_path
+                .extension()
                 .and_then(|e| e.to_str())
                 .unwrap_or("unknown")
                 .to_string(),
@@ -647,7 +702,7 @@ impl AutonomousRefactorer {
             nesting_depth: 0, // Would need AST analysis
             function_length_avg,
             duplicate_lines_percentage: 0.0, // Would need duplication analysis
-            maintainability_index: 80.0, // Placeholder
+            maintainability_index: 80.0,     // Placeholder
         }
     }
 
@@ -691,7 +746,10 @@ pub struct DefaultSafetyValidator;
 
 #[async_trait]
 impl RefactoringSafetyValidator for DefaultSafetyValidator {
-    async fn validate_safety(&self, suggestion: &RefactoringSuggestion) -> SecurityResult<SafetyAssessment> {
+    async fn validate_safety(
+        &self,
+        suggestion: &RefactoringSuggestion,
+    ) -> SecurityResult<SafetyAssessment> {
         let mut risk_factors = Vec::new();
 
         // Risk assessment based on refactoring type
@@ -734,12 +792,18 @@ impl RefactoringSafetyValidator for DefaultSafetyValidator {
         })
     }
 
-    async fn check_regressions(&self, _applied_changes: &[EditOperation]) -> SecurityResult<Vec<Regression>> {
+    async fn check_regressions(
+        &self,
+        _applied_changes: &[EditOperation],
+    ) -> SecurityResult<Vec<Regression>> {
         // In a real implementation, this would analyze the changes and run tests
         Ok(Vec::new())
     }
 
-    async fn assess_performance_impact(&self, suggestion: &RefactoringSuggestion) -> SecurityResult<PerformanceImpact> {
+    async fn assess_performance_impact(
+        &self,
+        suggestion: &RefactoringSuggestion,
+    ) -> SecurityResult<PerformanceImpact> {
         let expected_improvement = match suggestion.refactoring_type {
             RefactoringType::OptimizeLoops => 15.0,
             RefactoringType::MemoryOptimization => 10.0,
@@ -764,10 +828,7 @@ impl Default for AutonomousRefactorConfig {
             auto_apply_safe_changes: false,
             require_approval_for_medium_risk: true,
             batch_size_limit: 10,
-            exclude_patterns: vec![
-                "**/test/**".to_string(),
-                "**/node_modules/**".to_string(),
-            ],
+            exclude_patterns: vec!["**/test/**".to_string(), "**/node_modules/**".to_string()],
             max_impact_per_session: 100,
             enable_incremental_mode: true,
             backup_before_refactoring: true,
@@ -856,9 +917,21 @@ fn add_numbers(a: i32, b: i32) -> i32 {
 
     #[async_test]
     async fn test_refactoring_types_display() {
-        assert_eq!(format!("{}", RefactoringType::ExtractFunction), "Extract Function");
-        assert_eq!(format!("{}", RefactoringType::OptimizeLoops), "Optimize Loops");
-        assert_eq!(format!("{}", RefactoringType::SecureCoding), "Secure Coding");
-        assert_eq!(format!("{}", RefactoringType::AddTypeHints), "Add Type Hints");
+        assert_eq!(
+            format!("{}", RefactoringType::ExtractFunction),
+            "Extract Function"
+        );
+        assert_eq!(
+            format!("{}", RefactoringType::OptimizeLoops),
+            "Optimize Loops"
+        );
+        assert_eq!(
+            format!("{}", RefactoringType::SecureCoding),
+            "Secure Coding"
+        );
+        assert_eq!(
+            format!("{}", RefactoringType::AddTypeHints),
+            "Add Type Hints"
+        );
     }
 }

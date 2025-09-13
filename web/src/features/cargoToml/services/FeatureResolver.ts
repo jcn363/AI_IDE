@@ -51,7 +51,7 @@ export const resolveFeatureDependencies = (
   nodes: DependencyNode[],
   links: DependencyLink[],
   featureNodes: Map<string, DependencyNode>,
-  crateNodes: Map<string, DependencyNode>,
+  crateNodes: Map<string, DependencyNode>
 ) => {
   // First pass: Build a map of feature requirements
   const featureRequirements = new Map<string, Set<string>>();
@@ -68,14 +68,19 @@ export const resolveFeatureDependencies = (
     type FeatureEntry = string | { name: string; requires?: string[] };
 
     // Get feature requirements from Cargo.toml
-    const featureDef = crateNode.features?.find(f => {
+    const featureDef = crateNode.features?.find((f) => {
       if (typeof f === 'string') {
         return f === featureNode.name;
       }
       return f?.name === featureNode.name;
     });
 
-    if (featureDef && typeof featureDef === 'object' && 'requires' in featureDef && Array.isArray(featureDef.requires)) {
+    if (
+      featureDef &&
+      typeof featureDef === 'object' &&
+      'requires' in featureDef &&
+      Array.isArray(featureDef.requires)
+    ) {
       featureRequirements.set(featureId, new Set(featureDef.requires));
     }
   });
@@ -86,7 +91,7 @@ export const resolveFeatureDependencies = (
     const crateNode = crateNodes.get(crateId);
     if (!crateNode) return;
 
-    requiredFeatures.forEach(requiredFeature => {
+    requiredFeatures.forEach((requiredFeature) => {
       // Check if the required feature is a direct feature of the same crate
       const targetFeatureId = `${crateId}#${requiredFeature}`;
       if (featureNodes.has(targetFeatureId)) {
@@ -101,10 +106,11 @@ export const resolveFeatureDependencies = (
       }
 
       // Check if it's a feature from a dependency
-      const depLink = links.find(link =>
-        link.source === crateId &&
-        link.type === 'depends' &&
-        (link.target as string).startsWith(requiredFeature.split('=')[0]),
+      const depLink = links.find(
+        (link) =>
+          link.source === crateId &&
+          link.type === 'depends' &&
+          (link.target as string).startsWith(requiredFeature.split('=')[0])
       );
 
       if (depLink) {
@@ -126,14 +132,14 @@ export const resolveFeatureDependencies = (
   });
 
   // Third pass: Resolve default features
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     if (node.type === 'crate' && node.features?.length) {
       const defaultFeatures = node.features.filter((f): f is Feature => {
         if (typeof f === 'string') return false;
         return f !== null && typeof f === 'object' && 'default' in f && f.default === true;
       });
 
-      defaultFeatures.forEach(feature => {
+      defaultFeatures.forEach((feature) => {
         const featureName = typeof feature === 'string' ? feature : feature.name || '';
         const featureId = `${node.id}#${featureName}`;
 
@@ -156,7 +162,7 @@ export const resolveFeatureDependencies = (
  */
 export const resolveFeaturesToRecord = (features: Feature[]): Record<string, boolean> => {
   const resolved: Record<string, boolean> = {};
-  features.forEach(feature => {
+  features.forEach((feature) => {
     if (typeof feature === 'string') {
       resolved[feature] = true;
     } else if (typeof feature === 'object' && feature.name) {
@@ -185,7 +191,9 @@ export const isFeatureEnabled = (
   const featureDef = featureDefinitions[featureName] as FeatureDefinition;
   if (featureDef.requires) {
     // Feature is enabled only if all required features are also enabled
-    return featureDef.requires.every(dep => isFeatureEnabled(dep, enabledFeatures, featureDefinitions));
+    return featureDef.requires.every((dep) =>
+      isFeatureEnabled(dep, enabledFeatures, featureDefinitions)
+    );
   }
 
   return enabledFeatures.includes(featureName);

@@ -12,7 +12,7 @@ const loggerMiddleware: Middleware = (store) => (next) => (action: unknown) => {
 
   const startTime = Date.now();
   const prevState = store.getState();
-  
+
   // Type guard to check if action has the expected shape
   const isAction = (a: unknown): a is { type: string; payload?: unknown; meta?: unknown } => {
     return a !== null && typeof a === 'object' && 'type' in a;
@@ -32,11 +32,11 @@ const loggerMiddleware: Middleware = (store) => (next) => (action: unknown) => {
 
   // Call the next dispatch method in the middleware chain
   const result = next(action);
-  
+
   const endTime = Date.now();
   const nextState = store.getState();
   const duration = endTime - startTime;
-  
+
   // Log state changes
   if (process.env.NODE_ENV === 'development' && isAction(action)) {
     debug('State changed:', {

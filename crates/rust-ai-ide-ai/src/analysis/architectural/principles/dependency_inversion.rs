@@ -176,7 +176,7 @@ mod tests {
             struct Service {
                 repository: ConcreteRepository,
             }
-            
+
             struct ConcreteRepository;
         "#;
 

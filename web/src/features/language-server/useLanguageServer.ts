@@ -7,13 +7,18 @@ declare global {
     (message?: string): Error;
     readonly prototype: Error;
   }
-  
+
   interface PromiseConstructor {
-    new <T>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T>;
+    new <T>(
+      executor: (
+        resolve: (value: T | PromiseLike<T>) => void,
+        reject: (reason?: any) => void
+      ) => void
+    ): Promise<T>;
     all<T>(values: Iterable<T | PromiseLike<T>>): Promise<T[]>;
     // Add other Promise methods as needed
   }
-  
+
   var Promise: PromiseConstructor;
 }
 
@@ -56,14 +61,14 @@ export function useLanguageServer(): LanguageServerState {
     } catch (err) {
       console.error('Failed to restart language server:', err);
       const error = err instanceof Error ? err : new Error('Failed to restart language server');
-      setState(prev => ({ ...prev, error }));
+      setState((prev) => ({ ...prev, error }));
       return false;
     }
   }, [startServer]);
 
   useEffect(() => {
     let isMounted = true;
-    
+
     startServer();
 
     return () => {

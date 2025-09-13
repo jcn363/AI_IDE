@@ -93,7 +93,8 @@ impl DependencyTracker {
 
         // Add new dependencies
         for dep in &dependencies {
-            reverse_graph.entry(dep.clone())
+            reverse_graph
+                .entry(dep.clone())
                 .or_insert_with(HashSet::new)
                 .insert(file.clone());
         }
@@ -105,7 +106,8 @@ impl DependencyTracker {
         let mut visited = HashSet::new();
         visited.insert(file.clone());
 
-        self.collect_dependents_recursive(file, &mut result, &mut visited, 0, max_depth).await;
+        self.collect_dependents_recursive(file, &mut result, &mut visited, 0, max_depth)
+            .await;
 
         result
     }
@@ -116,7 +118,7 @@ impl DependencyTracker {
         result: &mut HashSet<PathBuf>,
         visited: &mut HashSet<PathBuf>,
         current_depth: usize,
-        max_depth: usize
+        max_depth: usize,
     ) -> impl std::future::Future<Output = ()> + '_ {
         async move {
             if current_depth >= max_depth {
@@ -132,8 +134,9 @@ impl DependencyTracker {
                             result,
                             visited,
                             current_depth + 1,
-                            max_depth
-                        ).await;
+                            max_depth,
+                        )
+                        .await;
                     }
                 }
             }
@@ -143,7 +146,9 @@ impl DependencyTracker {
     /// Record access pattern for a file
     pub async fn record_access(&self, file: PathBuf) {
         let mut patterns = self.access_patterns.write().await;
-        let deque = patterns.entry(file).or_insert_with(|| VecDeque::with_capacity(10));
+        let deque = patterns
+            .entry(file)
+            .or_insert_with(|| VecDeque::with_capacity(10));
 
         deque.push_back(chrono::Utc::now());
         if deque.len() > 10 {
@@ -203,7 +208,8 @@ impl PredictivePreloader {
     /// Get files that should be preloaded based on predictions
     pub async fn get_preload_candidates(&self, batch_size: usize) -> Vec<PathBuf> {
         let predictions = self.loading_predictions.read().await;
-        let mut candidates: Vec<(PathBuf, f64)> = predictions.iter()
+        let mut candidates: Vec<(PathBuf, f64)> = predictions
+            .iter()
             .map(|(path, score)| (path.clone(), *score))
             .collect();
 
@@ -211,7 +217,8 @@ impl PredictivePreloader {
         candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
 
         // Return top candidates
-        candidates.into_iter()
+        candidates
+            .into_iter()
             .take(batch_size)
             .map(|(path, _)| path)
             .collect()
@@ -227,7 +234,9 @@ impl PredictivePreloader {
             // Calculate access frequencies and patterns
             let mut file_counts = HashMap::new();
             for (file, time) in accesses.iter() {
-                let entry = file_counts.entry(file.clone()).or_insert((0usize, Vec::new()));
+                let entry = file_counts
+                    .entry(file.clone())
+                    .or_insert((0usize, Vec::new()));
                 entry.0 += 1;
                 entry.1.push(time.timestamp() as f64);
             }
@@ -243,8 +252,11 @@ impl PredictivePreloader {
                 score += (count as f64) * 0.4;
 
                 // Recency score (more recent = higher score)
-                if let Some(last_timestamp) = timestamps.iter().max_by(|a, b| a.partial_cmp(b).unwrap()) {
-                    let hours_since_access = (current_time.timestamp() as f64 - last_timestamp) / 3600.0;
+                if let Some(last_timestamp) =
+                    timestamps.iter().max_by(|a, b| a.partial_cmp(b).unwrap())
+                {
+                    let hours_since_access =
+                        (current_time.timestamp() as f64 - last_timestamp) / 3600.0;
                     let recency_bonus = (24.0 / (1.0 + hours_since_access)).clamp(0.0, 1.0);
                     score += recency_bonus * 0.6;
                 }
@@ -282,14 +294,21 @@ impl AdaptiveTTLCalculator {
 
             // Calculate average time between accesses
             let timestamps: Vec<i64> = accesses.iter().map(|t| t.timestamp()).collect();
-            let intervals: Vec<i64> = timestamps.windows(2)
-                .map(|w| w[1] - w[0])
-                .collect();
+            let intervals: Vec<i64> = timestamps.windows(2).map(|w| w[1] - w[0]).collect();
 
-            if let Some(avg_interval) = intervals.iter().sum::<i64>().checked_div(intervals.len() as i64) {
+            if let Some(avg_interval) = intervals
+                .iter()
+                .sum::<i64>()
+                .checked_div(intervals.len() as i64)
+            {
                 // Set TTL to 3x the average interval, but clamp between 1 minute and 7 days
                 let calculated_ttl = (avg_interval * 3).clamp(60, 604800);
-                debug!("Calculated TTL for {}: {} seconds (avg interval: {})", file.display(), calculated_ttl, avg_interval);
+                debug!(
+                    "Calculated TTL for {}: {} seconds (avg interval: {})",
+                    file.display(),
+                    calculated_ttl,
+                    avg_interval
+                );
                 calculated_ttl as u64
             } else {
                 default_ttl
@@ -302,7 +321,9 @@ impl AdaptiveTTLCalculator {
     /// Record access for TTL calculation
     pub async fn record_access(&self, file: PathBuf) {
         let mut patterns = self.access_patterns.write().await;
-        let deque = patterns.entry(file).or_insert_with(|| VecDeque::with_capacity(20));
+        let deque = patterns
+            .entry(file)
+            .or_insert_with(|| VecDeque::with_capacity(20));
 
         deque.push_back(chrono::Utc::now());
         if deque.len() > 20 {
@@ -373,7 +394,13 @@ where
                     if let Ok(Some(value)) = cache.get(key).await {
                         // Promote to memory
                         if let Some(ref mem_cache) = self.memory_cache {
-                            let _ = mem_cache.insert(key.clone(), value.clone(), Some(std::time::Duration::from_secs(300))).await;
+                            let _ = mem_cache
+                                .insert(
+                                    key.clone(),
+                                    value.clone(),
+                                    Some(std::time::Duration::from_secs(300)),
+                                )
+                                .await;
                         }
                         return Some(value);
                     }
@@ -386,7 +413,13 @@ where
                     if let Ok(Some(value)) = cache.get(key).await {
                         // Promote to memory
                         if let Some(ref mem_cache) = self.memory_cache {
-                            let _ = mem_cache.insert(key.clone(), value.clone(), Some(std::time::Duration::from_secs(300))).await;
+                            let _ = mem_cache
+                                .insert(
+                                    key.clone(),
+                                    value.clone(),
+                                    Some(std::time::Duration::from_secs(300)),
+                                )
+                                .await;
                         }
                         return Some(value);
                     }
@@ -411,7 +444,13 @@ where
                     if let Ok(Some(value)) = cache.get(key).await {
                         // Promote to memory
                         if let Some(ref mem_cache) = self.memory_cache {
-                            let _ = mem_cache.insert(key.clone(), value.clone(), Some(std::time::Duration::from_secs(600))).await;
+                            let _ = mem_cache
+                                .insert(
+                                    key.clone(),
+                                    value.clone(),
+                                    Some(std::time::Duration::from_secs(600)),
+                                )
+                                .await;
                         }
                         return Some(value);
                     }

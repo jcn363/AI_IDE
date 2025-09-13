@@ -12,7 +12,7 @@ export const PresenceIndicator: React.FC<PresenceIndicatorProps> = ({
   const getInitials = (name: string) => {
     return name
       .split(' ')
-      .map(n => n[0])
+      .map((n) => n[0])
       .join('')
       .toUpperCase()
       .slice(0, 2);

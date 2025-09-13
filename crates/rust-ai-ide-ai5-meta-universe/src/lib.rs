@@ -4,14 +4,14 @@
 //! systems for coordinating development across infinite parallel universes,
 //! quantum states, and consciousness dimensions.
 
+use chrono::{DateTime, Utc};
+use ndarray::{Array2, Array3};
+use petgraph::Graph;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use petgraph::Graph;
-use ndarray::{Array2, Array3};
 
 /// Hyper-dimensional project management system
 pub struct MetaUniverseOrchestrator {
@@ -42,7 +42,8 @@ impl MetaUniverseOrchestrator {
         let project_id = self.initialize_quantum_project(project).await?;
 
         // Distribute across dimensions
-        self.distribute_across_dimensions(project_id, project).await?;
+        self.distribute_across_dimensions(project_id, project)
+            .await?;
 
         // Establish quantum entanglement
         self.establish_quantum_entanglement(project_id).await?;
@@ -59,7 +60,10 @@ impl MetaUniverseOrchestrator {
         })
     }
 
-    async fn initialize_quantum_project(&self, project: &HyperdimensionalProject) -> Result<Uuid, MetaUniverseError> {
+    async fn initialize_quantum_project(
+        &self,
+        project: &HyperdimensionalProject,
+    ) -> Result<Uuid, MetaUniverseError> {
         let project_id = Uuid::new_v4();
 
         // Initialize dimension graph for project
@@ -70,31 +74,51 @@ impl MetaUniverseOrchestrator {
 
         // Initialize quantum workflow
         let mut workflow = self.quantum_workflow_engine.write().await;
-        workflow.initialize_workflows(project_id, &project.tasks).await?;
+        workflow
+            .initialize_workflows(project_id, &project.tasks)
+            .await?;
 
         Ok(project_id)
     }
 
-    async fn distribute_across_dimensions(&self, project_id: Uuid, project: &HyperdimensionalProject) -> Result<(), MetaUniverseError> {
+    async fn distribute_across_dimensions(
+        &self,
+        project_id: Uuid,
+        project: &HyperdimensionalProject,
+    ) -> Result<(), MetaUniverseError> {
         let coordinator = self.multiverse_coordinator.read().await;
 
         // Distribute project components across realities
         for (i, dimension) in project.dimensions.iter().enumerate() {
-            coordinator.distribute_component(project_id, i, dimension).await?;
+            coordinator
+                .distribute_component(project_id, i, dimension)
+                .await?;
         }
 
-        log::debug!("Distributed project across {} dimensions", project.dimensions.len());
+        log::debug!(
+            "Distributed project across {} dimensions",
+            project.dimensions.len()
+        );
         Ok(())
     }
 
-    async fn establish_quantum_entanglement(&self, project_id: Uuid) -> Result<(), MetaUniverseError> {
+    async fn establish_quantum_entanglement(
+        &self,
+        project_id: Uuid,
+    ) -> Result<(), MetaUniverseError> {
         let coordinator = self.multiverse_coordinator.read().await;
         coordinator.create_entanglement_network(project_id).await?;
-        log::debug!("Established quantum entanglement network for project {}", project_id);
+        log::debug!(
+            "Established quantum entanglement network for project {}",
+            project_id
+        );
         Ok(())
     }
 
-    async fn initialize_predictive_monitoring(&self, project_id: Uuid) -> Result<(), MetaUniverseError> {
+    async fn initialize_predictive_monitoring(
+        &self,
+        project_id: Uuid,
+    ) -> Result<(), MetaUniverseError> {
         let analytics = self.predictive_analytics.read().await;
         analytics.start_monitoring(project_id).await?;
         log::debug!("Started predictive monitoring for project {}", project_id);
@@ -181,19 +205,32 @@ impl DimensionGraph {
 
     pub fn add_dimension(&mut self, dimension: Dimension) -> Result<(), MetaUniverseError> {
         let node_idx = self.graph.add_node(dimension.clone());
-        self.dimensional_coordinates.insert(
-            dimension.id,
-            vec![0.0; dimension.dimensionality],
-        );
+        self.dimensional_coordinates
+            .insert(dimension.id, vec![0.0; dimension.dimensionality]);
 
-        log::debug!("Added dimension {} to graph with {} dimensions", dimension.name, dimension.dimensionality);
+        log::debug!(
+            "Added dimension {} to graph with {} dimensions",
+            dimension.name,
+            dimension.dimensionality
+        );
         Ok(())
     }
 
-    pub fn connect_dimensions(&mut self, dim_a: Uuid, dim_b: Uuid, edge: DimensionEdge) -> Result<(), MetaUniverseError> {
+    pub fn connect_dimensions(
+        &mut self,
+        dim_a: Uuid,
+        dim_b: Uuid,
+        edge: DimensionEdge,
+    ) -> Result<(), MetaUniverseError> {
         // Find node indices
-        let node_a = self.graph.node_indices().find(|&idx| self.graph[idx].id == dim_a);
-        let node_b = self.graph.node_indices().find(|&idx| self.graph[idx].id == dim_b);
+        let node_a = self
+            .graph
+            .node_indices()
+            .find(|&idx| self.graph[idx].id == dim_a);
+        let node_b = self
+            .graph
+            .node_indices()
+            .find(|&idx| self.graph[idx].id == dim_b);
 
         if let (Some(a), Some(b)) = (node_a, node_b) {
             self.graph.add_edge(a, b, edge);
@@ -230,7 +267,11 @@ impl QuantumWorkflowEngine {
         }
     }
 
-    pub async fn initialize_workflows(&mut self, project_id: Uuid, tasks: &[HyperTask]) -> Result<(), MetaUniverseError> {
+    pub async fn initialize_workflows(
+        &mut self,
+        project_id: Uuid,
+        tasks: &[HyperTask],
+    ) -> Result<(), MetaUniverseError> {
         let workflow_id = Uuid::new_v4();
         let workflow = QuantumWorkflow {
             id: workflow_id,
@@ -259,14 +300,18 @@ impl QuantumWorkflowEngine {
         Ok(())
     }
 
-    async fn execute_quantum_parallel(&self, workflow: &mut QuantumWorkflow) -> Result<(), MetaUniverseError> {
+    async fn execute_quantum_parallel(
+        &self,
+        workflow: &mut QuantumWorkflow,
+    ) -> Result<(), MetaUniverseError> {
         // Implement quantum parallel execution
         let futures = workflow.tasks.iter().map(|task| {
             async move {
                 // Simulate task execution with quantum speedup
                 tokio::time::sleep(tokio::time::Duration::from_millis(
                     (task.predicted_duration.as_millis() as f64 * 0.5) as u64, // 50% quantum speedup
-                )).await;
+                ))
+                .await;
                 log::debug!("Executed task: {}", task.task_description);
             }
         });
@@ -324,7 +369,12 @@ impl MultiverseCoordinator {
         }
     }
 
-    pub async fn distribute_component(&self, project_id: Uuid, dimension_index: usize, dimension: &Dimension) -> Result<(), MetaUniverseError> {
+    pub async fn distribute_component(
+        &self,
+        project_id: Uuid,
+        dimension_index: usize,
+        dimension: &Dimension,
+    ) -> Result<(), MetaUniverseError> {
         let reality_node = RealityNode {
             id: Uuid::new_v4(),
             project_id,
@@ -341,7 +391,10 @@ impl MultiverseCoordinator {
         Ok(())
     }
 
-    pub async fn create_entanglement_network(&self, project_id: Uuid) -> Result<(), MetaUniverseError> {
+    pub async fn create_entanglement_network(
+        &self,
+        project_id: Uuid,
+    ) -> Result<(), MetaUniverseError> {
         // Create quantum entanglement network
         self.entanglement_network.insert(project_id, vec![]);
         log::debug!("Created entanglement network for project {}", project_id);
@@ -377,7 +430,11 @@ impl CrossRealityCommunicator {
         }
     }
 
-    pub async fn send_message(&self, _target_reality: Uuid, _message: String) -> Result<(), MetaUniverseError> {
+    pub async fn send_message(
+        &self,
+        _target_reality: Uuid,
+        _message: String,
+    ) -> Result<(), MetaUniverseError> {
         // Implement cross-reality communication
         Ok(())
     }
@@ -412,7 +469,10 @@ impl PredictiveAnalyticsEngine {
         Ok(())
     }
 
-    pub async fn predict_evolution(&self, _current_state: &ProjectState) -> Result<PredictionResult, MetaUniverseError> {
+    pub async fn predict_evolution(
+        &self,
+        _current_state: &ProjectState,
+    ) -> Result<PredictionResult, MetaUniverseError> {
         // Generate quantum-powered predictions
         Ok(PredictionResult {
             predicted_completion: Utc::now() + chrono::Duration::days(30),
@@ -540,16 +600,14 @@ mod tests {
     async fn test_hyperdimensional_project_creation() {
         let project = HyperdimensionalProject {
             project_name: "Quantum IDE".to_string(),
-            dimensions: vec![
-                Dimension {
-                    id: Uuid::new_v4(),
-                    name: "Physical".to_string(),
-                    dimensionality: 3,
-                    quantum_signature: vec![1.0, 0.0, 0.0],
-                    consciousness_level: 0.8,
-                    reality_type: RealityType::Physical,
-                }
-            ],
+            dimensions: vec![Dimension {
+                id: Uuid::new_v4(),
+                name: "Physical".to_string(),
+                dimensionality: 3,
+                quantum_signature: vec![1.0, 0.0, 0.0],
+                consciousness_level: 0.8,
+                reality_type: RealityType::Physical,
+            }],
             tasks: vec![],
             quantum_constraints: vec![],
             consciousness_requirements: vec![],
@@ -578,19 +636,20 @@ mod tests {
     async fn test_quantum_workflow_execution() {
         let mut workflow_engine = QuantumWorkflowEngine::new();
         let project_id = Uuid::new_v4();
-        let tasks = vec![
-            HyperTask {
-                id: Uuid::new_v4(),
-                task_description: "Implement quantum compiler".to_string(),
-                dependencies: vec![],
-                dimensional_requirements: vec!["quantum".to_string()],
-                quantum_complexity: 0.8,
-                consciousness_demand: 0.7,
-                predicted_duration: std::time::Duration::from_secs(120),
-            }
-        ];
+        let tasks = vec![HyperTask {
+            id: Uuid::new_v4(),
+            task_description: "Implement quantum compiler".to_string(),
+            dependencies: vec![],
+            dimensional_requirements: vec!["quantum".to_string()],
+            quantum_complexity: 0.8,
+            consciousness_demand: 0.7,
+            predicted_duration: std::time::Duration::from_secs(120),
+        }];
 
-        workflow_engine.initialize_workflows(project_id, &tasks).await.unwrap();
+        workflow_engine
+            .initialize_workflows(project_id, &tasks)
+            .await
+            .unwrap();
         assert_eq!(workflow_engine.active_workflows.len(), 1);
     }
 

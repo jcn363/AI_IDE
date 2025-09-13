@@ -7,8 +7,8 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
+use super::models::{LearnedPattern, LearningPreferences};
 use super::types::LearningResult;
-use super::models::{LearningPreferences, LearnedPattern};
 
 /// Performance metrics collector
 #[derive(Debug, Clone)]
@@ -78,8 +78,16 @@ impl std::fmt::Display for PerformanceMetrics {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Performance Metrics:\n")?;
         write!(f, "  Operations: {}\n", self.operation_count)?;
-        write!(f, "  Total Time: {:.2}s\n", self.total_duration.as_secs_f64())?;
-        write!(f, "  Average Time: {:.2}ms\n", self.average_duration.as_millis())?;
+        write!(
+            f,
+            "  Total Time: {:.2}s\n",
+            self.total_duration.as_secs_f64()
+        )?;
+        write!(
+            f,
+            "  Average Time: {:.2}ms\n",
+            self.average_duration.as_millis()
+        )?;
         write!(f, "  Min Time: {:.2}ms\n", self.min_duration.as_millis())?;
         write!(f, "  Max Time: {:.2}ms\n", self.max_duration.as_millis())?;
         write!(f, "  Success Rate: {:.1}%\n", self.success_rate() * 100.0)?;
@@ -115,7 +123,9 @@ impl PerformanceProfiler {
             let duration = start_time.elapsed();
             let operation_name = operation_name.to_string();
 
-            let operation_metrics = metrics.entry(operation_name).or_insert_with(PerformanceMetrics::new);
+            let operation_metrics = metrics
+                .entry(operation_name)
+                .or_insert_with(PerformanceMetrics::new);
             operation_metrics.record_operation(duration, success);
         }
     }
@@ -208,8 +218,10 @@ impl MemoryProfiler {
         println!("  Initial: {} bytes", self.initial_memory);
         println!("  Peak: {} bytes", self.peak_memory);
         println!("  Current: {} bytes", self.current_memory);
-        println!("  Memory Growth: {} bytes",
-                 self.current_memory as isize - self.initial_memory as isize);
+        println!(
+            "  Memory Growth: {} bytes",
+            self.current_memory as isize - self.initial_memory as isize
+        );
     }
 }
 
@@ -236,8 +248,12 @@ impl AdvancedProfiler {
         let result = f();
 
         match &result {
-            Ok(_) => self.performance_profiler.end_operation(operation_name, true),
-            Err(_) => self.performance_profiler.end_operation(operation_name, false),
+            Ok(_) => self
+                .performance_profiler
+                .end_operation(operation_name, true),
+            Err(_) => self
+                .performance_profiler
+                .end_operation(operation_name, false),
         }
 
         result
@@ -303,9 +319,9 @@ impl Default for HealthThresholds {
     fn default() -> Self {
         Self {
             max_average_response_time_ms: 1000, // 1 second
-            min_success_rate: 0.95, // 95% success rate
-            max_error_rate: 0.05,  // 5% error rate
-            max_memory_usage_mb: 100, // 100MB
+            min_success_rate: 0.95,             // 95% success rate
+            max_error_rate: 0.05,               // 5% error rate
+            max_memory_usage_mb: 100,           // 100MB
         }
     }
 }
@@ -319,7 +335,10 @@ impl SystemHealthChecker {
     }
 
     pub fn check_system_health(&self, operation_name: &str) -> HealthStatus {
-        let metrics = self.profiler.performance_profiler.get_metrics(operation_name);
+        let metrics = self
+            .profiler
+            .performance_profiler
+            .get_metrics(operation_name);
 
         match metrics {
             Some(metrics) => {
@@ -333,8 +352,7 @@ impl SystemHealthChecker {
                 if avg_response_time > self.warning_thresholds.max_average_response_time_ms {
                     critical_issues.push(format!(
                         "Response time too high: {} ms > {} ms",
-                        avg_response_time,
-                        self.warning_thresholds.max_average_response_time_ms
+                        avg_response_time, self.warning_thresholds.max_average_response_time_ms
                     ));
                 }
 
@@ -417,23 +435,29 @@ pub async fn run_performance_test() -> LearningResult<()> {
 
     for i in 0..100 {
         // Simulate database operations
-        let _result = profiler.profile("database_operation", || {
-            // Simulate some work
-            std::thread::sleep(std::time::Duration::from_micros((i % 10) as u64 * 100));
-            Ok(())
-        }).unwrap();
+        let _result = profiler
+            .profile("database_operation", || {
+                // Simulate some work
+                std::thread::sleep(std::time::Duration::from_micros((i % 10) as u64 * 100));
+                Ok(())
+            })
+            .unwrap();
     }
 
     // Simulate similarity searches
     for i in 0..50 {
-        let _result = profiler.profile("similarity_search", || {
-            std::thread::sleep(std::time::Duration::from_micros((i % 5) as u64 * 200));
-            if i % 10 == 0 {
-                Err(super::types::LearningError::ConfigurationError("Simulated error".to_string()))
-            } else {
-                Ok(())
-            }
-        }).unwrap_err();  // Should handle errors properly
+        let _result = profiler
+            .profile("similarity_search", || {
+                std::thread::sleep(std::time::Duration::from_micros((i % 5) as u64 * 200));
+                if i % 10 == 0 {
+                    Err(super::types::LearningError::ConfigurationError(
+                        "Simulated error".to_string(),
+                    ))
+                } else {
+                    Ok(())
+                }
+            })
+            .unwrap_err(); // Should handle errors properly
     }
 
     println!("\n=== Performance Test Results ===");
@@ -447,7 +471,10 @@ pub async fn run_performance_test() -> LearningResult<()> {
 
 /// Quick performance test runner
 pub fn run_quick_performance_test(db_size: usize, query_count: usize) {
-    println!("Quick Performance Test: {} patterns, {} queries", db_size, query_count);
+    println!(
+        "Quick Performance Test: {} patterns, {} queries",
+        db_size, query_count
+    );
 
     // This would be implemented with actual learning system operations
     println!("✅ Performance test framework initialized");
@@ -473,7 +500,9 @@ mod tests {
 
         assert!(result.is_ok());
 
-        let metrics = profiler.get_performance_profiler().get_metrics("test_operation");
+        let metrics = profiler
+            .get_performance_profiler()
+            .get_metrics("test_operation");
         assert!(metrics.is_some());
         assert_eq!(metrics.unwrap().operation_count, 1);
     }
@@ -484,10 +513,12 @@ mod tests {
         let health_checker = SystemHealthChecker::new(Arc::clone(&profiler));
 
         // Add some test data
-        profiler.profile("test_op", || {
-            std::thread::sleep(std::time::Duration::from_millis(1));
-            Ok(())
-        }).unwrap();
+        profiler
+            .profile("test_op", || {
+                std::thread::sleep(std::time::Duration::from_millis(1));
+                Ok(())
+            })
+            .unwrap();
 
         let status = health_checker.check_system_health("test_op");
         match status {
@@ -507,7 +538,9 @@ mod tests {
             Ok(())
         });
 
-        let metrics = profiler.get_performance_profiler().get_metrics("async_operation");
+        let metrics = profiler
+            .get_performance_profiler()
+            .get_metrics("async_operation");
         assert!(metrics.is_some());
         assert!(metrics.unwrap().average_duration.as_millis() >= 5);
     }

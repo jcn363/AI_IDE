@@ -101,13 +101,7 @@ const aiProviders = [
   { value: 'ollama', label: 'Ollama' },
 ];
 
-const openaiModels = [
-  'gpt-4',
-  'gpt-4-turbo',
-  'gpt-3.5-turbo',
-  'gpt-4o',
-  'gpt-4o-mini',
-];
+const openaiModels = ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo', 'gpt-4o', 'gpt-4o-mini'];
 
 const analysisFrequencies = [
   { value: 'realtime', label: 'Real-time (as you type)' },
@@ -117,15 +111,9 @@ const analysisFrequencies = [
 
 export function Settings() {
   const dispatch = useAppDispatch();
-  const {
-    theme,
-    fontSize,
-    fontFamily,
-    wordWrap,
-    minimap,
-    lineNumbers,
-    tabSize,
-  } = useAppSelector((state) => state.editor);
+  const { theme, fontSize, fontFamily, wordWrap, minimap, lineNumbers, tabSize } = useAppSelector(
+    (state) => state.editor
+  );
 
   const [localFontSize, setLocalFontSize] = useState(fontSize);
   const [localTabSize, setLocalTabSize] = useState(tabSize);
@@ -198,40 +186,40 @@ export function Settings() {
   // AI Configuration Handlers
   const validateAIConfig = useCallback((config: AIAnalysisConfig): string[] => {
     const errors: string[] = [];
-    
+
     if (config.enabled) {
       if (config.provider === 'openai' && !config.apiKey.trim()) {
         errors.push('OpenAI API key is required when OpenAI provider is selected');
       }
-      
+
       if (config.provider === 'openai' && config.apiKey.length < 32) {
         errors.push('OpenAI API key appears to be invalid (too short)');
       }
-      
+
       if (!config.model.trim()) {
         errors.push('Model selection is required');
       }
-      
+
       if (!config.endpoint.trim() || !config.endpoint.startsWith('http')) {
         errors.push('Valid endpoint URL is required');
       }
-      
+
       if (config.timeout < 5000 || config.timeout > 300000) {
         errors.push('Timeout must be between 5 and 300 seconds');
       }
-      
+
       if (config.maxSuggestions < 1 || config.maxSuggestions > 200) {
         errors.push('Max suggestions must be between 1 and 200');
       }
     }
-    
+
     return errors;
   }, []);
 
   const saveAIConfig = useCallback(() => {
     const errors = validateAIConfig(aiConfig);
     setValidationErrors(errors);
-    
+
     if (errors.length === 0) {
       // Store non-sensitive config in localStorage
       const configToStore = { ...aiConfig };
@@ -240,38 +228,46 @@ export function Settings() {
         // In production, you'd want to use secure storage or send to backend
         configToStore.apiKey = '***STORED_SECURELY***';
       }
-      
+
       localStorage.setItem('ai-analysis-config', JSON.stringify(configToStore));
       setConfigSaved(true);
       setTimeout(() => setConfigSaved(false), 3000);
-      
+
       // Dispatch event to notify other components of config change
-      (globalThis as any).dispatchEvent?.(new CustomEvent('ai-config-changed', { detail: aiConfig }));
+      (globalThis as any).dispatchEvent?.(
+        new CustomEvent('ai-config-changed', { detail: aiConfig })
+      );
     }
   }, [aiConfig, validateAIConfig]);
 
   const updateAIConfig = useCallback((updates: Partial<AIAnalysisConfig>) => {
-    setAiConfig(prev => ({ ...prev, ...updates }));
+    setAiConfig((prev) => ({ ...prev, ...updates }));
     setConfigSaved(false);
   }, []);
 
-  const updateAICategory = useCallback((category: keyof AIAnalysisConfig['enabledCategories'], enabled: boolean) => {
-    updateAIConfig({
-      enabledCategories: {
-        ...aiConfig.enabledCategories,
-        [category]: enabled,
-      },
-    });
-  }, [aiConfig.enabledCategories, updateAIConfig]);
+  const updateAICategory = useCallback(
+    (category: keyof AIAnalysisConfig['enabledCategories'], enabled: boolean) => {
+      updateAIConfig({
+        enabledCategories: {
+          ...aiConfig.enabledCategories,
+          [category]: enabled,
+        },
+      });
+    },
+    [aiConfig.enabledCategories, updateAIConfig]
+  );
 
-  const updateSeverityThreshold = useCallback((severity: keyof AIAnalysisConfig['severityThresholds'], value: number) => {
-    updateAIConfig({
-      severityThresholds: {
-        ...aiConfig.severityThresholds,
-        [severity]: value,
-      },
-    });
-  }, [aiConfig.severityThresholds, updateAIConfig]);
+  const updateSeverityThreshold = useCallback(
+    (severity: keyof AIAnalysisConfig['severityThresholds'], value: number) => {
+      updateAIConfig({
+        severityThresholds: {
+          ...aiConfig.severityThresholds,
+          [severity]: value,
+        },
+      });
+    },
+    [aiConfig.severityThresholds, updateAIConfig]
+  );
 
   const resetAIConfig = useCallback(() => {
     setAiConfig(defaultAIConfig);
@@ -289,7 +285,7 @@ export function Settings() {
         <Typography variant="h6" gutterBottom>
           Appearance
         </Typography>
-        
+
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
           <Box>
             <FormControl fullWidth sx={{ mb: 3 }}>
@@ -361,39 +357,23 @@ export function Settings() {
         <Typography variant="h6" gutterBottom>
           Editor Features
         </Typography>
-        
+
         <Box>
           <FormControlLabel
-            control={
-              <Switch
-                checked={wordWrap}
-                onChange={handleWordWrapToggle}
-                color="primary"
-              />
-            }
+            control={<Switch checked={wordWrap} onChange={handleWordWrapToggle} color="primary" />}
             label="Word Wrap"
             sx={{ mb: 1, display: 'block' }}
           />
-          
+
           <FormControlLabel
-            control={
-              <Switch
-                checked={minimap}
-                onChange={handleMinimapToggle}
-                color="primary"
-              />
-            }
+            control={<Switch checked={minimap} onChange={handleMinimapToggle} color="primary" />}
             label="Show Minimap"
             sx={{ mb: 1, display: 'block' }}
           />
-          
+
           <FormControlLabel
             control={
-              <Switch
-                checked={lineNumbers}
-                onChange={handleLineNumbersToggle}
-                color="primary"
-              />
+              <Switch checked={lineNumbers} onChange={handleLineNumbersToggle} color="primary" />
             }
             label="Show Line Numbers"
             sx={{ mb: 1, display: 'block' }}
@@ -415,7 +395,9 @@ export function Settings() {
                   checked={(localStorage.getItem('notifications.enabled') ?? 'true') === 'true'}
                   onChange={(_e, checked) => {
                     localStorage.setItem('notifications.enabled', String(checked));
-                    (globalThis as any).dispatchEvent?.(new Event('notifications:settings-changed'));
+                    (globalThis as any).dispatchEvent?.(
+                      new Event('notifications:settings-changed')
+                    );
                   }}
                   color="primary"
                 />
@@ -427,10 +409,14 @@ export function Settings() {
             <FormControlLabel
               control={
                 <Switch
-                  checked={(localStorage.getItem('notifications.showDiagCount') ?? 'true') === 'true'}
+                  checked={
+                    (localStorage.getItem('notifications.showDiagCount') ?? 'true') === 'true'
+                  }
                   onChange={(_e, checked) => {
                     localStorage.setItem('notifications.showDiagCount', String(checked));
-                    (globalThis as any).dispatchEvent?.(new Event('notifications:settings-changed'));
+                    (globalThis as any).dispatchEvent?.(
+                      new Event('notifications:settings-changed')
+                    );
                   }}
                   color="primary"
                 />

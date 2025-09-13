@@ -35,11 +35,11 @@ pub mod watcher;
 use std::sync::Arc;
 
 // Re-exports for public API
+pub use cache::AnalysisCache;
 pub use engine::RealTimeCodeAnalysisEngine;
+pub use events::EventProcessor;
 pub use filesystem::FileSystemWatcher;
 pub use pipeline::MultiThreadedAnalysisPipeline;
-pub use cache::AnalysisCache;
-pub use events::EventProcessor;
 
 /// Version information for the real-time analysis engine
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

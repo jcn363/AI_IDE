@@ -35,12 +35,7 @@ export {
 } from './themeSlice';
 
 // Hooks
-export {
-  useTheme,
-  useHighContrastMode,
-  useReducedMotion,
-  useThemeForMonaco,
-} from './useTheme';
+export { useTheme, useHighContrastMode, useReducedMotion, useThemeForMonaco } from './useTheme';
 
 // Built-in themes
 export { BUILTIN_THEMES } from './builtinThemes';

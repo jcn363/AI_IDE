@@ -1,11 +1,11 @@
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
+use rust_ai_ide_performance::{
+    LazyLoader, ModulePreloader, ProfilingAdapter, ProfilingConfiguration, StartupCache,
+    StartupProfiler, StartupReport, StartupStats, StartupValidator,
+};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
-use rust_ai_ide_performance::{
-    ProfilingAdapter, StartupProfiler, StartupStats, ProfilingConfiguration,
-    StartupReport, StartupValidator, ModulePreloader, LazyLoader, StartupCache,
-};
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
 
 /// Integration tests for startup performance optimization
 /// Ensures startup performance targets are met: <400ms cold / <80ms warm
@@ -21,34 +21,52 @@ async fn simulate_startup_phases(
     is_cold_startup: bool,
 ) -> Result<(), IDEError> {
     // Phase 1: Core initialization
-    adapter.measure_phase("core_initialization", async {
-        simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 80 } else { 15 })).await;
-        Ok::<_, IDEError>(())
-    }).await?;
+    adapter
+        .measure_phase("core_initialization", async {
+            simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 80 } else { 15 }))
+                .await;
+            Ok::<_, IDEError>(())
+        })
+        .await?;
 
     // Phase 2: Plugin loading
-    adapter.measure_phase("plugin_loading", async {
-        simulate_io_bound_work(Duration::from_millis(if is_cold_startup { 120 } else { 25 })).await;
-        Ok::<_, IDEError>(())
-    }).await?;
+    adapter
+        .measure_phase("plugin_loading", async {
+            simulate_io_bound_work(Duration::from_millis(if is_cold_startup {
+                120
+            } else {
+                25
+            }))
+            .await;
+            Ok::<_, IDEError>(())
+        })
+        .await?;
 
     // Phase 3: LSP service initialization
-    adapter.measure_phase("lsp_initialization", async {
-        simulate_async_work(Duration::from_millis(if is_cold_startup { 90 } else { 18 })).await;
-        Ok::<_, IDEError>(())
-    }).await?;
+    adapter
+        .measure_phase("lsp_initialization", async {
+            simulate_async_work(Duration::from_millis(if is_cold_startup { 90 } else { 18 })).await;
+            Ok::<_, IDEError>(())
+        })
+        .await?;
 
     // Phase 4: AI model preparation (lazy loaded)
-    adapter.measure_phase("ai_model_preparation", async {
-        simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 70 } else { 12 })).await;
-        Ok::<_, IDEError>(())
-    }).await?;
+    adapter
+        .measure_phase("ai_model_preparation", async {
+            simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 70 } else { 12 }))
+                .await;
+            Ok::<_, IDEError>(())
+        })
+        .await?;
 
     // Phase 5: UI initialization
-    adapter.measure_phase("ui_initialization", async {
-        simulate_io_bound_work(Duration::from_millis(if is_cold_startup { 40 } else { 8 })).await;
-        Ok::<_, IDEError>(())
-    }).await?;
+    adapter
+        .measure_phase("ui_initialization", async {
+            simulate_io_bound_work(Duration::from_millis(if is_cold_startup { 40 } else { 8 }))
+                .await;
+            Ok::<_, IDEError>(())
+        })
+        .await?;
 
     Ok(())
 }
@@ -119,28 +137,39 @@ async fn simulate_optimized_startup(
     is_cold_startup: bool,
 ) -> Result<(), IDEError> {
     // Phase 1: Core initialization (always loaded)
-    adapter.measure_phase("core_initialization", async {
-        simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 60 } else { 12 })).await;
-        Ok::<_, IDEError>(())
-    }).await?;
+    adapter
+        .measure_phase("core_initialization", async {
+            simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 60 } else { 12 }))
+                .await;
+            Ok::<_, IDEError>(())
+        })
+        .await?;
 
     // Phase 2: Critical plugins (always loaded)
-    adapter.measure_phase("critical_plugins", async {
-        simulate_io_bound_work(Duration::from_millis(if is_cold_startup { 80 } else { 16 })).await;
-        Ok::<_, IDEError>(())
-    }).await?;
+    adapter
+        .measure_phase("critical_plugins", async {
+            simulate_io_bound_work(Duration::from_millis(if is_cold_startup { 80 } else { 16 }))
+                .await;
+            Ok::<_, IDEError>(())
+        })
+        .await?;
 
     // Phase 3: Minimal LSP (lazy loaded heavy components)
-    adapter.measure_phase("minimal_lsp", async {
-        simulate_async_work(Duration::from_millis(if is_cold_startup { 50 } else { 10 })).await;
-        Ok::<_, IDEError>(())
-    }).await?;
+    adapter
+        .measure_phase("minimal_lsp", async {
+            simulate_async_work(Duration::from_millis(if is_cold_startup { 50 } else { 10 })).await;
+            Ok::<_, IDEError>(())
+        })
+        .await?;
 
     // Phase 4: UI essentials
-    adapter.measure_phase("ui_essentials", async {
-        simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 25 } else { 5 })).await;
-        Ok::<_, IDEError>(())
-    }).await?;
+    adapter
+        .measure_phase("ui_essentials", async {
+            simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 25 } else { 5 }))
+                .await;
+            Ok::<_, IDEError>(())
+        })
+        .await?;
 
     Ok(())
 }
@@ -150,10 +179,12 @@ async fn test_cold_startup_performance_baseline() {
     let duration = perform_startup_simulation(true, false).await.unwrap();
 
     println!("Cold startup baseline: {}ms", duration.as_millis());
-    assert!(duration < COLD_STARTUP_TARGET,
+    assert!(
+        duration < COLD_STARTUP_TARGET,
         "Cold startup exceeded target: {}ms > {}ms",
         duration.as_millis(),
-        COLD_STARTUP_TARGET.as_millis());
+        COLD_STARTUP_TARGET.as_millis()
+    );
 }
 
 #[tokio::test]
@@ -161,10 +192,12 @@ async fn test_warm_startup_performance_baseline() {
     let duration = perform_startup_simulation(false, false).await.unwrap();
 
     println!("Warm startup baseline: {}ms", duration.as_millis());
-    assert!(duration < WARM_STARTUP_TARGET,
+    assert!(
+        duration < WARM_STARTUP_TARGET,
         "Warm startup exceeded target: {}ms > {}ms",
         duration.as_millis(),
-        WARM_STARTUP_TARGET.as_millis());
+        WARM_STARTUP_TARGET.as_millis()
+    );
 }
 
 #[tokio::test]
@@ -172,17 +205,21 @@ async fn test_cold_startup_performance_optimized() {
     let duration = perform_startup_simulation(true, true).await.unwrap();
 
     println!("Cold startup optimized: {}ms", duration.as_millis());
-    assert!(duration < COLD_STARTUP_TARGET,
+    assert!(
+        duration < COLD_STARTUP_TARGET,
         "Cold startup optimizations exceeded target: {}ms > {}ms",
         duration.as_millis(),
-        COLD_STARTUP_TARGET.as_millis());
+        COLD_STARTUP_TARGET.as_millis()
+    );
 
     // Optimized should be significantly better than baseline
     let baseline_estimate = Duration::from_millis(380); // Estimated baseline
     let improvement_ratio = baseline_estimate.as_millis() as f64 / duration.as_millis() as f64;
-    assert!(improvement_ratio > 1.1,
+    assert!(
+        improvement_ratio > 1.1,
         "Optimization should provide at least 10% improvement, got {:.2}x",
-        improvement_ratio);
+        improvement_ratio
+    );
 }
 
 #[tokio::test]
@@ -190,17 +227,21 @@ async fn test_warm_startup_performance_optimized() {
     let duration = perform_startup_simulation(false, true).await.unwrap();
 
     println!("Warm startup optimized: {}ms", duration.as_millis());
-    assert!(duration < WARM_STARTUP_TARGET,
+    assert!(
+        duration < WARM_STARTUP_TARGET,
         "Warm startup optimizations exceeded target: {}ms > {}ms",
         duration.as_millis(),
-        WARM_STARTUP_TARGET.as_millis());
+        WARM_STARTUP_TARGET.as_millis()
+    );
 
     // Optimized should be significantly better than baseline
     let baseline_estimate = Duration::from_millis(75); // Estimated baseline
     let improvement_ratio = baseline_estimate.as_millis() as f64 / duration.as_millis() as f64;
-    assert!(improvement_ratio > 1.05,
+    assert!(
+        improvement_ratio > 1.05,
         "Optimization should provide at least 5% improvement, got {:.2}x",
-        improvement_ratio);
+        improvement_ratio
+    );
 }
 
 #[tokio::test]
@@ -219,18 +260,22 @@ async fn test_startup_performance_consistency() {
     let cold_variance = calculate_variance(&cold_durations, cold_avg);
 
     println!("Cold startup variance: {:.2}ms", cold_variance.as_millis());
-    assert!(cold_variance < Duration::from_millis(50),
+    assert!(
+        cold_variance < Duration::from_millis(50),
         "Cold startup variance too high: {:.2}ms > 50ms",
-        cold_variance.as_millis());
+        cold_variance.as_millis()
+    );
 
     // Check warm startup consistency
     let warm_avg = warm_durations.iter().sum::<Duration>() / warm_durations.len() as u32;
     let warm_variance = calculate_variance(&warm_durations, warm_avg);
 
     println!("Warm startup variance: {:.2}ms", warm_variance.as_millis());
-    assert!(warm_variance < Duration::from_millis(20),
+    assert!(
+        warm_variance < Duration::from_millis(20),
         "Warm startup variance too high: {:.2}ms > 20ms",
-        warm_variance.as_millis());
+        warm_variance.as_millis()
+    );
 }
 
 #[tokio::test]
@@ -242,25 +287,30 @@ async fn test_lazy_loading_effectiveness() {
     adapter.start_startup_measurement(true).await.unwrap();
 
     // Simulate lazy loading with background tasks
-    adapter.measure_phase("lazy_component_prep", async {
-        // Fire off "lazy" tasks that don't block startup
-        for i in 0..3 {
-            tokio::spawn(async move {
-                simulate_cpu_bound_work(Duration::from_millis(100)).await;
-            });
-        }
+    adapter
+        .measure_phase("lazy_component_prep", async {
+            // Fire off "lazy" tasks that don't block startup
+            for i in 0..3 {
+                tokio::spawn(async move {
+                    simulate_cpu_bound_work(Duration::from_millis(100)).await;
+                });
+            }
 
-        // Startup continues without waiting
-        simulate_cpu_bound_work(Duration::from_millis(20)).await;
-        Ok::<_, IDEError>(())
-    }).await.unwrap();
+            // Startup continues without waiting
+            simulate_cpu_bound_work(Duration::from_millis(20)).await;
+            Ok::<_, IDEError>(())
+        })
+        .await
+        .unwrap();
 
     let report = adapter.end_startup_measurement().await.unwrap();
 
     // Startup time should not include lazy loaded components
-    assert!(report.total_startup_time < Duration::from_millis(100),
+    assert!(
+        report.total_startup_time < Duration::from_millis(100),
         "Lazy loading should not block startup: {}ms >= 100ms",
-        report.total_startup_time.as_millis());
+        report.total_startup_time.as_millis()
+    );
 }
 
 #[tokio::test]
@@ -274,11 +324,16 @@ async fn test_performance_monitoring_integration() {
 
     // Validate through monitoring
     let validation_result = validator.validate_startup_performance().await;
-    assert!(validation_result.is_within_threshold,
+    assert!(
+        validation_result.is_within_threshold,
         "Performance validation failed for {}ms startup",
-        startup_time.as_millis());
+        startup_time.as_millis()
+    );
 
-    println!("✅ Performance monitoring validation passed: {}ms", startup_time.as_millis());
+    println!(
+        "✅ Performance monitoring validation passed: {}ms",
+        startup_time.as_millis()
+    );
 }
 
 #[tokio::test]
@@ -289,30 +344,39 @@ async fn test_caching_performance_gains() {
 
     // First call - compute and cache
     let start = Instant::now();
-    let result1 = cache.cache_expensive_computation("test_data", async {
-        simulate_cpu_bound_work(Duration::from_millis(50)).await;
-        Ok::<Vec<i32>, IDEError>(test_data.clone())
-    }).await.unwrap();
+    let result1 = cache
+        .cache_expensive_computation("test_data", async {
+            simulate_cpu_bound_work(Duration::from_millis(50)).await;
+            Ok::<Vec<i32>, IDEError>(test_data.clone())
+        })
+        .await
+        .unwrap();
     let first_duration = start.elapsed();
 
     // Second call - should be cached
     let start = Instant::now();
-    let result2 = cache.cache_expensive_computation("test_data", async {
-        simulate_cpu_bound_work(Duration::from_millis(50)).await;
-        Ok::<Vec<i32>, IDEError>(test_data.clone())
-    }).await.unwrap();
+    let result2 = cache
+        .cache_expensive_computation("test_data", async {
+            simulate_cpu_bound_work(Duration::from_millis(50)).await;
+            Ok::<Vec<i32>, IDEError>(test_data.clone())
+        })
+        .await
+        .unwrap();
     let second_duration = start.elapsed();
 
     // Second call should be significantly faster
     assert_eq!(result1, result2);
-    assert!(second_duration < first_duration.saturating_div(10),
+    assert!(
+        second_duration < first_duration.saturating_div(10),
         "Cached call should be at least 10x faster: {}ms vs {}ms",
         second_duration.as_millis(),
-        first_duration.as_millis());
+        first_duration.as_millis()
+    );
 }
 
 fn calculate_variance(durations: &[Duration], mean: Duration) -> Duration {
-    let variance = durations.iter()
+    let variance = durations
+        .iter()
         .map(|d| {
             let diff = if *d > mean {
                 d.saturating_sub(mean)
@@ -321,7 +385,8 @@ fn calculate_variance(durations: &[Duration], mean: Duration) -> Duration {
             };
             diff.as_millis() as f64 * diff.as_millis() as f64
         })
-        .sum::<f64>() / durations.len() as f64;
+        .sum::<f64>()
+        / durations.len() as f64;
 
     Duration::from_millis(variance.sqrt() as u64)
 }
@@ -380,41 +445,71 @@ async fn test_performance_regression_suite() {
     assert_optimization_effectiveness(warm_baseline, warm_optimized, "warm");
 
     println!("✅ All performance regression tests passed!");
-    println!("📊 Results: Cold: {}ms (target: {}ms), Warm: {}ms (target: {}ms)",
-        cold_duration.as_millis(), COLD_STARTUP_TARGET.as_millis(),
-        warm_duration.as_millis(), WARM_STARTUP_TARGET.as_millis());
+    println!(
+        "📊 Results: Cold: {}ms (target: {}ms), Warm: {}ms (target: {}ms)",
+        cold_duration.as_millis(),
+        COLD_STARTUP_TARGET.as_millis(),
+        warm_duration.as_millis(),
+        WARM_STARTUP_TARGET.as_millis()
+    );
 }
 
 fn assert_cold_startup_target(duration: Duration) {
-    assert!(duration <= COLD_STARTUP_TARGET,
+    assert!(
+        duration <= COLD_STARTUP_TARGET,
         "❌ Cold startup regression: {}ms exceeds target {}ms",
-        duration.as_millis(), COLD_STARTUP_TARGET.as_millis());
-    println!("✅ Cold startup within target: {}ms ≤ {}ms", duration.as_millis(), COLD_STARTUP_TARGET.as_millis());
+        duration.as_millis(),
+        COLD_STARTUP_TARGET.as_millis()
+    );
+    println!(
+        "✅ Cold startup within target: {}ms ≤ {}ms",
+        duration.as_millis(),
+        COLD_STARTUP_TARGET.as_millis()
+    );
 }
 
 fn assert_warm_startup_target(duration: Duration) {
-    assert!(duration <= WARM_STARTUP_TARGET,
+    assert!(
+        duration <= WARM_STARTUP_TARGET,
         "❌ Warm startup regression: {}ms exceeds target {}ms",
-        duration.as_millis(), WARM_STARTUP_TARGET.as_millis());
-    println!("✅ Warm startup within target: {}ms ≤ {}ms", duration.as_millis(), WARM_STARTUP_TARGET.as_millis());
+        duration.as_millis(),
+        WARM_STARTUP_TARGET.as_millis()
+    );
+    println!(
+        "✅ Warm startup within target: {}ms ≤ {}ms",
+        duration.as_millis(),
+        WARM_STARTUP_TARGET.as_millis()
+    );
 }
 
 fn assert_optimization_effectiveness(baseline: Duration, optimized: Duration, startup_type: &str) {
-    let improvement_percent = ((baseline.as_millis() as f64 - optimized.as_millis() as f64) / baseline.as_millis() as f64) * 100.0;
+    let improvement_percent = ((baseline.as_millis() as f64 - optimized.as_millis() as f64)
+        / baseline.as_millis() as f64)
+        * 100.0;
 
     match startup_type {
         "cold" => {
-            assert!(improvement_percent >= 5.0,
+            assert!(
+                improvement_percent >= 5.0,
                 "❌ Cold startup optimization insufficient: {:.1}% improvement < 5%",
-                improvement_percent);
-            println!("✅ Cold startup optimization effective: {:.1}% improvement", improvement_percent);
-        },
+                improvement_percent
+            );
+            println!(
+                "✅ Cold startup optimization effective: {:.1}% improvement",
+                improvement_percent
+            );
+        }
         "warm" => {
-            assert!(improvement_percent >= 2.0,
+            assert!(
+                improvement_percent >= 2.0,
                 "❌ Warm startup optimization insufficient: {:.1}% improvement < 2%",
-                improvement_percent);
-            println!("✅ Warm startup optimization effective: {:.1}% improvement", improvement_percent);
-        },
+                improvement_percent
+            );
+            println!(
+                "✅ Warm startup optimization effective: {:.1}% improvement",
+                improvement_percent
+            );
+        }
         _ => panic!("Unknown startup type"),
     }
 }

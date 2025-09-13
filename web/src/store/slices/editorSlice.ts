@@ -58,10 +58,14 @@ interface UpdateFileContentPayload {
 }
 
 // Initial state
-const createPane = (id: string, activeFile: string | null = null, files: string[] = []): EditorPane => ({
+const createPane = (
+  id: string,
+  activeFile: string | null = null,
+  files: string[] = []
+): EditorPane => ({
   id,
   activeFile,
-  files: files.map(path => ({ path, isPinned: false })),
+  files: files.map((path) => ({ path, isPinned: false })),
 });
 
 const initialState: EditorState = {
@@ -124,7 +128,8 @@ export const loadFileTree = createAsyncThunk<FileNode, string>(
               name: 'Cargo.toml',
               path: '/project/Cargo.toml',
               type: 'file',
-              content: '[package]\nname = "my-project"\nversion = "0.1.0"\nedition = "2021"\n\n[dependencies]\n',
+              content:
+                '[package]\nname = "my-project"\nversion = "0.1.0"\nedition = "2021"\n\n[dependencies]\n',
               lastModified: Date.now() - 1000 * 60 * 60 * 24, // 1 day ago
             },
           ],
@@ -132,7 +137,7 @@ export const loadFileTree = createAsyncThunk<FileNode, string>(
         resolve(mockFileTree);
       }, 300);
     });
-  },
+  }
 );
 
 // Helper function to find a file in the file tree
@@ -182,7 +187,7 @@ const editorSlice = createSlice({
     },
     closeFile: (state, action: PayloadAction<string>) => {
       const filePath = action.payload;
-      state.openFiles = state.openFiles.filter(file => file !== filePath);
+      state.openFiles = state.openFiles.filter((file) => file !== filePath);
       if (state.activeFile === filePath) {
         state.activeFile = state.openFiles[0] || null;
       }
@@ -216,7 +221,10 @@ const editorSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
-    setNavigationTarget: (state, action: PayloadAction<{ filePath: string; line?: number; column?: number } | null>) => {
+    setNavigationTarget: (
+      state,
+      action: PayloadAction<{ filePath: string; line?: number; column?: number } | null>
+    ) => {
       state.navigationTarget = action.payload;
     },
   },
@@ -229,7 +237,7 @@ const editorSlice = createSlice({
       .addCase(loadFileTree.fulfilled, (state, action) => {
         state.isLoading = false;
         state.fileTree = action.payload;
-        
+
         // If we have a current file, update its content from the tree
         if (state.currentFile) {
           const file = findFileInTree(action.payload, state.currentFile);
@@ -309,7 +317,7 @@ export const editorSelectors = {
   selectIsLoading: (state: RootState) => state.editor.isLoading,
   selectError: (state: RootState) => state.editor.error,
   selectActiveFile: (state: RootState) => state.editor.activeFile,
-  selectFileContent: (state: RootState, filePath: string) => 
+  selectFileContent: (state: RootState, filePath: string) =>
     state.editor.fileContents[filePath] || '',
 } as const;
 

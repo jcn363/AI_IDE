@@ -1,9 +1,9 @@
 // Integration test demonstrating performance & memory management enhancements
 
-use std::time::Instant;
-use rust_ai_ide_performance::*;
 use rust_ai_ide_cache::{DistributedWorkStealingCache, WorkStealingConfig};
+use rust_ai_ide_performance::*;
 use rust_ai_ide_shared_types::MemoryUsageSample;
+use std::time::Instant;
 
 #[tokio::test]
 async fn test_integrated_performance_system() {
@@ -31,12 +31,22 @@ async fn test_integrated_performance_system() {
     for i in 0..1000 {
         let key = format!("cache_key_{}", i);
         let value = format!("cache_value_{}", i * i);
-        cache.insert(key.clone(), value, Some(std::time::Duration::from_secs(300))).await.unwrap();
+        cache
+            .insert(
+                key.clone(),
+                value,
+                Some(std::time::Duration::from_secs(300)),
+            )
+            .await
+            .unwrap();
     }
     let cache_insert_time = start.elapsed();
-    println!("Cache inserts: {} ops in {:.2}ms (avg: {:.2}μs/op)",
-        1000, cache_insert_time.as_millis(),
-        cache_insert_time.as_micros() as f64 / 1000.0);
+    println!(
+        "Cache inserts: {} ops in {:.2}ms (avg: {:.2}μs/op)",
+        1000,
+        cache_insert_time.as_millis(),
+        cache_insert_time.as_micros() as f64 / 1000.0
+    );
 
     // 2. Test Adaptive Memory Management
     println!("🧠 Testing Adaptive Memory Management...");
@@ -61,10 +71,19 @@ async fn test_integrated_performance_system() {
         timestamp: chrono::Utc::now(),
     };
 
-    memory_manager.adapt_to_memory_pressure(sample).await.unwrap();
-    let recommendation = memory_manager.get_allocation_recommendation().await.unwrap();
+    memory_manager
+        .adapt_to_memory_pressure(sample)
+        .await
+        .unwrap();
+    let recommendation = memory_manager
+        .get_allocation_recommendation()
+        .await
+        .unwrap();
 
-    println!("Memory adaptation: Current pressure -> recommendation: {:?}", recommendation);
+    println!(
+        "Memory adaptation: Current pressure -> recommendation: {:?}",
+        recommendation
+    );
 
     // 3. Test Enhanced Memory Leak Detection
     println!("🔍 Testing Enhanced Memory Leak Detection...");
@@ -83,12 +102,15 @@ async fn test_integrated_performance_system() {
         memory_analyzer.record_allocation(ptr, layout);
 
         // Track with leak detector
-        leak_detector.track_allocation(ptr as usize, AllocationInfo {
-            size: 1024 * 1024,
-            alignment: 8,
-            ptr,
-            backtrace: None,
-        });
+        leak_detector.track_allocation(
+            ptr as usize,
+            AllocationInfo {
+                size: 1024 * 1024,
+                alignment: 8,
+                ptr,
+                backtrace: None,
+            },
+        );
 
         // Access the allocation a few times
         for _ in 0..5 {
@@ -109,8 +131,10 @@ async fn test_integrated_performance_system() {
     }
 
     let leak_stats = leak_detector.get_leak_stats();
-    println!("Leak detection stats: {} tracked, {} high-risk candidates",
-        leak_stats.total_tracked, leak_stats.high_risk_candidates);
+    println!(
+        "Leak detection stats: {} tracked, {} high-risk candidates",
+        leak_stats.total_tracked, leak_stats.high_risk_candidates
+    );
 
     // 4. Test GPU Acceleration (Note: This would need actual GPU drivers/backends in production)
     println!("🚀 GPU Acceleration Framework Ready...");
@@ -127,12 +151,18 @@ async fn test_integrated_performance_system() {
 
     // In a real scenario, you'd initialize actual GPU devices
     // For now, we just show the framework is ready
-    println!("GPU Manager configured with fallback to CPU: {}",
-        gpu_manager.config.fallback_to_cpu);
+    println!(
+        "GPU Manager configured with fallback to CPU: {}",
+        gpu_manager.config.fallback_to_cpu
+    );
 
     println!("\n✅ All Performance & Memory Management Enhancements Completed!");
     println!("📈 Key Improvements:");
-    println!("- Distributed caching with work-stealing: {}ms for {} inserts", cache_insert_time.as_millis(), 1000);
+    println!(
+        "- Distributed caching with work-stealing: {}ms for {} inserts",
+        cache_insert_time.as_millis(),
+        1000
+    );
     println!("- Polling model recommendation: {:?}", recommendation);
     println!("- Leak detection: Enhanced with automatic fixes");
     println!("- GPU acceleration: Framework integrated and ready");
@@ -153,7 +183,11 @@ fn test_performance_benchmarks() {
     assert_eq!(results[0], 0);
     assert_eq!(results[5000], 5000 * 5000);
 
-    println!("Parallel processing: {} operations in {:.2}ms", results.len(), parallel_time.as_millis());
+    println!(
+        "Parallel processing: {} operations in {:.2}ms",
+        results.len(),
+        parallel_time.as_millis()
+    );
 
     println!("✅ Performance benchmarks completed successfully!");
 }

@@ -31,10 +31,16 @@ export class LanguageServerClient {
   constructor(options: LanguageServerOptions = {}) {
     this.options = {
       ...options,
-      workspaceFolders: options.workspaceFolders || (options.rootUri ? [{
-        uri: options.rootUri,
-        name: 'workspace'
-      }] : [])
+      workspaceFolders:
+        options.workspaceFolders ||
+        (options.rootUri
+          ? [
+              {
+                uri: options.rootUri,
+                name: 'workspace',
+              },
+            ]
+          : []),
     };
   }
 
@@ -55,16 +61,19 @@ export class LanguageServerClient {
 
       // Create a web worker that will run the language server
       // Avoid import.meta for compatibility with CommonJS builds
-      const workerUrl = new URL('./server.worker.ts', (globalThis as any).location?.href || 'http://localhost/');
+      const workerUrl = new URL(
+        './server.worker.ts',
+        (globalThis as any).location?.href || 'http://localhost/'
+      );
       this.worker = new Worker(workerUrl, {
         type: 'module',
-        name: 'rust-analyzer-worker'
+        name: 'rust-analyzer-worker',
       });
       const clientOptions: LanguageClientOptions = {
         documentSelector: ['rust'],
         errorHandler: {
           error: () => ErrorAction.Continue,
-          closed: () => CloseAction.DoNotRestart
+          closed: () => CloseAction.DoNotRestart,
         },
         outputChannel: {
           name: 'Rust Language Server',
@@ -74,20 +83,22 @@ export class LanguageServerClient {
           clear: () => {},
           show: () => {},
           hide: () => {},
-          dispose: () => {}
+          dispose: () => {},
         } as any,
-        workspaceFolder: this.options.workspaceFolders?.[0] ? {
-          uri: monaco.Uri.parse(this.options.workspaceFolders[0].uri),
-          name: this.options.workspaceFolders[0].name,
-          index: 0
-        } : undefined,
+        workspaceFolder: this.options.workspaceFolders?.[0]
+          ? {
+              uri: monaco.Uri.parse(this.options.workspaceFolders[0].uri),
+              name: this.options.workspaceFolders[0].name,
+              index: 0,
+            }
+          : undefined,
         initializationOptions: this.options.initializationOptions || {
-          "rust-analyzer": {
+          'rust-analyzer': {
             checkOnSave: true,
             cargo: { allFeatures: true },
-            diagnostics: { enable: true }
-          }
-        }
+            diagnostics: { enable: true },
+          },
+        },
       };
 
       // Create message reader and writer
@@ -100,13 +111,18 @@ export class LanguageServerClient {
         clientOptions,
         connectionProvider: {
           get: (errorHandler, closeHandler) => {
-            const connection = createMessageConnection(reader, writer, {
-              error: (message: string) => console.error(message),
-              warn: (message: string) => console.warn(message),
-              info: (message: string) => console.log(message),
-              log: (message: string) => console.log(message)
-            }, undefined);
-            
+            const connection = createMessageConnection(
+              reader,
+              writer,
+              {
+                error: (message: string) => console.error(message),
+                warn: (message: string) => console.warn(message),
+                info: (message: string) => console.log(message),
+                log: (message: string) => console.log(message),
+              },
+              undefined
+            );
+
             // Set up error handling
             connection.onError(([error, message, code]) => {
               console.error('Connection error:', error);
@@ -123,8 +139,8 @@ export class LanguageServerClient {
                 error: {
                   code: code || 0,
                   message: errorMessage,
-                  data: error
-                }
+                  data: error,
+                },
               } as unknown as Message;
               // Call the error handler with the correct types
               const action = clientOptions.errorHandler?.error(errorObj, messageObj, code || 0);
@@ -132,16 +148,16 @@ export class LanguageServerClient {
                 this.stop();
               }
             });
-            
+
             // Set up close handling
             connection.onClose(() => {
               console.log('Connection closed');
               closeHandler();
             });
-            
+
             // Start listening
             connection.listen();
-            
+
             // Return the connection wrapped in a Promise that resolves to IConnection
             return Promise.resolve({
               ...connection,
@@ -149,10 +165,10 @@ export class LanguageServerClient {
                 connection.dispose();
                 reader.dispose();
                 writer.dispose();
-              }
+              },
             } as any); // Cast to any to satisfy TypeScript
-          }
-        }
+          },
+        },
       });
 
       // Start the client

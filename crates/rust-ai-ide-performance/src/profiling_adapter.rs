@@ -1,9 +1,9 @@
+use crate::{StartupProfiler, StartupReport};
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::{Mutex, RwLock};
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
-use crate::{StartupProfiler, StartupReport};
-use serde::{Deserialize, Serialize};
 
 /// Configuration for profiling adapter
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -76,7 +76,10 @@ impl ProfilingAdapter {
             metadata: std::collections::HashMap::new(),
         };
 
-        initial_measurement.metadata.insert("startup_type".to_string(), if is_cold_startup { "cold" } else { "warm" }.to_string());
+        initial_measurement.metadata.insert(
+            "startup_type".to_string(),
+            if is_cold_startup { "cold" } else { "warm" }.to_string(),
+        );
         measurements.push(initial_measurement);
 
         Ok(())
@@ -106,22 +109,33 @@ impl ProfilingAdapter {
                     "within_warm_target"
                 } else {
                     "above_targets"
-                }.to_string()
+                }
+                .to_string(),
             );
         }
 
         // Maintain history limit
         let mut measurements_vec = Vec::new();
         std::mem::swap(&mut *measurements, &mut measurements_vec);
-        let keep_count = config.measurements_history_limit.min(measurements_vec.len());
-        let mut new_measurements = measurements_vec.into_iter().rev().take(keep_count).collect::<Vec<_>>();
+        let keep_count = config
+            .measurements_history_limit
+            .min(measurements_vec.len());
+        let mut new_measurements = measurements_vec
+            .into_iter()
+            .rev()
+            .take(keep_count)
+            .collect::<Vec<_>>();
         new_measurements.reverse();
         std::mem::swap(&mut *measurements, &mut new_measurements);
 
         Ok(report)
     }
 
-    pub async fn measure_phase<F, Fut>(&self, phase_name: &str, future: F) -> Result<F::Output, F::Error>
+    pub async fn measure_phase<F, Fut>(
+        &self,
+        phase_name: &str,
+        future: F,
+    ) -> Result<F::Output, F::Error>
     where
         F: Future<Output: Result<T, E>>,
         Fut: Future<Output = Result<T, E>>,
@@ -132,12 +146,18 @@ impl ProfilingAdapter {
         result
     }
 
-    pub async fn measure_blocking<F, T>(&self, phase_name: &str, blocking_fn: F) -> Result<T, IDEError>
+    pub async fn measure_blocking<F, T>(
+        &self,
+        phase_name: &str,
+        blocking_fn: F,
+    ) -> Result<T, IDEError>
     where
         F: FnOnce() -> Result<T, IDEError> + Send + 'static,
         T: Send + 'static,
     {
-        self.profiler.measure_blocking(phase_name, blocking_fn).await
+        self.profiler
+            .measure_blocking(phase_name, blocking_fn)
+            .await
     }
 
     pub async fn get_current_startup_stats(&self) -> Result<StartupStats, IDEError> {
@@ -188,7 +208,10 @@ impl ProfilingAdapter {
         })
     }
 
-    pub async fn update_configuration(&self, new_config: ProfilingConfiguration) -> Result<(), IDEError> {
+    pub async fn update_configuration(
+        &self,
+        new_config: ProfilingConfiguration,
+    ) -> Result<(), IDEError> {
         let mut config = self.config.write().await;
         *config = new_config;
         Ok(())
@@ -281,10 +304,13 @@ mod tests {
         adapter.start_startup_measurement(false).await.unwrap();
 
         // Measure a phase
-        let result = adapter.measure_phase("test_phase", async {
-            tokio::time::sleep(Duration::from_millis(30)).await;
-            Ok::<_, IDEError>(42)
-        }).await.unwrap();
+        let result = adapter
+            .measure_phase("test_phase", async {
+                tokio::time::sleep(Duration::from_millis(30)).await;
+                Ok::<_, IDEError>(42)
+            })
+            .await
+            .unwrap();
 
         adapter.end_startup_measurement().await.unwrap();
 

@@ -32,11 +32,7 @@ interface FineTuneFormProps {
 /**
  * Form component for configuring and submitting fine-tuning jobs
  */
-export const FineTuneForm: React.FC<FineTuneFormProps> = ({
-  onSubmit,
-  onClose,
-  isSubmitting,
-}) => {
+export const FineTuneForm: React.FC<FineTuneFormProps> = ({ onSubmit, onClose, isSubmitting }) => {
   const [formData, setFormData] = useState<FormData>({
     jobName: '',
     description: '',
@@ -60,7 +56,7 @@ export const FineTuneForm: React.FC<FineTuneFormProps> = ({
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const handleModelChange = (modelKey: string, config: ModelConfig) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       baseModelConfig: config,
       batchSize: config.recommendedBatchSize,
@@ -71,11 +67,11 @@ export const FineTuneForm: React.FC<FineTuneFormProps> = ({
   };
 
   const handleFormChange = (field: keyof FormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
     // Clear validation error for this field
     if (validationErrors[field]) {
-      setValidationErrors(prev => {
+      setValidationErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[field];
         return newErrors;
@@ -97,7 +93,9 @@ export const FineTuneForm: React.FC<FineTuneFormProps> = ({
     });
 
     const errors: Record<string, string> = {};
-    validation.forEach(v => { errors[v.field] = v.message; });
+    validation.forEach((v) => {
+      errors[v.field] = v.message;
+    });
     setValidationErrors(errors);
 
     if (Object.keys(errors).length === 0) {
@@ -162,9 +160,7 @@ export const FineTuneForm: React.FC<FineTuneFormProps> = ({
           onChange={(e) => handleFormChange('jobName', e.target.value)}
           disabled={isSubmitting}
         />
-        {validationErrors.jobName && (
-          <span className="error">{validationErrors.jobName}</span>
-        )}
+        {validationErrors.jobName && <span className="error">{validationErrors.jobName}</span>}
       </div>
 
       <ModelConfigSelector

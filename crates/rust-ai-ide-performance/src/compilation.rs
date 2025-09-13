@@ -1,18 +1,18 @@
 //! Parallel compilation system for Rust AI IDE
 //! Provides SIMD-accelerated parallel compilation with dependency analysis
 
-use std::sync::Arc;
-use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
+use anyhow::{Context, Result};
+use cargo_metadata::{Metadata, Package};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
+use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{error, info, warn};
-use cargo_metadata::{Metadata, Package};
-use anyhow::{Result, Context};
 
-use rust_ai_ide_simd::{get_simd_processor, SIMDProcessor};
 use rust_ai_ide_cargo::dependency::DependencyManager;
+use rust_ai_ide_simd::{get_simd_processor, SIMDProcessor};
 
 /// Represents compilation targets that can be parallelized
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -28,7 +28,7 @@ pub struct CompilationUnit {
     pub target: CompilationTarget,
     pub dependencies: Vec<CompilationTarget>,
     pub estimated_workload: u64, // Estimated compilation units
-    pub priority: u32, // Higher number = higher priority
+    pub priority: u32,           // Higher number = higher priority
 }
 
 /// Compilation graph for dependency resolution
@@ -52,14 +52,16 @@ impl CompilationGraph {
 
     /// Get independent units (no dependencies)
     pub fn independent_units(&self) -> Vec<&CompilationUnit> {
-        self.units.values()
+        self.units
+            .values()
             .filter(|unit| unit.dependencies.is_empty())
             .collect()
     }
 
     /// Get units that depend on the specified target
     pub fn dependents(&self, target: &CompilationTarget) -> Vec<&CompilationUnit> {
-        self.units.values()
+        self.units
+            .values()
             .filter(|unit| unit.dependencies.contains(target))
             .collect()
     }
@@ -75,7 +77,7 @@ impl CompilationGraph {
             graph: &CompilationGraph,
             result: &mut Vec<CompilationTarget>,
             visited: &mut std::collections::HashSet<CompilationTarget>,
-            visiting: &mut std::collections::HashSet<CompilationTarget>
+            visiting: &mut std::collections::HashSet<CompilationTarget>,
         ) -> Result<()> {
             if visited.contains(target) {
                 return Ok(());
@@ -131,15 +133,15 @@ impl Hash for CompilationTarget {
             CompilationTarget::Crate(s) => {
                 state.write_u8(0);
                 s.hash(state);
-            },
+            }
             CompilationTarget::Module(s) => {
                 state.write_u8(1);
                 s.hash(state);
-            },
+            }
             CompilationTarget::File(s) => {
                 state.write_u8(2);
                 s.hash(state);
-            },
+            }
         }
     }
 }
@@ -285,7 +287,7 @@ impl ParallelCompiler {
             Ok(processor) => {
                 info!("SIMD acceleration available");
                 Some(processor)
-            },
+            }
             Err(e) => {
                 warn!("SIMD acceleration not available: {}", e);
                 None
@@ -322,7 +324,8 @@ impl ParallelCompiler {
         let metadata_command = cargo_metadata::MetadataCommand::new()
             .manifest_path(format!("{}/Cargo.toml", workspace_path));
 
-        let metadata = metadata_command.exec()
+        let metadata = metadata_command
+            .exec()
             .context("Failed to execute cargo metadata")?;
 
         // Build dependency graph from Cargo metadata
@@ -367,8 +370,10 @@ impl ParallelCompiler {
             graph.add_unit(unit);
         }
 
-        info!("Built dependency graph with {} compilation units",
-              graph.units.len());
+        info!(
+            "Built dependency graph with {} compilation units",
+            graph.units.len()
+        );
 
         Ok(())
     }
@@ -386,8 +391,8 @@ impl ParallelCompiler {
             if src_dir.exists() {
                 for entry in walkdir::WalkDir::new(&src_dir)
                     .into_iter()
-                    .filter_map(|e| e.ok()) {
-
+                    .filter_map(|e| e.ok())
+                {
                     if entry.path().extension().and_then(|s| s.to_str()) == Some("rs") {
                         // Estimate complexity based on line count
                         if let Ok(content) = tokio::fs::read_to_string(entry.path()).await {
@@ -423,9 +428,16 @@ impl ParallelCompiler {
     }
 
     /// Execute parallel compilation of workspace
-    pub async fn compile_parallel(&self, workspace_path: &str, incremental: bool) -> Result<CompilationResult> {
-        info!("Starting parallel compilation with incremental={}, SIMD={}",
-              incremental, self.simd_processor.is_some());
+    pub async fn compile_parallel(
+        &self,
+        workspace_path: &str,
+        incremental: bool,
+    ) -> Result<CompilationResult> {
+        info!(
+            "Starting parallel compilation with incremental={}, SIMD={}",
+            incremental,
+            self.simd_processor.is_some()
+        );
 
         let start_time = std::time::Instant::now();
 
@@ -439,7 +451,9 @@ impl ParallelCompiler {
         let compilation_order = graph.topological_order();
 
         // Filter out changed or uncached items
-        let mut to_compile = self.filter_incremental_targets(&compilation_order, incremental).await?;
+        let mut to_compile = self
+            .filter_incremental_targets(&compilation_order, incremental)
+            .await?;
 
         // Sort by priority and dependencies
         to_compile.sort_by(|a, b| {
@@ -447,7 +461,9 @@ impl ParallelCompiler {
             let unit_b = graph.units.get(b).unwrap();
 
             // Higher priority first, then by workload distribution
-            unit_b.priority.cmp(&unit_a.priority)
+            unit_b
+                .priority
+                .cmp(&unit_a.priority)
                 .then_with(|| unit_a.estimated_workload.cmp(&unit_b.estimated_workload))
         });
 
@@ -463,8 +479,10 @@ impl ParallelCompiler {
         let successful = results.iter().filter(|(_, success)| *success).count();
         let failed = results.len() - successful;
 
-        info!("Compilation completed in {:?}: {} successful, {} failed",
-              duration, successful, failed);
+        info!(
+            "Compilation completed in {:?}: {} successful, {} failed",
+            duration, successful, failed
+        );
 
         let result = CompilationResult {
             total_time: duration,
@@ -477,7 +495,11 @@ impl ParallelCompiler {
     }
 
     /// Filter targets for incremental compilation
-    async fn filter_incremental_targets(&self, targets: &[CompilationTarget], incremental: bool) -> Result<Vec<CompilationTarget>> {
+    async fn filter_incremental_targets(
+        &self,
+        targets: &[CompilationTarget],
+        incremental: bool,
+    ) -> Result<Vec<CompilationTarget>> {
         if !incremental {
             return Ok(targets.to_vec());
         }
@@ -504,15 +526,23 @@ impl ParallelCompiler {
     }
 
     /// Check if target needs recompilation
-    async fn needs_recompilation(&self, target: &CompilationTarget, cache: &BuildCacheManager) -> Result<bool> {
+    async fn needs_recompilation(
+        &self,
+        target: &CompilationTarget,
+        cache: &BuildCacheManager,
+    ) -> Result<bool> {
         // For now, always recompile - in a real implementation this would check file modification times
         Ok(true)
     }
 
     /// Compile targets in parallel using Rayon
-    async fn compile_targets_parallel(&self, targets: Vec<CompilationTarget>) -> Vec<(CompilationTarget, bool)> {
+    async fn compile_targets_parallel(
+        &self,
+        targets: Vec<CompilationTarget>,
+    ) -> Vec<(CompilationTarget, bool)> {
         // Prepare compilation functions for each target
-        let compilation_tasks: Vec<_> = targets.into_iter()
+        let compilation_tasks: Vec<_> = targets
+            .into_iter()
             .map(|target| {
                 let resource_monitor = Arc::clone(&self.resource_monitor);
                 let progress_tracker = Arc::clone(&self.progress_tracker);
@@ -521,14 +551,17 @@ impl ParallelCompiler {
                 let start_time = chrono::Utc::now().to_rfc3339();
                 {
                     let mut tracker = progress_tracker.lock().await;
-                    tracker.insert(target.clone(), CompilationProgress {
-                        target: target.clone(),
-                        status: CompilationStatus::InProgress,
-                        start_time: start_time.clone(),
-                        completed_at: None,
-                        duration_ms: None,
-                        error_message: None,
-                    });
+                    tracker.insert(
+                        target.clone(),
+                        CompilationProgress {
+                            target: target.clone(),
+                            status: CompilationStatus::InProgress,
+                            start_time: start_time.clone(),
+                            completed_at: None,
+                            duration_ms: None,
+                            error_message: None,
+                        },
+                    );
                 }
 
                 let target_clone = target.clone();
@@ -538,16 +571,21 @@ impl ParallelCompiler {
                         // Record completion
                         let end_time = chrono::Utc::now().to_rfc3339();
                         let duration = chrono::Utc::now()
-                            .signed_duration_since(chrono::DateTime::parse_from_rfc3339(&start_time).unwrap())
+                            .signed_duration_since(
+                                chrono::DateTime::parse_from_rfc3339(&start_time).unwrap(),
+                            )
                             .num_milliseconds() as u64;
 
                         {
-                            let mut tracker = tokio::runtime::Handle::current().block_on(async {
-                                progress_tracker.lock().await
-                            });
+                            let mut tracker = tokio::runtime::Handle::current()
+                                .block_on(async { progress_tracker.lock().await });
 
                             if let Some(progress) = tracker.get_mut(&target_clone) {
-                                progress.status = if success { CompilationStatus::Completed } else { CompilationStatus::Failed };
+                                progress.status = if success {
+                                    CompilationStatus::Completed
+                                } else {
+                                    CompilationStatus::Failed
+                                };
                                 progress.completed_at = Some(end_time);
                                 progress.duration_ms = Some(duration);
                             }
@@ -581,17 +619,23 @@ impl ParallelCompiler {
             CompilationTarget::Crate(crate_name) => {
                 info!("Compiling crate: {}", crate_name);
                 // Simulate compilation with random success/failure
-                std::thread::sleep(std::time::Duration::from_millis(100 + rand::random::<u64>() % 500));
+                std::thread::sleep(std::time::Duration::from_millis(
+                    100 + rand::random::<u64>() % 500,
+                ));
                 rand::random::<bool>() || true // Mostly succeed
-            },
+            }
             CompilationTarget::Module(module_name) => {
                 info!("Compiling module: {}", module_name);
-                std::thread::sleep(std::time::Duration::from_millis(50 + rand::random::<u64>() % 200));
+                std::thread::sleep(std::time::Duration::from_millis(
+                    50 + rand::random::<u64>() % 200,
+                ));
                 true
-            },
+            }
             CompilationTarget::File(file_name) => {
                 info!("Compiling file: {}", file_name);
-                std::thread::sleep(std::time::Duration::from_millis(10 + rand::random::<u64>() % 50));
+                std::thread::sleep(std::time::Duration::from_millis(
+                    10 + rand::random::<u64>() % 50,
+                ));
                 true
             }
         };
@@ -682,7 +726,10 @@ mod tests {
 
         let independent = graph.independent_units();
         assert_eq!(independent.len(), 1);
-        assert_eq!(independent[0].target, CompilationTarget::Crate("crate1".to_string()));
+        assert_eq!(
+            independent[0].target,
+            CompilationTarget::Crate("crate1".to_string())
+        );
     }
 
     #[test]

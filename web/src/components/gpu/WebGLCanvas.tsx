@@ -1,10 +1,5 @@
 import React, { useRef, useEffect, useCallback, useState, useContext } from 'react';
-import {
-  Box,
-  Typography,
-  Alert,
-  useTheme
-} from '@mui/material';
+import { Box, Typography, Alert, useTheme } from '@mui/material';
 
 // WebGL Context interface for TypeScript
 interface WebGLRenderingContextWithDeprecations extends WebGLRenderingContext {
@@ -35,7 +30,11 @@ export const useCanvas2D = () => {
 class ShaderProgramCache {
   private cache = new Map<string, WebGLProgram>();
 
-  get(gl: WebGLRenderingContext, vertexShader: string, fragmentShader: string): WebGLProgram | null {
+  get(
+    gl: WebGLRenderingContext,
+    vertexShader: string,
+    fragmentShader: string
+  ): WebGLProgram | null {
     const key = `${vertexShader}_${fragmentShader}`;
     const cached = this.cache.get(key);
     if (cached) return cached;
@@ -47,7 +46,11 @@ class ShaderProgramCache {
     return program;
   }
 
-  private createProgram(gl: WebGLRenderingContext, vertexSrc: string, fragmentSrc: string): WebGLProgram | null {
+  private createProgram(
+    gl: WebGLRenderingContext,
+    vertexSrc: string,
+    fragmentSrc: string
+  ): WebGLProgram | null {
     const vertexShader = this.createShader(gl, gl.VERTEX_SHADER, vertexSrc);
     const fragmentShader = this.createShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);
 
@@ -69,7 +72,11 @@ class ShaderProgramCache {
     return program;
   }
 
-  private createShader(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | null {
+  private createShader(
+    gl: WebGLRenderingContext,
+    type: number,
+    source: string
+  ): WebGLShader | null {
     const shader = gl.createShader(type);
     if (!shader) return null;
 
@@ -163,7 +170,6 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = ({
       onInit?.(gl);
       setWebGLSupported(true);
       return true;
-
     } catch (err) {
       console.error('WebGL initialization failed:', err);
       setError('WebGL initialization failed');
@@ -217,23 +223,26 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = ({
   }, [webGLSupported, onRender]);
 
   // Handle canvas resize
-  const handleResize = useCallback((newWidth: number, newHeight: number) => {
-    if (canvasRef.current) {
-      canvasRef.current.width = newWidth;
-      canvasRef.current.height = newHeight;
-    }
+  const handleResize = useCallback(
+    (newWidth: number, newHeight: number) => {
+      if (canvasRef.current) {
+        canvasRef.current.width = newWidth;
+        canvasRef.current.height = newHeight;
+      }
 
-    if (canvas2DRef.current) {
-      canvas2DRef.current.width = newWidth;
-      canvas2DRef.current.height = newHeight;
-    }
+      if (canvas2DRef.current) {
+        canvas2DRef.current.width = newWidth;
+        canvas2DRef.current.height = newHeight;
+      }
 
-    if (glRef.current) {
-      glRef.current.viewport(0, 0, newWidth, newHeight);
-    }
+      if (glRef.current) {
+        glRef.current.viewport(0, 0, newWidth, newHeight);
+      }
 
-    onResize?.(newWidth, newHeight);
-  }, [onResize]);
+      onResize?.(newWidth, newHeight);
+    },
+    [onResize]
+  );
 
   // Initialize contexts on mount/update
   useEffect(() => {
@@ -265,7 +274,10 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = ({
 
   // Handle width/height changes
   useEffect(() => {
-    if (canvasRef.current && (canvasRef.current.width !== width || canvasRef.current.height !== height)) {
+    if (
+      canvasRef.current &&
+      (canvasRef.current.width !== width || canvasRef.current.height !== height)
+    ) {
       handleResize(width, height);
     }
   }, [width, height, handleResize]);
@@ -321,9 +333,7 @@ export const WebGLCanvas: React.FC<WebGLCanvasProps> = ({
       {error && (
         <Box sx={{ position: 'absolute', top: 0, left: 0, p: 2 }}>
           <Alert severity="warning" sx={{ bgcolor: theme.palette.background.paper }}>
-            <Typography variant="body2">
-              {error}. Performance may be reduced.
-            </Typography>
+            <Typography variant="body2">{error}. Performance may be reduced.</Typography>
           </Alert>
         </Box>
       )}

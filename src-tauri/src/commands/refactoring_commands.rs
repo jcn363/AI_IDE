@@ -12,13 +12,14 @@
 //! - Undo/redo functionality with history management
 
 // Re-export the advanced refactoring operations
-pub use rust_ai_ide_ai_refactoring::*;
 use crate::commands::types::*;
 use crate::validation;
+pub use rust_ai_ide_ai_refactoring::*;
 use rust_ai_ide_common::types::*;
 
 /// Global configuration for command operations
-static COMMAND_CONFIG: std::sync::OnceLock<super::command_templates::CommandConfig> = std::sync::OnceLock::new();
+static COMMAND_CONFIG: std::sync::OnceLock<super::command_templates::CommandConfig> =
+    std::sync::OnceLock::new();
 
 /// Initialize the command configuration
 fn get_command_config() -> &'static super::command_templates::CommandConfig {
@@ -42,8 +43,12 @@ impl RefactoringService {
         }
     }
 
-    pub fn create_operation(&self, refactoring_type: &RefactoringType) -> Result<Box<dyn RefactoringOperation>, String> {
-        self.operation_factory.create_operation(refactoring_type)
+    pub fn create_operation(
+        &self,
+        refactoring_type: &RefactoringType,
+    ) -> Result<Box<dyn RefactoringOperation>, String> {
+        self.operation_factory
+            .create_operation(refactoring_type)
             .map_err(|e| format!("Failed to create refactoring operation: {}", e))
     }
 }
@@ -60,7 +65,10 @@ pub async fn execute_refactoring_operation(
     request: RefactoringExecutionRequest,
     state: tauri::State<'_, std::sync::Arc<tokio::sync::Mutex<crate::IDEState>>>,
 ) -> Result<RefactoringResult, String> {
-    log::info!("Executing refactoring operation: {}", request.operation_type);
+    log::info!(
+        "Executing refactoring operation: {}",
+        request.operation_type
+    );
 
     // Validate inputs
     crate::validation::validate_secure_path(&request.file_path, false)
@@ -72,7 +80,8 @@ pub async fn execute_refactoring_operation(
 
     // Acquire service state
     let mut ide_state = state.lock().await;
-    let refactoring_service = ide_state.refactoring_service
+    let refactoring_service = ide_state
+        .refactoring_service
         .get_or_insert_with(|| RefactoringService::new());
 
     // Create the refactoring operation
@@ -83,9 +92,13 @@ pub async fn execute_refactoring_operation(
     let options = request.options.try_into()?;
 
     // Execute the operation with progress tracking
-    execute_command!(stringify!(execute_refactoring_operation), &get_command_config(),
+    execute_command!(
+        stringify!(execute_refactoring_operation),
+        &get_command_config(),
         async move || {
-            let result = operation.execute(&context, &options).await
+            let result = operation
+                .execute(&context, &options)
+                .await
                 .map_err(|e| format!("Refactoring operation failed: {}", e))?;
 
             Ok::<_, String>(result)
@@ -99,7 +112,10 @@ pub async fn analyze_refactoring_candidates(
     request: RefactoringAnalysisRequest,
     state: tauri::State<'_, std::sync::Arc<tokio::sync::Mutex<crate::IDEState>>>,
 ) -> Result<RefactoringAnalysisResponse, String> {
-    log::info!("Analyzing refactoring candidates for file: {}", request.file_path);
+    log::info!(
+        "Analyzing refactoring candidates for file: {}",
+        request.file_path
+    );
 
     // Validate file path
     crate::validation::validate_secure_path(&request.file_path, false)
@@ -112,7 +128,8 @@ pub async fn analyze_refactoring_candidates(
 
     // Acquire service
     let mut ide_state = state.lock().await;
-    let refactoring_service = ide_state.refactoring_service
+    let refactoring_service = ide_state
+        .refactoring_service
         .get_or_insert_with(|| RefactoringService::new());
 
     // Analyze for each requested operation type
@@ -127,8 +144,14 @@ pub async fn analyze_refactoring_candidates(
             file_path: request.file_path.clone(),
             symbol_name: request.target_symbol.clone(),
             symbol_kind: request.symbol_kind.map(|k| k.into()),
-            cursor_line: request.cursor_position.map(|p| p.line as usize).unwrap_or(0),
-            cursor_character: request.cursor_position.map(|p| p.character as usize).unwrap_or(0),
+            cursor_line: request
+                .cursor_position
+                .map(|p| p.line as usize)
+                .unwrap_or(0),
+            cursor_character: request
+                .cursor_position
+                .map(|p| p.character as usize)
+                .unwrap_or(0),
             selection: request.selection.map(|s| s.into()),
             context_lines: vec![], // Would be populated from LSP
             language: ProgrammingLanguage::Rust,
@@ -137,7 +160,10 @@ pub async fn analyze_refactoring_candidates(
 
         let basic_options = RefactoringOptions::default();
 
-        if let Ok(true) = operation.is_applicable(&context, Some(&basic_options)).await {
+        if let Ok(true) = operation
+            .is_applicable(&context, Some(&basic_options))
+            .await
+        {
             if let Ok(analysis) = operation.analyze(&context).await {
                 candidates.push(RefactoringCandidate {
                     operation_type: *operation_type,
@@ -170,7 +196,10 @@ pub async fn execute_batch_refactoring(
     request: BatchRefactoringRequest,
     state: tauri::State<'_, std::sync::Arc<tokio::sync::Mutex<crate::IDEState>>>,
 ) -> Result<BatchRefactoringResult, String> {
-    log::info!("Executing batch refactoring with {} operations", request.operations.len());
+    log::info!(
+        "Executing batch refactoring with {} operations",
+        request.operations.len()
+    );
 
     // Validate all file paths
     for operation in &request.operations {
@@ -180,19 +209,22 @@ pub async fn execute_batch_refactoring(
 
     // Acquire service
     let mut ide_state = state.lock().await;
-    let refactoring_service = ide_state.refactoring_service
+    let refactoring_service = ide_state
+        .refactoring_service
         .get_or_insert_with(|| RefactoringService::new());
 
     // Create batch executor
     let executor = BatchRefactoringOperationExecutor;
     let batch_options = BatchRefactoringOptions {
-        operations: request.operations.into_iter().map(|op| {
-            BatchRefactoringOperation {
+        operations: request
+            .operations
+            .into_iter()
+            .map(|op| BatchRefactoringOperation {
                 operation_type: op.operation_type,
                 context: op.context.try_into().unwrap_or_default(),
                 options: op.options.try_into().unwrap_or_default(),
-            }
-        }).collect(),
+            })
+            .collect(),
         parallel_execution: request.parallel_execution,
         stop_on_failure: request.stop_on_failure,
         create_backup_directory: true,
@@ -202,16 +234,22 @@ pub async fn execute_batch_refactoring(
 
     let mut progress_tracker = ProgressTracker::new();
 
-    execute_command!(stringify!(execute_batch_refactoring), &get_command_config(),
+    execute_command!(
+        stringify!(execute_batch_refactoring),
+        &get_command_config(),
         async move || {
-            let batch_result = executor.execute_batch(batch_options, &mut progress_tracker).await
+            let batch_result = executor
+                .execute_batch(batch_options, &mut progress_tracker)
+                .await
                 .map_err(|e| format!("Batch refactoring failed: {}", e))?;
 
             Ok::<_, String>(BatchRefactoringResult {
                 operation_count: batch_result.results.len(),
                 successes: batch_result.results.len(),
                 failures: 0,
-                warning_count: batch_result.results.iter()
+                warning_count: batch_result
+                    .results
+                    .iter()
                     .map(|r| r.result.warnings.len())
                     .sum(),
                 execution_time_ms: 0, // Would be tracked by progress tracker
@@ -228,7 +266,10 @@ pub async fn generate_refactoring_tests(
     request: TestGenerationRequest,
     state: tauri::State<'_, std::sync::Arc<tokio::sync::Mutex<crate::IDEState>>>,
 ) -> Result<TestGenerationResponse, String> {
-    log::info!("Generating refactoring tests for operation: {}", request.operation_type);
+    log::info!(
+        "Generating refactoring tests for operation: {}",
+        request.operation_type
+    );
 
     // Validate file path
     crate::validation::validate_secure_path(&request.file_path, false)
@@ -236,14 +277,17 @@ pub async fn generate_refactoring_tests(
 
     // Acquire service
     let mut ide_state = state.lock().await;
-    let refactoring_service = ide_state.refactoring_service
+    let refactoring_service = ide_state
+        .refactoring_service
         .get_or_insert_with(|| RefactoringService::new());
 
     // Get the operation for test generation context
     if let Ok(operation) = refactoring_service.create_operation(&request.operation_type) {
         let test_generator = RefactoringTestGenerator::new();
 
-        execute_command!(stringify!(generate_refactoring_tests), &get_command_config(),
+        execute_command!(
+            stringify!(generate_refactoring_tests),
+            &get_command_config(),
             async move || {
                 // Create basic result for test generation
                 let mock_result = RefactoringResult {
@@ -256,32 +300,39 @@ pub async fn generate_refactoring_tests(
                 };
 
                 // Generate tests
-                let tests_result = test_generator.generate_refactoring_tests(
-                    &request.operation_type,
-                    &mock_result,
-                    &RefactoringContext {
-                        file_path: request.file_path.clone(),
-                        symbol_name: request.symbol_name,
-                        symbol_kind: request.symbol_kind,
-                        cursor_line: request.cursor_line,
-                        cursor_character: request.cursor_character,
-                        selection: request.selection,
-                        context_lines: vec![],
-                        language: ProgrammingLanguage::Rust,
-                        project_root: request.project_root,
-                    }
-                ).await
-                .map_err(|e| format!("Test generation failed: {}", e))?;
+                let tests_result = test_generator
+                    .generate_refactoring_tests(
+                        &request.operation_type,
+                        &mock_result,
+                        &RefactoringContext {
+                            file_path: request.file_path.clone(),
+                            symbol_name: request.symbol_name,
+                            symbol_kind: request.symbol_kind,
+                            cursor_line: request.cursor_line,
+                            cursor_character: request.cursor_character,
+                            selection: request.selection,
+                            context_lines: vec![],
+                            language: ProgrammingLanguage::Rust,
+                            project_root: request.project_root,
+                        },
+                    )
+                    .await
+                    .map_err(|e| format!("Test generation failed: {}", e))?;
 
                 Ok::<_, String>(TestGenerationResponse {
                     operation_type: request.operation_type,
-                    generated_tests: tests_result.unit_tests.into_iter()
+                    generated_tests: tests_result
+                        .unit_tests
+                        .into_iter()
                         .map(|test| GeneratedTestInfo {
                             test_type: test.test_type.to_string(),
                             language: "Rust".to_string(),
                             framework: test.framework.clone(),
                             content: test.code,
-                            filename: format!("test_{}.rs", test.name.to_lowercase().replace(" ", "_")),
+                            filename: format!(
+                                "test_{}.rs",
+                                test.name.to_lowercase().replace(" ", "_")
+                            ),
                             dependencies: vec![], // Would be analyzed
                         })
                         .collect(),
@@ -291,7 +342,10 @@ pub async fn generate_refactoring_tests(
             }
         )
     } else {
-        Err(format!("Unsupported operation type for test generation: {:?}", request.operation_type))
+        Err(format!(
+            "Unsupported operation type for test generation: {:?}",
+            request.operation_type
+        ))
     }
 }
 
@@ -302,22 +356,27 @@ pub async fn get_available_refactoring_operations(
 ) -> Result<Vec<RefactoringOperationInfo>, String> {
     log::info!("Retrieving available refactoring operations");
 
-    execute_command!(stringify!(get_available_refactoring_operations), &get_command_config(),
+    execute_command!(
+        stringify!(get_available_refactoring_operations),
+        &get_command_config(),
         async move || {
             let factory = RefactoringOperationFactory;
             let available_types = factory.available_refactorings();
 
-            let operations = available_types.into_iter()
+            let operations = available_types
+                .into_iter()
                 .map(|operation_type| {
                     let operation = factory.create_operation(&operation_type).unwrap();
                     RefactoringOperationInfo {
                         operation_type,
                         name: operation.name().to_string(),
                         description: operation.description().to_string(),
-                        requires_selection: matches!(operation_type,
-                            RefactoringType::ExtractFunction |
-                            RefactoringType::ExtractVariable |
-                            RefactoringType::InlineVariable),
+                        requires_selection: matches!(
+                            operation_type,
+                            RefactoringType::ExtractFunction
+                                | RefactoringType::ExtractVariable
+                                | RefactoringType::InlineVariable
+                        ),
                         is_experimental: false, // Only some operations could be marked experimental
                         typical_confidence_score: 0.8, // Would be operation-specific
                     }
@@ -355,7 +414,10 @@ pub async fn validate_refactoring_safety(
     request: SafetyValidationRequest,
     state: tauri::State<'_, std::sync::Arc<tokio::sync::Mutex<crate::IDEState>>>,
 ) -> Result<SafetyValidationResult, String> {
-    log::info!("Validating refactoring safety for operation: {}", request.operation_type);
+    log::info!(
+        "Validating refactoring safety for operation: {}",
+        request.operation_type
+    );
 
     // Validate file path
     crate::validation::validate_secure_path(&request.file_path, false)
@@ -363,13 +425,16 @@ pub async fn validate_refactoring_safety(
 
     // Acquire service
     let mut ide_state = state.lock().await;
-    let refactoring_service = ide_state.refactoring_service
+    let refactoring_service = ide_state
+        .refactoring_service
         .get_or_insert_with(|| RefactoringService::new());
 
     // Create operation and validate
     if let Ok(operation) = refactoring_service.create_operation(&request.operation_type) {
         let context = request.context.try_into()?;
-        let analysis = operation.analyze(&context).await
+        let analysis = operation
+            .analyze(&context)
+            .await
             .map_err(|e| format!("Safety analysis failed: {}", e))?;
 
         Ok(SafetyValidationResult {
@@ -382,7 +447,10 @@ pub async fn validate_refactoring_safety(
             recommendations: generate_safety_recommendations(&analysis),
         })
     } else {
-        Err(format!("Unsupported operation type: {:?}", request.operation_type))
+        Err(format!(
+            "Unsupported operation type: {:?}",
+            request.operation_type
+        ))
     }
 }
 
@@ -447,7 +515,5 @@ pub async fn update_refactoring_preferences(
 
 // Module exports for the commands
 pub use rust_ai_ide_ai_refactoring::{
-    RefactoringTestGenerator,
-    BatchRefactoringOperationExecutor,
-    ProgressTracker,
+    BatchRefactoringOperationExecutor, ProgressTracker, RefactoringTestGenerator,
 };

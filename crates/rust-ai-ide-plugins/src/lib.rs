@@ -7,9 +7,9 @@ pub mod dependency_resolver;
 pub mod interfaces;
 pub mod loader;
 pub mod marketplace;
+pub mod marketplace_integration;
 pub mod mission_control;
 pub mod plugin_runtime;
-pub mod marketplace_integration;
 pub mod registry;
 
 pub use dependency_resolver::*;

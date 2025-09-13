@@ -16,9 +16,18 @@ export class OptionsMapper {
     // Map standard boolean options with fallbacks
     backendOptions.create_backup = OptionsMapper.mapBooleanOption(options.createBackup, true);
     backendOptions.generate_tests = OptionsMapper.mapBooleanOption(options.generateTests, false);
-    backendOptions.apply_to_all_occurrences = OptionsMapper.mapBooleanOption(options.applyToAllOccurrences, false);
-    backendOptions.preserve_references = OptionsMapper.mapBooleanOption(options.preserveReferences, true);
-    backendOptions.ignore_safe_operations = OptionsMapper.mapBooleanOption(options.ignoreSafeOperations, false);
+    backendOptions.apply_to_all_occurrences = OptionsMapper.mapBooleanOption(
+      options.applyToAllOccurrences,
+      false
+    );
+    backendOptions.preserve_references = OptionsMapper.mapBooleanOption(
+      options.preserveReferences,
+      true
+    );
+    backendOptions.ignore_safe_operations = OptionsMapper.mapBooleanOption(
+      options.ignoreSafeOperations,
+      false
+    );
 
     // Collect UI-specific options that don't exist in backend
     const uiOnlyKeys = [
@@ -29,8 +38,14 @@ export class OptionsMapper {
     const extraOptions: Record<string, any> = {};
     if (options.extraOptions) {
       Object.entries(options.extraOptions).forEach(([key, value]) => {
-        if (key === 'newName' || key === 'functionName' || key === 'methodName' ||
-            key === 'className' || key === 'interfaceName' || key === 'variableName') {
+        if (
+          key === 'newName' ||
+          key === 'functionName' ||
+          key === 'methodName' ||
+          key === 'className' ||
+          key === 'interfaceName' ||
+          key === 'variableName'
+        ) {
           // Keep refactor-specific options in extra_options
           extraOptions[key] = value;
         } else if (key === 'functionSignature' || key === 'methodSignature') {
@@ -63,9 +78,21 @@ export class OptionsMapper {
     const frontendOptions: RefactoringOptions = {
       createBackup: OptionsMapper.extractBooleanValue(backendOptions, 'create_backup', true),
       generateTests: OptionsMapper.extractBooleanValue(backendOptions, 'generate_tests', false),
-      applyToAllOccurrences: OptionsMapper.extractBooleanValue(backendOptions, 'apply_to_all_occurrences', false),
-      preserveReferences: OptionsMapper.extractBooleanValue(backendOptions, 'preserve_references', true),
-      ignoreSafeOperations: OptionsMapper.extractBooleanValue(backendOptions, 'ignore_safe_operations', false),
+      applyToAllOccurrences: OptionsMapper.extractBooleanValue(
+        backendOptions,
+        'apply_to_all_occurrences',
+        false
+      ),
+      preserveReferences: OptionsMapper.extractBooleanValue(
+        backendOptions,
+        'preserve_references',
+        true
+      ),
+      ignoreSafeOperations: OptionsMapper.extractBooleanValue(
+        backendOptions,
+        'ignore_safe_operations',
+        false
+      ),
     };
 
     // Extract extra options from backend
@@ -125,11 +152,14 @@ export class OptionsMapper {
   /**
    * Deep merge options, preserving extra options
    */
-  static mergeOptions(baseOptions: RefactoringOptions, overrideOptions: Partial<RefactoringOptions>): RefactoringOptions {
+  static mergeOptions(
+    baseOptions: RefactoringOptions,
+    overrideOptions: Partial<RefactoringOptions>
+  ): RefactoringOptions {
     const merged: RefactoringOptions = { ...baseOptions };
 
     // Override direct properties
-    Object.keys(overrideOptions).forEach(key => {
+    Object.keys(overrideOptions).forEach((key) => {
       const value = (overrideOptions as any)[key];
       if (value !== undefined) {
         (merged as any)[key] = value;
@@ -139,7 +169,7 @@ export class OptionsMapper {
     // Deep merge extraOptions
     if (overrideOptions.extraOptions) {
       merged.extraOptions = merged.extraOptions || {};
-      Object.keys(overrideOptions.extraOptions).forEach(key => {
+      Object.keys(overrideOptions.extraOptions).forEach((key) => {
         if (overrideOptions.extraOptions![key] !== undefined) {
           merged.extraOptions![key] = overrideOptions.extraOptions![key];
         }
@@ -190,7 +220,9 @@ export class OptionsMapperTest {
       roundtripOptions.ignoreSafeOperations === originalOptions.ignoreSafeOperations;
 
     // Compare extra options
-    const extraMatches = JSON.stringify(roundtripOptions.extraOptions) === JSON.stringify(originalOptions.extraOptions);
+    const extraMatches =
+      JSON.stringify(roundtripOptions.extraOptions) ===
+      JSON.stringify(originalOptions.extraOptions);
 
     console.log('Direct properties match:', matches);
     console.log('Extra options match:', extraMatches);
@@ -222,7 +254,7 @@ export class OptionsMapperTest {
       extraOptions: {
         specialConfig: true,
         patternData: 'test-value',
-      }
+      },
     };
     const extraBackend = OptionsMapper.mapFrontendToBackend(extraOnlyOptions);
     const extraRoundtrip = OptionsMapper.mapBackendToFrontend(extraBackend);

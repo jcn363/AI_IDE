@@ -15,10 +15,7 @@ interface LockfileViewerProps {
 /**
  * Displays the contents of the Cargo.lock file in a structured format
  */
-export const LockfileViewer: React.FC<LockfileViewerProps> = ({
-  projectPath,
-  onError
-}) => {
+export const LockfileViewer: React.FC<LockfileViewerProps> = ({ projectPath, onError }) => {
   const [lockfileData, setLockfileData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 

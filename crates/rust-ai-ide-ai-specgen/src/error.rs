@@ -53,30 +53,56 @@ pub enum SpecGenError {
 impl Clone for SpecGenError {
     fn clone(&self) -> Self {
         match self {
-            SpecGenError::ParseError { message } => SpecGenError::ParseError { message: message.clone() },
-            SpecGenError::GenerateError { message } => SpecGenError::GenerateError { message: message.clone() },
-            SpecGenError::ValidationError { message } => SpecGenError::ValidationError { message: message.clone() },
-            SpecGenError::TemplateError { message } => SpecGenError::TemplateError { message: message.clone() },
-            SpecGenError::DocumentationError { message } => SpecGenError::DocumentationError { message: message.clone() },
-            SpecGenError::IoError { message } => SpecGenError::IoError { message: message.clone() },
-            SpecGenError::JsonError { message } => SpecGenError::JsonError { message: message.clone() },
-            SpecGenError::TemplateRenderError { message } => SpecGenError::TemplateRenderError { message: message.clone() },
-            SpecGenError::ConfigError { message } => SpecGenError::ConfigError { message: message.clone() },
-            SpecGenError::ExternalError { message } => SpecGenError::ExternalError { message: message.clone() },
-            SpecGenError::ValidationIssues { issues } => SpecGenError::ValidationIssues { issues: issues.clone() },
+            SpecGenError::ParseError { message } => SpecGenError::ParseError {
+                message: message.clone(),
+            },
+            SpecGenError::GenerateError { message } => SpecGenError::GenerateError {
+                message: message.clone(),
+            },
+            SpecGenError::ValidationError { message } => SpecGenError::ValidationError {
+                message: message.clone(),
+            },
+            SpecGenError::TemplateError { message } => SpecGenError::TemplateError {
+                message: message.clone(),
+            },
+            SpecGenError::DocumentationError { message } => SpecGenError::DocumentationError {
+                message: message.clone(),
+            },
+            SpecGenError::IoError { message } => SpecGenError::IoError {
+                message: message.clone(),
+            },
+            SpecGenError::JsonError { message } => SpecGenError::JsonError {
+                message: message.clone(),
+            },
+            SpecGenError::TemplateRenderError { message } => SpecGenError::TemplateRenderError {
+                message: message.clone(),
+            },
+            SpecGenError::ConfigError { message } => SpecGenError::ConfigError {
+                message: message.clone(),
+            },
+            SpecGenError::ExternalError { message } => SpecGenError::ExternalError {
+                message: message.clone(),
+            },
+            SpecGenError::ValidationIssues { issues } => SpecGenError::ValidationIssues {
+                issues: issues.clone(),
+            },
         }
     }
 }
 
 impl From<std::io::Error> for SpecGenError {
     fn from(err: std::io::Error) -> Self {
-        SpecGenError::IoError { message: err.to_string() }
+        SpecGenError::IoError {
+            message: err.to_string(),
+        }
     }
 }
 
 impl From<serde_json::Error> for SpecGenError {
     fn from(err: serde_json::Error) -> Self {
-        SpecGenError::JsonError { message: err.to_string() }
+        SpecGenError::JsonError {
+            message: err.to_string(),
+        }
     }
 }
 
@@ -99,7 +125,9 @@ pub struct ValidationIssue {
 }
 
 /// Severity levels for validation issues
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 pub enum Severity {
     /// Information
     Info,

@@ -4,12 +4,12 @@
 //! including semantic code understanding, architecture recommendations, and
 //! advanced pattern detection.
 
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use crate::command_templates::{execute_command, CommandConfig};
 use crate::commands::types::*;
 use crate::state::AppState;
 use crate::validation;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 /// Global configuration for analysis commands
 static ANALYSIS_CONFIG: std::sync::OnceLock<CommandConfig> = std::sync::OnceLock::new();
@@ -49,23 +49,27 @@ pub async fn initialize_ai_service(
 ) -> Result<serde_json::Value, String> {
     let config = get_analysis_config();
 
-    execute_command!(stringify!(initialize_ai_service), &config, async move || {
-        let ai_service = AIAnalysisService::new();
-        let mut state = app_state.lock().await;
+    execute_command!(
+        stringify!(initialize_ai_service),
+        &config,
+        async move || {
+            let ai_service = AIAnalysisService::new();
+            let mut state = app_state.lock().await;
 
-        log::info!("Initializing advanced AI analysis service");
+            log::info!("Initializing advanced AI analysis service");
 
-        Ok::<_, String>(serde_json::json!({
-            "status": "initialized",
-            "features": [
-                "semantic_code_understanding",
-                "architecture_recommendations",
-                "pattern_detection",
-                "performance_analysis",
-                "security_scanning"
-            ]
-        }))
-    })
+            Ok::<_, String>(serde_json::json!({
+                "status": "initialized",
+                "features": [
+                    "semantic_code_understanding",
+                    "architecture_recommendations",
+                    "pattern_detection",
+                    "performance_analysis",
+                    "security_scanning"
+                ]
+            }))
+        }
+    )
 }
 
 /// Analyze file with enhanced semantic understanding
@@ -133,25 +137,32 @@ pub async fn analyze_workspace(
 pub async fn get_architectural_recommendations(
     request: ArchitectureAnalysisRequest,
     app_state: tauri::State<'_, Arc<Mutex<AppState>>>,
-) -> Result<serde_json::json!({
+) -> Result<
+    serde_json::json!({
         "result": recommendations,
         "confidence": confidence,
         "rationale": rationale
-    }), String> {
+    }),
+    String,
+> {
     let config = get_analysis_config();
 
-    execute_command!(stringify!(get_architectural_recommendations), &config, async move || {
-        log::info!("Generating architecture recommendations");
+    execute_command!(
+        stringify!(get_architectural_recommendations),
+        &config,
+        async move || {
+            log::info!("Generating architecture recommendations");
 
-        let recommendations = generate_architectural_recommendations(&request).await?;
+            let recommendations = generate_architectural_recommendations(&request).await?;
 
-        Ok::<_, String>(serde_json::json!({
-            "recommendations": recommendations.suggestions,
-            "confidence": recommendations.confidence_score,
-            "rationale": recommendations.rationale,
-            "priority": recommendations.priority
-        }))
-    })
+            Ok::<_, String>(serde_json::json!({
+                "recommendations": recommendations.suggestions,
+                "confidence": recommendations.confidence_score,
+                "rationale": recommendations.rationale,
+                "priority": recommendations.priority
+            }))
+        }
+    )
 }
 
 /// Generation code from specification with AI
@@ -159,28 +170,35 @@ pub async fn get_architectural_recommendations(
 pub async fn generate_code_from_specification(
     request: CodeSpecificationRequest,
     app_state: tauri::State<'_, Arc<Mutex<AppState>>>,
-) -> Result<serde_json::json!({
+) -> Result<
+    serde_json::json!({
         "success": true,
         "generated_code": code,
         "explanation": explanation,
         "quality_score": score,
         "test_suggestions": tests
-    }), String> {
+    }),
+    String,
+> {
     let config = get_analysis_config();
 
-    execute_command!(stringify!(generate_code_from_specification), &config, async move || {
-        log::info!("Generating code from specification");
+    execute_command!(
+        stringify!(generate_code_from_specification),
+        &config,
+        async move || {
+            log::info!("Generating code from specification");
 
-        let generation_result = generate_code_from_spec(&request).await?;
+            let generation_result = generate_code_from_spec(&request).await?;
 
-        Ok::<_, String>(serde_json::json!({
-            "success": true,
-            "generated_code": generation_result.code,
-            "explanation": generation_result.explanation,
-            "quality_score": generation_result.quality_score,
-            "test_suggestions": generation_result.tests
-        }))
-    })
+            Ok::<_, String>(serde_json::json!({
+                "success": true,
+                "generated_code": generation_result.code,
+                "explanation": generation_result.explanation,
+                "quality_score": generation_result.quality_score,
+                "test_suggestions": generation_result.tests
+            }))
+        }
+    )
 }
 
 /// Helper functions for analysis operations
@@ -229,7 +247,9 @@ async fn analyze_performance(
 
     Ok(PerformanceInsights {
         bottlenecks: analyzer.identify_bottlenecks(file_content, context).await?,
-        optimization_opportunities: analyzer.find_optimization_opportunities(file_content).await?,
+        optimization_opportunities: analyzer
+            .find_optimization_opportunities(file_content)
+            .await?,
         memory_usage_patterns: analyzer.analyze_memory_usage(file_content).await?,
         performance_metrics: analyzer.calculate_performance_metrics(file_content).await?,
     })
@@ -242,7 +262,9 @@ async fn scan_security(file_content: &str) -> Result<SecurityAnalysis, String> {
         vulnerabilities: scanner.find_vulnerabilities(file_content).await?,
         owasp_compliance: scanner.check_owasp_compliance(file_content).await?,
         audit_logging: scanner.analyze_audit_logging(file_content).await?,
-        security_recommendations: scanner.provide_security_recommendations(file_content).await?,
+        security_recommendations: scanner
+            .provide_security_recommendations(file_content)
+            .await?,
     })
 }
 
@@ -323,7 +345,10 @@ impl AdvancedPatternDetector {
     }
 
     async fn detect_architecture_patterns(&self, content: &str) -> Result<Vec<String>, String> {
-        Ok(vec!["MVVM pattern detected".to_string(), "Repository pattern used".to_string()])
+        Ok(vec![
+            "MVVM pattern detected".to_string(),
+            "Repository pattern used".to_string(),
+        ])
     }
 
     async fn calculate_quality_metrics(&self, content: &str) -> Result<QualityMetrics, String> {
@@ -344,7 +369,11 @@ impl PerformanceAnalyzer {
         Self {}
     }
 
-    async fn identify_bottlenecks(&self, content: &str, context: Option<&AnalysisContext>) -> Result<Vec<String>, String> {
+    async fn identify_bottlenecks(
+        &self,
+        content: &str,
+        context: Option<&AnalysisContext>,
+    ) -> Result<Vec<String>, String> {
         Ok(vec![
             "Potential N+1 query pattern".to_string(),
             "Large object allocation in hot path".to_string(),
@@ -365,7 +394,10 @@ impl PerformanceAnalyzer {
         ])
     }
 
-    async fn calculate_performance_metrics(&self, content: &str) -> Result<PerformanceMetrics, String> {
+    async fn calculate_performance_metrics(
+        &self,
+        content: &str,
+    ) -> Result<PerformanceMetrics, String> {
         Ok(PerformanceMetrics {
             estimated_complexity: "O(n log n)".to_string(),
             memory_efficiency: 0.90,
@@ -389,14 +421,12 @@ impl SecurityScanner {
 
     async fn check_owasp_compliance(&self, content: &str) -> Result<Vec<String>, String> {
         Ok(vec![
-            "Compliant with OWASP authentication guidelines".to_string(),
+            "Compliant with OWASP authentication guidelines".to_string()
         ])
     }
 
     async fn analyze_audit_logging(&self, content: &str) -> Result<Vec<String>, String> {
-        Ok(vec![
-            "Audit logging is properly implemented".to_string(),
-        ])
+        Ok(vec!["Audit logging is properly implemented".to_string()])
     }
 
     async fn provide_security_recommendations(&self, content: &str) -> Result<Vec<String>, String> {
@@ -452,7 +482,9 @@ async fn perform_workspace_analysis() -> Result<WorkspaceAnalysis, String> {
     })
 }
 
-async fn generate_architectural_recommendations(request: &ArchitectureAnalysisRequest) -> Result<ArchitectureRecommendations, String> {
+async fn generate_architectural_recommendations(
+    request: &ArchitectureAnalysisRequest,
+) -> Result<ArchitectureRecommendations, String> {
     Ok(ArchitectureRecommendations {
         suggestions: vec![
             "Consider microservices architecture for scalability".to_string(),
@@ -464,10 +496,15 @@ async fn generate_architectural_recommendations(request: &ArchitectureAnalysisRe
     })
 }
 
-async fn generate_code_from_spec(request: &CodeSpecificationRequest) -> Result<CodeGenerationResult, String> {
+async fn generate_code_from_spec(
+    request: &CodeSpecificationRequest,
+) -> Result<CodeGenerationResult, String> {
     Ok(CodeGenerationResult {
         code: format!("// Generated code for: {}", request.specification),
-        explanation: format!("Implemented based on specification: {}", request.specification),
+        explanation: format!(
+            "Implemented based on specification: {}",
+            request.specification
+        ),
         quality_score: 0.85,
         tests: vec![
             "Unit test for generated functionality".to_string(),

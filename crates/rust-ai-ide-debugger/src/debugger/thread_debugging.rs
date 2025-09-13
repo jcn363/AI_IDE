@@ -217,7 +217,10 @@ impl ThreadDebugger {
     }
 
     /// Send an event to the debugger system
-    fn send_event(&self, event: ThreadDebuggerEvent) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    fn send_event(
+        &self,
+        event: ThreadDebuggerEvent,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(sender) = &self.event_sender {
             sender.send(event)?;
         }
@@ -225,7 +228,11 @@ impl ThreadDebugger {
     }
 
     /// Track a new thread
-    pub fn track_thread(&mut self, thread_id: u32, name: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn track_thread(
+        &mut self,
+        thread_id: u32,
+        name: String,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let thread_info = ThreadInfo {
             id: thread_id,
             name: name.clone(),
@@ -255,7 +262,11 @@ impl ThreadDebugger {
     }
 
     /// Track an async task
-    pub fn track_async_task(&mut self, task_name: String, thread_id: Option<u32>) -> Result<u32, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn track_async_task(
+        &mut self,
+        task_name: String,
+        thread_id: Option<u32>,
+    ) -> Result<u32, Box<dyn std::error::Error + Send + Sync>> {
         let task_id = self.next_task_id;
         self.next_task_id += 1;
 
@@ -289,7 +300,11 @@ impl ThreadDebugger {
     }
 
     /// Update thread state
-    pub fn update_thread_state(&mut self, thread_id: u32, new_state: ThreadState) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn update_thread_state(
+        &mut self,
+        thread_id: u32,
+        new_state: ThreadState,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(thread) = self.threads.get_mut(&thread_id) {
             let old_state = thread.state.clone();
             thread.state = new_state.clone();
@@ -313,7 +328,11 @@ impl ThreadDebugger {
     }
 
     /// Update async task state
-    pub fn update_async_task_state(&mut self, task_id: u32, new_state: AsyncTaskState) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn update_async_task_state(
+        &mut self,
+        task_id: u32,
+        new_state: AsyncTaskState,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(task) = self.tasks.get_mut(&task_id) {
             let old_state = task.state.clone();
             task.state = new_state.clone();
@@ -324,7 +343,10 @@ impl ThreadDebugger {
             })?;
 
             // If task completed, send completion event
-            if matches!(new_state, AsyncTaskState::Completed | AsyncTaskState::Error(_)) {
+            if matches!(
+                new_state,
+                AsyncTaskState::Completed | AsyncTaskState::Error(_)
+            ) {
                 self.send_event(ThreadDebuggerEvent::TaskCompleted(task_id))?;
             }
 
@@ -341,7 +363,10 @@ impl ThreadDebugger {
                     timeline.events.push(TimelineEvent {
                         timestamp: self.get_timestamp(),
                         event_type,
-                        description: format!("Task '{}' state: {:?} -> {:?}", task.name, old_state, new_state),
+                        description: format!(
+                            "Task '{}' state: {:?} -> {:?}",
+                            task.name, old_state, new_state
+                        ),
                         task_id: Some(task_id),
                     });
                 }
@@ -351,7 +376,11 @@ impl ThreadDebugger {
     }
 
     /// Track lock acquisition
-    pub fn acquire_lock(&mut self, thread_id: u32, lock_id: u64) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn acquire_lock(
+        &mut self,
+        thread_id: u32,
+        lock_id: u64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Check for potential deadlock
         if let Some(contending) = self.check_lock_contention(thread_id, lock_id) {
             self.send_event(ThreadDebuggerEvent::LockContention {
@@ -383,7 +412,11 @@ impl ThreadDebugger {
     }
 
     /// Track lock release
-    pub fn release_lock(&mut self, thread_id: u32, lock_id: u64) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn release_lock(
+        &mut self,
+        thread_id: u32,
+        lock_id: u64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Update thread locks
         if let Some(thread) = self.threads.get_mut(&thread_id) {
             thread.held_locks.remove(&lock_id);
@@ -410,7 +443,11 @@ impl ThreadDebugger {
     }
 
     /// Wait for a lock
-    pub fn wait_for_lock(&mut self, thread_id: u32, lock_id: u64) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn wait_for_lock(
+        &mut self,
+        thread_id: u32,
+        lock_id: u64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(thread) = self.threads.get_mut(&thread_id) {
             thread.waiting_locks.insert(lock_id);
             thread.state = ThreadState::Blocked;
@@ -448,9 +485,10 @@ impl ThreadDebugger {
                 // Add threads waiting on locks held by this thread
                 for lock_id in &thread.held_locks {
                     contending.extend(
-                        self.threads.values()
+                        self.threads
+                            .values()
                             .filter(|t| t.waiting_locks.contains(lock_id))
-                            .map(|t| t.id)
+                            .map(|t| t.id),
                     );
                 }
             }
@@ -465,8 +503,12 @@ impl ThreadDebugger {
 
     /// Wake threads waiting for a released lock
     fn wake_waiting_threads(&mut self, lock_id: u64) {
-        let waiting_threads: Vec<_> = self.threads.values()
-            .filter(|t| t.waiting_locks.contains(&lock_id) && matches!(t.state, ThreadState::Blocked))
+        let waiting_threads: Vec<_> = self
+            .threads
+            .values()
+            .filter(|t| {
+                t.waiting_locks.contains(&lock_id) && matches!(t.state, ThreadState::Blocked)
+            })
             .map(|t| t.id)
             .collect();
 
@@ -509,7 +551,9 @@ impl ThreadDebugger {
         // Standard cycle detection in directed graph
         for thread in self.threads.keys() {
             if !visited.contains(thread) {
-                if let Some(deadlock) = self.detect_cycle(*thread, &mut visited, &mut recursion_stack) {
+                if let Some(deadlock) =
+                    self.detect_cycle(*thread, &mut visited, &mut recursion_stack)
+                {
                     deadlocks.push(deadlock);
                 }
             }
@@ -519,7 +563,12 @@ impl ThreadDebugger {
     }
 
     /// Helper method for cycle detection
-    fn detect_cycle(&self, thread_id: u32, visited: &mut HashSet<u32>, recursion_stack: &mut HashSet<u32>) -> Option<DeadlockInfo> {
+    fn detect_cycle(
+        &self,
+        thread_id: u32,
+        visited: &mut HashSet<u32>,
+        recursion_stack: &mut HashSet<u32>,
+    ) -> Option<DeadlockInfo> {
         visited.insert(thread_id);
         recursion_stack.insert(thread_id);
 
@@ -528,20 +577,27 @@ impl ThreadDebugger {
             for waiting_lock in &thread.waiting_locks {
                 if let Some(Some(holder_id)) = self.locks.get(waiting_lock) {
                     if !visited.contains(holder_id) {
-                        if let Some(deadlock) = self.detect_cycle(*holder_id, visited, recursion_stack) {
+                        if let Some(deadlock) =
+                            self.detect_cycle(*holder_id, visited, recursion_stack)
+                        {
                             return Some(deadlock);
                         }
                     } else if recursion_stack.contains(holder_id) {
                         // Cycle detected!
                         let involved_threads = recursion_stack.iter().cloned().collect();
-                        let contested_locks: Vec<u64> = self.threads.values()
+                        let contested_locks: Vec<u64> = self
+                            .threads
+                            .values()
                             .flat_map(|t| t.waiting_locks.iter().cloned())
                             .collect();
 
                         return Some(DeadlockInfo {
                             involved_threads,
                             contested_locks,
-                            description: format!("Deadlock detected involving threads: {:?}", recursion_stack),
+                            description: format!(
+                                "Deadlock detected involving threads: {:?}",
+                                recursion_stack
+                            ),
                             detected_at: self.get_timestamp(),
                         });
                     }
@@ -558,7 +614,10 @@ impl ThreadDebugger {
         let mut output = String::from("Async Task Execution Visualization:\n");
 
         for task in self.tasks.values() {
-            output.push_str(&format!("Task {} ({}): {:?}\n", task.id, task.name, task.state));
+            output.push_str(&format!(
+                "Task {} ({}): {:?}\n",
+                task.id, task.name, task.state
+            ));
 
             for frame in &task.async_call_stack {
                 output.push_str(&format!("  {} - {}\n", frame.future_name, frame.location));
@@ -567,7 +626,10 @@ impl ThreadDebugger {
 
         output.push_str("\nThread States:\n");
         for thread in self.threads.values() {
-            output.push_str(&format!("Thread {} ({}): {:?}\n", thread.id, thread.name, thread.state));
+            output.push_str(&format!(
+                "Thread {} ({}): {:?}\n",
+                thread.id, thread.name, thread.state
+            ));
         }
 
         output

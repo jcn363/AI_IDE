@@ -1,10 +1,10 @@
+use chrono::{DateTime, Utc};
+use ndarray::Array2;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use ndarray::Array2;
 
 /// Represents raw EEG data from neural interface
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -88,14 +88,22 @@ impl ThoughtPattern {
         // Positive emotions correlate with beta/alpha ratios
         let beta = bands.get("beta").unwrap_or(&0.0);
         let alpha = bands.get("alpha").unwrap_or(&0.0);
-        if *alpha > 0.0 { beta / alpha } else { 0.5 }
+        if *alpha > 0.0 {
+            beta / alpha
+        } else {
+            0.5
+        }
     }
 
     fn estimate_cognitive_load(bands: &HashMap<String, f32>) -> f32 {
         // Cognitive load correlates with theta/beta ratio
         let theta = bands.get("theta").unwrap_or(&0.0);
         let beta = bands.get("beta").unwrap_or(&0.0);
-        if *beta > 0.0 { theta / beta } else { 0.0 }
+        if *beta > 0.0 {
+            theta / beta
+        } else {
+            0.0
+        }
     }
 
     fn calculate_complexity(eeg_stream: &[EEGData]) -> f64 {
@@ -107,9 +115,16 @@ impl ThoughtPattern {
         // Fisher Information metric for signal complexity
         let mut total_complexity = 0.0;
         for data in eeg_stream {
-            let variance = data.channels.iter()
-                .map(|v| (*v as f64 - data.channels.iter().sum::<f32>() as f64 / data.channels.len() as f64).powi(2))
-                .sum::<f64>() / data.channels.len() as f64;
+            let variance = data
+                .channels
+                .iter()
+                .map(|v| {
+                    (*v as f64
+                        - data.channels.iter().sum::<f32>() as f64 / data.channels.len() as f64)
+                        .powi(2)
+                })
+                .sum::<f64>()
+                / data.channels.len() as f64;
             total_complexity += variance.sqrt();
         }
 
@@ -162,19 +177,38 @@ pub enum CodeConstruct {
 impl CodeConstruct {
     pub fn to_code_string(&self) -> String {
         match self {
-            CodeConstruct::VariableDeclaration { name, data_type, value } => {
-                format!("{} {} = {};", data_type, name, value.as_ref().unwrap_or(&"".to_string()))
+            CodeConstruct::VariableDeclaration {
+                name,
+                data_type,
+                value,
+            } => {
+                format!(
+                    "{} {} = {};",
+                    data_type,
+                    name,
+                    value.as_ref().unwrap_or(&"".to_string())
+                )
             }
-            CodeConstruct::FunctionDefinition { name, parameters, return_type, body } => {
-                let params_str = parameters.iter()
+            CodeConstruct::FunctionDefinition {
+                name,
+                parameters,
+                return_type,
+                body,
+            } => {
+                let params_str = parameters
+                    .iter()
                     .map(|(name, ty)| format!("{} {}", ty, name))
                     .collect::<Vec<_>>()
                     .join(", ");
-                let body_str = body.iter()
+                let body_str = body
+                    .iter()
                     .map(|construct| construct.to_code_string())
                     .collect::<Vec<_>>()
                     .join("\n    ");
-                format!("fn {}({}) -> {} {{\n    {}\n}}", name, params_str, return_type, body_str)
+                format!(
+                    "fn {}({}) -> {} {{\n    {}\n}}",
+                    name, params_str, return_type, body_str
+                )
             }
             _ => "".to_string(), // Simplified for other constructs
         }
@@ -201,7 +235,10 @@ impl NeuroCompiler {
         }
     }
 
-    pub async fn compile_thought_to_code(&self, eeg_stream: &[EEGData]) -> Result<CompiledProgram, NeuroError> {
+    pub async fn compile_thought_to_code(
+        &self,
+        eeg_stream: &[EEGData],
+    ) -> Result<CompiledProgram, NeuroError> {
         // Step 1: Process EEG data
         let processor = self.eeg_processor.read().await;
         let processed_data = processor.filter_artifacts(eeg_stream).await?;
@@ -236,7 +273,10 @@ impl NeuroCompiler {
         let mut session_mgr = self.session_manager.write().await;
         session_mgr.record_compilation(&program).await?;
 
-        log::info!("Successfully compiled thought pattern to code with quantum verification hash: {}", quantum_hash);
+        log::info!(
+            "Successfully compiled thought pattern to code with quantum verification hash: {}",
+            quantum_hash
+        );
         Ok(program)
     }
 
@@ -269,7 +309,10 @@ impl EEGProcessor {
         }
     }
 
-    pub async fn filter_artifacts(&self, eeg_stream: &[EEGData]) -> Result<Vec<EEGData>, NeuroError> {
+    pub async fn filter_artifacts(
+        &self,
+        eeg_stream: &[EEGData],
+    ) -> Result<Vec<EEGData>, NeuroError> {
         let mut filtered = Vec::new();
 
         for data in eeg_stream {
@@ -277,8 +320,13 @@ impl EEGProcessor {
 
             for (i, &sample) in data.channels.iter().enumerate() {
                 // Apply simple bandpass filter (simplified)
-                let filtered_sample = sample * 0.1 +
-                    (self.running_buffer.back().and_then(|last| last.channels.get(i)).unwrap_or(&0.0)) * 0.8;
+                let filtered_sample = sample * 0.1
+                    + (self
+                        .running_buffer
+                        .back()
+                        .and_then(|last| last.channels.get(i))
+                        .unwrap_or(&0.0))
+                        * 0.8;
                 filtered_channels.push(filtered_sample);
             }
 
@@ -313,7 +361,10 @@ impl PatternRecognizer {
         }
     }
 
-    pub async fn identify_pattern(&self, eeg_data: &[EEGData]) -> Result<ThoughtPattern, NeuroError> {
+    pub async fn identify_pattern(
+        &self,
+        eeg_data: &[EEGData],
+    ) -> Result<ThoughtPattern, NeuroError> {
         if eeg_data.is_empty() {
             return Err(NeuroError::InsufficientData);
         }
@@ -326,7 +377,10 @@ impl PatternRecognizer {
         Ok(pattern)
     }
 
-    pub async fn train_on_user_data(&mut self, training_data: &[ThoughtPattern]) -> Result<(), NeuroError> {
+    pub async fn train_on_user_data(
+        &mut self,
+        training_data: &[ThoughtPattern],
+    ) -> Result<(), NeuroError> {
         // Implement online learning for user-specific thought patterns
         for pattern in training_data {
             self.pattern_templates.insert(
@@ -335,7 +389,10 @@ impl PatternRecognizer {
             );
         }
 
-        log::info!("Trained pattern recognizer on {} user thought patterns", training_data.len());
+        log::info!(
+            "Trained pattern recognizer on {} user thought patterns",
+            training_data.len()
+        );
         Ok(())
     }
 }
@@ -368,7 +425,10 @@ impl CodeGenerator {
         }
     }
 
-    pub async fn translate_pattern(&self, pattern: &ThoughtPattern) -> Result<Vec<CodeConstruct>, NeuroError> {
+    pub async fn translate_pattern(
+        &self,
+        pattern: &ThoughtPattern,
+    ) -> Result<Vec<CodeConstruct>, NeuroError> {
         let mut constructs = Vec::new();
 
         // Generate basic constructs based on pattern complexity
@@ -378,13 +438,11 @@ impl CodeGenerator {
                 name: "generated_function".to_string(),
                 parameters: vec![("input".to_string(), "i32".to_string())],
                 return_type: "i32".to_string(),
-                body: vec![
-                    CodeConstruct::VariableDeclaration {
-                        name: "result".to_string(),
-                        data_type: "i32".to_string(),
-                        value: Some("0".to_string()),
-                    }
-                ],
+                body: vec![CodeConstruct::VariableDeclaration {
+                    name: "result".to_string(),
+                    data_type: "i32".to_string(),
+                    value: Some("0".to_string()),
+                }],
             });
         } else {
             // Simple variable
@@ -398,12 +456,19 @@ impl CodeGenerator {
         Ok(constructs)
     }
 
-    pub async fn build_syntax_tree(&self, _constructs: &[CodeConstruct]) -> Result<String, NeuroError> {
+    pub async fn build_syntax_tree(
+        &self,
+        _constructs: &[CodeConstruct],
+    ) -> Result<String, NeuroError> {
         // Generate simplified AST string representation
         Ok("fn main() { println!(\"Hello, Thought!\"); }".to_string())
     }
 
-    pub async fn generate_code_file(&self, constructs: &[CodeConstruct], filename: &str) -> Result<String, NeuroError> {
+    pub async fn generate_code_file(
+        &self,
+        constructs: &[CodeConstruct],
+        filename: &str,
+    ) -> Result<String, NeuroError> {
         let mut code_lines = Vec::new();
         code_lines.push("// Generated by Thought Compiler".to_string());
         code_lines.push("// Timestamp: ".to_string() + &Utc::now().to_string());
@@ -434,7 +499,10 @@ impl QuantumVerifier {
         }
     }
 
-    pub async fn verify_constructs(&self, constructs: &[CodeConstruct]) -> Result<String, NeuroError> {
+    pub async fn verify_constructs(
+        &self,
+        constructs: &[CodeConstruct],
+    ) -> Result<String, NeuroError> {
         // Generate quantum hash for verification
         let mut hash_input = String::new();
         for construct in constructs {
@@ -477,13 +545,19 @@ impl SessionManager {
         }
     }
 
-    pub async fn record_compilation(&mut self, program: &CompiledProgram) -> Result<(), NeuroError> {
+    pub async fn record_compilation(
+        &mut self,
+        program: &CompiledProgram,
+    ) -> Result<(), NeuroError> {
         self.compilations.push(program.clone());
         log::debug!("Recorded compilation session: {}", program.id);
         Ok(())
     }
 
-    pub async fn get_recent_compilations(&self, limit: usize) -> Result<Vec<CompiledProgram>, NeuroError> {
+    pub async fn get_recent_compilations(
+        &self,
+        limit: usize,
+    ) -> Result<Vec<CompiledProgram>, NeuroError> {
         let start_index = if self.compilations.len() > limit {
             self.compilations.len() - limit
         } else {
@@ -555,6 +629,14 @@ mod tests {
     #[tokio::test]
     async fn test_neuro_compiler_creation() {
         let compiler = NeuroCompiler::new().await;
-        assert!(compiler.eeg_processor.read().await.filter_coefficients.len() > 0);
+        assert!(
+            compiler
+                .eeg_processor
+                .read()
+                .await
+                .filter_coefficients
+                .len()
+                > 0
+        );
     }
 }

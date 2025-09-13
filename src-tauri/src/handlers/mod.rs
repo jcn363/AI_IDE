@@ -8,6 +8,7 @@ pub mod documentation;
 pub mod fs;
 pub mod git;
 pub mod lsp;
+pub mod monitoring;
 pub mod project;
 pub mod terminal;
 pub mod testing;

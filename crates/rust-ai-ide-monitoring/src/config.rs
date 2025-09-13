@@ -183,7 +183,9 @@ pub struct OutputConfig {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            workspace_root: PathBuf::from(".").canonicalize().unwrap_or_else(|_| PathBuf::from(".")),
+            workspace_root: PathBuf::from(".")
+                .canonicalize()
+                .unwrap_or_else(|_| PathBuf::from(".")),
             report_dir: PathBuf::from(crate::defaults::DEFAULT_REPORT_DIR),
             enabled_analyzers: Vec::new(),
             disabled_analyzers: Vec::new(),
@@ -208,7 +210,7 @@ impl Default for Thresholds {
             max_warnings: crate::defaults::DEFAULT_THRESHOLD_WARNINGS,
             max_errors: 0,
             max_compilation_time_secs: 300, // 5 minutes
-            max_memory_mb: 4096, // 4GB
+            max_memory_mb: 4096,            // 4GB
             security_vulnerability_max: 0,
             dependency_failures_max: 0,
         }
@@ -257,8 +259,8 @@ impl Default for OutputConfig {
 impl Config {
     /// Load configuration from file
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let content = std::fs::read_to_string(path)
-            .map_err(|e| MonitoringError::Fs { source: e })?;
+        let content =
+            std::fs::read_to_string(path).map_err(|e| MonitoringError::Fs { source: e })?;
         serde_yaml::from_str(&content)
             .map_err(|e| MonitoringError::other(format!("YAML parsing error: {}", e)))
     }
@@ -267,8 +269,7 @@ impl Config {
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let content = serde_yaml::to_string(self)
             .map_err(|e| MonitoringError::other(format!("YAML serialization error: {}", e)))?;
-        std::fs::write(path, content)
-            .map_err(|e| MonitoringError::Fs { source: e })?;
+        std::fs::write(path, content).map_err(|e| MonitoringError::Fs { source: e })?;
         Ok(())
     }
 

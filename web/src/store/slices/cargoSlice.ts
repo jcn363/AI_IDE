@@ -3,17 +3,17 @@ import type { RootState } from '../types';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 
-export type CargoCommandName = 
-  | 'build' 
-  | 'run' 
-  | 'test' 
-  | 'check' 
-  | 'clippy' 
-  | 'fmt' 
-  | 'doc' 
-  | 'clean' 
-  | 'update' 
-  | 'add' 
+export type CargoCommandName =
+  | 'build'
+  | 'run'
+  | 'test'
+  | 'check'
+  | 'clippy'
+  | 'fmt'
+  | 'doc'
+  | 'clean'
+  | 'update'
+  | 'add'
   | 'remove';
 
 export interface CargoCommand {
@@ -89,9 +89,17 @@ export const executeCargoCommand = createAsyncThunk(
 // Streaming thunk: fire-and-forget; events will populate the store
 export const executeCargoStream = createAsyncThunk(
   'cargo/executeStream',
-  async (
-    { command, args = [], cwd, commandId }: { command: CargoCommandName; args?: string[]; cwd: string; commandId?: string },
-  ) => {
+  async ({
+    command,
+    args = [],
+    cwd,
+    commandId,
+  }: {
+    command: CargoCommandName;
+    args?: string[];
+    cwd: string;
+    commandId?: string;
+  }) => {
     await invoke('cargo_execute_stream', {
       command,
       args,
@@ -134,7 +142,13 @@ const cargoSlice = createSlice({
     },
     streamStarted: (
       state,
-      action: PayloadAction<{ id: string; command: string; args: string[]; cwd: string; ts: number }>
+      action: PayloadAction<{
+        id: string;
+        command: string;
+        args: string[];
+        cwd: string;
+        ts: number;
+      }>
     ) => {
       const { id, command, args, cwd, ts } = action.payload;
       state.commands[id] = {
@@ -206,7 +220,8 @@ const cargoSlice = createSlice({
           state.commands[commandId].status = 'success';
           // payload may be tuple or object depending on backend; normalize
           const p: any = action.payload;
-          state.commands[commandId].output = typeof p === 'object' && 'output' in p ? p.output : String(p ?? '');
+          state.commands[commandId].output =
+            typeof p === 'object' && 'output' in p ? p.output : String(p ?? '');
           state.isLoading = false;
         }
       })
@@ -227,8 +242,8 @@ const cargoSlice = createSlice({
   },
 });
 
-export const { 
-  setCurrentProjectPath, 
+export const {
+  setCurrentProjectPath,
   clearCommandOutput,
   clearError,
   streamStarted,

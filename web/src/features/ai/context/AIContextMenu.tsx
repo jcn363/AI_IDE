@@ -1,5 +1,15 @@
 import React from 'react';
-import { Menu, MenuItem, ListItemIcon, ListItemText, Divider, Box, IconButton, CircularProgress, Typography } from '@mui/material';
+import {
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Box,
+  IconButton,
+  CircularProgress,
+  Typography,
+} from '@mui/material';
 import {
   Code as CodeIcon,
   Search as SearchIcon,
@@ -113,12 +123,7 @@ const AIContextMenu: React.FC<AIContextMenuProps> = ({
             <Typography variant="subtitle2" color="primary">
               AI Assistant
             </Typography>
-            <IconButton
-              size="small"
-              onClick={onClose}
-              sx={{ ml: 'auto' }}
-              disabled={isGenerating}
-            >
+            <IconButton size="small" onClick={onClose} sx={{ ml: 'auto' }} disabled={isGenerating}>
               <CloseIcon fontSize="small" />
             </IconButton>
           </Box>
@@ -132,9 +137,7 @@ const AIContextMenu: React.FC<AIContextMenuProps> = ({
             >
               <ListItemIcon>{item.icon}</ListItemIcon>
               <ListItemText>{item.label}</ListItemText>
-              {isGenerating && item.disabled && (
-                <CircularProgress size={16} sx={{ ml: 1 }} />
-              )}
+              {isGenerating && item.disabled && <CircularProgress size={16} sx={{ ml: 1 }} />}
             </MenuItem>
           ))}
         </Menu>
@@ -167,12 +170,7 @@ const AIContextMenu: React.FC<AIContextMenuProps> = ({
         <Typography variant="subtitle2" color="primary">
           AI Assistant
         </Typography>
-        <IconButton
-          size="small"
-          onClick={onClose}
-          sx={{ ml: 'auto' }}
-          disabled={isGenerating}
-        >
+        <IconButton size="small" onClick={onClose} sx={{ ml: 'auto' }} disabled={isGenerating}>
           <CloseIcon fontSize="small" />
         </IconButton>
       </Box>
@@ -186,9 +184,7 @@ const AIContextMenu: React.FC<AIContextMenuProps> = ({
         >
           <ListItemIcon>{item.icon}</ListItemIcon>
           <ListItemText>{item.label}</ListItemText>
-          {isGenerating && item.disabled && (
-            <CircularProgress size={16} sx={{ ml: 1 }} />
-          )}
+          {isGenerating && item.disabled && <CircularProgress size={16} sx={{ ml: 1 }} />}
         </MenuItem>
       ))}
     </Menu>

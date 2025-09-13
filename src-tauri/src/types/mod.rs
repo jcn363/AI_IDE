@@ -143,10 +143,14 @@ mod tests {
         assert_eq!(response.data, Some("test".to_string()));
         assert!(response.timestamp <= chrono::Utc::now());
 
-        let error_response: ApiResponse<String> = responses::error("something went wrong".to_string());
+        let error_response: ApiResponse<String> =
+            responses::error("something went wrong".to_string());
         assert!(matches!(error_response.status, Status::Error));
         assert_eq!(error_response.data, None);
-        assert_eq!(error_response.message, Some("something went wrong".to_string()));
+        assert_eq!(
+            error_response.message,
+            Some("something went wrong".to_string())
+        );
     }
 
     #[test]

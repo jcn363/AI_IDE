@@ -49,7 +49,9 @@ export class CapabilityUnifier {
   /**
    * Convert backend capabilities from snake_case to camelCase for UI consistency
    */
-  static convertBackendCapabilitiesToCamelCase(backendResponse: BackendCapabilitiesResponse): BackendCapabilities {
+  static convertBackendCapabilitiesToCamelCase(
+    backendResponse: BackendCapabilitiesResponse
+  ): BackendCapabilities {
     return {
       supportedRefactorings: backendResponse.supported_refactorings,
       supportedFileTypes: backendResponse.supported_file_types,
@@ -86,16 +88,29 @@ export class CapabilityUnifier {
       testGeneration: features.testGeneration,
       analysis: features.analysis,
       performanceMetrics: capabilities.performanceMetrics !== undefined,
-      advancedFeatures: features.aiAnalysis || features.lspIntegration || features.crossLanguageSupport,
-      basicOperations: features.analysis === false ? ['rename', 'extract-function', 'extract-variable'] as const : [] as const,
+      advancedFeatures:
+        features.aiAnalysis || features.lspIntegration || features.crossLanguageSupport,
+      basicOperations:
+        features.analysis === false
+          ? (['rename', 'extract-function', 'extract-variable'] as const)
+          : ([] as const),
     };
   }
 
   /**
    * Validate that capabilities response has all required fields
    */
-  static validateCapabilities(capabilities: BackendCapabilitiesResponse): { valid: boolean; missingFields: string[] } {
-    const requiredFields = ['supported_refactorings', 'supported_file_types', 'features', 'performance_metrics', 'configuration_options'];
+  static validateCapabilities(capabilities: BackendCapabilitiesResponse): {
+    valid: boolean;
+    missingFields: string[];
+  } {
+    const requiredFields = [
+      'supported_refactorings',
+      'supported_file_types',
+      'features',
+      'performance_metrics',
+      'configuration_options',
+    ];
     const missingFields: string[] = [];
 
     for (const field of requiredFields) {
@@ -122,7 +137,10 @@ export class CapabilityUnifier {
 
     // Merge with defaults to ensure all fields are present
     return {
-      supportedRefactorings: camelCaseCapabilities.supportedRefactorings || ['rename', 'extract-function'],
+      supportedRefactorings: camelCaseCapabilities.supportedRefactorings || [
+        'rename',
+        'extract-function',
+      ],
       supportedFileTypes: camelCaseCapabilities.supportedFileTypes || ['rs', 'ts', 'js', 'py'],
       features: camelCaseCapabilities.features || this.getDefaultFeatures(),
       performanceMetrics: camelCaseCapabilities.performanceMetrics || {},
@@ -163,7 +181,10 @@ export class CapabilityUnifier {
   /**
    * Check if a specific feature is available
    */
-  static isFeatureAvailable(capabilities: BackendCapabilities, feature: keyof BackendFeatures): boolean {
+  static isFeatureAvailable(
+    capabilities: BackendCapabilities,
+    feature: keyof BackendFeatures
+  ): boolean {
     return capabilities?.features[feature] || false;
   }
 
@@ -193,7 +214,8 @@ export class CapabilityUnifier {
       showTestGeneration: features.testGeneration,
       showAnalysis: features.analysis,
       showPerformanceMetrics: capabilities.performanceMetrics !== undefined,
-      showAdvancedFeatures: features.aiAnalysis || features.lspIntegration || features.crossLanguageSupport,
+      showAdvancedFeatures:
+        features.aiAnalysis || features.lspIntegration || features.crossLanguageSupport,
     };
   }
 }

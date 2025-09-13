@@ -74,13 +74,8 @@ function App() {
 
 ```tsx
 function YourComponent() {
-  const { 
-    analyzeCurrentFile,
-    generateTests,
-    generateDocumentation,
-    explainCode,
-    refactorCode 
-  } = useAIAssistant();
+  const { analyzeCurrentFile, generateTests, generateDocumentation, explainCode, refactorCode } =
+    useAIAssistant();
 
   // Example usage
   const handleAnalyze = async () => {

@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { emit, listen } from '@tauri-apps/api/event';
 
 import {
@@ -50,9 +50,7 @@ class AIService implements AIServices {
       console.log(`Sending batch inference: ${requests.length} requests`);
 
       // For now, process sequentially - in production this could be optimized
-      const results = await Promise.all(
-        requests.map(request => this.infer(request))
-      );
+      const results = await Promise.all(requests.map((request) => this.infer(request)));
 
       console.log(`Batch inference completed: ${results.length} results`);
       return results;
@@ -82,7 +80,12 @@ class AIService implements AIServices {
    */
   async codeSearch(request: CodeSearchRequest): Promise<CodeSearchResult[]> {
     try {
-      console.log('Code search request:', request.query, 'languages:', request.languages.join(', '));
+      console.log(
+        'Code search request:',
+        request.query,
+        'languages:',
+        request.languages.join(', ')
+      );
       const results = await invoke<CodeSearchResult[]>('semantic_code_search', { request });
       console.log(`Code search completed: ${results.length} results`);
       return results;
@@ -224,7 +227,7 @@ class AIService implements AIServices {
       return {
         utilization: 0,
         memory_used: 0,
-        error: error.toString()
+        error: error.toString(),
       };
     }
   }
@@ -242,7 +245,7 @@ class AIService implements AIServices {
    */
   emitEvent(event: AIServiceEvent): void {
     const listeners = this.eventListeners.get(event.type) || [];
-    listeners.forEach(listener => {
+    listeners.forEach((listener) => {
       try {
         listener(event);
       } catch (error) {
@@ -292,13 +295,13 @@ class AIService implements AIServices {
 
       return {
         available: true,
-        services
+        services,
       };
     } catch (error) {
       console.warn('AI services check failed:', error);
       return {
         available: false,
-        services: []
+        services: [],
       };
     }
   }

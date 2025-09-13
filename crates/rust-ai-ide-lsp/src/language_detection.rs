@@ -133,22 +133,22 @@ impl LanguageDetector {
             cache: Arc::new(DetectionCache::new(cache_size)),
             max_file_size: DEFAULT_MAX_FILE_SIZE,
         };
-        
+
         // Initialize all pattern maps
         detector.init_extension_map();
         detector.content_patterns = Self::init_pattern_map();
         detector.shebang_patterns = Self::init_shebang_patterns();
-        
+
         detector
     }
-    
+
     /// Initialize the extension map with language mappings
     fn init_extension_map(&mut self) {
         let extension_map = &mut self.extension_map;
-        
+
         // Clear existing mappings
         extension_map.clear();
-        
+
         // Programming languages
         extension_map.insert("rs".to_string(), vec![("rust".to_string(), 1.0)]);
         extension_map.insert("ts".to_string(), vec![("typescript".to_string(), 1.0)]);
@@ -157,7 +157,7 @@ impl LanguageDetector {
         extension_map.insert("jsx".to_string(), vec![("javascript".to_string(), 1.0)]);
         extension_map.insert("py".to_string(), vec![("python".to_string(), 1.0)]);
         extension_map.insert("go".to_string(), vec![("go".to_string(), 1.0)]);
-        
+
         // Web technologies
         extension_map.insert("html".to_string(), vec![("html".to_string(), 1.0)]);
         extension_map.insert("htm".to_string(), vec![("html".to_string(), 1.0)]);
@@ -165,18 +165,18 @@ impl LanguageDetector {
         extension_map.insert("scss".to_string(), vec![("scss".to_string(), 1.0)]);
         extension_map.insert("sass".to_string(), vec![("sass".to_string(), 1.0)]);
         extension_map.insert("less".to_string(), vec![("less".to_string(), 1.0)]);
-        
+
         // Data formats
         extension_map.insert("json".to_string(), vec![("json".to_string(), 1.0)]);
         extension_map.insert("yaml".to_string(), vec![("yaml".to_string(), 1.0)]);
         extension_map.insert("toml".to_string(), vec![("toml".to_string(), 1.0)]);
         extension_map.insert("xml".to_string(), vec![("xml".to_string(), 1.0)]);
-        
+
         // Shell scripts
         extension_map.insert("sh".to_string(), vec![("shell".to_string(), 1.0)]);
         extension_map.insert("bash".to_string(), vec![("bash".to_string(), 1.0)]);
         extension_map.insert("zsh".to_string(), vec![("zsh".to_string(), 1.0)]);
-        
+
         // Other languages
         extension_map.insert("java".to_string(), vec![("java".to_string(), 1.0)]);
         extension_map.insert("kt".to_string(), vec![("kotlin".to_string(), 1.0)]);
@@ -184,24 +184,24 @@ impl LanguageDetector {
         extension_map.insert("rb".to_string(), vec![("ruby".to_string(), 1.0)]);
         extension_map.insert("php".to_string(), vec![("php".to_string(), 1.0)]);
     }
-    
+
     /// Set minimum confidence threshold for language detection
     pub fn with_min_confidence(mut self, confidence: f64) -> Self {
         self.min_confidence = confidence.max(0.0).min(1.0);
         self
     }
-    
+
     /// Set maximum file size for content analysis
     pub fn with_max_file_size(mut self, size: usize) -> Self {
         self.max_file_size = size;
         self
     }
-    
+
     /// Detect language from file path and optional content
     #[instrument(skip(self, content))]
     pub async fn detect_language(&self, path: &Path, content: Option<&str>) -> Vec<LanguageDetection> {
         let start_time = Instant::now();
-        
+
         // Check file cache first
         if let Some(cached) = self.cache.get_file(path).await {
             debug!("Cache hit for file: {:?}", path);
@@ -209,7 +209,7 @@ impl LanguageDetector {
         }
 
         let mut detections = Vec::new();
-        
+
         // Try to detect by extension first
         if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
             if let Some(cached) = self.cache.get_extension(ext).await {
@@ -238,15 +238,15 @@ impl LanguageDetector {
 
         // Sort by confidence (highest first)
         detections.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap());
-        
+
         // Filter by minimum confidence
         detections.retain(|d| d.confidence >= self.min_confidence);
-        
+
         // Cache the result
         if !detections.is_empty() {
             self.cache.set_file(path.to_path_buf(), detections.clone()).await;
         }
-        
+
         debug!("Detected languages for {:?} in {:?}", path, start_time.elapsed());
         detections
     }
@@ -573,13 +573,13 @@ mod tests {
     #[tokio::test]
     async fn test_detect_by_extension() {
         let detector = LanguageDetector::new();
-        
+
         // Test Rust files
         let rust_file = PathBuf::from("test.rs");
         let detections = detector.detect_language(&rust_file, None).await;
         assert!(!detections.is_empty());
         assert_eq!(detections[0].language, "rust");
-        
+
         // Test Python files
         let py_file = PathBuf::from("script.py");
         let detections = detector.detect_language(&py_file, None).await;
@@ -590,7 +590,7 @@ mod tests {
     #[tokio::test]
     async fn test_detect_by_content() {
         let detector = LanguageDetector::new();
-        
+
         // Test Rust content
         let rust_content = r#"
         fn main() {
@@ -600,12 +600,12 @@ mod tests {
         let detections = detector.detect_language(&PathBuf::from("unknown"), Some(rust_content)).await;
         assert!(!detections.is_empty());
         assert_eq!(detections[0].language, "rust");
-        
+
         // Test Python content
         let py_content = r#"
         def hello():
             print("Hello, Python!")
-        
+
         if __name__ == "__main__":
             hello()
         "#;
@@ -617,13 +617,13 @@ mod tests {
     #[tokio::test]
     async fn test_detect_by_shebang() {
         let detector = LanguageDetector::new();
-        
+
         // Test Python shebang
         let py_content = "#!/usr/bin/env python3\nprint('Hello')";
         let detections = detector.detect_language(&PathBuf::from("script"), Some(py_content)).await;
         assert!(!detections.is_empty());
         assert_eq!(detections[0].language, "python");
-        
+
         // Test shell shebang
         let sh_content = "#!/bin/bash\necho 'Hello'";
         let detections = detector.detect_language(&PathBuf::from("script"), Some(sh_content)).await;
@@ -635,13 +635,13 @@ mod tests {
     async fn test_detection_confidence() {
         let detector = LanguageDetector::new()
             .with_min_confidence(0.8);
-        
+
         // This should be detected with high confidence
         let rust_content = "fn main() {}";
         let detections = detector.detect_language(&PathBuf::from("test.rs"), Some(rust_content)).await;
         assert!(!detections.is_empty());
         assert!(detections[0].confidence >= 0.8);
-        
+
         // This might be detected with lower confidence
         let ambiguous_content = "function test() {}";
         let detections = detector.detect_language(&PathBuf::from("test"), Some(ambiguous_content)).await;
@@ -652,12 +652,12 @@ mod tests {
     fn test_init_pattern_map() {
         let patterns = LanguageDetector::init_pattern_map();
         assert!(!patterns.is_empty());
-        
+
         // Check if we have patterns for major languages
         let has_rust = patterns.iter().any(|(_, lang, _)| lang == "rust");
         let has_python = patterns.iter().any(|(_, lang, _)| lang == "python");
         let has_js = patterns.iter().any(|(_, lang, _)| lang == "javascript");
-        
+
         assert!(has_rust);
         assert!(has_python);
         assert!(has_js);
@@ -667,11 +667,11 @@ mod tests {
     fn test_init_shebang_patterns() {
         let patterns = init_shebang_patterns();
         assert!(!patterns.is_empty());
-        
+
         // Check if we have common shebang patterns
         let has_python = patterns.iter().any(|(_, lang)| lang == "python");
         let has_bash = patterns.iter().any(|(_, lang)| lang == "bash" || lang == "shell");
-        
+
         assert!(has_python);
         assert!(has_bash);
     }

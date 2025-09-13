@@ -59,10 +59,7 @@ pub enum RefactoringError {
     SemanticError { message: String },
 
     #[error("Performance degradation detected: {metric} exceeded threshold {threshold}")]
-    PerformanceDegradation {
-        metric: String,
-        threshold: f64,
-    },
+    PerformanceDegradation { metric: String, threshold: f64 },
 
     #[error("Security violation: {violation_type}")]
     SecurityViolation { violation_type: String },

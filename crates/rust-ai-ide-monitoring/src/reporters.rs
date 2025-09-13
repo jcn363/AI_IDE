@@ -117,14 +117,29 @@ impl MarkdownReporter {
 
         // Summary
         md.push_str("## Summary\n\n");
-        md.push_str(&format!("- **Quality Score**: {:.1}%\n", report.quality_score));
-        md.push_str(&format!("- **Total Issues**: {}\n", report.metrics.total_issues));
-        md.push_str(&format!("- **Analysis Time**: {:.2}s\n", report.duration_seconds));
-        md.push_str(&format!("- **Analyzers Run**: {}\n\n", report.results.len()));
+        md.push_str(&format!(
+            "- **Quality Score**: {:.1}%\n",
+            report.quality_score
+        ));
+        md.push_str(&format!(
+            "- **Total Issues**: {}\n",
+            report.metrics.total_issues
+        ));
+        md.push_str(&format!(
+            "- **Analysis Time**: {:.2}s\n",
+            report.duration_seconds
+        ));
+        md.push_str(&format!(
+            "- **Analyzers Run**: {}\n\n",
+            report.results.len()
+        ));
 
         // Severity breakdown
         md.push_str("## Issue Breakdown by Severity\n\n");
-        md.push_str(&format!("- **Critical**: {}\n", report.metrics.critical_issues));
+        md.push_str(&format!(
+            "- **Critical**: {}\n",
+            report.metrics.critical_issues
+        ));
         md.push_str(&format!("- **High**: {}\n", report.metrics.high_issues));
         md.push_str(&format!("- **Medium**: {}\n", report.metrics.medium_issues));
         md.push_str(&format!("- **Low**: {}\n", report.metrics.low_issues));
@@ -134,12 +149,22 @@ impl MarkdownReporter {
         md.push_str("## Analyzer Results\n\n");
         for result in &report.results {
             md.push_str(&format!("### {}\n\n", result.analyzer));
-            md.push_str(&format!("- **Status**: {}\n", if result.success { "✅ Passed" } else { "❌ Failed" }));
+            md.push_str(&format!(
+                "- **Status**: {}\n",
+                if result.success {
+                    "✅ Passed"
+                } else {
+                    "❌ Failed"
+                }
+            ));
             md.push_str(&format!("- **Issues Found**: {}\n", result.issue_count));
 
             if self.format.include_performance {
                 if let Some(ref perf) = result.performance {
-                    md.push_str(&format!("- **Analysis Time**: {:.2}s\n", perf.duration_seconds));
+                    md.push_str(&format!(
+                        "- **Analysis Time**: {:.2}s\n",
+                        perf.duration_seconds
+                    ));
                     if let Some(mem) = perf.memory_mb {
                         md.push_str(&format!("- **Memory Usage**: {:.1}MB\n", mem));
                     }
@@ -169,12 +194,30 @@ impl MarkdownReporter {
         if self.format.include_system_info {
             md.push_str("## System Information\n\n");
             md.push_str(&format!("- **OS**: {}\n", report.system_info.os));
-            md.push_str(&format!("- **Architecture**: {}\n", report.system_info.arch));
-            md.push_str(&format!("- **Rust Version**: {}\n", report.system_info.rust_version));
-            md.push_str(&format!("- **Cargo Version**: {}\n", report.system_info.cargo_version));
-            md.push_str(&format!("- **CPU Cores**: {}\n", report.system_info.cpu_count));
-            md.push_str(&format!("- **Total Memory**: {}MB\n", report.system_info.total_memory_mb));
-            md.push_str(&format!("- **Available Memory**: {}MB\n\n", report.system_info.available_memory_mb));
+            md.push_str(&format!(
+                "- **Architecture**: {}\n",
+                report.system_info.arch
+            ));
+            md.push_str(&format!(
+                "- **Rust Version**: {}\n",
+                report.system_info.rust_version
+            ));
+            md.push_str(&format!(
+                "- **Cargo Version**: {}\n",
+                report.system_info.cargo_version
+            ));
+            md.push_str(&format!(
+                "- **CPU Cores**: {}\n",
+                report.system_info.cpu_count
+            ));
+            md.push_str(&format!(
+                "- **Total Memory**: {}MB\n",
+                report.system_info.total_memory_mb
+            ));
+            md.push_str(&format!(
+                "- **Available Memory**: {}MB\n\n",
+                report.system_info.available_memory_mb
+            ));
         }
 
         Ok(md)
@@ -199,21 +242,33 @@ impl Reporter for ConsoleReporter {
     async fn report(&self, report: &AnalysisReport) -> Result<()> {
         println!("🔍 Monitoring Analysis Complete");
         println!("════════════════════════════════════════════════════");
-        println!("🕐 Timestamp: {}", report.timestamp.format("%Y-%m-%d %H:%M:%S UTC"));
+        println!(
+            "🕐 Timestamp: {}",
+            report.timestamp.format("%Y-%m-%d %H:%M:%S UTC")
+        );
         println!("⏱️  Duration: {:.2}s", report.duration_seconds);
         println!();
 
         // Quality score with color
         let score_color = match report.quality_score {
             90.0..=100.0 => "🟢", // Green
-            75.0..=90.0 => "🟡",   // Yellow
-            _ => "🔴",              // Red
+            75.0..=90.0 => "🟡",  // Yellow
+            _ => "🔴",            // Red
         };
-        println!("🎯 Quality Score: {}{:.1}%{}", score_color, report.quality_score,
-                 if report.quality_score >= 90.0 { " (Excellent)" }
-                 else if report.quality_score >= 75.0 { " (Good)" }
-                 else if report.quality_score >= 50.0 { " (Needs Attention)" }
-                 else { " (Critical)" });
+        println!(
+            "🎯 Quality Score: {}{:.1}%{}",
+            score_color,
+            report.quality_score,
+            if report.quality_score >= 90.0 {
+                " (Excellent)"
+            } else if report.quality_score >= 75.0 {
+                " (Good)"
+            } else if report.quality_score >= 50.0 {
+                " (Needs Attention)"
+            } else {
+                " (Critical)"
+            }
+        );
         println!();
 
         // Issue summary
@@ -230,7 +285,10 @@ impl Reporter for ConsoleReporter {
         println!("🔧 Analyzer Results:");
         for result in &report.results {
             let status_icon = if result.success { "✅" } else { "❌" };
-            println!("  {} {}: {} issues", status_icon, result.analyzer, result.issue_count);
+            println!(
+                "  {} {}: {} issues",
+                status_icon, result.analyzer, result.issue_count
+            );
 
             if !result.success {
                 if let Some(ref error) = result.error {
@@ -239,7 +297,8 @@ impl Reporter for ConsoleReporter {
             }
 
             if self.verbose && !result.findings.is_empty() {
-                for finding in result.findings.iter().take(5) {  // Show first 5 findings
+                for finding in result.findings.iter().take(5) {
+                    // Show first 5 findings
                     let severity_icon = match finding.severity {
                         Severity::Critical => "🚨",
                         Severity::High => "🔴",
@@ -285,10 +344,15 @@ impl Reporter for ConsoleReporter {
 
 /// Trait implementations common to all reporters
 trait ReportWriter {
-    async fn write_output(&self, output: &str) -> Result<()> where Self: Sized;
+    async fn write_output(&self, output: &str) -> Result<()>
+    where
+        Self: Sized;
 }
 
-impl<T> ReportWriter for T where T: Reporter {
+impl<T> ReportWriter for T
+where
+    T: Reporter,
+{
     async fn write_output(&self, _output: &str) -> Result<()> {
         // Default implementation writes to stdout
         // In practice, this would be implemented differently for each reporter

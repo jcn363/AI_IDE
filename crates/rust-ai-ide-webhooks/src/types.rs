@@ -57,7 +57,10 @@ impl WebhookDeliveryStatus {
     }
 
     pub fn is_retryable(&self) -> bool {
-        matches!(self, WebhookDeliveryStatus::Failed { .. } | WebhookDeliveryStatus::TimedOut)
+        matches!(
+            self,
+            WebhookDeliveryStatus::Failed { .. } | WebhookDeliveryStatus::TimedOut
+        )
     }
 }
 
@@ -121,7 +124,10 @@ pub enum Provider {
     Bitbucket,
     Discord,
     Slack,
-    Custom { name: String, signature_header: String },
+    Custom {
+        name: String,
+        signature_header: String,
+    },
 }
 
 impl Provider {
@@ -132,7 +138,9 @@ impl Provider {
             Provider::Bitbucket => "X-Hub-Signature-256",
             Provider::Discord => "X-Signature-Ed25519",
             Provider::Slack => "X-Slack-Signature",
-            Provider::Custom { signature_header, .. } => signature_header,
+            Provider::Custom {
+                signature_header, ..
+            } => signature_header,
         }
     }
 }

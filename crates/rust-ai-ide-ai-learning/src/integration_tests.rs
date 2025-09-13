@@ -4,17 +4,17 @@
 //! and that the modular architecture maintains system integrity.
 
 use std::path::PathBuf;
-use tempfile::TempDir;
 use std::sync::Arc;
+use tempfile::TempDir;
 
 use super::{
-    models::{LearnedPattern, LearningPreferences, FixTemplate},
     database::LearningDatabase,
+    models::{FixTemplate, LearnedPattern, LearningPreferences},
+    preferences::{utils::apply_privacy_implications, PreferencesManager},
     similarity::SimilarityCalculator,
-    preferences::{PreferencesManager, utils::apply_privacy_implications},
-    statistics::{LearningStatistics, analysis::generate_insights},
+    statistics::{analysis::generate_insights, LearningStatistics},
     system::LearningSystem,
-    types::{AIResult, AIProvider, AnalysisPreferences, PrivacyMode},
+    types::{AIProvider, AIResult, AnalysisPreferences, PrivacyMode},
 };
 
 /// Helper function to create a temporary learning system for testing
@@ -22,7 +22,8 @@ async fn create_temp_learning_system() -> (LearningSystem, TempDir) {
     let temp_dir = TempDir::new().unwrap();
     let db_path = temp_dir.path().join("test_learning.db");
 
-    let system = LearningSystem::new_with_path(Some(db_path)).await
+    let system = LearningSystem::new_with_path(Some(db_path))
+        .await
         .expect("Failed to create learning system");
 
     (system, temp_dir)
@@ -52,10 +53,15 @@ async fn test_data_flow_models_to_database_to_system() {
     let test_pattern = create_test_learned_pattern();
 
     // Store via system (which uses database)
-    let _id = system.store_pattern(&test_pattern).await.expect("Failed to store pattern");
+    let _id = system
+        .store_pattern(&test_pattern)
+        .await
+        .expect("Failed to store pattern");
 
     // Retrieve via system
-    let retrieved_patterns = system.get_all_patterns_with_limit(10).await
+    let retrieved_patterns = system
+        .get_all_patterns_with_limit(10)
+        .await
         .expect("Failed to retrieve patterns");
 
     assert!(!retrieved_patterns.is_empty());
@@ -70,11 +76,19 @@ async fn test_similarity_calculator_integration() {
     // Store test patterns
     let pattern1 = create_test_learned_pattern();
     let pattern2 = create_similar_learned_pattern();
-    system.store_pattern(&pattern1).await.expect("Failed to store pattern1");
-    system.store_pattern(&pattern2).await.expect("Failed to store pattern2");
+    system
+        .store_pattern(&pattern1)
+        .await
+        .expect("Failed to store pattern1");
+    system
+        .store_pattern(&pattern2)
+        .await
+        .expect("Failed to store pattern2");
 
     // Test similarity finding
-    let similar_patterns = system.find_similar_patterns("test error context").await
+    let similar_patterns = system
+        .find_similar_patterns("test error context")
+        .await
         .expect("Failed to find similar patterns");
 
     assert!(!similar_patterns.is_empty());
@@ -88,7 +102,10 @@ async fn test_preferences_manager_integration() {
     // Test preference templates
     let dev_prefs = super::preferences::templates::development();
     system.update_preferences(dev_prefs.clone()).await.unwrap();
-    assert_eq!(system.get_preferences().confidence_threshold, dev_prefs.confidence_threshold);
+    assert_eq!(
+        system.get_preferences().confidence_threshold,
+        dev_prefs.confidence_threshold
+    );
 
     // Test privacy implications
     let mut test_prefs = LearningPreferences::default();
@@ -108,10 +125,14 @@ async fn test_database_operations_integration() {
     let original_pattern = create_test_learned_pattern();
     let pattern_id = original_pattern.id.clone();
 
-    system.store_pattern(&original_pattern).await
+    system
+        .store_pattern(&original_pattern)
+        .await
         .expect("Failed to store pattern");
 
-    let retrieved_pattern = system.get_pattern(&pattern_id).await
+    let retrieved_pattern = system
+        .get_pattern(&pattern_id)
+        .await
         .expect("Failed to retrieve pattern");
 
     assert_eq!(retrieved_pattern.id, original_pattern.id);
@@ -129,12 +150,17 @@ async fn test_statistics_integration() {
         pattern.id = format!("test_pattern_{}", i);
         pattern.success_count = i + 1;
         pattern.attempt_count = (i + 1) * 2;
-        system.store_pattern(&pattern).await
+        system
+            .store_pattern(&pattern)
+            .await
             .expect("Failed to store pattern");
     }
 
     // Test statistics calculation
-    let stats = system.get_statistics().await.expect("Failed to get statistics");
+    let stats = system
+        .get_statistics()
+        .await
+        .expect("Failed to get statistics");
 
     assert_eq!(stats.total_patterns, 5);
     assert!(stats.avg_success_rate > 0.0);
@@ -152,14 +178,20 @@ async fn test_pattern_caching_behavior() {
     // Store a pattern
     let test_pattern = create_test_learned_pattern();
     let pattern_id = test_pattern.id.clone();
-    system.store_pattern(&test_pattern).await
+    system
+        .store_pattern(&test_pattern)
+        .await
         .expect("Failed to store pattern");
 
     // Test caching by retrieving multiple times
     for i in 0..3 {
-        let retrieved_first = system.get_pattern(&pattern_id).await
+        let retrieved_first = system
+            .get_pattern(&pattern_id)
+            .await
             .expect(&format!("Failed to retrieve pattern attempt {}", i));
-        let retrieved_second = system.get_pattern(&pattern_id).await
+        let retrieved_second = system
+            .get_pattern(&pattern_id)
+            .await
             .expect(&format!("Failed to retrieve pattern attempt {}+1", i));
 
         assert_eq!(retrieved_first.id, retrieved_second.id);
@@ -179,7 +211,9 @@ async fn test_concurrent_access() {
         let system_clone = Arc::clone(&system_arc);
         let handle = tokio::spawn(async move {
             let pattern = create_test_learned_pattern_with_id(i);
-            system_clone.store_pattern(&pattern).await
+            system_clone
+                .store_pattern(&pattern)
+                .await
                 .map_err(|e| format!("Failed in task {}: {}", i, e))
         });
         handles.push(handle);
@@ -187,13 +221,16 @@ async fn test_concurrent_access() {
 
     // Wait for all concurrent operations
     for handle in handles {
-        handle.await
+        handle
+            .await
             .expect("Concurrent task failed")
             .expect("Storage operation failed");
     }
 
     // Verify all patterns were stored
-    let all_patterns = system_arc.get_all_patterns_with_limit(10).await
+    let all_patterns = system_arc
+        .get_all_patterns_with_limit(10)
+        .await
         .expect("Failed to retrieve patterns after concurrent operations");
 
     assert!(all_patterns.len() >= 5);
@@ -220,12 +257,16 @@ async fn test_resource_cleanup() {
     // Add patterns to build up cache/memory
     for i in 0..10 {
         let pattern = create_test_learned_pattern_with_id(i);
-        system.store_pattern(&pattern).await
+        system
+            .store_pattern(&pattern)
+            .await
             .expect("Failed to store pattern");
     }
 
     // Force some cache operations
-    let _similar_patterns = system.find_similar_patterns("test context").await
+    let _similar_patterns = system
+        .find_similar_patterns("test context")
+        .await
         .expect("Failed to find similar patterns");
 
     // System should clean up resources when dropped
@@ -265,22 +306,28 @@ async fn test_large_dataset_performance() {
     let pattern_count = 100;
     for i in 0..pattern_count {
         let pattern = create_test_learned_pattern_with_id(i);
-        system.store_pattern(&pattern).await
+        system
+            .store_pattern(&pattern)
+            .await
             .expect("Failed to store large dataset pattern");
     }
 
     // Test retrieval performance
     let start = std::time::Instant::now();
-    let patterns = system.get_all_patterns_with_limit(50).await
+    let patterns = system
+        .get_all_patterns_with_limit(50)
+        .await
         .expect("Failed to retrieve large dataset");
     let duration = start.elapsed();
 
     assert_eq!(patterns.len(), 50);
 
     // Should complete in reasonable time (less than 1 second for 100 patterns)
-    assert!(duration.as_secs() < 1,
+    assert!(
+        duration.as_secs() < 1,
         "Large dataset retrieval took {}ms, should be < 1000ms",
-        duration.as_millis());
+        duration.as_millis()
+    );
 }
 
 /// Benchmark-style test for similarity operations
@@ -291,7 +338,9 @@ async fn test_similarity_algorithm_stress() {
     // Create diverse patterns for similarity testing
     let patterns = create_diverse_test_patterns();
     for pattern in &patterns {
-        system.store_pattern(pattern).await
+        system
+            .store_pattern(pattern)
+            .await
             .expect("Failed to store diverse pattern");
     }
 
@@ -304,16 +353,24 @@ async fn test_similarity_algorithm_stress() {
     ];
 
     for context in &test_contexts {
-        let similarities = system.find_similar_patterns(context).await
+        let similarities = system
+            .find_similar_patterns(context)
+            .await
             .expect("Failed to compute similarities");
 
         // Should find at least one reasonably similar pattern for each context
-        assert!(!similarities.is_empty(),
-            "No similar patterns found for context: {}", context);
+        assert!(
+            !similarities.is_empty(),
+            "No similar patterns found for context: {}",
+            context
+        );
 
         // First result should have reasonable confidence
-        assert!(similarities[0].score > 0.0,
-            "Similarity score too low for context: {}", context);
+        assert!(
+            similarities[0].score > 0.0,
+            "Similarity score too low for context: {}",
+            context
+        );
     }
 }
 
@@ -322,28 +379,23 @@ async fn test_similarity_algorithm_stress() {
 // ============================================================================
 
 fn create_test_learned_pattern() -> LearnedPattern {
+    use super::models::{ChangeScope, ChangeTemplate, ChangeType, FixTemplate};
     use chrono::Utc;
-    use super::models::{FixTemplate, ChangeTemplate, ChangeType, ChangeScope};
 
     LearnedPattern {
         id: "test_pattern_1".to_string(),
         description: "Test pattern for integration testing".to_string(),
         error_pattern: "test error pattern".to_string(),
         error_code: Some("E0308".to_string()),
-        context_patterns: vec![
-            "fn test_function() {".to_string(),
-            "let x = 1;".to_string(),
-        ],
+        context_patterns: vec!["fn test_function() {".to_string(), "let x = 1;".to_string()],
         fix_template: FixTemplate {
             description_template: "Test fix template".to_string(),
-            change_templates: vec![
-                ChangeTemplate {
-                    match_pattern: "let x = 1;".to_string(),
-                    replacement_pattern: "let _x = 1;".to_string(),
-                    change_type: ChangeType::Replace,
-                    scope: ChangeScope::Local,
-                }
-            ],
+            change_templates: vec![ChangeTemplate {
+                match_pattern: "let x = 1;".to_string(),
+                replacement_pattern: "let _x = 1;".to_string(),
+                change_type: ChangeType::Replace,
+                scope: ChangeScope::Local,
+            }],
             variables: std::collections::HashMap::new(),
             conditions: vec![],
             warnings: vec![],
@@ -360,8 +412,8 @@ fn create_test_learned_pattern() -> LearnedPattern {
 }
 
 fn create_similar_learned_pattern() -> LearnedPattern {
+    use super::models::{ChangeScope, ChangeTemplate, ChangeType, FixTemplate};
     use chrono::Utc;
-    use super::models::{FixTemplate, ChangeTemplate, ChangeType, ChangeScope};
 
     LearnedPattern {
         id: "test_pattern_2".to_string(),
@@ -374,14 +426,12 @@ fn create_similar_learned_pattern() -> LearnedPattern {
         ],
         fix_template: FixTemplate {
             description_template: "Similar test fix".to_string(),
-            change_templates: vec![
-                ChangeTemplate {
-                    match_pattern: "let y = 2;".to_string(),
-                    replacement_pattern: "let _y = 2;".to_string(),
-                    change_type: ChangeType::Replace,
-                    scope: ChangeScope::Local,
-                }
-            ],
+            change_templates: vec![ChangeTemplate {
+                match_pattern: "let y = 2;".to_string(),
+                replacement_pattern: "let _y = 2;".to_string(),
+                change_type: ChangeType::Replace,
+                scope: ChangeScope::Local,
+            }],
             variables: std::collections::HashMap::new(),
             conditions: vec![],
             warnings: vec![],
@@ -398,8 +448,8 @@ fn create_similar_learned_pattern() -> LearnedPattern {
 }
 
 fn create_test_learned_pattern_with_id(id_num: usize) -> LearnedPattern {
+    use super::models::{ChangeScope, ChangeTemplate, ChangeType, FixTemplate};
     use chrono::Utc;
-    use super::models::{FixTemplate, ChangeTemplate, ChangeType, ChangeScope};
 
     LearnedPattern {
         id: format!("perf_test_pattern_{}", id_num),
@@ -412,14 +462,12 @@ fn create_test_learned_pattern_with_id(id_num: usize) -> LearnedPattern {
         ],
         fix_template: FixTemplate {
             description_template: format!("Perf fix for {}", id_num),
-            change_templates: vec![
-                ChangeTemplate {
-                    match_pattern: format!("let var_{} = {};", id_num, id_num),
-                    replacement_pattern: format!("let _var_{} = {};", id_num, id_num),
-                    change_type: ChangeType::Replace,
-                    scope: ChangeScope::Local,
-                }
-            ],
+            change_templates: vec![ChangeTemplate {
+                match_pattern: format!("let var_{} = {};", id_num, id_num),
+                replacement_pattern: format!("let _var_{} = {};", id_num, id_num),
+                change_type: ChangeType::Replace,
+                scope: ChangeScope::Local,
+            }],
             variables: std::collections::HashMap::new(),
             conditions: vec![],
             warnings: vec![],
@@ -452,10 +500,10 @@ fn create_pattern_with_context(
     keyword1: &str,
     keyword2: &str,
     fix_desc: &str,
-    confidence: f32
+    confidence: f32,
 ) -> LearnedPattern {
+    use super::models::{ChangeScope, ChangeTemplate, ChangeType, FixTemplate};
     use chrono::Utc;
-    use super::models::{FixTemplate, ChangeTemplate, ChangeType, ChangeScope};
 
     LearnedPattern {
         id: format!("{}_{}_pattern", keyword1, keyword2),
@@ -468,14 +516,12 @@ fn create_pattern_with_context(
         ],
         fix_template: FixTemplate {
             description_template: fix_desc.to_string(),
-            change_templates: vec![
-                ChangeTemplate {
-                    match_pattern: format!("let {} = {};", keyword2, keyword1),
-                    replacement_pattern: format!("let {} = {}.clone();", keyword2, keyword1),
-                    change_type: ChangeType::Replace,
-                    scope: ChangeScope::Local,
-                }
-            ],
+            change_templates: vec![ChangeTemplate {
+                match_pattern: format!("let {} = {};", keyword2, keyword1),
+                replacement_pattern: format!("let {} = {}.clone();", keyword2, keyword1),
+                change_type: ChangeType::Replace,
+                scope: ChangeScope::Local,
+            }],
             variables: std::collections::HashMap::new(),
             conditions: vec![],
             warnings: vec!["This is a test pattern".to_string()],
@@ -507,7 +553,9 @@ impl LearningSystemTestExt for LearningSystem {
     }
 
     async fn get_pattern(&self, id: &str) -> AIResult<LearnedPattern> {
-        self.database.get_pattern_by_id(id).await?
+        self.database
+            .get_pattern_by_id(id)
+            .await?
             .ok_or_else(|| crate::types::LearningError::PatternNotFoundError(id.to_string()).into())
     }
 

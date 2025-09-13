@@ -6,7 +6,7 @@ use std::path::Path;
 use anyhow::Result;
 use syn::File;
 
-use crate::analysis::{Analyzer, AnalysisFinding, AnalysisPreferences};
+use crate::analysis::{AnalysisFinding, AnalysisPreferences, Analyzer};
 
 /// Configuration for architectural analysis
 #[derive(Debug, Clone)]
@@ -98,7 +98,7 @@ impl ArchitecturalAnalyzer {
     /// Get the architectural layer of a module from its path
     pub fn get_module_layer(&self, file_path: &str) -> &str {
         let path = Path::new(file_path);
-        
+
         // Try to find the first component that matches an allowed layer
         for component in path.components() {
             if let Some(component_str) = component.as_os_str().to_str() {
@@ -107,13 +107,17 @@ impl ArchitecturalAnalyzer {
                 }
             }
         }
-        
+
         // Default to the first allowed layer if no match found
         &self.allowed_layers[0]
     }
 
     // Private helper methods for analysis
-    fn check_circular_dependencies(&self, _ast: &File, _file_path: &str) -> Vec<ArchitecturalFinding> {
+    fn check_circular_dependencies(
+        &self,
+        _ast: &File,
+        _file_path: &str,
+    ) -> Vec<ArchitecturalFinding> {
         // Implementation for circular dependency checking
         vec![]
     }
@@ -123,12 +127,20 @@ impl ArchitecturalAnalyzer {
         vec![]
     }
 
-    fn check_dependency_inversion_violations(&self, _ast: &File, _file_path: &str) -> Vec<ArchitecturalFinding> {
+    fn check_dependency_inversion_violations(
+        &self,
+        _ast: &File,
+        _file_path: &str,
+    ) -> Vec<ArchitecturalFinding> {
         // Implementation for dependency inversion checking
         vec![]
     }
 
-    fn check_interface_segregation_violations(&self, _ast: &File, _file_path: &str) -> Vec<ArchitecturalFinding> {
+    fn check_interface_segregation_violations(
+        &self,
+        _ast: &File,
+        _file_path: &str,
+    ) -> Vec<ArchitecturalFinding> {
         // Implementation for interface segregation checking
         vec![]
     }
@@ -139,27 +151,27 @@ impl Analyzer for ArchitecturalAnalyzer {
 
     fn analyze(&self, ast: &File, _code: &str, file_path: &str) -> Vec<Self::Finding> {
         let mut findings = Vec::new();
-        
+
         // Run all enabled analysis passes
         if self.check_circular_dependencies {
             findings.extend(self.check_circular_dependencies(ast, file_path));
         }
-        
+
         if self.enforce_layer_dependencies {
             findings.extend(self.check_layer_violations(ast, file_path));
         }
-        
+
         if self.check_dependency_inversion {
             findings.extend(self.check_dependency_inversion_violations(ast, file_path));
         }
-        
+
         if self.check_interface_segregation {
             findings.extend(self.check_interface_segregation_violations(ast, file_path));
         }
-        
+
         findings
     }
-    
+
     fn is_enabled(&self, _preferences: &AnalysisPreferences) -> bool {
         // This analyzer is always enabled by default
         true
@@ -177,7 +189,7 @@ mod tests {
             .with_max_cyclomatic_complexity(15)
             .with_max_inheritance_depth(2)
             .with_allowed_layer("test_layer");
-        
+
         assert_eq!(analyzer.max_cyclomatic_complexity, 15);
         assert_eq!(analyzer.max_inheritance_depth, 2);
         assert!(analyzer.allowed_layers.contains(&"test_layer".to_string()));
@@ -188,12 +200,12 @@ mod tests {
         let analyzer = ArchitecturalAnalyzer::new()
             .with_allowed_layer("domain")
             .with_allowed_layer("application");
-        
+
         assert_eq!(
             analyzer.get_module_layer("/path/to/domain/mod.rs"),
             "domain"
         );
-        
+
         assert_eq!(
             analyzer.get_module_layer("/path/to/unknown/mod.rs"),
             "domain" // Default to first allowed layer

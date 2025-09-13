@@ -22,9 +22,9 @@ rust-ai-ide-types = { path = "../rust-ai-ide-types" }
 rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
 
 # ML features placeholder
-ml-framework = { version = "0.1", optional = true }
-model-predictive = { version = "0.1", optional = true }
+#ml-framework = { version = "0.1", optional = true }
+#model-predictive = { version = "0.1", optional = true }
 
 [features]
 default = []
-ml_backend = ["ml-framework", "model-predictive"]
+ml_backend = []

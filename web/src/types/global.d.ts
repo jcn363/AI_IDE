@@ -26,18 +26,18 @@ interface HTMLAnchorElement extends HTMLElement {
   rel: string;
   target: string;
   type: string;
-  
+
   // Standard methods
   click(): void;
   toString(): string;
-  
+
   // HTML5 extensions
   relList: DOMTokenList;
-  
+
   // Non-standard but widely supported
   ping: string;
   text: string;
-  
+
   // Deprecated but still in use
   charset: string;
   coords: string;
@@ -59,23 +59,31 @@ interface HTMLElement {
   getAttribute(name: string): string | null;
   removeAttribute(name: string): void;
   hasAttribute(name: string): boolean;
-  
+
   // Style manipulation
   style: CSSStyleDeclaration;
-  
+
   // Class manipulation
   classList: DOMTokenList;
   className: string;
-  
+
   // Common properties
   id: string;
   title: string;
   hidden: boolean;
   tabIndex: number;
-  
+
   // Event handlers
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
-  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions
+  ): void;
   dispatchEvent(event: Event): boolean;
 }
 

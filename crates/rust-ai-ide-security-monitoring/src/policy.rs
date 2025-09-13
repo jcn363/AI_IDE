@@ -1,4 +1,3 @@
-
 //! Real-Time Security Policy Enforcement System
 //!
 //! This module provides active security policy enforcement including:
@@ -9,16 +8,16 @@
 //! - Performance monitoring and metrics collection
 
 use async_trait::async_trait;
-use std::sync::Arc;
-use tokio::sync::{RwLock, mpsc};
-use serde::{Deserialize, Serialize};
-use tracing::{info, warn, error};
-use moka::future::Cache;
 use chrono::{DateTime, Utc};
-use uuid::Uuid;
+use moka::future::Cache;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use tokio::sync::{mpsc, RwLock};
+use tracing::{error, info, warn};
+use uuid::Uuid;
 
-use crate::{SecurityEvent, MonitoringError, Result};
+use crate::{MonitoringError, Result, SecurityEvent};
 
 /// Core policy engine for real-time enforcement
 #[derive(Clone)]
@@ -185,7 +184,7 @@ impl RealtimePolicyEnforcer {
             Cache::builder()
                 .time_to_live(tokio::time::Duration::from_secs(300))
                 .max_capacity(10_000)
-                .build()
+                .build(),
         );
 
         let (sender, _) = mpsc::unbounded_channel();
@@ -198,8 +197,14 @@ impl RealtimePolicyEnforcer {
         })
     }
 
-    pub async fn enforce_access_control(&self, point: &AccessControlPoint) -> Result<PolicyDecision> {
-        let cache_key = format!("access:{}:{}:{}", point.subject, point.action, point.resource);
+    pub async fn enforce_access_control(
+        &self,
+        point: &AccessControlPoint,
+    ) -> Result<PolicyDecision> {
+        let cache_key = format!(
+            "access:{}:{}:{}",
+            point.subject, point.action, point.resource
+        );
 
         // Check cache first
         if let Some(decision) = self.decision_cache.get(&cache_key).await {
@@ -218,7 +223,9 @@ impl RealtimePolicyEnforcer {
         let decision = self.policy_engine.evaluate(&context).await?;
 
         // Cache decision
-        self.decision_cache.insert(cache_key, decision.clone()).await;
+        self.decision_cache
+            .insert(cache_key, decision.clone())
+            .await;
 
         if !decision.allow {
             let mut count = self.violation_count.write().await;
@@ -257,12 +264,18 @@ impl RealtimePolicyEnforcer {
             context: serde_json::json!({
                 "event_id": event.id,
                 "event_details": &event.details
-            }).as_object().unwrap().clone(),
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
             timestamp: event.timestamp,
         };
 
         // Only check policies for critical/high severity events
-        if matches!(event.severity, crate::EventSeverity::High | crate::EventSeverity::Critical) {
+        if matches!(
+            event.severity,
+            crate::EventSeverity::High | crate::EventSeverity::Critical
+        ) {
             let _decision = self.policy_engine.evaluate(&context).await?;
             // Decision result can be used for additional processing
         }
@@ -332,16 +345,16 @@ impl PolicyEngine {
                             if highest_priority_deny.map_or(true, |h| rule.priority > h.priority) {
                                 highest_priority_deny = Some(rule);
                             }
-                        },
+                        }
                         PolicyEffect::Allow => {
                             if highest_priority_allow.map_or(true, |h| rule.priority > h.priority) {
                                 highest_priority_allow = Some(rule);
                             }
-                        },
+                        }
                         PolicyEffect::Audit | PolicyEffect::Alert => {
                             // These effects don't block but can trigger additional actions
                             self.handle_audit_alert(rule, context).await?;
-                        },
+                        }
                     }
                 }
             }
@@ -385,20 +398,26 @@ impl PolicyEngine {
         }
     }
 
-    async fn policy_matches_scope(&self, policy: &SecurityPolicy, context: &DecisionContext) -> bool {
+    async fn policy_matches_scope(
+        &self,
+        policy: &SecurityPolicy,
+        context: &DecisionContext,
+    ) -> bool {
         match &policy.scope {
             PolicyScope::Global => true,
             PolicyScope::User(user_id) => context.subject == *user_id,
-            PolicyScope::Workspace(workspace_id) =>
-                context.context.get("workspace_id")
-                    .and_then(|v| v.as_str())
-                    .map(|id| id == workspace_id)
-                    .unwrap_or(false),
-            PolicyScope::Project(project_id) =>
-                context.context.get("project_id")
-                    .and_then(|v| v.as_str())
-                    .map(|id| id == project_id)
-                    .unwrap_or(false),
+            PolicyScope::Workspace(workspace_id) => context
+                .context
+                .get("workspace_id")
+                .and_then(|v| v.as_str())
+                .map(|id| id == workspace_id)
+                .unwrap_or(false),
+            PolicyScope::Project(project_id) => context
+                .context
+                .get("project_id")
+                .and_then(|v| v.as_str())
+                .map(|id| id == project_id)
+                .unwrap_or(false),
             PolicyScope::Resource(resource_id) => context.resource == *resource_id,
         }
     }
@@ -421,12 +440,19 @@ impl PolicyEngine {
         true
     }
 
-    fn condition_matches_condition(&self, condition: &PolicyCondition, context: &DecisionContext) -> bool {
+    fn condition_matches_condition(
+        &self,
+        condition: &PolicyCondition,
+        context: &DecisionContext,
+    ) -> bool {
         let context_value = match condition.field.as_str() {
             "subject" => Some(&context.subject),
             "action" => Some(&context.action),
             "resource" => Some(&context.resource),
-            _ => context.context.get(&condition.field).and_then(|v| v.as_str()),
+            _ => context
+                .context
+                .get(&condition.field)
+                .and_then(|v| v.as_str()),
         };
 
         if let Some(actual_value) = context_value {
@@ -438,7 +464,12 @@ impl PolicyEngine {
         }
     }
 
-    fn evaluate_condition_operator(&self, operator: &ConditionOperator, expected_value: &serde_json::Value, actual_value: &str) -> bool {
+    fn evaluate_condition_operator(
+        &self,
+        operator: &ConditionOperator,
+        expected_value: &serde_json::Value,
+        actual_value: &str,
+    ) -> bool {
         let expected_str = expected_value.as_str().unwrap_or("");
 
         match operator {
@@ -449,32 +480,30 @@ impl PolicyEngine {
             ConditionOperator::StartsWith => actual_value.starts_with(expected_str),
             ConditionOperator::EndsWith => actual_value.ends_with(expected_str),
             ConditionOperator::GreaterThan => {
-                if let (Ok(actual_num), Some(expected_num)) = (
-                    actual_value.parse::<f64>(),
-                    expected_value.as_number()
-                ) {
+                if let (Ok(actual_num), Some(expected_num)) =
+                    (actual_value.parse::<f64>(), expected_value.as_number())
+                {
                     actual_num > expected_num.as_f64().unwrap_or(0.0)
                 } else {
                     actual_value > expected_str
                 }
-            },
+            }
             ConditionOperator::LessThan => {
-                if let (Ok(actual_num), Some(expected_num)) = (
-                    actual_value.parse::<f64>(),
-                    expected_value.as_number()
-                ) {
+                if let (Ok(actual_num), Some(expected_num)) =
+                    (actual_value.parse::<f64>(), expected_value.as_number())
+                {
                     actual_num < expected_num.as_f64().unwrap_or(0.0)
                 } else {
                     actual_value < expected_str
                 }
-            },
+            }
             ConditionOperator::Regex => {
                 if let Ok(regex) = Regex::new(expected_str) {
                     regex.is_match(actual_value)
                 } else {
                     false
                 }
-            },
+            }
             ConditionOperator::IsEmpty => actual_value.is_empty(),
             ConditionOperator::IsNotEmpty => !actual_value.is_empty(),
         }
@@ -482,7 +511,10 @@ impl PolicyEngine {
 
     async fn handle_audit_alert(&self, rule: &PolicyRule, context: &DecisionContext) -> Result<()> {
         // Log audit event or trigger alert
-        info!("Policy rule triggered - Policy: {}, Rule: {}", "policy_id", rule.name);
+        info!(
+            "Policy rule triggered - Policy: {}, Rule: {}",
+            "policy_id", rule.name
+        );
         Ok(())
     }
 }

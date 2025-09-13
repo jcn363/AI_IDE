@@ -6,7 +6,7 @@
 #[cfg(test)]
 mod tests {
     use rust_ai_ide_protocol::commands::fs::{FileInfo, ListFilesRequest};
-    use rust_ai_ide_protocol::commands::git::{GitStatusRequest, GitCommitRequest};
+    use rust_ai_ide_protocol::commands::git::{GitCommitRequest, GitStatusRequest};
     use rust_ai_ide_protocol::errors::ProtocolError;
 
     #[test]
@@ -70,7 +70,10 @@ mod tests {
         assert_eq!(deserialized.directory, "/tmp/repo");
         assert_eq!(deserialized.message, "Fix critical bug");
         assert_eq!(deserialized.author_name, Some("John Doe".to_string()));
-        assert_eq!(deserialized.author_email, Some("john@example.com".to_string()));
+        assert_eq!(
+            deserialized.author_email,
+            Some("john@example.com".to_string())
+        );
     }
 
     #[test]

@@ -5,25 +5,25 @@
 //! attack vectors through static code analysis.
 
 // Sub-modules
-pub mod types;
 pub mod ai_visitor_base;
-pub mod security_rules;
 pub mod integration;
+pub mod security_rules;
+pub mod types;
 
+use regex::Regex;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 use syn::{
-    visit::Visit, File, Expr, ExprMethodCall, ExprCall, ExprMacro,
-    ExprPath, Lit, LitStr, Span, spanned::Spanned,
+    spanned::Spanned, visit::Visit, Expr, ExprCall, ExprMacro, ExprMethodCall, ExprPath, File, Lit,
+    LitStr, Span,
 };
-use serde::{Serialize, Deserialize};
-use regex::Regex;
 use walkdir;
 
 // Re-export types and implementations
-pub use types::*;
 pub use ai_visitor_base::*;
-pub use security_rules::*;
 pub use integration::*;
+pub use security_rules::*;
+pub use types::*;
 // Re-export base visitor macro for use in this module
 pub use ai_visitor_base::*;
 
@@ -205,7 +205,8 @@ impl<'ast> Visit<'ast> for UnsafeCodeVisitor {
                 line_number: Some(block.unsafe_token.span().line as usize),
                 column: Some(block.unsafe_token.span().column as usize),
                 code_snippet: Some(format!("{:?}", block)),
-                remediation: "Ensure all unsafe code is properly documented and justified".to_string(),
+                remediation: "Ensure all unsafe code is properly documented and justified"
+                    .to_string(),
                 confidence: 0.9,
                 cwe_id: Some(628), // CWE-628: Function Call with Incorrectly Specified Arguments
             });
@@ -226,10 +227,12 @@ struct PanicUnwrapVisitor {
 
 impl PanicUnwrapVisitor {
     fn new(file_path: String) -> Self {
-        let in_library_code = file_path.contains("/src/lib.rs") || 
-                             file_path.contains("/src/") && !file_path.contains("/examples/") && !file_path.contains("/tests/");
+        let in_library_code = file_path.contains("/src/lib.rs")
+            || file_path.contains("/src/")
+                && !file_path.contains("/examples/")
+                && !file_path.contains("/tests/");
         let in_test_code = file_path.contains("/tests/") || file_path.contains("test.rs");
-        
+
         Self {
             issues: Vec::new(),
             file_path,
@@ -243,7 +246,7 @@ impl<'ast> Visit<'ast> for PanicUnwrapVisitor {
     fn visit_expr_macro(&mut self, node: &'ast ExprMacro) {
         if let Some(segment) = node.mac.path.segments.last() {
             let macro_name = segment.ident.to_string();
-            
+
             match macro_name.as_str() {
                 "panic" => {
                     if self.in_library_code {
@@ -287,16 +290,16 @@ impl<'ast> Visit<'ast> for PanicUnwrapVisitor {
 
     fn visit_expr_method_call(&mut self, node: &'ast ExprMethodCall) {
         let method_name = node.method.to_string();
-        
+
         match method_name.as_str() {
             "unwrap" | "expect" => {
                 if self.in_library_code && !self.in_test_code {
-                    let severity = if method_name == "unwrap" { 
-                        SecuritySeverity::High 
-                    } else { 
-                        SecuritySeverity::Medium 
+                    let severity = if method_name == "unwrap" {
+                        SecuritySeverity::High
+                    } else {
+                        SecuritySeverity::Medium
                     };
-                    
+
                     self.issues.push(SecurityIssue {
                         category: SecurityCategory::MemorySafety,
                         severity,
@@ -317,19 +320,22 @@ impl<'ast> Visit<'ast> for PanicUnwrapVisitor {
                     category: SecurityCategory::MemorySafety,
                     severity: SecuritySeverity::Critical,
                     title: "Use of unwrap_unchecked".to_string(),
-                    description: "unwrap_unchecked bypasses safety checks and can cause undefined behavior".to_string(),
+                    description:
+                        "unwrap_unchecked bypasses safety checks and can cause undefined behavior"
+                            .to_string(),
                     file_path: self.file_path.clone(),
                     line_number: None,
                     column: None,
                     code_snippet: None,
-                    remediation: "Use safe alternatives or ensure the preconditions are always met".to_string(),
+                    remediation: "Use safe alternatives or ensure the preconditions are always met"
+                        .to_string(),
                     confidence: 0.95,
                     cwe_id: Some(119), // CWE-119: Improper Restriction of Operations within the Bounds of a Memory Buffer
                 });
             }
             _ => {}
         }
-        
+
         syn::visit::visit_expr_method_call(self, node);
     }
 }
@@ -359,22 +365,25 @@ impl<'ast> Visit<'ast> for CommandInjectionVisitor {
                 }
             }
         }
-        
+
         // Check for dangerous functions like std::process::Command::output()
         if let Expr::Path(expr_path) = &*node.func {
             if let Some(segment) = expr_path.path.segments.last() {
-                if segment.ident == "output" || segment.ident == "spawn" || segment.ident == "status" {
+                if segment.ident == "output"
+                    || segment.ident == "spawn"
+                    || segment.ident == "status"
+                {
                     // This is an ExprCall, so we can analyze it
                     // We need to create a separate analysis for method calls on expressions
                     // For now, skip this since it requires more complex AST analysis
                 }
             }
         }
-        
+
         // Continue visiting child nodes
         syn::visit::visit_expr_call(self, node);
     }
-    
+
     fn visit_expr_method_call(&mut self, node: &'ast ExprMethodCall) {
         // Check for Command::new() calls
         if let Expr::Path(expr_path) = &*node.receiver {
@@ -384,7 +393,7 @@ impl<'ast> Visit<'ast> for CommandInjectionVisitor {
                 }
             }
         }
-        
+
         // Check for dangerous method calls on Command objects
         if let Expr::Path(expr_path) = &*node.receiver {
             if let Some(segment) = expr_path.path.segments.last() {
@@ -393,7 +402,7 @@ impl<'ast> Visit<'ast> for CommandInjectionVisitor {
                 }
             }
         }
-        
+
         syn::visit::visit_expr_method_call(self, node);
     }
 }
@@ -450,7 +459,7 @@ impl CommandInjectionVisitor {
             }
         }
     }
-    
+
     fn check_command_arguments(&mut self, node: &syn::ExprMethodCall) {
         // Check for dangerous method calls on Command objects
         if let Expr::Path(expr_path) = &*node.receiver {
@@ -482,12 +491,12 @@ impl CommandInjectionVisitor {
             }
         }
     }
-    
+
     /// Check if a string contains potentially dangerous shell metacharacters
     fn is_potentially_unsafe_input(&self, input: &str) -> bool {
         let dangerous_patterns = [
-            "&&", "||", ";", "|", "`", "$", "(", ")", "{", "}", "<", ">", "*", "?", "[", "]",
-            "..", "/", "\\"
+            "&&", "||", ";", "|", "`", "$", "(", ")", "{", "}", "<", ">", "*", "?", "[", "]", "..",
+            "/", "\\",
         ];
 
         dangerous_patterns.iter().any(|&p| input.contains(p))
@@ -550,7 +559,7 @@ impl AISecurityAnalyzer {
             security_rules,
         })
     }
-    
+
     // Security rules and patterns are now initialized via SecurityRulesFactory
 
     pub fn analyze_code(&self, code: &str, file_path: &str) -> SecurityAnalysisResult {
@@ -565,7 +574,7 @@ impl AISecurityAnalyzer {
         // Parse and analyze AST for unsafe code and other patterns
         if let Ok(syntax_tree) = syn::parse_file(code) {
             issues.extend(self.analyze_ast(&syntax_tree, file_path));
-            
+
             // NEW: Advanced AST analysis with new visitors
             issues.extend(self.analyze_panic_unwrap(&syntax_tree, file_path));
             issues.extend(self.analyze_command_injection(&syntax_tree, file_path));
@@ -586,7 +595,10 @@ impl AISecurityAnalyzer {
         }
     }
 
-    pub fn analyze_workspace(&self, workspace_path: &Path) -> Result<SecurityAnalysisResult, Box<dyn std::error::Error>> {
+    pub fn analyze_workspace(
+        &self,
+        workspace_path: &Path,
+    ) -> Result<SecurityAnalysisResult, Box<dyn std::error::Error>> {
         let mut all_issues = Vec::new();
 
         // Walk through all Rust files in the workspace
@@ -617,17 +629,22 @@ impl AISecurityAnalyzer {
         for pattern in &self.secret_patterns {
             for mat in pattern.pattern.find_iter(code) {
                 let line_number = code[..mat.start()].lines().count();
-                
+
                 issues.push(SecurityIssue {
                     category: SecurityCategory::HardcodedSecrets,
                     severity: pattern.severity.clone(),
                     title: format!("Hardcoded {} detected", pattern.name),
-                    description: format!("A {} appears to be hardcoded in the source code", pattern.name),
+                    description: format!(
+                        "A {} appears to be hardcoded in the source code",
+                        pattern.name
+                    ),
                     file_path: file_path.to_string(),
                     line_number: Some(line_number),
                     column: Some(mat.start()),
                     code_snippet: Some(mat.as_str().to_string()),
-                    remediation: "Move sensitive data to environment variables or secure configuration files".to_string(),
+                    remediation:
+                        "Move sensitive data to environment variables or secure configuration files"
+                            .to_string(),
                     confidence: pattern.confidence,
                     cwe_id: Some(798), // CWE-798: Use of Hard-coded Credentials
                 });
@@ -643,7 +660,7 @@ impl AISecurityAnalyzer {
         for rule in &self.security_rules {
             for mat in rule.pattern.find_iter(code) {
                 let line_number = code[..mat.start()].lines().count();
-                
+
                 issues.push(SecurityIssue {
                     category: rule.category.clone(),
                     severity: rule.severity.clone(),
@@ -681,13 +698,21 @@ impl AISecurityAnalyzer {
         visitor.get_issues().clone()
     }
 
-    fn analyze_arithmetic_overflow(&self, syntax_tree: &File, file_path: &str) -> Vec<SecurityIssue> {
+    fn analyze_arithmetic_overflow(
+        &self,
+        syntax_tree: &File,
+        file_path: &str,
+    ) -> Vec<SecurityIssue> {
         let mut visitor = ArithmeticOverflowVisitor::new(file_path.to_string());
         syn::visit::visit_file(&mut visitor, syntax_tree);
         visitor.get_issues().clone()
     }
 
-    fn analyze_complexity_security(&self, syntax_tree: &File, file_path: &str) -> Vec<SecurityIssue> {
+    fn analyze_complexity_security(
+        &self,
+        syntax_tree: &File,
+        file_path: &str,
+    ) -> Vec<SecurityIssue> {
         let mut visitor = ComplexitySecurityVisitor::new(file_path.to_string());
         syn::visit::visit_file(&mut visitor, syntax_tree);
         visitor.get_issues().clone()
@@ -695,7 +720,7 @@ impl AISecurityAnalyzer {
 
     fn calculate_security_summary(&self, issues: &[SecurityIssue]) -> SecuritySummary {
         let total_issues = issues.len();
-        
+
         let (critical_count, high_count, medium_count, low_count, info_count) = issues.iter().fold(
             (0, 0, 0, 0, 0),
             |(crit, high, med, low, info), issue| match issue.severity {
@@ -711,7 +736,8 @@ impl AISecurityAnalyzer {
         let overall_score = if total_issues == 0 {
             100.0
         } else {
-            let weighted_score = (critical_count * 10 + high_count * 5 + medium_count * 2 + low_count) as f32;
+            let weighted_score =
+                (critical_count * 10 + high_count * 5 + medium_count * 2 + low_count) as f32;
             let max_possible_score = total_issues as f32 * 10.0;
             ((max_possible_score - weighted_score) / max_possible_score * 100.0).max(0.0)
         };
@@ -766,7 +792,7 @@ impl AISecurityAnalyzer {
 
     pub fn get_remediation_suggestions(&self, issue: &SecurityIssue) -> Vec<String> {
         let base_suggestions = vec![issue.remediation.clone()];
-        
+
         let category_suggestions: Vec<&str> = match issue.category {
             SecurityCategory::HardcodedSecrets => vec![
                 "Use environment variables with dotenv crate",

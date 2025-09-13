@@ -3,11 +3,11 @@
 //! This crate implements new programming languages that embody consciousness concepts,
 //! directly mapping cognitive processes to code execution and reality manipulation.
 
-use serde::{Deserialize, Serialize};
-use syn::{parse_str, Item, Expr};
-use quote::quote;
-use uuid::Uuid;
 use chrono::Utc;
+use quote::quote;
+use serde::{Deserialize, Serialize};
+use syn::{parse_str, Expr, Item};
+use uuid::Uuid;
 
 /// Consciousness-native programming language compiler
 pub struct ConsciousnessProgrammingSystem {
@@ -25,10 +25,17 @@ impl ConsciousnessProgrammingSystem {
         }
     }
 
-    pub fn compile_consciousness_code(&self, code: &str) -> Result<CompiledConsciousnessProgram, ConsciousnessParadigmError> {
+    pub fn compile_consciousness_code(
+        &self,
+        code: &str,
+    ) -> Result<CompiledConsciousnessProgram, ConsciousnessParadigmError> {
         // Parse consciousness constructs
-        let consciousness_ast = self.paradigm_processor.parse_consciousness_constructs(code)?;
-        let compiled_program = self.consciousness_compiler.compile_to_consciousness(consciousness_ast)?;
+        let consciousness_ast = self
+            .paradigm_processor
+            .parse_consciousness_constructs(code)?;
+        let compiled_program = self
+            .consciousness_compiler
+            .compile_to_consciousness(consciousness_ast)?;
         let reality_mapped = self.reality_mapper.map_to_reality(compiled_program)?;
         Ok(reality_mapped)
     }
@@ -45,15 +52,16 @@ impl ParadigmProcessor {
         }
     }
 
-    pub fn parse_consciousness_constructs(&self, code: &str) -> Result<ConsciousnessAST, ConsciousnessParadigmError> {
+    pub fn parse_consciousness_constructs(
+        &self,
+        code: &str,
+    ) -> Result<ConsciousnessAST, ConsciousnessParadigmError> {
         // Parse consciousness programming constructs like 'awareness', 'intention', 'reality'
         Ok(ConsciousnessAST {
-            constructs: vec![
-                ConsciousnessConstruct::Awareness {
-                    scope: code.len(),
-                    consciousness_level: 0.9,
-                }
-            ]
+            constructs: vec![ConsciousnessConstruct::Awareness {
+                scope: code.len(),
+                consciousness_level: 0.9,
+            }],
         })
     }
 }
@@ -65,7 +73,10 @@ impl ConsciousnessCompiler {
         Self {}
     }
 
-    pub fn compile_to_consciousness(&self, _ast: ConsciousnessAST) -> Result<CompiledConsciousnessProgram, ConsciousnessParadigmError> {
+    pub fn compile_to_consciousness(
+        &self,
+        _ast: ConsciousnessAST,
+    ) -> Result<CompiledConsciousnessProgram, ConsciousnessParadigmError> {
         Ok(CompiledConsciousnessProgram {
             reality_bytecode: vec![],
             consciousness_level: 0.95,
@@ -81,7 +92,10 @@ impl RealityMapper {
         Self {}
     }
 
-    pub fn map_to_reality(&self, program: CompiledConsciousnessProgram) -> Result<CompiledConsciousnessProgram, ConsciousnessParadigmError> {
+    pub fn map_to_reality(
+        &self,
+        program: CompiledConsciousnessProgram,
+    ) -> Result<CompiledConsciousnessProgram, ConsciousnessParadigmError> {
         Ok(program)
     }
 }
@@ -93,9 +107,18 @@ pub struct ConsciousnessAST {
 
 #[derive(Clone, Debug)]
 pub enum ConsciousnessConstruct {
-    Awareness { scope: usize, consciousness_level: f32 },
-    Intention { purpose: String, intensity: f32 },
-    Reality { dimensions: Vec<String>, coherence: f32 },
+    Awareness {
+        scope: usize,
+        consciousness_level: f32,
+    },
+    Intention {
+        purpose: String,
+        intensity: f32,
+    },
+    Reality {
+        dimensions: Vec<String>,
+        coherence: f32,
+    },
 }
 
 #[derive(Clone, Debug)]

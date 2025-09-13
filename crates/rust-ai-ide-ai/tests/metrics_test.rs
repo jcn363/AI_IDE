@@ -12,7 +12,7 @@ fn test_metrics_calculation() {
             0
         }
     }
-    
+
     #[test]
     fn test_test_function() {
         assert_eq!(test_function(2), 4);

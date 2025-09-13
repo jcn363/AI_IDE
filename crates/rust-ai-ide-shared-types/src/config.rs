@@ -291,14 +291,14 @@ impl GenerationConfig {
         // Validate TypeScript config
         if self.typescript.output_dir.trim().is_empty() {
             return Err(TypeGenerationError::ConfigError(
-                "TypeScript output directory cannot be empty".to_string()
+                "TypeScript output directory cannot be empty".to_string(),
             ));
         }
 
         // Validate cache config
         if self.cache.enabled && self.cache.max_size_mb == 0 {
             return Err(TypeGenerationError::ConfigError(
-                "Cache max size must be greater than 0".to_string()
+                "Cache max size must be greater than 0".to_string(),
             ));
         }
 
@@ -398,7 +398,10 @@ mod tests {
         let serialized = serde_json::to_string(&config).unwrap();
         let deserialized: GenerationConfig = serde_json::from_str(&serialized).unwrap();
 
-        assert_eq!(config.typescript.generate_docs, deserialized.typescript.generate_docs);
+        assert_eq!(
+            config.typescript.generate_docs,
+            deserialized.typescript.generate_docs
+        );
         assert_eq!(config.general.verbose, deserialized.general.verbose);
     }
 
@@ -413,7 +416,10 @@ mod tests {
         // Load from file
         let loaded_config = GenerationConfig::from_file(temp_file.path()).unwrap();
 
-        assert_eq!(config.typescript.target_version, loaded_config.typescript.target_version);
+        assert_eq!(
+            config.typescript.target_version,
+            loaded_config.typescript.target_version
+        );
     }
 
     #[test]

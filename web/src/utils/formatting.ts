@@ -50,7 +50,7 @@ export function formatTimestamp(timestamp: number | string | Date): string {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 }
 
@@ -122,12 +122,12 @@ export function formatLearningRate(rate: number): string {
  */
 export function formatTrainingStatus(status: string): string {
   const statusMap: Record<string, string> = {
-    'running': '🔄 Running',
-    'completed': '✅ Completed',
-    'failed': '❌ Failed',
-    'stopped': '⏹️ Stopped',
-    'queued': '⏳ Queued',
-    'pending': '🟡 Pending'
+    running: '🔄 Running',
+    completed: '✅ Completed',
+    failed: '❌ Failed',
+    stopped: '⏹️ Stopped',
+    queued: '⏳ Queued',
+    pending: '🟡 Pending',
   };
   return statusMap[status] || capitalizeFirst(status);
 }

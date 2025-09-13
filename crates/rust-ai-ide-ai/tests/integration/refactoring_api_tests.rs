@@ -6,10 +6,10 @@
 //! - Error handling and recovery
 //! - Serialization/deserialization
 
-use std::collections::HashMap;
 use rust_ai_ide_ai::refactoring::{
-    RefactoringType, RefactoringContext, RefactoringOptions, CodeRange
+    CodeRange, RefactoringContext, RefactoringOptions, RefactoringType,
 };
+use std::collections::HashMap;
 
 use crate::common::test_utils::*;
 
@@ -50,7 +50,10 @@ mod command_execution_tests {
 
         // Verify mappings are correct
         assert_eq!(backend_context.file_path, frontend_context.filePath);
-        assert_eq!(backend_context.cursor_line, frontend_context.startLine as usize);
+        assert_eq!(
+            backend_context.cursor_line,
+            frontend_context.startLine as usize
+        );
     }
 
     #[test]
@@ -76,7 +79,9 @@ mod capability_tests {
         // Test that backend capabilities are detected correctly
         let capabilities = query_backend_capabilities();
 
-        assert!(capabilities.supported_refactorings.contains(&"rename".to_string()));
+        assert!(capabilities
+            .supported_refactorings
+            .contains(&"rename".to_string()));
         assert!(!capabilities.features.ai_analysis); // Should be false in test mode
     }
 
@@ -135,9 +140,12 @@ mod enhanced_analysis_tests {
 
         for symbol in symbols {
             assert!(!symbol.name.is_empty());
-            assert!(matches!(symbol.kind, rust_ai_ide_ai::refactoring::SymbolKind::Function |
-                                         rust_ai_ide_ai::refactoring::SymbolKind::Struct |
-                                         rust_ai_ide_ai::refactoring::SymbolKind::Variable));
+            assert!(matches!(
+                symbol.kind,
+                rust_ai_ide_ai::refactoring::SymbolKind::Function
+                    | rust_ai_ide_ai::refactoring::SymbolKind::Struct
+                    | rust_ai_ide_ai::refactoring::SymbolKind::Variable
+            ));
         }
     }
 

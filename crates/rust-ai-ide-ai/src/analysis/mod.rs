@@ -141,7 +141,7 @@ impl From<CodeSmell> for AnalysisFinding {
             start_col: smell.span.column,
             end_col: smell.span.column + 1, // Approximate end column
         };
-        
+
         Self {
             kind: "code_smell".to_string(),
             message: smell.description,
@@ -165,7 +165,7 @@ impl From<SecurityIssue> for AnalysisFinding {
             start_col: issue.span.column,
             end_col: issue.span.column + 1,
         };
-        
+
         Self {
             kind: "security_issue".to_string(),
             message: issue.description,
@@ -189,7 +189,7 @@ impl From<PerformanceIssue> for AnalysisFinding {
             start_col: issue.span.column,
             end_col: issue.span.column + 1,
         };
-        
+
         Self {
             kind: "performance_issue".to_string(),
             message: issue.description,
@@ -213,7 +213,7 @@ impl From<StyleViolation> for AnalysisFinding {
             start_col: violation.span.column,
             end_col: violation.span.column + 1,
         };
-        
+
         Self {
             kind: "style_violation".to_string(),
             message: violation.description,
@@ -288,16 +288,16 @@ impl Default for AnalysisPreferences {
 #[typetag::serde(tag = "type")]
 pub trait Analyzer: std::fmt::Debug + Send + Sync + 'static {
     /// The type of findings this analyzer produces
-    type Finding: Finding + 'static;  
+    type Finding: Finding + 'static;
     /// Analyze the given code and return findings
     fn analyze(&self, ast: &syn::File, code: &str, file_path: &str) -> Result<Vec<Self::Finding>>;
-    
+
     /// Get the name/identifier of this analyzer
     fn name(&self) -> &'static str;
-    
+
     /// Get the category of analysis this analyzer performs
     fn category(&self) -> AnalysisCategory;
-    
+
     /// Check if this analyzer is enabled based on preferences
     fn is_enabled(&self, preferences: &AnalysisPreferences) -> bool {
         match self.category() {
@@ -308,7 +308,7 @@ pub trait Analyzer: std::fmt::Debug + Send + Sync + 'static {
             AnalysisCategory::Architecture => preferences.enable_architecture,
         }
     }
-    
+
     /// Run the analyzer if it's enabled
     fn run_if_enabled(&self, ast: &syn::File, code: &str, file_path: &str, preferences: &AnalysisPreferences) -> Result<Vec<Self::Finding>> {
         if self.is_enabled(preferences) {
@@ -374,7 +374,7 @@ impl AnalysisConfig {
     pub fn get_hash(&self) -> u64 {
         use std::hash::{Hash, Hasher};
         use std::collections::hash_map::DefaultHasher;
-        
+
         let mut hasher = DefaultHasher::new();
         self.version.hash(&mut hasher);
         self.min_confidence.to_bits().hash(&mut hasher);
@@ -382,7 +382,7 @@ impl AnalysisConfig {
         self.cache_ttl_seconds.hash(&mut hasher);
         self.incremental_analysis.hash(&mut hasher);
         self.max_parallel_files.hash(&mut hasher);
-        
+
         // Sort keys for consistent hashing
         let mut keys: Vec<_> = self.custom_rules.keys().collect();
         keys.sort();
@@ -392,7 +392,7 @@ impl AnalysisConfig {
             // that don't implement Hash. The version bump should be enough to
             // invalidate the cache when rules change.
         }
-        
+
         hasher.finish()
     }
 }
@@ -473,7 +473,7 @@ impl AnalysisRegistry {
         preferences: &AnalysisPreferences,
     ) -> Result<(Vec<AnalysisFinding>, Vec<CodeMetrics>)> {
         let path = Path::new(file_path);
-        
+
         // Check if we should skip analysis due to incremental mode
         if self.config.incremental_analysis {
             if let Some(state) = &self.incremental_state {
@@ -489,14 +489,14 @@ impl AnalysisRegistry {
             let cache_key = self.generate_cache_key(code, file_path)?;
             if let Some(cached) = self.get_cached_results(&cache_key)? {
                 debug!("Using cached analysis results for {}", file_path);
-                
+
                 // Update incremental state to mark this file as analyzed
                 if self.config.incremental_analysis {
                     if let Some(state) = &self.incremental_state {
                         let _ = state.write().unwrap().update_file_analysis(path, Vec::new(), true);
                     }
                 }
-                
+
                 return Ok(cached);
             }
         }
@@ -535,10 +535,10 @@ impl AnalysisRegistry {
         preferences: &AnalysisPreferences,
     ) -> Result<Vec<(String, Vec<AnalysisFinding>, Vec<CodeMetrics>)>> {
         let mut results = Vec::new();
-        
+
         // Get all files matching the include patterns
         let files = self.find_files_to_analyze(dir_path)?;
-        
+
         // Filter files based on incremental analysis if enabled
         let files_to_analyze: Vec<_> = if self.config.incremental_analysis {
             if let Some(state) = &self.incremental_state {
@@ -557,16 +557,16 @@ impl AnalysisRegistry {
         } else {
             files
         };
-        
+
         info!("Analyzing {} out of {} files ({} skipped due to incremental analysis)",
             files_to_analyze.len(),
             files.len(),
             files.len() - files_to_analyze.len()
         );
-        
+
         // Process files in parallel with progress reporting
         let pb = utils::progress_bar(files_to_analyze.len() as u64, "Analyzing files");
-        
+
         results = files_to_analyze
             .par_iter()
             .filter_map(|file_path| {
@@ -592,9 +592,9 @@ impl AnalysisRegistry {
                 }
             })
             .collect();
-        
+
         pb.finish_with_message("Analysis complete");
-        
+
         // Save incremental state if enabled
         if self.config.incremental_analysis {
             if let Some(state) = &self.incremental_state {
@@ -603,7 +603,7 @@ impl AnalysisRegistry {
                 }
             }
         }
-        
+
         Ok(results)
     }
 
@@ -615,17 +615,17 @@ impl AnalysisRegistry {
     ) -> Result<(Vec<AnalysisFinding>, Vec<CodeMetrics>)> {
         let code = std::fs::read_to_string(file_path)
             .with_context(|| format!("Failed to read file: {}", file_path.display()))?;
-        
+
         let ast = syn::parse_file(&code)
             .with_context(|| format!("Failed to parse file: {}", file_path.display()))?;
-        
+
         self.analyze_file(&ast, &code, &file_path.to_string_lossy(), preferences)
     }
 
     /// Find all files that should be analyzed in the given directory
     fn find_files_to_analyze(&self, dir_path: &str) -> Result<Vec<PathBuf>> {
         let mut files = Vec::new();
-        
+
         for entry in WalkDir::new(dir_path)
             .into_iter()
             .filter_map(Result::ok)
@@ -636,14 +636,14 @@ impl AnalysisRegistry {
                 files.push(path.to_path_buf());
             }
         }
-        
+
         Ok(files)
     }
-    
+
     /// Check if a file should be analyzed based on include patterns
     fn should_analyze_file(&self, path: &Path) -> bool {
         let path_str = path.to_string_lossy();
-        
+
         // Check if the file matches any of the include patterns
         self.config.include_patterns.iter().any(|pattern| {
             regex::Regex::new(pattern)
@@ -659,7 +659,7 @@ impl AnalysisRegistry {
             "analysis_v{}_{:x}",
             self.config.version, config_hash
         );
-        
+
         CacheKey::new(
             Path::new(file_path),
             &cache_key,
@@ -677,12 +677,12 @@ impl AnalysisRegistry {
         if !self.config.cache_enabled {
             return Ok(None);
         }
-        
+
         // Check if the cache entry is valid
         if key.is_stale() {
             return Ok(None);
         }
-        
+
         // Try to get from cache
         match cache::get_cached(key) {
             Ok(Some(result)) => {
@@ -710,14 +710,14 @@ impl AnalysisRegistry {
         if !self.config.cache_enabled {
             return Ok(());
         }
-        
+
         let metadata = serde_json::json!({
             "version": self.config.version,
             "findings_count": findings.len(),
             "metrics_count": metrics.len(),
             "cached_at": chrono::Utc::now().to_rfc3339(),
         });
-        
+
         cache::set_cached(
             key,
             &(findings, metrics),
@@ -726,7 +726,7 @@ impl AnalysisRegistry {
         )?;
 
         debug!("Cached results for {} with key {}", key.file_path().display(), key.key());
-        
+
         Ok(())
     }
 
@@ -734,24 +734,24 @@ impl AnalysisRegistry {
     pub fn invalidate_cache(&self, pattern: &str) -> Result<usize> {
         debug!("Invalidating cache for pattern: {}", pattern);
         let count = cache::invalidate_cache(pattern)?;
-        
+
         // Also clean up any expired entries
         let expired = cache::cleanup_expired()?;
         debug!("Cleaned up {} expired cache entries", expired);
-        
+
         Ok(count)
     }
-    
+
     /// Get cache statistics
     pub fn get_cache_stats(&self) -> Result<cache::CacheStats> {
         cache::get_stats()
     }
-    
+
     /// Clear the entire cache
     pub fn clear_cache(&self) -> Result<usize> {
         self.invalidate_cache(".*")
     }
-    
+
     /// Run all analyzers on the given code and return findings and metrics
     fn run_analysis(
         &self,
@@ -762,7 +762,7 @@ impl AnalysisRegistry {
     ) -> (Vec<AnalysisFinding>, Vec<CodeMetrics>) {
         let mut all_findings = Vec::new();
         let mut all_metrics = Vec::new();
-        
+
         // Run architectural analyzers
         if !self.architectural_analyzers.is_empty() {
             self.run_analyzers::<dyn Analyzer<Finding = AnalysisFinding> + Send + Sync>(
@@ -774,7 +774,7 @@ impl AnalysisRegistry {
                 &mut all_findings,
             );
         }
-        
+
         // Run security analyzers
         if !self.security_analyzers.is_empty() {
             let mut security_findings = Vec::new();
@@ -788,7 +788,7 @@ impl AnalysisRegistry {
             );
             all_findings.extend(security_findings.into_iter().map(Into::into));
         }
-        
+
         // Run performance analyzers
         if !self.performance_analyzers.is_empty() {
             let mut performance_findings = Vec::new();
@@ -802,7 +802,7 @@ impl AnalysisRegistry {
             );
             all_findings.extend(performance_findings.into_iter().map(Into::into));
         }
-        
+
         // Run metrics calculators
         if !self.metrics_calculators.is_empty() {
             let mut metrics = Vec::new();
@@ -866,7 +866,7 @@ impl AnalysisRegistry {
                 cache::init_cache(None, Some(Duration::from_secs(ttl)))?;
             }
         }
-        
+
         // If the config changed significantly, we might need to invalidate the cache
         if self.config.get_hash() != config.get_hash() {
             debug!("Configuration changed significantly, reloading incremental state");
@@ -876,7 +876,7 @@ impl AnalysisRegistry {
                 None
             };
         }
-        
+
         self.config = config;
         Ok(())
     }
@@ -893,7 +893,7 @@ impl AnalysisRegistry {
     pub fn update_preferences(&mut self, preferences: AnalysisPreferences) {
         self.preferences = preferences;
     }
-    
+
         /// Update analysis provider
     pub fn update_provider(&mut self, provider: impl Analyzer<Finding = AnalysisFinding> + Send + Sync + 'static) {
         self.architectural_analyzers.push(Box::new(provider));
@@ -915,7 +915,7 @@ pub mod utils {
         rule_id: String,
     ) -> AnalysisFinding {
         let location = format!("{}:{}", range.start_line, range.start_col);
-        
+
         AnalysisFinding {
             kind: category.to_string().to_lowercase(),
             message,
@@ -929,18 +929,18 @@ pub mod utils {
             rule_id,
         }
     }
-    
+
     /// Extract line number from syn span
     pub fn extract_line_number(span: &proc_macro2::Span) -> u32 {
         let source_text = span.unwrap().source_text().unwrap_or_default();
         source_text.lines().count() as u32
     }
-    
+
     /// Create a range from syn span
     pub fn span_to_range(span: &proc_macro2::Span) -> Range {
         // Get the source text position from the span
         let source_text = span.unwrap().source_text().unwrap_or_default();
-        
+
         // For now, return a default range since we can't get accurate positions
         // This will need to be updated if we need accurate positions
         Range {
@@ -950,26 +950,26 @@ pub mod utils {
             end_col: source_text.len() as u32 + 1, // Approximate end column
         }
     }
-    
+
     /// Check if a finding meets the confidence threshold
     pub fn meets_confidence_threshold(finding: &AnalysisFinding, threshold: f32) -> bool {
         finding.confidence >= threshold
     }
-    
+
     /// Merge overlapping ranges
     pub fn merge_ranges(ranges: &[Range]) -> Vec<Range> {
         if ranges.is_empty() {
             return Vec::new();
         }
-        
+
         let mut sorted_ranges = ranges.to_vec();
         sorted_ranges.sort_by_key(|r| (r.start_line, r.start_col));
-        
+
         let mut merged = vec![sorted_ranges[0].clone()];
-        
+
         for range in sorted_ranges.iter().skip(1) {
             let last = merged.last_mut().unwrap();
-            
+
             // Check if ranges overlap or are adjacent
             if range.start_line <= last.end_line + 1 {
                 // Merge ranges
@@ -984,7 +984,7 @@ pub mod utils {
                 merged.push(range.clone());
             }
         }
-        
+
         merged
     }
 }

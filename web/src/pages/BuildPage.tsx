@@ -23,7 +23,13 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useAppDispatch, useAppSelector } from '../store';
 import { editorActions } from '../store/slices/editorSlice';
-import { executeCargoStream, selectCargoCommands, selectCurrentProjectPath, clearCommandOutput, cancelCargoCommand } from '../store/slices/cargoSlice';
+import {
+  executeCargoStream,
+  selectCargoCommands,
+  selectCurrentProjectPath,
+  clearCommandOutput,
+  cancelCargoCommand,
+} from '../store/slices/cargoSlice';
 
 function genId() {
   return 'cmd-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
@@ -131,10 +137,19 @@ export default function BuildPage() {
             value={extraArgs}
             onChange={(e: any) => setExtraArgs(e.target?.value ?? '')}
           />
-          <Button variant="contained" startIcon={<PlayArrowIcon />} onClick={startBuild} disabled={!projectPath}>
+          <Button
+            variant="contained"
+            startIcon={<PlayArrowIcon />}
+            onClick={startBuild}
+            disabled={!projectPath}
+          >
             Build
           </Button>
-          <Button variant="outlined" color="warning" onClick={() => dispatch(clearCommandOutput({ commandId: 'all' }))}>
+          <Button
+            variant="outlined"
+            color="warning"
+            onClick={() => dispatch(clearCommandOutput({ commandId: 'all' }))}
+          >
             Clear All
           </Button>
         </Stack>
@@ -154,21 +169,46 @@ export default function BuildPage() {
           const isExpanded = expanded[c.id] || false;
           const diag = c.diagnostics || [];
           const errorCount = diag.filter((d) => (d.level || '').toLowerCase() === 'error').length;
-          const warnCount = diag.filter((d) => (d.level || '').toLowerCase() === 'warning' || (d.level || '').toLowerCase() === 'warn').length;
+          const warnCount = diag.filter(
+            (d) =>
+              (d.level || '').toLowerCase() === 'warning' ||
+              (d.level || '').toLowerCase() === 'warn'
+          ).length;
           return (
             <Paper key={c.id} sx={{ p: 2 }}>
               <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
                 <Stack direction="row" spacing={2} alignItems="center">
-                  <IconButton onClick={() => setExpanded((e) => ({ ...e, [c.id]: !isExpanded }))} size="small">
+                  <IconButton
+                    onClick={() => setExpanded((e) => ({ ...e, [c.id]: !isExpanded }))}
+                    size="small"
+                  >
                     {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                   </IconButton>
-                  <Typography variant="subtitle1">{c.command} {c.args.join(' ')}</Typography>
-                  <Chip size="small" label={c.status} color={c.status === 'running' ? 'info' : c.status === 'success' ? 'success' : c.status === 'error' ? 'error' : 'default'} />
+                  <Typography variant="subtitle1">
+                    {c.command} {c.args.join(' ')}
+                  </Typography>
+                  <Chip
+                    size="small"
+                    label={c.status}
+                    color={
+                      c.status === 'running'
+                        ? 'info'
+                        : c.status === 'success'
+                          ? 'success'
+                          : c.status === 'error'
+                            ? 'error'
+                            : 'default'
+                    }
+                  />
                   <Chip size="small" label={`compiled: ${c.stats?.compiling ?? 0}`} />
                   <Chip size="small" label={`fresh: ${c.stats?.fresh ?? 0}`} />
                   <Chip size="small" label={`finished: ${c.stats?.finished ?? 0}`} />
-                  {warnCount > 0 && <Chip size="small" color="warning" label={`warnings: ${warnCount}`} />}
-                  {errorCount > 0 && <Chip size="small" color="error" label={`errors: ${errorCount}`} />}
+                  {warnCount > 0 && (
+                    <Chip size="small" color="warning" label={`warnings: ${warnCount}`} />
+                  )}
+                  {errorCount > 0 && (
+                    <Chip size="small" color="error" label={`errors: ${errorCount}`} />
+                  )}
                 </Stack>
                 <Stack direction="row" spacing={1}>
                   <IconButton
@@ -183,13 +223,27 @@ export default function BuildPage() {
               </Stack>
               <Collapse in={isExpanded}>
                 <Divider sx={{ my: 1 }} />
-                <Typography variant="subtitle2" gutterBottom>Output</Typography>
-                <Box component="pre" sx={{ bgcolor: 'background.default', p: 1.5, borderRadius: 1, maxHeight: 220, overflow: 'auto', whiteSpace: 'pre-wrap' }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Output
+                </Typography>
+                <Box
+                  component="pre"
+                  sx={{
+                    bgcolor: 'background.default',
+                    p: 1.5,
+                    borderRadius: 1,
+                    maxHeight: 220,
+                    overflow: 'auto',
+                    whiteSpace: 'pre-wrap',
+                  }}
+                >
                   {c.output || 'No output'}
                 </Box>
                 {c.diagnostics && c.diagnostics.length > 0 && (
                   <>
-                    <Typography variant="subtitle2" sx={{ mt: 1 }} gutterBottom>Diagnostics</Typography>
+                    <Typography variant="subtitle2" sx={{ mt: 1 }} gutterBottom>
+                      Diagnostics
+                    </Typography>
                     <Box component="ul" sx={{ m: 0, pl: 3 }}>
                       {c.diagnostics.map((d, i) => {
                         const first = d.spans && d.spans[0];
@@ -209,7 +263,12 @@ export default function BuildPage() {
                             <Typography variant="body2">
                               [{d.level}] {d.message}{' '}
                               {hasSpan && (
-                                <Link component="button" type="button" onClick={handleOpen} sx={{ ml: 1 }}>
+                                <Link
+                                  component="button"
+                                  type="button"
+                                  onClick={handleOpen}
+                                  sx={{ ml: 1 }}
+                                >
                                   Open
                                 </Link>
                               )}

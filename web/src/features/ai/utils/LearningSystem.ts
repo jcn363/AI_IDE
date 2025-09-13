@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { useState, useCallback, useEffect } from 'react';
 import type {
   ErrorPattern,
@@ -9,7 +9,7 @@ import type {
   FixApplicationResult,
   CodeChange,
   LearningSystemRequest,
-  AIAnalysisError
+  AIAnalysisError,
 } from '../types';
 
 // ============================================================================
@@ -31,17 +31,17 @@ export async function recordSuccessfulFix(
       appliedFix,
       success: true,
       userFeedback,
-      context
+      context,
     };
 
     const patternId = await invoke<string>('record_successful_fix', { request });
-    
+
     // Update local analytics
     await updateLocalAnalytics('fix_recorded', {
       patternId,
       errorType: errorPattern.errorType,
       fixType: appliedFix.fixType,
-      confidence: appliedFix.confidence
+      confidence: appliedFix.confidence,
     });
 
     return patternId;
@@ -55,8 +55,8 @@ export async function recordSuccessfulFix(
       timestamp: Date.now(),
       context: {
         operation: 'record_fix',
-        errorType: errorPattern.errorType
-      }
+        errorType: errorPattern.errorType,
+      },
     });
   }
 }
@@ -75,16 +75,16 @@ export async function recordFailedFix(
       errorPattern,
       appliedFix: attemptedFix,
       success: false,
-      context
+      context,
     };
 
     await invoke('record_failed_fix', { request, errorMessage });
-    
+
     // Update local analytics
     await updateLocalAnalytics('fix_failed', {
       errorType: errorPattern.errorType,
       fixType: attemptedFix.fixType,
-      errorMessage
+      errorMessage,
     });
   } catch (error) {
     console.error('Failed to record failed fix:', error);
@@ -102,7 +102,7 @@ export async function getLearnedPatterns(
   try {
     const patterns = await invoke<LearnedPattern[]>('get_learned_patterns', {
       errorPattern,
-      maxResults
+      maxResults,
     });
 
     // Sort by confidence and recency
@@ -132,8 +132,8 @@ export function calculateFixConfidence(
   }
 
   // Find patterns that match the fix type
-  const relevantPatterns = learnedPatterns.filter(pattern => 
-    pattern.successfulFix.fixType === fixSuggestion.fixType
+  const relevantPatterns = learnedPatterns.filter(
+    (pattern) => pattern.successfulFix.fixType === fixSuggestion.fixType
   );
 
   if (relevantPatterns.length === 0) {
@@ -144,19 +144,19 @@ export function calculateFixConfidence(
   const totalWeight = relevantPatterns.reduce((sum, pattern) => {
     const successRate = pattern.successCount / (pattern.successCount + pattern.failureCount);
     const recencyWeight = calculateRecencyWeight(pattern.lastUsed);
-    return sum + (successRate * pattern.confidence * recencyWeight);
+    return sum + successRate * pattern.confidence * recencyWeight;
   }, 0);
 
   const averageWeight = totalWeight / relevantPatterns.length;
-  
+
   // Combine original confidence with learned confidence
   const baseWeight = 0.3;
   const learnedWeight = 0.7;
   const contextWeight = contextSimilarity;
-  
-  return Math.min(1.0, 
-    (fixSuggestion.confidence * baseWeight) + 
-    (averageWeight * learnedWeight * contextWeight)
+
+  return Math.min(
+    1.0,
+    fixSuggestion.confidence * baseWeight + averageWeight * learnedWeight * contextWeight
   );
 }
 
@@ -167,7 +167,7 @@ function calculateRecencyWeight(lastUsed: string): number {
   const now = new Date().getTime();
   const lastUsedTime = new Date(lastUsed).getTime();
   const daysSince = (now - lastUsedTime) / (1000 * 60 * 60 * 24);
-  
+
   // Exponential decay: weight decreases by half every 30 days
   return Math.exp(-daysSince / 30);
 }
@@ -175,10 +175,7 @@ function calculateRecencyWeight(lastUsed: string): number {
 /**
  * Calculates context similarity between two error patterns
  */
-export function calculateContextSimilarity(
-  pattern1: ErrorPattern,
-  pattern2: ErrorPattern
-): number {
+export function calculateContextSimilarity(pattern1: ErrorPattern, pattern2: ErrorPattern): number {
   // Simple similarity based on error type and pattern matching
   if (pattern1.errorType !== pattern2.errorType) {
     return 0;
@@ -187,8 +184,8 @@ export function calculateContextSimilarity(
   // Calculate string similarity for patterns
   const patternSimilarity = calculateStringSimilarity(pattern1.pattern, pattern2.pattern);
   const contextSimilarity = calculateStringSimilarity(pattern1.context, pattern2.context);
-  
-  return (patternSimilarity * 0.7) + (contextSimilarity * 0.3);
+
+  return patternSimilarity * 0.7 + contextSimilarity * 0.3;
 }
 
 /**
@@ -197,10 +194,10 @@ export function calculateContextSimilarity(
 function calculateStringSimilarity(str1: string, str2: string): number {
   const set1 = new Set(str1.toLowerCase().split(/\s+/));
   const set2 = new Set(str2.toLowerCase().split(/\s+/));
-  
-  const intersection = new Set([...set1].filter(x => set2.has(x)));
+
+  const intersection = new Set([...set1].filter((x) => set2.has(x)));
   const union = new Set([...set1, ...set2]);
-  
+
   return intersection.size / union.size;
 }
 
@@ -211,18 +208,16 @@ function calculateStringSimilarity(str1: string, str2: string): number {
 /**
  * Updates user learning preferences
  */
-export async function updateLearningPreferences(
-  preferences: LearningPreferences
-): Promise<void> {
+export async function updateLearningPreferences(preferences: LearningPreferences): Promise<void> {
   try {
     await invoke('update_learning_preferences', { preferences });
-    
+
     // Store preferences locally for quick access
     localStorage.setItem('ai_learning_preferences', JSON.stringify(preferences));
-    
+
     await updateLocalAnalytics('preferences_updated', {
       enableLearning: preferences.enableLearning,
-      privacyMode: preferences.privacyMode
+      privacyMode: preferences.privacyMode,
     });
   } catch (error) {
     console.error('Failed to update learning preferences:', error);
@@ -232,7 +227,7 @@ export async function updateLearningPreferences(
       details: error instanceof Error ? error.message : String(error),
       retryable: true,
       timestamp: Date.now(),
-      context: { operation: 'update_preferences' }
+      context: { operation: 'update_preferences' },
     });
   }
 }
@@ -244,20 +239,20 @@ export async function getLearningPreferences(): Promise<LearningPreferences> {
   try {
     // Try to get from backend first
     const preferences = await invoke<LearningPreferences>('get_learning_preferences');
-    
+
     // Cache locally
     localStorage.setItem('ai_learning_preferences', JSON.stringify(preferences));
-    
+
     return preferences;
   } catch (error) {
     console.error('Failed to get learning preferences from backend:', error);
-    
+
     // Fallback to local storage
     const cached = localStorage.getItem('ai_learning_preferences');
     if (cached) {
       return JSON.parse(cached);
     }
-    
+
     // Return default preferences
     return {
       enableLearning: false,
@@ -265,7 +260,7 @@ export async function getLearningPreferences(): Promise<LearningPreferences> {
       shareAnonymousData: false,
       retainPersonalData: false,
       dataRetentionDays: 30,
-      allowModelTraining: false
+      allowModelTraining: false,
     };
   }
 }
@@ -278,12 +273,12 @@ export async function clearLearningData(
 ): Promise<void> {
   try {
     await invoke('clear_learning_data', { clearType });
-    
+
     // Clear local analytics if clearing all data
     if (clearType === 'all') {
       localStorage.removeItem('ai_learning_analytics');
     }
-    
+
     await updateLocalAnalytics('data_cleared', { clearType });
   } catch (error) {
     console.error('Failed to clear learning data:', error);
@@ -293,7 +288,7 @@ export async function clearLearningData(
       details: error instanceof Error ? error.message : String(error),
       retryable: true,
       timestamp: Date.now(),
-      context: { operation: 'clear_data', clearType }
+      context: { operation: 'clear_data', clearType },
     });
   }
 }
@@ -316,20 +311,20 @@ export async function syncLearningData(): Promise<{
       syncedPatterns: number;
       errors: string[];
     }>('sync_learning_data');
-    
+
     await updateLocalAnalytics('data_synced', {
       success: result.success,
       syncedPatterns: result.syncedPatterns,
-      errorCount: result.errors.length
+      errorCount: result.errors.length,
     });
-    
+
     return result;
   } catch (error) {
     console.error('Failed to sync learning data:', error);
     return {
       success: false,
       syncedPatterns: 0,
-      errors: [error instanceof Error ? error.message : String(error)]
+      errors: [error instanceof Error ? error.message : String(error)],
     };
   }
 }
@@ -348,7 +343,7 @@ export async function getLearningSystemData(): Promise<LearningSystemData> {
       details: error instanceof Error ? error.message : String(error),
       retryable: true,
       timestamp: Date.now(),
-      context: { operation: 'get_learning_data' }
+      context: { operation: 'get_learning_data' },
     });
   }
 }
@@ -366,34 +361,31 @@ interface AnalyticsEvent {
 /**
  * Updates local analytics data
  */
-async function updateLocalAnalytics(
-  eventType: string,
-  data: Record<string, any>
-): Promise<void> {
+async function updateLocalAnalytics(eventType: string, data: Record<string, any>): Promise<void> {
   try {
     const preferences = await getLearningPreferences();
-    
+
     // Only track if user has opted in
     if (!preferences.enableLearning || preferences.privacyMode === 'opt-out') {
       return;
     }
-    
+
     const event: AnalyticsEvent = {
       type: eventType,
       timestamp: Date.now(),
-      data: preferences.shareAnonymousData ? data : {}
+      data: preferences.shareAnonymousData ? data : {},
     };
-    
+
     const existing = localStorage.getItem('ai_learning_analytics');
     const events: AnalyticsEvent[] = existing ? JSON.parse(existing) : [];
-    
+
     events.push(event);
-    
+
     // Keep only last 1000 events
     if (events.length > 1000) {
       events.splice(0, events.length - 1000);
     }
-    
+
     localStorage.setItem('ai_learning_analytics', JSON.stringify(events));
   } catch (error) {
     console.error('Failed to update local analytics:', error);
@@ -418,31 +410,35 @@ export async function getLearningAnalytics(): Promise<{
   try {
     const backendAnalytics = await invoke<any>('get_learning_analytics');
     const localEvents = getLocalAnalytics();
-    
+
     return {
       ...backendAnalytics,
       userAdoptionMetrics: {
         ...backendAnalytics.userAdoptionMetrics,
         daysActive: calculateActiveDays(localEvents),
-        feedbackProvided: localEvents.filter(e => e.type === 'fix_recorded' && e.data.userFeedback).length
-      }
+        feedbackProvided: localEvents.filter(
+          (e) => e.type === 'fix_recorded' && e.data.userFeedback
+        ).length,
+      },
     };
   } catch (error) {
     console.error('Failed to get learning analytics:', error);
-    
+
     // Return local analytics as fallback
     const localEvents = getLocalAnalytics();
     return {
-      totalFixesRecorded: localEvents.filter(e => e.type === 'fix_recorded').length,
+      totalFixesRecorded: localEvents.filter((e) => e.type === 'fix_recorded').length,
       successRate: calculateLocalSuccessRate(localEvents),
       averageConfidenceImprovement: 0,
       mostCommonErrorTypes: [],
       userAdoptionMetrics: {
         learningEnabled: true,
         daysActive: calculateActiveDays(localEvents),
-        fixesApplied: localEvents.filter(e => e.type === 'fix_recorded').length,
-        feedbackProvided: localEvents.filter(e => e.type === 'fix_recorded' && e.data.userFeedback).length
-      }
+        fixesApplied: localEvents.filter((e) => e.type === 'fix_recorded').length,
+        feedbackProvided: localEvents.filter(
+          (e) => e.type === 'fix_recorded' && e.data.userFeedback
+        ).length,
+      },
     };
   }
 }
@@ -457,17 +453,15 @@ function getLocalAnalytics(): AnalyticsEvent[] {
 }
 
 function calculateActiveDays(events: AnalyticsEvent[]): number {
-  const days = new Set(
-    events.map(e => new Date(e.timestamp).toDateString())
-  );
+  const days = new Set(events.map((e) => new Date(e.timestamp).toDateString()));
   return days.size;
 }
 
 function calculateLocalSuccessRate(events: AnalyticsEvent[]): number {
-  const fixEvents = events.filter(e => e.type === 'fix_recorded' || e.type === 'fix_failed');
+  const fixEvents = events.filter((e) => e.type === 'fix_recorded' || e.type === 'fix_failed');
   if (fixEvents.length === 0) return 0;
-  
-  const successCount = fixEvents.filter(e => e.type === 'fix_recorded').length;
+
+  const successCount = fixEvents.filter((e) => e.type === 'fix_recorded').length;
   return successCount / fixEvents.length;
 }
 
@@ -515,39 +509,42 @@ export function useLearningSystem() {
     }
   }, []);
 
-  const recordFix = useCallback(async (
-    errorPattern: ErrorPattern,
-    appliedFix: FixSuggestion,
-    context: string,
-    userFeedback?: 'positive' | 'negative' | 'neutral'
-  ) => {
-    if (!preferences?.enableLearning) {
-      return null;
-    }
+  const recordFix = useCallback(
+    async (
+      errorPattern: ErrorPattern,
+      appliedFix: FixSuggestion,
+      context: string,
+      userFeedback?: 'positive' | 'negative' | 'neutral'
+    ) => {
+      if (!preferences?.enableLearning) {
+        return null;
+      }
 
-    try {
-      return await recordSuccessfulFix(errorPattern, appliedFix, context, userFeedback);
-    } catch (err) {
-      setError(err as AIAnalysisError);
-      throw err;
-    }
-  }, [preferences]);
+      try {
+        return await recordSuccessfulFix(errorPattern, appliedFix, context, userFeedback);
+      } catch (err) {
+        setError(err as AIAnalysisError);
+        throw err;
+      }
+    },
+    [preferences]
+  );
 
-  const getPatterns = useCallback(async (
-    errorPattern: ErrorPattern,
-    maxResults?: number
-  ) => {
-    if (!preferences?.enableLearning) {
-      return [];
-    }
+  const getPatterns = useCallback(
+    async (errorPattern: ErrorPattern, maxResults?: number) => {
+      if (!preferences?.enableLearning) {
+        return [];
+      }
 
-    try {
-      return await getLearnedPatterns(errorPattern, maxResults);
-    } catch (err) {
-      setError(err as AIAnalysisError);
-      return [];
-    }
-  }, [preferences]);
+      try {
+        return await getLearnedPatterns(errorPattern, maxResults);
+      } catch (err) {
+        setError(err as AIAnalysisError);
+        return [];
+      }
+    },
+    [preferences]
+  );
 
   const clearData = useCallback(async (clearType?: 'all' | 'personal' | 'anonymous') => {
     try {
@@ -571,7 +568,7 @@ export function useLearningSystem() {
     recordFix,
     getPatterns,
     clearData,
-    isEnabled: preferences?.enableLearning ?? false
+    isEnabled: preferences?.enableLearning ?? false,
   };
 }
 
@@ -607,45 +604,45 @@ export function useEnhancedFixSuggestions(errorPattern: ErrorPattern | null) {
     }
   }, [errorPattern]);
 
-  const enhanceFixSuggestion = useCallback((
-    fixSuggestion: FixSuggestion,
-    contextSimilarity: number = 0.5
-  ): FixSuggestion => {
-    if (!isEnabled || learnedPatterns.length === 0) {
-      return fixSuggestion;
-    }
-
-    const enhancedConfidence = calculateFixConfidence(
-      fixSuggestion,
-      learnedPatterns,
-      contextSimilarity
-    );
-
-    const relevantPattern = learnedPatterns.find(pattern =>
-      pattern.successfulFix.fixType === fixSuggestion.fixType
-    );
-
-    let successRate: number | undefined = undefined;
-    if (relevantPattern) {
-      const totalAttempts = relevantPattern.successCount + relevantPattern.failureCount;
-      if (totalAttempts > 0) {
-        successRate = relevantPattern.successCount / totalAttempts;
+  const enhanceFixSuggestion = useCallback(
+    (fixSuggestion: FixSuggestion, contextSimilarity: number = 0.5): FixSuggestion => {
+      if (!isEnabled || learnedPatterns.length === 0) {
+        return fixSuggestion;
       }
-    }
 
-    return {
-      ...fixSuggestion,
-      confidence: enhancedConfidence,
-      learnedFrom: relevantPattern?.id,
-      successRate
-    };
-  }, [isEnabled, learnedPatterns]);
+      const enhancedConfidence = calculateFixConfidence(
+        fixSuggestion,
+        learnedPatterns,
+        contextSimilarity
+      );
+
+      const relevantPattern = learnedPatterns.find(
+        (pattern) => pattern.successfulFix.fixType === fixSuggestion.fixType
+      );
+
+      let successRate: number | undefined = undefined;
+      if (relevantPattern) {
+        const totalAttempts = relevantPattern.successCount + relevantPattern.failureCount;
+        if (totalAttempts > 0) {
+          successRate = relevantPattern.successCount / totalAttempts;
+        }
+      }
+
+      return {
+        ...fixSuggestion,
+        confidence: enhancedConfidence,
+        learnedFrom: relevantPattern?.id,
+        successRate,
+      };
+    },
+    [isEnabled, learnedPatterns]
+  );
 
   return {
     learnedPatterns,
     isLoading,
     enhanceFixSuggestion,
-    reload: loadLearnedPatterns
+    reload: loadLearnedPatterns,
   };
 }
 
@@ -678,7 +675,7 @@ export function useLearningAnalytics() {
     analytics,
     isLoading,
     error,
-    reload: loadAnalytics
+    reload: loadAnalytics,
   };
 }
 
@@ -706,7 +703,7 @@ export function createErrorPattern(
     context: filePath ? `${filePath}:${context}` : context,
     frequency: 1,
     lastSeen: new Date().toISOString(),
-    confidence: 0.8
+    confidence: 0.8,
   };
 }
 
@@ -718,9 +715,7 @@ export function matchErrorPattern(
   errorType: string,
   knownPatterns: ErrorPattern[]
 ): ErrorPattern | null {
-  const candidates = knownPatterns.filter(pattern => 
-    pattern.errorType === errorType
-  );
+  const candidates = knownPatterns.filter((pattern) => pattern.errorType === errorType);
 
   if (candidates.length === 0) {
     return null;
@@ -732,7 +727,8 @@ export function matchErrorPattern(
 
   for (const pattern of candidates) {
     const score = calculateStringSimilarity(errorMessage, pattern.pattern);
-    if (score > bestScore && score > 0.7) { // Minimum similarity threshold
+    if (score > bestScore && score > 0.7) {
+      // Minimum similarity threshold
       bestScore = score;
       bestMatch = pattern;
     }
@@ -757,5 +753,5 @@ export default {
   matchErrorPattern,
   useLearningSystem,
   useEnhancedFixSuggestions,
-  useLearningAnalytics
+  useLearningAnalytics,
 };

@@ -78,7 +78,9 @@ export class KeyboardServiceImpl implements IKeyboardService {
     }
   }
 
-  createProfile(profileData: Omit<UserShortcutProfile, 'id' | 'createdAt' | 'updatedAt'>): UserShortcutProfile {
+  createProfile(
+    profileData: Omit<UserShortcutProfile, 'id' | 'createdAt' | 'updatedAt'>
+  ): UserShortcutProfile {
     const profile: UserShortcutProfile = {
       ...profileData,
       id: `profile_${Date.now()}`,
@@ -95,7 +97,7 @@ export class KeyboardServiceImpl implements IKeyboardService {
     if (profile) {
       this.currentProfile = profileId;
       // Rebind all shortcuts with new profile
-      this.shortcuts.forEach(action => {
+      this.shortcuts.forEach((action) => {
         this.rebindShortcutAction(action);
       });
       this.saveUserShortcuts();
@@ -120,10 +122,10 @@ export class KeyboardServiceImpl implements IKeyboardService {
     const keyMap: Map<string, string[]> = new Map();
     const conflicts: Array<{ keys: string; actions: string[] }> = [];
 
-    this.shortcuts.forEach(action => {
+    this.shortcuts.forEach((action) => {
       const keys = this.getShortcut(action.id);
       if (keys) {
-        keys.forEach(keyCombo => {
+        keys.forEach((keyCombo) => {
           const keyString = this.keyCombinationToString(keyCombo);
           const actions = keyMap.get(keyString) || [];
           actions.push(action.id);
@@ -147,7 +149,8 @@ export class KeyboardServiceImpl implements IKeyboardService {
       if (storedProfiles) {
         const parsedProfiles = JSON.parse(storedProfiles);
         Object.entries(parsedProfiles).forEach(([id, profile]: [string, any]) => {
-          if (id !== 'default') { // Don't overwrite default profile
+          if (id !== 'default') {
+            // Don't overwrite default profile
             this.profiles.set(id, profile);
           }
         });
@@ -192,13 +195,12 @@ export class KeyboardServiceImpl implements IKeyboardService {
     const keys = this.getShortcut(action.id);
     if (!keys) return;
 
-    keys.forEach(keyCombo => {
+    keys.forEach((keyCombo) => {
       const contextKey = `${action.context}_${this.keyCombinationToString(keyCombo)}`;
       const handlers = this.keyHandlers.get(contextKey) || [];
 
       const handler: KeyboardEventHandler = (event: KeyboardEvent) => {
-        if (this.matchesKeyCombination(event, keyCombo) &&
-            this.currentContext === action.context) {
+        if (this.matchesKeyCombination(event, keyCombo) && this.currentContext === action.context) {
           event.preventDefault();
           event.stopPropagation();
           action.action();
@@ -216,7 +218,7 @@ export class KeyboardServiceImpl implements IKeyboardService {
     const keys = this.getShortcut(action.id);
     if (!keys) return;
 
-    keys.forEach(keyCombo => {
+    keys.forEach((keyCombo) => {
       const contextKey = `${action.context}_${this.keyCombinationToString(keyCombo)}`;
       this.keyHandlers.delete(contextKey);
     });
@@ -228,17 +230,19 @@ export class KeyboardServiceImpl implements IKeyboardService {
   }
 
   private matchesKeyCombination(event: KeyboardEvent, combo: KeyCombination): boolean {
-    return event.key.toLowerCase() === combo.key.toLowerCase() &&
-           !!event.ctrlKey === !!combo.ctrlKey &&
-           !!event.altKey === !!combo.altKey &&
-           !!event.shiftKey === !!combo.shiftKey &&
-           !!event.metaKey === !!combo.metaKey;
+    return (
+      event.key.toLowerCase() === combo.key.toLowerCase() &&
+      !!event.ctrlKey === !!combo.ctrlKey &&
+      !!event.altKey === !!combo.altKey &&
+      !!event.shiftKey === !!combo.shiftKey &&
+      !!event.metaKey === !!combo.metaKey
+    );
   }
 
   // Public methods for external integration
   setContext(context: ShortcutContext): void {
     this.currentContext = context;
-    this.contextHandlers.forEach(handler => handler(context));
+    this.contextHandlers.forEach((handler) => handler(context));
   }
 
   addContextChangeHandler(handler: ContextChangeHandler): () => void {

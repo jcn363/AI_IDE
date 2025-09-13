@@ -3,13 +3,13 @@
 //! This module provides comprehensive multi-cursor functionality for the IDE,
 //! including cursor management, find and match operations, and Monaco Editor integration.
 
+use lazy_static::lazy_static;
+use rust_ai_ide_core::security::{audit_action, audit_logger};
 use rust_ai_ide_core::validation::validate_secure_path;
-use rust_ai_ide_core::security::{audit_logger, audit_action};
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use lazy_static::lazy_static;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 use crate::command_templates::*;
 
@@ -138,8 +138,14 @@ impl MultiCursorManager {
         // For now, return placeholder positions
         Ok(vec![
             CursorPosition { line: 1, column: 5 },
-            CursorPosition { line: 3, column: 10 },
-            CursorPosition { line: 7, column: 15 },
+            CursorPosition {
+                line: 3,
+                column: 10,
+            },
+            CursorPosition {
+                line: 7,
+                column: 15,
+            },
         ])
     }
 

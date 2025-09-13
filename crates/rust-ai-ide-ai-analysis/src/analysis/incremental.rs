@@ -22,12 +22,18 @@ impl IncrementalAnalyzer {
 
     /// Mark a file as analyzed
     pub fn mark_analyzed(&self, path: &Path) {
-        self.analyzed_files.write().unwrap().insert(path.to_path_buf());
+        self.analyzed_files
+            .write()
+            .unwrap()
+            .insert(path.to_path_buf());
     }
 
     /// Mark a file as modified
     pub fn mark_modified(&self, path: &Path) {
-        self.file_modifications.write().unwrap().insert(path.to_path_buf());
+        self.file_modifications
+            .write()
+            .unwrap()
+            .insert(path.to_path_buf());
     }
 
     /// Get files that need re-analysis (modified but already analyzed)
@@ -51,8 +57,8 @@ impl IncrementalAnalyzer {
 
     /// Check if a file has been modified since last analysis
     pub fn is_modified_since_last_analysis(&self, path: &Path) -> bool {
-        self.analyzed_files.read().unwrap().contains(path) &&
-        self.file_modifications.read().unwrap().contains(path)
+        self.analyzed_files.read().unwrap().contains(path)
+            && self.file_modifications.read().unwrap().contains(path)
     }
 }
 

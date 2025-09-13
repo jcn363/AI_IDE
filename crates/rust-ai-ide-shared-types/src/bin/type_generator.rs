@@ -84,25 +84,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Generate types
     let type_names_refs: Vec<&str> = type_names.iter().map(|s| s.as_str()).collect();
-    let result = generator.generate_types_from_source(
-        &source,
-        &file_path,
-        &type_names_refs
-    ).await?;
+    let result = generator
+        .generate_types_from_source(&source, &file_path, &type_names_refs)
+        .await?;
 
     // Validate cross-platform compatibility
-    let rust_types = generator.generate_types_from_source(
-        &source,
-        &file_path,
-        &type_names_refs
-    ).await?
-    .source_types;
+    let rust_types = generator
+        .generate_types_from_source(&source, &file_path, &type_names_refs)
+        .await?
+        .source_types;
 
     if !rust_types.is_empty() {
-        let validation = rust_ai_ide_shared_types::validate_cross_platform(
-            &rust_types,
-            &default_config()
-        ).await?;
+        let validation =
+            rust_ai_ide_shared_types::validate_cross_platform(&rust_types, &default_config())
+                .await?;
 
         if !validation.compatible {
             eprintln!("Warning: Cross-platform compatibility issues detected:");
@@ -127,7 +122,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Print statistics
-    eprintln!("Generated {} types with {} bytes",
+    eprintln!(
+        "Generated {} types with {} bytes",
         result.source_types.len(),
         output.len()
     );
@@ -143,7 +139,9 @@ fn print_help() {
     eprintln!();
     eprintln!("OPTIONS:");
     eprintln!("  --file PATH       Path to Rust source file containing type definitions");
-    eprintln!("  --types TYPE...   Specific type names to generate (if not provided, generates all)");
+    eprintln!(
+        "  --types TYPE...   Specific type names to generate (if not provided, generates all)"
+    );
     eprintln!("  --output FILE     Output file path (if not provided, writes to stdout)");
     eprintln!("  --help, -h        Show this help message");
     eprintln!();

@@ -3,12 +3,15 @@
 //! This module provides macros, traits, and utilities to standardize command implementations,
 //! reducing boilerplate code and ensuring consistent error handling and validation patterns.
 
-use tauri::{State, AppHandle};
-use std::fmt;
+use rust_ai_ide_common::validation::{
+    validate_directory_exists, validate_file_exists, validate_file_size_content,
+    validate_path_not_excluded,
+};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::path::Path;
+use tauri::{AppHandle, State};
 use uuid;
-use rust_ai_ide_common::validation::{validate_file_exists, validate_directory_exists, validate_file_size_content, validate_path_not_excluded};
 
 pub use anyhow::{anyhow, Result};
 
@@ -97,7 +100,9 @@ where
     F: FnOnce(&'a mut T) -> Fut,
     Fut: std::future::Future<Output = Result<()>>,
 {
-    let timeout_duration = config.async_timeout_secs.map(std::time::Duration::from_secs);
+    let timeout_duration = config
+        .async_timeout_secs
+        .map(std::time::Duration::from_secs);
 
     if let Some(timeout) = timeout_duration {
         log::debug!("DEBUG: acquire_service processing with lifetime parameter handling");
@@ -115,7 +120,11 @@ pub use validate_file_exists as validate_file_exists_legacy;
 // validate_directory_exists removed - use the one imported from rust_ai_ide_common
 
 /// Validate file size is within limits (legacy wrapper for String error type)
-pub fn validate_file_size(content: &[u8], max_size_kb: usize, operation: &str) -> Result<(), String> {
+pub fn validate_file_size(
+    content: &[u8],
+    max_size_kb: usize,
+    operation: &str,
+) -> Result<(), String> {
     match validate_file_size_content(content, max_size_kb, operation) {
         Ok(()) => Ok(()),
         Err(e) => Err(e.to_string()),
@@ -136,7 +145,11 @@ macro_rules! execute_command {
 
         if $config.enable_logging {
             match &result {
-                Ok(_) => log::log!($config.log_level, "[{}] Command completed successfully", $command_name),
+                Ok(_) => log::log!(
+                    $config.log_level,
+                    "[{}] Command completed successfully",
+                    $command_name
+                ),
                 Err(e) => log::error!("[{}] Command failed: {}", $command_name, e),
             }
         }
@@ -199,9 +212,10 @@ macro_rules! acquire_service_and_execute {
         $closure:block
     ) => {{
         let service_guard = $service_state.lock().await;
-        let service = service_guard
-            .as_ref()
-            .ok_or(format_command_error("Service not initialized", stringify!($service_type)))?;
+        let service = service_guard.as_ref().ok_or(format_command_error(
+            "Service not initialized",
+            stringify!($service_type),
+        ))?;
 
         $closure
     }};
@@ -249,10 +263,18 @@ where
                     e
                 );
                 last_error = Some(e);
-                tokio::time::sleep(tokio::time::Duration::from_millis(100 * (attempt + 1) as u64)).await;
+                tokio::time::sleep(tokio::time::Duration::from_millis(
+                    100 * (attempt + 1) as u64,
+                ))
+                .await;
             }
             Err(e) => {
-                log::error!("{} failed after {} attempts: {}", operation_name, max_retries + 1, e);
+                log::error!(
+                    "{} failed after {} attempts: {}",
+                    operation_name,
+                    max_retries + 1,
+                    e
+                );
                 return Err(e);
             }
         }
@@ -274,7 +296,9 @@ where
         if let Err(e) = tokio::time::timeout(
             std::time::Duration::from_secs(3600), // 1 hour timeout
             task,
-        ).await {
+        )
+        .await
+        {
             log::error!("Background task {} failed or timed out: {}", value, e);
         }
     });

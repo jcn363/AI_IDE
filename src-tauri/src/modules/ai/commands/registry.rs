@@ -2,7 +2,6 @@
 ///
 /// This module handles AI service registration, discovery, health monitoring,
 /// and service lifecycle management through a centralized registry.
-
 use crate::commands::ai::services::AIServiceState;
 use crate::utils;
 use serde::{Deserialize, Serialize};
@@ -70,7 +69,11 @@ pub async fn register_ai_service(
     let _ai_service = utils::get_or_create_ai_service(&ai_service_state).await?;
 
     // Generate service ID
-    let service_id = format!("{}_{}", request.provider.to_lowercase(), request.name.to_lowercase());
+    let service_id = format!(
+        "{}_{}",
+        request.provider.to_lowercase(),
+        request.name.to_lowercase()
+    );
 
     // Create service configuration
     let config = AIServiceConfig {
@@ -144,7 +147,8 @@ pub async fn discover_ai_services(
     ];
 
     // Filter based on request criteria
-    let filtered_services: Vec<AIServiceConfig> = services.into_iter()
+    let filtered_services: Vec<AIServiceConfig> = services
+        .into_iter()
         .filter(|service| {
             // Check capability filter
             if let Some(ref cap) = request.capability {
@@ -226,7 +230,11 @@ pub async fn check_ai_service_health(
     // In real implementation, this would perform actual health checks
     let status = ServiceStatus::Healthy;
 
-    log::info!("Health check completed for service {}: {:?}", service_id, status);
+    log::info!(
+        "Health check completed for service {}: {:?}",
+        service_id,
+        status
+    );
     Ok(status)
 }
 
@@ -240,18 +248,16 @@ pub async fn list_ai_services(
     let _ai_service = utils::get_or_create_ai_service(&ai_service_state).await?;
 
     // In real implementation, this would list all services from registry
-    let services = vec![
-        AIServiceConfig {
-            id: "openai_gpt4".to_string(),
-            name: "GPT-4".to_string(),
-            provider: "OpenAI".to_string(),
-            model: "gpt-4".to_string(),
-            endpoint: Some("https://api.openai.com/v1".to_string()),
-            capabilities: vec!["text-generation".to_string(), "code-completion".to_string()],
-            status: ServiceStatus::Healthy,
-            last_health_check: chrono::Utc::now(),
-        }
-    ];
+    let services = vec![AIServiceConfig {
+        id: "openai_gpt4".to_string(),
+        name: "GPT-4".to_string(),
+        provider: "OpenAI".to_string(),
+        model: "gpt-4".to_string(),
+        endpoint: Some("https://api.openai.com/v1".to_string()),
+        capabilities: vec!["text-generation".to_string(), "code-completion".to_string()],
+        status: ServiceStatus::Healthy,
+        last_health_check: chrono::Utc::now(),
+    }];
 
     log::info!("Listed {} AI services", services.len());
     Ok(services)
@@ -298,7 +304,10 @@ pub struct RegistryStats {
 fn service_status_meets_minimum(current: &ServiceStatus, minimum: &ServiceStatus) -> bool {
     match (current, minimum) {
         (ServiceStatus::Healthy, _) => true,
-        (ServiceStatus::Degraded, ServiceStatus::Degraded | ServiceStatus::Unhealthy | ServiceStatus::Unknown) => true,
+        (
+            ServiceStatus::Degraded,
+            ServiceStatus::Degraded | ServiceStatus::Unhealthy | ServiceStatus::Unknown,
+        ) => true,
         (ServiceStatus::Unhealthy, ServiceStatus::Unhealthy | ServiceStatus::Unknown) => true,
         (ServiceStatus::Unknown, ServiceStatus::Unknown) => true,
         _ => false,

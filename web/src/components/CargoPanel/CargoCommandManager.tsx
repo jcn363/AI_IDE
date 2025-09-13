@@ -5,7 +5,11 @@
 
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { CargoCommandName, executeCargoStream, selectCargoCommands } from '../../store/slices/cargoSlice';
+import {
+  CargoCommandName,
+  executeCargoStream,
+  selectCargoCommands,
+} from '../../store/slices/cargoSlice';
 import { useAppDispatch } from '../../store/store';
 
 interface CargoCommandManagerProps {
@@ -47,7 +51,7 @@ export const CargoCommandManager: React.FC<CargoCommandManagerProps> = ({
       return;
     }
 
-    const args = commandArgs ? commandArgs.split(' ').filter(arg => arg.trim() !== '') : [];
+    const args = commandArgs ? commandArgs.split(' ').filter((arg) => arg.trim() !== '') : [];
     const jsonCapable = ['build', 'check', 'test', 'clippy', 'run'];
 
     if (jsonDiagnostics && jsonCapable.includes(selectedCommand)) {
@@ -63,7 +67,7 @@ export const CargoCommandManager: React.FC<CargoCommandManagerProps> = ({
           command: selectedCommand,
           args,
           cwd: projectPath,
-        }),
+        })
       );
     } catch (err) {
       // Error is handled by the store/reducers

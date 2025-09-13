@@ -35,15 +35,8 @@ const CargoOutputPanel: React.FC<CargoOutputPanelProps> = ({ onClose }) => {
             </Tooltip>
           )}
         </Box>
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          height="calc(100% - 48px)"
-        >
-          <Typography color="textSecondary">
-            No Cargo commands have been executed yet.
-          </Typography>
+        <Box display="flex" justifyContent="center" alignItems="center" height="calc(100% - 48px)">
+          <Typography color="textSecondary">No Cargo commands have been executed yet.</Typography>
         </Box>
       </Paper>
     );

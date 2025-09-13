@@ -4,10 +4,10 @@
 //! ai_analysis_commands.rs, and io.rs to eliminate ~47% code duplication.
 
 // Re-export types from rust_ai_ide_lsp
+pub use rust_ai_ide_lsp::error_resolution::FixSuggestion;
 pub use rust_ai_ide_lsp::ChangeType;
 pub use rust_ai_ide_lsp::CodeChange;
 pub use rust_ai_ide_lsp::CompilerDiagnostic;
-pub use rust_ai_ide_lsp::error_resolution::FixSuggestion;
 
 // Define missing types
 #[derive(Debug, serde::Deserialize)]
@@ -85,11 +85,11 @@ pub use rust_ai_ide_lsp::error_resolution::FixType;
 pub use self::ChangeType as CompilerChangeType;
 
 // Submodules
-pub mod parsing;
 pub mod caching;
 pub mod error_handling;
+pub mod parsing;
 
 // Re-export commonly used types from submodules for convenience
-pub use parsing::*;
 pub use caching::*;
 pub use error_handling::*;
+pub use parsing::*;

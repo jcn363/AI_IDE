@@ -1,10 +1,10 @@
 import { invoke } from '@tauri-apps/api/core';
 
 import type {
-  RefactoringOptions as BaseRefactoringOptions, 
+  RefactoringOptions as BaseRefactoringOptions,
   RefactoringContext,
   RefactoringResult,
-  RefactoringType
+  RefactoringType,
 } from '../../../types/refactoring';
 
 // Backend capabilities response (snake_case for backend)
@@ -132,7 +132,6 @@ export class RefactoringService {
         ...result,
         duration: Date.now() - startTime,
       } as RefactoringResult;
-
     } catch (error) {
       console.error('Refactoring execution failed:', error);
       return this.createErrorResult(error as Error, type, startTime);
@@ -144,7 +143,11 @@ export class RefactoringService {
     let successCount = 0;
 
     for (const operation of operations) {
-      const result = await this.executeRefactoring(operation.type, operation.context, operation.options);
+      const result = await this.executeRefactoring(
+        operation.type,
+        operation.context,
+        operation.options
+      );
       results.push(result);
       if (result.success) successCount++;
     }
@@ -186,7 +189,12 @@ export class RefactoringService {
     }
   }
 
-  async analyzeRefactoringContextEnhanced(context: RefactoringContext, codeContent?: string, includeAI?: boolean, includeLSP?: boolean): Promise<any> {
+  async analyzeRefactoringContextEnhanced(
+    context: RefactoringContext,
+    codeContent?: string,
+    includeAI?: boolean,
+    includeLSP?: boolean
+  ): Promise<any> {
     try {
       const result = await invoke('analyze_refactoring_context_enhanced', {
         filePath: context.filePath,
@@ -212,9 +220,11 @@ export class RefactoringService {
   async getBackendCapabilities(): Promise<BackendCapabilitiesResponse | null> {
     const now = Date.now();
 
-    if (!this.capabilities || (now - this.capabilitiesLastFetched) > this.CAPABILITIES_CACHE_MS) {
+    if (!this.capabilities || now - this.capabilitiesLastFetched > this.CAPABILITIES_CACHE_MS) {
       try {
-        const rawCapabilities = await invoke<BackendCapabilitiesResponse>('get_backend_capabilities');
+        const rawCapabilities = await invoke<BackendCapabilitiesResponse>(
+          'get_backend_capabilities'
+        );
         if (rawCapabilities) {
           this.capabilities = rawCapabilities;
           this.capabilitiesLastFetched = now;
@@ -341,7 +351,11 @@ export class RefactoringService {
     }
   }
 
-  private async callBackendRefactoring(type: RefactoringType, context: RefactoringContext, options: RefactoringOptions): Promise<any> {
+  private async callBackendRefactoring(
+    type: RefactoringType,
+    context: RefactoringContext,
+    options: RefactoringOptions
+  ): Promise<any> {
     const backendRequest = {
       refactoring_type: type,
       context: this.formatContextForBackend(context),
@@ -355,8 +369,10 @@ export class RefactoringService {
       const originalError = error as Error;
 
       // Check if this is a service-level error (unsupported operation, etc.)
-      if (originalError.message.includes('not currently supported') ||
-          originalError.message.includes('Unsupported operation')) {
+      if (
+        originalError.message.includes('not currently supported') ||
+        originalError.message.includes('Unsupported operation')
+      ) {
         throw new BackendError(originalError.message, error);
       }
 
@@ -392,7 +408,11 @@ export class RefactoringService {
     return parts.length > 1 ? parts[parts.length - 1] : null;
   }
 
-  private createErrorResult(error: Error, type: RefactoringType, startTime: number): RefactoringResult {
+  private createErrorResult(
+    error: Error,
+    type: RefactoringType,
+    startTime: number
+  ): RefactoringResult {
     return {
       id: `error_${Date.now()}`,
       type,

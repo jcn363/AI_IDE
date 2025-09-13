@@ -6,11 +6,11 @@
  */
 export const SPACING = {
   xs: 0.5, // 4px
-  sm: 1,   // 8px
-  md: 2,   // 16px
-  lg: 3,   // 24px
-  xl: 4,   // 32px
-  xxl: 6,  // 48px
+  sm: 1, // 8px
+  md: 2, // 16px
+  lg: 3, // 24px
+  xl: 4, // 32px
+  xxl: 6, // 48px
   xxxl: 8, // 64px
 } as const;
 
@@ -222,5 +222,6 @@ export const BREAKPOINTS = {
  */
 export const MEDIA_QUERIES = {
   UP: (breakpoint: keyof typeof BREAKPOINTS) => `@media (min-width: ${BREAKPOINTS[breakpoint]}px)`,
-  DOWN: (breakpoint: keyof typeof BREAKPOINTS) => `@media (max-width: ${BREAKPOINTS[breakpoint] - 1}px)`,
+  DOWN: (breakpoint: keyof typeof BREAKPOINTS) =>
+    `@media (max-width: ${BREAKPOINTS[breakpoint] - 1}px)`,
 } as const;

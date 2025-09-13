@@ -38,14 +38,14 @@ export const AsyncAwaitWizard: React.FC<WizardStepProps> = ({
     const checkSupport = async () => {
       try {
         const supported = await refactoringService.isFileTypeSupported(context.filePath);
-        setWizardState(prev => ({
+        setWizardState((prev) => ({
           ...prev,
           isSupported: supported,
           loading: false,
         }));
       } catch (error) {
         console.warn('Failed to check file type support:', error);
-        setWizardState(prev => ({ ...prev, isSupported: false, loading: false }));
+        setWizardState((prev) => ({ ...prev, isSupported: false, loading: false }));
       }
     };
     checkSupport();
@@ -64,22 +64,22 @@ export const AsyncAwaitWizard: React.FC<WizardStepProps> = ({
           'fetch_user',
           'calculate_result',
           'validate_input',
-          'save_file'
+          'save_file',
         ];
-        setWizardState(prev => ({
+        setWizardState((prev) => ({
           ...prev,
           functionNames: sampleFunctions,
         }));
       } catch (error) {
         console.warn('Failed to load function names:', error);
-        setWizardState(prev => ({ ...prev, functionNames: [] }));
+        setWizardState((prev) => ({ ...prev, functionNames: [] }));
       }
     };
 
     if (wizardState.isSupported) {
       loadFunctions();
     } else {
-      setWizardState(prev => ({ ...prev, loading: false }));
+      setWizardState((prev) => ({ ...prev, loading: false }));
     }
   }, [context, wizardState.isSupported]);
 
@@ -113,16 +113,16 @@ export const AsyncAwaitWizard: React.FC<WizardStepProps> = ({
   }, [wizardState, context, onConfigChange]);
 
   const handleFunctionSelection = useCallback((functionName: string) => {
-    setWizardState(prev => ({
+    setWizardState((prev) => ({
       ...prev,
       selectedFunctions: prev.selectedFunctions.includes(functionName)
-        ? prev.selectedFunctions.filter(fn => fn !== functionName)
+        ? prev.selectedFunctions.filter((fn) => fn !== functionName)
         : [...prev.selectedFunctions, functionName],
     }));
   }, []);
 
   const handleOptionChange = useCallback((key: string, value: boolean | number) => {
-    setWizardState(prev => ({
+    setWizardState((prev) => ({
       ...prev,
       customOptions: {
         ...prev.customOptions,
@@ -144,7 +144,15 @@ export const AsyncAwaitWizard: React.FC<WizardStepProps> = ({
     return (
       <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
         <h2>Async/Await Conversion Wizard</h2>
-        <div style={{ color: '#d32f2f', padding: '12px', background: '#fdeaea', borderRadius: '4px', border: '1px solid #f8c6c6' }}>
+        <div
+          style={{
+            color: '#d32f2f',
+            padding: '12px',
+            background: '#fdeaea',
+            borderRadius: '4px',
+            border: '1px solid #f8c6c6',
+          }}
+        >
           <p>⚠️ Async/await conversion is only supported for Rust (.rs) files.</p>
           <p>The current file ({context.filePath}) is not supported.</p>
         </div>
@@ -161,31 +169,44 @@ export const AsyncAwaitWizard: React.FC<WizardStepProps> = ({
         <h3>Functions to Convert</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {wizardState.functionNames.length > 0 ? (
-            wizardState.functionNames.map(funcName => (
-              <label key={funcName} style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px',
-                background: wizardState.selectedFunctions.includes(funcName) ? '#e3f2fd' : 'white',
-                borderRadius: '4px',
-                border: '1px solid #ddd',
-                cursor: 'pointer',
-                opacity: wizardState.selectedFunctions.length > 1 && wizardState.selectedFunctions.includes(funcName) ? 0.6 : 1,
-              }}>
+            wizardState.functionNames.map((funcName) => (
+              <label
+                key={funcName}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px',
+                  background: wizardState.selectedFunctions.includes(funcName)
+                    ? '#e3f2fd'
+                    : 'white',
+                  borderRadius: '4px',
+                  border: '1px solid #ddd',
+                  cursor: 'pointer',
+                  opacity:
+                    wizardState.selectedFunctions.length > 1 &&
+                    wizardState.selectedFunctions.includes(funcName)
+                      ? 0.6
+                      : 1,
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={wizardState.selectedFunctions.includes(funcName)}
                   onChange={() => handleFunctionSelection(funcName)}
                   // Disable additional selections if one is already selected (single-function mode)
-                  disabled={wizardState.selectedFunctions.length >= 1 && !wizardState.selectedFunctions.includes(funcName)}
+                  disabled={
+                    wizardState.selectedFunctions.length >= 1 &&
+                    !wizardState.selectedFunctions.includes(funcName)
+                  }
                 />
                 <span>{funcName}</span>
-                {wizardState.selectedFunctions.length > 1 && wizardState.selectedFunctions.includes(funcName) && (
-                  <span style={{ fontSize: '12px', color: '#ff6b35' }}>
-                    (Multi-select disabled - backend supports single function only)
-                  </span>
-                )}
+                {wizardState.selectedFunctions.length > 1 &&
+                  wizardState.selectedFunctions.includes(funcName) && (
+                    <span style={{ fontSize: '12px', color: '#ff6b35' }}>
+                      (Multi-select disabled - backend supports single function only)
+                    </span>
+                  )}
               </label>
             ))
           ) : (
@@ -194,7 +215,8 @@ export const AsyncAwaitWizard: React.FC<WizardStepProps> = ({
         </div>
         {wizardState.selectedFunctions.length > 1 && (
           <p style={{ color: '#ff6b35', fontSize: '14px', marginTop: '8px' }}>
-            ⚠️ Backend supports conversion of exactly one function at a time. Only the first selection will be converted.
+            ⚠️ Backend supports conversion of exactly one function at a time. Only the first
+            selection will be converted.
           </p>
         )}
       </div>
@@ -206,10 +228,12 @@ export const AsyncAwaitWizard: React.FC<WizardStepProps> = ({
             <input
               type="checkbox"
               checked={wizardState.generateTests}
-              onChange={(e) => setWizardState(prev => ({
-                ...prev,
-                generateTests: e.target.checked,
-              }))}
+              onChange={(e) =>
+                setWizardState((prev) => ({
+                  ...prev,
+                  generateTests: e.target.checked,
+                }))
+              }
             />
             <span>Generate async test cases</span>
           </label>
@@ -218,10 +242,12 @@ export const AsyncAwaitWizard: React.FC<WizardStepProps> = ({
             <input
               type="checkbox"
               checked={wizardState.applyToAll}
-              onChange={(e) => setWizardState(prev => ({
-                ...prev,
-                applyToAll: e.target.checked,
-              }))}
+              onChange={(e) =>
+                setWizardState((prev) => ({
+                  ...prev,
+                  applyToAll: e.target.checked,
+                }))
+              }
             />
             <span>Apply to all occurrences</span>
           </label>
@@ -239,7 +265,12 @@ export const AsyncAwaitWizard: React.FC<WizardStepProps> = ({
               onChange={(e) => handleOptionChange('timeout', parseInt(e.target.value, 10))}
               min="5000"
               max="120000"
-              style={{ width: '100px', padding: '4px 8px', border: '1px solid #ccc', borderRadius: '4px' }}
+              style={{
+                width: '100px',
+                padding: '4px 8px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+              }}
             />
           </label>
 

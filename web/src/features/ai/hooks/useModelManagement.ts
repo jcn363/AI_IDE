@@ -41,7 +41,9 @@ export const useModelManagement = (): UseModelManagementReturn => {
   const [resourceStatus, setResourceStatus] = useState<ResourceStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [autoUnloadConfig, setAutoUnloadConfig] = useState<AutoUnloadConfig>(ModelService.getAutoUnloadConfig());
+  const [autoUnloadConfig, setAutoUnloadConfig] = useState<AutoUnloadConfig>(
+    ModelService.getAutoUnloadConfig()
+  );
 
   // Load initial data
   const loadInitialData = useCallback(async () => {
@@ -76,82 +78,88 @@ export const useModelManagement = (): UseModelManagementReturn => {
   }, [loadInitialData]);
 
   // Load a specific model
-  const loadModel = useCallback(async (modelId: string) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const loadModel = useCallback(
+    async (modelId: string) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const availableModel = availableModels.find(m => m.id === modelId);
-      if (!availableModel) {
-        throw new Error(`Model ${modelId} not found in available models`);
-      }
-
-      // Check if already loaded
-      if (loadedModels.some(m => m.id === modelId)) {
-        console.log(`Model ${modelId} is already loaded`);
-        const loadedModel = loadedModels.find(m => m.id === modelId);
-        if (loadedModel) {
-          setSelectedModel(loadedModel);
+        const availableModel = availableModels.find((m) => m.id === modelId);
+        if (!availableModel) {
+          throw new Error(`Model ${modelId} not found in available models`);
         }
-        return;
+
+        // Check if already loaded
+        if (loadedModels.some((m) => m.id === modelId)) {
+          console.log(`Model ${modelId} is already loaded`);
+          const loadedModel = loadedModels.find((m) => m.id === modelId);
+          if (loadedModel) {
+            setSelectedModel(loadedModel);
+          }
+          return;
+        }
+
+        console.log(`Loading model: ${modelId}`);
+        const loadedModel = await ModelService.loadModel({
+          modelPath:
+            availableModel.modelPath ||
+            `/models/${availableModel.modelType.toLowerCase()}-${availableModel.modelSize.toLowerCase()}`,
+          modelType: availableModel.modelType,
+          modelSize: availableModel.modelSize,
+          quantization: availableModel.quantization || 'Int4',
+          loraAdapters: availableModel.loraAdapters,
+          device: 'Auto',
+        });
+
+        setLoadedModels((prev) => [...prev, loadedModel]);
+        setSelectedModel(loadedModel);
+
+        // Refresh resource status
+        const resources = await ModelService.getResourceStatus();
+        setResourceStatus(resources);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load model';
+        setError(errorMessage);
+        console.error('Failed to load model:', err);
+        throw new Error(errorMessage);
+      } finally {
+        setLoading(false);
       }
-
-      console.log(`Loading model: ${modelId}`);
-      const loadedModel = await ModelService.loadModel({
-        modelPath: availableModel.modelPath || `/models/${availableModel.modelType.toLowerCase()}-${availableModel.modelSize.toLowerCase()}`,
-        modelType: availableModel.modelType,
-        modelSize: availableModel.modelSize,
-        quantization: availableModel.quantization || 'Int4',
-        loraAdapters: availableModel.loraAdapters,
-        device: 'Auto',
-      });
-
-      setLoadedModels(prev => [...prev, loadedModel]);
-      setSelectedModel(loadedModel);
-
-      // Refresh resource status
-      const resources = await ModelService.getResourceStatus();
-      setResourceStatus(resources);
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load model';
-      setError(errorMessage);
-      console.error('Failed to load model:', err);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [availableModels, loadedModels]);
+    },
+    [availableModels, loadedModels]
+  );
 
   // Unload a model
-  const unloadModel = useCallback(async (modelId: string) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const unloadModel = useCallback(
+    async (modelId: string) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      console.log(`Unloading model: ${modelId}`);
-      await ModelService.unloadModel(modelId);
+        console.log(`Unloading model: ${modelId}`);
+        await ModelService.unloadModel(modelId);
 
-      setLoadedModels(prev => prev.filter(m => m.id !== modelId));
+        setLoadedModels((prev) => prev.filter((m) => m.id !== modelId));
 
-      // Clear selection if unloaded model was selected
-      if (selectedModel?.id === modelId) {
-        setSelectedModel(null);
+        // Clear selection if unloaded model was selected
+        if (selectedModel?.id === modelId) {
+          setSelectedModel(null);
+        }
+
+        // Refresh resource status
+        const resources = await ModelService.getResourceStatus();
+        setResourceStatus(resources);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to unload model';
+        setError(errorMessage);
+        console.error('Failed to unload model:', err);
+        throw new Error(errorMessage);
+      } finally {
+        setLoading(false);
       }
-
-      // Refresh resource status
-      const resources = await ModelService.getResourceStatus();
-      setResourceStatus(resources);
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to unload model';
-      setError(errorMessage);
-      console.error('Failed to unload model:', err);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedModel]);
+    },
+    [selectedModel]
+  );
 
   // Select a model (for using without loading)
   const selectModel = useCallback((model: ModelInfo | null) => {
@@ -177,7 +185,6 @@ export const useModelManagement = (): UseModelManagementReturn => {
       // Refresh loaded models
       const loaded = await ModelService.getLoadedModels();
       setLoadedModels(loaded);
-
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to trigger cleanup';
       setError(errorMessage);
@@ -203,7 +210,10 @@ export const useModelManagement = (): UseModelManagementReturn => {
   }, [loadInitialData]);
 
   // Computed values
-  const totalMemoryUsage = loadedModels.reduce((total, model) => total + (model.memoryUsageMB || 0), 0);
+  const totalMemoryUsage = loadedModels.reduce(
+    (total, model) => total + (model.memoryUsageMB || 0),
+    0
+  );
   const activeModelCount = loadedModels.length;
   const isMonitoringActive = ModelService.isMonitoringActive();
 

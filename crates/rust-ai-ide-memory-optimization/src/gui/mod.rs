@@ -188,7 +188,10 @@ impl MemoryDashboard {
     }
 
     /// Update dashboard with new memory data
-    pub async fn update_data(&self, new_data: MemoryVisualizationData) -> crate::MemoryOptimizationResult<()> {
+    pub async fn update_data(
+        &self,
+        new_data: MemoryVisualizationData,
+    ) -> crate::MemoryOptimizationResult<()> {
         let mut state = self.state.write().await;
         state.current_data = new_data;
         state.history.push(MemoryHistoryPoint {

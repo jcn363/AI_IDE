@@ -81,13 +81,13 @@ export interface AIConfig {
  */
 export enum AIProvider {
   /** Mock provider for testing */
-  Mock = "Mock",
+  Mock = 'Mock',
   /** OpenAI API */
-  OpenAI = "OpenAI",
+  OpenAI = 'OpenAI',
   /** Anthropic API */
-  Anthropic = "Anthropic",
+  Anthropic = 'Anthropic',
   /** Local provider */
-  Local = "Local",
+  Local = 'Local',
 }
 
 /**
@@ -121,11 +121,11 @@ export interface User {
  */
 export enum Theme {
   /** Light theme */
-  Light = "Light",
+  Light = 'Light',
   /** Dark theme */
-  Dark = "Dark",
+  Dark = 'Dark',
   /** System preference */
-  System = "System",
+  System = 'System',
 }
 
 /**
@@ -167,13 +167,13 @@ export interface ApiResponse<T> {
  */
 export enum Status {
   /** Success status */
-  Ok = "ok",
+  Ok = 'ok',
   /** Error status */
-  Error = "error",
+  Error = 'error',
   /** Warning status */
-  Warning = "warning",
+  Warning = 'warning',
   /** Info status */
-  Info = "info",
+  Info = 'info',
 }
 
 /**

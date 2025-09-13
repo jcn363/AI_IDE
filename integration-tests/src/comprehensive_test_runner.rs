@@ -7,18 +7,18 @@
 //! - Code Coverage Analysis
 //! - Enterprise Security Validation
 
+use chrono::{DateTime, Utc};
+use rust_ai_ide_errors::IdeResult;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use rust_ai_ide_errors::IdeResult;
 
+use crate::ai_capability_validation::{AICapabilityValidator, AIComprehensiveReport};
+use crate::coverage_validation::{CoverageAnalyzer, CoverageReport, CoverageThresholds};
 use crate::enterprise_security_validation::{OWASPScanner, SecurityValidationReport};
 use crate::performance_validation::PerformanceValidator;
-use crate::coverage_validation::{CoverageAnalyzer, CoverageReport, CoverageThresholds};
-use crate::ai_capability_validation::{AICapabilityValidator, AIComprehensiveReport};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TestSuiteResult {
@@ -173,7 +173,10 @@ impl ComprehensiveTestRunner {
     }
 
     /// Run the complete test suite validation
-    pub async fn run_comprehensive_validation(&self, output_dir: &Path) -> IdeResult<ComprehensiveTestReport> {
+    pub async fn run_comprehensive_validation(
+        &self,
+        output_dir: &Path,
+    ) -> IdeResult<ComprehensiveTestReport> {
         println!("🚀 Starting Comprehensive AI IDE Validation Suite...");
         println!("📊 Running multiple validation categories...");
 
@@ -204,12 +207,21 @@ impl ComprehensiveTestRunner {
         };
 
         // Generate output reports
-        self.generate_comprehensive_reports(&report, output_dir).await?;
+        self.generate_comprehensive_reports(&report, output_dir)
+            .await?;
 
         println!("✅ Comprehensive Validation Complete!");
-        println!("📈 Overall Pass Rate: {:.1}%", report.overall_summary.overall_pass_rate);
-        println!("⭐ Production Readiness: {} ({:.1}%)",
-            if report.production_readiness.deployment_ready { "READY" } else { "NOT READY" },
+        println!(
+            "📈 Overall Pass Rate: {:.1}%",
+            report.overall_summary.overall_pass_rate
+        );
+        println!(
+            "⭐ Production Readiness: {} ({:.1}%)",
+            if report.production_readiness.deployment_ready {
+                "READY"
+            } else {
+                "NOT READY"
+            },
             report.production_readiness.confidence_level
         );
 
@@ -224,8 +236,16 @@ impl ComprehensiveTestRunner {
         if config.include_ai_tests {
             println!("🧠 Running AI Capability Validation...");
             let start = Instant::now();
-            if let Ok(report) = self.validators.ai_validator.validate_ai_capabilities().await {
-                results.push(self.convert_ai_report_to_test_result(report, start.elapsed()).await);
+            if let Ok(report) = self
+                .validators
+                .ai_validator
+                .validate_ai_capabilities()
+                .await
+            {
+                results.push(
+                    self.convert_ai_report_to_test_result(report, start.elapsed())
+                        .await,
+                );
             }
         }
 
@@ -233,15 +253,26 @@ impl ComprehensiveTestRunner {
             println!("🔒 Running Security & Compliance Validation...");
             let start = Instant::now();
             if let Ok(scan_result) = self.run_security_scanning().await {
-                results.push(self.convert_security_report_to_test_result(scan_result, start.elapsed()).await);
+                results.push(
+                    self.convert_security_report_to_test_result(scan_result, start.elapsed())
+                        .await,
+                );
             }
         }
 
         if config.include_performance_tests {
             println!("⚡ Running Performance Validation...");
             let start = Instant::now();
-            if let Ok(report) = self.validators.performance_validator.validate_cross_platform_performance().await {
-                results.push(self.convert_performance_report_to_test_result(report, start.elapsed()).await);
+            if let Ok(report) = self
+                .validators
+                .performance_validator
+                .validate_cross_platform_performance()
+                .await
+            {
+                results.push(
+                    self.convert_performance_report_to_test_result(report, start.elapsed())
+                        .await,
+                );
             }
         }
 
@@ -250,8 +281,16 @@ impl ComprehensiveTestRunner {
             let start = Instant::now();
             let lcov_path = Path::new("target/coverage/lcov.info");
             if lcov_path.exists() {
-                if let Ok(report) = self.validators.coverage_validator.analyze_coverage(lcov_path).await {
-                    results.push(self.convert_coverage_report_to_test_result(report, start.elapsed()).await);
+                if let Ok(report) = self
+                    .validators
+                    .coverage_validator
+                    .analyze_coverage(lcov_path)
+                    .await
+                {
+                    results.push(
+                        self.convert_coverage_report_to_test_result(report, start.elapsed())
+                            .await,
+                    );
                 }
             } else {
                 println!("⚠️  LCOV coverage file not found. Skipping coverage analysis.");
@@ -297,7 +336,9 @@ impl ComprehensiveTestRunner {
         }\n";
 
         let mut report = SecurityValidationReport::default();
-        scanner.scan_code(test_code, "security_test.rs", &mut report).await?;
+        scanner
+            .scan_code(test_code, "security_test.rs", &mut report)
+            .await?;
 
         Ok(report)
     }
@@ -316,7 +357,9 @@ impl ComprehensiveTestRunner {
             0.0
         };
 
-        let production_readiness_score = (overall_pass_rate as f32 / 100.0) * (successful_suites as f32 / total_suites as f32) * 100.0;
+        let production_readiness_score = (overall_pass_rate as f32 / 100.0)
+            * (successful_suites as f32 / total_suites as f32)
+            * 100.0;
 
         let risk_assessment = if production_readiness_score >= 85.0 {
             RiskAssessment::Low
@@ -333,15 +376,17 @@ impl ComprehensiveTestRunner {
             successful_suites,
             failed_suites,
             overall_pass_rate,
-            overall_execution_time: suite_results.iter()
-                .map(|r| r.execution_time)
-                .sum(),
+            overall_execution_time: suite_results.iter().map(|r| r.execution_time).sum(),
             production_readiness_score,
             risk_assessment,
         }
     }
 
-    async fn convert_ai_report_to_test_result(&self, report: AIComprehensiveReport, execution_time: std::time::Duration) -> TestSuiteResult {
+    async fn convert_ai_report_to_test_result(
+        &self,
+        report: AIComprehensiveReport,
+        execution_time: std::time::Duration,
+    ) -> TestSuiteResult {
         TestSuiteResult {
             test_suite_name: "AI Capability Validation".to_string(),
             start_time: report.timestamp,
@@ -351,11 +396,23 @@ impl ComprehensiveTestRunner {
             results: HashMap::new(),
             summary: TestSuiteSummary {
                 total_tests: report.category_reports.len(),
-                passed_tests: report.category_reports.values().filter(|cr| cr.passed_tests > 0).count(),
-                failed_tests: report.category_reports.values().filter(|cr| cr.passed_tests == 0).count(),
+                passed_tests: report
+                    .category_reports
+                    .values()
+                    .filter(|cr| cr.passed_tests > 0)
+                    .count(),
+                failed_tests: report
+                    .category_reports
+                    .values()
+                    .filter(|cr| cr.passed_tests == 0)
+                    .count(),
                 skipped_tests: 0,
                 error_tests: 0,
-                pass_rate: report.overall_metrics.get("overall_pass_rate").copied().unwrap_or(0.0),
+                pass_rate: report
+                    .overall_metrics
+                    .get("overall_pass_rate")
+                    .copied()
+                    .unwrap_or(0.0),
                 overall_score: report.quality_assessment.overall_quality_score,
                 quality_score: report.quality_assessment.overall_quality_score,
             },
@@ -363,7 +420,11 @@ impl ComprehensiveTestRunner {
         }
     }
 
-    async fn convert_security_report_to_test_result(&self, report: SecurityValidationReport, execution_time: std::time::Duration) -> TestSuiteResult {
+    async fn convert_security_report_to_test_result(
+        &self,
+        report: SecurityValidationReport,
+        execution_time: std::time::Duration,
+    ) -> TestSuiteResult {
         let total_tests = 10; // OWASP categories
         let passed_tests = (report.compliance_score as usize).min(total_tests);
 
@@ -392,7 +453,11 @@ impl ComprehensiveTestRunner {
         }
     }
 
-    async fn convert_performance_report_to_test_result(&self, report: crate::performance_validation::PerformanceReport, execution_time: std::time::Duration) -> TestSuiteResult {
+    async fn convert_performance_report_to_test_result(
+        &self,
+        report: crate::performance_validation::PerformanceReport,
+        execution_time: std::time::Duration,
+    ) -> TestSuiteResult {
         let total_tests = 5; // Performance categories
         let passed_tests = 4; // Assume most pass for demo
 
@@ -417,9 +482,15 @@ impl ComprehensiveTestRunner {
         }
     }
 
-    async fn convert_coverage_report_to_test_result(&self, report: CoverageReport, execution_time: std::time::Duration) -> TestSuiteResult {
+    async fn convert_coverage_report_to_test_result(
+        &self,
+        report: CoverageReport,
+        execution_time: std::time::Duration,
+    ) -> TestSuiteResult {
         let total_tests = report.file_coverages.len();
-        let passed_tests = report.file_coverages.iter()
+        let passed_tests = report
+            .file_coverages
+            .iter()
             .filter(|fc| fc.coverage_metrics.coverage_percentage >= 70.0)
             .count();
 
@@ -468,20 +539,18 @@ impl ComprehensiveTestRunner {
     }
 
     async fn collect_security_findings(&self) -> Vec<SecurityFinding> {
-        vec![
-            SecurityFinding {
-                severity: "Low".to_string(),
-                category: "OWASP-A03".to_string(),
-                description: "Potential injection vulnerability detected".to_string(),
-                location: Some("src/main.rs:15".to_string()),
-                mitigation: vec![
-                    "Use parameterized queries".to_string(),
-                    "Validate input data".to_string(),
-                ],
-                confidence: 85.0,
-                timestamp: Utc::now(),
-            },
-        ]
+        vec![SecurityFinding {
+            severity: "Low".to_string(),
+            category: "OWASP-A03".to_string(),
+            description: "Potential injection vulnerability detected".to_string(),
+            location: Some("src/main.rs:15".to_string()),
+            mitigation: vec![
+                "Use parameterized queries".to_string(),
+                "Validate input data".to_string(),
+            ],
+            confidence: 85.0,
+            timestamp: Utc::now(),
+        }]
     }
 
     async fn collect_coverage_metrics(&self) -> CoverageMetrics {
@@ -546,7 +615,11 @@ impl ComprehensiveTestRunner {
         ]
     }
 
-    async fn generate_comprehensive_reports(&self, report: &ComprehensiveTestReport, output_dir: &Path) -> IdeResult<()> {
+    async fn generate_comprehensive_reports(
+        &self,
+        report: &ComprehensiveTestReport,
+        output_dir: &Path,
+    ) -> IdeResult<()> {
         fs::create_dir_all(output_dir)?;
 
         // Generate JSON report
@@ -624,11 +697,23 @@ Found {} security issues across {} categories.
             report.test_run_id,
             report.timestamp.format("%Y-%m-%d %H:%M:%S UTC"),
             report.overall_summary.overall_pass_rate,
-            if report.production_readiness.deployment_ready { "READY" } else { "NOT READY" },
+            if report.production_readiness.deployment_ready {
+                "READY"
+            } else {
+                "NOT READY"
+            },
             report.production_readiness.confidence_level,
             report.overall_summary.risk_assessment,
-            report.suite_results.iter()
-                .map(|r| format!("| {} | {} | {:.1}% | {:.1}% |", r.test_suite_name, if r.success { "✅" } else { "❌" }, r.summary.pass_rate, r.summary.quality_score))
+            report
+                .suite_results
+                .iter()
+                .map(|r| format!(
+                    "| {} | {} | {:.1}% | {:.1}% |",
+                    r.test_suite_name,
+                    if r.success { "✅" } else { "❌" },
+                    r.summary.pass_rate,
+                    r.summary.quality_score
+                ))
                 .collect::<Vec<_>>()
                 .join("\n"),
             report.quality_assessment.overall_quality_score,
@@ -636,11 +721,34 @@ Found {} security issues across {} categories.
             report.quality_assessment.performance_score,
             report.quality_assessment.security_score,
             report.quality_assessment.functionality_score,
-            report.quality_assessment.strengths.iter().map(|s| format!("- {}", s)).collect::<Vec<_>>().join("\n"),
-            report.quality_assessment.weaknesses.iter().map(|w| format!("- {}", w)).collect::<Vec<_>>().join("\n"),
-            report.recommendations.iter().enumerate().map(|(i, r)| format!("{}. {}", i + 1, r)).collect::<Vec<_>>().join("\n"),
+            report
+                .quality_assessment
+                .strengths
+                .iter()
+                .map(|s| format!("- {}", s))
+                .collect::<Vec<_>>()
+                .join("\n"),
+            report
+                .quality_assessment
+                .weaknesses
+                .iter()
+                .map(|w| format!("- {}", w))
+                .collect::<Vec<_>>()
+                .join("\n"),
+            report
+                .recommendations
+                .iter()
+                .enumerate()
+                .map(|(i, r)| format!("{}. {}", i + 1, r))
+                .collect::<Vec<_>>()
+                .join("\n"),
             report.security_findings.len(),
-            report.security_findings.iter().map(|f| f.category.clone()).collect::<std::collections::HashSet<_>>().len(),
+            report
+                .security_findings
+                .iter()
+                .map(|f| f.category.clone())
+                .collect::<std::collections::HashSet<_>>()
+                .len(),
             report.coverage_metrics.overall_coverage,
             report.coverage_metrics.line_coverage,
             report.coverage_metrics.function_coverage,

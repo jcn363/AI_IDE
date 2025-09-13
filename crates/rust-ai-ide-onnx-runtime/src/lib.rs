@@ -1,9 +1,9 @@
-use std::{collections::HashMap, sync::Arc, path::Path};
-use tokio::sync::RwLock;
-use ndarray::{ArrayD, ArrayViewD, IxDynImpl};
-use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
+use ndarray::{ArrayD, ArrayViewD, IxDynImpl};
 use parking_lot::Mutex;
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, path::Path, sync::Arc};
+use tokio::sync::RwLock;
 
 #[cfg(feature = "cpu")]
 use ort::CPUExecutionProvider;
@@ -14,8 +14,8 @@ use ort::CUDAExecutionProvider;
 #[cfg(feature = "tensorrt")]
 use ort::TensorRTExecutionProvider;
 
-use rust_ai_ide_common::validation::validate_secure_path;
 use rust_ai_ide_cache::strategies::AdaptiveCache;
+use rust_ai_ide_common::validation::validate_secure_path;
 use rust_ai_ide_shared_types::{InferenceRequest, InferenceResult, ModelMetadata};
 
 /// Configuration for ONNX runtime
@@ -81,15 +81,19 @@ impl ONNXInferenceService {
         Self {
             config: config.clone(),
             model_cache: Arc::new(Mutex::new(HashMap::new())),
-            adaptive_cache: Arc::new(
-                AdaptiveCache::new(config.model_cache_size_mb as usize * 1024 * 1024)
-            ),
+            adaptive_cache: Arc::new(AdaptiveCache::new(
+                config.model_cache_size_mb as usize * 1024 * 1024,
+            )),
             ab_test_config: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
     /// Load model with validation and caching
-    pub async fn load_model(&self, model_path: &str, model_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn load_model(
+        &self,
+        model_path: &str,
+        model_id: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // Validate path for security
         validate_secure_path(model_path)?;
 
@@ -121,11 +125,15 @@ impl ONNXInferenceService {
             .commit_from_file(path)?;
 
         // Extract metadata
-        let input_names = session.inputs()?.iter()
+        let input_names = session
+            .inputs()?
+            .iter()
             .map(|input| input.name().to_string())
             .collect();
 
-        let output_names = session.outputs()?.iter()
+        let output_names = session
+            .outputs()?
+            .iter()
             .map(|output| output.name().to_string())
             .collect();
 
@@ -150,10 +158,14 @@ impl ONNXInferenceService {
     }
 
     /// Run inference with batching support
-    pub async fn run_inference(&self, request: InferenceRequest) -> Result<InferenceResult, Box<dyn std::error::Error>> {
+    pub async fn run_inference(
+        &self,
+        request: InferenceRequest,
+    ) -> Result<InferenceResult, Box<dyn std::error::Error>> {
         let model_id = self.resolve_model_for_request(&request).await?;
         let cache = self.model_cache.lock();
-        let model = cache.get(&model_id)
+        let model = cache
+            .get(&model_id)
             .ok_or_else(|| format!("Model {} not found", model_id))?;
 
         // Convert request input to tensors
@@ -176,15 +188,16 @@ impl ONNXInferenceService {
     }
 
     /// Run batch inference for multiple requests
-    pub async fn run_batch_inference(&self, requests: Vec<InferenceRequest>) -> Result<Vec<InferenceResult>, Box<dyn std::error::Error>> {
+    pub async fn run_batch_inference(
+        &self,
+        requests: Vec<InferenceRequest>,
+    ) -> Result<Vec<InferenceResult>, Box<dyn std::error::Error>> {
         let mut results = Vec::new();
 
         // Process in parallel using rayon
-        let batch_results = requests.into_iter().map(|request| {
-            tokio::spawn(async {
-                self.run_inference(request).await
-            })
-        });
+        let batch_results = requests
+            .into_iter()
+            .map(|request| tokio::spawn(async { self.run_inference(request).await }));
 
         for result in futures::future::join_all(batch_results).await {
             results.push(result??);
@@ -194,17 +207,26 @@ impl ONNXInferenceService {
     }
 
     /// Configure A/B testing for model comparison
-    pub async fn configure_ab_test(&self, test_name: &str, config: ABTestConfiguration) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn configure_ab_test(
+        &self,
+        test_name: &str,
+        config: ABTestConfiguration,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut ab_config = self.ab_test_config.write().await;
         ab_config.insert(test_name.to_string(), config);
         Ok(())
     }
 
     /// Get A/B test results and performance metrics
-    pub async fn get_ab_test_results(&self, test_name: &str) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    pub async fn get_ab_test_results(
+        &self,
+        test_name: &str,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let config = {
             let ab_config = self.ab_test_config.read().await;
-            ab_config.get(test_name).cloned()
+            ab_config
+                .get(test_name)
+                .cloned()
                 .ok_or_else(|| format!("A/B test {} not found", test_name))?
         };
 
@@ -226,14 +248,20 @@ impl ONNXInferenceService {
         Ok(results)
     }
 
-    async fn resolve_model_for_request(&self, request: &InferenceRequest) -> Result<String, Box<dyn std::error::Error>> {
+    async fn resolve_model_for_request(
+        &self,
+        request: &InferenceRequest,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         // Check if request specifies A/B testing
         if let Some(ab_test) = &request.ab_test_name {
             let ab_config = self.ab_test_config.read().await;
             if let Some(config) = ab_config.get(ab_test) {
                 if config.enabled {
                     // Simple traffic splitting based on request hash
-                    let hash = request.model_name.as_bytes().iter()
+                    let hash = request
+                        .model_name
+                        .as_bytes()
+                        .iter()
                         .map(|b| *b as u64)
                         .sum::<u64>();
                     let should_use_model_b = (hash % 100) as f64 / 100.0 < config.traffic_split;
@@ -250,9 +278,12 @@ impl ONNXInferenceService {
         Ok(request.model_name.clone())
     }
 
-    fn create_input_tensors(&self, input: &serde_json::Value, input_names: &[String]) -> Result<Vec<ort::SessionInput<'static>>, Box<dyn std::error::Error>> {
-        let input_array = input.as_array()
-            .ok_or("Input must be an array")?;
+    fn create_input_tensors(
+        &self,
+        input: &serde_json::Value,
+        input_names: &[String],
+    ) -> Result<Vec<ort::SessionInput<'static>>, Box<dyn std::error::Error>> {
+        let input_array = input.as_array().ok_or("Input must be an array")?;
 
         if input_array.len() != input_names.len() {
             return Err("Input length mismatch".into());
@@ -264,16 +295,18 @@ impl ONNXInferenceService {
             // Convert JSON to ndarray - simplified for demonstration
             let tensor = match value {
                 serde_json::Value::Array(arr) => {
-                    let flat: Vec<f32> = arr.iter()
+                    let flat: Vec<f32> = arr
+                        .iter()
                         .filter_map(|v| v.as_f64())
                         .map(|v| v as f32)
                         .collect();
                     ndarray::ArrayD::from_shape_vec(IxDynImpl::from(vec![flat.len()]), flat)?
-                },
-                serde_json::Value::Number(num) => {
-                    ndarray::ArrayD::from_elem(IxDynImpl::from(vec![1]), num.as_f64().unwrap_or(0.0) as f32)
-                },
-                _ => return Err("Unsupported input type".into())
+                }
+                serde_json::Value::Number(num) => ndarray::ArrayD::from_elem(
+                    IxDynImpl::from(vec![1]),
+                    num.as_f64().unwrap_or(0.0) as f32,
+                ),
+                _ => return Err("Unsupported input type".into()),
             };
 
             tensors.push((input_names[i].clone(), tensor.into()));
@@ -282,32 +315,43 @@ impl ONNXInferenceService {
         Ok(tensors)
     }
 
-    fn process_outputs(&self, outputs: ort::SessionOutputs<'static>, output_names: &[String]) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    fn process_outputs(
+        &self,
+        outputs: ort::SessionOutputs<'static>,
+        output_names: &[String],
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let mut result = serde_json::Map::new();
 
         for (i, output) in outputs.into_iter().enumerate() {
             let name = output_names.get(i).unwrap_or(&format!("output_{}", i));
 
             // Convert tensor to JSON - simplified
-            let array_view = output.try_extract_tensor::<f32>()?
+            let array_view = output
+                .try_extract_tensor::<f32>()?
                 .into_dimensionality::<ndarray::IxDyn>()?;
 
-            let values: Vec<f64> = array_view.as_slice()
+            let values: Vec<f64> = array_view
+                .as_slice()
                 .unwrap_or(&[])
                 .iter()
                 .map(|&x| x as f64)
                 .collect();
 
-            result.insert(name.clone(), serde_json::Value::Array(
-                values.into_iter().map(serde_json::Value::Number).collect()
-            ));
+            result.insert(
+                name.clone(),
+                serde_json::Value::Array(
+                    values.into_iter().map(serde_json::Value::Number).collect(),
+                ),
+            );
         }
 
         Ok(serde_json::Value::Object(result))
     }
 
     /// Get performance metrics and profiling data
-    pub async fn get_performance_metrics(&self) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    pub async fn get_performance_metrics(
+        &self,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let cache = self.model_cache.lock();
         let mut models_info = Vec::new();
 
@@ -356,11 +400,17 @@ impl ONNXInferenceService {
 /// Async trait for inference service
 #[async_trait]
 impl InferenceService for ONNXInferenceService {
-    async fn infer(&self, request: InferenceRequest) -> Result<InferenceResult, Box<dyn std::error::Error>> {
+    async fn infer(
+        &self,
+        request: InferenceRequest,
+    ) -> Result<InferenceResult, Box<dyn std::error::Error>> {
         self.run_inference(request).await
     }
 
-    async fn batch_infer(&self, requests: Vec<InferenceRequest>) -> Result<Vec<InferenceResult>, Box<dyn std::error::Error>> {
+    async fn batch_infer(
+        &self,
+        requests: Vec<InferenceRequest>,
+    ) -> Result<Vec<InferenceResult>, Box<dyn std::error::Error>> {
         self.run_batch_inference(requests).await
     }
 }
@@ -368,8 +418,14 @@ impl InferenceService for ONNXInferenceService {
 /// Inference service trait for compatibility with existing systems
 #[async_trait]
 pub trait InferenceService: Send + Sync {
-    async fn infer(&self, request: InferenceRequest) -> Result<InferenceResult, Box<dyn std::error::Error>>;
-    async fn batch_infer(&self, requests: Vec<InferenceRequest>) -> Result<Vec<InferenceResult>, Box<dyn std::error::Error>>;
+    async fn infer(
+        &self,
+        request: InferenceRequest,
+    ) -> Result<InferenceResult, Box<dyn std::error::Error>>;
+    async fn batch_infer(
+        &self,
+        requests: Vec<InferenceRequest>,
+    ) -> Result<Vec<InferenceResult>, Box<dyn std::error::Error>>;
 }
 
 #[cfg(test)]

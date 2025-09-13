@@ -1,28 +1,28 @@
+use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::sync::RwLock;
-use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
+use rust_ai_ide_ai_inference::{AiInferenceService, InferenceConfig};
+use rust_ai_ide_cache::CacheService;
 use rust_ai_ide_lsp::LSPService;
 use rust_ai_ide_orchestration::OrchestratorService;
-use rust_ai_ide_cache::CacheService;
-use rust_ai_ide_ai_inference::{AiInferenceService, InferenceConfig};
 use rust_ai_ide_types::SafePath;
 
 use crate::ai_suggester::AiRefactoringSuggester;
-use crate::transformation_validator::TransformationValidator;
+use crate::execution_orchestrator::RefactoringOrchestrator;
 use crate::impact_assessor::RefactoringImpactAssessor;
 use crate::safety_guard::RefactoringSafetyGuard;
-use crate::execution_orchestrator::RefactoringOrchestrator;
+use crate::transformation_validator::TransformationValidator;
 
-use crate::types::{
-    RefactoringSuggestion, RefactoringTransformation, ImpactAssessment,
-    SafetyValidation, RefactoringExecutionContext, RefactoringSummary,
-    RefactoringConfig, ValidationResult, ExecutionResult, AnalysisResult,
-};
 use crate::error::{RefactoringError, RefactoringResult};
+use crate::types::{
+    AnalysisResult, ExecutionResult, ImpactAssessment, RefactoringConfig,
+    RefactoringExecutionContext, RefactoringSuggestion, RefactoringSummary,
+    RefactoringTransformation, SafetyValidation, ValidationResult,
+};
 
 /// Main orchestrator for the Advanced Refactoring Pipeline
 pub struct AdvancedRefactoringEngine {
@@ -84,7 +84,10 @@ impl AdvancedRefactoringEngine {
     ) -> Self {
         let config = Arc::new(RwLock::new(RefactoringConfig::default()));
 
-        let suggester = Arc::new(AiRefactoringSuggester::new(ai_service.clone(), lsp_service.clone()));
+        let suggester = Arc::new(AiRefactoringSuggester::new(
+            ai_service.clone(),
+            lsp_service.clone(),
+        ));
         let validator = Arc::new(TransformationValidator::new(ai_service.clone()));
         let assessor = Arc::new(RefactoringImpactAssessor::new(orchestrator_service.clone()));
         let safety_guard = Arc::new(RefactoringSafetyGuard::new(orchestrator_service.clone()));
@@ -118,22 +121,26 @@ impl AdvancedRefactoringEngine {
         let sanitized_path = self.sanitize_path(&request.target_file).await?;
 
         // Generate AI-driven suggestions
-        let suggestions = self.suggester.generate_suggestions(
-            &sanitized_path,
-            &request.target_content,
-            AnalysisContext {
-                project_root: request.project_root.clone(),
-                project_type: "rust".to_string(), // TODO: Detect project type
-                dependencies: vec![], // TODO: Extract dependencies
-                recent_changes: vec![], // TODO: Get recent changes
-                code_style_preferences: vec![], // TODO: Load preferences
-                excluded_patterns: vec![],
-                included_languages: vec!["rust".to_string()],
-            }
-        ).await?;
+        let suggestions = self
+            .suggester
+            .generate_suggestions(
+                &sanitized_path,
+                &request.target_content,
+                AnalysisContext {
+                    project_root: request.project_root.clone(),
+                    project_type: "rust".to_string(), // TODO: Detect project type
+                    dependencies: vec![],             // TODO: Extract dependencies
+                    recent_changes: vec![],           // TODO: Get recent changes
+                    code_style_preferences: vec![],   // TODO: Load preferences
+                    excluded_patterns: vec![],
+                    included_languages: vec!["rust".to_string()],
+                },
+            )
+            .await?;
 
         // Filter out low-confidence suggestions
-        let filtered_suggestions: Vec<_> = suggestions.into_iter()
+        let filtered_suggestions: Vec<_> = suggestions
+            .into_iter()
             .filter(|s| s.confidence_score >= request.auto_approve_threshold)
             .collect();
 
@@ -151,27 +158,34 @@ impl AdvancedRefactoringEngine {
         }
 
         // Assess impact for high-quality suggestions
-        let impact_assessment = self.assessor
+        let impact_assessment = self
+            .assessor
             .assess_impact(&filtered_suggestions, &request)
             .await?;
 
         // Validate safety
-        let safety_validation = self.safety_guard
+        let safety_validation = self
+            .safety_guard
             .validate_safety(&filtered_suggestions, &request)
             .await?;
 
         // Create execution context if not dry run
         let execution_context = if !request.dry_run {
-            Some(self.orchestrator
-                .create_execution_context(filtered_suggestions.clone(), &request)
-                .await?)
+            Some(
+                self.orchestrator
+                    .create_execution_context(filtered_suggestions.clone(), &request)
+                    .await?,
+            )
         } else {
             None
         };
 
         // Generate summary
         let summary = if execution_context.is_some() {
-            Some(self.generate_summary(&request, &filtered_suggestions).await?)
+            Some(
+                self.generate_summary(&request, &filtered_suggestions)
+                    .await?,
+            )
         } else {
             None
         };
@@ -198,7 +212,9 @@ impl AdvancedRefactoringEngine {
     ) -> RefactoringResult<RefactoringExecutionContext> {
         // Find execution context
         let mut contexts = self.execution_contexts.write().await;
-        let context_idx = contexts.iter().position(|ctx| ctx.execution_id == session_id)
+        let context_idx = contexts
+            .iter()
+            .position(|ctx| ctx.execution_id == session_id)
             .ok_or_else(|| RefactoringError::Execution {
                 message: format!("No execution context found for session {}", session_id),
             })?;
@@ -214,9 +230,13 @@ impl AdvancedRefactoringEngine {
     }
 
     /// Get execution status for a session
-    pub async fn get_execution_status(&self, session_id: Uuid) -> RefactoringResult<RefactoringExecutionContext> {
+    pub async fn get_execution_status(
+        &self,
+        session_id: Uuid,
+    ) -> RefactoringResult<RefactoringExecutionContext> {
         let contexts = self.execution_contexts.read().await;
-        contexts.iter()
+        contexts
+            .iter()
             .find(|ctx| ctx.session_id == session_id)
             .cloned()
             .ok_or_else(|| RefactoringError::Execution {
@@ -227,8 +247,7 @@ impl AdvancedRefactoringEngine {
     /// Cancel executing refactorings
     pub async fn cancel_refactorings(&self, session_id: Uuid) -> RefactoringResult<()> {
         let mut contexts = self.execution_contexts.write().await;
-        if let Some(context) = contexts.iter_mut()
-            .find(|ctx| ctx.session_id == session_id) {
+        if let Some(context) = contexts.iter_mut().find(|ctx| ctx.session_id == session_id) {
             context.status = ExecutionStatus::Cancelled;
 
             // TODO: Implement actual cancellation logic
@@ -241,8 +260,7 @@ impl AdvancedRefactoringEngine {
     /// Rollback completed refactorings
     pub async fn rollback_refactorings(&self, session_id: Uuid) -> RefactoringResult<()> {
         let mut contexts = self.execution_contexts.write().await;
-        if let Some(context) = contexts.iter_mut()
-            .find(|ctx| ctx.session_id == session_id) {
+        if let Some(context) = contexts.iter_mut().find(|ctx| ctx.session_id == session_id) {
             // TODO: Implement rollback logic
             self.orchestrator.rollback_execution(context).await?;
         }

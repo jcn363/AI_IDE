@@ -16,7 +16,17 @@ import {
   Warning as WarningIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from 'recharts';
 
 // Unified Performance Metrics interface (matches Rust struct)
 interface UnifiedPerformanceMetrics {
@@ -93,7 +103,7 @@ const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
   metrics,
   isLoading = false,
   autoRefreshInterval = 30,
-  onRefresh
+  onRefresh,
 }) => {
   const [selectedTimeframe, setSelectedTimeframe] = useState<'1h' | '6h' | '24h' | '7d'>('1h');
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -122,7 +132,7 @@ const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
 
     const cutoff = new Date(now.getTime() - timeframeMs);
 
-    return metrics.filter(m => {
+    return metrics.filter((m) => {
       const metricTime = new Date(m.timestamp);
       return metricTime >= cutoff;
     });
@@ -133,31 +143,43 @@ const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     if (filteredMetrics.length === 0) return null;
 
     const latest = filteredMetrics[filteredMetrics.length - 1];
-    const previous = filteredMetrics.length > 1 ? filteredMetrics[filteredMetrics.length - 2] : null;
+    const previous =
+      filteredMetrics.length > 1 ? filteredMetrics[filteredMetrics.length - 2] : null;
 
     return {
       cpuUsage: {
         current: latest.rates.cpu_usage_percent || 0,
-        trend: previous ? (latest.rates.cpu_usage_percent || 0) - (previous.rates.cpu_usage_percent || 0) : 0
+        trend: previous
+          ? (latest.rates.cpu_usage_percent || 0) - (previous.rates.cpu_usage_percent || 0)
+          : 0,
       },
       memoryUsage: {
-        current: latest.resources.memory_bytes ? (latest.resources.memory_bytes / (1024 * 1024)) : 0, // MB
-        peak: latest.resources.peak_memory_bytes ? (latest.resources.peak_memory_bytes / (1024 * 1024)) : 0
+        current: latest.resources.memory_bytes ? latest.resources.memory_bytes / (1024 * 1024) : 0, // MB
+        peak: latest.resources.peak_memory_bytes
+          ? latest.resources.peak_memory_bytes / (1024 * 1024)
+          : 0,
       },
       responseTime: {
-        current: latest.timing.response_time_ns ? (latest.timing.response_time_ns / 1_000_000) : 0, // ms
-        trend: previous && previous.timing.response_time_ns && latest.timing.response_time_ns ?
-          (latest.timing.response_time_ns - previous.timing.response_time_ns) / 1_000_000 : 0
+        current: latest.timing.response_time_ns ? latest.timing.response_time_ns / 1_000_000 : 0, // ms
+        trend:
+          previous && previous.timing.response_time_ns && latest.timing.response_time_ns
+            ? (latest.timing.response_time_ns - previous.timing.response_time_ns) / 1_000_000
+            : 0,
       },
       throughput: {
         current: latest.rates.throughput_ops_per_sec || 0,
-        trend: previous ? (latest.rates.throughput_ops_per_sec || 0) - (previous.rates.throughput_ops_per_sec || 0) : 0
+        trend: previous
+          ? (latest.rates.throughput_ops_per_sec || 0) -
+            (previous.rates.throughput_ops_per_sec || 0)
+          : 0,
       },
       successRate: {
         current: latest.rates.success_rate ? latest.rates.success_rate * 100 : 0,
-        trend: previous && previous.rates.success_rate && latest.rates.success_rate ?
-          (latest.rates.success_rate - previous.rates.success_rate) * 100 : 0
-      }
+        trend:
+          previous && previous.rates.success_rate && latest.rates.success_rate
+            ? (latest.rates.success_rate - previous.rates.success_rate) * 100
+            : 0,
+      },
     };
   }, [filteredMetrics]);
 
@@ -178,7 +200,10 @@ const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     return `${value.toFixed(1)} ${units[unitIndex]}`;
   };
 
-  const TrendIndicator: React.FC<{ value: number; inverse?: boolean }> = ({ value, inverse = false }) => {
+  const TrendIndicator: React.FC<{ value: number; inverse?: boolean }> = ({
+    value,
+    inverse = false,
+  }) => {
     if (value === 0) return null;
 
     const isPositive = inverse ? value < 0 : value > 0;
@@ -237,7 +262,13 @@ const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
           </Box>
 
           {/* Refresh button */}
-          <IconButton onClick={() => { onRefresh?.(); setLastUpdate(new Date()); }} disabled={isLoading}>
+          <IconButton
+            onClick={() => {
+              onRefresh?.();
+              setLastUpdate(new Date());
+            }}
+            disabled={isLoading}
+          >
             <RefreshIcon />
           </IconButton>
 
@@ -320,10 +351,12 @@ const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                 CPU Usage Trend
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={filteredMetrics.map(m => ({
-                  time: new Date(m.timestamp).toLocaleTimeString(),
-                  cpu: m.rates.cpu_usage_percent || 0
-                }))}>
+                <LineChart
+                  data={filteredMetrics.map((m) => ({
+                    time: new Date(m.timestamp).toLocaleTimeString(),
+                    cpu: m.rates.cpu_usage_percent || 0,
+                  }))}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="time" />
                   <YAxis />
@@ -356,7 +389,7 @@ const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                     borderRadius: 4,
                     '& .MuiLinearProgress-bar': {
                       borderRadius: 4,
-                    }
+                    },
                   }}
                 />
               </Box>
@@ -365,16 +398,26 @@ const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
               {filteredMetrics[filteredMetrics.length - 1]?.counters.error_count > 0 && (
                 <Alert severity="warning" sx={{ mb: 2 }}>
                   <Typography variant="body2">
-                    Errors detected: {filteredMetrics[filteredMetrics.length - 1]?.counters.error_count}
+                    Errors detected:{' '}
+                    {filteredMetrics[filteredMetrics.length - 1]?.counters.error_count}
                   </Typography>
                 </Alert>
               )}
 
               {/* Build Status */}
-              {filteredMetrics[filteredMetrics.length - 1]?.build.build_successful !== undefined && (
+              {filteredMetrics[filteredMetrics.length - 1]?.build.build_successful !==
+                undefined && (
                 <Chip
-                  label={filteredMetrics[filteredMetrics.length - 1]?.build.build_successful ? "Build OK" : "Build Failed"}
-                  color={filteredMetrics[filteredMetrics.length - 1]?.build.build_successful ? "success" : "error"}
+                  label={
+                    filteredMetrics[filteredMetrics.length - 1]?.build.build_successful
+                      ? 'Build OK'
+                      : 'Build Failed'
+                  }
+                  color={
+                    filteredMetrics[filteredMetrics.length - 1]?.build.build_successful
+                      ? 'success'
+                      : 'error'
+                  }
                   size="small"
                 />
               )}
@@ -389,10 +432,12 @@ const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                 Response Time Distribution
               </Typography>
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={filteredMetrics.slice(-20).map(m => ({
-                  time: new Date(m.timestamp).toLocaleTimeString(),
-                  response: m.timing.response_time_ns ? m.timing.response_time_ns / 1_000_000 : 0 // convert to ms
-                }))}>
+                <BarChart
+                  data={filteredMetrics.slice(-20).map((m) => ({
+                    time: new Date(m.timestamp).toLocaleTimeString(),
+                    response: m.timing.response_time_ns ? m.timing.response_time_ns / 1_000_000 : 0, // convert to ms
+                  }))}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="time" />
                   <YAxis />

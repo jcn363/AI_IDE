@@ -3,14 +3,15 @@ import {
   BugReport,
   CheckCircle,
   Error as ErrorIcon,
-  Info, PlayArrow,
+  Info,
+  PlayArrow,
   Refresh,
   Security,
   Settings,
   Speed,
   Style,
   TrendingUp,
-  Warning
+  Warning,
 } from '@mui/icons-material';
 import {
   Badge,
@@ -25,7 +26,7 @@ import {
   MenuItem,
   Switch,
   Tooltip,
-  Typography
+  Typography,
 } from '@mui/material';
 import { invoke } from '@tauri-apps/api/core';
 import { useCallback, useMemo, useState } from 'react';
@@ -57,7 +58,7 @@ export function StatusBar() {
     analyzeWorkspace,
     runCodeQualityCheck,
     updateConfiguration,
-    getAnalysisStats
+    getAnalysisStats,
   } = useAIAssistant();
 
   const [settingsMenuAnchor, setSettingsMenuAnchor] = useState<null | HTMLElement>(null);
@@ -75,16 +76,16 @@ export function StatusBar() {
     // Aggregate results from all analyzed files
     for (const result of analysisResults.values()) {
       totalIssues += result.summary?.totalIssues || 0;
-      
+
       // Count by severity from all suggestion types
       const allSuggestions = [
         ...result.codeSmells,
         ...result.style,
         ...(result.security?.vulnerabilities || []),
-        ...(result.architecture?.patterns || [])
+        ...(result.architecture?.patterns || []),
       ];
 
-      allSuggestions.forEach(suggestion => {
+      allSuggestions.forEach((suggestion) => {
         switch (suggestion.severity || suggestion.severityLevel) {
           case 'critical':
             criticalCount++;
@@ -130,10 +131,10 @@ export function StatusBar() {
     const overallStatus = running.length
       ? 'running'
       : errored.length
-      ? 'error'
-      : success.length
-      ? 'success'
-      : 'idle';
+        ? 'error'
+        : success.length
+          ? 'success'
+          : 'idle';
 
     const last = commands.sort((a, b) => b.timestamp - a.timestamp)[0];
     const lastLabel = last
@@ -151,7 +152,13 @@ export function StatusBar() {
   }, [cargo.commands]);
 
   const cargoColor: 'default' | 'success' | 'error' | 'warning' =
-    overallStatus === 'running' ? 'warning' : overallStatus === 'success' ? 'success' : overallStatus === 'error' ? 'error' : 'default';
+    overallStatus === 'running'
+      ? 'warning'
+      : overallStatus === 'success'
+        ? 'success'
+        : overallStatus === 'error'
+          ? 'error'
+          : 'default';
 
   const getAIStatusColor = () => {
     if (aiSummary.isAnalyzing) return 'warning';
@@ -187,21 +194,24 @@ export function StatusBar() {
     }
   }, [runCodeQualityCheck]);
 
-  const handleToggleAnalysisCategory = useCallback(async (category: AnalysisCategory, enabled: boolean) => {
-    if (!config) return;
-    
-    const newCategories = enabled
-      ? [...config.enabledCategories, category]
-      : config.enabledCategories.filter(c => c !== category);
-    
-    try {
-      await updateConfiguration({
-        enabledCategories: newCategories,
-      });
-    } catch (error) {
-      console.error('Failed to update analysis configuration:', error);
-    }
-  }, [config, updateConfiguration]);
+  const handleToggleAnalysisCategory = useCallback(
+    async (category: AnalysisCategory, enabled: boolean) => {
+      if (!config) return;
+
+      const newCategories = enabled
+        ? [...config.enabledCategories, category]
+        : config.enabledCategories.filter((c) => c !== category);
+
+      try {
+        await updateConfiguration({
+          enabledCategories: newCategories,
+        });
+      } catch (error) {
+        console.error('Failed to update analysis configuration:', error);
+      }
+    },
+    [config, updateConfiguration]
+  );
 
   const handleOpenAISettings = useCallback(async () => {
     try {
@@ -214,22 +224,33 @@ export function StatusBar() {
 
   const getCategoryIcon = (category: AnalysisCategory) => {
     switch (category) {
-      case 'code-smell': return <BugReport fontSize="small" />;
-      case 'performance': return <Speed fontSize="small" />;
-      case 'security': return <Security fontSize="small" />;
-      case 'style': return <Style fontSize="small" />;
-      case 'architecture': return <Architecture fontSize="small" />;
-      default: return <Info fontSize="small" />;
+      case 'code-smell':
+        return <BugReport fontSize="small" />;
+      case 'performance':
+        return <Speed fontSize="small" />;
+      case 'security':
+        return <Security fontSize="small" />;
+      case 'style':
+        return <Style fontSize="small" />;
+      case 'architecture':
+        return <Architecture fontSize="small" />;
+      default:
+        return <Info fontSize="small" />;
     }
   };
 
   const getSeverityIcon = (severity: SeverityLevel) => {
     switch (severity) {
-      case 'critical': return <ErrorIcon fontSize="small" color="error" />;
-      case 'error': return <ErrorIcon fontSize="small" color="error" />;
-      case 'warning': return <Warning fontSize="small" color="warning" />;
-      case 'info': return <Info fontSize="small" color="info" />;
-      default: return <CheckCircle fontSize="small" color="success" />;
+      case 'critical':
+        return <ErrorIcon fontSize="small" color="error" />;
+      case 'error':
+        return <ErrorIcon fontSize="small" color="error" />;
+      case 'warning':
+        return <Warning fontSize="small" color="warning" />;
+      case 'info':
+        return <Info fontSize="small" color="info" />;
+      default:
+        return <CheckCircle fontSize="small" color="success" />;
     }
   };
 
@@ -257,30 +278,26 @@ export function StatusBar() {
       <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
 
       {/* AI Analysis Status */}
-      <Tooltip 
+      <Tooltip
         title={
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
               AI Analysis Status
             </Typography>
-            <Typography variant="body2">
-              Provider: {aiSummary.aiProviderStatus}
-            </Typography>
-            <Typography variant="body2">
-              Total Issues: {aiSummary.totalIssues}
-            </Typography>
+            <Typography variant="body2">Provider: {aiSummary.aiProviderStatus}</Typography>
+            <Typography variant="body2">Total Issues: {aiSummary.totalIssues}</Typography>
             {aiSummary.lastAnalysisTime && (
               <Typography variant="body2">
                 Last Analysis: {new Date(aiSummary.lastAnalysisTime).toLocaleTimeString()}
               </Typography>
             )}
           </Box>
-        } 
+        }
         arrow
       >
-        <Chip 
-          size="small" 
-          color={getAIStatusColor()} 
+        <Chip
+          size="small"
+          color={getAIStatusColor()}
           label={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               {aiSummary.isAnalyzing && <CircularProgress size={12} color="inherit" />}
@@ -293,21 +310,21 @@ export function StatusBar() {
       {/* Issue Counters */}
       {aiSummary.criticalCount > 0 && (
         <Badge badgeContent={aiSummary.criticalCount} color="error">
-          <Chip 
-            size="small" 
-            variant="outlined" 
+          <Chip
+            size="small"
+            variant="outlined"
             color="error"
             icon={<ErrorIcon fontSize="small" />}
             label="Critical"
           />
         </Badge>
       )}
-      
+
       {aiSummary.errorCount > 0 && (
         <Badge badgeContent={aiSummary.errorCount} color="error">
-          <Chip 
-            size="small" 
-            variant="outlined" 
+          <Chip
+            size="small"
+            variant="outlined"
             color="error"
             icon={<ErrorIcon fontSize="small" />}
             label="Errors"
@@ -317,9 +334,9 @@ export function StatusBar() {
 
       {aiSummary.warningCount > 0 && (
         <Badge badgeContent={aiSummary.warningCount} color="warning">
-          <Chip 
-            size="small" 
-            variant="outlined" 
+          <Chip
+            size="small"
+            variant="outlined"
             color="warning"
             icon={<Warning fontSize="small" />}
             label="Warnings"
@@ -329,9 +346,9 @@ export function StatusBar() {
 
       {aiSummary.infoCount > 0 && (
         <Badge badgeContent={aiSummary.infoCount} color="info">
-          <Chip 
-            size="small" 
-            variant="outlined" 
+          <Chip
+            size="small"
+            variant="outlined"
             color="info"
             icon={<Info fontSize="small" />}
             label="Info"
@@ -342,9 +359,9 @@ export function StatusBar() {
       {/* Analysis Progress */}
       {aiSummary.isAnalyzing && aiSummary.analysisProgress !== undefined && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 100 }}>
-          <LinearProgress 
-            variant="determinate" 
-            value={aiSummary.analysisProgress} 
+          <LinearProgress
+            variant="determinate"
+            value={aiSummary.analysisProgress}
             sx={{ flex: 1, height: 4 }}
           />
           <Typography variant="caption" color="text.secondary">
@@ -357,8 +374,8 @@ export function StatusBar() {
 
       {/* Quick Action Buttons */}
       <Tooltip title="Run Workspace Analysis">
-        <IconButton 
-          size="small" 
+        <IconButton
+          size="small"
           onClick={handleRunWorkspaceAnalysis}
           disabled={isRunningWorkspaceAnalysis || aiSummary.isAnalyzing}
         >
@@ -371,8 +388,8 @@ export function StatusBar() {
       </Tooltip>
 
       <Tooltip title="Run Code Quality Check">
-        <IconButton 
-          size="small" 
+        <IconButton
+          size="small"
           onClick={handleRunCodeQualityCheck}
           disabled={aiSummary.isAnalyzing}
         >
@@ -381,8 +398,8 @@ export function StatusBar() {
       </Tooltip>
 
       <Tooltip title="Refresh Analysis">
-        <IconButton 
-          size="small" 
+        <IconButton
+          size="small"
           onClick={handleRunWorkspaceAnalysis}
           disabled={aiSummary.isAnalyzing}
         >
@@ -392,10 +409,7 @@ export function StatusBar() {
 
       {/* Settings Menu */}
       <Tooltip title="AI Analysis Settings">
-        <IconButton 
-          size="small" 
-          onClick={(e) => setSettingsMenuAnchor(e.currentTarget)}
-        >
+        <IconButton size="small" onClick={(e) => setSettingsMenuAnchor(e.currentTarget)}>
           <Settings fontSize="small" />
         </IconButton>
       </Tooltip>
@@ -405,22 +419,24 @@ export function StatusBar() {
         open={Boolean(settingsMenuAnchor)}
         onClose={() => setSettingsMenuAnchor(null)}
         PaperProps={{
-          sx: { minWidth: 250 }
+          sx: { minWidth: 250 },
         }}
       >
         <MenuItem onClick={handleOpenAISettings}>
           <Settings fontSize="small" sx={{ mr: 1 }} />
           AI Provider Settings
         </MenuItem>
-        
+
         <Divider />
-        
+
         <Box sx={{ px: 2, py: 1 }}>
           <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
             Analysis Categories
           </Typography>
-          
-          {(['code-smell', 'performance', 'security', 'style', 'architecture'] as AnalysisCategory[]).map(category => (
+
+          {(
+            ['code-smell', 'performance', 'security', 'style', 'architecture'] as AnalysisCategory[]
+          ).map((category) => (
             <FormControlLabel
               key={category}
               control={
@@ -433,7 +449,7 @@ export function StatusBar() {
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   {getCategoryIcon(category)}
-                  {category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  {category.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                 </Box>
               }
               sx={{ display: 'flex', width: '100%', m: 0, py: 0.5 }}

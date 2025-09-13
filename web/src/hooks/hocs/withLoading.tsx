@@ -82,14 +82,14 @@ export function withLoading<P extends object>(
     loadingConfig: config = {},
     showRetryButton = false,
     onRetry,
-    formatErrorMessage
+    formatErrorMessage,
   } = options;
 
   const EnhancedComponent: React.FC<P> = (props) => {
     const loadingProps: WithLoadingProps = {
       loading: false,
       error: '',
-      clearError: () => {}
+      clearError: () => {},
     };
 
     // In a real implementation, you would get these from props or context
@@ -134,7 +134,7 @@ const LoadingIndicator: React.FC<{ config: LoadingConfig }> = ({ config }) => {
     message = 'Loading...',
     customComponent,
     size = 'medium',
-    skeletonLines = 3
+    skeletonLines = 3,
   } = config;
 
   if (customComponent) {
@@ -192,14 +192,7 @@ const ErrorIndicator: React.FC<{
   onRetry?: () => void;
   formatErrorMessage?: (error: string) => string;
   clearError: () => void;
-}> = ({
-  error,
-  config,
-  showRetryButton,
-  onRetry,
-  formatErrorMessage,
-  clearError
-}) => {
+}> = ({ error, config, showRetryButton, onRetry, formatErrorMessage, clearError }) => {
   const { errorFallback } = config;
   const formattedError = formatErrorMessage ? formatErrorMessage(error) : error;
 
@@ -259,7 +252,7 @@ export function useLoadingState(initialLoading = false) {
   }, []);
 
   const retry = React.useCallback(() => {
-    setRetryCount(prev => prev + 1);
+    setRetryCount((prev) => prev + 1);
     startLoading();
   }, [startLoading]);
 
@@ -271,7 +264,7 @@ export function useLoadingState(initialLoading = false) {
     stopLoading,
     setError: setErrorState,
     clearError,
-    retry
+    retry,
   };
 }
 

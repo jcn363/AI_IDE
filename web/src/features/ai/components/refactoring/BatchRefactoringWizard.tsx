@@ -1,9 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Typography, FormControl, FormLabel, RadioGroup,
-  FormControlLabel, Radio, Checkbox, TextField, Alert,
-  List, ListItem, ListItemText, Chip, Button, IconButton,
-  Divider, Paper
+  Box,
+  Typography,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Checkbox,
+  TextField,
+  Alert,
+  List,
+  ListItem,
+  ListItemText,
+  Chip,
+  Button,
+  IconButton,
+  Divider,
+  Paper,
 } from '@mui/material';
 import { Add, Delete, DragHandle } from '@mui/icons-material';
 import { WizardStepProps } from './RefactoringWizard';
@@ -33,13 +47,13 @@ export const BatchRefactoringWizard: React.FC<WizardStepProps> = ({
     const errors: string[] = [];
 
     if (operations.length === 0) {
-      errors.push("At least one refactoring operation must be added");
+      errors.push('At least one refactoring operation must be added');
     }
 
     // Check for cycles in dependencies
     const hasCycles = checkForDependencyCycles(operations);
     if (hasCycles) {
-      errors.push("Circular dependencies detected in batch operations");
+      errors.push('Circular dependencies detected in batch operations');
     }
 
     setValidationErrors(errors);
@@ -82,13 +96,11 @@ export const BatchRefactoringWizard: React.FC<WizardStepProps> = ({
   };
 
   const removeOperation = (id: string) => {
-    setOperations(operations.filter(op => op.id !== id));
+    setOperations(operations.filter((op) => op.id !== id));
   };
 
   const updateOperation = (id: string, updates: Partial<BatchOperation>) => {
-    setOperations(operations.map(op =>
-      op.id === id ? { ...op, ...updates } : op
-    ));
+    setOperations(operations.map((op) => (op.id === id ? { ...op, ...updates } : op)));
   };
 
   const moveOperation = (index: number, direction: 'up' | 'down') => {
@@ -106,8 +118,8 @@ export const BatchRefactoringWizard: React.FC<WizardStepProps> = ({
         Batch Refactoring Configuration
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Configure multiple refactoring operations to execute together.
-        Operations can have dependencies and will be executed in order.
+        Configure multiple refactoring operations to execute together. Operations can have
+        dependencies and will be executed in order.
       </Typography>
 
       <Box sx={{ mb: 4 }}>
@@ -144,9 +156,11 @@ export const BatchRefactoringWizard: React.FC<WizardStepProps> = ({
                       select
                       size="small"
                       value={operation.refactoringType}
-                      onChange={(e) => updateOperation(operation.id, {
-                        refactoringType: e.target.value as RefactoringType
-                      })}
+                      onChange={(e) =>
+                        updateOperation(operation.id, {
+                          refactoringType: e.target.value as RefactoringType,
+                        })
+                      }
                       sx={{ mr: 2, minWidth: 150 }}
                     >
                       <option value="rename">Rename</option>
@@ -155,11 +169,7 @@ export const BatchRefactoringWizard: React.FC<WizardStepProps> = ({
                       {/* Add more types as needed */}
                     </TextField>
 
-                    <Chip
-                      label={`ID: ${operation.id}`}
-                      size="small"
-                      variant="outlined"
-                    />
+                    <Chip label={`ID: ${operation.id}`} size="small" variant="outlined" />
                   </Box>
 
                   <IconButton

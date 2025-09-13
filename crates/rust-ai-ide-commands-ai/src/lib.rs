@@ -46,14 +46,14 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub mod completion;
 pub mod analysis;
+pub mod completion;
 pub mod models;
-pub mod training;
 pub mod services;
+pub mod training;
 
 // Re-export key types
-pub use services::{AIService, AIConfig};
+pub use services::{AIConfig, AIService};
 
 // Command registry for collecting all AI commands
 pub struct AICommandsRegistry {
@@ -154,16 +154,22 @@ pub async fn get_ai_system_health() -> HashMap<String, serde_json::Value> {
     let mut health = HashMap::new();
 
     // Check service availability
-    health.insert("ai_service".to_string(),
-        serde_json::json!({"status": "healthy", "available": true}));
+    health.insert(
+        "ai_service".to_string(),
+        serde_json::json!({"status": "healthy", "available": true}),
+    );
 
     // Check model management
-    health.insert("model_management".to_string(),
-        serde_json::json!({"status": "operational", "models_loaded": 0}));
+    health.insert(
+        "model_management".to_string(),
+        serde_json::json!({"status": "operational", "models_loaded": 0}),
+    );
 
     // Check training system
-    health.insert("training_system".to_string(),
-        serde_json::json!({"status": "idle", "active_jobs": 0}));
+    health.insert(
+        "training_system".to_string(),
+        serde_json::json!({"status": "idle", "active_jobs": 0}),
+    );
 
     health
 }
@@ -179,7 +185,9 @@ mod tests {
         // Verify core AI commands are registered
         assert!(registry.get_commands().contains_key("ai_code_completion"));
         assert!(registry.get_commands().contains_key("analyze_file"));
-        assert!(registry.get_commands().contains_key("list_available_models"));
+        assert!(registry
+            .get_commands()
+            .contains_key("list_available_models"));
         assert!(registry.get_commands().contains_key("start_finetune_job"));
     }
 

@@ -71,12 +71,12 @@ export class MetricsCollector {
       if (global.gc) {
         global.gc();
       }
-      
+
       const memoryUsage = process.memoryUsage();
-      
+
       // Convert bytes to MB for better readability
       const toMB = (bytes: number) => Math.round((bytes / 1024 / 1024) * 100) / 100;
-      
+
       this.addMetric({
         id: 'memory.heapUsed',
         name: 'Heap Used',
@@ -84,7 +84,7 @@ export class MetricsCollector {
         unit: 'MB',
         timestamp,
       });
-      
+
       this.addMetric({
         id: 'memory.heapTotal',
         name: 'Heap Total',
@@ -92,7 +92,7 @@ export class MetricsCollector {
         unit: 'MB',
         timestamp,
       });
-      
+
       this.addMetric({
         id: 'memory.rss',
         name: 'Resident Set Size',
@@ -100,19 +100,19 @@ export class MetricsCollector {
         unit: 'MB',
         timestamp,
       });
-      
+
       // Collect CPU usage (this is a simple implementation)
       const startUsage = process.cpuUsage();
       const startTime = performance.now();
-      
+
       // Small delay to measure CPU usage
       setTimeout(() => {
         const endTime = performance.now();
         const endUsage = process.cpuUsage(startUsage);
-        
+
         const elapsedTime = (endTime - startTime) * 1000; // convert to microseconds
         const cpuPercent = ((endUsage.user + endUsage.system) / elapsedTime) * 100;
-        
+
         this.addMetric({
           id: 'cpu.usage',
           name: 'CPU Usage',
@@ -121,7 +121,6 @@ export class MetricsCollector {
           timestamp,
         });
       }, 100);
-      
     } catch (error) {
       console.error('Error collecting system metrics:', error);
     }
@@ -146,19 +145,19 @@ export class MetricsCollector {
 
   private addMetric(metric: PerformanceMetric) {
     const { id } = metric;
-    
+
     if (!this.metrics.has(id)) {
       this.metrics.set(id, []);
     }
-    
+
     const metrics = this.metrics.get(id)!;
     metrics.push(metric);
-    
+
     // Trim old metrics if we exceed max samples
     if (metrics.length > this.maxSamples) {
       metrics.shift();
     }
-    
+
     // Also send to the performance analyzer
     performanceAnalyzer.addMetric(metric);
   }

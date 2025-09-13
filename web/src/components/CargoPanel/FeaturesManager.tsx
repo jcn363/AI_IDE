@@ -65,12 +65,7 @@ export const FeaturesManager: React.FC<FeaturesManagerProps> = ({
 
   return (
     <div className="features-manager">
-      <Button
-        variant="contained"
-        onClick={loadFeatures}
-        disabled={!projectPath}
-        sx={{ mb: 2 }}
-      >
+      <Button variant="contained" onClick={loadFeatures} disabled={!projectPath} sx={{ mb: 2 }}>
         Load Features
       </Button>
 
@@ -78,10 +73,7 @@ export const FeaturesManager: React.FC<FeaturesManagerProps> = ({
         <List dense>
           {Object.entries(features).map(([pkgName, pkgFeatures]) => (
             <ListItem key={pkgName}>
-              <ListItemText
-                primary={pkgName}
-                secondary={pkgFeatures.join(', ')}
-              />
+              <ListItemText primary={pkgName} secondary={pkgFeatures.join(', ')} />
             </ListItem>
           ))}
         </List>

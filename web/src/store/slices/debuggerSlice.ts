@@ -56,7 +56,14 @@ const initialState: DebuggerSliceState = {
 
 // Event payloads from backend
 export type DebuggerEvent =
-  | { StateChanged: { Stopped: {} } | { Running: {} } | { Paused: { reason: string; location?: [string, number] } } | { Terminated: { exit_code?: number | null } } | { Error: { message: string } } }
+  | {
+      StateChanged:
+        | { Stopped: {} }
+        | { Running: {} }
+        | { Paused: { reason: string; location?: [string, number] } }
+        | { Terminated: { exit_code?: number | null } }
+        | { Error: { message: string } };
+    }
   | { BreakpointHit: { breakpoint: BreakpointInfo; stack_frame: StackFrame } }
   | { OutputReceived: string }
   | { ErrorReceived: string }
@@ -113,7 +120,7 @@ const debuggerSlice = createSlice({
       } else if (ev.CallStackUpdated) {
         state.callStack = ev.CallStackUpdated;
       } else if (ev.BreakpointChanged) {
-        const idx = state.breakpoints.findIndex(b => b.id === ev.BreakpointChanged.id);
+        const idx = state.breakpoints.findIndex((b) => b.id === ev.BreakpointChanged.id);
         if (idx >= 0) state.breakpoints[idx] = ev.BreakpointChanged;
         else state.breakpoints.push(ev.BreakpointChanged);
       }

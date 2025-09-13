@@ -1,9 +1,9 @@
-use wasm_bindgen::prelude::*;
-use web_sys::{console, Performance, Document, Element, Text, CssStyleDeclaration};
-use js_sys::{Array, Uint8Array, Reflect};
+use js_sys::{Array, Reflect, Uint8Array};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use parking_lot::RwLock;
+use wasm_bindgen::prelude::*;
+use web_sys::{console, CssStyleDeclaration, Document, Element, Performance, Text};
 
 // Performance monitoring and text processing utilities
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -116,7 +116,9 @@ impl TextProcessor {
             duration: end_time - start_time,
         };
 
-        PERFORMANCE_CACHE.write().insert("analyze_text".to_string(), perf);
+        PERFORMANCE_CACHE
+            .write()
+            .insert("analyze_text".to_string(), perf);
 
         serde_wasm_bindgen::to_value(&metrics).unwrap_or(JsValue::NULL)
     }
@@ -155,7 +157,10 @@ impl TextProcessor {
 
     fn highlight_javascript(&self, code: &str) -> String {
         let mut result = code.to_string();
-        result = result.replace("function ", "<span style=\"color: #61dafb\">function</span> ");
+        result = result.replace(
+            "function ",
+            "<span style=\"color: #61dafb\">function</span> ",
+        );
         result = result.replace("const ", "<span style=\"color: #ff6b6b\">const</span> ");
         result = result.replace("let ", "<span style=\"color: #ff6b6b\">let</span> ");
         result = result.replace("var ", "<span style=\"color: #ff6b6b\">var</span> ");
@@ -184,7 +189,8 @@ impl TextProcessor {
     #[wasm_bindgen]
     pub fn process_large_file(&mut self, content: &str, chunk_size: usize) -> String {
         // Process file in chunks to avoid memory issues
-        let chunks = content.chars()
+        let chunks = content
+            .chars()
             .collect::<Vec<char>>()
             .chunks(chunk_size)
             .map(|chunk| chunk.iter().collect::<String>())
@@ -332,7 +338,8 @@ pub fn perform_syntax_analysis(code: &str, language: &str) -> JsValue {
         "language": language,
         "highlighted_code": result,
         "analysis_time": 0.0
-    }).into()
+    })
+    .into()
 }
 
 // Console logging helper

@@ -1,8 +1,8 @@
+use chrono::{DateTime, Utc};
+use rust_ai_ide_types::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use rust_ai_ide_types::*;
 
 /// Core refactoring suggestion data structure
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use super::ai::{AIProvider, ModelConfig, AnalysisConfig};
-use super::error::{IDEResult, IDEError};
+use super::ai::{AIProvider, AnalysisConfig, ModelConfig};
+use super::error::{IDEError, IDEResult};
 use rust_ai_ide_common::config::Config;
 
 /// Main application configuration
@@ -74,7 +74,8 @@ impl AppConfig {
         }
 
         // Extract extension before moving path
-        let extension = path.extension()
+        let extension = path
+            .extension()
             .and_then(|ext| ext.to_str())
             .map(|s| s.to_string());
 
@@ -84,23 +85,16 @@ impl AppConfig {
 
         match extension.as_ref().map(|s| s.as_str()) {
             Some("yaml") | Some("yml") => {
-                serde_yaml::from_str(&contents)
-                    .map_err(|e| IDEError::Parse {
-                        message: format!("YAML parsing error: {}", e)
-                    })
+                serde_yaml::from_str(&contents).map_err(|e| IDEError::Parse {
+                    message: format!("YAML parsing error: {}", e),
+                })
             }
-            Some("toml") => {
-                toml::from_str(&contents)
-                    .map_err(|e| IDEError::Parse {
-                        message: format!("TOML parsing error: {}", e)
-                    })
-            }
-            Some("json") => {
-                serde_json::from_str(&contents)
-                    .map_err(|e| IDEError::Parse {
-                        message: format!("JSON parsing error: {}", e)
-                    })
-            }
+            Some("toml") => toml::from_str(&contents).map_err(|e| IDEError::Parse {
+                message: format!("TOML parsing error: {}", e),
+            }),
+            Some("json") => serde_json::from_str(&contents).map_err(|e| IDEError::Parse {
+                message: format!("JSON parsing error: {}", e),
+            }),
             _ => {
                 // Try JSON first, then TOML
                 match serde_json::from_str(&contents) {
@@ -108,9 +102,9 @@ impl AppConfig {
                     Err(_) => match toml::from_str(&contents) {
                         Ok(config) => Ok(config),
                         Err(_) => Err(IDEError::Parse {
-                            message: "Unsupported configuration format".to_string()
-                        })
-                    }
+                            message: "Unsupported configuration format".to_string(),
+                        }),
+                    },
                 }
             }
         }
@@ -119,18 +113,17 @@ impl AppConfig {
     /// Save configuration to a file
     pub async fn save_to_file(&self, path: PathBuf, format: ConfigFormat) -> IDEResult<()> {
         let contents = match format {
-            ConfigFormat::Yaml => serde_yaml::to_string(self)
-                .map_err(|e| IDEError::Generic {
-                    message: format!("YAML serialization error: {}", e)
-                })?,
-            ConfigFormat::Toml => toml::to_string(self)
-                .map_err(|e| IDEError::Generic {
-                    message: format!("TOML serialization error: {}", e)
-                })?,
-            ConfigFormat::Json => serde_json::to_string_pretty(self)
-                .map_err(|e| IDEError::Generic {
-                    message: format!("JSON serialization error: {}", e)
-                })?,
+            ConfigFormat::Yaml => serde_yaml::to_string(self).map_err(|e| IDEError::Generic {
+                message: format!("YAML serialization error: {}", e),
+            })?,
+            ConfigFormat::Toml => toml::to_string(self).map_err(|e| IDEError::Generic {
+                message: format!("TOML serialization error: {}", e),
+            })?,
+            ConfigFormat::Json => {
+                serde_json::to_string_pretty(self).map_err(|e| IDEError::Generic {
+                    message: format!("JSON serialization error: {}", e),
+                })?
+            }
         };
 
         // Create directory if it doesn't exist
@@ -222,8 +215,7 @@ impl Default for CoreConfig {
             cache_directory: dirs::cache_dir()
                 .unwrap_or_else(|| PathBuf::from("./cache"))
                 .join("rust-ai-ide"),
-            log_directory: dirs::data_local_dir()
-                .unwrap_or_else(|| PathBuf::from("./logs")),
+            log_directory: dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("./logs")),
             theme: "dark".to_string(),
             fonts: FontConfig::default(),
             editor: EditorConfig::default(),
@@ -335,7 +327,10 @@ impl AIConfig {
         // Validate that default provider is in providers list
         if !self.providers.contains(&self.default_provider) {
             return Err(IDEError::Config {
-                message: format!("Default provider {:?} not in providers list", self.default_provider)
+                message: format!(
+                    "Default provider {:?} not in providers list",
+                    self.default_provider
+                ),
             });
         }
 
@@ -345,7 +340,7 @@ impl AIConfig {
                 AIProvider::OpenAI | AIProvider::Anthropic | AIProvider::Local { .. } => {
                     if !self.endpoints.contains_key(provider) {
                         return Err(IDEError::Config {
-                            message: format!("Missing endpoint for provider {:?}", provider)
+                            message: format!("Missing endpoint for provider {:?}", provider),
                         });
                     }
                 }
@@ -506,13 +501,13 @@ impl PerformanceConfig {
     pub fn validate(&self) -> IDEResult<()> {
         if self.max_analysis_threads == 0 {
             return Err(IDEError::Config {
-                message: "Max analysis threads must be > 0".to_string()
+                message: "Max analysis threads must be > 0".to_string(),
             });
         }
 
         if self.max_memory_mb < 256 {
             return Err(IDEError::Config {
-                message: "Max memory must be at least 256 MB".to_string()
+                message: "Max memory must be at least 256 MB".to_string(),
             });
         }
 
@@ -579,7 +574,7 @@ impl CacheConfig {
     pub fn validate(&self) -> IDEResult<()> {
         if self.enabled && self.max_size_mb < 64 {
             return Err(IDEError::Config {
-                message: "Minimum cache size is 64 MB".to_string()
+                message: "Minimum cache size is 64 MB".to_string(),
             });
         }
 
@@ -647,7 +642,7 @@ impl NetworkConfig {
     pub fn validate(&self) -> IDEResult<()> {
         if self.timeout_seconds < 5 {
             return Err(IDEError::Config {
-                message: "Network timeout must be at least 5 seconds".to_string()
+                message: "Network timeout must be at least 5 seconds".to_string(),
             });
         }
 
@@ -745,7 +740,7 @@ impl LoggingConfig {
     pub fn validate(&self) -> IDEResult<()> {
         if self.outputs.is_empty() {
             return Err(IDEError::Config {
-                message: "At least one log output must be configured".to_string()
+                message: "At least one log output must be configured".to_string(),
             });
         }
 

@@ -1,12 +1,15 @@
 # Frontend Component Consolidation Plan
 
 ## Executive Summary
+
 Analysis of the frontend React/TypeScript codebase reveals significant duplication across panels, editors, and UI components. The consolidation plan targets ~35% reduction in code duplication through shared components, utilities, and patterns.
 
 ## Current State Analysis
 
 ### 1. Shared Component Structures
+
 **Duplication Found:**
+
 - **TabPanel**: Implemented inline in 5+ files (CargoPanel.tsx, PerformanceDashboard.tsx, etc.) and as separate component
 - **BasePanel Structure**: `Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}` appears in 10+ components
 - **a11yProps Utility**: Duplicated in 4 files for tab accessibility
@@ -14,7 +17,9 @@ Analysis of the frontend React/TypeScript codebase reveals significant duplicati
 **Impact:** ~500 LOC of duplicated structure code
 
 ### 2. UI Pattern Duplication
+
 **Common patterns across components:**
+
 - Button groups with loading/indicators: `{!isLoading ? 'Save' : 'Saving...'}` pattern
 - Form sections: `{errors.length > 0 && <Alert severity="error">` pattern
 - List containers: Shared list/filter/search templates
@@ -24,12 +29,15 @@ Analysis of the frontend React/TypeScript codebase reveals significant duplicati
 **Impact:** ~800 LOC of repeated UI logic
 
 ### 3. AI Component Duplication
+
 **Refactoring Wizards:**
+
 - 6 wizards with identical structure: AsyncAwait, Batch, Extract, Pattern, Unified
 - Common patterns: `useState([])`, `useEffect(async)`, toggle handlers, validation logic
 - Shared UI: Form controls, checklists, configuration panels
 
 **Configuration Panels:**
+
 - Similar initialization/load patterns
 - Error handling duplication
 - Loading state management
@@ -37,12 +45,15 @@ Analysis of the frontend React/TypeScript codebase reveals significant duplicati
 **Impact:** Most significant - ~2000 LOC across wizards alone
 
 ### 4. Shared Utilities Discovery
+
 **Error Handling**: `try/catch(console.error('/Failed to../', error))` appears 50+ times
 **State Management**: `setState(prev => ({ ...prev, loading: true }))` pattern in 20+ places
 **Async Patterns**: Similar data loading, caching, and retry logic
 
 ### 5. Hook Consolidation Opportunities
+
 **Common Patterns:**
+
 - API request hooks with loading/error states
 - Form submission with validation
 - Data synchronization with debouncing
@@ -51,6 +62,7 @@ Analysis of the frontend React/TypeScript codebase reveals significant duplicati
 ## Proposed Architecture
 
 ### Consolidated Components
+
 ```typescript
 // 1. BasePanel - Foundation for all panels
 export const BasePanel = ({ children, title, actions, ...props }) => (
@@ -78,11 +90,12 @@ export const WizardBase = ({
 ```
 
 ### Shared Hooks
+
 ```typescript
 // 1. useAsyncOperation
-export const useAsyncOperation = <T,>(
+export const useAsyncOperation = <T>(
   operation: () => Promise<T>,
-  options: { onSuccess?, onError?, retry? } = {}
+  options: { onSuccess?; onError?; retry? } = {}
 ) => {
   // Consolidated async handling
 };
@@ -99,41 +112,44 @@ export const useFormHandler = (initialValues, validationSchema) => {
 ```
 
 ### Utility Functions
+
 ```typescript
 // 1. Error handling utilities
-export const createErrorHandler = (context: string) =>
-  (error: unknown, customMessage?: string) => {
-    console.error(`Error in ${context}:`, error);
-    return customMessage || error instanceof Error ? error.message : 'An error occurred';
-  };
+export const createErrorHandler = (context: string) => (error: unknown, customMessage?: string) => {
+  console.error(`Error in ${context}:`, error);
+  return customMessage || error instanceof Error ? error.message : 'An error occurred';
+};
 
 // 2. Common formatting
 export const formatErrorMessage = createErrorHandler;
-export const formatLoadingState = (isLoading, text = 'Processing...') =>
-  isLoading ? text : null;
+export const formatLoadingState = (isLoading, text = 'Processing...') => (isLoading ? text : null);
 ```
 
 ## Implementation Roadmap
 
 ### Phase 1: Foundation (Week 1-2)
+
 1. Create shared utilities (`utils/consolidated.ts`)
 2. Implement BasePanel component
 3. Create SharedTabPanel component
 4. Establish design system tokens
 
 ### Phase 2: Core Consolidation (Week 2-3)
+
 1. Refactor refactoring wizards to use WizardBase
 2. Update all panels to use BasePanel
 3. Replace inline TabPanel implementations
 4. Consolidate a11yProps usage
 
 ### Phase 3: Advanced Patterns (Week 4)
+
 1. Implement shared hooks
 2. Standardize error handling
 3. Consolidate form patterns
 4. Update component templates
 
 ### Phase 4: Migration & Testing (Week 5)
+
 1. Update import statements
 2. Add tests for new components
 3. Performance verification
@@ -214,6 +230,7 @@ graph TB
 ## Metrics & Benefits
 
 ### Quantitative Targets
+
 - **Code Reduction:** 35% (target ~1800-2400 LOC reduction from estimated ~5100 LOC duplication)
 - **Component Savings:** ~25 shared components replace ~100+ individual implementations
 - **Hook Consolidation:** ~10 shared hooks reduce manual state management by ~500 LOC
@@ -221,6 +238,7 @@ graph TB
 - **Maintainability:** Single source for UI patterns and utilities with 80% code reusability
 
 ### Qualitative Benefits
+
 - Consistent UI/UX across panels
 - Faster development of new features
 - Easier maintenance and updates
@@ -230,11 +248,13 @@ graph TB
 ## Dependency Analysis
 
 ### Critical Dependencies
+
 - None - consolidation maintains existing APIs
 - New shared components are backwards compatible
 - Gradual migration possible
 
 ### Breaking Changes
+
 - Minimal - most changes internal
 - Some prop interface standardization
 - Import path updates required
@@ -242,17 +262,20 @@ graph TB
 ## Migration Guidelines
 
 ### For Developers
+
 1. Use shared components instead of custom implementations
 2. Prefer consolidated hooks over inline state management
 3. Follow established patterns for UI consistency
 4. Update imports when consolidation components are available
 
 ### Backward Compatibility
+
 - Existing components continue to work during transition
 - Gradual adoption through feature flags
 - API compatibility maintained where possible
 
 ## Risk Mitigation
+
 - Comprehensive testing of consolidated components
 - Incremental rollout to production
 - Rollback plan for critical issues

@@ -19,13 +19,9 @@ type AppThunk<ReturnType = void, Arg = unknown> = ThunkAction<
 };
 
 // Helper type to extract the return type of an async thunk
-type AsyncThunkReturnType<T> = T extends AsyncThunk<infer Returned, any, any> 
-  ? Returned 
-  : never;
+type AsyncThunkReturnType<T> = T extends AsyncThunk<infer Returned, any, any> ? Returned : never;
 
-type AsyncThunkArg<T> = T extends AsyncThunk<any, infer Arg, any> 
-  ? Arg 
-  : never;
+type AsyncThunkArg<T> = T extends AsyncThunk<any, infer Arg, any> ? Arg : never;
 
 export type { AppThunk };
 

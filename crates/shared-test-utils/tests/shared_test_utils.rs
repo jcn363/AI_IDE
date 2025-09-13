@@ -1,7 +1,7 @@
-use shared_test_utils::*;
-use std::path::Path;
-use std::collections::HashMap;
 use serde_json;
+use shared_test_utils::*;
+use std::collections::HashMap;
+use std::path::Path;
 
 #[cfg(test)]
 mod basic_tests {
@@ -56,7 +56,9 @@ mod filesystem_tests {
     fn test_workspace_file_operations() {
         let workspace = TempWorkspace::new().unwrap();
 
-        workspace.create_file(Path::new("test.txt"), "hello world").unwrap();
+        workspace
+            .create_file(Path::new("test.txt"), "hello world")
+            .unwrap();
         let content = workspace.read_file(Path::new("test.txt")).unwrap();
         assert_eq!(content, "hello world");
         assert!(workspace.file_exists(Path::new("test.txt")));
@@ -79,7 +81,9 @@ mod validation_tests {
         let test_file = Path::new("test.txt");
         workspace.create_file(test_file, "test").unwrap();
 
-        assert!(ValidationUtils::validate_path_security(&workspace.path().join("test.txt")).is_ok());
+        assert!(
+            ValidationUtils::validate_path_security(&workspace.path().join("test.txt")).is_ok()
+        );
         assert!(ValidationUtils::validate_path_security(Path::new("nonexistent")).is_err());
     }
 
@@ -106,17 +110,22 @@ mod fixtures_tests {
 
         let fixture = TestFixtureBuilder::new()
             .with_file("config.json", r#"{"test": true}"#)
-            .build(&workspace).unwrap();
+            .build(&workspace)
+            .unwrap();
 
         assert!(workspace.file_exists(Path::new("config.json")));
-        let content = fixture.get_file_content(&Path::new("config.json").to_path_buf()).unwrap();
+        let content = fixture
+            .get_file_content(&Path::new("config.json").to_path_buf())
+            .unwrap();
         assert_eq!(content, r#"{"test": true}"#);
     }
 
     #[test]
     fn test_cargo_workspace_fixture() {
         let workspace = TempWorkspace::new().unwrap();
-        let fixture = FixturePresets::cargo_workspace(&["member1"]).build(&workspace).unwrap();
+        let fixture = FixturePresets::cargo_workspace(&["member1"])
+            .build(&workspace)
+            .unwrap();
 
         assert!(workspace.file_exists(Path::new("Cargo.toml")));
         assert!(workspace.file_exists(Path::new("member1/Cargo.toml")));
@@ -136,7 +145,7 @@ mod fixtures_tests {
 #[cfg(test)]
 mod command_tests {
     use super::*;
-    use shared_test_utils::command_tests::{MockCommand, CommandTestBuilder};
+    use shared_test_utils::command_tests::{CommandTestBuilder, MockCommand};
 
     #[test]
     fn test_mock_command() {
@@ -150,12 +159,19 @@ mod command_tests {
     #[test]
     fn test_command_test_runner() {
         let mut runner = CommandTestBuilder::new()
-            .success_command("get_data", serde_json::json!({}), serde_json::json!({"data": "test"}))
+            .success_command(
+                "get_data",
+                serde_json::json!({}),
+                serde_json::json!({"data": "test"}),
+            )
             .build_runner();
 
         let rt = tokio::runtime::Runtime::new().unwrap();
         let result: serde_json::Value = rt.block_on(async {
-            runner.execute_command("get_data", &serde_json::json!({})).await.unwrap()
+            runner
+                .execute_command("get_data", &serde_json::json!({}))
+                .await
+                .unwrap()
         });
 
         assert_eq!(result["data"], "test");
@@ -169,7 +185,9 @@ mod command_tests {
 
         let rt = tokio::runtime::Runtime::new().unwrap();
         let result: Result<serde_json::Value, _> = rt.block_on(async {
-            runner.execute_command("failing", &serde_json::json!({})).await
+            runner
+                .execute_command("failing", &serde_json::json!({}))
+                .await
         });
 
         assert!(result.is_err());
@@ -179,7 +197,9 @@ mod command_tests {
 #[cfg(test)]
 mod integration_tests {
     use super::*;
-    use shared_test_utils::integration::{IntegrationTestRunner, IntegrationPresets, IntegrationContext};
+    use shared_test_utils::integration::{
+        IntegrationContext, IntegrationPresets, IntegrationTestRunner,
+    };
 
     #[test]
     fn test_integration_runner_setup() {
@@ -204,17 +224,22 @@ mod integration_tests {
 
         // Manually create the integration structure
         workspace.create_dir(Path::new("integration_data")).unwrap();
-        workspace.create_file(Path::new("config.toml"), &format!(
-            r#"cleanup_on_exit = {}
+        workspace
+            .create_file(
+                Path::new("config.toml"),
+                &format!(
+                    r#"cleanup_on_exit = {}
 isolated_tests = {}
 enable_logging = {}
 timeout_seconds = {}
 "#,
-            config.cleanup_on_exit,
-            config.isolated_tests,
-            config.enable_logging,
-            config.timeout_seconds
-        )).unwrap();
+                    config.cleanup_on_exit,
+                    config.isolated_tests,
+                    config.enable_logging,
+                    config.timeout_seconds
+                ),
+            )
+            .unwrap();
 
         // Create context
         let mut context = IntegrationContext {
@@ -229,8 +254,10 @@ timeout_seconds = {}
         assert_eq!(retrieved, "value");
 
         // Test scenario state
-        context.state.insert("current_scenario".to_string(),
-            serde_json::Value::String("manual_test".to_string()));
+        context.state.insert(
+            "current_scenario".to_string(),
+            serde_json::Value::String("manual_test".to_string()),
+        );
 
         assert_eq!(context.state["current_scenario"], "manual_test");
 
@@ -248,7 +275,11 @@ mod async_tests {
 
     #[tokio::test]
     async fn test_async_timeout() {
-        let result = with_timeout(async { String::from("success") }, Duration::from_millis(100)).await;
+        let result = with_timeout(
+            async { String::from("success") },
+            Duration::from_millis(100),
+        )
+        .await;
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "success");
     }
@@ -262,10 +293,14 @@ mod async_tests {
 
     #[tokio::test]
     async fn test_timeout_failure() {
-        let result = with_timeout(async {
-            tokio::time::sleep(Duration::from_millis(200)).await;
-            "late"
-        }, Duration::from_millis(50)).await;
+        let result = with_timeout(
+            async {
+                tokio::time::sleep(Duration::from_millis(200)).await;
+                "late"
+            },
+            Duration::from_millis(50),
+        )
+        .await;
 
         assert!(result.is_err());
     }
@@ -274,8 +309,8 @@ mod async_tests {
 #[cfg(test)]
 mod macro_tests {
     use super::*;
-    use shared_test_utils::fixtures::FixturePresets;
     use shared_test_utils::error::TestResult;
+    use shared_test_utils::fixtures::FixturePresets;
 
     #[test]
     fn test_setup_test_workspace_macro() {

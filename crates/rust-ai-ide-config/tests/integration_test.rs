@@ -1,7 +1,7 @@
 //! Integration tests for the unified configuration system
 
-use rust_ai_ide_config::*;
 use rust_ai_ide_config::config::ManagerConfig;
+use rust_ai_ide_config::*;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -188,7 +188,6 @@ async fn test_multi_source_priority() {
     std::env::remove_var("PRIORITY_TEST_TESTAPP_APP_NAME");
 }
 
-
 #[tokio::test]
 async fn test_file_format_detection() {
     use crate::sources::{ConfigFormat, SourceUtils};
@@ -233,5 +232,8 @@ async fn test_error_propagation() {
     assert!(result.is_ok());
 
     // Test error handling through configuration operations
-    assert!(manager.load_secure::<TestAppConfig>("nonexistent").await.is_ok());
+    assert!(manager
+        .load_secure::<TestAppConfig>("nonexistent")
+        .await
+        .is_ok());
 }

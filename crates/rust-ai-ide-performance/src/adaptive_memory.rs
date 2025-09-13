@@ -13,7 +13,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
-use tokio::sync::{RwLock, Mutex };
+use tokio::sync::{Mutex, RwLock};
 use tracing::{debug, info, warn};
 
 use rust_ai_ide_shared_types::{IDEResult, RustAIError};
@@ -89,7 +89,10 @@ impl PredictiveAllocationModel {
         // Update timestamp
         self.model_last_updated = chrono::Utc::now();
 
-        debug!("Updated predictive model - Current trend: {:?}", self.current_trend);
+        debug!(
+            "Updated predictive model - Current trend: {:?}",
+            self.current_trend
+        );
     }
 
     /// Predict memory usage for next interval
@@ -141,7 +144,11 @@ impl PredictiveAllocationModel {
     }
 
     /// Determine allocation trend from historical data
-    fn determine_trend(&self, previous: &MemoryUsagePattern, current: &MemoryUsageSample) -> AllocationTrend {
+    fn determine_trend(
+        &self,
+        previous: &MemoryUsagePattern,
+        current: &MemoryUsageSample,
+    ) -> AllocationTrend {
         let prev_avg = previous.average_usage_mb;
         let curr_avg = current.used_memory_mb as f64;
         let change_percentage = ((curr_avg - prev_avg) / prev_avg).abs();
@@ -204,7 +211,8 @@ impl PredictiveAllocationModel {
         }
 
         let recent_patterns: Vec<_> = self.historical_patterns.iter().rev().take(5).collect();
-        let changes: Vec<f64> = recent_patterns.windows(2)
+        let changes: Vec<f64> = recent_patterns
+            .windows(2)
             .map(|w| {
                 let prev = w[0].average_usage_mb;
                 let curr = w[1].average_usage_mb;
@@ -238,7 +246,7 @@ impl PredictiveAllocationModel {
         let mean = changes.iter().sum::<f64>() / changes.len() as f64;
 
         for i in 0..changes.len() - 1 {
-            autocorr += (changes[i] - mean) * (changes[i+1] - mean);
+            autocorr += (changes[i] - mean) * (changes[i + 1] - mean);
         }
 
         autocorr.abs() > (changes.len() as f64 * 0.1)
@@ -250,7 +258,11 @@ impl PredictiveAllocationModel {
 
         // Calculate simple linear regression
         let x_mean = (self.historical_patterns.len() as f64 - 1.0) / 2.0;
-        let y_sum: f64 = self.historical_patterns.iter().map(|p| p.average_usage_mb).sum();
+        let y_sum: f64 = self
+            .historical_patterns
+            .iter()
+            .map(|p| p.average_usage_mb)
+            .sum();
         let y_mean = y_sum / n;
 
         let mut numerator = 0.0;
@@ -274,7 +286,11 @@ impl PredictiveAllocationModel {
 
     /// Calculate prediction confidence based on model accuracy
     fn calculate_prediction_confidence(&self) -> f64 {
-        let base_confidence = if self.historical_patterns.len() > 10 { 0.8 } else { 0.5 };
+        let base_confidence = if self.historical_patterns.len() > 10 {
+            0.8
+        } else {
+            0.5
+        };
         let trend_confidence = match self.current_trend {
             AllocationTrend::Stable => 0.9,
             AllocationTrend::Increasing | AllocationTrend::Decreasing => 0.7,
@@ -397,7 +413,10 @@ impl AdaptiveMemoryManager {
     }
 
     /// Apply adaptive strategy based on current memory pressure
-    pub async fn adapt_to_memory_pressure(&self, current_usage: MemoryUsageSample) -> IDEResult<()> {
+    pub async fn adapt_to_memory_pressure(
+        &self,
+        current_usage: MemoryUsageSample,
+    ) -> IDEResult<()> {
         // Update prediction model
         let mut model = self.model.write().await;
         model.update(current_usage);
@@ -409,14 +428,18 @@ impl AdaptiveMemoryManager {
         // Adapt strategy based on prediction
         match prediction.recommendation {
             AllocationRecommendation::ScaleUp => {
-                strategy.preallocation_chunks = (strategy.preallocation_chunks as f64 * strategy.scaling_factor) as usize;
-                strategy.allocation_chunk_size_kb =
-                    (strategy.allocation_chunk_size_kb as f64 * (1.0 + self.config.adaptation_threshold)) as usize;
+                strategy.preallocation_chunks =
+                    (strategy.preallocation_chunks as f64 * strategy.scaling_factor) as usize;
+                strategy.allocation_chunk_size_kb = (strategy.allocation_chunk_size_kb as f64
+                    * (1.0 + self.config.adaptation_threshold))
+                    as usize;
             }
             AllocationRecommendation::ScaleDown => {
-                strategy.preallocation_chunks = (strategy.preallocation_chunks as f64 * 0.8) as usize;
-                strategy.allocation_chunk_size_kb =
-                    (strategy.allocation_chunk_size_kb as f64 * (1.0 - self.config.adaptation_threshold)) as usize;
+                strategy.preallocation_chunks =
+                    (strategy.preallocation_chunks as f64 * 0.8) as usize;
+                strategy.allocation_chunk_size_kb = (strategy.allocation_chunk_size_kb as f64
+                    * (1.0 - self.config.adaptation_threshold))
+                    as usize;
             }
             AllocationRecommendation::Preallocate => {
                 strategy.preallocation_enabled = true;
@@ -435,7 +458,10 @@ impl AdaptiveMemoryManager {
         strategy.allocation_chunk_size_kb = strategy.allocation_chunk_size_kb.min(8192);
         strategy.preallocation_chunks = strategy.preallocation_chunks.min(50);
 
-        debug!("Adapted strategy: {} chunks of {} KB", strategy.preallocation_chunks, strategy.allocation_chunk_size_kb);
+        debug!(
+            "Adapted strategy: {} chunks of {} KB",
+            strategy.preallocation_chunks, strategy.allocation_chunk_size_kb
+        );
 
         Ok(())
     }
@@ -463,9 +489,9 @@ pub struct MemoryMonitor {
 impl MemoryMonitor {
     pub fn new() -> Self {
         let mut thresholds = HashMap::new();
-        thresholds.insert(PressureLevel::Low, 70);      // 70% usage
-        thresholds.insert(PressureLevel::Medium, 85);   // 85% usage
-        thresholds.insert(PressureLevel::High, 95);     // 95% usage
+        thresholds.insert(PressureLevel::Low, 70); // 70% usage
+        thresholds.insert(PressureLevel::Medium, 85); // 85% usage
+        thresholds.insert(PressureLevel::High, 95); // 95% usage
         thresholds.insert(PressureLevel::Critical, 98); // 98% usage
 
         Self {
@@ -476,13 +502,19 @@ impl MemoryMonitor {
 
     /// Monitor memory pressure and return current level
     pub fn monitor_pressure(&self, sample: &MemoryUsageSample) -> PressureLevel {
-        let usage_percentage = (sample.used_memory_mb as f64 / sample.total_memory_mb as f64) * 100.0;
+        let usage_percentage =
+            (sample.used_memory_mb as f64 / sample.total_memory_mb as f64) * 100.0;
 
-        if usage_percentage >= *self.thresholds.get(&PressureLevel::Critical).unwrap_or(&98) as f64 {
+        if usage_percentage >= *self.thresholds.get(&PressureLevel::Critical).unwrap_or(&98) as f64
+        {
             PressureLevel::Critical
-        } else if usage_percentage >= *self.thresholds.get(&PressureLevel::High).unwrap_or(&95) as f64 {
+        } else if usage_percentage
+            >= *self.thresholds.get(&PressureLevel::High).unwrap_or(&95) as f64
+        {
             PressureLevel::High
-        } else if usage_percentage >= *self.thresholds.get(&PressureLevel::Medium).unwrap_or(&85) as f64 {
+        } else if usage_percentage
+            >= *self.thresholds.get(&PressureLevel::Medium).unwrap_or(&85) as f64
+        {
             PressureLevel::Medium
         } else {
             PressureLevel::Low
@@ -588,15 +620,20 @@ mod tests {
         };
 
         // Test adaptation
-        manager.adapt_to_memory_pressure(current_usage).await.unwrap();
+        manager
+            .adapt_to_memory_pressure(current_usage)
+            .await
+            .unwrap();
 
         let recommendation = manager.get_allocation_recommendation().await.unwrap();
         // Should return some recommendation (which may be Conservative due to insufficient data)
-        assert!(matches!(recommendation,
-            AllocationRecommendation::Conservative |
-            AllocationRecommendation::Maintain |
-            AllocationRecommendation::ScaleUp |
-            AllocationRecommendation::ScaleDown |
-            AllocationRecommendation::Preallocate));
+        assert!(matches!(
+            recommendation,
+            AllocationRecommendation::Conservative
+                | AllocationRecommendation::Maintain
+                | AllocationRecommendation::ScaleUp
+                | AllocationRecommendation::ScaleDown
+                | AllocationRecommendation::Preallocate
+        ));
     }
 }

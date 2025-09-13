@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { 
-  setCurrentFile, 
+import {
+  setCurrentFile,
   updateFileContent,
   loadFileTree,
   selectEditor,
-  FileNode
+  FileNode,
 } from '../../store/slices/editorSlice';
 import {
   Box,
@@ -52,13 +52,8 @@ interface FileExplorerProps {
 
 export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps) {
   const dispatch = useAppDispatch();
-  const { 
-    currentFile, 
-    fileTree, 
-    isLoading, 
-    error: fileError 
-  } = useAppSelector(selectEditor);
-  
+  const { currentFile, fileTree, isLoading, error: fileError } = useAppSelector(selectEditor);
+
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [contextMenu, setContextMenu] = useState<{
     node: FileNode;
@@ -66,8 +61,8 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
     mouseY: number;
   } | null>(null);
   const [dialogOpen, setDialogOpen] = useState<{
-    type: 'file' | 'folder' | 'rename'; 
-    parentPath: string; 
+    type: 'file' | 'folder' | 'rename';
+    parentPath: string;
     node?: FileNode;
   } | null>(null);
   const [newName, setNewName] = useState('');
@@ -81,7 +76,7 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
   useEffect(() => {
     dispatch(loadFileTree(rootPath));
   }, [dispatch, rootPath]);
-  
+
   // Handle file tree loading errors
   useEffect(() => {
     if (fileError) {
@@ -92,7 +87,7 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
       });
     }
   }, [fileError]);
-  
+
   // Helper function to find a node by path
   const findNodeByPath = useCallback((node: FileNode, path: string): FileNode | null => {
     if (node.path === path) return node;
@@ -123,7 +118,11 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
     dispatch(loadFileTree(rootPath));
   };
 
-  const handleCreateNew = (type: 'file' | 'folder' | 'rename', parentPath: string, node?: FileNode) => {
+  const handleCreateNew = (
+    type: 'file' | 'folder' | 'rename',
+    parentPath: string,
+    node?: FileNode
+  ) => {
     setDialogOpen({ type, parentPath, node });
     setNewName(node ? node.name : '');
   };
@@ -131,7 +130,7 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
   const handleContextMenu = (event: React.MouseEvent, node: FileNode) => {
     event.preventDefault();
     event.stopPropagation();
-    
+
     setContextMenu({
       node,
       mouseX: event.clientX - 2,
@@ -163,9 +162,9 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
 
   const handleDialogConfirm = () => {
     if (!dialogOpen || !newName.trim()) return;
-    
+
     const { type, parentPath, node } = dialogOpen;
-    
+
     if (type === 'rename' && node) {
       // Handle rename
       console.log(`Renaming ${node.path} to ${parentPath}/${newName}`);
@@ -183,14 +182,14 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
         severity: 'success',
       });
     }
-    
+
     // Close the dialog and refresh the file tree
     setDialogOpen(null);
     handleRefresh();
   };
-  
+
   const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   const renderFileTree = (node: FileNode, level = 0) => {
@@ -206,7 +205,9 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
             pl: 2 + level * 2,
             backgroundColor: isSelected ? 'rgba(144, 202, 249, 0.16)' : 'transparent',
             '&:hover': {
-              backgroundColor: isSelected ? 'rgba(144, 202, 249, 0.24)' : 'rgba(255, 255, 255, 0.04)',
+              backgroundColor: isSelected
+                ? 'rgba(144, 202, 249, 0.24)'
+                : 'rgba(255, 255, 255, 0.04)',
             },
           }}
           onClick={() => (isFile ? handleFileClick(node.path) : handleToggle(node.path))}
@@ -231,7 +232,7 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
           ) : (
             <Box sx={{ width: 32, display: 'flex', justifyContent: 'center' }} />
           )}
-          
+
           <ListItemIcon sx={{ minWidth: 36 }}>
             {isFile ? (
               <FileIcon fontSize="small" />
@@ -241,7 +242,7 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
               <FolderIcon fontSize="small" />
             )}
           </ListItemIcon>
-          
+
           <ListItemText
             primary={node.name}
             primaryTypographyProps={{
@@ -253,10 +254,10 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
               },
             }}
           />
-          
+
           {node.lastModified && (
-            <Typography 
-              variant="caption" 
+            <Typography
+              variant="caption"
               color="text.secondary"
               sx={{
                 ml: 1,
@@ -267,7 +268,7 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
               {new Date(node.lastModified).toLocaleTimeString()}
             </Typography>
           )}
-          
+
           <ListItemSecondaryAction>
             <IconButton
               edge="end"
@@ -281,7 +282,7 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
             </IconButton>
           </ListItemSecondaryAction>
         </ListItemButton>
-        
+
         {!isFile && (
           <Collapse in={isExpanded} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
@@ -300,7 +301,7 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
       </Box>
     );
   }
-  
+
   if (!fileTree) {
     return (
       <Box p={2} textAlign="center">
@@ -354,7 +355,7 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
           </Tooltip>
         </Box>
       </Box>
-      
+
       <Box sx={{ flex: 1, overflow: 'auto' }}>
         <List dense disablePadding>
           {fileTree ? (
@@ -375,7 +376,7 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
           anchorReference="anchorPosition"
           anchorPosition={{
             top: contextMenu.mouseY,
-            left: contextMenu.mouseX
+            left: contextMenu.mouseX,
           }}
         >
           <MenuItem onClick={() => handleRename(contextMenu.node)}>
@@ -384,10 +385,7 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
             </ListItemIcon>
             <ListItemText>Rename</ListItemText>
           </MenuItem>
-          <MenuItem 
-            onClick={() => handleDelete(contextMenu.node)}
-            sx={{ color: 'error.main' }}
-          >
+          <MenuItem onClick={() => handleDelete(contextMenu.node)} sx={{ color: 'error.main' }}>
             <ListItemIcon sx={{ color: 'error.main' }}>
               <DeleteIcon fontSize="small" />
             </ListItemIcon>
@@ -397,15 +395,10 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
       )}
 
       {/* Create/Rename Dialog */}
-      <Dialog 
-        open={!!dialogOpen} 
-        onClose={() => setDialogOpen(null)} 
-        maxWidth="sm" 
-        fullWidth
-      >
+      <Dialog open={!!dialogOpen} onClose={() => setDialogOpen(null)} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {dialogOpen?.type === 'rename' 
-            ? 'Rename Item' 
+          {dialogOpen?.type === 'rename'
+            ? 'Rename Item'
             : `New ${dialogOpen?.type === 'file' ? 'File' : 'Folder'}`}
         </DialogTitle>
         <DialogContent>
@@ -413,8 +406,8 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
             autoFocus
             margin="dense"
             label={
-              dialogOpen?.type === 'rename' 
-                ? 'New name' 
+              dialogOpen?.type === 'rename'
+                ? 'New name'
                 : `${dialogOpen?.type === 'file' ? 'File' : 'Folder'} name`
             }
             type="text"
@@ -434,9 +427,9 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(null)}>Cancel</Button>
-          <Button 
-            onClick={handleDialogConfirm} 
-            color="primary" 
+          <Button
+            onClick={handleDialogConfirm}
+            color="primary"
             variant="contained"
             disabled={!newName.trim()}
           >
@@ -444,7 +437,7 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
@@ -452,11 +445,7 @@ export function FileExplorer({ rootPath = '/', onFileSelect }: FileExplorerProps
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       >
-        <Alert 
-          onClose={handleCloseSnackbar} 
-          severity={snackbar.severity}
-          variant="filled"
-        >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
           {snackbar.message}
         </Alert>
       </Snackbar>

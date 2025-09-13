@@ -2,7 +2,6 @@
 ///
 /// This module contains the core shared types that need to be converted to TypeScript
 /// for cross-platform type safety between Rust backend and TypeScript frontend.
-
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -192,7 +191,7 @@ pub struct ProjectSettings {
     pub language: Option<String>,
 }
 
- /// Generic error response
+/// Generic error response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorResponse {
     /// Error code

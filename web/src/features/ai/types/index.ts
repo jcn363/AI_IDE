@@ -57,21 +57,10 @@ export interface RefactoringContext {
 // =============================================================================
 
 // Analysis Categories
-export type AnalysisCategory =
-  | 'code-smell'
-  | 'performance'
-  | 'security'
-  | 'style'
-  | 'architecture';
+export type AnalysisCategory = 'code-smell' | 'performance' | 'security' | 'style' | 'architecture';
 
 // Severity levels
-export type SeverityLevel =
-  | 'critical'
-  | 'high'
-  | 'medium'
-  | 'low'
-  | 'info'
-  | 'hint';
+export type SeverityLevel = 'critical' | 'high' | 'medium' | 'low' | 'info' | 'hint';
 
 // Core AI Analysis Configuration
 export interface AIAnalysisConfig {
@@ -305,12 +294,7 @@ export interface FineTuneJob {
   };
 }
 
-export type TrainingStatus =
-  | 'queued'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'cancelled';
+export type TrainingStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 
 export interface TrainingProgress {
   epoch: number;
@@ -348,5 +332,5 @@ export {
   type RefactoringIntegration,
   type ValidationResult,
   type FixConflict,
-  type ImpactAnalysis
+  type ImpactAnalysis,
 } from './error-resolution';

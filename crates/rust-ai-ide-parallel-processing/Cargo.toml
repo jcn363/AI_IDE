@@ -30,7 +30,7 @@ crossbeam = "0.8"
 rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
 
 # Logging for performance monitoring
-tracing = { version = "0.1" }
+#tracing = { version = "0.1" }
 
 # Common serialization for distributed task communication
 serde = { version = "1.0", features = ["derive"] }

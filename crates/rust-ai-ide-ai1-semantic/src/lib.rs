@@ -3,19 +3,19 @@
 //! Advanced semantic analysis for deep code understanding, cross-language support,
 //! and intelligent code transformations.
 
-use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
-pub mod semantic_analyzer;
-pub mod cross_language;
 pub mod code_graph;
+pub mod cross_language;
 pub mod inference_engine;
+pub mod semantic_analyzer;
 
 // Re-exports
-pub use semantic_analyzer::{SemanticAnalyzer, SemanticContext};
-pub use cross_language::{LanguageSupport, CrossLanguageRefactor};
 pub use code_graph::{CodeGraph, RelationshipGraph};
+pub use cross_language::{CrossLanguageRefactor, LanguageSupport};
 pub use inference_engine::{InferenceEngine, SemanticInference};
+pub use semantic_analyzer::{SemanticAnalyzer, SemanticContext};
 
 /// Configuration for semantic understanding
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -58,7 +58,11 @@ impl SemanticUnderstandingEngine {
     }
 
     /// Analyze code for deep semantic understanding
-    pub async fn analyze_code(&self, source_code: &str, language: &str) -> Result<SemanticAnalysis, SemanticError> {
+    pub async fn analyze_code(
+        &self,
+        source_code: &str,
+        language: &str,
+    ) -> Result<SemanticAnalysis, SemanticError> {
         // Perform basic semantic analysis
         let context = self.analyzer.analyze(source_code, language).await?;
 

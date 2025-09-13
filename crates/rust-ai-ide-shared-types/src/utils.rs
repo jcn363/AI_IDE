@@ -3,8 +3,8 @@
 //! This module contains utility functions, helper traits, and common
 //! functionality used across the shared types crate.
 
-use crate::types::*;
 use crate::errors::TypeGenerationError;
+use crate::types::*;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -14,20 +14,17 @@ pub mod file_utils {
 
     /// Read a Rust source file and return its contents
     pub fn read_rust_file(path: &Path) -> Result<String, TypeGenerationError> {
-        std::fs::read_to_string(path)
-            .map_err(|e| TypeGenerationError::IoError(e))
+        std::fs::read_to_string(path).map_err(|e| TypeGenerationError::IoError(e))
     }
 
     /// Write generated content to a file
     pub fn write_generated_file(path: &Path, content: &str) -> Result<(), TypeGenerationError> {
         // Ensure parent directory exists
         if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(|e| TypeGenerationError::IoError(e))?;
+            std::fs::create_dir_all(parent).map_err(|e| TypeGenerationError::IoError(e))?;
         }
 
-        std::fs::write(path, content)
-            .map_err(|e| TypeGenerationError::IoError(e))
+        std::fs::write(path, content).map_err(|e| TypeGenerationError::IoError(e))
     }
 
     /// Check if a file is a valid Rust source file
@@ -133,8 +130,12 @@ pub mod collection_utils {
     use super::*;
 
     /// Filter types by visibility
-    pub fn filter_by_visibility(types: &[ParsedType], min_visibility: Visibility) -> Vec<ParsedType> {
-        types.iter()
+    pub fn filter_by_visibility(
+        types: &[ParsedType],
+        min_visibility: Visibility,
+    ) -> Vec<ParsedType> {
+        types
+            .iter()
             .filter(|ty| visibility_level(&ty.visibility) >= visibility_level(&min_visibility))
             .cloned()
             .collect()
@@ -145,7 +146,8 @@ pub mod collection_utils {
         let mut groups = HashMap::new();
 
         for ty in types {
-            groups.entry(ty.kind.clone())
+            groups
+                .entry(ty.kind.clone())
                 .or_insert_with(Vec::new)
                 .push(ty.clone());
         }
@@ -195,9 +197,8 @@ pub mod collection_utils {
         let mut visiting = std::collections::HashSet::new();
 
         // Create a map for quick lookup
-        let type_map: HashMap<String, &ParsedType> = types.iter()
-            .map(|ty| (ty.name.clone(), ty))
-            .collect();
+        let type_map: HashMap<String, &ParsedType> =
+            types.iter().map(|ty| (ty.name.clone(), ty)).collect();
 
         fn visit(
             type_name: &str,
@@ -237,7 +238,13 @@ pub mod collection_utils {
 
         for ty in types {
             if !visited.contains(&ty.name) {
-                visit(&ty.name, &type_map, &mut result, &mut visited, &mut visiting);
+                visit(
+                    &ty.name,
+                    &type_map,
+                    &mut result,
+                    &mut visited,
+                    &mut visiting,
+                );
             }
         }
 
@@ -255,9 +262,10 @@ pub mod validation_utils {
 
         for ty in types {
             if seen_names.contains(&ty.name) {
-                return Err(TypeGenerationError::AnalysisError(
-                    format!("Duplicate type name found: {}", ty.name)
-                ));
+                return Err(TypeGenerationError::AnalysisError(format!(
+                    "Duplicate type name found: {}",
+                    ty.name
+                )));
             }
             seen_names.insert(ty.name.clone());
         }
@@ -268,9 +276,8 @@ pub mod validation_utils {
     /// Validate that all referenced types exist
     pub fn check_type_references(types: &[ParsedType]) -> Vec<String> {
         let mut warnings = Vec::new();
-        let type_names: std::collections::HashSet<String> = types.iter()
-            .map(|ty| ty.name.clone())
-            .collect();
+        let type_names: std::collections::HashSet<String> =
+            types.iter().map(|ty| ty.name.clone()).collect();
 
         for ty in types {
             for field in &ty.fields {
@@ -300,8 +307,8 @@ pub mod validation_utils {
     /// Check if a type is a built-in language type
     fn is_builtin_type(type_name: &str) -> bool {
         let builtins = [
-            "String", "str", "i8", "i16", "i32", "i64", "u8", "u16", "u32", "u64",
-            "f32", "f64", "bool", "char", "usize", "isize"
+            "String", "str", "i8", "i16", "i32", "i64", "u8", "u16", "u32", "u64", "f32", "f64",
+            "bool", "char", "usize", "isize",
         ];
 
         builtins.contains(&type_name)

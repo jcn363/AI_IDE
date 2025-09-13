@@ -125,7 +125,7 @@ The Rust AI IDE now includes four major AI/ML enhancements that leverage cutting
 Use the built-in model management interface:
 
 ```typescript
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 
 // Download CodeLlama 7B
 await invoke('download_model', {
@@ -251,7 +251,7 @@ let config = InferenceConfig {
 #### Single File Review
 
 ```typescript
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 
 const result = await invoke('run_automated_code_review', {
     targetPath: './src/main.rs',

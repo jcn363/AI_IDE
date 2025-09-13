@@ -66,35 +66,35 @@ describe('AISuggestionPanel', () => {
       severities: [],
       showOnlyFixable: false,
       minConfidence: 0,
-      searchText: ''
+      searchText: '',
     },
     sortOptions: {
       field: 'severity' as const,
-      direction: 'asc' as const
+      direction: 'asc' as const,
     },
     analysisResult: undefined,
     enhancedAnalysisResult: undefined,
     analysisProgress: undefined,
-    searchText: ''
+    searchText: '',
   };
 
   test('renders suggestions with correct severity', () => {
     const { container } = render(<AISuggestionPanel {...defaultProps} />);
-    
+
     // Check that all suggestions are rendered
     const errorSuggestion = screen.getByText('Test error');
     const warningSuggestion = screen.getByText('Test warning');
     const infoSuggestion = screen.getByText('Test info');
-    
+
     expect(errorSuggestion).toBeInTheDocument();
     expect(warningSuggestion).toBeInTheDocument();
     expect(infoSuggestion).toBeInTheDocument();
-    
+
     // Check severity labels
     const errorLabel = screen.getByText('Error');
     const warningLabel = screen.getByText('Warning');
     const infoLabel = screen.getByText('Info');
-    
+
     expect(errorLabel).toBeInTheDocument();
     expect(warningLabel).toBeInTheDocument();
     expect(infoLabel).toBeInTheDocument();
@@ -109,7 +109,7 @@ describe('AISuggestionPanel', () => {
           severities: ['error'],
           showOnlyFixable: defaultProps.filters?.showOnlyFixable ?? false,
           minConfidence: defaultProps.filters?.minConfidence ?? 0,
-          searchText: defaultProps.filters?.searchText ?? ''
+          searchText: defaultProps.filters?.searchText ?? '',
         }}
       />
     );
@@ -118,7 +118,7 @@ describe('AISuggestionPanel', () => {
     const errorSuggestion = screen.queryByText('Test error');
     const warningSuggestion = screen.queryByText('Test warning');
     const infoSuggestion = screen.queryByText('Test info');
-    
+
     expect(errorSuggestion).toBeInTheDocument();
     expect(warningSuggestion).not.toBeInTheDocument();
     expect(infoSuggestion).not.toBeInTheDocument();
@@ -126,29 +126,29 @@ describe('AISuggestionPanel', () => {
 
   test('sorts suggestions by severity', () => {
     const { container } = render(
-      <AISuggestionPanel 
+      <AISuggestionPanel
         {...defaultProps}
         sortOptions={{
           field: 'severity' as const,
-          direction: 'asc' as const
+          direction: 'asc' as const,
         }}
       />
     );
-    
+
     // Debug: Log the rendered component HTML after sorting
     console.log('Sorted HTML:', container.innerHTML);
-    
+
     // Get all suggestion items
     const items = container.querySelectorAll('[data-testid="suggestion-item"]');
-    
+
     // Debug: Log the text content of each item
     items.forEach((item, index) => {
       console.log(`Item ${index}:`, item.textContent);
     });
-    
+
     // Check that we have the expected number of items
     expect(items.length).toBe(3);
-    
+
     // Check order: error (1) should be first, then warning (2), then info (3)
     // Using toContain instead of toHaveTextContent to be more flexible with whitespace
     expect(items[0].textContent).toContain('Test error');

@@ -19,14 +19,14 @@
 //! - **LSP Integration**: Interface with existing LSP completion
 
 use async_trait::async_trait;
+use lsp_types::{CompletionItem, CompletionParams, Position};
+use moka::future::Cache;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 use tracing::{debug, info, warn};
-use lsp_types::{CompletionItem, CompletionParams, Position};
 use tree_sitter::{Language, Parser, Query, QueryCursor};
-use moka::future::Cache;
 
 use rust_ai_ide_errors::RustAIError;
 
@@ -184,10 +184,14 @@ impl PredictiveCompletionEngine {
         }
 
         // Extract completion context
-        let context = self.extract_completion_context(&text, position, workspace_root, language).await?;
+        let context = self
+            .extract_completion_context(&text, position, workspace_root, language)
+            .await?;
 
         // Get completions from registered provider
-        let completions = self.get_provider_completions(language, &text, position, context.clone()).await?;
+        let completions = self
+            .get_provider_completions(language, &text, position, context.clone())
+            .await?;
 
         // Enhance with predictive suggestions
         let enhanced = self.enhance_completions(completions, context).await?;
@@ -195,7 +199,10 @@ impl PredictiveCompletionEngine {
         // Filter and rank suggestions
         let ranked = self.rank_and_filter_completions(enhanced).await?;
 
-        Ok(ranked.into_iter().take(self.config.max_suggestions).collect())
+        Ok(ranked
+            .into_iter()
+            .take(self.config.max_suggestions)
+            .collect())
     }
 
     /// Learn from accepted completions to improve future suggestions
@@ -219,13 +226,16 @@ impl PredictiveCompletionEngine {
                 analyzer.frequency.get(&pattern_key).unwrap_or(&0) + 1,
             );
 
-            let pattern = analyzer.patterns.entry(pattern_key.clone()).or_insert_with(|| Pattern {
-                prefix: prefix.to_string(),
-                completions: Vec::new(),
-                score: 0.0,
-                usage_count: 0,
-                last_used: chrono::Utc::now(),
-            });
+            let pattern = analyzer
+                .patterns
+                .entry(pattern_key.clone())
+                .or_insert_with(|| Pattern {
+                    prefix: prefix.to_string(),
+                    completions: Vec::new(),
+                    score: 0.0,
+                    usage_count: 0,
+                    last_used: chrono::Utc::now(),
+                });
 
             pattern.completions.push(accepted_completion.to_string());
             pattern.usage_count += 1;
@@ -233,7 +243,10 @@ impl PredictiveCompletionEngine {
             pattern.score = self.calculate_pattern_score(pattern);
         }
 
-        debug!("Learned completion pattern: {} -> {}", prefix, accepted_completion);
+        debug!(
+            "Learned completion pattern: {} -> {}",
+            prefix, accepted_completion
+        );
         Ok(())
     }
 
@@ -261,7 +274,10 @@ impl PredictiveCompletionEngine {
         - Build symbol relationship graph
         */
 
-        debug!("Analyzed semantic context for {} at position {}:{}", language, context.cursor_position.line, context.cursor_position.character);
+        debug!(
+            "Analyzed semantic context for {} at position {}:{}",
+            language, context.cursor_position.line, context.cursor_position.character
+        );
         Ok(())
     }
 
@@ -275,11 +291,10 @@ impl PredictiveCompletionEngine {
         let lines: Vec<&str> = text.lines().collect();
         let current_line_index = position.line as usize;
 
-        let current_line = lines.get(current_line_index)
-            .unwrap_or(&"")
-            .to_string();
+        let current_line = lines.get(current_line_index).unwrap_or(&"").to_string();
 
-        let surrounding_lines = lines.iter()
+        let surrounding_lines = lines
+            .iter()
             .skip(current_line_index.saturating_sub(self.config.context_window))
             .take(self.config.context_window * 2 + 1)
             .map(|l| l.to_string())
@@ -291,9 +306,9 @@ impl PredictiveCompletionEngine {
             cursor_position: position,
             current_line,
             surrounding_lines,
-            imports: Vec::new(), // Extract from syntax analysis
+            imports: Vec::new(),            // Extract from syntax analysis
             variables_in_scope: Vec::new(), // Extract from semantic analysis
-            functions_defined: Vec::new(), // Extract from syntax analysis
+            functions_defined: Vec::new(),  // Extract from syntax analysis
             project_path: workspace_root,
             file_path,
             language: language.to_string(),
@@ -309,7 +324,9 @@ impl PredictiveCompletionEngine {
     ) -> CompletionResult<Vec<CompletionItem>> {
         let providers = self.providers.read().await;
         if let Some(provider) = providers.get(language) {
-            provider.get_patched_completions(text, position, context).await
+            provider
+                .get_patched_completions(text, position, context)
+                .await
         } else {
             Ok(Vec::new())
         }
@@ -325,7 +342,8 @@ impl PredictiveCompletionEngine {
         // Add predictive suggestions based on learned patterns
         if self.config.enable_pattern_learning {
             let analyzer = self.pattern_analyzer.lock().await;
-            let prefix = self.extract_prefix(&context.current_line, context.cursor_position.character);
+            let prefix =
+                self.extract_prefix(&context.current_line, context.cursor_position.character);
 
             for pattern in analyzer.patterns.values() {
                 if pattern.prefix.starts_with(&prefix) {
@@ -334,7 +352,10 @@ impl PredictiveCompletionEngine {
                             enhanced.push(CompletionItem {
                                 label: completion.clone(),
                                 kind: Some(lsp_types::CompletionItemKind::SNIPPET),
-                                detail: Some(format!("Predicted (confidence: {:.2})", pattern.score)),
+                                detail: Some(format!(
+                                    "Predicted (confidence: {:.2})",
+                                    pattern.score
+                                )),
                                 ..Default::default()
                             });
                         }
@@ -428,7 +449,9 @@ pub struct RustCompletionProvider {
 
 #[async_trait]
 impl LanguageCompletionProvider for RustCompletionProvider {
-    fn language_name(&self) -> &'static str { "rust" }
+    fn language_name(&self) -> &'static str {
+        "rust"
+    }
 
     async fn get_patched_completions(
         &self,
@@ -439,7 +462,8 @@ impl LanguageCompletionProvider for RustCompletionProvider {
         let mut completions = Vec::new();
 
         // Basic syntax-aware completions
-        let prefix = code.lines()
+        let prefix = code
+            .lines()
             .skip(position.line as usize)
             .next()
             .unwrap_or("")
@@ -525,19 +549,24 @@ impl LanguageCompletionProvider for RustCompletionProvider {
 mod tauri_integration {
     use super::*;
     use std::sync::Arc;
-    use tauri::{State, Manager};
+    use tauri::{Manager, State};
 
     type PredictiveCompletionState = Arc<Mutex<Option<PredictiveCompletionEngine>>>;
 
     /// Initialize predictive completion engine
     pub async fn initialize_predictive_completion(
         state: PredictiveCompletionState,
-        config: PredictiveCompletionConfig
+        config: PredictiveCompletionConfig,
     ) -> Result<(), RustAIError> {
         let engine = PredictiveCompletionEngine::new(Arc::new(config));
-        engine.register_provider("rust", Arc::new(RustCompletionProvider {
-            parser: Arc::new(Mutex::new(None)),
-        })).await?;
+        engine
+            .register_provider(
+                "rust",
+                Arc::new(RustCompletionProvider {
+                    parser: Arc::new(Mutex::new(None)),
+                }),
+            )
+            .await?;
 
         let mut state_guard = state.lock().await;
         *state_guard = Some(engine);
@@ -557,7 +586,8 @@ mod tauri_integration {
         workspace_root: Option<String>,
     ) -> Result<Vec<CompletionItem>, String> {
         let state_guard = state.lock().await;
-        let engine = state_guard.as_ref()
+        let engine = state_guard
+            .as_ref()
             .ok_or("Predictive completion engine not initialized")?;
 
         // Input validation
@@ -565,7 +595,8 @@ mod tauri_integration {
         validate_string_input_extended(&text, 50 * 1024, true) // 50KB limit
             .map_err(|e| format!("Invalid text input: {}", e))?;
 
-        engine.predict_completions(text_document_uri, position, text, &language, workspace_root)
+        engine
+            .predict_completions(text_document_uri, position, text, &language, workspace_root)
             .await
             .map_err(|e| format!("Prediction failed: {}", e))
     }
@@ -583,7 +614,10 @@ mod tests {
         };
 
         let code = "let x = 1;";
-        let position = Position { line: 0, character: 6 }; // Cursor after "let "
+        let position = Position {
+            line: 0,
+            character: 6,
+        }; // Cursor after "let "
         let context = CompletionContext {
             cursor_position: position.clone(),
             current_line: "let x = 1;".to_string(),
@@ -596,7 +630,10 @@ mod tests {
             language: "rust".to_string(),
         };
 
-        let completions = provider.get_patched_completions(code, position, context).await.unwrap();
+        let completions = provider
+            .get_patched_completions(code, position, context)
+            .await
+            .unwrap();
         assert!(!completions.is_empty());
         assert!(completions.iter().any(|c| c.label == "println!"));
     }
@@ -606,22 +643,34 @@ mod tests {
         let config = Arc::new(PredictiveCompletionConfig::default());
         let engine = PredictiveCompletionEngine::new(config);
 
-        engine.register_provider("rust", Arc::new(RustCompletionProvider {
-            parser: Arc::new(Mutex::new(None)),
-        })).await.unwrap();
+        engine
+            .register_provider(
+                "rust",
+                Arc::new(RustCompletionProvider {
+                    parser: Arc::new(Mutex::new(None)),
+                }),
+            )
+            .await
+            .unwrap();
 
-        let completions = engine.predict_completions(
-            "test.rs".to_string(),
-            Position { line: 0, character: 0 },
-            "fn main() {}".to_string(),
-            "rust",
-            None,
-        ).await.unwrap();
+        let completions = engine
+            .predict_completions(
+                "test.rs".to_string(),
+                Position {
+                    line: 0,
+                    character: 0,
+                },
+                "fn main() {}".to_string(),
+                "rust",
+                None,
+            )
+            .await
+            .unwrap();
 
         assert!(!completions.is_empty());
     }
 }
 
-pub use PredictiveCompletionEngine as CompletionEngine;
 pub use CompletionContext;
 pub use LanguageCompletionProvider;
+pub use PredictiveCompletionEngine as CompletionEngine;

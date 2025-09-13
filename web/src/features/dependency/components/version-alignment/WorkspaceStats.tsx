@@ -39,16 +39,18 @@ export const WorkspaceStats: React.FC<WorkspaceStatsProps> = ({
 
   return (
     <Box mb={3}>
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: {
-          xs: '1fr',
-          sm: 'repeat(2, 1fr)',
-          md: 'repeat(3, 1fr)',
-          lg: 'repeat(6, 1fr)',
-        },
-        gap: 2,
-      }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+            lg: 'repeat(6, 1fr)',
+          },
+          gap: 2,
+        }}
+      >
         {statItems.map((item) => (
           <Box key={item.label}>
             <Card variant="outlined">

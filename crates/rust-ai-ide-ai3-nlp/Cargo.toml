@@ -18,7 +18,7 @@ async-trait = "0.1"
 
 # NLP/ML for code understanding
 tch = { version = "0.12", optional = true }  # PyTorch bindings
-transformer = { version = "0.1", optional = true }
+#transformer = { version = "0.1", optional = true }
 tokenizers = { version = "0.19", optional = true }
 rust-bert = { version = "0.21", optional = true }
 
@@ -31,5 +31,5 @@ rust-ai-ide-ai3-quantum = { path = "../rust-ai-ide-ai3-quantum" }
 
 [features]
 default = []
-ml_models = ["tch", "transformer", "tokenizers", "rust-bert"]
+ml_models = ["tch", "tokenizers", "rust-bert"]
 full = ["ml_models"]

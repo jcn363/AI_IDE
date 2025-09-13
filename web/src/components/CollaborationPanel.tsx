@@ -39,14 +39,14 @@ enum MessageType {
   CHAT = 'chat',
   SYSTEM = 'system',
   COACHING = 'coaching',
-  EDITING = 'editing'
+  EDITING = 'editing',
 }
 
 enum ParticipantRole {
   HOST = 'host',
   COLLABORATOR = 'collaborator',
   AI_AGENT = 'ai_agent',
-  OBSERVER = 'observer'
+  OBSERVER = 'observer',
 }
 
 interface CoachingEvent {
@@ -71,7 +71,7 @@ class CollaborationPanel extends Component<CollaborationPanelProps, Collaboratio
       isConnected: false,
       isTyping: false,
       currentUser: this.getCurrentUser(),
-      coachingMode: true
+      coachingMode: true,
     };
   }
 
@@ -99,26 +99,30 @@ class CollaborationPanel extends Component<CollaborationPanelProps, Collaboratio
   private async loadInitialState() {
     // Load current chat messages and participants
     const messages = await this.props.service.getRecentMessages(this.props.sessionId || '');
-    const participants = await this.props.service.getSessionParticipants(this.props.sessionId || '');
+    const participants = await this.props.service.getSessionParticipants(
+      this.props.sessionId || ''
+    );
 
     this.setState({
       messages: messages || [],
       participants: participants || [],
-      isConnected: Boolean(this.props.sessionId)
+      isConnected: Boolean(this.props.sessionId),
     });
   }
 
   private subscribeToCollaborationEvents() {
     // Subscribe to real-time events
     const unsubscribeMessage = this.props.service.onMessage((message: ChatMessage) => {
-      this.setState(prevState => ({
-        messages: [...prevState.messages, message]
+      this.setState((prevState) => ({
+        messages: [...prevState.messages, message],
       }));
     });
 
-    const unsubscribeParticipantUpdate = this.props.service.onParticipantUpdate((participants: Participant[]) => {
-      this.setState({ participants });
-    });
+    const unsubscribeParticipantUpdate = this.props.service.onParticipantUpdate(
+      (participants: Participant[]) => {
+        this.setState({ participants });
+      }
+    );
 
     const unsubscribeCoachingEvent = this.props.service.onCoachingEvent((event: CoachingEvent) => {
       const coachingMessage: ChatMessage = {
@@ -127,18 +131,22 @@ class CollaborationPanel extends Component<CollaborationPanelProps, Collaboratio
         content: '',
         timestamp: Date.now(),
         messageType: MessageType.COACHING,
-        coachingEvent: event
+        coachingEvent: event,
       };
-      this.setState(prevState => ({
-        messages: [...prevState.messages, coachingMessage]
+      this.setState((prevState) => ({
+        messages: [...prevState.messages, coachingMessage],
       }));
     });
 
-    this.eventListeners = [unsubscribeMessage, unsubscribeParticipantUpdate, unsubscribeCoachingEvent];
+    this.eventListeners = [
+      unsubscribeMessage,
+      unsubscribeParticipantUpdate,
+      unsubscribeCoachingEvent,
+    ];
   }
 
   private cleanupEventListeners() {
-    this.eventListeners.forEach(unsubscribe => unsubscribe());
+    this.eventListeners.forEach((unsubscribe) => unsubscribe());
     if (this.typingTimeout) {
       clearTimeout(this.typingTimeout);
     }
@@ -176,7 +184,7 @@ class CollaborationPanel extends Component<CollaborationPanelProps, Collaboratio
       this.props.service.sendTypingIndicator(false);
       this.setState({ isTyping: false });
     }, 1000);
-  }
+  };
 
   private handleSendMessage = async () => {
     if (!this.state.currentMessage.trim()) return;
@@ -186,7 +194,7 @@ class CollaborationPanel extends Component<CollaborationPanelProps, Collaboratio
       sender: this.state.currentUser,
       content: this.state.currentMessage.trim(),
       timestamp: Date.now(),
-      messageType: MessageType.CHAT
+      messageType: MessageType.CHAT,
     };
 
     try {
@@ -199,14 +207,14 @@ class CollaborationPanel extends Component<CollaborationPanelProps, Collaboratio
       console.error('Failed to send message:', error);
       // Could add error handling UI here
     }
-  }
+  };
 
   private handleKeyPress = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       this.handleSendMessage();
     }
-  }
+  };
 
   private scrollToBottom() {
     if (this.chatContainerRef.current) {
@@ -216,18 +224,20 @@ class CollaborationPanel extends Component<CollaborationPanelProps, Collaboratio
 
   private focusMessageInput() {
     // Focus message input when panel becomes visible
-    const inputElement = document.getElementById('collaboration-message-input') as HTMLTextAreaElement;
+    const inputElement = document.getElementById(
+      'collaboration-message-input'
+    ) as HTMLTextAreaElement;
     if (inputElement) {
       inputElement.focus();
     }
   }
 
   private toggleCoachingMode = () => {
-    this.setState(prevState => ({ coachingMode: !prevState.coachingMode }));
+    this.setState((prevState) => ({ coachingMode: !prevState.coachingMode }));
 
     // Notify backend about coaching mode change
     this.props.service.updateCoachingMode(this.state.coachingMode);
-  }
+  };
 
   private renderMessage(message: ChatMessage): React.ReactNode {
     const isOwnMessage = message.sender === this.state.currentUser;
@@ -239,7 +249,8 @@ class CollaborationPanel extends Component<CollaborationPanelProps, Collaboratio
             <span className="ai-icon">🤖</span>
             <span className="coaching-label">AI Coaching</span>
             <span className="coaching-confidence">
-              {message.coachingEvent.confidence && `${Math.round(message.coachingEvent.confidence * 100)}%`}
+              {message.coachingEvent.confidence &&
+                `${Math.round(message.coachingEvent.confidence * 100)}%`}
             </span>
           </div>
           <div className="coaching-content">
@@ -258,13 +269,9 @@ class CollaborationPanel extends Component<CollaborationPanelProps, Collaboratio
       <div key={message.id} className={`message ${isOwnMessage ? 'own-message' : 'other-message'}`}>
         <div className="message-header">
           <span className="sender">{message.sender}</span>
-          <span className="timestamp">
-            {new Date(message.timestamp).toLocaleTimeString()}
-          </span>
+          <span className="timestamp">{new Date(message.timestamp).toLocaleTimeString()}</span>
         </div>
-        <div className="message-content">
-          {message.content}
-        </div>
+        <div className="message-content">{message.content}</div>
       </div>
     );
   }
@@ -273,24 +280,23 @@ class CollaborationPanel extends Component<CollaborationPanelProps, Collaboratio
     return (
       <div className="participants-list">
         <h4>Participants ({this.state.participants.length})</h4>
-        {this.state.participants.map(participant => (
-          <div key={participant.id} className={`participant ${participant.isOnline ? 'online' : 'offline'}`}>
+        {this.state.participants.map((participant) => (
+          <div
+            key={participant.id}
+            className={`participant ${participant.isOnline ? 'online' : 'offline'}`}
+          >
             <div className="participant-avatar">
               {participant.avatar ? (
                 <img src={participant.avatar} alt={`${participant.name} avatar`} />
               ) : (
-                <div className="avatar-placeholder">
-                  {participant.name.charAt(0).toUpperCase()}
-                </div>
+                <div className="avatar-placeholder">{participant.name.charAt(0).toUpperCase()}</div>
               )}
             </div>
             <div className="participant-info">
               <span className="participant-name">{participant.name}</span>
               <span className={`participant-role ${participant.role}`}>{participant.role}</span>
             </div>
-            {participant.isOnline && (
-              <div className="online-indicator"></div>
-            )}
+            {participant.isOnline && <div className="online-indicator"></div>}
           </div>
         ))}
       </div>
@@ -310,7 +316,9 @@ class CollaborationPanel extends Component<CollaborationPanelProps, Collaboratio
         <div className="panel-header">
           <h3>Collaborative Session</h3>
           <div className="panel-controls">
-            <div className={`connection-status ${this.state.isConnected ? 'connected' : 'disconnected'}`}>
+            <div
+              className={`connection-status ${this.state.isConnected ? 'connected' : 'disconnected'}`}
+            >
               {connectionStatus}
             </div>
             <button
@@ -324,14 +332,12 @@ class CollaborationPanel extends Component<CollaborationPanelProps, Collaboratio
         </div>
 
         {/* Participants Sidebar */}
-        <div className="panel-sidebar">
-          {this.renderParticipantList()}
-        </div>
+        <div className="panel-sidebar">{this.renderParticipantList()}</div>
 
         {/* Main Chat Area */}
         <div className="chat-container">
           <div className="messages-list" ref={this.chatContainerRef}>
-            {this.state.messages.map(message => this.renderMessage(message))}
+            {this.state.messages.map((message) => this.renderMessage(message))}
           </div>
 
           {/* Message Input */}

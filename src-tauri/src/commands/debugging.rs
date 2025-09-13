@@ -1,9 +1,9 @@
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
-use serde_json;
 use crate::command_templates::validate_commands;
 use rust_ai_ide_common::validation::validate_secure_path;
+use serde::{Deserialize, Serialize};
+use serde_json;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 // Import existing structures for compatibility
 use crate::infra::IDEState;
@@ -99,13 +99,11 @@ pub async fn debugger_get_futures_and_streams(
     _state: tauri::State<'_, Arc<Mutex<IDEState>>>,
 ) -> Result<Vec<FutureInfo>, String> {
     // Placeholder implementation
-    Ok(vec![
-        FutureInfo {
-            id: 1,
-            expression: "async { ... }".to_string(),
-            state: "pending".to_string(),
-        },
-    ])
+    Ok(vec![FutureInfo {
+        id: 1,
+        expression: "async { ... }".to_string(),
+        state: "pending".to_string(),
+    }])
 }
 
 #[tauri::command]
@@ -138,12 +136,30 @@ pub async fn debugger_set_breakpoint_async(
 pub fn get_debugging_commands() -> std::collections::HashMap<&'static str, tauri::Command> {
     let mut commands = std::collections::HashMap::new();
 
-    commands.insert("debugger_start_session", debugger_start_session as tauri::Command);
-    commands.insert("debugger_get_active_tasks", debugger_get_active_tasks as tauri::Command);
-    commands.insert("debugger_get_futures_and_streams", debugger_get_futures_and_streams as tauri::Command);
-    commands.insert("debugger_detect_deadlocks", debugger_detect_deadlocks as tauri::Command);
-    commands.insert("debugger_get_breakpoints_async", debugger_get_breakpoints_async as tauri::Command);
-    commands.insert("debugger_set_breakpoint_async", debugger_set_breakpoint_async as tauri::Command);
+    commands.insert(
+        "debugger_start_session",
+        debugger_start_session as tauri::Command,
+    );
+    commands.insert(
+        "debugger_get_active_tasks",
+        debugger_get_active_tasks as tauri::Command,
+    );
+    commands.insert(
+        "debugger_get_futures_and_streams",
+        debugger_get_futures_and_streams as tauri::Command,
+    );
+    commands.insert(
+        "debugger_detect_deadlocks",
+        debugger_detect_deadlocks as tauri::Command,
+    );
+    commands.insert(
+        "debugger_get_breakpoints_async",
+        debugger_get_breakpoints_async as tauri::Command,
+    );
+    commands.insert(
+        "debugger_set_breakpoint_async",
+        debugger_set_breakpoint_async as tauri::Command,
+    );
 
     commands
 }
@@ -494,22 +510,70 @@ use std::collections::HashMap;
 pub fn get_debugging_commands() -> HashMap<String, tauri::Command> {
     let mut commands = HashMap::new();
 
-    commands.insert("debugger_start_session".to_string(), debugger_start_session as tauri::Command);
-    commands.insert("debugger_get_active_tasks".to_string(), debugger_get_active_tasks as tauri::Command);
-    commands.insert("debugger_get_task_stack_trace".to_string(), debugger_get_task_stack_trace as tauri::Command);
-    commands.insert("debugger_inspect_future_state".to_string(), debugger_inspect_future_state as tauri::Command);
-    commands.insert("debugger_step_into_async_operation".to_string(), debugger_step_into_async_operation as tauri::Command);
-    commands.insert("debugger_step_over_async_operation".to_string(), debugger_step_over_async_operation as tauri::Command);
-    commands.insert("debugger_get_async_synchronization_points".to_string(), debugger_get_async_synchronization_points as tauri::Command);
-    commands.insert("debugger_get_async_thread_safety_analysis".to_string(), debugger_get_async_thread_safety_analysis as tauri::Command);
-    commands.insert("debugger_analyze_promise_chain".to_string(), debugger_analyze_promise_chain as tauri::Command);
-    commands.insert("debugger_analyze_channel_capacity".to_string(), debugger_analyze_channel_capacity as tauri::Command);
-    commands.insert("debugger_detect_deadlocks".to_string(), debugger_detect_deadlocks as tauri::Command);
-    commands.insert("debugger_get_futures_and_streams".to_string(), debugger_get_futures_and_streams as tauri::Command);
-    commands.insert("debugger_end_session".to_string(), debugger_end_session as tauri::Command);
-    commands.insert("debugger_get_state".to_string(), debugger_get_state as tauri::Command);
-    commands.insert("debugger_get_breakpoints".to_string(), debugger_get_breakpoints as tauri::Command);
-    commands.insert("debugger_set_breakpoint_async".to_string(), debugger_set_breakpoint_async as tauri::Command);
+    commands.insert(
+        "debugger_start_session".to_string(),
+        debugger_start_session as tauri::Command,
+    );
+    commands.insert(
+        "debugger_get_active_tasks".to_string(),
+        debugger_get_active_tasks as tauri::Command,
+    );
+    commands.insert(
+        "debugger_get_task_stack_trace".to_string(),
+        debugger_get_task_stack_trace as tauri::Command,
+    );
+    commands.insert(
+        "debugger_inspect_future_state".to_string(),
+        debugger_inspect_future_state as tauri::Command,
+    );
+    commands.insert(
+        "debugger_step_into_async_operation".to_string(),
+        debugger_step_into_async_operation as tauri::Command,
+    );
+    commands.insert(
+        "debugger_step_over_async_operation".to_string(),
+        debugger_step_over_async_operation as tauri::Command,
+    );
+    commands.insert(
+        "debugger_get_async_synchronization_points".to_string(),
+        debugger_get_async_synchronization_points as tauri::Command,
+    );
+    commands.insert(
+        "debugger_get_async_thread_safety_analysis".to_string(),
+        debugger_get_async_thread_safety_analysis as tauri::Command,
+    );
+    commands.insert(
+        "debugger_analyze_promise_chain".to_string(),
+        debugger_analyze_promise_chain as tauri::Command,
+    );
+    commands.insert(
+        "debugger_analyze_channel_capacity".to_string(),
+        debugger_analyze_channel_capacity as tauri::Command,
+    );
+    commands.insert(
+        "debugger_detect_deadlocks".to_string(),
+        debugger_detect_deadlocks as tauri::Command,
+    );
+    commands.insert(
+        "debugger_get_futures_and_streams".to_string(),
+        debugger_get_futures_and_streams as tauri::Command,
+    );
+    commands.insert(
+        "debugger_end_session".to_string(),
+        debugger_end_session as tauri::Command,
+    );
+    commands.insert(
+        "debugger_get_state".to_string(),
+        debugger_get_state as tauri::Command,
+    );
+    commands.insert(
+        "debugger_get_breakpoints".to_string(),
+        debugger_get_breakpoints as tauri::Command,
+    );
+    commands.insert(
+        "debugger_set_breakpoint_async".to_string(),
+        debugger_set_breakpoint_async as tauri::Command,
+    );
 
     commands
 }

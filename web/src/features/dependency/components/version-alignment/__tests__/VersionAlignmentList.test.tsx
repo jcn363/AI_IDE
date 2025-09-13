@@ -10,18 +10,14 @@ const theme = createTheme();
 
 // Wrapper component to provide theme context
 const renderWithTheme = (component: React.ReactElement) => {
-  return render(
-    <ThemeProvider theme={theme}>
-      {component}
-    </ThemeProvider>,
-  );
+  return render(<ThemeProvider theme={theme}>{component}</ThemeProvider>);
 };
 
 const mockAlignments: VersionAlignment[] = [
   {
     id: 'serde',
     dependencyName: 'serde',
-    currentVersions: { 'crate1': '1.0.0' },
+    currentVersions: { crate1: '1.0.0' },
     suggestedVersion: '1.2.0',
     severity: 'medium',
     affectedPackages: ['crate1'],
@@ -29,7 +25,7 @@ const mockAlignments: VersionAlignment[] = [
   {
     id: 'tokio',
     dependencyName: 'tokio',
-    currentVersions: { 'crate2': '0.2.0', 'crate3': '0.3.0' },
+    currentVersions: { crate2: '0.2.0', crate3: '0.3.0' },
     suggestedVersion: '1.0.0',
     severity: 'high',
     affectedPackages: ['crate2', 'crate3'],
@@ -40,17 +36,17 @@ describe('VersionAlignmentList', () => {
   it('renders the list of version alignments', () => {
     const onApply = vi.fn();
     const onIgnore = vi.fn();
-    
+
     renderWithTheme(
-      <VersionAlignmentList 
-        alignments={mockAlignments} 
-        selectedIds={[]} 
-        loading={false} 
-        onSelect={() => {}} 
-        onSelectOne={() => {}} 
-        onApplyAlignment={onApply} 
-        onIgnoreAlignment={onIgnore} 
-      />,
+      <VersionAlignmentList
+        alignments={mockAlignments}
+        selectedIds={[]}
+        loading={false}
+        onSelect={() => {}}
+        onSelectOne={() => {}}
+        onApplyAlignment={onApply}
+        onIgnoreAlignment={onIgnore}
+      />
     );
 
     expect(screen.getByText('Version Alignment Issues')).toBeInTheDocument();
@@ -63,17 +59,17 @@ describe('VersionAlignmentList', () => {
   it('shows a message when there are no alignments', () => {
     const onApply = vi.fn();
     const onIgnore = vi.fn();
-    
+
     renderWithTheme(
-      <VersionAlignmentList 
-        alignments={[]} 
-        selectedIds={[]} 
-        loading={false} 
-        onSelect={() => {}} 
-        onSelectOne={() => {}} 
-        onApplyAlignment={onApply} 
-        onIgnoreAlignment={onIgnore} 
-      />,
+      <VersionAlignmentList
+        alignments={[]}
+        selectedIds={[]}
+        loading={false}
+        onSelect={() => {}}
+        onSelectOne={() => {}}
+        onApplyAlignment={onApply}
+        onIgnoreAlignment={onIgnore}
+      />
     );
 
     expect(screen.getByText('No version alignment issues found.')).toBeInTheDocument();
@@ -82,17 +78,17 @@ describe('VersionAlignmentList', () => {
   it('renders the correct number of list items', () => {
     const onApply = vi.fn();
     const onIgnore = vi.fn();
-    
+
     const { container } = renderWithTheme(
-      <VersionAlignmentList 
-        alignments={mockAlignments} 
-        selectedIds={[]} 
-        loading={false} 
-        onSelect={() => {}} 
-        onSelectOne={() => {}} 
-        onApplyAlignment={onApply} 
-        onIgnoreAlignment={onIgnore} 
-      />,
+      <VersionAlignmentList
+        alignments={mockAlignments}
+        selectedIds={[]}
+        loading={false}
+        onSelect={() => {}}
+        onSelectOne={() => {}}
+        onApplyAlignment={onApply}
+        onIgnoreAlignment={onIgnore}
+      />
     );
 
     const listItems = container.querySelectorAll('li');

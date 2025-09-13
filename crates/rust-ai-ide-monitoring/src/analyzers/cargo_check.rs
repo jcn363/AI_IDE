@@ -111,14 +111,12 @@ impl CargoCheckAnalyzer {
 
                 (results.success, findings, issue_count, None)
             }
-            Err(e) => {
-                (
-                    false,
-                    Vec::new(),
-                    0,
-                    Some(format!("Cargo check failed: {}", e)),
-                )
-            }
+            Err(e) => (
+                false,
+                Vec::new(),
+                0,
+                Some(format!("Cargo check failed: {}", e)),
+            ),
         };
 
         let performance = Some(AnalysisPerformance {
@@ -151,7 +149,10 @@ impl CargoCheckAnalyzer {
     }
 
     /// Get workspace targets to analyze
-    async fn discover_workspace_targets(&self, workspace_root: &Path) -> Result<Vec<WorkspaceTarget>> {
+    async fn discover_workspace_targets(
+        &self,
+        workspace_root: &Path,
+    ) -> Result<Vec<WorkspaceTarget>> {
         // Simple implementation - in practice, this would parse Cargo.toml files
         // For now, just return a basic target for the workspace root
         let target = WorkspaceTarget {
@@ -195,7 +196,10 @@ impl Analyzer for CargoCheckAnalyzer {
     }
 
     async fn analyze(&self, workspace_root: &Path) -> Result<AnalysisResult> {
-        tracing::info!("Starting cargo check analysis for workspace: {}", workspace_root.display());
+        tracing::info!(
+            "Starting cargo check analysis for workspace: {}",
+            workspace_root.display()
+        );
 
         // Initialize system info
         let mut analyzer = self.clone();
@@ -210,14 +214,18 @@ impl Analyzer for CargoCheckAnalyzer {
             let result = analyzer.analyze_target(&target).await?;
             tracing::info!(
                 "Cargo check analysis completed in {:.2}s with {} issues",
-                result.performance.as_ref()
+                result
+                    .performance
+                    .as_ref()
                     .map(|p| p.duration_seconds)
                     .unwrap_or(0.0),
                 result.issue_count
             );
             Ok(result)
         } else {
-            Err(MonitoringError::analysis("No enabled targets found for analysis"))
+            Err(MonitoringError::analysis(
+                "No enabled targets found for analysis",
+            ))
         }
     }
 }

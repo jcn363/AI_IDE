@@ -7,23 +7,20 @@
 //!
 //! Provides a single, consistent API for all dependency operations.
 
+use petgraph::graph::{DiGraph, NodeIndex};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use petgraph::graph::{DiGraph, NodeIndex};
 
-use crate::dependency::{
-    models::*,
-    DependencyGraph, DependencyGraphBuilder, ExportFormat, DependencyFilter,
-    DependencyUpdater, DependencyUpdate,
-    DependencyUpdateChecker, DependencyInfo,
-    analysis::*,
-};
 use crate::cargo::service::CargoService;
-use crate::security::{VulnerabilityScanner, VulnerabilityReport};
-use crate::license::{LicenseComplianceChecker, LicenseCompliance};
+use crate::dependency::{
+    analysis::*, models::*, DependencyFilter, DependencyGraph, DependencyGraphBuilder,
+    DependencyInfo, DependencyUpdate, DependencyUpdateChecker, DependencyUpdater, ExportFormat,
+};
+use crate::license::{LicenseCompliance, LicenseComplianceChecker};
+use crate::security::{VulnerabilityReport, VulnerabilityScanner};
 
 /// Unified cargo state that caches both raw and structured data
 #[derive(Debug, Clone)]
@@ -57,7 +54,10 @@ impl UnifiedCargoService {
     }
 
     /// Get or create cached state for a project
-    async fn get_or_load_project_state(&self, project_path: &Path) -> Result<CargoState, UnifiedCargoError> {
+    async fn get_or_load_project_state(
+        &self,
+        project_path: &Path,
+    ) -> Result<CargoState, UnifiedCargoError> {
         let mut states = self.states.write().await;
 
         if let Some(state) = states.get(project_path) {
@@ -74,10 +74,13 @@ impl UnifiedCargoService {
     }
 
     /// Load all project data (both raw and structured)
-    async fn load_project_data(&self, project_path: &Path) -> Result<CargoState, UnifiedCargoError> {
+    async fn load_project_data(
+        &self,
+        project_path: &Path,
+    ) -> Result<CargoState, UnifiedCargoError> {
         // Load raw metadata
-        let raw_metadata = CargoService::get_metadata(project_path)
-            .map_err(UnifiedCargoError::CargoService)?;
+        let raw_metadata =
+            CargoService::get_metadata(project_path).map_err(UnifiedCargoError::CargoService)?;
 
         // Load structured graph
         let graph = DependencyGraphBuilder::new(project_path)
@@ -103,15 +106,20 @@ impl UnifiedCargoService {
     // ========================================
 
     /// Get consolidated dependency information for a project
-    pub async fn get_dependency_info(&self, project_path: &Path) -> Result<UnifiedDependencyInfo, UnifiedCargoError> {
+    pub async fn get_dependency_info(
+        &self,
+        project_path: &Path,
+    ) -> Result<UnifiedDependencyInfo, UnifiedCargoError> {
         let state = self.get_or_load_project_state(project_path).await?;
 
-        let raw_deps = state.raw_metadata
+        let raw_deps = state
+            .raw_metadata
             .as_ref()
             .map(|m| m.packages.len())
             .unwrap_or(0);
 
-        let graph_deps = state.graph
+        let graph_deps = state
+            .graph
             .as_ref()
             .map(|g| g.graph.node_count())
             .unwrap_or(0);
@@ -134,7 +142,10 @@ impl UnifiedCargoService {
     }
 
     /// Get dependency graph with both raw and structured data
-    pub async fn get_dependency_graph(&self, project_path: &Path) -> Result<UnifiedGraph, UnifiedCargoError> {
+    pub async fn get_dependency_graph(
+        &self,
+        project_path: &Path,
+    ) -> Result<UnifiedGraph, UnifiedCargoError> {
         let state = self.get_or_load_project_state(project_path).await?;
 
         let nodes = if let Some(graph) = &state.graph {
@@ -158,9 +169,15 @@ impl UnifiedCargoService {
     }
 
     /// Unified dependency update operation
-    pub async fn update_dependencies(&self, project_path: &Path, dry_run: bool) -> Result<Vec<DependencyUpdate>, UnifiedCargoError> {
+    pub async fn update_dependencies(
+        &self,
+        project_path: &Path,
+        dry_run: bool,
+    ) -> Result<Vec<DependencyUpdate>, UnifiedCargoError> {
         let updater = DependencyUpdater::new(project_path.as_ref());
-        let updates = updater.update_dependencies(dry_run).await
+        let updates = updater
+            .update_dependencies(dry_run)
+            .await
             .map_err(UnifiedCargoError::DependencyUpdater)?;
 
         // Invalidate cache after updates
@@ -172,31 +189,45 @@ impl UnifiedCargoService {
     }
 
     /// Check available updates using unified approach
-    pub async fn check_updates(&self, project_path: &Path) -> Result<Vec<DependencyInfo>, UnifiedCargoError> {
+    pub async fn check_updates(
+        &self,
+        project_path: &Path,
+    ) -> Result<Vec<DependencyInfo>, UnifiedCargoError> {
         let checker = DependencyUpdateChecker::new(project_path.as_ref());
-        checker.check_updates()
+        checker
+            .check_updates()
             .map_err(UnifiedCargoError::UpdateChecker)
     }
 
     /// Analyze vulnerabilities
-    pub async fn analyze_vulnerabilities(&self, project_path: &Path) -> Result<Vec<VulnerabilityReport>, UnifiedCargoError> {
-        let scanner = VulnerabilityScanner::new()
-            .map_err(UnifiedCargoError::SecurityScanner)?;
+    pub async fn analyze_vulnerabilities(
+        &self,
+        project_path: &Path,
+    ) -> Result<Vec<VulnerabilityReport>, UnifiedCargoError> {
+        let scanner = VulnerabilityScanner::new().map_err(UnifiedCargoError::SecurityScanner)?;
         Ok(scanner.check_dependencies(project_path))
     }
 
     /// Check license compliance
-    pub async fn check_license_compliance(&self, _project_path: &Path) -> Result<LicenseCompliance, UnifiedCargoError> {
+    pub async fn check_license_compliance(
+        &self,
+        _project_path: &Path,
+    ) -> Result<LicenseCompliance, UnifiedCargoError> {
         let checker = LicenseComplianceChecker::default();
         // Simplified - would need actual license policy
         Ok(checker.check_license("MIT"))
     }
 
     /// Export graph in various formats
-    pub async fn export_graph(&self, project_path: &Path, format: ExportFormat) -> Result<Vec<u8>, UnifiedCargoError> {
+    pub async fn export_graph(
+        &self,
+        project_path: &Path,
+        format: ExportFormat,
+    ) -> Result<Vec<u8>, UnifiedCargoError> {
         let state = self.get_or_load_project_state(project_path).await?;
         if let Some(graph) = &state.graph {
-            graph.export(format)
+            graph
+                .export(format)
                 .map_err(UnifiedCargoError::DependencyAnalysis)
         } else {
             Err(UnifiedCargoError::StateNotLoaded)
@@ -204,7 +235,11 @@ impl UnifiedCargoService {
     }
 
     /// Apply filters to dependency graph
-    pub async fn filter_dependencies(&self, project_path: &Path, filter: DependencyFilter) -> Result<UnifiedGraph, UnifiedCargoError> {
+    pub async fn filter_dependencies(
+        &self,
+        project_path: &Path,
+        filter: DependencyFilter,
+    ) -> Result<UnifiedGraph, UnifiedCargoError> {
         let state = self.get_or_load_project_state(project_path).await?;
         if let Some(graph) = &state.graph {
             let filtered_graph = filter.apply(graph);
@@ -222,14 +257,21 @@ impl UnifiedCargoService {
     }
 
     /// Get dependency paths between packages
-    pub async fn find_dependency_paths(&self, project_path: &Path, from: &str, to: &str) -> Result<Vec<Vec<NodeInfo>>, UnifiedCargoError> {
+    pub async fn find_dependency_paths(
+        &self,
+        project_path: &Path,
+        from: &str,
+        to: &str,
+    ) -> Result<Vec<Vec<NodeInfo>>, UnifiedCargoError> {
         let state = self.get_or_load_project_state(project_path).await?;
         if let Some(graph) = &state.graph {
             // Use graph analysis for path finding
-            graph.find_paths(from, to)
+            graph
+                .find_paths(from, to)
                 .map_err(UnifiedCargoError::DependencyAnalysis)
                 .and_then(|paths| {
-                    paths.into_iter()
+                    paths
+                        .into_iter()
                         .map(|path| {
                             path.into_iter()
                                 .filter_map(|idx| graph.graph.node_weight(idx))
@@ -253,7 +295,10 @@ impl UnifiedCargoService {
     // HELPER METHODS
     // ========================================
 
-    fn get_direct_dependencies(&self, state: &CargoState) -> Result<Vec<String>, UnifiedCargoError> {
+    fn get_direct_dependencies(
+        &self,
+        state: &CargoState,
+    ) -> Result<Vec<String>, UnifiedCargoError> {
         if let Some(graph) = &state.graph {
             Ok(graph.root_package_dependencies())
         } else {
@@ -261,7 +306,10 @@ impl UnifiedCargoService {
         }
     }
 
-    fn get_transitive_dependencies(&self, state: &CargoState) -> Result<Vec<String>, UnifiedCargoError> {
+    fn get_transitive_dependencies(
+        &self,
+        state: &CargoState,
+    ) -> Result<Vec<String>, UnifiedCargoError> {
         if let Some(graph) = &state.graph {
             Ok(graph.all_dependencies())
         } else {
@@ -269,7 +317,10 @@ impl UnifiedCargoService {
         }
     }
 
-    async fn extract_licenses_from_graph(&self, graph: &DependencyGraph) -> HashMap<String, String> {
+    async fn extract_licenses_from_graph(
+        &self,
+        graph: &DependencyGraph,
+    ) -> HashMap<String, String> {
         let mut licenses = HashMap::new();
         for node_idx in graph.graph.node_indices() {
             if let Some(node) = graph.graph.node_weight(node_idx) {
@@ -281,8 +332,13 @@ impl UnifiedCargoService {
         licenses
     }
 
-    fn convert_graph_nodes_to_unified(&self, graph: &DependencyGraph) -> Result<Vec<UnifiedNode>, UnifiedCargoError> {
-        Ok(graph.graph.node_indices()
+    fn convert_graph_nodes_to_unified(
+        &self,
+        graph: &DependencyGraph,
+    ) -> Result<Vec<UnifiedNode>, UnifiedCargoError> {
+        Ok(graph
+            .graph
+            .node_indices()
             .filter_map(|idx| graph.graph.node_weight(idx))
             .map(|node| UnifiedNode {
                 id: node.name.clone(),
@@ -295,8 +351,13 @@ impl UnifiedCargoService {
             .collect())
     }
 
-    fn convert_graph_edges_to_unified(&self, graph: &DependencyGraph) -> Result<Vec<UnifiedEdge>, UnifiedCargoError> {
-        Ok(graph.graph.edge_indices()
+    fn convert_graph_edges_to_unified(
+        &self,
+        graph: &DependencyGraph,
+    ) -> Result<Vec<UnifiedEdge>, UnifiedCargoError> {
+        Ok(graph
+            .graph
+            .edge_indices()
             .filter_map(|edge_idx| graph.graph.edge_weight(edge_idx))
             .map(|edge| UnifiedEdge {
                 from: String::new(), // Would need to map from node indices

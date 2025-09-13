@@ -15,21 +15,37 @@ impl TemplateEngine {
         let mut engine = Handlebars::new();
 
         // Register built-in templates
-        engine.register_template_string("struct", include_str!("templates/struct.rs.hbs")).unwrap();
-        engine.register_template_string("function", include_str!("templates/function.rs.hbs")).unwrap();
-        engine.register_template_string("test", include_str!("templates/test.rs.hbs")).unwrap();
+        engine
+            .register_template_string("struct", include_str!("templates/struct.rs.hbs"))
+            .unwrap();
+        engine
+            .register_template_string("function", include_str!("templates/function.rs.hbs"))
+            .unwrap();
+        engine
+            .register_template_string("test", include_str!("templates/test.rs.hbs"))
+            .unwrap();
 
         Self { engine }
     }
 
     /// Render a template with context
-    pub fn render(&self, template: &str, context: &serde_json::Value) -> Result<String, Box<dyn std::error::Error>> {
+    pub fn render(
+        &self,
+        template: &str,
+        context: &serde_json::Value,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         self.engine.render(template, context).map_err(Into::into)
     }
 
     /// Register a custom template
-    pub fn register_template(&mut self, name: &str, template: &str) -> Result<(), Box<dyn std::error::Error>> {
-        self.engine.register_template_string(name, template).map_err(Into::into)
+    pub fn register_template(
+        &mut self,
+        name: &str,
+        template: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.engine
+            .register_template_string(name, template)
+            .map_err(Into::into)
     }
 
     /// Check if template exists

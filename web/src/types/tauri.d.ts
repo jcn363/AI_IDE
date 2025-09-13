@@ -6,7 +6,10 @@ declare module '@tauri-apps/api/core' {
 // Tauri event types
 declare module '@tauri-apps/api/event' {
   export type UnlistenFn = () => void;
-  export function listen<T = any>(event: string, handler: (event: { event: string; id: number; payload: T }) => void): Promise<UnlistenFn>;
+  export function listen<T = any>(
+    event: string,
+    handler: (event: { event: string; id: number; payload: T }) => void
+  ): Promise<UnlistenFn>;
 }
 
 // Extend Window interface for Tauri

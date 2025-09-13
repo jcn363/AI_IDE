@@ -3,20 +3,23 @@
 //! This module provides comprehensive benchmarking for the learning system
 //! to ensure performance requirements are met and regressions are caught.
 
-use std::hint::black_box;
-use std::time::{Duration, Instant};
-use std::path::Path;
 use rand::Rng;
+use std::hint::black_box;
+use std::path::Path;
+use std::time::{Duration, Instant};
 use tempfile::TempDir;
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use tokio::runtime::Runtime;
 
 use super::{
-    models::{LearnedPattern, LearningPreferences, FixTemplate, ChangeTemplate, ChangeType, ChangeScope, PatternSimilarity},
-    system::LearningSystem,
-    similarity::SimilarityCalculator,
     database::LearningDatabase,
+    models::{
+        ChangeScope, ChangeTemplate, ChangeType, FixTemplate, LearnedPattern, LearningPreferences,
+        PatternSimilarity,
+    },
+    similarity::SimilarityCalculator,
+    system::LearningSystem,
     types::{AIResult, PrivacyMode},
 };
 
@@ -93,10 +96,12 @@ fn learning_system_benchmarks(c: &mut Criterion) {
             query,
             |b, query| {
                 b.to_async(&rt).iter_batched(
-                    || rt.block_on(async {
-                        let (system, _) = setup_benchmark_system_with_data().await;
-                        (system, query.to_string())
-                    }),
+                    || {
+                        rt.block_on(async {
+                            let (system, _) = setup_benchmark_system_with_data().await;
+                            (system, query.to_string())
+                        })
+                    },
                     |(system, query)| async move {
                         let results = system.find_similar_patterns(&query).await.unwrap();
                         black_box(results);
@@ -117,11 +122,13 @@ fn database_benchmarks(c: &mut Criterion) {
     // Database CRUD operations
     group.bench_function("database_store_single", |b| {
         b.to_async(&rt).iter_batched(
-            || rt.block_on(async {
-                let (system, _) = setup_benchmark_system().await;
-                let pattern = generate_test_pattern(0, std::path::Path::new("."));
-                (system, pattern)
-            }),
+            || {
+                rt.block_on(async {
+                    let (system, _) = setup_benchmark_system().await;
+                    let pattern = generate_test_pattern(0, std::path::Path::new("."));
+                    (system, pattern)
+                })
+            },
             |(system, pattern)| async move {
                 system.store_pattern(&pattern).await.unwrap();
             },
@@ -131,12 +138,14 @@ fn database_benchmarks(c: &mut Criterion) {
 
     group.bench_function("database_retrieve_single", |b| {
         b.to_async(&rt).iter_batched(
-            || rt.block_on(async {
-                let (system, _) = setup_benchmark_system_with_data().await;
-                let patterns = system.get_all_patterns_with_limit(1).await.unwrap();
-                let pattern_id = patterns.first().unwrap().id.clone();
-                (system, pattern_id)
-            }),
+            || {
+                rt.block_on(async {
+                    let (system, _) = setup_benchmark_system_with_data().await;
+                    let patterns = system.get_all_patterns_with_limit(1).await.unwrap();
+                    let pattern_id = patterns.first().unwrap().id.clone();
+                    (system, pattern_id)
+                })
+            },
             |(system, id)| async move {
                 let _ = system.get_pattern(&id).await.unwrap();
             },
@@ -146,10 +155,12 @@ fn database_benchmarks(c: &mut Criterion) {
 
     group.bench_function("database_bulk_retrieve", |b| {
         b.to_async(&rt).iter_batched(
-            || rt.block_on(async {
-                let (system, _) = setup_benchmark_system_with_data().await;
-                system
-            }),
+            || {
+                rt.block_on(async {
+                    let (system, _) = setup_benchmark_system_with_data().await;
+                    system
+                })
+            },
             |system| async move {
                 let results = system.get_all_patterns_with_limit(100).await.unwrap();
                 black_box(results);
@@ -170,8 +181,10 @@ fn similarity_benchmarks(c: &mut Criterion) {
     group.bench_function("text_similarity_calculation", |b| {
         b.to_async(&rt).iter_batched(
             || {
-                ("unused variable x in function".to_string(),
-                 "unused variable y in function".to_string())
+                (
+                    "unused variable x in function".to_string(),
+                    "unused variable y in function".to_string(),
+                )
             },
             |(text1, text2)| async move {
                 let similarity = SimilarityCalculator::calculate_text_similarity(&text1, &text2);
@@ -193,7 +206,8 @@ fn similarity_benchmarks(c: &mut Criterion) {
                 (context.to_string(), patterns)
             },
             |(context, patterns)| async move {
-                let similarity = SimilarityCalculator::calculate_structure_similarity(&context, &patterns);
+                let similarity =
+                    SimilarityCalculator::calculate_structure_similarity(&context, &patterns);
                 black_box(similarity);
             },
             criterion::BatchSize::SmallInput,
@@ -203,11 +217,13 @@ fn similarity_benchmarks(c: &mut Criterion) {
     // Full system similarity search
     group.bench_function("system_similarity_search", |b| {
         b.to_async(&rt).iter_batched(
-            || rt.block_on(async {
-                let (system, _) = setup_benchmark_system_with_data().await;
-                let query = "unused variable".to_string();
-                (system, query)
-            }),
+            || {
+                rt.block_on(async {
+                    let (system, _) = setup_benchmark_system_with_data().await;
+                    let query = "unused variable".to_string();
+                    (system, query)
+                })
+            },
             |(system, query)| async move {
                 let _ = system.find_similar_patterns(&query).await.unwrap();
             },
@@ -226,12 +242,14 @@ fn memory_benchmarks(c: &mut Criterion) {
     // Benchmark cache hit performance
     group.bench_function("cache_hit_performance", |b| {
         b.to_async(&rt).iter_batched(
-            || rt.block_on(async {
-                let (system, _) = setup_benchmark_system_with_data().await;
-                // Prime the cache with initial queries
-                let _ = system.find_similar_patterns("borrow checker").await;
-                ("borrow checker error mutable".to_string(), system)
-            }),
+            || {
+                rt.block_on(async {
+                    let (system, _) = setup_benchmark_system_with_data().await;
+                    // Prime the cache with initial queries
+                    let _ = system.find_similar_patterns("borrow checker").await;
+                    ("borrow checker error mutable".to_string(), system)
+                })
+            },
             |(query, system)| async move {
                 // This should be a cache hit
                 let results = system.find_similar_patterns(&query).await.unwrap();
@@ -244,11 +262,13 @@ fn memory_benchmarks(c: &mut Criterion) {
     // Benchmark cache miss performance
     group.bench_function("cache_miss_performance", |b| {
         b.to_async(&rt).iter_batched(
-            || rt.block_on(async {
-                let (system, _) = setup_benchmark_system_with_data().await;
-                system.invalidate_cache("*"); // Clear cache
-                system
-            }),
+            || {
+                rt.block_on(async {
+                    let (system, _) = setup_benchmark_system_with_data().await;
+                    system.invalidate_cache("*"); // Clear cache
+                    system
+                })
+            },
             |system| async move {
                 let query = format!("unique_query_{}", rand::random::<u32>());
                 let results = system.find_similar_patterns(&query).await.unwrap();
@@ -261,13 +281,16 @@ fn memory_benchmarks(c: &mut Criterion) {
     // Benchmark memory usage with growing dataset
     group.bench_function("memory_usage_growth", |b| {
         b.to_async(&rt).iter_batched(
-            || rt.block_on(async {
-                let (system, _) = setup_benchmark_system().await;
-                system
-            }),
+            || {
+                rt.block_on(async {
+                    let (system, _) = setup_benchmark_system().await;
+                    system
+                })
+            },
             |system| async move {
                 let pattern_count = 1000;
-                let test_patterns = generate_test_patterns(pattern_count, std::path::Path::new("."));
+                let test_patterns =
+                    generate_test_patterns(pattern_count, std::path::Path::new("."));
 
                 for (i, pattern) in test_patterns.into_iter().enumerate() {
                     system.store_pattern(&pattern).await.unwrap();
@@ -297,22 +320,27 @@ fn concurrent_benchmarks(c: &mut Criterion) {
     // Concurrent reads
     group.bench_function("concurrent_reads", |b| {
         b.to_async(&rt).iter_batched(
-            || rt.block_on(async {
-                let (system, _) = setup_benchmark_system_with_data().await;
-                let system = std::sync::Arc::new(system);
-                let mut handles = Vec::new();
+            || {
+                rt.block_on(async {
+                    let (system, _) = setup_benchmark_system_with_data().await;
+                    let system = std::sync::Arc::new(system);
+                    let mut handles = Vec::new();
 
-                for _ in 0..10 {
-                    let system_clone = std::sync::Arc::clone(&system);
-                    let handle = tokio::spawn(async move {
-                        let results = system_clone.find_similar_patterns("borrow checker").await.unwrap();
-                        black_box(results);
-                    });
-                    handles.push(handle);
-                }
+                    for _ in 0..10 {
+                        let system_clone = std::sync::Arc::clone(&system);
+                        let handle = tokio::spawn(async move {
+                            let results = system_clone
+                                .find_similar_patterns("borrow checker")
+                                .await
+                                .unwrap();
+                            black_box(results);
+                        });
+                        handles.push(handle);
+                    }
 
-                (system, handles)
-            }),
+                    (system, handles)
+                })
+            },
             |(system, handles)| async move {
                 for handle in handles {
                     handle.await.unwrap();
@@ -326,19 +354,21 @@ fn concurrent_benchmarks(c: &mut Criterion) {
     // Concurrent writes
     group.bench_function("concurrent_writes", |b| {
         b.to_async(&rt).iter_batched(
-            || rt.block_on(async {
-                let (system, _) = setup_benchmark_system().await;
-                let system = std::sync::Arc::new(system);
-                let mut pattern_batches = Vec::new();
+            || {
+                rt.block_on(async {
+                    let (system, _) = setup_benchmark_system().await;
+                    let system = std::sync::Arc::new(system);
+                    let mut pattern_batches = Vec::new();
 
-                for i in 0..10 {
-                    let start_idx = i * 100;
-                    let patterns = generate_test_patterns_with_offset(100, start_idx);
-                    pattern_batches.push(patterns);
-                }
+                    for i in 0..10 {
+                        let start_idx = i * 100;
+                        let patterns = generate_test_patterns_with_offset(100, start_idx);
+                        pattern_batches.push(patterns);
+                    }
 
-                (system, pattern_batches)
-            }),
+                    (system, pattern_batches)
+                })
+            },
             |(system, pattern_batches)| async move {
                 let mut handles = Vec::new();
 
@@ -370,18 +400,18 @@ fn concurrent_benchmarks(c: &mut Criterion) {
 async fn setup_benchmark_system() -> (LearningSystem, TempDir) {
     let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
     let db_path = temp_dir.path().join("test_learning.db");
-    
+
     // Create a learning system with test database
     let system = LearningSystem::new_with_path(Some(db_path))
         .await
         .expect("Failed to create learning system");
-    
+
     (system, temp_dir)
 }
 
 async fn setup_benchmark_system_with_data() -> (LearningSystem, TempDir) {
     let (system, temp_dir) = setup_benchmark_system().await;
-    
+
     // Configure for benchmarking
     let bench_prefs = LearningPreferences {
         enable_learning: true,
@@ -393,13 +423,17 @@ async fn setup_benchmark_system_with_data() -> (LearningSystem, TempDir) {
         auto_apply_threshold: 0.8,
     };
 
-    system.update_preferences(bench_prefs).await
+    system
+        .update_preferences(bench_prefs)
+        .await
         .expect("Failed to configure benchmark preferences");
 
     // Pre-populate with test data
     let patterns = generate_test_patterns(500, Path::new(""));
     for pattern in patterns {
-        system.store_pattern(&pattern).await
+        system
+            .store_pattern(&pattern)
+            .await
             .expect("Failed to populate benchmark data");
     }
 
@@ -407,11 +441,15 @@ async fn setup_benchmark_system_with_data() -> (LearningSystem, TempDir) {
 }
 
 fn generate_test_patterns(count: usize, base_path: &Path) -> Vec<LearnedPattern> {
-    (0..count).map(|i| generate_test_pattern(i, base_path)).collect()
+    (0..count)
+        .map(|i| generate_test_pattern(i, base_path))
+        .collect()
 }
 
 fn generate_test_patterns_with_offset(count: usize, offset: usize) -> Vec<LearnedPattern> {
-    (0..count).map(|i| generate_test_pattern(i + offset, Path::new(""))).collect()
+    (0..count)
+        .map(|i| generate_test_pattern(i + offset, Path::new("")))
+        .collect()
 }
 
 fn generate_test_pattern(index: usize, base_path: &std::path::Path) -> LearnedPattern {
@@ -452,14 +490,12 @@ fn generate_test_pattern(index: usize, base_path: &std::path::Path) -> LearnedPa
         ],
         fix_template: FixTemplate {
             description_template: format!("Fix for benchmark {}", index),
-            change_templates: vec![
-                ChangeTemplate {
-                    match_pattern: format!("let var_{} = {};", index, index * 2),
-                    replacement_pattern: format!("let _var_{} = {};", index, index * 2),
-                    change_type: ChangeType::Replace,
-                    scope: ChangeScope::Local,
-                }
-            ],
+            change_templates: vec![ChangeTemplate {
+                match_pattern: format!("let var_{} = {};", index, index * 2),
+                replacement_pattern: format!("let _var_{} = {};", index, index * 2),
+                change_type: ChangeType::Replace,
+                scope: ChangeScope::Local,
+            }],
             variables: std::collections::HashMap::new(),
             conditions: vec![],
             warnings: vec![],
@@ -496,7 +532,9 @@ impl LearningSystemBenchExt for LearningSystem {
 
     async fn get_pattern(&self, id: &str) -> AIResult<LearnedPattern> {
         // Get a pattern by ID from the database
-        self.database.get_pattern_by_id(id).await?
+        self.database
+            .get_pattern_by_id(id)
+            .await?
             .ok_or_else(|| super::types::LearningError::PatternNotFoundError(id.to_string()).into())
     }
 

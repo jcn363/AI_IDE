@@ -1,9 +1,25 @@
 import React, { useState, useMemo, useCallback, useEffect, useDeferredValue } from 'react';
-import { Box, TextField, IconButton, TreeView, TreeItem, Typography, useTheme, CircularProgress } from '@mui/material';
-import { ChevronRight, ExpandMore, Folder, FolderOpen, Description, Search } from '@mui/icons-material';
+import {
+  Box,
+  TextField,
+  IconButton,
+  TreeView,
+  TreeItem,
+  Typography,
+  useTheme,
+  CircularProgress,
+} from '@mui/material';
+import {
+  ChevronRight,
+  ExpandMore,
+  Folder,
+  FolderOpen,
+  Description,
+  Search,
+} from '@mui/icons-material';
 import { Tree, Virtuoso } from 'react-virtuoso';
 import { useDebouncedCallback } from 'use-debounce';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 
 // Types for file tree structure
 export interface FileNode {
@@ -99,97 +115,105 @@ export const VirtualizedFileTree: React.FC<VirtualizedFileTreeProps> = ({
   }, []);
 
   // Load directory contents on expand
-  const loadDirectoryContents = useCallback(async (path: string) => {
-    try {
-      const node = nodeMap.get(path);
-      if (!node || !node.isDirectory) return;
+  const loadDirectoryContents = useCallback(
+    async (path: string) => {
+      try {
+        const node = nodeMap.get(path);
+        if (!node || !node.isDirectory) return;
 
-      const result = await invoke<FileNode[]>('get_directory_contents', {
-        path,
-        maxDepth: 1,
-      });
+        const result = await invoke<FileNode[]>('get_directory_contents', {
+          path,
+          maxDepth: 1,
+        });
 
-      if (result) {
-        // Update node's children
-        const updatedNode = { ...node, children: result };
-        nodeMap.set(path, updatedNode);
+        if (result) {
+          // Update node's children
+          const updatedNode = { ...node, children: result };
+          nodeMap.set(path, updatedNode);
 
-        // Update root nodes array
-        const updateNodeChildren = (nodes: FileNode[]): FileNode[] =>
-          nodes.map(n => n.id === path ? updatedNode : n);
+          // Update root nodes array
+          const updateNodeChildren = (nodes: FileNode[]): FileNode[] =>
+            nodes.map((n) => (n.id === path ? updatedNode : n));
 
-        setNodes(prev => updateNodeChildren(prev));
+          setNodes((prev) => updateNodeChildren(prev));
+        }
+      } catch (error) {
+        console.error('Failed to load directory contents:', error);
       }
-    } catch (error) {
-      console.error('Failed to load directory contents:', error);
-    }
-  }, [nodeMap]);
+    },
+    [nodeMap]
+  );
 
   // Handle node expand/collapse
-  const handleToggle = useCallback(async (path: string) => {
-    const newExpanded = new Set(expanded);
-    const node = nodeMap.get(path);
+  const handleToggle = useCallback(
+    async (path: string) => {
+      const newExpanded = new Set(expanded);
+      const node = nodeMap.get(path);
 
-    if (node?.isDirectory) {
-      if (expanded.has(path)) {
-        newExpanded.delete(path);
-        node.isExpanded = false;
-      } else {
-        newExpanded.add(path);
-        node.isExpanded = true;
+      if (node?.isDirectory) {
+        if (expanded.has(path)) {
+          newExpanded.delete(path);
+          node.isExpanded = false;
+        } else {
+          newExpanded.add(path);
+          node.isExpanded = true;
 
-        // Load children if not already loaded
-        if (!node.children || node.children.length === 0) {
-          await loadDirectoryContents(path);
+          // Load children if not already loaded
+          if (!node.children || node.children.length === 0) {
+            await loadDirectoryContents(path);
+          }
         }
       }
-    }
 
-    onExpandedChange?.(newExpanded);
-  }, [expanded, nodeMap, onExpandedChange, loadDirectoryContents]);
+      onExpandedChange?.(newExpanded);
+    },
+    [expanded, nodeMap, onExpandedChange, loadDirectoryContents]
+  );
 
   // Search matching utility
   const matchesSearch = useCallback((node: FileNode, query: string): boolean => {
     const lowerQuery = query.toLowerCase();
-    return node.name.toLowerCase().includes(lowerQuery) ||
-            node.path.toLowerCase().includes(lowerQuery);
+    return (
+      node.name.toLowerCase().includes(lowerQuery) || node.path.toLowerCase().includes(lowerQuery)
+    );
   }, []);
 
   // Tree item component
-  const TreeItemComponent = useCallback(({ node }: { node: FileNode }) => {
-    const isExpanded = expanded.has(node.id);
-    const hasChildren = node.children && node.children.length > 0;
+  const TreeItemComponent = useCallback(
+    ({ node }: { node: FileNode }) => {
+      const isExpanded = expanded.has(node.id);
+      const hasChildren = node.children && node.children.length > 0;
 
-    return (
-      <TreeItem
-        nodeId={node.id}
-        label={
-          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-            {node.isDirectory ? (
-              isExpanded ? <FolderOpen /> : <Folder />
-            ) : (
-              <Description />
-            )}
-            <Typography variant="body2" sx={{ ml: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {node.name}
-            </Typography>
-          </Box>
-        }
-        sx={{
-          pl: node.depth * theme.spacing(2),
-          '& .MuiTreeItem-content': {
-            paddingLeft: node.depth * 8,
-          },
-        }}
-      >
-        {node.isDirectory && isExpanded && node.children &&
-          node.children.map(child => (
-            <TreeItemComponent key={child.id} node={child} />
-          ))
-        }
-      </TreeItem>
-    );
-  }, [expanded, theme]);
+      return (
+        <TreeItem
+          nodeId={node.id}
+          label={
+            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+              {node.isDirectory ? isExpanded ? <FolderOpen /> : <Folder /> : <Description />}
+              <Typography
+                variant="body2"
+                sx={{ ml: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}
+              >
+                {node.name}
+              </Typography>
+            </Box>
+          }
+          sx={{
+            pl: node.depth * theme.spacing(2),
+            '& .MuiTreeItem-content': {
+              paddingLeft: node.depth * 8,
+            },
+          }}
+        >
+          {node.isDirectory &&
+            isExpanded &&
+            node.children &&
+            node.children.map((child) => <TreeItemComponent key={child.id} node={child} />)}
+        </TreeItem>
+      );
+    },
+    [expanded, theme]
+  );
 
   // Initialize component
   useEffect(() => {
@@ -234,17 +258,11 @@ export const VirtualizedFileTree: React.FC<VirtualizedFileTreeProps> = ({
           treeTable
           data={displayNodes}
           totalCount={displayNodes.length}
-          itemContent={(index, node) => (
-            <TreeItemComponent key={node.id} node={node} />
-          )}
+          itemContent={(index, node) => <TreeItemComponent key={node.id} node={node} />}
           onExpandedChange={onExpandedChange}
           components={{
-            Table: ({ children }) => (
-              <Box sx={{ p: 1 }}>{children}</Box>
-            ),
-            TableRow: ({ children }) => (
-              <Box sx={{ py: 0.5 }}>{children}</Box>
-            ),
+            Table: ({ children }) => <Box sx={{ p: 1 }}>{children}</Box>,
+            TableRow: ({ children }) => <Box sx={{ py: 0.5 }}>{children}</Box>,
             TableCell: ({ children, onClick }) => (
               <Box
                 onClick={() => {

@@ -3,16 +3,16 @@
 //! Comprehensive machine learning model lifecycle management within the Rust AI IDE.
 //! Features model registry, versioning, deployment tracking, performance monitoring, and ecosystem integration.
 
-use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use semver::Version;
-use sha2::{Sha256, Digest};
-use tokio::sync::{RwLock, Mutex};
-use std::sync::Arc;
-use petgraph::{Graph, Directed};
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
+use petgraph::{Directed, Graph};
+use semver::Version;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::sync::Arc;
+use tokio::sync::{Mutex, RwLock};
+use uuid::Uuid;
 
 /// Main ML Model Management System
 #[derive(Debug)]
@@ -44,11 +44,12 @@ impl MLModelManager {
         let version_manager = VersionManager::new();
 
         let training_orchestrator = Arc::new(Mutex::new(TrainingOrchestrator::new(
-            system_config.training_config.clone()
+            system_config.training_config.clone(),
         )));
         let quality_assurance = QualityAssurance::new(system_config.quality_config.clone());
         let experiment_manager = ExperimentManager::new();
-        let serving_infrastructure = ServingInfrastructure::new(system_config.serving_config.clone());
+        let serving_infrastructure =
+            ServingInfrastructure::new(system_config.serving_config.clone());
 
         Ok(Self {
             model_registry,
@@ -66,7 +67,7 @@ impl MLModelManager {
     pub async fn register_model(
         &self,
         model: ModelDefinition,
-        initial_version: ModelVersion
+        initial_version: ModelVersion,
     ) -> Result<ModelId, MLError> {
         let model_id = ModelId(Uuid::new_v4());
 
@@ -90,10 +91,14 @@ impl MLModelManager {
         registry.register_model(metadata)?;
 
         // Add initial version
-        self.version_manager.create_version(&model_id, initial_version).await?;
+        self.version_manager
+            .create_version(&model_id, initial_version)
+            .await?;
 
         // Run quality checks
-        self.quality_assurance.validate_model(&model_id, &initial_version).await?;
+        self.quality_assurance
+            .validate_model(&model_id, &initial_version)
+            .await?;
 
         Ok(model_id)
     }
@@ -103,14 +108,19 @@ impl MLModelManager {
         &self,
         model_id: &ModelId,
         version_data: VersionData,
-        build_info: BuildInfo
+        build_info: BuildInfo,
     ) -> Result<VersionInfo, MLError> {
         // Perform quality checks first
-        self.quality_assurance.validate_version_data(&version_data).await?;
+        self.quality_assurance
+            .validate_version_data(&version_data)
+            .await?;
 
         // Create version
         let version = ModelVersion {
-            version_number: self.version_manager.generate_version_number(model_id).await?,
+            version_number: self
+                .version_manager
+                .generate_version_number(model_id)
+                .await?,
             data: version_data,
             build_info,
             status: VersionStatus::Draft,
@@ -119,7 +129,10 @@ impl MLModelManager {
             deployed_at: None,
         };
 
-        let version_info = self.version_manager.create_version(model_id, version).await?;
+        let version_info = self
+            .version_manager
+            .create_version(model_id, version)
+            .await?;
 
         // Trigger automatic quality assessment
         self.quality_assurance.assess_quality(&version_info).await?;
@@ -130,72 +143,84 @@ impl MLModelManager {
     /// Deploy model version to production or staging
     pub async fn deploy_model(
         &self,
-        deployment_request: DeploymentRequest
+        deployment_request: DeploymentRequest,
     ) -> Result<DeploymentId, MLError> {
         // Pre-deployment validation
-        self.deployment_manager.validate_deployment(&deployment_request).await?;
+        self.deployment_manager
+            .validate_deployment(&deployment_request)
+            .await?;
 
         // Quality gate check
         if !deployment_request.bypass_quality_gate {
-            let quality_report = self.quality_assurance.get_quality_report(
-                &deployment_request.model_id,
-                &deployment_request.version
-            ).await?;
+            let quality_report = self
+                .quality_assurance
+                .get_quality_report(&deployment_request.model_id, &deployment_request.version)
+                .await?;
 
             if !quality_report.passed_all_gates() {
-                return Err(MLError::QualityGateFailed(
-                    format!("Quality gates failed for deployment: {:?}", quality_report.failing_gates())
-                ));
+                return Err(MLError::QualityGateFailed(format!(
+                    "Quality gates failed for deployment: {:?}",
+                    quality_report.failing_gates()
+                )));
             }
         }
 
         // Create deployment
-        let deployment = self.deployment_manager.create_deployment(deployment_request).await?;
+        let deployment = self
+            .deployment_manager
+            .create_deployment(deployment_request)
+            .await?;
 
         // Update monitoring
-        self.performance_monitor.track_deployment(&deployment).await?;
+        self.performance_monitor
+            .track_deployment(&deployment)
+            .await?;
 
         // Handle rollback scenarios if specified
         if let Some(rollback_policy) = deployment.rollback_policy {
-            self.deployment_manager.configure_rollback(&deployment.id, rollback_policy).await?;
+            self.deployment_manager
+                .configure_rollback(&deployment.id, rollback_policy)
+                .await?;
         }
 
         // Start actual deployment process
-        self.serving_infrastructure.deploy_model(&deployment).await?;
+        self.serving_infrastructure
+            .deploy_model(&deployment)
+            .await?;
 
         Ok(deployment.id)
     }
 
     /// Start A/B testing between model versions
-    pub async fn start_ab_test(
-        &self,
-        test_config: ABTestConfig
-    ) -> Result<ExperimentId, MLError> {
+    pub async fn start_ab_test(&self, test_config: ABTestConfig) -> Result<ExperimentId, MLError> {
         // Validate test configuration
         if test_config.traffic_distribution.iter().sum::<f64>() != 1.0 {
             return Err(MLError::InvalidConfiguration(
-                "Traffic distribution must sum to 1.0".to_string()
+                "Traffic distribution must sum to 1.0".to_string(),
             ));
         }
 
         if test_config.versions.len() < 2 {
             return Err(MLError::InvalidConfiguration(
-                "A/B test requires at least 2 versions".to_string()
+                "A/B test requires at least 2 versions".to_string(),
             ));
         }
 
-        let experiment = self.experiment_manager.create_experiment(test_config).await?;
+        let experiment = self
+            .experiment_manager
+            .create_experiment(test_config)
+            .await?;
 
         // Start the experiment
-        self.experiment_manager.start_experiment(&experiment.id).await?;
+        self.experiment_manager
+            .start_experiment(&experiment.id)
+            .await?;
 
         // Configure traffic routing
         for (version, distribution) in experiment.versions.iter() {
-            self.serving_infrastructure.configure_traffic_routing(
-                &experiment.model_id,
-                version,
-                distribution
-            ).await?;
+            self.serving_infrastructure
+                .configure_traffic_routing(&experiment.model_id, version, distribution)
+                .await?;
         }
 
         Ok(experiment.id)
@@ -204,7 +229,10 @@ impl MLModelManager {
     /// Monitor model performance in real-time
     pub async fn monitor_performance(&self) -> Result<PerformanceDashboard, MLError> {
         let metrics = self.performance_monitor.gather_metrics().await?;
-        let predictions = self.performance_monitor.generate_predictions(&metrics).await?;
+        let predictions = self
+            .performance_monitor
+            .generate_predictions(&metrics)
+            .await?;
 
         Ok(PerformanceDashboard {
             current_metrics: metrics,
@@ -218,13 +246,12 @@ impl MLModelManager {
     pub async fn optimize_model(
         &self,
         model_id: &ModelId,
-        optimization_config: OptimizationRequest
+        optimization_config: OptimizationRequest,
     ) -> Result<OptimizationResult, MLError> {
         // Check if optimization is feasible
-        self.quality_assurance.check_optimization_feasibility(
-            model_id,
-            &optimization_config
-        ).await?;
+        self.quality_assurance
+            .check_optimization_feasibility(model_id, &optimization_config)
+            .await?;
 
         // Create optimization task
         let task = OptimizationTask {
@@ -248,20 +275,26 @@ impl MLModelManager {
     pub async fn get_model_analytics(
         &self,
         model_id: &ModelId,
-        time_range: std::ops::Range<DateTime<Utc>>
+        time_range: std::ops::Range<DateTime<Utc>>,
     ) -> Result<ModelAnalytics, MLError> {
         let registry = self.model_registry.read().await;
         let model_info = registry.get_model(model_id)?;
 
-        let performance_metrics = self.performance_monitor.get_model_metrics(
-            model_id,
-            time_range.clone()
-        ).await?;
+        let performance_metrics = self
+            .performance_monitor
+            .get_model_metrics(model_id, time_range.clone())
+            .await?;
 
         let usage_metrics = registry.get_usage_metrics(model_id, time_range.clone());
 
-        let a_b_tests = self.experiment_manager.get_active_experiments(model_id).await?;
-        let deployments = self.deployment_manager.get_deployment_history(model_id, time_range).await?;
+        let a_b_tests = self
+            .experiment_manager
+            .get_active_experiments(model_id)
+            .await?;
+        let deployments = self
+            .deployment_manager
+            .get_deployment_history(model_id, time_range)
+            .await?;
         let versions = self.version_manager.get_version_history(model_id).await?;
 
         Ok(ModelAnalytics {
@@ -272,38 +305,60 @@ impl MLModelManager {
             active_experiments: a_b_tests,
             deployment_history: deployments,
             version_history: versions,
-            data_quality_score: self.quality_assurance.calculate_data_quality_score(model_id).await,
+            data_quality_score: self
+                .quality_assurance
+                .calculate_data_quality_score(model_id)
+                .await,
             risk_assessment: self.quality_assurance.assess_risk(model_id).await,
             generated_at: Utc::now(),
         })
     }
 
     /// Handle model lifecycle events
-    pub async fn handle_lifecycle_event(
-        &self,
-        event: LifecycleEvent
-    ) -> Result<(), MLError> {
+    pub async fn handle_lifecycle_event(&self, event: LifecycleEvent) -> Result<(), MLError> {
         match event {
             LifecycleEvent::ModelCreated(model_id) => {
-                self.performance_monitor.initialize_monitoring(&model_id).await?;
-                self.quality_assurance.create_quality_baseline(&model_id).await?;
+                self.performance_monitor
+                    .initialize_monitoring(&model_id)
+                    .await?;
+                self.quality_assurance
+                    .create_quality_baseline(&model_id)
+                    .await?;
             }
             LifecycleEvent::VersionPromoted { model_id, version } => {
-                self.deployment_manager.promote_version(&model_id, &version).await?;
-                self.experiment_manager.notify_promotion(&model_id, &version).await?;
+                self.deployment_manager
+                    .promote_version(&model_id, &version)
+                    .await?;
+                self.experiment_manager
+                    .notify_promotion(&model_id, &version)
+                    .await?;
             }
             LifecycleEvent::DeploymentStarted(deployment_id) => {
-                self.performance_monitor.start_deployment_monitoring(&deployment_id).await?;
+                self.performance_monitor
+                    .start_deployment_monitoring(&deployment_id)
+                    .await?;
             }
             LifecycleEvent::ExperimentCompleted(experiment_id) => {
-                let winner = self.experiment_manager.finish_experiment(&experiment_id).await?;
-                self.deployment_manager.handle_experiment_result(&experiment_id, winner).await?;
+                let winner = self
+                    .experiment_manager
+                    .finish_experiment(&experiment_id)
+                    .await?;
+                self.deployment_manager
+                    .handle_experiment_result(&experiment_id, winner)
+                    .await?;
             }
-            LifecycleEvent::PerformanceThresholdExceeded { model_id, threshold_type } => {
-                self.performance_monitor.handle_threshold_breach(&model_id, threshold_type).await?;
+            LifecycleEvent::PerformanceThresholdExceeded {
+                model_id,
+                threshold_type,
+            } => {
+                self.performance_monitor
+                    .handle_threshold_breach(&model_id, threshold_type)
+                    .await?;
                 let registry = self.model_registry.read().await;
                 let contact_info = registry.get_model(&model_id)?.emergency_contacts;
-                self.deployment_manager.trigger_emergency_protocol(&model_id, contact_info).await?;
+                self.deployment_manager
+                    .trigger_emergency_protocol(&model_id, contact_info)
+                    .await?;
             }
         }
 
@@ -314,7 +369,7 @@ impl MLModelManager {
     pub async fn emergency_rollback(
         &self,
         model_id: &ModelId,
-        rollback_reason: RollbackReason
+        rollback_reason: RollbackReason,
     ) -> Result<RollbackResult, MLError> {
         // Create emergency rollback plan
         let plan = EmergencyRollbackPlan {
@@ -333,7 +388,9 @@ impl MLModelManager {
         };
 
         // Execute emergency rollback
-        self.deployment_manager.execute_emergency_rollback(&plan).await?;
+        self.deployment_manager
+            .execute_emergency_rollback(&plan)
+            .await?;
 
         // Update monitoring
         self.performance_monitor.log_rollback(&plan).await?;
@@ -353,7 +410,7 @@ impl MLModelManager {
     async fn notify_stakeholders(
         &self,
         rollback_plan: &EmergencyRollbackPlan,
-        contacts: &[String]
+        contacts: &[String],
     ) -> Result<(), MLError> {
         // Send notifications (email, Slack, etc.)
         // Implementation would integrate with notification services
@@ -753,10 +810,16 @@ pub enum RiskLevel {
 #[derive(Debug, Clone)]
 pub enum LifecycleEvent {
     ModelCreated(ModelId),
-    VersionPromoted { model_id: ModelId, version: Version },
+    VersionPromoted {
+        model_id: ModelId,
+        version: Version,
+    },
     DeploymentStarted(DeploymentId),
     ExperimentCompleted(ExperimentId),
-    PerformanceThresholdExceeded { model_id: ModelId, threshold_type: String },
+    PerformanceThresholdExceeded {
+        model_id: ModelId,
+        threshold_type: String,
+    },
 }
 
 /// Rollback reason
@@ -900,12 +963,17 @@ impl ModelRegistry {
     }
 
     pub fn get_model(&self, model_id: &ModelId) -> Result<ModelMetadata, MLError> {
-        self.models.get(model_id)
+        self.models
+            .get(model_id)
             .cloned()
             .ok_or_else(|| MLError::ResourceNotFound("Model not found".to_string()))
     }
 
-    pub fn get_usage_metrics(&self, model_id: &ModelId, _time_range: std::ops::Range<DateTime<Utc>>) -> ModelUsageMetrics {
+    pub fn get_usage_metrics(
+        &self,
+        model_id: &ModelId,
+        _time_range: std::ops::Range<DateTime<Utc>>,
+    ) -> ModelUsageMetrics {
         self.storage
             .get(model_id)
             .cloned()
@@ -938,7 +1006,10 @@ impl DeploymentManager {
         Ok(())
     }
 
-    pub async fn create_deployment(&mut self, request: DeploymentRequest) -> Result<DeploymentInfo, MLError> {
+    pub async fn create_deployment(
+        &mut self,
+        request: DeploymentRequest,
+    ) -> Result<DeploymentInfo, MLError> {
         let deployment = DeploymentInfo {
             id: DeploymentId(Uuid::new_v4()),
             model_id: request.model_id,
@@ -950,19 +1021,32 @@ impl DeploymentManager {
             health_status: None,
         };
 
-        self.deployments.insert(deployment.id.clone(), deployment.clone());
+        self.deployments
+            .insert(deployment.id.clone(), deployment.clone());
         Ok(deployment)
     }
 
-    pub async fn configure_rollback(&self, _deployment_id: &DeploymentId, _policy: RollbackPolicy) -> Result<(), MLError> {
+    pub async fn configure_rollback(
+        &self,
+        _deployment_id: &DeploymentId,
+        _policy: RollbackPolicy,
+    ) -> Result<(), MLError> {
         Ok(())
     }
 
-    pub async fn promote_version(&self, _model_id: &ModelId, _version: &Version) -> Result<(), MLError> {
+    pub async fn promote_version(
+        &self,
+        _model_id: &ModelId,
+        _version: &Version,
+    ) -> Result<(), MLError> {
         Ok(())
     }
 
-    pub async fn get_deployment_history(&self, _model_id: &ModelId, _time_range: std::ops::Range<DateTime<Utc>>) -> Result<Vec<DeploymentInfo>, MLError> {
+    pub async fn get_deployment_history(
+        &self,
+        _model_id: &ModelId,
+        _time_range: std::ops::Range<DateTime<Utc>>,
+    ) -> Result<Vec<DeploymentInfo>, MLError> {
         Ok(vec![])
     }
 
@@ -970,15 +1054,26 @@ impl DeploymentManager {
         Ok(Version::new(1, 0, 0))
     }
 
-    pub async fn execute_emergency_rollback(&mut self, _plan: &EmergencyRollbackPlan) -> Result<(), MLError> {
+    pub async fn execute_emergency_rollback(
+        &mut self,
+        _plan: &EmergencyRollbackPlan,
+    ) -> Result<(), MLError> {
         Ok(())
     }
 
-    pub async fn handle_experiment_result(&mut self, _experiment_id: &ExperimentId, _winner: &Version) -> Result<(), MLError> {
+    pub async fn handle_experiment_result(
+        &mut self,
+        _experiment_id: &ExperimentId,
+        _winner: &Version,
+    ) -> Result<(), MLError> {
         Ok(())
     }
 
-    pub async fn trigger_emergency_protocol(&mut self, _model_id: &ModelId, _contacts: &[String]) -> Result<(), MLError> {
+    pub async fn trigger_emergency_protocol(
+        &mut self,
+        _model_id: &ModelId,
+        _contacts: &[String],
+    ) -> Result<(), MLError> {
         Ok(())
     }
 }
@@ -1005,17 +1100,18 @@ impl PerformanceMonitor {
         })
     }
 
-    pub async fn generate_predictions(&self, metrics: &PerformanceMetrics) -> Result<Vec<PerformancePrediction>, MLError> {
-        Ok(vec![
-            PerformancePrediction {
-                metric_name: "latency".to_string(),
-                current_value: metrics.latency_ms.iter().sum::<f64>() / metrics.latency_ms.len() as f64,
-                predicted_value: 105.0,
-                confidence: 0.85,
-                timeframe_hours: 24.0,
-                reason: "Based on recent usage patterns and seasonal trends".to_string(),
-            }
-        ])
+    pub async fn generate_predictions(
+        &self,
+        metrics: &PerformanceMetrics,
+    ) -> Result<Vec<PerformancePrediction>, MLError> {
+        Ok(vec![PerformancePrediction {
+            metric_name: "latency".to_string(),
+            current_value: metrics.latency_ms.iter().sum::<f64>() / metrics.latency_ms.len() as f64,
+            predicted_value: 105.0,
+            confidence: 0.85,
+            timeframe_hours: 24.0,
+            reason: "Based on recent usage patterns and seasonal trends".to_string(),
+        }])
     }
 
     pub async fn generate_alerts(&self, _metrics: &PerformanceMetrics) -> Vec<PerformanceAlert> {
@@ -1030,15 +1126,26 @@ impl PerformanceMonitor {
         Ok(())
     }
 
-    pub async fn start_deployment_monitoring(&self, _deployment_id: &DeploymentId) -> Result<(), MLError> {
+    pub async fn start_deployment_monitoring(
+        &self,
+        _deployment_id: &DeploymentId,
+    ) -> Result<(), MLError> {
         Ok(())
     }
 
-    pub async fn handle_threshold_breach(&self, _model_id: &ModelId, _threshold_type: String) -> Result<(), MLError> {
+    pub async fn handle_threshold_breach(
+        &self,
+        _model_id: &ModelId,
+        _threshold_type: String,
+    ) -> Result<(), MLError> {
         Ok(())
     }
 
-    pub async fn get_model_metrics(&self, _model_id: &ModelId, _time_range: std::ops::Range<DateTime<Utc>>) -> Result<PerformanceMetrics, MLError> {
+    pub async fn get_model_metrics(
+        &self,
+        _model_id: &ModelId,
+        _time_range: std::ops::Range<DateTime<Utc>>,
+    ) -> Result<PerformanceMetrics, MLError> {
         self.gather_metrics().await
     }
 
@@ -1060,7 +1167,10 @@ impl VersionManager {
     }
 
     pub async fn generate_version_number(&self, model_id: &ModelId) -> Result<Version, MLError> {
-        let latest_version = self.get_latest_version(model_id).await.unwrap_or(Version::new(0, 0, 0));
+        let latest_version = self
+            .get_latest_version(model_id)
+            .await
+            .unwrap_or(Version::new(0, 0, 0));
         Ok(Version {
             major: latest_version.major,
             minor: latest_version.minor + 1,
@@ -1071,14 +1181,23 @@ impl VersionManager {
     }
 
     pub async fn get_latest_version(&self, model_id: &ModelId) -> Option<Version> {
-        self.versions.get(model_id)
-            .and_then(|versions| {
-                versions.iter().max_by_key(|v| v.version_number.clone()).map(|v| v.version_number.clone())
-            })
+        self.versions.get(model_id).and_then(|versions| {
+            versions
+                .iter()
+                .max_by_key(|v| v.version_number.clone())
+                .map(|v| v.version_number.clone())
+        })
     }
 
-    pub async fn create_version(&mut self, model_id: &ModelId, version: ModelVersion) -> Result<VersionInfo, MLError> {
-        let versions = self.versions.entry(model_id.clone()).or_insert_with(Vec::new);
+    pub async fn create_version(
+        &mut self,
+        model_id: &ModelId,
+        version: ModelVersion,
+    ) -> Result<VersionInfo, MLError> {
+        let versions = self
+            .versions
+            .entry(model_id.clone())
+            .or_insert_with(Vec::new);
         versions.push(version.clone());
 
         Ok(VersionInfo {
@@ -1091,12 +1210,14 @@ impl VersionManager {
         })
     }
 
-    pub async fn get_version_history(&self, model_id: &ModelId) -> Result<Vec<VersionInfo>, MLError> {
-        let versions = self.versions.get(model_id)
-            .cloned()
-            .unwrap_or_default();
+    pub async fn get_version_history(
+        &self,
+        model_id: &ModelId,
+    ) -> Result<Vec<VersionInfo>, MLError> {
+        let versions = self.versions.get(model_id).cloned().unwrap_or_default();
 
-        let version_infos = versions.into_iter()
+        let version_infos = versions
+            .into_iter()
             .map(|v| VersionInfo {
                 model_id: model_id.clone(),
                 version_number: v.version_number,
@@ -1137,7 +1258,11 @@ impl QualityAssurance {
         Self
     }
 
-    pub async fn validate_model(&self, _model_id: &ModelId, _version: &ModelVersion) -> Result<(), MLError> {
+    pub async fn validate_model(
+        &self,
+        _model_id: &ModelId,
+        _version: &ModelVersion,
+    ) -> Result<(), MLError> {
         Ok(())
     }
 
@@ -1149,7 +1274,11 @@ impl QualityAssurance {
         Ok(())
     }
 
-    pub async fn get_quality_report(&self, _model_id: &ModelId, _version: &Version) -> Result<(), MLError> {
+    pub async fn get_quality_report(
+        &self,
+        _model_id: &ModelId,
+        _version: &Version,
+    ) -> Result<(), MLError> {
         Ok(())
     }
 
@@ -1170,7 +1299,11 @@ impl QualityAssurance {
         }
     }
 
-    pub async fn check_optimization_feasibility(&self, _model_id: &ModelId, _config: &OptimizationRequest) -> Result<(), MLError> {
+    pub async fn check_optimization_feasibility(
+        &self,
+        _model_id: &ModelId,
+        _config: &OptimizationRequest,
+    ) -> Result<(), MLError> {
         Ok(())
     }
 
@@ -1199,7 +1332,10 @@ impl ExperimentManager {
         }
     }
 
-    pub async fn create_experiment(&mut self, config: ABTestConfig) -> Result<ExperimentInfo, MLError> {
+    pub async fn create_experiment(
+        &mut self,
+        config: ABTestConfig,
+    ) -> Result<ExperimentInfo, MLError> {
         let experiment = ExperimentInfo {
             id: ExperimentId(Uuid::new_v4()),
             model_id: config.model_id,
@@ -1210,7 +1346,8 @@ impl ExperimentManager {
             winner: None,
         };
 
-        self.experiments.insert(experiment.id.clone(), experiment.clone());
+        self.experiments
+            .insert(experiment.id.clone(), experiment.clone());
         Ok(experiment)
     }
 
@@ -1221,14 +1358,22 @@ impl ExperimentManager {
         Ok(())
     }
 
-    pub async fn get_active_experiments(&self, model_id: &ModelId) -> Result<Vec<ExperimentInfo>, MLError> {
-        Ok(self.experiments.values()
+    pub async fn get_active_experiments(
+        &self,
+        model_id: &ModelId,
+    ) -> Result<Vec<ExperimentInfo>, MLError> {
+        Ok(self
+            .experiments
+            .values()
             .filter(|e| e.model_id == *model_id && matches!(e.status, ExperimentStatus::Running))
             .cloned()
             .collect())
     }
 
-    pub async fn finish_experiment(&mut self, experiment_id: &ExperimentId) -> Result<&Version, MLError> {
+    pub async fn finish_experiment(
+        &mut self,
+        experiment_id: &ExperimentId,
+    ) -> Result<&Version, MLError> {
         if let Some(experiment) = self.experiments.get_mut(experiment_id) {
             experiment.status = ExperimentStatus::Completed;
             // For demo purposes, return the first version as winner
@@ -1236,10 +1381,16 @@ impl ExperimentManager {
             experiment.winner = Some(winner.clone());
             return Ok(&experiment.winner.as_ref().unwrap());
         }
-        Err(MLError::ResourceNotFound("Experiment not found".to_string()))
+        Err(MLError::ResourceNotFound(
+            "Experiment not found".to_string(),
+        ))
     }
 
-    pub async fn notify_promotion(&self, _model_id: &ModelId, _version: &Version) -> Result<(), MLError> {
+    pub async fn notify_promotion(
+        &self,
+        _model_id: &ModelId,
+        _version: &Version,
+    ) -> Result<(), MLError> {
         Ok(())
     }
 }
@@ -1256,7 +1407,12 @@ impl ServingInfrastructure {
         Ok(())
     }
 
-    pub async fn configure_traffic_routing(&self, _model_id: &ModelId, _version: &Version, _distribution: &f64) -> Result<(), MLError> {
+    pub async fn configure_traffic_routing(
+        &self,
+        _model_id: &ModelId,
+        _version: &Version,
+        _distribution: &f64,
+    ) -> Result<(), MLError> {
         Ok(())
     }
 }

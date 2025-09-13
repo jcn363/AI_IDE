@@ -6,7 +6,7 @@ import {
   ErrorCategory,
   PatternMatch,
   PatternMatchResult,
-  DocumentationLink
+  DocumentationLink,
 } from '../types/error-resolution';
 
 /**
@@ -43,7 +43,7 @@ export class ErrorPatternMatcher {
           pattern,
           confidence,
           matches,
-          suggestedFixes
+          suggestedFixes,
         });
       }
     }
@@ -107,14 +107,17 @@ export class ErrorPatternMatcher {
       benefits: ['Eliminates warning from unused variable', 'Makes code intent clear'],
       risks: ['May mask actual issues if variable should be used'],
       dependencies: [],
-      testSuggestions: []
+      testSuggestions: [],
     };
   }
 
   /**
    * Generate fixes for borrowing issues
    */
-  private generateBorrowCheckFixes(matches: PatternMatch[], originalError: string): FixSuggestion[] {
+  private generateBorrowCheckFixes(
+    matches: PatternMatch[],
+    originalError: string
+  ): FixSuggestion[] {
     const fixes: FixSuggestion[] = [];
 
     // Fix for mutable borrow after immutable borrow
@@ -132,7 +135,7 @@ export class ErrorPatternMatcher {
         benefits: ['Allows mutation of borrowed data', 'Maintains memory safety'],
         risks: ['Runtime borrow checking overhead'],
         dependencies: [],
-        testSuggestions: ['Verify RefCell borrowing rules are respected']
+        testSuggestions: ['Verify RefCell borrowing rules are respected'],
       });
 
       // Clone alternative
@@ -149,7 +152,7 @@ export class ErrorPatternMatcher {
         benefits: ['Simple solution for small data structures'],
         risks: ['Performance impact for large data structures'],
         dependencies: [],
-        testSuggestions: []
+        testSuggestions: [],
       });
     }
 
@@ -173,7 +176,7 @@ export class ErrorPatternMatcher {
       benefits: ['Resolves type mismatch error', 'Makes code more explicit'],
       risks: ['May not be the intended type'],
       dependencies: [],
-      testSuggestions: []
+      testSuggestions: [],
     };
   }
 
@@ -195,7 +198,7 @@ export class ErrorPatternMatcher {
       risks: [],
       dependencies: [],
       testSuggestions: [],
-      documentationLinks: this.generateDocumentationLinks(pattern.errorType)
+      documentationLinks: this.generateDocumentationLinks(pattern.errorType),
     };
   }
 
@@ -212,7 +215,7 @@ export class ErrorPatternMatcher {
       frequency: 0,
       lastSeen: new Date().toISOString(),
       confidence: 1.0,
-      language: 'rust'
+      language: 'rust',
     });
 
     // Borrow checker patterns
@@ -224,7 +227,7 @@ export class ErrorPatternMatcher {
       frequency: 0,
       lastSeen: new Date().toISOString(),
       confidence: 0.9,
-      language: 'rust'
+      language: 'rust',
     });
 
     this.registerPattern({
@@ -235,7 +238,7 @@ export class ErrorPatternMatcher {
       frequency: 0,
       lastSeen: new Date().toISOString(),
       confidence: 0.9,
-      language: 'rust'
+      language: 'rust',
     });
 
     // Type mismatch patterns
@@ -247,7 +250,7 @@ export class ErrorPatternMatcher {
       frequency: 0,
       lastSeen: new Date().toISOString(),
       confidence: 0.8,
-      language: 'rust'
+      language: 'rust',
     });
 
     // Missing trait implementation
@@ -259,7 +262,7 @@ export class ErrorPatternMatcher {
       frequency: 0,
       lastSeen: new Date().toISOString(),
       confidence: 0.8,
-      language: 'rust'
+      language: 'rust',
     });
   }
 
@@ -306,7 +309,7 @@ export class ErrorPatternMatcher {
           column: index,
           length: pattern.pattern.length,
           context: errorMessage,
-          capturedGroups: {}
+          capturedGroups: {},
         });
       }
     } else if (pattern.pattern instanceof RegExp) {
@@ -317,7 +320,7 @@ export class ErrorPatternMatcher {
           column: match.index,
           length: match[0].length,
           context: errorMessage,
-          capturedGroups: match.groups || {}
+          capturedGroups: match.groups || {},
         });
       }
     }
@@ -329,63 +332,71 @@ export class ErrorPatternMatcher {
    * Helper methods for generating specific changes
    */
   private generateVariableChanges(match: PatternMatch, prefix: string): CodeChange[] {
-    return [{
-      filePath: 'unknown.rs', // Would be provided by caller
-      changeType: ChangeType.Replace,
-      range: {
-        startLine: match.line,
-        startColumn: match.column,
-        endLine: match.line,
-        endColumn: match.column + match.length
+    return [
+      {
+        filePath: 'unknown.rs', // Would be provided by caller
+        changeType: ChangeType.Replace,
+        range: {
+          startLine: match.line,
+          startColumn: match.column,
+          endLine: match.line,
+          endColumn: match.column + match.length,
+        },
+        newText: `${prefix}${match.context.substring(match.column, match.column + match.length)}`,
+        description: `Prefix variable with underscore`,
       },
-      newText: `${prefix}${match.context.substring(match.column, match.column + match.length)}`,
-      description: `Prefix variable with underscore`
-    }];
+    ];
   }
 
   private generateRefCellChanges(): CodeChange[] {
-    return [{
-      filePath: 'unknown.rs',
-      changeType: ChangeType.Insert,
-      range: {
-        startLine: 0,
-        startColumn: 0,
-        endLine: 0,
-        endColumn: 0
+    return [
+      {
+        filePath: 'unknown.rs',
+        changeType: ChangeType.Insert,
+        range: {
+          startLine: 0,
+          startColumn: 0,
+          endLine: 0,
+          endColumn: 0,
+        },
+        newText: 'use std::cell::RefCell;',
+        description: 'Add RefCell import',
       },
-      newText: 'use std::cell::RefCell;',
-      description: 'Add RefCell import'
-    }];
+    ];
   }
 
   private generateCloneChanges(): CodeChange[] {
-    return [{
-      filePath: 'unknown.rs',
-      changeType: ChangeType.Replace,
-      range: {
-        startLine: 0,
-        startColumn: 0,
-        endLine: 0,
-        endColumn: 0
+    return [
+      {
+        filePath: 'unknown.rs',
+        changeType: ChangeType.Replace,
+        range: {
+          startLine: 0,
+          startColumn: 0,
+          endLine: 0,
+          endColumn: 0,
+        },
+        newText: '.clone()',
+        description: 'Clone value to resolve borrowing conflict',
       },
-      newText: '.clone()',
-      description: 'Clone value to resolve borrowing conflict'
-    }];
+    ];
   }
 
   private generateTypeAnnotationChanges(match: PatternMatch): CodeChange[] {
-    return [{
-      filePath: 'unknown.rs',
-      changeType: ChangeType.Insert,
-      range: {
-        startLine: match.line,
-        startColumn: match.column,
-        endLine: match.line,
-        endColumn: match.column + match.length
+    return [
+      {
+        filePath: 'unknown.rs',
+        changeType: ChangeType.Insert,
+        range: {
+          startLine: match.line,
+          startColumn: match.column,
+          endLine: match.line,
+          endColumn: match.column + match.length,
+        },
+        newText: ': TypeName',
+        description: 'Add explicit type annotation',
       },
-      newText: ': TypeName',
-      description: 'Add explicit type annotation'
-    }];
+    ];
   }
 
   private generateDocumentationLinks(errorType: string): DocumentationLink[] {
@@ -398,7 +409,7 @@ export class ErrorPatternMatcher {
           url: 'https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html',
           description: 'Learn about Rust ownership and borrowing',
           relevance: 'high',
-          type: 'official-docs'
+          type: 'official-docs',
         });
         break;
       case 'type_mismatch':
@@ -407,7 +418,7 @@ export class ErrorPatternMatcher {
           url: 'https://doc.rust-lang.org/book/ch03-02-data-types.html',
           description: 'Understanding Rust data types',
           relevance: 'medium',
-          type: 'official-docs'
+          type: 'official-docs',
         });
         break;
       default:
@@ -416,7 +427,7 @@ export class ErrorPatternMatcher {
           url: 'https://doc.rust-lang.org/book/',
           description: 'Official Rust programming language guide',
           relevance: 'low',
-          type: 'official-docs'
+          type: 'official-docs',
         });
     }
 

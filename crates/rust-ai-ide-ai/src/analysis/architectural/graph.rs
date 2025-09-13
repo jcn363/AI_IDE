@@ -1,9 +1,9 @@
 //! Graph-based analysis for detecting architectural issues like circular dependencies.
 
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::hash::{Hash, Hasher};
-use serde::{Deserialize, Serialize};
 
 use petgraph::algo::kosaraju_scc as find_strongly_connected_components;
 use petgraph::graph::{DiGraph, NodeIndex};
@@ -74,21 +74,21 @@ impl DependencyGraph {
     /// Add a node to the graph if it doesn't already exist
     pub fn add_node(&mut self, name: &str, file_path: &str, span: Span) -> NodeIndex {
         let key = format!("{}:{}", file_path, name);
-        
+
         if let Some(&idx) = self.node_indices.get(&key) {
             return idx;
         }
-        
+
         let node = DependencyNode {
             name: name.to_string(),
             file_path: file_path.to_string(),
             span,
         };
-        
+
         let idx = self.graph.add_node(node.clone());
         self.node_indices.insert(key, idx);
         self.node_map.insert(idx, node);
-        
+
         idx
     }
 
@@ -104,9 +104,13 @@ impl DependencyGraph {
     ) {
         let from_idx = self.add_node(from, from_file, span);
         let to_idx = self.add_node(to, to_file, span);
-        
+
         // Only add the edge if it doesn't already exist
-        if !self.graph.edges_connecting(from_idx, to_idx).any(|e| e.weight().kind == kind) {
+        if !self
+            .graph
+            .edges_connecting(from_idx, to_idx)
+            .any(|e| e.weight().kind == kind)
+        {
             self.graph.add_edge(
                 from_idx,
                 to_idx,
@@ -121,7 +125,7 @@ impl DependencyGraph {
     /// Detect cycles in the dependency graph
     pub fn detect_cycles(&self) -> Vec<Vec<String>> {
         let sccs = find_strongly_connected_components(&self.graph);
-        
+
         sccs.into_iter()
             .filter(|scc| scc.len() > 1) // Only include actual cycles (2+ nodes)
             .map(|scc| {
@@ -141,7 +145,8 @@ impl DependencyGraph {
 
     /// Get the location of a node
     pub fn get_node_location(&self, node_name: &str) -> Option<CodeLocation> {
-        self.node_map.values()
+        self.node_map
+            .values()
             .find(|n| n.name == node_name)
             .map(|n| CodeLocation::from_span(&n.span))
     }
@@ -158,7 +163,8 @@ impl Serialize for DependencyGraph {
         let nodes: Vec<DependencyNode> = self.graph.node_weights().cloned().collect();
         state.serialize_field("nodes", &nodes)?;
 
-        let edges: Vec<(usize, usize, DependencyEdge)> = self.graph
+        let edges: Vec<(usize, usize, DependencyEdge)> = self
+            .graph
             .edge_references()
             .map(|e| (e.source().index(), e.target().index(), e.weight().clone()))
             .collect();
@@ -181,13 +187,16 @@ impl<'de> Deserialize<'de> for DependencyGraph {
 
         let raw = DependencyGraphRaw::deserialize(deserializer)?;
         let mut graph = DiGraph::new();
-        let node_indices_vec: Vec<NodeIndex> = raw.nodes.into_iter().map(|n| graph.add_node(n)).collect();
+        let node_indices_vec: Vec<NodeIndex> =
+            raw.nodes.into_iter().map(|n| graph.add_node(n)).collect();
 
         for (source, target, weight) in raw.edges {
             if source >= node_indices_vec.len() || target >= node_indices_vec.len() {
                 return Err(serde::de::Error::custom(format!(
                     "Invalid node index in edges: source={}, target={}, len={}",
-                    source, target, node_indices_vec.len()
+                    source,
+                    target,
+                    node_indices_vec.len()
                 )));
             }
             graph.add_edge(node_indices_vec[source], node_indices_vec[target], weight);
@@ -221,14 +230,14 @@ mod tests {
     fn test_add_node() {
         let mut graph = DependencyGraph::new();
         let span = parse_quote!(span);
-        
+
         let idx1 = graph.add_node("module1", "path/to/file1.rs", span);
         let idx2 = graph.add_node("module2", "path/to/file2.rs", span);
-        
+
         // Adding the same node again should return the same index
         let idx1_again = graph.add_node("module1", "path/to/file1.rs", span);
         assert_eq!(idx1, idx1_again);
-        
+
         // Different nodes should have different indices
         assert_ne!(idx1, idx2);
     }
@@ -237,16 +246,16 @@ mod tests {
     fn test_detect_cycles() {
         let mut graph = DependencyGraph::new();
         let span = parse_quote!(span);
-        
+
         // A -> B -> C -> A (cycle)
         graph.add_dependency("A", "file1.rs", "B", "file2.rs", "uses", span);
         graph.add_dependency("B", "file2.rs", "C", "file3.rs", "uses", span);
         graph.add_dependency("C", "file3.rs", "A", "file1.rs", "uses", span);
-        
+
         let cycles = graph.detect_cycles();
         assert_eq!(cycles.len(), 1);
         assert_eq!(cycles[0].len(), 3);
-        
+
         // Should contain all nodes in the cycle, order doesn't matter
         let cycle_nodes: HashSet<_> = cycles[0].iter().collect();
         assert!(cycle_nodes.contains(&"A".to_string()));

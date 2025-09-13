@@ -3,8 +3,14 @@
 //! This service provides a comprehensive keybinding management system with
 //! support for multiple profiles, conflict detection, and persistent storage.
 
-import { invoke } from '@tauri-apps/api/tauri';
-import { ShortcutContext, KeyCombination, ShortcutAction, UserShortcutProfile, KeybindingConflict } from './types';
+import { invoke } from '@tauri-apps/api/core';
+import {
+  ShortcutContext,
+  KeyCombination,
+  ShortcutAction,
+  UserShortcutProfile,
+  KeybindingConflict,
+} from './types';
 import { defaultShortcuts } from './defaultShortcuts';
 
 export class KeybindingManager {
@@ -25,7 +31,7 @@ export class KeybindingManager {
         description: 'Save the current file',
         context: 'editor',
         action: () => {},
-        defaultKeys: [{ key: 's', ctrlKey: true }]
+        defaultKeys: [{ key: 's', ctrlKey: true }],
       },
       {
         id: 'editor.undo',
@@ -33,7 +39,7 @@ export class KeybindingManager {
         description: 'Undo last action',
         context: 'editor',
         action: () => {},
-        defaultKeys: [{ key: 'z', ctrlKey: true }]
+        defaultKeys: [{ key: 'z', ctrlKey: true }],
       },
       {
         id: 'editor.redo',
@@ -43,8 +49,8 @@ export class KeybindingManager {
         action: () => {},
         defaultKeys: [
           { key: 'z', ctrlKey: true, shiftKey: true },
-          { key: 'y', ctrlKey: true }
-        ]
+          { key: 'y', ctrlKey: true },
+        ],
       },
       {
         id: 'terminal.new',
@@ -52,7 +58,7 @@ export class KeybindingManager {
         description: 'Open new terminal instance',
         context: 'terminal',
         action: () => {},
-        defaultKeys: [{ key: '`', ctrlKey: true, shiftKey: true }]
+        defaultKeys: [{ key: '`', ctrlKey: true, shiftKey: true }],
       },
       {
         id: 'search.find',
@@ -60,7 +66,7 @@ export class KeybindingManager {
         description: 'Open find dialog',
         context: 'search',
         action: () => {},
-        defaultKeys: [{ key: 'f', ctrlKey: true }]
+        defaultKeys: [{ key: 'f', ctrlKey: true }],
       },
       {
         id: 'search.replace',
@@ -68,7 +74,7 @@ export class KeybindingManager {
         description: 'Open find and replace dialog',
         context: 'search',
         action: () => {},
-        defaultKeys: [{ key: 'h', ctrlKey: true }]
+        defaultKeys: [{ key: 'h', ctrlKey: true }],
       },
       {
         id: 'command.palette',
@@ -76,7 +82,7 @@ export class KeybindingManager {
         description: 'Open command palette',
         context: 'command-palette',
         action: () => {},
-        defaultKeys: [{ key: 'p', ctrlKey: true, shiftKey: true }]
+        defaultKeys: [{ key: 'p', ctrlKey: true, shiftKey: true }],
       },
       {
         id: 'git.status',
@@ -84,7 +90,7 @@ export class KeybindingManager {
         description: 'Show git status',
         context: 'git',
         action: () => {},
-        defaultKeys: [{ key: 'g', ctrlKey: true, shiftKey: true }]
+        defaultKeys: [{ key: 'g', ctrlKey: true, shiftKey: true }],
       },
       {
         id: 'explorer.toggle',
@@ -92,10 +98,10 @@ export class KeybindingManager {
         description: 'Toggle file explorer visibility',
         context: 'file-explorer',
         action: () => {},
-        defaultKeys: [{ key: 'b', ctrlKey: true, shiftKey: true }]
+        defaultKeys: [{ key: 'b', ctrlKey: true, shiftKey: true }],
       },
       // Add more actions as needed
-      ...this.actions
+      ...this.actions,
     ];
   }
 
@@ -128,7 +134,7 @@ export class KeybindingManager {
       shortcuts,
       isDefault: true,
       createdAt: Date.now(),
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     };
 
     this.profiles.set('default', defaultProfile);
@@ -150,8 +156,8 @@ export class KeybindingManager {
         profileData: {
           name,
           description,
-          shortcuts: this.createDefaultShortcuts()
-        }
+          shortcuts: this.createDefaultShortcuts(),
+        },
       });
 
       const profile = typeof result === 'string' ? JSON.parse(result) : result;
@@ -225,13 +231,13 @@ export class KeybindingManager {
   }
 
   static parseKeyCombination(formatted: string): KeyCombination {
-    const parts = formatted.split('+').map(p => p.trim().toLowerCase());
+    const parts = formatted.split('+').map((p) => p.trim().toLowerCase());
     const combination: KeyCombination = {
       key: '',
       ctrlKey: parts.includes('ctrl'),
       altKey: parts.includes('alt'),
       shiftKey: parts.includes('shift'),
-      metaKey: parts.includes('cmd') || parts.includes('meta')
+      metaKey: parts.includes('cmd') || parts.includes('meta'),
     };
 
     // Find the key part
@@ -305,7 +311,7 @@ export class KeybindingManager {
     return this.actions;
   }
 
-  getCurrentProfile():  UserShortcutProfile | null {
+  getCurrentProfile(): UserShortcutProfile | null {
     return this.profiles.get(this.currentProfile) || null;
   }
 

@@ -16,8 +16,8 @@
 //! - Custom vectorized algorithms for common IDE operations
 //! - Fallback mechanisms for unsupported architectures
 
-use std::simd::{f32x4, f32x8, i32x4, i32x8, SimdFloat, SimdInt};
 use std::collections::HashMap;
+use std::simd::{f32x4, f32x8, i32x4, i32x8, SimdFloat, SimdInt};
 
 /// SIMD-accelerated vector mathematics for AI/ML computations
 #[derive(Debug)]
@@ -73,18 +73,28 @@ impl SimdMathAccelerator {
         let mut constants = HashMap::new();
 
         // Pre-compute mathematical constants
-        constants.insert("sigmoid_lut".to_string(),
-            (0..1024).map(|i| {
-                let x = (i as f32 - 512.0) / 128.0;
-                1.0 / (1.0 + (-x).exp())
-            }).collect()
+        constants.insert(
+            "sigmoid_lut".to_string(),
+            (0..1024)
+                .map(|i| {
+                    let x = (i as f32 - 512.0) / 128.0;
+                    1.0 / (1.0 + (-x).exp())
+                })
+                .collect(),
         );
 
-        constants.insert("relu_derivative_lut".to_string(),
-            (0..1024).map(|i| {
-                let x = (i as f32 - 512.0) / 128.0;
-                if x > 0.0 { 1.0 } else { 0.0 }
-            }).collect()
+        constants.insert(
+            "relu_derivative_lut".to_string(),
+            (0..1024)
+                .map(|i| {
+                    let x = (i as f32 - 512.0) / 128.0;
+                    if x > 0.0 {
+                        1.0
+                    } else {
+                        0.0
+                    }
+                })
+                .collect(),
         );
 
         Self {
@@ -113,14 +123,14 @@ impl SimdMathAccelerator {
         let chunks = len / 8;
 
         for i in 0..chunks {
-            let va = f32x8::from_slice_unaligned(&a[i*8..]);
-            let vb = f32x8::from_slice_unaligned(&b[i*8..]);
+            let va = f32x8::from_slice_unaligned(&a[i * 8..]);
+            let vb = f32x8::from_slice_unaligned(&b[i * 8..]);
             let vresult = va + vb;
-            vresult.copy_to_slice_unaligned(&mut result[i*8..]);
+            vresult.copy_to_slice_unaligned(&mut result[i * 8..]);
         }
 
         // Handle remaining elements
-        for i in chunks*8..len {
+        for i in chunks * 8..len {
             result[i] = a[i] + b[i];
         }
     }
@@ -133,14 +143,14 @@ impl SimdMathAccelerator {
         let chunks = len / 4;
 
         for i in 0..chunks {
-            let va = f32x4::from_slice_unaligned(&a[i*4..]);
-            let vb = f32x4::from_slice_unaligned(&b[i*4..]);
+            let va = f32x4::from_slice_unaligned(&a[i * 4..]);
+            let vb = f32x4::from_slice_unaligned(&b[i * 4..]);
             let vresult = va + vb;
-            vresult.copy_to_slice_unaligned(&mut result[i*4..]);
+            vresult.copy_to_slice_unaligned(&mut result[i * 4..]);
         }
 
         // Handle remaining elements
-        for i in chunks*4..len {
+        for i in chunks * 4..len {
             result[i] = a[i] + b[i];
         }
     }
@@ -153,7 +163,15 @@ impl SimdMathAccelerator {
     }
 
     /// SIMD-accelerated matrix multiplication
-    pub fn matrix_multiply(&self, a: &[f32], b: &[f32], result: &mut [f32], m: usize, n: usize, p: usize) {
+    pub fn matrix_multiply(
+        &self,
+        a: &[f32],
+        b: &[f32],
+        result: &mut [f32],
+        m: usize,
+        n: usize,
+        p: usize,
+    ) {
         assert_eq!(a.len(), m * n);
         assert_eq!(b.len(), n * p);
         assert_eq!(result.len(), m * p);
@@ -167,38 +185,54 @@ impl SimdMathAccelerator {
     /// AVX2-optimized matrix multiplication
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[target_feature(enable = "avx2")]
-    unsafe fn matrix_multiply_avx2(&self, a: &[f32], b: &[f32], result: &mut [f32], m: usize, n: usize, p: usize) {
+    unsafe fn matrix_multiply_avx2(
+        &self,
+        a: &[f32],
+        b: &[f32],
+        result: &mut [f32],
+        m: usize,
+        n: usize,
+        p: usize,
+    ) {
         for i in 0..m {
             for j in 0..p {
                 let mut sum = f32x8::splat(0.0);
                 let mut k = 0;
 
                 while k + 8 <= n {
-                    let va = f32x8::from_slice_unaligned(&a[i*n + k..]);
-                    let vb = f32x8::from_slice_unaligned(&b[k*p + j..k*p + j + 8]);
+                    let va = f32x8::from_slice_unaligned(&a[i * n + k..]);
+                    let vb = f32x8::from_slice_unaligned(&b[k * p + j..k * p + j + 8]);
                     sum += va * vb;
                     k += 8;
                 }
 
                 let mut scalar_sum = sum.reduce_sum();
                 for k_remain in k..n {
-                    scalar_sum += a[i*n + k_remain] * b[k_remain*p + j];
+                    scalar_sum += a[i * n + k_remain] * b[k_remain * p + j];
                 }
 
-                result[i*p + j] = scalar_sum;
+                result[i * p + j] = scalar_sum;
             }
         }
     }
 
     /// Fallback scalar matrix multiplication
-    fn matrix_multiply_scalar(&self, a: &[f32], b: &[f32], result: &mut [f32], m: usize, n: usize, p: usize) {
+    fn matrix_multiply_scalar(
+        &self,
+        a: &[f32],
+        b: &[f32],
+        result: &mut [f32],
+        m: usize,
+        n: usize,
+        p: usize,
+    ) {
         for i in 0..m {
             for j in 0..p {
                 let mut sum = 0.0;
                 for k in 0..n {
-                    sum += a[i*n + k] * b[k*p + j];
+                    sum += a[i * n + k] * b[k * p + j];
                 }
-                result[i*p + j] = sum;
+                result[i * p + j] = sum;
             }
         }
     }
@@ -225,7 +259,8 @@ impl SimdTextProcessor {
         } else {
             // Fallback to scalar search
             for pattern in patterns {
-                let positions: Vec<usize> = text.match_indices(pattern).map(|(pos, _)| pos).collect();
+                let positions: Vec<usize> =
+                    text.match_indices(pattern).map(|(pos, _)| pos).collect();
                 results.insert(pattern.to_string(), positions);
             }
         }
@@ -395,12 +430,12 @@ impl SimdMemoryManager {
         let chunks = len / 8;
 
         for i in 0..chunks {
-            let vs = f32x8::from_slice_unaligned(&src[i*8..]);
-            vs.copy_to_slice_unaligned(&mut dst[i*8..]);
+            let vs = f32x8::from_slice_unaligned(&src[i * 8..]);
+            vs.copy_to_slice_unaligned(&mut dst[i * 8..]);
         }
 
         // Handle remaining elements
-        for i in chunks*8..len {
+        for i in chunks * 8..len {
             dst[i] = src[i];
         }
     }
@@ -414,11 +449,11 @@ impl SimdMemoryManager {
                 let chunks = buffer.len() / 8;
 
                 for i in 0..chunks {
-                    value_vec.copy_to_slice_unaligned(&mut buffer[i*8..]);
+                    value_vec.copy_to_slice_unaligned(&mut buffer[i * 8..]);
                 }
 
                 // Handle remaining elements
-                for i in chunks*8..buffer.len() {
+                for i in chunks * 8..buffer.len() {
                     buffer[i] = value;
                 }
             }
@@ -446,8 +481,20 @@ impl SimdConfig {
         let has_avx512 = is_x86_feature_detected!("avx512f");
         let has_sse4 = is_x86_feature_detected!("sse4.1");
 
-        let vector_width_f32 = if has_avx512 { 16 } else if has_avx2 { 8 } else { 4 };
-        let vector_width_i32 = if has_avx512 { 16 } else if has_avx2 { 8 } else { 4 };
+        let vector_width_f32 = if has_avx512 {
+            16
+        } else if has_avx2 {
+            8
+        } else {
+            4
+        };
+        let vector_width_i32 = if has_avx512 {
+            16
+        } else if has_avx2 {
+            8
+        } else {
+            4
+        };
 
         // Estimate cache line size (typical values: 64 for most x86)
         let cache_line_size = 64;
@@ -604,17 +651,21 @@ async fn main() {
     println!("\n⏱️  Performance Benchmark Results:");
 
     // Benchmark SIMD operation
-    let simd_time = benchmarker.benchmark_operation("SIMD vector add", || async {
-        let accelerator = SimdMathAccelerator::new();
-        accelerator.vector_add(&large_array, &large_array, &mut result);
-    }).await;
+    let simd_time = benchmarker
+        .benchmark_operation("SIMD vector add", || async {
+            let accelerator = SimdMathAccelerator::new();
+            accelerator.vector_add(&large_array, &large_array, &mut result);
+        })
+        .await;
 
     // Benchmark scalar operation
-    let scalar_time = benchmarker.benchmark_operation("Scalar vector add", || async {
-        for i in 0..large_array.len() {
-            result[i] = large_array[i] + large_array[i];
-        }
-    }).await;
+    let scalar_time = benchmarker
+        .benchmark_operation("Scalar vector add", || async {
+            for i in 0..large_array.len() {
+                result[i] = large_array[i] + large_array[i];
+            }
+        })
+        .await;
 
     let ratio = benchmarker.performance_ratio(simd_time, scalar_time);
     println!("  SIMD Speedup: {:.2}x", ratio);

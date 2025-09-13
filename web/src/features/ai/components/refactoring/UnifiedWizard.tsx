@@ -47,7 +47,8 @@ export const UnifiedRefactoringWizard: React.FC<UnifiedWizardProps> = ({
         wizardSteps.push({
           id: 'extract-interface-config',
           title: 'Extract Interface Configuration',
-          description: 'Configure which methods and properties to include in the extracted interface.',
+          description:
+            'Configure which methods and properties to include in the extracted interface.',
           component: ExtractInterfaceWizard,
           validation: async (config: Record<string, any>) => {
             const isValid = config.selectedClasses?.length > 0 && config.interfaceName?.trim();
@@ -137,7 +138,7 @@ export const UnifiedRefactoringWizard: React.FC<UnifiedWizardProps> = ({
       'pattern-conversion': 'Pattern Conversion',
       'batch-interface-extraction': 'Batch Interface Extraction',
       'batch-pattern-conversion': 'Batch Pattern Conversion',
-      'rename': 'Rename',
+      rename: 'Rename',
       'extract-method': 'Extract Method',
       'extract-function': 'Extract Function',
       'extract-variable': 'Extract Variable',
@@ -166,7 +167,7 @@ export const UnifiedRefactoringWizard: React.FC<UnifiedWizardProps> = ({
       'interface-extraction': 'Interface Extraction',
       'async-await-pattern-conversion': 'Async/Await Pattern Conversion',
     };
-    return names[type] || type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return names[type] || type.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   if (!open || isLoading) {

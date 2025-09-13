@@ -24,7 +24,7 @@ fn create_test_ast() -> syn::File {
 fn test_security_analyzer_detects_command_injection() {
     let code = r#"
         use std::process::Command;
-        
+
         pub fn vulnerable(user_input: &str) {
             let _ = Command::new("echo").arg(user_input).output();
         }
@@ -104,7 +104,7 @@ fn test_security_analyzer_integration() {
 
     let code = r#"
         use std::process::Command;
-        
+
         pub fn vulnerable(user_input: &str) {
             let _ = Command::new("echo").arg(user_input).output();
         }

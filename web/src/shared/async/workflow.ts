@@ -56,7 +56,7 @@ export class WorkflowEngine<T = any> {
       enableRetry: true,
       enableRollback: true,
       timeout: 300000, // 5 minutes
-      ...options
+      ...options,
     };
   }
 
@@ -76,7 +76,7 @@ export class WorkflowEngine<T = any> {
       name: task.name,
       status: 'pending',
       retryCount: 0,
-      maxRetries: task.retryAttempts || 3
+      maxRetries: task.retryAttempts || 3,
     };
 
     this.state.set(task.id, state);
@@ -86,7 +86,7 @@ export class WorkflowEngine<T = any> {
    * Add multiple tasks to the workflow
    */
   addTasks(tasks: WorkflowTask[]): void {
-    tasks.forEach(task => this.addTask(task));
+    tasks.forEach((task) => this.addTask(task));
   }
 
   /**
@@ -137,9 +137,8 @@ export class WorkflowEngine<T = any> {
         success: true,
         result: results.get(this.getTerminalTask()), // Return result of terminal task
         duration: performance.now() - startTime,
-        taskStates: this.state
+        taskStates: this.state,
       };
-
     } catch (error) {
       const workflowError = error instanceof Error ? error : new Error(String(error));
 
@@ -147,10 +146,17 @@ export class WorkflowEngine<T = any> {
         success: false,
         error: workflowError,
         duration: performance.now() - startTime,
-        taskStates: this.state
+        taskStates: this.state,
       };
 
-      this.notifyStateChange({ id: 'workflow', name: 'workflow', status: 'failed', retryCount: 0, maxRetries: 0, error: workflowError });
+      this.notifyStateChange({
+        id: 'workflow',
+        name: 'workflow',
+        status: 'failed',
+        retryCount: 0,
+        maxRetries: 0,
+        error: workflowError,
+      });
 
       return result;
     } finally {
@@ -252,7 +258,7 @@ export class WorkflowEngine<T = any> {
 
     if (!task.dependsOn) return;
 
-    const promises = task.dependsOn.map(depId => {
+    const promises = task.dependsOn.map((depId) => {
       return new Promise<void>((resolve, reject) => {
         const checkDependency = () => {
           const depState = this.state.get(depId)!;
@@ -284,7 +290,7 @@ export class WorkflowEngine<T = any> {
     }
 
     // Return array of dependency results
-    return task.dependsOn.map(depId => results.get(depId));
+    return task.dependsOn.map((depId) => results.get(depId));
   }
 
   private async executeTask(task: WorkflowTask, input: any, state: WorkflowState): Promise<any> {
@@ -333,7 +339,11 @@ export class WorkflowEngine<T = any> {
     return this.executeTask(task, input, state);
   }
 
-  private async handleTaskFailure(task: WorkflowTask, error: Error, state: WorkflowState): Promise<void> {
+  private async handleTaskFailure(
+    task: WorkflowTask,
+    error: Error,
+    state: WorkflowState
+  ): Promise<void> {
     if (this.options.onError) {
       this.options.onError(error, task);
     }
@@ -392,7 +402,7 @@ export class WorkflowEngine<T = any> {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
@@ -414,7 +424,7 @@ export function createWorkflow<T>(
     workflow.addTask({
       ...task,
       id: taskId,
-      dependsOn: i > 0 ? [`task-${i - 1}`] : undefined
+      dependsOn: i > 0 ? [`task-${i - 1}`] : undefined,
     });
   }
 

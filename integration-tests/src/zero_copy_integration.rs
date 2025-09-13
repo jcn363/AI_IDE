@@ -1,9 +1,12 @@
+use rust_ai_ide_ai_inference::{MmapModel, ZeroCopyInferenceEngine, ZeroCopyModelManager};
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
+use rust_ai_ide_parallel_processing::{
+    MmapManager, WorkStealingScheduler, ZeroCopyOperation, ZeroCopyOperationType,
+    ZeroCopyResourcePool,
+};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::{Mutex, Semaphore};
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
-use rust_ai_ide_parallel_processing::{WorkStealingScheduler, MmapManager, ZeroCopyResourcePool, ZeroCopyOperation, ZeroCopyOperationType};
-use rust_ai_ide_ai_inference::{MmapModel, ZeroCopyInferenceEngine, ZeroCopyModelManager};
 
 /// Integration test suite for zero-copy operations across the pipeline
 #[cfg(test)]
@@ -24,14 +27,18 @@ mod zero_copy_integration_tests {
 
         // Create test model data
         let model_size = 1024 * 1024; // 1MB test model
-        create_test_model_data(&model_path, model_size).await.unwrap();
+        create_test_model_data(&model_path, model_size)
+            .await
+            .unwrap();
 
         // 1. Initialize zero-copy memory mapping components
         let mmap_manager = Arc::new(MmapManager::new(10));
         let zero_copy_pool = Arc::new(ZeroCopyResourcePool::new(mmap_manager.clone()));
 
         // 2. Setup work-stealing scheduler with zero-copy support
-        let resource_manager = Arc::new(rust_ai_ide_parallel_processing::ResourcePoolManager::new(4, 1024, 10));
+        let resource_manager = Arc::new(rust_ai_ide_parallel_processing::ResourcePoolManager::new(
+            4, 1024, 10,
+        ));
         let config = rust_ai_ide_parallel_processing::SchedulerConfig::default();
         let scheduler = WorkStealingScheduler::new_with_zero_copy(
             config,
@@ -45,10 +52,16 @@ mod zero_copy_integration_tests {
 
         // 4. Load model with memory mapping
         let model_key = "test_model".to_string();
-        model_manager.load_model(model_key.clone(), model_path.clone()).await.unwrap();
+        model_manager
+            .load_model(model_key.clone(), model_path.clone())
+            .await
+            .unwrap();
 
         // 5. Execute zero-copy inference pipeline
-        let inference_engine = model_manager.get_inference_engine(&model_key).await.unwrap();
+        let inference_engine = model_manager
+            .get_inference_engine(&model_key)
+            .await
+            .unwrap();
 
         // Create test input data
         let input_data = b"Hello World! This is test input for zero-copy inference.";
@@ -64,7 +77,10 @@ mod zero_copy_integration_tests {
 
         // Cleanup
         std::fs::remove_dir_all(&temp_dir).ok();
-        println!("✓ Zero-copy pipeline integration test passed in {:?}", baseline_duration);
+        println!(
+            "✓ Zero-copy pipeline integration test passed in {:?}",
+            baseline_duration
+        );
     }
 
     /// Test parallel processing with memory-mapped files under load
@@ -83,14 +99,18 @@ mod zero_copy_integration_tests {
 
         for i in 0..file_count {
             let file_path = temp_dir.join(format!("test_file_{}.bin", i));
-            create_test_data(&file_path, file_size, i as u8).await.unwrap();
+            create_test_data(&file_path, file_size, i as u8)
+                .await
+                .unwrap();
             test_files.push(file_path);
         }
 
         // Initialize components
         let mmap_manager = Arc::new(MmapManager::new(20));
         let zero_copy_pool = Arc::new(ZeroCopyResourcePool::new(mmap_manager.clone()));
-        let resource_manager = Arc::new(rust_ai_ide_parallel_processing::ResourcePoolManager::new(8, 2048, 20));
+        let resource_manager = Arc::new(rust_ai_ide_parallel_processing::ResourcePoolManager::new(
+            8, 2048, 20,
+        ));
 
         let config = rust_ai_ide_parallel_processing::SchedulerConfig::default();
         let scheduler = WorkStealingScheduler::new_with_zero_copy(
@@ -129,7 +149,11 @@ mod zero_copy_integration_tests {
                     },
                 ];
 
-                let results = zero_copy_pool.advanced_ops.batch_process_files(operations).await.unwrap();
+                let results = zero_copy_pool
+                    .advanced_ops
+                    .batch_process_files(operations)
+                    .await
+                    .unwrap();
                 assert_eq!(results.len(), 2);
                 assert!(results.iter().all(|r| r.success));
             });
@@ -168,17 +192,26 @@ mod zero_copy_integration_tests {
 
         // Create test model
         let model_size = 2 * 1024 * 1024; // 2MB model
-        create_test_model_data(&model_path, model_size).await.unwrap();
+        create_test_model_data(&model_path, model_size)
+            .await
+            .unwrap();
 
         // Initialize model manager
         let model_manager = Arc::new(ZeroCopyModelManager::new(1024)); // 1GB max memory
 
         // Load model
         let model_key = "concurrent_model".to_string();
-        model_manager.load_model(model_key.clone(), model_path.clone()).await.unwrap();
+        model_manager
+            .load_model(model_key.clone(), model_path.clone())
+            .await
+            .unwrap();
 
         // Test concurrent inference
-        let inference_engine = model_manager.get_inference_engine(&model_key).await.unwrap().clone();
+        let inference_engine = model_manager
+            .get_inference_engine(&model_key)
+            .await
+            .unwrap()
+            .clone();
 
         // Create multiple concurrent requests
         let request_count = 10;
@@ -254,7 +287,8 @@ mod zero_copy_integration_tests {
         let mut allocated_files = Vec::new();
         let allocation_size = 10 * 1024 * 1024; // 10MB each - will cause pressure with 5 concurrent limit
 
-        for i in 0..6 { // Try to allocate 6 files (more than limit of 5)
+        for i in 0..6 {
+            // Try to allocate 6 files (more than limit of 5)
             let file_path = temp_dir.path().join(format!("large_file_{}.bin", i));
             let result = manager.create_mmap_file(file_path, allocation_size).await;
 
@@ -293,7 +327,10 @@ mod zero_copy_integration_tests {
 
         // Cleanup
         std::fs::remove_dir_all(&temp_dir).ok();
-        println!("✓ Memory pressure and cleanup test completed in {:?}", cleanup_duration);
+        println!(
+            "✓ Memory pressure and cleanup test completed in {:?}",
+            cleanup_duration
+        );
     }
 
     /// Test error handling and recovery in zero-copy operations
@@ -322,17 +359,27 @@ mod zero_copy_integration_tests {
         }
 
         // Test 2: Invalid operations on nonexistent buffers
-        let invalid_access = zero_copy_pool.advanced_ops.access_segment("invalid_id").await;
+        let invalid_access = zero_copy_pool
+            .advanced_ops
+            .access_segment("invalid_id")
+            .await;
         assert!(invalid_access.is_err());
 
         // Test 3: Recovery and continued operation
         let valid_file_path = temp_dir.path().join("recovery_test.bin");
         create_test_data(&valid_file_path, 1024, 0).await.unwrap();
 
-        let file_id = mmap_manager.create_mmap_file(valid_file_path, 1024).await.unwrap();
+        let file_id = mmap_manager
+            .create_mmap_file(valid_file_path, 1024)
+            .await
+            .unwrap();
 
         // Verify normal operation continues after errors
-        let segment_data = zero_copy_pool.advanced_ops.access_segment(&file_id).await.unwrap();
+        let segment_data = zero_copy_pool
+            .advanced_ops
+            .access_segment(&file_id)
+            .await
+            .unwrap();
         assert_eq!(segment_data.len(), 1024);
 
         // Cleanup
@@ -369,7 +416,11 @@ mod zero_copy_integration_tests {
         Ok(())
     }
 
-    async fn create_test_data(path: &std::path::Path, size: usize, fill_byte: u8) -> std::io::Result<()> {
+    async fn create_test_data(
+        path: &std::path::Path,
+        size: usize,
+        fill_byte: u8,
+    ) -> std::io::Result<()> {
         use tokio::io::AsyncWriteExt;
 
         let mut file = tokio::fs::File::create(path).await?;

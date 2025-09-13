@@ -10,11 +10,11 @@ pub fn fixture_path(relative_path: &str) -> String {
         .parent()
         .unwrap()
         .join("test-fixtures");
-    
+
     if !relative_path.is_empty() {
         path = path.join(relative_path);
     }
-    
+
     path.to_string_lossy().into_owned()
 }
 
@@ -28,7 +28,7 @@ pub fn temp_dir() -> tempfile::TempDir {
 macro_rules! assert_error {
     ($result:expr, $pat:pat) => {
         match $result {
-            Err($pat) => {},
+            Err($pat) => {}
             Ok(_) => panic!("Expected error, got Ok"),
             Err(e) => panic!("Expected error matching pattern, got {:?}", e),
         }

@@ -6,7 +6,7 @@ import {
   Save as SaveIcon,
   RestoreFromTrash as LoadIcon,
 } from '@mui/icons-material';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 
 // Split view related interfaces matching Rust types
 interface CursorPosition {
@@ -43,7 +43,15 @@ interface PanelTab {
 
 interface PanelInfo {
   id: string;
-  content_type: 'Editor' | 'Terminal' | 'FileExplorer' | 'Output' | 'Debug' | 'Git' | 'Cargo' | 'Documentation';
+  content_type:
+    | 'Editor'
+    | 'Terminal'
+    | 'FileExplorer'
+    | 'Output'
+    | 'Debug'
+    | 'Git'
+    | 'Cargo'
+    | 'Documentation';
   title?: string;
   is_active: boolean;
   tabs: PanelTab[];
@@ -167,7 +175,9 @@ const SplitViewLayout: React.FC<SplitViewLayoutProps> = ({
                 backgroundColor: 'background.paper',
               }}
             >
-              <span style={{ fontWeight: 'bold' }}>{node.Leaf.title || node.Leaf.content_type}</span>
+              <span style={{ fontWeight: 'bold' }}>
+                {node.Leaf.title || node.Leaf.content_type}
+              </span>
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 <Tooltip title={`Split ${node.Leaf.id} Horizontally`}>
                   <IconButton
@@ -186,10 +196,7 @@ const SplitViewLayout: React.FC<SplitViewLayoutProps> = ({
                   </IconButton>
                 </Tooltip>
                 <Tooltip title={`Close ${node.Leaf.id}`}>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleClosePanel(node.Leaf!.id)}
-                  >
+                  <IconButton size="small" onClick={() => handleClosePanel(node.Leaf!.id)}>
                     <RemoveIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
@@ -197,9 +204,7 @@ const SplitViewLayout: React.FC<SplitViewLayoutProps> = ({
             </Box>
 
             {/* Panel content */}
-            <Box sx={{ flex: 1, overflow: 'auto' }}>
-              {renderPanel(node.Leaf, isFocused)}
-            </Box>
+            <Box sx={{ flex: 1, overflow: 'auto' }}>{renderPanel(node.Leaf, isFocused)}</Box>
           </Box>
         );
       }
@@ -285,18 +290,12 @@ const SplitViewLayout: React.FC<SplitViewLayoutProps> = ({
       >
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <Tooltip title="Save Layout">
-            <IconButton
-              size="small"
-              onClick={() => saveLayout('current')}
-            >
+            <IconButton size="small" onClick={() => saveLayout('current')}>
               <SaveIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Load Default Layout">
-            <IconButton
-              size="small"
-              onClick={() => loadSavedLayout('default')}
-            >
+            <IconButton size="small" onClick={() => loadSavedLayout('default')}>
               <LoadIcon fontSize="small" />
             </IconButton>
           </Tooltip>

@@ -30,7 +30,6 @@ num_cpus = { workspace = true }
 rayon = { workspace = true }
 lazy_static = { workspace = true }
 filetime = { workspace = true }
-md5 = { workspace = true }
 proc-macro2 = { workspace = true }
 heck = "^0.5.0"
 tokio-stream = { workspace = true }

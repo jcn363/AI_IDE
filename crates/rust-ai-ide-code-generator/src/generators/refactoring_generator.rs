@@ -19,9 +19,9 @@ pub fn create_refactoring_generator() -> RefactoringGenerator {
     RefactoringGenerator::new()
 }
 
-use super::{CodeGenerationInput, GeneratedFile, CodeGenerationError};
-use std::collections::HashMap;
+use super::{CodeGenerationError, CodeGenerationInput, GeneratedFile};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Refactoring suggestion with severity and impact analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,21 +41,21 @@ pub struct RefactoringSuggestion {
 /// Severity levels for refactoring suggestions
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RefactoringSeverity {
-    Critical,    // API breaking changes, security issues
-    High,        // Performance issues, major code smells
-    Medium,      // Maintainability improvements
-    Low,         // Minor style improvements
-    Info,        // Best practice suggestions
+    Critical, // API breaking changes, security issues
+    High,     // Performance issues, major code smells
+    Medium,   // Maintainability improvements
+    Low,      // Minor style improvements
+    Info,     // Best practice suggestions
 }
 
 /// Effort estimation for refactoring tasks
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EffortLevel {
-    Trivial,    // < 15 minutes
-    Small,      // 15-60 minutes
-    Medium,     // 1-4 hours
-    Large,      // 4-8 hours
-    XLarge,     // > 8 hours
+    Trivial, // < 15 minutes
+    Small,   // 15-60 minutes
+    Medium,  // 1-4 hours
+    Large,   // 4-8 hours
+    XLarge,  // > 8 hours
 }
 
 /// Advanced refactoring generator with pattern recognition
@@ -76,7 +76,10 @@ impl RefactoringGenerator {
     }
 
     /// Analyze code and generate refactoring suggestions
-    pub async fn analyze_and_suggest_refactoring(&self, input: &RefactoringInput) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
+    pub async fn analyze_and_suggest_refactoring(
+        &self,
+        input: &RefactoringInput,
+    ) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
         // Analyze code structure
@@ -97,7 +100,9 @@ impl RefactoringGenerator {
 
         // Sort by severity and confidence
         suggestions.sort_by(|a, b| {
-            b.severity.priority().cmp(&a.severity.priority())
+            b.severity
+                .priority()
+                .cmp(&a.severity.priority())
                 .then(b.confidence.partial_cmp(&a.confidence).unwrap())
         });
 
@@ -105,16 +110,21 @@ impl RefactoringGenerator {
     }
 
     /// Apply refactoring suggestions to generate refactored code
-    pub async fn apply_refactoring(&self, original_content: &str, suggestions: &[RefactoringSuggestion]) -> Result<String, CodeGenerationError> {
+    pub async fn apply_refactoring(
+        &self,
+        original_content: &str,
+        suggestions: &[RefactoringSuggestion],
+    ) -> Result<String, CodeGenerationError> {
         let mut refactored_content = original_content.to_string();
 
         for suggestion in suggestions {
-            if suggestion.confidence >= 0.8 { // Only apply high-confidence refactorings
+            if suggestion.confidence >= 0.8 {
+                // Only apply high-confidence refactorings
                 refactored_content = self.transformation_engine.apply_transformation(
                     &refactored_content,
                     &suggestion.pattern_name,
                     &suggestion.before_code,
-                    &suggestion.after_code
+                    &suggestion.after_code,
                 )?;
             }
         }
@@ -123,7 +133,11 @@ impl RefactoringGenerator {
     }
 
     /// Detect extract method refactoring opportunities
-    fn detect_extract_method_patterns(&self, analysis: &CodeAnalysis, input: &RefactoringInput) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
+    fn detect_extract_method_patterns(
+        &self,
+        analysis: &CodeAnalysis,
+        input: &RefactoringInput,
+    ) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
         for method in &analysis.methods {
@@ -134,7 +148,10 @@ impl RefactoringGenerator {
                 for block in extractable_blocks {
                     suggestions.push(RefactoringSuggestion {
                         pattern_name: "extract_method".to_string(),
-                        description: format!("Extract method '{}' from '{}'", block.method_name, method.name),
+                        description: format!(
+                            "Extract method '{}' from '{}'",
+                            block.method_name, method.name
+                        ),
                         severity: RefactoringSeverity::Medium,
                         confidence: 0.85,
                         estimated_effort: EffortLevel::Small,
@@ -156,7 +173,11 @@ impl RefactoringGenerator {
     }
 
     /// Detect extract class refactoring opportunities
-    fn detect_extract_class_patterns(&self, analysis: &CodeAnalysis, input: &RefactoringInput) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
+    fn detect_extract_class_patterns(
+        &self,
+        analysis: &CodeAnalysis,
+        input: &RefactoringInput,
+    ) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
         for struct_def in &analysis.structs {
@@ -165,17 +186,26 @@ impl RefactoringGenerator {
                 let field_groups = self.group_related_fields(&struct_def.fields)?;
 
                 for group in field_groups {
-                    if group.len() >= 3 { // At least 3 related fields
+                    if group.len() >= 3 {
+                        // At least 3 related fields
                         suggestions.push(RefactoringSuggestion {
                             pattern_name: "extract_class".to_string(),
-                            description: format!("Extract class for fields: {}",
-                                group.iter().map(|f| f.name.as_str()).collect::<Vec<_>>().join(", ")),
+                            description: format!(
+                                "Extract class for fields: {}",
+                                group
+                                    .iter()
+                                    .map(|f| f.name.as_str())
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            ),
                             severity: RefactoringSeverity::High,
                             confidence: 0.7,
                             estimated_effort: EffortLevel::Medium,
-                            before_code: group.iter()
+                            before_code: group
+                                .iter()
                                 .map(|f| format!("    pub {}: {},", f.name, f.type_name))
-                                .collect::<Vec<_>>().join("\n"),
+                                .collect::<Vec<_>>()
+                                .join("\n"),
                             after_code: self.generate_extracted_class_code(&group),
                             line_numbers: struct_def.line_range,
                             impacted_files: vec![input.file_path.clone()],
@@ -194,7 +224,11 @@ impl RefactoringGenerator {
     }
 
     /// Detect performance issues requiring refactoring
-    fn detect_performance_issues(&self, analysis: &CodeAnalysis, input: &RefactoringInput) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
+    fn detect_performance_issues(
+        &self,
+        analysis: &CodeAnalysis,
+        input: &RefactoringInput,
+    ) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
         // Look for repeated expensive operations
@@ -225,7 +259,11 @@ impl RefactoringGenerator {
     }
 
     /// Detect async refactoring opportunities
-    fn detect_async_refactoring_opportunities(&self, analysis: &CodeAnalysis, input: &RefactoringInput) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
+    fn detect_async_refactoring_opportunities(
+        &self,
+        analysis: &CodeAnalysis,
+        input: &RefactoringInput,
+    ) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
         for method in &analysis.methods {
@@ -253,11 +291,17 @@ impl RefactoringGenerator {
     }
 
     /// Detect opportunities to replace conditionals with polymorphism
-    fn detect_polymorphism_opportunities(&self, analysis: &CodeAnalysis, input: &RefactoringInput) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
+    fn detect_polymorphism_opportunities(
+        &self,
+        analysis: &CodeAnalysis,
+        input: &RefactoringInput,
+    ) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
         for conditional in &analysis.conditionals {
-            if conditional.condition_type == ConditionalType::TypeSwitch && conditional.branch_count >= 3 {
+            if conditional.condition_type == ConditionalType::TypeSwitch
+                && conditional.branch_count >= 3
+            {
                 suggestions.push(RefactoringSuggestion {
                     pattern_name: "replace_conditional_with_polymorphism".to_string(),
                     description: "Replace conditional with polymorphism pattern".to_string(),
@@ -281,14 +325,21 @@ impl RefactoringGenerator {
     }
 
     /// Detect null object pattern opportunities
-    fn detect_null_object_patterns(&self, analysis: &CodeAnalysis, input: &RefactoringInput) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
+    fn detect_null_object_patterns(
+        &self,
+        analysis: &CodeAnalysis,
+        input: &RefactoringInput,
+    ) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
         for null_check in &analysis.null_checks {
             if null_check.check_count > 3 && null_check.alternation_count >= 2 {
                 suggestions.push(RefactoringSuggestion {
                     pattern_name: "introduce_null_object".to_string(),
-                    description: format!("Introduce null object to replace {} null checks", null_check.check_count),
+                    description: format!(
+                        "Introduce null object to replace {} null checks",
+                        null_check.check_count
+                    ),
                     severity: RefactoringSeverity::Medium,
                     confidence: 0.8,
                     estimated_effort: EffortLevel::Medium,
@@ -309,7 +360,11 @@ impl RefactoringGenerator {
     }
 
     /// Detect long method patterns
-    fn detect_long_method_patterns(&self, analysis: &CodeAnalysis, input: &RefactoringInput) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
+    fn detect_long_method_patterns(
+        &self,
+        analysis: &CodeAnalysis,
+        input: &RefactoringInput,
+    ) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
         for method in &analysis.methods {
@@ -319,7 +374,10 @@ impl RefactoringGenerator {
                 for point in extraction_points {
                     suggestions.push(RefactoringSuggestion {
                         pattern_name: "extract_method_long_method".to_string(),
-                        description: format!("Extract method '{}' from long method '{}'", point.method_name, method.name),
+                        description: format!(
+                            "Extract method '{}' from long method '{}'",
+                            point.method_name, method.name
+                        ),
                         severity: RefactoringSeverity::Medium,
                         confidence: 0.75,
                         estimated_effort: EffortLevel::Small,
@@ -328,7 +386,11 @@ impl RefactoringGenerator {
                         line_numbers: point.line_range,
                         impacted_files: vec![input.file_path.clone()],
                         benefits: vec![
-                            format!("Reduces method from {} to ~{} lines", method.line_count, method.line_count - point.line_count),
+                            format!(
+                                "Reduces method from {} to ~{} lines",
+                                method.line_count,
+                                method.line_count - point.line_count
+                            ),
                             "Improves maintainability".to_string(),
                             "Simplifies testing".to_string(),
                         ],
@@ -341,14 +403,21 @@ impl RefactoringGenerator {
     }
 
     /// Detect primitive obsession code smell
-    fn detect_primitive_obsession(&self, analysis: &CodeAnalysis, input: &RefactoringInput) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
+    fn detect_primitive_obsession(
+        &self,
+        analysis: &CodeAnalysis,
+        input: &RefactoringInput,
+    ) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
         for primitive_group in &analysis.primitive_groups {
             if primitive_group.usage_count >= 3 {
                 suggestions.push(RefactoringSuggestion {
                     pattern_name: "replace_primitive_with_object".to_string(),
-                    description: format!("Replace primitive '{}' with value object", primitive_group.primitive_type),
+                    description: format!(
+                        "Replace primitive '{}' with value object",
+                        primitive_group.primitive_type
+                    ),
                     severity: RefactoringSeverity::Low,
                     confidence: 0.6,
                     estimated_effort: EffortLevel::Medium,
@@ -369,14 +438,21 @@ impl RefactoringGenerator {
     }
 
     /// Detect data clumps
-    fn detect_data_clumps(&self, analysis: &CodeAnalysis, input: &RefactoringInput) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
+    fn detect_data_clumps(
+        &self,
+        analysis: &CodeAnalysis,
+        input: &RefactoringInput,
+    ) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
         for clump in &analysis.data_clumps {
             if clump.parameter_count >= 4 {
                 suggestions.push(RefactoringSuggestion {
                     pattern_name: "extract_data_clump".to_string(),
-                    description: format!("Extract data clump with {} parameters into object", clump.parameter_count),
+                    description: format!(
+                        "Extract data clump with {} parameters into object",
+                        clump.parameter_count
+                    ),
                     severity: RefactoringSeverity::Medium,
                     confidence: 0.7,
                     estimated_effort: EffortLevel::Medium,
@@ -397,14 +473,21 @@ impl RefactoringGenerator {
     }
 
     /// Detect switch statement refactoring opportunities
-    fn detect_switch_statements(&self, analysis: &CodeAnalysis, input: &RefactoringInput) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
+    fn detect_switch_statements(
+        &self,
+        analysis: &CodeAnalysis,
+        input: &RefactoringInput,
+    ) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
         for switch_stmt in &analysis.switch_statements {
             if switch_stmt.case_count >= 4 {
                 suggestions.push(RefactoringSuggestion {
                     pattern_name: "replace_switch_with_strategy".to_string(),
-                    description: format!("Replace switch statement with strategy pattern ({} cases)", switch_stmt.case_count),
+                    description: format!(
+                        "Replace switch statement with strategy pattern ({} cases)",
+                        switch_stmt.case_count
+                    ),
                     severity: RefactoringSeverity::Medium,
                     confidence: 0.8,
                     estimated_effort: EffortLevel::Medium,
@@ -425,14 +508,21 @@ impl RefactoringGenerator {
     }
 
     /// Detect collection operation opportunities
-    fn detect_collection_operations(&self, analysis: &CodeAnalysis, input: &RefactoringInput) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
+    fn detect_collection_operations(
+        &self,
+        analysis: &CodeAnalysis,
+        input: &RefactoringInput,
+    ) -> Result<Vec<RefactoringSuggestion>, CodeGenerationError> {
         let mut suggestions = Vec::new();
 
         for loop_construct in &analysis.loops {
-            if loop_construct.loop_type == LoopType::IteratorBased && loop_construct.has_transformation {
+            if loop_construct.loop_type == LoopType::IteratorBased
+                && loop_construct.has_transformation
+            {
                 suggestions.push(RefactoringSuggestion {
                     pattern_name: "replace_loop_with_map_filter".to_string(),
-                    description: "Replace imperative loop with functional map/filter operations".to_string(),
+                    description: "Replace imperative loop with functional map/filter operations"
+                        .to_string(),
                     severity: RefactoringSeverity::Low,
                     confidence: 0.9,
                     estimated_effort: EffortLevel::Small,
@@ -453,19 +543,28 @@ impl RefactoringGenerator {
     }
 
     // Helper methods for generating refactored code
-    fn find_extractable_blocks(&self, method_body: &str) -> Result<Vec<ExtractableBlock>, CodeGenerationError> {
+    fn find_extractable_blocks(
+        &self,
+        method_body: &str,
+    ) -> Result<Vec<ExtractableBlock>, CodeGenerationError> {
         // Implementation for finding cohesive code blocks
         Ok(Vec::new()) // Placeholder
     }
 
-    fn group_related_fields(&self, fields: &[FieldInfo]) -> Result<Vec<Vec<FieldInfo>>, CodeGenerationError> {
+    fn group_related_fields(
+        &self,
+        fields: &[FieldInfo],
+    ) -> Result<Vec<Vec<FieldInfo>>, CodeGenerationError> {
         // Implementation for grouping semantically related fields
         Ok(Vec::new()) // Placeholder
     }
 
     fn generate_extracted_class_code(&self, fields: &[FieldInfo]) -> String {
         // Implementation for generating extracted class code
-        format!("// Generated extracted class code for {} fields", fields.len())
+        format!(
+            "// Generated extracted class code for {} fields",
+            fields.len()
+        )
     }
 
     fn generate_cached_operation(&self, operation: &ExpensiveOperation) -> String {
@@ -488,7 +587,10 @@ impl RefactoringGenerator {
         String::new()
     }
 
-    fn identify_extraction_points(&self, method: &MethodInfo) -> Result<Vec<ExtractionPoint>, CodeGenerationError> {
+    fn identify_extraction_points(
+        &self,
+        method: &MethodInfo,
+    ) -> Result<Vec<ExtractionPoint>, CodeGenerationError> {
         // Implementation for identifying extraction points
         Ok(Vec::new())
     }
@@ -704,7 +806,13 @@ impl TransformationEngine {
         Self {}
     }
 
-    fn apply_transformation(&self, content: &str, pattern: &str, before: &str, after: &str) -> Result<String, CodeGenerationError> {
+    fn apply_transformation(
+        &self,
+        content: &str,
+        pattern: &str,
+        before: &str,
+        after: &str,
+    ) -> Result<String, CodeGenerationError> {
         // Apply the transformation to the content
         Ok(content.replace(before, after))
     }

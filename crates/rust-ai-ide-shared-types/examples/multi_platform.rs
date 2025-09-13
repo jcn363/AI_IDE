@@ -144,7 +144,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ("openapi", "OpenAPI 3.0 spec"),
     ];
 
-    println!("🎯 Generating code for {} target platforms...\n", platforms.len());
+    println!(
+        "🎯 Generating code for {} target platforms...\n",
+        platforms.len()
+    );
 
     // Generate code for each platform
     for (platform, description) in &platforms {
@@ -158,7 +161,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             _ => serde_json::Value::Null,
         };
 
-        match generator.generate_types_from_source(rust_code, "api_types.rs", &[]).await {
+        match generator
+            .generate_types_from_source(rust_code, "api_types.rs", &[])
+            .await
+        {
             Ok(result) => {
                 let content_preview = if result.content.len() > 150 {
                     format!("{}...", &result.content[..150])
@@ -167,10 +173,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 };
 
                 println!("  ✅ Generated {} characters", result.content.len());
-                println!("  📄 Preview: {}", content_preview.replace('\n', " ").replace('\r', ""));
-                println!("  📊 Types: {}, Dependencies: {}\n",
+                println!(
+                    "  📄 Preview: {}",
+                    content_preview.replace('\n', " ").replace('\r', "")
+                );
+                println!(
+                    "  📊 Types: {}, Dependencies: {}\n",
                     result.source_types.len(),
-                    result.dependencies.len());
+                    result.dependencies.len()
+                );
             }
             Err(e) => {
                 println!("  ❌ Failed: {}\n", e);
@@ -184,7 +195,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let types = parser.parse_file(rust_code, "validation.rs")?;
 
     let validation = validate_cross_platform(&types, &default_config()).await?;
-    println!("✓ Compatibility Score: {:.1}%", validation.compatibility_score * 100.0);
+    println!(
+        "✓ Compatibility Score: {:.1}%",
+        validation.compatibility_score * 100.0
+    );
     println!("✓ Issues Found: {}", validation.issues.len());
 
     if !validation.issues.is_empty() {

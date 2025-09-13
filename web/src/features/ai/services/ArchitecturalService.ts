@@ -29,56 +29,56 @@ export class ArchitecturalService {
     targetPath: string,
     currentArchitecture?: any,
     constraints?: string[],
-    goals?: string[],
+    goals?: string[]
   ): Promise<ArchitecturalGuidance> {
     try {
-        const request: ArchitecturalAnalysisRequest = {
-            targetPath,
-            config: {
-              provider: {
-                type: 'codellama-rust',
-                codellamaRust: {
-                  modelPath: '/models/codellama-7b',
-                  modelSize: 'Medium',
-                  quantization: 'Int4',
-                  loraAdapters: ['rust-architecture'],
-                },
-              },
-              analysis_preferences: {
-                enableCodeSmells: false,
-                enablePerformance: false,
-                enableSecurity: false,
-                enableCodeStyle: false,
-                enableArchitecture: true,
-                enableLearning: false,
-                confidenceThreshold: 0.7,
-                timeoutSeconds: 180,
-                includeExplanations: true,
-                includeExamples: true,
-                privacyMode: 'opt-in' as const,
-              },
-              enable_real_time: false,
-              enable_workspace_analysis: true,
-              max_file_size_kb: 1024,
-              excluded_paths: ['target/', 'node_modules/', '.git/'],
-              learning_preferences: {
-                enableLearning: false,
-                privacyMode: 'opt-in' as const,
-                shareAnonymousData: false,
-                retainPersonalData: false,
-                dataRetentionDays: 30,
-                allowModelTraining: false,
-              },
-              compiler_integration: {
-                enable_compiler_integration: true,
-                parse_cargo_check_output: true,
-                enable_error_explanations: true,
-                enable_suggested_fixes: true,
-                cache_explanations: true,
-                explanation_cache_ttl_hours: 24,
-              },
+      const request: ArchitecturalAnalysisRequest = {
+        targetPath,
+        config: {
+          provider: {
+            type: 'codellama-rust',
+            codellamaRust: {
+              modelPath: '/models/codellama-7b',
+              modelSize: 'Medium',
+              quantization: 'Int4',
+              loraAdapters: ['rust-architecture'],
             },
-        };
+          },
+          analysis_preferences: {
+            enableCodeSmells: false,
+            enablePerformance: false,
+            enableSecurity: false,
+            enableCodeStyle: false,
+            enableArchitecture: true,
+            enableLearning: false,
+            confidenceThreshold: 0.7,
+            timeoutSeconds: 180,
+            includeExplanations: true,
+            includeExamples: true,
+            privacyMode: 'opt-in' as const,
+          },
+          enable_real_time: false,
+          enable_workspace_analysis: true,
+          max_file_size_kb: 1024,
+          excluded_paths: ['target/', 'node_modules/', '.git/'],
+          learning_preferences: {
+            enableLearning: false,
+            privacyMode: 'opt-in' as const,
+            shareAnonymousData: false,
+            retainPersonalData: false,
+            dataRetentionDays: 30,
+            allowModelTraining: false,
+          },
+          compiler_integration: {
+            enable_compiler_integration: true,
+            parse_cargo_check_output: true,
+            enable_error_explanations: true,
+            enable_suggested_fixes: true,
+            cache_explanations: true,
+            explanation_cache_ttl_hours: 24,
+          },
+        },
+      };
 
       const result = await invoke<ArchitecturalGuidance>('get_architectural_recommendations', {
         request,
@@ -110,7 +110,8 @@ export class ArchitecturalService {
         patternType: 'LayeredArchitecture',
         name: 'Layered Architecture',
         confidence: 0.85,
-        description: 'Traditional layered architecture with presentation, business, and data layers',
+        description:
+          'Traditional layered architecture with presentation, business, and data layers',
         benefits: ['Separation of concerns', 'Maintainability', 'Testability'],
         location: targetPath,
       });
@@ -133,7 +134,7 @@ export class ArchitecturalService {
   async evaluateDecisions(
     decision: string,
     alternatives: string[],
-    criteria: DecisionCriterion[],
+    criteria: DecisionCriterion[]
   ): Promise<DecisionEvaluation> {
     try {
       // Simplified decision evaluation
@@ -142,7 +143,7 @@ export class ArchitecturalService {
         score: Math.random() * 0.5 + 0.5, // Random score for demo
         strengths: ['Good performance', 'Easy to implement'],
         weaknesses: ['May require refactoring'],
-        recommendation: index === 0 ? 'recommended' as const : 'acceptable' as const,
+        recommendation: index === 0 ? ('recommended' as const) : ('acceptable' as const),
       }));
 
       return {
@@ -182,19 +183,19 @@ export class ArchitecturalService {
   generateRoadmap(recommendations: any[]): Roadmap {
     try {
       const shortTerm = recommendations
-        .filter(r => (r.priority || r.impact) === 'High')
+        .filter((r) => (r.priority || r.impact) === 'High')
         .slice(0, 3)
-        .map(r => r.title || r.description);
+        .map((r) => r.title || r.description);
 
       const mediumTerm = recommendations
-        .filter(r => (r.priority || r.impact) === 'Medium')
+        .filter((r) => (r.priority || r.impact) === 'Medium')
         .slice(0, 2)
-        .map(r => r.title || r.description);
+        .map((r) => r.title || r.description);
 
       const longTerm = recommendations
-        .filter(r => (r.priority || r.impact) === 'Low')
+        .filter((r) => (r.priority || r.impact) === 'Low')
         .slice(0, 2)
-        .map(r => r.title || r.description);
+        .map((r) => r.title || r.description);
 
       return {
         shortTerm,

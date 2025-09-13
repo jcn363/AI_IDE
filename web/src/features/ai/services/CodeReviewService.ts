@@ -29,22 +29,22 @@ export class CodeReviewService {
   async reviewCode(
     targetPath: string,
     config?: ReviewConfig,
-    createReport = true,
+    createReport = true
   ): Promise<CodeReviewResult> {
     try {
-        const request: AutomatedCodeReviewRequest = {
-            targetPath,
-            config: {
-              provider: {
-                type: 'codellama-rust',
-                codellamaRust: {
-                  modelPath: '/models/codellama-7b',
-                  modelSize: 'Medium',
-                  quantization: 'Int4',
-                  loraAdapters: ['rust-review'],
-                },
-              },
-              analysis_preferences: {
+      const request: AutomatedCodeReviewRequest = {
+        targetPath,
+        config: {
+          provider: {
+            type: 'codellama-rust',
+            codellamaRust: {
+              modelPath: '/models/codellama-7b',
+              modelSize: 'Medium',
+              quantization: 'Int4',
+              loraAdapters: ['rust-review'],
+            },
+          },
+          analysis_preferences: {
             enableCodeSmells: config?.includeStyle ?? true,
             enablePerformance: config?.includePerformance ?? true,
             enableSecurity: config?.includeSecurity ?? true,
@@ -114,7 +114,7 @@ export class CodeReviewService {
   async reviewPullRequest(
     targetPath: string,
     prUrl?: string,
-    config?: ReviewConfig,
+    config?: ReviewConfig
   ): Promise<CodeReviewResult> {
     try {
       const request: AutomatedCodeReviewRequest = {
@@ -197,26 +197,32 @@ export class CodeReviewService {
   async getReviewComments(
     filePath: string,
     content: string,
-    severityFilter?: 'info' | 'warning' | 'error',
+    severityFilter?: 'info' | 'warning' | 'error'
   ): Promise<ReviewComment[]> {
     try {
-      const result = await this.reviewCode(filePath, {
-        includeStyle: true,
-        includePerformance: true,
-        includeSecurity: true,
-        includeArchitecture: false,
-        maxCommentsPerFile: 50,
-        severityThreshold: severityFilter || 'info',
-      }, false);
+      const result = await this.reviewCode(
+        filePath,
+        {
+          includeStyle: true,
+          includePerformance: true,
+          includeSecurity: true,
+          includeArchitecture: false,
+          maxCommentsPerFile: 50,
+          severityThreshold: severityFilter || 'info',
+        },
+        false
+      );
 
       let comments = result.reviewComments || [];
 
       // Apply severity filter if specified
       if (severityFilter) {
-        comments = comments.filter(comment => {
+        comments = comments.filter((comment) => {
           const severityOrder = { info: 1, warning: 2, error: 3 };
-          return severityOrder[comment.severity as keyof typeof severityOrder] >=
-                 severityOrder[severityFilter];
+          return (
+            severityOrder[comment.severity as keyof typeof severityOrder] >=
+            severityOrder[severityFilter]
+          );
         });
       }
 
@@ -244,7 +250,7 @@ export class CodeReviewService {
 
       if (overallAssessment.keyStrengths?.length) {
         report += `### Key Strengths\n\n`;
-        overallAssessment.keyStrengths.forEach(strength => {
+        overallAssessment.keyStrengths.forEach((strength) => {
           report += `- ${strength}\n`;
         });
         report += `\n`;
@@ -252,7 +258,7 @@ export class CodeReviewService {
 
       if (overallAssessment.criticalIssues?.length) {
         report += `### Critical Issues\n\n`;
-        overallAssessment.criticalIssues.forEach(issue => {
+        overallAssessment.criticalIssues.forEach((issue) => {
           report += `- ${issue}\n`;
         });
         report += `\n`;
@@ -361,7 +367,7 @@ export class CodeReviewService {
     if (result.reviewComments) {
       const issueCounts = this.countIssuesByType(result.reviewComments);
       insights.topIssues = Object.entries(issueCounts)
-        .sort(([,a], [,b]) => b - a)
+        .sort(([, a], [, b]) => b - a)
         .slice(0, 5)
         .map(([type, count]) => `${type}: ${count} occurrences`);
     }
@@ -369,8 +375,8 @@ export class CodeReviewService {
     // Extract improvement areas
     if (summary?.categoryBreakdown) {
       const categories = Object.keys(summary.categoryBreakdown);
-      insights.improvementAreas = categories.filter(cat =>
-        (summary.categoryBreakdown![cat] || 0) > 3,
+      insights.improvementAreas = categories.filter(
+        (cat) => (summary.categoryBreakdown![cat] || 0) > 3
       );
     }
 
@@ -410,8 +416,10 @@ export class CodeReviewService {
     if (reviewComments && reviewComments.length > 0) {
       const sortedComments = [...reviewComments].sort((a, b) => {
         const severityOrder = { error: 3, warning: 2, info: 1 };
-        return (severityOrder[b.severity as keyof typeof severityOrder] || 0) -
-               (severityOrder[a.severity as keyof typeof severityOrder] || 0);
+        return (
+          (severityOrder[b.severity as keyof typeof severityOrder] || 0) -
+          (severityOrder[a.severity as keyof typeof severityOrder] || 0)
+        );
       });
 
       const topComments = sortedComments.slice(0, maxComments);
@@ -438,7 +446,8 @@ export class CodeReviewService {
       comment += `*... and ${result.reviewComments.length - maxComments} more comments*\n\n`;
     }
 
-    comment += '---\n*This review was generated by AI. Please review the suggestions and apply appropriate changes.*';
+    comment +=
+      '---\n*This review was generated by AI. Please review the suggestions and apply appropriate changes.*';
 
     return comment;
   }
@@ -463,22 +472,28 @@ export class CodeReviewService {
    * Private helper methods
    */
   private groupCommentsBySeverity(comments: ReviewComment[]): Record<string, ReviewComment[]> {
-    return comments.reduce((groups, comment) => {
-      const severity = comment.severity || 'info';
-      if (!groups[severity]) {
-        groups[severity] = [];
-      }
-      groups[severity].push(comment);
-      return groups;
-    }, {} as Record<string, ReviewComment[]>);
+    return comments.reduce(
+      (groups, comment) => {
+        const severity = comment.severity || 'info';
+        if (!groups[severity]) {
+          groups[severity] = [];
+        }
+        groups[severity].push(comment);
+        return groups;
+      },
+      {} as Record<string, ReviewComment[]>
+    );
   }
 
   private countIssuesByType(comments: ReviewComment[]): Record<string, number> {
-    return comments.reduce((counts, comment) => {
-      const type = comment.category || 'general';
-      counts[type] = (counts[type] || 0) + 1;
-      return counts;
-    }, {} as Record<string, number>);
+    return comments.reduce(
+      (counts, comment) => {
+        const type = comment.category || 'general';
+        counts[type] = (counts[type] || 0) + 1;
+        return counts;
+      },
+      {} as Record<string, number>
+    );
   }
 
   private getScoreEmoji(score: number): string {
@@ -489,10 +504,14 @@ export class CodeReviewService {
 
   private getSeverityEmoji(severity: string): string {
     switch (severity) {
-      case 'error': return '🔴';
-      case 'warning': return '🟡';
-      case 'info': return '🔵';
-      default: return '⚪';
+      case 'error':
+        return '🔴';
+      case 'warning':
+        return '🟡';
+      case 'info':
+        return '🔵';
+      default:
+        return '⚪';
     }
   }
 }

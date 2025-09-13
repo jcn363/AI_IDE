@@ -97,7 +97,11 @@ export class HyperparameterTuningService {
     const params: Record<string, any> = {};
 
     if (space.learningRate) {
-      params.learningRate = this.sampleContinuous(space.learningRate.min, space.learningRate.max, space.learningRate.type);
+      params.learningRate = this.sampleContinuous(
+        space.learningRate.min,
+        space.learningRate.max,
+        space.learningRate.type
+      );
     }
 
     if (space.batchSize) {
@@ -109,7 +113,11 @@ export class HyperparameterTuningService {
     }
 
     if (space.weightDecay) {
-      params.weightDecay = this.sampleContinuous(space.weightDecay.min, space.weightDecay.max, space.weightDecay.type);
+      params.weightDecay = this.sampleContinuous(
+        space.weightDecay.min,
+        space.weightDecay.max,
+        space.weightDecay.type
+      );
     }
 
     if (space.warmupSteps) {
@@ -117,7 +125,11 @@ export class HyperparameterTuningService {
     }
 
     if (space.maxGradNorm) {
-      params.maxGradNorm = this.sampleContinuous(space.maxGradNorm.min, space.maxGradNorm.max, space.maxGradNorm.type);
+      params.maxGradNorm = this.sampleContinuous(
+        space.maxGradNorm.min,
+        space.maxGradNorm.max,
+        space.maxGradNorm.type
+      );
     }
 
     if (space.loraRank) {
@@ -125,7 +137,11 @@ export class HyperparameterTuningService {
     }
 
     if (space.loraAlpha) {
-      params.loraAlpha = this.sampleContinuous(space.loraAlpha.min, space.loraAlpha.max, space.loraAlpha.type);
+      params.loraAlpha = this.sampleContinuous(
+        space.loraAlpha.min,
+        space.loraAlpha.max,
+        space.loraAlpha.type
+      );
     }
 
     return params;
@@ -181,7 +197,10 @@ export class HyperparameterTuningService {
     for (const trial of trialList) {
       while (executing.length >= concurrentLimit) {
         await Promise.race(executing);
-        executing.splice(executing.findIndex(p => p === Promise.race(executing)), 1);
+        executing.splice(
+          executing.findIndex((p) => p === Promise.race(executing)),
+          1
+        );
       }
 
       const trialPromise = this.executeSingleTrial(tuningId, trial);
@@ -233,7 +252,6 @@ export class HyperparameterTuningService {
 
       trial.status = 'completed';
       trial.endTime = new Date().toISOString();
-
     } catch (error) {
       trial.status = 'failed';
       trial.errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -276,7 +294,7 @@ export class HyperparameterTuningService {
         }
 
         // Wait before checking again
-        await new Promise(resolve => setTimeout(resolve, 5000)); // 5 seconds
+        await new Promise((resolve) => setTimeout(resolve, 5000)); // 5 seconds
       } catch (error) {
         console.warn('Error checking trial progress:', error);
         break;
@@ -294,7 +312,7 @@ export class HyperparameterTuningService {
         //@ts-ignore
         .invoke<TrainingMetrics>('get_trial_metrics', {
           trialId: trial.trialId,
-          jobName: `${trial.config.modelId}_${trial.trialId}`
+          jobName: `${trial.config.modelId}_${trial.trialId}`,
         });
 
       trial.metrics = metrics;
@@ -317,7 +335,6 @@ export class HyperparameterTuningService {
         default:
           trial.score = -metrics.finalLoss;
       }
-
     } catch (error) {
       console.error(`Failed to evaluate trial ${trial.trialId}:`, error);
       // Assign a default low score for failed evaluation
@@ -336,7 +353,9 @@ export class HyperparameterTuningService {
       return null;
     }
 
-    const completedTrials = trialList.filter(t => t.status === 'completed' && t.score !== undefined);
+    const completedTrials = trialList.filter(
+      (t) => t.status === 'completed' && t.score !== undefined
+    );
     if (completedTrials.length === 0) {
       return null;
     }
@@ -345,7 +364,8 @@ export class HyperparameterTuningService {
       (current.score || 0) > (best.score || 0) ? current : best
     );
 
-    const averageScore = completedTrials.reduce((sum, t) => sum + (t.score || 0), 0) / completedTrials.length;
+    const averageScore =
+      completedTrials.reduce((sum, t) => sum + (t.score || 0), 0) / completedTrials.length;
     const improvement = (bestTrial.score || 0) - averageScore;
 
     const recommendations = this.generateRecommendations(bestTrial, completedTrials);
@@ -375,7 +395,7 @@ export class HyperparameterTuningService {
     const importantParams = this.analyzeParameterImportance(allTrials);
     if (importantParams.length > 0) {
       recommendations.push('\nMost important parameters:');
-      importantParams.forEach(param => {
+      importantParams.forEach((param) => {
         recommendations.push(`  ${param.name}: affects performance by ~${param.impact}%`);
       });
     }
@@ -386,10 +406,12 @@ export class HyperparameterTuningService {
   /**
    * Analyze which parameters have the most impact on performance
    */
-  private analyzeParameterImportance(trials: TuningTrial[]): Array<{ name: string; impact: number }> {
+  private analyzeParameterImportance(
+    trials: TuningTrial[]
+  ): Array<{ name: string; impact: number }> {
     const params: Record<string, Array<{ value: any; score: number }>> = {};
 
-    trials.forEach(trial => {
+    trials.forEach((trial) => {
       if (trial.score !== undefined) {
         for (const [key, value] of Object.entries(trial.hyperparameters || {})) {
           if (!params[key]) {
@@ -424,15 +446,15 @@ export class HyperparameterTuningService {
     const n = data.length;
 
     // Convert continuous values to numbers for correlation
-    const numericValues = data.map(d => {
+    const numericValues = data.map((d) => {
       if (typeof d.value === 'number') {
         return d.value;
       }
       // For categorical/discrete values, use index
-      return data.findIndex(item => item.value === d.value);
+      return data.findIndex((item) => item.value === d.value);
     });
 
-    const scores = data.map(d => d.score);
+    const scores = data.map((d) => d.score);
 
     const sumX = numericValues.reduce((a, b) => a + b, 0);
     const sumY = scores.reduce((a, b) => a + b, 0);

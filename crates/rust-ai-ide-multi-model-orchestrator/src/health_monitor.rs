@@ -2,12 +2,12 @@
 //!
 //! This module provides real-time health monitoring and diagnostics for the multi-model orchestration system.
 
+use crate::types::{HealthEvent, ModelId, ModelMetrics, ModelStatus};
+use crate::{OrchestrationError, Result};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use crate::types::{ModelId, HealthEvent, ModelStatus, ModelMetrics};
-use crate::{Result, OrchestrationError};
 
 /// Real-time health checker for models
 #[derive(Debug)]

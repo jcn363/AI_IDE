@@ -7,19 +7,19 @@
 //! - Auto-completion for files and directories
 //! - Enhanced shell features and bookmarks
 
+use crate::command_templates::*;
+use lazy_static::lazy_static;
+use rusqlite::{params, Connection};
+use rust_ai_ide_core::security::{audit_action, audit_logger};
 use rust_ai_ide_core::validation::validate_secure_path;
-use rust_ai_ide_core::security::{audit_logger, audit_action};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt;
 use std::process::Stdio;
+use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
-use std::sync::Arc;
 use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
-use std::fmt;
-use lazy_static::lazy_static;
-use std::collections::HashMap;
-use rusqlite::{Connection, params};
-use crate::command_templates::*;
 
 use rust_ai_ide_common::validation::{validate_file_exists, validate_path_not_excluded};
 
@@ -100,7 +100,8 @@ impl TerminalEnhancementService {
                 output_length INTEGER
             )",
             [],
-        ).map_err(|e| format!("Failed to create command_history table: {}", e))?;
+        )
+        .map_err(|e| format!("Failed to create command_history table: {}", e))?;
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS bookmarks (
@@ -111,7 +112,8 @@ impl TerminalEnhancementService {
                 created_at INTEGER NOT NULL
             )",
             [],
-        ).map_err(|e| format!("Failed to create bookmarks table: {}", e))?;
+        )
+        .map_err(|e| format!("Failed to create bookmarks table: {}", e))?;
 
         Ok(())
     }
@@ -140,16 +142,18 @@ impl TerminalEnhancementService {
     pub async fn get_command_history(&self, limit: usize) -> Vec<CommandHistoryEntry> {
         if let Ok(conn) = Connection::open(&self.db_path) {
             let mut stmt = conn.prepare("SELECT id, command, working_directory, timestamp, success, output_length FROM command_history ORDER BY timestamp DESC LIMIT ?").unwrap();
-            let entries_iter = stmt.query_map([limit as i64], |row| {
-                Ok(CommandHistoryEntry {
-                    id: row.get(0)?,
-                    command: row.get(1)?,
-                    working_directory: row.get(2)?,
-                    timestamp: row.get(3)?,
-                    success: row.get(4)?,
-                    output_length: row.get(5)?,
+            let entries_iter = stmt
+                .query_map([limit as i64], |row| {
+                    Ok(CommandHistoryEntry {
+                        id: row.get(0)?,
+                        command: row.get(1)?,
+                        working_directory: row.get(2)?,
+                        timestamp: row.get(3)?,
+                        success: row.get(4)?,
+                        output_length: row.get(5)?,
+                    })
                 })
-            }).unwrap();
+                .unwrap();
 
             entries_iter.filter_map(|r| r.ok()).collect()
         } else {
@@ -158,7 +162,11 @@ impl TerminalEnhancementService {
         }
     }
 
-    pub async fn get_ai_suggestions(&self, partial_command: &str, context: &str) -> Vec<AICommandSuggestion> {
+    pub async fn get_ai_suggestions(
+        &self,
+        partial_command: &str,
+        context: &str,
+    ) -> Vec<AICommandSuggestion> {
         // This would integrate with AI service for command suggestions
         vec![
             AICommandSuggestion {
@@ -176,7 +184,11 @@ impl TerminalEnhancementService {
         ]
     }
 
-    pub async fn get_auto_completion(&self, partial: &str, working_dir: &str) -> Vec<CompletionSuggestion> {
+    pub async fn get_auto_completion(
+        &self,
+        partial: &str,
+        working_dir: &str,
+    ) -> Vec<CompletionSuggestion> {
         let mut suggestions = Vec::new();
 
         // File and directory completion
@@ -237,7 +249,8 @@ impl TerminalEnhancementService {
                     bookmark.description,
                     bookmark.created_at as i64
                 ],
-            ).map_err(|e| format!("Failed to insert bookmark: {}", e))?;
+            )
+            .map_err(|e| format!("Failed to insert bookmark: {}", e))?;
         }
 
         let mut bookmarks = self.bookmarks.lock().await;
@@ -248,15 +261,17 @@ impl TerminalEnhancementService {
     pub async fn get_bookmarks(&self) -> Vec<TerminalBookmark> {
         if let Ok(conn) = Connection::open(&self.db_path) {
             let mut stmt = conn.prepare("SELECT id, name, command, description, created_at FROM bookmarks ORDER BY created_at DESC").unwrap();
-            let bookmarks_iter = stmt.query_map([], |row| {
-                Ok(TerminalBookmark {
-                    id: row.get(0)?,
-                    name: row.get(1)?,
-                    command: row.get(2)?,
-                    description: row.get(3)?,
-                    created_at: row.get(4)?,
+            let bookmarks_iter = stmt
+                .query_map([], |row| {
+                    Ok(TerminalBookmark {
+                        id: row.get(0)?,
+                        name: row.get(1)?,
+                        command: row.get(2)?,
+                        description: row.get(3)?,
+                        created_at: row.get(4)?,
+                    })
                 })
-            }).unwrap();
+                .unwrap();
 
             bookmarks_iter.filter_map(|r| r.ok()).collect()
         } else {
@@ -413,9 +428,7 @@ pub async fn terminal_execute_stream(
     }
 
     // Generate a terminal event ID
-    let event_id = id.unwrap_or_else(|| {
-        uuid::Uuid::new_v4().to_string()
-    });
+    let event_id = id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
     let term_event = format!("terminal-{}", event_id);
 
@@ -426,9 +439,9 @@ pub async fn terminal_execute_stream(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
-    let mut child = cmd.spawn().map_err(|e| {
-        format!("Failed to start {}: {}", program, e)
-    })?;
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("Failed to start {}: {}", program, e))?;
 
     let stdout = child.stdout.take();
     let stderr = child.stderr.take();
@@ -440,7 +453,10 @@ pub async fn terminal_execute_stream(
         let event_id_clone = event_id.clone();
 
         tauri::async_runtime::spawn(async move {
-            log::debug!("Starting stdout reader task for terminal {}", term_event_clone);
+            log::debug!(
+                "Starting stdout reader task for terminal {}",
+                term_event_clone
+            );
             let mut reader = BufReader::new(out).lines();
             let mut lines_read = 0;
             while let Ok(Some(line)) = reader.try_next().await {
@@ -465,7 +481,10 @@ pub async fn terminal_execute_stream(
         let event_id_clone = event_id.clone();
 
         tauri::async_runtime::spawn(async move {
-            log::debug!("Starting stderr reader task for terminal {}", term_event_clone);
+            log::debug!(
+                "Starting stderr reader task for terminal {}",
+                term_event_clone
+            );
             let mut reader = BufReader::new(err).lines();
             let mut lines_read = 0;
             while let Ok(Some(line)) = reader.try_next().await {

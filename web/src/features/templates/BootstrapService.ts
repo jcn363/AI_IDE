@@ -19,21 +19,23 @@ export class BootstrapServiceImpl implements IBootstrapService {
   }
 
   filterTemplates(filter: TemplateFilter): ProjectTemplate[] {
-    return this.getTemplates().filter(template => {
+    return this.getTemplates().filter((template) => {
       if (filter.category?.length && !filter.category.includes(template.category)) {
         return false;
       }
       if (filter.complexity?.length && !filter.complexity.includes(template.complexity)) {
         return false;
       }
-      if (filter.tags?.length && !filter.tags.some(tag => template.tags.includes(tag))) {
+      if (filter.tags?.length && !filter.tags.some((tag) => template.tags.includes(tag))) {
         return false;
       }
       if (filter.searchTerm) {
         const search = filter.searchTerm.toLowerCase();
-        if (!template.name.toLowerCase().includes(search) &&
-            !template.description.toLowerCase().includes(search) &&
-            !template.tags.some(tag => tag.toLowerCase().includes(search))) {
+        if (
+          !template.name.toLowerCase().includes(search) &&
+          !template.description.toLowerCase().includes(search) &&
+          !template.tags.some((tag) => tag.toLowerCase().includes(search))
+        ) {
           return false;
         }
       }
@@ -61,7 +63,11 @@ export class BootstrapServiceImpl implements IBootstrapService {
     this.templates.set(template.id, template);
   }
 
-  validateBootstrapOptions(options: BootstrapOptions): { isValid: boolean; errors: string[]; warnings: string[] } {
+  validateBootstrapOptions(options: BootstrapOptions): {
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+  } {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -122,19 +128,25 @@ export class BootstrapServiceImpl implements IBootstrapService {
     }
   }
 
-  previewTemplate(templateId: string, options?: Partial<BootstrapOptions>): { files: string[]; dependencies: string[] } {
+  previewTemplate(
+    templateId: string,
+    options?: Partial<BootstrapOptions>
+  ): { files: string[]; dependencies: string[] } {
     const template = this.getTemplate(templateId);
     if (!template) {
       return { files: [], dependencies: [] };
     }
 
-    const files = template.files.map(file => file.path);
+    const files = template.files.map((file) => file.path);
     const dependencies = this.extractDependencies(template);
 
     return { files, dependencies };
   }
 
-  async setupAutomation(templateId: string, options: BootstrapOptions): Promise<{ setupCommands: string[]; configFiles: string[] }> {
+  async setupAutomation(
+    templateId: string,
+    options: BootstrapOptions
+  ): Promise<{ setupCommands: string[]; configFiles: string[] }> {
     const template = this.getTemplate(templateId);
     if (!template?.automation) {
       return { setupCommands: [], configFiles: [] };
@@ -157,11 +169,14 @@ export class BootstrapServiceImpl implements IBootstrapService {
     return { setupCommands, configFiles };
   }
 
-  async generateWorkflows(templateId: string, workflows: string[]): Promise<Record<string, string>> {
+  async generateWorkflows(
+    templateId: string,
+    workflows: string[]
+  ): Promise<Record<string, string>> {
     const workflowsConfig: Record<string, string> = {};
 
     // Generate basic workflows
-    workflows.forEach(workflow => {
+    workflows.forEach((workflow) => {
       switch (workflow) {
         case 'build':
           workflowsConfig['build.yml'] = this.generateBuildWorkflow();
@@ -195,7 +210,8 @@ export class BootstrapServiceImpl implements IBootstrapService {
     const rustCliTemplate: ProjectTemplate = {
       id: 'rust-cli-basic',
       name: 'Basic Rust CLI Tool',
-      description: 'A simple command-line application template with basic structure and dependencies.',
+      description:
+        'A simple command-line application template with basic structure and dependencies.',
       category: 'cli-tool',
       complexity: 'beginner',
       tags: ['rust', 'cli', 'beginner', 'tool'],
@@ -295,11 +311,7 @@ cargo run
           },
         },
       ],
-      folders: [
-        { path: 'src' },
-        { path: 'tests' },
-        { path: 'docs' },
-      ],
+      folders: [{ path: 'src' }, { path: 'tests' }, { path: 'docs' }],
       config: {
         packageManager: 'cargo',
         testFramework: 'cargo-test',
@@ -320,7 +332,8 @@ cargo run
         },
       },
       preview: {
-        description: 'Perfect for building command-line utilities, automation scripts, and system tools.',
+        description:
+          'Perfect for building command-line utilities, automation scripts, and system tools.',
         features: [
           'CLI argument parsing with clap',
           'Error handling with anyhow',
@@ -344,7 +357,10 @@ cargo run
     return false;
   }
 
-  private async createProject(template: ProjectTemplate, options: BootstrapOptions): Promise<BootstrapResult> {
+  private async createProject(
+    template: ProjectTemplate,
+    options: BootstrapOptions
+  ): Promise<BootstrapResult> {
     const filesCreated: string[] = [];
     const dependencies: string[] = [];
     const nextSteps: string[] = [];
@@ -394,7 +410,6 @@ cargo run
         'Run cargo run to execute the application',
         'Run cargo test to run tests'
       );
-
     } catch (error) {
       throw new Error('Failed to create project structure');
     }

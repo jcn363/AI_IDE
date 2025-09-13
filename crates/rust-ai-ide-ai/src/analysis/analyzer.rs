@@ -1,8 +1,8 @@
-use anyhow::Result;
-use syn::File;
 use crate::analysis::{AnalysisFinding, AnalysisPreferences};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use syn::File;
 
 /// Preferences that control analyzer behavior
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -25,21 +25,21 @@ pub struct AnalysisPreferences {
 pub trait Analyzer: Send + Sync + 'static {
     /// The type of findings this analyzer produces
     type Finding: Send + Sync + 'static;
-    
+
     /// Analyze the given code and return findings
     fn analyze(&self, ast: &File, code: &str, file_path: &str) -> Result<Vec<Self::Finding>>;
-    
+
     /// Get the name/identifier of this analyzer
     fn name(&self) -> &'static str;
-    
+
     /// Get a brief description of what this analyzer does
     fn description(&self) -> &'static str;
-    
+
     /// Check if this analyzer is enabled based on preferences
     fn is_enabled(&self, _preferences: &AnalysisPreferences) -> bool {
         true
     }
-    
+
     /// Get the default configuration for this analyzer
     fn default_config() -> serde_json::Value
     where
@@ -65,7 +65,7 @@ pub trait AnalyzerExt: Analyzer {
             Ok(Vec::new())
         }
     }
-    
+
     /// Filter findings based on confidence level and other criteria
     fn filter_findings(
         &self,
@@ -79,11 +79,11 @@ pub trait AnalyzerExt: Analyzer {
             .into_iter()
             .filter(|f| f.confidence() >= preferences.min_confidence)
             .collect::<Vec<_>>();
-            
+
         if preferences.max_findings > 0 && filtered.len() > preferences.max_findings {
             filtered.truncate(preferences.max_findings);
         }
-        
+
         filtered
     }
 }
@@ -96,19 +96,19 @@ where
     A: Send + Sync + 'static,
 {
     type Finding = A;
-    
+
     fn analyze(&self, ast: &File, code: &str, file_path: &str) -> Result<Vec<Self::Finding>> {
         self.as_ref().analyze(ast, code, file_path)
     }
-    
+
     fn name(&self) -> &'static str {
         self.as_ref().name()
     }
-    
+
     fn description(&self) -> &'static str {
         self.as_ref().description()
     }
-    
+
     fn is_enabled(&self, preferences: &AnalysisPreferences) -> bool {
         self.as_ref().is_enabled(preferences)
     }
@@ -118,13 +118,13 @@ where
 pub trait Finding: Send + Sync + 'static {
     /// Get the location of this finding in the source code
     fn location(&self) -> CodeLocation;
-    
+
     /// Get a short title describing this finding
     fn title(&self) -> &str;
-    
+
     /// Get a detailed description of this finding
     fn description(&self) -> &str;
-    
+
     /// Get the severity level of this finding
     fn severity(&self) -> Severity;
 }
@@ -174,26 +174,28 @@ impl CodeLocation {
             end_column: None,
         }
     }
-    
+
     /// Set the end position of this location
     pub fn with_end(mut self, line: usize, column: usize) -> Self {
         self.end_line = Some(line);
         self.end_column = Some(column);
         self
     }
-    
+
     /// Check if this location contains the given position
     pub fn contains(&self, line: usize, column: usize) -> bool {
         if line < self.line || (line == self.line && column < self.column) {
             return false;
         }
-        
+
         if let Some(end_line) = self.end_line {
-            if line > end_line || (line == end_line && column >= self.end_column.unwrap_or(usize::MAX)) {
+            if line > end_line
+                || (line == end_line && column >= self.end_column.unwrap_or(usize::MAX))
+            {
                 return false;
             }
         }
-        
+
         true
     }
 }

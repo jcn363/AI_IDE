@@ -7,7 +7,7 @@ export class DependencyAnalyzer {
    */
   analyzeMethodDependencies(
     methodCode: string,
-    targetClass: string,
+    targetClass: string
   ): {
     dependencies: string[];
     isMovable: boolean;
@@ -19,13 +19,15 @@ export class DependencyAnalyzer {
     // Find field accesses
     const fieldMatches = methodCode.match(/self\.(\w+)/g);
     if (fieldMatches) {
-      dependencies.push(...fieldMatches.map(match => match.replace('self.', '')));
+      dependencies.push(...fieldMatches.map((match) => match.replace('self.', '')));
     }
 
     // Find method calls on self
     const methodMatches = methodCode.match(/self\.(\w+)\(/g);
     if (methodMatches) {
-      dependencies.push(...methodMatches.map(match => match.match(/\.(\w+)\(/)?.[1]).filter(Boolean) as string[]);
+      dependencies.push(
+        ...(methodMatches.map((match) => match.match(/\.(\w+)\(/)?.[1]).filter(Boolean) as string[])
+      );
     }
 
     // More sophisticated dependency analysis
@@ -105,9 +107,7 @@ export class DependencyAnalyzer {
     }
 
     // Check dependency complexity
-    const complexDependencies = dependencies.filter(dep =>
-      dep.includes('::') || dep.length > 20,
-    );
+    const complexDependencies = dependencies.filter((dep) => dep.includes('::') || dep.length > 20);
 
     if (complexDependencies.length > 0) {
       issues.push(`Method depends on ${complexDependencies.length} complex dependencies`);
@@ -131,13 +131,15 @@ export class DependencyAnalyzer {
     // Find field accesses: self.field
     const fieldMatches = methodCode.match(/self\.(\w+)/g);
     if (fieldMatches) {
-      dependencies.push(...fieldMatches.map(match => match.replace('self.', '')));
+      dependencies.push(...fieldMatches.map((match) => match.replace('self.', '')));
     }
 
     // Find method calls on self: self.method()
     const methodMatches = methodCode.match(/self\.(\w+)\(/g);
     if (methodMatches) {
-      dependencies.push(...methodMatches.map(match => match.match(/\.(\w+)\(/)?.[1]).filter(Boolean) as string[]);
+      dependencies.push(
+        ...(methodMatches.map((match) => match.match(/\.(\w+)\(/)?.[1]).filter(Boolean) as string[])
+      );
     }
 
     return [...new Set(dependencies)];

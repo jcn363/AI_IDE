@@ -52,7 +52,7 @@ export class FederatedLearningManager {
     averagePrivacyLoss: 0,
     maxPrivacyLoss: 0,
     epsilon: 1.0, // Privacy budget parameter
-    delta: 1e-6,  // Privacy budget parameter
+    delta: 1e-6, // Privacy budget parameter
   };
 
   constructor(config?: Partial<FederatedConfig>) {
@@ -131,7 +131,7 @@ export class FederatedLearningManager {
       roundId,
       startTime: new Date().toISOString(),
       status: 'waiting',
-      participants: Array.from(this.clients.values()).map(client => ({ ...client })),
+      participants: Array.from(this.clients.values()).map((client) => ({ ...client })),
     };
 
     this.activeRounds.set(roundId, round);
@@ -171,12 +171,11 @@ export class FederatedLearningManager {
         .invoke('send_model_to_client', {
           clientId: client.id,
           modelId,
-          federatedConfig: this.config
+          federatedConfig: this.config,
         });
 
       client.lastSeen = new Date().toISOString();
       console.log(`Sent model ${modelId} to client ${client.id}`);
-
     } catch (error) {
       console.error(`Failed to send model to client ${client.id}:`, error);
       throw error;
@@ -242,7 +241,7 @@ export class FederatedLearningManager {
         .invoke('store_client_update', {
           clientId,
           modelUpdate,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
     } catch (error) {
       console.error(`Failed to store update from client ${clientId}:`, error);
@@ -255,16 +254,18 @@ export class FederatedLearningManager {
    */
   private async checkAggregationReady(): Promise<void> {
     // Find active round
-    const activeRound = Array.from(this.activeRounds.values()).find(r => r.status === 'running');
+    const activeRound = Array.from(this.activeRounds.values()).find((r) => r.status === 'running');
     if (!activeRound) {
       return;
     }
 
     // Count ready clients (those who have sent updates)
-    const readyClients = activeRound.participants.filter(p => p.status === 'communicating');
+    const readyClients = activeRound.participants.filter((p) => p.status === 'communicating');
 
     if (readyClients.length >= this.config.minClients) {
-      console.log(`Enough clients ready (${readyClients.length}/${this.config.minClients}), starting aggregation`);
+      console.log(
+        `Enough clients ready (${readyClients.length}/${this.config.minClients}), starting aggregation`
+      );
       await this.aggregateUpdates(activeRound);
     }
   }
@@ -282,12 +283,12 @@ export class FederatedLearningManager {
         //@ts-ignore
         .invoke('aggregate_federated_updates', {
           roundId: round.roundId,
-          clientIds: round.participants.map(p => p.id),
+          clientIds: round.participants.map((p) => p.id),
           privacyConfig: {
             enableDifferentialPrivacy: this.config.enableDifferentialPrivacy,
             noiseMultiplier: this.config.noiseMultiplier,
             maxGradNorm: this.config.maxGradNorm,
-          }
+          },
         });
 
       const aggregationTime = (Date.now() - aggregationStart) / 1000;
@@ -305,7 +306,6 @@ export class FederatedLearningManager {
       if (this.shouldContinueTraining(round)) {
         await this.startNextRound(round);
       }
-
     } catch (error) {
       console.error(`Aggregation failed for round ${round.roundId}:`, error);
       round.status = 'failed';
@@ -318,7 +318,7 @@ export class FederatedLearningManager {
    */
   private updatePrivacyMetrics(participants: FederatedClient[]): void {
     const totalLoss = participants.reduce((sum, p) => sum + p.privacyLoss, 0);
-    const maxLoss = Math.max(...participants.map(p => p.privacyLoss));
+    const maxLoss = Math.max(...participants.map((p) => p.privacyLoss));
 
     this.privacyMetrics = {
       ...this.privacyMetrics,
@@ -329,7 +329,9 @@ export class FederatedLearningManager {
     };
 
     if (this.privacyMetrics.epsilon > this.config.privacyBudget) {
-      console.warn(`Privacy budget exceeded: ${this.privacyMetrics.epsilon} > ${this.config.privacyBudget}`);
+      console.warn(
+        `Privacy budget exceeded: ${this.privacyMetrics.epsilon} > ${this.config.privacyBudget}`
+      );
     }
   }
 
@@ -367,7 +369,7 @@ export class FederatedLearningManager {
       roundId,
       startTime: new Date().toISOString(),
       status: 'waiting',
-      participants: previousRound.participants.map(p => ({
+      participants: previousRound.participants.map((p) => ({
         ...p,
         status: 'idle' as const,
         localMetrics: undefined,
@@ -390,10 +392,13 @@ export class FederatedLearningManager {
     privacyMetrics: PrivacyMetrics;
     currentRound?: FederatedRound;
   } {
-    const activeRounds = Array.from(this.activeRounds.values())
-      .filter(r => r.roundId.includes(sessionId));
+    const activeRounds = Array.from(this.activeRounds.values()).filter((r) =>
+      r.roundId.includes(sessionId)
+    );
 
-    const currentRound = activeRounds.find(r => r.status !== 'completed' && r.status !== 'failed');
+    const currentRound = activeRounds.find(
+      (r) => r.status !== 'completed' && r.status !== 'failed'
+    );
 
     return {
       isActive: currentRound !== undefined,
@@ -409,7 +414,7 @@ export class FederatedLearningManager {
    */
   getRounds(sessionId: string): FederatedRound[] {
     return Array.from(this.activeRounds.values())
-      .filter(r => r.roundId.includes(sessionId))
+      .filter((r) => r.roundId.includes(sessionId))
       .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
   }
 
@@ -420,8 +425,9 @@ export class FederatedLearningManager {
     console.log(`Stopping federated session: ${sessionId}`);
 
     // Find and complete current round
-    const currentRound = Array.from(this.activeRounds.values())
-      .find(r => r.roundId.includes(sessionId) && r.status === 'running');
+    const currentRound = Array.from(this.activeRounds.values()).find(
+      (r) => r.roundId.includes(sessionId) && r.status === 'running'
+    );
 
     if (currentRound) {
       currentRound.status = 'completed';
@@ -466,11 +472,12 @@ export class FederatedLearningManager {
       finalModel: rounds[rounds.length - 1]?.globalMetrics,
       trainingSummary: {
         totalRounds: rounds.length,
-        successfulRounds: rounds.filter(r => r.status === 'completed').length,
-        failedRounds: rounds.filter(r => r.status === 'failed').length,
-        averageAggregationTime: rounds
-          .filter(r => r.aggregationTimeSeconds !== undefined)
-          .reduce((sum, r) => sum + (r.aggregationTimeSeconds || 0), 0) / rounds.length,
+        successfulRounds: rounds.filter((r) => r.status === 'completed').length,
+        failedRounds: rounds.filter((r) => r.status === 'failed').length,
+        averageAggregationTime:
+          rounds
+            .filter((r) => r.aggregationTimeSeconds !== undefined)
+            .reduce((sum, r) => sum + (r.aggregationTimeSeconds || 0), 0) / rounds.length,
       },
     };
   }

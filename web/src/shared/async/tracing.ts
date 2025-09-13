@@ -21,9 +21,11 @@ class AsyncTracer {
   private logger: (level: string, message: string, context: any) => void;
 
   constructor(logger?: (level: string, message: string, context: any) => void) {
-    this.logger = logger || ((level, message, context) => {
-      console.log(`[${level.toUpperCase()}] [${new Date().toISOString()}] ${message}`, context);
-    });
+    this.logger =
+      logger ||
+      ((level, message, context) => {
+        console.log(`[${level.toUpperCase()}] [${new Date().toISOString()}] ${message}`, context);
+      });
   }
 
   /**
@@ -36,7 +38,7 @@ class AsyncTracer {
       name,
       startTime: performance.now(),
       metadata: { ...metadata },
-      children: []
+      children: [],
     };
 
     // Find parent context if exists
@@ -135,7 +137,7 @@ class AsyncTracer {
 
     // Basic metrics - could be extended
     const metrics: PerformanceMetrics = {
-      duration
+      duration,
     };
 
     // Memory usage if available

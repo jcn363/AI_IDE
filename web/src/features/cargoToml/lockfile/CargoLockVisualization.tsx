@@ -33,8 +33,9 @@ export const CargoLockVisualization: React.FC<{ projectPath: string }> = ({ proj
   }, [loadLockData]);
 
   const filteredDependencies = useMemo(() => {
-    return lockData.filter(dep => {
-      const matchesSearch = !searchText || 
+    return lockData.filter((dep) => {
+      const matchesSearch =
+        !searchText ||
         dep.name.toLowerCase().includes(searchText.toLowerCase()) ||
         dep.version.toLowerCase().includes(searchText.toLowerCase());
       const matchesDirectFilter = !showOnlyDirect || dep.isDirect;
@@ -68,7 +69,14 @@ export const CargoLockVisualization: React.FC<{ projectPath: string }> = ({ proj
       dataIndex: 'dependencies',
       key: 'dependencies',
       render: (deps: string[] = []) => (
-        <div style={{ maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div
+          style={{
+            maxWidth: 300,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
           {deps.length > 0 ? deps.join(', ') : 'None'}
         </div>
       ),
@@ -76,7 +84,7 @@ export const CargoLockVisualization: React.FC<{ projectPath: string }> = ({ proj
   ];
 
   return (
-    <Card 
+    <Card
       title="Cargo.lock Explorer"
       extra={
         <Space>
@@ -84,12 +92,12 @@ export const CargoLockVisualization: React.FC<{ projectPath: string }> = ({ proj
             prefix={<SearchOutlined />}
             placeholder="Search dependencies..."
             value={searchText}
-            onChange={e => setSearchText((e.target as any).value)}
+            onChange={(e) => setSearchText((e.target as any).value)}
             style={{ width: 200 }}
             allowClear
           />
-          <Button 
-            type={showOnlyDirect ? 'primary' : 'default'} 
+          <Button
+            type={showOnlyDirect ? 'primary' : 'default'}
             onClick={() => setShowOnlyDirect(!showOnlyDirect)}
           >
             {showOnlyDirect ? 'Showing Direct Only' : 'Show All'}

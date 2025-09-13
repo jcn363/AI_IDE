@@ -5,12 +5,14 @@
 
 use crate::analysis::architectural::{anti_patterns::*, ml_scorer::*, patterns::*};
 use crate::analysis::{AnalysisCategory, Severity};
-use rust_ai_ide_common::{IdeResult, IdeError};
 #[cfg(feature = "caching")]
-use rust_ai_ide_cache::{Cache, InMemoryCache, CacheEntry};
+use rust_ai_ide_cache::{Cache, CacheEntry, InMemoryCache};
+use rust_ai_ide_common::{IdeError, IdeResult};
 
 #[cfg(not(feature = "caching"))]
-use crate::analysis::architectural::dummy_cache::{DummyCache as InMemoryCache, DummyCacheEntry as CacheEntry};
+use crate::analysis::architectural::dummy_cache::{
+    DummyCache as InMemoryCache, DummyCacheEntry as CacheEntry,
+};
 
 // The Cache trait is now implemented by the actual cache implementations
 use std::collections::HashMap;
@@ -28,7 +30,7 @@ pub struct AIDetector {
     /// Analysis cache for performance optimization
     #[cfg(feature = "caching")]
     analysis_cache: Arc<dyn Cache<String, AnalysisResult> + Send + Sync>,
-    
+
     /// Dummy cache implementation when caching is disabled
     #[cfg(not(feature = "caching"))]
     analysis_cache: Arc<InMemoryCache<String, AnalysisResult>>,
@@ -171,11 +173,8 @@ impl AIDetector {
         // Detect anti-patterns
         if request.detect_anti_patterns {
             let mut anti_patterns = self.anti_pattern_detector.write().await;
-            let detected = anti_patterns.analyze_code(
-                content,
-                file_path,
-                request.parse_tree.as_ref(),
-            )?;
+            let detected =
+                anti_patterns.analyze_code(content, file_path, request.parse_tree.as_ref())?;
 
             // Score anti-patterns with ML
             let mut scored_anti_patterns = Vec::new();
@@ -213,7 +212,9 @@ impl AIDetector {
         }
 
         // Generate intelligent suggestions
-        let suggestions = self.generate_suggestions(&analysis_result, &request).await?;
+        let suggestions = self
+            .generate_suggestions(&analysis_result, &request)
+            .await?;
         analysis_result.intelligence_suggestions = suggestions;
 
         // Calculate analysis duration
@@ -274,7 +275,9 @@ impl AIDetector {
                 return priority_cmp;
             }
 
-            b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal)
+            b.confidence
+                .partial_cmp(&a.confidence)
+                .unwrap_or(std::cmp::Ordering::Equal)
         });
 
         Ok(suggestions)
@@ -305,20 +308,20 @@ impl AIDetector {
             cache_hit_rate: cache_stats.hit_ratio,
             #[cfg(not(feature = "caching"))]
             cache_hit_rate: 0.0,
-            
+
             #[cfg(feature = "caching")]
             total_analyses: cache_stats.total_sets as usize,
             #[cfg(not(feature = "caching"))]
             total_analyses: 0,
-            
+
             average_analysis_time_ms: 100.0, // Would calculate from actual data
             ml_predictions_processed: 0,     // Would track from ML scorer
-            
+
             #[cfg(feature = "caching")]
             cache_size_entries: cache_stats.total_entries as usize,
             #[cfg(not(feature = "caching"))]
             cache_size_entries: 0,
-            
+
             #[cfg(feature = "caching")]
             uptime_seconds: cache_stats.uptime_seconds,
             #[cfg(not(feature = "caching"))]
@@ -327,7 +330,12 @@ impl AIDetector {
     }
 
     /// Generate cache key for analysis request
-    fn generate_cache_key(&self, file_path: &str, content: &str, request: &AnalysisRequest) -> String {
+    fn generate_cache_key(
+        &self,
+        file_path: &str,
+        content: &str,
+        request: &AnalysisRequest,
+    ) -> String {
         // Simple hash-based key generation
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         file_path.hash(&mut hasher);
@@ -341,20 +349,20 @@ impl AIDetector {
         {
             self.analysis_cache.get(key).await
         }
-        
+
         #[cfg(not(feature = "caching"))]
         {
             self.analysis_cache.get(key).cloned()
         }
     }
-    
+
     /// Store a value in the cache
     async fn store_in_cache(&self, key: String, value: AnalysisResult) {
         #[cfg(feature = "caching")]
         {
             self.analysis_cache.set(key, value).await;
         }
-        
+
         #[cfg(not(feature = "caching"))]
         {
             self.analysis_cache.insert(key, value);
@@ -364,15 +372,23 @@ impl AIDetector {
     /// Check if cached result is still valid
     fn is_cache_valid(&self, cached: &AnalysisResult, request: &AnalysisRequest) -> bool {
         // Simple cache validation - could be enhanced with file modification times
-        let cache_age = chrono::Utc::now().signed_duration_since(cached.analysis_metadata.timestamp);
+        let cache_age =
+            chrono::Utc::now().signed_duration_since(cached.analysis_metadata.timestamp);
         cache_age < chrono::Duration::minutes(30) // 30 minute cache validity
     }
 
     /// Generate code for automated fix (placeholder implementation)
-    fn generate_fix_code(&self, _suggestion: &IntelligenceSuggestion, _fix: &AutomatedFix) -> IdeResult<String> {
+    fn generate_fix_code(
+        &self,
+        _suggestion: &IntelligenceSuggestion,
+        _fix: &AutomatedFix,
+    ) -> IdeResult<String> {
         // This would implement the actual code transformation logic
         // For now, return a placeholder comment
-        Ok("// AI-generated fix applied\n// TODO: Implement actual code transformation".to_string())
+        Ok(
+            "// AI-generated fix applied\n// TODO: Implement actual code transformation"
+                .to_string(),
+        )
     }
 }
 
@@ -387,18 +403,18 @@ pub struct AIDetectorConfig {
     pub enable_ml_scoring: bool,
     /// Enable caching of analysis results
     pub enable_caching: bool,
-    
+
     /// Configuration for pattern detection
     pub pattern_config: PatternDetectorConfig,
     /// Configuration for ML scorer
     pub ml_scorer_config: MLScorerConfig,
     /// Configuration for anti-pattern detection
     pub anti_pattern_config: AntiPatternDetectorConfig,
-    
+
     /// Cache configuration (only used if enable_caching is true)
     #[cfg(feature = "caching")]
     pub cache_config: Option<rust_ai_ide_cache::CacheConfig>,
-    
+
     /// Private field to force users to use the builder pattern when not using the caching feature
     #[cfg(not(feature = "caching"))]
     _non_exhaustive: (),
@@ -518,7 +534,9 @@ impl PatternDetector {
 
         // Simple pattern detection based on keywords and structure
         for (pattern_name, pattern_type) in &self.architectural_patterns {
-            if let Some(detected) = self.detect_pattern(content, file_path, pattern_name, *pattern_type) {
+            if let Some(detected) =
+                self.detect_pattern(content, file_path, pattern_name, *pattern_type)
+            {
                 detected_patterns.push(detected);
             }
         }
@@ -534,7 +552,8 @@ impl PatternDetector {
         pattern_type: ArchitecturalPattern,
     ) -> Option<DetectedPattern> {
         let pattern_keywords = self.get_pattern_keywords(&pattern_type);
-        let keyword_matches = pattern_keywords.iter()
+        let keyword_matches = pattern_keywords
+            .iter()
             .filter(|keyword| content.contains(&format!("\\b{}\\b", keyword)))
             .count();
 
@@ -580,10 +599,24 @@ impl PatternDetector {
 
     fn get_pattern_keywords(&self, pattern_type: &ArchitecturalPattern) -> Vec<String> {
         match pattern_type {
-            ArchitecturalPattern::Singleton => vec!["static".to_string(), "instance".to_string(), "lazy".to_string()],
-            ArchitecturalPattern::Repository => vec!["trait".to_string(), "impl".to_string(), "query".to_string()],
-            ArchitecturalPattern::Factory => vec!["create".to_string(), "factory".to_string(), "build".to_string()],
-            ArchitecturalPattern::Observer => vec!["subscribe".to_string(), "notify".to_string(), "observer".to_string()],
+            ArchitecturalPattern::Singleton => vec![
+                "static".to_string(),
+                "instance".to_string(),
+                "lazy".to_string(),
+            ],
+            ArchitecturalPattern::Repository => {
+                vec!["trait".to_string(), "impl".to_string(), "query".to_string()]
+            }
+            ArchitecturalPattern::Factory => vec![
+                "create".to_string(),
+                "factory".to_string(),
+                "build".to_string(),
+            ],
+            ArchitecturalPattern::Observer => vec![
+                "subscribe".to_string(),
+                "notify".to_string(),
+                "observer".to_string(),
+            ],
             _ => vec![],
         }
     }
@@ -631,12 +664,30 @@ impl IntelligentSuggestionGenerator {
         }
     }
 
-    fn generate_from_anti_pattern(&self, anti_pattern: &DetectedAntiPattern) -> IdeResult<Option<IntelligenceSuggestion>> {
+    fn generate_from_anti_pattern(
+        &self,
+        anti_pattern: &DetectedAntiPattern,
+    ) -> IdeResult<Option<IntelligenceSuggestion>> {
         let template_key = format!("{:?}", anti_pattern.anti_pattern_type);
         if let Some(template) = self.suggestion_templates.get(&template_key) {
-            let title = template.template
-                .replace("{method_name}", anti_pattern.location.function_name.as_deref().unwrap_or("method"))
-                .replace("{class_name}", anti_pattern.location.class_name.as_deref().unwrap_or("class"));
+            let title = template
+                .template
+                .replace(
+                    "{method_name}",
+                    anti_pattern
+                        .location
+                        .function_name
+                        .as_deref()
+                        .unwrap_or("method"),
+                )
+                .replace(
+                    "{class_name}",
+                    anti_pattern
+                        .location
+                        .class_name
+                        .as_deref()
+                        .unwrap_or("class"),
+                );
 
             let suggestion = IntelligenceSuggestion::new(
                 SuggestionCategory::Maintainability,
@@ -648,7 +699,9 @@ impl IntelligentSuggestionGenerator {
                 template.refactoring_type.clone(),
             )
             .with_benefits(template.benefits.clone())
-            .with_guidance("Use 'Extract Method' refactoring to break down large methods".to_string());
+            .with_guidance(
+                "Use 'Extract Method' refactoring to break down large methods".to_string(),
+            );
 
             Ok(Some(suggestion))
         } else {
@@ -656,7 +709,10 @@ impl IntelligentSuggestionGenerator {
         }
     }
 
-    fn generate_from_pattern(&self, _pattern: &DetectedPattern) -> IdeResult<Option<IntelligenceSuggestion>> {
+    fn generate_from_pattern(
+        &self,
+        _pattern: &DetectedPattern,
+    ) -> IdeResult<Option<IntelligenceSuggestion>> {
         // For now, no specific suggestions for detected patterns
         Ok(None)
     }

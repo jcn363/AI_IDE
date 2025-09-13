@@ -41,25 +41,40 @@ export function useTheme() {
     dispatch(updateAccessibility(currentAccessibility));
   }, [dispatch]);
 
-  const setTheme = useCallback((themeId: string) => {
-    dispatch(setCurrentTheme(themeId));
-  }, [dispatch]);
+  const setTheme = useCallback(
+    (themeId: string) => {
+      dispatch(setCurrentTheme(themeId));
+    },
+    [dispatch]
+  );
 
-  const createNewTheme = useCallback((themeDefinition: any) => {
-    dispatch(createTheme(themeDefinition));
-  }, [dispatch]);
+  const createNewTheme = useCallback(
+    (themeDefinition: any) => {
+      dispatch(createTheme(themeDefinition));
+    },
+    [dispatch]
+  );
 
-  const updateExistingTheme = useCallback((themeDefinition: any) => {
-    dispatch(updateTheme(themeDefinition));
-  }, [dispatch]);
+  const updateExistingTheme = useCallback(
+    (themeDefinition: any) => {
+      dispatch(updateTheme(themeDefinition));
+    },
+    [dispatch]
+  );
 
-  const deleteExistingTheme = useCallback((themeId: string) => {
-    dispatch(deleteTheme(themeId));
-  }, [dispatch]);
+  const deleteExistingTheme = useCallback(
+    (themeId: string) => {
+      dispatch(deleteTheme(themeId));
+    },
+    [dispatch]
+  );
 
-  const applyThemeCustomization = useCallback((customization: any) => {
-    dispatch(applyCustomization(customization));
-  }, [dispatch]);
+  const applyThemeCustomization = useCallback(
+    (customization: any) => {
+      dispatch(applyCustomization(customization));
+    },
+    [dispatch]
+  );
 
   const resetThemeCustomization = useCallback(() => {
     dispatch(resetCustomization());
@@ -69,13 +84,19 @@ export function useTheme() {
     dispatch(loadMarketplace());
   }, [dispatch]);
 
-  const downloadThemeFromMarketplace = useCallback((item: any) => {
-    dispatch(downloadTheme(item));
-  }, [dispatch]);
+  const downloadThemeFromMarketplace = useCallback(
+    (item: any) => {
+      dispatch(downloadTheme(item));
+    },
+    [dispatch]
+  );
 
-  const updateAccessibilityOptions = useCallback((options: any) => {
-    dispatch(updateAccessibility(options));
-  }, [dispatch]);
+  const updateAccessibilityOptions = useCallback(
+    (options: any) => {
+      dispatch(updateAccessibility(options));
+    },
+    [dispatch]
+  );
 
   const resetAccessibilityOptions = useCallback(() => {
     dispatch(resetAccessibility());
@@ -141,7 +162,7 @@ export function useHighContrastMode() {
 
   const toggleHighContrast = useCallback(() => {
     updateAccessibilityOptions({
-      highContrastMode: !accessibility.highContrastMode
+      highContrastMode: !accessibility.highContrastMode,
     });
   }, [accessibility.highContrastMode, updateAccessibilityOptions]);
 
@@ -156,7 +177,7 @@ export function useReducedMotion() {
 
   const toggleReducedMotion = useCallback(() => {
     updateAccessibilityOptions({
-      reducedMotion: !accessibility.reducedMotion
+      reducedMotion: !accessibility.reducedMotion,
     });
   }, [accessibility.reducedMotion, updateAccessibilityOptions]);
 

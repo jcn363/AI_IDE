@@ -1,30 +1,12 @@
-import {
-    Alert,
-    Box,
-    Button,
-    Chip,
-    IconButton,
-    Paper,
-    Tooltip,
-    Typography,
-} from '@mui/material';
+import { Alert, Box, Button, Chip, IconButton, Paper, Tooltip, Typography } from '@mui/material';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-    ArrowForward,
-    Build,
-    Code,
-    Refresh,
-} from '@mui/icons-material';
+import { ArrowForward, Build, Code, Refresh } from '@mui/icons-material';
 
 // Import services and types
 import { useAIService } from '../../ai/AIProvider';
 import { RefactoringPanel } from '../../ai/components/RefactoringPanel';
-import type {
-    RefactoringContext,
-    RefactoringTarget,
-    RefactoringType,
-} from '../../ai/types';
+import type { RefactoringContext, RefactoringTarget, RefactoringType } from '../../ai/types';
 
 // Import editor hooks
 import { editorActions } from '../../../store/slices/editorSlice';
@@ -43,11 +25,11 @@ export const RefactoringIntegrationExample: React.FC = () => {
   // REDUX INTEGRATION (Existing IDE Pattern)
   // ============================================================================
   const dispatch = useAppDispatch();
-  const editorState = useAppSelector(state => state.editor);
+  const editorState = useAppSelector((state) => state.editor);
 
   // Get current file and selection from editor state
-  const {activeFile} = editorState;
-  const {selection} = editorState;
+  const { activeFile } = editorState;
+  const { selection } = editorState;
 
   // ============================================================================
   // AI SERVICES INTEGRATION (New Refactoring Services)
@@ -72,60 +54,75 @@ export const RefactoringIntegrationExample: React.FC = () => {
    * Analyzes available refactorings for current context
    * Uses the RefactoringService to determine what operations are available
    */
-  const analyzeRefactorings = useCallback(async (ctx: RefactoringContext) => {
-    try {
-      setIsAnalyzing(true);
-      setAnalysisProgress(0);
+  const analyzeRefactorings = useCallback(
+    async (ctx: RefactoringContext) => {
+      try {
+        setIsAnalyzing(true);
+        setAnalysisProgress(0);
 
-      // Simulate analysis progress
-      const progressInterval = setInterval(() => {
-        setAnalysisProgress(prev => {
-          if (prev < 90) return prev + 10;
-          clearInterval(progressInterval);
-          return 90;
-        });
-      }, 100);
+        // Simulate analysis progress
+        const progressInterval = setInterval(() => {
+          setAnalysisProgress((prev) => {
+            if (prev < 90) return prev + 10;
+            clearInterval(progressInterval);
+            return 90;
+          });
+        }, 100);
 
-      // Call the refactoring service to analyze the context
-      const available = await refactoringService.getAvailableRefactorings(ctx);
+        // Call the refactoring service to analyze the context
+        const available = await refactoringService.getAvailableRefactorings(ctx);
 
-      // Integration with LSP - get semantic tokens and language server state
-      const enhancedAnalysis = await getEnhancedAnalysis(ctx);
+        // Integration with LSP - get semantic tokens and language server state
+        const enhancedAnalysis = await getEnhancedAnalysis(ctx);
 
-      setAvailableRefactorings(available);
-      setAnalysisProgress(100);
-      clearInterval(progressInterval);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analysis failed');
-    } finally {
-      setIsAnalyzing(false);
-    }
-  }, [refactoringService]);
+        setAvailableRefactorings(available);
+        setAnalysisProgress(100);
+        clearInterval(progressInterval);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Analysis failed');
+      } finally {
+        setIsAnalyzing(false);
+      }
+    },
+    [refactoringService]
+  );
 
   /**
    * Integrates with Monaco editor to get current context
    * This would be called from the Monaco editor onMount/onChange handlers
    */
-  const updateEditorContext = useCallback((
-    filePath: string,
-    selection: { startLine: number, startColumn: number, endLine: number, endColumn: number } | null,
-    cursorPosition: { line: number, character: number } | null,
-  ) => {
-    const newContext: RefactoringContext = {
-      filePath,
-      selection: selection ? {
-        start: { line: selection.startLine, character: selection.startColumn },
-        end: { line: selection.endLine, character: selection.endColumn },
-      } : undefined,
-      cursorPosition: cursorPosition ? {
-        line: cursorPosition.line,
-        character: cursorPosition.character,
-      } : undefined,
-    };
+  const updateEditorContext = useCallback(
+    (
+      filePath: string,
+      selection: {
+        startLine: number;
+        startColumn: number;
+        endLine: number;
+        endColumn: number;
+      } | null,
+      cursorPosition: { line: number; character: number } | null
+    ) => {
+      const newContext: RefactoringContext = {
+        filePath,
+        selection: selection
+          ? {
+              start: { line: selection.startLine, character: selection.startColumn },
+              end: { line: selection.endLine, character: selection.endColumn },
+            }
+          : undefined,
+        cursorPosition: cursorPosition
+          ? {
+              line: cursorPosition.line,
+              character: cursorPosition.character,
+            }
+          : undefined,
+      };
 
-    setContext(newContext);
-    analyzeRefactorings(newContext);
-  }, []);
+      setContext(newContext);
+      analyzeRefactorings(newContext);
+    },
+    []
+  );
 
   /**
    * Gets enhanced analysis from LSP and other sources
@@ -152,44 +149,47 @@ export const RefactoringIntegrationExample: React.FC = () => {
    * - Editor state for real-time updates
    * - Language server for symbol resolution
    */
-  const handleRefactoringExecution = useCallback(async (
-    type: RefactoringType,
-    ctx: RefactoringContext,
-    options: any,
-  ) => {
-    try {
-      // Execute the refactoring
-      const result = await refactoringService.executeRefactoring(type, ctx, options);
+  const handleRefactoringExecution = useCallback(
+    async (type: RefactoringType, ctx: RefactoringContext, options: any) => {
+      try {
+        // Execute the refactoring
+        const result = await refactoringService.executeRefactoring(type, ctx, options);
 
-      if (result.success) {
-        // Update editor with the changes
-        dispatch(editorActions.updateFileContent({
-          filePath: ctx.filePath,
-          content: applyChangesToContent(ctx.filePath, result.changes),
-        }));
+        if (result.success) {
+          // Update editor with the changes
+          dispatch(
+            editorActions.updateFileContent({
+              filePath: ctx.filePath,
+              content: applyChangesToContent(ctx.filePath, result.changes),
+            })
+          );
 
-        // If changes affect other files, update those too
-        for (const change of result.changes) {
-          if (change.filePath !== ctx.filePath) {
-            dispatch(editorActions.updateFileContent({
-              filePath: change.filePath,
-              content: applyChangesToContent(change.filePath, [change]),
-            }));
+          // If changes affect other files, update those too
+          for (const change of result.changes) {
+            if (change.filePath !== ctx.filePath) {
+              dispatch(
+                editorActions.updateFileContent({
+                  filePath: change.filePath,
+                  content: applyChangesToContent(change.filePath, [change]),
+                })
+              );
+            }
           }
+
+          // Success feedback
+          console.log(`Refactoring '${type}' completed successfully`, result);
+
+          // Refresh available refactorings after the change
+          await analyzeRefactorings(ctx);
+        } else {
+          throw new Error(result.error || 'Refactoring failed');
         }
-
-        // Success feedback
-        console.log(`Refactoring '${type}' completed successfully`, result);
-
-        // Refresh available refactorings after the change
-        await analyzeRefactorings(ctx);
-      } else {
-        throw new Error(result.error || 'Refactoring failed');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Refactoring execution failed');
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Refactoring execution failed');
-    }
-  }, [refactoringService, dispatch, analyzeRefactorings]);
+    },
+    [refactoringService, dispatch, analyzeRefactorings]
+  );
 
   /**
    * Applies changes to file content
@@ -225,7 +225,7 @@ export const RefactoringIntegrationExample: React.FC = () => {
         {
           line: selection.start.lineNumber,
           character: selection.startColumn,
-        },
+        }
       );
     }
   }, [activeFile, selection, updateEditorContext]);
@@ -241,13 +241,7 @@ export const RefactoringIntegrationExample: React.FC = () => {
         <Typography variant="h6">AI Refactoring</Typography>
 
         {/* Current file status */}
-        {activeFile && (
-          <Chip
-            label={activeFile.split('/').pop()}
-            icon={<Code />}
-            size="small"
-          />
-        )}
+        {activeFile && <Chip label={activeFile.split('/').pop()} icon={<Code />} size="small" />}
 
         {/* Available refactorings indicator */}
         <Box sx={{ flex: 1 }} />
@@ -259,11 +253,7 @@ export const RefactoringIntegrationExample: React.FC = () => {
 
         {/* Analysis status */}
         {isAnalyzing && (
-          <Chip
-            label={`Analyzing... ${analysisProgress}%`}
-            color="secondary"
-            size="small"
-          />
+          <Chip label={`Analyzing... ${analysisProgress}%`} color="secondary" size="small" />
         )}
 
         {/* Action buttons */}
@@ -292,11 +282,7 @@ export const RefactoringIntegrationExample: React.FC = () => {
 
       {/* Error display */}
       {error && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          onClose={() => setError(null)}
-        >
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
@@ -316,14 +302,10 @@ export const RefactoringIntegrationExample: React.FC = () => {
                 onClick={() => context && handleRefactoringExecution(type, context, {})}
                 startIcon={<ArrowForward fontSize="small" />}
               >
-                {type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                {type.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
               </Button>
             ))}
-            <Button
-              size="small"
-              variant="text"
-              onClick={() => setShowRefactoringPanel(true)}
-            >
+            <Button size="small" variant="text" onClick={() => setShowRefactoringPanel(true)}>
               View All
             </Button>
           </Box>
@@ -357,7 +339,8 @@ export const RefactoringIntegrationExample: React.FC = () => {
           <strong>AI Context Integration:</strong> RefactoringService through useAIService hook
         </Typography>
         <Typography variant="body2" sx={{ mb: 1 }}>
-          <strong>LSP Integration:</strong> Language server for semantic analysis and symbol resolution
+          <strong>LSP Integration:</strong> Language server for semantic analysis and symbol
+          resolution
         </Typography>
         <Typography variant="body2" sx={{ mb: 1 }}>
           <strong>Monaco Editor Integration:</strong> Selection tracking and content updates

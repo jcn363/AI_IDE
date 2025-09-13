@@ -16,7 +16,9 @@ export const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
   const [reviewResult, setReviewResult] = useState<CodeReviewResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'comments' | 'suggestions' | 'report'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'comments' | 'suggestions' | 'report'>(
+    'overview'
+  );
   const latestRequestIdRef = useRef<number>(0);
 
   const runReview = useCallback(async () => {
@@ -78,8 +80,18 @@ export const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
       <div className="code-review-panel bg-gray-900 text-white p-6 rounded-lg">
         <div className="text-center py-8">
           <div className="text-red-400 mb-4">
-            <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="mx-auto h-12 w-12"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </div>
           <h3 className="text-lg font-semibold mb-2">Review Failed</h3>
@@ -112,12 +124,16 @@ export const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">AI Code Review</h2>
           <div className="flex items-center space-x-2">
-                        {reviewResult.overallAssessment && (
-              <div className={`px-2 py-1 rounded text-sm font-medium ${
-                (reviewResult.overallAssessment.score ?? 0) >= 0.8 ? 'bg-green-800 text-green-100' :
-                (reviewResult.overallAssessment.score ?? 0) >= 0.6 ? 'bg-yellow-800 text-yellow-100' :
-                'bg-red-800 text-red-100'
-              }`}>
+            {reviewResult.overallAssessment && (
+              <div
+                className={`px-2 py-1 rounded text-sm font-medium ${
+                  (reviewResult.overallAssessment.score ?? 0) >= 0.8
+                    ? 'bg-green-800 text-green-100'
+                    : (reviewResult.overallAssessment.score ?? 0) >= 0.6
+                      ? 'bg-yellow-800 text-yellow-100'
+                      : 'bg-red-800 text-red-100'
+                }`}
+              >
                 Score: {((reviewResult.overallAssessment.score ?? 0) * 100).toFixed(0)}%
               </div>
             )}
@@ -138,14 +154,12 @@ export const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
             { key: 'comments', label: 'Comments', icon: '💬' },
             { key: 'suggestions', label: 'Suggestions', icon: '💡' },
             { key: 'report', label: 'Report', icon: '📝' },
-          ].map(tab => (
+          ].map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key as any)}
               className={`px-3 py-2 rounded text-sm flex items-center space-x-2 ${
-                activeTab === tab.key
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 hover:bg-gray-600'
+                activeTab === tab.key ? 'bg-blue-600 text-white' : 'bg-gray-700 hover:bg-gray-600'
               }`}
             >
               <span>{tab.icon}</span>
@@ -176,9 +190,7 @@ const OverviewTab: React.FC<{ reviewResult: CodeReviewResult }> = ({ reviewResul
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-4 bg-gray-800 rounded">
             <h3 className="font-semibold mb-2">Overall Assessment</h3>
-            <div className="text-2xl font-bold mb-1">
-              {overallAssessment.grade}
-            </div>
+            <div className="text-2xl font-bold mb-1">{overallAssessment.grade}</div>
             <p className="text-gray-400 text-sm">{overallAssessment.summary}</p>
           </div>
 
@@ -196,15 +208,21 @@ const OverviewTab: React.FC<{ reviewResult: CodeReviewResult }> = ({ reviewResul
       {summary && (
         <div className="grid grid-cols-3 gap-4">
           <div className="p-4 bg-gray-800 rounded text-center">
-            <div className="text-2xl font-bold text-red-400">{summary.severityBreakdown?.error || 0}</div>
+            <div className="text-2xl font-bold text-red-400">
+              {summary.severityBreakdown?.error || 0}
+            </div>
             <div className="text-sm text-gray-400">Errors</div>
           </div>
           <div className="p-4 bg-gray-800 rounded text-center">
-            <div className="text-2xl font-bold text-yellow-400">{summary.severityBreakdown?.warning || 0}</div>
+            <div className="text-2xl font-bold text-yellow-400">
+              {summary.severityBreakdown?.warning || 0}
+            </div>
             <div className="text-sm text-gray-400">Warnings</div>
           </div>
           <div className="p-4 bg-gray-800 rounded text-center">
-            <div className="text-2xl font-bold text-blue-400">{summary.severityBreakdown?.info || 0}</div>
+            <div className="text-2xl font-bold text-blue-400">
+              {summary.severityBreakdown?.info || 0}
+            </div>
             <div className="text-sm text-gray-400">Info</div>
           </div>
         </div>
@@ -221,23 +239,30 @@ const CommentsTab: React.FC<{ reviewResult: CodeReviewResult }> = ({ reviewResul
     return <div className="text-center py-8 text-gray-400">No review comments found</div>;
   }
 
-  const groupedComments = reviewComments.reduce((groups, comment) => {
-    const severity = comment.severity?.toLowerCase().trim();
-    const normalizedSeverity = severity === 'error' || severity === 'warning' ? severity : 'info';
-    if (!groups[normalizedSeverity]) groups[normalizedSeverity] = [];
-    groups[normalizedSeverity].push(comment);
-    return groups;
-  }, {} as Record<string, ReviewComment[]>);
+  const groupedComments = reviewComments.reduce(
+    (groups, comment) => {
+      const severity = comment.severity?.toLowerCase().trim();
+      const normalizedSeverity = severity === 'error' || severity === 'warning' ? severity : 'info';
+      if (!groups[normalizedSeverity]) groups[normalizedSeverity] = [];
+      groups[normalizedSeverity].push(comment);
+      return groups;
+    },
+    {} as Record<string, ReviewComment[]>
+  );
 
   return (
     <div className="space-y-4">
       {Object.entries(groupedComments).map(([severity, comments]) => (
         <div key={severity}>
-          <h3 className={`text-lg font-semibold mb-2 capitalize ${
-            severity === 'error' ? 'text-red-400' :
-            severity === 'warning' ? 'text-yellow-400' :
-            'text-blue-400'
-          }`}>
+          <h3
+            className={`text-lg font-semibold mb-2 capitalize ${
+              severity === 'error'
+                ? 'text-red-400'
+                : severity === 'warning'
+                  ? 'text-yellow-400'
+                  : 'text-blue-400'
+            }`}
+          >
             {severity} Comments ({comments.length})
           </h3>
           <div className="space-y-2">

@@ -39,7 +39,7 @@ export function createServer(_wasm: wasmWasi.Wasm, onSendMessage?: (message: any
   // Simple message handler for the web worker
   const messageHandler = (event: MessageEvent) => {
     const message = event.data;
-    
+
     // Handle initialization request
     if (message.method === 'initialize') {
       const result: InitializeResult = {
@@ -47,7 +47,7 @@ export function createServer(_wasm: wasmWasi.Wasm, onSendMessage?: (message: any
           textDocumentSync: 1, // Full text document sync
           completionProvider: {
             resolveProvider: true,
-            triggerCharacters: ['.', ':', '<', '"', '/', '*', "'"]
+            triggerCharacters: ['.', ':', '<', '"', '/', '*', "'"],
           },
           hoverProvider: true,
           definitionProvider: true,
@@ -59,27 +59,27 @@ export function createServer(_wasm: wasmWasi.Wasm, onSendMessage?: (message: any
           documentRangeFormattingProvider: true,
           renameProvider: true,
           executeCommandProvider: {
-            commands: []
-          }
+            commands: [],
+          },
         },
         serverInfo: {
           name: 'rust-analyzer',
-          version: '0.1.0'
-        }
+          version: '0.1.0',
+        },
       };
-      
+
       // Send the initialization response
       self.postMessage({
         jsonrpc: '2.0',
         id: message.id,
-        result: result
+        result: result,
       });
-      
+
       if (onSendMessage) {
         onSendMessage({ type: 'initialized' });
       }
     }
-    
+
     // Forward other messages
     if (onSendMessage) {
       onSendMessage(message);
@@ -88,7 +88,7 @@ export function createServer(_wasm: wasmWasi.Wasm, onSendMessage?: (message: any
 
   // Set up the message handler
   self.onmessage = messageHandler;
-  
+
   // Return a simple server interface
   return {
     onMessage: (handler: (message: any) => void) => {
@@ -105,6 +105,6 @@ export function createServer(_wasm: wasmWasi.Wasm, onSendMessage?: (message: any
     // Clean up method
     dispose: () => {
       self.onmessage = null as any;
-    }
+    },
   };
 }

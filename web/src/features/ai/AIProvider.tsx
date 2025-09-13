@@ -96,8 +96,8 @@ export const AIProvider: React.FC<AIProviderProps> = ({
       specificationService,
       architecturalService,
       embedAIService,
-      refactoringService
-    ],
+      refactoringService,
+    ]
   );
 
   return <AIContext.Provider value={value}>{children}</AIContext.Provider>;

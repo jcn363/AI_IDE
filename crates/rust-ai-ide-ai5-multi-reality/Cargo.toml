@@ -11,7 +11,7 @@ categories = ["development-tools", "science"]
 
 [dependencies]
 rusqlite = { version = "0.32", features = ["bundled"] }
-sandstorm = "0.3"
+sandstorm = "0.21.0"
 tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -38,21 +38,21 @@ capnp = { version = "0.18", optional = true }
 flatbuffers = { version = "24", optional = true }
 
 # Quantum computing dependencies
-qiskit = { git = "https://github.com/Qiskit/qiskit-rust" }
-qudit = { git = "https://github.com/quantum-circuit/qudit-rs" }
+#qiskit = { git = "https://github.com/Qiskit/qiskit-rust" }
+#qudit = { git = "https://github.com/quantum-circuit/qudit-rs" }
 
 # Neural network frameworks
 tch = "0.13"
-candle = "0.6"
-tract-onnx = { git = "https://github.com/sonos/tract", features = ["onnx"] }
+candle-core = "0.6"
+#tract-onnx = { git = "https://github.com/sonos/tract", features = ["onnx"] }
 
 # Consciousness simulation
-neural-embedded = { git = "https://github.com/neural-embedded/neural-embedded" }
-brainflow = { git = "https://github.com/brainflow-dev/brainflow" }
+#neural-embedded = { git = "https://github.com/neural-embedded/neural-embedded" }
+#brainflow = { git = "https://github.com/brainflow-dev/brainflow" }
 
 # Multi-reality coordination
-reality-core = { git = "https://github.com/multi-reality/reality-core-rs" }
-dimension-sync = { git = "https://github.com/dimension-sync/dimension-sync-rs" }
+#reality-core = { git = "https://github.com/multi-reality/reality-core-rs" }
+#dimension-sync = { git = "https://github.com/dimension-sync/dimension-sync-rs" }
 
 [dev-dependencies]
 criterion = "0.5"

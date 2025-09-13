@@ -73,7 +73,7 @@ describe('Generated Types Integration', () => {
       ai: {
         default_provider: 'OpenAI',
         endpoints: {
-          'OpenAI': 'https://api.openai.com/v1',
+          OpenAI: 'https://api.openai.com/v1',
         },
       },
       performance: {

@@ -1,19 +1,26 @@
-use std::{collections::HashMap, path::{Path, PathBuf}, sync::Arc};
-use tokio::{sync::{mpsc, RwLock}, task::{spawn_blocking, JoinHandle}};
 use parking_lot::{Mutex, RwLock as ParkingRwLock};
 use regex::Regex;
-use tree_sitter::{Parser, Query};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
+use tokio::{
+    sync::{mpsc, RwLock},
+    task::{spawn_blocking, JoinHandle},
+};
+use tree_sitter::{Parser, Query};
 
+use rust_ai_ide_cache::strategies::AdaptiveCache;
+use rust_ai_ide_common::validation::validate_secure_path;
+use rust_ai_ide_onnx_runtime::{InferenceRequest, ONNXInferenceService};
 use rust_ai_ide_shared_types::{
-    CodeSearchRequest, CodeSearchResult, SearchRanking,
-    CodeResultType, ContextLine, HighlightSpan, MatchType
+    CodeResultType, CodeSearchRequest, CodeSearchResult, ContextLine, HighlightSpan, MatchType,
+    SearchRanking,
 };
 use rust_ai_ide_vector_database::{VectorDatabase, VectorDocument, VectorSearchRequest};
-use rust_ai_ide_onnx_runtime::{ONNXInferenceService, InferenceRequest};
-use rust_ai_ide_common::validation::validate_secure_path;
-use rust_ai_ide_cache::strategies::AdaptiveCache;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SemanticSearchConfig {
@@ -107,7 +114,11 @@ impl SemanticSearchEngine {
     }
 
     /// Index a codebase directory tree
-    pub async fn index_codebase(&self, root_path: &Path, force_reindex: bool) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn index_codebase(
+        &self,
+        root_path: &Path,
+        force_reindex: bool,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         validate_secure_path(root_path.to_str().unwrap())?;
 
         if !root_path.exists() {
@@ -123,9 +134,8 @@ impl SemanticSearchEngine {
         drop(state);
 
         let self_clone = self as *const Self as *mut Self;
-        let indexer_handle = spawn_blocking(move || unsafe {
-            (*self_clone).perform_indexing_blocking(root_path)
-        });
+        let indexer_handle =
+            spawn_blocking(move || unsafe { (*self_clone).perform_indexing_blocking(root_path) });
 
         let mut handle_lock = self.indexer_handle.lock();
         *handle_lock = Some(indexer_handle);
@@ -156,7 +166,9 @@ impl SemanticSearchEngine {
 
                         // Batch index periodically
                         if chunks.len() >= self.config.batch_size {
-                            if let Err(e) = self.create_and_index_chunks_blocking(chunks.drain(..).collect()) {
+                            if let Err(e) =
+                                self.create_and_index_chunks_blocking(chunks.drain(..).collect())
+                            {
                                 eprintln!("Failed to index batch: {}", e);
                             }
                         }
@@ -181,10 +193,12 @@ impl SemanticSearchEngine {
         });
     }
 
-    fn process_file_blocking(&self, file_path: &Path, chunks: &mut Vec<CodeChunk>) -> Result<(), Box<dyn std::error::Error>> {
-        let extension = file_path.extension()
-            .and_then(|s| s.to_str())
-            .unwrap_or("");
+    fn process_file_blocking(
+        &self,
+        file_path: &Path,
+        chunks: &mut Vec<CodeChunk>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let extension = file_path.extension().and_then(|s| s.to_str()).unwrap_or("");
 
         let language = match extension {
             "rs" => "rust",
@@ -197,7 +211,11 @@ impl SemanticSearchEngine {
             _ => return Ok(()), // Skip unsupported files
         };
 
-        if !self.config.supported_languages.contains(&language.to_string()) {
+        if !self
+            .config
+            .supported_languages
+            .contains(&language.to_string())
+        {
             return Ok(());
         }
 
@@ -232,7 +250,12 @@ impl SemanticSearchEngine {
         Ok(())
     }
 
-    fn extract_code_chunks(&self, content: &str, file_path: &Path, language: &str) -> Result<Vec<CodeChunk>, Box<dyn std::error::Error>> {
+    fn extract_code_chunks(
+        &self,
+        content: &str,
+        file_path: &Path,
+        language: &str,
+    ) -> Result<Vec<CodeChunk>, Box<dyn std::error::Error>> {
         let mut chunks = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -252,8 +275,13 @@ impl SemanticSearchEngine {
         Ok(chunks)
     }
 
-    fn extract_structural_chunks(&self, tree: &tree_sitter::Tree, content: &str, file_path: &Path, language: &str)
-                                  -> Result<Vec<CodeChunk>, Box<dyn std::error::Error>> {
+    fn extract_structural_chunks(
+        &self,
+        tree: &tree_sitter::Tree,
+        content: &str,
+        file_path: &Path,
+        language: &str,
+    ) -> Result<Vec<CodeChunk>, Box<dyn std::error::Error>> {
         let mut chunks = Vec::new();
         let mut cursor = tree.root_node().walk();
 
@@ -262,20 +290,39 @@ impl SemanticSearchEngine {
 
             match node.kind() {
                 // Function definitions
-                "function_declaration" | "fn_item" if self.config.supported_languages.contains(&language.to_string()) => {
-                    if let Ok(chunk) = self.extract_function_chunk(node, content, file_path, language) {
+                "function_declaration" | "fn_item"
+                    if self
+                        .config
+                        .supported_languages
+                        .contains(&language.to_string()) =>
+                {
+                    if let Ok(chunk) =
+                        self.extract_function_chunk(node, content, file_path, language)
+                    {
                         chunks.push(chunk);
                     }
                 }
                 // Class/struct definitions
                 "class_declaration" | "struct_item" | "impl_item" => {
-                    if let Ok(chunk) = self.extract_structural_chunk(node, content, file_path, language, CodeResultType::Class) {
+                    if let Ok(chunk) = self.extract_structural_chunk(
+                        node,
+                        content,
+                        file_path,
+                        language,
+                        CodeResultType::Class,
+                    ) {
                         chunks.push(chunk);
                     }
                 }
                 // Import statements
                 "import_statement" | "use_declaration" => {
-                    if let Ok(chunk) = self.extract_structural_chunk(node, content, file_path, language, CodeResultType::Import) {
+                    if let Ok(chunk) = self.extract_structural_chunk(
+                        node,
+                        content,
+                        file_path,
+                        language,
+                        CodeResultType::Import,
+                    ) {
                         chunks.push(chunk);
                     }
                 }
@@ -302,8 +349,13 @@ impl SemanticSearchEngine {
         Ok(chunks)
     }
 
-    fn extract_function_chunk(&self, node: tree_sitter::Node, content: &str, file_path: &Path, language: &str)
-                              -> Result<CodeChunk, Box<dyn std::error::Error>> {
+    fn extract_function_chunk(
+        &self,
+        node: tree_sitter::Node,
+        content: &str,
+        file_path: &Path,
+        language: &str,
+    ) -> Result<CodeChunk, Box<dyn std::error::Error>> {
         let start_byte = node.start_byte();
         let end_byte = node.end_byte();
         let function_content = &content[start_byte..end_byte];
@@ -323,8 +375,14 @@ impl SemanticSearchEngine {
         })
     }
 
-    fn extract_structural_chunk(&self, node: tree_sitter::Node, content: &str, file_path: &Path, language: &str, chunk_type: CodeResultType)
-                                 -> Result<CodeChunk, Box<dyn std::error::Error>> {
+    fn extract_structural_chunk(
+        &self,
+        node: tree_sitter::Node,
+        content: &str,
+        file_path: &Path,
+        language: &str,
+        chunk_type: CodeResultType,
+    ) -> Result<CodeChunk, Box<dyn std::error::Error>> {
         let start_byte = node.start_byte();
         let end_byte = node.end_byte();
         let chunk_content = &content[start_byte..end_byte];
@@ -343,7 +401,12 @@ impl SemanticSearchEngine {
         })
     }
 
-    fn extract_line_based_chunks(&self, lines: &[&str], file_path: &Path, language: &str) -> Vec<CodeChunk> {
+    fn extract_line_based_chunks(
+        &self,
+        lines: &[&str],
+        file_path: &Path,
+        language: &str,
+    ) -> Vec<CodeChunk> {
         let mut chunks = Vec::new();
         let mut current_chunk = String::new();
         let mut start_line = 0;
@@ -386,40 +449,62 @@ impl SemanticSearchEngine {
         chunks
     }
 
-    fn create_and_index_chunks_blocking(&self, chunks: Vec<CodeChunk>) -> Result<(), Box<dyn std::error::Error>> {
+    fn create_and_index_chunks_blocking(
+        &self,
+        chunks: Vec<CodeChunk>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         if chunks.is_empty() {
             return Ok(());
         }
 
         // Generate embeddings for chunks using ONNX runtime
-        let embeddings = self.generate_embeddings_blocking(chunks.iter().map(|c| c.content.as_str()).collect())?;
+        let embeddings =
+            self.generate_embeddings_blocking(chunks.iter().map(|c| c.content.as_str()).collect())?;
 
         // Convert to vector documents
-        let vector_docs = chunks.into_iter().zip(embeddings.into_iter()).map(|(chunk, embedding)| {
-            VectorDocument {
+        let vector_docs = chunks
+            .into_iter()
+            .zip(embeddings.into_iter())
+            .map(|(chunk, embedding)| VectorDocument {
                 id: format!("{}_{}", chunk.file_path.display(), chunk.line_start),
                 vector: embedding,
                 content: Some(chunk.content),
                 metadata: HashMap::from([
-                    ("file_path".to_string(), serde_json::Value::String(chunk.file_path.to_string_lossy().to_string())),
-                    ("line_start".to_string(), serde_json::Value::Number(chunk.line_start.into())),
-                    ("line_end".to_string(), serde_json::Value::Number(chunk.line_end.into())),
-                    ("language".to_string(), serde_json::Value::String(chunk.language.clone())),
-                    ("chunk_type".to_string(), serde_json::Value::String(format!("{:?}", chunk.chunk_type))),
+                    (
+                        "file_path".to_string(),
+                        serde_json::Value::String(chunk.file_path.to_string_lossy().to_string()),
+                    ),
+                    (
+                        "line_start".to_string(),
+                        serde_json::Value::Number(chunk.line_start.into()),
+                    ),
+                    (
+                        "line_end".to_string(),
+                        serde_json::Value::Number(chunk.line_end.into()),
+                    ),
+                    (
+                        "language".to_string(),
+                        serde_json::Value::String(chunk.language.clone()),
+                    ),
+                    (
+                        "chunk_type".to_string(),
+                        serde_json::Value::String(format!("{:?}", chunk.chunk_type)),
+                    ),
                 ]),
-            }
-        }).collect::<Vec<_>>();
+            })
+            .collect::<Vec<_>>();
 
         // Add to vector database in blocking context
         let rt = tokio::runtime::Handle::current();
-        rt.block_on(async {
-            self.vector_db.add_batch(vector_docs).await
-        })?;
+        rt.block_on(async { self.vector_db.add_batch(vector_docs).await })?;
 
         Ok(())
     }
 
-    fn generate_embeddings_blocking(&self, texts: Vec<&str>) -> Result<Vec<Vec<f32>>, Box<dyn std::error::Error>> {
+    fn generate_embeddings_blocking(
+        &self,
+        texts: Vec<&str>,
+    ) -> Result<Vec<Vec<f32>>, Box<dyn std::error::Error>> {
         if texts.is_empty() {
             return Ok(Vec::new());
         }
@@ -441,7 +526,10 @@ impl SemanticSearchEngine {
     }
 
     /// Perform semantic code search
-    pub async fn search(&self, request: CodeSearchRequest) -> Result<Vec<CodeSearchResult>, Box<dyn std::error::Error>> {
+    pub async fn search(
+        &self,
+        request: CodeSearchRequest,
+    ) -> Result<Vec<CodeSearchResult>, Box<dyn std::error::Error>> {
         // Generate embedding for the query using ONNX
         let query_embedding = self.generate_query_embedding(&request.query).await?;
         let normalized_embedding = Self::normalize_vector(&query_embedding)?;
@@ -461,17 +549,23 @@ impl SemanticSearchEngine {
         let mut results = Vec::new();
 
         for result in vector_results {
-            let file_path = result.metadata.get("file_path")
+            let file_path = result
+                .metadata
+                .get("file_path")
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
 
-            let language = result.metadata.get("language")
+            let language = result
+                .metadata
+                .get("language")
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
 
-            let line_number = result.metadata.get("line_start")
+            let line_number = result
+                .metadata
+                .get("line_start")
                 .and_then(|v| v.as_u64())
                 .unwrap_or(0) as u32;
 
@@ -483,8 +577,8 @@ impl SemanticSearchEngine {
                 language,
                 score: result.score,
                 result_type: CodeResultType::Other, // Would be determined from metadata
-                context: vec![], // Would be populated from surrounding context
-                highlights: vec![], // Would be populated with highlight spans
+                context: vec![],                    // Would be populated from surrounding context
+                highlights: vec![],                 // Would be populated with highlight spans
             });
         }
 
@@ -494,7 +588,10 @@ impl SemanticSearchEngine {
         Ok(results)
     }
 
-    async fn generate_query_embedding(&self, query: &str) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
+    async fn generate_query_embedding(
+        &self,
+        query: &str,
+    ) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
         // In a real implementation, this would use the ONNX service to encode the query
         let mock_embedding = (0..self.config.vector_dimension)
             .map(|i| query.chars().nth(i % query.len()).unwrap_or(' ') as u32 as f32 / 255.0)
@@ -503,7 +600,10 @@ impl SemanticSearchEngine {
         Ok(mock_embedding)
     }
 
-    fn build_langauge_filters(&self, languages: &[String]) -> Option<Vec<rust_ai_ide_vector_database::SearchFilter>> {
+    fn build_langauge_filters(
+        &self,
+        languages: &[String],
+    ) -> Option<Vec<rust_ai_ide_vector_database::SearchFilter>> {
         if languages.is_empty() {
             return None;
         }
@@ -519,22 +619,32 @@ impl SemanticSearchEngine {
         for result in results.iter_mut() {
             // Apply ranking weights
             let semantic_score = result.score * ranking.semantic_weight;
-            let exact_match_score = if result.code_snippet.contains(&result.code_snippet.chars().take(5).collect::<String>()) {
+            let exact_match_score = if result
+                .code_snippet
+                .contains(&result.code_snippet.chars().take(5).collect::<String>())
+            {
                 ranking.exact_match_weight
             } else {
                 0.0
             };
-            let distance_score = (1.0 / (result.line_number as f32 + 1.0)) * ranking.proximity_weight;
+            let distance_score =
+                (1.0 / (result.line_number as f32 + 1.0)) * ranking.proximity_weight;
             let recency_score = ranking.recency_factor; // Simplified
 
             result.score = semantic_score + exact_match_score + distance_score + recency_score;
         }
 
-        results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
     }
 
     /// Get indexing status
-    pub async fn get_indexing_status(&self) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    pub async fn get_indexing_status(
+        &self,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let state = self.indexing_state.read().await;
         Ok(serde_json::json!({
             "is_indexing": state.is_indexing,
@@ -608,9 +718,9 @@ impl SemanticSearchEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
-    use rust_ai_ide_vector_database::VectorIndexConfig;
     use rust_ai_ide_onnx_runtime::ONNXConfig;
+    use rust_ai_ide_vector_database::VectorIndexConfig;
+    use std::sync::Arc;
 
     #[tokio::test]
     async fn test_semantic_search_initialization() {
@@ -621,7 +731,9 @@ mod tests {
         let vector_db = Arc::new(VectorDatabase::new(vector_config).await.unwrap());
         let onnx_service = Arc::new(ONNXInferenceService::new(onnx_config));
 
-        let search_engine = SemanticSearchEngine::new(config, vector_db, onnx_service).await.unwrap();
+        let search_engine = SemanticSearchEngine::new(config, vector_db, onnx_service)
+            .await
+            .unwrap();
         assert!(!search_engine.config.supported_languages.is_empty());
     }
 
@@ -634,7 +746,9 @@ mod tests {
         let vector_db = Arc::new(VectorDatabase::new(vector_config).await.unwrap());
         let onnx_service = Arc::new(ONNXInferenceService::new(onnx_config));
 
-        let search_engine = SemanticSearchEngine::new(config, vector_db, onnx_service).await.unwrap();
+        let search_engine = SemanticSearchEngine::new(config, vector_db, onnx_service)
+            .await
+            .unwrap();
 
         let rust_code = r#"
         fn main() {
@@ -643,7 +757,11 @@ mod tests {
         "#;
 
         let file_path = PathBuf::from("test.rs");
-        let chunks = search_engine.extract_line_based_chunks(&[rust_code.lines().next().unwrap()], &file_path, "rust");
+        let chunks = search_engine.extract_line_based_chunks(
+            &[rust_code.lines().next().unwrap()],
+            &file_path,
+            "rust",
+        );
         assert!(!chunks.is_empty());
     }
 
@@ -656,7 +774,9 @@ mod tests {
         let vector_db = Arc::new(VectorDatabase::new(vector_config).await.unwrap());
         let onnx_service = Arc::new(ONNXInferenceService::new(onnx_config));
 
-        let search_engine = SemanticSearchEngine::new(config, vector_db, onnx_service).await.unwrap();
+        let search_engine = SemanticSearchEngine::new(config, vector_db, onnx_service)
+            .await
+            .unwrap();
 
         let request = CodeSearchRequest {
             query: "function".to_string(),

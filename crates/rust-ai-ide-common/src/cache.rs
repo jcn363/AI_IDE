@@ -16,13 +16,13 @@
 //! - Type-safe cache adapters for common use cases
 
 use rust_ai_ide_cache::*;
-use rust_ai_ide_types::*;
 use rust_ai_ide_errors::*;
+use rust_ai_ide_types::*;
 use std::sync::Arc;
 use std::time::Duration;
 
 /// Re-export the core cache types for easy access
-pub use rust_ai_ide_cache::{Cache, CacheEntry, CacheConfig, CacheStats, EvictionPolicy};
+pub use rust_ai_ide_cache::{Cache, CacheConfig, CacheEntry, CacheStats, EvictionPolicy};
 
 /// Re-export specific implementations
 pub use rust_ai_ide_cache::cache_impls::*;
@@ -43,7 +43,7 @@ pub mod presets {
             default_ttl: Some(Duration::from_secs(300)), // 5 minutes
             eviction_policy: EvictionPolicy::Lru,
             enable_metrics: true,
-            max_memory_mb: Some(50), // 50MB limit
+            max_memory_mb: Some(50),            // 50MB limit
             compression_threshold_kb: Some(10), // 10KB threshold
             background_cleanup_interval_seconds: 300,
         }
@@ -55,7 +55,7 @@ pub mod presets {
             default_ttl: Some(Duration::from_secs(86400)), // 24 hours
             eviction_policy: EvictionPolicy::Lfu,
             enable_metrics: true,
-            max_memory_mb: Some(30), // 30MB limit
+            max_memory_mb: Some(30),           // 30MB limit
             compression_threshold_kb: Some(5), // 5KB threshold
             background_cleanup_interval_seconds: 600,
         }
@@ -161,7 +161,10 @@ impl UnifiedCacheManager {
     }
 
     /// Get diagnostic result from cache
-    pub async fn get_diagnostic(&self, request: &CompilerDiagnosticsRequest) -> IDEResult<Option<CompilerDiagnosticsResult>> {
+    pub async fn get_diagnostic(
+        &self,
+        request: &CompilerDiagnosticsRequest,
+    ) -> IDEResult<Option<CompilerDiagnosticsResult>> {
         let key = DiagnosticCacheKey::new(request.workspace_path.clone(), request);
         let result = self.diagnostic_cache.get(&key).await;
 
@@ -178,14 +181,21 @@ impl UnifiedCacheManager {
     }
 
     /// Set diagnostic result in cache
-    pub async fn set_diagnostic(&self, request: &CompilerDiagnosticsRequest, result: CompilerDiagnosticsResult) -> IDEResult<()> {
+    pub async fn set_diagnostic(
+        &self,
+        request: &CompilerDiagnosticsRequest,
+        result: CompilerDiagnosticsResult,
+    ) -> IDEResult<()> {
         let key = DiagnosticCacheKey::new(request.workspace_path.clone(), request);
         let ttl = request.cache_ttl_seconds.map(Duration::from_secs);
         self.diagnostic_cache.insert(key, result, ttl).await
     }
 
     /// Get error explanation from cache
-    pub async fn get_explanation(&self, error_code: &str) -> IDEResult<Option<ErrorCodeExplanation>> {
+    pub async fn get_explanation(
+        &self,
+        error_code: &str,
+    ) -> IDEResult<Option<ErrorCodeExplanation>> {
         let result = self.explanation_cache.get(error_code).await?;
 
         // Update global stats
@@ -201,9 +211,16 @@ impl UnifiedCacheManager {
     }
 
     /// Set error explanation in cache
-    pub async fn set_explanation(&self, error_code: String, explanation: ErrorCodeExplanation, ttl_seconds: Option<u64>) -> IDEResult<()> {
+    pub async fn set_explanation(
+        &self,
+        error_code: String,
+        explanation: ErrorCodeExplanation,
+        ttl_seconds: Option<u64>,
+    ) -> IDEResult<()> {
         let ttl = ttl_seconds.map(Duration::from_secs);
-        self.explanation_cache.insert(error_code, explanation, ttl).await
+        self.explanation_cache
+            .insert(error_code, explanation, ttl)
+            .await
     }
 
     /// Get performance data from cache
@@ -223,7 +240,12 @@ impl UnifiedCacheManager {
     }
 
     /// Set performance data in cache
-    pub async fn set_performance(&self, key: String, data: serde_json::Value, ttl_seconds: Option<u64>) -> IDEResult<()> {
+    pub async fn set_performance(
+        &self,
+        key: String,
+        data: serde_json::Value,
+        ttl_seconds: Option<u64>,
+    ) -> IDEResult<()> {
         let ttl = ttl_seconds.map(Duration::from_secs);
         self.performance_cache.insert(key, data, ttl).await
     }
@@ -240,9 +262,15 @@ impl UnifiedCacheManager {
         stats.performance = self.performance_cache.stats().await?;
 
         // Calculate totals
-        stats.total_hits = stats.diagnostic.total_hits + stats.explanation.total_hits + stats.performance.total_hits;
-        stats.total_misses = stats.diagnostic.total_misses + stats.explanation.total_misses + stats.performance.total_misses;
-        stats.total_evictions = stats.diagnostic.total_evictions + stats.explanation.total_evictions + stats.performance.total_evictions;
+        stats.total_hits = stats.diagnostic.total_hits
+            + stats.explanation.total_hits
+            + stats.performance.total_hits;
+        stats.total_misses = stats.diagnostic.total_misses
+            + stats.explanation.total_misses
+            + stats.performance.total_misses;
+        stats.total_evictions = stats.diagnostic.total_evictions
+            + stats.explanation.total_evictions
+            + stats.performance.total_evictions;
 
         Ok(stats.clone())
     }
@@ -301,12 +329,19 @@ pub mod legacy {
             Self { manager }
         }
 
-        pub async fn get(&self, request: &CompilerDiagnosticsRequest) -> IDEResult<Option<CompilerDiagnosticsResult>> {
+        pub async fn get(
+            &self,
+            request: &CompilerDiagnosticsRequest,
+        ) -> IDEResult<Option<CompilerDiagnosticsResult>> {
             let key = DiagnosticCacheKey::new(request.workspace_path.clone(), request);
             self.manager.diagnostic_cache.get(&key).await
         }
 
-        pub async fn insert(&self, request: &CompilerDiagnosticsRequest, result: CompilerDiagnosticsResult) -> IDEResult<()> {
+        pub async fn insert(
+            &self,
+            request: &CompilerDiagnosticsRequest,
+            result: CompilerDiagnosticsResult,
+        ) -> IDEResult<()> {
             self.manager.set_diagnostic(request, result).await
         }
 
@@ -342,8 +377,15 @@ pub mod legacy {
             self.manager.get_explanation(error_code).await
         }
 
-        pub async fn insert(&self, error_code: String, explanation: ErrorCodeExplanation, ttl_seconds: u64) -> IDEResult<()> {
-            self.manager.set_explanation(error_code, explanation, Some(ttl_seconds)).await
+        pub async fn insert(
+            &self,
+            error_code: String,
+            explanation: ErrorCodeExplanation,
+            ttl_seconds: u64,
+        ) -> IDEResult<()> {
+            self.manager
+                .set_explanation(error_code, explanation, Some(ttl_seconds))
+                .await
         }
 
         pub async fn clear(&self) -> IDEResult<()> {
@@ -427,7 +469,10 @@ mod tests {
             },
         };
 
-        manager.set_diagnostic(&request, result.clone()).await.unwrap();
+        manager
+            .set_diagnostic(&request, result.clone())
+            .await
+            .unwrap();
         let cached = manager.get_diagnostic(&request).await.unwrap();
         assert!(cached.is_some());
 
@@ -444,13 +489,19 @@ mod tests {
             rustc_code: "".to_string(),
         };
 
-        manager.set_explanation("E001".to_string(), explanation.clone(), Some(3600)).await.unwrap();
+        manager
+            .set_explanation("E001".to_string(), explanation.clone(), Some(3600))
+            .await
+            .unwrap();
         let cached_exp = manager.get_explanation("E001").await.unwrap();
         assert!(cached_exp.is_some());
 
         // Test performance cache
         let perf_data = serde_json::json!({"cpu": 85.2, "memory": 1024});
-        manager.set_performance("test:metrics".to_string(), perf_data.clone(), Some(60)).await.unwrap();
+        manager
+            .set_performance("test:metrics".to_string(), perf_data.clone(), Some(60))
+            .await
+            .unwrap();
         let cached_perf = manager.get_performance("test:metrics").await.unwrap();
         assert!(cached_perf.is_some());
     }

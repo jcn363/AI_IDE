@@ -23,11 +23,11 @@ export function useTabManager(initialTab = 0) {
   }, []);
 
   const nextTab = useCallback((totalTabs: number) => {
-    setActiveTab(prev => Math.min(prev + 1, totalTabs - 1));
+    setActiveTab((prev) => Math.min(prev + 1, totalTabs - 1));
   }, []);
 
   const prevTab = useCallback(() => {
-    setActiveTab(prev => Math.max(prev - 1, 0));
+    setActiveTab((prev) => Math.max(prev - 1, 0));
   }, []);
 
   const resetTab = useCallback(() => {
@@ -41,7 +41,7 @@ export function useTabManager(initialTab = 0) {
     goToTab,
     nextTab,
     prevTab,
-    resetTab
+    resetTab,
   };
 }
 
@@ -61,25 +61,28 @@ export function useTabManagerWithData<T = any>(initialTab = 0) {
   }, []);
 
   const updateTabData = useCallback((tabKey: string, data: T) => {
-    setTabData(prev => ({
+    setTabData((prev) => ({
       ...prev,
-      [tabKey]: data
+      [tabKey]: data,
     }));
   }, []);
 
-  const getTabData = useCallback((tabKey: string): T | undefined => {
-    return tabData[tabKey];
-  }, [tabData]);
+  const getTabData = useCallback(
+    (tabKey: string): T | undefined => {
+      return tabData[tabKey];
+    },
+    [tabData]
+  );
 
   const modifyTabData = useCallback((tabKey: string, updater: (prevData: T | undefined) => T) => {
-    setTabData(prev => ({
+    setTabData((prev) => ({
       ...prev,
-      [tabKey]: updater(prev[tabKey])
+      [tabKey]: updater(prev[tabKey]),
     }));
   }, []);
 
   const clearTabData = useCallback((tabKey: string) => {
-    setTabData(prev => {
+    setTabData((prev) => {
       const newData = { ...prev };
       delete newData[tabKey];
       return newData;
@@ -95,7 +98,7 @@ export function useTabManagerWithData<T = any>(initialTab = 0) {
     getTabData,
     modifyTabData,
     clearTabData,
-    tabData
+    tabData,
   };
 }
 
@@ -106,16 +109,19 @@ export function useTabNavigation(initialTab = 0, historySize = 10) {
   const [activeTab, setActiveTab] = useState<number>(initialTab);
   const [tabHistory, setTabHistory] = useState<number[]>([initialTab]);
 
-  const changeTab = useCallback((event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-    setTabHistory(prev => {
-      const newHistory = [...prev, newValue];
-      if (newHistory.length > historySize) {
-        newHistory.shift();
-      }
-      return newHistory;
-    });
-  }, [historySize]);
+  const changeTab = useCallback(
+    (event: React.SyntheticEvent, newValue: number) => {
+      setActiveTab(newValue);
+      setTabHistory((prev) => {
+        const newHistory = [...prev, newValue];
+        if (newHistory.length > historySize) {
+          newHistory.shift();
+        }
+        return newHistory;
+      });
+    },
+    [historySize]
+  );
 
   const goBack = useCallback(() => {
     if (tabHistory.length > 1) {
@@ -137,6 +143,6 @@ export function useTabNavigation(initialTab = 0, historySize = 10) {
     changeTab,
     goBack,
     canGoBack,
-    tabHistory
+    tabHistory,
   };
 }

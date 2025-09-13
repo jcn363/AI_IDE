@@ -37,14 +37,14 @@
 //! ```
 
 use async_trait::async_trait;
+use base64::{engine::general_purpose, Engine as _};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use chrono::{DateTime, Utc};
-use base64::{Engine as _, engine::general_purpose};
 
-use crate::{SecurityResult, SecurityError, ComponentStatus};
+use crate::{ComponentStatus, SecurityError, SecurityResult};
 
 /// TLS configuration for secure connections
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -278,7 +278,10 @@ impl NetworkSecurity {
     }
 
     /// Validate connection security
-    pub async fn validate_connection(&self, context: &ConnectionContext) -> SecurityResult<ConnectionValidationResult> {
+    pub async fn validate_connection(
+        &self,
+        context: &ConnectionContext,
+    ) -> SecurityResult<ConnectionValidationResult> {
         let mut result = ConnectionValidationResult {
             is_valid: true,
             warnings: Vec::new(),
@@ -294,7 +297,9 @@ impl NetworkSecurity {
         // TLS validation
         if let Some(tls_version) = &context.tls_version {
             if !self.validate_tls_version(tls_version) {
-                result.blocking_reasons.push(format!("Unsupported TLS version: {}", tls_version));
+                result
+                    .blocking_reasons
+                    .push(format!("Unsupported TLS version: {}", tls_version));
                 result.is_valid = false;
             } else {
                 stats.tls_connections += 1;
@@ -313,19 +318,25 @@ impl NetworkSecurity {
                         result.is_valid = false;
                     }
                     Err(e) => {
-                        result.blocking_reasons.push(format!("Certificate validation error: {}", e));
+                        result
+                            .blocking_reasons
+                            .push(format!("Certificate validation error: {}", e));
                         result.is_valid = false;
                     }
                 }
             } else {
-                result.blocking_reasons.push("Client certificate required but not provided".to_string());
+                result
+                    .blocking_reasons
+                    .push("Client certificate required but not provided".to_string());
                 result.is_valid = false;
             }
         }
 
         // Network policy validation
         if let Err(policy_error) = self.validate_network_policy(context).await {
-            result.blocking_reasons.push(format!("Network policy violation: {:?}", policy_error));
+            result
+                .blocking_reasons
+                .push(format!("Network policy violation: {:?}", policy_error));
             result.is_valid = false;
         }
 
@@ -333,7 +344,9 @@ impl NetworkSecurity {
         if let Ok(ddos_result) = self.check_ddos_protection(context).await {
             if ddos_result.is_blocked {
                 stats.ddos_attacks_detected += 1;
-                result.blocking_reasons.push("DDoS protection: Connection blocked".to_string());
+                result
+                    .blocking_reasons
+                    .push("DDoS protection: Connection blocked".to_string());
                 result.is_valid = false;
             }
         }
@@ -341,7 +354,10 @@ impl NetworkSecurity {
         // Traffic analysis
         if let Ok(analysis) = self.analyze_traffic(context).await {
             if analysis.risk_score > 0.7 {
-                result.warnings.push(format!("High risk traffic detected: {:?}", analysis.traffic_pattern));
+                result.warnings.push(format!(
+                    "High risk traffic detected: {:?}",
+                    analysis.traffic_pattern
+                ));
                 result.risk_score = analysis.risk_score;
             }
         }
@@ -355,13 +371,34 @@ impl NetworkSecurity {
 
     /// Apply security headers to HTTP response
     pub async fn apply_security_headers(&self, headers: &mut HashMap<String, String>) {
-        headers.insert("Content-Security-Policy".to_string(), self.security_headers.content_security_policy.clone());
-        headers.insert("X-Frame-Options".to_string(), self.security_headers.x_frame_options.clone());
-        headers.insert("X-Content-Type-Options".to_string(), self.security_headers.x_content_type_options.clone());
-        headers.insert("X-XSS-Protection".to_string(), self.security_headers.x_xss_protection.clone());
-        headers.insert("Strict-Transport-Security".to_string(), self.security_headers.strict_transport_security.clone());
-        headers.insert("Referrer-Policy".to_string(), self.security_headers.referrer_policy.clone());
-        headers.insert("Permissions-Policy".to_string(), self.security_headers.permissions_policy.clone());
+        headers.insert(
+            "Content-Security-Policy".to_string(),
+            self.security_headers.content_security_policy.clone(),
+        );
+        headers.insert(
+            "X-Frame-Options".to_string(),
+            self.security_headers.x_frame_options.clone(),
+        );
+        headers.insert(
+            "X-Content-Type-Options".to_string(),
+            self.security_headers.x_content_type_options.clone(),
+        );
+        headers.insert(
+            "X-XSS-Protection".to_string(),
+            self.security_headers.x_xss_protection.clone(),
+        );
+        headers.insert(
+            "Strict-Transport-Security".to_string(),
+            self.security_headers.strict_transport_security.clone(),
+        );
+        headers.insert(
+            "Referrer-Policy".to_string(),
+            self.security_headers.referrer_policy.clone(),
+        );
+        headers.insert(
+            "Permissions-Policy".to_string(),
+            self.security_headers.permissions_policy.clone(),
+        );
 
         let mut stats = self.stats.write().await;
         stats.security_headers_applied += 1;
@@ -377,7 +414,8 @@ impl NetworkSecurity {
     /// Check rate limiting
     pub async fn check_rate_limit(&self, client_ip: &str) -> SecurityResult<bool> {
         // Simple in-memory rate limiting (in production, use Redis)
-        static mut LAST_REQUESTS: std::sync::Mutex<Option<HashMap<String, Vec<DateTime<Utc>>>>> = std::sync::Mutex::new(None);
+        static mut LAST_REQUESTS: std::sync::Mutex<Option<HashMap<String, Vec<DateTime<Utc>>>>> =
+            std::sync::Mutex::new(None);
 
         unsafe {
             let mut requests = LAST_REQUESTS.lock().unwrap();
@@ -386,13 +424,16 @@ impl NetworkSecurity {
             }
 
             let requests_map = requests.as_mut().unwrap();
-            let client_requests = requests_map.entry(client_ip.to_string()).or_insert_with(Vec::new);
+            let client_requests = requests_map
+                .entry(client_ip.to_string())
+                .or_insert_with(Vec::new);
             let now = Utc::now();
 
             // Remove requests older than 1 minute
             client_requests.retain(|time| now.signed_duration_since(*time).num_seconds() < 60);
 
-            if client_requests.len() >= 100 { // 100 requests per minute
+            if client_requests.len() >= 100 {
+                // 100 requests per minute
                 let mut stats = self.stats.write().await;
                 stats.rate_limited_requests += 1;
                 return Ok(false);
@@ -435,7 +476,10 @@ impl NetworkSecurity {
         }
     }
 
-    async fn validate_certificate(&self, certificate_pem: &str) -> SecurityResult<CertificateValidation> {
+    async fn validate_certificate(
+        &self,
+        certificate_pem: &str,
+    ) -> SecurityResult<CertificateValidation> {
         // Check certificate cache first
         let mut cache = self.certificate_cache.write().await;
         if let Some(validation) = cache.get(certificate_pem) {
@@ -456,21 +500,29 @@ impl NetworkSecurity {
 
         // Basic validation checks
         if certificate_pem.is_empty() {
-            validation.validation_errors.push("Empty certificate".to_string());
+            validation
+                .validation_errors
+                .push("Empty certificate".to_string());
         } else {
             validation.is_valid = true;
 
             // Calculate fingerprint
-            use sha2::{Sha256, Digest};
+            use sha2::{Digest, Sha256};
             let mut hasher = Sha256::new();
             hasher.update(certificate_pem.as_bytes());
             validation.fingerprint_sha256 = format!("{:x}", hasher.finalize());
 
             // Check pinning if enabled
             if self.tls_config.certificate_pinning {
-                if !self.tls_config.pinned_fingerprints.contains(&validation.fingerprint_sha256) {
+                if !self
+                    .tls_config
+                    .pinned_fingerprints
+                    .contains(&validation.fingerprint_sha256)
+                {
                     validation.is_valid = false;
-                    validation.validation_errors.push("Certificate not pinned".to_string());
+                    validation
+                        .validation_errors
+                        .push("Certificate not pinned".to_string());
                 }
             }
         }
@@ -493,14 +545,20 @@ impl NetworkSecurity {
             // Check port
             if !policy.allowed_ports.contains(&context.server_port) {
                 return Err(SecurityError::SecurityViolation {
-                    violation: format!("Port {} not allowed by policy '{}'", context.server_port, policy.name)
+                    violation: format!(
+                        "Port {} not allowed by policy '{}'",
+                        context.server_port, policy.name
+                    ),
                 });
             }
 
             // Check protocol
             if !policy.allowed_protocols.contains(&context.protocol) {
                 return Err(SecurityError::SecurityViolation {
-                    violation: format!("Protocol {} not allowed by policy '{}'", context.protocol, policy.name)
+                    violation: format!(
+                        "Protocol {} not allowed by policy '{}'",
+                        context.protocol, policy.name
+                    ),
                 });
             }
         }
@@ -508,7 +566,10 @@ impl NetworkSecurity {
         Ok(())
     }
 
-    async fn check_ddos_protection(&self, context: &ConnectionContext) -> SecurityResult<DDoSResult> {
+    async fn check_ddos_protection(
+        &self,
+        context: &ConnectionContext,
+    ) -> SecurityResult<DDoSResult> {
         let ddos = self.ddos_protection.read().await;
         let mut result = DDoSResult {
             is_blocked: false,
@@ -527,20 +588,27 @@ impl NetworkSecurity {
 
         // Count active connections from this IP
         let connections = self.active_connections.read().await;
-        let connection_count = connections.values()
+        let connection_count = connections
+            .values()
             .filter(|conn| conn.client_ip == context.client_ip)
             .count();
 
         if connection_count as u32 >= ddos.max_connections_per_ip {
             result.is_blocked = true;
-            result.reason = Some(format!("Too many connections from IP: {} connections", connection_count));
+            result.reason = Some(format!(
+                "Too many connections from IP: {} connections",
+                connection_count
+            ));
             result.risk_level = "high".to_string();
         }
 
         Ok(result)
     }
 
-    async fn analyze_traffic(&self, context: &ConnectionContext) -> SecurityResult<TrafficAnalysis> {
+    async fn analyze_traffic(
+        &self,
+        context: &ConnectionContext,
+    ) -> SecurityResult<TrafficAnalysis> {
         let analysis = TrafficAnalysis {
             source_ip: context.client_ip.clone(),
             destination_ip: context.server_ip.clone(),
@@ -663,7 +731,10 @@ mod tests {
         let network_security = NetworkSecurity::new(config).await.unwrap();
 
         // This test would require multiple requests - simplified for demo
-        let allowed = network_security.check_rate_limit("192.168.1.1").await.unwrap();
+        let allowed = network_security
+            .check_rate_limit("192.168.1.1")
+            .await
+            .unwrap();
         assert!(allowed);
     }
 
@@ -699,7 +770,10 @@ mod tests {
             timestamp: Utc::now(),
         };
 
-        let result = network_security.validate_connection(&context).await.unwrap();
+        let result = network_security
+            .validate_connection(&context)
+            .await
+            .unwrap();
         assert!(result.is_valid); // Should pass basic validation
         assert!(result.risk_score < 0.1); // Low risk for valid TLS
     }
@@ -715,7 +789,10 @@ mod tests {
 
         // Test with dummy certificate
         let dummy_cert = "-----BEGIN CERTIFICATE-----\nMOCK_CERT\n-----END CERTIFICATE-----";
-        let result = network_security.validate_certificate(dummy_cert).await.unwrap();
+        let result = network_security
+            .validate_certificate(dummy_cert)
+            .await
+            .unwrap();
         assert!(!result.is_valid); // Should fail real validation
     }
 }

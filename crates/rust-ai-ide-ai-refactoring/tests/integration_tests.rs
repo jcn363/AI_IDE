@@ -5,8 +5,8 @@ use std::fs;
 use std::path::Path;
 use tempfile::tempdir;
 
-use rust_ai_ide_ai_refactoring::types::*;
 use rust_ai_ide_ai_refactoring::operations::*;
+use rust_ai_ide_ai_refactoring::types::*;
 use rust_ai_ide_ai_refactoring::RefactoringOperationFactory;
 
 #[cfg(test)]
@@ -176,7 +176,9 @@ impl DataProcessor {
                 assert!(modified_content.contains("fn get_count"));
                 assert!(modified_content.contains("fn sort_data"));
 
-                println!("✓ Extract interface operation successfully created trait and implementation");
+                println!(
+                    "✓ Extract interface operation successfully created trait and implementation"
+                );
             }
             Err(e) => panic!("Extract interface operation failed: {}", e),
         }
@@ -366,7 +368,10 @@ impl FileManager {
         match operation.analyze(&context).await {
             Ok(analysis) => {
                 assert!(analysis.is_safe);
-                println!("Split analysis confidence: {:.2}", analysis.confidence_score);
+                println!(
+                    "Split analysis confidence: {:.2}",
+                    analysis.confidence_score
+                );
                 println!("Breaking changes: {:?}", analysis.breaking_changes);
 
                 if analysis.confidence_score > 0.7 {
@@ -410,7 +415,11 @@ pub fn process_numbers(numbers: Vec<i32>) -> Vec<i32> {
 }
 "#;
         let temp_dir = create_test_file(test_code, "imperative_transform.rs");
-        let file_path = temp_dir.path().join("imperative_transform.rs").to_str().unwrap();
+        let file_path = temp_dir
+            .path()
+            .join("imperative_transform.rs")
+            .to_str()
+            .unwrap();
 
         let context = RefactoringContext {
             file_path: file_path.to_string(),
@@ -430,7 +439,8 @@ pub fn process_numbers(numbers: Vec<i32>) -> Vec<i32> {
         };
 
         let mut options = create_options();
-        options.extra_options = Some(serde_json::json!({"sourcePattern": "loop", "targetPattern": "iterator"}));
+        options.extra_options =
+            Some(serde_json::json!({"sourcePattern": "loop", "targetPattern": "iterator"}));
 
         let operation = PatternConversionOperation;
 
@@ -491,26 +501,24 @@ pub fn use_functions() {
         fs::write(&file2_path, file2_content).unwrap();
 
         // Create batch operation
-        let operations = vec![
-            BatchRefactoringOperation {
-                operation_type: RefactoringType::Rename,
-                context: RefactoringContext {
-                    file_path: file1_path.to_str().unwrap().to_string(),
-                    symbol_name: Some("helper_function".to_string()),
-                    symbol_kind: Some(SymbolKind::Function),
-                    cursor_line: 1,
-                    cursor_character: 5,
-                    selection: None,
-                    context_lines: vec![],
-                    language: ProgrammingLanguage::Rust,
-                    project_root: temp_dir.path().to_str().unwrap().to_string(),
-                },
-                options: RefactoringOptions {
-                    extra_options: Some(serde_json::json!({"newName": "double_value"})),
-                    ..create_options()
-                },
+        let operations = vec![BatchRefactoringOperation {
+            operation_type: RefactoringType::Rename,
+            context: RefactoringContext {
+                file_path: file1_path.to_str().unwrap().to_string(),
+                symbol_name: Some("helper_function".to_string()),
+                symbol_kind: Some(SymbolKind::Function),
+                cursor_line: 1,
+                cursor_character: 5,
+                selection: None,
+                context_lines: vec![],
+                language: ProgrammingLanguage::Rust,
+                project_root: temp_dir.path().to_str().unwrap().to_string(),
             },
-        ];
+            options: RefactoringOptions {
+                extra_options: Some(serde_json::json!({"newName": "double_value"})),
+                ..create_options()
+            },
+        }];
 
         let batch_options = BatchRefactoringOptions {
             operations,
@@ -524,7 +532,10 @@ pub fn use_functions() {
         let batch_operation = BatchRefactoringOperationExecutor;
         let mut progress_tracker = ProgressTracker::new();
 
-        match batch_operation.execute_batch(batch_options, &mut progress_tracker).await {
+        match batch_operation
+            .execute_batch(batch_options, &mut progress_tracker)
+            .await
+        {
             Ok(results) => {
                 assert_eq!(results.results.len(), 1);
                 println!("✓ Batch refactoring operation executed successfully");
@@ -572,7 +583,8 @@ impl BankAccount {
 
         let safety_validator = SafetyValidator::new();
         let validation_result = safety_validator
-            .validate_refactoring_operation(&RefactoringType::Rename, &context).await;
+            .validate_refactoring_operation(&RefactoringType::Rename, &context)
+            .await;
 
         match validation_result {
             Ok(analysis) => {
@@ -656,7 +668,9 @@ pub fn complex_processing(data: Vec<i32>) -> Vec<String> {
 
         // Test factory creates operations correctly
         let rename_op = factory.create_operation(&RefactoringType::Rename).unwrap();
-        let extract_op = factory.create_operation(&RefactoringType::ExtractFunction).unwrap();
+        let extract_op = factory
+            .create_operation(&RefactoringType::ExtractFunction)
+            .unwrap();
 
         assert_eq!(rename_op.name(), "Rename");
         assert_eq!(extract_op.name(), "Extract Function");
@@ -687,17 +701,27 @@ pub fn complex_processing(data: Vec<i32>) -> Vec<String> {
         };
 
         let options = create_options();
-        let extract_interface_op = factory.create_operation(&RefactoringType::ExtractInterface).unwrap();
-        let convert_async_op = factory.create_operation(&RefactoringType::ConvertToAsync).unwrap();
+        let extract_interface_op = factory
+            .create_operation(&RefactoringType::ExtractInterface)
+            .unwrap();
+        let convert_async_op = factory
+            .create_operation(&RefactoringType::ConvertToAsync)
+            .unwrap();
 
         // Test structural operation applicability
-        match extract_interface_op.is_applicable(&struct_context, Some(&options)).await {
+        match extract_interface_op
+            .is_applicable(&struct_context, Some(&options))
+            .await
+        {
             Ok(applicable) => assert!(applicable),
             Err(e) => panic!("Applicability check failed: {}", e),
         }
 
         // Test function operation applicability
-        match convert_async_op.is_applicable(&function_context, Some(&options)).await {
+        match convert_async_op
+            .is_applicable(&function_context, Some(&options))
+            .await
+        {
             Ok(applicable) => assert!(applicable),
             Err(e) => panic!("Applicability check failed: {}", e),
         }
@@ -724,7 +748,10 @@ pub fn complex_processing(data: Vec<i32>) -> Vec<String> {
             }
         }
 
-        println!("✓ Factory can create all {} available refactoring operations", factory.available_refactorings().len());
+        println!(
+            "✓ Factory can create all {} available refactoring operations",
+            factory.available_refactorings().len()
+        );
     }
 
     #[tokio::test]
@@ -775,12 +802,17 @@ impl Calculator {
         };
 
         let factory = RefactoringOperationFactory;
-        let extract_op = factory.create_operation(&RefactoringType::ExtractFunction).unwrap();
+        let extract_op = factory
+            .create_operation(&RefactoringType::ExtractFunction)
+            .unwrap();
 
         let mut options = create_options();
         options.extra_options = Some(serde_json::json!({"newFunctionName": "compute_value"}));
 
-        let extract_result = extract_op.execute(&extract_context, &options).await.unwrap();
+        let extract_result = extract_op
+            .execute(&extract_context, &options)
+            .await
+            .unwrap();
         assert!(extract_result.success);
 
         // Read the modified content after extraction
@@ -803,7 +835,10 @@ impl Calculator {
         let mut rename_options = create_options();
         rename_options.extra_options = Some(serde_json::json!({"newName": "calculate_value"}));
 
-        let rename_result = rename_op.execute(&rename_context, &rename_options).await.unwrap();
+        let rename_result = rename_op
+            .execute(&rename_context, &rename_options)
+            .await
+            .unwrap();
         assert!(rename_result.success);
 
         // Step 3: Change signature of the renamed function
@@ -819,14 +854,19 @@ impl Calculator {
             project_root: "/tmp/test".to_string(),
         };
 
-        let signature_op = factory.create_operation(&RefactoringType::ChangeSignature).unwrap();
+        let signature_op = factory
+            .create_operation(&RefactoringType::ChangeSignature)
+            .unwrap();
         let mut sig_options = create_options();
         sig_options.extra_options = Some(serde_json::json!({
             "newParameters": [{"name": "base", "type": "i32"}, {"name": "multiplier", "type": "i32"}],
             "returnType": "i32"
         }));
 
-        let sig_result = signature_op.execute(&signature_context, &sig_options).await.unwrap();
+        let sig_result = signature_op
+            .execute(&signature_context, &sig_options)
+            .await
+            .unwrap();
         assert!(sig_result.success);
 
         // Verify AST consistency across all transformations
@@ -842,7 +882,9 @@ impl Calculator {
         // Verify that calls to the function were updated
         assert!(final_content.contains("calculate_value("));
 
-        println!("✓ Cross-module workflow (extract → rename → change signature) completed successfully");
+        println!(
+            "✓ Cross-module workflow (extract → rename → change signature) completed successfully"
+        );
         println!("✓ AST consistency maintained across sequential operations");
     }
 
@@ -866,7 +908,11 @@ impl DataProcessor {
 "#;
 
         let temp_dir = create_test_file(test_code, "module_interaction.rs");
-        let file_path = temp_dir.path().join("module_interaction.rs").to_str().unwrap();
+        let file_path = temp_dir
+            .path()
+            .join("module_interaction.rs")
+            .to_str()
+            .unwrap();
 
         // Test ast_utils integration with operations
         use rust_ai_ide_ai_refactoring::ast_utils::{is_ast_supported, IdentifierRenamer};
@@ -896,7 +942,9 @@ impl DataProcessor {
         };
 
         let factory = RefactoringOperationFactory;
-        let extract_interface_op = factory.create_operation(&RefactoringType::ExtractInterface).unwrap();
+        let extract_interface_op = factory
+            .create_operation(&RefactoringType::ExtractInterface)
+            .unwrap();
 
         // Verify operation implements required traits
         assert!(!extract_interface_op.name().is_empty());
@@ -904,10 +952,16 @@ impl DataProcessor {
 
         // Test applicability through core traits
         let options = create_options();
-        match extract_interface_op.is_applicable(&context, Some(&options)).await {
+        match extract_interface_op
+            .is_applicable(&context, Some(&options))
+            .await
+        {
             Ok(applicable) => {
                 if applicable {
-                    let result = extract_interface_op.execute(&context, &options).await.unwrap();
+                    let result = extract_interface_op
+                        .execute(&context, &options)
+                        .await
+                        .unwrap();
                     assert!(result.success);
                     println!("✓ Module interaction test: AST utils, core traits, and operations work together");
                 } else {
@@ -942,7 +996,10 @@ impl DataProcessor {
         match rename_op.execute(&invalid_context, &options).await {
             Ok(_) => panic!("Expected error for invalid file path"),
             Err(e) => {
-                println!("✓ Error handling: Invalid file path error propagated correctly: {}", e);
+                println!(
+                    "✓ Error handling: Invalid file path error propagated correctly: {}",
+                    e
+                );
                 assert!(e.to_string().contains("file") || e.to_string().contains("path"));
             }
         }
@@ -1035,10 +1092,16 @@ pub fn caller() {
         match rename_op.execute(&failure_context, &success_options).await {
             Ok(result) => {
                 // Operation might succeed but with warnings
-                println!("✓ Failure scenario handled gracefully with result: {:?}", result.warnings);
+                println!(
+                    "✓ Failure scenario handled gracefully with result: {:?}",
+                    result.warnings
+                );
             }
             Err(e) => {
-                println!("✓ Failure scenario: Error correctly returned for non-existent symbol: {}", e);
+                println!(
+                    "✓ Failure scenario: Error correctly returned for non-existent symbol: {}",
+                    e
+                );
             }
         }
 
@@ -1093,11 +1156,17 @@ impl ComplexProcessor {
             project_root: "/tmp/test".to_string(),
         };
 
-        let extract_op = factory.create_operation(&RefactoringType::ExtractFunction).unwrap();
+        let extract_op = factory
+            .create_operation(&RefactoringType::ExtractFunction)
+            .unwrap();
         let mut extract_options = options.clone();
-        extract_options.extra_options = Some(serde_json::json!({"newFunctionName": "double_value"}));
+        extract_options.extra_options =
+            Some(serde_json::json!({"newFunctionName": "double_value"}));
 
-        let _extract_result = extract_op.execute(&extract_context, &extract_options).await.unwrap();
+        let _extract_result = extract_op
+            .execute(&extract_context, &extract_options)
+            .await
+            .unwrap();
 
         // Second operation: Rename variable in extracted function
         let rename_context = RefactoringContext {
@@ -1116,7 +1185,10 @@ impl ComplexProcessor {
         let mut rename_options = options.clone();
         rename_options.extra_options = Some(serde_json::json!({"newName": "compute_double"}));
 
-        let _rename_result = rename_op.execute(&rename_context, &rename_options).await.unwrap();
+        let _rename_result = rename_op
+            .execute(&rename_context, &rename_options)
+            .await
+            .unwrap();
 
         // Verify AST consistency by checking if code still compiles conceptually
         let final_content = std::fs::read_to_string(file_path).unwrap();

@@ -1,9 +1,9 @@
-use std::sync::Arc;
-use tokio::sync::{Mutex, Semaphore};
 use memmap2::{Mmap, MmapOptions};
 use rust_ai_ide_common::{IDEError, IDEErrorKind};
-use std::path::Path;
 use std::collections::HashMap;
+use std::path::Path;
+use std::sync::Arc;
+use tokio::sync::{Mutex, Semaphore};
 use tokio::task::spawn_blocking;
 
 /// Zero-copy inference trait for operating directly on memory-mapped model weights
@@ -27,20 +27,17 @@ pub struct MmapModel {
 impl MmapModel {
     pub async fn load<P: AsRef<Path>>(path: P) -> Result<Self, IDEError> {
         let file = std::fs::File::open(&path).map_err(|e| {
-            IDEError::new(IDEErrorKind::FileOperation, "Failed to open model file")
-                .with_source(e)
+            IDEError::new(IDEErrorKind::FileOperation, "Failed to open model file").with_source(e)
         })?;
 
         let mmap = unsafe {
-            MmapOptions::new()
-                .map(&file)
-                .map_err(|e| {
-                    IDEError::new(
-                        IDEErrorKind::MemoryError,
-                        "Failed to create memory map for model",
-                    )
-                    .with_source(e)
-                })?
+            MmapOptions::new().map(&file).map_err(|e| {
+                IDEError::new(
+                    IDEErrorKind::MemoryError,
+                    "Failed to create memory map for model",
+                )
+                .with_source(e)
+            })?
         };
 
         let size = mmap.len();
@@ -130,11 +127,7 @@ impl ZeroCopyInferenceEngine {
         })
         .await
         .map_err(|e| {
-            IDEError::new(
-                IDEErrorKind::ConcurrencyError,
-                "Inference task panicked",
-            )
-            .with_source(e)
+            IDEError::new(IDEErrorKind::ConcurrencyError, "Inference task panicked").with_source(e)
         })??;
 
         Ok(result)
@@ -245,7 +238,10 @@ impl ZeroCopyModelManager {
         Ok(key)
     }
 
-    pub async fn get_inference_engine(&self, key: &str) -> Result<&ZeroCopyInferenceEngine, IDEError> {
+    pub async fn get_inference_engine(
+        &self,
+        key: &str,
+    ) -> Result<&ZeroCopyInferenceEngine, IDEError> {
         let engines = self.engines.lock().await;
         engines.get(key).ok_or_else(|| {
             IDEError::new(
@@ -316,10 +312,15 @@ fn perform_zero_copy_operations(model_data: &[u8], input: &[u8]) -> Result<Vec<u
     // In real implementation, this would use SIMD instructions and direct memory operations
     // to avoid heap allocations and copying
     unsafe {
-        let output_ptr = std::alloc::alloc(std::alloc::Layout::from_size_align(output_len, std::mem::align_of::<u8>()).unwrap());
+        let output_ptr = std::alloc::alloc(
+            std::alloc::Layout::from_size_align(output_len, std::mem::align_of::<u8>()).unwrap(),
+        );
 
         if output_ptr.is_null() {
-            return Err(IDEError::new(IDEErrorKind::MemoryError, "Failed to allocate output buffer"));
+            return Err(IDEError::new(
+                IDEErrorKind::MemoryError,
+                "Failed to allocate output buffer",
+            ));
         }
 
         // Zero-copy processing - operate directly on memory

@@ -3,11 +3,11 @@
 //! This module provides Prometheus-compatible metrics collection and exposure
 //! for the Rust AI IDE performance monitoring system.
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 
 use crate::{PerformanceMetrics, UnifiedPerformanceCollector};
 
@@ -106,7 +106,9 @@ impl PrometheusMetric {
         let labels_str = if self.labels.is_empty() {
             String::new()
         } else {
-            let label_parts: Vec<String> = self.labels.iter()
+            let label_parts: Vec<String> = self
+                .labels
+                .iter()
                 .map(|(k, v)| format!("{}=\"{}\"", k, v))
                 .collect();
             format!("{{{}}}", label_parts.join(","))
@@ -123,20 +125,31 @@ impl PrometheusMetric {
                 for bucket in buckets {
                     let mut bucket_labels = self.labels.clone();
                     bucket_labels.insert("le".to_string(), bucket.upper_bound.to_string());
-                    let bucket_label_parts: Vec<String> = bucket_labels.iter()
+                    let bucket_label_parts: Vec<String> = bucket_labels
+                        .iter()
                         .map(|(k, v)| format!("{}=\"{}\"", k, v))
                         .collect();
                     let bucket_labels_str = format!("{{{}}}", bucket_label_parts.join(","));
-                    output.push_str(&format!("{}_bucket{} {}\n", self.name, bucket_labels_str, bucket.count));
+                    output.push_str(&format!(
+                        "{}_bucket{} {}\n",
+                        self.name, bucket_labels_str, bucket.count
+                    ));
                 }
             }
             MetricValue::Summary(summary) => {
-                output.push_str(&format!("{}_sum{} {}\n", self.name, labels_str, summary.sum));
-                output.push_str(&format!("{}_count{} {}\n", self.name, labels_str, summary.count));
+                output.push_str(&format!(
+                    "{}_sum{} {}\n",
+                    self.name, labels_str, summary.sum
+                ));
+                output.push_str(&format!(
+                    "{}_count{} {}\n",
+                    self.name, labels_str, summary.count
+                ));
                 for (quantile, value) in &summary.quantiles {
                     let mut quantile_labels = self.labels.clone();
                     quantile_labels.insert("quantile".to_string(), quantile.clone());
-                    let quantile_label_parts: Vec<String> = quantile_labels.iter()
+                    let quantile_label_parts: Vec<String> = quantile_labels
+                        .iter()
                         .map(|(k, v)| format!("{}=\"{}\"", k, v))
                         .collect();
                     let quantile_labels_str = format!("{{{}}}", quantile_label_parts.join(","));
@@ -181,10 +194,12 @@ impl MetricsRegistry {
         if let Some(metric) = metrics.get_mut(name) {
             if let MetricValue::Counter(ref mut count) = metric.value {
                 *count += increment;
-                metric.timestamp = Some(std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap()
-                    .as_millis() as u64);
+                metric.timestamp = Some(
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis() as u64,
+                );
                 Ok(())
             } else {
                 Err(MetricsError::WrongMetricType)
@@ -199,10 +214,12 @@ impl MetricsRegistry {
         if let Some(metric) = metrics.get_mut(name) {
             if let MetricValue::Gauge(ref mut gauge_value) = metric.value {
                 *gauge_value = value;
-                metric.timestamp = Some(std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap()
-                    .as_millis() as u64);
+                metric.timestamp = Some(
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis() as u64,
+                );
                 Ok(())
             } else {
                 Err(MetricsError::WrongMetricType)
@@ -237,7 +254,9 @@ pub enum MetricsError {
 impl std::fmt::Display for MetricsError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            MetricsError::MetricAlreadyExists(name) => write!(f, "Metric '{}' already exists", name),
+            MetricsError::MetricAlreadyExists(name) => {
+                write!(f, "Metric '{}' already exists", name)
+            }
             MetricsError::MetricNotFound(name) => write!(f, "Metric '{}' not found", name),
             MetricsError::WrongMetricType => write!(f, "Wrong metric type"),
             MetricsError::CollectionFailed(msg) => write!(f, "Collection failed: {}", msg),
@@ -256,49 +275,60 @@ pub struct PrometheusExporter {
 impl PrometheusExporter {
     pub fn new(collector: Arc<UnifiedPerformanceCollector>) -> Self {
         let registry = MetricsRegistry::new();
-        Self { registry, collector }
+        Self {
+            registry,
+            collector,
+        }
     }
 
     pub async fn initialize_default_metrics(&self) -> Result<(), MetricsError> {
         // CPU usage metrics
-        self.registry.register_metric(
-            PrometheusMetric::new(
-                "rust_ai_ide_cpu_usage_percent".to_string(),
-                "Current CPU usage percentage".to_string(),
-                MetricType::Gauge,
+        self.registry
+            .register_metric(
+                PrometheusMetric::new(
+                    "rust_ai_ide_cpu_usage_percent".to_string(),
+                    "Current CPU usage percentage".to_string(),
+                    MetricType::Gauge,
+                )
+                .with_label("service".to_string(), "rust-ai-ide".to_string()),
             )
-            .with_label("service".to_string(), "rust-ai-ide".to_string())
-        ).await?;
+            .await?;
 
         // Memory usage metrics
-        self.registry.register_metric(
-            PrometheusMetric::new(
-                "rust_ai_ide_memory_usage_bytes".to_string(),
-                "Current memory usage in bytes".to_string(),
-                MetricType::Gauge,
+        self.registry
+            .register_metric(
+                PrometheusMetric::new(
+                    "rust_ai_ide_memory_usage_bytes".to_string(),
+                    "Current memory usage in bytes".to_string(),
+                    MetricType::Gauge,
+                )
+                .with_label("service".to_string(), "rust-ai-ide".to_string()),
             )
-            .with_label("service".to_string(), "rust-ai-ide".to_string())
-        ).await?;
+            .await?;
 
         // Response time metrics
-        self.registry.register_metric(
-            PrometheusMetric::new(
-                "rust_ai_ide_response_time_seconds".to_string(),
-                "Response time in seconds".to_string(),
-                MetricType::Histogram,
+        self.registry
+            .register_metric(
+                PrometheusMetric::new(
+                    "rust_ai_ide_response_time_seconds".to_string(),
+                    "Response time in seconds".to_string(),
+                    MetricType::Histogram,
+                )
+                .with_label("service".to_string(), "rust-ai-ide".to_string()),
             )
-            .with_label("service".to_string(), "rust-ai-ide".to_string())
-        ).await?;
+            .await?;
 
         // Request rate metrics
-        self.registry.register_metric(
-            PrometheusMetric::new(
-                "rust_ai_ide_requests_total".to_string(),
-                "Total number of requests".to_string(),
-                MetricType::Counter,
+        self.registry
+            .register_metric(
+                PrometheusMetric::new(
+                    "rust_ai_ide_requests_total".to_string(),
+                    "Total number of requests".to_string(),
+                    MetricType::Counter,
+                )
+                .with_label("service".to_string(), "rust-ai-ide".to_string()),
             )
-            .with_label("service".to_string(), "rust-ai-ide".to_string())
-        ).await?;
+            .await?;
 
         Ok(())
     }
@@ -308,12 +338,16 @@ impl PrometheusExporter {
         if let Some(metrics) = self.collector.get_latest_metrics() {
             // Update Prometheus metrics based on PerformanceMetrics
             if let Some(cpu_usage) = metrics.cpu_usage_percent {
-                self.registry.set_gauge("rust_ai_ide_cpu_usage_percent", cpu_usage).await?;
+                self.registry
+                    .set_gauge("rust_ai_ide_cpu_usage_percent", cpu_usage)
+                    .await?;
             }
 
             if let Some(memory_mb) = metrics.memory_usage_mb {
                 let memory_bytes = (memory_mb * 1024.0 * 1024.0) as f64;
-                self.registry.set_gauge("rust_ai_ide_memory_usage_bytes", memory_bytes).await?;
+                self.registry
+                    .set_gauge("rust_ai_ide_memory_usage_bytes", memory_bytes)
+                    .await?;
             }
 
             if let Some(response_ms) = metrics.response_time_ms {
@@ -322,7 +356,9 @@ impl PrometheusExporter {
             }
 
             // Increment request counter (simplified)
-            self.registry.update_counter("rust_ai_ide_requests_total", 1).await?;
+            self.registry
+                .update_counter("rust_ai_ide_requests_total", 1)
+                .await?;
         }
 
         // Export all metrics in Prometheus format

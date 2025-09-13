@@ -17,17 +17,21 @@ export interface TimeoutResult<T> {
 export async function withTimeout<T>(
   operation: () => Promise<T>,
   timeoutMs: number,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<TimeoutResult<T>> {
   const timeoutPromise = new Promise<never>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
       reject(new Error('Operation timed out'));
     }, timeoutMs);
 
-    signal?.addEventListener('abort', () => {
-      clearTimeout(timeoutId);
-      reject(new Error('Operation cancelled'));
-    }, { once: true });
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timeoutId);
+        reject(new Error('Operation cancelled'));
+      },
+      { once: true }
+    );
   });
 
   try {
@@ -46,7 +50,7 @@ export async function withTimeout<T>(
  * Standard utility for async delays
  */
 export function delay(ms: number): Promise<void> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 }
@@ -103,15 +107,19 @@ export function combineSignals(...signals: AbortSignal[]): AbortSignal {
   const controller = new AbortController();
   const combinedSignal = controller.signal;
 
-  signals.forEach(signal => {
+  signals.forEach((signal) => {
     if (signal.aborted) {
       controller.abort();
       return;
     }
 
-    signal.addEventListener('abort', () => {
-      controller.abort();
-    }, { once: true });
+    signal.addEventListener(
+      'abort',
+      () => {
+        controller.abort();
+      },
+      { once: true }
+    );
   });
 
   return combinedSignal;
@@ -126,9 +134,13 @@ export function cancellableDelay(ms: number, signal: AbortSignal): Promise<void>
       resolve();
     }, ms);
 
-    signal.addEventListener('abort', () => {
-      clearTimeout(timeoutId);
-      reject(new Error('Delayed operation cancelled'));
-    }, { once: true });
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timeoutId);
+        reject(new Error('Delayed operation cancelled'));
+      },
+      { once: true }
+    );
   });
 }

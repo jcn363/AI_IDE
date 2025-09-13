@@ -2,7 +2,6 @@
 ///
 /// This module handles code completion suggestions and code generation
 /// using AI services integrated with the Rust AI IDE.
-
 use crate::commands::ai::services::AIServiceState;
 use crate::errors::{IDEError, IDEResult};
 use crate::utils;
@@ -47,7 +46,9 @@ pub async fn ai_code_completion(
     // Validate file_name if provided
     if let Some(ref fname) = file_name {
         if fname.is_empty() {
-            return Err(IDEError::Validation("File name cannot be empty".to_string()));
+            return Err(IDEError::Validation(
+                "File name cannot be empty".to_string(),
+            ));
         }
         // Additional path validation for file names
         TauriInputSanitizer::validate_path(fname)
@@ -55,7 +56,8 @@ pub async fn ai_code_completion(
     }
 
     // Get AI service from managed state with retry logic
-    let ai_service = utils::get_or_create_ai_service(&ai_service_state).await
+    let ai_service = utils::get_or_create_ai_service(&ai_service_state)
+        .await
         .map_err(|e| {
             log::error!("AI service acquisition failed: {}", e);
             IDEError::AIService(format!("Service unavailable: {}", e))
@@ -64,18 +66,20 @@ pub async fn ai_code_completion(
     let ctx = rust_ai_ide_lsp::AIContext {
         current_code: sanitized_code,
         file_name,
-        cursor_position: match (cursor_line, cursor_char) { (Some(l), Some(c)) => Some((l, c)), _ => None },
+        cursor_position: match (cursor_line, cursor_char) {
+            (Some(l), Some(c)) => Some((l, c)),
+            _ => None,
+        },
         selection: None,
         project_context: Default::default(),
     };
 
     log::debug!("Requesting AI completion for context: {:#?}", ctx);
 
-    let list = ai_service.get_completions(ctx).await
-        .map_err(|e| {
-            log::error!("AI completion error: {}", e);
-            IDEError::AIService(format!("Completion generation failed: {}", e))
-        })?;
+    let list = ai_service.get_completions(ctx).await.map_err(|e| {
+        log::error!("AI completion error: {}", e);
+        IDEError::AIService(format!("Completion generation failed: {}", e))
+    })?;
 
     let n = max_suggestions.unwrap_or(5) as usize;
     let suggestions: Vec<String> = list.into_iter().take(n).map(|c| c.text).collect();
@@ -117,16 +121,21 @@ pub async fn ai_generate_code(
     // Validate context_code if provided
     if let Some(ref code) = context_code {
         if code.is_empty() {
-            return Err(IDEError::Validation("Context code cannot be empty string".to_string()));
+            return Err(IDEError::Validation(
+                "Context code cannot be empty string".to_string(),
+            ));
         }
-        TauriInputSanitizer::sanitize_text(code)
-            .map_err(|e| IDEError::Validation(format!("Context code sanitization failed: {}", e)))?;
+        TauriInputSanitizer::sanitize_text(code).map_err(|e| {
+            IDEError::Validation(format!("Context code sanitization failed: {}", e))
+        })?;
     }
 
     // Validate file_name if provided
     if let Some(ref fname) = file_name {
         if fname.is_empty() {
-            return Err(IDEError::Validation("File name cannot be empty".to_string()));
+            return Err(IDEError::Validation(
+                "File name cannot be empty".to_string(),
+            ));
         }
         TauriInputSanitizer::validate_path(fname)
             .map_err(|e| IDEError::PathValidation(format!("Invalid file path: {}", e)))?;
@@ -146,14 +155,16 @@ pub async fn ai_generate_code(
         project_context: Default::default(),
     };
 
-    let task = format!("Generate code for: {}\nReturn only code if possible. Include comments for clarity.", sanitized_prompt);
+    let task = format!(
+        "Generate code for: {}\nReturn only code if possible. Include comments for clarity.",
+        sanitized_prompt
+    );
     log::debug!("AI task: {}", task);
 
-    let result = ai_service.get_task_response(ctx, task).await
-        .map_err(|e| {
-            log::error!("AI code generation error: {}", e);
-            IDEError::AIService(format!("Code generation failed: {}", e))
-        })?;
+    let result = ai_service.get_task_response(ctx, task).await.map_err(|e| {
+        log::error!("AI code generation error: {}", e);
+        IDEError::AIService(format!("Code generation failed: {}", e))
+    })?;
 
     log::info!("Code generation completed successfully");
     Ok(result)

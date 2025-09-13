@@ -1,9 +1,11 @@
 use crate::{
-    integration::{UnifiedCargoService, UnifiedCargoError, UnifiedGraph, UnifiedNode, UnifiedEdge, NodeInfo},
+    integration::{
+        NodeInfo, UnifiedCargoError, UnifiedCargoService, UnifiedEdge, UnifiedGraph, UnifiedNode,
+    },
     license::LicenseComplianceChecker,
     security::VulnerabilityScanner,
 };
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tauri::State;
@@ -13,7 +15,9 @@ pub async fn check_vulnerabilities(
     manifest_path: PathBuf,
 ) -> Result<Vec<crate::security::vulnerability_scanner::VulnerabilityReport>, String> {
     let service = UnifiedCargoService::new();
-    service.analyze_vulnerabilities(&manifest_path).await
+    service
+        .analyze_vulnerabilities(&manifest_path)
+        .await
         .map_err(|e| format!("Failed to analyze vulnerabilities: {}", e))
 }
 
@@ -23,7 +27,9 @@ pub async fn check_license_compliance(
     project_path: PathBuf,
 ) -> Result<crate::license::compliance_checker::LicenseCompliance, String> {
     let service = UnifiedCargoService::new();
-    service.check_license_compliance(&project_path).await
+    service
+        .check_license_compliance(&project_path)
+        .await
         .map_err(|e| format!("Failed to check license compliance: {}", e))
 }
 
@@ -33,7 +39,9 @@ pub async fn update_dependencies(
     dry_run: bool,
 ) -> Result<Vec<crate::dependency::updater::DependencyUpdate>, String> {
     let service = UnifiedCargoService::new();
-    service.update_dependencies(&manifest_path, dry_run).await
+    service
+        .update_dependencies(&manifest_path, dry_run)
+        .await
         .map_err(|e| format!("Failed to update dependencies: {}", e))
 }
 
@@ -42,7 +50,9 @@ pub async fn check_dependency_updates(
     project_path: PathBuf,
 ) -> Result<Vec<crate::dependency::update_checker::DependencyInfo>, String> {
     let service = UnifiedCargoService::new();
-    service.check_updates(&project_path).await
+    service
+        .check_updates(&project_path)
+        .await
         .map_err(|e| format!("Failed to check updates: {}", e))
 }
 
@@ -72,15 +82,16 @@ pub struct DependencyGraphData {
 }
 
 #[tauri::command]
-pub async fn get_dependency_graph(
-    project_path: PathBuf,
-) -> Result<DependencyGraphData, String> {
+pub async fn get_dependency_graph(project_path: PathBuf) -> Result<DependencyGraphData, String> {
     let service = UnifiedCargoService::new();
-    let unified_graph = service.get_dependency_graph(&project_path).await
+    let unified_graph = service
+        .get_dependency_graph(&project_path)
+        .await
         .map_err(|e| format!("Failed to get dependency graph: {}", e))?;
 
     // Convert from unified format back to existing format
-    let nodes = unified_graph.nodes
+    let nodes = unified_graph
+        .nodes
         .into_iter()
         .map(|node| GraphNode {
             id: node.id.clone(),
@@ -92,7 +103,8 @@ pub async fn get_dependency_graph(
         .collect();
 
     // Convert edges to links format
-    let links = unified_graph.edges
+    let links = unified_graph
+        .edges
         .into_iter()
         .map(|edge| GraphLink {
             source: edge.from,
@@ -109,6 +121,8 @@ pub async fn get_dependency_info(
     project_path: PathBuf,
 ) -> Result<Vec<crate::dependency::update_checker::DependencyInfo>, String> {
     let service = UnifiedCargoService::new();
-    service.check_updates(&project_path).await
+    service
+        .check_updates(&project_path)
+        .await
         .map_err(|e| format!("Failed to get dependency info: {}", e))
 }

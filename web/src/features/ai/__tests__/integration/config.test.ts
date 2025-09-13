@@ -26,7 +26,7 @@ const TEST_CONFIG = {
 
   // Performance thresholds
   MAX_BACKEND_RESPONSE_TIME: 2000, // ms
-  MAX_CACHE_OPERATION_TIME: 50,   // ms
+  MAX_CACHE_OPERATION_TIME: 50, // ms
   TARGET_CACHE_HIT_RATIO: 0.8,
 
   // Backend capability configurations
@@ -125,11 +125,12 @@ expect.extend({
    * Check if a refactoring result is valid
    */
   toBeValidRefactoringResult(received) {
-    const pass = received
-      && typeof received === 'object'
-      && typeof received.id === 'string'
-      && Array.isArray(received.changes)
-      && typeof received.success === 'boolean';
+    const pass =
+      received &&
+      typeof received === 'object' &&
+      typeof received.id === 'string' &&
+      Array.isArray(received.changes) &&
+      typeof received.success === 'boolean';
 
     if (pass) {
       return {
@@ -148,11 +149,12 @@ expect.extend({
    * Check if capabilities are properly structured
    */
   toHaveValidBackendCapabilities(received) {
-    const pass = received
-      && Array.isArray(received.supported_refactorings)
-      && Array.isArray(received.supported_file_types)
-      && typeof received.features === 'object'
-      && received.features !== null;
+    const pass =
+      received &&
+      Array.isArray(received.supported_refactorings) &&
+      Array.isArray(received.supported_file_types) &&
+      typeof received.features === 'object' &&
+      received.features !== null;
 
     if (pass) {
       return {
@@ -171,10 +173,11 @@ expect.extend({
    * Check if an error response is properly structured
    */
   toBeStructuredErrorResponse(received) {
-    const pass = received
-      && typeof received.code === 'string'
-      && typeof received.message === 'string'
-      && typeof received.recoverable === 'boolean';
+    const pass =
+      received &&
+      typeof received.code === 'string' &&
+      typeof received.message === 'string' &&
+      typeof received.recoverable === 'boolean';
 
     if (pass) {
       return {
@@ -193,14 +196,15 @@ expect.extend({
    * Check if cache statistics are valid
    */
   toHaveValidCacheStatistics(received) {
-    const pass = received
-      && typeof received.totalEntries === 'number'
-      && typeof received.freshEntries === 'number'
-      && typeof received.staleEntries === 'number'
-      && received.totalEntries >= 0
-      && received.freshEntries >= 0
-      && received.staleEntries >= 0
-      && received.freshEntries + received.staleEntries <= received.totalEntries;
+    const pass =
+      received &&
+      typeof received.totalEntries === 'number' &&
+      typeof received.freshEntries === 'number' &&
+      typeof received.staleEntries === 'number' &&
+      received.totalEntries >= 0 &&
+      received.freshEntries >= 0 &&
+      received.staleEntries >= 0 &&
+      received.freshEntries + received.staleEntries <= received.totalEntries;
 
     if (pass) {
       return {
@@ -238,8 +242,11 @@ export const testUtils = {
   /**
    * Create a mock backend response with specified latency
    */
-  withLatency: async <T>(data: T, delay: number = TEST_CONFIG.BACKEND_SERVICE_DELAY): Promise<T> => {
-    await new Promise(resolve => setTimeout(resolve, delay));
+  withLatency: async <T>(
+    data: T,
+    delay: number = TEST_CONFIG.BACKEND_SERVICE_DELAY
+  ): Promise<T> => {
+    await new Promise((resolve) => setTimeout(resolve, delay));
     return data;
   },
 
@@ -260,7 +267,7 @@ export const testUtils = {
         // Mock service availability check
         return true;
       } catch {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
     return false;
@@ -270,10 +277,12 @@ export const testUtils = {
    * Validate refactoring test data
    */
   validateRefactoringTestData: (data: any): boolean => {
-    return data
-      && typeof data === 'object'
-      && Array.isArray(data.changes)
-      && typeof data.success === 'boolean';
+    return (
+      data &&
+      typeof data === 'object' &&
+      Array.isArray(data.changes) &&
+      typeof data.success === 'boolean'
+    );
   },
 };
 
@@ -288,11 +297,14 @@ export const performanceMonitor = {
         const duration = Date.now() - startTime;
         console.log(`⚡ Test "${name}" completed in ${duration}ms`);
         return duration;
-      }
+      },
     };
   },
 
-  measureAverageDuration(testFunction: () => Promise<any>, iterations: number = 5): Promise<number> {
+  measureAverageDuration(
+    testFunction: () => Promise<any>,
+    iterations: number = 5
+  ): Promise<number> {
     return Promise.resolve(0); // Placeholder for actual implementation
   },
 };

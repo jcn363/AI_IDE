@@ -20,11 +20,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`ai-feature-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -49,17 +45,17 @@ const AIFeaturesDemo: React.FC = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           AI-Enhanced Development Features
         </Typography>
-        
+
         <Typography variant="body1" paragraph>
-          Explore the AI-powered features that enhance your development experience.
-          Try out different AI capabilities on the example code or your own code.
+          Explore the AI-powered features that enhance your development experience. Try out
+          different AI capabilities on the example code or your own code.
         </Typography>
-        
+
         <Paper sx={{ width: '100%', mb: 4 }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs 
-              value={value} 
-              onChange={handleChange} 
+            <Tabs
+              value={value}
+              onChange={handleChange}
               aria-label="AI features tabs"
               variant="scrollable"
               scrollButtons="auto"
@@ -70,18 +66,16 @@ const AIFeaturesDemo: React.FC = () => {
               <Tab label="Code Generation" {...a11yProps(3)} />
             </Tabs>
           </Box>
-          
+
           <TabPanel value={value} index={0}>
             <AIFeatureExample />
           </TabPanel>
-          
+
           <TabPanel value={value} index={1}>
             <Typography variant="h6" gutterBottom>
               Advanced Code Analysis
             </Typography>
-            <Typography paragraph>
-              The AI analyzes your code for:
-            </Typography>
+            <Typography paragraph>The AI analyzes your code for:</Typography>
             <ul>
               <li>Code smells and anti-patterns</li>
               <li>Performance bottlenecks</li>
@@ -89,18 +83,14 @@ const AIFeaturesDemo: React.FC = () => {
               <li>Style inconsistencies</li>
               <li>Architecture improvements</li>
             </ul>
-            <Typography paragraph>
-              Try the interactive demo to see it in action!
-            </Typography>
+            <Typography paragraph>Try the interactive demo to see it in action!</Typography>
           </TabPanel>
-          
+
           <TabPanel value={value} index={2}>
             <Typography variant="h6" gutterBottom>
               Smart Error Resolution
             </Typography>
-            <Typography paragraph>
-              Get intelligent help with errors and warnings:
-            </Typography>
+            <Typography paragraph>Get intelligent help with errors and warnings:</Typography>
             <ul>
               <li>Context-aware fixes</li>
               <li>Step-by-step explanations</li>
@@ -108,14 +98,12 @@ const AIFeaturesDemo: React.FC = () => {
               <li>Learning from previous fixes</li>
             </ul>
           </TabPanel>
-          
+
           <TabPanel value={value} index={3}>
             <Typography variant="h6" gutterBottom>
               AI-Powered Code Generation
             </Typography>
-            <Typography paragraph>
-              Generate high-quality code with AI:
-            </Typography>
+            <Typography paragraph>Generate high-quality code with AI:</Typography>
             <ul>
               <li>Test cases</li>
               <li>Documentation</li>
@@ -125,7 +113,7 @@ const AIFeaturesDemo: React.FC = () => {
             </ul>
           </TabPanel>
         </Paper>
-        
+
         <Box sx={{ mt: 4, p: 3, bgcolor: 'background.paper', borderRadius: 1 }}>
           <Typography variant="h6" gutterBottom>
             Getting Started
@@ -133,12 +121,8 @@ const AIFeaturesDemo: React.FC = () => {
           <Typography paragraph>
             1. Enter your code in the input area or use the example provided
           </Typography>
-          <Typography paragraph>
-            2. Select an action from the dropdown menu
-          </Typography>
-          <Typography paragraph>
-            3. Click "Run" to see the AI in action
-          </Typography>
+          <Typography paragraph>2. Select an action from the dropdown menu</Typography>
+          <Typography paragraph>3. Click "Run" to see the AI in action</Typography>
           <Typography>
             Pro tip: Right-click in the code area for quick access to AI features!
           </Typography>

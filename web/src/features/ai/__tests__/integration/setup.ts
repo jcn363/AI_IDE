@@ -64,18 +64,20 @@ export const mockRefactoringResult: RefactoringResult = {
     endLine: 10,
     endCharacter: 7,
   },
-  changes: [{
-    filePath: 'src/main.rs',
-    range: {
-      startLine: 10,
-      startCharacter: 4,
-      endLine: 10,
-      endCharacter: 11,
+  changes: [
+    {
+      filePath: 'src/main.rs',
+      range: {
+        startLine: 10,
+        startCharacter: 4,
+        endLine: 10,
+        endCharacter: 11,
+      },
+      oldText: 'oldName',
+      newText: 'newName',
+      changeType: 'Replacement',
     },
-    oldText: 'oldName',
-    newText: 'newName',
-    changeType: 'Replacement',
-  }],
+  ],
   analysis: {
     possibleRefactorings: ['rename'],
     confidence: 0.9,
@@ -138,7 +140,9 @@ export const simulateBackendError = (errorType: string, recoverable = true) => {
 };
 
 export const simulateNetworkFailure = () => {
-  throw new Error('BackendError({"code": "NETWORK_ERROR", "message": "Service temporarily unavailable", "recoverable": true})');
+  throw new Error(
+    'BackendError({"code": "NETWORK_ERROR", "message": "Service temporarily unavailable", "recoverable": true})'
+  );
 };
 
 export const simulateServiceTimeout = () => {
@@ -207,25 +211,22 @@ export const cacheTestingUtilities = {
   simulateCacheRefresh() {
     // Reset cache state for testing
     this.mockCacheStats.freshEntries = 5;
-    this.mockCacheStats.staleEntries = this.mockCacheStats.totalEntries - this.mockCacheStats.freshEntries;
+    this.mockCacheStats.staleEntries =
+      this.mockCacheStats.totalEntries - this.mockCacheStats.freshEntries;
   },
 };
 
 // Async test utilities
 export const asyncTestUtils = {
   async waitForTimeout(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   },
 
   async waitForNextTick() {
-    return new Promise(resolve => setImmediate(resolve));
+    return new Promise((resolve) => setImmediate(resolve));
   },
 
-  async retryAsync<T>(
-    operation: () => Promise<T>,
-    maxRetries = 3,
-    delayMs = 100
-  ): Promise<T> {
+  async retryAsync<T>(operation: () => Promise<T>, maxRetries = 3, delayMs = 100): Promise<T> {
     let lastError: Error;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {

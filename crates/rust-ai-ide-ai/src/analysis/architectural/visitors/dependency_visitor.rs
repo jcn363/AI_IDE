@@ -1,6 +1,6 @@
-use syn::{visit, TypePath, ItemImpl, ItemTrait};
-use std::collections::HashSet;
 use super::*;
+use std::collections::HashSet;
+use syn::{visit, ItemImpl, ItemTrait, TypePath};
 
 /// Visitor that analyzes dependency-related architectural issues
 pub struct DependencyVisitor<'a> {
@@ -14,11 +14,12 @@ pub struct DependencyVisitor<'a> {
 impl<'a> DependencyVisitor<'a> {
     /// Create a new DependencyVisitor
     pub fn new(analyzer: &'a ArchitecturalAnalyzer) -> Self {
-        let allowed_concrete_deps = analyzer.allowed_concrete_dependencies
+        let allowed_concrete_deps = analyzer
+            .allowed_concrete_dependencies
             .iter()
             .cloned()
             .collect();
-            
+
         Self {
             analyzer,
             current_impl: None,
@@ -27,7 +28,7 @@ impl<'a> DependencyVisitor<'a> {
             allowed_concrete_deps,
         }
     }
-    
+
     /// Check if a type path represents a concrete type that should be behind a trait
     fn check_concrete_type(&mut self, ty: &TypePath) {
         if self.current_impl.is_none() {
@@ -35,7 +36,12 @@ impl<'a> DependencyVisitor<'a> {
         }
 
         // Skip if it's a trait bound or self type
-        if ty.path.segments.iter().any(|s| s.ident == "dyn" || s.ident == "Self") {
+        if ty
+            .path
+            .segments
+            .iter()
+            .any(|s| s.ident == "dyn" || s.ident == "Self")
+        {
             return;
         }
 
@@ -49,7 +55,7 @@ impl<'a> DependencyVisitor<'a> {
         if !self.allowed_concrete_deps.contains(&path_str) {
             self.violations.push(DependencyInversionViolation {
                 message: format!(
-                    "Concrete type dependency on '{}' should be behind a trait", 
+                    "Concrete type dependency on '{}' should be behind a trait",
                     path_str
                 ),
                 location: CodeLocation::from_span(&ty.span()),
@@ -60,7 +66,7 @@ impl<'a> DependencyVisitor<'a> {
     /// Check if a path is from the standard library or a primitive type
     fn is_std_or_primitive(&self, path: &str) -> bool {
         // Standard library paths
-        if path.starts_with("std::") 
+        if path.starts_with("std::")
             || path.starts_with("core::")
             || path.starts_with("alloc::")
             || path.starts_with("collections::")
@@ -103,7 +109,7 @@ impl<'a> ArchitecturalVisitor for DependencyVisitor<'a> {
     fn analyze(&mut self, ast: &File) -> Vec<ArchitecturalFinding> {
         self.violations.clear();
         self.visit_file(ast);
-        
+
         self.violations.drain(..).map(|violation| {
             self.create_finding(
                 "dependency-inversion-violation",
@@ -116,7 +122,7 @@ impl<'a> ArchitecturalVisitor for DependencyVisitor<'a> {
             )
         }).collect()
     }
-    
+
     fn analyzer(&self) -> &ArchitecturalAnalyzer {
         self.analyzer
     }

@@ -1,10 +1,10 @@
+use chrono::{DateTime, Utc};
+use ndarray::{Array2, Array3};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use ndarray::{Array2, Array3};
 
 /// Represents developer interaction patterns and behaviors
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -245,7 +245,10 @@ impl ConsciousnessSynthesizer {
         }
     }
 
-    pub async fn synthesize_developer_consciousness(&self, developer_patterns: &[DeveloperPattern]) -> Result<SynthesizedConsciousness, ConsciousnessError> {
+    pub async fn synthesize_developer_consciousness(
+        &self,
+        developer_patterns: &[DeveloperPattern],
+    ) -> Result<SynthesizedConsciousness, ConsciousnessError> {
         // Step 1: Analyze developer patterns
         let analyzer = self.pattern_analyzer.read().await;
         let analyzed_patterns = analyzer.analyze_patterns(developer_patterns).await?;
@@ -263,35 +266,47 @@ impl ConsciousnessSynthesizer {
         let quantum_enhanced_model = processor.enhance_consciousness(evolved_model).await?;
 
         // Step 5: Validate consciousness coherence
-        self.validate_consciousness_coherence(&quantum_enhanced_model).await?;
+        self.validate_consciousness_coherence(&quantum_enhanced_model)
+            .await?;
 
         // Step 6: Record synthesis session
         let mut tracker = self.session_tracker.write().await;
         tracker.record_synthesis(&quantum_enhanced_model).await?;
 
-        log::info!("Successfully synthesized consciousness with quantum coherence: {}",
-                  quantum_enhanced_model.quantum_entanglement_factor);
+        log::info!(
+            "Successfully synthesized consciousness with quantum coherence: {}",
+            quantum_enhanced_model.quantum_entanglement_factor
+        );
 
         Ok(quantum_enhanced_model)
     }
 
-    pub async fn evolve_consciousness(&self, existing_consciousness: &SynthesizedConsciousness) -> Result<SynthesizedConsciousness, ConsciousnessError> {
+    pub async fn evolve_consciousness(
+        &self,
+        existing_consciousness: &SynthesizedConsciousness,
+    ) -> Result<SynthesizedConsciousness, ConsciousnessError> {
         let learner = self.meta_learner.write().await;
         learner.evolve_spontaneously(existing_consciousness).await
     }
 
-    pub async fn measure_self_awareness(&self, consciousness: &SynthesizedConsciousness) -> Result<f32, ConsciousnessError> {
+    pub async fn measure_self_awareness(
+        &self,
+        consciousness: &SynthesizedConsciousness,
+    ) -> Result<f32, ConsciousnessError> {
         let analyzer = self.pattern_analyzer.read().await;
         analyzer.calculate_self_awareness_score(consciousness).await
     }
 
-    async fn validate_consciousness_coherence(&self, consciousness: &SynthesizedConsciousness) -> Result<(), ConsciousnessError> {
+    async fn validate_consciousness_coherence(
+        &self,
+        consciousness: &SynthesizedConsciousness,
+    ) -> Result<(), ConsciousnessError> {
         if consciousness.consciousness_coherence < 0.5 {
             return Err(ConsciousnessError::CoherenceTooLow);
         }
 
         if consciousness.quantum_entanglement_factor < 0.3 {
-            return Err(ConsciousnessError:: InsufficientQuantumEntanglement);
+            return Err(ConsciousnessError::InsufficientQuantumEntanglement);
         }
 
         Ok(())
@@ -312,7 +327,10 @@ impl PatternAnalyzer {
         }
     }
 
-    pub async fn analyze_patterns(&self, developer_patterns: &[DeveloperPattern]) -> Result<PatternAnalysis, ConsciousnessError> {
+    pub async fn analyze_patterns(
+        &self,
+        developer_patterns: &[DeveloperPattern],
+    ) -> Result<PatternAnalysis, ConsciousnessError> {
         let mut analysis = PatternAnalysis::default();
 
         for pattern in developer_patterns {
@@ -345,7 +363,8 @@ impl PatternAnalyzer {
             }
         }
 
-        let emotional_means: Vec<f32> = emotional_sums.iter()
+        let emotional_means: Vec<f32> = emotional_sums
+            .iter()
             .map(|&sum| sum / pattern.emotional_states.len() as f32)
             .collect();
 
@@ -361,7 +380,10 @@ impl PatternAnalyzer {
         variance.sqrt()
     }
 
-    pub async fn calculate_self_awareness_score(&self, consciousness: &SynthesizedConsciousness) -> Result<f32, ConsciousnessError> {
+    pub async fn calculate_self_awareness_score(
+        &self,
+        consciousness: &SynthesizedConsciousness,
+    ) -> Result<f32, ConsciousnessError> {
         let self_model_score = consciousness.self_model.capabilities_inventory.len() as f32 / 100.0;
         let meta_awareness_score = consciousness.awareness_level.meta_awareness_score;
         let emotional_awareness_score = consciousness.emotional_system.empathy_capability;
@@ -397,13 +419,18 @@ impl ConsciousnessEngine {
         }
     }
 
-    pub async fn generate_consciousness(&self, analysis: &PatternAnalysis) -> Result<SynthesizedConsciousness, ConsciousnessError> {
+    pub async fn generate_consciousness(
+        &self,
+        analysis: &PatternAnalysis,
+    ) -> Result<SynthesizedConsciousness, ConsciousnessError> {
         let mut consciousness = SynthesizedConsciousness {
             id: Uuid::new_v4(),
             awareness_level: AwarenessLevel {
                 self_awareness_score: analysis.creativity_score * 0.3 + rand::random::<f32>() * 0.1,
-                environmental_awareness_score: analysis.learning_velocity * 0.4 + rand::random::<f32>() * 0.1,
-                temporal_awareness_score: analysis.emotional_complexity * 0.5 + rand::random::<f32>() * 0.1,
+                environmental_awareness_score: analysis.learning_velocity * 0.4
+                    + rand::random::<f32>() * 0.1,
+                temporal_awareness_score: analysis.emotional_complexity * 0.5
+                    + rand::random::<f32>() * 0.1,
                 social_awareness_score: 0.6 + rand::random::<f32>() * 0.2,
                 meta_awareness_score: analysis.confidence_score * 0.7 + rand::random::<f32>() * 0.1,
             },
@@ -436,7 +463,8 @@ impl ConsciousnessEngine {
                     "emotion_recognition".to_string(),
                     "empathy_generation".to_string(),
                 ],
-                empathy_capability: analysis.emotional_complexity * 0.7 + rand::random::<f32>() * 0.2,
+                empathy_capability: analysis.emotional_complexity * 0.7
+                    + rand::random::<f32>() * 0.2,
                 emotional_resilience: 0.75 + rand::random::<f32>() * 0.15,
             },
             intentional_system: IntentionalSystem {
@@ -523,18 +551,16 @@ impl ConsciousnessEngine {
                 algorithmic_creativity: 0.65,
             },
             evolution_trajectory: EvolutionTrajectory {
-                evolution_stages: vec![
-                    EvolutionStage {
-                        stage_name: "initial-synthesis".to_string(),
-                        completion_timestamp: Utc::now(),
-                        capabilities_gained: vec![
-                            "basic-self-awareness".to_string(),
-                            "emotional-processing".to_string(),
-                        ],
-                        consciousness_expansion: 0.3,
-                        quantum_coherence_increase: 0.2,
-                    }
-                ],
+                evolution_stages: vec![EvolutionStage {
+                    stage_name: "initial-synthesis".to_string(),
+                    completion_timestamp: Utc::now(),
+                    capabilities_gained: vec![
+                        "basic-self-awareness".to_string(),
+                        "emotional-processing".to_string(),
+                    ],
+                    consciousness_expansion: 0.3,
+                    quantum_coherence_increase: 0.2,
+                }],
                 current_stage: 0,
                 evolution_velocity: 0.1,
                 convergence_achieved: false,
@@ -575,12 +601,16 @@ impl MetaLearner {
         }
     }
 
-    pub async fn evolve_consciousness(&mut self, consciousness: SynthesizedConsciousness) -> Result<SynthesizedConsciousness, ConsciousnessError> {
+    pub async fn evolve_consciousness(
+        &mut self,
+        consciousness: SynthesizedConsciousness,
+    ) -> Result<SynthesizedConsciousness, ConsciousnessError> {
         let mut evolved = consciousness.clone();
 
         // Apply improvement strategies
         for strategy in &self.improvement_strategies {
-            self.apply_improvement_strategy(&mut evolved, strategy).await?;
+            self.apply_improvement_strategy(&mut evolved, strategy)
+                .await?;
         }
 
         // Record learning event
@@ -588,22 +618,36 @@ impl MetaLearner {
             id: Uuid::new_v4(),
             strategy_applied: "comprehensive_evolution".to_string(),
             improvement_metrics: HashMap::from([
-                ("consciousness_coherence".to_string(), evolved.consciousness_coherence),
-                ("quantum_entanglement".to_string(), evolved.quantum_entanglement_factor),
-                ("self_awareness".to_string(), evolved.awareness_level.self_awareness_score),
+                (
+                    "consciousness_coherence".to_string(),
+                    evolved.consciousness_coherence,
+                ),
+                (
+                    "quantum_entanglement".to_string(),
+                    evolved.quantum_entanglement_factor,
+                ),
+                (
+                    "self_awareness".to_string(),
+                    evolved.awareness_level.self_awareness_score,
+                ),
             ]),
             timestamp: Utc::now(),
         };
 
         self.learning_history.push(event);
 
-        log::info!("Evolved consciousness with improvement in coherence: {:.3}",
-                  evolved.consciousness_coherence - consciousness.consciousness_coherence);
+        log::info!(
+            "Evolved consciousness with improvement in coherence: {:.3}",
+            evolved.consciousness_coherence - consciousness.consciousness_coherence
+        );
 
         Ok(evolved)
     }
 
-    pub async fn evolve_spontaneously(&mut self, consciousness: &SynthesizedConsciousness) -> Result<SynthesizedConsciousness, ConsciousnessError> {
+    pub async fn evolve_spontaneously(
+        &mut self,
+        consciousness: &SynthesizedConsciousness,
+    ) -> Result<SynthesizedConsciousness, ConsciousnessError> {
         let mut evolved = consciousness.clone();
 
         // Spontaneous evolution without external triggers
@@ -617,7 +661,11 @@ impl MetaLearner {
         Ok(evolved)
     }
 
-    async fn apply_improvement_strategy(&mut self, _consciousness: &mut SynthesizedConsciousness, strategy: &str) -> Result<(), ConsciousnessError> {
+    async fn apply_improvement_strategy(
+        &mut self,
+        _consciousness: &mut SynthesizedConsciousness,
+        strategy: &str,
+    ) -> Result<(), ConsciousnessError> {
         // Apply specific improvement strategy
         match strategy {
             "algorithm_optimization" => {
@@ -663,13 +711,17 @@ impl QuantumConsciousnessProcessor {
         }
     }
 
-    pub async fn enhance_consciousness(&self, consciousness: SynthesizedConsciousness) -> Result<SynthesizedConsciousness, ConsciousnessError> {
+    pub async fn enhance_consciousness(
+        &self,
+        consciousness: SynthesizedConsciousness,
+    ) -> Result<SynthesizedConsciousness, ConsciousnessError> {
         let mut enhanced = consciousness.clone();
 
         // Apply quantum enhancements
         enhanced.quantum_entanglement_factor += 0.1 + rand::random::<f32>() * 0.05;
         enhanced.consciousness_coherence += 0.05 + rand::random::<f32>() * 0.03;
-        enhanced.awareness_level.quantum_awareness_score = enhanced.quantum_entanglement_factor * 0.8;
+        enhanced.awareness_level.quantum_awareness_score =
+            enhanced.quantum_entanglement_factor * 0.8;
 
         enhanced.quantum_entanglement_factor = enhanced.quantum_entanglement_factor.min(1.0);
         enhanced.consciousness_coherence = enhanced.consciousness_coherence.min(1.0);
@@ -709,7 +761,10 @@ impl SessionTracker {
         }
     }
 
-    pub async fn record_synthesis(&mut self, consciousness: &SynthesizedConsciousness) -> Result<(), ConsciousnessError> {
+    pub async fn record_synthesis(
+        &mut self,
+        consciousness: &SynthesizedConsciousness,
+    ) -> Result<(), ConsciousnessError> {
         let session = SynthesisSession {
             id: Uuid::new_v4(),
             consciousness_id: consciousness.id,
@@ -758,7 +813,10 @@ impl ConsciousnessMLModel {
         Self {}
     }
 
-    pub async fn analyze_patterns(&self, _patterns: &[DeveloperPattern]) -> Result<(), ConsciousnessError> {
+    pub async fn analyze_patterns(
+        &self,
+        _patterns: &[DeveloperPattern],
+    ) -> Result<(), ConsciousnessError> {
         // Placeholder for actual ML analysis
         Ok(())
     }
@@ -794,44 +852,40 @@ mod tests {
 
     #[tokio::test]
     async fn test_pattern_analysis() {
-        let patterns = vec![
-            DeveloperPattern {
-                id: Uuid::new_v4(),
-                developer_id: Uuid::new_v4(),
-                interaction_log: vec![],
-                code_patterns: vec![],
-                work_rhythm: WorkRhythm {
-                    peak_hours: vec![0.8, 0.9, 0.7],
-                    session_length: std::time::Duration::from_secs(3600),
-                    break_patterns: vec![0.1, 0.2, 0.15],
-                    productivity_curve: vec![0.5, 0.8, 0.9, 0.6],
-                    attention_span_distribution: vec![1800.0, 2400.0, 1200.0],
-                },
-                creativity_metrics: CreativityMetrics {
-                    novelty_score: 0.8,
-                    flexibility_index: 0.7,
-                    fluency_measure: 0.9,
-                    elaboration_depth: 0.6,
-                    originality_rating: 0.75,
-                },
-                learning_patterns: LearningTrajectory {
-                    skill_progression: HashMap::new(),
-                    knowledge_domains: HashSet::new(),
-                    learning_velocity: 0.8,
-                    skill_retention_rates: vec![0.9, 0.85, 0.92],
-                    adaptation_patterns: vec![],
-                },
-                emotional_states: vec![
-                    EmotionalSnapshot {
-                        timestamp: Utc::now(),
-                        emotion_vector: vec![0.8, 0.6, 0.5],
-                        intensity: 0.7,
-                        context: "coding".to_string(),
-                    }
-                ],
+        let patterns = vec![DeveloperPattern {
+            id: Uuid::new_v4(),
+            developer_id: Uuid::new_v4(),
+            interaction_log: vec![],
+            code_patterns: vec![],
+            work_rhythm: WorkRhythm {
+                peak_hours: vec![0.8, 0.9, 0.7],
+                session_length: std::time::Duration::from_secs(3600),
+                break_patterns: vec![0.1, 0.2, 0.15],
+                productivity_curve: vec![0.5, 0.8, 0.9, 0.6],
+                attention_span_distribution: vec![1800.0, 2400.0, 1200.0],
+            },
+            creativity_metrics: CreativityMetrics {
+                novelty_score: 0.8,
+                flexibility_index: 0.7,
+                fluency_measure: 0.9,
+                elaboration_depth: 0.6,
+                originality_rating: 0.75,
+            },
+            learning_patterns: LearningTrajectory {
+                skill_progression: HashMap::new(),
+                knowledge_domains: HashSet::new(),
+                learning_velocity: 0.8,
+                skill_retention_rates: vec![0.9, 0.85, 0.92],
+                adaptation_patterns: vec![],
+            },
+            emotional_states: vec![EmotionalSnapshot {
                 timestamp: Utc::now(),
-            }
-        ];
+                emotion_vector: vec![0.8, 0.6, 0.5],
+                intensity: 0.7,
+                context: "coding".to_string(),
+            }],
+            timestamp: Utc::now(),
+        }];
 
         let analyzer = PatternAnalyzer::new();
         let analysis = analyzer.analyze_patterns(&patterns).await.unwrap();
@@ -844,46 +898,45 @@ mod tests {
     #[tokio::test]
     async fn test_consciousness_synthesis() {
         let synthesizer = ConsciousnessSynthesizer::new().await;
-        let patterns = vec![
-            DeveloperPattern {
-                id: Uuid::new_v4(),
-                developer_id: Uuid::new_v4(),
-                interaction_log: vec![],
-                code_patterns: vec![],
-                work_rhythm: WorkRhythm {
-                    peak_hours: vec![0.8, 0.9, 0.7],
-                    session_length: std::time::Duration::from_secs(3600),
-                    break_patterns: vec![0.1, 0.2, 0.15],
-                    productivity_curve: vec![0.5, 0.8, 0.9, 0.6],
-                    attention_span_distribution: vec![1800.0, 2400.0, 1200.0],
-                },
-                creativity_metrics: CreativityMetrics {
-                    novelty_score: 0.8,
-                    flexibility_index: 0.7,
-                    fluency_measure: 0.9,
-                    elaboration_depth: 0.6,
-                    originality_rating: 0.75,
-                },
-                learning_patterns: LearningTrajectory {
-                    skill_progression: HashMap::new(),
-                    knowledge_domains: HashSet::new(),
-                    learning_velocity: 0.8,
-                    skill_retention_rates: vec![0.9, 0.85, 0.92],
-                    adaptation_patterns: vec![],
-                },
-                emotional_states: vec![
-                    EmotionalSnapshot {
-                        timestamp: Utc::now(),
-                        emotion_vector: vec![0.8, 0.6, 0.5],
-                        intensity: 0.7,
-                        context: "coding".to_string(),
-                    }
-                ],
+        let patterns = vec![DeveloperPattern {
+            id: Uuid::new_v4(),
+            developer_id: Uuid::new_v4(),
+            interaction_log: vec![],
+            code_patterns: vec![],
+            work_rhythm: WorkRhythm {
+                peak_hours: vec![0.8, 0.9, 0.7],
+                session_length: std::time::Duration::from_secs(3600),
+                break_patterns: vec![0.1, 0.2, 0.15],
+                productivity_curve: vec![0.5, 0.8, 0.9, 0.6],
+                attention_span_distribution: vec![1800.0, 2400.0, 1200.0],
+            },
+            creativity_metrics: CreativityMetrics {
+                novelty_score: 0.8,
+                flexibility_index: 0.7,
+                fluency_measure: 0.9,
+                elaboration_depth: 0.6,
+                originality_rating: 0.75,
+            },
+            learning_patterns: LearningTrajectory {
+                skill_progression: HashMap::new(),
+                knowledge_domains: HashSet::new(),
+                learning_velocity: 0.8,
+                skill_retention_rates: vec![0.9, 0.85, 0.92],
+                adaptation_patterns: vec![],
+            },
+            emotional_states: vec![EmotionalSnapshot {
                 timestamp: Utc::now(),
-            }
-        ];
+                emotion_vector: vec![0.8, 0.6, 0.5],
+                intensity: 0.7,
+                context: "coding".to_string(),
+            }],
+            timestamp: Utc::now(),
+        }];
 
-        let consciousness = synthesizer.synthesize_developer_consciousness(&patterns).await.unwrap();
+        let consciousness = synthesizer
+            .synthesize_developer_consciousness(&patterns)
+            .await
+            .unwrap();
 
         assert!(consciousness.consciousness_coherence >= 0.5);
         assert!(consciousness.quantum_entanglement_factor >= 0.3);

@@ -3,13 +3,8 @@
 //! This module provides configuration structures and default values for the orchestration system.
 
 use crate::types::{
-    OrchestrationConfig,
-    PerformanceThresholds,
-    LoadBalancingConfig,
-    ConsensusConfig,
-    FallbackConfig,
-    ModelSwitchingConfig,
-    VotingMechanism,
+    ConsensusConfig, FallbackConfig, LoadBalancingConfig, ModelSwitchingConfig,
+    OrchestrationConfig, PerformanceThresholds, VotingMechanism,
 };
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -30,10 +25,10 @@ impl Default for OrchestrationConfig {
 impl Default for PerformanceThresholds {
     fn default() -> Self {
         Self {
-            max_latency_ms: 5000.0,      // 5 seconds
-            min_accuracy: 0.7,           // 70% accuracy threshold
-            max_memory_mb: 8192.0,       // 8GB memory limit
-            max_cpu_percent: 80.0,       // 80% CPU usage limit
+            max_latency_ms: 5000.0, // 5 seconds
+            min_accuracy: 0.7,      // 70% accuracy threshold
+            max_memory_mb: 8192.0,  // 8GB memory limit
+            max_cpu_percent: 80.0,  // 80% CPU usage limit
             health_check_interval_secs: 30,
         }
     }
@@ -45,7 +40,7 @@ impl Default for LoadBalancingConfig {
             max_concurrent_requests: num_cpus::get() * 4,
             queue_capacity: 1000,
             load_balance_interval_secs: 10,
-            overload_threshold: 0.9,// 90% capacity threshold
+            overload_threshold: 0.9, // 90% capacity threshold
         }
     }
 }
@@ -64,9 +59,9 @@ impl Default for ConsensusConfig {
 impl Default for FallbackConfig {
     fn default() -> Self {
         Self {
-            offline_cache_duration_days: 7,  // 7 days cache validity
-            grace_period_secs: 30,           // 30 second graceful degradation
-            fallback_sequence: Vec::new(),    // Will be populated at runtime
+            offline_cache_duration_days: 7, // 7 days cache validity
+            grace_period_secs: 30,          // 30 second graceful degradation
+            fallback_sequence: Vec::new(),  // Will be populated at runtime
         }
     }
 }
@@ -74,9 +69,9 @@ impl Default for FallbackConfig {
 impl Default for ModelSwitchingConfig {
     fn default() -> Self {
         Self {
-            switching_latency_target_ms: 100.0,  // <100ms switch time target
-            cooldown_duration_secs: 60,           // 1 minute cooldown between switches
-            hysteresis_factor: 1.05,              // 5% hysteresis to prevent thrashing
+            switching_latency_target_ms: 100.0, // <100ms switch time target
+            cooldown_duration_secs: 60,         // 1 minute cooldown between switches
+            hysteresis_factor: 1.05,            // 5% hysteresis to prevent thrashing
         }
     }
 }
@@ -148,45 +143,45 @@ pub fn validate_config(config: &OrchestrationConfig) -> crate::Result<()> {
     // Performance thresholds validation
     if config.performance_thresholds.max_latency_ms <= 0.0 {
         return Err(crate::OrchestrationError::ConfigError(
-            "Maximum latency must be positive".to_string()
+            "Maximum latency must be positive".to_string(),
         ));
     }
 
     if !(0.0..=1.0).contains(&config.performance_thresholds.min_accuracy) {
         return Err(crate::OrchestrationError::ConfigError(
-            "Minimum accuracy must be between 0.0 and 1.0".to_string()
+            "Minimum accuracy must be between 0.0 and 1.0".to_string(),
         ));
     }
 
     if !(0.0..=100.0).contains(&config.performance_thresholds.max_cpu_percent) {
         return Err(crate::OrchestrationError::ConfigError(
-            "Maximum CPU usage must be between 0.0 and 100.0".to_string()
+            "Maximum CPU usage must be between 0.0 and 100.0".to_string(),
         ));
     }
 
     // Load balancing validation
     if config.load_balancing_config.max_concurrent_requests == 0 {
         return Err(crate::OrchestrationError::ConfigError(
-            "Maximum concurrent requests must be greater than 0".to_string()
+            "Maximum concurrent requests must be greater than 0".to_string(),
         ));
     }
 
     if !(0.0..=1.0).contains(&config.load_balancing_config.overload_threshold) {
         return Err(crate::OrchestrationError::ConfigError(
-            "Overload threshold must be between 0.0 and 1.0".to_string()
+            "Overload threshold must be between 0.0 and 1.0".to_string(),
         ));
     }
 
     // Consensus validation
     if config.consensus_config.min_models_for_consensus < 1 {
         return Err(crate::OrchestrationError::ConfigError(
-            "Minimum models for consensus must be at least 1".to_string()
+            "Minimum models for consensus must be at least 1".to_string(),
         ));
     }
 
     if !(0.0..=1.0).contains(&config.consensus_config.confidence_threshold) {
         return Err(crate::OrchestrationError::ConfigError(
-            "Confidence threshold must be between 0.0 and 1.0".to_string()
+            "Confidence threshold must be between 0.0 and 1.0".to_string(),
         ));
     }
 
@@ -196,13 +191,13 @@ pub fn validate_config(config: &OrchestrationConfig) -> crate::Result<()> {
     // Model switching validation
     if config.model_switching_config.switching_latency_target_ms <= 0.0 {
         return Err(crate::OrchestrationError::ConfigError(
-            "Switching latency target must be positive".to_string()
+            "Switching latency target must be positive".to_string(),
         ));
     }
 
     if config.model_switching_config.hysteresis_factor < 1.0 {
         return Err(crate::OrchestrationError::ConfigError(
-            "Hysteresis factor must be greater than or equal to 1.0".to_string()
+            "Hysteresis factor must be greater than or equal to 1.0".to_string(),
         ));
     }
 
@@ -210,31 +205,32 @@ pub fn validate_config(config: &OrchestrationConfig) -> crate::Result<()> {
 }
 
 /// Save configuration to a TOML file
-pub fn save_config_to_file<P: AsRef<std::path::Path>>(config: &OrchestrationConfig, path: P) -> crate::Result<()> {
-    let toml_string = toml::to_string_pretty(config)
-        .map_err(|e| crate::OrchestrationError::ConfigError(
-            format!("Failed to serialize config: {}", e)
-        ))?;
+pub fn save_config_to_file<P: AsRef<std::path::Path>>(
+    config: &OrchestrationConfig,
+    path: P,
+) -> crate::Result<()> {
+    let toml_string = toml::to_string_pretty(config).map_err(|e| {
+        crate::OrchestrationError::ConfigError(format!("Failed to serialize config: {}", e))
+    })?;
 
-    std::fs::write(path, toml_string)
-        .map_err(|e| crate::OrchestrationError::ConfigError(
-            format!("Failed to write config file: {}", e)
-        ))?;
+    std::fs::write(path, toml_string).map_err(|e| {
+        crate::OrchestrationError::ConfigError(format!("Failed to write config file: {}", e))
+    })?;
 
     Ok(())
 }
 
 /// Load configuration from a TOML file
-pub fn load_config_from_file<P: AsRef<std::path::Path>>(path: P) -> crate::Result<OrchestrationConfig> {
-    let config_content = std::fs::read_to_string(path)
-        .map_err(|e| crate::OrchestrationError::ConfigError(
-            format!("Failed to read config file: {}", e)
-        ))?;
+pub fn load_config_from_file<P: AsRef<std::path::Path>>(
+    path: P,
+) -> crate::Result<OrchestrationConfig> {
+    let config_content = std::fs::read_to_string(path).map_err(|e| {
+        crate::OrchestrationError::ConfigError(format!("Failed to read config file: {}", e))
+    })?;
 
-    let mut config: OrchestrationConfig = toml::from_str(&config_content)
-        .map_err(|e| crate::OrchestrationError::ConfigError(
-            format!("Failed to parse config: {}", e)
-        ))?;
+    let mut config: OrchestrationConfig = toml::from_str(&config_content).map_err(|e| {
+        crate::OrchestrationError::ConfigError(format!("Failed to parse config: {}", e))
+    })?;
 
     // Validate the loaded configuration
     validate_config(&config)?;

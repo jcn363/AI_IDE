@@ -1,17 +1,20 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tauri::{command, State};
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Instant;
+use tauri::{command, State};
 use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use rust_ai_ide_ai::refactoring::{RefactoringEngine, RefactoringType, RefactoringContext, RefactoringOptions, BatchRefactoring, CodeRange, SymbolKind};
-use rust_ai_ide_ai::refactoring::ChangeType as RefactoringChangeType;
-use rust_ai_ide_ai::refactoring::{RefactoringOperationFactory, BackupManager};
 use rust_ai_ide_ai::refactoring::analysis::RefactoringAnalyzer;
 use rust_ai_ide_ai::refactoring::batch::BatchRefactoringHandler;
 use rust_ai_ide_ai::refactoring::test_generation::TestGenerator;
+use rust_ai_ide_ai::refactoring::ChangeType as RefactoringChangeType;
+use rust_ai_ide_ai::refactoring::{BackupManager, RefactoringOperationFactory};
+use rust_ai_ide_ai::refactoring::{
+    BatchRefactoring, CodeRange, RefactoringContext, RefactoringEngine, RefactoringOptions,
+    RefactoringType, SymbolKind,
+};
 
 // Re-export for convenience
 pub use crate::commands::types::*;
@@ -25,7 +28,10 @@ pub async fn analyze_refactoring_context(
     request: AnalyzeContextRequest,
     state: State<'_, Arc<Mutex<crate::IDEState>>>,
 ) -> Result<serde_json::Value, String> {
-    println!("Analyzing refactoring context for file: {}", request.filePath);
+    println!(
+        "Analyzing refactoring context for file: {}",
+        request.filePath
+    );
 
     // Build enhanced analysis response with DTO structure for frontend compatibility
     let applicable_refactorings = vec![
@@ -37,8 +43,11 @@ pub async fn analyze_refactoring_context(
 
     let analysis_result = AnalysisResultDto {
         analysis_id: uuid::Uuid::new_v4().to_string(),
-        timestamp: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)
-            .unwrap().as_millis().to_string(),
+        timestamp: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis()
+            .to_string(),
         file_path: request.filePath.clone(),
         symbol_info: Some(SymbolAnalysisDto {
             name: Some("sample_function".to_string()),
@@ -69,7 +78,9 @@ pub async fn analyze_refactoring_context(
             ("extract-function".to_string(), 0.85),
             ("extract-variable".to_string(), 0.75),
             ("inline-function".to_string(), 0.6),
-        ].into_iter().collect(),
+        ]
+        .into_iter()
+        .collect(),
         warnings: vec!["Consider breaking down large functions".to_string()],
         recommendations: vec![
             "Function complexity suggests method extraction".to_string(),
@@ -116,9 +127,18 @@ pub async fn execute_refactoring(
         Some(rt) => rt,
         None => {
             let supported_types: Vec<String> = vec![
-                "rename", "extract-function", "extract-variable", "extract-interface",
-                "inline-function", "move-method", "convert-to-async", "pattern-conversion"
-            ].into_iter().map(String::from).collect();
+                "rename",
+                "extract-function",
+                "extract-variable",
+                "extract-interface",
+                "inline-function",
+                "move-method",
+                "convert-to-async",
+                "pattern-conversion",
+            ]
+            .into_iter()
+            .map(String::from)
+            .collect();
 
             return Err(format!(
                 r#"BackendError({{ "code": "UNSUPPORTED_REFACTORING", "message": "Refactoring type '{}' is not supported", "details": "Supported types: {}", "recoverable": true }})"#,
@@ -128,7 +148,8 @@ pub async fn execute_refactoring(
         }
     };
 
-    let context = request.context
+    let context = request
+        .context
         .map(|ctx| map_refactoring_context(&ctx))
         .unwrap_or_else(|| RefactoringContext {
             file_path: String::new(),
@@ -143,35 +164,47 @@ pub async fn execute_refactoring(
 
     // Use RefactoringEngine from injected state
     let mut engine_guard = refactoring_engine_state.0.lock().await;
-    let engine = engine_guard.as_mut().ok_or_else(|| "Refactoring engine not initialized".to_string())?;
-    let result = engine.execute_refactoring(&refactoring_type, &context, &options)
+    let engine = engine_guard
+        .as_mut()
+        .ok_or_else(|| "Refactoring engine not initialized".to_string())?;
+    let result = engine
+        .execute_refactoring(&refactoring_type, &context, &options)
         .await
         .map_err(|e| format!("Refactoring failed: {}", e))?;
 
     let duration = start_time.elapsed().as_millis() as u64;
-    let affected_files = result.changes.iter().map(|c| &c.file_path).collect::<std::collections::HashSet<_>>().len();
+    let affected_files = result
+        .changes
+        .iter()
+        .map(|c| &c.file_path)
+        .collect::<std::collections::HashSet<_>>()
+        .len();
 
     // Convert backend result to frontend response
     let response = RefactoringResultResponse {
         id: format!("refactor_{}", start_time.elapsed().as_nanos()),
         refactor_type: request.refactoring_type,
         success: result.success,
-        changes: result.changes.into_iter().map(|change| CodeChangeResponse {
-            file_path: change.file_path,
-            code_range: CodeRangeResponse {
-                start_line: change.range.start_line,
-                start_character: change.range.start_character,
-                end_line: change.range.end_line,
-                end_character: change.range.end_character,
-            },
-            old_text: change.old_text,
-            new_text: change.new_text,
-            change_type: match change.change_type {
-                RefactoringChangeType::Insertion => "Insertion".to_string(),
-                RefactoringChangeType::Replacement => "Replacement".to_string(),
-                RefactoringChangeType::Deletion => "Deletion".to_string(),
-            },
-        }).collect(),
+        changes: result
+            .changes
+            .into_iter()
+            .map(|change| CodeChangeResponse {
+                file_path: change.file_path,
+                code_range: CodeRangeResponse {
+                    start_line: change.range.start_line,
+                    start_character: change.range.start_character,
+                    end_line: change.range.end_line,
+                    end_character: change.range.end_character,
+                },
+                old_text: change.old_text,
+                new_text: change.new_text,
+                change_type: match change.change_type {
+                    RefactoringChangeType::Insertion => "Insertion".to_string(),
+                    RefactoringChangeType::Replacement => "Replacement".to_string(),
+                    RefactoringChangeType::Deletion => "Deletion".to_string(),
+                },
+            })
+            .collect(),
         error: result.error_message.as_ref().map(|msg| {
             // Parse detailed error information
             if msg.contains("File permission") {
@@ -205,17 +238,18 @@ pub async fn execute_refactoring(
             }
         }),
         error_message: result.error_message,
-        timestamp: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)
-            .unwrap().as_millis().to_string(),
+        timestamp: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis()
+            .to_string(),
         duration,
         affected_files,
         metrics: Some(RefactoringMetrics {
             operations_attempted: result.changes.len() as u32,
             operations_succeeded: result.changes.len() as u32,
             operations_failed: 0,
-            total_bytes_changed: result.changes.iter()
-                .map(|c| c.new_text.len() as u64)
-                .sum(),
+            total_bytes_changed: result.changes.iter().map(|c| c.new_text.len() as u64).sum(),
             average_complexity: 0.7, // Placeholder - could be calculated based on change complexity
         }),
     };
@@ -241,7 +275,10 @@ pub async fn analyze_refactoring_impact(
         }
     }
 
-    println!("Analyzing refactoring impact for type: {}", request.refactoringType);
+    println!(
+        "Analyzing refactoring impact for type: {}",
+        request.refactoringType
+    );
 
     // Use RefactoringEngine if available
     if let Ok(mut engine_guard) = refactoring_engine_state.0.try_lock() {
@@ -249,11 +286,17 @@ pub async fn analyze_refactoring_impact(
             // Map refactoring type
             let refactoring_type = match map_refactoring_type(&request.refactoringType) {
                 Some(rt) => rt,
-                None => return Err(format!("Unsupported refactoring type: {}", request.refactoringType)),
+                None => {
+                    return Err(format!(
+                        "Unsupported refactoring type: {}",
+                        request.refactoringType
+                    ))
+                }
             };
 
             // Map context if provided
-            let context = request.context
+            let context = request
+                .context
                 .map(|ctx| map_refactoring_context(&ctx))
                 .unwrap_or_else(|| RefactoringContext {
                     file_path: String::new(),
@@ -267,7 +310,10 @@ pub async fn analyze_refactoring_impact(
             let options = map_refactoring_options(&request.configuration);
 
             // Analyze impact using RefactoringEngine
-            match engine.analyze_refactoring_impact(&refactoring_type, &context, &options).await {
+            match engine
+                .analyze_refactoring_impact(&refactoring_type, &context, &options)
+                .await
+            {
                 Ok(impact_analysis) => {
                     // Convert to JSON response
                     let analysis = serde_json::json!({
@@ -336,7 +382,8 @@ pub async fn identify_refactoring_target(
     if let Ok(mut engine_guard) = refactoring_engine_state.0.try_lock() {
         if let Some(engine) = engine_guard.as_mut() {
             // Map context if provided
-            let context = request.context
+            let context = request
+                .context
                 .map(|ctx| map_refactoring_context(&ctx))
                 .unwrap_or_else(|| RefactoringContext {
                     file_path: String::new(),
@@ -372,7 +419,10 @@ pub async fn identify_refactoring_target(
                     return Ok(target);
                 }
                 Err(e) => {
-                    println!("Warning: RefactoringEngine target identification failed: {}", e);
+                    println!(
+                        "Warning: RefactoringEngine target identification failed: {}",
+                        e
+                    );
                     // Fall through to placeholder
                 }
             }
@@ -403,37 +453,51 @@ pub async fn batch_refactoring(
     state: State<'_, Arc<Mutex<crate::IDEState>>>,
     refactoring_engine_state: State<'_, crate::RefactoringEngineState>,
 ) -> Result<serde_json::Value, String> {
-    println!("Executing batch refactoring with {} operations", request.refactorings.len());
+    println!(
+        "Executing batch refactoring with {} operations",
+        request.refactorings.len()
+    );
 
     // Use RefactoringEngine if available
     if let Ok(mut engine_guard) = refactoring_engine_state.0.try_lock() {
         if let Some(engine) = engine_guard.as_mut() {
             // Convert request to BatchRefactoring format
-            let batch_operations = request.refactorings.into_iter().filter_map(|hashmap| {
-                // Convert hashmap to BatchOperation structure
-                if let (Some(refactoring_type_str), Some(context_hashmap)) = (
-                    hashmap.get("refactoringType").and_then(|v| v.as_str()),
-                    hashmap.get("context").and_then(|v| v.as_object())
-                ) {
-                    let refactoring_type = map_refactoring_type(refactoring_type_str)?;
-                    let context = parse_context_from_hashmap(context_hashmap)?;
-                    let options = hashmap.get("options")
-                        .and_then(|v| v.as_object())
-                        .map(|opts| opts.into());
+            let batch_operations = request
+                .refactorings
+                .into_iter()
+                .filter_map(|hashmap| {
+                    // Convert hashmap to BatchOperation structure
+                    if let (Some(refactoring_type_str), Some(context_hashmap)) = (
+                        hashmap.get("refactoringType").and_then(|v| v.as_str()),
+                        hashmap.get("context").and_then(|v| v.as_object()),
+                    ) {
+                        let refactoring_type = map_refactoring_type(refactoring_type_str)?;
+                        let context = parse_context_from_hashmap(context_hashmap)?;
+                        let options = hashmap
+                            .get("options")
+                            .and_then(|v| v.as_object())
+                            .map(|opts| opts.into());
 
-                    Some(BatchOperation {
-                        refactoring_type,
-                        context,
-                        options: map_refactoring_options(&options),
-                        dependencies: hashmap.get("dependencies")
-                            .and_then(|v| v.as_array())
-                            .map(|arr| arr.into_iter().filter_map(|v| v.as_str()).map(String::from).collect())
-                            .unwrap_or_default(),
-                    })
-                } else {
-                    None
-                }
-            }).collect::<Vec<_>>();
+                        Some(BatchOperation {
+                            refactoring_type,
+                            context,
+                            options: map_refactoring_options(&options),
+                            dependencies: hashmap
+                                .get("dependencies")
+                                .and_then(|v| v.as_array())
+                                .map(|arr| {
+                                    arr.into_iter()
+                                        .filter_map(|v| v.as_str())
+                                        .map(String::from)
+                                        .collect()
+                                })
+                                .unwrap_or_default(),
+                        })
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
 
             if batch_operations.is_empty() {
                 return Err("No valid refactoring operations provided".to_string());
@@ -442,7 +506,7 @@ pub async fn batch_refactoring(
             let batch = BatchRefactoring {
                 operations: batch_operations,
                 validate_independently: true, // Enable validation
-                stop_on_first_error: false,  // Continue on errors by default
+                stop_on_first_error: false,   // Continue on errors by default
                 backup_strategy: crate::Default::default(), // Use default backup strategy
             };
 
@@ -494,7 +558,10 @@ pub async fn generate_refactoring_tests(
     state: State<'_, Arc<Mutex<crate::IDEState>>>,
     refactoring_engine_state: State<'_, crate::RefactoringEngineState>,
 ) -> Result<serde_json::Value, String> {
-    println!("Generating tests for refactoring operations: {}", request.refactoringOperations.len());
+    println!(
+        "Generating tests for refactoring operations: {}",
+        request.refactoringOperations.len()
+    );
 
     // Use RefactoringEngine if available
     if let Ok(mut engine_guard) = refactoring_engine_state.0.try_lock() {
@@ -504,12 +571,16 @@ pub async fn generate_refactoring_tests(
 
             for (index, operation_hashmap) in request.refactoringOperations.iter().enumerate() {
                 if let (Some(refactoring_type_str), Some(context_hashmap)) = (
-                    operation_hashmap.get("refactoringType").and_then(|v| v.as_str()),
-                    operation_hashmap.get("context").and_then(|v| v.as_object())
+                    operation_hashmap
+                        .get("refactoringType")
+                        .and_then(|v| v.as_str()),
+                    operation_hashmap.get("context").and_then(|v| v.as_object()),
                 ) {
                     let context = parse_context_from_hashmap(context_hashmap);
 
-                    if let (Some(refactoring_type), Some(ctx)) = (map_refactoring_type(refactoring_type_str), context) {
+                    if let (Some(refactoring_type), Some(ctx)) =
+                        (map_refactoring_type(refactoring_type_str), context)
+                    {
                         let test_options = RefactoringOptions {
                             create_backup: false, // Don't create backups for test generation
                             generate_tests: true, // Enable test generation
@@ -519,14 +590,23 @@ pub async fn generate_refactoring_tests(
                             extra_options: None,
                         };
 
-                        match engine.generate_tests_for_refactoring(&refactoring_type, &ctx, &test_options).await {
+                        match engine
+                            .generate_tests_for_refactoring(&refactoring_type, &ctx, &test_options)
+                            .await
+                        {
                             Ok(tests) => {
                                 generated_tests.extend(tests);
                             }
                             Err(e) => {
-                                println!("Warning: Failed to generate tests for operation {}: {}", index, e);
+                                println!(
+                                    "Warning: Failed to generate tests for operation {}: {}",
+                                    index, e
+                                );
                                 // Add error comment
-                                generated_tests.push(format!("// Failed to generate test for operation {}: {}", index, e));
+                                generated_tests.push(format!(
+                                    "// Failed to generate test for operation {}: {}",
+                                    index, e
+                                ));
                             }
                         }
                     } else {
@@ -542,10 +622,7 @@ pub async fn generate_refactoring_tests(
     }
 
     // Fallback placeholder implementation
-    let tests = serde_json::json!([
-        "// Generated test 1",
-        "// Generated test 2"
-    ]);
+    let tests = serde_json::json!(["// Generated test 1", "// Generated test 2"]);
 
     Ok(tests)
 }
@@ -615,23 +692,42 @@ pub async fn analyze_refactoring_context_enhanced(
     let basic_analysis_request = AnalyzeContextRequest {
         filePath: request.filePath.clone(),
         selection: request.context.as_ref().and_then(|ctx| {
-            if ctx.startLine != 0 || ctx.startCharacter != 0 || ctx.endLine != 0 || ctx.endCharacter != 0 {
-                Some(serde_json::json!({
-                    "start": {"line": ctx.startLine, "character": ctx.startCharacter},
-                    "end": {"line": ctx.endLine, "character": ctx.endCharacter}
-                }).as_object().unwrap().clone())
+            if ctx.startLine != 0
+                || ctx.startCharacter != 0
+                || ctx.endLine != 0
+                || ctx.endCharacter != 0
+            {
+                Some(
+                    serde_json::json!({
+                        "start": {"line": ctx.startLine, "character": ctx.startCharacter},
+                        "end": {"line": ctx.endLine, "character": ctx.endCharacter}
+                    })
+                    .as_object()
+                    .unwrap()
+                    .clone(),
+                )
             } else {
                 None
             }
         }),
-        cursorPosition: Some(serde_json::json!({
-            "line": request.context.as_ref().map_or(0, |ctx| ctx.startLine),
-            "character": request.context.as_ref().map_or(0, |ctx| ctx.startCharacter)
-        }).as_object().unwrap().clone()),
-        configuration: Some(serde_json::json!({
-            "includeAiSuggestions": request.includeAiSuggestions,
-            "includeLspAnalysis": request.includeLspAnalysis
-        }).as_object().unwrap().clone()),
+        cursorPosition: Some(
+            serde_json::json!({
+                "line": request.context.as_ref().map_or(0, |ctx| ctx.startLine),
+                "character": request.context.as_ref().map_or(0, |ctx| ctx.startCharacter)
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        ),
+        configuration: Some(
+            serde_json::json!({
+                "includeAiSuggestions": request.includeAiSuggestions,
+                "includeLspAnalysis": request.includeLspAnalysis
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        ),
     };
 
     let basic_analysis = analyze_refactoring_context(basic_analysis_request, state.clone())
@@ -672,7 +768,10 @@ pub async fn analyze_refactoring_context_enhanced(
     }
 
     // Merge basic analysis with enhanced results
-    if let Some(applicable) = basic_analysis.get("possibleRefactorings").and_then(|v| v.as_array()) {
+    if let Some(applicable) = basic_analysis
+        .get("possibleRefactorings")
+        .and_then(|v| v.as_array())
+    {
         analysis_response["applicableRefactorings"] = serde_json::json!(applicable);
     }
 
@@ -740,11 +839,11 @@ pub async fn get_backend_capabilities(
             analysis,
             backup_recovery,
             test_generation,
-            ai_analysis: true, // Now available through enhanced analyzer
-            lsp_integration: true, // Now available through LSP client integration
-            git_integration: true, // Basic git integration available
+            ai_analysis: true,            // Now available through enhanced analyzer
+            lsp_integration: true,        // Now available through LSP client integration
+            git_integration: true,        // Basic git integration available
             cross_language_support: true, // Multiple languages supported
-            parallel_processing: true, // Parallel processing available
+            parallel_processing: true,    // Parallel processing available
         },
         performance_metrics: cache_stats,
         configuration_options: vec![
@@ -816,14 +915,28 @@ pub async fn get_available_refactorings(
 }
 
 /// Helper function to parse context from hashmap
-pub fn parse_context_from_hashmap(hashmap: &serde_json::Map<String, serde_json::Value>) -> Option<RefactoringContext> {
+pub fn parse_context_from_hashmap(
+    hashmap: &serde_json::Map<String, serde_json::Value>,
+) -> Option<RefactoringContext> {
     let file_path = hashmap.get("filePath").and_then(|v| v.as_str())?;
-    let start_line = hashmap.get("startLine").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
-    let start_character = hashmap.get("startCharacter").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+    let start_line = hashmap
+        .get("startLine")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0) as usize;
+    let start_character = hashmap
+        .get("startCharacter")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0) as usize;
 
     // Try to get end line/character, default to start if not provided (single position)
-    let end_line = hashmap.get("endLine").and_then(|v| v.as_u64()).unwrap_or(start_line as u64) as usize;
-    let end_character = hashmap.get("endCharacter").and_then(|v| v.as_u64()).unwrap_or(start_character as u64) as usize;
+    let end_line = hashmap
+        .get("endLine")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(start_line as u64) as usize;
+    let end_character = hashmap
+        .get("endCharacter")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(start_character as u64) as usize;
 
     let selection = if start_line != end_line || start_character != end_character {
         Some(CodeRange {
@@ -836,8 +949,14 @@ pub fn parse_context_from_hashmap(hashmap: &serde_json::Map<String, serde_json::
         None
     };
 
-    let symbol_name = hashmap.get("symbolName").and_then(|v| v.as_str()).map(String::from);
-    let symbol_kind = hashmap.get("symbolKind").and_then(|v| v.as_str()).map(String::from);
+    let symbol_name = hashmap
+        .get("symbolName")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let symbol_kind = hashmap
+        .get("symbolKind")
+        .and_then(|v| v.as_str())
+        .map(String::from);
 
     Some(RefactoringContext {
         file_path: file_path.to_string(),

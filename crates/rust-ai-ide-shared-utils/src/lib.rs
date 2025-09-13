@@ -64,16 +64,17 @@ pub fn get_extension(path: &Path) -> Option<&str> {
 /// let dir = Path::new("src/");
 /// assert!(!is_code_file(dir));
 /// ```
-#[must_use] 
+#[must_use]
 pub fn is_code_file(path: &Path) -> bool {
     if !path.is_file() {
         return false;
     }
 
-    get_extension(path).is_some_and(|ext| matches!(
-        ext,
-        // Rust
-        "rs" | "rlib" |
+    get_extension(path).is_some_and(|ext| {
+        matches!(
+            ext,
+            // Rust
+            "rs" | "rlib" |
         // Python
         "py" | "pyi" | "pyc" |
         // JavaScript/TypeScript
@@ -122,7 +123,8 @@ pub fn is_code_file(path: &Path) -> bool {
         "md" | "rst" | "adoc" | "tex" |
         // Other common extensions
         "sql" | "csv" | "log"
-    ))
+        )
+    })
 }
 
 /// Path utilities
@@ -136,7 +138,7 @@ pub fn is_code_file(path: &Path) -> bool {
 ///
 /// # Returns
 /// A normalized path as a String
-#[must_use] 
+#[must_use]
 pub fn normalize_path(path: &Path) -> String {
     dunce::canonicalize(path)
         .unwrap_or_else(|_| path.to_owned())
@@ -152,10 +154,9 @@ pub fn normalize_path(path: &Path) -> String {
 ///
 /// # Returns
 /// `Some(String)` containing the relative path, or `None` if computation fails
-#[must_use] 
+#[must_use]
 pub fn relative_path(base: &Path, target: &Path) -> Option<String> {
-    pathdiff::diff_paths(target, base)
-        .and_then(|p| p.to_str().map(String::from))
+    pathdiff::diff_paths(target, base).and_then(|p| p.to_str().map(String::from))
 }
 
 /// File utilities
@@ -166,7 +167,7 @@ pub fn relative_path(base: &Path, target: &Path) -> Option<String> {
 ///
 /// # Returns
 /// `Some(u64)` containing file size in bytes, or `None` if path is not a file or metadata cannot be read
-#[must_use] 
+#[must_use]
 pub fn get_file_size(path: &Path) -> Option<u64> {
     path.metadata().ok()?.len().into()
 }
@@ -178,9 +179,13 @@ pub fn get_file_size(path: &Path) -> Option<u64> {
 ///
 /// # Returns
 /// `true` if the file exists and is readable, `false` otherwise
-#[must_use] 
+#[must_use]
 pub fn is_readable(path: &Path) -> bool {
-    path.exists() && path.metadata().map(|m| !m.permissions().readonly()).unwrap_or(false)
+    path.exists()
+        && path
+            .metadata()
+            .map(|m| !m.permissions().readonly())
+            .unwrap_or(false)
 }
 
 #[cfg(test)]

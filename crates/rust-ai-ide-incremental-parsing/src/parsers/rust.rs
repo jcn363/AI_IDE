@@ -9,11 +9,11 @@ use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-use rust_ai_ide_errors::{RustAIError, IDEResult};
 use rust_ai_ide_common::validation::ValidatedFilePath;
+use rust_ai_ide_errors::{IDEResult, RustAIError};
 use rust_ai_ide_lsp::incremental::change_tracker::FileChange;
 
-use crate::{IncrementalParser, ParseTree, ParserConfig, ASTDiff, ASTChange, ASTChangeType};
+use crate::{ASTChange, ASTChangeType, ASTDiff, IncrementalParser, ParseTree, ParserConfig};
 
 /// Rust language parser with advanced parsing capabilities
 #[derive(Clone)]
@@ -147,7 +147,9 @@ impl RustIncrementalParser {
     /// Create a new Rust parser with default optimizations
     pub fn new(config: ParserConfig) -> Self {
         let mut parser = tree_sitter::Parser::new();
-        parser.set_language(tree_sitter_rust::language()).expect("Failed to load tree-sitter-rust language");
+        parser
+            .set_language(tree_sitter_rust::language())
+            .expect("Failed to load tree-sitter-rust language");
 
         Self {
             parser: Arc::new(RwLock::new(parser)),
@@ -162,7 +164,9 @@ impl RustIncrementalParser {
     /// Create parser with custom optimizations
     pub fn with_optimizations(config: ParserConfig, optimizations: RustOptimizations) -> Self {
         let mut parser = tree_sitter::Parser::new();
-        parser.set_language(tree_sitter_rust::language()).expect("Failed to load tree-sitter-rust language");
+        parser
+            .set_language(tree_sitter_rust::language())
+            .expect("Failed to load tree-sitter-rust language");
 
         Self {
             parser: Arc::new(RwLock::new(parser)),
@@ -175,16 +179,18 @@ impl RustIncrementalParser {
     }
 
     /// Parse Rust code with tree-sitter and extract logical information
-    async fn parse_internal(&mut self, source: &str, old_tree: Option<&tree_sitter::Tree>) -> IDEResult<ParseTree> {
+    async fn parse_internal(
+        &mut self,
+        source: &str,
+        old_tree: Option<&tree_sitter::Tree>,
+    ) -> IDEResult<ParseTree> {
         // Validate input size
         let source_length = source.len();
         if source_length > self.config.max_incremental_size {
-            return Err(RustAIError::Validation(
-                format!(
-                    "Source code exceeds maximum size of {} bytes (current: {})",
-                    self.config.max_incremental_size, source_length
-                )
-            ));
+            return Err(RustAIError::Validation(format!(
+                "Source code exceeds maximum size of {} bytes (current: {})",
+                self.config.max_incremental_size, source_length
+            )));
         }
 
         let parser = self.parser.write().await;
@@ -194,7 +200,7 @@ impl RustIncrementalParser {
             Some(tree) => tree,
             None => {
                 return Err(RustAIError::Compilation(
-                    "Failed to parse Rust source code with tree-sitter".to_string()
+                    "Failed to parse Rust source code with tree-sitter".to_string(),
                 ));
             }
         };
@@ -222,7 +228,11 @@ impl RustIncrementalParser {
     }
 
     /// Extract Rust logical constructs from AST
-    async fn extract_logic_info(&self, root_node: &tree_sitter::Node, source: &str) -> HashMap<String, RustLogicInfo> {
+    async fn extract_logic_info(
+        &self,
+        root_node: &tree_sitter::Node,
+        source: &str,
+    ) -> HashMap<String, RustLogicInfo> {
         let mut logic_info = HashMap::new();
 
         // Extract functions, structs, traits, macros, etc.
@@ -278,7 +288,11 @@ impl RustIncrementalParser {
     }
 
     /// Apply changes incrementally using tree-sitter
-    async fn apply_changes_incremental(&self, changes: &[FileChange], old_source: &str) -> IDEResult<Option<String>> {
+    async fn apply_changes_incremental(
+        &self,
+        changes: &[FileChange],
+        old_source: &str,
+    ) -> IDEResult<Option<String>> {
         for change in changes {
             match change.change_type {
                 rust_ai_ide_lsp::incremental::change_tracker::FileChangeType::Modified => {
@@ -305,7 +319,13 @@ impl RustIncrementalParser {
     }
 
     /// Compute AST diff with Rust-specific optimizations
-    async fn compute_ast_diff(&self, old_tree: &ParseTree, new_tree: &ParseTree, old_logic: &HashMap<String, RustLogicInfo>, new_logic: Option<&HashMap<String, RustLogicInfo>>) -> IDEResult<ASTDiff> {
+    async fn compute_ast_diff(
+        &self,
+        old_tree: &ParseTree,
+        new_tree: &ParseTree,
+        old_logic: &HashMap<String, RustLogicInfo>,
+        new_logic: Option<&HashMap<String, RustLogicInfo>>,
+    ) -> IDEResult<ASTDiff> {
         let mut diff = ASTDiff::default();
         let mut changes = Vec::new();
 
@@ -322,8 +342,18 @@ impl RustIncrementalParser {
                     change_type: ASTChangeType::Modified,
                     start_position: old_node.start_position(),
                     end_position: old_node.end_position(),
-                    old_text: Some(old_node.utf8_text(old_source.as_bytes()).unwrap_or("").to_string()),
-                    new_text: Some(new_node.utf8_text(new_source.as_bytes()).unwrap_or("").to_string()),
+                    old_text: Some(
+                        old_node
+                            .utf8_text(old_source.as_bytes())
+                            .unwrap_or("")
+                            .to_string(),
+                    ),
+                    new_text: Some(
+                        new_node
+                            .utf8_text(new_source.as_bytes())
+                            .unwrap_or("")
+                            .to_string(),
+                    ),
                     node_type: old_node.kind().to_string(),
                 });
             } else if old_node.has_changes() || new_node.has_changes() {
@@ -332,8 +362,18 @@ impl RustIncrementalParser {
                     change_type: ASTChangeType::Modified,
                     start_position: old_node.start_position(),
                     end_position: old_node.end_position(),
-                    old_text: Some(old_node.utf8_text(old_source.as_bytes()).unwrap_or("").to_string()),
-                    new_text: Some(new_node.utf8_text(new_source.as_bytes()).unwrap_or("").to_string()),
+                    old_text: Some(
+                        old_node
+                            .utf8_text(old_source.as_bytes())
+                            .unwrap_or("")
+                            .to_string(),
+                    ),
+                    new_text: Some(
+                        new_node
+                            .utf8_text(new_source.as_bytes())
+                            .unwrap_or("")
+                            .to_string(),
+                    ),
                     node_type: old_node.kind().to_string(),
                 });
             }
@@ -356,7 +396,12 @@ impl RustIncrementalParser {
                         change_type: ASTChangeType::Removed,
                         start_position: removed_node.start_position(),
                         end_position: removed_node.end_position(),
-                        old_text: Some(removed_node.utf8_text(old_source.as_bytes()).unwrap_or("").to_string()),
+                        old_text: Some(
+                            removed_node
+                                .utf8_text(old_source.as_bytes())
+                                .unwrap_or("")
+                                .to_string(),
+                        ),
                         new_text: None,
                         node_type: removed_node.kind().to_string(),
                     });
@@ -371,7 +416,12 @@ impl RustIncrementalParser {
                         start_position: added_node.start_position(),
                         end_position: added_node.end_position(),
                         old_text: None,
-                        new_text: Some(added_node.utf8_text(new_source.as_bytes()).unwrap_or("").to_string()),
+                        new_text: Some(
+                            added_node
+                                .utf8_text(new_source.as_bytes())
+                                .unwrap_or("")
+                                .to_string(),
+                        ),
                         node_type: added_node.kind().to_string(),
                     });
                     diff.additions += 1;
@@ -389,7 +439,11 @@ impl RustIncrementalParser {
 
         // Update diff counts
         diff.changes = changes;
-        diff.modifications = diff.changes.iter().filter(|c| matches!(c.change_type, ASTChangeType::Modified)).count();
+        diff.modifications = diff
+            .changes
+            .iter()
+            .filter(|c| matches!(c.change_type, ASTChangeType::Modified))
+            .count();
         diff.moves = 0; // Rust parser doesn't currently track moves
 
         Ok(diff)
@@ -398,10 +452,7 @@ impl RustIncrementalParser {
     /// Validate file path and content for Rust parsing
     async fn validate_rust_file(&self, file_path: &Path, content: &str) -> IDEResult<()> {
         // Security validation
-        let validated_path = ValidatedFilePath::new(
-            &file_path.to_string_lossy(),
-            "rust_parser",
-        )?;
+        let validated_path = ValidatedFilePath::new(&file_path.to_string_lossy(), "rust_parser")?;
 
         // Basic content validation
         if content.is_empty() {
@@ -424,19 +475,29 @@ impl RustIncrementalParser {
 }
 
 // Extraction functions for Rust constructs
-fn extract_functions(root_node: &tree_sitter::Node, source: &str, logic_info: &mut HashMap<String, RustLogicInfo>) {
+fn extract_functions(
+    root_node: &tree_sitter::Node,
+    source: &str,
+    logic_info: &mut HashMap<String, RustLogicInfo>,
+) {
     for node in walk_tree(root_node, "function_item") {
         if let Ok(function) = extract_function_info(node, source) {
             let file_key = "current_file".to_string(); // In practice, this would be the file path
-            logic_info.entry(file_key).or_default().functions.push(function);
+            logic_info
+                .entry(file_key)
+                .or_default()
+                .functions
+                .push(function);
         }
     }
 }
 
 fn extract_function_info(node: tree_sitter::Node, source: &str) -> IDEResult<FunctionInfo> {
-    let name_node = node.child_by_field_name("name")
+    let name_node = node
+        .child_by_field_name("name")
         .ok_or_else(|| RustAIError::InternalError("Function missing name".to_string()))?;
-    let name = name_node.utf8_text(source.as_bytes())
+    let name = name_node
+        .utf8_text(source.as_bytes())
         .map_err(|_| RustAIError::InternalError("Failed to extract function name".to_string()))?
         .to_string();
 
@@ -455,15 +516,18 @@ fn extract_function_info(node: tree_sitter::Node, source: &str) -> IDEResult<Fun
     }
 
     if let Some(return_type_node) = node.child_by_field_name("return_type") {
-        return_type = return_type_node.utf8_text(source.as_bytes())
+        return_type = return_type_node
+            .utf8_text(source.as_bytes())
             .map(|s| s.to_string())
             .ok();
     }
 
     // Check for async keyword
-    if node.utf8_text(source.as_bytes())
+    if node
+        .utf8_text(source.as_bytes())
         .unwrap_or("")
-        .starts_with("async ") {
+        .starts_with("async ")
+    {
         is_async = true;
     }
 
@@ -477,19 +541,29 @@ fn extract_function_info(node: tree_sitter::Node, source: &str) -> IDEResult<Fun
     })
 }
 
-fn extract_structs(root_node: &tree_sitter::Node, source: &str, logic_info: &mut HashMap<String, RustLogicInfo>) {
+fn extract_structs(
+    root_node: &tree_sitter::Node,
+    source: &str,
+    logic_info: &mut HashMap<String, RustLogicInfo>,
+) {
     for node in walk_tree(root_node, "struct_item") {
         if let Ok(struct_info) = extract_struct_info(node, source) {
             let file_key = "current_file".to_string(); // In practice, this would be the file path
-            logic_info.entry(file_key).or_default().structs.push(struct_info);
+            logic_info
+                .entry(file_key)
+                .or_default()
+                .structs
+                .push(struct_info);
         }
     }
 }
 
 fn extract_struct_info(node: tree_sitter::Node, source: &str) -> IDEResult<StructInfo> {
-    let name_node = node.child_by_field_name("name")
+    let name_node = node
+        .child_by_field_name("name")
         .ok_or_else(|| RustAIError::InternalError("Struct missing name".to_string()))?;
-    let name = name_node.utf8_text(source.as_bytes())
+    let name = name_node
+        .utf8_text(source.as_bytes())
         .map_err(|_| RustAIError::InternalError("Failed to extract struct name".to_string()))?
         .to_string();
 
@@ -497,7 +571,9 @@ fn extract_struct_info(node: tree_sitter::Node, source: &str) -> IDEResult<Struc
     let mut fields = Vec::new();
 
     // Check if it's a tuple struct vs named struct
-    let is_tuple = if let Some(field_declaration_list) = node.child_by_field_name("field_declaration_list") {
+    let is_tuple = if let Some(field_declaration_list) =
+        node.child_by_field_name("field_declaration_list")
+    {
         false // Named struct
     } else if let Some(field_declaration_list) = node.child_by_field_name("field_delimiter_list") {
         true // Tuple-like struct
@@ -533,21 +609,27 @@ fn extract_struct_info(node: tree_sitter::Node, source: &str) -> IDEResult<Struc
 }
 
 // Helper functions for extraction
-fn extract_field_info(node: tree_sitter::Node, source: &str, is_tuple: bool) -> IDEResult<FieldInfo> {
+fn extract_field_info(
+    node: tree_sitter::Node,
+    source: &str,
+    is_tuple: bool,
+) -> IDEResult<FieldInfo> {
     if is_tuple {
         return extract_field_info_with_index(node, source, 0);
     }
 
     let name_node = node.child_by_field_name("name");
     let field_name = if let Some(name_node) = name_node {
-        name_node.utf8_text(source.as_bytes())
+        name_node
+            .utf8_text(source.as_bytes())
             .map(|s| Some(s.to_string()))
             .ok()
     } else {
         None
     };
 
-    let field_type = node.child_by_field_name("type")
+    let field_type = node
+        .child_by_field_name("type")
         .and_then(|type_node| type_node.utf8_text(source.as_bytes()).ok())
         .map(|s| s.to_string());
 
@@ -561,8 +643,13 @@ fn extract_field_info(node: tree_sitter::Node, source: &str, is_tuple: bool) -> 
     })
 }
 
-fn extract_field_info_with_index(node: tree_sitter::Node, source: &str, index: usize) -> IDEResult<FieldInfo> {
-    let field_type = node.utf8_text(source.as_bytes())
+fn extract_field_info_with_index(
+    node: tree_sitter::Node,
+    source: &str,
+    index: usize,
+) -> IDEResult<FieldInfo> {
+    let field_type = node
+        .utf8_text(source.as_bytes())
         .map(|s| s.to_string())
         .ok();
 
@@ -574,17 +661,29 @@ fn extract_field_info_with_index(node: tree_sitter::Node, source: &str, index: u
     })
 }
 
-fn extract_traits(_root_node: &tree_sitter::Node, _source: &str, _logic_info: &mut HashMap<String, RustLogicInfo>) {
+fn extract_traits(
+    _root_node: &tree_sitter::Node,
+    _source: &str,
+    _logic_info: &mut HashMap<String, RustLogicInfo>,
+) {
     // Trait extraction implementation
     // This would analyze trait_item nodes to extract trait definitions
 }
 
-fn extract_macros(_root_node: &tree_sitter::Node, _source: &str, _logic_info: &mut HashMap<String, RustLogicInfo>) {
+fn extract_macros(
+    _root_node: &tree_sitter::Node,
+    _source: &str,
+    _logic_info: &mut HashMap<String, RustLogicInfo>,
+) {
     // Macro extraction implementation
     // This would analyze macro_definition nodes to extract macro definitions
 }
 
-fn extract_imports(_root_node: &tree_sitter::Node, _source: &str, _logic_info: &mut HashMap<String, RustLogicInfo>) {
+fn extract_imports(
+    _root_node: &tree_sitter::Node,
+    _source: &str,
+    _logic_info: &mut HashMap<String, RustLogicInfo>,
+) {
     // Import extraction implementation
     // This would analyze use_declaration nodes to extract import statements
 }
@@ -609,7 +708,11 @@ fn extract_visibility(node: &tree_sitter::Node, source: &str) -> Visibility {
 fn walk_tree(node: &tree_sitter::Node, node_kind: &str) -> Vec<tree_sitter::Node> {
     let mut nodes = Vec::new();
 
-    fn walk_recursive(node: tree_sitter::Node, node_kind: &str, nodes: &mut Vec<tree_sitter::Node>) {
+    fn walk_recursive(
+        node: tree_sitter::Node,
+        node_kind: &str,
+        nodes: &mut Vec<tree_sitter::Node>,
+    ) {
         if node.kind() == node_kind {
             nodes.push(node);
         }
@@ -637,7 +740,9 @@ impl IncrementalParser for RustIncrementalParser {
 
         // Apply incremental changes if available
         if let Some(changes) = changes {
-            if let Ok(Some(modified_source)) = self.apply_changes_incremental(changes, old_source).await {
+            if let Ok(Some(modified_source)) =
+                self.apply_changes_incremental(changes, old_source).await
+            {
                 return self.parse_internal(&modified_source, old_tree).await;
             }
         }
@@ -653,11 +758,16 @@ impl IncrementalParser for RustIncrementalParser {
         }
 
         // Apply changes and re-parse
-        if let Ok(Some(modified_source)) = self.apply_changes_incremental(changes, &current_source).await {
-            self.parse_incremental(&current_source, &modified_source, None).await
+        if let Ok(Some(modified_source)) = self
+            .apply_changes_incremental(changes, &current_source)
+            .await
+        {
+            self.parse_incremental(&current_source, &modified_source, None)
+                .await
         } else {
             // Fallback to full re-parse
-            self.parse_incremental(&current_source, &current_source, None).await
+            self.parse_incremental(&current_source, &current_source, None)
+                .await
         }
     }
 
@@ -665,25 +775,29 @@ impl IncrementalParser for RustIncrementalParser {
         let old_logic = &*self.logic_cache.read().await;
         let new_logic = Some(&*self.logic_cache.read().await);
 
-        self.compute_ast_diff(old_tree, new_tree, old_logic, new_logic).await
+        self.compute_ast_diff(old_tree, new_tree, old_logic, new_logic)
+            .await
     }
 
     async fn parse_file(&mut self, file_path: &Path) -> IDEResult<ParseTree> {
         // Read and validate file
-        let validated_path = ValidatedFilePath::new(
-            &file_path.to_string_lossy(),
-            "rust_parser_parse_file",
-        )?;
+        let validated_path =
+            ValidatedFilePath::new(&file_path.to_string_lossy(), "rust_parser_parse_file")?;
 
-        let content = tokio::fs::read_to_string(validated_path.as_path()).await
+        let content = tokio::fs::read_to_string(validated_path.as_path())
+            .await
             .map_err(|e| RustAIError::Io(e.into()))?;
 
         self.validate_rust_file(file_path, &content).await?;
-        self.parse_incremental("", &content, None).await.map(|mut tree| {
-            tree.file_path = Some(file_path.to_path_buf());
-            tree.last_modified = std::fs::metadata(file_path).ok().and_then(|m| m.modified().ok());
-            tree
-        })
+        self.parse_incremental("", &content, None)
+            .await
+            .map(|mut tree| {
+                tree.file_path = Some(file_path.to_path_buf());
+                tree.last_modified = std::fs::metadata(file_path)
+                    .ok()
+                    .and_then(|m| m.modified().ok());
+                tree
+            })
     }
 
     fn supported_languages(&self) -> Vec<&str> {
@@ -749,15 +863,24 @@ mod tests {
         let modified_code = "fn main() { println!(\"Hello!\"); }";
 
         // Initial parse
-        let initial_tree = parser.parse_incremental("", initial_code, None).await.unwrap();
+        let initial_tree = parser
+            .parse_incremental("", initial_code, None)
+            .await
+            .unwrap();
         assert!(!initial_tree.has_errors());
 
         // Modified parse
-        let modified_tree = parser.parse_incremental(initial_code, modified_code, None).await.unwrap();
+        let modified_tree = parser
+            .parse_incremental(initial_code, modified_code, None)
+            .await
+            .unwrap();
         assert!(!modified_tree.has_errors());
 
         // Compute diff
-        let diff = parser.get_ast_diff(&initial_tree, &modified_tree).await.unwrap();
+        let diff = parser
+            .get_ast_diff(&initial_tree, &modified_tree)
+            .await
+            .unwrap();
         assert!(diff.changes.len() > 0); // Should detect changes
     }
 

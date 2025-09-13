@@ -88,7 +88,8 @@ export function validateFineTuneForm(data: {
   if (!data.jobName?.trim()) {
     errors.jobName = 'Job name is required';
   } else if (!isValidPackageName(data.jobName)) {
-    errors.jobName = 'Job name must start with a letter and contain only alphanumeric characters, hyphens, or underscores';
+    errors.jobName =
+      'Job name must start with a letter and contain only alphanumeric characters, hyphens, or underscores';
   }
 
   // Description validation (optional but shouldn't be empty if provided)
@@ -130,14 +131,17 @@ export function validateFineTuneForm(data: {
 
   return {
     isValid: Object.keys(errors).length === 0,
-    errors
+    errors,
   };
 }
 
 /**
  * Validates configuration compatibility
  */
-export function validateModelConfigCompatibility(baseModel: string, batchSize: number): string | null {
+export function validateModelConfigCompatibility(
+  baseModel: string,
+  batchSize: number
+): string | null {
   // Example compatibility validation
   if (baseModel.includes('codellama-13b') && batchSize > 4) {
     return 'For CodeLlama 13B, batch size should not exceed 4 due to memory constraints';

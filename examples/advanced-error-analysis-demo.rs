@@ -11,10 +11,10 @@
 //!
 //! Run with: cargo run --example advanced-error-analysis-demo
 
-use rust_ai_ide_ai::advanced_error_analysis::*;
-use rust_ai_ide_ai::{AIProvider, ErrorContext, AIContext};
-use std::path::PathBuf;
 use chrono::Utc;
+use rust_ai_ide_ai::advanced_error_analysis::*;
+use rust_ai_ide_ai::{AIContext, AIProvider, ErrorContext};
+use std::path::PathBuf;
 
 /// Demonstration of Phase 2 Advanced AI Error Analysis capabilities
 #[tokio::main]
@@ -64,7 +64,8 @@ async fn demonstrate_root_cause_analysis(
 
     // Create a complex borrow checker error scenario
     let error_context = ErrorContext {
-        message: "Cannot borrow `items` as mutable because it is also borrowed as immutable".to_string(),
+        message: "Cannot borrow `items` as mutable because it is also borrowed as immutable"
+            .to_string(),
         error_code: Some("E0502".to_string()),
         context_lines: vec![
             "fn process_items(items: &mut Vec<String>) {".to_string(),
@@ -84,20 +85,32 @@ async fn demonstrate_root_cause_analysis(
     };
 
     println!("Analyzing complex borrow checker error...");
-    let root_cause = analyzer.root_cause_engine
+    let root_cause = analyzer
+        .root_cause_engine
         .analyze_root_cause(&error_context, &project_context)
         .await?;
 
     println!("📊 Root Cause Analysis Results:");
     println!("  Analysis ID: {}", root_cause.analysis_id);
     println!("  Primary Level: {:?}", root_cause.primary_level);
-    println!("  Overall Confidence: {:.2}%", root_cause.confidence * 100.0);
+    println!(
+        "  Overall Confidence: {:.2}%",
+        root_cause.confidence * 100.0
+    );
 
     println!("\n📋 Cause Chain:");
     for (i, link) in root_cause.cause_chain.iter().enumerate() {
-        println!("  {}. {} ({:.1}% confidence)", i + 1, link.message, link.confidence * 100.0);
+        println!(
+            "  {}. {} ({:.1}% confidence)",
+            i + 1,
+            link.message,
+            link.confidence * 100.0
+        );
         if let Some(ref location) = link.location {
-            println!("     Location: {}:{}:{}", location.file_path, location.line, location.column);
+            println!(
+                "     Location: {}:{}:{}",
+                location.file_path, location.line, location.column
+            );
         }
     }
 
@@ -108,9 +121,18 @@ async fn demonstrate_root_cause_analysis(
 
     println!("\n⚡ Impact Assessment:");
     println!("  Scope: {:?}", root_cause.impact_assessment.scope);
-    println!("  Risk Level: {:?}", root_cause.impact_assessment.risk_level);
-    println!("  Urgency Score: {:.2}%", root_cause.impact_assessment.urgency_score * 100.0);
-    println!("  Affected Files: {}", root_cause.impact_assessment.affected_files.len());
+    println!(
+        "  Risk Level: {:?}",
+        root_cause.impact_assessment.risk_level
+    );
+    println!(
+        "  Urgency Score: {:.2}%",
+        root_cause.impact_assessment.urgency_score * 100.0
+    );
+    println!(
+        "  Affected Files: {}",
+        root_cause.impact_assessment.affected_files.len()
+    );
 
     println!("✅ Multi-level root cause analysis completed successfully!");
     Ok(())
@@ -132,7 +154,10 @@ async fn demonstrate_predictive_prevention(
         dependencies: vec![],
         impact_assessment: ImpactAssessment {
             scope: ImpactScope::ModuleLevel,
-            affected_files: vec!["src/async_ops.rs".to_string(), "src/data_processor.rs".to_string()],
+            affected_files: vec![
+                "src/async_ops.rs".to_string(),
+                "src/data_processor.rs".to_string(),
+            ],
             risk_level: RiskLevel::High,
             level_breakdown: [(ErrorLevel::Function, 5)].iter().cloned().collect(),
             urgency_score: 0.8,
@@ -142,7 +167,8 @@ async fn demonstrate_predictive_prevention(
     };
 
     println!("Analyzing predictive error patterns...");
-    let predictions = analyzer.prediction_system
+    let predictions = analyzer
+        .prediction_system
         .predict_related_errors(&root_cause)
         .await?;
 
@@ -152,7 +178,12 @@ async fn demonstrate_predictive_prevention(
     println!("\n🎯 High-Risk Predictions:");
     for (i, prediction) in predictions.iter().enumerate() {
         if prediction.likelihood > 0.7 {
-            println!("  {}. {} ({}% likelihood)", i + 1, prediction.error_type, (prediction.likelihood * 100.0) as i32);
+            println!(
+                "  {}. {} ({}% likelihood)",
+                i + 1,
+                prediction.error_type,
+                (prediction.likelihood * 100.0) as i32
+            );
             println!("     Contributing: {:?}", prediction.contributing_factors);
             println!("     Prevention: {:?}", prediction.preventive_suggestions);
         }
@@ -210,7 +241,8 @@ async fn demonstrate_solution_generation(
     };
 
     println!("Generating automated solutions...");
-    let solutions = analyzer.solution_generator
+    let solutions = analyzer
+        .solution_generator
         .generate_solutions(&root_cause, &error_context)
         .await?;
 
@@ -219,7 +251,12 @@ async fn demonstrate_solution_generation(
 
     println!("\n💡 Recommended Solutions:");
     for (i, solution) in solutions.iter().enumerate() {
-        println!("  {}. {} ({:.1}% confidence)", i + 1, solution.title, solution.confidence * 100.0);
+        println!(
+            "  {}. {} ({:.1}% confidence)",
+            i + 1,
+            solution.title,
+            solution.confidence * 100.0
+        );
         println!("     Auto-applicable: {}", solution.auto_applicable);
         println!("     Changes required: {}", solution.changes.len());
         println!("     Impact: {:?}", solution.impact);
@@ -276,8 +313,14 @@ async fn demonstrate_clustering_impact(
             error_type: "memory_leak".to_string(),
             likelihood: 0.85,
             time_window_hours: 48,
-            contributing_factors: vec!["Improper Arc usage".to_string(), "Missing Drop implementations".to_string()],
-            preventive_suggestions: vec!["Implement RAII pattern".to_string(), "Use memory profiling tools".to_string()],
+            contributing_factors: vec![
+                "Improper Arc usage".to_string(),
+                "Missing Drop implementations".to_string(),
+            ],
+            preventive_suggestions: vec![
+                "Implement RAII pattern".to_string(),
+                "Use memory profiling tools".to_string(),
+            ],
         },
         PredictionResult {
             prediction_id: "pred_2".to_string(),
@@ -290,7 +333,8 @@ async fn demonstrate_clustering_impact(
     ];
 
     println!("Analyzing systemic impact of error cluster...");
-    let impact_analysis = analyzer.impact_analyzer
+    let impact_analysis = analyzer
+        .impact_analyzer
         .assess_impacts(&root_cause, &predictions)
         .await?;
 
@@ -298,12 +342,21 @@ async fn demonstrate_clustering_impact(
     println!("  Error Cluster: Memory Management Issues");
     println!("  Affected Files: {}", impact_analysis.affected_files.len());
     println!("  Risk Level: {:?}", impact_analysis.risk_level);
-    println!("  Urgency Score: {:.1}%", impact_analysis.urgency_score * 100.0);
+    println!(
+        "  Urgency Score: {:.1}%",
+        impact_analysis.urgency_score * 100.0
+    );
     println!("  Business Impact: {}", impact_analysis.business_impact);
 
     println!("\n🔗 Related Predictions:");
     for (i, pred) in predictions.iter().enumerate() {
-        println!("  {}. {} ({}% in {}h)", i + 1, pred.error_type, (pred.likelihood * 100.0) as i32, pred.time_window_hours);
+        println!(
+            "  {}. {} ({}% in {}h)",
+            i + 1,
+            pred.error_type,
+            (pred.likelihood * 100.0) as i32,
+            pred.time_window_hours
+        );
     }
 
     println!("✅ Error clustering and impact analysis completed!");
@@ -344,7 +397,8 @@ async fn demonstrate_evolution_tracking(
     };
 
     println!("Tracking error evolution patterns...");
-    let evolution_patterns = analyzer.evolution_tracker
+    let evolution_patterns = analyzer
+        .evolution_tracker
         .track_evolution(&root_cause, &error_context)
         .await?;
 
@@ -353,12 +407,22 @@ async fn demonstrate_evolution_tracking(
 
     println!("\n🔄 Evolution Patterns:");
     for (i, pattern) in evolution_patterns.iter().enumerate() {
-        println!("  {}. {} (Frequency: {})", i + 1, pattern.description, pattern.frequency);
+        println!(
+            "  {}. {} (Frequency: {})",
+            i + 1,
+            pattern.description,
+            pattern.frequency
+        );
         println!("     Severity: {}", pattern.impact_severity);
 
         println!("     Evolution Stages:");
         for (j, stage) in pattern.evolution_stages.iter().enumerate() {
-            println!("       {}. {} (avg {} days)", j + 1, stage.stage_name, stage.average_duration_days as i32);
+            println!(
+                "       {}. {} (avg {} days)",
+                j + 1,
+                stage.stage_name,
+                stage.average_duration_days as i32
+            );
         }
     }
 
@@ -402,8 +466,14 @@ async fn demonstrate_comprehensive_analysis(
 
     println!("🧠 Comprehensive Analysis Results:");
     println!("  Analysis ID: {}", comprehensive_result.analysis_id);
-    println!("  Overall Confidence: {:.2}%", comprehensive_result.confidence_score * 100.0);
-    println!("  Root Cause Level: {:?}", comprehensive_result.root_cause_analysis.primary_level);
+    println!(
+        "  Overall Confidence: {:.2}%",
+        comprehensive_result.confidence_score * 100.0
+    );
+    println!(
+        "  Root Cause Level: {:?}",
+        comprehensive_result.root_cause_analysis.primary_level
+    );
 
     println!("\n📊 Multi-Level Breakdown:");
     for (level, count) in &comprehensive_result.impacts.level_breakdown {
@@ -411,26 +481,52 @@ async fn demonstrate_comprehensive_analysis(
     }
 
     println!("\n💡 Intelligent Suggestions:");
-    println!("  Root Cause Fixes: {}", comprehensive_result.solutions.len());
-    println!("  Predictive Warnings: {}", comprehensive_result.predictions.len());
-    println!("  Evolution Patterns: {}", comprehensive_result.evolution_patterns.len());
+    println!(
+        "  Root Cause Fixes: {}",
+        comprehensive_result.solutions.len()
+    );
+    println!(
+        "  Predictive Warnings: {}",
+        comprehensive_result.predictions.len()
+    );
+    println!(
+        "  Evolution Patterns: {}",
+        comprehensive_result.evolution_patterns.len()
+    );
 
     println!("\n🎯 Key Intelligence Insights:");
-    println!("  ⚡ Impact Scope: {:?}", comprehensive_result.impacts.scope);
-    println!("  ⚠️  Risk Level: {:?}", comprehensive_result.impacts.risk_level);
-    println!("  🔥 Urgency: {:.1}%", comprehensive_result.impacts.urgency_score * 100.0);
+    println!(
+        "  ⚡ Impact Scope: {:?}",
+        comprehensive_result.impacts.scope
+    );
+    println!(
+        "  ⚠️  Risk Level: {:?}",
+        comprehensive_result.impacts.risk_level
+    );
+    println!(
+        "  🔥 Urgency: {:.1}%",
+        comprehensive_result.impacts.urgency_score * 100.0
+    );
 
     // Calculate and display system intelligence metrics
     println!("\n📈 Intelligence Metrics:");
-    let intelligence_score = (comprehensive_result.confidence_score + comprehensive_result.impacts.urgency_score) / 2.0 * 100.0;
+    let intelligence_score =
+        (comprehensive_result.confidence_score + comprehensive_result.impacts.urgency_score) / 2.0
+            * 100.0;
     println!("  System Intelligence Score: {:.1}%", intelligence_score);
 
-    let solutions_coverage = comprehensive_result.solutions.len() as f32 / (comprehensive_result.root_cause_analysis.cause_chain.len() as f32) * 100.0;
+    let solutions_coverage = comprehensive_result.solutions.len() as f32
+        / (comprehensive_result.root_cause_analysis.cause_chain.len() as f32)
+        * 100.0;
     println!("  Solution Coverage: {:.1}%", solutions_coverage);
 
-    let prediction_precision = comprehensive_result.predictions.iter()
+    let prediction_precision = comprehensive_result
+        .predictions
+        .iter()
         .map(|p| p.likelihood)
-        .sum::<f32>() / comprehensive_result.predictions.len() as f32 * 100.0;
+        .sum::<f32>()
+        / comprehensive_result.predictions.len() as f32
+        * 100.0;
     println!("  Prediction Precision: {:.1}%", prediction_precision);
 
     println!("✅ Comprehensive error intelligence analysis completed!");

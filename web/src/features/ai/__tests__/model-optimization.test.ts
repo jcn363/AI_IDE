@@ -1,11 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import ModelService from '../services/ModelService';
-import type {
-  QuantizationConfig,
-  ModelInfo,
-  FineTuningRequest,
-  TrainingMetrics
-} from '../types';
+import type { QuantizationConfig, ModelInfo, FineTuningRequest, TrainingMetrics } from '../types';
 
 describe('AI/ML Model Optimization Enhancements', () => {
   let modelService: ModelService;
@@ -135,11 +130,9 @@ describe('AI/ML Model Optimization Enhancements', () => {
     });
 
     it('should add and track model versions', () => {
-      const experimentId = modelService.startExperiment(
-        'Version Test',
-        'code-llama-7b',
-        { learningRate: 1e-4 }
-      );
+      const experimentId = modelService.startExperiment('Version Test', 'code-llama-7b', {
+        learningRate: 1e-4,
+      });
 
       modelService.addModelVersion(
         experimentId,
@@ -164,8 +157,7 @@ describe('AI/ML Model Optimization Enhancements', () => {
       const versions = modelService.getModelVersions('code-llama-7b');
       expect(versions.length).toBe(2);
 
-      const activeVersion = modelService.getModelVersions('code-llama-7b')
-        .find(v => v.isActive);
+      const activeVersion = modelService.getModelVersions('code-llama-7b').find((v) => v.isActive);
 
       expect(activeVersion?.modelId).toBe('code-llama-7b-v2');
 
@@ -173,11 +165,7 @@ describe('AI/ML Model Optimization Enhancements', () => {
     });
 
     it('should support model rollback', async () => {
-      const experimentId = modelService.startExperiment(
-        'Rollback Test',
-        'code-llama-7b',
-        {}
-      );
+      const experimentId = modelService.startExperiment('Rollback Test', 'code-llama-7b', {});
 
       // Mock rollback functionality
       expect(typeof modelService.rollbackModel).toBe('function');
@@ -186,11 +174,7 @@ describe('AI/ML Model Optimization Enhancements', () => {
     });
 
     it('should compare model versions', () => {
-      const experimentId = modelService.startExperiment(
-        'Comparison Test',
-        'code-llama-7b',
-        {}
-      );
+      const experimentId = modelService.startExperiment('Comparison Test', 'code-llama-7b', {});
 
       modelService.addModelVersion(
         experimentId,
@@ -208,16 +192,14 @@ describe('AI/ML Model Optimization Enhancements', () => {
         { accuracy: 0.85, loss: 2.1 }
       );
 
-      const comparison = modelService.compareVersions(
-        'code-llama-7b',
-        'model-v1',
-        'model-v2'
-      );
+      const comparison = modelService.compareVersions('code-llama-7b', 'model-v1', 'model-v2');
 
       expect(comparison.differences.length).toBeGreaterThan(0);
-      expect(comparison.differences.some(diff =>
-        diff.includes('learningRate') || diff.includes('batchSize')
-      )).toBe(true);
+      expect(
+        comparison.differences.some(
+          (diff) => diff.includes('learningRate') || diff.includes('batchSize')
+        )
+      ).toBe(true);
 
       console.log('✅ Model version comparison verified');
     });
@@ -260,7 +242,7 @@ describe('AI/ML Model Optimization Enhancements', () => {
       // Test different optimization targets
       const targets = ['loss', 'accuracy', 'f1', 'precision', 'recall'];
 
-      targets.forEach(target => {
+      targets.forEach((target) => {
         // Verify target is valid
         expect(['loss', 'accuracy', 'f1', 'precision', 'recall']).toContain(target);
       });

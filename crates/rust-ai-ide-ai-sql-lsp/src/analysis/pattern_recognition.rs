@@ -6,12 +6,15 @@
 //! - Historical pattern analysis and trend detection
 //! - Similarity-based pattern matching
 
+use chrono::{DateTime, Duration, Utc};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use std::collections::HashMap;
-use chrono::{DateTime, Utc, Duration};
 
-use crate::{AIEnhancedResult, PatternRecognitionEngine, QueryPatternType, QueryPatternAnalysis, ComplexityLevel, SimilarPattern, PatternTrend, PatternEvolution, TrendDirection, PerformanceMetric};
+use crate::{
+    AIEnhancedResult, ComplexityLevel, PatternEvolution, PatternRecognitionEngine, PatternTrend,
+    PerformanceMetric, QueryPatternAnalysis, QueryPatternType, SimilarPattern, TrendDirection,
+};
 
 /// Machine learning-powered pattern recognition engine
 pub struct MLPatternRecognitionEngine {
@@ -178,13 +181,19 @@ impl MLPatternRecognitionEngine {
             classifiers: HashMap::new(),
             pattern_database: Arc::new(RwLock::new(HashMap::new())),
             complexity_assessors: HashMap::new(),
-            trend_analyzer: Arc::new(RwLock::new(PatternTrendAnalyzer::new(config.trend_window_days))),
+            trend_analyzer: Arc::new(RwLock::new(PatternTrendAnalyzer::new(
+                config.trend_window_days,
+            ))),
             config,
         }
     }
 
     /// Analyze a query and recognize its patterns
-    pub async fn analyze_query(&self, query: &str, query_hash: &str) -> AIEnhancedResult<QueryPatternAnalysis> {
+    pub async fn analyze_query(
+        &self,
+        query: &str,
+        query_hash: &str,
+    ) -> AIEnhancedResult<QueryPatternAnalysis> {
         // Extract features from the query
         let feature_vector = self.extract_query_features(query).await?;
 
@@ -214,7 +223,8 @@ impl MLPatternRecognitionEngine {
         };
 
         // Update pattern database
-        self.update_pattern_database(query_hash, &analysis, &feature_vector).await?;
+        self.update_pattern_database(query_hash, &analysis, &feature_vector)
+            .await?;
 
         Ok(analysis)
     }
@@ -233,7 +243,10 @@ impl MLPatternRecognitionEngine {
     }
 
     /// Use ML classifier to determine query pattern type
-    async fn classify_query_pattern(&self, _feature_vector: &[f32]) -> AIEnhancedResult<(QueryPatternType, f32)> {
+    async fn classify_query_pattern(
+        &self,
+        _feature_vector: &[f32],
+    ) -> AIEnhancedResult<(QueryPatternType, f32)> {
         // TODO: Implement actual ML classification
         // This would use trained classifiers to predict pattern type
 
@@ -242,7 +255,11 @@ impl MLPatternRecognitionEngine {
     }
 
     /// Use ML models to assess query complexity
-    async fn assess_query_complexity(&self, _feature_vector: &[f32], _query: &str) -> AIEnhancedResult<ComplexityLevel> {
+    async fn assess_query_complexity(
+        &self,
+        _feature_vector: &[f32],
+        _query: &str,
+    ) -> AIEnhancedResult<ComplexityLevel> {
         // TODO: Implement actual complexity assessment
         // This would use regression models to predict complexity
 
@@ -250,14 +267,18 @@ impl MLPatternRecognitionEngine {
     }
 
     /// Find similar patterns in historical database
-    async fn find_similar_patterns(&self, _feature_vector: &[f32]) -> AIEnhancedResult<Vec<SimilarPattern>> {
+    async fn find_similar_patterns(
+        &self,
+        _feature_vector: &[f32],
+    ) -> AIEnhancedResult<Vec<SimilarPattern>> {
         // TODO: Implement similarity matching
         // This would use vector similarity (cosine similarity, etc.) to find patterns
 
         let pattern_db = self.pattern_database.read().await;
 
         // Placeholder: return top similar patterns
-        let similar_patterns = pattern_db.values()
+        let similar_patterns = pattern_db
+            .values()
             .take(self.config.max_similarity_search.min(5))
             .map(|record| SimilarPattern {
                 pattern_id: record.pattern_id.clone(),
@@ -272,7 +293,10 @@ impl MLPatternRecognitionEngine {
     }
 
     /// Analyze usage trends for specific pattern types
-    async fn analyze_pattern_trend(&self, _pattern_type: &QueryPatternType) -> AIEnhancedResult<PatternTrend> {
+    async fn analyze_pattern_trend(
+        &self,
+        _pattern_type: &QueryPatternType,
+    ) -> AIEnhancedResult<PatternTrend> {
         // TODO: Implement trend analysis using historical data
 
         Ok(PatternTrend {
@@ -290,10 +314,13 @@ impl MLPatternRecognitionEngine {
     }
 
     /// Calculate frequency ranking among all patterns
-    async fn calculate_frequency_ranking(&self, _pattern_type: &QueryPatternType) -> AIEnhancedResult<usize> {
+    async fn calculate_frequency_ranking(
+        &self,
+        _pattern_type: &QueryPatternType,
+    ) -> AIEnhancedResult<usize> {
         // TODO: Implement ranking calculation based on usage statistics
 
-        Ok(7)  // Placeholder ranking
+        Ok(7) // Placeholder ranking
     }
 
     /// Update the pattern database with new analysis results
@@ -374,7 +401,10 @@ impl PatternTrendAnalyzer {
     }
 
     /// Calculate trend for specific pattern
-    pub async fn calculate_trend(&self, pattern_id: &str) -> AIEnhancedResult<Option<PatternTrend>> {
+    pub async fn calculate_trend(
+        &self,
+        pattern_id: &str,
+    ) -> AIEnhancedResult<Option<PatternTrend>> {
         if let Some(data_points) = self.trend_data.get(pattern_id) {
             if data_points.len() < self.min_data_points {
                 return Ok(None);
@@ -458,19 +488,29 @@ mod tests {
         let old_time = Utc::now() - Duration::days(10);
         let new_time = Utc::now();
 
-        analyzer.add_data_point("test_pattern", TrendDataPoint {
-            timestamp: old_time,
-            usage_count: 1.0,
-            performance_metric: 100.0,
-            accuracy_score: 0.8,
-        }).await;
+        analyzer
+            .add_data_point(
+                "test_pattern",
+                TrendDataPoint {
+                    timestamp: old_time,
+                    usage_count: 1.0,
+                    performance_metric: 100.0,
+                    accuracy_score: 0.8,
+                },
+            )
+            .await;
 
-        analyzer.add_data_point("test_pattern", TrendDataPoint {
-            timestamp: new_time,
-            usage_count: 2.0,
-            performance_metric: 95.0,
-            accuracy_score: 0.85,
-        }).await;
+        analyzer
+            .add_data_point(
+                "test_pattern",
+                TrendDataPoint {
+                    timestamp: new_time,
+                    usage_count: 2.0,
+                    performance_metric: 95.0,
+                    accuracy_score: 0.85,
+                },
+            )
+            .await;
 
         // The old data point should be cleaned up
         if let Some(data_points) = analyzer.trend_data.get("test_pattern") {

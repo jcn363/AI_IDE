@@ -1,20 +1,12 @@
 import {
   Build as BuildIcon,
   CheckCircle as CheckCircleIcon,
-  Code as CodeIcon, 
+  Code as CodeIcon,
   Info as InfoIcon,
   Memory as MemoryIcon,
   Speed as SpeedIcon,
 } from '@mui/icons-material';
-import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  List,
-  Typography,
-  useTheme,
-} from '@mui/material';
+import { Box, Card, CardContent, Chip, List, Typography, useTheme } from '@mui/material';
 import Button from '@mui/material/Button';
 import React from 'react';
 import { PerformanceRecommendation } from '../types';
@@ -64,19 +56,14 @@ export const PerformanceRecommendations: React.FC<PerformanceRecommendationsProp
 
   if (recommendations.length === 0) {
     return (
-      <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
-        p={4}
-      >
+      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={4}>
         <CheckCircleIcon color="success" fontSize="large" />
         <Typography variant="h6" color="textSecondary" gutterBottom>
           No performance recommendations
         </Typography>
         <Typography variant="body2" color="textSecondary" align="center">
-          Your code is performing well. We'll let you know if we find any optimization opportunities.
+          Your code is performing well. We'll let you know if we find any optimization
+          opportunities.
         </Typography>
       </Box>
     );
@@ -103,7 +90,7 @@ export const PerformanceRecommendations: React.FC<PerformanceRecommendationsProp
                 }}
               />
             </Box>
-            
+
             <Typography variant="body2" color="text.secondary" paragraph>
               {rec.description}
             </Typography>
@@ -127,11 +114,7 @@ export const PerformanceRecommendations: React.FC<PerformanceRecommendationsProp
               >
                 Apply
               </Button>
-              <Button
-                size="small"
-                variant="text"
-                onClick={() => onDismissRecommendation?.(rec.id)}
-              >
+              <Button size="small" variant="text" onClick={() => onDismissRecommendation?.(rec.id)}>
                 Dismiss
               </Button>
             </Box>

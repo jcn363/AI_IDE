@@ -9,7 +9,7 @@ import {
   useTheme,
   Skeleton,
   Chip,
-  Tooltip
+  Tooltip,
 } from '@mui/material';
 import { Search, Code, Description, Folder, Star, StarBorder } from '@mui/icons-material';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
@@ -145,9 +145,7 @@ const CodeListItem: React.FC<{
     >
       <Box sx={{ display: 'flex', width: '100%', alignItems: 'flex-start', p: 1 }}>
         {/* Icon */}
-        <Box sx={{ mr: 1, mt: 0.5 }}>
-          {getItemIcon()}
-        </Box>
+        <Box sx={{ mr: 1, mt: 0.5 }}>{getItemIcon()}</Box>
 
         {/* Content */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -157,11 +155,7 @@ const CodeListItem: React.FC<{
               {item.path.split('/').pop()}
             </Typography>
             {showLineNumbers && 'lineNumber' in item && (
-              <Chip
-                size="small"
-                label={`Line ${item.lineNumber}`}
-                sx={{ ml: 1, height: 18 }}
-              />
+              <Chip size="small" label={`Line ${item.lineNumber}`} sx={{ ml: 1, height: 18 }} />
             )}
             {!isResult && item.type && (
               <Chip
@@ -197,17 +191,19 @@ const CodeListItem: React.FC<{
                   {item.context}
                 </Typography>
               )}
-              <Box sx={{
-                p: 1,
-                backgroundColor: theme.palette.grey[50],
-                borderRadius: 1,
-                fontFamily: 'monospace',
-                fontSize: '0.875rem',
-                whiteSpace: 'pre-wrap',
-                maxHeight: 120,
-                overflow: 'hidden',
-                wordBreak: 'break-word',
-              }}>
+              <Box
+                sx={{
+                  p: 1,
+                  backgroundColor: theme.palette.grey[50],
+                  borderRadius: 1,
+                  fontFamily: 'monospace',
+                  fontSize: '0.875rem',
+                  whiteSpace: 'pre-wrap',
+                  maxHeight: 120,
+                  overflow: 'hidden',
+                  wordBreak: 'break-word',
+                }}
+              >
                 {item.content}
               </Box>
             </Box>
@@ -279,23 +275,26 @@ export const VirtualizedCodeList: React.FC<VirtualizedCodeListProps> = ({
   }, [updateVisibleItems]);
 
   // Render virtualized list item
-  const renderItem = useCallback((props: ListChildComponentProps) => {
-    const { index, style } = props;
-    const item = visibleItems[index];
+  const renderItem = useCallback(
+    (props: ListChildComponentProps) => {
+      const { index, style } = props;
+      const item = visibleItems[index];
 
-    return (
-      <div style={style}>
-        <CodeListItem
-          item={item}
-          onClick={onItemClick}
-          onHover={onItemHover}
-          showRelevanceScore={showRelevanceScore}
-          showGitStatus={showGitStatus}
-          showLineNumbers={showLineNumbers}
-        />
-      </div>
-    );
-  }, [visibleItems, onItemClick, onItemHover, showRelevanceScore, showGitStatus, showLineNumbers]);
+      return (
+        <div style={style}>
+          <CodeListItem
+            item={item}
+            onClick={onItemClick}
+            onHover={onItemHover}
+            showRelevanceScore={showRelevanceScore}
+            showGitStatus={showGitStatus}
+            showLineNumbers={showLineNumbers}
+          />
+        </div>
+      );
+    },
+    [visibleItems, onItemClick, onItemHover, showRelevanceScore, showGitStatus, showLineNumbers]
+  );
 
   // Loading state
   if (isLoading && visibleItems.length === 0) {
@@ -326,9 +325,7 @@ export const VirtualizedCodeList: React.FC<VirtualizedCodeListProps> = ({
         <Typography variant="h6" gutterBottom>
           No results found
         </Typography>
-        <Typography variant="body2">
-          Try adjusting your search query
-        </Typography>
+        <Typography variant="body2">Try adjusting your search query</Typography>
       </Box>
     );
   }

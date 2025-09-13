@@ -1,15 +1,15 @@
 #[cfg(test)]
 mod tests {
     use async_trait::async_trait;
-    use std::fs;
-    use std::io::Write;
-    use tempfile::NamedTempFile;
     use rust_ai_ide_ai_refactoring::class_struct_operations::{
-        ExtractInterfaceOperation, SplitClassOperation, MergeClassesOperation,
-        ExtractClassOperation, EncapsulateFieldOperation, GenerateGettersSettersOperation
+        EncapsulateFieldOperation, ExtractClassOperation, ExtractInterfaceOperation,
+        GenerateGettersSettersOperation, MergeClassesOperation, SplitClassOperation,
     };
     use rust_ai_ide_ai_refactoring::types::*;
     use rust_ai_ide_ai_refactoring::RefactoringOperation;
+    use std::fs;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
 
     // Helper function to create temporary Rust file with test content
     fn create_temp_rust_file(content: &str) -> NamedTempFile {
@@ -22,8 +22,14 @@ mod tests {
     async fn test_extract_interface_operation_name_and_description() {
         let operation = ExtractInterfaceOperation;
         assert_eq!(operation.name(), "Extract Interface");
-        assert_eq!(operation.description(), "Extracts an interface from a class or struct");
-        assert_eq!(operation.refactoring_type(), RefactoringType::ExtractInterface);
+        assert_eq!(
+            operation.description(),
+            "Extracts an interface from a class or struct"
+        );
+        assert_eq!(
+            operation.refactoring_type(),
+            RefactoringType::ExtractInterface
+        );
     }
 
     #[tokio::test]
@@ -53,7 +59,10 @@ mod tests {
             symbol_kind: Some(SymbolKind::Function),
             ..context
         };
-        assert!(!operation.is_applicable(&context_function, None).await.unwrap());
+        assert!(!operation
+            .is_applicable(&context_function, None)
+            .await
+            .unwrap());
     }
 
     #[tokio::test]
@@ -102,8 +111,16 @@ impl CalculatorService {
         let result = operation.execute(&context, &options).await.unwrap();
         assert!(result.success);
         assert!(result.new_content.is_some());
-        assert!(result.new_content.as_ref().unwrap().contains("trait CalculatorInterface"));
-        assert!(result.new_content.as_ref().unwrap().contains("impl CalculatorInterface for CalculatorService"));
+        assert!(result
+            .new_content
+            .as_ref()
+            .unwrap()
+            .contains("trait CalculatorInterface"));
+        assert!(result
+            .new_content
+            .as_ref()
+            .unwrap()
+            .contains("impl CalculatorInterface for CalculatorService"));
         assert!(!result.warnings.is_empty());
     }
 
@@ -139,7 +156,10 @@ impl SimpleService {
 
         let result = operation.execute(&context, &options).await;
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("needs at least 2 public methods"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("needs at least 2 public methods"));
     }
 
     #[tokio::test]
@@ -166,7 +186,10 @@ impl SimpleService {
     async fn test_split_class_operation_name_and_description() {
         let operation = SplitClassOperation;
         assert_eq!(operation.name(), "Split Class");
-        assert_eq!(operation.description(), "Splits a large class into multiple smaller classes using composition");
+        assert_eq!(
+            operation.description(),
+            "Splits a large class into multiple smaller classes using composition"
+        );
         assert_eq!(operation.refactoring_type(), RefactoringType::SplitClass);
     }
 
@@ -190,14 +213,20 @@ impl SimpleService {
             symbol_name: None,
             ..context
         };
-        assert!(!operation.is_applicable(&context_no_name, None).await.unwrap());
+        assert!(!operation
+            .is_applicable(&context_no_name, None)
+            .await
+            .unwrap());
 
         // Not applicable for non-structs
         let context_function = RefactoringContext {
             symbol_kind: Some(SymbolKind::Function),
             ..context
         };
-        assert!(!operation.is_applicable(&context_function, None).await.unwrap());
+        assert!(!operation
+            .is_applicable(&context_function, None)
+            .await
+            .unwrap());
     }
 
     #[tokio::test]
@@ -238,9 +267,15 @@ pub struct SmallStruct {
         assert_eq!(operation.refactoring_type(), RefactoringType::MergeClasses);
 
         let context = RefactoringContext::default();
-        let result = operation.execute(&context, &RefactoringOptions::default()).await.unwrap();
+        let result = operation
+            .execute(&context, &RefactoringOptions::default())
+            .await
+            .unwrap();
         assert!(result.success);
-        assert!(result.warnings.iter().any(|w| w.contains("requires implementation")));
+        assert!(result
+            .warnings
+            .iter()
+            .any(|w| w.contains("requires implementation")));
     }
 
     #[tokio::test]
@@ -248,13 +283,22 @@ pub struct SmallStruct {
         let operation = ExtractClassOperation;
 
         assert_eq!(operation.name(), "Extract Class");
-        assert_eq!(operation.description(), "Extracts a class from existing code");
+        assert_eq!(
+            operation.description(),
+            "Extracts a class from existing code"
+        );
         assert_eq!(operation.refactoring_type(), RefactoringType::ExtractClass);
 
         let context = RefactoringContext::default();
-        let result = operation.execute(&context, &RefactoringOptions::default()).await.unwrap();
+        let result = operation
+            .execute(&context, &RefactoringOptions::default())
+            .await
+            .unwrap();
         assert!(result.success);
-        assert!(result.warnings.iter().any(|w| w.contains("requires implementation")));
+        assert!(result
+            .warnings
+            .iter()
+            .any(|w| w.contains("requires implementation")));
     }
 
     #[tokio::test]
@@ -262,13 +306,25 @@ pub struct SmallStruct {
         let operation = EncapsulateFieldOperation;
 
         assert_eq!(operation.name(), "Encapsulate Field");
-        assert_eq!(operation.description(), "Encapsulates a field with getter/setter methods");
-        assert_eq!(operation.refactoring_type(), RefactoringType::EncapsulateField);
+        assert_eq!(
+            operation.description(),
+            "Encapsulates a field with getter/setter methods"
+        );
+        assert_eq!(
+            operation.refactoring_type(),
+            RefactoringType::EncapsulateField
+        );
 
         let context = RefactoringContext::default();
-        let result = operation.execute(&context, &RefactoringOptions::default()).await.unwrap();
+        let result = operation
+            .execute(&context, &RefactoringOptions::default())
+            .await
+            .unwrap();
         assert!(result.success);
-        assert!(result.warnings.iter().any(|w| w.contains("requires implementation")));
+        assert!(result
+            .warnings
+            .iter()
+            .any(|w| w.contains("requires implementation")));
     }
 
     #[tokio::test]
@@ -276,13 +332,25 @@ pub struct SmallStruct {
         let operation = GenerateGettersSettersOperation;
 
         assert_eq!(operation.name(), "Generate Getters/Setters");
-        assert_eq!(operation.description(), "Generates getter and setter methods for fields");
-        assert_eq!(operation.refactoring_type(), RefactoringType::GenerateGettersSetters);
+        assert_eq!(
+            operation.description(),
+            "Generates getter and setter methods for fields"
+        );
+        assert_eq!(
+            operation.refactoring_type(),
+            RefactoringType::GenerateGettersSetters
+        );
 
         let context = RefactoringContext::default();
-        let result = operation.execute(&context, &RefactoringOptions::default()).await.unwrap();
+        let result = operation
+            .execute(&context, &RefactoringOptions::default())
+            .await
+            .unwrap();
         assert!(result.success);
-        assert!(result.warnings.iter().any(|w| w.contains("requires implementation")));
+        assert!(result
+            .warnings
+            .iter()
+            .any(|w| w.contains("requires implementation")));
     }
 
     #[tokio::test]

@@ -6,7 +6,7 @@ import type {
   TrainingProgress,
   TrainingConfigInfo,
   FineTuningRequest,
-  DatasetPreparationRequest
+  DatasetPreparationRequest,
 } from '../types';
 
 interface FineTuningPanelProps {
@@ -76,10 +76,7 @@ export const FineTuningPanel: React.FC<FineTuningPanelProps> = ({ className }) =
         ) : jobs.length === 0 ? (
           <div className="empty-state">
             <p>No fine-tuning jobs found</p>
-            <button
-              onClick={() => setIsCreateJobOpen(true)}
-              className="secondary-button"
-            >
+            <button onClick={() => setIsCreateJobOpen(true)} className="secondary-button">
               Start Your First Training Job
             </button>
           </div>
@@ -97,7 +94,9 @@ export const FineTuningPanel: React.FC<FineTuningPanelProps> = ({ className }) =
                 <div className="job-info">
                   <div className="info-row">
                     <span className="label">Model:</span>
-                    <span className="value">{job.model_type} - {job.base_model}</span>
+                    <span className="value">
+                      {job.model_type} - {job.base_model}
+                    </span>
                   </div>
 
                   {job.progress && (
@@ -105,31 +104,25 @@ export const FineTuningPanel: React.FC<FineTuningPanelProps> = ({ className }) =
                       <div className="progress-bar">
                         <div
                           className="progress-fill"
-                          style={{ width: `${job.progress.epoch / job.progress.total_epochs * 100}%` }}
+                          style={{
+                            width: `${(job.progress.epoch / job.progress.total_epochs) * 100}%`,
+                          }}
                         />
                       </div>
                       <div className="progress-text">
                         Epoch {job.progress.epoch}/{job.progress.total_epochs}
-                        {job.progress.loss && (
-                          <span> • Loss: {job.progress.loss.toFixed(4)}</span>
-                        )}
+                        {job.progress.loss && <span> • Loss: {job.progress.loss.toFixed(4)}</span>}
                       </div>
                     </div>
                   )}
 
                   <div className="job-actions">
-                    <button
-                      className="action-button"
-                      onClick={() => setSelectedJob(job)}
-                    >
+                    <button className="action-button" onClick={() => setSelectedJob(job)}>
                       View Details
                     </button>
 
                     {(job.status === 'Training' || job.status === 'Initializing') && (
-                      <button
-                        className="cancel-button"
-                        onClick={() => handleCancelJob(job.id)}
-                      >
+                      <button className="cancel-button" onClick={() => handleCancelJob(job.id)}>
                         Cancel
                       </button>
                     )}
@@ -147,10 +140,7 @@ export const FineTuningPanel: React.FC<FineTuningPanelProps> = ({ className }) =
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{selectedJob.name}</h3>
-              <button
-                className="close-button"
-                onClick={() => setSelectedJob(null)}
-              >
+              <button className="close-button" onClick={() => setSelectedJob(null)}>
                 ×
               </button>
             </div>
@@ -164,7 +154,9 @@ export const FineTuningPanel: React.FC<FineTuningPanelProps> = ({ className }) =
 
                 <div className="detail-item">
                   <span className="label">Model Type:</span>
-                  <span className="value">{selectedJob.model_type} - {selectedJob.base_model}</span>
+                  <span className="value">
+                    {selectedJob.model_type} - {selectedJob.base_model}
+                  </span>
                 </div>
 
                 <div className="detail-item">
@@ -349,14 +341,38 @@ export const FineTuningPanel: React.FC<FineTuningPanelProps> = ({ className }) =
           text-transform: uppercase;
         }
 
-        .status-created { background: #e2e8f0; color: #4a5568; }
-        .status-initializing { background: #fff5f5; color: #d69e2e; }
-        .status-training { background: #c6f6d5; color: #276749; }
-        .status-evaluating { background: #bee3f8; color: #2c3338; }
-        .status-saving { background: #fef5e7; color: #7b341e; }
-        .status-completed { background: #c6f6d5; color: #276749; }
-        .status-failed { background: #fed7d7; color: #c53030; }
-        .status-cancelled { background: #e2e8f0; color: #4a5568; }
+        .status-created {
+          background: #e2e8f0;
+          color: #4a5568;
+        }
+        .status-initializing {
+          background: #fff5f5;
+          color: #d69e2e;
+        }
+        .status-training {
+          background: #c6f6d5;
+          color: #276749;
+        }
+        .status-evaluating {
+          background: #bee3f8;
+          color: #2c3338;
+        }
+        .status-saving {
+          background: #fef5e7;
+          color: #7b341e;
+        }
+        .status-completed {
+          background: #c6f6d5;
+          color: #276749;
+        }
+        .status-failed {
+          background: #fed7d7;
+          color: #c53030;
+        }
+        .status-cancelled {
+          background: #e2e8f0;
+          color: #4a5568;
+        }
 
         .job-info {
           display: flex;
@@ -439,7 +455,8 @@ export const FineTuningPanel: React.FC<FineTuningPanelProps> = ({ className }) =
           background: #c53030;
         }
 
-        .loading, .modal-overlay {
+        .loading,
+        .modal-overlay {
           display: flex;
           justify-content: center;
           align-items: center;
@@ -558,7 +575,7 @@ interface CreateFineTuneJobModalProps {
 const CreateFineTuneJobModal: React.FC<CreateFineTuneJobModalProps> = ({
   onSave,
   onClose,
-  isLoading
+  isLoading,
 }) => {
   const [formData, setFormData] = useState<{
     jobName: string;
@@ -578,7 +595,7 @@ const CreateFineTuneJobModal: React.FC<CreateFineTuneJobModalProps> = ({
       mixedPrecision: true,
       maxSeqLength: 2048,
       datasetSize: 10000,
-    }
+    },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -601,39 +618,43 @@ const CreateFineTuneJobModal: React.FC<CreateFineTuneJobModalProps> = ({
   };
 
   const updateFormData = (field: string, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const updateConfig = (field: string, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       config: {
         ...prev.config,
-        [field]: value
-      }
+        [field]: value,
+      },
     }));
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content form-modal" onClick={e => e.stopPropagation()}>
+      <div className="modal-content form-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Create Fine-Tuning Job</h3>
-          <button className="close-button" onClick={onClose}>×</button>
+          <button className="close-button" onClick={onClose}>
+            ×
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="modal-body">
           <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="jobName" className="required">Job Name</label>
+              <label htmlFor="jobName" className="required">
+                Job Name
+              </label>
               <input
                 type="text"
                 id="jobName"
                 value={formData.jobName}
-                onChange={e => updateFormData('jobName', e.target.value)}
+                onChange={(e) => updateFormData('jobName', e.target.value)}
                 placeholder="e.g., rust-code-analysis-model"
                 required
                 disabled={isLoading}
@@ -645,7 +666,7 @@ const CreateFineTuneJobModal: React.FC<CreateFineTuneJobModalProps> = ({
               <textarea
                 id="description"
                 value={formData.description}
-                onChange={e => updateFormData('description', e.target.value)}
+                onChange={(e) => updateFormData('description', e.target.value)}
                 placeholder="Optional description of the training job"
                 rows={3}
                 disabled={isLoading}
@@ -653,11 +674,13 @@ const CreateFineTuneJobModal: React.FC<CreateFineTuneJobModalProps> = ({
             </div>
 
             <div className="form-group">
-              <label htmlFor="baseModel" className="required">Base Model</label>
+              <label htmlFor="baseModel" className="required">
+                Base Model
+              </label>
               <select
                 id="baseModel"
                 value={formData.baseModel}
-                onChange={e => updateFormData('baseModel', e.target.value)}
+                onChange={(e) => updateFormData('baseModel', e.target.value)}
                 required
                 disabled={isLoading}
               >
@@ -669,12 +692,14 @@ const CreateFineTuneJobModal: React.FC<CreateFineTuneJobModalProps> = ({
             </div>
 
             <div className="form-group">
-              <label htmlFor="datasetPath" className="required">Dataset Path</label>
+              <label htmlFor="datasetPath" className="required">
+                Dataset Path
+              </label>
               <input
                 type="text"
                 id="datasetPath"
                 value={formData.datasetPath}
-                onChange={e => updateFormData('datasetPath', e.target.value)}
+                onChange={(e) => updateFormData('datasetPath', e.target.value)}
                 placeholder="Path to training dataset (JSONL format)"
                 required
                 disabled={isLoading}
@@ -694,7 +719,7 @@ const CreateFineTuneJobModal: React.FC<CreateFineTuneJobModalProps> = ({
                     min="1e-6"
                     max="1e-3"
                     value={formData.config.learningRate}
-                    onChange={e => updateConfig('learningRate', parseFloat(e.target.value))}
+                    onChange={(e) => updateConfig('learningRate', parseFloat(e.target.value))}
                     disabled={isLoading}
                   />
                 </div>
@@ -707,7 +732,7 @@ const CreateFineTuneJobModal: React.FC<CreateFineTuneJobModalProps> = ({
                     min="1"
                     max="64"
                     value={formData.config.batchSize}
-                    onChange={e => updateConfig('batchSize', parseInt(e.target.value, 10))}
+                    onChange={(e) => updateConfig('batchSize', parseInt(e.target.value, 10))}
                     disabled={isLoading}
                   />
                 </div>
@@ -720,7 +745,7 @@ const CreateFineTuneJobModal: React.FC<CreateFineTuneJobModalProps> = ({
                     min="1"
                     max="20"
                     value={formData.config.maxEpochs}
-                    onChange={e => updateConfig('maxEpochs', parseInt(e.target.value, 10))}
+                    onChange={(e) => updateConfig('maxEpochs', parseInt(e.target.value, 10))}
                     disabled={isLoading}
                   />
                 </div>
@@ -734,7 +759,7 @@ const CreateFineTuneJobModal: React.FC<CreateFineTuneJobModalProps> = ({
                     max="8192"
                     step="512"
                     value={formData.config.maxSeqLength}
-                    onChange={e => updateConfig('maxSeqLength', parseInt(e.target.value, 10))}
+                    onChange={(e) => updateConfig('maxSeqLength', parseInt(e.target.value, 10))}
                     disabled={isLoading}
                   />
                 </div>
@@ -746,7 +771,7 @@ const CreateFineTuneJobModal: React.FC<CreateFineTuneJobModalProps> = ({
                     type="checkbox"
                     id="mixedPrecision"
                     checked={formData.config.mixedPrecision}
-                    onChange={e => updateConfig('mixedPrecision', e.target.checked)}
+                    onChange={(e) => updateConfig('mixedPrecision', e.target.checked)}
                     disabled={isLoading}
                   />
                   Enable Mixed Precision Training
@@ -756,12 +781,7 @@ const CreateFineTuneJobModal: React.FC<CreateFineTuneJobModalProps> = ({
           </div>
 
           <div className="form-actions">
-            <button
-              type="button"
-              className="cancel-button"
-              onClick={onClose}
-              disabled={isLoading}
-            >
+            <button type="button" className="cancel-button" onClick={onClose} disabled={isLoading}>
               Cancel
             </button>
             <button

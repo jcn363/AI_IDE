@@ -83,10 +83,7 @@ class GracefulShutdown {
     });
 
     try {
-      await Promise.race([
-        Promise.all(Array.from(this.activeOperations)),
-        operationsTimeout
-      ]);
+      await Promise.race([Promise.all(Array.from(this.activeOperations)), operationsTimeout]);
       console.log('All operations completed');
     } catch (error) {
       console.warn('Some operations did not complete within timeout:', error);

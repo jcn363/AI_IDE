@@ -70,8 +70,10 @@ export function useAsyncOperation<TData = any>(
         lastError = errorMessage;
 
         if (attempt < retryCount) {
-          console.log(`Retrying ${errorContext} (attempt ${attempt + 1}/${retryCount + 1}) in ${retryDelay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          console.log(
+            `Retrying ${errorContext} (attempt ${attempt + 1}/${retryCount + 1}) in ${retryDelay}ms...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
           continue;
         }
 
@@ -84,7 +86,16 @@ export function useAsyncOperation<TData = any>(
     }
 
     return null;
-  }, [asyncFn, errorContext, retryCount, retryDelay, onLoading, onSuccess, onError, createErrorHandler]);
+  }, [
+    asyncFn,
+    errorContext,
+    retryCount,
+    retryDelay,
+    onLoading,
+    onSuccess,
+    onError,
+    createErrorHandler,
+  ]);
 
   const reset = useCallback(() => {
     setState({ status: 'idle' });
@@ -127,18 +138,21 @@ export function useAsyncOperations<TData = any>(
 
   const executeAll = useCallback(async () => {
     const promises = Object.entries(operations).map(async ([key, asyncFn]) => {
-      setStates(prev => ({ ...prev, [key]: { status: 'loading' } }));
+      setStates((prev) => ({ ...prev, [key]: { status: 'loading' } }));
 
       try {
         const result = await useAsyncOperation(asyncFn, options).execute();
-        setStates(prev => ({
+        setStates((prev) => ({
           ...prev,
-          [key]: result ? { status: 'success', data: result } : { status: 'idle' }
+          [key]: result ? { status: 'success', data: result } : { status: 'idle' },
         }));
       } catch (error) {
-        setStates(prev => ({
+        setStates((prev) => ({
           ...prev,
-          [key]: { status: 'error', error: error instanceof Error ? error.message : 'Unknown error' }
+          [key]: {
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
         }));
       }
     });
@@ -146,52 +160,58 @@ export function useAsyncOperations<TData = any>(
     await Promise.all(promises);
   }, [operations, options]);
 
-  const execute = useCallback(async (key: string) => {
-    const asyncFn = operations[key];
-    if (asyncFn) {
-      setStates(prev => ({ ...prev, [key]: { status: 'loading' } }));
+  const execute = useCallback(
+    async (key: string) => {
+      const asyncFn = operations[key];
+      if (asyncFn) {
+        setStates((prev) => ({ ...prev, [key]: { status: 'loading' } }));
 
-      try {
-        const result = await asyncFn();
-        setStates(prev => ({
-          ...prev,
-          [key]: { status: 'success', data: result }
-        }));
-        options.onSuccess?.(result);
-        return result;
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        setStates(prev => ({
-          ...prev,
-          [key]: { status: 'error', error: errorMessage }
-        }));
-        options.onError?.(errorMessage);
-        console.error(`Error in operation ${key}:`, error);
-        return null;
+        try {
+          const result = await asyncFn();
+          setStates((prev) => ({
+            ...prev,
+            [key]: { status: 'success', data: result },
+          }));
+          options.onSuccess?.(result);
+          return result;
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          setStates((prev) => ({
+            ...prev,
+            [key]: { status: 'error', error: errorMessage },
+          }));
+          options.onError?.(errorMessage);
+          console.error(`Error in operation ${key}:`, error);
+          return null;
+        }
       }
-    }
-    return null;
-  }, [operations, options]);
+      return null;
+    },
+    [operations, options]
+  );
 
-  const reset = useCallback((key?: string) => {
-    if (key) {
-      setStates(prev => ({ ...prev, [key]: { status: 'idle' } }));
-    } else {
-      const resetStates: AsyncOperationsState = {};
-      Object.keys(states).forEach(k => {
-        resetStates[k] = { status: 'idle' };
-      });
-      setStates(resetStates);
-    }
-  }, [states]);
+  const reset = useCallback(
+    (key?: string) => {
+      if (key) {
+        setStates((prev) => ({ ...prev, [key]: { status: 'idle' } }));
+      } else {
+        const resetStates: AsyncOperationsState = {};
+        Object.keys(states).forEach((k) => {
+          resetStates[k] = { status: 'idle' };
+        });
+        setStates(resetStates);
+      }
+    },
+    [states]
+  );
 
   return {
     states,
     execute,
     executeAll,
     reset,
-    isAnyLoading: Object.values(states).some(state => state.status === 'loading'),
-    isAllSuccess: Object.values(states).every(state => state.status === 'success'),
-    hasAnyError: Object.values(states).some(state => state.status === 'error'),
+    isAnyLoading: Object.values(states).some((state) => state.status === 'loading'),
+    isAllSuccess: Object.values(states).every((state) => state.status === 'success'),
+    hasAnyError: Object.values(states).some((state) => state.status === 'error'),
   };
 }

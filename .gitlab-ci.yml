@@ -139,6 +139,45 @@ security:scan:container:
     - develop
     - schedules
 
+# Automated vulnerability scanning with cargo-audit and cargo-deny
+security:scan:vulnerabilities:
+  stage: security_scan
+  image: rust:latest
+  dependencies:
+    - setup:environment
+  before_script:
+    - source $HOME/.cargo/env
+    - apt-get update -qq && apt-get install -y -qq curl jq
+    - cargo install cargo-audit cargo-deny 2>/dev/null || echo "Tools already installed"
+  script:
+    - echo "Running automated vulnerability scanning..."
+    - mkdir -p ${SECURITY_REPORT_DIR}/vulnerability-scan
+    - |
+      # Run vulnerability scanner with configurable severity threshold
+      export SEVERITY_THRESHOLD="${SEVERITY_THRESHOLD:-medium}"
+      export FAIL_ON_CRITICAL="${FAIL_ON_CRITICAL:-false}"
+      export GENERATE_HTML="${GENERATE_HTML:-true}"
+      export SLACK_WEBHOOK="${SLACK_WEBHOOK:-}"
+      export EMAIL_RECIPIENTS="${EMAIL_RECIPIENTS:-}"
+
+      bash scripts/security/vulnerability_scanner.sh
+
+      # Copy reports to CI artifacts
+      cp -r security-reports/* ${SECURITY_REPORT_DIR}/vulnerability-scan/ 2>/dev/null || true
+  artifacts:
+    reports:
+      junit: ${SECURITY_REPORT_DIR}/vulnerability-scan/**/junit-*.xml
+    paths:
+      - ${SECURITY_REPORT_DIR}/vulnerability-scan/
+      - security-reports/
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+    - schedules
+
 # Security patching stage - Apply automated patches
 security:patch:dependencies:
   stage: security_patch

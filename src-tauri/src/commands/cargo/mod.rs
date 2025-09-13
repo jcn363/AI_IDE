@@ -4,20 +4,20 @@
 //! It provides functionality for Cargo management, build analysis, dependency features,
 //! and build configuration management.
 
+use rust_ai_ide_core::read_file_to_string;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use toml::Table;
-use std::fs;
 use uuid;
-use rust_ai_ide_core::read_file_to_string;
 
 // Import required types from parent modules
-use crate::cargo::{CargoService, CargoMetadata, PerformanceMetrics};
+use crate::cargo::{CargoMetadata, CargoService, PerformanceMetrics};
 
 // Re-export types needed by handlers
-pub use crate::cargo::{CargoService, CargoMetadata, PerformanceMetrics};
+pub use crate::cargo::{CargoMetadata, CargoService, PerformanceMetrics};
 
 use crate::utils;
 
@@ -76,7 +76,10 @@ pub async fn cargo_execute_stream(
         Some(id) => id,
         None => {
             let generated_id = uuid::Uuid::new_v4().to_string();
-            log::debug!("No command ID provided for cargo execution, generated: {}", generated_id);
+            log::debug!(
+                "No command ID provided for cargo execution, generated: {}",
+                generated_id
+            );
             generated_id
         }
     };
@@ -106,17 +109,23 @@ pub async fn cargo_analyze_performance(
 
 // New Cargo commands for enhanced dependency management
 #[tauri::command]
-pub async fn cargo_generate_dependency_graph(project_path: String) -> Result<serde_json::Value, String> {
+pub async fn cargo_generate_dependency_graph(
+    project_path: String,
+) -> Result<serde_json::Value, String> {
     CargoService::generate_dependency_graph(Path::new(&project_path)).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn cargo_get_dependency_info(dependency_name: String) -> Result<serde_json::Value, String> {
+pub async fn cargo_get_dependency_info(
+    dependency_name: String,
+) -> Result<serde_json::Value, String> {
     CargoService::get_dependency_info(&dependency_name).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn cargo_update_all_dependencies(project_path: String) -> Result<(String, String, i32), String> {
+pub async fn cargo_update_all_dependencies(
+    project_path: String,
+) -> Result<(String, String, i32), String> {
     CargoService::update_all_dependencies(Path::new(&project_path)).map_err(|e| e.to_string())
 }
 
@@ -138,7 +147,9 @@ pub async fn cargo_build_with_profile(
 
 // Dependency management commands
 #[tauri::command]
-pub async fn cargo_get_full_metadata_json(project_path: String) -> Result<serde_json::Value, String> {
+pub async fn cargo_get_full_metadata_json(
+    project_path: String,
+) -> Result<serde_json::Value, String> {
     CargoService::get_full_metadata_json(Path::new(&project_path)).map_err(|e| e.to_string())
 }
 
@@ -185,16 +196,19 @@ pub async fn parse_cargo_lock(project_path: PathBuf) -> Result<Vec<LockDependenc
         return Err("Cargo.lock not found".to_string());
     }
 
-    let lock_content = read_file_to_string(&lock_path).await
+    let lock_content = read_file_to_string(&lock_path)
+        .await
         .map_err(|e| format!("Failed to read Cargo.lock: {}", e))?;
 
-    let lock_data: Table = toml::from_str(&lock_content)
-        .map_err(|e| format!("Failed to parse Cargo.lock: {}", e))?;
+    let lock_data: Table =
+        toml::from_str(&lock_content).map_err(|e| format!("Failed to parse Cargo.lock: {}", e))?;
 
     let mut dependencies = Vec::new();
 
     // Get direct dependencies from Cargo.toml for reference
-    let direct_deps = get_direct_dependencies(&project_path).await.unwrap_or_default();
+    let direct_deps = get_direct_dependencies(&project_path)
+        .await
+        .unwrap_or_default();
 
     if let Some(packages) = lock_data.get("package").and_then(|v| v.as_array()) {
         for pkg in packages {
@@ -202,7 +216,8 @@ pub async fn parse_cargo_lock(project_path: PathBuf) -> Result<Vec<LockDependenc
                 let name_str = name.as_str().unwrap_or("").to_string();
                 let version_str = version.as_str().unwrap_or("").to_string();
 
-                let deps = pkg.get("dependencies")
+                let deps = pkg
+                    .get("dependencies")
                     .and_then(|d| d.as_array())
                     .map(|arr| {
                         arr.iter()
@@ -233,11 +248,12 @@ async fn get_direct_dependencies(project_path: &PathBuf) -> Result<Vec<String>, 
         return Ok(Vec::new());
     }
 
-    let toml_content = read_file_to_string(&toml_path).await
+    let toml_content = read_file_to_string(&toml_path)
+        .await
         .map_err(|e| format!("Failed to read Cargo.toml: {}", e))?;
 
-    let cargo_toml: Table = toml::from_str(&toml_content)
-        .map_err(|e| format!("Failed to parse Cargo.toml: {}", e))?;
+    let cargo_toml: Table =
+        toml::from_str(&toml_content).map_err(|e| format!("Failed to parse Cargo.toml: {}", e))?;
 
     let mut deps = Vec::new();
 
@@ -247,12 +263,18 @@ async fn get_direct_dependencies(project_path: &PathBuf) -> Result<Vec<String>, 
     }
 
     // Check [dev-dependencies] section
-    if let Some(dev_deps) = cargo_toml.get("dev-dependencies").and_then(|d| d.as_table()) {
+    if let Some(dev_deps) = cargo_toml
+        .get("dev-dependencies")
+        .and_then(|d| d.as_table())
+    {
         deps.extend(dev_deps.keys().cloned());
     }
 
     // Check [build-dependencies] section
-    if let Some(build_deps) = cargo_toml.get("build-dependencies").and_then(|d| d.as_table()) {
+    if let Some(build_deps) = cargo_toml
+        .get("build-dependencies")
+        .and_then(|d| d.as_table())
+    {
         deps.extend(build_deps.keys().cloned());
     }
 

@@ -3,18 +3,18 @@
 //! This module implements intelligent load balancing and request routing across multiple AI models,
 //! with priority-based processing and failure detection.
 
-use async_trait::async_trait;
-use std::collections::{HashMap, VecDeque, BinaryHeap};
-use std::cmp::Reverse;
-use std::sync::Arc;
-use tokio::sync::{RwLock, Mutex, Semaphore, mpsc};
-use tokio::time::{Duration, Instant};
+use crate::config::{validate_config, OrchestrationConfig};
 use crate::types::{
-    ModelId, LoadDecision, ModelMetrics, ModelTask, RequestPriority,
-    RequestContext, ModelSwitchEvent, SwitchReason,
+    LoadDecision, ModelId, ModelMetrics, ModelSwitchEvent, ModelTask, RequestContext,
+    RequestPriority, SwitchReason,
 };
-use crate::config::{OrchestrationConfig, validate_config};
-use crate::{Result, OrchestrationError};
+use crate::{OrchestrationError, Result};
+use async_trait::async_trait;
+use std::cmp::Reverse;
+use std::collections::{BinaryHeap, HashMap, VecDeque};
+use std::sync::Arc;
+use tokio::sync::{mpsc, Mutex, RwLock, Semaphore};
+use tokio::time::{Duration, Instant};
 
 /// Represents a queued request with priority
 #[derive(Debug, Clone)]
@@ -88,7 +88,7 @@ impl RequestRouter {
 
         if compatible_models.is_empty() {
             return Err(OrchestrationError::LoadBalancingError(
-                "No compatible models available".to_string()
+                "No compatible models available".to_string(),
             ));
         }
 
@@ -168,13 +168,21 @@ impl RequestRouter {
         }
     }
 
-    pub async fn update_model_capabilities(&self, model_id: ModelId, capabilities: Vec<ModelTask>) -> Result<()> {
+    pub async fn update_model_capabilities(
+        &self,
+        model_id: ModelId,
+        capabilities: Vec<ModelTask>,
+    ) -> Result<()> {
         let mut model_capabilities = self.model_capabilities.write().await;
         model_capabilities.insert(model_id, capabilities);
         Ok(())
     }
 
-    pub async fn update_model_health(&self, model_id: ModelId, metrics: ModelMetrics) -> Result<()> {
+    pub async fn update_model_health(
+        &self,
+        model_id: ModelId,
+        metrics: ModelMetrics,
+    ) -> Result<()> {
         let mut model_health = self.model_health.write().await;
         model_health.insert(model_id, metrics);
         Ok(())
@@ -209,7 +217,7 @@ impl QueueManager {
 
         if queue.len() >= self.max_queue_size {
             return Err(OrchestrationError::LoadBalancingError(
-                "Request queue is full".to_string()
+                "Request queue is full".to_string(),
             ));
         }
 
@@ -246,9 +254,7 @@ impl QueueManager {
             return Duration::from_millis(0);
         }
 
-        let total_wait: Duration = processed.values()
-            .map(|&start| start.elapsed())
-            .sum();
+        let total_wait: Duration = processed.values().map(|&start| start.elapsed()).sum();
 
         total_wait / processed.len() as u32
     }
@@ -304,13 +310,13 @@ impl SystemCapacityMonitor {
     fn estimate_memory_usage(&self, _context: &RequestContext) -> f64 {
         // Simple estimation based on task type
         match _context.task_type {
-            ModelTask::Completion => 256.0,      // 256MB for code completion
-            ModelTask::Chat => 512.0,            // 512MB for chat
-            ModelTask::Generation => 1024.0,     // 1GB for code generation
-            ModelTask::Analysis => 512.0,        // 512MB for analysis
-            ModelTask::Refactoring => 1024.0,    // 1GB for refactoring
-            ModelTask::Classification => 256.0,  // 256MB for classification
-            ModelTask::Translation => 128.0,     // 128MB for translation
+            ModelTask::Completion => 256.0,     // 256MB for code completion
+            ModelTask::Chat => 512.0,           // 512MB for chat
+            ModelTask::Generation => 1024.0,    // 1GB for code generation
+            ModelTask::Analysis => 512.0,       // 512MB for analysis
+            ModelTask::Refactoring => 1024.0,   // 1GB for refactoring
+            ModelTask::Classification => 256.0, // 256MB for classification
+            ModelTask::Translation => 128.0,    // 128MB for translation
         }
     }
 
@@ -330,7 +336,8 @@ impl SystemCapacityMonitor {
         // Update history
         let mut history = self.capacity_history.write().await;
         history.push(Instant::now());
-        if history.len() > 3600 { // Keep 1 hour of history (1 entry per second)
+        if history.len() > 3600 {
+            // Keep 1 hour of history (1 entry per second)
             history.remove(0);
         }
 
@@ -417,12 +424,12 @@ impl ConcurrencyLimiter {
     }
 
     pub async fn acquire(&self) -> Result<tokio::sync::SemaphorePermit<'_>> {
-        self.semaphore
-            .acquire()
-            .await
-            .map_err(|e| OrchestrationError::LoadBalancingError(
-                format!("Failed to acquire concurrency permit: {}", e)
+        self.semaphore.acquire().await.map_err(|e| {
+            OrchestrationError::LoadBalancingError(format!(
+                "Failed to acquire concurrency permit: {}",
+                e
             ))
+        })
     }
 
     pub async fn adjust_limit(&self, new_limit: usize) -> Result<()> {
@@ -430,7 +437,7 @@ impl ConcurrencyLimiter {
 
         if new_limit > self.max_possible_concurrent {
             return Err(OrchestrationError::LoadBalancingError(
-                "New limit exceeds maximum possible concurrent requests".to_string()
+                "New limit exceeds maximum possible concurrent requests".to_string(),
             ));
         }
 
@@ -477,7 +484,7 @@ impl ModelLoadBalancer {
         // Start capacity monitoring task
         let capacity_monitor = Arc::new(SystemCapacityMonitor {
             system_resources: Arc::new(RwLock::new(SystemCapacity {
-                total_memory_mb: 8192.0, // Default 8GB
+                total_memory_mb: 8192.0,     // Default 8GB
                 available_memory_mb: 4096.0, // Default 4GB available
                 total_cpu_cores: num_cpus::get(),
                 available_cpu_percent: 50.0, // Default 50% CPU available
@@ -504,7 +511,7 @@ impl ModelLoadBalancer {
                 last_failovers: Arc::new(RwLock::new(HashMap::new())),
             }),
             concurrency_limiter: Arc::new(ConcurrencyLimiter::new(
-                config.load_balancing_config.max_concurrent_requests
+                config.load_balancing_config.max_concurrent_requests,
             )),
             config,
         })
@@ -516,7 +523,7 @@ impl ModelLoadBalancer {
         // Check capacity before submitting
         if !self.capacity_monitor.is_capacity_available(&request).await {
             return Err(OrchestrationError::LoadBalancingError(
-                "Insufficient system capacity".to_string()
+                "Insufficient system capacity".to_string(),
             ));
         }
 

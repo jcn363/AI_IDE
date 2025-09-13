@@ -7,14 +7,14 @@
 //! - Behavioral anomaly detection
 //! - Attack chain reconstruction
 
+use chrono::{DateTime, Duration, Utc};
+use moka::future::Cache;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc, Duration};
 use tracing::{info, warn};
-use moka::future::Cache;
 
-use crate::{SecurityEvent, MonitoringError, Result};
+use crate::{MonitoringError, Result, SecurityEvent};
 
 #[derive(Clone)]
 pub struct CorrelationEngine {
@@ -71,7 +71,7 @@ impl CorrelationEngine {
             event_buffer: Arc::new(
                 Cache::builder()
                     .time_to_live(tokio::time::Duration::from_secs(1800))
-                    .build()
+                    .build(),
             ),
         }
     }
@@ -89,13 +89,14 @@ impl CorrelationEngine {
         Ok(results)
     }
 
-    async fn evaluate_rule(&self, rule: &CorrelationRule, event: &SecurityEvent) -> Option<CorrelationResult> {
+    async fn evaluate_rule(
+        &self,
+        rule: &CorrelationRule,
+        event: &SecurityEvent,
+    ) -> Option<CorrelationResult> {
         // Buffer event for time-window analysis
         let buffer_key = format!("rule_{}", rule.id);
-        let mut buffer = self.event_buffer
-            .get(&buffer_key)
-            .await
-            .unwrap_or_default();
+        let mut buffer = self.event_buffer.get(&buffer_key).await.unwrap_or_default();
 
         // Add current event and filter by time window
         buffer.push(event.clone());
@@ -115,7 +116,10 @@ impl CorrelationEngine {
         let mut matched_events = Vec::new();
 
         for condition in &rule.conditions {
-            let matches = buffer.iter().filter(|e| matches_condition(e, &condition)).collect::<Vec<_>>();
+            let matches = buffer
+                .iter()
+                .filter(|e| matches_condition(e, &condition))
+                .collect::<Vec<_>>();
             if !matches.is_empty() {
                 score += condition.weight;
                 matched_events.extend(matches.iter().map(|e| (**e).clone()));
@@ -128,7 +132,11 @@ impl CorrelationEngine {
                 rule_id: rule.id.clone(),
                 confidence: (score / rule.conditions.len() as f64).min(1.0),
                 events: matched_events,
-                description: format!("Correlated {} events using rule '{}'", matched_events.len(), rule.name),
+                description: format!(
+                    "Correlated {} events using rule '{}'",
+                    matched_events.len(),
+                    rule.name
+                ),
                 risk_score: score,
                 recommended_actions: vec![
                     "Review correlated events".to_string(),
@@ -171,16 +179,14 @@ fn matches_condition(event: &SecurityEvent, condition: &CorrelationCondition) ->
             } else {
                 false
             }
-        },
+        }
         CorrelationPattern::Range { min, max } => {
             if let Ok(num) = field_value.parse::<f64>() {
                 num >= *min && num <= *max
             } else {
                 false
             }
-        },
-        CorrelationPattern::Sequence(sequence) => {
-            sequence.contains(&field_value.to_string())
         }
+        CorrelationPattern::Sequence(sequence) => sequence.contains(&field_value.to_string()),
     }
 }

@@ -2,8 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import wasm from 'vite-plugin-wasm';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import { visualizer } from 'rollup-plugin-visualizer';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react({
       jsxRuntime: 'automatic',
@@ -27,6 +28,14 @@ export default defineConfig({
         process: true,
       },
     }),
+    // Bundle analyzer - only enabled in analyze mode
+    ...(mode === 'analyze' ? [visualizer({
+      filename: 'dist/bundle-analysis.html',
+      open: true,
+      template: 'treemap',
+      gzipSize: true,
+      brotliSize: true,
+    })] : []),
   ],
   define: {
     'process.env': {},
@@ -47,8 +56,27 @@ export default defineConfig({
     cssCodeSplit: true,
     // Optimize for large codebases
     minify: 'esbuild',
+    // Asset optimization
+    assetsInlineLimit: 4096, // Inline assets smaller than 4kb
     rollupOptions: {
       output: {
+        // Asset optimization with better naming and compression
+        assetFileNames: (assetInfo) => {
+          const fileName = assetInfo.name;
+          if (fileName?.endsWith('.png') || fileName?.endsWith('.jpg') || fileName?.endsWith('.jpeg') || fileName?.endsWith('.gif') || fileName?.endsWith('.webp')) {
+            return 'assets/images/[name].[hash][extname]';
+          }
+          if (fileName?.endsWith('.svg')) {
+            return 'assets/icons/[name].[hash][extname]';
+          }
+          if (fileName?.endsWith('.woff') || fileName?.endsWith('.woff2') || fileName?.endsWith('.ttf') || fileName?.endsWith('.eot')) {
+            return 'assets/fonts/[name].[hash][extname]';
+          }
+          return 'assets/[name].[hash][extname]';
+        },
+        // Optimize chunk naming for better caching
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
         manualChunks: {
           // Split heavy libraries into separate chunks
           react: ['react', 'react-dom'],
@@ -69,19 +97,11 @@ export default defineConfig({
           // WASM chunks
           wasm: ['./src/wasm/**/*'],
         },
-        // Asset handling for WebGL shaders and WASM files
-        assetFileNames: (assetInfo) => {
-          const fileName = assetInfo.name;
-          if (fileName?.endsWith('.wasm')) return 'assets/wasm/[name].[hash][extname]';
-          if (fileName?.endsWith('.frag') || fileName?.endsWith('.vert')) return 'assets/shaders/[name].[hash][extname]';
-          return 'assets/[name].[hash][extname]';
-        },
       },
       // WASM import resolution
       external: (id) => {
         return id.endsWith('.wasm') ? false : undefined;
       },
-    },
   },
   optimizeDeps: {
     esbuildOptions: {

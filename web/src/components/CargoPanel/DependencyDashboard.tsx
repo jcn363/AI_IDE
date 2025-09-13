@@ -28,11 +28,7 @@ interface DependencyData {
 
 // Type guard to check if an object is a DependencyData
 function isDependencyData(obj: unknown): obj is DependencyData {
-  return (
-    obj !== null &&
-    typeof obj === 'object' &&
-    (obj as DependencyData).package !== undefined
-  );
+  return obj !== null && typeof obj === 'object' && (obj as DependencyData).package !== undefined;
 }
 
 // Converts DependencyData to CargoManifest
@@ -52,27 +48,34 @@ function toCargoManifest(data: DependencyData | null): CargoManifest {
   }
 
   // Helper function to convert dependency entries to CargoDependency format
-  const convertDeps = (deps: Record<string, string | { version?: string; [key: string]: unknown }> = {}): Record<string, CargoDependency> => {
-    return Object.entries(deps).reduce((acc, [name, dep]) => {
-      if (typeof dep === 'string') {
-        acc[name] = { version: dep } as CargoDependency;
-      } else if (dep && typeof dep === 'object') {
-        // Ensure we have at least a version or path for a valid CargoDependency
-        if ('version' in dep || 'path' in dep || 'git' in dep) {
-          acc[name] = { ...dep } as CargoDependency;
+  const convertDeps = (
+    deps: Record<string, string | { version?: string; [key: string]: unknown }> = {}
+  ): Record<string, CargoDependency> => {
+    return Object.entries(deps).reduce(
+      (acc, [name, dep]) => {
+        if (typeof dep === 'string') {
+          acc[name] = { version: dep } as CargoDependency;
+        } else if (dep && typeof dep === 'object') {
+          // Ensure we have at least a version or path for a valid CargoDependency
+          if ('version' in dep || 'path' in dep || 'git' in dep) {
+            acc[name] = { ...dep } as CargoDependency;
+          }
         }
-      }
-      return acc;
-    }, {} as Record<string, CargoDependency>);
+        return acc;
+      },
+      {} as Record<string, CargoDependency>
+    );
   };
 
   return {
-    package: data.package ? {
-      name: data.package.name || 'unknown',
-      version: data.package.version || '0.0.0',
-      edition: data.package.edition || '2021',
-      ...(typeof data.package === 'object' ? data.package : {}),
-    } : undefined,
+    package: data.package
+      ? {
+          name: data.package.name || 'unknown',
+          version: data.package.version || '0.0.0',
+          edition: data.package.edition || '2021',
+          ...(typeof data.package === 'object' ? data.package : {}),
+        }
+      : undefined,
     dependencies: convertDeps(data.dependencies),
     'dev-dependencies': convertDeps(data['dev-dependencies']),
     'build-dependencies': convertDeps(data['build-dependencies']),
@@ -148,12 +151,7 @@ export const DependencyDashboard: React.FC<DependencyDashboardProps> = ({
       {activeTab === 0 && <DependencyGraph manifest={toCargoManifest(manifest)} />}
 
       {/* Cargo.lock Tab */}
-      {activeTab === 1 && (
-        <LockfileViewer
-          projectPath={projectPath}
-          onError={onError}
-        />
-      )}
+      {activeTab === 1 && <LockfileViewer projectPath={projectPath} onError={onError} />}
 
       {/* Features Tab */}
       {activeTab === 2 && (
@@ -182,9 +180,7 @@ export const DependencyDashboard: React.FC<DependencyDashboardProps> = ({
       {activeTab === 4 && (
         <div>
           <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
-            <button onClick={() => onUpdateDependencies(undefined)}>
-              Update All
-            </button>
+            <button onClick={() => onUpdateDependencies(undefined)}>Update All</button>
             <input
               placeholder="Package name (optional)"
               onKeyDown={(e) => {

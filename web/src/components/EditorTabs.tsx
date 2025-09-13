@@ -17,12 +17,21 @@ type TabData = {
   paneId: string;
   tabIndex: number;
   filePath: string;
-  isPinned?: boolean;  // Make isPinned optional since it might not always be needed
+  isPinned?: boolean; // Make isPinned optional since it might not always be needed
 };
 
 // Extend the DataTransfer interface to include the methods we need
 interface CustomDataTransfer extends DataTransfer {
-  effectAllowed: 'none' | 'copy' | 'copyLink' | 'copyMove' | 'link' | 'linkMove' | 'move' | 'all' | 'uninitialized';
+  effectAllowed:
+    | 'none'
+    | 'copy'
+    | 'copyLink'
+    | 'copyMove'
+    | 'link'
+    | 'linkMove'
+    | 'move'
+    | 'all'
+    | 'uninitialized';
   dropEffect: 'none' | 'copy' | 'link' | 'move';
   setData(format: string, data: string): void;
   getData(format: string): string;
@@ -36,7 +45,12 @@ function getTabDataFromDataTransfer(dataTransfer: DataTransfer): TabData | null 
     const data = dt.getData('text/plain');
     if (!data) return null;
     const parsed = JSON.parse(data);
-    if (typeof parsed === 'object' && parsed !== null && 'paneId' in parsed && 'tabIndex' in parsed) {
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      'paneId' in parsed &&
+      'tabIndex' in parsed
+    ) {
       return parsed as TabData;
     }
     return null;
@@ -84,7 +98,7 @@ const EditorTabs: React.FC<EditorTabsProps> = ({
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [draggedTabIndex, setDraggedTabIndex] = useState<number | null>(null);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
-  
+
   // Get drag state from Redux store with proper typing
   const dragState = useAppSelector(tabManagementSelectors.selectDragState);
   const isSourcePane = dragState.sourcePaneId === paneId;
@@ -97,7 +111,7 @@ const EditorTabs: React.FC<EditorTabsProps> = ({
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     const dt = e.dataTransfer as unknown as CustomDataTransfer;
     dt.effectAllowed = 'move';
-    
+
     const tabData: TabData = {
       paneId,
       tabIndex: index,
@@ -105,15 +119,17 @@ const EditorTabs: React.FC<EditorTabsProps> = ({
       isPinned: files[index].isPinned,
     };
     dt.setData('text/plain', JSON.stringify(tabData));
-    
+
     // Start the drag operation in the Redux store
     dispatch(tabManagementActions.startDragTab({ paneId, index }));
     setDraggedTabIndex(index);
-    
+
     // Set a custom drag image for better visual feedback
     const tabElement = e.currentTarget as unknown as HTMLElement;
-    const rect = (tabElement as unknown as { getBoundingClientRect: () => DOMRect }).getBoundingClientRect();
-    
+    const rect = (
+      tabElement as unknown as { getBoundingClientRect: () => DOMRect }
+    ).getBoundingClientRect();
+
     // Create a simple drag image element
     const dragImage = document.createElement('div');
     dragImage.textContent = files[index].path.split('/').pop() || '';
@@ -135,14 +151,14 @@ const EditorTabs: React.FC<EditorTabsProps> = ({
       justifyContent: 'center',
       boxShadow: theme.shadows[2],
     });
-    
+
     // Add drag image to the DOM
     document.body.appendChild(dragImage);
-    
+
     try {
       // Set the drag image
       dt.setDragImage(dragImage, rect.width / 2, rect.height / 2);
-      
+
       // Clean up the drag image after a short delay
       setTimeout(() => {
         if (document.body.contains(dragImage)) {
@@ -161,28 +177,30 @@ const EditorTabs: React.FC<EditorTabsProps> = ({
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Only update if the index has changed to prevent unnecessary re-renders
     if (dragOverIndex !== index) {
       setDragOverIndex(index);
     }
-    
+
     // Update the drag target in the Redux store
-    dispatch(tabManagementActions.updateDragTarget({ 
-      paneId, 
-      index: index >= 0 ? index : 0, 
-    }));
+    dispatch(
+      tabManagementActions.updateDragTarget({
+        paneId,
+        index: index >= 0 ? index : 0,
+      })
+    );
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetIndex: number) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const tabData = getTabDataFromDataTransfer(e.dataTransfer);
     if (!tabData) return;
 
     const { paneId: sourcePaneId, tabIndex: sourceIndex, filePath: sourceFilePath } = tabData;
-    
+
     // Handle the drop by dispatching the appropriate action
     if (e.ctrlKey || e.metaKey) {
       // If Ctrl/Cmd is pressed, create a copy of the tab
@@ -190,18 +208,22 @@ const EditorTabs: React.FC<EditorTabsProps> = ({
         sourceFilePath ?? (sourcePaneId === paneId ? files[sourceIndex]?.path : undefined);
 
       if (filePathToCopy) {
-        dispatch(tabManagementActions.openFileInPane({
-          paneId,
-          filePath: filePathToCopy,
-        }));
+        dispatch(
+          tabManagementActions.openFileInPane({
+            paneId,
+            filePath: filePathToCopy,
+          })
+        );
       }
     } else if (e.shiftKey) {
       // If Shift is pressed, move the tab to a new split pane
       const direction = window.innerWidth / 2 > e.clientX ? 'horizontal' : 'vertical';
-      dispatch(tabManagementActions.endDragTab({
-        createNewPane: true,
-        direction,
-      }));
+      dispatch(
+        tabManagementActions.endDragTab({
+          createNewPane: true,
+          direction,
+        })
+      );
     } else {
       // Regular drag and drop move
       dispatch(tabManagementActions.endDragTab({}));
@@ -222,21 +244,21 @@ const EditorTabs: React.FC<EditorTabsProps> = ({
       setIsDraggingOver(false);
     }
   };
-  
+
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDraggingOver(true);
   };
-  
+
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Only set dragging over to false if we're leaving the container
     const relatedTarget = e.relatedTarget as Node | null;
-    const {currentTarget} = e;
-    
+    const { currentTarget } = e;
+
     if (!relatedTarget || !currentTarget.contains(relatedTarget)) {
       setIsDraggingOver(false);
       setDragOverIndex(null);
@@ -257,26 +279,27 @@ const EditorTabs: React.FC<EditorTabsProps> = ({
   // Calculate the position for the drop indicator
   const getDropIndicatorPosition = () => {
     if (dragOverIndex === null || !tabsContainerRef.current) return null;
-    
+
     const container = tabsContainerRef.current as unknown as HTMLElement;
     const tabElements = Array.from(container.querySelectorAll<HTMLElement>('[role="tab"]'));
-    
+
     if (tabElements.length === 0) return null;
-    
+
     // Position after the tab at dragOverIndex, or before the first tab if dragOverIndex is 0
     const targetIndex = Math.min(dragOverIndex, tabElements.length - 1);
     const targetTab = tabElements[targetIndex] as unknown as HTMLElement;
-    
+
     if (!targetTab) return null;
-    
+
     try {
       const rect = targetTab.getBoundingClientRect();
       const containerRect = (container as unknown as HTMLElement).getBoundingClientRect();
-      
+
       return {
-        left: dragOverIndex === 0 
-          ? rect.left - containerRect.left - 2 
-          : rect.right - containerRect.left,
+        left:
+          dragOverIndex === 0
+            ? rect.left - containerRect.left - 2
+            : rect.right - containerRect.left,
         isEnd: dragOverIndex >= tabElements.length,
       };
     } catch (error) {
@@ -284,21 +307,21 @@ const EditorTabs: React.FC<EditorTabsProps> = ({
       return null;
     }
   };
-  
+
   const dropIndicator = getDropIndicatorPosition();
 
   return (
-    <Box 
+    <Box
       ref={tabsContainerRef}
-      sx={{ 
+      sx={{
         position: 'relative',
-        borderBottom: 1, 
+        borderBottom: 1,
         borderColor: 'divider',
         backgroundColor: isDraggingOver ? theme.palette.action.hover : 'inherit',
         transition: 'background-color 0.2s',
         '&:hover': {
-          backgroundColor: isDraggingOver 
-            ? theme.palette.action.hover 
+          backgroundColor: isDraggingOver
+            ? theme.palette.action.hover
             : theme.palette.action.hoverOpacity,
         },
       }}

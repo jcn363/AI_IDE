@@ -6,8 +6,8 @@
 //! - Model performance statistics
 //! - Distributed processing efficiency metrics
 
-use prometheus::{Encoder, TextEncoder, register_gauge, register_counter, register_histogram};
 use lazy_static::lazy_static;
+use prometheus::{register_counter, register_gauge, register_histogram, Encoder, TextEncoder};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -32,58 +32,68 @@ impl DistributedMetrics {
         let total_requests = register_counter!(
             "distributed_ai_requests_total",
             "Total number of distributed AI requests"
-        ).unwrap();
+        )
+        .unwrap();
 
         let successful_requests = register_counter!(
             "distributed_ai_requests_successful",
             "Number of successful distributed AI requests"
-        ).unwrap();
+        )
+        .unwrap();
 
         let failed_requests = register_counter!(
             "distributed_ai_requests_failed",
             "Number of failed distributed AI requests"
-        ).unwrap();
+        )
+        .unwrap();
 
         let request_latency = register_histogram!(
             "distributed_ai_request_latency_ms",
             "Request latency in milliseconds",
             vec![100.0, 250.0, 500.0, 1000.0, 2500.0, 5000.0]
-        ).unwrap();
+        )
+        .unwrap();
 
         let worker_load_distribution = register_gauge_vec!(
             "distributed_ai_worker_load",
             "Worker load distribution (0.0-1.0)",
             &["worker_id"]
-        ).unwrap();
+        )
+        .unwrap();
 
         let gpu_utilization = register_gauge_vec!(
             "distributed_ai_gpu_utilization",
             "GPU utilization per worker (0.0-1.0)",
             &["worker_id", "gpu_type"]
-        ).unwrap();
+        )
+        .unwrap();
 
         let model_inference_time = register_histogram_vec!(
             "distributed_ai_model_inference_time_ms",
             "Model inference time in milliseconds",
             &["model_type", "operation"],
             vec![50.0, 100.0, 250.0, 500.0, 1000.0, 2500.0]
-        ).unwrap();
+        )
+        .unwrap();
 
         let cache_hit_ratio = register_gauge!(
             "distributed_ai_cache_hit_ratio",
             "Cache hit ratio (0.0-1.0)"
-        ).unwrap();
+        )
+        .unwrap();
 
         let memory_usage = register_gauge_vec!(
             "distributed_ai_memory_usage_gb",
             "Memory usage in GB",
             &["worker_id", "memory_type"]
-        ).unwrap();
+        )
+        .unwrap();
 
         let current_active_workers = register_gauge!(
             "distributed_ai_active_workers",
             "Current number of active workers"
-        ).unwrap();
+        )
+        .unwrap();
 
         Self {
             total_requests,
@@ -206,42 +216,47 @@ impl MetricsCollector {
         states.insert(worker_id.to_string(), state.clone());
 
         // Update Prometheus metrics
-        self.metrics.record_worker_load(worker_id, state.load_factor);
+        self.metrics
+            .record_worker_load(worker_id, state.load_factor);
 
         if let (Some(gpu_util), Some(gpu_type)) = (state.gpu_utilization, state.gpu_type.as_ref()) {
-            self.metrics.record_gpu_utilization(worker_id, gpu_type, gpu_util);
+            self.metrics
+                .record_gpu_utilization(worker_id, gpu_type, gpu_util);
         }
 
-        self.metrics.record_memory_usage(worker_id, "total", state.memory_usage_gb);
+        self.metrics
+            .record_memory_usage(worker_id, "total", state.memory_usage_gb);
 
-        info!("Updated metrics for worker {}: load={:.2}, gpu={:.2}, mem={:.1}GB",
-            worker_id, state.load_factor, state.gpu_utilization.unwrap_or(0.0), state.memory_usage_gb
+        info!(
+            "Updated metrics for worker {}: load={:.2}, gpu={:.2}, mem={:.1}GB",
+            worker_id,
+            state.load_factor,
+            state.gpu_utilization.unwrap_or(0.0),
+            state.memory_usage_gb
         );
     }
 
     pub async fn collect_aggregated_metrics(&self) {
         let states = self.worker_states.read().await;
 
-        let active_workers = states.values()
+        let active_workers = states
+            .values()
             .filter(|s| s.last_update.elapsed() < std::time::Duration::from_secs(60))
             .count();
 
         let avg_load = if active_workers > 0 {
-            states.values()
-                .map(|s| s.load_factor)
-                .sum::<f64>() / active_workers as f64
+            states.values().map(|s| s.load_factor).sum::<f64>() / active_workers as f64
         } else {
             0.0
         };
 
-        let total_memory = states.values()
-            .map(|s| s.memory_usage_gb)
-            .sum::<f64>();
+        let total_memory = states.values().map(|s| s.memory_usage_gb).sum::<f64>();
 
         // Update global metrics
         self.metrics.record_active_workers(active_workers);
 
-        info!("Aggregated metrics: {} active workers, avg load {:.2}, total mem {:.1}GB",
+        info!(
+            "Aggregated metrics: {} active workers, avg load {:.2}, total mem {:.1}GB",
             active_workers, avg_load, total_memory
         );
     }
@@ -339,7 +354,9 @@ mod tests {
             last_update: std::time::Instant::now(),
         };
 
-        collector.update_worker_state("worker-1", worker_state).await;
+        collector
+            .update_worker_state("worker-1", worker_state)
+            .await;
 
         let states = collector.worker_states.read().await;
         assert_eq!(states.len(), 1);
@@ -361,7 +378,9 @@ mod tests {
             last_update: std::time::Instant::now(),
         };
 
-        collector.update_worker_state("healthy-worker", healthy_state).await;
+        collector
+            .update_worker_state("healthy-worker", healthy_state)
+            .await;
 
         // Add overloaded worker
         let overloaded_state = WorkerState {
@@ -373,11 +392,19 @@ mod tests {
             last_update: std::time::Instant::now(),
         };
 
-        collector.update_worker_state("overloaded-worker", overloaded_state).await;
+        collector
+            .update_worker_state("overloaded-worker", overloaded_state)
+            .await;
 
         let health_summary = collector.get_worker_health_summary().await;
-        assert_eq!(health_summary[&"healthy-worker".to_string()], WorkerHealth::Healthy);
-        assert_eq!(health_summary[&"overloaded-worker".to_string()], WorkerHealth::Overloaded);
+        assert_eq!(
+            health_summary[&"healthy-worker".to_string()],
+            WorkerHealth::Healthy
+        );
+        assert_eq!(
+            health_summary[&"overloaded-worker".to_string()],
+            WorkerHealth::Overloaded
+        );
     }
 
     #[tokio::test]

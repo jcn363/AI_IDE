@@ -4,13 +4,13 @@
 //! pattern recognition, and vulnerability analysis. Integrates with existing LSP
 //! service for model management.
 
+use moka::future::Cache;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::Path;
-use serde::{Deserialize, Serialize};
-use tokio::sync::{RwLock, Mutex};
-use moka::future::Cache;
+use tokio::sync::{Mutex, RwLock};
 
-use super::{OWASPVulnerability, OWASPCategory, DependencyAnalysis};
+use super::{DependencyAnalysis, OWASPCategory, OWASPVulnerability};
 
 // AI model types for different analysis tasks
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -220,7 +220,9 @@ impl AIEnhancedAnalyzer {
                 AIModelCapability::PatternRecognition,
                 AIModelCapability::VulnerabilityClassification,
                 AIModelCapability::AnomalyDetection,
-            ].into_iter().collect(),
+            ]
+            .into_iter()
+            .collect(),
             loaded: false,
             performance_metrics: None,
         });
@@ -232,7 +234,9 @@ impl AIEnhancedAnalyzer {
             capabilities: [
                 AIModelCapability::CodeSimilarityAnalysis,
                 AIModelCapability::RiskAssessment,
-            ].into_iter().collect(),
+            ]
+            .into_iter()
+            .collect(),
             loaded: false,
             performance_metrics: None,
         });
@@ -244,7 +248,9 @@ impl AIEnhancedAnalyzer {
             capabilities: [
                 AIModelCapability::PredictiveModeling,
                 AIModelCapability::RiskAssessment,
-            ].into_iter().collect(),
+            ]
+            .into_iter()
+            .collect(),
             loaded: false,
             performance_metrics: None,
         });
@@ -253,7 +259,10 @@ impl AIEnhancedAnalyzer {
     }
 
     /// Main analysis function that orchestrates AI-enhanced security analysis
-    pub async fn analyze_security(&self, context: &AIAnalysisContext) -> Result<AIVulnerabilityInsights, Box<dyn std::error::Error>> {
+    pub async fn analyze_security(
+        &self,
+        context: &AIAnalysisContext,
+    ) -> Result<AIVulnerabilityInsights, Box<dyn std::error::Error>> {
         // Load required AI models
         self.load_required_models().await?;
 
@@ -265,21 +274,27 @@ impl AIEnhancedAnalyzer {
         )?;
 
         // Integrate AI insights with traditional analysis
-        let integrated_insights = self.integrate_insights(context, &patterns, &predictions, &correlations);
+        let integrated_insights =
+            self.integrate_insights(context, &patterns, &predictions, &correlations);
 
         // Update learning models
-        self.update_learning_models(context, &integrated_insights).await;
+        self.update_learning_models(context, &integrated_insights)
+            .await;
 
         Ok(integrated_insights)
     }
 
     /// Generate insights specifically for vulnerability analysis
-    pub async fn generate_insights(&self, vulnerabilities: &[OWASPVulnerability], dependency_analysis: &DependencyAnalysis) -> Result<Vec<SecurityPattern>, Box<dyn std::error::Error>> {
+    pub async fn generate_insights(
+        &self,
+        vulnerabilities: &[OWASPVulnerability],
+        dependency_analysis: &DependencyAnalysis,
+    ) -> Result<Vec<SecurityPattern>, Box<dyn std::error::Error>> {
         let context = AIAnalysisContext {
             vulnerabilities: vulnerabilities.to_vec(),
             dependency_data: Some(dependency_analysis.clone()),
             code_patterns: HashMap::new(), // Would be populated with actual file patterns
-            historical_data: vec![], // Would be loaded from storage
+            historical_data: vec![],       // Would be loaded from storage
         };
 
         let analysis_result = self.analyze_security(&context).await?;
@@ -292,7 +307,11 @@ impl AIEnhancedAnalyzer {
         // Load models as needed (integrating with LSP service per rules)
         for model in models.iter_mut() {
             if !model.loaded {
-                match self.lsp_integration.load_model(&model.name, &model.version).await {
+                match self
+                    .lsp_integration
+                    .load_model(&model.name, &model.version)
+                    .await
+                {
                     Ok(true) => {
                         model.loaded = true;
                         println!("Loaded AI model: {} v{}", model.name, model.version);
@@ -312,11 +331,21 @@ impl AIEnhancedAnalyzer {
         Ok(())
     }
 
-    async fn perform_pattern_analysis(&self, context: &AIAnalysisContext) -> Result<Vec<SecurityPattern>, Box<dyn std::error::Error>> {
+    async fn perform_pattern_analysis(
+        &self,
+        context: &AIAnalysisContext,
+    ) -> Result<Vec<SecurityPattern>, Box<dyn std::error::Error>> {
         let mut patterns = vec![];
 
         for vulnerability in &context.vulnerabilities {
-            let pattern_id = format!("pattern_{}", vulnerability.security_issue.title.replace(" ", "_").to_lowercase());
+            let pattern_id = format!(
+                "pattern_{}",
+                vulnerability
+                    .security_issue
+                    .title
+                    .replace(" ", "_")
+                    .to_lowercase()
+            );
 
             if let Some(cached_pattern) = self.pattern_cache.get(&pattern_id).await {
                 patterns.push(cached_pattern);
@@ -327,20 +356,26 @@ impl AIEnhancedAnalyzer {
                     category: vulnerability.owasp_category.clone(),
                     confidence: vulnerability.ai_confidence,
                     matched_files: vec![vulnerability.security_issue.file_path.clone()],
-                    pattern_description: format!("AI-detected pattern for {}", vulnerability.security_issue.title),
-                    ai_detected_indicators: vec![
-                        AIPatternIndicator {
-                            indicator_type: PatternIndicatorType::VectorSimilarity,
-                            confidence: 0.85,
-                            description: format!("Similarity analysis detected potential {}", vulnerability.security_issue.title.to_lowercase()),
-                            source: "pattern-recognizer".to_string(),
-                        }
-                    ],
+                    pattern_description: format!(
+                        "AI-detected pattern for {}",
+                        vulnerability.security_issue.title
+                    ),
+                    ai_detected_indicators: vec![AIPatternIndicator {
+                        indicator_type: PatternIndicatorType::VectorSimilarity,
+                        confidence: 0.85,
+                        description: format!(
+                            "Similarity analysis detected potential {}",
+                            vulnerability.security_issue.title.to_lowercase()
+                        ),
+                        source: "pattern-recognizer".to_string(),
+                    }],
                     learnings: vec![],
                 };
 
                 // Cache the pattern
-                self.pattern_cache.insert(pattern_id, new_pattern.clone()).await;
+                self.pattern_cache
+                    .insert(pattern_id, new_pattern.clone())
+                    .await;
                 patterns.push(new_pattern);
             }
         }
@@ -348,7 +383,10 @@ impl AIEnhancedAnalyzer {
         Ok(patterns)
     }
 
-    async fn perform_predictive_analysis(&self, context: &AIAnalysisContext) -> Result<Vec<PredictiveVulnerability>, Box<dyn std::error::Error>> {
+    async fn perform_predictive_analysis(
+        &self,
+        context: &AIAnalysisContext,
+    ) -> Result<Vec<PredictiveVulnerability>, Box<dyn std::error::Error>> {
         let mut predictions = vec![];
 
         // Use historical data and current vulnerabilities to predict future issues
@@ -359,7 +397,10 @@ impl AIEnhancedAnalyzer {
                 line_range: None, // Would be calculated based on actual line analysis
                 vulnerability_type: vulnerability.owasp_category.clone(),
                 confidence: self.calculate_predictive_confidence(vulnerability),
-                predicted_impact: format!("Potential escalation of {}", vulnerability.security_issue.title),
+                predicted_impact: format!(
+                    "Potential escalation of {}",
+                    vulnerability.security_issue.title
+                ),
                 time_to_exploitation_estimate: "Unknown".to_string(),
                 preventive_actions: vec![
                     "Implement comprehensive input validation".to_string(),
@@ -374,7 +415,10 @@ impl AIEnhancedAnalyzer {
         Ok(predictions)
     }
 
-    async fn analyze_correlations(&self, context: &AIAnalysisContext) -> Result<Vec<VulnerabilityCorrelation>, Box<dyn std::error::Error>> {
+    async fn analyze_correlations(
+        &self,
+        context: &AIAnalysisContext,
+    ) -> Result<Vec<VulnerabilityCorrelation>, Box<dyn std::error::Error>> {
         let mut correlations = vec![];
 
         // Analyze relationships between vulnerabilities
@@ -382,7 +426,8 @@ impl AIEnhancedAnalyzer {
             for vuln_b in &context.vulnerabilities[i + 1..] {
                 let correlation_strength = self.calculate_correlation_strength(vuln_a, vuln_b);
 
-                if correlation_strength > 0.6 { // High correlation threshold
+                if correlation_strength > 0.6 {
+                    // High correlation threshold
                     correlations.push(VulnerabilityCorrelation {
                         vulnerability_ids: vec![
                             vuln_a.security_issue.title.clone(),
@@ -390,7 +435,10 @@ impl AIEnhancedAnalyzer {
                         ],
                         correlation_strength,
                         correlation_type: CorrelationType::SharedDependencies, // Simplified
-                        reasoning: format!("Similar code patterns suggest {}", vuln_a.security_issue.title),
+                        reasoning: format!(
+                            "Similar code patterns suggest {}",
+                            vuln_a.security_issue.title
+                        ),
                     });
                 }
             }
@@ -399,12 +447,13 @@ impl AIEnhancedAnalyzer {
         Ok(correlations)
     }
 
-    fn integrate_insights(&self,
-                         context: &AIAnalysisContext,
-                         patterns: &[SecurityPattern],
-                         predictions: &[PredictiveVulnerability],
-                         correlations: &[VulnerabilityCorrelation]) -> AIVulnerabilityInsights {
-
+    fn integrate_insights(
+        &self,
+        context: &AIAnalysisContext,
+        patterns: &[SecurityPattern],
+        predictions: &[PredictiveVulnerability],
+        correlations: &[VulnerabilityCorrelation],
+    ) -> AIVulnerabilityInsights {
         let integrated_risk_score = self.calculate_integrated_risk_score(context, patterns);
 
         let behavioral_anomalies = self.identify_behavioral_anomalies(context);
@@ -420,14 +469,20 @@ impl AIEnhancedAnalyzer {
         }
     }
 
-    fn calculate_integrated_risk_score(&self, context: &AIAnalysisContext, patterns: &[SecurityPattern]) -> f32 {
-        let base_risk = context.vulnerabilities.iter()
+    fn calculate_integrated_risk_score(
+        &self,
+        context: &AIAnalysisContext,
+        patterns: &[SecurityPattern],
+    ) -> f32 {
+        let base_risk = context
+            .vulnerabilities
+            .iter()
             .map(|v| v.risk_score)
-            .sum::<f32>() / context.vulnerabilities.len().max(1) as f32;
+            .sum::<f32>()
+            / context.vulnerabilities.len().max(1) as f32;
 
-        let pattern_risk_bonus = patterns.iter()
-            .map(|p| p.confidence * 2.0)
-            .sum::<f32>() / patterns.len().max(1) as f32;
+        let pattern_risk_bonus =
+            patterns.iter().map(|p| p.confidence * 2.0).sum::<f32>() / patterns.len().max(1) as f32;
 
         (base_risk + pattern_risk_bonus).min(10.0)
     }
@@ -436,8 +491,12 @@ impl AIEnhancedAnalyzer {
         let mut anomalies = vec![];
 
         // Check for unusual patterns that might indicate compromised behavior
-        let cmd_injection_count = context.vulnerabilities.iter()
-            .filter(|v| v.security_issue.category == super::security::SecurityCategory::CommandInjection)
+        let cmd_injection_count = context
+            .vulnerabilities
+            .iter()
+            .filter(|v| {
+                v.security_issue.category == super::security::SecurityCategory::CommandInjection
+            })
             .count();
 
         if cmd_injection_count > 3 {
@@ -453,16 +512,23 @@ impl AIEnhancedAnalyzer {
         anomalies
     }
 
-    fn calculate_remediation_priorities(&self,
-                                       context: &AIAnalysisContext,
-                                       patterns: &[SecurityPattern]) -> Vec<RemediationPriority> {
-
-        context.vulnerabilities.iter().enumerate().map(|(index, vuln)| {
-            RemediationPriority {
+    fn calculate_remediation_priorities(
+        &self,
+        context: &AIAnalysisContext,
+        patterns: &[SecurityPattern],
+    ) -> Vec<RemediationPriority> {
+        context
+            .vulnerabilities
+            .iter()
+            .enumerate()
+            .map(|(index, vuln)| RemediationPriority {
                 vulnerability_id: vuln.security_issue.title.clone(),
-                priority_score: 10.0 - ((index as f32) / context.vulnerabilities.len() as f32 * 10.0),
+                priority_score: 10.0
+                    - ((index as f32) / context.vulnerabilities.len() as f32 * 10.0),
                 remediation_strategy: match vuln.owasp_category {
-                    OWASPCategory::A06_2021_VulnerableOutdatedComponents => RemediationStrategy::UpdateDependencies,
+                    OWASPCategory::A06_2021_VulnerableOutdatedComponents => {
+                        RemediationStrategy::UpdateDependencies
+                    }
                     _ => RemediationStrategy::RefactorCode,
                 },
                 estimated_effort_days: match vuln.security_issue.severity {
@@ -471,42 +537,53 @@ impl AIEnhancedAnalyzer {
                     _ => 1.0,
                 },
                 business_impact: vuln.risk_score,
-            }
-        }).collect()
+            })
+            .collect()
     }
 
-    fn extract_patterns_from_insights(&self,
-                                     insights: &AIVulnerabilityInsights,
-                                     vulnerabilities: &[OWASPVulnerability]) -> Vec<SecurityPattern> {
-        vulnerabilities.iter().enumerate().map(|(index, vuln)| {
-            SecurityPattern {
-                pattern_id: format!("insight_pattern_{}", index),
-                category: vuln.owasp_category.clone(),
-                confidence: vuln.ai_confidence,
-                matched_files: vec![vuln.security_issue.file_path.clone()],
-                pattern_description: "AI-enhanced vulnerability pattern".to_string(),
-                ai_detected_indicators: vec![
-                    AIPatternIndicator {
+    fn extract_patterns_from_insights(
+        &self,
+        insights: &AIVulnerabilityInsights,
+        vulnerabilities: &[OWASPVulnerability],
+    ) -> Vec<SecurityPattern> {
+        vulnerabilities
+            .iter()
+            .enumerate()
+            .map(|(index, vuln)| {
+                SecurityPattern {
+                    pattern_id: format!("insight_pattern_{}", index),
+                    category: vuln.owasp_category.clone(),
+                    confidence: vuln.ai_confidence,
+                    matched_files: vec![vuln.security_issue.file_path.clone()],
+                    pattern_description: "AI-enhanced vulnerability pattern".to_string(),
+                    ai_detected_indicators: vec![AIPatternIndicator {
                         indicator_type: PatternIndicatorType::SemanticAnalysis,
                         confidence: vuln.ai_confidence,
-                        description: format!("Pattern detected by AI model for {}", vuln.security_issue.category.to_string()),
+                        description: format!(
+                            "Pattern detected by AI model for {}",
+                            vuln.security_issue.category.to_string()
+                        ),
                         source: "integrated-analysis".to_string(),
-                    }
-                ],
-                learnings: vec![], // Would be populated from learning history
-            }
-        }).collect()
+                    }],
+                    learnings: vec![], // Would be populated from learning history
+                }
+            })
+            .collect()
     }
 
-    async fn update_learning_models(&self,
-                                   context: &AIAnalysisContext,
-                                   insights: &AIVulnerabilityInsights) -> Result<(), Box<dyn std::error::Error>> {
-
+    async fn update_learning_models(
+        &self,
+        context: &AIAnalysisContext,
+        insights: &AIVulnerabilityInsights,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let learning = PatternLearning {
             timestamp: chrono::Utc::now(),
             learning_type: LearningType::ConfidenceAdjustment,
             confidence_delta: 0.05, // Small improvements over time
-            evidence: format!("Processed {} vulnerabilities with AI analysis", context.vulnerabilities.len()),
+            evidence: format!(
+                "Processed {} vulnerabilities with AI analysis",
+                context.vulnerabilities.len()
+            ),
         };
 
         let mut history = self.learning_history.lock().await;
@@ -526,12 +603,28 @@ impl AIEnhancedAnalyzer {
             OWASPCategory::A02_2021_CryptographicFailures => 0.9,
             OWASPCategory::A03_2021_Injection => 0.85,
             _ => 0.7,
-        } * vulnerability.ai_confidence
+        }
+        *vulnerability.ai_confidence
     }
 
-    fn calculate_correlation_strength(&self, vuln_a: &OWASPVulnerability, vuln_b: &OWASPVulnerability) -> f32 {
-        let category_similarity = if vuln_a.owasp_category.to_string() == vuln_b.owasp_category.to_string() { 1.0 } else { 0.3 };
-        let severity_similarity = if vuln_a.security_issue.severity.to_string() == vuln_b.security_issue.severity.to_string() { 1.0 } else { 0.5 };
+    fn calculate_correlation_strength(
+        &self,
+        vuln_a: &OWASPVulnerability,
+        vuln_b: &OWASPVulnerability,
+    ) -> f32 {
+        let category_similarity =
+            if vuln_a.owasp_category.to_string() == vuln_b.owasp_category.to_string() {
+                1.0
+            } else {
+                0.3
+            };
+        let severity_similarity = if vuln_a.security_issue.severity.to_string()
+            == vuln_b.security_issue.severity.to_string()
+        {
+            1.0
+        } else {
+            0.5
+        };
 
         (category_similarity + severity_similarity) / 2.0 + vuln_a.ai_confidence * 0.2
     }
@@ -549,10 +642,17 @@ impl LSPIntegration {
         })
     }
 
-    async fn load_model(&self, model_name: &str, version: &str) -> Result<bool, Box<dyn std::error::Error>> {
+    async fn load_model(
+        &self,
+        model_name: &str,
+        version: &str,
+    ) -> Result<bool, Box<dyn std::error::Error>> {
         // Integrate with LSP service for model loading/unloading
         // Per rules: "Model loading/unloading happens through LSP service - direct model access forbidden"
-        println!("Loading model {} v{} via LSP integration", model_name, version);
+        println!(
+            "Loading model {} v{} via LSP integration",
+            model_name, version
+        );
 
         // Placeholder - would actually communicate with LSP service
         Ok(true)
@@ -574,16 +674,32 @@ trait StringExt {
 impl StringExt for OWASPCategory {
     fn to_string(&self) -> String {
         match self {
-            OWASPCategory::A01_2021_BrokenAccessControl => "A01:2021-BrokenAccessControl".to_string(),
-            OWASPCategory::A02_2021_CryptographicFailures => "A02:2021-CryptographicFailures".to_string(),
+            OWASPCategory::A01_2021_BrokenAccessControl => {
+                "A01:2021-BrokenAccessControl".to_string()
+            }
+            OWASPCategory::A02_2021_CryptographicFailures => {
+                "A02:2021-CryptographicFailures".to_string()
+            }
             OWASPCategory::A03_2021_Injection => "A03:2021-Injection".to_string(),
             OWASPCategory::A04_2021_InsecureDesign => "A04:2021-InsecureDesign".to_string(),
-            OWASPCategory::A05_2021_SecurityMisconfiguration => "A05:2021-SecurityMisconfiguration".to_string(),
-            OWASPCategory::A06_2021_VulnerableOutdatedComponents => "A06:2021-VulnerableOutdatedComponents".to_string(),
-            OWASPCategory::A07_2021_IDAuthenticationFailures => "A07:2021-IDAuthenticationFailures".to_string(),
-            OWASPCategory::A08_2021_SoftwareDataIntegrityFailures => "A08:2021-SoftwareDataIntegrityFailures".to_string(),
-            OWASPCategory::A09_2021_SecurityLoggingFailures => "A09:2021-SecurityLoggingFailures".to_string(),
-            OWASPCategory::A10_2021_ServerSideRequestForgery => "A10:2021-ServerSideRequestForgery".to_string(),
+            OWASPCategory::A05_2021_SecurityMisconfiguration => {
+                "A05:2021-SecurityMisconfiguration".to_string()
+            }
+            OWASPCategory::A06_2021_VulnerableOutdatedComponents => {
+                "A06:2021-VulnerableOutdatedComponents".to_string()
+            }
+            OWASPCategory::A07_2021_IDAuthenticationFailures => {
+                "A07:2021-IDAuthenticationFailures".to_string()
+            }
+            OWASPCategory::A08_2021_SoftwareDataIntegrityFailures => {
+                "A08:2021-SoftwareDataIntegrityFailures".to_string()
+            }
+            OWASPCategory::A09_2021_SecurityLoggingFailures => {
+                "A09:2021-SecurityLoggingFailures".to_string()
+            }
+            OWASPCategory::A10_2021_ServerSideRequestForgery => {
+                "A10:2021-ServerSideRequestForgery".to_string()
+            }
         }
     }
 }

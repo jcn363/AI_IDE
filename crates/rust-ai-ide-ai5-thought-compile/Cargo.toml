@@ -24,24 +24,24 @@ log = "0.4"
 rand = "0.8"
 
 # EEG and neural interface dependencies
-brainflow = { git = "https://github.com/brainflow-dev/brainflow" }
-neuroflow = { git = "https://github.com/neuroflow/neuroflow-rs" }
-eeg-tools = { git = "https://github.com/eeg-tools/eeg-tools-rs" }
-thought-api = { git = "https://github.com/thought-api/thought-api-rs" }
+#brainflow = { git = "https://github.com/brainflow-dev/brainflow" }
+#neuroflow = { git = "https://github.com/neuroflow/neuroflow-rs" }
+#eeg-tools = { git = "https://github.com/eeg-tools/eeg-tools-rs" }
+#thought-api = { git = "https://github.com/thought-api/thought-api-rs" }
 
 # Real-time signal processing
 rustfft = "6.2"
 ndarray = "0.15"
-scipy-rs = { git = "https://github.com/scipy/scipy-rs" }
+#scipy-rs = { git = "https://github.com/scipy/scipy-rs" }
 
 # Machine learning for thought pattern recognition
 tch = "0.13"
-candle = "0.6"
+candle-core = "0.6"
 linfa = "0.7"
 
 # Quantum verification
-qiskit = { git = "https://github.com/Qiskit/qiskit-rust" }
-quantum-verifier = { git = "https://github.com/quantum-verifier/quantum-verifier-rs" }
+#qiskit = { git = "https://github.com/Qiskit/qiskit-rust" }
+#quantum-verifier = { git = "https://github.com/quantum-verifier/quantum-verifier-rs" }
 
 # Code generation
 syn = { version = "2.0", features = ["full", "visit"] }
@@ -51,7 +51,7 @@ proc-macro2 = "1.0"
 # Natural language processing for thought-to-code translation
 hf-hub = "0.3"
 tokenizers = "0.20"
-transformers = { git = "https://github.com/huggingface/transformers-rust" }
+#transformers = { git = "https://github.com/huggingface/transformers-rust" }
 
 [dev-dependencies]
 criterion = "0.5"

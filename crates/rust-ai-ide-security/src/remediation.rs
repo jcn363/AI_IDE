@@ -34,25 +34,25 @@
 //! ```
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::{
-    SecurityResult, SecurityError, VulnerabilityReport, ComponentStatus,
-    UserContext, AuditTrail, AuditEvent,
+    AuditEvent, AuditTrail, ComponentStatus, SecurityError, SecurityResult, UserContext,
+    VulnerabilityReport,
 };
 
 /// Remediation confidence levels
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ConfidenceLevel {
-    Low,       // < 60% confidence
-    Medium,    // 60-79% confidence
-    High,      // 80-94% confidence
-    Critical,  // ≥ 95% confidence
+    Low,      // < 60% confidence
+    Medium,   // 60-79% confidence
+    High,     // 80-94% confidence
+    Critical, // ≥ 95% confidence
 }
 
 /// Remediation strategy types
@@ -85,12 +85,12 @@ pub enum WorkflowStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VulnerabilityPriority {
     pub vulnerability_id: String,
-    pub base_severity: f64,      // CVSS score or equivalent
+    pub base_severity: f64, // CVSS score or equivalent
     pub exploitability_score: f64,
-    pub exposure_factor: f64,    // How easily accessible the vulnerability is
-    pub business_impact: f64,    // Business criticality impact
-    pub confidence_score: f64,   // AI/ML confidence in assessment
-    pub overall_priority: f64,   // Final calculated priority
+    pub exposure_factor: f64,  // How easily accessible the vulnerability is
+    pub business_impact: f64,  // Business criticality impact
+    pub confidence_score: f64, // AI/ML confidence in assessment
+    pub overall_priority: f64, // Final calculated priority
     pub classification: ConfidenceLevel,
 }
 
@@ -297,11 +297,17 @@ impl ConfidenceScoringModel {
     }
 
     /// Calculate confidence score for a remediation action
-    pub async fn calculate_confidence(&self, action: &RemediationAction, context: &HashMap<String, String>) -> SecurityResult<f64> {
+    pub async fn calculate_confidence(
+        &self,
+        action: &RemediationAction,
+        context: &HashMap<String, String>,
+    ) -> SecurityResult<f64> {
         let mut score = 0.7; // Base confidence
 
         // Historical success rate factor
-        let historical_data = self.historical_data.iter()
+        let historical_data = self
+            .historical_data
+            .iter()
             .find(|h| format!("{:?}", action).contains(&h.remediation_type));
 
         if let Some(historical) = historical_data {
@@ -311,7 +317,7 @@ impl ConfidenceScoringModel {
         // Environmental factors
         if let Some(env) = context.get("environment") {
             match env.as_str() {
-                "production" => score *= 0.9,  // More conservative in production
+                "production" => score *= 0.9, // More conservative in production
                 "staging" => score *= 0.95,
                 "development" => score *= 0.98,
                 _ => {}
@@ -365,25 +371,38 @@ impl RemediationEngine {
     }
 
     /// Prioritize vulnerabilities for remediation
-    pub async fn prioritize_vulnerabilities(&self, vulnerabilities: &[VulnerabilityReport]) -> SecurityResult<Vec<RemediationWorkflow>> {
+    pub async fn prioritize_vulnerabilities(
+        &self,
+        vulnerabilities: &[VulnerabilityReport],
+    ) -> SecurityResult<Vec<RemediationWorkflow>> {
         let mut prioritized = Vec::new();
 
         for vuln in vulnerabilities {
             let priority = self.calculate_priority(vuln).await?;
             let confidence_level = Self::classificate_confidence(priority.confidence_score);
 
-            let workflow = self.create_workflow_for_vulnerability(vuln, &priority, confidence_level).await?;
+            let workflow = self
+                .create_workflow_for_vulnerability(vuln, &priority, confidence_level)
+                .await?;
             prioritized.push(workflow);
         }
 
         // Sort by overall priority (highest first)
-        prioritized.sort_by(|a, b| b.priority.overall_priority.partial_cmp(&a.priority.overall_priority).unwrap());
+        prioritized.sort_by(|a, b| {
+            b.priority
+                .overall_priority
+                .partial_cmp(&a.priority.overall_priority)
+                .unwrap()
+        });
 
         Ok(prioritized)
     }
 
     /// Calculate priority score for a vulnerability
-    async fn calculate_priority(&self, vuln: &VulnerabilityReport) -> SecurityResult<VulnerabilityPriority> {
+    async fn calculate_priority(
+        &self,
+        vuln: &VulnerabilityReport,
+    ) -> SecurityResult<VulnerabilityPriority> {
         let base_severity = vuln.cvss_score.unwrap_or(5.0) / 10.0;
         let exploitability_score = match vuln.cwe_id {
             Some(cwe) if cwe.contains("79") || cwe.contains("89") => 1.0, // XSS, SQL injection are highly exploitable
@@ -397,16 +416,17 @@ impl RemediationEngine {
         // Use ML model for confidence scoring
         let mut context = HashMap::new();
         context.insert("vulnerability_type".to_string(), vuln.title.clone());
-        let confidence_score = self.confidence_model.calculate_confidence(
-            &RemediationAction::SecurityPatch,
-            &context
-        ).await?;
+        let confidence_score = self
+            .confidence_model
+            .calculate_confidence(&RemediationAction::SecurityPatch, &context)
+            .await?;
 
-        let overall_priority = (base_severity * 0.3 +
-                              exploitability_score * 0.25 +
-                              exposure_factor * 0.2 +
-                              business_impact * 0.15 +
-                              confidence_score * 0.1) * 100.0;
+        let overall_priority = (base_severity * 0.3
+            + exploitability_score * 0.25
+            + exposure_factor * 0.2
+            + business_impact * 0.15
+            + confidence_score * 0.1)
+            * 100.0;
 
         Ok(VulnerabilityPriority {
             vulnerability_id: vuln.vulnerability_id.clone(),
@@ -482,8 +502,14 @@ impl RemediationEngine {
                 description: "Remediation workflow created".to_string(),
                 actor: "system".to_string(),
                 context: HashMap::from([
-                    ("vulnerability_id".to_string(), vuln.vulnerability_id.clone()),
-                    ("confidence_level".to_string(), format!("{:?}", confidence_level)),
+                    (
+                        "vulnerability_id".to_string(),
+                        vuln.vulnerability_id.clone(),
+                    ),
+                    (
+                        "confidence_level".to_string(),
+                        format!("{:?}", confidence_level),
+                    ),
                 ]),
                 success: true,
                 errors: Vec::new(),
@@ -498,7 +524,11 @@ impl RemediationEngine {
     }
 
     /// Generate remediation steps for a vulnerability
-    async fn generate_remediation_steps(&self, vuln: &VulnerabilityReport, priority: &VulnerabilityPriority) -> SecurityResult<Vec<RemediationStep>> {
+    async fn generate_remediation_steps(
+        &self,
+        vuln: &VulnerabilityReport,
+        priority: &VulnerabilityPriority,
+    ) -> SecurityResult<Vec<RemediationStep>> {
         let mut steps = Vec::new();
         let mut step_counter = 1;
 
@@ -536,10 +566,17 @@ impl RemediationEngine {
                     dependencies: vec![format!("step-{}-backup", step_counter - 1)],
                     rollback_action: Some("Revert dependency to previous version".to_string()),
                     risk_assessment: RiskAssessment {
-                        risk_level: if priority.overall_priority > 70.0 { RiskLevel::High } else { RiskLevel::Medium },
+                        risk_level: if priority.overall_priority > 70.0 {
+                            RiskLevel::High
+                        } else {
+                            RiskLevel::Medium
+                        },
                         downtime_estimated: Some(60),
                         failure_probability: 0.2,
-                        impact_scope: HashSet::from(["application".to_string(), "dependencies".to_string()]),
+                        impact_scope: HashSet::from([
+                            "application".to_string(),
+                            "dependencies".to_string(),
+                        ]),
                         mitigation_measures: vec![
                             "Test in staging environment".to_string(),
                             "Automated rollback capability".to_string(),
@@ -604,15 +641,24 @@ impl RemediationEngine {
 
     /// Assess overall workflow risk
     async fn assess_workflow_risk(&self, steps: &[RemediationStep]) -> RiskLevel {
-        let high_risk_steps = steps.iter()
-            .filter(|s| matches!(s.risk_assessment.risk_level, RiskLevel::High | RiskLevel::Critical))
+        let high_risk_steps = steps
+            .iter()
+            .filter(|s| {
+                matches!(
+                    s.risk_assessment.risk_level,
+                    RiskLevel::High | RiskLevel::Critical
+                )
+            })
             .count();
 
         if high_risk_steps > 2 {
             RiskLevel::Critical
         } else if high_risk_steps > 0 {
             RiskLevel::High
-        } else if steps.iter().any(|s| s.risk_assessment.downtime_estimated.is_some()) {
+        } else if steps
+            .iter()
+            .any(|s| s.risk_assessment.downtime_estimated.is_some())
+        {
             RiskLevel::Medium
         } else {
             RiskLevel::Low
@@ -620,10 +666,14 @@ impl RemediationEngine {
     }
 
     /// Execute remediation workflow
-    pub async fn execute_remediation_workflow(&self, workflow_id: &str) -> SecurityResult<WorkflowStatus> {
+    pub async fn execute_remediation_workflow(
+        &self,
+        workflow_id: &str,
+    ) -> SecurityResult<WorkflowStatus> {
         let mut workflow = {
             let workflows = self.workflows.read().await;
-            workflows.get(workflow_id)
+            workflows
+                .get(workflow_id)
                 .ok_or_else(|| SecurityError::ValidationError {
                     source: format!("Workflow {} not found", workflow_id).into(),
                 })?
@@ -631,10 +681,10 @@ impl RemediationEngine {
         };
 
         // Check if workflow requires approval
-        if workflow.strategy == RemediationStrategy::SemiAutomatic &&
-           workflow.priority.classification <= self.config.approval_threshold &&
-           workflow.approved_at.is_none() {
-
+        if workflow.strategy == RemediationStrategy::SemiAutomatic
+            && workflow.priority.classification <= self.config.approval_threshold
+            && workflow.approved_at.is_none()
+        {
             let mut queue = self.approval_queue.write().await;
             queue.push_back(workflow_id.to_string());
 
@@ -667,9 +717,13 @@ impl RemediationEngine {
 
             workflow.progress.completed_steps += 1;
             if result.success {
-                workflow.progress.success_rate = (workflow.progress.completed_steps as f64) / (workflow.progress.total_steps as f64);
+                workflow.progress.success_rate = (workflow.progress.completed_steps as f64)
+                    / (workflow.progress.total_steps as f64);
             } else {
-                workflow.progress.errors.push(result.error_message.unwrap_or_default());
+                workflow
+                    .progress
+                    .errors
+                    .push(result.error_message.unwrap_or_default());
 
                 // Initiate rollback if step failed
                 if self.config.enable_rollback {
@@ -695,7 +749,8 @@ impl RemediationEngine {
         }
 
         // Update statistics
-        self.update_statistics(&workflow, workflow.status == WorkflowStatus::Completed).await?;
+        self.update_statistics(&workflow, workflow.status == WorkflowStatus::Completed)
+            .await?;
 
         let mut workflows = self.workflows.write().await;
         workflows.insert(workflow_id.to_string(), workflow);
@@ -704,43 +759,67 @@ impl RemediationEngine {
     }
 
     /// Execute single remediation step
-    async fn execute_remediation_step(&self, step: &RemediationStep) -> SecurityResult<ExecutionResult> {
+    async fn execute_remediation_step(
+        &self,
+        step: &RemediationStep,
+    ) -> SecurityResult<ExecutionResult> {
         // Log audit entry
-        self.audit_trail.log_event(
-            "remediation_step_started",
-            &serde_json::json!({
-                "step_id": step.step_id,
-                "action": format!("{:?}", step.action),
-                "description": step.description
-            }),
-        ).await?;
+        self.audit_trail
+            .log_event(
+                "remediation_step_started",
+                &serde_json::json!({
+                    "step_id": step.step_id,
+                    "action": format!("{:?}", step.action),
+                    "description": step.description
+                }),
+            )
+            .await?;
 
         // Simulate step execution (replace with actual implementation)
         let execution_time = step.estimated_duration;
         let success = rand::random::<bool>() || step.confidence_score > 0.7; // Simulated success probability
-        let error_message = if success { None } else {
-            Some(format!("Failed to execute {}: {}", step.action, step.description))
+        let error_message = if success {
+            None
+        } else {
+            Some(format!(
+                "Failed to execute {}: {}",
+                step.action, step.description
+            ))
         };
 
         let result = ExecutionResult {
             step_id: step.step_id.clone(),
             success,
             execution_time,
-            output: if success { Some(format!("Successfully executed {}", step.description)) } else { None },
+            output: if success {
+                Some(format!("Successfully executed {}", step.description))
+            } else {
+                None
+            },
             error_message,
-            confidence_score: if success { step.confidence_score } else { step.confidence_score * 0.8 },
+            confidence_score: if success {
+                step.confidence_score
+            } else {
+                step.confidence_score * 0.8
+            },
             requires_manual_verification: step.risk_assessment.risk_level == RiskLevel::High,
         };
 
         // Log completion
-        self.audit_trail.log_event(
-            if success { "remediation_step_completed" } else { "remediation_step_failed" },
-            &serde_json::json!({
-                "step_id": step.step_id,
-                "success": success,
-                "execution_time": execution_time
-            }),
-        ).await?;
+        self.audit_trail
+            .log_event(
+                if success {
+                    "remediation_step_completed"
+                } else {
+                    "remediation_step_failed"
+                },
+                &serde_json::json!({
+                    "step_id": step.step_id,
+                    "success": success,
+                    "execution_time": execution_time
+                }),
+            )
+            .await?;
 
         Ok(result)
     }
@@ -753,7 +832,11 @@ impl RemediationEngine {
     }
 
     /// Update remediation statistics
-    async fn update_statistics(&self, workflow: &RemediationWorkflow, success: bool) -> SecurityResult<()> {
+    async fn update_statistics(
+        &self,
+        workflow: &RemediationWorkflow,
+        success: bool,
+    ) -> SecurityResult<()> {
         let mut stats = self.stats.write().await;
         stats.total_workflows += 1;
 
@@ -766,9 +849,13 @@ impl RemediationEngine {
         }
 
         // Update averages
-        let total_duration = workflow.progress.start_time
+        let total_duration = workflow
+            .progress
+            .start_time
             .map(|start| {
-                workflow.progress.estimated_completion
+                workflow
+                    .progress
+                    .estimated_completion
                     .unwrap_or_else(Utc::now)
                     .signed_duration_since(start)
                     .num_seconds() as f64
@@ -776,8 +863,14 @@ impl RemediationEngine {
             .unwrap_or(0.0);
 
         if stats.total_workflows > 1 {
-            stats.average_completion_time = (stats.average_completion_time * ((stats.total_workflows - 1) as f64) + total_duration) / stats.total_workflows as f64;
-            stats.average_confidence_score = (stats.average_confidence_score * ((stats.total_workflows - 1) as f64) + workflow.priority.confidence_score) / stats.total_workflows as f64;
+            stats.average_completion_time = (stats.average_completion_time
+                * ((stats.total_workflows - 1) as f64)
+                + total_duration)
+                / stats.total_workflows as f64;
+            stats.average_confidence_score = (stats.average_confidence_score
+                * ((stats.total_workflows - 1) as f64)
+                + workflow.priority.confidence_score)
+                / stats.total_workflows as f64;
         } else {
             stats.average_completion_time = total_duration;
             stats.average_confidence_score = workflow.priority.confidence_score;
@@ -787,7 +880,10 @@ impl RemediationEngine {
     }
 
     /// Get workflow status
-    pub async fn get_remediation_status(&self, workflow_id: &str) -> SecurityResult<Option<WorkflowProgress>> {
+    pub async fn get_remediation_status(
+        &self,
+        workflow_id: &str,
+    ) -> SecurityResult<Option<WorkflowProgress>> {
         let workflows = self.workflows.read().await;
         Ok(workflows.get(workflow_id).map(|w| w.progress.clone()))
     }
@@ -835,7 +931,10 @@ impl AuditTrait for NoOpAuditTrail {
         Ok(())
     }
 
-    async fn query_events(&self, _filters: std::collections::HashMap<String, String>) -> SecurityResult<Vec<serde_json::Value>> {
+    async fn query_events(
+        &self,
+        _filters: std::collections::HashMap<String, String>,
+    ) -> SecurityResult<Vec<serde_json::Value>> {
         Ok(Vec::new())
     }
 }
@@ -855,7 +954,10 @@ mod tests {
         let model = ConfidenceScoringModel::new();
         let context = HashMap::from([("environment".to_string(), "production".to_string())]);
 
-        let score = model.calculate_confidence(&RemediationAction::SecurityPatch, &context).await.unwrap();
+        let score = model
+            .calculate_confidence(&RemediationAction::SecurityPatch, &context)
+            .await
+            .unwrap();
         assert!(score >= 0.0 && score <= 1.0);
     }
 
@@ -863,24 +965,25 @@ mod tests {
     async fn test_vulnerability_prioritization() {
         let engine = RemediationEngine::new().await.unwrap();
 
-        let vulnerabilities = vec![
-            VulnerabilityReport {
-                vulnerability_id: "test-vuln-1".to_string(),
-                component_id: "test-comp".to_string(),
-                title: "Test vulnerability 1".to_string(),
-                description: "A test vulnerability".to_string(),
-                severity: crate::VulnerabilitySeverity::High,
-                cwe_id: Some("79".to_string()),
-                affected_versions: vec!["1.0.0".to_string()],
-                cvss_score: Some(8.5),
-                published_date: Utc::now(),
-                last_modified: Utc::now(),
-                references: vec![],
-                remediation: None,
-            }
-        ];
+        let vulnerabilities = vec![VulnerabilityReport {
+            vulnerability_id: "test-vuln-1".to_string(),
+            component_id: "test-comp".to_string(),
+            title: "Test vulnerability 1".to_string(),
+            description: "A test vulnerability".to_string(),
+            severity: crate::VulnerabilitySeverity::High,
+            cwe_id: Some("79".to_string()),
+            affected_versions: vec!["1.0.0".to_string()],
+            cvss_score: Some(8.5),
+            published_date: Utc::now(),
+            last_modified: Utc::now(),
+            references: vec![],
+            remediation: None,
+        }];
 
-        let workflows = engine.prioritize_vulnerabilities(&vulnerabilities).await.unwrap();
+        let workflows = engine
+            .prioritize_vulnerabilities(&vulnerabilities)
+            .await
+            .unwrap();
         assert_eq!(workflows.len(), 1);
         assert!(workflows[0].priority.overall_priority > 0.0);
     }

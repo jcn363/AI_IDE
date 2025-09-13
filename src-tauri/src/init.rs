@@ -3,17 +3,17 @@
 //! This module contains initialization functions and startup routines.
 
 use crate::state::AppState;
-use rust_ai_ide_lsp::{AIService, AIProvider};
-use std::path::PathBuf;
 use dirs;
+use rust_ai_ide_lsp::{AIProvider, AIService};
+use std::path::PathBuf;
 
 /// Initialize AI service on application startup
 pub async fn initialize_ai_service_on_startup(ai_service_state: &AppState) -> Result<(), String> {
     log::info!("Initializing AI service on startup");
 
     // Create default AI service configuration with environment-configurable endpoints
-    let model_path = std::env::var("RUST_AI_IDE_MODEL_PATH")
-        .unwrap_or_else(|_| "default".to_string());
+    let model_path =
+        std::env::var("RUST_AI_IDE_MODEL_PATH").unwrap_or_else(|_| "default".to_string());
 
     let endpoint = std::env::var("RUST_AI_IDE_AI_ENDPOINT")
         .unwrap_or_else(|_| "https://api.example.com".to_string());
@@ -85,7 +85,10 @@ pub async fn initialize_cache_cleanup_task() -> Result<(), String> {
 
         // Handle potential send errors gracefully
         if let Err(e) = shutdown_tx_signal.send(()) {
-            log::warn!("Failed to send shutdown signal: {}. Shutdown may not be properly coordinated.", e);
+            log::warn!(
+                "Failed to send shutdown signal: {}. Shutdown may not be properly coordinated.",
+                e
+            );
         } else {
             log::debug!("Shutdown signal sent successfully to listeners");
         }

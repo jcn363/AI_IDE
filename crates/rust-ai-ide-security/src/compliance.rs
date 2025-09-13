@@ -41,16 +41,16 @@
 //! ```
 
 use async_trait::async_trait;
+use base64::{engine::general_purpose, Engine as _};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use chrono::{DateTime, Utc};
-use base64::{Engine as _, engine::general_purpose};
 
 use crate::{
-    SecurityResult, SecurityError, UserContext,
-    AuditEventType, AuditEventSeverity, GDPRCompliance, CCPACompliance
+    AuditEventSeverity, AuditEventType, CCPACompliance, GDPRCompliance, SecurityError,
+    SecurityResult, UserContext,
 };
 
 /// GDPR data processing purposes
@@ -247,7 +247,12 @@ pub struct CCPAComplianceManager {
 #[async_trait]
 pub trait ConsentManager: Send + Sync {
     /// Grant consent for a specific purpose
-    async fn grant_consent(&self, user_id: &str, purpose: String, context: &HashMap<String, String>) -> SecurityResult<()>;
+    async fn grant_consent(
+        &self,
+        user_id: &str,
+        purpose: String,
+        context: &HashMap<String, String>,
+    ) -> SecurityResult<()>;
 
     /// Withdraw consent for a specific purpose
     async fn withdraw_consent(&self, user_id: &str, purpose: &str) -> SecurityResult<()>;
@@ -455,10 +460,19 @@ pub enum ComplianceEventType {
 #[async_trait]
 pub trait DataDeletionManager: Send + Sync {
     /// Delete user data for GDPR right to erasure
-    async fn delete_user_data(&self, user_id: &str, reasons: Vec<String>) -> SecurityResult<DeletionResult>;
+    async fn delete_user_data(
+        &self,
+        user_id: &str,
+        reasons: Vec<String>,
+    ) -> SecurityResult<DeletionResult>;
 
     /// Schedule data deletion
-    async fn schedule_deletion(&self, user_id: &str, deletion_date: DateTime<Utc>, reasons: Vec<String>) -> SecurityResult<()>;
+    async fn schedule_deletion(
+        &self,
+        user_id: &str,
+        deletion_date: DateTime<Utc>,
+        reasons: Vec<String>,
+    ) -> SecurityResult<()>;
 
     /// Cancel scheduled deletion
     async fn cancel_deletion(&self, user_id: &str) -> SecurityResult<()>;
@@ -509,8 +523,14 @@ impl GDPRManager {
 
         // Initialize default anonymization methods
         let mut methods = HashMap::new();
-        methods.insert("personal_data".to_string(), AnonymizationMethod::Pseudonymization);
-        methods.insert("financial_data".to_string(), AnonymizationMethod::Aggregation);
+        methods.insert(
+            "personal_data".to_string(),
+            AnonymizationMethod::Pseudonymization,
+        );
+        methods.insert(
+            "financial_data".to_string(),
+            AnonymizationMethod::Aggregation,
+        );
         methods.insert("health_data".to_string(), AnonymizationMethod::KAnonymity);
 
         *anonymization_methods.write().await = methods;
@@ -526,36 +546,45 @@ impl GDPRManager {
     }
 
     /// Process a data subject request
-    pub async fn process_request(&self, request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
+    pub async fn process_request(
+        &self,
+        request: DataSubjectRequest,
+    ) -> SecurityResult<DataSubjectResponse> {
         match &request.request_type {
-            RequestType::GDPR(gdpr_type) => {
-                match gdpr_type {
-                    GDPRRequestType::RightToAccess => self.handle_access_request(request).await,
-                    GDPRRequestType::RightToErasure => self.handle_erasure_request(request).await,
-                    GDPRRequestType::RightToDataPortability => self.handle_portability_request(request).await,
-                    GDPRRequestType::RightToRectification => self.handle_rectification_request(request).await,
-                    _ => Err(SecurityError::ComplianceViolation {
-                        policy: "GDPR".to_string()
-                    }),
+            RequestType::GDPR(gdpr_type) => match gdpr_type {
+                GDPRRequestType::RightToAccess => self.handle_access_request(request).await,
+                GDPRRequestType::RightToErasure => self.handle_erasure_request(request).await,
+                GDPRRequestType::RightToDataPortability => {
+                    self.handle_portability_request(request).await
                 }
-            }
-            RequestType::CCPA(ccpa_type) => {
-                match ccpa_type {
-                    CCPARequestType::RightToKnow => self.handle_access_request_ccpa(request).await,
-                    CCPARequestType::RightToDelete => self.handle_erasure_request_ccpa(request).await,
-                    _ => Err(SecurityError::ComplianceViolation {
-                        policy: "CCPA".to_string()
-                    }),
+                GDPRRequestType::RightToRectification => {
+                    self.handle_rectification_request(request).await
                 }
-            }
+                _ => Err(SecurityError::ComplianceViolation {
+                    policy: "GDPR".to_string(),
+                }),
+            },
+            RequestType::CCPA(ccpa_type) => match ccpa_type {
+                CCPARequestType::RightToKnow => self.handle_access_request_ccpa(request).await,
+                CCPARequestType::RightToDelete => self.handle_erasure_request_ccpa(request).await,
+                _ => Err(SecurityError::ComplianceViolation {
+                    policy: "CCPA".to_string(),
+                }),
+            },
         }
     }
 
     /// Create data processing record (Article 30 compliance)
-    pub async fn create_processing_record(&self, record: DataProcessingRecord) -> SecurityResult<String> {
+    pub async fn create_processing_record(
+        &self,
+        record: DataProcessingRecord,
+    ) -> SecurityResult<String> {
         let mut records = self.processing_records.write().await;
         let id = format!("processing_{}", uuid::Uuid::new_v4());
-        records.push(DataProcessingRecord { id: id.clone(), ..record });
+        records.push(DataProcessingRecord {
+            id: id.clone(),
+            ..record
+        });
         Ok(id)
     }
 
@@ -564,7 +593,10 @@ impl GDPRManager {
         let mut records = self.breach_records.write().await;
         let id = format!("breach_{}", uuid::Uuid::new_v4());
 
-        records.push(BreachRecord { id: id.clone(), ..breach });
+        records.push(BreachRecord {
+            id: id.clone(),
+            ..breach
+        });
 
         // Log breach to audit
         if let Some(audit) = &self.compliance_audit_log {
@@ -587,7 +619,10 @@ impl GDPRManager {
     }
 
     /// Perform privacy impact assessment
-    pub async fn create_privacy_assessment(&self, assessment: PrivacyImpactAssessment) -> SecurityResult<String> {
+    pub async fn create_privacy_assessment(
+        &self,
+        assessment: PrivacyImpactAssessment,
+    ) -> SecurityResult<String> {
         let id = format!("pia_{}", uuid::Uuid::new_v4());
         // In a real implementation, this would be stored
 
@@ -628,7 +663,10 @@ impl GDPRManager {
     }
 
     // Private methods for handling specific requests
-    async fn handle_access_request(&self, _request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
+    async fn handle_access_request(
+        &self,
+        _request: DataSubjectRequest,
+    ) -> SecurityResult<DataSubjectResponse> {
         Ok(DataSubjectResponse {
             request_id: _request.id,
             status: RequestStatus::Completed,
@@ -637,7 +675,10 @@ impl GDPRManager {
         })
     }
 
-    async fn handle_erasure_request(&self, _request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
+    async fn handle_erasure_request(
+        &self,
+        _request: DataSubjectRequest,
+    ) -> SecurityResult<DataSubjectResponse> {
         Ok(DataSubjectResponse {
             request_id: _request.id,
             status: RequestStatus::Completed,
@@ -646,7 +687,10 @@ impl GDPRManager {
         })
     }
 
-    async fn handle_portability_request(&self, _request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
+    async fn handle_portability_request(
+        &self,
+        _request: DataSubjectRequest,
+    ) -> SecurityResult<DataSubjectResponse> {
         Ok(DataSubjectResponse {
             request_id: _request.id,
             status: RequestStatus::Completed,
@@ -655,7 +699,10 @@ impl GDPRManager {
         })
     }
 
-    async fn handle_rectification_request(&self, _request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
+    async fn handle_rectification_request(
+        &self,
+        _request: DataSubjectRequest,
+    ) -> SecurityResult<DataSubjectResponse> {
         Ok(DataSubjectResponse {
             request_id: _request.id,
             status: RequestStatus::Completed,
@@ -664,7 +711,10 @@ impl GDPRManager {
         })
     }
 
-    async fn handle_access_request_ccpa(&self, _request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
+    async fn handle_access_request_ccpa(
+        &self,
+        _request: DataSubjectRequest,
+    ) -> SecurityResult<DataSubjectResponse> {
         Ok(DataSubjectResponse {
             request_id: _request.id,
             status: RequestStatus::Completed,
@@ -673,7 +723,10 @@ impl GDPRManager {
         })
     }
 
-    async fn handle_erasure_request_ccpa(&self, _request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
+    async fn handle_erasure_request_ccpa(
+        &self,
+        _request: DataSubjectRequest,
+    ) -> SecurityResult<DataSubjectResponse> {
         Ok(DataSubjectResponse {
             request_id: _request.id,
             status: RequestStatus::Completed,
@@ -704,9 +757,15 @@ impl CCPAComplianceManager {
     }
 
     /// Process CCPA opt-out request
-    pub async fn process_optout(&self, user_id: &str, categories: Vec<String>) -> SecurityResult<String> {
+    pub async fn process_optout(
+        &self,
+        user_id: &str,
+        categories: Vec<String>,
+    ) -> SecurityResult<String> {
         let mut optouts = self.consent_optouts.write().await;
-        let user_optouts = optouts.entry(user_id.to_string()).or_insert_with(HashSet::new);
+        let user_optouts = optouts
+            .entry(user_id.to_string())
+            .or_insert_with(HashSet::new);
 
         for category in categories {
             user_optouts.insert(category);
@@ -736,7 +795,7 @@ impl CCPAComplianceManager {
     pub async fn log_data_sale(&self, sale_record: DataSaleRecord) -> SecurityResult<()> {
         if !sale_record.consent_obtained {
             return Err(SecurityError::ComplianceViolation {
-                policy: "CCPA data sale without consent".to_string()
+                policy: "CCPA data sale without consent".to_string(),
             });
         }
 
@@ -830,12 +889,13 @@ impl EnterpriseComplianceManager {
         let soc2_score = self.soc2_compliance.overall_assurance;
         let sox_score = self.sox_compliance.internal_controls_effective;
 
-        let overall_score = (gdpr_status.data_processing_consent as u32 +
-                           gdpr_status.subject_access_rights_provided as u32 +
-                           self.ccpa_audit_compliant().await as u32 +
-                           (hipaa_score > 0.8) as u32 +
-                           (soc2_score > 0.8) as u32 +
-                           (sox_score > 0.8) as u32) as f64 / 6.0;
+        let overall_score = (gdpr_status.data_processing_consent as u32
+            + gdpr_status.subject_access_rights_provided as u32
+            + self.ccpa_audit_compliant().await as u32
+            + (hipaa_score > 0.8) as u32
+            + (soc2_score > 0.8) as u32
+            + (sox_score > 0.8) as u32) as f64
+            / 6.0;
 
         let report = ComprehensiveComplianceReport {
             report_id,
@@ -905,10 +965,12 @@ impl EnterpriseComplianceManager {
                 "Data Processing".to_string(),
                 "Data Security".to_string(),
                 "Access Control".to_string(),
-            ].into_iter().collect(),
+            ]
+            .into_iter()
+            .collect(),
             control_activities: vec![], // Would be populated with actual controls
             testing_procedures: vec![], // Would be populated with actual procedures
-            findings: vec![], // Would be populated with actual findings
+            findings: vec![],           // Would be populated with actual findings
             attestation_report: Some("SOC 2 Type II Report Available".to_string()),
             audit_period_start: Some(Utc::now() - chrono::Duration::days(365)),
             audit_period_end: Some(Utc::now()),
@@ -972,7 +1034,9 @@ pub struct ComprehensiveComplianceReport {
 }
 
 /// Create enterprise compliance manager
-pub async fn create_enterprise_compliance_manager(audit_callback: Arc<dyn AuditCallback>) -> SecurityResult<EnterpriseComplianceManager> {
+pub async fn create_enterprise_compliance_manager(
+    audit_callback: Arc<dyn AuditCallback>,
+) -> SecurityResult<EnterpriseComplianceManager> {
     EnterpriseComplianceManager::new(audit_callback).await
 }
 
@@ -981,7 +1045,9 @@ pub mod anonymization {
     use super::*;
 
     /// Anonymize sensitive data according to GDPR
-    pub fn anonymize_personal_data(data: &HashMap<String, String>) -> SecurityResult<serde_json::Value> {
+    pub fn anonymize_personal_data(
+        data: &HashMap<String, String>,
+    ) -> SecurityResult<serde_json::Value> {
         let mut anonymized = serde_json::Map::new();
 
         for (key, value) in data {
@@ -989,15 +1055,15 @@ pub mod anonymization {
                 "name" => {
                     // Pseudonymize name
                     anonymized.insert(key.clone(), format!("User_{}", value.len()).into());
-                },
+                }
                 "email" => {
                     // Hash email
-                    use sha2::{Sha256, Digest};
+                    use sha2::{Digest, Sha256};
                     let mut hasher = Sha256::new();
                     hasher.update(value);
                     let hash = format!("{:x}", hasher.finalize());
                     anonymized.insert(key.clone(), format!("hashed_{}", &hash[..8]).into());
-                },
+                }
                 _ => {
                     // Keep other data as-is (assuming it's already appropriate)
                     anonymized.insert(key.clone(), value.clone().into());
@@ -1091,9 +1157,16 @@ mod tests {
             consent_string: "essential analytics".to_string(),
         };
 
-        ccpa_manager.set_cookie_consent(consent.clone()).await.unwrap();
+        ccpa_manager
+            .set_cookie_consent(consent.clone())
+            .await
+            .unwrap();
 
-        let retrieved = ccpa_manager.get_cookie_consent("test_user").await.unwrap().unwrap();
+        let retrieved = ccpa_manager
+            .get_cookie_consent("test_user")
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(retrieved.user_id, "test_user");
         assert_eq!(retrieved.categories, consent.categories);
     }

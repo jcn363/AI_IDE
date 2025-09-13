@@ -45,7 +45,7 @@ export enum SourcePriority {
   GLOBAL_USER = 1,
   PROJECT = 2,
   ENVIRONMENT = 3,
-  RUNTIME = 4
+  RUNTIME = 4,
 }
 
 /**

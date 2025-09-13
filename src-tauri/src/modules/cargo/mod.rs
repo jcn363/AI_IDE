@@ -9,6 +9,6 @@ pub mod commands;
 pub use commands::*;
 
 // Application interface
-pub use super::state;
+pub use super::cargo::{CargoMetadata, CargoService, PerformanceMetrics};
 pub use super::lifecycle::LifecycleManager;
-pub use super::cargo::{CargoService, CargoMetadata, PerformanceMetrics};
+pub use super::state;

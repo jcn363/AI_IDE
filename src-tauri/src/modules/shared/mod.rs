@@ -3,5 +3,5 @@
 //! Contains common types and functions used across multiple modules.
 
 pub mod diagnostics;
-pub mod validation;
 pub mod types;
+pub mod validation;

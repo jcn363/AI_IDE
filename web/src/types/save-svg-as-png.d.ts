@@ -28,15 +28,9 @@ declare module 'save-svg-as-png' {
     options?: SaveSVGOptions
   ): Promise<HTMLCanvasElement>;
 
-  export function svgAsDataUri(
-    svg: Element | string,
-    options?: SaveSVGOptions
-  ): Promise<string>;
+  export function svgAsDataUri(svg: Element | string, options?: SaveSVGOptions): Promise<string>;
 
-  export function svgAsPngUri(
-    svg: Element | string,
-    options?: SaveSVGOptions
-  ): Promise<string>;
+  export function svgAsPngUri(svg: Element | string, options?: SaveSVGOptions): Promise<string>;
 
   export function saveSvgAsPng(
     svg: Element | string,

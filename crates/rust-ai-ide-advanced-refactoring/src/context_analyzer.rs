@@ -1,8 +1,8 @@
-use std::sync::Arc;
-use async_trait::async_trait;
-use rust_ai_ide_lsp::LSPService;
 use crate::ai_suggester::AnalysisContext;
 use crate::error::{AnalysisError, AnalysisResult};
+use async_trait::async_trait;
+use rust_ai_ide_lsp::LSPService;
+use std::sync::Arc;
 
 /// Context analysis result
 #[derive(Debug, Clone)]

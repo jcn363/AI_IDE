@@ -5,23 +5,23 @@
 //! and concurrency security problems.
 
 mod advanced_pattern;
+mod analyzer;
+mod concurrency;
 mod cryptographic;
 mod input_validation;
-mod concurrency;
-mod analyzer;
 
 // Only include test module in test builds
 #[cfg(test)]
 mod tests;
 
 pub use advanced_pattern::AdvancedPatternDetector;
+pub use analyzer::SecurityAnalyzer;
+pub use concurrency::ConcurrencySecurityAnalyzer;
 pub use cryptographic::CryptographicAnalyzer;
 pub use input_validation::InputValidationAnalyzer;
-pub use concurrency::ConcurrencySecurityAnalyzer;
-pub use analyzer::SecurityAnalyzer;
 
-use serde::{Serialize, Deserialize};
 use crate::analysis::CodeLocation;
+use serde::{Deserialize, Serialize};
 
 /// Represents a security issue found during analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]

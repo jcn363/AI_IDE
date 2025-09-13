@@ -3,7 +3,7 @@ import { performance } from 'node:perf_hooks';
 // Declare WeakRef for environments where it's not available
 declare global {
   interface WeakRef<T extends object = object> {
-    readonly [Symbol.toStringTag]: "WeakRef";
+    readonly [Symbol.toStringTag]: 'WeakRef';
     deref(): T | undefined;
   }
 
@@ -54,7 +54,7 @@ export class MemoryManager {
       warningLimit: 512 * 1024 * 1024, // 512MB
       criticalLimit: 1024 * 1024 * 1024, // 1GB
       leakDetectionInterval: 30000, // 30 seconds
-      ...thresholds
+      ...thresholds,
     };
 
     this.leakDetectionInterval = this.leakThresholds.leakDetectionInterval;
@@ -96,7 +96,7 @@ export class MemoryManager {
       name,
       size,
       allocatedAt: performance.now(),
-      stack: includeStack ? new Error().stack : undefined
+      stack: includeStack ? new Error().stack : undefined,
     };
 
     this.memoryTracked.set(id, tracker);
@@ -133,7 +133,7 @@ export class MemoryManager {
         heapSizeLimit: memoryUsage.heap_size_limit,
         externalMemory: memoryUsage.external_memory,
         trackingCount: this.memoryTracked.size,
-        leakCount: this.calculateLeakCount()
+        leakCount: this.calculateLeakCount(),
       };
     } else {
       // Browser environment
@@ -143,7 +143,7 @@ export class MemoryManager {
         heapSizeLimit: 0,
         externalMemory: 0,
         trackingCount: this.memoryTracked.size,
-        leakCount: this.calculateLeakCount()
+        leakCount: this.calculateLeakCount(),
       };
 
       if ('memory' in performance) {
@@ -183,11 +183,11 @@ export class MemoryManager {
   private calculateLeakCount(): number {
     // Consider allocations older than threshold as potential leaks
     const now = performance.now();
-    const leakThreshold = now - (this.leakDetectionInterval * 5); // 5x the detection interval
+    const leakThreshold = now - this.leakDetectionInterval * 5; // 5x the detection interval
 
-    return Array.from(this.memoryTracked.values())
-      .filter(tracker => tracker.allocatedAt < leakThreshold)
-      .length;
+    return Array.from(this.memoryTracked.values()).filter(
+      (tracker) => tracker.allocatedAt < leakThreshold
+    ).length;
   }
 
   private checkMemoryUsage(): void {
@@ -203,13 +203,16 @@ export class MemoryManager {
 
   private detectMemoryLeaks(): void {
     const now = performance.now();
-    const potentialLeaks = Array.from(this.memoryTracked.values())
-      .filter(tracker => (now - tracker.allocatedAt) > (this.leakDetectionInterval * 10));
+    const potentialLeaks = Array.from(this.memoryTracked.values()).filter(
+      (tracker) => now - tracker.allocatedAt > this.leakDetectionInterval * 10
+    );
 
     if (potentialLeaks.length > 0) {
       console.warn(`Potential memory leak(s) detected: ${potentialLeaks.length} allocations`);
-      potentialLeaks.forEach(leak => {
-        console.warn(`  - ${leak.name} (${leak.id}): ${(now - leak.allocatedAt).toFixed(2)}ms since allocation`);
+      potentialLeaks.forEach((leak) => {
+        console.warn(
+          `  - ${leak.name} (${leak.id}): ${(now - leak.allocatedAt).toFixed(2)}ms since allocation`
+        );
         if (leak.stack) {
           console.warn(`    Stack: ${leak.stack}`);
         }
@@ -226,10 +229,7 @@ export class MemoryManager {
 /**
  * Memory-safe wrapper for functions
  */
-export function withMemoryTracking<T>(
-  name: string,
-  fn: () => Promise<T>
-): Promise<T> {
+export function withMemoryTracking<T>(name: string, fn: () => Promise<T>): Promise<T> {
   const memoryManager = new MemoryManager();
   const id = `${name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -272,14 +272,13 @@ export class ResourceDisposer {
 
     this.disposed = true;
 
-    const cleanupPromises = Array.from(this.resources.entries())
-      .map(async ([resource]) => {
-        try {
-          await resource();
-        } catch (error) {
-          console.error('Error during resource cleanup:', error);
-        }
-      });
+    const cleanupPromises = Array.from(this.resources.entries()).map(async ([resource]) => {
+      try {
+        await resource();
+      } catch (error) {
+        console.error('Error during resource cleanup:', error);
+      }
+    });
 
     await Promise.all(cleanupPromises);
     this.resources.clear();
@@ -302,7 +301,9 @@ export class SafeCache<T> {
   private defaultTTL: number;
   private memoryManager?: MemoryManager;
 
-  constructor(options: { maxSize?: number; defaultTTL?: number; enableMemoryTracking?: boolean } = {}) {
+  constructor(
+    options: { maxSize?: number; defaultTTL?: number; enableMemoryTracking?: boolean } = {}
+  ) {
     this.maxSize = options.maxSize || 100;
     this.defaultTTL = options.defaultTTL || 300000; // 5 minutes
 
@@ -310,10 +311,13 @@ export class SafeCache<T> {
       this.memoryManager = new MemoryManager();
 
       // Start a cleanup timer
-      setInterval(() => {
-        this.evictExpired();
-        this.evictOverSize();
-      }, Math.min(this.defaultTTL, 60000)); // Check every minute or TTL, whichever is smaller
+      setInterval(
+        () => {
+          this.evictExpired();
+          this.evictOverSize();
+        },
+        Math.min(this.defaultTTL, 60000)
+      ); // Check every minute or TTL, whichever is smaller
     }
   }
 
@@ -419,8 +423,7 @@ export class SafeCache<T> {
   }
 
   private evictOverSize(): void {
-    const entries = Array.from(this.cache.entries())
-      .sort(([, a], [, b]) => a.expires - b.expires); // Sort by expiration
+    const entries = Array.from(this.cache.entries()).sort(([, a], [, b]) => a.expires - b.expires); // Sort by expiration
 
     while (this.cache.size > this.maxSize) {
       const [key] = entries.shift()!;

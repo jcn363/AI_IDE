@@ -24,21 +24,21 @@ log = "0.4"
 rand = "0.8"
 
 # Self-evolving AI frameworks
-evolutionary-ai = { git = "https://github.com/evolutionary-ai/evolutionary-ai-rs" }
-meta-intelligence = { git = "https://github.com/meta-intelligence/meta-intelligence-rs" }
-infinite-learning = { git = "https://github.com/infinite-learning/infinite-learning-rs" }
-self-transcending-ai = { git = "https://github.com/self-transcending-ai/self-transcending-ai-rs" }
+# evolutionary-ai = { git = "https://github.com/evolutionary-ai/evolutionary-ai-rs" }
+# meta-intelligence = { git = "https://github.com/meta-intelligence/meta-intelligence-rs" }
+# infinite-learning = { git = "https://github.com/infinite-learning/infinite-learning-rs" }
+# self-transcending-ai = { git = "https://github.com/self-transcending-ai/self-transcending-ai-rs" }
 
 # Advanced ML frameworks
-candle = "0.6"
+candle-core = "0.6"
 linfa = "0.7"
 tch = "0.13"
-neuronika = "0.4"
-tract-onnx = { git = "https://github.com/sonos/tract" }
+neuronika = "0.2"
+# tract-onnx = { git = "https://github.com/sonos/tract" }
 
 # Consciousness-powered learning
-consciousness-ml = { git = "https://github.com/consciousness-ml/consciousness-ml-rs" }
-meta-cognition-engine = { git = "https://github.com/meta-cognition-engine/meta-cognition-engine-rs" }
+# consciousness-ml = { git = "https://github.com/consciousness-ml/consciousness-ml-rs" }
+# meta-cognition-engine = { git = "https://github.com/meta-cognition-engine/meta-cognition-engine-rs" }
 
 [dev-dependencies]
 criterion = "0.5"

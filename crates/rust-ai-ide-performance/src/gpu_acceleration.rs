@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 
 use rust_ai_ide_shared_types::{IDEResult, RustAIError};
 
@@ -61,7 +61,10 @@ impl GPUComputeQueue {
 
     /// Estimate memory usage for a kernel launch
     pub fn estimate_memory_usage(&self, kernel_config: &GPUKernelConfig, input_size: usize) -> u64 {
-        let total_threads = kernel_config.grid_dim.iter().fold(1usize, |acc, &d| acc.saturating_mul(d as usize));
+        let total_threads = kernel_config
+            .grid_dim
+            .iter()
+            .fold(1usize, |acc, &d| acc.saturating_mul(d as usize));
         let estimated_data_size = total_threads * 32; // Rough estimate per thread
         estimated_data_size as u64 + (input_size * 2) as u64 // Input + output buffers
     }
@@ -109,7 +112,11 @@ pub trait GPUComputeBackend: Send + Sync + 'static {
     async fn get_available_devices(&self) -> IDEResult<Vec<GPUDeviceInfo>>;
 
     /// Allocate GPU memory
-    async fn allocate_memory(&self, size_bytes: usize, device: &GPUDeviceInfo) -> IDEResult<GPUBuffer>;
+    async fn allocate_memory(
+        &self,
+        size_bytes: usize,
+        device: &GPUDeviceInfo,
+    ) -> IDEResult<GPUBuffer>;
 
     /// Copy data to GPU
     async fn copy_to_gpu(&self, buffer: &GPUBuffer, data: &[u8]) -> IDEResult<()>;
@@ -118,7 +125,12 @@ pub trait GPUComputeBackend: Send + Sync + 'static {
     async fn copy_from_gpu(&self, buffer: &GPUBuffer, target: &mut [u8]) -> IDEResult<()>;
 
     /// Launch a kernel
-    async fn launch_kernel(&self, kernel: &GPUKernelConfig, args: &[GPUKernelArg], device: &GPUDeviceInfo) -> IDEResult<GPUExecutionResult>;
+    async fn launch_kernel(
+        &self,
+        kernel: &GPUKernelConfig,
+        args: &[GPUKernelArg],
+        device: &GPUDeviceInfo,
+    ) -> IDEResult<GPUExecutionResult>;
 
     /// Synchronize operations
     async fn synchronize(&self) -> IDEResult<()>;
@@ -230,7 +242,8 @@ impl GPUPerformanceMonitor {
                 0.0
             },
             failure_rate: if self.operations_completed + self.operations_failed > 0 {
-                self.operations_failed as f64 / (self.operations_completed + self.operations_failed) as f64
+                self.operations_failed as f64
+                    / (self.operations_completed + self.operations_failed) as f64
             } else {
                 0.0
             },
@@ -271,7 +284,10 @@ pub mod kernels {
     }
 
     /// Pattern matching kernel for code analysis
-    pub fn create_pattern_matching_kernel(text_length: usize, patterns_count: usize) -> GPUKernelConfig {
+    pub fn create_pattern_matching_kernel(
+        text_length: usize,
+        patterns_count: usize,
+    ) -> GPUKernelConfig {
         let threads_per_block = 512;
         let blocks = (text_length as u32 + threads_per_block - 1) / threads_per_block;
 
@@ -313,7 +329,11 @@ impl GPUAccelerationManager {
     }
 
     /// Add a GPU compute backend
-    pub async fn add_backend(&mut self, name: String, backend: Box<dyn GPUComputeBackend>) -> IDEResult<()> {
+    pub async fn add_backend(
+        &mut self,
+        name: String,
+        backend: Box<dyn GPUComputeBackend>,
+    ) -> IDEResult<()> {
         self.backends.insert(name, backend);
         Ok(())
     }
@@ -337,8 +357,12 @@ impl GPUAccelerationManager {
         // Select best devices based on memory and performance
         for device in all_devices {
             if device.available_memory_gb >= self.config.memory_threshold_gb {
-                self.active_devices.insert(device.device_id.clone(), device.clone());
-                self.operation_queues.insert(device.device_id.clone(), GPUComputeQueue::new(self.config.max_queued_operations));
+                self.active_devices
+                    .insert(device.device_id.clone(), device.clone());
+                self.operation_queues.insert(
+                    device.device_id.clone(),
+                    GPUComputeQueue::new(self.config.max_queued_operations),
+                );
             }
         }
 
@@ -349,23 +373,32 @@ impl GPUAccelerationManager {
     /// Submit operation for GPU execution
     pub async fn submit_operation(&self, operation: GPUOperation) -> IDEResult<String> {
         if !self.config.enable_gpu_acceleration {
-            return Err(RustAIError::InternalError("GPU acceleration disabled".to_string()));
+            return Err(RustAIError::InternalError(
+                "GPU acceleration disabled".to_string(),
+            ));
         }
 
         // Select best device for this operation
         let selected_device = self.select_device_for_operation(&operation)?;
-        let device_info = self.active_devices.get(&selected_device)
+        let device_info = self
+            .active_devices
+            .get(&selected_device)
             .ok_or_else(|| RustAIError::InternalError("Device not found".to_string()))?;
 
         // Add to operation queue
         if let Some(queue) = self.operation_queues.get_mut(&selected_device) {
             if queue.operations.len() >= queue.max_operations {
-                return Err(RustAIError::InternalError("Operation queue full".to_string()));
+                return Err(RustAIError::InternalError(
+                    "Operation queue full".to_string(),
+                ));
             }
             queue.operations.push(operation);
         }
 
-        info!("Submitted operation {} to device {}", operation.id, selected_device);
+        info!(
+            "Submitted operation {} to device {}",
+            operation.id, selected_device
+        );
         Ok(operation.id)
     }
 
@@ -378,13 +411,19 @@ impl GPUAccelerationManager {
                 continue;
             }
 
-            let device_info = self.active_devices.get(device_id)
+            let device_info = self
+                .active_devices
+                .get(device_id)
                 .ok_or_else(|| RustAIError::InternalError("Device info not found".to_string()))?;
 
             // Find a suitable backend for this device
             for (_, backend) in &self.backends {
-                for operation in &queue.operations.clone() { // Clone to avoid borrow issues
-                    match backend.launch_kernel(&operation.kernel_config, &[], device_info).await {
+                for operation in &queue.operations.clone() {
+                    // Clone to avoid borrow issues
+                    match backend
+                        .launch_kernel(&operation.kernel_config, &[], device_info)
+                        .await
+                    {
                         Ok(result) => {
                             self.performance_monitor.record_operation(&result);
                             results.insert(operation.id.clone(), result);
@@ -420,7 +459,9 @@ impl GPUAccelerationManager {
     /// Select optimal device for an operation
     fn select_device_for_operation(&self, operation: &GPUOperation) -> IDEResult<String> {
         if self.active_devices.is_empty() {
-            return Err(RustAIError::InternalError("No GPU devices available".to_string()));
+            return Err(RustAIError::InternalError(
+                "No GPU devices available".to_string(),
+            ));
         }
 
         // Simple selection based on available memory
@@ -430,7 +471,9 @@ impl GPUAccelerationManager {
             }
         }
 
-        Err(RustAIError::InternalError("No device has sufficient memory".to_string()))
+        Err(RustAIError::InternalError(
+            "No device has sufficient memory".to_string(),
+        ))
     }
 
     /// Get performance statistics

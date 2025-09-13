@@ -45,8 +45,8 @@ sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite", "postgres", "my
 redis = { version = "0.24", optional = true }
 
 # Development frameworks
-tari_workspace = { version = "0.1", optional = true }
-tauri_nn = { version = "0.1", optional = true }
+#tari_workspace = { version = "0.1", optional = true }
+#tauri_nn = { version = "0.1", optional = true }
 
 # Cloud-native specific
 opentelemetry = { version = "0.21", optional = true }

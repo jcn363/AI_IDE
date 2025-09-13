@@ -39,7 +39,7 @@ const RealTimeCompletionPopup: React.FC<RealTimeCompletionPopupProps> = ({
   aiEnabled = true,
   aiConfig,
   onSuggestionApplied,
-  onFeedbackGiven
+  onFeedbackGiven,
 }) => {
   const [showPopup, setShowPopup] = React.useState(false);
   const [suggestions, setSuggestions] = React.useState<CompletionItem[]>([]);
@@ -67,7 +67,7 @@ const RealTimeCompletionPopup: React.FC<RealTimeCompletionPopupProps> = ({
 
     return {
       x: 16, // Small left margin
-      y: cursorCoords + lineHeight
+      y: cursorCoords + lineHeight,
     };
   }, [editor]);
 
@@ -80,8 +80,12 @@ const RealTimeCompletionPopup: React.FC<RealTimeCompletionPopupProps> = ({
       const lines = content.split('\n');
       const currentLine = lines[cursorPosition.lineNumber - 1] || '';
       const lineStart = currentLine.substring(0, cursorPosition.column);
-      const contextBefore = lines.slice(Math.max(0, cursorPosition.lineNumber - 6), cursorPosition.lineNumber).join('\n');
-      const contextAfter = lines.slice(cursorPosition.lineNumber, cursorPosition.lineNumber + 4).join('\n');
+      const contextBefore = lines
+        .slice(Math.max(0, cursorPosition.lineNumber - 6), cursorPosition.lineNumber)
+        .join('\n');
+      const contextAfter = lines
+        .slice(cursorPosition.lineNumber, cursorPosition.lineNumber + 4)
+        .join('\n');
 
       // Basic LSP context
       const lspSuggestions: CompletionItem[] = [
@@ -91,8 +95,8 @@ const RealTimeCompletionPopup: React.FC<RealTimeCompletionPopupProps> = ({
           confidence: 0.3,
           type: 'completion',
           description: 'Basic completion',
-          metadata: { source: 'lsp', language }
-        }
+          metadata: { source: 'lsp', language },
+        },
       ];
 
       // AI-powered suggestions
@@ -110,7 +114,7 @@ Context after: ${contextAfter}\n\nProvide:`,
           );
 
           // Parse AI response into multiple suggestions
-          const suggestions = completionResponse.split('\n').filter(s => s.trim());
+          const suggestions = completionResponse.split('\n').filter((s) => s.trim());
 
           aiSuggestions = suggestions.slice(0, 3).map((suggestion, index) => ({
             id: `ai-${index}`,
@@ -118,7 +122,7 @@ Context after: ${contextAfter}\n\nProvide:`,
             confidence: Math.max(0.4, 1 / (index + 1)), // Decreasing confidence
             type: 'completion' as const,
             description: `AI suggestion ${index + 1}`,
-            metadata: { source: 'ai', language, category: 'smart' }
+            metadata: { source: 'ai', language, category: 'smart' },
           }));
         } catch (error) {
           console.warn('AI completion failed:', error);
@@ -126,7 +130,7 @@ Context after: ${contextAfter}\n\nProvide:`,
       }
 
       const allSuggestions = [...lspSuggestions, ...aiSuggestions];
-      setSuggestions(allSuggestions.filter(s => s.text && s.text !== lineStart));
+      setSuggestions(allSuggestions.filter((s) => s.text && s.text !== lineStart));
       setSelectedIndex(0);
       setPopupPosition(calculatePopupPosition());
 
@@ -138,76 +142,94 @@ Context after: ${contextAfter}\n\nProvide:`,
     } finally {
       setIsLoading(false);
     }
-  }, [aiEnabled, aiConfig, isLoading, content, cursorPosition, language, aiService, calculatePopupPosition]);
+  }, [
+    aiEnabled,
+    aiConfig,
+    isLoading,
+    content,
+    cursorPosition,
+    language,
+    aiService,
+    calculatePopupPosition,
+  ]);
 
-  const applySuggestion = React.useCallback((index: number) => {
-    if (!editor || !suggestions[index]) return;
+  const applySuggestion = React.useCallback(
+    (index: number) => {
+      if (!editor || !suggestions[index]) return;
 
-    const suggestion = suggestions[index];
-    const model = editor.getModel();
-    if (!model) return;
+      const suggestion = suggestions[index];
+      const model = editor.getModel();
+      if (!model) return;
 
-    // Get current line content
-    const lineContent = model.getLineContent(cursorPosition.lineNumber);
-    const contentBeforeCursor = lineContent.substring(0, cursorPosition.column);
+      // Get current line content
+      const lineContent = model.getLineContent(cursorPosition.lineNumber);
+      const contentBeforeCursor = lineContent.substring(0, cursorPosition.column);
 
-    // Insert suggestion at cursor position
-    const range = new monaco.Range(
-      cursorPosition.lineNumber,
-      cursorPosition.column + 1,
-      cursorPosition.lineNumber,
-      lineContent.length + 1
-    );
+      // Insert suggestion at cursor position
+      const range = new monaco.Range(
+        cursorPosition.lineNumber,
+        cursorPosition.column + 1,
+        cursorPosition.lineNumber,
+        lineContent.length + 1
+      );
 
-    const edit = {
-      range,
-      text: suggestion.text
-    };
+      const edit = {
+        range,
+        text: suggestion.text,
+      };
 
-    editor.executeEdits('completion-application', [edit]);
-    onSuggestionApplied?.(suggestion);
+      editor.executeEdits('completion-application', [edit]);
+      onSuggestionApplied?.(suggestion);
 
-    hidePopup();
-  }, [editor, suggestions, cursorPosition, onSuggestionApplied, hidePopup]);
-
-  const handleKeyDown = React.useCallback((event: KeyboardEvent) => {
-    if (!showPopup || suggestions.length === 0) return;
-
-    if (event.key === 'Escape') {
       hidePopup();
-      event.preventDefault();
-      return;
-    }
+    },
+    [editor, suggestions, cursorPosition, onSuggestionApplied, hidePopup]
+  );
 
-    if (event.key === 'ArrowDown') {
-      setSelectedIndex(prev => (prev + 1) % suggestions.length);
-      event.preventDefault();
-      return;
-    }
+  const handleKeyDown = React.useCallback(
+    (event: KeyboardEvent) => {
+      if (!showPopup || suggestions.length === 0) return;
 
-    if (event.key === 'ArrowUp') {
-      setSelectedIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
-      event.preventDefault();
-      return;
-    }
+      if (event.key === 'Escape') {
+        hidePopup();
+        event.preventDefault();
+        return;
+      }
 
-    if (event.key === 'Enter') {
-      applySuggestion(selectedIndex);
-      event.preventDefault();
-      return;
-    }
+      if (event.key === 'ArrowDown') {
+        setSelectedIndex((prev) => (prev + 1) % suggestions.length);
+        event.preventDefault();
+        return;
+      }
 
-    if (event.key === 'Tab') {
-      applySuggestion(selectedIndex);
-      event.preventDefault();
-      return;
-    }
-  }, [showPopup, suggestions.length, hidePopup, selectedIndex, applySuggestion]);
+      if (event.key === 'ArrowUp') {
+        setSelectedIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length);
+        event.preventDefault();
+        return;
+      }
 
-  const handleFeedback = React.useCallback((suggestionId: string, type: 'positive' | 'negative') => {
-    onFeedbackGiven?.(suggestionId, type);
-    // Could also send feedback to AI service for learning
-  }, [onFeedbackGiven]);
+      if (event.key === 'Enter') {
+        applySuggestion(selectedIndex);
+        event.preventDefault();
+        return;
+      }
+
+      if (event.key === 'Tab') {
+        applySuggestion(selectedIndex);
+        event.preventDefault();
+        return;
+      }
+    },
+    [showPopup, suggestions.length, hidePopup, selectedIndex, applySuggestion]
+  );
+
+  const handleFeedback = React.useCallback(
+    (suggestionId: string, type: 'positive' | 'negative') => {
+      onFeedbackGiven?.(suggestionId, type);
+      // Could also send feedback to AI service for learning
+    },
+    [onFeedbackGiven]
+  );
 
   // Trigger suggestions when content changes or cursor moves
   React.useEffect(() => {
@@ -263,7 +285,9 @@ Context after: ${contextAfter}\n\nProvide:`,
         </Box>
       ) : (
         <Box sx={{ p: 1 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+          >
             <Typography variant="subtitle2">AI Suggestions</Typography>
             <IconButton size="small" onClick={hidePopup}>
               <Close fontSize="small" />
@@ -285,15 +309,30 @@ Context after: ${contextAfter}\n\nProvide:`,
               }}
               onClick={() => applySuggestion(index)}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  mb: 0.5,
+                }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography variant="body2" sx={{ fontFamily: 'monospace', flex: 1 }}>
-                    {suggestion.text.length > 60 ? `${suggestion.text.substring(0, 60)}...` : suggestion.text}
+                    {suggestion.text.length > 60
+                      ? `${suggestion.text.substring(0, 60)}...`
+                      : suggestion.text}
                   </Typography>
                   <Chip
                     label={`${Math.round(suggestion.confidence * 100)}%`}
                     size="small"
-                    color={suggestion.confidence > 0.8 ? 'success' : suggestion.confidence > 0.6 ? 'warning' : 'default'}
+                    color={
+                      suggestion.confidence > 0.8
+                        ? 'success'
+                        : suggestion.confidence > 0.6
+                          ? 'warning'
+                          : 'default'
+                    }
                     variant="outlined"
                   />
                 </Box>
@@ -305,12 +344,18 @@ Context after: ${contextAfter}\n\nProvide:`,
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Good suggestion">
-                    <IconButton size="small" onClick={() => handleFeedback(suggestion.id, 'positive')}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleFeedback(suggestion.id, 'positive')}
+                    >
                       <ThumbUp fontSize="small" />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Poor suggestion">
-                    <IconButton size="small" onClick={() => handleFeedback(suggestion.id, 'negative')}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleFeedback(suggestion.id, 'negative')}
+                    >
                       <ThumbDown fontSize="small" />
                     </IconButton>
                   </Tooltip>

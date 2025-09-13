@@ -485,7 +485,7 @@ crates/rust-ai-ide-monitoring/
 **Dashboard Component Structure:**
 ```typescript
 // web/src/components/ai/AIMonitoringDashboard.tsx
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 
 interface MonitoringData {
   modelPerformance: Array<ModelMetrics>;

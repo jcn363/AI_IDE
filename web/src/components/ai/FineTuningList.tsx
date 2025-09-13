@@ -22,7 +22,7 @@ export const FineTuningList: React.FC<FineTuningListProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'created' | 'name' | 'status'>('created');
 
-  const filteredJobs = jobs.filter(job =>
+  const filteredJobs = jobs.filter((job) =>
     job.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -73,14 +73,16 @@ export const FineTuningList: React.FC<FineTuningListProps> = ({
             >
               <div className="job-header">
                 <h4>{job.name}</h4>
-                <span className={`status status-${job.status.toLowerCase()}`}>
-                  {job.status}
-                </span>
+                <span className={`status status-${job.status.toLowerCase()}`}>{job.status}</span>
               </div>
 
               <div className="job-details">
-                <p><strong>Model:</strong> {job.modelType} - {job.baseModel}</p>
-                <p><strong>Created:</strong> {new Date(job.createdAt).toLocaleString()}</p>
+                <p>
+                  <strong>Model:</strong> {job.modelType} - {job.baseModel}
+                </p>
+                <p>
+                  <strong>Created:</strong> {new Date(job.createdAt).toLocaleString()}
+                </p>
 
                 {job.progress && (
                   <div className="progress">
@@ -88,7 +90,7 @@ export const FineTuningList: React.FC<FineTuningListProps> = ({
                       <div
                         className="progress-fill"
                         style={{
-                          width: `${(job.progress.epoch / job.progress.totalEpochs) * 100}%`
+                          width: `${(job.progress.epoch / job.progress.totalEpochs) * 100}%`,
                         }}
                       />
                     </div>
@@ -101,13 +103,21 @@ export const FineTuningList: React.FC<FineTuningListProps> = ({
               </div>
 
               <div className="job-actions">
-                <button onClick={(e) => { e.stopPropagation(); onJobSelect(job); }}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onJobSelect(job);
+                  }}
+                >
                   View Details
                 </button>
                 {(job.status === 'Training' || job.status === 'Initializing') && (
                   <button
                     className="danger"
-                    onClick={(e) => { e.stopPropagation(); onCancelJob(job.jobId); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCancelJob(job.jobId);
+                    }}
                   >
                     Cancel
                   </button>
@@ -209,10 +219,19 @@ export const FineTuningList: React.FC<FineTuningListProps> = ({
         }
 
         .status-completed,
-        .status-training { background: #c6f6d5; color: #276749; }
-        .status-failed { background: #fed7d7; color: #c53030; }
+        .status-training {
+          background: #c6f6d5;
+          color: #276749;
+        }
+        .status-failed {
+          background: #fed7d7;
+          color: #c53030;
+        }
         .status-created,
-        .status-initializing { background: #e2e8f0; color: #4a5568; }
+        .status-initializing {
+          background: #e2e8f0;
+          color: #4a5568;
+        }
 
         .job-details p {
           margin: 4px 0;

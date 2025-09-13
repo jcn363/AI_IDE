@@ -40,28 +40,28 @@
 //! let audit_trail = secure_engine.get_audit_trail(&inference_id).await?;
 //! ```
 
-pub mod secure_ai_engine;
-pub mod privacy_preservation;
-pub mod federated_security;
 pub mod ai_audit;
-pub mod quantum_resistant;
 pub mod ai_compliance;
-pub mod federated_learning;
 pub mod encrypted_models;
+pub mod federated_learning;
+pub mod federated_security;
+pub mod privacy_preservation;
+pub mod quantum_resistant;
+pub mod secure_ai_engine;
 pub mod secure_inference;
 
 // Wave 4 Re-exports
-pub use secure_ai_engine::{SecureAIEngine, Wave4Config};
-pub use privacy_preservation::{PrivacyConfig, PrivacyGuard};
-pub use federated_security::FederatedSecurity;
-pub use ai_audit::{AIAuditTrail, AIAuditEvent, ExplainabilityReport};
-pub use quantum_resistant::{QuantumResistantAI, PostQuantumAIConfig};
+pub use ai_audit::{AIAuditEvent, AIAuditTrail, ExplainabilityReport};
 pub use ai_compliance::{AIComplianceConfig, AIComplianceEngine};
 pub use federated_learning::{FederatedLearningEngine, SecureAggregation};
+pub use federated_security::FederatedSecurity;
+pub use privacy_preservation::{PrivacyConfig, PrivacyGuard};
+pub use quantum_resistant::{PostQuantumAIConfig, QuantumResistantAI};
+pub use secure_ai_engine::{SecureAIEngine, Wave4Config};
 
 // Core types that integrate with existing AI inference
 use rust_ai_ide_ai_inference::{InferenceEngine, ModelLoadConfig};
-use rust_ai_ide_security::{SecurityResult, SecurityEngine};
+use rust_ai_ide_security::{SecurityEngine, SecurityResult};
 
 /// Core secure AI engine integrating Wave 3 security
 pub struct SecureAIEngine {
@@ -81,7 +81,9 @@ impl SecureAIEngine {
     ) -> SecurityResult<Self> {
         // Initialize core components
         let inference_engine = InferenceEngine::new().await?;
-        let security_engine = rust_ai_ide_security::create_security_engine(rust_ai_ide_security::SecurityConfig::default())?;
+        let security_engine = rust_ai_ide_security::create_security_engine(
+            rust_ai_ide_security::SecurityConfig::default(),
+        )?;
         let privacy_guard = PrivacyGuard::new(privacy_config)?;
         let audit_trail = AIAuditTrail::new()?;
 
@@ -96,7 +98,10 @@ impl SecureAIEngine {
     }
 
     /// Enable federated learning capabilities
-    pub async fn enable_federated_learning(&mut self, participants: Vec<String>) -> SecurityResult<()> {
+    pub async fn enable_federated_learning(
+        &mut self,
+        participants: Vec<String>,
+    ) -> SecurityResult<()> {
         self.federated_security = Some(FederatedSecurity::new(participants)?);
         Ok(())
     }
@@ -110,46 +115,57 @@ impl SecureAIEngine {
     /// Secure AI inference with privacy guarantees
     pub async fn infer_with_privacy(
         &self,
-        model_request: &secure_ai_engine::AIInferenceRequest
+        model_request: &secure_ai_engine::AIInferenceRequest,
     ) -> SecurityResult<secure_ai_engine::AISecureInferenceResult> {
         // 1. Check permissions (integrating Wave 3 RBAC/ABAC)
         let operation_context = model_request.to_operation_context();
-        self.security_engine.secure_operation(
-            &operation_context,
-            || async {
+        self.security_engine
+            .secure_operation(&operation_context, || async {
                 // 2. Apply privacy-preserving transformation
                 let privacy_request = self.privacy_guard.apply_privacy(&model_request)?;
 
                 // 3. Perform secure inference
-                let inference_result = self.inference_engine.infer(&privacy_request.inner_request()?).await?;
+                let inference_result = self
+                    .inference_engine
+                    .infer(&privacy_request.inner_request()?)
+                    .await?;
 
                 // 4. Generate audit trail
-                let audit_id = self.audit_trail.create_audit_entry(&model_request, &inference_result).await?;
+                let audit_id = self
+                    .audit_trail
+                    .create_audit_entry(&model_request, &inference_result)
+                    .await?;
 
                 Ok(secure_inference::AISecureInferenceResult::new(
                     inference_result,
                     audit_id,
-                    self.privacy_guard.get_privacy_guarantees()
+                    self.privacy_guard.get_privacy_guarantees(),
                 ))
-            }
-        ).await??.inner_result()
+            })
+            .await??
+            .inner_result()
     }
 
     /// Get audit trail for explainability
-    pub async fn get_audit_trail(&self, inference_id: &str) -> SecurityResult<ExplainabilityReport> {
-        self.audit_trail.generate_explainability_report(inference_id).await
+    pub async fn get_audit_trail(
+        &self,
+        inference_id: &str,
+    ) -> SecurityResult<ExplainabilityReport> {
+        self.audit_trail
+            .generate_explainability_report(inference_id)
+            .await
     }
 
     /// Secure federated learning training
     pub async fn secure_federated_training(
         &self,
-        training_request: &federated_learning::FederatedTrainingRequest
+        training_request: &federated_learning::FederatedTrainingRequest,
     ) -> SecurityResult<federated_learning::FederatedTrainingResult> {
         if let Some(federated) = &self.federated_security {
             federated.secure_training(training_request).await
         } else {
             Err(rust_ai_ide_security::SecurityError::ConfigurationError {
-                config_error: "Federated learning not enabled".to_string()
+                config_error: "Federated learning not enabled".to_string(),
             })
         }
     }

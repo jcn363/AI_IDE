@@ -15,48 +15,54 @@ export function useFormValidation(initialRules: Record<string, ValidationRule> =
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [rules, setRules] = useState<Record<string, ValidationRule>>(initialRules);
 
-  const validateField = useCallback((fieldName: string, value: any, formData?: Record<string, any>): boolean => {
-    const rule = rules[fieldName];
-    if (!rule) return true;
+  const validateField = useCallback(
+    (fieldName: string, value: any, formData?: Record<string, any>): boolean => {
+      const rule = rules[fieldName];
+      if (!rule) return true;
 
-    const error = rule.validate(value, formData);
-    setErrors(prev => ({
-      ...prev,
-      [fieldName]: error || ''
-    }));
-
-    return !error;
-  }, [rules]);
-
-  const validateForm = useCallback((formData: Record<string, any>): boolean => {
-    const newErrors: Record<string, string> = {};
-    let isValid = true;
-
-    Object.entries(rules).forEach(([fieldName, rule]) => {
-      const value = formData[fieldName];
       const error = rule.validate(value, formData);
+      setErrors((prev) => ({
+        ...prev,
+        [fieldName]: error || '',
+      }));
 
-      if (error) {
-        newErrors[fieldName] = error;
-        isValid = false;
-      }
-    });
+      return !error;
+    },
+    [rules]
+  );
 
-    setErrors(newErrors);
-    return isValid;
-  }, [rules]);
+  const validateForm = useCallback(
+    (formData: Record<string, any>): boolean => {
+      const newErrors: Record<string, string> = {};
+      let isValid = true;
+
+      Object.entries(rules).forEach(([fieldName, rule]) => {
+        const value = formData[fieldName];
+        const error = rule.validate(value, formData);
+
+        if (error) {
+          newErrors[fieldName] = error;
+          isValid = false;
+        }
+      });
+
+      setErrors(newErrors);
+      return isValid;
+    },
+    [rules]
+  );
 
   const setFieldError = useCallback((fieldName: string, error: string) => {
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
-      [fieldName]: error
+      [fieldName]: error,
     }));
   }, []);
 
   const clearError = useCallback((fieldName: string) => {
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
-      [fieldName]: ''
+      [fieldName]: '',
     }));
   }, []);
 
@@ -65,14 +71,14 @@ export function useFormValidation(initialRules: Record<string, ValidationRule> =
   }, []);
 
   const addRule = useCallback((fieldName: string, rule: ValidationRule) => {
-    setRules(prev => ({
+    setRules((prev) => ({
       ...prev,
-      [fieldName]: rule
+      [fieldName]: rule,
     }));
   }, []);
 
   const removeRule = useCallback((fieldName: string) => {
-    setRules(prev => {
+    setRules((prev) => {
       const newRules = { ...prev };
       delete newRules[fieldName];
       return newRules;
@@ -89,7 +95,7 @@ export function useFormValidation(initialRules: Record<string, ValidationRule> =
     clearAllErrors,
     addRule,
     removeRule,
-    hasErrors: Object.values(errors).some(error => error.length > 0)
+    hasErrors: Object.values(errors).some((error) => error.length > 0),
   };
 }
 
@@ -104,7 +110,7 @@ export const createValidationRules = {
       if (Array.isArray(value) && value.length === 0) return message;
       return null;
     },
-    required: true
+    required: true,
   }),
 
   minLength: (minLength: number, message?: string): ValidationRule<string> => ({
@@ -113,7 +119,7 @@ export const createValidationRules = {
         return message || `Must be at least ${minLength} characters`;
       }
       return null;
-    }
+    },
   }),
 
   maxLength: (maxLength: number, message?: string): ValidationRule<string> => ({
@@ -122,7 +128,7 @@ export const createValidationRules = {
         return message || `Must be less than ${maxLength} characters`;
       }
       return null;
-    }
+    },
   }),
 
   email: (message = 'Invalid email format'): ValidationRule<string> => ({
@@ -130,7 +136,7 @@ export const createValidationRules = {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (value && !emailRegex.test(value)) return message;
       return null;
-    }
+    },
   }),
 
   numberRange: (min?: number, max?: number, message?: string): ValidationRule<number> => ({
@@ -139,14 +145,14 @@ export const createValidationRules = {
       if (min !== undefined && value < min) return message || `Must be at least ${min}`;
       if (max !== undefined && value > max) return message || `Must be no more than ${max}`;
       return null;
-    }
+    },
   }),
 
   pattern: (regex: RegExp, message = 'Invalid format'): ValidationRule<string> => ({
     validate: (value: string) => {
       if (value && !regex.test(value)) return message;
       return null;
-    }
+    },
   }),
 
   fileExtension: (allowedExtensions: string[], message?: string): ValidationRule<string> => ({
@@ -157,6 +163,6 @@ export const createValidationRules = {
         return message || `File must be one of: ${allowedExtensions.join(', ')}`;
       }
       return null;
-    }
-  })
+    },
+  }),
 };

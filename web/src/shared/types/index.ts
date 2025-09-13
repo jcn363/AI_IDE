@@ -451,7 +451,9 @@ export interface VersionInfo {
 
 export const parseVersion = (version: string): VersionInfo | null => {
   // Simple semver parser - in practice, use a library like semver
-  const match = version.match(/^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9\-.]+))?(?:\+([a-zA-Z0-9\-.]+))?$/);
+  const match = version.match(
+    /^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9\-.]+))?(?:\+([a-zA-Z0-9\-.]+))?$/
+  );
   if (!match) return null;
 
   return {

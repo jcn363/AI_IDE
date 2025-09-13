@@ -273,7 +273,10 @@ impl MemoryProfiler {
     }
 
     /// Send an event to the profiling system
-    fn send_event(&self, event: MemoryProfileEvent) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    fn send_event(
+        &self,
+        event: MemoryProfileEvent,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(sender) = &self.event_sender {
             sender.send(event)?;
         }
@@ -281,7 +284,10 @@ impl MemoryProfiler {
     }
 
     /// Track a memory allocation
-    pub fn track_allocation(&mut self, allocation: Allocation) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn track_allocation(
+        &mut self,
+        allocation: Allocation,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Update heap statistics
         self.heap_stats.used_heap += allocation.size;
         self.heap_stats.peak_usage = self.heap_stats.peak_usage.max(self.heap_stats.used_heap);
@@ -289,7 +295,8 @@ impl MemoryProfiler {
         self.heap_stats.total_heap = self.heap_stats.total_heap.max(self.heap_stats.used_heap);
 
         // Store allocation
-        self.allocations.insert(allocation.address, allocation.clone());
+        self.allocations
+            .insert(allocation.address, allocation.clone());
         self.allocation_history.push(allocation.clone());
 
         // Analyze potential leaks periodically
@@ -338,21 +345,29 @@ impl MemoryProfiler {
     }
 
     /// Update heap statistics
-    pub fn update_heap_statistics(&mut self, new_stats: HeapStatistics) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn update_heap_statistics(
+        &mut self,
+        new_stats: HeapStatistics,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.heap_stats = new_stats.clone();
         self.send_event(MemoryProfileEvent::HeapStatisticsUpdated(new_stats))?;
         Ok(())
     }
 
     /// Update fragmentation analysis
-    pub fn update_fragmentation_analysis(&mut self, analysis: FragmentationAnalysis) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn update_fragmentation_analysis(
+        &mut self,
+        analysis: FragmentationAnalysis,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.fragmentation_data = analysis.clone();
         self.send_event(MemoryProfileEvent::FragmentationAnalysis(analysis))?;
         Ok(())
     }
 
     /// Detect memory leaks
-    pub fn analyze_potential_leaks(&mut self) -> Result<Vec<LeakClassification>, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn analyze_potential_leaks(
+        &mut self,
+    ) -> Result<Vec<LeakClassification>, Box<dyn std::error::Error + Send + Sync>> {
         let leaks = self.detect_leaks();
         let classifications = leaks.clone();
 
@@ -371,9 +386,15 @@ impl MemoryProfiler {
 
         // Find allocations that have lived for too long without deallocation
         for allocation in &self.allocation_history {
-            if allocation.deallocated_at.is_none() && !self.leaked_addresses.contains(&allocation.address) {
-                let allocation_time = Duration::from_millis(self.start_time.elapsed().as_millis() - allocation.allocated_at as u128);
-                let leak_duration = Duration::from_millis(self.start_time.elapsed().as_millis() - now.elapsed().as_millis());
+            if allocation.deallocated_at.is_none()
+                && !self.leaked_addresses.contains(&allocation.address)
+            {
+                let allocation_time = Duration::from_millis(
+                    self.start_time.elapsed().as_millis() - allocation.allocated_at as u128,
+                );
+                let leak_duration = Duration::from_millis(
+                    self.start_time.elapsed().as_millis() - now.elapsed().as_millis(),
+                );
 
                 // Simple heuristic: if allocation has lived longer than 5 minutes, consider it suspicious
                 if leak_duration > Duration::from_secs(300) {
@@ -393,11 +414,14 @@ impl MemoryProfiler {
                     self.leaked_addresses.insert(allocation.address);
 
                     // Update potential leaks
-                    self.potential_leaks.insert(allocation.address, LeakCandidate {
-                        allocation: allocation.clone(),
-                        detection_time: now,
-                        classification: leak_type,
-                    });
+                    self.potential_leaks.insert(
+                        allocation.address,
+                        LeakCandidate {
+                            allocation: allocation.clone(),
+                            detection_time: now,
+                            classification: leak_type,
+                        },
+                    );
                 }
             }
         }
@@ -438,7 +462,10 @@ impl MemoryProfiler {
         HeapVisualization {
             total_heap_size: self.heap_stats.total_heap,
             used_heap_size: self.heap_stats.used_heap,
-            free_heap_size: self.heap_stats.total_heap.saturating_sub(self.heap_stats.used_heap),
+            free_heap_size: self
+                .heap_stats
+                .total_heap
+                .saturating_sub(self.heap_stats.used_heap),
             memory_segments,
             allocation_histogram: histogram,
             top_consumers,
@@ -451,7 +478,9 @@ impl MemoryProfiler {
         let mut segments = Vec::new();
 
         for addr in (0..self.heap_stats.total_heap).step_by(1024) {
-            let allocations_in_range = self.allocations.values()
+            let allocations_in_range = self
+                .allocations
+                .values()
                 .filter(|alloc| alloc.address >= addr && alloc.address < addr + 1024)
                 .map(|alloc| alloc.address)
                 .collect::<Vec<_>>();
@@ -476,24 +505,28 @@ impl MemoryProfiler {
     /// Create allocation histogram
     fn create_allocation_histogram(&self) -> Vec<HistogramBin> {
         let size_ranges = [
-            (0, 64),        // Small allocations
-            (64, 256),      // Medium small
-            (256, 1024),    // Medium
-            (1024, 4096),   // Medium large
-            (4096, 16384),  // Large
-            (16384, 65536), // Very large
+            (0, 64),             // Small allocations
+            (64, 256),           // Medium small
+            (256, 1024),         // Medium
+            (1024, 4096),        // Medium large
+            (4096, 16384),       // Large
+            (16384, 65536),      // Very large
             (65536, usize::MAX), // Huge
         ];
 
         let mut histogram = Vec::new();
         for (min_size, max_size) in &size_ranges {
-            let allocations_in_range = self.allocation_history.iter()
-                .filter(|alloc| alloc.deallocated_at.is_none() && alloc.size >= *min_size && alloc.size < *max_size)
+            let allocations_in_range = self
+                .allocation_history
+                .iter()
+                .filter(|alloc| {
+                    alloc.deallocated_at.is_none()
+                        && alloc.size >= *min_size
+                        && alloc.size < *max_size
+                })
                 .collect::<Vec<_>>();
 
-            let total_size = allocations_in_range.iter()
-                .map(|alloc| alloc.size)
-                .sum();
+            let total_size = allocations_in_range.iter().map(|alloc| alloc.size).sum();
 
             histogram.push(HistogramBin {
                 size_range: (*min_size, *max_size),
@@ -521,7 +554,8 @@ impl MemoryProfiler {
         }
 
         // Convert to TopConsumer structs
-        let mut top_consumers: Vec<_> = consumers.into_iter()
+        let mut top_consumers: Vec<_> = consumers
+            .into_iter()
             .map(|(site, (count, total, sizes))| {
                 let avg_size = sizes.iter().sum::<usize>() as f64 / sizes.len() as f64;
                 TopConsumer {

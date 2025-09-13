@@ -51,7 +51,7 @@ impl AdvancedPatternDetector {
             Regex::new(r"std::slice::from_raw_parts")?,
             Regex::new(r"Box::from_raw")?,
         ];
-        
+
         let command_injection_patterns = vec![
             // Direct command execution with user input
             Regex::new(r"std::process::Command::new\([^)]*\)\s*\.arg\([^)]*[^a-zA-Z0-9_][a-z0-9_]*[^a-zA-Z0-9_]\)")?,
@@ -84,7 +84,7 @@ impl AdvancedPatternDetector {
 
         // Detect memory safety violations
         issues.extend(self.detect_memory_safety_violations(code, file_path));
-        
+
         // Detect command injection vulnerabilities
         issues.extend(self.detect_command_injection(code, file_path));
 
@@ -196,7 +196,7 @@ impl AdvancedPatternDetector {
 
         issues
     }
-    
+
     /// Detect potential command injection vulnerabilities in the code
     fn detect_command_injection(&self, code: &str, file_path: &str) -> Vec<SecurityIssue> {
         let mut issues = Vec::new();
@@ -204,10 +204,10 @@ impl AdvancedPatternDetector {
             Ok(ast) => ast,
             Err(_) => return issues, // Skip parsing errors
         };
-        
+
         let mut visitor = CommandInjectionVisitor::new();
         visitor.visit_file(&ast);
-        
+
         // Add pattern-based detections
         for (line_num, line) in code.lines().enumerate() {
             for pattern in &self.command_injection_patterns {
@@ -224,7 +224,7 @@ impl AdvancedPatternDetector {
                         recommendation: "Validate and sanitize all user input used in command execution. Consider using whitelisting for allowed characters.".to_string(),
                         confidence: 0.85,
                     };
-                    
+
                     // Avoid duplicate issues
                     if !issues.iter().any(|i: &SecurityIssue| i.line_range == issue.line_range && i.issue_type == issue.issue_type) {
                         issues.push(issue);
@@ -232,7 +232,7 @@ impl AdvancedPatternDetector {
                 }
             }
         }
-        
+
         // Add AST-based detections
         for (func_name, (line, col)) in visitor.unsafe_commands {
             let issue = SecurityIssue {
@@ -247,13 +247,13 @@ impl AdvancedPatternDetector {
                 recommendation: "Validate and sanitize all user input used in command execution. Consider using whitelisting for allowed characters.".to_string(),
                 confidence: 0.9,
             };
-            
+
             // Avoid duplicate issues
             if !issues.iter().any(|i: &SecurityIssue| i.line_range == issue.line_range && i.issue_type == issue.issue_type) {
                 issues.push(issue);
             }
         }
-        
+
         issues
     }
 
@@ -302,7 +302,7 @@ impl CommandInjectionVisitor {
             current_function: None,
         }
     }
-    
+
     fn check_unsafe_command_arg(&mut self, expr: &Expr, line: u32, col: u32) {
         match expr {
             Expr::Path(expr_path) => {
@@ -338,14 +338,14 @@ impl<'ast> Visit<'ast> for CommandInjectionVisitor {
         // Track the current function name
         let old_function = self.current_function.take();
         self.current_function = Some(node.sig.ident.to_string());
-        
+
         // Visit the function body
         syn::visit::visit_item_fn(self, node);
-        
+
         // Restore the previous function context
         self.current_function = old_function;
     }
-    
+
     fn visit_expr_method_call(&mut self, node: &'ast ExprMethodCall) {
         // Check for Command::new().arg() patterns
         if let Expr::Path(expr_path) = &*node.receiver {
@@ -358,7 +358,7 @@ impl<'ast> Visit<'ast> for CommandInjectionVisitor {
                 }
             }
         }
-        
+
         // Continue visiting
         syn::visit::visit_expr_method_call(self, node);
     }
@@ -855,11 +855,11 @@ impl PublicApiVisitor {
 impl<'ast> Visit<'ast> for PublicApiVisitor {
     fn visit_item_fn(&mut self, node: &'ast ItemFn) {
         let is_public = node.vis.to_token_stream().to_string().contains("pub");
-        
+
         if is_public {
             let name = node.sig.ident.to_string();
             let line = node.span().start().line as u32;
-            
+
             let has_string_params = node.sig.inputs.iter().any(|input| {
                 if let syn::FnArg::Typed(pat_type) = input {
                     let type_str = quote::quote!(#pat_type.ty).to_string();
@@ -872,7 +872,7 @@ impl<'ast> Visit<'ast> for PublicApiVisitor {
             // Simple heuristic for validation - look for common validation patterns in function body
             let has_validation = if let Some(block) = &node.block {
                 let block_str = quote::quote!(#block).to_string();
-                block_str.contains("is_empty") || 
+                block_str.contains("is_empty") ||
                 block_str.contains("len()") ||
                 block_str.contains("validate") ||
                 block_str.contains("check") ||
@@ -919,21 +919,21 @@ impl<'ast> Visit<'ast> for ConcurrencyVisitor {
     fn visit_item_fn(&mut self, node: &'ast ItemFn) {
         let old_function = self.current_function.clone();
         self.current_function = Some(node.sig.ident.to_string());
-        
+
         syn::visit::visit_item_fn(self, node);
-        
+
         self.current_function = old_function;
     }
 
     fn visit_expr_method_call(&mut self, node: &'ast ExprMethodCall) {
         let method_name = node.method.to_string();
-        
+
         if method_name == "clone" || method_name == "lock" || method_name == "write" {
             if let Expr::Path(path_expr) = &*node.receiver {
                 if let Some(ident) = path_expr.path.get_ident() {
                     let var_name = ident.to_string();
                     let line = node.span().start().line as u32;
-                    
+
                     if let Some(func_name) = &self.current_function {
                         self.race_risks.push(RaceRisk {
                             variable: var_name,
@@ -972,11 +972,11 @@ impl<'ast> Visit<'ast> for SynchronizationVisitor {
     fn visit_expr_call(&mut self, node: &'ast ExprCall) {
         if let Expr::Path(path_expr) = &*node.func {
             let path_str = quote::quote!(#path_expr).to_string();
-            
-            if path_str.contains("Mutex::new") || 
-               path_str.contains("RwLock::new") || 
+
+            if path_str.contains("Mutex::new") ||
+               path_str.contains("RwLock::new") ||
                path_str.contains("Condvar::new") {
-                
+
                 let line = node.span().start().line as u32;
                 self.sync_issues.push(SyncIssue {
                     primitive_type: path_str,
@@ -1083,7 +1083,7 @@ mod tests {
                 }
             }
         "#;
-        
+
         let issues = analyzer.analyze(code, "test.rs");
         assert!(!issues.is_empty());
         assert!(issues.iter().any(|i| i.issue_type == SecurityIssueType::RaceCondition));
@@ -1095,13 +1095,13 @@ mod tests {
         let code = r#"
             use md5::Md5;
             use sha1::Sha1;
-            
+
             fn weak_crypto() {
                 let hash = Md5::digest(b"data");
                 let sha1_hash = Sha1::digest(b"data");
             }
         "#;
-        
+
         let issues = analyzer.analyze(code, "test.rs");
         assert!(!issues.is_empty());
         assert!(issues.iter().any(|i| i.issue_type == SecurityIssueType::WeakCryptography));
@@ -1116,7 +1116,7 @@ mod tests {
                 input.to_uppercase()
             }
         "#;
-        
+
         let ast = syn::parse_file(code).unwrap();
         let issues = analyzer.analyze(&ast, code, "test.rs");
         assert!(!issues.is_empty());
@@ -1128,16 +1128,16 @@ mod tests {
         let analyzer = ConcurrencySecurityAnalyzer::new().unwrap();
         let code = r#"
             use std::sync::{Arc, Mutex};
-            
+
             fn potential_deadlock() {
                 let mutex1 = Arc::new(Mutex::new(0));
                 let mutex2 = Arc::new(Mutex::new(0));
-                
+
                 let _guard1 = mutex1.lock().unwrap();
                 let _guard2 = mutex2.lock().unwrap(); // Potential deadlock
             }
         "#;
-        
+
         let ast = syn::parse_file(code).unwrap();
         let issues = analyzer.analyze(&ast, code, "test.rs");
         assert!(!issues.is_empty());
@@ -1149,23 +1149,23 @@ mod tests {
         let code = r#"
             use md5::Md5;
             use std::fs;
-            
+
             pub fn vulnerable_function(user_input: String, path: &str) {
                 // Multiple security issues:
                 // 1. No input validation
                 // 2. TOCTOU vulnerability
                 // 3. Weak cryptography
-                
+
                 if fs::metadata(path).is_ok() {
                     let content = fs::read_to_string(path).unwrap();
                     let hash = Md5::digest(user_input.as_bytes());
                 }
             }
         "#;
-        
+
         let issues = analyzer.analyze(code, "test.rs").unwrap();
         assert!(issues.len() >= 3); // Should detect multiple issues
-        
+
         let summary = analyzer.get_security_summary(&issues);
         assert!(summary.total_issues >= 3);
         assert!(summary.security_score < 100.0);

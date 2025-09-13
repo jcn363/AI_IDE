@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-use tokio::sync::{Mutex, mpsc};
-use serde::{Deserialize, Serialize};
 use rust_ai_ide_plugins::debugger::{
-    Debugger, DebuggerConfig, VariableInfo, StackFrame, BreakpointInfo, DebuggerState
+    BreakpointInfo, Debugger, DebuggerConfig, DebuggerState, StackFrame, VariableInfo,
 };
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use tokio::sync::{mpsc, Mutex};
 
 // Placeholder types for IDEState - these should match lib.rs definitions
 #[derive(Debug)]
@@ -234,7 +234,10 @@ pub async fn debugger_get_variables(
         }
         None => {
             let default_scope = "local".to_string();
-            log::debug!("No scope provided for debugger variables, using '{}'", default_scope);
+            log::debug!(
+                "No scope provided for debugger variables, using '{}'",
+                default_scope
+            );
             default_scope
         }
     };
@@ -257,11 +260,7 @@ pub async fn debugger_get_breakpoints(
 ) -> Result<Vec<BreakpointInfo>, String> {
     let ide_state = state.lock().await;
     let debugger = ide_state.debugger.lock().await;
-    Ok(debugger
-        .get_breakpoints()
-        .into_iter()
-        .cloned()
-        .collect())
+    Ok(debugger.get_breakpoints().into_iter().cloned().collect())
 }
 
 #[tauri::command]
@@ -302,5 +301,7 @@ pub async fn debugger_var_children(
 ) -> Result<Vec<VariableInfo>, String> {
     let ide_state = state.lock().await;
     let mut debugger = ide_state.debugger.lock().await;
-    debugger.list_var_children(&name, all_values.unwrap_or(true)).await
+    debugger
+        .list_var_children(&name, all_values.unwrap_or(true))
+        .await
 }

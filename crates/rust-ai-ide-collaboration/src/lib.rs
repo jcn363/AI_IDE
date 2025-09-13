@@ -1,14 +1,21 @@
 //! Real-time collaboration system for Rust AI IDE.
 //!
 //! This crate implements CRDT-based collaborative editing, AI coaching during pair programming,
-//! and real-time communication infrastructure.
+//! and real-time communication infrastructure with enhanced session management, permissions,
+//! and team collaboration features.
 
-pub mod real_time_editing;
 pub mod ai_coaching;
+pub mod presence;
+pub mod real_time_editing;
+pub mod session_management;
+pub mod team_management;
 
-use std::sync::Arc;
-use tokio::sync::RwLock;
+pub use presence::*;
 use serde::{Deserialize, Serialize};
+pub use session_management::*;
+use std::sync::Arc;
+pub use team_management::*;
+use tokio::sync::RwLock;
 
 /// Core collaboration service that manages sessions and state
 pub struct CollaborationService {
@@ -46,7 +53,11 @@ impl CollaborationService {
         }
     }
 
-    pub async fn create_session(&self, session_id: String, document_id: String) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn create_session(
+        &self,
+        session_id: String,
+        document_id: String,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = self.state.write().await;
         state.sessions.push(CollaborationSession {
             id: session_id.clone(),
@@ -56,11 +67,14 @@ impl CollaborationService {
         });
 
         // Initialize empty document state
-        state.active_editing_state.insert(document_id, EditingDocument {
-            content: String::new(),
-            crdt_state: CRDTState::default(),
-            participants: Vec::new(),
-        });
+        state.active_editing_state.insert(
+            document_id,
+            EditingDocument {
+                content: String::new(),
+                crdt_state: CRDTState::default(),
+                participants: Vec::new(),
+            },
+        );
 
         Ok(())
     }

@@ -12,8 +12,8 @@
  */
 export const createErrorHandler = (context: string) => {
   return (error: unknown, customMessage?: string): string => {
-    const message = customMessage ||
-      (error instanceof Error ? error.message : 'An unknown error occurred');
+    const message =
+      customMessage || (error instanceof Error ? error.message : 'An unknown error occurred');
 
     // Using console.error as standard practice, could be replaced with logging service
     console.error(`Error in ${context}:`, error);
@@ -28,7 +28,10 @@ export const createErrorHandler = (context: string) => {
  * @param customText - Custom loading text
  * @returns Formatted loading message or null
  */
-export const formatLoadingState = (isLoading: boolean, customText = 'Processing...'): string | null => {
+export const formatLoadingState = (
+  isLoading: boolean,
+  customText = 'Processing...'
+): string | null => {
   return isLoading ? customText : null;
 };
 
@@ -77,7 +80,7 @@ export const createStateUpdater = <T extends Record<string, any>>(
   setState: React.Dispatch<React.SetStateAction<T>>
 ) => {
   return (updates: Partial<T>) => {
-    setState(prev => ({ ...prev, ...updates }));
+    setState((prev) => ({ ...prev, ...updates }));
   };
 };
 
@@ -92,7 +95,7 @@ export const createToggleHandler = <T extends Record<string, any>>(
   field: keyof T
 ) => {
   return () => {
-    setState(prev => ({ ...prev, [field]: !prev[field] }));
+    setState((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 };
 
@@ -154,7 +157,10 @@ export const validators = {
   isNotEmpty: (value: string): boolean => value.trim().length > 0,
   isEmail: (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
   isValidPath: (value: string): boolean => /^[^\0\n\r\f\v<>*?"|]*$/.test(value),
-  hasMinLength: (min: number) => (value: string): boolean => value.length >= min,
+  hasMinLength:
+    (min: number) =>
+    (value: string): boolean =>
+      value.length >= min,
 };
 
 /**

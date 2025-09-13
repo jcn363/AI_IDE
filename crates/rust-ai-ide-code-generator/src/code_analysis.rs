@@ -34,8 +34,8 @@ pub struct CodeComplexityAnalyzer;
 #[async_trait::async_trait]
 impl CodeAnalyzer for CodeComplexityAnalyzer {
     async fn analyze(&self, code: &str) -> Result<CodeAnalysisResult, CodeGenerationError> {
-        let ast = syn::parse_file(code)
-            .map_err(|e| CodeGenerationError::ParseError(e.to_string()))?;
+        let ast =
+            syn::parse_file(code).map_err(|e| CodeGenerationError::ParseError(e.to_string()))?;
 
         let patterns = self.analyze_patterns(&ast);
         let complexity = self.analyze_complexity(&ast);
@@ -44,7 +44,7 @@ impl CodeAnalyzer for CodeComplexityAnalyzer {
             patterns,
             complexity,
             dependencies: Vec::new(), // Would need dependency analysis
-            suggestions: Vec::new(), // Would need additional analysis
+            suggestions: Vec::new(),  // Would need additional analysis
         })
     }
 }
@@ -74,7 +74,11 @@ impl CodeComplexityAnalyzer {
                 } else {
                     self.patterns.sync_functions += 1;
                 }
-                if node.attrs.iter().any(|attr| attr.path().segments.iter().any(|seg| seg.ident == "test")) {
+                if node
+                    .attrs
+                    .iter()
+                    .any(|attr| attr.path().segments.iter().any(|seg| seg.ident == "test"))
+                {
                     self.patterns.tests += 1;
                 }
             }
@@ -88,7 +92,9 @@ impl CodeComplexityAnalyzer {
             }
         }
 
-        let mut visitor = PatternVisitor { patterns: &mut patterns };
+        let mut visitor = PatternVisitor {
+            patterns: &mut patterns,
+        };
         visitor.visit_file(ast);
 
         patterns
@@ -131,13 +137,19 @@ impl CodeComplexityAnalyzer {
                 // Rough estimation of lines
                 let body_lines = quote::quote!(#node).to_string().lines().count() as f64;
                 if self.metrics.function_count > 0 {
-                    self.metrics.lines_per_function = (self.metrics.lines_per_function * (self.metrics.function_count - 1) as f64 + body_lines) / self.metrics.function_count as f64;
+                    self.metrics.lines_per_function = (self.metrics.lines_per_function
+                        * (self.metrics.function_count - 1) as f64
+                        + body_lines)
+                        / self.metrics.function_count as f64;
                 }
                 visit::visit_item_fn(self, node);
             }
         }
 
-        let mut visitor = ComplexityVisitor { metrics: &mut metrics, current_depth: 0 };
+        let mut visitor = ComplexityVisitor {
+            metrics: &mut metrics,
+            current_depth: 0,
+        };
         visitor.visit_file(ast);
 
         metrics.nesting_depth = visitor.current_depth;

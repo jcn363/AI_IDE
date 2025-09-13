@@ -18,7 +18,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   isSaving,
 }) => {
   return (
-    <Box 
+    <Box
       sx={{
         display: 'flex',
         alignItems: 'center',

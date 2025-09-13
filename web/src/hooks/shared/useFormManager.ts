@@ -127,7 +127,13 @@ export type FormManagerReturn<T> = {
 export function useFormManager<T extends Record<string, any>>(
   config: FormConfig<T>
 ): FormManagerReturn<T> {
-  const { fields, onSubmit, validateForm: customValidateForm, validateOnChange = true, validateOnBlur = true } = config;
+  const {
+    fields,
+    onSubmit,
+    validateForm: customValidateForm,
+    validateOnChange = true,
+    validateOnBlur = true,
+  } = config;
 
   // Initialize form state
   const getInitialValues = useCallback(() => {
@@ -159,44 +165,47 @@ export function useFormManager<T extends Record<string, any>>(
   });
 
   // Validate field
-  const validateField = useCallback((field: keyof T): boolean => {
-    const fieldName = field as string;
-    const fieldConfig = fields[field];
-    if (!fieldConfig) return true;
+  const validateField = useCallback(
+    (field: keyof T): boolean => {
+      const fieldName = field as string;
+      const fieldConfig = fields[field];
+      if (!fieldConfig) return true;
 
-    const value = values[fieldName];
-    const formData = values as Partial<T>;
+      const value = values[fieldName];
+      const formData = values as Partial<T>;
 
-    // Check validation rules
-    if (fieldConfig.rules) {
-      for (const rule of fieldConfig.rules) {
-        if (!rule.validate(value, formData as T)) {
-          setErrors(prev => ({ ...prev, [fieldName]: rule.message }));
+      // Check validation rules
+      if (fieldConfig.rules) {
+        for (const rule of fieldConfig.rules) {
+          if (!rule.validate(value, formData as T)) {
+            setErrors((prev) => ({ ...prev, [fieldName]: rule.message }));
+            return false;
+          }
+        }
+      }
+
+      // Check custom validator
+      if (fieldConfig.validator) {
+        const error = fieldConfig.validator(value, formData);
+        if (error) {
+          setErrors((prev) => ({ ...prev, [fieldName]: error }));
           return false;
         }
       }
-    }
 
-    // Check custom validator
-    if (fieldConfig.validator) {
-      const error = fieldConfig.validator(value, formData);
-      if (error) {
-        setErrors(prev => ({ ...prev, [fieldName]: error }));
-        return false;
-      }
-    }
-
-    // Clear error if validation passes
-    setErrors(prev => ({ ...prev, [fieldName]: '' }));
-    return true;
-  }, [fields, values]);
+      // Clear error if validation passes
+      setErrors((prev) => ({ ...prev, [fieldName]: '' }));
+      return true;
+    },
+    [fields, values]
+  );
 
   // Validate entire form
   const validateForm = useCallback((): boolean => {
     let isValid = true;
 
     // Validate all fields
-    Object.keys(fields).forEach(fieldName => {
+    Object.keys(fields).forEach((fieldName) => {
       if (!validateField(fieldName as keyof T)) {
         isValid = false;
       }
@@ -206,7 +215,7 @@ export function useFormManager<T extends Record<string, any>>(
     if (customValidateForm && isValid) {
       const formErrors = customValidateForm(values);
       if (Object.keys(formErrors).length > 0) {
-        setErrors(prev => ({ ...prev, ...formErrors }));
+        setErrors((prev) => ({ ...prev, ...formErrors }));
         isValid = false;
       }
     }
@@ -216,52 +225,61 @@ export function useFormManager<T extends Record<string, any>>(
 
   // Update form validity whenever values change
   useEffect(() => {
-    const currentIsValid = Object.values(errors).every(error => !error || error === '');
+    const currentIsValid = Object.values(errors).every((error) => !error || error === '');
     // Update isValid could be added to state if needed
   }, [errors]);
 
   // Set field value
-  const setValue = useCallback((field: keyof T, value: any) => {
-    const fieldName = field as string;
+  const setValue = useCallback(
+    (field: keyof T, value: any) => {
+      const fieldName = field as string;
 
-    setValues(prev => ({ ...prev, [fieldName]: value }));
+      setValues((prev) => ({ ...prev, [fieldName]: value }));
 
-    if (validateOnChange || touched[fieldName]) {
-      // Mark as touched
-      setTouched(prev => ({ ...prev, [fieldName]: true }));
+      if (validateOnChange || touched[fieldName]) {
+        // Mark as touched
+        setTouched((prev) => ({ ...prev, [fieldName]: true }));
 
-      // Validate field
-      setTimeout(() => validateField(field), 0); // Debounce validation
-    }
-  }, [validateOnChange, touched, validateField]);
+        // Validate field
+        setTimeout(() => validateField(field), 0); // Debounce validation
+      }
+    },
+    [validateOnChange, touched, validateField]
+  );
 
   // Get field value
-  const getValue = useCallback((field: keyof T) => {
-    return values[field as string];
-  }, [values]);
+  const getValue = useCallback(
+    (field: keyof T) => {
+      return values[field as string];
+    },
+    [values]
+  );
 
   // Set field error
   const setFieldError = useCallback((field: keyof T, error: string) => {
     const fieldName = field as string;
-    setErrors(prev => ({ ...prev, [fieldName]: error }));
+    setErrors((prev) => ({ ...prev, [fieldName]: error }));
   }, []);
 
   // Clear field error
   const clearFieldError = useCallback((field: keyof T) => {
     const fieldName = field as string;
-    setErrors(prev => ({ ...prev, [fieldName]: '' }));
+    setErrors((prev) => ({ ...prev, [fieldName]: '' }));
   }, []);
 
   // Handle field blur
-  const handleFieldBlur = useCallback((field: keyof T) => {
-    const fieldName = field as string;
+  const handleFieldBlur = useCallback(
+    (field: keyof T) => {
+      const fieldName = field as string;
 
-    setTouched(prev => ({ ...prev, [fieldName]: true }));
+      setTouched((prev) => ({ ...prev, [fieldName]: true }));
 
-    if (validateOnBlur) {
-      validateField(field);
-    }
-  }, [validateOnBlur, validateField]);
+      if (validateOnBlur) {
+        validateField(field);
+      }
+    },
+    [validateOnBlur, validateField]
+  );
 
   // Reset form
   const reset = useCallback(() => {
@@ -306,17 +324,20 @@ export function useFormManager<T extends Record<string, any>>(
   }, [isSubmitting, validateForm, fields, values, onSubmit]);
 
   // Register field event handlers
-  const register = useCallback((field: keyof T) => {
-    const fieldName = field as string;
-    const value = values[fieldName];
+  const register = useCallback(
+    (field: keyof T) => {
+      const fieldName = field as string;
+      const value = values[fieldName];
 
-    return {
-      value,
-      onChange: (newValue: any) => setValue(field, newValue),
-      onBlur: () => handleFieldBlur(field),
-      error: errors[fieldName] || undefined,
-    };
-  }, [values, setValue, handleFieldBlur, errors]);
+      return {
+        value,
+        onChange: (newValue: any) => setValue(field, newValue),
+        onBlur: () => handleFieldBlur(field),
+        error: errors[fieldName] || undefined,
+      };
+    },
+    [values, setValue, handleFieldBlur, errors]
+  );
 
   // Form state
   const formState: FormState<T> = {
@@ -325,7 +346,7 @@ export function useFormManager<T extends Record<string, any>>(
     touched,
     isSubmitting,
     isDirty,
-    isValid: Object.values(errors).every(error => !error || error === ''),
+    isValid: Object.values(errors).every((error) => !error || error === ''),
   };
 
   return {

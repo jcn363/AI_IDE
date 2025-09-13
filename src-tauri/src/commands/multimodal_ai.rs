@@ -4,12 +4,12 @@
 //! including vision processing, audio analysis, and combined modality processing.
 
 use serde_json::json;
+use std::sync::Arc;
 use tauri::{AppHandle, State};
 use tokio::sync::Mutex;
-use std::sync::Arc;
 
+use rust_ai_ide_ai_multimodal::{AnalysisRequest, ModalityType, MultiModalAiService};
 use rust_ai_ide_common::validation::TauriInputSanitizer;
-use rust_ai_ide_ai_multimodal::{MultiModalAiService, AnalysisRequest, ModalityType};
 
 /// State for multi-modal AI service management
 #[derive(Default)]
@@ -22,7 +22,10 @@ impl MultiModalState {
     /// Initialize the multi-modal service
     pub async fn initialize(&mut self) -> Result<(), tauri::Error> {
         let multimodal_service = MultiModalAiService::new().await.map_err(|e| {
-            tauri::Error::Anyhow(anyhow::anyhow!("Failed to initialize multimodal service: {}", e))
+            tauri::Error::Anyhow(anyhow::anyhow!(
+                "Failed to initialize multimodal service: {}",
+                e
+            ))
         })?;
 
         self.multimodal_service = Some(Arc::new(multimodal_service));
@@ -32,8 +35,9 @@ impl MultiModalState {
     /// Get the multimodal service reference
     #[must_use]
     pub fn service(&self) -> Result<&Arc<MultiModalAiService>, tauri::Error> {
-        self.multimodal_service.as_ref()
-            .ok_or_else(|| tauri::Error::Anyhow(anyhow::anyhow!("Multimodal service not initialized")))
+        self.multimodal_service.as_ref().ok_or_else(|| {
+            tauri::Error::Anyhow(anyhow::anyhow!("Multimodal service not initialized"))
+        })
     }
 }
 
@@ -41,7 +45,7 @@ impl MultiModalState {
 #[tauri::command]
 pub async fn initialize_multimodal_ai(
     app_handle: AppHandle,
-    multimodal_state: State<'_, Arc<Mutex<MultiModalState>>>
+    multimodal_state: State<'_, Arc<Mutex<MultiModalState>>>,
 ) -> Result<(), tauri::Error> {
     log::info!("Initializing multi-modal AI services...");
 
@@ -188,7 +192,7 @@ pub async fn process_multimodal_analysis(
                 "processing_time": response.processing_duration_ms,
                 "timestamp": response.timestamp.timestamp()
             }))
-        },
+        }
         Err(e) => {
             log::error!("Multi-modal analysis failed: {}", e);
             Ok(json!({
@@ -224,26 +228,29 @@ pub async fn analyze_image(
         Ok(response) => {
             if let Some(result) = response.modality_results.get(&ModalityType::Image) {
                 match &result.data {
-                    rust_ai_ide_ai_multimodal::ModalityData::Image { description, objects, ocr_text, .. } => {
-                        Ok(json!({
-                            "success": result.success,
-                            "description": description,
-                            "objects": objects.iter().map(|o| json!({
-                                "class": o.class,
-                                "confidence": o.confidence,
-                                "bbox": [o.bbox.x1, o.bbox.y1, o.bbox.x2, o.bbox.y2]
-                            })).collect::<Vec<_>>(),
-                            "ocr_text": ocr_text,
-                            "confidence": result.confidence,
-                            "processing_time_ms": result.processing_time_ms
-                        }))
-                    },
+                    rust_ai_ide_ai_multimodal::ModalityData::Image {
+                        description,
+                        objects,
+                        ocr_text,
+                        ..
+                    } => Ok(json!({
+                        "success": result.success,
+                        "description": description,
+                        "objects": objects.iter().map(|o| json!({
+                            "class": o.class,
+                            "confidence": o.confidence,
+                            "bbox": [o.bbox.x1, o.bbox.y1, o.bbox.x2, o.bbox.y2]
+                        })).collect::<Vec<_>>(),
+                        "ocr_text": ocr_text,
+                        "confidence": result.confidence,
+                        "processing_time_ms": result.processing_time_ms
+                    })),
                     _ => Ok(json!({"error": "Unexpected result format"})),
                 }
             } else {
                 Ok(json!({"error": "No image result found"}))
             }
-        },
+        }
         Err(e) => Ok(json!({"error": format!("Image analysis failed: {}", e)})),
     }
 }
@@ -266,29 +273,34 @@ pub async fn recognize_voice_command(
         .with_audio_data(audio_data);
 
     if let Some(lang) = language {
-        analysis_request.metadata.insert("language".to_string(), json!(lang));
+        analysis_request
+            .metadata
+            .insert("language".to_string(), json!(lang));
     }
 
     match service.process_request(analysis_request).await {
         Ok(response) => {
             if let Some(result) = response.modality_results.get(&ModalityType::Audio) {
                 match &result.data {
-                    rust_ai_ide_ai_multimodal::ModalityData::Audio { transcription, language: detected_lang, speakers, .. } => {
-                        Ok(json!({
-                            "success": result.success,
-                            "transcription": transcription,
-                            "language": detected_lang,
-                            "speakers": speakers.len(),
-                            "confidence": result.confidence,
-                            "processing_time_ms": result.processing_time_ms
-                        }))
-                    },
+                    rust_ai_ide_ai_multimodal::ModalityData::Audio {
+                        transcription,
+                        language: detected_lang,
+                        speakers,
+                        ..
+                    } => Ok(json!({
+                        "success": result.success,
+                        "transcription": transcription,
+                        "language": detected_lang,
+                        "speakers": speakers.len(),
+                        "confidence": result.confidence,
+                        "processing_time_ms": result.processing_time_ms
+                    })),
                     _ => Ok(json!({"error": "Unexpected result format"})),
                 }
             } else {
                 Ok(json!({"error": "No audio result found"}))
             }
-        },
+        }
         Err(e) => Ok(json!({"error": format!("Voice recognition failed: {}", e)})),
     }
 }
@@ -307,9 +319,11 @@ pub async fn get_multimodal_capabilities(
     let capabilities = AnalysisRequest::new().as_capability_query();
 
     // Get metrics to understand current capabilities
-    let metrics = service.metrics_collector().get_metrics().await.map_err(|e| {
-        tauri::Error::Anyhow(anyhow::anyhow!("Failed to get metrics: {}", e))
-    })?;
+    let metrics = service
+        .metrics_collector()
+        .get_metrics()
+        .await
+        .map_err(|e| tauri::Error::Anyhow(anyhow::anyhow!("Failed to get metrics: {}", e)))?;
 
     Ok(json!({
         "supported_modalities": [
@@ -347,9 +361,11 @@ pub async fn get_multimodal_metrics(
         Arc::clone(state_guard.service()?)
     };
 
-    let metrics = service.metrics_collector().get_metrics().await.map_err(|e| {
-        tauri::Error::Anyhow(anyhow::anyhow!("Failed to get metrics: {}", e))
-    })?;
+    let metrics = service
+        .metrics_collector()
+        .get_metrics()
+        .await
+        .map_err(|e| tauri::Error::Anyhow(anyhow::anyhow!("Failed to get metrics: {}", e)))?;
 
     Ok(json!({
         "request_count": metrics.request_count,

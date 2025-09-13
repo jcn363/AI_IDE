@@ -1,5 +1,11 @@
 import { invoke } from '@tauri-apps/api/core';
-import { CodeAction, CodeActionKind, OptionalVersionedTextDocumentIdentifier, TextDocumentEdit, TextEdit } from 'vscode-languageserver';
+import {
+  CodeAction,
+  CodeActionKind,
+  OptionalVersionedTextDocumentIdentifier,
+  TextDocumentEdit,
+  TextEdit,
+} from 'vscode-languageserver';
 import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver-types';
 import type {
   AIContext,
@@ -14,7 +20,7 @@ import type {
   ErrorResolutionResult,
   FixSuggestion,
   LearnedPattern,
-  LearningSystemRequest
+  LearningSystemRequest,
 } from '../types';
 
 // Enhanced error resolution result with learning capabilities
@@ -44,7 +50,6 @@ interface CompilerDiagnosticsRequest {
   includeSuggestedFixes: boolean;
 }
 
-
 export class ErrorResolver {
   private static instance: ErrorResolver;
   private errorPatterns: Map<string, ErrorPattern> = new Map();
@@ -68,10 +73,7 @@ export class ErrorResolver {
   /**
    * Configure the error resolver with preferences
    */
-  public configure(preferences: {
-    confidenceThreshold?: number;
-    enableLearning?: boolean;
-  }): void {
+  public configure(preferences: { confidenceThreshold?: number; enableLearning?: boolean }): void {
     if (preferences.confidenceThreshold !== undefined) {
       this.confidenceThreshold = preferences.confidenceThreshold;
     }
@@ -104,7 +106,7 @@ export class ErrorResolver {
         content: documentText,
         errors: errorMessages,
         cursorPosition,
-        useLearnedPatterns: this.enableLearning
+        useLearnedPatterns: this.enableLearning,
       };
 
       // Get AI-powered error resolution from backend
@@ -135,7 +137,7 @@ export class ErrorResolver {
         learnedPatterns,
         compilerDiagnostics: compilerResult?.diagnostics || [],
         confidence,
-        estimatedSuccessRate
+        estimatedSuccessRate,
       };
     } catch (error) {
       console.error('Enhanced error resolution failed:', error);
@@ -148,7 +150,7 @@ export class ErrorResolver {
         learnedPatterns: [],
         compilerDiagnostics: [],
         confidence: 0.5,
-        estimatedSuccessRate: 0.0
+        estimatedSuccessRate: 0.0,
       };
     }
   }
@@ -159,7 +161,7 @@ export class ErrorResolver {
   public resolveError(
     error: Diagnostic,
     documentText: string,
-    filePath: string,
+    filePath: string
   ): ErrorResolutionResult {
     const result: ErrorResolutionResult = {
       quickFixes: [],
@@ -207,7 +209,7 @@ export class ErrorResolver {
         context: context || '',
         frequency: 1,
         lastSeen: new Date().toISOString(),
-        confidence: wasSuccessful ? 0.8 : 0.3
+        confidence: wasSuccessful ? 0.8 : 0.3,
       };
 
       // Convert CodeAction to FixSuggestion if needed
@@ -221,7 +223,7 @@ export class ErrorResolver {
         appliedFix: fixSuggestion,
         success: wasSuccessful,
         userFeedback,
-        context: context || `Error at line ${error.range.start.line + 1}`
+        context: context || `Error at line ${error.range.start.line + 1}`,
       };
 
       // Record the fix in the backend learning system
@@ -230,7 +232,9 @@ export class ErrorResolver {
       // Update local learned patterns cache
       await this.updateLocalLearnedPatterns(errorPattern, fixSuggestion, wasSuccessful);
 
-      console.log(`Recorded ${wasSuccessful ? 'successful' : 'failed'} fix for error: ${error.message}`);
+      console.log(
+        `Recorded ${wasSuccessful ? 'successful' : 'failed'} fix for error: ${error.message}`
+      );
     } catch (error) {
       console.error('Failed to record fix for learning:', error);
     }
@@ -248,19 +252,19 @@ export class ErrorResolver {
         suggestionId: fixSuggestion.id,
         changes: fixSuggestion.changes,
         createBackup: true,
-        recordForLearning
+        recordForLearning,
       };
 
       const result = await invoke<string>('apply_ai_suggestion', { request });
 
       return {
         success: true,
-        errors: []
+        errors: [],
       };
     } catch (error) {
       return {
         success: false,
-        errors: [error instanceof Error ? error.message : String(error)]
+        errors: [error instanceof Error ? error.message : String(error)],
       };
     }
   }
@@ -268,7 +272,9 @@ export class ErrorResolver {
   /**
    * Get compiler diagnostics for enhanced error context
    */
-  private async getCompilerDiagnostics(filePath: string): Promise<CompilerIntegrationResult | null> {
+  private async getCompilerDiagnostics(
+    filePath: string
+  ): Promise<CompilerIntegrationResult | null> {
     try {
       // Extract workspace path from file path
       const workspacePath = this.extractWorkspacePath(filePath);
@@ -276,7 +282,7 @@ export class ErrorResolver {
       const request: CompilerDiagnosticsRequest = {
         workspacePath,
         includeExplanations: true,
-        includeSuggestedFixes: true
+        includeSuggestedFixes: true,
       };
 
       return await invoke<CompilerIntegrationResult>('get_compiler_diagnostics', { request });
@@ -292,7 +298,7 @@ export class ErrorResolver {
   private async getLearnedPatternsForError(errorMessage: string): Promise<LearnedPattern[]> {
     try {
       return await invoke<LearnedPattern[]>('get_learned_patterns', {
-        errorContext: errorMessage
+        errorContext: errorMessage,
       });
     } catch (error) {
       console.warn('Failed to get learned patterns:', error);
@@ -316,7 +322,7 @@ export class ErrorResolver {
       } else {
         try {
           const explanation = await invoke<ErrorCodeExplanation>('explain_error_code', {
-            errorCode
+            errorCode,
           });
           this.explanationCache.set(errorCode, explanation);
           explanations.push(explanation);
@@ -339,7 +345,7 @@ export class ErrorResolver {
     const links: DocumentationLink[] = [];
 
     // Add links from error explanations
-    explanations.forEach(explanation => {
+    explanations.forEach((explanation) => {
       links.push(...explanation.documentationLinks);
     });
 
@@ -362,7 +368,7 @@ export class ErrorResolver {
   private matchErrorPatterns(
     error: Diagnostic,
     documentText: string,
-    result: ErrorResolutionResult,
+    result: ErrorResolutionResult
   ): void {
     // Try to match against each known pattern
     for (const [patternId, pattern] of this.errorPatterns) {
@@ -415,18 +421,25 @@ export class ErrorResolver {
     if (severity === undefined) return 'unknown';
 
     switch (severity) {
-      case DiagnosticSeverity.Error: return 'error';
-      case DiagnosticSeverity.Warning: return 'warning';
-      case DiagnosticSeverity.Information: return 'information';
-      case DiagnosticSeverity.Hint: return 'hint';
-      default: return 'unknown';
+      case DiagnosticSeverity.Error:
+        return 'error';
+      case DiagnosticSeverity.Warning:
+        return 'warning';
+      case DiagnosticSeverity.Information:
+        return 'information';
+      case DiagnosticSeverity.Hint:
+        return 'hint';
+      default:
+        return 'unknown';
     }
   }
 
   private generateGenericExplanation(error: Diagnostic): string {
     const severityText = this.getSeverityText(error.severity);
-    return `Error: ${error.message}\n\nThis appears to be a ${severityText} issue. ` +
-      `The error occurred at line ${error.range.start.line + 1}.`;
+    return (
+      `Error: ${error.message}\n\nThis appears to be a ${severityText} issue. ` +
+      `The error occurred at line ${error.range.start.line + 1}.`
+    );
   }
 
   /**
@@ -444,13 +457,13 @@ export class ErrorResolver {
     let count = 0;
 
     // Include confidence from AI-generated fixes
-    fixes.forEach(fix => {
+    fixes.forEach((fix) => {
       totalConfidence += fix.confidence;
       count++;
     });
 
     // Include confidence from learned patterns
-    learnedPatterns.forEach(pattern => {
+    learnedPatterns.forEach((pattern) => {
       totalConfidence += pattern.confidence;
       count++;
     });
@@ -469,7 +482,7 @@ export class ErrorResolver {
     let totalSuccesses = 0;
     let totalAttempts = 0;
 
-    learnedPatterns.forEach(pattern => {
+    learnedPatterns.forEach((pattern) => {
       totalSuccesses += pattern.successCount;
       totalAttempts += pattern.successCount + pattern.failureCount;
     });
@@ -502,9 +515,7 @@ export class ErrorResolver {
     const patterns = this.learnedPatterns.get(errorType) || [];
 
     // Find existing pattern or create new one
-    let existingPattern = patterns.find(p =>
-      p.errorPattern.pattern === errorPattern.pattern
-    );
+    let existingPattern = patterns.find((p) => p.errorPattern.pattern === errorPattern.pattern);
 
     if (existingPattern) {
       // Update existing pattern
@@ -514,7 +525,8 @@ export class ErrorResolver {
         existingPattern.failureCount++;
       }
       existingPattern.lastUsed = new Date().toISOString();
-      existingPattern.confidence = existingPattern.successCount /
+      existingPattern.confidence =
+        existingPattern.successCount /
         (existingPattern.successCount + existingPattern.failureCount);
     } else {
       // Create new learned pattern
@@ -527,7 +539,7 @@ export class ErrorResolver {
         confidence: wasSuccessful ? 1.0 : 0.0,
         lastUsed: new Date().toISOString(),
         userFeedback: null,
-        context: errorPattern.context
+        context: errorPattern.context,
       };
       patterns.push(newPattern);
     }
@@ -538,10 +550,7 @@ export class ErrorResolver {
   /**
    * Enhanced documentation link generation
    */
-  private addDocumentationLinks(
-    error: Diagnostic,
-    result: ErrorResolutionResult,
-  ): void {
+  private addDocumentationLinks(error: Diagnostic, result: ErrorResolutionResult): void {
     const errorType = this.categorizeError(error);
     const links = this.getGeneralDocumentationLinks(errorType);
     result.relatedDocumentation.push(...links);
@@ -553,45 +562,45 @@ export class ErrorResolver {
   private getGeneralDocumentationLinks(errorType: string): DocumentationLink[] {
     const baseLinks: DocumentationLink[] = [
       {
-        title: "Rust Book",
-        url: "https://doc.rust-lang.org/book/",
-        description: "The Rust Programming Language book"
+        title: 'Rust Book',
+        url: 'https://doc.rust-lang.org/book/',
+        description: 'The Rust Programming Language book',
       },
       {
-        title: "Rust Reference",
-        url: "https://doc.rust-lang.org/reference/",
-        description: "The Rust language reference"
-      }
+        title: 'Rust Reference',
+        url: 'https://doc.rust-lang.org/reference/',
+        description: 'The Rust language reference',
+      },
     ];
 
     // Add specific links based on error type
     switch (errorType) {
       case 'borrow_check':
         baseLinks.push({
-          title: "Understanding Ownership",
-          url: "https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html",
-          description: "Learn about Rust's ownership system"
+          title: 'Understanding Ownership',
+          url: 'https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html',
+          description: "Learn about Rust's ownership system",
         });
         break;
       case 'type_error':
         baseLinks.push({
-          title: "Data Types",
-          url: "https://doc.rust-lang.org/book/ch03-02-data-types.html",
-          description: "Understanding Rust data types"
+          title: 'Data Types',
+          url: 'https://doc.rust-lang.org/book/ch03-02-data-types.html',
+          description: 'Understanding Rust data types',
         });
         break;
       case 'lifetime_error':
         baseLinks.push({
-          title: "Validating References with Lifetimes",
-          url: "https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html",
-          description: "Understanding lifetime annotations"
+          title: 'Validating References with Lifetimes',
+          url: 'https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html',
+          description: 'Understanding lifetime annotations',
         });
         break;
       case 'trait_error':
         baseLinks.push({
-          title: "Traits",
-          url: "https://doc.rust-lang.org/book/ch10-02-traits.html",
-          description: "Defining shared behavior with traits"
+          title: 'Traits',
+          url: 'https://doc.rust-lang.org/book/ch10-02-traits.html',
+          description: 'Defining shared behavior with traits',
         });
         break;
     }
@@ -608,25 +617,25 @@ export class ErrorResolver {
     // Pattern matching for specific error messages
     if (errorMessage.includes('cannot borrow')) {
       links.push({
-        title: "Borrowing Rules",
-        url: "https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html",
-        description: "Understanding borrowing rules in Rust"
+        title: 'Borrowing Rules',
+        url: 'https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html',
+        description: 'Understanding borrowing rules in Rust',
       });
     }
 
     if (errorMessage.includes('trait bound')) {
       links.push({
-        title: "Trait Bounds",
-        url: "https://doc.rust-lang.org/book/ch10-02-traits.html#trait-bounds",
-        description: "Using trait bounds to specify functionality"
+        title: 'Trait Bounds',
+        url: 'https://doc.rust-lang.org/book/ch10-02-traits.html#trait-bounds',
+        description: 'Using trait bounds to specify functionality',
       });
     }
 
     if (errorMessage.includes('lifetime')) {
       links.push({
-        title: "Lifetime Elision",
-        url: "https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html#lifetime-elision",
-        description: "Understanding lifetime elision rules"
+        title: 'Lifetime Elision',
+        url: 'https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html#lifetime-elision',
+        description: 'Understanding lifetime elision rules',
       });
     }
 
@@ -638,7 +647,7 @@ export class ErrorResolver {
    */
   private deduplicateLinks(links: DocumentationLink[]): DocumentationLink[] {
     const seen = new Set<string>();
-    return links.filter(link => {
+    return links.filter((link) => {
       const key = `${link.title}:${link.url}`;
       if (seen.has(key)) {
         return false;
@@ -665,7 +674,7 @@ export class ErrorResolver {
       confidence: 0.7,
       estimatedEffort: 'trivial',
       benefits: ['Fixes the reported issue'],
-      risks: []
+      risks: [],
     };
   }
 
@@ -677,12 +686,12 @@ export class ErrorResolver {
       return null;
     }
 
-    const edits: TextEdit[] = fixSuggestion.changes.map(change => ({
+    const edits: TextEdit[] = fixSuggestion.changes.map((change) => ({
       range: {
         start: { line: change.range[0], character: change.range[1] },
-        end: { line: change.range[2], character: change.range[3] }
+        end: { line: change.range[2], character: change.range[3] },
       },
-      newText: change.newText
+      newText: change.newText,
     }));
 
     return {
@@ -693,17 +702,17 @@ export class ErrorResolver {
           TextDocumentEdit.create(
             {
               uri: `file://${fixSuggestion.changes[0].filePath}`,
-              version: null
+              version: null,
             } as OptionalVersionedTextDocumentIdentifier,
             edits
-          )
-        ]
-      }
+          ),
+        ],
+      },
     };
   }
 
   private convertToFixSuggestions(codeActions: CodeAction[]): FixSuggestion[] {
-    return codeActions.map(action => this.convertCodeActionToFixSuggestion(action));
+    return codeActions.map((action) => this.convertCodeActionToFixSuggestion(action));
   }
 
   private convertToErrorExplanations(explanations: string[]): ErrorCodeExplanation[] {
@@ -712,7 +721,7 @@ export class ErrorResolver {
       title: 'Error Explanation',
       explanation,
       examples: [],
-      documentationLinks: []
+      documentationLinks: [],
     }));
   }
 
@@ -776,39 +785,46 @@ export class ErrorResolver {
 
         if (match) {
           const varName = match[1];
-          return [{
-            title: `Prefix with _ to indicate it's intentionally unused (High confidence)`,
-            kind: CodeActionKind.QuickFix,
-            edit: {
-              documentChanges: [
-                TextDocumentEdit.create(
-                  {
-                    uri: `file://${error.source}`,
-                    version: null
-                  } as OptionalVersionedTextDocumentIdentifier,
-                  [
-                    TextEdit.replace(
-                      {
-                        start: { line: range.start.line, character: range.start.character + 4 },
-                        end: { line: range.start.line, character: range.start.character + 4 + varName.length },
-                      },
-                      `_${varName}`,
-                    ),
-                  ],
-                ),
-              ],
+          return [
+            {
+              title: `Prefix with _ to indicate it's intentionally unused (High confidence)`,
+              kind: CodeActionKind.QuickFix,
+              edit: {
+                documentChanges: [
+                  TextDocumentEdit.create(
+                    {
+                      uri: `file://${error.source}`,
+                      version: null,
+                    } as OptionalVersionedTextDocumentIdentifier,
+                    [
+                      TextEdit.replace(
+                        {
+                          start: { line: range.start.line, character: range.start.character + 4 },
+                          end: {
+                            line: range.start.line,
+                            character: range.start.character + 4 + varName.length,
+                          },
+                        },
+                        `_${varName}`
+                      ),
+                    ]
+                  ),
+                ],
+              },
             },
-          }];
+          ];
         }
         return [];
       },
-      explanation: () => "This warning occurs when you declare a variable but don't use it. " +
+      explanation: () =>
+        "This warning occurs when you declare a variable but don't use it. " +
         "You can either use the variable or prefix it with an underscore to indicate it's intentionally unused.",
     });
 
     // Borrow checker error pattern
     this.errorPatterns.set('borrow_check', {
-      matcher: (error) => error.message.includes('cannot borrow') || error.message.includes('already borrowed'),
+      matcher: (error) =>
+        error.message.includes('cannot borrow') || error.message.includes('already borrowed'),
       quickFixes: (error, documentText) => {
         const fixes: CodeAction[] = [];
 
@@ -817,15 +833,16 @@ export class ErrorResolver {
             title: 'Consider using RefCell for interior mutability',
             kind: CodeActionKind.Refactor,
             edit: {
-              documentChanges: []
-            }
+              documentChanges: [],
+            },
           });
         }
 
         return fixes;
       },
-      explanation: () => "Rust's borrow checker ensures memory safety by preventing data races. " +
-        "This error occurs when you try to borrow data in a way that violates borrowing rules.",
+      explanation: () =>
+        "Rust's borrow checker ensures memory safety by preventing data races. " +
+        'This error occurs when you try to borrow data in a way that violates borrowing rules.',
     });
 
     // Type mismatch pattern
@@ -846,15 +863,16 @@ export class ErrorResolver {
             title: `Convert ${found} to ${expected}`,
             kind: CodeActionKind.QuickFix,
             edit: {
-              documentChanges: []
-            }
+              documentChanges: [],
+            },
           });
         }
 
         return fixes;
       },
-      explanation: () => "Type mismatch errors occur when the compiler expects one type but finds another. " +
-        "Check the types involved and consider type conversion or correction.",
+      explanation: () =>
+        'Type mismatch errors occur when the compiler expects one type but finds another. ' +
+        'Check the types involved and consider type conversion or correction.',
     });
 
     // Add more sophisticated patterns...

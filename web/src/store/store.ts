@@ -8,6 +8,7 @@ import tabManagementReducer from './slices/tabManagementSlice';
 import cargoReducer from './slices/cargoSlice';
 import debuggerReducer, { debuggerActions, type DebuggerEvent } from './slices/debuggerSlice';
 import projectsReducer from './slices/projectsSlice';
+import codegenReducer from './slices/codegenSlice';
 
 // Types and utilities
 import type { RootState } from './types';
@@ -22,6 +23,7 @@ export const store = configureStore({
     cargo: cargoReducer,
     debugger: debuggerReducer,
     projects: projectsReducer,
+    codegen: codegenReducer,
   },
   middleware: (getDefaultMiddleware) => {
     const middlewares = getDefaultMiddleware({
@@ -29,7 +31,7 @@ export const store = configureStore({
         ignoredActions: [
           'cargo/executeCommand/pending',
           'cargo/executeCommand/fulfilled',
-          'cargo/executeCommand/rejected'
+          'cargo/executeCommand/rejected',
         ],
       },
     });
@@ -53,7 +55,9 @@ export default store;
 // Initialize Tauri event listeners for streaming once
 initCargoStreamingListeners(store.dispatch).catch((err) => {
   // Log the error but continue execution
-  info('Failed to initialize cargo streaming listeners', { error: err?.message || 'Unknown error' });
+  info('Failed to initialize cargo streaming listeners', {
+    error: err?.message || 'Unknown error',
+  });
 });
 
 // Initialize debugger event listener
@@ -65,8 +69,8 @@ initCargoStreamingListeners(store.dispatch).catch((err) => {
     });
     info('Debugger event listener initialized');
   } catch (error) {
-    info('Debugger event listener initialization failed', { 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    info('Debugger event listener initialization failed', {
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 })();

@@ -7,7 +7,9 @@ export class PatternMatcher {
   /**
    * Extract variable declarations using improved Rust-aware patterns
    */
-  extractVariableDeclarations(code: string): Array<{ variableName: string; line: number; initializer: string }> {
+  extractVariableDeclarations(
+    code: string
+  ): Array<{ variableName: string; line: number; initializer: string }> {
     const variables: Array<{ variableName: string; line: number; initializer: string }> = [];
     const lines = code.split('\n');
 
@@ -74,7 +76,7 @@ export class PatternMatcher {
       /\.\s*(borrow_mut)\s*\(\)/,
     ];
 
-    return sideEffectPatterns.some(pattern => pattern.test(initializer));
+    return sideEffectPatterns.some((pattern) => pattern.test(initializer));
   }
 
   /**
@@ -309,7 +311,7 @@ export class PatternMatcher {
     const suggestions: string[] = [];
 
     // Extract meaningful words from expression
-    const words = expression.split(/[\s()[\]{}+\-*/%.]/).filter(word => word.length > 2);
+    const words = expression.split(/[\s()[\]{}+\-*/%.]/).filter((word) => word.length > 2);
 
     if (words.length > 0) {
       // Create camelCase variations

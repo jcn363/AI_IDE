@@ -1,8 +1,8 @@
 //! Supervisor-specific error types and utilities
 
+use rusqlite::Error as RusqliteError;
 use std::fmt;
 use thiserror::Error;
-use rusqlite::Error as RusqliteError;
 use tokio::process::Command as TokioCommand;
 
 /// Supervisor error types extending the core IDEError
@@ -33,7 +33,11 @@ pub enum SupervisorError {
     SecurityError { operation: String, reason: String },
 
     #[error("Resource limit exceeded: {resource} - current: {current}, limit: {limit}")]
-    ResourceLimitExceeded { resource: String, current: u64, limit: u64 },
+    ResourceLimitExceeded {
+        resource: String,
+        current: u64,
+        limit: u64,
+    },
 
     #[error("Initialization failure: {component} - {reason}")]
     InitError { component: String, reason: String },
@@ -221,7 +225,9 @@ impl SupervisorErrorUtils {
             SupervisorError::HealthCheckTimeout { .. } => true,
             SupervisorError::ProcessError { message } => {
                 // Check if it's a temporary process error
-                message.contains("timeout") || message.contains("connection") || message.contains("network")
+                message.contains("timeout")
+                    || message.contains("connection")
+                    || message.contains("network")
             }
             SupervisorError::IpcRecoveryError { .. } => true,
             _ => false,
@@ -231,16 +237,12 @@ impl SupervisorErrorUtils {
     /// Create a detailed error context
     pub fn with_context(error: SupervisorError, context: &str) -> SupervisorError {
         match error {
-            SupervisorError::ProcessError { message } => {
-                SupervisorError::ProcessError {
-                    message: format!("{}: {}", context, message),
-                }
-            }
-            SupervisorError::PersistenceError { message } => {
-                SupervisorError::PersistenceError {
-                    message: format!("{}: {}", context, message),
-                }
-            }
+            SupervisorError::ProcessError { message } => SupervisorError::ProcessError {
+                message: format!("{}: {}", context, message),
+            },
+            SupervisorError::PersistenceError { message } => SupervisorError::PersistenceError {
+                message: format!("{}: {}", context, message),
+            },
             SupervisorError::IpcRecoveryError { channel_id, reason } => {
                 SupervisorError::IpcRecoveryError {
                     channel_id,
@@ -262,7 +264,10 @@ mod tests {
         assert!(matches!(error, SupervisorError::ProcessError { .. }));
 
         let restart_error = SupervisorError::restart_failed("test_service", 3);
-        assert!(matches!(restart_error, SupervisorError::RestartFailed { .. }));
+        assert!(matches!(
+            restart_error,
+            SupervisorError::RestartFailed { .. }
+        ));
     }
 
     #[test]

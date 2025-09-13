@@ -30,7 +30,10 @@ export class UnifiedCacheManager implements ICacheManager {
     return this.diagnosticCache.get(key);
   }
 
-  async setDiagnostic(request: DiagnosticRequest, result: CompilerDiagnosticsResult): Promise<void> {
+  async setDiagnostic(
+    request: DiagnosticRequest,
+    result: CompilerDiagnosticsResult
+  ): Promise<void> {
     const key = this.generateDiagnosticKey(request);
     const ttl = request.cacheTtlSeconds;
     await this.diagnosticCache.set(key, result, ttl);
@@ -41,7 +44,11 @@ export class UnifiedCacheManager implements ICacheManager {
     return this.explanationCache.get(key);
   }
 
-  async setExplanation(errorCode: string, explanation: ErrorCodeExplanation, ttl?: number): Promise<void> {
+  async setExplanation(
+    errorCode: string,
+    explanation: ErrorCodeExplanation,
+    ttl?: number
+  ): Promise<void> {
     const key = `explanation:${errorCode}`;
     await this.explanationCache.set(key, explanation, ttl);
   }
@@ -114,7 +121,7 @@ export class UnifiedCacheManager implements ICacheManager {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32bit integer
     }
     return hash.toString(16);

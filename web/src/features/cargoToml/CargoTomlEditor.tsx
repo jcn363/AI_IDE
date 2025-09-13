@@ -1,14 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
-import { useCargoTomlEditor } from "./useCargoTomlEditor";
-import { DependencyGraphRenderer } from "./dependencyGraph";
-import EnhancedDependencyGraph from "./EnhancedDependencyGraph";
-import WorkspaceInheritanceGraph from "./WorkspaceInheritanceGraph";
-import DependencyUpdater from "./DependencyUpdater";
-import { CargoLockVisualization } from "./lockfile/CargoLockVisualization";
-import {
-  WorkspaceAnalysis,
-  analyzeWorkspaceInheritance,
-} from "./workspaceAnalyzer";
+import { useCallback, useEffect, useState } from 'react';
+import { useCargoTomlEditor } from './useCargoTomlEditor';
+import { DependencyGraphRenderer } from './dependencyGraph';
+import EnhancedDependencyGraph from './EnhancedDependencyGraph';
+import WorkspaceInheritanceGraph from './WorkspaceInheritanceGraph';
+import DependencyUpdater from './DependencyUpdater';
+import { CargoLockVisualization } from './lockfile/CargoLockVisualization';
+import { WorkspaceAnalysis, analyzeWorkspaceInheritance } from './workspaceAnalyzer';
 
 interface CargoTomlEditorProps {
   initialToml: string;
@@ -19,20 +16,20 @@ interface CargoTomlEditorProps {
 const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
   initialToml,
   onSave,
-  className = "",
+  className = '',
 }) => {
   const [activeTab, setActiveTab] = useState<
-    | "editor"
-    | "dependencies"
-    | "features"
-    | "security"
-    | "licenses"
-    | "graph"
-    | "enhanced-graph"
-    | "workspace"
-    | "updates"
-    | "lockfile"
-  >("editor");
+    | 'editor'
+    | 'dependencies'
+    | 'features'
+    | 'security'
+    | 'licenses'
+    | 'graph'
+    | 'enhanced-graph'
+    | 'workspace'
+    | 'updates'
+    | 'lockfile'
+  >('editor');
   const [isSaving, setIsSaving] = useState(false);
 
   const {
@@ -56,18 +53,13 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
   } = useCargoTomlEditor(initialToml);
 
   // Workspace analysis state
-  const [workspaceAnalysis, setWorkspaceAnalysis] =
-    useState<WorkspaceAnalysis | null>(null);
+  const [workspaceAnalysis, setWorkspaceAnalysis] = useState<WorkspaceAnalysis | null>(null);
   const [isAnalyzingWorkspace, setIsAnalyzingWorkspace] = useState(false);
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
 
   // Analyze workspace when the workspace tab is selected
   useEffect(() => {
-    if (
-      activeTab === "workspace" &&
-      !workspaceAnalysis &&
-      !isAnalyzingWorkspace
-    ) {
+    if (activeTab === 'workspace' && !workspaceAnalysis && !isAnalyzingWorkspace) {
       const analyzeWorkspace = async () => {
         if (!manifest) return;
 
@@ -78,14 +70,14 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
           // In a real implementation, this would call the Rust backend
           // For now, we'll simulate the response
           const analysis = await analyzeWorkspaceInheritance(
-            ".", // Current directory - would be provided by the backend
-            manifest,
+            '.', // Current directory - would be provided by the backend
+            manifest
           );
 
           setWorkspaceAnalysis(analysis);
         } catch (err) {
-          console.error("Error analyzing workspace:", err);
-          setWorkspaceError("Failed to analyze workspace. Please try again.");
+          console.error('Error analyzing workspace:', err);
+          setWorkspaceError('Failed to analyze workspace. Please try again.');
         } finally {
           setIsAnalyzingWorkspace(false);
         }
@@ -99,7 +91,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
     (name: string, version: string) => {
       return updateDependency([{ name, version }]);
     },
-    [updateDependency],
+    [updateDependency]
   );
 
   const handleSave = useCallback(async () => {
@@ -111,7 +103,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
       // Force a reload to ensure everything is in sync
       reload();
     } catch (err) {
-      console.error("Failed to save:", err);
+      console.error('Failed to save:', err);
     } finally {
       setIsSaving(false);
     }
@@ -119,7 +111,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
 
   const renderEditorTab = () => {
     // Custom TOML syntax highlighting with CSS
-    const [highlightedContent, setHighlightedContent] = useState("");
+    const [highlightedContent, setHighlightedContent] = useState('');
 
     useEffect(() => {
       // Basic TOML syntax highlighting using regex
@@ -139,7 +131,10 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
         html = html.replace(/\[\[([^\]]+)\]\]/g, '<span class="text-purple-400">[[$1]]</span>');
 
         // Highlight array items
-        html = html.replace(/\b\d+(\.\d+)?|[tf]rue|[mf]alse\b/g, '<span class="text-cyan-400">$&</span>');
+        html = html.replace(
+          /\b\d+(\.\d+)?|[tf]rue|[mf]alse\b/g,
+          '<span class="text-cyan-400">$&</span>'
+        );
 
         // Preserve line breaks
         html = html.replace(/\n/g, '<br>');
@@ -157,7 +152,9 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
             {/* Line numbers */}
             <div className="absolute left-0 top-0 w-10 bg-gray-800 border-r border-gray-600 py-2 px-2 font-mono text-sm text-gray-400 select-none">
               {initialToml.split('\n').map((_, i) => (
-                <div key={i} className="leading-5">{i + 1}</div>
+                <div key={i} className="leading-5">
+                  {i + 1}
+                </div>
               ))}
             </div>
 
@@ -170,7 +167,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
               spellCheck={false}
               style={{
                 tabSize: 2,
-                fontFamily: 'Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+                fontFamily: 'Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
               }}
             />
 
@@ -198,7 +195,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             disabled={!isDirty || isLoading || isSaving}
           >
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -228,9 +225,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
     <div className="space-y-6">
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
         <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
-            Feature Flags
-          </h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900">Feature Flags</h3>
           <button
             onClick={optimizeFeatures}
             className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -257,9 +252,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">
-                  Feature Flag Suggestions
-                </h3>
+                <h3 className="text-sm font-medium text-yellow-800">Feature Flag Suggestions</h3>
                 <div className="mt-2 text-sm text-yellow-700">
                   <ul className="list-disc pl-5 space-y-1">
                     {featureFlagSuggestions.map((suggestion, i) => (
@@ -293,19 +286,14 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
                       <p className="text-sm text-gray-500">Used by:</p>
                       <ul className="list-disc pl-5 mt-1">
                         {feature.usedBy.map((dep: string) => (
-                          <li
-                            key={`${feature.name}-${dep}`}
-                            className="text-sm"
-                          >
+                          <li key={`${feature.name}-${dep}`} className="text-sm">
                             {dep}
                           </li>
                         ))}
                       </ul>
                     </div>
                   ) : (
-                    <span className="text-gray-400">
-                      Not used by any dependencies
-                    </span>
+                    <span className="text-gray-400">Not used by any dependencies</span>
                   )}
                 </dd>
               </div>
@@ -320,9 +308,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
     <div className="space-y-6">
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
         <div className="px-4 py-5 sm:px-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
-            Security Vulnerabilities
-          </h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900">Security Vulnerabilities</h3>
           <p className="mt-1 max-w-2xl text-sm text-gray-500">
             Known security issues in your dependencies
           </p>
@@ -361,17 +347,16 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
                     <div className="flex items-center">
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          vuln.severity === "critical"
-                            ? "bg-red-100 text-red-800"
-                            : vuln.severity === "high"
-                              ? "bg-orange-100 text-orange-800"
-                              : vuln.severity === "medium"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-blue-100 text-blue-800"
+                          vuln.severity === 'critical'
+                            ? 'bg-red-100 text-red-800'
+                            : vuln.severity === 'high'
+                              ? 'bg-orange-100 text-orange-800'
+                              : vuln.severity === 'medium'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-blue-100 text-blue-800'
                         }`}
                       >
-                        {vuln.severity.charAt(0).toUpperCase() +
-                          vuln.severity.slice(1)}
+                        {vuln.severity.charAt(0).toUpperCase() + vuln.severity.slice(1)}
                       </span>
                       <p className="ml-2 text-sm font-medium text-gray-900">
                         {vuln.package}@{vuln.version}
@@ -387,20 +372,12 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
                     </a>
                   </div>
                   <div className="mt-2">
-                    <p className="text-sm text-gray-900 font-medium">
-                      {vuln.title}
-                    </p>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {vuln.description}
-                    </p>
+                    <p className="text-sm text-gray-900 font-medium">{vuln.title}</p>
+                    <p className="mt-1 text-sm text-gray-500">{vuln.description}</p>
                     {vuln.patched_versions && (
                       <div className="mt-2">
-                        <span className="text-sm font-medium text-gray-500">
-                          Fixed in:{" "}
-                        </span>
-                        <span className="text-sm text-green-600">
-                          {vuln.patched_versions}
-                        </span>
+                        <span className="text-sm font-medium text-gray-500">Fixed in: </span>
+                        <span className="text-sm text-green-600">{vuln.patched_versions}</span>
                       </div>
                     )}
                   </div>
@@ -418,9 +395,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
       {licenseSummary && (
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:px-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              License Compliance
-            </h3>
+            <h3 className="text-lg leading-6 font-medium text-gray-900">License Compliance</h3>
             <div className="mt-2 grid grid-cols-1 gap-5 sm:grid-cols-4">
               <div className="bg-white overflow-hidden shadow rounded-lg">
                 <div className="px-4 py-5 sm:p-6">
@@ -464,9 +439,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
               <div className="bg-white overflow-hidden shadow rounded-lg">
                 <div className="px-4 py-5 sm:p-6">
                   <dl>
-                    <dt className="text-sm font-medium text-red-600 truncate">
-                      Banned Licenses
-                    </dt>
+                    <dt className="text-sm font-medium text-red-600 truncate">Banned Licenses</dt>
                     <dd className="mt-1 text-3xl font-semibold text-red-600">
                       {licenseSummary.banned}
                     </dd>
@@ -498,15 +471,16 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
                     </h3>
                     <div className="mt-2 text-sm text-red-700">
                       <p>
-                        The following dependencies have incompatible licenses
-                        with your project:
+                        The following dependencies have incompatible licenses with your project:
                       </p>
                       <ul className="list-disc pl-5 mt-1">
-                        {licenseCompatibility.conflicts.map((conflict: { package: string; license: string }, i: number) => (
-                          <li key={`conflict-${i}`}>
-                            {conflict.package} ({conflict.license})
-                          </li>
-                        ))}
+                        {licenseCompatibility.conflicts.map(
+                          (conflict: { package: string; license: string }, i: number) => (
+                            <li key={`conflict-${i}`}>
+                              {conflict.package} ({conflict.license})
+                            </li>
+                          )
+                        )}
                       </ul>
                     </div>
                   </div>
@@ -555,7 +529,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
                       {license.version}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {license.license || "Unknown"}
+                      {license.license || 'Unknown'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {license.isBanned ? (
@@ -599,7 +573,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
     if (!projectPath) return null;
     return (
       <div className="h-[600px] bg-white shadow overflow-hidden sm:rounded-lg">
-        <EnhancedDependencyGraph 
+        <EnhancedDependencyGraph
           projectPath={projectPath}
           width="100%"
           height="100%"
@@ -611,7 +585,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
 
   const renderWorkspaceTab = () => {
     if (!projectPath) return null;
-    
+
     // Create mock manifest data
     const createMockManifest = (name: string) => ({
       package: {
@@ -621,9 +595,9 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
       },
       dependencies: {},
       'dev-dependencies': {},
-      'build-dependencies': {}
+      'build-dependencies': {},
     });
-    
+
     // Create mock workspace members
     const createMockMember = (name: string) => ({
       name,
@@ -631,27 +605,20 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
       manifest: createMockManifest(name),
       dependencies: [],
       inheritedDependencies: {},
-      directDependencies: {} as Record<string, string>
+      directDependencies: {} as Record<string, string>,
     });
-    
+
     // Create a mock analysis for demonstration
     const mockAnalysis: WorkspaceAnalysis = {
       root: createMockManifest('root-crate'),
-      members: [
-        createMockMember('crate1'),
-        createMockMember('crate2')
-      ],
+      members: [createMockMember('crate1'), createMockMember('crate2')],
       workspaceDependencies: {},
-      inheritanceGraph: {}
+      inheritanceGraph: {},
     };
 
     return (
       <div className="h-[600px] bg-white shadow overflow-hidden sm:rounded-lg p-4">
-        <WorkspaceInheritanceGraph 
-          analysis={mockAnalysis} 
-          width={800}
-          height={550}
-        />
+        <WorkspaceInheritanceGraph analysis={mockAnalysis} width={800} height={550} />
       </div>
     );
   };
@@ -664,7 +631,7 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
 
   const renderUpdatesTab = () => {
     if (!projectPath) return null;
-    
+
     // Create mock manifest data
     const createMockManifest = (name: string) => ({
       package: {
@@ -674,9 +641,9 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
       },
       dependencies: {},
       'dev-dependencies': {},
-      'build-dependencies': {}
+      'build-dependencies': {},
     });
-    
+
     // Create mock workspace members
     const createMockMember = (name: string) => ({
       name,
@@ -684,25 +651,22 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
       manifest: createMockManifest(name),
       dependencies: [],
       inheritedDependencies: {},
-      directDependencies: {} as Record<string, string>
+      directDependencies: {} as Record<string, string>,
     });
-    
+
     // Create a mock analysis for demonstration
     const mockAnalysis: WorkspaceAnalysis = {
       root: createMockManifest('root-crate'),
-      members: [
-        createMockMember('crate1'),
-        createMockMember('crate2')
-      ],
+      members: [createMockMember('crate1'), createMockMember('crate2')],
       workspaceDependencies: {},
-      inheritanceGraph: {}
+      inheritanceGraph: {},
     };
 
     return (
       <div className="h-[600px] bg-white shadow overflow-hidden sm:rounded-lg p-4">
         <DependencyUpdater
           analysis={mockAnalysis}
-          projectPath={projectPath || "."}
+          projectPath={projectPath || '.'}
           onUpdateDependency={handleUpdateDependency}
         />
       </div>
@@ -745,93 +709,86 @@ const CargoTomlEditor: React.FC<CargoTomlEditorProps> = ({
     }
   };
 
-interface DependencyItemProps {
-  name: string;
-  dep: any;
-  onUpdate: (name: string, version: string) => void;
-  onRemove: (name: string) => void;
-}
+  interface DependencyItemProps {
+    name: string;
+    dep: any;
+    onUpdate: (name: string, version: string) => void;
+    onRemove: (name: string) => void;
+  }
 
-function DependencyItem({
-  name,
-  dep,
-  onUpdate,
-  onRemove,
-}: DependencyItemProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [version, setVersion] = useState(
-    typeof dep === "string" ? dep : dep.version || "",
-  );
+  function DependencyItem({ name, dep, onUpdate, onRemove }: DependencyItemProps) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [version, setVersion] = useState(typeof dep === 'string' ? dep : dep.version || '');
 
-  const handleSave = () => {
-    onUpdate(name, version);
-    setIsEditing(false);
-  };
+    const handleSave = () => {
+      onUpdate(name, version);
+      setIsEditing(false);
+    };
 
-  return (
-    <li className="px-4 py-4 sm:px-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <p className="text-sm font-medium text-blue-600 truncate">{name}</p>
-          {isEditing ? (
-            <div className="ml-4 flex items-center">
-              <input
-                type="text"
-                className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-32 sm:text-sm border-gray-300 rounded-md"
-                value={version}
-                onChange={(e) => setVersion((e.target as any).value)}
-              />
-              <button
-                onClick={handleSave}
-                className="ml-2 inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => setIsEditing(false)}
-                className="ml-1 inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <span className="ml-2 text-sm text-gray-500">{version}</span>
-          )}
-        </div>
-        <div className="ml-2 flex-shrink-0 flex">
-          <button
-            onClick={() => setIsEditing(true)}
-            className="mr-2 inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => onRemove(name)}
-            className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          >
-            Remove
-          </button>
-        </div>
-      </div>
-
-      {typeof dep === "object" && dep.features && (
-        <div className="mt-2">
-          <span className="text-xs text-gray-500">Features: </span>
-          <div className="mt-1 flex flex-wrap gap-1">
-            {dep.features.map((feature: string) => (
-              <span
-                key={`${name}-${feature}`}
-                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
-              >
-                {feature}
-              </span>
-            ))}
+    return (
+      <li className="px-4 py-4 sm:px-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <p className="text-sm font-medium text-blue-600 truncate">{name}</p>
+            {isEditing ? (
+              <div className="ml-4 flex items-center">
+                <input
+                  type="text"
+                  className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-32 sm:text-sm border-gray-300 rounded-md"
+                  value={version}
+                  onChange={(e) => setVersion((e.target as any).value)}
+                />
+                <button
+                  onClick={handleSave}
+                  className="ml-2 inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="ml-1 inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <span className="ml-2 text-sm text-gray-500">{version}</span>
+            )}
+          </div>
+          <div className="ml-2 flex-shrink-0 flex">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="mr-2 inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => onRemove(name)}
+              className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              Remove
+            </button>
           </div>
         </div>
-      )}
-    </li>
-  );
-}
+
+        {typeof dep === 'object' && dep.features && (
+          <div className="mt-2">
+            <span className="text-xs text-gray-500">Features: </span>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {dep.features.map((feature: string) => (
+                <span
+                  key={`${name}-${feature}`}
+                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {feature}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </li>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -902,10 +859,8 @@ function DependencyItem({
           </button>
         </nav>
       </div>
-      
-      <div className="flex-1 overflow-auto p-4">
-        {renderTabContent()}
-      </div>
+
+      <div className="flex-1 overflow-auto p-4">{renderTabContent()}</div>
     </div>
   );
-}
+};

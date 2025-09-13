@@ -1,18 +1,18 @@
 import React, { useMemo } from 'react';
 import { VersionAlignment } from '../../types';
-import { 
-  Box, 
-  Checkbox, 
-  CircularProgress, 
-  Divider, 
-  FormControlLabel, 
-  List, 
-  Paper, 
+import {
+  Box,
+  Checkbox,
+  CircularProgress,
+  Divider,
+  FormControlLabel,
+  List,
+  Paper,
   Typography,
   Skeleton,
   Stack,
   useTheme,
-  alpha
+  alpha,
 } from '@mui/material';
 import VersionAlignmentItem from './VersionAlignmentItem';
 import { Check as CheckIcon } from '@mui/icons-material';
@@ -25,7 +25,10 @@ interface VersionAlignmentListProps {
   onSelectOne: (id: string) => void;
   onApplyAlignment: (alignment: VersionAlignment) => void | Promise<void>;
   onIgnoreAlignment: (alignment: VersionAlignment) => void;
-  onResolveConflict?: (alignment: VersionAlignment, selectedVersion: string) => Promise<void> | void;
+  onResolveConflict?: (
+    alignment: VersionAlignment,
+    selectedVersion: string
+  ) => Promise<void> | void;
   isApplying?: boolean;
   isBulkApplying?: boolean;
 }
@@ -43,35 +46,38 @@ const VersionAlignmentList: React.FC<VersionAlignmentListProps> = ({
   isBulkApplying = false,
 }) => {
   const theme = useTheme();
-  
-  const loadingSkeletons = useMemo(() => (
-    <Paper elevation={2}>
-      <Box p={2}>
-        <Stack spacing={2}>
-          {[1, 2, 3].map((i) => (
-            <Paper 
-              key={i} 
-              variant="outlined" 
-              sx={{ 
-                p: 2, 
-                backgroundColor: alpha(theme.palette.primary.main, 0.02),
-                borderRadius: 1,
-              }}
-            >
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Skeleton variant="circular" width={24} height={24} />
-                <Skeleton width="30%" height={32} />
-                <Skeleton width="15%" height={32} />
-              </Stack>
-              <Box mt={1}>
-                <Skeleton width="40%" height={24} />
-              </Box>
-            </Paper>
-          ))}
-        </Stack>
-      </Box>
-    </Paper>
-  ), [theme]);
+
+  const loadingSkeletons = useMemo(
+    () => (
+      <Paper elevation={2}>
+        <Box p={2}>
+          <Stack spacing={2}>
+            {[1, 2, 3].map((i) => (
+              <Paper
+                key={i}
+                variant="outlined"
+                sx={{
+                  p: 2,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.02),
+                  borderRadius: 1,
+                }}
+              >
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Skeleton variant="circular" width={24} height={24} />
+                  <Skeleton width="30%" height={32} />
+                  <Skeleton width="15%" height={32} />
+                </Stack>
+                <Box mt={1}>
+                  <Skeleton width="40%" height={24} />
+                </Box>
+              </Paper>
+            ))}
+          </Stack>
+        </Box>
+      </Paper>
+    ),
+    [theme]
+  );
 
   if (loading && alignments.length === 0) {
     return loadingSkeletons;
@@ -85,21 +91,19 @@ const VersionAlignmentList: React.FC<VersionAlignmentListProps> = ({
           <Typography variant="h6" gutterBottom>
             All dependencies are aligned
           </Typography>
-          <Typography variant="body2">
-            No version mismatches found in your workspace.
-          </Typography>
+          <Typography variant="body2">No version mismatches found in your workspace.</Typography>
         </Box>
       </Paper>
     );
   }
 
-  const allSelected = useMemo(() => 
-    alignments.length > 0 && alignments.every(a => selectedIds.includes(a.id)),
+  const allSelected = useMemo(
+    () => alignments.length > 0 && alignments.every((a) => selectedIds.includes(a.id)),
     [alignments, selectedIds]
   );
-  
-  const indeterminate = useMemo(() => 
-    !allSelected && alignments.some(a => selectedIds.includes(a.id)),
+
+  const indeterminate = useMemo(
+    () => !allSelected && alignments.some((a) => selectedIds.includes(a.id)),
     [allSelected, alignments, selectedIds]
   );
 
@@ -111,10 +115,10 @@ const VersionAlignmentList: React.FC<VersionAlignmentListProps> = ({
     return (
       <Paper elevation={2}>
         <Box p={2}>
-          <Box 
-            display="flex" 
-            alignItems="center" 
-            mb={2} 
+          <Box
+            display="flex"
+            alignItems="center"
+            mb={2}
             gap={2}
             sx={{
               position: 'sticky',
@@ -158,12 +162,12 @@ const VersionAlignmentList: React.FC<VersionAlignmentListProps> = ({
               }
               sx={{ m: 0 }}
             />
-            
+
             {isBulkApplying && (
-              <Box 
-                display="flex" 
-                alignItems="center" 
-                gap={1} 
+              <Box
+                display="flex"
+                alignItems="center"
+                gap={1}
                 ml="auto"
                 sx={{
                   px: 1.5,
@@ -179,7 +183,7 @@ const VersionAlignmentList: React.FC<VersionAlignmentListProps> = ({
               </Box>
             )}
           </Box>
-          
+
           <List disablePadding>
             {alignments.map((alignment, index) => (
               <React.Fragment key={`${alignment.id}-${index}`}>
@@ -196,13 +200,13 @@ const VersionAlignmentList: React.FC<VersionAlignmentListProps> = ({
               </React.Fragment>
             ))}
           </List>
-          
+
           {alignments.length === 0 && (
-            <Box 
-              display="flex" 
-              flexDirection="column" 
-              alignItems="center" 
-              justifyContent="center" 
+            <Box
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
               py={4}
               color="text.secondary"
             >
@@ -220,11 +224,7 @@ const VersionAlignmentList: React.FC<VersionAlignmentListProps> = ({
     );
   };
 
-  return (
-    <Box sx={{ position: 'relative' }}>
-      {renderContent()}
-    </Box>
-  );
+  return <Box sx={{ position: 'relative' }}>{renderContent()}</Box>;
 };
 
 export default VersionAlignmentList;

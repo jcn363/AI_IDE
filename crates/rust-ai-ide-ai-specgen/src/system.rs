@@ -1,6 +1,12 @@
 //! System orchestration module - stub implementation
 
-use crate::{types::{SpecificationGenerator, SpecificationRequest, ParsedSpecification, GeneratedCode, ValidationResult, ArchitecturalPattern, RefinedCode, ImprovementMetrics}, error::Result};
+use crate::{
+    error::Result,
+    types::{
+        ArchitecturalPattern, GeneratedCode, ImprovementMetrics, ParsedSpecification, RefinedCode,
+        SpecificationGenerator, SpecificationRequest, ValidationResult,
+    },
+};
 
 /// Main system orchestrator - placeholder implementation
 pub struct IntelligentSpecGenerator;
@@ -14,27 +20,40 @@ impl IntelligentSpecGenerator {
         Ok(Self {})
     }
 
-    pub async fn generate_from_spec(&self, _request: &SpecificationRequest) -> Result<GeneratedCode> {
-        Err(crate::error::SpecGenError::GenerateError { message: "Not implemented".to_string() })
+    pub async fn generate_from_spec(
+        &self,
+        _request: &SpecificationRequest,
+    ) -> Result<GeneratedCode> {
+        Err(crate::error::SpecGenError::GenerateError {
+            message: "Not implemented".to_string(),
+        })
     }
 
     pub async fn parse_specification(&self, _text: &str) -> Result<ParsedSpecification> {
-        Err(crate::error::SpecGenError::ParseError { message: "Not implemented".to_string() })
+        Err(crate::error::SpecGenError::ParseError {
+            message: "Not implemented".to_string(),
+        })
     }
 }
 
 #[async_trait::async_trait]
 impl SpecificationGenerator for IntelligentSpecGenerator {
     async fn generate_from_spec(&self, _request: &SpecificationRequest) -> Result<GeneratedCode> {
-        Err(crate::error::SpecGenError::GenerateError { message: "Not implemented".to_string() })
+        Err(crate::error::SpecGenError::GenerateError {
+            message: "Not implemented".to_string(),
+        })
     }
 
     async fn parse_specification(&self, _text: &str) -> Result<ParsedSpecification> {
-        Err(crate::error::SpecGenError::ParseError { message: "Not implemented".to_string() })
+        Err(crate::error::SpecGenError::ParseError {
+            message: "Not implemented".to_string(),
+        })
     }
 
     async fn generate_pattern(&self, _pattern: &ArchitecturalPattern) -> Result<GeneratedCode> {
-        Err(crate::error::SpecGenError::GenerateError { message: "Not implemented".to_string() })
+        Err(crate::error::SpecGenError::GenerateError {
+            message: "Not implemented".to_string(),
+        })
     }
 
     async fn validate_generation(
@@ -57,9 +76,9 @@ impl SpecificationGenerator for IntelligentSpecGenerator {
         _spec: &ParsedSpecification,
         _feedback: &str,
     ) -> Result<RefinedCode> {
-        use crate::types::RefinedCode;
-        use crate::types::CodeChange;
         use crate::types::ChangeType;
+        use crate::types::CodeChange;
+        use crate::types::RefinedCode;
 
         Ok(RefinedCode {
             code: _code.to_string(),

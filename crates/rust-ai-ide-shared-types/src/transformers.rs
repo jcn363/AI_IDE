@@ -4,8 +4,8 @@
 //! Rust types to various target platforms. These transformations can be
 //! extended and customized through the plugin system.
 
-use crate::types::{ParsedType, TransformationContext};
 use crate::errors::TypeGenerationError;
+use crate::types::{ParsedType, TransformationContext};
 use std::collections::HashMap;
 
 /// Main type transformer with built-in transformation logic
@@ -76,7 +76,10 @@ impl TypeTransformer {
 
     /// Add a custom transformation rule
     pub fn add_custom_rule(&mut self, rule: TransformationRule) {
-        let key = format!("{}:{}:{}", rule.source_platform, rule.target_platform, rule.type_pattern);
+        let key = format!(
+            "{}:{}:{}",
+            rule.source_platform, rule.target_platform, rule.type_pattern
+        );
         self.custom_rules.insert(key, rule);
     }
 
@@ -101,7 +104,10 @@ impl TypeTransformer {
             transformed_type: rust_type.to_string(),
             metadata: HashMap::new(),
             success: false,
-            warnings: vec![format!("No transformation rule found for type '{}'", rust_type)],
+            warnings: vec![format!(
+                "No transformation rule found for type '{}'",
+                rust_type
+            )],
         })
     }
 
@@ -174,8 +180,9 @@ impl TypeTransformer {
         context: &TransformationContext,
     ) -> Result<bool, TypeGenerationError> {
         // Check platform match
-        if rule.source_platform != context.source_platform ||
-           rule.target_platform != context.target_platform {
+        if rule.source_platform != context.source_platform
+            || rule.target_platform != context.target_platform
+        {
             return Ok(false);
         }
 
@@ -289,13 +296,16 @@ impl TypeTransformer {
             let key = pattern.to_string();
             let parts: Vec<&str> = pattern.split(':').collect();
             if parts.len() == 3 {
-                rules.insert(key, TransformationRule {
-                    source_platform: parts[0].to_string(),
-                    target_platform: parts[1].to_string(),
-                    type_pattern: parts[2].to_string(),
-                    transformation: transformation.to_string(),
-                    priority: 0,
-                });
+                rules.insert(
+                    key,
+                    TransformationRule {
+                        source_platform: parts[0].to_string(),
+                        target_platform: parts[1].to_string(),
+                        type_pattern: parts[2].to_string(),
+                        transformation: transformation.to_string(),
+                        priority: 0,
+                    },
+                );
             }
         }
     }
@@ -357,7 +367,9 @@ mod tests {
         let transformer = TypeTransformer::new();
         let context = TransformationContext::default();
 
-        let result = transformer.transform_type("Option<String>", &context).unwrap();
+        let result = transformer
+            .transform_type("Option<String>", &context)
+            .unwrap();
         assert_eq!(result.transformed_type, "string | undefined");
         assert!(result.success);
     }
@@ -377,7 +389,9 @@ mod tests {
         let transformer = TypeTransformer::new();
         let context = TransformationContext::default();
 
-        let result = transformer.transform_type("SomeUnknownType", &context).unwrap();
+        let result = transformer
+            .transform_type("SomeUnknownType", &context)
+            .unwrap();
         assert_eq!(result.transformed_type, "SomeUnknownType");
         assert!(!result.success);
         assert!(!result.warnings.is_empty());
@@ -423,7 +437,9 @@ mod tests {
             metadata: crate::types::TypeMetadata::default(),
         };
 
-        let transformed = transformer.transform_parsed_type(&parsed_type, "typescript").unwrap();
+        let transformed = transformer
+            .transform_parsed_type(&parsed_type, "typescript")
+            .unwrap();
         assert_eq!(transformed.fields.len(), 2);
         assert_eq!(transformed.fields[0].transformed_type, "string");
         assert_eq!(transformed.fields[1].transformed_type, "number");

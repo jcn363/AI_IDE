@@ -56,7 +56,7 @@ export class VariableAnalyzer {
         continue;
       }
 
-      if (mutationPatterns.some(pattern => pattern.test(trimmed))) {
+      if (mutationPatterns.some((pattern) => pattern.test(trimmed))) {
         return true;
       }
 
@@ -84,20 +84,22 @@ export class VariableAnalyzer {
       new RegExp(`let\\s+mut\\s+\\b${escapedName}\\b`),
     ];
 
-    return contextPatterns.some(pattern => pattern.test(line));
+    return contextPatterns.some((pattern) => pattern.test(line));
   }
 
   /**
    * Extract variable declarations from a single line using Rust-aware patterns
    */
-  extractVariableDeclarationFromLine(line: string): { variableName: string; initializer: string } | null {
+  extractVariableDeclarationFromLine(
+    line: string
+  ): { variableName: string; initializer: string } | null {
     // Basic pattern for variable declarations with optional mut and optional type annotation
     const basicPattern = /^let\s+(mut\s+)?(\w+)(\s*:\s*[^=]+)?\s*=\s*(.+);?$/;
     let match = basicPattern.exec(line.trim());
     if (match && match[2] && match[4]) {
       return {
         variableName: match[2],
-        initializer: match[4].trim()
+        initializer: match[4].trim(),
       };
     }
 
@@ -111,7 +113,7 @@ export class VariableAnalyzer {
       if (identifierMatch) {
         return {
           variableName: identifierMatch[1],
-          initializer: match[3].trim()
+          initializer: match[3].trim(),
         };
       }
     }

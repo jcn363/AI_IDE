@@ -3,13 +3,15 @@
 //! This module handles the global application state including
 //! AI services, analysis progress, and other shared data.
 
+use crate::file_watcher::FileWatcher;
+use crate::infra::{ConnectionPool, EventBus, RateLimiter};
+use rust_ai_ide_debugger::{
+    BreakpointInfo, Debugger, DebuggerConfig, DebuggerState, StackFrame, VariableInfo,
+};
+use rust_ai_ide_lsp::pool::LanguageServerPool as LspPool;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use rust_ai_ide_debugger::{Debugger, DebuggerConfig, DebuggerState, BreakpointInfo, StackFrame, VariableInfo};
-use crate::file_watcher::FileWatcher;
-use crate::infra::{EventBus, RateLimiter, ConnectionPool};
-use rust_ai_ide_lsp::pool::LanguageServerPool as LspPool;
 
 /// Workspace information
 #[derive(Clone, Debug)]
@@ -47,8 +49,10 @@ pub struct AppState {
 
     // Performance monitoring components
     performance_monitor: Arc<Mutex<Option<rust_ai_ide_performance_monitoring::PerformanceMonitor>>>,
-    memory_optimizer: Arc<Mutex<Option<rust_ai_ide_performance_monitoring::memory::MemoryOptimizer>>>,
-    battery_monitor: Arc<Mutex<Option<rust_ai_ide_performance_monitoring::battery::BatteryMonitor>>>,
+    memory_optimizer:
+        Arc<Mutex<Option<rust_ai_ide_performance_monitoring::memory::MemoryOptimizer>>>,
+    battery_monitor:
+        Arc<Mutex<Option<rust_ai_ide_performance_monitoring::battery::BatteryMonitor>>>,
 }
 
 impl AppState {
@@ -80,7 +84,10 @@ impl AppState {
     }
 
     pub async fn set_analysis_progress(&self, task_id: String, progress: f64) {
-        self.analysis_progress.lock().await.insert(task_id, progress);
+        self.analysis_progress
+            .lock()
+            .await
+            .insert(task_id, progress);
     }
 
     pub async fn get_analysis_progress(&self, task_id: &str) -> Option<f64> {
@@ -142,27 +149,42 @@ impl AppState {
     }
 
     // Performance monitoring accessors
-    pub async fn set_performance_monitor(&self, monitor: rust_ai_ide_performance_monitoring::PerformanceMonitor) {
+    pub async fn set_performance_monitor(
+        &self,
+        monitor: rust_ai_ide_performance_monitoring::PerformanceMonitor,
+    ) {
         *self.performance_monitor.lock().await = Some(monitor);
     }
 
-    pub async fn get_performance_monitor(&self) -> Option<rust_ai_ide_performance_monitoring::PerformanceMonitor> {
+    pub async fn get_performance_monitor(
+        &self,
+    ) -> Option<rust_ai_ide_performance_monitoring::PerformanceMonitor> {
         self.performance_monitor.lock().await.clone()
     }
 
-    pub async fn set_memory_optimizer(&self, optimizer: rust_ai_ide_performance_monitoring::memory::MemoryOptimizer) {
+    pub async fn set_memory_optimizer(
+        &self,
+        optimizer: rust_ai_ide_performance_monitoring::memory::MemoryOptimizer,
+    ) {
         *self.memory_optimizer.lock().await = Some(optimizer);
     }
 
-    pub async fn get_memory_optimizer(&self) -> Option<rust_ai_ide_performance_monitoring::memory::MemoryOptimizer> {
+    pub async fn get_memory_optimizer(
+        &self,
+    ) -> Option<rust_ai_ide_performance_monitoring::memory::MemoryOptimizer> {
         self.memory_optimizer.lock().await.clone()
     }
 
-    pub async fn set_battery_monitor(&self, monitor: rust_ai_ide_performance_monitoring::battery::BatteryMonitor) {
+    pub async fn set_battery_monitor(
+        &self,
+        monitor: rust_ai_ide_performance_monitoring::battery::BatteryMonitor,
+    ) {
         *self.battery_monitor.lock().await = Some(monitor);
     }
 
-    pub async fn get_battery_monitor(&self) -> Option<rust_ai_ide_performance_monitoring::battery::BatteryMonitor> {
+    pub async fn get_battery_monitor(
+        &self,
+    ) -> Option<rust_ai_ide_performance_monitoring::battery::BatteryMonitor> {
         self.battery_monitor.lock().await.clone()
     }
 }

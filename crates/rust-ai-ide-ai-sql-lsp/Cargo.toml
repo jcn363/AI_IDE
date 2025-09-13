@@ -36,7 +36,7 @@ rust-ai-ide-ai-analysis = { path = "../rust-ai-ide-ai-analysis" }
 rust-ai-ide-ai-inference = { path = "../rust-ai-ide-ai-inference" }
 
 # Database/cache
-rusqlite = { version = "0.30", features = ["bundled"] }
+rusqlite = { workspace = true }
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite"] }
 
 # Performance optimizations

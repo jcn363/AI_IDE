@@ -19,20 +19,20 @@ async fn test_spec_parser() {
     let parser = SpecificationParser::new();
     let spec_text = r#"
     // A simple counter component
-    
+
     struct Counter {
         value: i32,
     }
-    
+
     impl Counter {
         fn new() -> Self {
             Counter { value: 0 }
         }
-        
+
         fn increment(&mut self) {
             self.value += 1;
         }
-        
+
         fn value(&self) -> i32 {
             self.value
         }

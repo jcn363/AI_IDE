@@ -6,7 +6,7 @@ import DependencyGraphVisualization from '../features/cargoToml/DependencyGraphV
 const DependencyGraphPage: React.FC = () => {
   const theme = useTheme();
   const { currentProject, projects, loading, error } = useCurrentProject();
-  
+
   // Show loading state
   if (loading) {
     return (
@@ -15,7 +15,7 @@ const DependencyGraphPage: React.FC = () => {
       </Box>
     );
   }
-  
+
   // Show error if any
   if (error) {
     return (
@@ -31,7 +31,7 @@ const DependencyGraphPage: React.FC = () => {
       </Box>
     );
   }
-  
+
   // If no project is selected, show a message
   if (!currentProject) {
     return (
@@ -61,17 +61,21 @@ const DependencyGraphPage: React.FC = () => {
         <Typography variant="h5" component="h1">
           Dependency Graph: {currentProject.name}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ 
-          fontFamily: 'monospace',
-          wordBreak: 'break-all',
-          mt: 1,
-        }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            fontFamily: 'monospace',
+            wordBreak: 'break-all',
+            mt: 1,
+          }}
+        >
           {currentProject.path}
         </Typography>
       </Box>
-      
+
       <Box sx={{ flex: 1, overflow: 'hidden' }}>
-        <DependencyGraphVisualization 
+        <DependencyGraphVisualization
           projectPath={currentProject.path}
           width="100%"
           height="100%"

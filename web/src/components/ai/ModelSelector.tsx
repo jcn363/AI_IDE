@@ -102,7 +102,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
       // Actually load models from backend
       const availableModels: ModelInfo[] = await invoke('get_available_models');
-      const formattedModels = availableModels.map(model => ({
+      const formattedModels = availableModels.map((model) => ({
         id: model.id,
         name: `${MODEL_TYPE_LABELS[model.modelType]} ${model.modelSize}`,
         type: model.modelType,
@@ -122,7 +122,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     }
   };
 
-  const filteredModels = models.filter(model => {
+  const filteredModels = models.filter((model) => {
     if (filterBySupportedFineTuning && !model.supportsFineTuning) return false;
     if (filter.type && model.type !== filter.type) return false;
     if (filter.size && model.size !== filter.size) return false;
@@ -173,14 +173,18 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           <label>Type:</label>
           <select
             value={filter.type || ''}
-            onChange={(e) => setFilter(prev => ({
-              ...prev,
-              type: e.target.value as ModelType || undefined
-            }))}
+            onChange={(e) =>
+              setFilter((prev) => ({
+                ...prev,
+                type: (e.target.value as ModelType) || undefined,
+              }))
+            }
           >
             <option value="">All Types</option>
             {Object.entries(MODEL_TYPE_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
+              <option key={key} value={key}>
+                {label}
+              </option>
             ))}
           </select>
         </div>
@@ -189,14 +193,18 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           <label>Size:</label>
           <select
             value={filter.size || ''}
-            onChange={(e) => setFilter(prev => ({
-              ...prev,
-              size: e.target.value as ModelSize || undefined
-            }))}
+            onChange={(e) =>
+              setFilter((prev) => ({
+                ...prev,
+                size: (e.target.value as ModelSize) || undefined,
+              }))
+            }
           >
             <option value="">All Sizes</option>
             {Object.entries(MODEL_SIZE_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
+              <option key={key} value={key}>
+                {label}
+              </option>
             ))}
           </select>
         </div>
@@ -205,10 +213,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           <label>Status:</label>
           <select
             value={filter.loaded !== undefined ? filter.loaded.toString() : ''}
-            onChange={(e) => setFilter(prev => ({
-              ...prev,
-              loaded: e.target.value ? e.target.value === 'true' : undefined
-            }))}
+            onChange={(e) =>
+              setFilter((prev) => ({
+                ...prev,
+                loaded: e.target.value ? e.target.value === 'true' : undefined,
+              }))
+            }
           >
             <option value="">All</option>
             <option value="true">Loaded</option>
@@ -225,9 +235,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             onClick={() => handleModelClick(model)}
           >
             <div className="model-header">
-              <div className="model-type-badge" style={{
-                backgroundColor: MODEL_TYPE_COLORS[model.type]
-              }}>
+              <div
+                className="model-type-badge"
+                style={{
+                  backgroundColor: MODEL_TYPE_COLORS[model.type],
+                }}
+              >
                 {MODEL_TYPE_LABELS[model.type]}
               </div>
               <div className={`model-status ${model.isLoaded ? 'loaded' : 'not-loaded'}`}>
@@ -238,15 +251,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             <div className="model-content">
               <h4>{model.name}</h4>
               <div className="model-details">
-                <span className="detail-item">
-                  Size: {MODEL_SIZE_LABELS[model.size]}
-                </span>
-                <span className="detail-item">
-                  Memory: {formatMemoryUsage(model.memoryUsage)}
-                </span>
-                <span className="detail-item">
-                  Last Used: {formatLastUsed(model.lastUsed)}
-                </span>
+                <span className="detail-item">Size: {MODEL_SIZE_LABELS[model.size]}</span>
+                <span className="detail-item">Memory: {formatMemoryUsage(model.memoryUsage)}</span>
+                <span className="detail-item">Last Used: {formatLastUsed(model.lastUsed)}</span>
               </div>
 
               {model.isLoaded && (
@@ -255,22 +262,25 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                     <div
                       className="memory-fill"
                       style={{
-                        width: model.memoryUsage ? `${Math.min((model.memoryUsage / 32) * 100, 100)}%` : '20%'
+                        width: model.memoryUsage
+                          ? `${Math.min((model.memoryUsage / 32) * 100, 100)}%`
+                          : '20%',
                       }}
                     />
                   </div>
-                  <span className="memory-text">
-                    Used: {formatMemoryUsage(model.memoryUsage)}
-                  </span>
+                  <span className="memory-text">Used: {formatMemoryUsage(model.memoryUsage)}</span>
                 </div>
               )}
 
               {!model.isLoaded && (
-                <button className="load-button" onClick={(e) => {
-                  e.stopPropagation();
-                  // Handle model loading
-                  console.log(`Loading model: ${model.id}`);
-                }}>
+                <button
+                  className="load-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Handle model loading
+                    console.log(`Loading model: ${model.id}`);
+                  }}
+                >
                   Load Model
                 </button>
               )}

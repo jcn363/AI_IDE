@@ -92,7 +92,7 @@ export class ModelService {
   async listAvailableModels(): Promise<ModelInfo[]> {
     try {
       const models = await invoke<ModelInfo[]>('list_available_models');
-      return models.map(model => ({
+      return models.map((model) => ({
         ...model,
         status: this.mapStatus(model.status),
       }));
@@ -108,7 +108,7 @@ export class ModelService {
   async listDownloadedModels(): Promise<ModelInfo[]> {
     try {
       const models = await invoke<ModelInfo[]>('list_downloaded_models');
-      return models.map(model => ({
+      return models.map((model) => ({
         ...model,
         status: this.mapStatus(model.status),
       }));
@@ -125,19 +125,19 @@ export class ModelService {
     try {
       const models = await invoke<ModelInfo[]>('get_loaded_models');
       // Normalize models and update cache
-      const normalizedModels = models.map(model => ({
+      const normalizedModels = models.map((model) => ({
         ...model,
         status: this.mapStatus(model.status),
       }));
 
       // Update local cache with normalized models
       this.loadedModels.clear();
-      normalizedModels.forEach(model => {
+      normalizedModels.forEach((model) => {
         this.loadedModels.set(model.id, model);
       });
 
       // Initialize activity tracking for models that don't have it
-      normalizedModels.forEach(model => {
+      normalizedModels.forEach((model) => {
         if (!this.modelActivity.has(model.id)) {
           this.recordModelActivity(model.id, model);
         }
@@ -229,7 +229,9 @@ export class ModelService {
       this.performAutomaticCleanup();
     }, intervalMs);
 
-    console.log(`Automatic model unloading monitoring started (${validatedIntervalMinutes} minute intervals)`);
+    console.log(
+      `Automatic model unloading monitoring started (${validatedIntervalMinutes} minute intervals)`
+    );
   }
 
   /**
@@ -267,10 +269,12 @@ export class ModelService {
       await this.handleInactivityCleanup();
 
       // Check LRU policy
-      if (this.autoUnloadConfig.enableLRU && loadedModelIds.length > this.autoUnloadConfig.maxSimultaneousModels) {
+      if (
+        this.autoUnloadConfig.enableLRU &&
+        loadedModelIds.length > this.autoUnloadConfig.maxSimultaneousModels
+      ) {
         await this.handleLRUCleanup();
       }
-
     } catch (error) {
       console.error('Error during automatic cleanup:', error);
     } finally {
@@ -302,7 +306,7 @@ export class ModelService {
 
     // Sort models by last used time (LRU)
     const sortedModels = loadedModelIds
-      .map(id => ({
+      .map((id) => ({
         id,
         activity: this.modelActivity.get(id),
       }))
@@ -310,7 +314,7 @@ export class ModelService {
 
     // Unload oldest models until memory pressure is relieved
     for (const model of sortedModels) {
-      if (!await this.shouldUnloadModel(model.id)) {
+      if (!(await this.shouldUnloadModel(model.id))) {
         continue;
       }
 
@@ -336,7 +340,9 @@ export class ModelService {
     for (const [modelId, activity] of Array.from(this.modelActivity.entries())) {
       if (now - activity.lastUsedAt > timeoutMs) {
         if (await this.shouldUnloadModel(modelId)) {
-          console.log(`Auto-unloading inactive model: ${modelId} (${this.autoUnloadConfig.inactivityTimeoutMinutes} min timeout)`);
+          console.log(
+            `Auto-unloading inactive model: ${modelId} (${this.autoUnloadConfig.inactivityTimeoutMinutes} min timeout)`
+          );
           await this.unloadModel(modelId);
         }
       }
@@ -427,7 +433,7 @@ export class ModelService {
     modelType: 'CodeLlama' | 'StarCoder',
     modelSize: 'Small' | 'Medium' | 'Large',
     destinationPath?: string,
-    forceDownload = false,
+    forceDownload = false
   ): Promise<string> {
     try {
       const request = {
@@ -509,7 +515,7 @@ export class ModelService {
   async listFineTuneJobs(): Promise<FineTuneJobInfo[]> {
     try {
       const jobs = await invoke<FineTuneJobInfo[]>('list_finetune_jobs');
-      return jobs.map(job => ({
+      return jobs.map((job) => ({
         ...job,
         status: this.mapTrainingStatus(job.status),
       }));
@@ -526,7 +532,7 @@ export class ModelService {
     sourcePaths: string[],
     outputPath: string,
     taskType: 'CodeCompletion' | 'ErrorCorrection' | 'Documentation',
-    filters?: Partial<DatasetFilters>,
+    filters?: Partial<DatasetFilters>
   ): Promise<string> {
     try {
       const defaultFilters: DatasetFilters = {
@@ -588,7 +594,7 @@ export class ModelService {
    * Get all loaded models
    */
   getAllLoadedModels(): ModelInfo[] {
-    return Array.from(this.loadedModels.values()).filter(model => (model as any).is_loaded);
+    return Array.from(this.loadedModels.values()).filter((model) => (model as any).is_loaded);
   }
 
   /**
@@ -596,7 +602,7 @@ export class ModelService {
    */
   getTotalMemoryUsage(): number {
     return Array.from(this.loadedModels.values())
-      .filter(model => (model as any).is_loaded)
+      .filter((model) => (model as any).is_loaded)
       .reduce((total, model) => total + ((model as any).memory_usage_mb || 0), 0);
   }
 
@@ -611,7 +617,9 @@ export class ModelService {
     outputPath?: string
   ): Promise<ModelInfo> {
     try {
-      console.log(`Starting quantization of model ${modelId} to ${quantizationConfig.targetPrecision}`);
+      console.log(
+        `Starting quantization of model ${modelId} to ${quantizationConfig.targetPrecision}`
+      );
 
       const request = {
         modelId,
@@ -624,7 +632,10 @@ export class ModelService {
       // Update memory usage estimates
       const originalModel = this.loadedModels.get(modelId);
       if (originalModel) {
-        const memoryReduction = this.calculateQuantizationMemoryReduction(originalModel, quantizationConfig);
+        const memoryReduction = this.calculateQuantizationMemoryReduction(
+          originalModel,
+          quantizationConfig
+        );
         console.log(`Estimated memory reduction: ${memoryReduction}%`);
       }
 
@@ -699,7 +710,9 @@ export class ModelService {
     }
 
     const reducedMemoryMb = originalMemoryMb * reductionFactor;
-    const reductionPercentage = Math.round(((originalMemoryMb - reducedMemoryMb) / originalMemoryMb) * 100);
+    const reductionPercentage = Math.round(
+      ((originalMemoryMb - reducedMemoryMb) / originalMemoryMb) * 100
+    );
 
     return reductionPercentage;
   }
@@ -730,7 +743,15 @@ export class ModelService {
     tags?: string[],
     notes?: string
   ): void {
-    this.experimentTracker.addModelVersion(experimentId, modelId, baseModel, hyperparameters, metrics, tags, notes);
+    this.experimentTracker.addModelVersion(
+      experimentId,
+      modelId,
+      baseModel,
+      hyperparameters,
+      metrics,
+      tags,
+      notes
+    );
   }
 
   /**
@@ -807,11 +828,7 @@ export class ModelService {
   /**
    * Receive client update for federated learning
    */
-  async receiveClientUpdate(
-    clientId: string,
-    modelUpdate: any,
-    localMetrics?: any
-  ): Promise<void> {
+  async receiveClientUpdate(clientId: string, modelUpdate: any, localMetrics?: any): Promise<void> {
     return this.federatedLearningManager.receiveClientUpdate(clientId, modelUpdate, localMetrics);
   }
 
@@ -848,14 +865,22 @@ export class ModelService {
    */
   private mapStatus(status: string): ModelStatus {
     switch (status) {
-      case 'Available': return 'Available';
-      case 'Downloading': return 'Downloading';
-      case 'Downloaded': return 'Downloaded';
-      case 'Loading': return 'Loading';
-      case 'Loaded': return 'Loaded';
-      case 'Unloading': return 'Unloading';
-      case 'Error': return 'Error';
-      default: return 'Error';
+      case 'Available':
+        return 'Available';
+      case 'Downloading':
+        return 'Downloading';
+      case 'Downloaded':
+        return 'Downloaded';
+      case 'Loading':
+        return 'Loading';
+      case 'Loaded':
+        return 'Loaded';
+      case 'Unloading':
+        return 'Unloading';
+      case 'Error':
+        return 'Error';
+      default:
+        return 'Error';
     }
   }
 
@@ -864,16 +889,26 @@ export class ModelService {
    */
   private mapTrainingStatus(status: string): TrainingStatus {
     switch (status) {
-      case 'Created': return 'Created';
-      case 'Initializing': return 'Initializing';
-      case 'PreparingData': return 'PreparingData';
-      case 'Training': return 'Training';
-      case 'Evaluating': return 'Evaluating';
-      case 'Saving': return 'Saving';
-      case 'Completed': return 'Completed';
-      case 'Failed': return 'Failed';
-      case 'Cancelled': return 'Cancelled';
-      default: return 'Failed';
+      case 'Created':
+        return 'Created';
+      case 'Initializing':
+        return 'Initializing';
+      case 'PreparingData':
+        return 'PreparingData';
+      case 'Training':
+        return 'Training';
+      case 'Evaluating':
+        return 'Evaluating';
+      case 'Saving':
+        return 'Saving';
+      case 'Completed':
+        return 'Completed';
+      case 'Failed':
+        return 'Failed';
+      case 'Cancelled':
+        return 'Cancelled';
+      default:
+        return 'Failed';
     }
   }
 }

@@ -7,12 +7,12 @@
 //! - Multi-format reporting (HTML, JSON, LCOV)
 //! - Coverage optimization recommendations
 
+use chrono::{DateTime, Utc};
+use rust_ai_ide_errors::IdeResult;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
-use rust_ai_ide_errors::IdeResult;
 
 /// Coverage metric types and calculations
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -147,20 +147,30 @@ impl CoverageAnalyzer {
     }
 
     /// Generate coverage report in multiple formats
-    pub async fn generate_reports(&self, report: &CoverageReport, output_dir: &Path) -> IdeResult<()> {
+    pub async fn generate_reports(
+        &self,
+        report: &CoverageReport,
+        output_dir: &Path,
+    ) -> IdeResult<()> {
         println!("📋 Generating Coverage Reports...");
 
         // Create output directory
         fs::create_dir_all(output_dir)?;
 
         // Generate HTML report
-        self.report_generator.generate_html_report(report, output_dir).await?;
+        self.report_generator
+            .generate_html_report(report, output_dir)
+            .await?;
 
         // Generate JSON report
-        self.report_generator.generate_json_report(report, output_dir).await?;
+        self.report_generator
+            .generate_json_report(report, output_dir)
+            .await?;
 
         // Generate LCOV report
-        self.report_generator.generate_lcov_report(report, output_dir).await?;
+        self.report_generator
+            .generate_lcov_report(report, output_dir)
+            .await?;
 
         Ok(())
     }
@@ -173,39 +183,50 @@ impl CoverageAnalyzer {
 
         // Check overall thresholds
         if report.overall_coverage.coverage_percentage < self.thresholds.overall_minimum {
-            println!("❌ Overall coverage below minimum threshold: {}% < {}%",
-                report.overall_coverage.coverage_percentage, self.thresholds.overall_minimum);
+            println!(
+                "❌ Overall coverage below minimum threshold: {}% < {}%",
+                report.overall_coverage.coverage_percentage, self.thresholds.overall_minimum
+            );
             all_passed = false;
         }
 
         // Check line coverage
         if report.overall_coverage.line_coverage_percentage < self.thresholds.line_minimum {
-            println!("❌ Line coverage below minimum threshold: {}% < {}%",
-                report.overall_coverage.line_coverage_percentage, self.thresholds.line_minimum);
+            println!(
+                "❌ Line coverage below minimum threshold: {}% < {}%",
+                report.overall_coverage.line_coverage_percentage, self.thresholds.line_minimum
+            );
             all_passed = false;
         }
 
         // Check function coverage
         if report.overall_coverage.function_coverage_percentage < self.thresholds.function_minimum {
-            println!("❌ Function coverage below minimum threshold: {}% < {}%",
-                report.overall_coverage.function_coverage_percentage, self.thresholds.function_minimum);
+            println!(
+                "❌ Function coverage below minimum threshold: {}% < {}%",
+                report.overall_coverage.function_coverage_percentage,
+                self.thresholds.function_minimum
+            );
             all_passed = false;
         }
 
         // Check branch coverage
         if report.overall_coverage.branch_coverage_percentage < self.thresholds.branch_minimum {
-            println!("❌ Branch coverage below minimum threshold: {}% < {}%",
-                report.overall_coverage.branch_coverage_percentage, self.thresholds.branch_minimum);
+            println!(
+                "❌ Branch coverage below minimum threshold: {}% < {}%",
+                report.overall_coverage.branch_coverage_percentage, self.thresholds.branch_minimum
+            );
             all_passed = false;
         }
 
         // Check individual file thresholds
         for file_coverage in &report.file_coverages {
             if file_coverage.coverage_metrics.coverage_percentage < self.thresholds.file_minimum {
-                println!("❌ File coverage below threshold: {} ({}% < {}%)",
+                println!(
+                    "❌ File coverage below threshold: {} ({}% < {}%)",
                     file_coverage.file_name,
                     file_coverage.coverage_metrics.coverage_percentage,
-                    self.thresholds.file_minimum);
+                    self.thresholds.file_minimum
+                );
                 all_passed = false;
             }
         }
@@ -231,19 +252,34 @@ impl CoverageAnalyzer {
         Ok(data)
     }
 
-    async fn calculate_overall_metrics(&self, coverage_data: &HashMap<String, String>) -> CoverageMetrics {
-        let lines_covered = coverage_data.get("covered_lines")
-            .and_then(|s| s.parse().ok()).unwrap_or(850);
-        let lines_total = coverage_data.get("total_lines")
-            .and_then(|s| s.parse().ok()).unwrap_or(1000);
-        let functions_covered = coverage_data.get("covered_functions")
-            .and_then(|s| s.parse().ok()).unwrap_or(125);
-        let functions_total = coverage_data.get("total_functions")
-            .and_then(|s| s.parse().ok()).unwrap_or(150);
-        let branches_covered = coverage_data.get("covered_branches")
-            .and_then(|s| s.parse().ok()).unwrap_or(170);
-        let branches_total = coverage_data.get("total_branches")
-            .and_then(|s| s.parse().ok()).unwrap_or(200);
+    async fn calculate_overall_metrics(
+        &self,
+        coverage_data: &HashMap<String, String>,
+    ) -> CoverageMetrics {
+        let lines_covered = coverage_data
+            .get("covered_lines")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(850);
+        let lines_total = coverage_data
+            .get("total_lines")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(1000);
+        let functions_covered = coverage_data
+            .get("covered_functions")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(125);
+        let functions_total = coverage_data
+            .get("total_functions")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(150);
+        let branches_covered = coverage_data
+            .get("covered_branches")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(170);
+        let branches_total = coverage_data
+            .get("total_branches")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(200);
 
         CoverageMetrics {
             lines_covered,
@@ -254,12 +290,16 @@ impl CoverageAnalyzer {
             branches_total,
             coverage_percentage: (lines_covered as f64 / lines_total as f64) * 100.0,
             line_coverage_percentage: (lines_covered as f64 / lines_total as f64) * 100.0,
-            function_coverage_percentage: (functions_covered as f64 / functions_total as f64) * 100.0,
+            function_coverage_percentage: (functions_covered as f64 / functions_total as f64)
+                * 100.0,
             branch_coverage_percentage: (branches_covered as f64 / branches_total as f64) * 100.0,
         }
     }
 
-    async fn generate_file_coverages(&self, _coverage_data: &HashMap<String, String>) -> Vec<FileCoverage> {
+    async fn generate_file_coverages(
+        &self,
+        _coverage_data: &HashMap<String, String>,
+    ) -> Vec<FileCoverage> {
         // Placeholder file coverage generation
         let test_files = vec![
             ("src/main.rs", 120, 100),
@@ -268,53 +308,66 @@ impl CoverageAnalyzer {
             ("tests/integration.rs", 200, 180),
         ];
 
-        test_files.into_iter().map(|(path, total, covered)| {
-            let file_name = Path::new(path).file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or(path).to_string();
+        test_files
+            .into_iter()
+            .map(|(path, total, covered)| {
+                let file_name = Path::new(path)
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or(path)
+                    .to_string();
 
-            FileCoverage {
-                file_path: path.to_string(),
-                file_name,
-                coverage_metrics: CoverageMetrics {
-                    lines_covered: covered,
-                    lines_total: total,
-                    functions_covered: 0,
-                    functions_total: 0,
-                    branches_covered: 0,
-                    branches_total: 0,
-                    coverage_percentage: (covered as f64 / total as f64) * 100.0,
-                    line_coverage_percentage: (covered as f64 / total as f64) * 100.0,
-                    function_coverage_percentage: 0.0,
-                    branch_coverage_percentage: 0.0,
-                },
-                uncovered_lines: Vec::new(),
-                functions: Vec::new(),
-                regions: Vec::new(),
-            }
-        }).collect()
+                FileCoverage {
+                    file_path: path.to_string(),
+                    file_name,
+                    coverage_metrics: CoverageMetrics {
+                        lines_covered: covered,
+                        lines_total: total,
+                        functions_covered: 0,
+                        functions_total: 0,
+                        branches_covered: 0,
+                        branches_total: 0,
+                        coverage_percentage: (covered as f64 / total as f64) * 100.0,
+                        line_coverage_percentage: (covered as f64 / total as f64) * 100.0,
+                        function_coverage_percentage: 0.0,
+                        branch_coverage_percentage: 0.0,
+                    },
+                    uncovered_lines: Vec::new(),
+                    functions: Vec::new(),
+                    regions: Vec::new(),
+                }
+            })
+            .collect()
     }
 
     fn check_thresholds(&self, metrics: &CoverageMetrics) -> bool {
-        metrics.coverage_percentage >= self.thresholds.overall_minimum &&
-        metrics.line_coverage_percentage >= self.thresholds.line_minimum &&
-        metrics.function_coverage_percentage >= self.thresholds.function_minimum &&
-        metrics.branch_coverage_percentage >= self.thresholds.branch_minimum
+        metrics.coverage_percentage >= self.thresholds.overall_minimum
+            && metrics.line_coverage_percentage >= self.thresholds.line_minimum
+            && metrics.function_coverage_percentage >= self.thresholds.function_minimum
+            && metrics.branch_coverage_percentage >= self.thresholds.branch_minimum
     }
 
-    fn generate_recommendations(&self, overall: &CoverageMetrics, files: &Vec<FileCoverage>) -> Vec<String> {
+    fn generate_recommendations(
+        &self,
+        overall: &CoverageMetrics,
+        files: &Vec<FileCoverage>,
+    ) -> Vec<String> {
         let mut recommendations = Vec::new();
 
         if overall.coverage_percentage < 80.0 {
-            recommendations.push("🔧 Overall coverage is below 80%. Add more comprehensive test cases.".to_string());
+            recommendations.push(
+                "🔧 Overall coverage is below 80%. Add more comprehensive test cases.".to_string(),
+            );
         }
 
         if overall.branch_coverage_percentage < 75.0 {
-            recommendations.push("🌿 Branch coverage is low. Add tests for different code paths.".to_string());
+            recommendations
+                .push("🌿 Branch coverage is low. Add tests for different code paths.".to_string());
         }
 
         // Check for files with low coverage
-        let low_coverage_files: Vec<_> = files.iter()
+        let low_coverage_files: Vec<_> = files
+            .iter()
             .filter(|f| f.coverage_metrics.coverage_percentage < 70.0)
             .map(|f| f.file_name.clone())
             .collect();
@@ -327,7 +380,8 @@ impl CoverageAnalyzer {
         }
 
         // Check for uncovered lines
-        let total_uncovered: usize = files.iter()
+        let total_uncovered: usize = files
+            .iter()
             .map(|f| f.coverage_metrics.lines_total - f.coverage_metrics.lines_covered)
             .sum();
 
@@ -380,13 +434,21 @@ impl CoverageReportGenerator {
         Self
     }
 
-    async fn generate_html_report(&self, _report: &CoverageReport, _output_dir: &Path) -> IdeResult<()> {
+    async fn generate_html_report(
+        &self,
+        _report: &CoverageReport,
+        _output_dir: &Path,
+    ) -> IdeResult<()> {
         // Placeholder HTML report generation
         println!("📄 Generating HTML coverage report...");
         Ok(())
     }
 
-    async fn generate_json_report(&self, report: &CoverageReport, output_dir: &Path) -> IdeResult<()> {
+    async fn generate_json_report(
+        &self,
+        report: &CoverageReport,
+        output_dir: &Path,
+    ) -> IdeResult<()> {
         println!("📊 Generating JSON coverage report...");
         let json_path = output_dir.join("coverage.json");
         let json_content = serde_json::to_string_pretty(report)?;
@@ -394,7 +456,11 @@ impl CoverageReportGenerator {
         Ok(())
     }
 
-    async fn generate_lcov_report(&self, _report: &CoverageReport, _output_dir: &Path) -> IdeResult<()> {
+    async fn generate_lcov_report(
+        &self,
+        _report: &CoverageReport,
+        _output_dir: &Path,
+    ) -> IdeResult<()> {
         // Placeholder LCOV report generation
         println!("📈 Generating LCOV coverage report...");
         Ok(())
@@ -490,7 +556,10 @@ mod tests {
         assert_eq!(metrics.lines_covered, 850);
         assert_eq!(metrics.lines_total, 1000);
         assert_eq!(metrics.coverage_percentage, 85.0);
-        assert_eq!(metrics.function_coverage_percentage, (125.0 / 150.0) * 100.0);
+        assert_eq!(
+            metrics.function_coverage_percentage,
+            (125.0 / 150.0) * 100.0
+        );
         assert_eq!(metrics.branch_coverage_percentage, 85.0);
 
         Ok(())
@@ -513,34 +582,38 @@ mod tests {
             branch_coverage_percentage: 50.0,
         };
 
-        let files = vec![
-            FileCoverage {
-                file_path: "src/main.rs".to_string(),
-                file_name: "main.rs".to_string(),
-                coverage_metrics: CoverageMetrics {
-                    lines_covered: 50,
-                    lines_total: 100,
-                    functions_covered: 0,
-                    functions_total: 0,
-                    branches_covered: 0,
-                    branches_total: 0,
-                    coverage_percentage: 50.0,
-                    line_coverage_percentage: 50.0,
-                    function_coverage_percentage: 0.0,
-                    branch_coverage_percentage: 0.0,
-                },
-                uncovered_lines: (51..=100).collect(),
-                functions: Vec::new(),
-                regions: Vec::new(),
-            }
-        ];
+        let files = vec![FileCoverage {
+            file_path: "src/main.rs".to_string(),
+            file_name: "main.rs".to_string(),
+            coverage_metrics: CoverageMetrics {
+                lines_covered: 50,
+                lines_total: 100,
+                functions_covered: 0,
+                functions_total: 0,
+                branches_covered: 0,
+                branches_total: 0,
+                coverage_percentage: 50.0,
+                line_coverage_percentage: 50.0,
+                function_coverage_percentage: 0.0,
+                branch_coverage_percentage: 0.0,
+            },
+            uncovered_lines: (51..=100).collect(),
+            functions: Vec::new(),
+            regions: Vec::new(),
+        }];
 
         let recommendations = analyzer.generate_recommendations(&overall, &files);
 
         assert!(recommendations.len() > 0);
-        assert!(recommendations.iter().any(|r| r.contains("Overall coverage")));
-        assert!(recommendations.iter().any(|r| r.contains("Branch coverage")));
-        assert!(recommendations.iter().any(|r| r.contains("Files with low coverage")));
+        assert!(recommendations
+            .iter()
+            .any(|r| r.contains("Overall coverage")));
+        assert!(recommendations
+            .iter()
+            .any(|r| r.contains("Branch coverage")));
+        assert!(recommendations
+            .iter()
+            .any(|r| r.contains("Files with low coverage")));
 
         Ok(())
     }

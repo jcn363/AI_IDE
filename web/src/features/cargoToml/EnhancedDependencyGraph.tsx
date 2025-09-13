@@ -2,10 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as d3 from 'd3';
 import { invoke } from '@tauri-apps/api/core';
 import { Button, Empty, Space, Spin, message } from 'antd';
-import { 
-  DownloadOutlined, 
-  ReloadOutlined, 
-} from '@ant-design/icons';
+import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
 import { type DependencyNode } from './dependencyGraph';
 import './EnhancedDependencyGraph.css';
 
@@ -130,15 +127,15 @@ const EnhancedDependencyGraph: React.FC<EnhancedDependencyGraphProps> = ({
   // Fetch graph data from backend
   const fetchGraphData = useCallback(async () => {
     if (!projectPath) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await invoke<DependencyGraphData>('get_dependency_graph', {
         projectPath,
       });
-      
+
       setGraphData(data);
     } catch (err) {
       console.error('Failed to fetch dependency graph:', err);
@@ -162,25 +159,25 @@ const EnhancedDependencyGraph: React.FC<EnhancedDependencyGraphProps> = ({
   // Handle download
   const handleDownload = useCallback(() => {
     if (!svgRef.current) return;
-    
+
     // Use type assertion for XMLSerializer
     const serializer = new (window as any).XMLSerializer();
     const svgData = serializer.serializeToString(svgRef.current);
     const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
     const svgUrl = (window.URL || window.webkitURL).createObjectURL(svgBlob);
-    
+
     const downloadLink = document.createElement('a');
     // Use setAttribute for better cross-browser compatibility
     downloadLink.setAttribute('href', svgUrl);
     downloadLink.setAttribute('download', 'dependency-graph.svg');
-    
+
     // Make the link invisible
     downloadLink.style.display = 'none';
     document.body.appendChild(downloadLink);
-    
+
     // Trigger the download
     downloadLink.click();
-    
+
     // Clean up
     setTimeout(() => {
       document.body.removeChild(downloadLink);
@@ -191,104 +188,119 @@ const EnhancedDependencyGraph: React.FC<EnhancedDependencyGraphProps> = ({
   // Render the graph using D3
   useEffect(() => {
     if (!graphData || !svgRef.current || !containerRef.current) return;
-    
+
     const container = containerRef.current;
     const rect = container.getBoundingClientRect();
     const width = rect.width || 800;
     const height = rect.height || 600;
-    
+
     // Clear previous graph
     d3.select(svgRef.current).selectAll('*').remove();
-    
+
     // Set up the SVG
-    const svg = d3.select(svgRef.current)
+    const svg = d3
+      .select(svgRef.current)
       .attr('width', '100%')
       .attr('height', '100%')
       .attr('viewBox', `0 0 ${width} ${height}`);
-    
+
     // Add zoom behavior
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
+    const zoom = d3
+      .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 8])
       .on('zoom', (event) => {
         svg.select('.graph-content').attr('transform', event.transform);
       });
-    
+
     svg.call(zoom as any);
-    
+
     // Create a group for the graph content
     const g = svg.append('g').attr('class', 'graph-content');
-    
+
     // Create the force simulation
-    const simulation = d3.forceSimulation<GraphNode>()
-      .force('link', d3.forceLink<GraphNode, GraphLink>(graphData.links).id(d => d.id).distance(100))
+    const simulation = d3
+      .forceSimulation<GraphNode>()
+      .force(
+        'link',
+        d3
+          .forceLink<GraphNode, GraphLink>(graphData.links)
+          .id((d) => d.id)
+          .distance(100)
+      )
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(width / 2, height / 2));
-    
+
     // Store simulation reference for cleanup
     simulationRef.current = simulation;
-    
+
     // Create links
-    const link = g.append('g')
+    const link = g
+      .append('g')
       .attr('class', 'links')
       .selectAll('line')
       .data(graphData.links)
-      .enter().append('line')
+      .enter()
+      .append('line')
       .attr('stroke', '#999')
       .attr('stroke-opacity', 0.6)
       .attr('stroke-width', 1.5);
-    
+
     // Create nodes
-    const node = g.append('g')
+    const node = g
+      .append('g')
       .attr('class', 'nodes')
       .selectAll('.node')
       .data(graphData.nodes)
-      .enter().append('g')
+      .enter()
+      .append('g')
       .attr('class', 'node')
-      .call(d3.drag<SVGGElement, GraphNode>()
-        .on('start', dragstarted)
-        .on('drag', dragged)
-        .on('end', dragended) as any);
-    
+      .call(
+        d3
+          .drag<SVGGElement, GraphNode>()
+          .on('start', dragstarted)
+          .on('drag', dragged)
+          .on('end', dragended) as any
+      );
+
     // Add circles to nodes
-    node.append('circle')
-      .attr('r', 10)
-      .attr('fill', '#69b3a2');
-    
+    node.append('circle').attr('r', 10).attr('fill', '#69b3a2');
+
     // Add labels to nodes
-    node.append('text')
+    node
+      .append('text')
       .attr('dx', 12)
       .attr('dy', '.35em')
-      .text(d => d.name);
-    
+      .text((d) => d.name);
+
     // Update positions on simulation tick
     simulation.nodes(graphData.nodes).on('tick', () => {
       link
-        .attr('x1', d => (d.source as any).x || 0)
-        .attr('y1', d => (d.source as any).y || 0)
-        .attr('x2', d => (d.target as any).x || 0)
-        .attr('y2', d => (d.target as any).y || 0);
-      
-      node.attr('transform', d => `translate(${d.x},${d.y})`);
+        .attr('x1', (d) => (d.source as any).x || 0)
+        .attr('y1', (d) => (d.source as any).y || 0)
+        .attr('x2', (d) => (d.target as any).x || 0)
+        .attr('y2', (d) => (d.target as any).y || 0);
+
+      node.attr('transform', (d) => `translate(${d.x},${d.y})`);
     });
-    
+
     // Drag functions
     function dragstarted(event: any, d: any) {
       if (!event.active) simulation.alphaTarget(0.3).restart();
       d.fx = d.x;
       d.fy = d.y;
     }
-    
+
     function dragged(event: any, d: any) {
       d.fx = event.x;
       d.fy = event.y;
     }
-    
+
     function dragended(event: any, d: any) {
       if (!event.active) simulation.alphaTarget(0);
       d.fx = event.x;
       d.fy = event.y;
     }
-    
+
     // Clean up simulation on unmount
     return () => {
       simulation.stop();
@@ -308,11 +320,7 @@ const EnhancedDependencyGraph: React.FC<EnhancedDependencyGraphProps> = ({
             >
               Refresh
             </Button>
-            <Button
-              icon={<DownloadOutlined />}
-              onClick={handleDownload}
-              disabled={!graphData}
-            >
+            <Button icon={<DownloadOutlined />} onClick={handleDownload} disabled={!graphData}>
               Export
             </Button>
           </Space>
@@ -335,11 +343,7 @@ const EnhancedDependencyGraph: React.FC<EnhancedDependencyGraphProps> = ({
               description={
                 <>
                   <div>{error}</div>
-                  <Button 
-                    type="link" 
-                    onClick={handleRefresh}
-                    icon={<ReloadOutlined />}
-                  >
+                  <Button type="link" onClick={handleRefresh} icon={<ReloadOutlined />}>
                     Retry
                   </Button>
                 </>

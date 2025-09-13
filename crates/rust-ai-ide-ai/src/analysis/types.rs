@@ -187,11 +187,21 @@ pub struct AnalysisConfig {
     pub custom_rules: std::collections::HashMap<String, serde_json::Value>,
 }
 
-fn default_true() -> bool { true }
-fn default_max_parallel_files() -> usize { num_cpus::get().max(1) }
-fn default_include_patterns() -> Vec<String> { vec![r"\.rs$".to_string()] }
-fn default_version() -> u32 { 1 }
-fn default_min_confidence() -> f32 { 0.7 }
+fn default_true() -> bool {
+    true
+}
+fn default_max_parallel_files() -> usize {
+    num_cpus::get().max(1)
+}
+fn default_include_patterns() -> Vec<String> {
+    vec![r"\.rs$".to_string()]
+}
+fn default_version() -> u32 {
+    1
+}
+fn default_min_confidence() -> f32 {
+    0.7
+}
 
 impl Default for AnalysisConfig {
     fn default() -> Self {

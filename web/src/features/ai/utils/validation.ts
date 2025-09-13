@@ -10,7 +10,7 @@ export class RefactoringValidationUtils {
   static async validateRefactoringRequest(
     type: RefactoringType,
     context: RefactoringContext,
-    request: any,
+    request: any
   ): Promise<void> {
     // Base validation
     if (!context.filePath) {
@@ -18,7 +18,7 @@ export class RefactoringValidationUtils {
     }
 
     // Validate file path format and accessibility
-    if (!context.filePath || (typeof context.filePath !== 'string')) {
+    if (!context.filePath || typeof context.filePath !== 'string') {
       throw new Error('Valid file path string is required');
     }
 
@@ -38,7 +38,10 @@ export class RefactoringValidationUtils {
   /**
    * Validate selection range when operation requires it
    */
-  private static validateSelection(context: RefactoringContext, operationType: RefactoringType): void {
+  private static validateSelection(
+    context: RefactoringContext,
+    operationType: RefactoringType
+  ): void {
     const requiresSelection = this.operationRequiresSelection(operationType);
 
     if (requiresSelection && !context.selection) {
@@ -60,16 +63,21 @@ export class RefactoringValidationUtils {
       'extract-variable',
       'extract-interface',
       'interface-extraction',
-      'pattern-conversion'
+      'pattern-conversion',
     ];
     return selectionRequiredTypes.includes(operationType);
   }
 
   private static isValidRange(start: any, end: any): boolean {
-    return start && end &&
-      typeof start.line === 'number' && typeof start.character === 'number' &&
-      typeof end.line === 'number' && typeof end.character === 'number' &&
-      (start.line < end.line || (start.line === end.line && start.character <= end.character));
+    return (
+      start &&
+      end &&
+      typeof start.line === 'number' &&
+      typeof start.character === 'number' &&
+      typeof end.line === 'number' &&
+      typeof end.character === 'number' &&
+      (start.line < end.line || (start.line === end.line && start.character <= end.character))
+    );
   }
 
   /**
@@ -152,7 +160,9 @@ export class RefactoringValidationUtils {
 
       default:
         // Log warning for unhandled refactoring types
-        console.warn(`No specific validation implemented for refactoring type: ${type}. Using basic validation only.`);
+        console.warn(
+          `No specific validation implemented for refactoring type: ${type}. Using basic validation only.`
+        );
     }
   }
 
@@ -224,7 +234,9 @@ export class RefactoringValidationUtils {
 
     // Check if selection contains function calls (not always suitable for extraction)
     if (request.generateTests && this.containsSideEffects(context)) {
-      throw new Error('Selection contains code with side effects. Consider creation of additional tests.');
+      throw new Error(
+        'Selection contains code with side effects. Consider creation of additional tests.'
+      );
     }
   }
 
@@ -249,7 +261,11 @@ export class RefactoringValidationUtils {
   /**
    * Validate move operation request
    */
-  private static validateMoveRequest(context: RefactoringContext, request: any, operationType: RefactoringType): void {
+  private static validateMoveRequest(
+    context: RefactoringContext,
+    request: any,
+    operationType: RefactoringType
+  ): void {
     if (!request.targetPath && !request.targetName) {
       throw new Error(`${operationType} requires a target location or name`);
     }
@@ -271,7 +287,10 @@ export class RefactoringValidationUtils {
   /**
    * Validate inline operation request
    */
-  private static validateInlineRequest(context: RefactoringContext, operationType: RefactoringType): void {
+  private static validateInlineRequest(
+    context: RefactoringContext,
+    operationType: RefactoringType
+  ): void {
     if (operationType === 'inline-method' || operationType === 'inline-function') {
       // Check if method has multiple usages
       if (context.usages && context.usages.length > 1) {
@@ -283,7 +302,11 @@ export class RefactoringValidationUtils {
   /**
    * Validate parameter operation request
    */
-  private static validateParameterRequest(context: RefactoringContext, request: any, operationType: RefactoringType): void {
+  private static validateParameterRequest(
+    context: RefactoringContext,
+    request: any,
+    operationType: RefactoringType
+  ): void {
     if (operationType === 'introduce-parameter') {
       if (!request.parameterName || !this.isValidIdentifier(request.parameterName)) {
         throw new Error('Valid parameter name is required');
@@ -309,7 +332,10 @@ export class RefactoringValidationUtils {
   /**
    * Validate replacement operations
    */
-  private static validateReplaceRequest(context: RefactoringContext, operationType: RefactoringType): void {
+  private static validateReplaceRequest(
+    context: RefactoringContext,
+    operationType: RefactoringType
+  ): void {
     // These operations typically require more complex validation
     if (!context.selection && operationType !== 'replace-conditionals') {
       throw new Error(`${operationType} requires a specific target to replace`);
@@ -319,7 +345,11 @@ export class RefactoringValidationUtils {
   /**
    * Validate class operations
    */
-  private static validateClassOperationRequest(context: RefactoringContext, request: any, operationType: RefactoringType): void {
+  private static validateClassOperationRequest(
+    context: RefactoringContext,
+    request: any,
+    operationType: RefactoringType
+  ): void {
     if (operationType === 'split-class') {
       if (!request.classNames || !Array.isArray(request.classNames)) {
         throw new Error('Target class names are required for split operation');
@@ -348,7 +378,10 @@ export class RefactoringValidationUtils {
   /**
    * Validate encapsulation operations
    */
-  private static validateEncapsulationRequest(context: RefactoringContext, operationType: RefactoringType): void {
+  private static validateEncapsulationRequest(
+    context: RefactoringContext,
+    operationType: RefactoringType
+  ): void {
     // Most encapsulation operations work on fields/variables
     if (operationType === 'encapsulate-field') {
       if (!context.symbolName) {
@@ -363,7 +396,14 @@ export class RefactoringValidationUtils {
   private static validateUtilityRequest(operationType: RefactoringType): void {
     // Utility operations typically only need basic validation
     // Most work on the entire file or don't need special context
-    if (!['add-missing-imports', 'sort-imports', 'convert-to-async', 'generate-getters-setters'].includes(operationType)) {
+    if (
+      ![
+        'add-missing-imports',
+        'sort-imports',
+        'convert-to-async',
+        'generate-getters-setters',
+      ].includes(operationType)
+    ) {
       throw new Error(`Unknown utility operation: ${operationType}`);
     }
   }
@@ -371,8 +411,15 @@ export class RefactoringValidationUtils {
   /**
    * Validate advanced operations
    */
-  private static validateAdvancedRequest(context: RefactoringContext, request: any, operationType: RefactoringType): void {
-    if (operationType === 'interface-extraction' || operationType === 'batch-interface-extraction') {
+  private static validateAdvancedRequest(
+    context: RefactoringContext,
+    request: any,
+    operationType: RefactoringType
+  ): void {
+    if (
+      operationType === 'interface-extraction' ||
+      operationType === 'batch-interface-extraction'
+    ) {
       if (!request.methods || !Array.isArray(request.methods)) {
         throw new Error('Method list is required for interface extraction');
       }
@@ -402,13 +449,28 @@ export class RefactoringValidationUtils {
 
   private static isSupportedLanguage(extension: string, operationType: RefactoringType): boolean {
     const languageSupport = {
-      'rust': ['rename', 'extract-function', 'extract-variable', 'inline-function'] as RefactoringType[],
-      'ts': ['rename', 'extract-function', 'extract-variable', 'convert-to-async'] as RefactoringType[],
-      'js': ['rename', 'extract-function', 'extract-variable', 'convert-to-async'] as RefactoringType[],
-      'cpp': ['rename', 'extract-function'] as RefactoringType[],
-      'c': ['rename', 'extract-function'] as RefactoringType[],
-      'java': ['rename', 'extract-function', 'extract-variable'] as RefactoringType[],
-      'python': ['rename', 'extract-function', 'extract-variable'] as RefactoringType[],
+      rust: [
+        'rename',
+        'extract-function',
+        'extract-variable',
+        'inline-function',
+      ] as RefactoringType[],
+      ts: [
+        'rename',
+        'extract-function',
+        'extract-variable',
+        'convert-to-async',
+      ] as RefactoringType[],
+      js: [
+        'rename',
+        'extract-function',
+        'extract-variable',
+        'convert-to-async',
+      ] as RefactoringType[],
+      cpp: ['rename', 'extract-function'] as RefactoringType[],
+      c: ['rename', 'extract-function'] as RefactoringType[],
+      java: ['rename', 'extract-function', 'extract-variable'] as RefactoringType[],
+      python: ['rename', 'extract-function', 'extract-variable'] as RefactoringType[],
     };
 
     const supportedTypes = languageSupport[extension as keyof typeof languageSupport];

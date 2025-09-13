@@ -103,9 +103,9 @@
 //! - **Adaptive Memory Management**: Intelligent context retention and expiration
 //! - **Cross-Session Learning**: Preservation of learned patterns across development sessions
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
 
 /// Core AI context for all operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -178,13 +178,21 @@ impl AIContext {
     }
 
     /// Add project context
-    pub fn with_project_context<K: Into<String>, V: Into<String>>(mut self, key: K, value: V) -> Self {
+    pub fn with_project_context<K: Into<String>, V: Into<String>>(
+        mut self,
+        key: K,
+        value: V,
+    ) -> Self {
         self.project_context.insert(key.into(), value.into());
         self
     }
 
     /// Add metadata
-    pub fn with_metadata<K: Into<String>, V: Into<serde_json::Value>>(mut self, key: K, value: V) -> Self {
+    pub fn with_metadata<K: Into<String>, V: Into<serde_json::Value>>(
+        mut self,
+        key: K,
+        value: V,
+    ) -> Self {
         self.metadata.insert(key.into(), value.into());
         self
     }
@@ -257,7 +265,11 @@ impl OperationContext {
         self
     }
 
-    pub fn with_metadata<K: Into<String>, V: Into<serde_json::Value>>(mut self, key: K, value: V) -> Self {
+    pub fn with_metadata<K: Into<String>, V: Into<serde_json::Value>>(
+        mut self,
+        key: K,
+        value: V,
+    ) -> Self {
         self.metadata.insert(key.into(), value.into());
         self
     }

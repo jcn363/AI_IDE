@@ -2,10 +2,10 @@
 
 use anyhow::Result;
 use indicatif::{ProgressBar, ProgressStyle};
-use syn::visit::Visit;
-use syn::{File, Item, ItemFn, ItemMod, ItemStruct, ItemTrait, ItemImpl};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
+use syn::visit::Visit;
+use syn::{File, Item, ItemFn, ItemImpl, ItemMod, ItemStruct, ItemTrait};
 
 /// Creates a new progress bar with the given length and message
 pub fn progress_bar(len: u64, msg: &str) -> ProgressBar {
@@ -48,7 +48,10 @@ pub fn count_lines(content: &str) -> usize {
 
 /// Count the number of non-empty lines in a string
 pub fn count_non_empty_lines(content: &str) -> usize {
-    content.lines().filter(|line| !line.trim().is_empty()).count()
+    content
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .count()
 }
 
 /// Count the number of comment lines in a string
@@ -112,7 +115,7 @@ pub fn calculate_maintainability_index(
     let volume = halstead_volume.max(1.0);
     let loc = lines_of_code.max(1) as f64;
     let cm = cyclomatic_complexity.max(1.0);
-    
+
     // Calculate maintainability index (0-100 scale)
     let mi = 171.0 - 5.2 * volume.ln() - 0.23 * cm - 16.2 * loc.ln();
     mi.max(0.0).min(100.0)
@@ -130,7 +133,7 @@ pub fn calculate_halstead_metrics(ast: &File) -> (f64, f64, f64) {
     impl<'ast> Visit<'ast> for Metrics {
         fn visit_expr(&mut self, node: &'ast syn::Expr) {
             use syn::Expr;
-            
+
             // Count operators
             match node {
                 Expr::Binary(bin) => {

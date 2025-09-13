@@ -134,7 +134,9 @@ export const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({
             endColumn: change.range.endColumn,
           },
           content: change.text,
-          previousContent: change.rangeLength ? content.slice(change.range.offset, change.range.offset + change.rangeLength) : undefined,
+          previousContent: change.rangeLength
+            ? content.slice(change.range.offset, change.range.offset + change.rangeLength)
+            : undefined,
         };
 
         collaborationManager.sendChange(operation);
@@ -173,20 +175,23 @@ export const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({
     }
   }, [content]);
 
-  const updateUserPresence = useCallback((presence: UserPresence) => {
-    setUsers(prevUsers => {
-      const existingIndex = prevUsers.findIndex(u => u.userId === presence.userId);
-      if (existingIndex >= 0) {
-        const updated = [...prevUsers];
-        updated[existingIndex] = presence;
-        return updated;
-      } else {
-        return [...prevUsers, presence].filter(u =>
-          u.currentFile === filePath && u.status === 'online'
-        );
-      }
-    });
-  }, [filePath]);
+  const updateUserPresence = useCallback(
+    (presence: UserPresence) => {
+      setUsers((prevUsers) => {
+        const existingIndex = prevUsers.findIndex((u) => u.userId === presence.userId);
+        if (existingIndex >= 0) {
+          const updated = [...prevUsers];
+          updated[existingIndex] = presence;
+          return updated;
+        } else {
+          return [...prevUsers, presence].filter(
+            (u) => u.currentFile === filePath && u.status === 'online'
+          );
+        }
+      });
+    },
+    [filePath]
+  );
 
   const handleRemoteChange = useCallback((operation: ChangeOperation) => {
     if (!monacoRef.current) return;
@@ -203,42 +208,53 @@ export const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({
         endPosition.lineNumber = operation.position.endLine;
         endPosition.column = operation.position.endColumn;
 
-        monacoOp.applyEdits([{
-          range: new monaco.Range(
-            operation.position.startLine,
-            operation.position.startColumn,
-            operation.position.endLine,
-            operation.position.endColumn
-          ),
-          text: operation.content,
-        }], false);
+        monacoOp.applyEdits(
+          [
+            {
+              range: new monaco.Range(
+                operation.position.startLine,
+                operation.position.startColumn,
+                operation.position.endLine,
+                operation.position.endColumn
+              ),
+              text: operation.content,
+            },
+          ],
+          false
+        );
       }
     }
   }, []);
 
   const handleConflict = useCallback((conflict: Conflict) => {
-    setConflicts(prev => [...prev, conflict]);
+    setConflicts((prev) => [...prev, conflict]);
     setActiveConflict(conflict);
     setShowConflictResolver(true);
   }, []);
 
-  const handleResolveConflict = useCallback((resolution: 'local' | 'remote' | 'merge') => {
-    if (activeConflict) {
-      collaborationManager.resolveConflict(activeConflict.id, resolution);
-      setConflicts(prev => prev.filter(c => c.id !== activeConflict.id));
-      setShowConflictResolver(false);
-      setActiveConflict(null);
-    }
-  }, [activeConflict, collaborationManager]);
+  const handleResolveConflict = useCallback(
+    (resolution: 'local' | 'remote' | 'merge') => {
+      if (activeConflict) {
+        collaborationManager.resolveConflict(activeConflict.id, resolution);
+        setConflicts((prev) => prev.filter((c) => c.id !== activeConflict.id));
+        setShowConflictResolver(false);
+        setActiveConflict(null);
+      }
+    },
+    [activeConflict, collaborationManager]
+  );
 
-  const handleMergeConflict = useCallback((mergedContent: string) => {
-    if (activeConflict && mergedContent) {
-      collaborationManager.resolveConflict(activeConflict.id, 'merge', mergedContent);
-      setConflicts(prev => prev.filter(c => c.id !== activeConflict.id));
-      setShowConflictResolver(false);
-      setActiveConflict(null);
-    }
-  }, [activeConflict, collaborationManager]);
+  const handleMergeConflict = useCallback(
+    (mergedContent: string) => {
+      if (activeConflict && mergedContent) {
+        collaborationManager.resolveConflict(activeConflict.id, 'merge', mergedContent);
+        setConflicts((prev) => prev.filter((c) => c.id !== activeConflict.id));
+        setShowConflictResolver(false);
+        setActiveConflict(null);
+      }
+    },
+    [activeConflict, collaborationManager]
+  );
 
   // Render user decorations in editor
   useEffect(() => {
@@ -246,7 +262,7 @@ export const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({
 
     const decorations: string[] = [];
 
-    users.forEach(user => {
+    users.forEach((user) => {
       if (user.cursorPosition && user.userId !== 'current_user') {
         const decoration: monaco.editor.IModelDecoration = {
           range: new monaco.Range(
@@ -278,7 +294,9 @@ export const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({
 
   // Add CSS styles for collaboration cursors
   useEffect(() => {
-    const styles = users.map(user => `
+    const styles = users
+      .map(
+        (user) => `
       .collaboration-cursor-${user.userId} {
         background-color: ${user.color}40;
         border-left: 2px solid ${user.color};
@@ -288,7 +306,9 @@ export const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({
         color: ${user.color};
         font-weight: bold;
       }
-    `).join('\n');
+    `
+      )
+      .join('\n');
 
     const styleEl = document.createElement('style');
     styleEl.textContent = styles;
@@ -301,10 +321,12 @@ export const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({
 
   return (
     <Box sx={{ position: 'relative', height: '100%' }}>
-      {isLoading && <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }} />}
+      {isLoading && (
+        <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }} />
+      )}
 
       <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 5, display: 'flex', gap: 1 }}>
-        {users.map(user => (
+        {users.map((user) => (
           <PresenceIndicator key={user.userId} user={user} size="small" />
         ))}
       </Box>

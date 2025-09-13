@@ -1,8 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Typography, FormControl, FormLabel, RadioGroup,
-  FormControlLabel, Radio, Checkbox, TextField, Alert,
-  List, ListItem, ListItemText, Chip, Collapse, Button
+  Box,
+  Typography,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Checkbox,
+  TextField,
+  Alert,
+  List,
+  ListItem,
+  ListItemText,
+  Chip,
+  Collapse,
+  Button,
 } from '@mui/material';
 import { WizardStepProps } from './RefactoringWizard';
 import type { RefactoringContext } from '../../../../types/refactoring';
@@ -13,9 +26,13 @@ export const PatternConversionWizard: React.FC<WizardStepProps> = ({
   onConfigChange,
   onValidation,
 }) => {
-  const [detectedPatterns, setDetectedPatterns] = useState<Array<{id: string, name: string, description: string, confidence: number}>>([]);
+  const [detectedPatterns, setDetectedPatterns] = useState<
+    Array<{ id: string; name: string; description: string; confidence: number }>
+  >([]);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>([]);
-  const [conversionTarget, setConversionTarget] = useState<'async-await' | 'modern-syntax' | 'functional' | 'oop'>('modern-syntax');
+  const [conversionTarget, setConversionTarget] = useState<
+    'async-await' | 'modern-syntax' | 'functional' | 'oop'
+  >('modern-syntax');
   const [generateTests, setGenerateTests] = useState(false);
   const [analyzeImpact, setAnalyzeImpact] = useState(true);
   const [customPattern, setCustomPattern] = useState('');
@@ -52,16 +69,12 @@ export const PatternConversionWizard: React.FC<WizardStepProps> = ({
         name: 'Data Structure Optimization',
         description: 'Replace arrays/vectors with more efficient data structures',
         confidence: 0.61,
-      }
+      },
     ];
     setDetectedPatterns(mockPatterns);
 
     // Pre-select high-confidence patterns
-    setSelectedPatterns(
-      mockPatterns
-        .filter(p => p.confidence >= 0.7)
-        .map(p => p.id)
-    );
+    setSelectedPatterns(mockPatterns.filter((p) => p.confidence >= 0.7).map((p) => p.id));
   }, [context]);
 
   useEffect(() => {
@@ -75,18 +88,24 @@ export const PatternConversionWizard: React.FC<WizardStepProps> = ({
       shouldAnalyzeImpact: analyzeImpact,
       targetType: 'pattern',
     });
-  }, [selectedPatterns, conversionTarget, customPattern, generateTests, analyzeImpact, onConfigChange, onValidation]);
+  }, [
+    selectedPatterns,
+    conversionTarget,
+    customPattern,
+    generateTests,
+    analyzeImpact,
+    onConfigChange,
+    onValidation,
+  ]);
 
   const handlePatternToggle = (patternId: string) => {
-    setSelectedPatterns(prev =>
-      prev.includes(patternId)
-        ? prev.filter(id => id !== patternId)
-        : [...prev, patternId]
+    setSelectedPatterns((prev) =>
+      prev.includes(patternId) ? prev.filter((id) => id !== patternId) : [...prev, patternId]
     );
   };
 
   const getSelectedPatternDetails = () => {
-    return detectedPatterns.filter(p => selectedPatterns.includes(p.id));
+    return detectedPatterns.filter((p) => selectedPatterns.includes(p.id));
   };
 
   const getConfidenceColor = (confidence: number) => {
@@ -96,9 +115,7 @@ export const PatternConversionWizard: React.FC<WizardStepProps> = ({
   };
 
   const handleSelectHighConfidence = () => {
-    const highConfidence = detectedPatterns
-      .filter(p => p.confidence >= 0.7)
-      .map(p => p.id);
+    const highConfidence = detectedPatterns.filter((p) => p.confidence >= 0.7).map((p) => p.id);
     setSelectedPatterns(highConfidence);
   };
 
@@ -112,8 +129,8 @@ export const PatternConversionWizard: React.FC<WizardStepProps> = ({
         Pattern Conversion Configuration
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Select which code patterns should be converted to modern or more efficient alternatives.
-        The wizard analyzes your code and suggests optimizations.
+        Select which code patterns should be converted to modern or more efficient alternatives. The
+        wizard analyzes your code and suggests optimizations.
       </Typography>
 
       <Box sx={{ mb: 4 }}>
@@ -131,9 +148,21 @@ export const PatternConversionWizard: React.FC<WizardStepProps> = ({
           </Box>
         </Box>
 
-        <List sx={{ maxHeight: 300, overflowY: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+        <List
+          sx={{
+            maxHeight: 300,
+            overflowY: 'auto',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
+          }}
+        >
           {detectedPatterns.map((pattern) => (
-            <ListItem key={pattern.id} dense sx={{ flexDirection: 'column', alignItems: 'stretch' }}>
+            <ListItem
+              key={pattern.id}
+              dense
+              sx={{ flexDirection: 'column', alignItems: 'stretch' }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'flex-start', width: '100%', mb: 1 }}>
                 <FormControlLabel
                   control={
@@ -167,8 +196,8 @@ export const PatternConversionWizard: React.FC<WizardStepProps> = ({
               <Collapse in={selectedPatterns.includes(pattern.id)}>
                 <Box sx={{ ml: 4, mb: 2 }}>
                   <Typography variant="caption" color="text.secondary">
-                    <strong>Impact:</strong> High confidence conversion detected. This pattern
-                    can be safely converted with minimal risk.
+                    <strong>Impact:</strong> High confidence conversion detected. This pattern can
+                    be safely converted with minimal risk.
                   </Typography>
                 </Box>
               </Collapse>
@@ -253,9 +282,9 @@ export const PatternConversionWizard: React.FC<WizardStepProps> = ({
 
       <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
         <Typography variant="body2" color="text.secondary">
-          <strong>Expected Changes:</strong> Convert {selectedPatterns.length} pattern(s)
-          to {conversionTarget} style. {getSelectedPatternDetails().length} high-confidence
-          conversions detected with minimal risk assessment.
+          <strong>Expected Changes:</strong> Convert {selectedPatterns.length} pattern(s) to{' '}
+          {conversionTarget} style. {getSelectedPatternDetails().length} high-confidence conversions
+          detected with minimal risk assessment.
         </Typography>
       </Box>
     </Box>

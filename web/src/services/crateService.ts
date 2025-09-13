@@ -44,12 +44,14 @@ export class CrateService {
     }
 
     try {
-      const response: ApiResponse<{ crate: CrateInfo }> = await apiClient.get(`api/v1/crates/${name}`);
+      const response: ApiResponse<{ crate: CrateInfo }> = await apiClient.get(
+        `api/v1/crates/${name}`
+      );
       const crateInfo: CrateInfo = response.data.crate;
-      
+
       // Cache the result
       this.cache.set(name, crateInfo);
-      
+
       return crateInfo;
     } catch (error) {
       console.error('Error fetching crate info:', error);
@@ -67,15 +69,15 @@ export class CrateService {
     if (!info) return {};
 
     const targetVersion = version || info.max_version;
-    const versionInfo = info.versions.find(v => v.num === targetVersion);
-    
+    const versionInfo = info.versions.find((v) => v.num === targetVersion);
+
     return versionInfo?.features || info.features || {};
   }
 
   public async searchCrates(query: string): Promise<Array<{ name: string; description: string }>> {
     try {
       const response: ApiResponse<{ crates: any[] }> = await apiClient.get(`api/v1/crates`, {
-        params: { q: query, per_page: '10' }
+        params: { q: query, per_page: '10' },
       });
 
       return response.data.crates.map((crate: any) => ({

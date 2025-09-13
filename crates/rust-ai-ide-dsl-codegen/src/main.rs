@@ -7,12 +7,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         template SimpleFunction {
             name: "hello_function"
             description: "A simple hello function"
-            
+
             parameters: {
                 name: String!
                 greeting: String
             }
-            
+
             generate: {
                 content: """
 fn hello_{{name}}() {

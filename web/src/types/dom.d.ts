@@ -2,21 +2,29 @@
 interface Element {
   // Basic properties
   textContent: string | null;
-  
+
   // Methods
   getAttribute(name: string): string | null;
   querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E>;
   contains(other: Node | null): boolean;
   appendChild<T extends Node>(node: T): T;
   removeChild<T extends Node>(child: T): T;
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
-  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions
+  ): void;
 }
 
 interface HTMLElement extends Element {
   // Basic properties
   style: CSSStyleDeclaration;
-  
+
   // Methods
   getBoundingClientRect(): DOMRect;
 }

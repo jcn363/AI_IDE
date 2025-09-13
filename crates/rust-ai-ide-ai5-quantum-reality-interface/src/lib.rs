@@ -1,10 +1,10 @@
+use chrono::{DateTime, Utc};
+use ndarray::Array3;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use ndarray::Array3;
 
 /// Represents a quantum holographic interface
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -38,12 +38,17 @@ impl QuantumHolographicInterface {
         }
     }
 
-    pub async fn render_development_environment(&mut self, code_context: &CodeContext) -> Result<(), InterfaceError> {
+    pub async fn render_development_environment(
+        &mut self,
+        code_context: &CodeContext,
+    ) -> Result<(), InterfaceError> {
         // Clear existing elements
         self.visual_elements.clear();
 
         // Generate quantum holographic code visualization
-        let quantum_viz = self.generate_quantum_code_visualization(code_context).await?;
+        let quantum_viz = self
+            .generate_quantum_code_visualization(code_context)
+            .await?;
         self.visual_elements.extend(quantum_viz);
 
         // Add development tools in quantum space
@@ -53,13 +58,18 @@ impl QuantumHolographicInterface {
         // Initialize quantum interactions
         self.initialize_quantum_interactions().await?;
 
-        log::info!("Rendered quantum holographic development environment with {} elements",
-                  self.visual_elements.len());
+        log::info!(
+            "Rendered quantum holographic development environment with {} elements",
+            self.visual_elements.len()
+        );
 
         Ok(())
     }
 
-    async fn generate_quantum_code_visualization(&self, context: &CodeContext) -> Result<Vec<HolographicElement>, InterfaceError> {
+    async fn generate_quantum_code_visualization(
+        &self,
+        context: &CodeContext,
+    ) -> Result<Vec<HolographicElement>, InterfaceError> {
         let mut elements = Vec::new();
 
         for (i, code_block) in context.code_blocks.iter().enumerate() {
@@ -96,11 +106,17 @@ impl QuantumHolographicInterface {
         Ok(elements)
     }
 
-    async fn create_code_superposition(&self, code_block: &str) -> Result<Vec<String>, InterfaceError> {
+    async fn create_code_superposition(
+        &self,
+        code_block: &str,
+    ) -> Result<Vec<String>, InterfaceError> {
         // Simulate quantum superposition of code alternatives
         let mut alternatives = vec![
             code_block.to_string(),
-            format!("// Optimized version\n{}", code_block.replace("let", "const")),
+            format!(
+                "// Optimized version\n{}",
+                code_block.replace("let", "const")
+            ),
             format!("// Async version\n{}", code_block.replace("fn", "async fn")),
         ];
 
@@ -111,7 +127,10 @@ impl QuantumHolographicInterface {
         Ok(alternatives)
     }
 
-    async fn generate_quantum_code_variants(&self, code_block: &str) -> Result<Vec<String>, InterfaceError> {
+    async fn generate_quantum_code_variants(
+        &self,
+        code_block: &str,
+    ) -> Result<Vec<String>, InterfaceError> {
         // Simulate quantum algorithm for code optimization
         let variants = vec![
             code_block.replace("vec![", "(0..10).map(|x| x * 2).collect()"),
@@ -122,12 +141,34 @@ impl QuantumHolographicInterface {
         Ok(variants)
     }
 
-    async fn spawn_quantum_development_tools(&self) -> Result<Vec<HolographicElement>, InterfaceError> {
+    async fn spawn_quantum_development_tools(
+        &self,
+    ) -> Result<Vec<HolographicElement>, InterfaceError> {
         let tools = vec![
-            ("Code Analyzer", ElementType::DevelopmentTool { tool_type: ToolType::StaticAnalysis }),
-            ("Performance Profiler", ElementType::DevelopmentTool { tool_type: ToolType::Performance }),
-            ("Quantum Debugger", ElementType::DevelopmentTool { tool_type: ToolType::Debugger }),
-            ("Reality Bridge", ElementType::DevelopmentTool { tool_type: ToolType::Bridge }),
+            (
+                "Code Analyzer",
+                ElementType::DevelopmentTool {
+                    tool_type: ToolType::StaticAnalysis,
+                },
+            ),
+            (
+                "Performance Profiler",
+                ElementType::DevelopmentTool {
+                    tool_type: ToolType::Performance,
+                },
+            ),
+            (
+                "Quantum Debugger",
+                ElementType::DevelopmentTool {
+                    tool_type: ToolType::Debugger,
+                },
+            ),
+            (
+                "Reality Bridge",
+                ElementType::DevelopmentTool {
+                    tool_type: ToolType::Bridge,
+                },
+            ),
         ];
 
         let mut elements = Vec::new();
@@ -201,12 +242,17 @@ impl QuantumHolographicInterface {
 
     async fn create_quantum_entanglement(&self) -> Result<(), InterfaceError> {
         // Create quantum entanglement between interface elements
-        log::debug!("Created quantum entanglement network for {} elements",
-                   self.visual_elements.len());
+        log::debug!(
+            "Created quantum entanglement network for {} elements",
+            self.visual_elements.len()
+        );
         Ok(())
     }
 
-    pub async fn collapse_quantum_state(&self, user_gesture: &Gesture) -> Result<(), InterfaceError> {
+    pub async fn collapse_quantum_state(
+        &self,
+        user_gesture: &Gesture,
+    ) -> Result<(), InterfaceError> {
         // Handle quantum state collapse based on user interaction
         let mut state = self.quantum_state.write().await;
 
@@ -223,7 +269,10 @@ impl QuantumHolographicInterface {
             }
         }
 
-        log::info!("Collapsed quantum state based on gesture: {}", user_gesture.id);
+        log::info!(
+            "Collapsed quantum state based on gesture: {}",
+            user_gesture.id
+        );
         Ok(())
     }
 }
@@ -303,7 +352,10 @@ impl SpatialAudio {
         Ok(())
     }
 
-    pub async fn play_quantum_sound(&self, sound_type: QuantumSoundType) -> Result<(), InterfaceError> {
+    pub async fn play_quantum_sound(
+        &self,
+        sound_type: QuantumSoundType,
+    ) -> Result<(), InterfaceError> {
         // Play spatially positioned quantum sound effects
         log::debug!("Playing quantum sound: {:?}", sound_type);
         Ok(())
@@ -341,7 +393,10 @@ impl HapticSystem {
         }
     }
 
-    pub async fn generate_feedback(&self, feedback_type: HapticFeedback) -> Result<(), InterfaceError> {
+    pub async fn generate_feedback(
+        &self,
+        feedback_type: HapticFeedback,
+    ) -> Result<(), InterfaceError> {
         // Generate quantum-based haptic feedback
         log::debug!("Generating haptic feedback: {:?}", feedback_type);
         Ok(())
@@ -601,9 +656,14 @@ impl QuantumRealityInterfaceManager {
         }
     }
 
-    pub async fn create_interface(&self, code_context: &CodeContext) -> Result<Uuid, InterfaceError> {
+    pub async fn create_interface(
+        &self,
+        code_context: &CodeContext,
+    ) -> Result<Uuid, InterfaceError> {
         let mut interface = QuantumHolographicInterface::new().await;
-        interface.render_development_environment(code_context).await?;
+        interface
+            .render_development_environment(code_context)
+            .await?;
 
         let id = interface.id;
         let mut interfaces = self.active_interfaces.write().await;
@@ -613,7 +673,11 @@ impl QuantumRealityInterfaceManager {
         Ok(id)
     }
 
-    pub async fn process_gesture(&self, interface_id: Uuid, gesture: &Gesture) -> Result<(), InterfaceError> {
+    pub async fn process_gesture(
+        &self,
+        interface_id: Uuid,
+        gesture: &Gesture,
+    ) -> Result<(), InterfaceError> {
         let interfaces = self.active_interfaces.read().await;
         if let Some(interface) = interfaces.get(&interface_id) {
             interface.collapse_quantum_state(gesture).await?;
@@ -778,9 +842,7 @@ mod tests {
         let manager = QuantumRealityInterfaceManager::new().await;
 
         let context = CodeContext {
-            code_blocks: vec![
-                "fn main() { println!(\"Quantum development!\"); }".to_string(),
-            ],
+            code_blocks: vec!["fn main() { println!(\"Quantum development!\"); }".to_string()],
             file_structure: HashMap::new(),
             dependencies: vec![],
             quantum_complexity: 0.5,
@@ -805,7 +867,11 @@ mod tests {
             id: Uuid::new_v4(),
             gesture_type: GestureType::Selection,
             position: Position3D::new(1.0, 2.0, 3.0),
-            velocity: Velocity3D { x: 0.1, y: 0.2, z: 0.0 },
+            velocity: Velocity3D {
+                x: 0.1,
+                y: 0.2,
+                z: 0.0,
+            },
             intensity: 0.8,
             quantum_phase: std::f32::consts::PI,
             timestamp: Utc::now(),

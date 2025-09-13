@@ -1,5 +1,5 @@
-use syn::{visit, ItemTrait};
 use super::*;
+use syn::{visit, ItemTrait};
 
 /// Represents an interface segregation violation
 #[derive(Debug)]
@@ -22,7 +22,7 @@ impl<'a> InterfaceVisitor<'a> {
             violations: Vec::new(),
         }
     }
-    
+
     /// Check if a trait has too many methods
     fn check_trait_size(&mut self, item: &ItemTrait) {
         let method_count = item.items.len();
@@ -42,7 +42,7 @@ impl<'a> ArchitecturalVisitor for InterfaceVisitor<'a> {
     fn analyze(&mut self, ast: &File) -> Vec<ArchitecturalFinding> {
         self.violations.clear();
         self.visit_file(ast);
-        
+
         self.violations.drain(..).map(|violation| {
             self.create_finding(
                 "interface-segregation-violation",
@@ -55,7 +55,7 @@ impl<'a> ArchitecturalVisitor for InterfaceVisitor<'a> {
             )
         }).collect()
     }
-    
+
     fn analyzer(&self) -> &ArchitecturalAnalyzer {
         self.analyzer
     }

@@ -1,18 +1,41 @@
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import React, { Suspense } from 'react';
+import {
+  CssBaseline,
+  ThemeProvider,
+  createTheme,
+  Box,
+  CircularProgress,
+} from '../components/shared/MaterialUI';
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { Layout } from './components/Layout';
-import { Home } from './pages/Home';
-import EditorPage from './pages/EditorPage';
-import { Settings } from './pages/Settings';
-import BuildPage from './pages/BuildPage';
-import { FileExplorer } from './components/FileExplorer/index';
-import DebuggerPanel from './components/DebuggerPanel';
-import TestingPage from './pages/TestingPage';
-import DocsPage from './pages/DocsPage';
-import DependencyGraphPage from './pages/DependencyGraphPage';
-import VersionAlignmentPage from './pages/VersionAlignmentPage';
+
+// Lazy load all page components for code splitting
+const Home = React.lazy(() => import('./pages/Home'));
+const EditorPage = React.lazy(() => import('./pages/EditorPage'));
+const Settings = React.lazy(() => import('./pages/Settings'));
+const BuildPage = React.lazy(() => import('./pages/BuildPage'));
+const FileExplorer = React.lazy(() => import('./components/FileExplorer/index'));
+const DebuggerPanel = React.lazy(() => import('./components/DebuggerPanel'));
+const TestingPage = React.lazy(() => import('./pages/TestingPage'));
+const DocsPage = React.lazy(() => import('./pages/DocsPage'));
+const DependencyGraphPage = React.lazy(() => import('./pages/DependencyGraphPage'));
+const VersionAlignmentPage = React.lazy(() => import('./pages/VersionAlignmentPage'));
+
+// Loading component for Suspense fallback
+const LoadingFallback = () => (
+  <Box
+    sx={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+    }}
+  >
+    <CircularProgress />
+  </Box>
+);
 
 const darkTheme = createTheme({
   palette: {
@@ -60,21 +83,23 @@ function App() {
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
         <Router>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Navigate to="/home" replace />} />
-              <Route path="home" element={<Home />} />
-              <Route path="editor" element={<EditorPage />} />
-              <Route path="build" element={<BuildPage />} />
-              <Route path="explorer" element={<FileExplorer />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="debugger" element={<DebuggerPanel />} />
-              <Route path="testing" element={<TestingPage />} />
-              <Route path="docs" element={<DocsPage />} />
-              <Route path="dependencies" element={<DependencyGraphPage />} />
-              <Route path="version-alignment" element={<VersionAlignmentPage />} />
-            </Route>
-          </Routes>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Navigate to="/home" replace />} />
+                <Route path="home" element={<Home />} />
+                <Route path="editor" element={<EditorPage />} />
+                <Route path="build" element={<BuildPage />} />
+                <Route path="explorer" element={<FileExplorer />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="debugger" element={<DebuggerPanel />} />
+                <Route path="testing" element={<TestingPage />} />
+                <Route path="docs" element={<DocsPage />} />
+                <Route path="dependencies" element={<DependencyGraphPage />} />
+                <Route path="version-alignment" element={<VersionAlignmentPage />} />
+              </Route>
+            </Routes>
+          </Suspense>
         </Router>
       </ThemeProvider>
     </Provider>

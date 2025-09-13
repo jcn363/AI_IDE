@@ -1,5 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Typography, Button, Paper, Tooltip, Switch, FormControlLabel, IconButton } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Button,
+  Paper,
+  Tooltip,
+  Switch,
+  FormControlLabel,
+  IconButton,
+} from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { Clear as ClearIcon } from '@mui/icons-material';
@@ -44,97 +53,111 @@ function useOpenInEditor() {
   const dispatch = useAppDispatch();
   const activePaneId = useAppSelector((s: RootState) => s.tabManagement.activePaneId);
   const workspaceRoot = useAppSelector((s: RootState) => s.editor.fileTree?.path);
-  return useCallback((filePath: string, line?: number, column?: number) => {
-    if (!filePath) return;
-    const resolved = resolvePathAgainstRoot(workspaceRoot, filePath);
-    if (activePaneId) {
-      dispatch(tabManagementActions.openFileInPane({ paneId: activePaneId, filePath: resolved }));
-    }
-    dispatch(editorActions.setCurrentFile(resolved));
-    dispatch(editorActions.setNavigationTarget({ filePath: resolved, line, column }));
-    // Navigation is handled by EditorPage, which listens to navigationTarget and applies the cursor move in Monaco.
-  }, [dispatch, activePaneId, workspaceRoot]);
+  return useCallback(
+    (filePath: string, line?: number, column?: number) => {
+      if (!filePath) return;
+      const resolved = resolvePathAgainstRoot(workspaceRoot, filePath);
+      if (activePaneId) {
+        dispatch(tabManagementActions.openFileInPane({ paneId: activePaneId, filePath: resolved }));
+      }
+      dispatch(editorActions.setCurrentFile(resolved));
+      dispatch(editorActions.setNavigationTarget({ filePath: resolved, line, column }));
+      // Navigation is handled by EditorPage, which listens to navigationTarget and applies the cursor move in Monaco.
+    },
+    [dispatch, activePaneId, workspaceRoot]
+  );
 }
 
 function useRenderHighlighted(parseJsonDiagnostics: boolean) {
   const openInEditor = useOpenInEditor();
-  return useCallback((text: string) => {
-    const lines = text.split('\n');
-    return (
-      <>
-        {lines.map((line, idx) => {
-          // Extract possible file locations
-          let clickable: { path: string; line?: number; col?: number } | null = null;
-          let display = line;
+  return useCallback(
+    (text: string) => {
+      const lines = text.split('\n');
+      return (
+        <>
+          {lines.map((line, idx) => {
+            // Extract possible file locations
+            let clickable: { path: string; line?: number; col?: number } | null = null;
+            let display = line;
 
-          // Try JSON diagnostics if enabled
-          if (parseJsonDiagnostics) {
-            try {
-              const obj = JSON.parse(line);
-              if (obj && obj.message && obj.spans && obj.spans.length) {
-                const span = obj.spans[0];
-                if (span && span.file_name && span.line_start && span.column_start) {
+            // Try JSON diagnostics if enabled
+            if (parseJsonDiagnostics) {
+              try {
+                const obj = JSON.parse(line);
+                if (obj && obj.message && obj.spans && obj.spans.length) {
+                  const span = obj.spans[0];
+                  if (span && span.file_name && span.line_start && span.column_start) {
+                    clickable = {
+                      path: span.file_name,
+                      line: span.line_start,
+                      col: span.column_start,
+                    };
+                    display = `${(obj.level || 'diagnostic').toUpperCase()}: ${obj.message} (${span.file_name}:${span.line_start}:${span.column_start})`;
+                  }
+                }
+              } catch {}
+            }
+
+            for (const pat of locationPatterns) {
+              const m = line.match(pat as RegExp);
+              if (m) {
+                // Pattern lengths:
+                //  - rustc arrow: [full, path, line, col] => length 4
+                //  - generic:     [full, spaceOrStart, path, line, col] => length 5
+                let path = '';
+                let ln: number | undefined;
+                let col: number | undefined;
+                if (m.length === 4) {
+                  path = m[1];
+                  ln = parseInt(m[2], 10);
+                  col = parseInt(m[3], 10);
+                } else if (m.length === 5) {
+                  path = m[2];
+                  ln = parseInt(m[3], 10);
+                  col = parseInt(m[4], 10);
+                }
+                if (path) {
                   clickable = {
-                    path: span.file_name,
-                    line: span.line_start,
-                    col: span.column_start,
+                    path,
+                    line: isNaN(ln as any) ? undefined : ln,
+                    col: isNaN(col as any) ? undefined : col,
                   };
-                  display = `${(obj.level || 'diagnostic').toUpperCase()}: ${obj.message} (${span.file_name}:${span.line_start}:${span.column_start})`;
+                  break;
                 }
               }
-            } catch {}
-          }
-
-          for (const pat of locationPatterns) {
-            const m = line.match(pat as RegExp);
-            if (m) {
-              // Pattern lengths:
-              //  - rustc arrow: [full, path, line, col] => length 4
-              //  - generic:     [full, spaceOrStart, path, line, col] => length 5
-              let path = '';
-              let ln: number | undefined;
-              let col: number | undefined;
-              if (m.length === 4) {
-                path = m[1];
-                ln = parseInt(m[2], 10);
-                col = parseInt(m[3], 10);
-              } else if (m.length === 5) {
-                path = m[2];
-                ln = parseInt(m[3], 10);
-                col = parseInt(m[4], 10);
-              }
-              if (path) {
-                clickable = { path, line: isNaN(ln as any) ? undefined : ln, col: isNaN(col as any) ? undefined : col };
-                break;
-              }
             }
-          }
 
-          const isError = errorPattern.test(line);
-          return (
-            <Box
-              key={idx}
-              component="div"
-              sx={{
-                color: isError ? 'error.main' : 'text.primary',
-                whiteSpace: 'pre-wrap',
-                fontFamily: 'inherit',
-                cursor: clickable ? 'pointer' : 'default',
-                textDecoration: clickable ? 'underline' : 'none',
-                textUnderlineOffset: clickable ? '2px' : undefined,
-              }}
-              onClick={() => {
-                if (clickable) openInEditor(clickable.path, clickable.line, clickable.col);
-              }}
-              title={clickable ? `Open ${clickable.path}${clickable.line ? `:${clickable.line}${clickable.col ? `:${clickable.col}` : ''}` : ''}` : undefined}
-            >
-              {display}
-            </Box>
-          );
-        })}
-      </>
-    );
-  }, [openInEditor, parseJsonDiagnostics]);
+            const isError = errorPattern.test(line);
+            return (
+              <Box
+                key={idx}
+                component="div"
+                sx={{
+                  color: isError ? 'error.main' : 'text.primary',
+                  whiteSpace: 'pre-wrap',
+                  fontFamily: 'inherit',
+                  cursor: clickable ? 'pointer' : 'default',
+                  textDecoration: clickable ? 'underline' : 'none',
+                  textUnderlineOffset: clickable ? '2px' : undefined,
+                }}
+                onClick={() => {
+                  if (clickable) openInEditor(clickable.path, clickable.line, clickable.col);
+                }}
+                title={
+                  clickable
+                    ? `Open ${clickable.path}${clickable.line ? `:${clickable.line}${clickable.col ? `:${clickable.col}` : ''}` : ''}`
+                    : undefined
+                }
+              >
+                {display}
+              </Box>
+            );
+          })}
+        </>
+      );
+    },
+    [openInEditor, parseJsonDiagnostics]
+  );
 }
 
 const CommandOutput: React.FC<CommandOutputProps> = ({
@@ -156,7 +179,9 @@ const CommandOutput: React.FC<CommandOutputProps> = ({
   );
 
   const handleCopyAll = useCallback(() => {
-    const all = commandEntries.map(([, cmd]) => `$ cargo ${cmd.command} ${cmd.args?.join(' ')}\n${cmd.output ?? ''}`).join('\n\n');
+    const all = commandEntries
+      .map(([, cmd]) => `$ cargo ${cmd.command} ${cmd.args?.join(' ')}\n${cmd.output ?? ''}`)
+      .join('\n\n');
     const nav = (globalThis as any)?.navigator;
     if (nav && nav.clipboard && typeof nav.clipboard.writeText === 'function') {
       nav.clipboard.writeText(all).catch(() => {});
@@ -216,22 +241,38 @@ const CommandOutput: React.FC<CommandOutputProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Tooltip title="Expand all blocks">
             <span>
-              <Button size="small" onClick={handleExpandAll} disabled={commandEntries.length === 0}>Expand All</Button>
+              <Button size="small" onClick={handleExpandAll} disabled={commandEntries.length === 0}>
+                Expand All
+              </Button>
             </span>
           </Tooltip>
           <Tooltip title="Collapse all blocks">
             <span>
-              <Button size="small" onClick={handleCollapseAll} disabled={commandEntries.length === 0}>Collapse All</Button>
+              <Button
+                size="small"
+                onClick={handleCollapseAll}
+                disabled={commandEntries.length === 0}
+              >
+                Collapse All
+              </Button>
             </span>
           </Tooltip>
           <FormControlLabel
             sx={{ ml: 1 }}
-            control={<Switch size="small" checked={parseJson} onChange={() => { /* controlled by parent */ }} />}
+            control={
+              <Switch
+                size="small"
+                checked={parseJson}
+                onChange={() => {
+                  /* controlled by parent */
+                }}
+              />
+            }
             label={<Typography variant="caption">Parse JSON diagnostics</Typography>}
           />
         </Box>
       </Box>
-      
+
       {commandEntries.map(([id, cmd]: [string, any]) => (
         <Box key={id} sx={{ mb: 2 }}>
           <Typography variant="subtitle2" color="text.secondary">
@@ -245,7 +286,9 @@ const CommandOutput: React.FC<CommandOutputProps> = ({
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                 {cmd.diagnostics.map((d: any, dIdx: number) => {
                   const span = d.spans?.[0];
-                  const loc = span ? `${span.file_name}:${span.line_start}:${span.column_start}` : '';
+                  const loc = span
+                    ? `${span.file_name}:${span.line_start}:${span.column_start}`
+                    : '';
                   const clickable = span && span.file_name;
                   const level = (d.level || '').toUpperCase();
                   return (
@@ -268,7 +311,8 @@ const CommandOutput: React.FC<CommandOutputProps> = ({
                       }}
                       title={clickable ? `Open ${loc}` : undefined}
                     >
-                      [{level || 'DIAG'}] {d.message || ''}{loc ? ` (${loc})` : ''}
+                      [{level || 'DIAG'}] {d.message || ''}
+                      {loc ? ` (${loc})` : ''}
                     </Box>
                   );
                 })}
@@ -282,30 +326,51 @@ const CommandOutput: React.FC<CommandOutputProps> = ({
               const isErrBlock = errorPattern.test(block);
               const isCollapsed = collapsed[key] ?? (isErrBlock ? true : false);
               return (
-                <Paper key={key} variant="outlined" sx={{ p: 1, bgcolor: 'background.paper', mb: 1 }}>
+                <Paper
+                  key={key}
+                  variant="outlined"
+                  sx={{ p: 1, bgcolor: 'background.paper', mb: 1 }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: isCollapsed ? 0 : 1 }}>
-                    <IconButton size="small" onClick={() => setCollapsed(prev => ({ ...prev, [key]: !isCollapsed }))}>
-                      {isCollapsed ? <ExpandMoreIcon fontSize="small" /> : <ExpandLessIcon fontSize="small" />}
+                    <IconButton
+                      size="small"
+                      onClick={() => setCollapsed((prev) => ({ ...prev, [key]: !isCollapsed }))}
+                    >
+                      {isCollapsed ? (
+                        <ExpandMoreIcon fontSize="small" />
+                      ) : (
+                        <ExpandLessIcon fontSize="small" />
+                      )}
                     </IconButton>
-                    <Typography variant="caption" color={isErrBlock ? 'error.main' : 'text.secondary'} sx={{ ml: 0.5 }}>
-                      {isErrBlock ? 'Error Block' : 'Output Block'} {isCollapsed && `(${block.split('\n').length} lines)`}
+                    <Typography
+                      variant="caption"
+                      color={isErrBlock ? 'error.main' : 'text.secondary'}
+                      sx={{ ml: 0.5 }}
+                    >
+                      {isErrBlock ? 'Error Block' : 'Output Block'}{' '}
+                      {isCollapsed && `(${block.split('\n').length} lines)`}
                     </Typography>
                     <Box sx={{ flexGrow: 1 }} />
                     <Tooltip title="Export block">
                       <span>
-                        <Button size="small" onClick={() => {
-                          const content = block;
-                          const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-                          const a = document.createElement('a') as any; // tolerant typing for projects without DOM lib
-                          const href = URL.createObjectURL(blob);
-                          a.href = href;
-                          a.download = `cargo-block-${idx}.txt`;
-                          a.style = 'display:none';
-                          (document.body as any)?.appendChild?.(a);
-                          a.click?.();
-                          a.remove?.();
-                          URL.revokeObjectURL(href);
-                        }}>Save</Button>
+                        <Button
+                          size="small"
+                          onClick={() => {
+                            const content = block;
+                            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                            const a = document.createElement('a') as any; // tolerant typing for projects without DOM lib
+                            const href = URL.createObjectURL(blob);
+                            a.href = href;
+                            a.download = `cargo-block-${idx}.txt`;
+                            a.style = 'display:none';
+                            (document.body as any)?.appendChild?.(a);
+                            a.click?.();
+                            a.remove?.();
+                            URL.revokeObjectURL(href);
+                          }}
+                        >
+                          Save
+                        </Button>
                       </span>
                     </Tooltip>
                   </Box>
@@ -318,13 +383,15 @@ const CommandOutput: React.FC<CommandOutputProps> = ({
               );
             })
           ) : (
-            <Paper variant="outlined" sx={{ p: 1, bgcolor: 'background.paper' }}>No output yet...</Paper>
+            <Paper variant="outlined" sx={{ p: 1, bgcolor: 'background.paper' }}>
+              No output yet...
+            </Paper>
           )}
         </Box>
       ))}
       <div ref={bottomRef} />
     </TabPanel>
   );
-}
+};
 
 export default CommandOutput;

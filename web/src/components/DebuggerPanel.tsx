@@ -48,137 +48,141 @@ interface DebuggerControlsProps {
   onStop: () => Promise<void>;
 }
 
-const DebuggerControls = React.memo<DebuggerControlsProps>(({
-  onError,
-  isRunning,
-  isPaused,
-  onStart,
-  onPause,
-  onContinue,
-  onStepOver,
-  onStepInto,
-  onStepOut,
-  onStop,
-}) => {
-  const [execPath, setExecPath] = useState('');
-  const [workDir, setWorkDir] = useState('');
-  const [busy, setBusy] = useState(false);
+const DebuggerControls = React.memo<DebuggerControlsProps>(
+  ({
+    onError,
+    isRunning,
+    isPaused,
+    onStart,
+    onPause,
+    onContinue,
+    onStepOver,
+    onStepInto,
+    onStepOut,
+    onStop,
+  }) => {
+    const [execPath, setExecPath] = useState('');
+    const [workDir, setWorkDir] = useState('');
+    const [busy, setBusy] = useState(false);
 
-  const handleStart = useCallback(async () => {
-    if (!execPath || !workDir) {
-      onError('Executable path and working directory are required');
-      return;
-    }
-    setBusy(true);
-    onError(null);
-    try {
-      await onStart(execPath, workDir);
-    } catch (err) {
-      onError(err instanceof Error ? err.message : 'Failed to start debugger');
-      console.error('Debugger start error:', err);
-    } finally {
-      setBusy(false);
-    }
-  }, [execPath, workDir, onError, onStart]);
-
-  const withBusy = useCallback(
-    (fn: () => Promise<void>) => async () => {
+    const handleStart = useCallback(async () => {
+      if (!execPath || !workDir) {
+        onError('Executable path and working directory are required');
+        return;
+      }
       setBusy(true);
+      onError(null);
       try {
-        await fn();
+        await onStart(execPath, workDir);
+      } catch (err) {
+        onError(err instanceof Error ? err.message : 'Failed to start debugger');
+        console.error('Debugger start error:', err);
       } finally {
         setBusy(false);
       }
-    },
-    [],
-  );
+    }, [execPath, workDir, onError, onStart]);
 
-  const handlePause = withBusy(onPause);
-  const handleContinue = withBusy(onContinue);
-  const handleStepOver = withBusy(onStepOver);
-  const handleStepInto = withBusy(onStepInto);
-  const handleStepOut = withBusy(onStepOut);
-  const handleStop = withBusy(onStop);
+    const withBusy = useCallback(
+      (fn: () => Promise<void>) => async () => {
+        setBusy(true);
+        try {
+          await fn();
+        } finally {
+          setBusy(false);
+        }
+      },
+      []
+    );
 
-  return (
-    <Stack direction="row" spacing={1} alignItems="center">
-      <TextField
-        size="small"
-        label="Executable"
-        value={execPath}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setExecPath((e.target as any).value)}
-        sx={{ minWidth: 240 }}
-        aria-label="Executable path"
-      />
-      <TextField
-        size="small"
-        label="Working Dir"
-        value={workDir}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWorkDir((e.target as any).value)}
-        sx={{ minWidth: 240 }}
-        aria-label="Working directory"
-      />
-      <Button
-        variant="contained"
-        onClick={handleStart}
-        disabled={busy || isRunning || !execPath || !workDir}
-        startIcon={busy ? <CircularProgress size={16} /> : <StartIcon />}
-        aria-label="Start debugging session"
-      >
-        Start
-      </Button>
-      <Button
-        onClick={handlePause}
-        disabled={busy || !isRunning || isPaused}
-        startIcon={<PauseIcon />}
-        aria-label="Pause debugging session"
-      >
-        Pause
-      </Button>
-      <Button
-        onClick={handleContinue}
-        disabled={busy || !isPaused}
-        startIcon={<StartIcon />}
-        aria-label="Continue execution"
-      >
-        Continue
-      </Button>
-      <Button
-        onClick={handleStepOver}
-        disabled={busy || !isPaused}
-        startIcon={<StepOverIcon />}
-        aria-label="Step over"
-      >
-        Step Over
-      </Button>
-      <Button
-        onClick={handleStepInto}
-        disabled={busy || !isPaused}
-        startIcon={<StepIntoIcon />}
-        aria-label="Step into"
-      >
-        Step Into
-      </Button>
-      <Button
-        onClick={handleStepOut}
-        disabled={busy || !isPaused}
-        startIcon={<StepOutIcon />}
-        aria-label="Step out"
-      >
-        Step Out
-      </Button>
-      <Button
-        onClick={handleStop}
-        color="error"
-        disabled={busy || !isRunning}
-        startIcon={<StopIcon />}
-        aria-label="Stop debugging session"
-      >
-        Stop
-      </Button>
-    </Stack>
-  );
-});
+    const handlePause = withBusy(onPause);
+    const handleContinue = withBusy(onContinue);
+    const handleStepOver = withBusy(onStepOver);
+    const handleStepInto = withBusy(onStepInto);
+    const handleStepOut = withBusy(onStepOut);
+    const handleStop = withBusy(onStop);
+
+    return (
+      <Stack direction="row" spacing={1} alignItems="center">
+        <TextField
+          size="small"
+          label="Executable"
+          value={execPath}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setExecPath((e.target as any).value)
+          }
+          sx={{ minWidth: 240 }}
+          aria-label="Executable path"
+        />
+        <TextField
+          size="small"
+          label="Working Dir"
+          value={workDir}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWorkDir((e.target as any).value)}
+          sx={{ minWidth: 240 }}
+          aria-label="Working directory"
+        />
+        <Button
+          variant="contained"
+          onClick={handleStart}
+          disabled={busy || isRunning || !execPath || !workDir}
+          startIcon={busy ? <CircularProgress size={16} /> : <StartIcon />}
+          aria-label="Start debugging session"
+        >
+          Start
+        </Button>
+        <Button
+          onClick={handlePause}
+          disabled={busy || !isRunning || isPaused}
+          startIcon={<PauseIcon />}
+          aria-label="Pause debugging session"
+        >
+          Pause
+        </Button>
+        <Button
+          onClick={handleContinue}
+          disabled={busy || !isPaused}
+          startIcon={<StartIcon />}
+          aria-label="Continue execution"
+        >
+          Continue
+        </Button>
+        <Button
+          onClick={handleStepOver}
+          disabled={busy || !isPaused}
+          startIcon={<StepOverIcon />}
+          aria-label="Step over"
+        >
+          Step Over
+        </Button>
+        <Button
+          onClick={handleStepInto}
+          disabled={busy || !isPaused}
+          startIcon={<StepIntoIcon />}
+          aria-label="Step into"
+        >
+          Step Into
+        </Button>
+        <Button
+          onClick={handleStepOut}
+          disabled={busy || !isPaused}
+          startIcon={<StepOutIcon />}
+          aria-label="Step out"
+        >
+          Step Out
+        </Button>
+        <Button
+          onClick={handleStop}
+          color="error"
+          disabled={busy || !isRunning}
+          startIcon={<StopIcon />}
+          aria-label="Stop debugging session"
+        >
+          Stop
+        </Button>
+      </Stack>
+    );
+  }
+);
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -216,11 +220,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`debug-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -280,10 +280,13 @@ export default function DebuggerPanel() {
   }, []);
 
   // Memoize service callbacks so DebuggerControls (memoized) doesn't re-render unnecessarily
-  const startCb = useCallback(async (execPath: string, workDir: string) => {
-    await DebuggerService.start(execPath, workDir, []);
-    dispatch(debuggerActions.openDebugger());
-  }, [dispatch]);
+  const startCb = useCallback(
+    async (execPath: string, workDir: string) => {
+      await DebuggerService.start(execPath, workDir, []);
+      dispatch(debuggerActions.openDebugger());
+    },
+    [dispatch]
+  );
 
   const pauseCb = useCallback(async () => {
     await DebuggerService.pause();
@@ -445,7 +448,10 @@ export default function DebuggerPanel() {
 
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography variant="subtitle1">Call Stack</Typography>
-            <List dense sx={{ maxHeight: 200, overflow: 'auto', border: '1px solid', borderColor: 'divider' }}>
+            <List
+              dense
+              sx={{ maxHeight: 200, overflow: 'auto', border: '1px solid', borderColor: 'divider' }}
+            >
               {callStack.map((f) => (
                 <ListItem key={f.id} disablePadding>
                   <ListItemButton onClick={() => selectFrame(f.id)}>
@@ -465,7 +471,10 @@ export default function DebuggerPanel() {
 
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography variant="subtitle1">Breakpoints</Typography>
-            <List dense sx={{ maxHeight: 200, overflow: 'auto', border: '1px solid', borderColor: 'divider' }}>
+            <List
+              dense
+              sx={{ maxHeight: 200, overflow: 'auto', border: '1px solid', borderColor: 'divider' }}
+            >
               {breakpoints.map((b) => (
                 <ListItem
                   key={String(b.id)}
@@ -495,7 +504,9 @@ export default function DebuggerPanel() {
                 fullWidth
                 size="small"
                 value={expr}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setExpr((e.target as any).value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setExpr((e.target as any).value)
+                }
                 placeholder="Enter expression to evaluate"
                 disabled={!isRunning && !isPaused}
                 onKeyDown={async (e) => {
@@ -517,7 +528,15 @@ export default function DebuggerPanel() {
               </Button>
             </Stack>
             {lastEvalResult && (
-              <Box sx={{ mt: 2, p: 1, bgcolor: 'background.default', borderRadius: 1, fontFamily: 'monospace' }}>
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 1,
+                  bgcolor: 'background.default',
+                  borderRadius: 1,
+                  fontFamily: 'monospace',
+                }}
+              >
                 {lastEvalResult}
               </Box>
             )}
@@ -541,18 +560,27 @@ export default function DebuggerPanel() {
                 Refresh
               </Button>
             </Stack>
-            <List dense sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider' }}>
+            <List
+              dense
+              sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider' }}
+            >
               {activeTasks.map((task) => (
                 <ListItem key={task.id} disablePadding>
                   <ListItemButton onClick={() => inspectTask(task.id)}>
                     <ListItemIcon>
-                      <TaskAlt sx={{ color: task.status === 'running' ? 'success.main' : 'warning.main' }} />
+                      <TaskAlt
+                        sx={{ color: task.status === 'running' ? 'success.main' : 'warning.main' }}
+                      />
                     </ListItemIcon>
                     <ListItemText
                       primary={
                         <Stack direction="row" alignItems="center" spacing={1}>
                           <Typography variant="body2">{task.name}</Typography>
-                          <Chip label={task.status} size="small" color={task.status === 'running' ? 'success' : 'warning'} />
+                          <Chip
+                            label={task.status}
+                            size="small"
+                            color={task.status === 'running' ? 'success' : 'warning'}
+                          />
                         </Stack>
                       }
                       secondary={task.spawnLocation}
@@ -578,12 +606,17 @@ export default function DebuggerPanel() {
               <Typography variant="subtitle1">Futures & Streams</Typography>
               <Chip label={`${futures.length} active`} size="small" />
             </Stack>
-            <List dense sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider' }}>
+            <List
+              dense
+              sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider' }}
+            >
               {futures.map((future) => (
                 <ListItem key={future.id} disablePadding>
                   <ListItemButton onClick={() => inspectFuture(future.id)}>
                     <ListItemIcon>
-                      <Future sx={{ color: future.state === 'ready' ? 'success.main' : 'info.main' }} />
+                      <Future
+                        sx={{ color: future.state === 'ready' ? 'success.main' : 'info.main' }}
+                      />
                     </ListItemIcon>
                     <ListItemText
                       primary={
@@ -591,7 +624,11 @@ export default function DebuggerPanel() {
                           <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
                             {future.expression.slice(0, 50)}...
                           </Typography>
-                          <Chip label={future.state} size="small" color={future.state === 'ready' ? 'success' : 'info'} />
+                          <Chip
+                            label={future.state}
+                            size="small"
+                            color={future.state === 'ready' ? 'success' : 'info'}
+                          />
                         </Stack>
                       }
                       secondary={`Future ${future.id}`}
@@ -621,7 +658,15 @@ export default function DebuggerPanel() {
                 ✅ No deadlocks detected
               </Typography>
             ) : (
-              <List dense sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider' }}>
+              <List
+                dense
+                sx={{
+                  maxHeight: 300,
+                  overflow: 'auto',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
                 {deadlocks.map((deadlock, index) => (
                   <ListItem key={index} disablePadding>
                     <ListItemIcon>
@@ -634,7 +679,13 @@ export default function DebuggerPanel() {
                           <Chip
                             label={deadlock.severity}
                             size="small"
-                            color={deadlock.severity === 'high' ? 'error' : deadlock.severity === 'medium' ? 'warning' : 'info'}
+                            color={
+                              deadlock.severity === 'high'
+                                ? 'error'
+                                : deadlock.severity === 'medium'
+                                  ? 'warning'
+                                  : 'info'
+                            }
                           />
                         </Stack>
                       }

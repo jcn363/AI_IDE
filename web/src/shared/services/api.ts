@@ -120,7 +120,9 @@ export class ApiClient {
 
   /** Build URL with base URL and query parameters */
   private buildUrl(endpoint: string, params?: Record<string, string | number | boolean>): string {
-    let url = endpoint.startsWith('http') ? endpoint : `${this.config.baseUrl}/${endpoint}`.replace(/\/+/g, '/');
+    let url = endpoint.startsWith('http')
+      ? endpoint
+      : `${this.config.baseUrl}/${endpoint}`.replace(/\/+/g, '/');
 
     if (params && Object.keys(params).length > 0) {
       const searchParams = new URLSearchParams();
@@ -149,9 +151,10 @@ export class ApiClient {
 
         // Add authentication if configured and not skipped
         if (!options.skipAuth) {
-          const authToken = typeof this.config.authToken === 'function'
-            ? this.config.authToken()
-            : this.config.authToken;
+          const authToken =
+            typeof this.config.authToken === 'function'
+              ? this.config.authToken()
+              : this.config.authToken;
 
           if (authToken) {
             headers.set('Authorization', `Bearer ${authToken}`);
@@ -166,12 +169,19 @@ export class ApiClient {
         const requestInit: RequestInit = {
           method,
           headers,
-          body: options.body ? (typeof options.body === 'object' ? JSON.stringify(options.body) : options.body) : undefined,
+          body: options.body
+            ? typeof options.body === 'object'
+              ? JSON.stringify(options.body)
+              : options.body
+            : undefined,
         };
 
         // Apply timeout using AbortController
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), options.timeout || this.config.timeout);
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          options.timeout || this.config.timeout
+        );
 
         try {
           requestInit.signal = controller.signal;
@@ -182,20 +192,21 @@ export class ApiClient {
           clearTimeout(timeoutId);
           throw fetchError;
         }
-
       } catch (error) {
         console.warn(`[API Request ${requestId}] Attempt ${attempt + 1} failed:`, error);
 
         // Don't retry on the last attempt or for certain errors
-        if (attempt === this.config.maxRetries ||
-            error instanceof TypeError ||
-            (error instanceof DOMException && error.name === 'AbortError')) {
+        if (
+          attempt === this.config.maxRetries ||
+          error instanceof TypeError ||
+          (error instanceof DOMException && error.name === 'AbortError')
+        ) {
           throw error;
         }
 
         // Simple exponential backoff
         const delay = Math.min(1000 * Math.pow(2, attempt), 10000);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
 
@@ -228,7 +239,7 @@ export class ApiClient {
           errorDetails = errorData;
         } catch {
           try {
-            errorMessage = await response.text() || errorMessage;
+            errorMessage = (await response.text()) || errorMessage;
           } catch {}
         }
 
@@ -269,10 +280,11 @@ export class ApiClient {
         requestId: options.requestId || 'unknown',
       };
 
-      console.log(`[API Response ${apiResponse.requestId}] ${response.status} ${url} (${responseTime}ms)`);
+      console.log(
+        `[API Response ${apiResponse.requestId}] ${response.status} ${url} (${responseTime}ms)`
+      );
 
       return apiResponse;
-
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;
@@ -280,46 +292,56 @@ export class ApiClient {
 
       // Handle network/other errors
       const responseTime = Date.now() - startTime;
-      const message = error instanceof DOMException && error.name === 'AbortError'
-        ? 'Request timed out'
-        : 'Network error';
+      const message =
+        error instanceof DOMException && error.name === 'AbortError'
+          ? 'Request timed out'
+          : 'Network error';
 
-      throw new ApiError(
-        message,
-        0,
-        url,
-        method,
-        options.requestId || 'unknown',
-        'NETWORK_ERROR',
-        { originalError: (error as Error).message }
-      );
+      throw new ApiError(message, 0, url, method, options.requestId || 'unknown', 'NETWORK_ERROR', {
+        originalError: (error as Error).message,
+      });
     }
   }
 
   // ===== CONVENIENCE METHODS =================================================================
 
   /** GET request */
-  public async get<T = any>(endpoint: string, options: Omit<ApiRequestOptions, 'method'> = {}): Promise<ApiResponse<T>> {
+  public async get<T = any>(
+    endpoint: string,
+    options: Omit<ApiRequestOptions, 'method'> = {}
+  ): Promise<ApiResponse<T>> {
     return this.request('GET', endpoint, options);
   }
 
   /** POST request */
-  public async post<T = any>(endpoint: string, options: Omit<ApiRequestOptions, 'method'> = {}): Promise<ApiResponse<T>> {
+  public async post<T = any>(
+    endpoint: string,
+    options: Omit<ApiRequestOptions, 'method'> = {}
+  ): Promise<ApiResponse<T>> {
     return this.request('POST', endpoint, options);
   }
 
   /** PUT request */
-  public async put<T = any>(endpoint: string, options: Omit<ApiRequestOptions, 'method'> = {}): Promise<ApiResponse<T>> {
+  public async put<T = any>(
+    endpoint: string,
+    options: Omit<ApiRequestOptions, 'method'> = {}
+  ): Promise<ApiResponse<T>> {
     return this.request('PUT', endpoint, options);
   }
 
   /** DELETE request */
-  public async delete<T = any>(endpoint: string, options: Omit<ApiRequestOptions, 'method'> = {}): Promise<ApiResponse<T>> {
+  public async delete<T = any>(
+    endpoint: string,
+    options: Omit<ApiRequestOptions, 'method'> = {}
+  ): Promise<ApiResponse<T>> {
     return this.request('DELETE', endpoint, options);
   }
 
   /** PATCH request */
-  public async patch<T = any>(endpoint: string, options: Omit<ApiRequestOptions, 'method'> = {}): Promise<ApiResponse<T>> {
+  public async patch<T = any>(
+    endpoint: string,
+    options: Omit<ApiRequestOptions, 'method'> = {}
+  ): Promise<ApiResponse<T>> {
     return this.request('PATCH', endpoint, options);
   }
 

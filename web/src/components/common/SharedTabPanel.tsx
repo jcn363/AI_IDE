@@ -46,11 +46,7 @@ export const SharedTabPanel: React.FC<SharedTabPanelProps> = ({
       data-testid={testId}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ pt: 2 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ pt: 2 }}>{children}</Box>}
     </div>
   );
 };
@@ -83,11 +79,10 @@ export const SharedTabsHelper = {
   renderTabs: <T extends { label: string; disabled?: boolean }>(
     tabs: T[],
     renderTab: (tab: T, index: number) => React.ReactNode
-  ) => tabs.map((tab, index) => (
-    <React.Fragment key={`${tab.label}-${index}`}>
-      {renderTab(tab, index)}
-    </React.Fragment>
-  )),
+  ) =>
+    tabs.map((tab, index) => (
+      <React.Fragment key={`${tab.label}-${index}`}>{renderTab(tab, index)}</React.Fragment>
+    )),
 };
 
 export default SharedTabPanel;

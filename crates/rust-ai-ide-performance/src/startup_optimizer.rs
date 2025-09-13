@@ -1,13 +1,13 @@
+use crate::{DefaultSystemMonitor, Monitor, SystemMonitor};
+use moka::future::Cache;
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::future::Future;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tokio::sync::{Mutex, RwLock, Semaphore};
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
-use moka::future::Cache;
-use tokio::task::spawn_blocking;
-use std::future::Future;
 use tokio::sync::oneshot;
-use crate::{DefaultSystemMonitor, Monitor, SystemMonitor};
+use tokio::sync::{Mutex, RwLock, Semaphore};
+use tokio::task::spawn_blocking;
 
 /// Startup time targets (in milliseconds)
 const COLD_STARTUP_TARGET: u64 = 400;
@@ -52,7 +52,10 @@ impl StartupProfiler {
         if let Some(start_time) = start_times.remove(phase_name) {
             let duration = start_time.elapsed();
             let mut measurements = self.measurements.lock().await;
-            measurements.entry(phase_name.to_string()).or_insert_with(Vec::new).push(duration);
+            measurements
+                .entry(phase_name.to_string())
+                .or_insert_with(Vec::new)
+                .push(duration);
         }
     }
 
@@ -66,20 +69,20 @@ impl StartupProfiler {
         result
     }
 
-    pub async fn measure_blocking<T, F>(&self, phase_name: &str, blocking_fn: F) -> Result<T, IDEError>
+    pub async fn measure_blocking<T, F>(
+        &self,
+        phase_name: &str,
+        blocking_fn: F,
+    ) -> Result<T, IDEError>
     where
         F: FnOnce() -> Result<T, IDEError> + Send + 'static,
         T: Send + 'static,
     {
         self.start_phase(phase_name).await;
 
-        let result = spawn_blocking(move || blocking_fn())
-            .await
-            .map_err(|e| IDEError::new(
-                IDEErrorKind::ConcurrencyError,
-                "Blocking task panicked",
-            )
-            .with_source(e))??;
+        let result = spawn_blocking(move || blocking_fn()).await.map_err(|e| {
+            IDEError::new(IDEErrorKind::ConcurrencyError, "Blocking task panicked").with_source(e)
+        })??;
 
         self.end_phase(phase_name).await;
         Ok(result)
@@ -208,7 +211,10 @@ impl LazyLoader {
     ) -> Result<T, IDEError> {
         let mut state = self.async_state.lock().await;
 
-        let current_state = state.get(key).cloned().unwrap_or(InitializationState::NotStarted);
+        let current_state = state
+            .get(key)
+            .cloned()
+            .unwrap_or(InitializationState::NotStarted);
 
         match current_state {
             InitializationState::Completed(result) => {
@@ -217,21 +223,21 @@ impl LazyLoader {
                     IDEErrorKind::TypeConversion,
                     "Type casting not implemented in this example",
                 ))
-            },
+            }
             InitializationState::InProgress => {
                 // Wait for ongoing initialization (simplified)
                 Err(IDEError::new(
                     IDEErrorKind::ResourceBusy,
                     "Initialization already in progress",
                 ))
-            },
+            }
             InitializationState::Pending | InitializationState::NotStarted => {
                 state.insert(key.to_string(), InitializationState::InProgress);
                 drop(state);
 
                 // Start initialization
                 self.initialize_component(key).await
-            },
+            }
             InitializationState::Failed(e) => Err(e),
         }
     }
@@ -253,7 +259,10 @@ impl LazyLoader {
         Ok(())
     }
 
-    pub async fn preload_frequently_used(&self, frequently_used_keys: &[String]) -> Result<(), IDEError> {
+    pub async fn preload_frequently_used(
+        &self,
+        frequently_used_keys: &[String],
+    ) -> Result<(), IDEError> {
         for key in frequently_used_keys {
             let state = self.async_state.lock().await;
             if let Some(InitializationState::NotStarted) = state.get(key) {
@@ -452,7 +461,10 @@ impl StartupValidator {
         }
     }
 
-    pub async fn validate_phase_performance(&self, phase_name: &str) -> Option<PhaseValidationResult> {
+    pub async fn validate_phase_performance(
+        &self,
+        phase_name: &str,
+    ) -> Option<PhaseValidationResult> {
         let average_time = self.profiler.get_phase_average(phase_name).await?;
         let phase_threshold = self.get_phase_threshold(phase_name);
 
@@ -483,15 +495,24 @@ impl StartupValidator {
         }
     }
 
-    fn generate_suggestions(&self, excess_time: Duration, slowest_phases: Vec<(String, Duration)>) -> Vec<String> {
+    fn generate_suggestions(
+        &self,
+        excess_time: Duration,
+        slowest_phases: Vec<(String, Duration)>,
+    ) -> Vec<String> {
         let mut suggestions = Vec::new();
 
         for (phase, time) in slowest_phases {
-            suggestions.push(format!("Consider optimizing {} ({}ms)", phase, time.as_millis()));
+            suggestions.push(format!(
+                "Consider optimizing {} ({}ms)",
+                phase,
+                time.as_millis()
+            ));
         }
 
         if excess_time > Duration::from_millis(200) {
-            suggestions.push("Consider implementing lazy loading for non-critical components".to_string());
+            suggestions
+                .push("Consider implementing lazy loading for non-critical components".to_string());
         }
 
         if excess_time > Duration::from_millis(300) {
@@ -517,7 +538,8 @@ impl StartupValidator {
         let mut recommendations = Vec::new();
 
         if violation_count > 5 {
-            recommendations.push("Implement startup profiling and optimization pipeline".to_string());
+            recommendations
+                .push("Implement startup profiling and optimization pipeline".to_string());
         }
 
         if violation_count > 3 {
@@ -613,7 +635,10 @@ impl IntegratedStartupOptimizer {
         let lazy_loader = Arc::new(LazyLoader::new(10)); // Max 10 concurrent initializations
         let cache = Arc::new(StartupCache::new(1000, 300)); // 1000 entries, 5min TTL
         let preloader = Arc::new(ModulePreloader::new());
-        let validator = Arc::new(StartupValidator::new(profiler.clone(), Duration::from_millis(400)));
+        let validator = Arc::new(StartupValidator::new(
+            profiler.clone(),
+            Duration::from_millis(400),
+        ));
         let monitor = Arc::new(RwLock::new(SystemMonitor::new()));
 
         Self {
@@ -627,28 +652,39 @@ impl IntegratedStartupOptimizer {
         }
     }
 
-    pub async fn initialize_with_monitoring(&self, is_cold_startup: bool) -> Result<StartupReport, IDEError> {
+    pub async fn initialize_with_monitoring(
+        &self,
+        is_cold_startup: bool,
+    ) -> Result<StartupReport, IDEError> {
         // Start monitoring
         let monitor = self.monitor.write().await;
         // Start collecting system metrics during startup
 
         // Start measurement
-        self.adapter.start_startup_measurement(is_cold_startup).await?;
+        self.adapter
+            .start_startup_measurement(is_cold_startup)
+            .await?;
 
         // Phase 1: Core systems (always loaded)
-        self.adapter.measure_phase("core_systems", async {
-            self.initialize_core_systems().await
-        }).await?;
+        self.adapter
+            .measure_phase("core_systems", async {
+                self.initialize_core_systems().await
+            })
+            .await?;
 
         // Phase 2: Essential services (with lazy loading for non-critical)
-        self.adapter.measure_phase("essential_services", async {
-            self.initialize_essential_services().await
-        }).await?;
+        self.adapter
+            .measure_phase("essential_services", async {
+                self.initialize_essential_services().await
+            })
+            .await?;
 
         // Phase 3: UI and plugins
-        self.adapter.measure_phase("ui_plugins", async {
-            self.initialize_ui_and_plugins().await
-        }).await?;
+        self.adapter
+            .measure_phase("ui_plugins", async {
+                self.initialize_ui_and_plugins().await
+            })
+            .await?;
 
         // End measurement and get report
         let report = self.adapter.end_startup_measurement().await?;
@@ -663,52 +699,51 @@ impl IntegratedStartupOptimizer {
         self.cache_expensive_operation("database_init", async {
             tokio::time::sleep(Duration::from_millis(20)).await;
             Ok::<_, IDEError>(())
-        }).await?;
+        })
+        .await?;
 
         // Event bus initialization
         self.cache_expensive_operation("event_bus_init", async {
             tokio::time::sleep(Duration::from_millis(10)).await;
             Ok::<_, IDEError>(())
-        }).await?;
+        })
+        .await?;
 
         Ok(())
     }
 
     async fn initialize_essential_services(&self) -> Result<(), IDEError> {
         // Register lazy initialization for heavy services
-        self.lazy_loader.register_lazy_initialization(
-            "lsp_service".to_string(),
-            || async {
+        self.lazy_loader
+            .register_lazy_initialization("lsp_service".to_string(), || async {
                 tokio::time::sleep(Duration::from_millis(60)).await;
                 Ok::<_, IDEError>(())
-            }
-        ).await?;
+            })
+            .await?;
 
-        self.lazy_loader.register_lazy_initialization(
-            "ai_models".to_string(),
-            || async {
+        self.lazy_loader
+            .register_lazy_initialization("ai_models".to_string(), || async {
                 tokio::time::sleep(Duration::from_millis(80)).await;
                 Ok::<_, IDEError>(())
-            }
-        ).await?;
+            })
+            .await?;
 
         // Preload frequently used components
-        self.lazy_loader.preload_frequently_used(&vec![
-            "lsp_service".to_string(),
-        ]).await?;
+        self.lazy_loader
+            .preload_frequently_used(&vec!["lsp_service".to_string()])
+            .await?;
 
         Ok(())
     }
 
     async fn initialize_ui_and_plugins(&self) -> Result<(), IDEError> {
         // Plugin loading (with lazy loading for non-essential plugins)
-        self.lazy_loader.register_lazy_initialization(
-            "plugin_system".to_string(),
-            || async {
+        self.lazy_loader
+            .register_lazy_initialization("plugin_system".to_string(), || async {
                 tokio::time::sleep(Duration::from_millis(40)).await;
                 Ok::<_, IDEError>(())
-            }
-        ).await?;
+            })
+            .await?;
 
         // UI essentials
         tokio::time::sleep(Duration::from_millis(25)).await;
@@ -725,15 +760,16 @@ impl IntegratedStartupOptimizer {
         F: Future<Output = Result<T, IDEError>> + Send + 'static,
         T: serde::Serialize + serde::de::DeserializeOwned + Send + 'static,
     {
-        self.cache.cache_expensive_computation(key, computation).await
+        self.cache
+            .cache_expensive_computation(key, computation)
+            .await
     }
 
     pub async fn preload_components(&self, components: &[String]) {
         // Setup preloading patterns based on usage history
-        self.preloader.register_pattern(
-            "ui_ready".to_string(),
-            components.to_vec(),
-        ).await;
+        self.preloader
+            .register_pattern("ui_ready".to_string(), components.to_vec())
+            .await;
 
         // Trigger preloading
         self.preloader.trigger_pattern("ui_ready").await.ok();
@@ -756,7 +792,7 @@ impl IntegratedStartupOptimizer {
         if measurements.is_empty() {
             return Err(IDEError::new(
                 IDEErrorKind::StateError,
-                "No startup measurements available"
+                "No startup measurements available",
             ));
         }
 
@@ -766,7 +802,9 @@ impl IntegratedStartupOptimizer {
             cold_startup_target: Duration::from_millis(COLD_STARTUP_TARGET),
             warm_startup_target: Duration::from_millis(WARM_STARTUP_TARGET),
             phase_average_times: std::collections::HashMap::new(), // Would need to be populated
-            target_achievement: TargetAchievement::AboveTarget { excess: Duration::default() },
+            target_achievement: TargetAchievement::AboveTarget {
+                excess: Duration::default(),
+            },
         })
     }
 
@@ -779,7 +817,8 @@ impl IntegratedStartupOptimizer {
             "database_connection".to_string(),
             "lsp_service".to_string(),
             "ui_layout".to_string(),
-        ]).await;
+        ])
+        .await;
 
         Ok(())
     }
@@ -807,17 +846,26 @@ mod tests {
 
         // Simulate cold startup
         let report = optimizer.initialize_with_monitoring(true).await.unwrap();
-        println!("Cold startup time: {}ms", report.total_startup_time.as_millis());
+        println!(
+            "Cold startup time: {}ms",
+            report.total_startup_time.as_millis()
+        );
 
         assert!(report.total_startup_time < Duration::from_millis(COLD_STARTUP_TARGET));
 
         // Test lazy loading
-        optimizer.get_lazy_initialized_component("lsp_service").await.unwrap();
+        optimizer
+            .get_lazy_initialized_component("lsp_service")
+            .await
+            .unwrap();
 
         // Validate performance
         let validation = optimizer.validate_performance().await;
-        assert!(validation.is_within_threshold, "Performance validation failed: {} violations",
-                validation.violations.len());
+        assert!(
+            validation.is_within_threshold,
+            "Performance validation failed: {} violations",
+            validation.violations.len()
+        );
     }
 
     #[tokio::test]
@@ -829,7 +877,10 @@ mod tests {
 
         // Simulate warm startup
         let report = optimizer.initialize_with_monitoring(false).await.unwrap();
-        println!("Warm startup time: {}ms", report.total_startup_time.as_millis());
+        println!(
+            "Warm startup time: {}ms",
+            report.total_startup_time.as_millis()
+        );
 
         assert!(report.total_startup_time < Duration::from_millis(WARM_STARTUP_TARGET));
     }
@@ -840,22 +891,31 @@ mod tests {
 
         // First expensive operation
         let start = Instant::now();
-        let result1: i32 = optimizer.cache_expensive_operation("test_op".to_string(), async {
-            tokio::time::sleep(Duration::from_millis(50)).await;
-            Ok::<i32, IDEError>(42)
-        }).await.unwrap();
+        let result1: i32 = optimizer
+            .cache_expensive_operation("test_op".to_string(), async {
+                tokio::time::sleep(Duration::from_millis(50)).await;
+                Ok::<i32, IDEError>(42)
+            })
+            .await
+            .unwrap();
         let first_duration = start.elapsed();
 
         // Second call should be cached
         let start = Instant::now();
-        let result2: i32 = optimizer.cache_expensive_operation("test_op".to_string(), async {
-            tokio::time::sleep(Duration::from_millis(50)).await;
-            Ok::<i32, IDEError>(42)
-        }).await.unwrap();
+        let result2: i32 = optimizer
+            .cache_expensive_operation("test_op".to_string(), async {
+                tokio::time::sleep(Duration::from_millis(50)).await;
+                Ok::<i32, IDEError>(42)
+            })
+            .await
+            .unwrap();
         let second_duration = start.elapsed();
 
         assert_eq!(result1, result2);
-        assert!(second_duration < Duration::from_millis(10),
-            "Cached operation should be much faster: {}ms", second_duration.as_millis());
+        assert!(
+            second_duration < Duration::from_millis(10),
+            "Cached operation should be much faster: {}ms",
+            second_duration.as_millis()
+        );
     }
 }

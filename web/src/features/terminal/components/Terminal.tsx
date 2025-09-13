@@ -31,36 +31,40 @@ const Terminal: React.FC<TerminalProps> = ({
   if (!terminalOpen) return null;
 
   return (
-    <Paper 
-      elevation={3} 
-      sx={{ 
-        width: '100%', 
-        height: '300px', 
-        display: 'flex', 
+    <Paper
+      elevation={3}
+      sx={{
+        width: '100%',
+        height: '300px',
+        display: 'flex',
         flexDirection: 'column',
         backgroundColor: '#1E1E1E',
         color: '#FFFFFF',
       }}
     >
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        p: 1,
-        borderBottom: '1px solid #333',
-      }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          p: 1,
+          borderBottom: '1px solid #333',
+        }}
+      >
         <Typography variant="subtitle2">Terminal</Typography>
         <IconButton size="small" onClick={onCloseTerminal} sx={{ color: '#FFFFFF' }}>
           <Close fontSize="small" />
         </IconButton>
       </Box>
-      
+
       <Box sx={{ p: 1, display: 'flex', gap: 1, borderBottom: '1px solid #333' }}>
         <TextField
           size="small"
           label="Program"
           value={terminalProgram}
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onTerminalProgramChange((e.target as any).value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+            onTerminalProgramChange((e.target as any).value)
+          }
           variant="outlined"
           sx={{ flex: 1 }}
           InputLabelProps={{ style: { color: '#999' } }}
@@ -70,7 +74,9 @@ const Terminal: React.FC<TerminalProps> = ({
           size="small"
           label="Arguments"
           value={terminalArgs}
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onTerminalArgsChange((e.target as any).value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+            onTerminalArgsChange((e.target as any).value)
+          }
           variant="outlined"
           sx={{ flex: 2 }}
           InputLabelProps={{ style: { color: '#999' } }}
@@ -80,31 +86,33 @@ const Terminal: React.FC<TerminalProps> = ({
           size="small"
           label="Directory"
           value={terminalDir}
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onTerminalDirChange((e.target as any).value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+            onTerminalDirChange((e.target as any).value)
+          }
           variant="outlined"
           sx={{ flex: 2 }}
           InputLabelProps={{ style: { color: '#999' } }}
           inputProps={{ style: { color: '#FFF' } }}
         />
-        <Button 
-          variant="contained" 
-          onClick={onStartTerminal}
-          sx={{ minWidth: '100px' }}
-        >
+        <Button variant="contained" onClick={onStartTerminal} sx={{ minWidth: '100px' }}>
           Start
         </Button>
       </Box>
-      
-      <Box sx={{ 
-        flex: 1, 
-        overflow: 'auto', 
-        p: 1, 
-        fontFamily: 'monospace',
-        whiteSpace: 'pre-wrap',
-        wordBreak: 'break-word',
-      }}>
+
+      <Box
+        sx={{
+          flex: 1,
+          overflow: 'auto',
+          p: 1,
+          fontFamily: 'monospace',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+        }}
+      >
         {terminalLines.map((line: string, index: number) => (
-          <div key={index} style={{ lineHeight: '1.5' }}>{line}</div>
+          <div key={index} style={{ lineHeight: '1.5' }}>
+            {line}
+          </div>
         ))}
       </Box>
     </Paper>

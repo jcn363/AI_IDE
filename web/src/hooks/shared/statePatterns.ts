@@ -6,9 +6,7 @@ import { useState, useCallback } from 'react';
 export function useLoadingState(initialValue = false) {
   const [isLoading, setIsLoading] = useState<boolean>(initialValue);
 
-  const withLoading = useCallback(async <T>(
-    asyncFn: () => Promise<T>
-  ): Promise<T | null> => {
+  const withLoading = useCallback(async <T>(asyncFn: () => Promise<T>): Promise<T | null> => {
     setIsLoading(true);
     try {
       return await asyncFn();
@@ -42,22 +40,23 @@ export function useAsyncOperation(initialLoading = false) {
   const loading = useLoadingState(initialLoading);
   const error = useErrorState<string>();
 
-  const execute = useCallback(async <T>(
-    asyncFn: () => Promise<T>
-  ): Promise<T | null> => {
-    loading.setIsLoading(true);
-    error.clearError();
+  const execute = useCallback(
+    async <T>(asyncFn: () => Promise<T>): Promise<T | null> => {
+      loading.setIsLoading(true);
+      error.clearError();
 
-    try {
-      const result = await asyncFn();
-      return result;
-    } catch (err) {
-      error.setErrorFromException(err);
-      return null;
-    } finally {
-      loading.setIsLoading(false);
-    }
-  }, [loading, error]);
+      try {
+        const result = await asyncFn();
+        return result;
+      } catch (err) {
+        error.setErrorFromException(err);
+        return null;
+      } finally {
+        loading.setIsLoading(false);
+      }
+    },
+    [loading, error]
+  );
 
   const reset = useCallback(() => {
     loading.setIsLoading(false);
@@ -81,7 +80,7 @@ export function useAsyncOperation(initialLoading = false) {
 export function useToggleState(initialValue = false) {
   const [state, setState] = useState<boolean>(initialValue);
 
-  const toggle = useCallback(() => setState(prev => !prev), []);
+  const toggle = useCallback(() => setState((prev) => !prev), []);
   const setTrue = useCallback(() => setState(true), []);
   const setFalse = useCallback(() => setState(false), []);
   const reset = useCallback(() => setState(initialValue), [initialValue]);
@@ -96,26 +95,29 @@ export function useArrayState<T>(initialArray: T[] = []) {
   const [array, setArray] = useState<T[]>(initialArray);
 
   const add = useCallback((item: T) => {
-    setArray(prev => [...prev, item]);
+    setArray((prev) => [...prev, item]);
   }, []);
 
   const remove = useCallback((index: number) => {
-    setArray(prev => prev.filter((_, i) => i !== index));
+    setArray((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const removeItem = useCallback((item: T) => {
-    setArray(prev => prev.filter(i => i !== item));
+    setArray((prev) => prev.filter((i) => i !== item));
   }, []);
 
   const clear = useCallback(() => setArray([]), []);
 
   const update = useCallback((index: number, item: T) => {
-    setArray(prev => prev.map((existing, i) => i === index ? item : existing));
+    setArray((prev) => prev.map((existing, i) => (i === index ? item : existing)));
   }, []);
 
-  const findIndex = useCallback((predicate: (item: T) => boolean): number => {
-    return array.findIndex(predicate);
-  }, [array]);
+  const findIndex = useCallback(
+    (predicate: (item: T) => boolean): number => {
+      return array.findIndex(predicate);
+    },
+    [array]
+  );
 
   return { array, setArray, add, remove, removeItem, update, clear, findIndex };
 }
@@ -127,15 +129,18 @@ export function useFormField<T>(initialValue: T, validator?: (value: T) => strin
   const [value, setValue] = useState<T>(initialValue);
   const [error, setError] = useState<string | null>(null);
 
-  const setValueWithValidation = useCallback((newValue: T) => {
-    setValue(newValue);
-    if (validator) {
-      const validationError = validator(newValue);
-      setError(validationError);
-    } else {
-      setError(null);
-    }
-  }, [validator]);
+  const setValueWithValidation = useCallback(
+    (newValue: T) => {
+      setValue(newValue);
+      if (validator) {
+        const validationError = validator(newValue);
+        setError(validationError);
+      } else {
+        setError(null);
+      }
+    },
+    [validator]
+  );
 
   const validate = useCallback(() => {
     if (validator) {
@@ -162,7 +167,7 @@ export function useModalState(initialOpen = false) {
 
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);
-  const toggle = useCallback(() => setIsOpen(prev => !prev), []);
+  const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
 
   return { isOpen, open, close, toggle };
 }
@@ -173,54 +178,69 @@ export function useModalState(initialOpen = false) {
 export function useSelectionState<T>(multiple = false) {
   const [selected, setSelected] = useState<T | T[] | null>(multiple ? [] : null);
 
-  const select = useCallback((item: T) => {
-    if (multiple) {
-      const current = selected as T[];
-      const isSelected = current.includes(item);
-      if (isSelected) {
-        setSelected(current.filter(existing => existing !== item));
+  const select = useCallback(
+    (item: T) => {
+      if (multiple) {
+        const current = selected as T[];
+        const isSelected = current.includes(item);
+        if (isSelected) {
+          setSelected(current.filter((existing) => existing !== item));
+        } else {
+          setSelected([...current, item]);
+        }
       } else {
-        setSelected([...current, item]);
+        setSelected(selected === item ? null : item);
       }
-    } else {
-      setSelected(selected === item ? null : item);
-    }
-  }, [selected, multiple]);
+    },
+    [selected, multiple]
+  );
 
-  const selectAll = useCallback((items: T[]) => {
-    if (multiple) {
-      const current = selected as T[];
-      const allSelected = items.every(item => current.includes(item));
-      if (allSelected) {
-        setSelected([]);
-      } else {
-        setSelected(items);
+  const selectAll = useCallback(
+    (items: T[]) => {
+      if (multiple) {
+        const current = selected as T[];
+        const allSelected = items.every((item) => current.includes(item));
+        if (allSelected) {
+          setSelected([]);
+        } else {
+          setSelected(items);
+        }
       }
-    }
-  }, [selected, multiple]);
+    },
+    [selected, multiple]
+  );
 
   const clear = useCallback(() => {
     setSelected(multiple ? [] : null);
   }, [multiple]);
 
-  const isSelected = useCallback((item: T): boolean => {
-    if (multiple) {
-      return (selected as T[]).includes(item);
-    }
-    return selected === item;
-  }, [selected, multiple]);
+  const isSelected = useCallback(
+    (item: T): boolean => {
+      if (multiple) {
+        return (selected as T[]).includes(item);
+      }
+      return selected === item;
+    },
+    [selected, multiple]
+  );
 
-  const isAllSelected = useCallback((items: T[]): boolean => {
-    if (!multiple) return false;
-    return items.length > 0 && items.every(item => (selected as T[]).includes(item));
-  }, [selected, multiple]);
+  const isAllSelected = useCallback(
+    (items: T[]): boolean => {
+      if (!multiple) return false;
+      return items.length > 0 && items.every((item) => (selected as T[]).includes(item));
+    },
+    [selected, multiple]
+  );
 
-  const isIndeterminate = useCallback((items: T[]): boolean => {
-    if (!multiple) return false;
-    const selectedItems = selected as T[];
-    const selectedCount = selectedItems.length;
-    return selectedCount > 0 && selectedCount < items.length;
-  }, [selected, multiple]);
+  const isIndeterminate = useCallback(
+    (items: T[]): boolean => {
+      if (!multiple) return false;
+      const selectedItems = selected as T[];
+      const selectedCount = selectedItems.length;
+      return selectedCount > 0 && selectedCount < items.length;
+    },
+    [selected, multiple]
+  );
 
   return {
     selected,

@@ -1,11 +1,11 @@
-use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock, mpsc};
-use std::collections::{HashMap, HashSet, VecDeque};
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
 use super::mi_protocol::*;
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::sync::Arc;
+use tokio::sync::{mpsc, Mutex, RwLock};
 use tokio::task::spawn_blocking;
 use tokio::time::{timeout, Duration};
-use serde::{Deserialize, Serialize};
 
 /// Async debugger for debugging async Rust code with proper task tracking
 pub struct AsyncDebugger {
@@ -79,7 +79,10 @@ impl AsyncDebugger {
         self.async_inspector.get_sync_points().await
     }
 
-    pub async fn trace_future_lifecycle(&self, future_id: u64) -> Result<FutureLifecycle, IDEError> {
+    pub async fn trace_future_lifecycle(
+        &self,
+        future_id: u64,
+    ) -> Result<FutureLifecycle, IDEError> {
         self.future_analyzer.trace_lifecycle(future_id).await
     }
 
@@ -158,7 +161,11 @@ impl TaskTracker {
         Ok(task_id)
     }
 
-    pub async fn update_task_status(&self, task_id: u64, status: TaskStatus) -> Result<(), IDEError> {
+    pub async fn update_task_status(
+        &self,
+        task_id: u64,
+        status: TaskStatus,
+    ) -> Result<(), IDEError> {
         let mut active_tasks = self.active_tasks.write().await;
 
         if let Some(task) = active_tasks.get_mut(&task_id) {
@@ -230,14 +237,20 @@ impl AsyncInspector {
     pub async fn inspect_future(&self, future_id: u64) -> Result<FutureState, IDEError> {
         let futures = self.futures.read().await;
 
-        futures.get(&future_id).map(|future_info| match future_info.state {
-            FutureStateEnum::Pending => FutureState::Pending,
-            FutureStateEnum::Ready => FutureState::Ready,
-            FutureStateEnum::Completed => FutureState::Completed,
-            FutureStateEnum::Cancelled => FutureState::Cancelled,
-        }).ok_or_else(|| {
-            IDEError::new(IDEErrorKind::ResourceNotFound, format!("Future {} not found", future_id))
-        })
+        futures
+            .get(&future_id)
+            .map(|future_info| match future_info.state {
+                FutureStateEnum::Pending => FutureState::Pending,
+                FutureStateEnum::Ready => FutureState::Ready,
+                FutureStateEnum::Completed => FutureState::Completed,
+                FutureStateEnum::Cancelled => FutureState::Cancelled,
+            })
+            .ok_or_else(|| {
+                IDEError::new(
+                    IDEErrorKind::ResourceNotFound,
+                    format!("Future {} not found", future_id),
+                )
+            })
     }
 
     pub async fn register_future(&self, expression: &str) -> Result<u64, IDEError> {
@@ -256,14 +269,24 @@ impl AsyncInspector {
         Ok(future_id)
     }
 
-    pub async fn update_future_state(&self, future_id: u64, state: FutureStateEnum) -> Result<(), IDEError> {
+    pub async fn update_future_state(
+        &self,
+        future_id: u64,
+        state: FutureStateEnum,
+    ) -> Result<(), IDEError> {
         let mut futures = self.futures.write().await;
 
-        futures.get_mut(&future_id).map(|future| {
-            future.state = state;
-        }).ok_or_else(|| {
-            IDEError::new(IDEErrorKind::ResourceNotFound, format!("Future {} not found", future_id))
-        })?;
+        futures
+            .get_mut(&future_id)
+            .map(|future| {
+                future.state = state;
+            })
+            .ok_or_else(|| {
+                IDEError::new(
+                    IDEErrorKind::ResourceNotFound,
+                    format!("Future {} not found", future_id),
+                )
+            })?;
 
         Ok(())
     }
@@ -273,7 +296,11 @@ impl AsyncInspector {
         Ok(sync_points.clone())
     }
 
-    pub async fn add_sync_point(&self, location: &str, sync_type: SyncPointType) -> Result<(), IDEError> {
+    pub async fn add_sync_point(
+        &self,
+        location: &str,
+        sync_type: SyncPointType,
+    ) -> Result<(), IDEError> {
         let sync_point = SyncPoint {
             location: location.to_string(),
             sync_type,
@@ -286,7 +313,10 @@ impl AsyncInspector {
         Ok(())
     }
 
-    pub async fn analyze_channel_capacity(&self, channel_id: &str) -> Result<ChannelAnalysis, IDEError> {
+    pub async fn analyze_channel_capacity(
+        &self,
+        channel_id: &str,
+    ) -> Result<ChannelAnalysis, IDEError> {
         // Analyze tokio channel usage
         // In practice, this would hook into tokio's metrics
         Ok(ChannelAnalysis {
@@ -326,13 +356,21 @@ impl FutureAnalyzer {
         }
 
         let total_length: usize = chains.values().map(|chain| chain.futures.len()).sum();
-        analysis.longest_chain = chains.values().map(|chain| chain.futures.len()).max().unwrap_or(0);
+        analysis.longest_chain = chains
+            .values()
+            .map(|chain| chain.futures.len())
+            .max()
+            .unwrap_or(0);
         analysis.average_chain_length = total_length as f64 / chains.len() as f64;
 
         // Check for potential issues
         for (name, chain) in chains.iter() {
             if chain.futures.len() > 10 {
-                analysis.potential_issues.push(format!("Chain '{}' is very long ({} futures)", name, chain.futures.len()));
+                analysis.potential_issues.push(format!(
+                    "Chain '{}' is very long ({} futures)",
+                    name,
+                    chain.futures.len()
+                ));
             }
         }
 
@@ -351,7 +389,11 @@ impl FutureAnalyzer {
         })
     }
 
-    pub async fn register_future_chain(&self, name: &str, futures: Vec<String>) -> Result<(), IDEError> {
+    pub async fn register_future_chain(
+        &self,
+        name: &str,
+        futures: Vec<String>,
+    ) -> Result<(), IDEError> {
         let chain = FutureChain {
             name: name.to_string(),
             futures,
@@ -404,9 +446,16 @@ impl DeadlockDetector {
         Ok(())
     }
 
-    pub async fn record_wait_for_acquire(&self, waiting_task: u64, acquiring_task: u64) -> Result<(), IDEError> {
+    pub async fn record_wait_for_acquire(
+        &self,
+        waiting_task: u64,
+        acquiring_task: u64,
+    ) -> Result<(), IDEError> {
         let mut dependencies = self.dependencies.write().await;
-        dependencies.entry(waiting_task).or_insert_with(HashSet::new).insert(acquiring_task);
+        dependencies
+            .entry(waiting_task)
+            .or_insert_with(HashSet::new)
+            .insert(acquiring_task);
         Ok(())
     }
 
@@ -416,7 +465,11 @@ impl DeadlockDetector {
         Ok(())
     }
 
-    pub async fn record_mutex_guard_release(&self, _task: u64, resource: &str) -> Result<(), IDEError> {
+    pub async fn record_mutex_guard_release(
+        &self,
+        _task: u64,
+        resource: &str,
+    ) -> Result<(), IDEError> {
         let mut task_ownership = self.task_ownership.write().await;
         task_ownership.remove(resource);
         Ok(())
@@ -427,7 +480,9 @@ impl DeadlockDetector {
         Self::detect_deadlock_cycles(&dependencies).await
     }
 
-    async fn detect_deadlock_cycles(dependencies: &HashMap<u64, HashSet<u64>>) -> Vec<PotentialDeadlock> {
+    async fn detect_deadlock_cycles(
+        dependencies: &HashMap<u64, HashSet<u64>>,
+    ) -> Vec<PotentialDeadlock> {
         let mut deadlocks = Vec::new();
 
         // Simple cycle detection (could be improved with more sophisticated algorithms)

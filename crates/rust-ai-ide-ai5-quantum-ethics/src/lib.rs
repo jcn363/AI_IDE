@@ -20,14 +20,20 @@ impl QuantumEthicsFramework {
         }
     }
 
-    pub fn evaluate_quantum_action(&self, action: &QuantumAction) -> Result<EthicalEvaluation, QuantumEthicsError> {
+    pub fn evaluate_quantum_action(
+        &self,
+        action: &QuantumAction,
+    ) -> Result<EthicalEvaluation, QuantumEthicsError> {
         let consciousness_evaluation = self.consciousness_ethics.evaluate_consciousness(action)?;
         let reality_evaluation = self.reality_manipulation_ethics.evaluate_reality(action)?;
         let overall_score = (consciousness_evaluation.score + reality_evaluation.score) / 2.0;
 
         Ok(EthicalEvaluation {
             score: overall_score,
-            reasoning: format!("Consciousness: {}, Reality: {}", consciousness_evaluation.reasoning, reality_evaluation.reasoning),
+            reasoning: format!(
+                "Consciousness: {}, Reality: {}",
+                consciousness_evaluation.reasoning, reality_evaluation.reasoning
+            ),
             approved: overall_score >= 0.7,
         })
     }
@@ -44,7 +50,10 @@ impl ConsciousnessEthicsEngine {
         }
     }
 
-    pub fn evaluate_consciousness(&self, action: &QuantumAction) -> Result<EthicalEvaluation, QuantumEthicsError> {
+    pub fn evaluate_consciousness(
+        &self,
+        action: &QuantumAction,
+    ) -> Result<EthicalEvaluation, QuantumEthicsError> {
         Ok(EthicalEvaluation {
             score: 0.85,
             reasoning: "Consciousness enhancement is ethically sound".to_string(),
@@ -64,7 +73,10 @@ impl RealityManipulationEthics {
         }
     }
 
-    pub fn evaluate_reality(&self, action: &QuantumAction) -> Result<EthicalEvaluation, QuantumEthicsError> {
+    pub fn evaluate_reality(
+        &self,
+        action: &QuantumAction,
+    ) -> Result<EthicalEvaluation, QuantumEthicsError> {
         Ok(EthicalEvaluation {
             score: 0.8,
             reasoning: "Reality manipulation within ethical boundaries".to_string(),

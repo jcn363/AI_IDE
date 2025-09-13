@@ -81,7 +81,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   };
 
   const toggleOption = (option: keyof SearchOptions) => {
-    setSearchOptions(prev => ({
+    setSearchOptions((prev) => ({
       ...prev,
       [option]: !prev[option],
     }));
@@ -97,7 +97,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
             type="text"
             placeholder="Search files and symbols... (Ctrl+Shift+F)"
             value={searchOptions.query}
-            onChange={(e) => setSearchOptions(prev => ({ ...prev, query: e.target.value }))}
+            onChange={(e) => setSearchOptions((prev) => ({ ...prev, query: e.target.value }))}
             onKeyDown={handleKeyDown}
             className="search-input"
             disabled={searchState.loading}
@@ -137,10 +137,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
             />
             Word
           </label>
-          <div
-            className="advanced-toggle"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-          >
+          <div className="advanced-toggle" onClick={() => setShowAdvanced(!showAdvanced)}>
             Advanced ▼
           </div>
         </div>
@@ -153,10 +150,12 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
               <input
                 type="text"
                 value={searchOptions.file_patterns.join(', ')}
-                onChange={(e) => setSearchOptions(prev => ({
-                  ...prev,
-                  file_patterns: e.target.value.split(',').map(s => s.trim())
-                }))}
+                onChange={(e) =>
+                  setSearchOptions((prev) => ({
+                    ...prev,
+                    file_patterns: e.target.value.split(',').map((s) => s.trim()),
+                  }))
+                }
                 placeholder="*.rs, *.toml, *.md"
               />
             </div>
@@ -165,10 +164,12 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
               <input
                 type="text"
                 value={searchOptions.exclude_patterns.join(', ')}
-                onChange={(e) => setSearchOptions(prev => ({
-                  ...prev,
-                  exclude_patterns: e.target.value.split(',').map(s => s.trim())
-                }))}
+                onChange={(e) =>
+                  setSearchOptions((prev) => ({
+                    ...prev,
+                    exclude_patterns: e.target.value.split(',').map((s) => s.trim()),
+                  }))
+                }
                 placeholder="target/*, node_modules/*"
               />
             </div>
@@ -177,10 +178,12 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
               <input
                 type="number"
                 value={searchOptions.max_results || 100}
-                onChange={(e) => setSearchOptions(prev => ({
-                  ...prev,
-                  max_results: parseInt(e.target.value) || 100
-                }))}
+                onChange={(e) =>
+                  setSearchOptions((prev) => ({
+                    ...prev,
+                    max_results: parseInt(e.target.value) || 100,
+                  }))
+                }
                 min="1"
                 max="1000"
               />
@@ -190,10 +193,12 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
               <input
                 type="number"
                 value={searchOptions.context_lines}
-                onChange={(e) => setSearchOptions(prev => ({
-                  ...prev,
-                  context_lines: parseInt(e.target.value) || 2
-                }))}
+                onChange={(e) =>
+                  setSearchOptions((prev) => ({
+                    ...prev,
+                    context_lines: parseInt(e.target.value) || 2,
+                  }))
+                }
                 min="0"
                 max="5"
               />
@@ -214,7 +219,9 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
               <button onClick={goToPreviousResult} disabled={selectedIndex === 0}>
                 ↑ Previous
               </button>
-              <span>{selectedIndex + 1} / {searchState.results.length}</span>
+              <span>
+                {selectedIndex + 1} / {searchState.results.length}
+              </span>
               <button
                 onClick={goToNextResult}
                 disabled={selectedIndex === searchState.results.length - 1}
@@ -449,8 +456,12 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
         }
 
         @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
         }
       `}</style>
     </div>
@@ -480,10 +491,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
   );
 
   return (
-    <div
-      className={`search-result-item ${isSelected ? 'selected' : ''}`}
-      onClick={onClick}
-    >
+    <div className={`search-result-item ${isSelected ? 'selected' : ''}`} onClick={onClick}>
       <div className="result-header">
         <span className="file-path">{relativePath}</span>
         <span className="line-info">:{result.line_number}</span>
@@ -492,7 +500,9 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
       <div className="result-content">
         <div className="context-pre">
           {result.context_before.map((line, idx) => (
-            <div key={idx} className="context-line">{line}</div>
+            <div key={idx} className="context-line">
+              {line}
+            </div>
           ))}
         </div>
         <div className="match-line">
@@ -501,7 +511,9 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
         </div>
         <div className="context-post">
           {result.context_after.map((line, idx) => (
-            <div key={idx} className="context-line">{line}</div>
+            <div key={idx} className="context-line">
+              {line}
+            </div>
           ))}
         </div>
       </div>

@@ -4,13 +4,13 @@
 //! Leverages large language models and NLP techniques to comprehend code intent,
 //! patterns, and meaning at a deep semantic level.
 
-use std::collections::{HashMap, HashSet, VecDeque};
-use serde::{Deserialize, Serialize};
-use tokio::sync::{RwLock, Mutex};
-use std::sync::Arc;
 use rust_ai_ide_ai3_quantum::{QuantumAIEngine, QuantumProcessor};
 #[cfg(feature = "rust-bert")]
 use rust_bert::pipelines::sentence_embeddings::SentenceEmbeddingsModel;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::sync::Arc;
+use tokio::sync::{Mutex, RwLock};
 
 /// Main NLP Code Understanding Engine
 #[derive(Debug)]
@@ -64,14 +64,22 @@ impl NLPCoeUnderstandingEngine {
 
         // Perform transformer-based semantic analysis
         let semantic_understanding = self.deep_semantic_analysis(code, language, context).await?;
-        analysis.semantic_understanding.extend(semantic_understanding);
+        analysis
+            .semantic_understanding
+            .extend(semantic_understanding);
 
         // Analyze developer intent
-        let intent_analysis = self.intent_recognition.analyze_developer_intent(code, context).await?;
+        let intent_analysis = self
+            .intent_recognition
+            .analyze_developer_intent(code, context)
+            .await?;
         analysis.intent_confidence.extend(intent_analysis);
 
         // Assess complexity with NLP understanding
-        let complexity = self.complexity_assessor.assess_complexity(code, &analysis).await?;
+        let complexity = self
+            .complexity_assessor
+            .assess_complexity(code, &analysis)
+            .await?;
         analysis.complexity_metrics.extend(complexity);
 
         // Recognize code patterns using NLP embeddings
@@ -101,7 +109,9 @@ impl NLPCoeUnderstandingEngine {
         suggestions.extend(semantic_suggestions);
 
         // Context-aware suggestions based on developer history
-        let contextual_suggestions = self.generate_contextual_suggestions(analysis, dev_context).await?;
+        let contextual_suggestions = self
+            .generate_contextual_suggestions(analysis, dev_context)
+            .await?;
         suggestions.extend(contextual_suggestions);
 
         // Pattern-based improvement suggestions
@@ -109,7 +119,8 @@ impl NLPCoeUnderstandingEngine {
         suggestions.extend(pattern_suggestions);
 
         // Sort suggestions by relevance and apply NLP-based ranking
-        self.rank_suggestions_by_relevance(&mut suggestions, dev_context).await;
+        self.rank_suggestions_by_relevance(&mut suggestions, dev_context)
+            .await;
 
         Ok(suggestions)
     }
@@ -121,21 +132,18 @@ impl NLPCoeUnderstandingEngine {
         history: &[CodeChange],
     ) -> Result<DeveloperIntent, NLPEError> {
         // Analyze the current change
-        let current_analysis = self.analyze_code_semantics(
-            &code_change.new_content,
-            "rust",
-            &CodeContext::new()
-        ).await?;
+        let current_analysis = self
+            .analyze_code_semantics(&code_change.new_content, "rust", &CodeContext::new())
+            .await?;
 
         // Compare with historical patterns
         let historical_patterns = self.analyze_historical_patterns(history).await?;
 
         // Infer developer intent
-        let intent = self.intent_recognition.infer_intent(
-            &current_analysis,
-            &historical_patterns,
-            &code_change
-        ).await?;
+        let intent = self
+            .intent_recognition
+            .infer_intent(&current_analysis, &historical_patterns, &code_change)
+            .await?;
 
         Ok(intent)
     }
@@ -157,7 +165,10 @@ impl NLPCoeUnderstandingEngine {
                     pattern_name: format!("Extract {}", pattern.pattern_type),
                     location: "Global".to_string(),
                     confidence: pattern.compute_suggestion_score(),
-                    description: format!("Refactor {} patterns to reduce duplication", pattern.pattern_type),
+                    description: format!(
+                        "Refactor {} patterns to reduce duplication",
+                        pattern.pattern_type
+                    ),
                     estimated_effort: (pattern.frequency as f32 * 0.5).round() as u32,
                     impact_score: (pattern.frequency as f32 * 2.0).round() as u32,
                 });
@@ -165,7 +176,9 @@ impl NLPCoeUnderstandingEngine {
         }
 
         // Suggest architectural improvements based on semantic understanding
-        let architectural_suggestions = self.suggest_architectural_improvements(&global_patterns).await?;
+        let architectural_suggestions = self
+            .suggest_architectural_improvements(&global_patterns)
+            .await?;
         opportunities.extend(architectural_suggestions);
 
         Ok(opportunities)
@@ -181,17 +194,17 @@ impl NLPCoeUnderstandingEngine {
 
         if let Some(intent) = analysis.intent_confidence.get("main_function") {
             if intent.confidence > 0.7 {
-                explanation.push_str(&format!("This code implements {}. ", intent.intent_description));
+                explanation.push_str(&format!(
+                    "This code implements {}. ",
+                    intent.intent_description
+                ));
             }
         }
 
         // Analyze key semantic concepts
         let concepts = Self::extract_key_concepts(analysis);
         if !concepts.is_empty() {
-            explanation.push_str(&format!(
-                "Key concepts include: {}. ",
-                concepts.join(", ")
-            ));
+            explanation.push_str(&format!("Key concepts include: {}. ", concepts.join(", ")));
         }
 
         // Explain algorithmic characteristics
@@ -201,12 +214,21 @@ impl NLPCoeUnderstandingEngine {
                 score if score < 0.6 => "moderate",
                 _ => "complex",
             };
-            explanation.push_str(&format!("The implementation has {} complexity. ", complexity_level));
+            explanation.push_str(&format!(
+                "The implementation has {} complexity. ",
+                complexity_level
+            ));
         }
 
         // Suggest improvements
-        if analysis.pattern_recognition.iter().any(|p| p.confidence > 0.8) {
-            explanation.push_str("The code contains well-established patterns that could be considered for reuse. ");
+        if analysis
+            .pattern_recognition
+            .iter()
+            .any(|p| p.confidence > 0.8)
+        {
+            explanation.push_str(
+                "The code contains well-established patterns that could be considered for reuse. ",
+            );
         }
 
         Ok(explanation)
@@ -269,7 +291,8 @@ impl NLPCoeUnderstandingEngine {
         for (concept1, understanding1) in &analysis.semantic_understanding {
             for (concept2, understanding2) in &analysis.semantic_understanding {
                 if concept1 != concept2 {
-                    let similarity = self.compute_concept_similarity(understanding1, understanding2)?;
+                    let similarity =
+                        self.compute_concept_similarity(understanding1, understanding2)?;
                     if similarity > 0.5 {
                         relationships.push(SemanticRelationship {
                             from_concept: concept1.clone(),
@@ -321,7 +344,11 @@ impl NLPCoeUnderstandingEngine {
         false
     }
 
-    async fn parse_semantic_units(&self, code: &str, _language: &str) -> Result<Vec<SemanticUnit>, NLPEError> {
+    async fn parse_semantic_units(
+        &self,
+        code: &str,
+        _language: &str,
+    ) -> Result<Vec<SemanticUnit>, NLPEError> {
         let mut units = Vec::new();
 
         // Simple semantic unit parsing (would be much more sophisticated in real implementation)
@@ -331,7 +358,12 @@ impl NLPCoeUnderstandingEngine {
                     name: line.to_string(),
                     start_line: 0, // Would compute actual line numbers
                     content: line.to_string(),
-                    semantic_type: if line.contains("fn ") { "function" } else { "type" }.to_string(),
+                    semantic_type: if line.contains("fn ") {
+                        "function"
+                    } else {
+                        "type"
+                    }
+                    .to_string(),
                 });
             }
         }
@@ -340,13 +372,18 @@ impl NLPCoeUnderstandingEngine {
     }
 
     fn extract_key_concepts(analysis: &NLPCodeAnalysis) -> Vec<String> {
-        analysis.semantic_understanding.keys()
+        analysis
+            .semantic_understanding
+            .keys()
             .take(5)
             .cloned()
             .collect()
     }
 
-    async fn analyze_historical_patterns(&self, _history: &[CodeChange]) -> Result<HistoricalPatterns, NLPEError> {
+    async fn analyze_historical_patterns(
+        &self,
+        _history: &[CodeChange],
+    ) -> Result<HistoricalPatterns, NLPEError> {
         Ok(HistoricalPatterns {
             add_pattern: HashMap::new(),
             remove_pattern: HashMap::new(),
@@ -354,7 +391,10 @@ impl NLPCoeUnderstandingEngine {
         })
     }
 
-    async fn analyze_global_patterns(&self, _analyses: &[NLPCodeAnalysis]) -> Result<GlobalPatternAnalysis, NLPEError> {
+    async fn analyze_global_patterns(
+        &self,
+        _analyses: &[NLPCodeAnalysis],
+    ) -> Result<GlobalPatternAnalysis, NLPEError> {
         Ok(GlobalPatternAnalysis {
             repeated_patterns: vec![],
             architectural_patterns: vec![],
@@ -364,64 +404,72 @@ impl NLPCoeUnderstandingEngine {
 
     async fn suggest_architectural_improvements(
         &self,
-        _global_patterns: &GlobalPatternAnalysis
+        _global_patterns: &GlobalPatternAnalysis,
     ) -> Result<Vec<RefactoringOpportunity>, NLPEError> {
-        Ok(vec![
-            RefactoringOpportunity {
-                pattern_name: "Improve module organization".to_string(),
-                location: "Global".to_string(),
-                confidence: 0.85,
-                description: "Reorganize modules for better separation of concerns".to_string(),
-                estimated_effort: 20,
-                impact_score: 50,
-            }
-        ])
+        Ok(vec![RefactoringOpportunity {
+            pattern_name: "Improve module organization".to_string(),
+            location: "Global".to_string(),
+            confidence: 0.85,
+            description: "Reorganize modules for better separation of concerns".to_string(),
+            estimated_effort: 20,
+            impact_score: 50,
+        }])
     }
 
-    async fn generate_semantic_suggestions(&self, _analysis: &NLPCodeAnalysis) -> Result<Vec<NLPCodeSuggestion>, NLPEError> {
-        Ok(vec![
-            NLPCodeSuggestion {
-                suggestion_type: "Code improvement".to_string(),
-                description: "Consider adding documentation".to_string(),
-                confidence: 0.75,
-                impact_level: "Minor".to_string(),
-                code_example: Some("/// Add documentation here".to_string()),
-            }
-        ])
+    async fn generate_semantic_suggestions(
+        &self,
+        _analysis: &NLPCodeAnalysis,
+    ) -> Result<Vec<NLPCodeSuggestion>, NLPEError> {
+        Ok(vec![NLPCodeSuggestion {
+            suggestion_type: "Code improvement".to_string(),
+            description: "Consider adding documentation".to_string(),
+            confidence: 0.75,
+            impact_level: "Minor".to_string(),
+            code_example: Some("/// Add documentation here".to_string()),
+        }])
     }
 
     async fn generate_contextual_suggestions(
         &self,
         _analysis: &NLPCodeAnalysis,
-        _dev_context: &DeveloperContext
+        _dev_context: &DeveloperContext,
     ) -> Result<Vec<NLPCodeSuggestion>, NLPEError> {
-        Ok(vec![
-            NLPCodeSuggestion {
-                suggestion_type: "Best practice".to_string(),
-                description: "Consider adding error handling".to_string(),
-                confidence: 0.8,
-                impact_level: "Medium".to_string(),
-                code_example: Some(".map_err(|e| MyError::from(e))".to_string()),
-            }
-        ])
+        Ok(vec![NLPCodeSuggestion {
+            suggestion_type: "Best practice".to_string(),
+            description: "Consider adding error handling".to_string(),
+            confidence: 0.8,
+            impact_level: "Medium".to_string(),
+            code_example: Some(".map_err(|e| MyError::from(e))".to_string()),
+        }])
     }
 
-    async fn generate_pattern_suggestions(&self, _analysis: &NLPCodeAnalysis) -> Result<Vec<NLPCodeSuggestion>, NLPEError> {
-        Ok(vec![
-            NLPCodeSuggestion {
-                suggestion_type: "Pattern application".to_string(),
-                description: "Consider using Result<_, MyCustomError>".to_string(),
-                confidence: 0.9,
-                impact_level: "High".to_string(),
-                code_example: Some("type Result<T> = std::result::Result<T, MyCustomError>;".to_string()),
-            }
-        ])
+    async fn generate_pattern_suggestions(
+        &self,
+        _analysis: &NLPCodeAnalysis,
+    ) -> Result<Vec<NLPCodeSuggestion>, NLPEError> {
+        Ok(vec![NLPCodeSuggestion {
+            suggestion_type: "Pattern application".to_string(),
+            description: "Consider using Result<_, MyCustomError>".to_string(),
+            confidence: 0.9,
+            impact_level: "High".to_string(),
+            code_example: Some(
+                "type Result<T> = std::result::Result<T, MyCustomError>;".to_string(),
+            ),
+        }])
     }
 
-    async fn rank_suggestions_by_relevance(&self, _suggestions: &mut Vec<NLPCodeSuggestion>, _context: &DeveloperContext) {
+    async fn rank_suggestions_by_relevance(
+        &self,
+        _suggestions: &mut Vec<NLPCodeSuggestion>,
+        _context: &DeveloperContext,
+    ) {
         // Would rank suggestions based on developer preferences and history
         // For demo, just sort by confidence
-        _suggestions.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+        _suggestions.sort_by(|a, b| {
+            b.confidence
+                .partial_cmp(&a.confidence)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
     }
 }
 
@@ -436,14 +484,15 @@ impl CodeTransformer {
     pub async fn understand_semantic_unit(
         &self,
         _unit: &SemanticUnit,
-        _context: &CodeContext
+        _context: &CodeContext,
     ) -> Result<SemanticUnderstanding, NLPEError> {
         Ok(SemanticUnderstanding {
             semantic_meaning: "function_that_processes_input".to_string(),
             confidence_score: 0.85,
             context_relationships: vec![],
             semantic_categories: vec!["computation".to_string(), "input_processing".to_string()],
-            natural_language_description: "A function that takes some input and performs processing on it".to_string(),
+            natural_language_description:
+                "A function that takes some input and performs processing on it".to_string(),
         })
     }
 }
@@ -504,7 +553,7 @@ impl IntentRecognitionEngine {
     pub async fn analyze_developer_intent(
         &self,
         _code: &str,
-        _context: &CodeContext
+        _context: &CodeContext,
     ) -> Result<HashMap<String, IntentConfidence>, NLPEError> {
         Ok(HashMap::new())
     }
@@ -513,7 +562,7 @@ impl IntentRecognitionEngine {
         &self,
         _current_analysis: &NLPCodeAnalysis,
         _historical_patterns: &HistoricalPatterns,
-        _code_change: &CodeChange
+        _code_change: &CodeChange,
     ) -> Result<DeveloperIntent, NLPEError> {
         Ok(DeveloperIntent {
             primary_intent: "code_improvement".to_string(),
@@ -535,7 +584,7 @@ impl NLComplximationAssessor {
     pub async fn assess_complexity(
         &self,
         _code: &str,
-        _analysis: &NLPCodeAnalysis
+        _analysis: &NLPCodeAnalysis,
     ) -> Result<HashMap<String, ComplexityMetric>, NLPEError> {
         Ok(HashMap::new())
     }

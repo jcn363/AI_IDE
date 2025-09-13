@@ -128,7 +128,10 @@ async fn test_complete_generation_pipeline() {
 
     // Test TypeScript generation
     let generator = create_typescript_generator().unwrap();
-    let result = generator.generate_types_from_source(rust_code, "test_types.rs", &[]).await.unwrap();
+    let result = generator
+        .generate_types_from_source(rust_code, "test_types.rs", &[])
+        .await
+        .unwrap();
 
     // Validate generated TypeScript
     assert!(result.content.contains("export interface User"));
@@ -146,14 +149,19 @@ async fn test_complete_generation_pipeline() {
     assert!(result.content.contains("permissions: Array<string>"));
 
     // Test cross-platform validation
-    let validation = validate_cross_platform(&types, &default_config()).await.unwrap();
+    let validation = validate_cross_platform(&types, &default_config())
+        .await
+        .unwrap();
 
     assert!(validation.compatible);
     assert!(validation.compatibility_score >= 0.8);
     assert!(validation.issues.len() <= 2); // Allow some minor issues
 
     println!("✅ Complete generation pipeline test passed");
-    println!("📊 Compatibility Score: {:.1}%", validation.compatibility_score * 100.0);
+    println!(
+        "📊 Compatibility Score: {:.1}%",
+        validation.compatibility_score * 100.0
+    );
     println!("⚠️  Issues found: {}", validation.issues.len());
 
     for issue in &validation.issues {
@@ -177,7 +185,10 @@ async fn test_advanced_configuration() {
     config.typescript.generate_type_guards = true;
 
     let generator = TypeGenerator::with_full_config(config).unwrap();
-    let result = generator.generate_types_from_source(rust_code, "test.rs", &[]).await.unwrap();
+    let result = generator
+        .generate_types_from_source(rust_code, "test.rs", &[])
+        .await
+        .unwrap();
 
     // Should use camelCase for generated interface
     assert!(result.content.contains("export interface testType"));
@@ -187,7 +198,10 @@ async fn test_advanced_configuration() {
     config.typescript.naming_convention = NamingConvention::PascalCase;
 
     let generator = TypeGenerator::with_full_config(config).unwrap();
-    let result = generator.generate_types_from_source(rust_code, "test.rs", &[]).await.unwrap();
+    let result = generator
+        .generate_types_from_source(rust_code, "test.rs", &[])
+        .await
+        .unwrap();
 
     assert!(result.content.contains("export interface TestType"));
 }
@@ -228,7 +242,10 @@ async fn test_complex_nested_types() {
     "#;
 
     let generator = create_typescript_generator().unwrap();
-    let result = generator.generate_types_from_source(rust_code, "complex_types.rs", &[]).await.unwrap();
+    let result = generator
+        .generate_types_from_source(rust_code, "complex_types.rs", &[])
+        .await
+        .unwrap();
 
     // Check generic type handling
     assert!(result.content.contains("export interface ApiResponse<T>"));
@@ -238,7 +255,9 @@ async fn test_complex_nested_types() {
 
     // Check nested object handling
     assert!(result.content.contains("profile: UserProfile"));
-    assert!(result.content.contains("preferences: Record<string, string>"));
+    assert!(result
+        .content
+        .contains("preferences: Record<string, string>"));
 }
 
 /// Test error handling and validation
@@ -255,7 +274,10 @@ async fn test_error_handling_and_validation() {
     let types = parser.parse_file(invalid_code, "invalid.rs").unwrap();
 
     let generator = create_typescript_generator().unwrap();
-    let result = generator.generate_types_from_source(invalid_code, "invalid.rs", &[]).await.unwrap();
+    let result = generator
+        .generate_types_from_source(invalid_code, "invalid.rs", &[])
+        .await
+        .unwrap();
 
     // Should still generate, but with unknown types
     assert!(result.content.contains("field: any"));
@@ -271,7 +293,9 @@ async fn test_error_handling_and_validation() {
     let parser = TypeParser::new();
     let types = parser.parse_file(complex_code, "complex.rs").unwrap();
 
-    let validation = validate_cross_platform(&types, &default_config()).await.unwrap();
+    let validation = validate_cross_platform(&types, &default_config())
+        .await
+        .unwrap();
 
     // Union types might have compatibility issues
     assert!(!validation.issues.is_empty());
@@ -292,10 +316,16 @@ async fn test_caching_integration() {
     let generator = create_typescript_generator().unwrap();
 
     // First generation
-    let result1 = generator.generate_types_from_source(rust_code, "cache_test.rs", &[]).await.unwrap();
+    let result1 = generator
+        .generate_types_from_source(rust_code, "cache_test.rs", &[])
+        .await
+        .unwrap();
 
     // Second generation (should potentially use cache)
-    let result2 = generator.generate_types_from_source(rust_code, "cache_test.rs", &[]).await.unwrap();
+    let result2 = generator
+        .generate_types_from_source(rust_code, "cache_test.rs", &[])
+        .await
+        .unwrap();
 
     assert_eq!(result1.content, result2.content);
 }
@@ -345,7 +375,10 @@ async fn test_type_transformation_rules() {
         options: HashMap::new(),
     };
 
-    let result = transformer.transform_type("CustomType", &context).await.unwrap();
+    let result = transformer
+        .transform_type("CustomType", &context)
+        .await
+        .unwrap();
     assert_eq!(result.transformed_type, "string");
     assert!(result.success);
 }
@@ -387,7 +420,10 @@ fn test_utility_functions() {
 async fn test_error_scenarios() {
     // Test with empty source
     let generator = create_typescript_generator().unwrap();
-    let result = generator.generate_types_from_source("", "empty.rs", &[]).await.unwrap();
+    let result = generator
+        .generate_types_from_source("", "empty.rs", &[])
+        .await
+        .unwrap();
     assert!(result.content.is_empty());
 
     // Test with only comments
@@ -396,7 +432,10 @@ async fn test_error_scenarios() {
         // Another comment
     "#;
 
-    let result = generator.generate_types_from_source(comment_only, "comments.rs", &[]).await.unwrap();
+    let result = generator
+        .generate_types_from_source(comment_only, "comments.rs", &[])
+        .await
+        .unwrap();
     assert!(result.content.is_empty());
 }
 
@@ -407,7 +446,8 @@ async fn test_large_type_set_performance() {
 
     // Generate many similar types
     for i in 1..=50 {
-        large_code.push_str(&format!(r#"
+        large_code.push_str(&format!(
+            r#"
             pub struct Type{} {{
                 pub id: u32,
                 pub name: String,
@@ -418,12 +458,17 @@ async fn test_large_type_set_performance() {
                 pub value: String,
                 pub count: i32,
             }}
-        "#, i, i, i));
+        "#,
+            i, i, i
+        ));
     }
 
     let start = std::time::Instant::now();
     let generator = create_typescript_generator().unwrap();
-    let result = generator.generate_types_from_source(&large_code, "large.rs", &[]).await.unwrap();
+    let result = generator
+        .generate_types_from_source(&large_code, "large.rs", &[])
+        .await
+        .unwrap();
     let duration = start.elapsed();
 
     // Should complete in reasonable time (< 1 second for 50 types)
@@ -431,7 +476,11 @@ async fn test_large_type_set_performance() {
     assert!(result.source_types.len() > 50); // Should have parsed all types
 
     println!("✅ Large type set performance test passed");
-    println!("📊 Generated {} types in {:?}", result.source_types.len(), duration);
+    println!(
+        "📊 Generated {} types in {:?}",
+        result.source_types.len(),
+        duration
+    );
 }
 
 /// Stress test for concurrent operations
@@ -442,14 +491,18 @@ async fn test_concurrent_operations() {
     let tasks = (1..=10).map(|i| {
         let gen = generator.clone();
         tokio::spawn(async move {
-            let code = format!(r#"
+            let code = format!(
+                r#"
                 pub struct ConcurrentType{} {{
                     pub id: u32,
                     pub name: String,
                 }}
-            "#, i);
+            "#,
+                i
+            );
 
-            gen.generate_types_from_source(&code, &format!("concurrent_{}.rs", i), &[]).await
+            gen.generate_types_from_source(&code, &format!("concurrent_{}.rs", i), &[])
+                .await
         })
     });
 
@@ -466,8 +519,8 @@ async fn test_concurrent_operations() {
 /// Test configuration file operations
 #[tokio::test]
 async fn test_configuration_file_operations() {
-    use tempfile::NamedTempFile;
     use std::io::Write;
+    use tempfile::NamedTempFile;
 
     let config = GenerationConfig::preset_production();
     let temp_file = NamedTempFile::new().unwrap();
@@ -478,7 +531,10 @@ async fn test_configuration_file_operations() {
     // Load configuration
     let loaded_config = GenerationConfig::from_file(temp_file.path()).unwrap();
 
-    assert_eq!(config.typescript.target_version, loaded_config.typescript.target_version);
+    assert_eq!(
+        config.typescript.target_version,
+        loaded_config.typescript.target_version
+    );
     assert_eq!(config.cache.enabled, loaded_config.cache.enabled);
 
     // Test validation
@@ -540,7 +596,10 @@ async fn test_external_dependency_integration() {
     "#;
 
     let generator = create_typescript_generator().unwrap();
-    let result = generator.generate_types_from_source(rust_code, "integration.rs", &[]).await.unwrap();
+    let result = generator
+        .generate_types_from_source(rust_code, "integration.rs", &[])
+        .await
+        .unwrap();
 
     // Should handle external types gracefully
     assert!(result.content.contains("language: any"));
@@ -562,7 +621,10 @@ async fn test_generation_consistency() {
     // Generate multiple times to ensure consistency
     let mut results = Vec::new();
     for _ in 0..5 {
-        let result = generator.generate_types_from_source(rust_code, "consistency.rs", &[]).await.unwrap();
+        let result = generator
+            .generate_types_from_source(rust_code, "consistency.rs", &[])
+            .await
+            .unwrap();
         results.push(result.content);
     }
 

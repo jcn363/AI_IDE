@@ -57,6 +57,6 @@ export function createCancellable<T>(
   return {
     promise,
     cancel: () => controller.cancel(),
-    isCancelled: () => controller.isCancelled()
+    isCancelled: () => controller.isCancelled(),
   };
 }

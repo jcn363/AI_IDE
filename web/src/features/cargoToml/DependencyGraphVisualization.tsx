@@ -55,7 +55,6 @@ export interface GraphNode extends d3.SimulationNodeDatum, Omit<DependencyNode, 
   label?: string;
 }
 
-
 export interface DependencyGraphData {
   nodes: GraphNode[];
   links: GraphLink[];
@@ -150,23 +149,23 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
   // Handle downloading the SVG
   const handleDownloadSVG = useCallback(() => {
     if (!svgRef.current) return;
-    
+
     // Get the SVG element and its outer HTML
     const svgElement = svgRef.current;
     const serializer = new XMLSerializer();
     // Use type assertion to handle the SVG element
     const svgString = serializer.serializeToString(svgElement as unknown as Node);
-    
+
     // Create a proper SVG document with XML declaration and DOCTYPE
     const svgData = `<?xml version="1.0" standalone="no"?>
       <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
       "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
       ${svgString}`;
-    
+
     // Create and trigger download
     const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
     const svgUrl = URL.createObjectURL(svgBlob);
-    
+
     const downloadLink = document.createElement('a') as HTMLAnchorElement;
     downloadLink.href = svgUrl;
     downloadLink.download = 'dependency-graph.svg';
@@ -175,7 +174,7 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
     document.body.removeChild(downloadLink);
     URL.revokeObjectURL(svgUrl);
   }, []);
-  
+
   // Helper to safely access window.location
   const reloadPage = useCallback(() => {
     if (typeof window !== 'undefined' && 'location' in globalThis) {
@@ -196,15 +195,15 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
       setIsLoadingManifest(false);
       return;
     }
-    
+
     const loadManifest = async () => {
       try {
         setIsLoadingManifest(true);
         setManifestError(null);
-        
+
         const manifestPath = `${projectPath}/Cargo.toml`;
         const tomlContent = await invoke<string>('read_file', { path: manifestPath });
-        
+
         // Use the TOML parser if available, otherwise try to parse as JSON
         let parsedManifest: CargoManifest;
         if (typeof window.toml !== 'undefined') {
@@ -214,7 +213,7 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
           // Fallback to JSON parsing if TOML parser is not available
           parsedManifest = JSON.parse(tomlContent);
         }
-        
+
         setManifestState(parsedManifest);
       } catch (err) {
         console.error('Failed to load Cargo.toml:', err);
@@ -223,25 +222,28 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
         setIsLoadingManifest(false);
       }
     };
-    
+
     loadManifest();
   }, [projectPath, manifest]);
 
   // Load and process the Cargo.toml manifest
-  const { nodes, links, crates, features } = useDependencyGraph(manifestState || { package: { name: 'unknown' } }, {
-    includeDevDeps: filters.showDevDeps,
-    includeBuildDeps: filters.showBuildDeps,
-    includeFeatures: filters.showFeatures,
-    resolveFeatures: filters.showFeatureDeps,
-  });
+  const { nodes, links, crates, features } = useDependencyGraph(
+    manifestState || { package: { name: 'unknown' } },
+    {
+      includeDevDeps: filters.showDevDeps,
+      includeBuildDeps: filters.showBuildDeps,
+      includeFeatures: filters.showFeatures,
+      resolveFeatures: filters.showFeatureDeps,
+    }
+  );
 
   // Process graph data when dependencies change
   useEffect(() => {
     if (!nodes.length || isLoadingManifest) return;
-    
+
     try {
       setLoading(true);
-      
+
       // Process nodes for visualization
       const processedNodes: GraphNode[] = nodes.map((node: DependencyNode) => {
         // Safely determine node type and properties
@@ -249,7 +251,7 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
         let size = 8;
         let color = '#1890ff';
         let label = node.name;
-        
+
         // Determine node type and set properties based on type
         if (node.type === 'feature') {
           nodeType = 'feature';
@@ -273,10 +275,10 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
           size = 5;
           color = '#888888';
         }
-        
+
         const isFeature = nodeType === 'feature';
         const isWorkspace = nodeType === 'workspace';
-        
+
         return {
           ...node,
           id: node.id,
@@ -286,9 +288,9 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
           label: label,
         };
       });
-      
+
       // Process links for visualization
-      const processedLinks: GraphLink[] = links.map(link => ({
+      const processedLinks: GraphLink[] = links.map((link) => ({
         ...link,
         source: link.source,
         target: link.target,
@@ -303,15 +305,15 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
         // Add d3 simulation properties
         index: undefined,
       }));
-      
+
       setGraphData({
         nodes: processedNodes,
         links: processedLinks,
-        crates: nodes.filter(n => n.type === 'crate'),
-        features: nodes.filter(n => n.type === 'feature'),
+        crates: nodes.filter((n) => n.type === 'crate'),
+        features: nodes.filter((n) => n.type === 'feature'),
         rootNode: projectPath,
       });
-      
+
       setLoading(false);
     } catch (err) {
       console.error('Error processing graph data:', err);
@@ -323,21 +325,24 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
   // Initialize and update the D3 force simulation
   useEffect(() => {
     if (!graphData || !svgRef.current) return;
-    
+
     const { width, height } = dimensions;
     if (width === 0 || height === 0) return;
-    
+
     // Clear previous simulation
     if (simulation) {
       simulation.stop();
     }
-    
+
     // Filter nodes and links based on current filters
-    const filteredNodes = graphData.nodes.filter(node => {
+    const filteredNodes = graphData.nodes.filter((node) => {
       if (filters.dependencyType !== 'all' && node.type !== filters.dependencyType) {
         return false;
       }
-      if (filters.searchTerm && !node.name.toLowerCase().includes(filters.searchTerm.toLowerCase())) {
+      if (
+        filters.searchTerm &&
+        !node.name.toLowerCase().includes(filters.searchTerm.toLowerCase())
+      ) {
         return false;
       }
       if (!filters.showFeatures && node.type === 'feature') return false;
@@ -345,25 +350,29 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
       if (!filters.showBuildDeps && node.type === 'build') return false;
       return !(!filters.showTransitiveDeps && node.type === 'transitive');
     });
-    
-    const nodeIds = new Set(filteredNodes.map(n => n.id));
+
+    const nodeIds = new Set(filteredNodes.map((n) => n.id));
     const filteredLinks = graphData.links.filter(
-      link => nodeIds.has(link.source as string) && nodeIds.has(link.target as string),
+      (link) => nodeIds.has(link.source as string) && nodeIds.has(link.target as string)
     );
-    
+
     // Create a new simulation
-    const newSimulation = d3.forceSimulation<GraphNode>(filteredNodes as any[])
-      .force('link', d3.forceLink<GraphNode, GraphLink>(filteredLinks as any[])
-        .id((d: any) => d.id)
-        .distance(100)
-        .strength(0.1),
+    const newSimulation = d3
+      .forceSimulation<GraphNode>(filteredNodes as any[])
+      .force(
+        'link',
+        d3
+          .forceLink<GraphNode, GraphLink>(filteredLinks as any[])
+          .id((d: any) => d.id)
+          .distance(100)
+          .strength(0.1)
       )
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide().radius(40));
-    
+
     setSimulation(newSimulation);
-    
+
     return () => {
       newSimulation.stop();
     };
@@ -381,15 +390,20 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
 
     // Create simulation if it doesn't exist
     if (!simulation) {
-      const newSimulation = d3.forceSimulation<GraphNode>(graphData.nodes as any[])
-        .force('link', d3.forceLink<GraphNode, GraphLink>(graphData.links as any[])
-          .id((d: any) => d.id)
-          .distance(100)
-          .strength(0.1))
+      const newSimulation = d3
+        .forceSimulation<GraphNode>(graphData.nodes as any[])
+        .force(
+          'link',
+          d3
+            .forceLink<GraphNode, GraphLink>(graphData.links as any[])
+            .id((d: any) => d.id)
+            .distance(100)
+            .strength(0.1)
+        )
         .force('charge', d3.forceManyBody().strength(-300))
         .force('center', d3.forceCenter(width / 2, height / 2))
         .force('collision', d3.forceCollide().radius(40));
-      
+
       setSimulation(newSimulation);
       return;
     }
@@ -399,21 +413,25 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
 
     // Create a group for zoom/pan
     const g = svg.append('g');
-    
+
     // Add zoom/pan behavior
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
+    const zoom = d3
+      .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 4])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
       });
-    
+
     svg.call(zoom as any);
-    
+
     // Create arrow markers for links
-    svg.append('defs').selectAll('marker')
+    svg
+      .append('defs')
+      .selectAll('marker')
       .data(['end'])
-      .enter().append('marker')
-      .attr('id', d => d)
+      .enter()
+      .append('marker')
+      .attr('id', (d) => d)
       .attr('viewBox', '0 -5 10 10')
       .attr('refX', 15)
       .attr('refY', 0)
@@ -423,31 +441,36 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
       .append('path')
       .attr('d', 'M0,-5L10,0L0,5')
       .attr('fill', '#999');
-    
+
     // Create links
-    const link = g.append('g')
+    const link = g
+      .append('g')
       .selectAll('line')
       .data(graphData.links, (d: any) => `${d.source.id}-${d.target.id}`)
-      .enter().append('line')
+      .enter()
+      .append('line')
       .attr('stroke', (d: any) => d.color || '#999')
       .attr('stroke-width', (d: any) => d.width || 1)
       .attr('stroke-opacity', 0.6)
       .attr('marker-end', 'url(#end)');
-    
+
     // Create nodes
-    const node = g.append('g')
+    const node = g
+      .append('g')
       .selectAll('circle')
       .data(graphData.nodes, (d: any) => d.id)
-      .enter().append('circle')
+      .enter()
+      .append('circle')
       .attr('r', (d: any) => d.size || 5)
       .attr('fill', (d: any) => d.color || '#1890ff')
       .attr('stroke', '#fff')
       .attr('stroke-width', 1.5)
       .call(
-        d3.drag<SVGCircleElement, GraphNode>()
+        d3
+          .drag<SVGCircleElement, GraphNode>()
           .on('start', dragstarted)
           .on('drag', dragged)
-          .on('end', dragended) as any,
+          .on('end', dragended) as any
       )
       .on('mouseover', (event: any, d: any) => {
         setHoveredNode(d);
@@ -461,18 +484,20 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
         setSelectedNode(d);
         event.stopPropagation();
       });
-    
+
     // Add labels
-    const labels = g.append('g')
+    const labels = g
+      .append('g')
       .selectAll('text')
       .data(graphData.nodes, (d: any) => d.id)
-      .enter().append('text')
+      .enter()
+      .append('text')
       .text((d: any) => d.label || d.name)
       .attr('font-size', '10px')
       .attr('dx', 12)
       .attr('dy', '.35em')
       .attr('fill', '#333');
-    
+
     // Update positions on each tick
     withSimulation((sim) => {
       sim.on('tick', () => {
@@ -481,33 +506,29 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
           .attr('y1', (d: any) => d.source.y)
           .attr('x2', (d: any) => d.target.x)
           .attr('y2', (d: any) => d.target.y);
-        
-        node
-          .attr('cx', (d: any) => d.x)
-          .attr('cy', (d: any) => d.y);
-        
-        labels
-          .attr('x', (d: any) => d.x + 10)
-          .attr('y', (d: any) => d.y + 5);
+
+        node.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y);
+
+        labels.attr('x', (d: any) => d.x + 10).attr('y', (d: any) => d.y + 5);
       });
     });
-    
+
     // Drag functions
     function dragstarted(event: any, d: any) {
-      withSimulation(sim => {
+      withSimulation((sim) => {
         if (!event.active) sim.alphaTarget(0.3).restart();
         d.fx = d.x;
         d.fy = d.y;
       });
     }
-    
+
     function dragged(event: any, d: any) {
       d.fx = event.x;
       d.fy = event.y;
     }
-    
+
     function dragended(event: any, d: any) {
-      withSimulation(sim => {
+      withSimulation((sim) => {
         if (!event.active) sim.alphaTarget(0);
         d.fx = event.x;
         d.fy = event.y;
@@ -517,37 +538,35 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
 
   const handleZoomToFit = useCallback(() => {
     if (!svgRef.current || !graphData || !graphContainerRef.current) return;
-    
+
     const svg = d3.select<SVGSVGElement, unknown>(svgRef.current);
     const container = graphContainerRef.current;
     const containerRect = container.getBoundingClientRect();
-    
+
     // Get bounds of all nodes
-    const xExtent = d3.extent(graphData.nodes, d => d.x) as [number, number];
-    const yExtent = d3.extent(graphData.nodes, d => d.y) as [number, number];
-    
+    const xExtent = d3.extent(graphData.nodes, (d) => d.x) as [number, number];
+    const yExtent = d3.extent(graphData.nodes, (d) => d.y) as [number, number];
+
     const graphWidth = xExtent[1] - xExtent[0];
     const graphHeight = yExtent[1] - yExtent[0];
-    
+
     if (graphWidth === 0 || graphHeight === 0) return;
-    
+
     // Calculate scale and translation
     const scale = Math.min(
-      0.9 * containerRect.width / graphWidth,
-      0.9 * containerRect.height / graphHeight,
+      (0.9 * containerRect.width) / graphWidth,
+      (0.9 * containerRect.height) / graphHeight
     );
-    
+
     const dx = (containerRect.width - graphWidth * scale) / 2 - xExtent[0] * scale;
     const dy = (containerRect.height - graphHeight * scale) / 2 - yExtent[0] * scale;
-    
+
     // Apply zoom transform
     const zoom = d3.zoom<SVGSVGElement, unknown>();
-    svg.transition()
+    svg
+      .transition()
       .duration(750)
-      .call(
-        zoom.transform as any,
-        d3.zoomIdentity.translate(dx, dy).scale(scale),
-      );
+      .call(zoom.transform as any, d3.zoomIdentity.translate(dx, dy).scale(scale));
   }, [graphData]);
 
   if (isLoadingManifest) {
@@ -562,17 +581,13 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
     return (
       <div className="error-container" style={{ padding: '20px', textAlign: 'center' }}>
         <p style={{ color: 'red', marginBottom: '16px' }}>Error: {error}</p>
-        <Button 
-          type="primary" 
-          icon={<ReloadOutlined />} 
-          onClick={reloadPage}
-        >
+        <Button type="primary" icon={<ReloadOutlined />} onClick={reloadPage}>
           Retry
         </Button>
       </div>
     );
   }
-  
+
   if (!projectPath) {
     return (
       <div className="error-container" style={{ padding: '20px', textAlign: 'center' }}>
@@ -587,51 +602,39 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
         <div className="graph-controls">
           <Space>
             <Tooltip title="Reload graph">
-              <Button 
-                icon={<ReloadOutlined />} 
-                onClick={reloadPage}
-              />
+              <Button icon={<ReloadOutlined />} onClick={reloadPage} />
             </Tooltip>
-            
+
             <Tooltip title="Download as SVG">
-              <Button 
-                icon={<DownloadOutlined />} 
-                onClick={handleDownloadSVG}
-              />
+              <Button icon={<DownloadOutlined />} onClick={handleDownloadSVG} />
             </Tooltip>
-            
+
             <Tooltip title="Zoom to fit">
-              <Button 
-                icon={<SearchOutlined />} 
-                onClick={handleZoomToFit}
-              />
+              <Button icon={<SearchOutlined />} onClick={handleZoomToFit} />
             </Tooltip>
-            
+
             <Tooltip title="Toggle features">
-              <Switch 
+              <Switch
                 checked={filters.showFeatures}
-                onChange={checked => setFilters(prev => ({ ...prev, showFeatures: checked }))}
+                onChange={(checked) => setFilters((prev) => ({ ...prev, showFeatures: checked }))}
                 checkedChildren={<EyeOutlined />}
                 unCheckedChildren={<EyeInvisibleOutlined />}
               />
             </Tooltip>
-            
+
             <Tooltip title="Filter dependencies">
-              <Button
-                icon={<FilterOutlined />}
-                onClick={() => setIsFilterModalOpen(true)}
-              />
+              <Button icon={<FilterOutlined />} onClick={() => setIsFilterModalOpen(true)} />
             </Tooltip>
           </Space>
         </div>
       )}
-      
-      <div 
+
+      <div
         ref={graphContainerRef}
-        className="graph-container" 
-        style={{ 
-          position: 'relative', 
-          width: '100%', 
+        className="graph-container"
+        style={{
+          position: 'relative',
+          width: '100%',
           height: '100%',
           border: '1px solid #f0f0f0',
           borderRadius: '4px',
@@ -639,12 +642,12 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
         }}
       >
         {loading ? (
-          <div 
-            className="graph-loading" 
-            style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center', 
+          <div
+            className="graph-loading"
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
               height: '100%',
               backgroundColor: '#fff',
             }}
@@ -652,12 +655,12 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
             <Spin tip="Loading dependency graph..." />
           </div>
         ) : error ? (
-          <div 
-            className="graph-error" 
-            style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center', 
+          <div
+            className="graph-error"
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
               height: '100%',
               backgroundColor: '#fff',
             }}
@@ -665,36 +668,36 @@ const DependencyGraphVisualization: React.FC<DependencyGraphVisualizationProps> 
             <Empty description={error} />
           </div>
         ) : (
-          <svg
-            ref={svgRef}
-            width="100%"
-            height="100%"
-            className="dependency-graph"
-          />
+          <svg ref={svgRef} width="100%" height="100%" className="dependency-graph" />
         )}
       </div>
-      
+
       {(selectedNode || hoveredNode) && (
-        <div className="graph-sidebar" style={{
-          position: 'absolute',
-          right: '20px',
-          top: '60px',
-          width: '300px',
-          backgroundColor: '#fff',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          padding: '16px',
-          borderRadius: '4px',
-          maxHeight: 'calc(100% - 80px)',
-          overflow: 'auto',
-          zIndex: 10,
-        }}>
+        <div
+          className="graph-sidebar"
+          style={{
+            position: 'absolute',
+            right: '20px',
+            top: '60px',
+            width: '300px',
+            backgroundColor: '#fff',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            padding: '16px',
+            borderRadius: '4px',
+            maxHeight: 'calc(100% - 80px)',
+            overflow: 'auto',
+            zIndex: 10,
+          }}
+        >
           <h3 style={{ marginTop: 0 }}>{(hoveredNode || selectedNode)?.name}</h3>
-          <pre style={{
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            fontSize: '12px',
-            margin: 0,
-          }}>
+          <pre
+            style={{
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              fontSize: '12px',
+              margin: 0,
+            }}
+          >
             {JSON.stringify(hoveredNode || selectedNode, null, 2)}
           </pre>
         </div>

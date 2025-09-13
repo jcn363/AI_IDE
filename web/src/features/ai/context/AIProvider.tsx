@@ -1,4 +1,11 @@
-import React, { ReactNode, createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, {
+  ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { AIService } from '..';
 import type { CodeGenerationOptions, GeneratedCode, AISuggestion } from '../types';
 import type { ErrorResolutionResult, DocumentationLink } from '../error-resolution/ErrorResolver';
@@ -15,7 +22,11 @@ interface AIState {
 
 interface AIActions {
   analyzeCode: (code: string, filePath: string) => Promise<void>;
-  resolveError: (error: any, documentText: string, filePath: string) => Promise<ErrorResolutionResult | null>;
+  resolveError: (
+    error: any,
+    documentText: string,
+    filePath: string
+  ) => Promise<ErrorResolutionResult | null>;
   generateCode: (options: CodeGenerationOptions) => Promise<GeneratedCode | null>;
   applyFix: (action: any) => Promise<boolean>;
   dismissSuggestion: (index: number) => void;
@@ -39,7 +50,10 @@ interface AIProviderProps {
   service?: AIService;
 }
 
-export const AIProvider: React.FC<AIProviderProps> = ({ children, service = AIService.getInstance() }) => {
+export const AIProvider: React.FC<AIProviderProps> = ({
+  children,
+  service = AIService.getInstance(),
+}) => {
   const [state, setState] = useState<AIState>({
     isInitialized: false,
     isLoading: false,
@@ -53,16 +67,16 @@ export const AIProvider: React.FC<AIProviderProps> = ({ children, service = AISe
   useEffect(() => {
     const init = async () => {
       try {
-        setState(prev => ({ ...prev, isLoading: true }));
+        setState((prev) => ({ ...prev, isLoading: true }));
         await service.initialize();
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           isInitialized: true,
           isLoading: false,
         }));
       } catch (error) {
         console.error('Failed to initialize AI service:', error);
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           isLoading: false,
           error: 'Failed to initialize AI service',
@@ -75,29 +89,33 @@ export const AIProvider: React.FC<AIProviderProps> = ({ children, service = AISe
 
   const analyzeCode = useCallback(async (code: string, filePath: string) => {
     try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      
+      setState((prev) => ({ ...prev, isLoading: true }));
+
       // In a real implementation, this would call the actual AI service
       // For now, we'll simulate analysis with a timeout
-      await new Promise(resolve => {setTimeout(resolve, 1000);});
-      
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1000);
+      });
+
       // Simulate analysis results
       const newSuggestion: AISuggestion = {
         type: 'suggestion',
         message: 'Consider extracting this complex logic into a separate function',
         range: { start: { line: 10, character: 0 }, end: { line: 15, character: 1 } },
-        codeActions: [{
-          title: 'Extract method',
-          action: async () => {
-            // Implementation would go here
+        codeActions: [
+          {
+            title: 'Extract method',
+            action: async () => {
+              // Implementation would go here
+            },
           },
-        }],
+        ],
         category: 'performance',
         severity: 2,
         source: 'code-analysis',
       };
-      
-      setState(prev => ({
+
+      setState((prev) => ({
         ...prev,
         suggestions: [...prev.suggestions, newSuggestion],
         isPanelVisible: true,
@@ -121,9 +139,9 @@ export const AIProvider: React.FC<AIProviderProps> = ({ children, service = AISe
         severity: 1, // Error
         source: 'error-resolution',
       };
-      
+
       console.error('Error analyzing code:', error);
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         suggestions: [...prev.suggestions, errorSuggestion],
         isPanelVisible: true,
@@ -133,102 +151,128 @@ export const AIProvider: React.FC<AIProviderProps> = ({ children, service = AISe
     }
   }, []);
 
-  const resolveError = useCallback(async (error: Error & { range?: any; text?: string }, documentText: string, filePath: string) => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      
-      // In a real implementation, this would call the actual error resolver
-      // For now, we'll simulate resolution with a timeout
-      await new Promise(resolve => {setTimeout(resolve, 800);});
-      
-      // Create error suggestion
-      const errorSuggestion: AISuggestion = {
-        type: 'error',
-        message: error.message || 'Unknown error occurred',
-        range: error.range || { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
-        codeActions: [
-          {
-            title: 'Fix automatically',
-            action: async () => {
-              // Implementation would go here
-              await Promise.resolve();
-            },
-          },
-        ],
-        category: 'security',
-        severity: 1, // Error
-        source: 'error-resolution',
-      };
-      
-      // Simulate resolution results
-      const mockResolution: ErrorResolutionResult = {
-        quickFixes: [{
-          title: 'Add missing semicolon',
-          kind: 'quickfix',
-          edit: {
-            changes: {
-              [filePath]: [{
-                range: error.range || { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
-                newText: `${error.text || ''  };`,
-              }],
-            },
-          },
-        }],
-        explanations: ['This error occurs because of a missing semicolon at the end of the line.'],
-        relatedDocumentation: [
-          {
-            title: 'Rust Semicolon Documentation',
-            url: 'https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html',
-            description: 'Learn about Rust syntax and semicolon usage',
-          },
-        ],
-      };
+  const resolveError = useCallback(
+    async (
+      error: Error & { range?: any; text?: string },
+      documentText: string,
+      filePath: string
+    ) => {
+      try {
+        setState((prev) => ({ ...prev, isLoading: true }));
 
-      setState(prev => ({
-        ...prev,
-        suggestions: [...prev.suggestions, {
+        // In a real implementation, this would call the actual error resolver
+        // For now, we'll simulate resolution with a timeout
+        await new Promise((resolve) => {
+          setTimeout(resolve, 800);
+        });
+
+        // Create error suggestion
+        const errorSuggestion: AISuggestion = {
           type: 'error',
-          message: error.message,
-          range: error.range,
-          codeActions: mockResolution.quickFixes.map(fix => ({
-            title: fix.title || 'Fix automatically',
-            action: async () => {
-              // Implementation would go here
-              console.log('Applying fix:', fix.title);
-              await Promise.resolve();
+          message: error.message || 'Unknown error occurred',
+          range: error.range || {
+            start: { line: 0, character: 0 },
+            end: { line: 0, character: 1 },
+          },
+          codeActions: [
+            {
+              title: 'Fix automatically',
+              action: async () => {
+                // Implementation would go here
+                await Promise.resolve();
+              },
             },
-          })),
-          category: 'syntax',
+          ],
+          category: 'security',
           severity: 1, // Error
           source: 'error-resolution',
-        }],
-        isPanelVisible: true,
-        isLoading: false,
-      }));
+        };
 
-      return mockResolution;
-    } catch (error) {
-      console.error('Error resolving error:', error);
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: 'Failed to resolve error',
-      }));
-      return null;
-    }
-  }, []);
+        // Simulate resolution results
+        const mockResolution: ErrorResolutionResult = {
+          quickFixes: [
+            {
+              title: 'Add missing semicolon',
+              kind: 'quickfix',
+              edit: {
+                changes: {
+                  [filePath]: [
+                    {
+                      range: error.range || {
+                        start: { line: 0, character: 0 },
+                        end: { line: 0, character: 1 },
+                      },
+                      newText: `${error.text || ''};`,
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+          explanations: [
+            'This error occurs because of a missing semicolon at the end of the line.',
+          ],
+          relatedDocumentation: [
+            {
+              title: 'Rust Semicolon Documentation',
+              url: 'https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html',
+              description: 'Learn about Rust syntax and semicolon usage',
+            },
+          ],
+        };
+
+        setState((prev) => ({
+          ...prev,
+          suggestions: [
+            ...prev.suggestions,
+            {
+              type: 'error',
+              message: error.message,
+              range: error.range,
+              codeActions: mockResolution.quickFixes.map((fix) => ({
+                title: fix.title || 'Fix automatically',
+                action: async () => {
+                  // Implementation would go here
+                  console.log('Applying fix:', fix.title);
+                  await Promise.resolve();
+                },
+              })),
+              category: 'syntax',
+              severity: 1, // Error
+              source: 'error-resolution',
+            },
+          ],
+          isPanelVisible: true,
+          isLoading: false,
+        }));
+
+        return mockResolution;
+      } catch (error) {
+        console.error('Error resolving error:', error);
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: 'Failed to resolve error',
+        }));
+        return null;
+      }
+    },
+    []
+  );
 
   const generateCode = useCallback(async (options: CodeGenerationOptions) => {
     try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      
+      setState((prev) => ({ ...prev, isLoading: true }));
+
       // In a real implementation, this would call the actual code generator
       // For now, we'll simulate generation with a timeout
-      await new Promise(resolve => {setTimeout(resolve, 1500);});
-      
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1500);
+      });
+
       // Simulate generated code
       const mockGeneratedCode: GeneratedCode = {
-        content: `// Generated code based on: ${  options.context?.substring(0, 50)  }...`,
+        content: `// Generated code based on: ${options.context?.substring(0, 50)}...`,
         range: {
           start: { line: options.cursorPosition.line, character: 0 },
           end: { line: options.cursorPosition.line, character: 0 },
@@ -238,7 +282,7 @@ export const AIProvider: React.FC<AIProviderProps> = ({ children, service = AISe
         type: 'example',
       };
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         isLoading: false,
       }));
@@ -246,7 +290,7 @@ export const AIProvider: React.FC<AIProviderProps> = ({ children, service = AISe
       return mockGeneratedCode;
     } catch (error) {
       console.error('Error generating code:', error);
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         isLoading: false,
         error: 'Failed to generate code',
@@ -267,28 +311,28 @@ export const AIProvider: React.FC<AIProviderProps> = ({ children, service = AISe
   }, []);
 
   const dismissSuggestion = useCallback((index: number) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       suggestions: prev.suggestions.filter((_, i) => i !== index),
     }));
   }, []);
 
   const showPanel = useCallback(() => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       isPanelVisible: true,
     }));
   }, []);
 
   const hidePanel = useCallback(() => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       isPanelVisible: false,
     }));
   }, []);
 
   const clearSuggestions = useCallback(() => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       suggestions: [],
       activeSuggestionIndex: null,

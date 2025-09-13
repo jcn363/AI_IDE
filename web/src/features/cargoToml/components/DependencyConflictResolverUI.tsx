@@ -1,7 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Card, Table, Tag, Button, Space, Select, Alert, Typography } from 'antd';
 import { InfoCircleOutlined, CheckCircleOutlined, WarningOutlined } from '@ant-design/icons';
-import { detectAndResolveConflicts, VersionConflict, ResolutionStrategy } from '../conflictResolver';
+import {
+  detectAndResolveConflicts,
+  VersionConflict,
+  ResolutionStrategy,
+} from '../conflictResolver';
 import { CargoManifest } from '../../../types/cargo';
 
 const { Text } = Typography;
@@ -28,13 +32,16 @@ export const DependencyConflictResolverUI: React.FC<DependencyConflictResolverUI
   // Detect and resolve conflicts
   const { conflicts, resolutions } = useMemo(() => {
     const conflicts = detectAndResolveConflicts(manifest, lockfile, strategy);
-    const resolutions = conflicts.reduce((acc, conflict) => {
-      if (conflict.resolution) {
-        acc[conflict.package] = conflict.resolution.version;
-      }
-      return acc;
-    }, {} as Record<string, string>);
-    
+    const resolutions = conflicts.reduce(
+      (acc, conflict) => {
+        if (conflict.resolution) {
+          acc[conflict.package] = conflict.resolution.version;
+        }
+        return acc;
+      },
+      {} as Record<string, string>
+    );
+
     return { conflicts, resolutions };
   }, [manifest, lockfile, strategy]);
 
@@ -101,8 +108,8 @@ export const DependencyConflictResolverUI: React.FC<DependencyConflictResolverUI
   }
 
   return (
-    <Card 
-      title="Dependency Conflicts" 
+    <Card
+      title="Dependency Conflicts"
       className={className}
       extra={
         <Space>
@@ -120,7 +127,7 @@ export const DependencyConflictResolverUI: React.FC<DependencyConflictResolverUI
             <Option value="highest">Highest Version</Option>
             <Option value="lowest">Lowest Version</Option>
           </Select>
-          
+
           <Select
             value={strategy.preferStable ? 'stable' : 'all'}
             onChange={(value) => {
@@ -134,9 +141,9 @@ export const DependencyConflictResolverUI: React.FC<DependencyConflictResolverUI
             <Option value="stable">Stable Only</Option>
             <Option value="all">Include Pre-release</Option>
           </Select>
-          
-          <Button 
-            type="primary" 
+
+          <Button
+            type="primary"
             onClick={handleResolve}
             disabled={Object.keys(resolutions).length === 0}
           >
@@ -148,15 +155,16 @@ export const DependencyConflictResolverUI: React.FC<DependencyConflictResolverUI
       <Alert
         message={
           <>
-            Found <strong>{conflicts.length}</strong> dependency conflict{conflicts.length > 1 ? 's' : ''}.
-            Select a resolution strategy and click "Apply Resolutions" to fix them.
+            Found <strong>{conflicts.length}</strong> dependency conflict
+            {conflicts.length > 1 ? 's' : ''}. Select a resolution strategy and click "Apply
+            Resolutions" to fix them.
           </>
         }
         type="warning"
         showIcon
         style={{ marginBottom: 16 }}
       />
-      
+
       <Table
         dataSource={conflicts}
         columns={columns}
@@ -164,10 +172,10 @@ export const DependencyConflictResolverUI: React.FC<DependencyConflictResolverUI
         pagination={false}
         size="small"
       />
-      
+
       <div style={{ marginTop: 16, textAlign: 'right' }}>
-        <Button 
-          type="primary" 
+        <Button
+          type="primary"
           onClick={handleResolve}
           disabled={Object.keys(resolutions).length === 0}
         >

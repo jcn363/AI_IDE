@@ -30,12 +30,12 @@ rust-ai-ide-types = { path = "../rust-ai-ide-types" }
 rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
 
 # ML/ML learning specific
-ml-framework-integration = { version = "0.1", optional = true }
-model-serving = { version = "0.1", optional = true }
-distributed-training = { version = "0.1", optional = true }
+# ml-framework-integration = { version = "0.1", optional = true }
+# model-serving = { version = "0.1", optional = true }
+# distributed-training = { version = "0.1", optional = true }
 
 [features]
 default = []
-distributed = ["distributed-training"]
-serving = ["model-serving"]
-full = ["distributed", "serving", "ml-framework-integration"]
+# distributed = ["distributed-training"]
+# serving = ["model-serving"]
+full = []

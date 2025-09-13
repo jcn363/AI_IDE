@@ -1,13 +1,9 @@
 //! Core workspace management implementation using shared services
 
-use std::sync::Arc;
-use async_trait::async_trait;
-use rust_ai_ide_shared_services::{
-    WorkspaceConfig,
-    WorkspaceManager,
-    WorkspaceManagerTrait,
-};
 use crate::error::IDEError;
+use async_trait::async_trait;
+use rust_ai_ide_shared_services::{WorkspaceConfig, WorkspaceManager, WorkspaceManagerTrait};
+use std::sync::Arc;
 
 /// Core workspace manager with additional functionality
 pub struct CoreWorkspaceManager {
@@ -31,12 +27,11 @@ impl CoreWorkspaceManager {
         let config_file_path = config_path.as_ref().join(".rust-ai-ide/workspace.json");
 
         if config_file_path.exists() {
-            let config_content = std::fs::read_to_string(&config_file_path)
-                .map_err(|e| IDEError::from(e))?;
+            let config_content =
+                std::fs::read_to_string(&config_file_path).map_err(|e| IDEError::from(e))?;
 
             let config: serde_json::Map<String, serde_json::Value> =
-                serde_json::from_str(&config_content)
-                    .map_err(|e| IDEError::from(e))?;
+                serde_json::from_str(&config_content).map_err(|e| IDEError::from(e))?;
 
             // Extract workspace root from config or use directory
             let root_path = config_path.as_ref().to_path_buf();
@@ -47,7 +42,8 @@ impl CoreWorkspaceManager {
             if let Some(settings) = config.get("settings") {
                 if let serde_json::Value::Object(settings_obj) = settings {
                     for (key, value) in settings_obj {
-                        workspace_config.set_setting(key.clone(), value.clone())
+                        workspace_config
+                            .set_setting(key.clone(), value.clone())
                             .map_err(|e| IDEError::from(e))?;
                     }
                 }
@@ -68,8 +64,13 @@ impl CoreWorkspaceManager {
         &self,
         path: P,
     ) -> Result<WorkspaceCapabilities, IDEError> {
-        let workspace = self.inner.get_workspace(&path).await
-            .ok_or_else(|| IDEError::FileSystem { message: format!("workspace not found for path: {}", path.as_ref().display()) })?;
+        let workspace =
+            self.inner
+                .get_workspace(&path)
+                .await
+                .ok_or_else(|| IDEError::FileSystem {
+                    message: format!("workspace not found for path: {}", path.as_ref().display()),
+                })?;
 
         let mut capabilities = WorkspaceCapabilities {
             rust_support: false,
@@ -101,10 +102,16 @@ impl CoreWorkspaceManager {
         key: &str,
         value: serde_json::Value,
     ) -> Result<(), IDEError> {
-        let mut workspace = self.inner.get_workspace(&path).await
-            .ok_or_else(|| IDEError::FileSystem { message: format!("workspace not found for path: {}", path.as_ref().display()) })?;
+        let mut workspace =
+            self.inner
+                .get_workspace(&path)
+                .await
+                .ok_or_else(|| IDEError::FileSystem {
+                    message: format!("workspace not found for path: {}", path.as_ref().display()),
+                })?;
 
-        workspace.set_setting(key, value)
+        workspace
+            .set_setting(key, value)
             .map_err(|e| IDEError::from(e))?;
 
         // Re-add the updated workspace
@@ -176,7 +183,10 @@ mod tests {
         manager.add_workspace(config).await.unwrap();
 
         // Test workspace capabilities
-        let capabilities = manager.get_workspace_capabilities(temp_dir.path()).await.unwrap();
+        let capabilities = manager
+            .get_workspace_capabilities(temp_dir.path())
+            .await
+            .unwrap();
         assert_eq!(capabilities.rs_support, false); // No Cargo.toml yet
         assert_eq!(capabilities.cargo_support, false);
         assert_eq!(capabilities.file_watching, true);

@@ -15,7 +15,10 @@ pub enum MonitoringError {
 
     /// Command execution errors
     #[error("Command execution failed: {command} - {source}")]
-    CommandExecution { command: String, source: std::io::Error },
+    CommandExecution {
+        command: String,
+        source: std::io::Error,
+    },
 
     /// Process execution errors with exit code
     #[error("Command '{command}' failed with exit code {exit_code}: {stderr}")]

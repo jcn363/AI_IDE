@@ -64,9 +64,7 @@ const cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
  * return <UserList users={data || []} onRefresh={refresh} />;
  * ```
  */
-export function useDataLoader<T>(
-  options: UseDataLoaderOptions<T>
-): UseDataLoaderReturn<T> {
+export function useDataLoader<T>(options: UseDataLoaderOptions<T>): UseDataLoaderReturn<T> {
   const {
     fetchFn,
     immediate = false,
@@ -74,7 +72,7 @@ export function useDataLoader<T>(
     enableCache = false,
     cacheKey,
     transform,
-    deps = []
+    deps = [],
   } = options;
 
   const [data, setData] = useState<T | null>(null);
@@ -102,15 +100,18 @@ export function useDataLoader<T>(
   }, [enableCache, cacheKey]);
 
   // Save to cache
-  const saveToCache = useCallback((data: T, ttl = 5 * 60 * 1000) => {
-    if (enableCache && cacheKey) {
-      cache.set(cacheKey, {
-        data,
-        timestamp: Date.now(),
-        ttl
-      });
-    }
-  }, [enableCache, cacheKey]);
+  const saveToCache = useCallback(
+    (data: T, ttl = 5 * 60 * 1000) => {
+      if (enableCache && cacheKey) {
+        cache.set(cacheKey, {
+          data,
+          timestamp: Date.now(),
+          ttl,
+        });
+      }
+    },
+    [enableCache, cacheKey]
+  );
 
   const fetchData = useCallback(async (): Promise<T | null> => {
     // Cancel any existing request
@@ -233,7 +234,7 @@ export function useDataLoader<T>(
     error,
     refresh,
     clear,
-    lastFetch
+    lastFetch,
   };
 }
 
@@ -243,31 +244,27 @@ export function useDataLoader<T>(
 export function useMultipleDataLoaders<T>(
   loaders: Array<{ key: string; options: UseDataLoaderOptions<T> }>
 ) {
-  const results = loaders.map(loader =>
-    useDataLoader(loader.options)
-  );
+  const results = loaders.map((loader) => useDataLoader(loader.options));
 
-  const loading = results.some(r => r.loading);
-  const error = results.find(r => r.error)?.error || null;
-  const lastFetch = Math.max(...results.map(r => r.lastFetch || 0));
+  const loading = results.some((r) => r.loading);
+  const error = results.find((r) => r.error)?.error || null;
+  const lastFetch = Math.max(...results.map((r) => r.lastFetch || 0));
 
   const refreshAll = useCallback(async () => {
-    const promises = results.map(r => r.refresh());
+    const promises = results.map((r) => r.refresh());
     await Promise.all(promises);
   }, [results]);
 
   const clearAll = useCallback(() => {
-    results.forEach(r => r.clear());
+    results.forEach((r) => r.clear());
   }, [results]);
 
   return {
-    loaders: Object.fromEntries(
-      loaders.map((loader, index) => [loader.key, results[index]])
-    ),
+    loaders: Object.fromEntries(loaders.map((loader, index) => [loader.key, results[index]])),
     loading,
     error,
     lastFetch: lastFetch > 0 ? lastFetch : null,
     refreshAll,
-    clearAll
+    clearAll,
   };
 }

@@ -1,5 +1,5 @@
 use rust_ai_ide_cargo::{
-    build::{BuildStatus, BuildError, ErrorLevel},
+    build::{BuildError, BuildStatus, ErrorLevel},
     dependency::{DependencyInfo, DependencyKind, DependencyManager},
     models::BuildMetrics,
 };
@@ -21,13 +21,13 @@ async fn test_dependency_management() {
         name = "test_project"
         version = "0.1.0"
         edition = "2021"
-        
+
         [dependencies]
         serde = { version = "1.0", features = ["derive"] }
-        
+
         [dev-dependencies]
         tempfile = "3.0"
-        
+
         [build-dependencies]
         cc = "1.0"
     "#,
@@ -110,16 +110,14 @@ async fn test_dependency_management() {
     let failed = BuildStatus::Failed {
         error: "Build failed".to_string(),
         duration: 10000.0,
-        error_details: vec![
-            BuildError {
-                message: "Build failed".to_string(),
-                file: None,
-                line: None,
-                column: None,
-                code: None,
-                level: ErrorLevel::Error,
-            },
-        ],
+        error_details: vec![BuildError {
+            message: "Build failed".to_string(),
+            file: None,
+            line: None,
+            column: None,
+            code: None,
+            level: ErrorLevel::Error,
+        }],
     };
 
     let cancelled = BuildStatus::Cancelled;

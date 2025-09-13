@@ -30,7 +30,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   Clear as ClearIcon,
 } from '@mui/icons-material';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 
 // Terminal-related interfaces matching Rust types
 interface CommandHistoryEntry {
@@ -146,11 +146,11 @@ const EnhancedTerminal: React.FC<EnhancedTerminalProps> = ({
   const handleTerminalEvent = (event: TerminalEvent) => {
     if (event.id === id) {
       if (event.stream_type === 'stdout' || event.stream_type === 'stderr') {
-        setOutput(prev => [...prev, event.line]);
+        setOutput((prev) => [...prev, event.line]);
       } else if (event.stream_type === 'completion') {
         setIsRunning(false);
       } else if (event.stream_type === 'error') {
-        setOutput(prev => [...prev, `Error: ${event.line}`]);
+        setOutput((prev) => [...prev, `Error: ${event.line}`]);
         setIsRunning(false);
       }
     }
@@ -160,7 +160,7 @@ const EnhancedTerminal: React.FC<EnhancedTerminalProps> = ({
     if (!cmdToExecute.trim() || isRunning) return;
 
     setIsRunning(true);
-    setOutput(prev => [...prev, `$ ${cmdToExecute}`]);
+    setOutput((prev) => [...prev, `$ ${cmdToExecute}`]);
 
     // Add to history
     const historyEntry: CommandHistoryEntry = {
@@ -185,7 +185,7 @@ const EnhancedTerminal: React.FC<EnhancedTerminalProps> = ({
       });
     } catch (error) {
       console.error('Failed to execute command:', error);
-      setOutput(prev => [...prev, `Command execution failed: ${error}`]);
+      setOutput((prev) => [...prev, `Command execution failed: ${error}`]);
       setIsRunning(false);
     }
   };
@@ -290,11 +290,7 @@ const EnhancedTerminal: React.FC<EnhancedTerminalProps> = ({
             </IconButton>
           </Tooltip>
           <Tooltip title="Clear Output">
-            <IconButton
-              size="small"
-              onClick={clearOutput}
-              sx={{ color: 'text.secondary' }}
-            >
+            <IconButton size="small" onClick={clearOutput} sx={{ color: 'text.secondary' }}>
               <ClearIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -428,7 +424,7 @@ const EnhancedTerminal: React.FC<EnhancedTerminalProps> = ({
               } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 // Navigate history
-                const recentCommand = history.find(h => h.success)?.command;
+                const recentCommand = history.find((h) => h.success)?.command;
                 if (recentCommand) setCommand(recentCommand);
               } else if (e.key === 'Tab') {
                 e.preventDefault();
@@ -468,11 +464,7 @@ const EnhancedTerminal: React.FC<EnhancedTerminalProps> = ({
       </Box>
 
       {/* Command History Drawer */}
-      <Drawer
-        anchor="right"
-        open={historyDrawer}
-        onClose={() => setHistoryDrawer(false)}
-      >
+      <Drawer anchor="right" open={historyDrawer} onClose={() => setHistoryDrawer(false)}>
         <Box sx={{ width: 400, p: 2 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             Command History
@@ -508,11 +500,7 @@ const EnhancedTerminal: React.FC<EnhancedTerminalProps> = ({
       </Drawer>
 
       {/* Bookmarks Drawer */}
-      <Drawer
-        anchor="right"
-        open={bookmarksDrawer}
-        onClose={() => setBookmarksDrawer(false)}
-      >
+      <Drawer anchor="right" open={bookmarksDrawer} onClose={() => setBookmarksDrawer(false)}>
         <Box sx={{ width: 400, p: 2 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             Terminal Bookmarks
@@ -530,10 +518,7 @@ const EnhancedTerminal: React.FC<EnhancedTerminalProps> = ({
                 <ListItemIcon>
                   <BookmarkedIcon />
                 </ListItemIcon>
-                <ListItemText
-                  primary={bookmark.name}
-                  secondary={bookmark.command}
-                />
+                <ListItemText primary={bookmark.name} secondary={bookmark.command} />
               </ListItem>
             ))}
           </List>

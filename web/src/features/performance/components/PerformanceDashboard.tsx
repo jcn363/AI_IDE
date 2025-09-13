@@ -114,24 +114,14 @@ const PerformanceDashboard: React.FC = () => {
           variant="scrollable"
           scrollButtons="auto"
         >
-          <Tab
-            icon={<AssessmentIcon />}
-            iconPosition="start"
-            label="Overview"
-            {...a11yProps(0)}
-          />
+          <Tab icon={<AssessmentIcon />} iconPosition="start" label="Overview" {...a11yProps(0)} />
           <Tab
             icon={<WarningIcon />}
             iconPosition="start"
             label={`Recommendations ${hasRecommendations ? `(${recommendations.length})` : ''}`}
             {...a11yProps(1)}
           />
-          <Tab
-            icon={<SpeedIcon />}
-            iconPosition="start"
-            label="Metrics"
-            {...a11yProps(2)}
-          />
+          <Tab icon={<SpeedIcon />} iconPosition="start" label="Metrics" {...a11yProps(2)} />
         </Tabs>
       </Box>
 
@@ -197,7 +187,14 @@ const PerformanceDashboard: React.FC = () => {
                     Issues & Recommendations
                   </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'space-between' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 2,
+                    justifyContent: 'space-between',
+                  }}
+                >
                   <Box sx={{ width: { xs: '100%', sm: '48%', md: '30%' } }}>
                     <Paper
                       elevation={0}
@@ -248,7 +245,11 @@ const PerformanceDashboard: React.FC = () => {
                       }}
                     >
                       <Typography variant="h4" color="success.main">
-                        {Math.round((1 - summary.totalRecommendations / (summary.totalRecommendations + 1)) * 100)}%
+                        {Math.round(
+                          (1 - summary.totalRecommendations / (summary.totalRecommendations + 1)) *
+                            100
+                        )}
+                        %
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Issues Resolved

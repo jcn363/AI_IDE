@@ -44,11 +44,11 @@ import {
 } from '@mui/icons-material';
 import { Severity } from '../../types';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { 
-  analyzeVersionAlignment, 
-  applyVersionAlignment, 
-  clearSelectedAlignments, 
-  selectAllAlignments, 
+import {
+  analyzeVersionAlignment,
+  applyVersionAlignment,
+  clearSelectedAlignments,
+  selectAllAlignments,
   selectVersionAlignment,
   setFilter,
   toggleIgnoreAlignment,
@@ -69,10 +69,10 @@ const sortOptions = [
 
 const VersionAlignmentToolbar: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { 
-    selectedCount, 
-    totalCount, 
-    hasSelection, 
+  const {
+    selectedCount,
+    totalCount,
+    hasSelection,
     hasAlignments,
     filter,
     status,
@@ -92,10 +92,12 @@ const VersionAlignmentToolbar: React.FC = () => {
 
   const handleSortChange = (event: SelectChangeEvent) => {
     const [sortBy, sortOrder] = event.target.value.split('_');
-    dispatch(setFilter({ 
-      sortBy: sortBy as 'severity' | 'dependencyName' | 'suggestedVersion',
-      sortOrder: sortOrder as 'asc' | 'desc',
-    }));
+    dispatch(
+      setFilter({
+        sortBy: sortBy as 'severity' | 'dependencyName' | 'suggestedVersion',
+        sortOrder: sortOrder as 'asc' | 'desc',
+      })
+    );
   };
 
   const toggleShowIgnored = () => {
@@ -103,46 +105,46 @@ const VersionAlignmentToolbar: React.FC = () => {
   };
 
   const handleSelectAll = () => {
-  if (selectedCount === totalCount) {
-    return dispatch(clearSelectedAlignments());
-  }
-
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return;
-  }
-
-  const elements = document.querySelectorAll('[data-alignment-id]');
-  const allIds: string[] = [];
-  
-  elements.forEach((el: Element) => {
-    const id = el.getAttribute('data-alignment-id');
-    if (id) {
-      allIds.push(id);
+    if (selectedCount === totalCount) {
+      return dispatch(clearSelectedAlignments());
     }
-  });
-  
-  dispatch(selectAllAlignments(allIds));
-};
+
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    const elements = document.querySelectorAll('[data-alignment-id]');
+    const allIds: string[] = [];
+
+    elements.forEach((el: Element) => {
+      const id = el.getAttribute('data-alignment-id');
+      if (id) {
+        allIds.push(id);
+      }
+    });
+
+    dispatch(selectAllAlignments(allIds));
+  };
 
   const handleBulkAction = (action: 'apply' | 'ignore') => {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
-  const elements = document.querySelectorAll('[data-alignment-id]');
-  const selectedIds: string[] = [];
-  
-  elements.forEach((el: Element) => {
-    const id = el.getAttribute('data-alignment-id');
-    if (id !== null) {
-      selectedIds.push(id);
+    const elements = document.querySelectorAll('[data-alignment-id]');
+    const selectedIds: string[] = [];
+
+    elements.forEach((el: Element) => {
+      const id = el.getAttribute('data-alignment-id');
+      if (id !== null) {
+        selectedIds.push(id);
+      }
+    });
+
+    if (action === 'apply') {
+      dispatch(applyVersionAlignment(selectedIds));
+    } else {
+      selectedIds.forEach((id) => dispatch(toggleIgnoreAlignment(id)));
     }
-  });
-
-  if (action === 'apply') {
-    dispatch(applyVersionAlignment(selectedIds));
-  } else {
-    selectedIds.forEach(id => dispatch(toggleIgnoreAlignment(id)));
-  }
-};
+  };
 
   const handleRefresh = () => {
     dispatch(analyzeVersionAlignment());
@@ -158,14 +160,14 @@ const VersionAlignmentToolbar: React.FC = () => {
 
   const handleBatchApply = async () => {
     if (selectedIds.length === 0) return;
-    
+
     try {
       setIsBatchApplying(true);
       const result = await dispatch(applyVersionAlignment(selectedIds) as any).unwrap();
-      
+
       // Show success/error message
       // The actual UI feedback is handled by the extraReducers in the slice
-      
+
       // Close the dialog
       setBatchDialogOpen(false);
     } catch (error) {
@@ -177,9 +179,9 @@ const VersionAlignmentToolbar: React.FC = () => {
 
   return (
     <>
-      <Toolbar 
-        sx={{ 
-          borderBottom: '1px solid', 
+      <Toolbar
+        sx={{
+          borderBottom: '1px solid',
           borderColor: 'divider',
           gap: 2,
           flexWrap: 'wrap',
@@ -196,7 +198,9 @@ const VersionAlignmentToolbar: React.FC = () => {
               label="Severity"
               onChange={handleSeverityChange}
               size="small"
-              startAdornment={<FilterIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />}
+              startAdornment={
+                <FilterIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+              }
             >
               {severityOptions.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
@@ -264,18 +268,20 @@ const VersionAlignmentToolbar: React.FC = () => {
             </Tooltip>
           </Box>
         </Box>
-        
+
         {hasAlignments && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%', mt: 1 }}>
             <Button
               size="small"
               onClick={handleSelectAll}
-              startIcon={selectedCount === totalCount ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />}
+              startIcon={
+                selectedCount === totalCount ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />
+              }
               disabled={!hasAlignments}
             >
               {selectedCount === totalCount ? 'Deselect All' : 'Select All'}
             </Button>
-            
+
             <Button
               size="small"
               variant="contained"
@@ -287,14 +293,14 @@ const VersionAlignmentToolbar: React.FC = () => {
             >
               Resolve {selectedCount} Selected
             </Button>
-            
-            <Chip 
-              label={`${selectedCount} selected`} 
-              size="small" 
+
+            <Chip
+              label={`${selectedCount} selected`}
+              size="small"
               variant="outlined"
               sx={{ ml: 'auto' }}
             />
-            
+
             <ButtonGroup size="small" disabled={!hasSelection}>
               <Button
                 onClick={() => handleBulkAction('ignore')}
@@ -317,29 +323,27 @@ const VersionAlignmentToolbar: React.FC = () => {
       </Toolbar>
 
       {/* Batch Resolution Dialog */}
-      <Dialog 
-        open={batchDialogOpen} 
+      <Dialog
+        open={batchDialogOpen}
         onClose={handleBatchDialogClose}
         maxWidth="md"
         fullWidth
         aria-labelledby="batch-resolution-dialog-title"
       >
-        <DialogTitle id="batch-resolution-dialog-title">
-          Batch Resolve Conflicts
-        </DialogTitle>
-        
+        <DialogTitle id="batch-resolution-dialog-title">Batch Resolve Conflicts</DialogTitle>
+
         <DialogContent dividers>
           <Alert severity="info" sx={{ mb: 2 }}>
             <AlertTitle>Resolving {selectedCount} Dependencies</AlertTitle>
             The following dependencies will be updated to their suggested versions.
           </Alert>
-          
+
           <Paper variant="outlined" sx={{ maxHeight: 300, overflow: 'auto' }}>
             <List dense>
               {selectedIds.slice(0, 10).map((id, index) => {
-                const alignment = alignments.find(a => a.id === id);
+                const alignment = alignments.find((a) => a.id === id);
                 if (!alignment) return null;
-                
+
                 return (
                   <React.Fragment key={id}>
                     <ListItem>
@@ -354,16 +358,18 @@ const VersionAlignmentToolbar: React.FC = () => {
                       </ListItemIcon>
                       <ListItemText
                         primary={
-                          <Typography variant="subtitle2">
-                            {alignment.dependencyName}
-                          </Typography>
+                          <Typography variant="subtitle2">{alignment.dependencyName}</Typography>
                         }
                         secondary={
                           <Box component="span" display="flex" alignItems="center">
                             <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
                               {Object.values(alignment.currentVersions)[0]}
                             </Typography>
-                            <Typography variant="caption" color="primary" sx={{ fontWeight: 'medium' }}>
+                            <Typography
+                              variant="caption"
+                              color="primary"
+                              sx={{ fontWeight: 'medium' }}
+                            >
                               → {alignment.suggestedVersion}
                             </Typography>
                           </Box>
@@ -374,7 +380,7 @@ const VersionAlignmentToolbar: React.FC = () => {
                   </React.Fragment>
                 );
               })}
-              
+
               {selectedCount > 10 && (
                 <ListItem>
                   <Typography variant="body2" color="text.secondary">
@@ -384,7 +390,7 @@ const VersionAlignmentToolbar: React.FC = () => {
               )}
             </List>
           </Paper>
-          
+
           {isBatchApplying && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -394,13 +400,9 @@ const VersionAlignmentToolbar: React.FC = () => {
             </Box>
           )}
         </DialogContent>
-        
+
         <DialogActions sx={{ p: 2 }}>
-          <Button 
-            onClick={handleBatchDialogClose}
-            color="inherit"
-            disabled={isBatchApplying}
-          >
+          <Button onClick={handleBatchDialogClose} color="inherit" disabled={isBatchApplying}>
             Cancel
           </Button>
           <Button

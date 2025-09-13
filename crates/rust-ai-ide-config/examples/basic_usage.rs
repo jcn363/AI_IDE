@@ -10,7 +10,7 @@
 //! - Environment variable support
 //! - Migration support
 
-use rust_ai_ide_config::{*, config::ManagerConfig};
+use rust_ai_ide_config::{config::ManagerConfig, *};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 

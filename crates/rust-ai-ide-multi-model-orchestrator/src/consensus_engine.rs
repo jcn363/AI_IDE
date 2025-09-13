@@ -3,16 +3,16 @@
 //! This module implements intelligent result aggregation and consensus determination
 //! across multiple AI models to improve accuracy and provide confidence scores.
 
+use crate::config::{validate_config, OrchestrationConfig};
+use crate::types::{
+    ConsensusResult, ModelContribution, ModelId, ModelTask, RequestContext, VotingMechanism,
+};
+use crate::{OrchestrationError, Result};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::time::{Duration, Instant};
-use crate::types::{
-    ModelId, ConsensusResult, ModelContribution, VotingMechanism, ModelTask, RequestContext,
-};
-use crate::config::{OrchestrationConfig, validate_config};
-use crate::{Result, OrchestrationError};
 
 /// Result aggregator for combining outputs from multiple models
 #[derive(Debug)]
@@ -53,7 +53,8 @@ impl ResultAggregator {
         }
 
         // Return the most common output
-        output_counts.into_iter()
+        output_counts
+            .into_iter()
             .max_by_key(|&(_, count)| count)
             .map(|(output, _)| output)
             .unwrap_or_else(|| String::new())
@@ -110,19 +111,29 @@ impl ConsensusCalculator {
     ) -> Result<ConsensusResult> {
         if model_outputs.is_empty() {
             return Err(OrchestrationError::ConsensusError(
-                "No model outputs provided".to_string()
+                "No model outputs provided".to_string(),
             ));
         }
 
         let consensus_result = match self.voting_mechanism {
-            VotingMechanism::Majority => self.majority_voting_consensus(model_outputs, model_confidences).await,
-            VotingMechanism::Weighted => self.weighted_voting_consensus(model_outputs, model_confidences).await,
-            VotingMechanism::ConfidenceBased => self.confidence_based_consensus(model_outputs, model_confidences).await,
+            VotingMechanism::Majority => {
+                self.majority_voting_consensus(model_outputs, model_confidences)
+                    .await
+            }
+            VotingMechanism::Weighted => {
+                self.weighted_voting_consensus(model_outputs, model_confidences)
+                    .await
+            }
+            VotingMechanism::ConfidenceBased => {
+                self.confidence_based_consensus(model_outputs, model_confidences)
+                    .await
+            }
         };
 
         // Cache result
         let mut cache = self.result_cache.write().await;
-        if cache.len() > 1000 { // Limit cache size
+        if cache.len() > 1000 {
+            // Limit cache size
             // Remove oldest entries (this is a simple FIFO eviction)
             let to_remove: Vec<_> = cache.keys().take(cache.len() - 1000).cloned().collect();
             for key in to_remove {
@@ -144,8 +155,10 @@ impl ConsensusCalculator {
             let confidence = model_confidences.get(model_id).unwrap_or(&0.5);
             let trimmed = output.trim().to_string();
 
-            let (count, voters, total_confidence) = vote_counts.entry(trimmed.clone())
-                .or_insert((0, Vec::new(), 0.0));
+            let (count, voters, total_confidence) =
+                vote_counts
+                    .entry(trimmed.clone())
+                    .or_insert((0, Vec::new(), 0.0));
 
             *count += 1;
             voters.push(*model_id);
@@ -153,7 +166,8 @@ impl ConsensusCalculator {
         }
 
         // Find the majority result
-        let (final_result, (count, voters, total_confidence)) = vote_counts.into_iter()
+        let (final_result, (count, voters, total_confidence)) = vote_counts
+            .into_iter()
             .max_by_key(|(_, (count, _, _))| *count)
             .unwrap_or_else(|| (String::new(), (0, Vec::new(), 0.0)));
 
@@ -163,18 +177,22 @@ impl ConsensusCalculator {
             0.0
         };
 
-        let contributions: HashMap<ModelId, ModelContribution> = voters.into_iter()
+        let contributions: HashMap<ModelId, ModelContribution> = voters
+            .into_iter()
             .map(|model_id| {
                 let result = model_outputs.get(&model_id).unwrap().clone();
                 let confidence = model_confidences.get(&model_id).unwrap_or(&0.5);
                 let weight = confidence / total_confidence.max(1.0); // Normalize weights
 
-                (model_id, ModelContribution {
+                (
                     model_id,
-                    result,
-                    confidence: *confidence,
-                    weight_in_consensus: weight,
-                })
+                    ModelContribution {
+                        model_id,
+                        result,
+                        confidence: *confidence,
+                        weight_in_consensus: weight,
+                    },
+                )
             })
             .collect();
 
@@ -200,7 +218,8 @@ impl ConsensusCalculator {
             let confidence = model_confidences.get(model_id).unwrap_or(&0.5);
             let trimmed = output.trim().to_string();
 
-            let (total_weight, voters, total_confidence) = weight_scores.entry(trimmed.clone())
+            let (total_weight, voters, total_confidence) = weight_scores
+                .entry(trimmed.clone())
                 .or_insert((0.0, Vec::new(), 0.0));
 
             *total_weight += confidence;
@@ -209,8 +228,13 @@ impl ConsensusCalculator {
         }
 
         // Find the weighted majority result
-        let (final_result, (total_weight, voters, total_confidence)) = weight_scores.into_iter()
-            .max_by(|a, b| a.1.0.partial_cmp(&b.1.0).unwrap_or(std::cmp::Ordering::Equal))
+        let (final_result, (total_weight, voters, total_confidence)) = weight_scores
+            .into_iter()
+            .max_by(|a, b| {
+                a.1 .0
+                    .partial_cmp(&b.1 .0)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
             .unwrap_or_else(|| (String::new(), (0.0, Vec::new(), 0.0)));
 
         let total_possible_weight = model_confidences.values().sum::<f64>();
@@ -220,18 +244,22 @@ impl ConsensusCalculator {
             0.0
         };
 
-        let contributions: HashMap<ModelId, ModelContribution> = voters.into_iter()
+        let contributions: HashMap<ModelId, ModelContribution> = voters
+            .into_iter()
             .map(|model_id| {
                 let result = model_outputs.get(&model_id).unwrap().clone();
                 let confidence = model_confidences.get(&model_id).unwrap_or(&0.5);
                 let weight = confidence / total_confidence.max(1.0);
 
-                (model_id, ModelContribution {
+                (
                     model_id,
-                    result,
-                    confidence: *confidence,
-                    weight_in_consensus: weight,
-                })
+                    ModelContribution {
+                        model_id,
+                        result,
+                        confidence: *confidence,
+                        weight_in_consensus: weight,
+                    },
+                )
             })
             .collect();
 
@@ -252,24 +280,31 @@ impl ConsensusCalculator {
         model_confidences: HashMap<ModelId, f64>,
     ) -> ConsensusResult {
         // Use confidence scores directly to select the highest confidence output
-        let (primary_model, best_output, best_confidence) = model_confidences.iter()
+        let (primary_model, best_output, best_confidence) = model_confidences
+            .iter()
             .filter_map(|(model_id, confidence)| {
-                model_outputs.get(model_id).map(|output| (model_id, output, confidence))
+                model_outputs
+                    .get(model_id)
+                    .map(|output| (model_id, output, confidence))
             })
             .max_by(|a, b| a.2.partial_cmp(b.2).unwrap_or(std::cmp::Ordering::Equal))
             .unwrap_or_else(|| (&ModelId::new(), &String::new(), &0.0));
 
-        let contributions: HashMap<ModelId, ModelContribution> = model_outputs.keys()
+        let contributions: HashMap<ModelId, ModelContribution> = model_outputs
+            .keys()
             .map(|model_id| {
                 let result = model_outputs.get(model_id).unwrap().clone();
                 let confidence = model_confidences.get(model_id).unwrap_or(&0.5);
 
-                (*model_id, ModelContribution {
-                    model_id: *model_id,
-                    result,
-                    confidence: *confidence,
-                    weight_in_consensus: if model_id == &primary_model { 1.0 } else { 0.0 },
-                })
+                (
+                    *model_id,
+                    ModelContribution {
+                        model_id: *model_id,
+                        result,
+                        confidence: *confidence,
+                        weight_in_consensus: if model_id == &primary_model { 1.0 } else { 0.0 },
+                    },
+                )
             })
             .collect();
 
@@ -326,19 +361,17 @@ impl ResultValidator {
     pub fn validate_result(&self, consensus_result: &ConsensusResult) -> Result<()> {
         // Check quality thresholds
         if consensus_result.confidence_score < self.quality_thresholds.min_confidence {
-            return Err(OrchestrationError::ConsensusError(
-                format!("Consensus confidence {} below threshold {}", 
-                       consensus_result.confidence_score, 
-                       self.quality_thresholds.min_confidence)
-            ));
+            return Err(OrchestrationError::ConsensusError(format!(
+                "Consensus confidence {} below threshold {}",
+                consensus_result.confidence_score, self.quality_thresholds.min_confidence
+            )));
         }
 
         if consensus_result.disagreement_score > self.quality_thresholds.max_disagreement {
-            return Err(OrchestrationError::ConsensusError(
-                format!("Consensus disagreement {} above threshold {}", 
-                       consensus_result.disagreement_score, 
-                       self.quality_thresholds.max_disagreement)
-            ));
+            return Err(OrchestrationError::ConsensusError(format!(
+                "Consensus disagreement {} above threshold {}",
+                consensus_result.disagreement_score, self.quality_thresholds.max_disagreement
+            )));
         }
 
         // Apply validation rules
@@ -347,24 +380,26 @@ impl ResultValidator {
                 ValidationRule::NoEmptyResults => {
                     if consensus_result.final_result.trim().is_empty() {
                         return Err(OrchestrationError::ConsensusError(
-                            "Empty result after consensus".to_string()
+                            "Empty result after consensus".to_string(),
                         ));
                     }
                 }
                 ValidationRule::MinLength(min_len) => {
                     if consensus_result.final_result.len() < *min_len {
-                        return Err(OrchestrationError::ConsensusError(
-                            format!("Result length {} below minimum {}", 
-                                   consensus_result.final_result.len(), min_len)
-                        ));
+                        return Err(OrchestrationError::ConsensusError(format!(
+                            "Result length {} below minimum {}",
+                            consensus_result.final_result.len(),
+                            min_len
+                        )));
                     }
                 }
                 ValidationRule::MaxLength(max_len) => {
                     if consensus_result.final_result.len() > *max_len {
-                        return Err(OrchestrationError::ConsensusError(
-                            format!("Result length {} above maximum {}", 
-                                   consensus_result.final_result.len(), max_len)
-                        ));
+                        return Err(OrchestrationError::ConsensusError(format!(
+                            "Result length {} above maximum {}",
+                            consensus_result.final_result.len(),
+                            max_len
+                        )));
                     }
                 }
                 ValidationRule::ConsistentFormat => {
@@ -389,7 +424,7 @@ impl ResultValidator {
         // Basic format checking (this could be much more sophisticated)
         if result.contains("<?xml") && !result.contains("</") || !result.contains(">") {
             return Err(OrchestrationError::ConsensusError(
-                "Inconsistent XML-like format".to_string()
+                "Inconsistent XML-like format".to_string(),
             ));
         }
         Ok(())
@@ -398,8 +433,10 @@ impl ResultValidator {
     fn check_language_consistency(&self, result: &str) -> Result<()> {
         // Placeholder - could use language detection libraries
         // For now, just check for basic syntax patterns
-        let has_code_patterns = result.contains(';') || result.contains('{') || result.contains('}');
-        let has_text_patterns = result.contains('.') || result.contains(' ') || result.contains('\n');
+        let has_code_patterns =
+            result.contains(';') || result.contains('{') || result.contains('}');
+        let has_text_patterns =
+            result.contains('.') || result.contains(' ') || result.contains('\n');
 
         if has_code_patterns && has_text_patterns {
             // Mixed content is okay for some tasks
@@ -411,10 +448,11 @@ impl ResultValidator {
     fn check_code_syntax(&self, result: &str) -> Result<()> {
         // Placeholder - would integrate with language-specific parsers
         // For now, check for obvious syntax errors in common formats
-        if result.contains("{{") && !result.contains("}}") ||
-           result.contains("}}") && !result.contains("{{") {
+        if result.contains("{{") && !result.contains("}}")
+            || result.contains("}}") && !result.contains("{{")
+        {
             return Err(OrchestrationError::ConsensusError(
-                "Mismatched template syntax".to_string()
+                "Mismatched template syntax".to_string(),
             ));
         }
         Ok(())
@@ -448,7 +486,9 @@ impl ConfidenceScorer {
             let mut total_score = 0.0;
 
             for (i, &score) in performances.iter().enumerate() {
-                let weight = self.decay_factor.powi(performances.len() as i32 - i as i32 - 1);
+                let weight = self
+                    .decay_factor
+                    .powi(performances.len() as i32 - i as i32 - 1);
                 total_weight += weight;
                 total_score += score * weight;
             }
@@ -521,10 +561,13 @@ impl DisagreementResolver {
             }
             DisagreementStrategy::ExpertVoting(expert_model) => {
                 // If expert model is available, use its output
-                conflicting_outputs.iter()
+                conflicting_outputs
+                    .iter()
                     .find(|(model_id, _)| model_id.0.to_string().contains(expert_model))
                     .map(|(_, output)| output.clone())
-                    .unwrap_or_else(|| self.resolve_by_highest_confidence(&conflicting_outputs, &model_confidences))
+                    .unwrap_or_else(|| {
+                        self.resolve_by_highest_confidence(&conflicting_outputs, &model_confidences)
+                    })
             }
         };
 
@@ -551,9 +594,12 @@ impl DisagreementResolver {
         conflicting_outputs: &HashMap<ModelId, String>,
         model_confidences: &HashMap<ModelId, f64>,
     ) -> String {
-        let (result, _) = model_confidences.iter()
+        let (result, _) = model_confidences
+            .iter()
             .filter_map(|(model_id, confidence)| {
-                conflicting_outputs.get(model_id).map(|output| (output.clone(), confidence))
+                conflicting_outputs
+                    .get(model_id)
+                    .map(|output| (output.clone(), confidence))
             })
             .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
             .unwrap_or_else(|| (String::new(), &0.0));
@@ -567,9 +613,12 @@ impl DisagreementResolver {
         model_confidences: &HashMap<ModelId, f64>,
     ) -> String {
         // Sort outputs by confidence and pick the middle one
-        let mut outputs: Vec<(String, f64)> = conflicting_outputs.iter()
+        let mut outputs: Vec<(String, f64)> = conflicting_outputs
+            .iter()
             .filter_map(|(model_id, output)| {
-                model_confidences.get(model_id).map(|conf| (output.clone(), *conf))
+                model_confidences
+                    .get(model_id)
+                    .map(|conf| (output.clone(), *conf))
             })
             .collect();
 
@@ -604,7 +653,7 @@ impl ModelConsensusEngine {
             validator: Arc::new(ResultValidator::new()),
             confidence_scorer: Arc::new(ConfidenceScorer::new(0.9)),
             disagreement_resolver: Arc::new(DisagreementResolver::new(
-                DisagreementStrategy::FallbackToHighestConfidence
+                DisagreementStrategy::FallbackToHighestConfidence,
             )),
             config,
         })
@@ -625,13 +674,19 @@ impl ModelConsensusEngine {
         // Get confidence scores for each model
         let mut model_confidences = HashMap::new();
         for model_id in normalized_outputs.keys() {
-            let confidence = self.confidence_scorer.calculate_model_confidence(model_id).await;
+            let confidence = self
+                .confidence_scorer
+                .calculate_model_confidence(model_id)
+                .await;
             model_confidences.insert(*model_id, confidence);
         }
 
         // Check if we have multiple outputs to build consensus
-        if normalized_outputs.len() >= self.config.consensus_config.min_models_for_consensus as usize {
-            let consensus_result = self.consensus_calculator
+        if normalized_outputs.len()
+            >= self.config.consensus_config.min_models_for_consensus as usize
+        {
+            let consensus_result = self
+                .consensus_calculator
                 .calculate_consensus(normalized_outputs, model_confidences)
                 .await?;
 
@@ -641,7 +696,8 @@ impl ModelConsensusEngine {
             Ok(consensus_result)
         } else if !normalized_outputs.is_empty() {
             // Not enough models for consensus, use the best available output
-            let fallback_result = self.disagreement_resolver
+            let fallback_result = self
+                .disagreement_resolver
                 .resolve_disagreement(normalized_outputs, model_confidences)
                 .await;
 
@@ -665,12 +721,16 @@ impl ModelConsensusEngine {
                 primary_model: model_id,
             })
         } else {
-            Err(OrchestrationError::ConsensusError("No model outputs available".to_string()))
+            Err(OrchestrationError::ConsensusError(
+                "No model outputs available".to_string(),
+            ))
         }
     }
 
     pub async fn record_performance(&self, model_id: ModelId, performance_score: f64) {
-        self.confidence_scorer.record_performance(model_id, performance_score).await;
+        self.confidence_scorer
+            .record_performance(model_id, performance_score)
+            .await;
     }
 
     pub fn update_voting_mechanism(&self, mechanism: VotingMechanism) {
@@ -707,7 +767,10 @@ mod tests {
             preferred_hardware: None,
         };
 
-        let consensus = engine.process_consensus(model_outputs, &context).await.unwrap();
+        let consensus = engine
+            .process_consensus(model_outputs, &context)
+            .await
+            .unwrap();
         assert_eq!(consensus.final_result, "Result A");
         assert!(consensus.confidence_score > 0.0);
     }

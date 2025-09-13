@@ -5,7 +5,10 @@
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
-enum TypeKind { Struct, Enum }
+enum TypeKind {
+    Struct,
+    Enum,
+}
 
 #[derive(Debug, Clone)]
 struct ParsedType {
@@ -66,24 +69,42 @@ fn main() {
         name: "User".to_string(),
         kind: TypeKind::Struct,
         fields: vec![
-            Field { name: "id".to_string(), ty: "u32".to_string() },
-            Field { name: "name".to_string(), ty: "String".to_string() },
-            Field { name: "email".to_string(), ty: "Option<String>".to_string() },
+            Field {
+                name: "id".to_string(),
+                ty: "u32".to_string(),
+            },
+            Field {
+                name: "name".to_string(),
+                ty: "String".to_string(),
+            },
+            Field {
+                name: "email".to_string(),
+                ty: "Option<String>".to_string(),
+            },
         ],
     };
 
     println!("✅ Test 1: Type Parsing");
     assert_eq!(user_type.name, "User");
     assert_eq!(user_type.fields.len(), 3);
-    println!("   ✓ Parsed User struct with {} fields", user_type.fields.len());
+    println!(
+        "   ✓ Parsed User struct with {} fields",
+        user_type.fields.len()
+    );
 
     // Test Type Transformation
     println!("\n✅ Test 2: Type Transformations");
     assert_eq!(TypeTransformer::transform_type("String"), "string");
     assert_eq!(TypeTransformer::transform_type("u32"), "number");
     assert_eq!(TypeTransformer::transform_type("bool"), "boolean");
-    assert_eq!(TypeTransformer::transform_type("Option<String>"), "string | undefined");
-    assert_eq!(TypeTransformer::transform_type("Vec<String>"), "Array<string>");
+    assert_eq!(
+        TypeTransformer::transform_type("Option<String>"),
+        "string | undefined"
+    );
+    assert_eq!(
+        TypeTransformer::transform_type("Vec<String>"),
+        "Array<string>"
+    );
     println!("   ✓ String → string");
     println!("   ✓ u32 → number");
     println!("   ✓ bool → boolean");
@@ -102,7 +123,11 @@ fn main() {
     ];
 
     for expected in &expected_lines {
-        assert!(generated_ts.contains(expected), "Missing line: {}", expected);
+        assert!(
+            generated_ts.contains(expected),
+            "Missing line: {}",
+            expected
+        );
         println!("   ✓ Generated: {}", expected);
     }
 

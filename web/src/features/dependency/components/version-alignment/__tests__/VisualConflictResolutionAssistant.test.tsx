@@ -26,7 +26,7 @@ describe('VisualConflictResolutionAssistant', () => {
         alignment={mockAlignment}
         onResolve={onResolve}
         onCancel={onCancel}
-      />,
+      />
     );
 
     expect(screen.getByText('Resolve Version Conflict: test-dependency')).toBeInTheDocument();
@@ -47,17 +47,17 @@ describe('VisualConflictResolutionAssistant', () => {
         alignment={mockAlignment}
         onResolve={onResolve}
         onCancel={onCancel}
-      />,
+      />
     );
-    
+
     // Click apply - should use suggested version (2.0.0) by default
     fireEvent.click(screen.getByText('Apply Resolution'));
-    
+
     expect(onResolve).toHaveBeenCalledWith({
       selectedVersion: '2.0.0',
     });
   });
-  
+
   it('calls onResolve with suggested version when no version is explicitly selected', () => {
     const onResolve = vi.fn();
     const onCancel = vi.fn();
@@ -67,12 +67,12 @@ describe('VisualConflictResolutionAssistant', () => {
         alignment={mockAlignment}
         onResolve={onResolve}
         onCancel={onCancel}
-      />,
+      />
     );
-    
+
     // Click apply without explicitly selecting a version
     fireEvent.click(screen.getByText('Apply Resolution'));
-    
+
     // Should use the suggested version (2.0.0) by default
     expect(onResolve).toHaveBeenCalledWith({
       selectedVersion: '2.0.0',
@@ -88,7 +88,7 @@ describe('VisualConflictResolutionAssistant', () => {
         alignment={mockAlignment}
         onResolve={onResolve}
         onCancel={onCancel}
-      />,
+      />
     );
 
     fireEvent.click(screen.getByText('Cancel'));

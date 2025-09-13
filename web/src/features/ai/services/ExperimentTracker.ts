@@ -141,7 +141,9 @@ export class ExperimentTracker {
           reason: request.reason || 'Rollback requested',
         });
 
-      console.log(`Successfully rolled back model ${request.modelId} to version ${request.targetVersion}`);
+      console.log(
+        `Successfully rolled back model ${request.modelId} to version ${request.targetVersion}`
+      );
       return rollbackResult;
     } catch (error) {
       console.error('Failed to rollback model:', error);
@@ -169,16 +171,18 @@ export class ExperimentTracker {
   getModelVersions(modelId: string): ModelVersionEntry[] {
     const allVersions: ModelVersionEntry[] = [];
     for (const experiment of this.experiments.values()) {
-      allVersions.push(...experiment.versions.filter(v => v.modelId === modelId));
+      allVersions.push(...experiment.versions.filter((v) => v.modelId === modelId));
     }
-    return allVersions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return allVersions.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }
 
   /**
    * Get active version for a model
    */
   getActiveVersion(modelId: string): ModelVersionEntry | undefined {
-    return this.getModelVersions(modelId).find(v => v.isActive);
+    return this.getModelVersions(modelId).find((v) => v.isActive);
   }
 
   /**
@@ -200,14 +204,18 @@ export class ExperimentTracker {
   /**
    * Compare model versions
    */
-  compareVersions(modelId: string, versionId1: string, versionId2: string): {
+  compareVersions(
+    modelId: string,
+    versionId1: string,
+    versionId2: string
+  ): {
     version1: ModelVersionEntry;
     version2: ModelVersionEntry;
     differences: string[];
   } {
     const versions = this.getModelVersions(modelId);
-    const version1 = versions.find(v => v.versionId === versionId1);
-    const version2 = versions.find(v => v.versionId === versionId2);
+    const version1 = versions.find((v) => v.versionId === versionId1);
+    const version2 = versions.find((v) => v.versionId === versionId2);
 
     if (!version1 || !version2) {
       throw new Error('One or both versions not found');
@@ -221,7 +229,9 @@ export class ExperimentTracker {
 
     for (const key of new Set([...Object.keys(hp1), ...Object.keys(hp2)])) {
       if (hp1[key] !== hp2[key]) {
-        differences.push(`Hyperparameter ${key}: ${hp1[key] || 'undefined'} -> ${hp2[key] || 'undefined'}`);
+        differences.push(
+          `Hyperparameter ${key}: ${hp1[key] || 'undefined'} -> ${hp2[key] || 'undefined'}`
+        );
       }
     }
 
@@ -231,7 +241,9 @@ export class ExperimentTracker {
 
     for (const key of new Set([...Object.keys(metrics1), ...Object.keys(metrics2)])) {
       if (metrics1[key] !== metrics2[key]) {
-        differences.push(`Metric ${key}: ${metrics1[key] || 'undefined'} -> ${metrics2[key] || 'undefined'}`);
+        differences.push(
+          `Metric ${key}: ${metrics1[key] || 'undefined'} -> ${metrics2[key] || 'undefined'}`
+        );
       }
     }
 

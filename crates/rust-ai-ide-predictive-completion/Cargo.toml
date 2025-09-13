@@ -23,7 +23,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # AI/ML for predictive analysis
 candle-core = "0.6.0"
 candle-nn = "0.6.0"
-tokenizers = "0.18.1"
+tokenizers = "0.21.4"
 
 # Performance and caching
 moka = { version = "0.12", features = ["future"] }

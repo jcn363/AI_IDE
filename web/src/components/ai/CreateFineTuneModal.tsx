@@ -6,7 +6,7 @@ interface CreateFineTuneModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (request: FineTuningRequest) => Promise<void>;
-  availableModels: Array<{ id: string; name: string; }>;
+  availableModels: Array<{ id: string; name: string }>;
 }
 
 const MODEL_CONFIGS = {
@@ -40,7 +40,7 @@ const MODEL_CONFIGS = {
   },
 } as const;
 
-type ModelConfig = typeof MODEL_CONFIGS[keyof typeof MODEL_CONFIGS];
+type ModelConfig = (typeof MODEL_CONFIGS)[keyof typeof MODEL_CONFIGS];
 type ModelKey = keyof typeof MODEL_CONFIGS;
 
 // Update the state type to use this config
@@ -64,19 +64,19 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
   onSubmit,
   availableModels,
 }) => {
-    const [formData, setFormData] = useState<FormState>({
-        jobName: '',
-        description: '',
-        baseModelConfig: MODEL_CONFIGS.codellama7b,
-        datasetPath: '',
-        learningRate: 5e-5,
-        batchSize: 8,
-        maxEpochs: 3,
-        mixedPrecision: true,
-        maxSeqLength: 2048,
-        enableLoRA: false,
-        loraRank: 8,
-      });
+  const [formData, setFormData] = useState<FormState>({
+    jobName: '',
+    description: '',
+    baseModelConfig: MODEL_CONFIGS.codellama7b,
+    datasetPath: '',
+    learningRate: 5e-5,
+    batchSize: 8,
+    maxEpochs: 3,
+    mixedPrecision: true,
+    maxSeqLength: 2048,
+    enableLoRA: false,
+    loraRank: 8,
+  });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -84,7 +84,7 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
   const handleModelChange = (modelKey: ModelKey) => {
     const config = MODEL_CONFIGS[modelKey];
     if (config) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         baseModelConfig: config,
         batchSize: config.recommendedBatchSize,
@@ -194,10 +194,12 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content create-job-modal" onClick={e => e.stopPropagation()}>
+      <div className="modal-content create-job-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Create New Fine-Tuning Job</h2>
-          <button onClick={onClose} className="close-btn">&times;</button>
+          <button onClick={onClose} className="close-btn">
+            &times;
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="job-creation-form">
@@ -209,7 +211,7 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
                 type="text"
                 id="jobName"
                 value={formData.jobName}
-                onChange={(e) => setFormData(prev => ({ ...prev, jobName: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, jobName: e.target.value }))}
                 placeholder="e.g., rust-code-analysis-v1"
                 disabled={isSubmitting}
                 className={validationErrors.jobName ? 'error' : ''}
@@ -224,7 +226,7 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
               <textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="Describe what this fine-tuning job is for..."
                 rows={3}
                 disabled={isSubmitting}
@@ -269,7 +271,7 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
                 type="text"
                 id="datasetPath"
                 value={formData.datasetPath}
-                onChange={(e) => setFormData(prev => ({ ...prev, datasetPath: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, datasetPath: e.target.value }))}
                 placeholder="/path/to/training/data.jsonl"
                 disabled={isSubmitting}
                 className={validationErrors.datasetPath ? 'error' : ''}
@@ -292,10 +294,12 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
                   min="1e-6"
                   max="1e-2"
                   value={formData.learningRate}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    learningRate: parseFloat(e.target.value) || 0
-                  }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      learningRate: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                   disabled={isSubmitting}
                   className={validationErrors.learningRate ? 'error' : ''}
                 />
@@ -312,10 +316,12 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
                   min="1"
                   max="64"
                   value={formData.batchSize}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    batchSize: parseInt(e.target.value) || 1
-                  }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      batchSize: parseInt(e.target.value) || 1,
+                    }))
+                  }
                   disabled={isSubmitting}
                   className={validationErrors.batchSize ? 'error' : ''}
                 />
@@ -332,10 +338,12 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
                   min="1"
                   max="20"
                   value={formData.maxEpochs}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    maxEpochs: parseInt(e.target.value) || 1
-                  }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      maxEpochs: parseInt(e.target.value) || 1,
+                    }))
+                  }
                   disabled={isSubmitting}
                   className={validationErrors.maxEpochs ? 'error' : ''}
                 />
@@ -353,10 +361,12 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
                   max="8192"
                   step="512"
                   value={formData.maxSeqLength}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    maxSeqLength: parseInt(e.target.value) || 2048
-                  }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      maxSeqLength: parseInt(e.target.value) || 2048,
+                    }))
+                  }
                   disabled={isSubmitting}
                 />
               </div>
@@ -367,10 +377,12 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
                 <input
                   type="checkbox"
                   checked={formData.mixedPrecision}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    mixedPrecision: e.target.checked
-                  }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      mixedPrecision: e.target.checked,
+                    }))
+                  }
                   disabled={isSubmitting || !formData.baseModelConfig.supportsMixedPrecision}
                 />
                 Enable Mixed Precision Training
@@ -382,10 +394,12 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
                     <input
                       type="checkbox"
                       checked={formData.enableLoRA}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        enableLoRA: e.target.checked
-                      }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          enableLoRA: e.target.checked,
+                        }))
+                      }
                       disabled={isSubmitting}
                     />
                     Enable LoRA (Parameter Efficient Fine-Tuning)
@@ -401,10 +415,12 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
                         max="64"
                         step="4"
                         value={formData.loraRank}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          loraRank: parseInt(e.target.value) || 8
-                        }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            loraRank: parseInt(e.target.value) || 8,
+                          }))
+                        }
                         disabled={isSubmitting}
                       />
                     </div>
@@ -415,19 +431,10 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
           </div>
 
           <div className="form-actions">
-            <button
-              type="button"
-              onClick={onClose}
-              className="cancel-btn"
-              disabled={isSubmitting}
-            >
+            <button type="button" onClick={onClose} className="cancel-btn" disabled={isSubmitting}>
               Cancel
             </button>
-            <button
-              type="submit"
-              className="submit-btn"
-              disabled={isSubmitting}
-            >
+            <button type="submit" className="submit-btn" disabled={isSubmitting}>
               {isSubmitting ? 'Creating Job...' : 'Create Fine-Tuning Job'}
             </button>
           </div>
@@ -614,7 +621,7 @@ export const CreateFineTuneModal: React.FC<CreateFineTuneModalProps> = ({
             cursor: pointer;
           }
 
-          .checkbox-group input[type="checkbox"] {
+          .checkbox-group input[type='checkbox'] {
             width: auto;
           }
 

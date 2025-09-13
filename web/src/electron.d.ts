@@ -5,10 +5,14 @@ declare global {
     electron: {
       // File system operations
       invoke<T = any>(channel: string, ...args: any[]): Promise<T>;
-      
+
       // Cargo commands
       cargo: {
-        execute: (command: string, args: string[], cwd: string) => Promise<{ output: string; error?: string }>;
+        execute: (
+          command: string,
+          args: string[],
+          cwd: string
+        ) => Promise<{ output: string; error?: string }>;
         checkAvailable: () => Promise<{ available: boolean; version?: string }>;
         getMetadata: (projectPath: string) => Promise<{
           name: string;
@@ -21,7 +25,11 @@ declare global {
       // File system operations
       fs: {
         readFile: (options: { path: string; encoding: BufferEncoding }) => Promise<string>;
-        writeFile: (options: { path: string; content: string; encoding: BufferEncoding }) => Promise<void>;
+        writeFile: (options: {
+          path: string;
+          content: string;
+          encoding: BufferEncoding;
+        }) => Promise<void>;
         readDir: (path: string) => Promise<Array<{ name: string; isDirectory: boolean }>>;
         exists: (path: string) => Promise<boolean>;
       };

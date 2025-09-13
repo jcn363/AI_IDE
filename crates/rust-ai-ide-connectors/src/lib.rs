@@ -1,5 +1,5 @@
-pub mod slack;
 pub mod discord;
+pub mod slack;
 pub mod types;
 
 use async_trait::async_trait;
@@ -17,7 +17,11 @@ pub trait ServiceConnector: Send + Sync {
     async fn disconnect(&self) -> Result<(), Box<dyn std::error::Error>>;
 
     /// Send a message
-    async fn send_message(&self, channel: &str, message: &str) -> Result<String, Box<dyn std::error::Error>>;
+    async fn send_message(
+        &self,
+        channel: &str,
+        message: &str,
+    ) -> Result<String, Box<dyn std::error::Error>>;
 
     /// Listen for events
     async fn listen_events(&self) -> Result<(), Box<dyn std::error::Error>>;
@@ -60,7 +64,12 @@ impl ConnectorManager {
     }
 
     /// Send message via specific connector
-    pub async fn send_message(&self, connector_name: &str, channel: &str, message: &str) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn send_message(
+        &self,
+        connector_name: &str,
+        channel: &str,
+        message: &str,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         if let Some(connector) = self.get_connector(connector_name).await {
             connector.send_message(channel, message).await
         } else {

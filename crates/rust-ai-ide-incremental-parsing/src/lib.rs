@@ -31,8 +31,8 @@
 //! let diff = parser.get_ast_diff(&initial_tree, &new_tree).await?;
 //! ```
 
+use rust_ai_ide_common::validation::{validate_file_exists, ValidatedFilePath};
 use rust_ai_ide_errors::{IdeError, IdeResult};
-use rust_ai_ide_common::validation::{ValidatedFilePath, validate_file_exists};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -122,7 +122,7 @@ impl Default for ParserConfig {
     fn default() -> Self {
         Self {
             max_incremental_size: 1024 * 1024, // 1MB
-            parse_timeout_ms: 5000, // 5 seconds
+            parse_timeout_ms: 5000,            // 5 seconds
             enable_caching: true,
             cache_ttl_seconds: 300, // 5 minutes
             language_options: HashMap::new(),
@@ -199,10 +199,18 @@ impl ParseTree {
 #[async_trait::async_trait]
 pub trait IncrementalParser: Send + Sync {
     /// Parse content incrementally from existing tree
-    async fn parse_incremental(&mut self, old_source: &str, new_source: &str, changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>) -> IdeResult<ParseTree>;
+    async fn parse_incremental(
+        &mut self,
+        old_source: &str,
+        new_source: &str,
+        changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>,
+    ) -> IdeResult<ParseTree>;
 
     /// Apply a set of changes to the parse tree
-    async fn apply_changes(&mut self, changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>) -> IdeResult<ParseTree>;
+    async fn apply_changes(
+        &mut self,
+        changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>,
+    ) -> IdeResult<ParseTree>;
 
     /// Get AST diff between two parse trees
     async fn get_ast_diff(&self, old_tree: &ParseTree, new_tree: &ParseTree) -> IdeResult<ASTDiff>;
@@ -259,10 +267,12 @@ impl ParserFactory {
             "java" => Box::new(JavaParser::new(self.config.clone())),
             #[cfg(feature = "cpp")]
             "cpp" | "c++" => Box::new(CppParser::new(self.config.clone())),
-            _ => return Err(IdeError::Validation {
-                field: "language".to_string(),
-                reason: format!("Unsupported language: {}", language),
-            }),
+            _ => {
+                return Err(IdeError::Validation {
+                    field: "language".to_string(),
+                    reason: format!("Unsupported language: {}", language),
+                })
+            }
         };
 
         // Store in cache
@@ -277,17 +287,22 @@ impl ParserFactory {
     /// Get supported languages
     pub fn supported_languages(&self) -> Vec<String> {
         let mut langs = Vec::new();
-        #[cfg(feature = "rust")] langs.push("rust".to_string());
-        #[cfg(feature = "typescript")] {
+        #[cfg(feature = "rust")]
+        langs.push("rust".to_string());
+        #[cfg(feature = "typescript")]
+        {
             langs.push("typescript".to_string());
             langs.push("ts".to_string());
         }
-        #[cfg(feature = "python")] {
+        #[cfg(feature = "python")]
+        {
             langs.push("python".to_string());
             langs.push("py".to_string());
         }
-        #[cfg(feature = "java")] langs.push("java".to_string());
-        #[cfg(feature = "cpp")] {
+        #[cfg(feature = "java")]
+        langs.push("java".to_string());
+        #[cfg(feature = "cpp")]
+        {
             langs.push("cpp".to_string());
             langs.push("c++".to_string());
         }
@@ -334,7 +349,9 @@ impl BaseParser {
     /// Create a new base parser
     pub fn new(language: Language, language_name: String, config: ParserConfig) -> Self {
         let mut parser = tree_sitter::Parser::new();
-        parser.set_language(language).expect("Failed to set parser language");
+        parser
+            .set_language(language)
+            .expect("Failed to set parser language");
 
         Self {
             config,
@@ -345,7 +362,12 @@ impl BaseParser {
     }
 
     /// Parse source code incrementally
-    pub async fn parse_incremental_base(&mut self, old_source: &str, new_source: &str, changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>) -> IdeResult<ParseTree> {
+    pub async fn parse_incremental_base(
+        &mut self,
+        old_source: &str,
+        new_source: &str,
+        changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>,
+    ) -> IdeResult<ParseTree> {
         // Use tree-sitter's incremental parsing
         let mut parser = self.parser.write().await;
 
@@ -355,20 +377,29 @@ impl BaseParser {
         }
 
         // Parse the new source
-        let tree = parser.parse(new_source, None)
+        let tree = parser
+            .parse(new_source, None)
             .ok_or_else(|| IdeError::Parsing {
                 file: "input".to_string(),
                 reason: "Failed to parse source code".to_string(),
             })?;
 
-        let mut parse_tree = ParseTree::new(tree, new_source.to_string(), Some(self.language_name.clone()));
+        let mut parse_tree = ParseTree::new(
+            tree,
+            new_source.to_string(),
+            Some(self.language_name.clone()),
+        );
         parse_tree.config = self.config.clone();
 
         Ok(parse_tree)
     }
 
     /// Apply changes to source and re-parse
-    pub async fn apply_changes_base(&mut self, source: &str, changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>) -> IdeResult<(String, ParseTree)> {
+    pub async fn apply_changes_base(
+        &mut self,
+        source: &str,
+        changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>,
+    ) -> IdeResult<(String, ParseTree)> {
         // Sort changes by position
         let mut sorted_changes = changes.clone();
         sorted_changes.sort_by(|a, b| {
@@ -386,12 +417,18 @@ impl BaseParser {
         }
 
         // Re-parse with changes
-        let tree = self.parse_incremental_base("", &new_source, Some(changes)).await?;
+        let tree = self
+            .parse_incremental_base("", &new_source, Some(changes))
+            .await?;
         Ok((new_source, tree))
     }
 
     /// Compute AST diff between two trees
-    pub async fn get_ast_diff_base(&self, old_tree: &ParseTree, new_tree: &ParseTree) -> IdeResult<ASTDiff> {
+    pub async fn get_ast_diff_base(
+        &self,
+        old_tree: &ParseTree,
+        new_tree: &ParseTree,
+    ) -> IdeResult<ASTDiff> {
         let mut diff = ASTDiff::default();
 
         // Walk both trees and find differences
@@ -462,15 +499,28 @@ impl RustParser {
 #[cfg(feature = "rust")]
 #[async_trait::async_trait]
 impl IncrementalParser for RustParser {
-    async fn parse_incremental(&mut self, old_source: &str, new_source: &str, changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>) -> IdeResult<ParseTree> {
-        self.base.parse_incremental_base(old_source, new_source, changes).await
+    async fn parse_incremental(
+        &mut self,
+        old_source: &str,
+        new_source: &str,
+        changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>,
+    ) -> IdeResult<ParseTree> {
+        self.base
+            .parse_incremental_base(old_source, new_source, changes)
+            .await
     }
 
-    async fn apply_changes(&mut self, changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>) -> IdeResult<ParseTree> {
+    async fn apply_changes(
+        &mut self,
+        changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>,
+    ) -> IdeResult<ParseTree> {
         // For now, assume we have current source content somewhere
         // In practice, this would be stored in the parser state
         let current_source = "".to_string(); // Placeholder
-        let (_new_source, tree) = self.base.apply_changes_base(&current_source, changes).await?;
+        let (_new_source, tree) = self
+            .base
+            .apply_changes_base(&current_source, changes)
+            .await?;
         Ok(tree)
     }
 
@@ -480,7 +530,8 @@ impl IncrementalParser for RustParser {
 
     async fn parse_file(&mut self, file_path: &Path) -> IdeResult<ParseTree> {
         let validated_path = ValidatedFilePath::new(&file_path.to_string_lossy(), "parse_file")?;
-        let content = tokio::fs::read_to_string(validated_path.as_path()).await
+        let content = tokio::fs::read_to_string(validated_path.as_path())
+            .await
             .map_err(|e| IdeError::Io {
                 path: file_path.to_path_buf(),
                 reason: format!("Failed to read file: {}", e),
@@ -489,7 +540,9 @@ impl IncrementalParser for RustParser {
         let tree = self.base.parse_incremental_base("", &content, None).await?;
         let mut tree = tree;
         tree.file_path = Some(file_path.to_path_buf());
-        tree.last_modified = std::fs::metadata(file_path).ok().and_then(|m| m.modified().ok());
+        tree.last_modified = std::fs::metadata(file_path)
+            .ok()
+            .and_then(|m| m.modified().ok());
 
         Ok(tree)
     }
@@ -518,13 +571,26 @@ impl TypeScriptParser {
 #[cfg(feature = "typescript")]
 #[async_trait::async_trait]
 impl IncrementalParser for TypeScriptParser {
-    async fn parse_incremental(&mut self, old_source: &str, new_source: &str, changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>) -> IdeResult<ParseTree> {
-        self.base.parse_incremental_base(old_source, new_source, changes).await
+    async fn parse_incremental(
+        &mut self,
+        old_source: &str,
+        new_source: &str,
+        changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>,
+    ) -> IdeResult<ParseTree> {
+        self.base
+            .parse_incremental_base(old_source, new_source, changes)
+            .await
     }
 
-    async fn apply_changes(&mut self, changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>) -> IdeResult<ParseTree> {
+    async fn apply_changes(
+        &mut self,
+        changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>,
+    ) -> IdeResult<ParseTree> {
         let current_source = "".to_string(); // Placeholder
-        let (_new_source, tree) = self.base.apply_changes_base(&current_source, changes).await?;
+        let (_new_source, tree) = self
+            .base
+            .apply_changes_base(&current_source, changes)
+            .await?;
         Ok(tree)
     }
 
@@ -534,7 +600,8 @@ impl IncrementalParser for TypeScriptParser {
 
     async fn parse_file(&mut self, file_path: &Path) -> IdeResult<ParseTree> {
         let validated_path = ValidatedFilePath::new(&file_path.to_string_lossy(), "parse_file")?;
-        let content = tokio::fs::read_to_string(validated_path.as_path()).await
+        let content = tokio::fs::read_to_string(validated_path.as_path())
+            .await
             .map_err(|e| IdeError::Io {
                 path: file_path.to_path_buf(),
                 reason: format!("Failed to read file: {}", e),
@@ -543,7 +610,9 @@ impl IncrementalParser for TypeScriptParser {
         let tree = self.base.parse_incremental_base("", &content, None).await?;
         let mut tree = tree;
         tree.file_path = Some(file_path.to_path_buf());
-        tree.last_modified = std::fs::metadata(file_path).ok().and_then(|m| m.modified().ok());
+        tree.last_modified = std::fs::metadata(file_path)
+            .ok()
+            .and_then(|m| m.modified().ok());
 
         Ok(tree)
     }
@@ -572,13 +641,26 @@ impl PythonParser {
 #[cfg(feature = "python")]
 #[async_trait::async_trait]
 impl IncrementalParser for PythonParser {
-    async fn parse_incremental(&mut self, old_source: &str, new_source: &str, changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>) -> IdeResult<ParseTree> {
-        self.base.parse_incremental_base(old_source, new_source, changes).await
+    async fn parse_incremental(
+        &mut self,
+        old_source: &str,
+        new_source: &str,
+        changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>,
+    ) -> IdeResult<ParseTree> {
+        self.base
+            .parse_incremental_base(old_source, new_source, changes)
+            .await
     }
 
-    async fn apply_changes(&mut self, changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>) -> IdeResult<ParseTree> {
+    async fn apply_changes(
+        &mut self,
+        changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>,
+    ) -> IdeResult<ParseTree> {
         let current_source = "".to_string(); // Placeholder
-        let (_new_source, tree) = self.base.apply_changes_base(&current_source, changes).await?;
+        let (_new_source, tree) = self
+            .base
+            .apply_changes_base(&current_source, changes)
+            .await?;
         Ok(tree)
     }
 
@@ -588,7 +670,8 @@ impl IncrementalParser for PythonParser {
 
     async fn parse_file(&mut self, file_path: &Path) -> IdeResult<ParseTree> {
         let validated_path = ValidatedFilePath::new(&file_path.to_string_lossy(), "parse_file")?;
-        let content = tokio::fs::read_to_string(validated_path.as_path()).await
+        let content = tokio::fs::read_to_string(validated_path.as_path())
+            .await
             .map_err(|e| IdeError::Io {
                 path: file_path.to_path_buf(),
                 reason: format!("Failed to read file: {}", e),
@@ -597,7 +680,9 @@ impl IncrementalParser for PythonParser {
         let tree = self.base.parse_incremental_base("", &content, None).await?;
         let mut tree = tree;
         tree.file_path = Some(file_path.to_path_buf());
-        tree.last_modified = std::fs::metadata(file_path).ok().and_then(|m| m.modified().ok());
+        tree.last_modified = std::fs::metadata(file_path)
+            .ok()
+            .and_then(|m| m.modified().ok());
 
         Ok(tree)
     }
@@ -626,13 +711,26 @@ impl JavaParser {
 #[cfg(feature = "java")]
 #[async_trait::async_trait]
 impl IncrementalParser for JavaParser {
-    async fn parse_incremental(&mut self, old_source: &str, new_source: &str, changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>) -> IdeResult<ParseTree> {
-        self.base.parse_incremental_base(old_source, new_source, changes).await
+    async fn parse_incremental(
+        &mut self,
+        old_source: &str,
+        new_source: &str,
+        changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>,
+    ) -> IdeResult<ParseTree> {
+        self.base
+            .parse_incremental_base(old_source, new_source, changes)
+            .await
     }
 
-    async fn apply_changes(&mut self, changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>) -> IdeResult<ParseTree> {
+    async fn apply_changes(
+        &mut self,
+        changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>,
+    ) -> IdeResult<ParseTree> {
         let current_source = "".to_string(); // Placeholder
-        let (_new_source, tree) = self.base.apply_changes_base(&current_source, changes).await?;
+        let (_new_source, tree) = self
+            .base
+            .apply_changes_base(&current_source, changes)
+            .await?;
         Ok(tree)
     }
 
@@ -642,7 +740,8 @@ impl IncrementalParser for JavaParser {
 
     async fn parse_file(&mut self, file_path: &Path) -> IdeResult<ParseTree> {
         let validated_path = ValidatedFilePath::new(&file_path.to_string_lossy(), "parse_file")?;
-        let content = tokio::fs::read_to_string(validated_path.as_path()).await
+        let content = tokio::fs::read_to_string(validated_path.as_path())
+            .await
             .map_err(|e| IdeError::Io {
                 path: file_path.to_path_buf(),
                 reason: format!("Failed to read file: {}", e),
@@ -651,7 +750,9 @@ impl IncrementalParser for JavaParser {
         let tree = self.base.parse_incremental_base("", &content, None).await?;
         let mut tree = tree;
         tree.file_path = Some(file_path.to_path_buf());
-        tree.last_modified = std::fs::metadata(file_path).ok().and_then(|m| m.modified().ok());
+        tree.last_modified = std::fs::metadata(file_path)
+            .ok()
+            .and_then(|m| m.modified().ok());
 
         Ok(tree)
     }
@@ -680,13 +781,26 @@ impl CppParser {
 #[cfg(feature = "cpp")]
 #[async_trait::async_trait]
 impl IncrementalParser for CppParser {
-    async fn parse_incremental(&mut self, old_source: &str, new_source: &str, changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>) -> IdeResult<ParseTree> {
-        self.base.parse_incremental_base(old_source, new_source, changes).await
+    async fn parse_incremental(
+        &mut self,
+        old_source: &str,
+        new_source: &str,
+        changes: Option<&Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>>,
+    ) -> IdeResult<ParseTree> {
+        self.base
+            .parse_incremental_base(old_source, new_source, changes)
+            .await
     }
 
-    async fn apply_changes(&mut self, changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>) -> IdeResult<ParseTree> {
+    async fn apply_changes(
+        &mut self,
+        changes: &Vec<rust_ai_ide_lsp::incremental::change_tracker::FileChange>,
+    ) -> IdeResult<ParseTree> {
         let current_source = "".to_string(); // Placeholder
-        let (_new_source, tree) = self.base.apply_changes_base(&current_source, changes).await?;
+        let (_new_source, tree) = self
+            .base
+            .apply_changes_base(&current_source, changes)
+            .await?;
         Ok(tree)
     }
 
@@ -696,7 +810,8 @@ impl IncrementalParser for CppParser {
 
     async fn parse_file(&mut self, file_path: &Path) -> IdeResult<ParseTree> {
         let validated_path = ValidatedFilePath::new(&file_path.to_string_lossy(), "parse_file")?;
-        let content = tokio::fs::read_to_string(validated_path.as_path()).await
+        let content = tokio::fs::read_to_string(validated_path.as_path())
+            .await
             .map_err(|e| IdeError::Io {
                 path: file_path.to_path_buf(),
                 reason: format!("Failed to read file: {}", e),
@@ -705,7 +820,9 @@ impl IncrementalParser for CppParser {
         let tree = self.base.parse_incremental_base("", &content, None).await?;
         let mut tree = tree;
         tree.file_path = Some(file_path.to_path_buf());
-        tree.last_modified = std::fs::metadata(file_path).ok().and_then(|m| m.modified().ok());
+        tree.last_modified = std::fs::metadata(file_path)
+            .ok()
+            .and_then(|m| m.modified().ok());
 
         Ok(tree)
     }
@@ -755,7 +872,9 @@ impl ParserRegistry {
 
     /// Check if a language is supported
     pub fn supports_language(&self, language: &str) -> bool {
-        self.factory.supported_languages().contains(&language.to_string())
+        self.factory
+            .supported_languages()
+            .contains(&language.to_string())
     }
 
     /// Get all supported languages
@@ -792,7 +911,10 @@ pub fn extract_nodes_by_type(tree: &ParseTree, node_type: &str) -> Vec<tree_sitt
 }
 
 /// Find the smallest node containing a position
-pub fn find_node_at_position(tree: &ParseTree, position: tree_sitter::Point) -> Option<tree_sitter::Node> {
+pub fn find_node_at_position(
+    tree: &ParseTree,
+    position: tree_sitter::Point,
+) -> Option<tree_sitter::Node> {
     let mut cursor = tree.tree.walk();
     cursor.goto_first_child_for_index(position.row as usize);
 
@@ -817,14 +939,19 @@ pub fn find_node_at_position(tree: &ParseTree, position: tree_sitter::Point) -> 
 
 /// Validate file content before parsing
 pub async fn validate_file_for_parsing(file_path: &Path, max_size: usize) -> IdeResult<()> {
-    let validated_path = ValidatedFilePath::new(&file_path.to_string_lossy(), "validate_file_for_parsing")?;
+    let validated_path =
+        ValidatedFilePath::new(&file_path.to_string_lossy(), "validate_file_for_parsing")?;
 
     // Check file size
     if let Ok(metadata) = std::fs::metadata(&validated_path.as_path()) {
         if metadata.len() > max_size as u64 {
             return Err(IdeError::Validation {
                 field: "file_size".to_string(),
-                reason: format!("File size {} exceeds maximum allowed size {}", metadata.len(), max_size),
+                reason: format!(
+                    "File size {} exceeds maximum allowed size {}",
+                    metadata.len(),
+                    max_size
+                ),
             });
         }
     }

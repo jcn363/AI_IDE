@@ -35,7 +35,10 @@ export { AIService } from './code-analysis/CodeAnalyzer';
 export { useArchitecturalAdvice } from './hooks/useArchitecturalAdvice';
 
 // Hook for accessing hook helpers (architectural advice hook exports its own types)
-export type { ArchitecturalAdviceState, ArchitecturalAdviceConfig } from './hooks/useArchitecturalAdvice';
+export type {
+  ArchitecturalAdviceState,
+  ArchitecturalAdviceConfig,
+} from './hooks/useArchitecturalAdvice';
 
 // =============================================================================
 // TYPE EXPORTS
@@ -50,7 +53,7 @@ export type {
   GeneratedCode,
   FineTuneJob,
   TrainingStatus,
-  TrainingProgress
+  TrainingProgress,
 } from './types';
 
 // Service-specific types

@@ -33,17 +33,21 @@ import WorkspaceStats from './WorkspaceStats';
 const WorkspaceAlignmentView: React.FC = () => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const { 
-    filteredAlignments: alignments, 
-    status, 
-    error, 
-    selectedIds, 
+  const {
+    filteredAlignments: alignments,
+    status,
+    error,
+    selectedIds,
   } = useAppSelector(selectVersionAlignment);
   const [isBulkApplying, setIsBulkApplying] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'info' | 'warning' }>({ 
-    open: false, 
-    message: '', 
-    severity: 'info', 
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info' | 'warning';
+  }>({
+    open: false,
+    message: '',
+    severity: 'info',
   });
   const [stats, setStats] = useState<{
     totalDependencies: number;
@@ -52,25 +56,28 @@ const WorkspaceAlignmentView: React.FC = () => {
     highSeverity: number;
     mediumSeverity: number;
     lowSeverity: number;
-  }>({ 
-    totalDependencies: 0, 
-    alignedDependencies: 0, 
-    conflicts: 0, 
-    highSeverity: 0, 
-    mediumSeverity: 0, 
-    lowSeverity: 0, 
+  }>({
+    totalDependencies: 0,
+    alignedDependencies: 0,
+    conflicts: 0,
+    highSeverity: 0,
+    mediumSeverity: 0,
+    lowSeverity: 0,
   });
   const [isApplying, setIsApplying] = useState(false);
 
   useEffect(() => {
     if (alignments.length > 0) {
-      const highSeverity = alignments.filter(a => a.severity === 'high').length;
-      const mediumSeverity = alignments.filter(a => a.severity === 'medium').length;
-      const lowSeverity = alignments.filter(a => a.severity === 'low').length;
-      
+      const highSeverity = alignments.filter((a) => a.severity === 'high').length;
+      const mediumSeverity = alignments.filter((a) => a.severity === 'medium').length;
+      const lowSeverity = alignments.filter((a) => a.severity === 'low').length;
+
       setStats({
-        totalDependencies: alignments.reduce((acc, curr) => acc + Object.keys(curr.currentVersions).length, 0),
-        alignedDependencies: 0, 
+        totalDependencies: alignments.reduce(
+          (acc, curr) => acc + Object.keys(curr.currentVersions).length,
+          0
+        ),
+        alignedDependencies: 0,
         conflicts: alignments.length,
         highSeverity,
         mediumSeverity,
@@ -123,61 +130,70 @@ const WorkspaceAlignmentView: React.FC = () => {
     }
   }, [dispatch, selectedIds.length, alignments]);
 
-  const handleSelectOne = useCallback((id: string) => {
-    dispatch(toggleSelectAlignment(id));
-  }, [dispatch]);
+  const handleSelectOne = useCallback(
+    (id: string) => {
+      dispatch(toggleSelectAlignment(id));
+    },
+    [dispatch]
+  );
 
-  const handleApplyAlignment = useCallback(async (alignment: VersionAlignment) => {
-    try {
-      setIsApplying(true);
-      await dispatch(applyWorkspaceAlignment([alignment.id])).unwrap();
-      setSnackbar({
-        open: true,
-        message: `Successfully applied version alignment for ${alignment.dependencyName}`,
-        severity: 'success',
-      });
-    } catch (err) {
-      setSnackbar({
-        open: true,
-        message: 'Failed to apply version alignment',
-        severity: 'error',
-      });
-    } finally {
-      setIsApplying(false);
-    }
-  }, [dispatch]);
+  const handleApplyAlignment = useCallback(
+    async (alignment: VersionAlignment) => {
+      try {
+        setIsApplying(true);
+        await dispatch(applyWorkspaceAlignment([alignment.id])).unwrap();
+        setSnackbar({
+          open: true,
+          message: `Successfully applied version alignment for ${alignment.dependencyName}`,
+          severity: 'success',
+        });
+      } catch (err) {
+        setSnackbar({
+          open: true,
+          message: 'Failed to apply version alignment',
+          severity: 'error',
+        });
+      } finally {
+        setIsApplying(false);
+      }
+    },
+    [dispatch]
+  );
 
-  const handleResolveConflict = useCallback(async (alignment: VersionAlignment, selectedVersion: string) => {
-    try {
-      setIsApplying(true);
-      // Update the alignment with the selected version
-      const updatedAlignment = {
-        ...alignment,
-        suggestedVersion: selectedVersion,
-        currentVersions: {
-          [Object.keys(alignment.currentVersions)[0]]: selectedVersion
-        }
-      };
-      
-      // Apply the resolution
-      await dispatch(applyWorkspaceAlignment([updatedAlignment.id])).unwrap();
-      
-      setSnackbar({
-        open: true,
-        message: `Resolved version conflict for ${alignment.dependencyName} (${selectedVersion})`,
-        severity: 'success',
-      });
-    } catch (err) {
-      setSnackbar({
-        open: true,
-        message: 'Failed to resolve version conflict',
-        severity: 'error',
-      });
-      throw err;
-    } finally {
-      setIsApplying(false);
-    }
-  }, [dispatch]);
+  const handleResolveConflict = useCallback(
+    async (alignment: VersionAlignment, selectedVersion: string) => {
+      try {
+        setIsApplying(true);
+        // Update the alignment with the selected version
+        const updatedAlignment = {
+          ...alignment,
+          suggestedVersion: selectedVersion,
+          currentVersions: {
+            [Object.keys(alignment.currentVersions)[0]]: selectedVersion,
+          },
+        };
+
+        // Apply the resolution
+        await dispatch(applyWorkspaceAlignment([updatedAlignment.id])).unwrap();
+
+        setSnackbar({
+          open: true,
+          message: `Resolved version conflict for ${alignment.dependencyName} (${selectedVersion})`,
+          severity: 'success',
+        });
+      } catch (err) {
+        setSnackbar({
+          open: true,
+          message: 'Failed to resolve version conflict',
+          severity: 'error',
+        });
+        throw err;
+      } finally {
+        setIsApplying(false);
+      }
+    },
+    [dispatch]
+  );
 
   const handleIgnoreAlignment = useCallback((alignment: VersionAlignment) => {
     // Implementation for ignoring an alignment
@@ -189,7 +205,7 @@ const WorkspaceAlignmentView: React.FC = () => {
   }, []);
 
   const handleCloseSnackbar = useCallback(() => {
-    setSnackbar(prev => ({ ...prev, open: false }));
+    setSnackbar((prev) => ({ ...prev, open: false }));
   }, []);
 
   return (
@@ -208,17 +224,12 @@ const WorkspaceAlignmentView: React.FC = () => {
           {status === 'loading' ? 'Refreshing...' : 'Refresh'}
         </Button>
       </Box>
-      
+
       <Collapse in={Boolean(error)} sx={{ mb: 2 }}>
-        <Alert 
-          severity="error" 
+        <Alert
+          severity="error"
           action={
-            <IconButton
-              aria-label="close"
-              color="inherit"
-              size="small"
-              onClick={() => {}}
-            >
+            <IconButton aria-label="close" color="inherit" size="small" onClick={() => {}}>
               <CloseIcon fontSize="inherit" />
             </IconButton>
           }
@@ -226,8 +237,8 @@ const WorkspaceAlignmentView: React.FC = () => {
           {error}
         </Alert>
       </Collapse>
-      
-      <WorkspaceStats 
+
+      <WorkspaceStats
         total={stats.totalDependencies}
         aligned={stats.alignedDependencies}
         conflicts={stats.conflicts}
@@ -235,22 +246,22 @@ const WorkspaceAlignmentView: React.FC = () => {
         mediumSeverity={stats.mediumSeverity}
         lowSeverity={stats.lowSeverity}
       />
-      
-      <Paper 
-        elevation={0} 
-        sx={{ 
-          mt: 3, 
+
+      <Paper
+        elevation={0}
+        sx={{
+          mt: 3,
           border: `1px solid ${theme.palette.divider}`,
           borderRadius: 1,
           overflow: 'hidden',
         }}
       >
-        <Box 
-          p={2} 
-          display="flex" 
-          justifyContent="space-between" 
+        <Box
+          p={2}
+          display="flex"
+          justifyContent="space-between"
           alignItems="center"
-          sx={{ 
+          sx={{
             backgroundColor: theme.palette.background.paper,
             borderBottom: `1px solid ${theme.palette.divider}`,
           }}
@@ -258,16 +269,16 @@ const WorkspaceAlignmentView: React.FC = () => {
           <Typography variant="subtitle1" color="text.primary">
             Version Mismatches
             {alignments.length > 0 && (
-              <Chip 
-                label={`${alignments.length} found`} 
-                size="small" 
+              <Chip
+                label={`${alignments.length} found`}
+                size="small"
                 sx={{ ml: 1, fontWeight: 500 }}
                 color={alignments.length > 0 ? 'primary' : 'default'}
                 variant={alignments.length > 0 ? 'filled' : 'outlined'}
               />
             )}
           </Typography>
-          
+
           <Stack direction="row" spacing={1}>
             <Button
               variant="outlined"
@@ -277,7 +288,7 @@ const WorkspaceAlignmentView: React.FC = () => {
             >
               {selectedIds.length === alignments.length ? 'Deselect All' : 'Select All'}
             </Button>
-            
+
             <Button
               variant="contained"
               color="primary"
@@ -290,7 +301,7 @@ const WorkspaceAlignmentView: React.FC = () => {
             </Button>
           </Stack>
         </Box>
-        
+
         <VersionAlignmentList
           alignments={alignments}
           selectedIds={selectedIds}
@@ -303,7 +314,7 @@ const WorkspaceAlignmentView: React.FC = () => {
           isBulkApplying={isBulkApplying}
         />
       </Paper>
-      
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -311,16 +322,20 @@ const WorkspaceAlignmentView: React.FC = () => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         sx={{ '& .MuiPaper-root': { minWidth: 300 } }}
       >
-        <Alert 
-          onClose={handleCloseSnackbar} 
-          severity={snackbar.severity} 
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
           sx={{ width: '100%', boxShadow: 3 }}
           variant="filled"
         >
           <AlertTitle sx={{ fontWeight: 'bold' }}>
-            {snackbar.severity === 'success' ? 'Success' : 
-             snackbar.severity === 'error' ? 'Error' : 
-             snackbar.severity === 'warning' ? 'Warning' : 'Info'}
+            {snackbar.severity === 'success'
+              ? 'Success'
+              : snackbar.severity === 'error'
+                ? 'Error'
+                : snackbar.severity === 'warning'
+                  ? 'Warning'
+                  : 'Info'}
           </AlertTitle>
           {snackbar.message}
         </Alert>

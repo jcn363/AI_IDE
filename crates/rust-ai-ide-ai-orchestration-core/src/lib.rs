@@ -35,15 +35,17 @@ pub mod ai_orchestrator {
     use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
     use std::sync::Arc;
-    use tokio::sync::{Mutex, RwLock, mpsc};
-    use tokio::time::{Duration, timeout};
-    use uuid::Uuid;
+    use tokio::sync::{mpsc, Mutex, RwLock};
+    use tokio::time::{timeout, Duration};
     use tracing::{debug, error, info, warn};
+    use uuid::Uuid;
 
-    use rust_ai_ide_errors::RustAIError;
-    use rust_ai_ide_common::validation::{validate_string_input_extended, sanitize_string_for_processing};
-    use rust_ai_ide_performance::adaptive_memory::AdaptiveMemoryManager;
     use rust_ai_ide_cache::{InMemoryCache, LspCodeCompletion};
+    use rust_ai_ide_common::validation::{
+        sanitize_string_for_processing, validate_string_input_extended,
+    };
+    use rust_ai_ide_errors::RustAIError;
+    use rust_ai_ide_performance::adaptive_memory::AdaptiveMemoryManager;
 
     /// Types of AI services that can be orchestrated
     #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -181,7 +183,11 @@ pub mod ai_orchestrator {
     pub trait AIServiceProvider: Send + Sync {
         async fn is_available(&self) -> bool;
         async fn get_capabilities(&self) -> Result<AIServiceCapabilities, RustAIError>;
-        async fn execute_request(&self, context: AIRequestContext, payload: serde_json::Value) -> Result<serde_json::Value, RustAIError>;
+        async fn execute_request(
+            &self,
+            context: AIRequestContext,
+            payload: serde_json::Value,
+        ) -> Result<serde_json::Value, RustAIError>;
         fn service_name(&self) -> &'static str;
     }
 
@@ -216,7 +222,11 @@ pub mod ai_orchestrator {
             })
         }
 
-        async fn execute_request(&self, context: AIRequestContext, payload: serde_json::Value) -> Result<serde_json::Value, RustAIError> {
+        async fn execute_request(
+            &self,
+            context: AIRequestContext,
+            payload: serde_json::Value,
+        ) -> Result<serde_json::Value, RustAIError> {
             match context.service_type {
                 AIServiceType::Completion => {
                     // Placeholder: Call LSP completion service
@@ -231,7 +241,8 @@ pub mod ai_orchestrator {
                             { "text": "fn example_function() {", "score": 0.95 },
                             { "text": "impl MyStruct {", "score": 0.88 }
                         ]
-                    }).into()
+                    })
+                    .into()
                 }
                 AIServiceType::CodeAnalysis => {
                     // Placeholder: Call LSP analysis service
@@ -242,7 +253,8 @@ pub mod ai_orchestrator {
                             "issues": [],
                             "metrics": { "complexity": 5, "maintainability": 85 }
                         }
-                    }).into()
+                    })
+                    .into()
                 }
                 AIServiceType::CodeGeneration => {
                     // Placeholder: Call code generation service
@@ -251,9 +263,12 @@ pub mod ai_orchestrator {
                         "status": "success",
                         "generated_code": "fn generated_function() {\n    // Generated code\n}",
                         "confidence": 0.92
-                    }).into()
+                    })
+                    .into()
                 }
-                _ => Err(RustAIError::ServiceUnavailable("Service type not implemented in mock mode".to_string())),
+                _ => Err(RustAIError::ServiceUnavailable(
+                    "Service type not implemented in mock mode".to_string(),
+                )),
             }
         }
 
@@ -272,8 +287,10 @@ pub mod ai_orchestrator {
                 services: Arc::new(RwLock::new(HashMap::new())),
                 task_queue: Arc::new(Mutex::new(std::collections::VecDeque::new())),
                 model_cache: Arc::new(InMemoryCache::new_with_capacity(1000)),
-                adaptive_memory: Arc::new(AdaptiveMemoryManager::new()
-                    .map_err(|e| RustAIError::InternalError(e.to_string()))?),
+                adaptive_memory: Arc::new(
+                    AdaptiveMemoryManager::new()
+                        .map_err(|e| RustAIError::InternalError(e.to_string()))?,
+                ),
                 request_sender: sender,
                 request_receiver: Arc::new(Mutex::new(receiver)),
                 metrics: Arc::new(RwLock::new(OrchestratorMetrics::default())),
@@ -281,13 +298,18 @@ pub mod ai_orchestrator {
         }
 
         /// Register an AI service provider
-        pub async fn register_service(&self, provider: Arc<dyn AIServiceProvider>) -> Result<(), RustAIError> {
+        pub async fn register_service(
+            &self,
+            provider: Arc<dyn AIServiceProvider>,
+        ) -> Result<(), RustAIError> {
             let capabilities = provider.get_capabilities().await?;
             let service_name = provider.service_name();
 
             // Validate service capabilities
             if capabilities.supported_service_types.is_empty() {
-                return Err(RustAIError::Validation("Service must support at least one service type".to_string()));
+                return Err(RustAIError::Validation(
+                    "Service must support at least one service type".to_string(),
+                ));
             }
 
             let mut services = self.services.write().await;
@@ -298,16 +320,18 @@ pub mod ai_orchestrator {
         }
 
         /// Submit an AI request for processing
-        pub async fn submit_request(&self, context: AIRequestContext, payload: serde_json::Value) -> Result<String, RustAIError> {
+        pub async fn submit_request(
+            &self,
+            context: AIRequestContext,
+            payload: serde_json::Value,
+        ) -> Result<String, RustAIError> {
             // Validate input
             self.validate_request_context(&context).await?;
             self.validate_payload(&payload)?;
 
             // Sanitize payload for security
-            let sanitized_payload = sanitize_string_for_processing(
-                &payload.to_string(),
-                &["<script>", "</script>"]
-            )?;
+            let sanitized_payload =
+                sanitize_string_for_processing(&payload.to_string(), &["<script>", "</script>"])?;
 
             let sanitized_payload: serde_json::Value = serde_json::from_str(&sanitized_payload)
                 .map_err(|e| RustAIError::Validation(format!("Payload parsing failed: {}", e)))?;
@@ -319,7 +343,9 @@ pub mod ai_orchestrator {
             }
 
             // Send request to processing queue (non-blocking)
-            self.request_sender.send(context.clone()).await
+            self.request_sender
+                .send(context.clone())
+                .await
                 .map_err(|_| RustAIError::QueueFull("Request queue is full".to_string()))?;
 
             debug!("Submitted request {} for processing", context.request_id);
@@ -333,7 +359,9 @@ pub mod ai_orchestrator {
         }
 
         /// Get registered services
-        pub async fn get_services(&self) -> Result<HashMap<String, AIServiceCapabilities>, RustAIError> {
+        pub async fn get_services(
+            &self,
+        ) -> Result<HashMap<String, AIServiceCapabilities>, RustAIError> {
             let services = self.services.read().await;
             Ok(services.clone())
         }
@@ -346,7 +374,9 @@ pub mod ai_orchestrator {
             let model_cache = self.model_cache.clone();
 
             tokio::spawn(async move {
-                if let Err(e) = Self::processing_loop(request_receiver, services, metrics, model_cache).await {
+                if let Err(e) =
+                    Self::processing_loop(request_receiver, services, metrics, model_cache).await
+                {
                     error!("Processing loop error: {}", e);
                 }
             });
@@ -378,7 +408,13 @@ pub mod ai_orchestrator {
                         match service_result {
                             Some((service_name, capabilities)) => {
                                 // Execute request
-                                match Self::execute_request_with_service(service_name, capabilities, context).await {
+                                match Self::execute_request_with_service(
+                                    service_name,
+                                    capabilities,
+                                    context,
+                                )
+                                .await
+                                {
                                     Ok(_) => {
                                         let mut metrics = metrics.write().await;
                                         metrics.completed_requests += 1;
@@ -391,7 +427,10 @@ pub mod ai_orchestrator {
                                 }
                             }
                             None => {
-                                warn!("No suitable service found for request {}", context.request_id);
+                                warn!(
+                                    "No suitable service found for request {}",
+                                    context.request_id
+                                );
                                 let mut metrics = metrics.write().await;
                                 metrics.failed_requests += 1;
                             }
@@ -413,7 +452,10 @@ pub mod ai_orchestrator {
 
             for (service_name, capabilities) in services.iter() {
                 // Check if service supports the required type
-                if !capabilities.supported_service_types.contains(&context.service_type) {
+                if !capabilities
+                    .supported_service_types
+                    .contains(&context.service_type)
+                {
                     continue;
                 }
 
@@ -443,27 +485,42 @@ pub mod ai_orchestrator {
 
             let start_time = std::time::Instant::now();
             let timeout_duration = Duration::from_secs(
-                context.timeout_override
-                    .unwrap_or(context.service_type.timeout_secs().min(capabilities.average_latency_ms as u64 / 1000))
+                context.timeout_override.unwrap_or(
+                    context
+                        .service_type
+                        .timeout_secs()
+                        .min(capabilities.average_latency_ms as u64 / 1000),
+                ),
             );
 
             // Mock execution for sample implementation
             match tokio::time::timeout(timeout_duration, async {
                 // Simulate AI model inference time
-                tokio::time::sleep(Duration::from_millis((capabilities.average_latency_ms * 0.8) as u64)).await;
+                tokio::time::sleep(Duration::from_millis(
+                    (capabilities.average_latency_ms * 0.8) as u64,
+                ))
+                .await;
                 serde_json::json!({ "status": "success", "result": "sample_output" })
-            }).await {
+            })
+            .await
+            {
                 Ok(result) => {
                     let latency_ms = start_time.elapsed().as_millis() as f64;
                     debug!("Request completed in {}ms via {}", latency_ms, service_name);
                     Ok(result)
                 }
-                Err(_) => Err(RustAIError::Timeout(format!("Service {} timed out", service_name))),
+                Err(_) => Err(RustAIError::Timeout(format!(
+                    "Service {} timed out",
+                    service_name
+                ))),
             }
         }
 
         /// Validate request context
-        async fn validate_request_context(&self, context: &AIRequestContext) -> Result<(), RustAIError> {
+        async fn validate_request_context(
+            &self,
+            context: &AIRequestContext,
+        ) -> Result<(), RustAIError> {
             // Validate request ID format
             validate_string_input_extended(&context.request_id, 64, false)?;
 
@@ -484,8 +541,11 @@ pub mod ai_orchestrator {
         fn validate_payload(&self, payload: &serde_json::Value) -> Result<(), RustAIError> {
             // Basic validation - payload should be reasonable size
             let payload_str = payload.to_string();
-            if payload_str.len() > 10 * 1024 * 1024 { // 10MB limit
-                return Err(RustAIError::Validation("Payload size exceeds maximum allowed".to_string()));
+            if payload_str.len() > 10 * 1024 * 1024 {
+                // 10MB limit
+                return Err(RustAIError::Validation(
+                    "Payload size exceeds maximum allowed".to_string(),
+                ));
             }
 
             // For more sophisticated validation, we could:
@@ -537,7 +597,10 @@ pub mod ai_orchestrator {
             language: String,
         ) -> Result<String, RustAIError>;
 
-        async fn get_request_status(&self, request_id: &str) -> Result<serde_json::Value, RustAIError>;
+        async fn get_request_status(
+            &self,
+            request_id: &str,
+        ) -> Result<serde_json::Value, RustAIError>;
 
         async fn cancel_request(&self, request_id: &str) -> Result<(), RustAIError>;
     }
@@ -574,7 +637,10 @@ pub mod ai_orchestrator {
             self.submit_request(context, payload).await
         }
 
-        async fn get_request_status(&self, _request_id: &str) -> Result<serde_json::Value, RustAIError> {
+        async fn get_request_status(
+            &self,
+            _request_id: &str,
+        ) -> Result<serde_json::Value, RustAIError> {
             // Placeholder implementation
             Ok(serde_json::json!({
                 "status": "processing",
@@ -600,7 +666,10 @@ pub mod tauri_integration {
     type OrchestratorState = Arc<Mutex<Option<AIOrchestrator>>>;
 
     /// Initialize the orchestrator service (call once upon startup)
-    pub async fn initialize_orchestrator(state: OrchestratorState, config: OrchestratorConfig) -> Result<(), RustAIError> {
+    pub async fn initialize_orchestrator(
+        state: OrchestratorState,
+        config: OrchestratorConfig,
+    ) -> Result<(), RustAIError> {
         let orchestrator = AIOrchestrator::new(Arc::new(config)).await?;
 
         // Register sample services
@@ -634,8 +703,7 @@ pub mod tauri_integration {
             .map_err(|e| format!("Invalid code input: {}", e))?;
 
         let state_guard = state.lock().await;
-        let orchestrator = state_guard.as_ref()
-            .ok_or("Orchestrator not initialized")?;
+        let orchestrator = state_guard.as_ref().ok_or("Orchestrator not initialized")?;
 
         let context = AIRequestContext {
             service_type: AIServiceType::Completion,
@@ -643,7 +711,8 @@ pub mod tauri_integration {
             ..Default::default()
         };
 
-        orchestrator.submit_completion_request(context, code, cursor_position)
+        orchestrator
+            .submit_completion_request(context, code, cursor_position)
             .await
             .map_err(|e| format!("AI request failed: {}", e))
     }
@@ -651,13 +720,13 @@ pub mod tauri_integration {
     /// Health check command
     #[tauri::command]
     pub async fn get_orchestrator_health(
-        state: State<'_, OrchestratorState>
+        state: State<'_, OrchestratorState>,
     ) -> Result<serde_json::Value, String> {
         let state_guard = state.lock().await;
-        let orchestrator = state_guard.as_ref()
-            .ok_or("Orchestrator not initialized")?;
+        let orchestrator = state_guard.as_ref().ok_or("Orchestrator not initialized")?;
 
-        orchestrator.health_check()
+        orchestrator
+            .health_check()
             .await
             .map_err(|e| format!("Health check failed: {}", e))
     }

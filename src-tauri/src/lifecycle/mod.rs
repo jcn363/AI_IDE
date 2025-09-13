@@ -5,9 +5,9 @@
 //! for better observability, controllability, and maintainability of the
 //! application state.
 
-pub mod startup;
-pub mod runtime;
 pub mod cleanup;
+pub mod runtime;
+pub mod startup;
 
 use anyhow::Result;
 use std::sync::Arc;
@@ -83,10 +83,12 @@ impl LifecycleManager {
     }
 
     pub async fn emit_event(&self, event: LifecycleEvent) {
-        log::info!("Lifecycle event: {} - {} ({})",
-                   event.phase,
-                   event.message,
-                   if event.success { "success" } else { "failure" });
+        log::info!(
+            "Lifecycle event: {} - {} ({})",
+            event.phase,
+            event.message,
+            if event.success { "success" } else { "failure" }
+        );
 
         let listeners = self.event_listeners.lock().await;
         for listener in listeners.iter() {
@@ -116,16 +118,16 @@ impl LifecycleManager {
                 success: false,
                 metadata: serde_json::json!({ "error": e.to_string() }),
                 ..Default::default()
-            }).await;
+            })
+            .await;
             return Err(e);
         }
 
         self.update_phase(LifecyclePhase::Running).await;
 
         // Runtime phase (runs concurrently)
-        let runtime_handle = tokio::spawn(async move {
-            runtime.run(Arc::clone(&self.current_phase)).await
-        });
+        let runtime_handle =
+            tokio::spawn(async move { runtime.run(Arc::clone(&self.current_phase)).await });
 
         // Wait for shutdown signal
         self.wait_for_shutdown().await;
@@ -142,7 +144,8 @@ impl LifecycleManager {
             message: "Application shutdown complete".to_string(),
             success: true,
             ..Default::default()
-        }).await;
+        })
+        .await;
 
         Ok(())
     }
@@ -150,7 +153,9 @@ impl LifecycleManager {
     async fn wait_for_shutdown(&self) {
         // In a real application, this would listen for shutdown signals
         // For now, we'll just wait for the runtime to finish
-        tokio::signal::ctrl_c().await.expect("Failed to listen for ctrl+c");
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Failed to listen for ctrl+c");
         log::info!("Shutdown signal received");
     }
 }

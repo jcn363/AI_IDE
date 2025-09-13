@@ -1,9 +1,9 @@
-use std::sync::Arc;
+use crate::ai_suggester::AnalysisContext;
+use crate::error::{AnalysisError, AnalysisResult};
+use crate::types::RefactoringSuggestion;
 use async_trait::async_trait;
 use rust_ai_ide_ai_inference::AiInferenceService;
-use crate::ai_suggester::AnalysisContext;
-use crate::types::RefactoringSuggestion;
-use crate::error::{AnalysisError, AnalysisResult};
+use std::sync::Arc;
 
 /// ML-based confidence scoring for refactoring suggestions
 pub struct ConfidenceScorer {

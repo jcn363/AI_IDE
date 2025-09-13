@@ -1,18 +1,30 @@
 import React from 'react';
-import { Box, CssBaseline, Divider, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from '@mui/material';
+import {
+  Box,
+  CssBaseline,
+  Divider,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  Typography,
+  CodeIcon,
+  SettingsIcon,
+  HomeIcon,
+  FolderOpenIcon,
+  BuildIcon,
+  BugReportIcon,
+  ScienceIcon,
+  DescriptionIcon,
+  AccountTreeIcon,
+  CompareArrowsIcon,
+} from '../shared/MaterialUI';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../store/store';
 import { tabManagementSelectors } from '../../store/slices/tabManagementSlice';
-import CodeIcon from '@mui/icons-material/Code';
-import SettingsIcon from '@mui/icons-material/Settings';
-import HomeIcon from '@mui/icons-material/Home';
-import FolderOpenIcon from '@mui/icons-material/FolderOpen';
-import BuildIcon from '@mui/icons-material/Build';
-import BugReportIcon from '@mui/icons-material/BugReport';
-import ScienceIcon from '@mui/icons-material/Science';
-import DescriptionIcon from '@mui/icons-material/Description';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import { FileExplorer } from '../FileExplorer/index';
 import StatusBar from '../StatusBar';
 import CargoNotifier from '../Notifications/CargoNotifier';
@@ -49,7 +61,7 @@ export function Layout({ children }: Readonly<LayoutProps>) {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      
+
       {/* Sidebar */}
       <Drawer
         variant="permanent"
@@ -96,15 +108,20 @@ export function Layout({ children }: Readonly<LayoutProps>) {
       </Drawer>
 
       {/* Main content + Status bar */}
-      <Box component="section" sx={{ flexGrow: 1, height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box
+        component="section"
+        sx={{ flexGrow: 1, height: '100vh', display: 'flex', flexDirection: 'column' }}
+      >
         <Box component="main" sx={{ p: 3, flex: 1, overflow: 'auto' }}>
           <Toolbar />
           {children || <Outlet />}
         </Box>
-        <StatusBar 
-          activeFilePath={useAppSelector(state => tabManagementSelectors.selectActivePane(state)?.activeFile || null)}
+        <StatusBar
+          activeFilePath={useAppSelector(
+            (state) => tabManagementSelectors.selectActivePane(state)?.activeFile || null
+          )}
           isSaving={false} // TODO: Implement saving state in tabManagementSlice if needed
-          isConnected={useAppSelector(state => {
+          isConnected={useAppSelector((state) => {
             // Check if language server state is available in the store
             if ('languageServer' in state) {
               return (state as any).languageServer?.isConnected || false;
