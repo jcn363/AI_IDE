@@ -46,15 +46,19 @@
 //! let new_key_id = key_manager.rotate_key(&key_id).await?;
 //!
 //! // Use credential manager
-//! let credential_id = credential_manager.generate_credential("database", "admin").await?;
+//! let credential_id = credential_manager
+//!     .generate_credential("database", "admin")
+//!     .await?;
 //! ```
 
-use async_trait::async_trait;
-use base64::{engine::general_purpose, Engine as _};
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+
+use async_trait::async_trait;
+use base64::engine::general_purpose;
+use base64::Engine as _;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 use crate::SecurityResult;
@@ -66,17 +70,17 @@ pub enum KeyBackendType {
     FileSystem,
     HardwareSecurityModule {
         hsm_path: String,
-        slot_id: String,
+        slot_id:  String,
         pin_file: String,
     },
     CloudKMS {
-        provider: CloudProvider,
-        key_ring: String,
+        provider:   CloudProvider,
+        key_ring:   String,
         project_id: String,
     },
     ExternalKMS {
-        provider: String,
-        endpoint: String,
+        provider:   String,
+        endpoint:   String,
         auth_token: String,
     },
 }
@@ -115,18 +119,18 @@ pub enum KeyAlgorithm {
 /// Key metadata and state
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeyMetadata {
-    pub key_id: String,
-    pub version: u32,
-    pub algorithm: KeyAlgorithm,
-    pub purpose: KeyPurpose,
-    pub usage_count: u64,
-    pub created_at: DateTime<Utc>,
-    pub expires_at: Option<DateTime<Utc>>,
-    pub rotated_at: Option<DateTime<Utc>>,
-    pub status: KeyStatus,
-    pub backend_info: HashMap<String, String>,
-    pub hsm_slot_id: Option<String>,
-    pub backup_available: bool,
+    pub key_id:            String,
+    pub version:           u32,
+    pub algorithm:         KeyAlgorithm,
+    pub purpose:           KeyPurpose,
+    pub usage_count:       u64,
+    pub created_at:        DateTime<Utc>,
+    pub expires_at:        Option<DateTime<Utc>>,
+    pub rotated_at:        Option<DateTime<Utc>>,
+    pub status:            KeyStatus,
+    pub backend_info:      HashMap<String, String>,
+    pub hsm_slot_id:       Option<String>,
+    pub backup_available:  bool,
     pub encryption_policy: KeyEncryptionPolicy,
 }
 
@@ -143,31 +147,31 @@ pub enum KeyStatus {
 /// Key encryption policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeyEncryptionPolicy {
-    pub allow_export: bool,
-    pub requires_mfa: bool,
-    pub max_uses: Option<u64>,
+    pub allow_export:     bool,
+    pub requires_mfa:     bool,
+    pub max_uses:         Option<u64>,
     pub allowed_networks: Vec<String>,
-    pub audit_required: bool,
+    pub audit_required:   bool,
 }
 
 /// Key rotation policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeyRotationPolicy {
-    pub automatic_rotation: bool,
-    pub rotation_interval_days: u32,
-    pub keep_versions: u32,
+    pub automatic_rotation:         bool,
+    pub rotation_interval_days:     u32,
+    pub keep_versions:              u32,
     pub rotation_notification_days: u32,
-    pub emergency_rotation: bool,
-    pub rotation_schedule: Option<RotationSchedule>,
+    pub emergency_rotation:         bool,
+    pub rotation_schedule:          Option<RotationSchedule>,
 }
 
 /// Rotation schedule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RotationSchedule {
-    pub timezone: String,
+    pub timezone:                 String,
     pub maintenance_window_start: String, // HH:MM format
-    pub maintenance_window_end: String,
-    pub blackout_periods: Vec<String>, // Dates to avoid rotation
+    pub maintenance_window_end:   String,
+    pub blackout_periods:         Vec<String>, // Dates to avoid rotation
 }
 
 /// Credential types
@@ -184,29 +188,29 @@ pub enum CredentialType {
 /// Credential metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CredentialMetadata {
-    pub credential_id: String,
-    pub name: String,
+    pub credential_id:   String,
+    pub name:            String,
     pub credential_type: CredentialType,
-    pub owner: String,
-    pub created_at: DateTime<Utc>,
-    pub expires_at: DateTime<Utc>,
+    pub owner:           String,
+    pub created_at:      DateTime<Utc>,
+    pub expires_at:      DateTime<Utc>,
     pub last_rotated_at: Option<DateTime<Utc>>,
-    pub last_used_at: Option<DateTime<Utc>>,
-    pub usage_count: u64,
-    pub access_list: HashSet<String>, // User/role IDs with access
+    pub last_used_at:    Option<DateTime<Utc>>,
+    pub usage_count:     u64,
+    pub access_list:     HashSet<String>, // User/role IDs with access
     pub rotation_policy: CredentialRotationPolicy,
-    pub backup_status: BackupStatus,
+    pub backup_status:   BackupStatus,
 }
 
 /// Credential rotation policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CredentialRotationPolicy {
-    pub enabled: bool,
-    pub rotation_interval_days: u32,
-    pub max_lifetime_days: u32,
-    pub auto_rotate: bool,
+    pub enabled:                    bool,
+    pub rotation_interval_days:     u32,
+    pub max_lifetime_days:          u32,
+    pub auto_rotate:                bool,
     pub rotation_notification_days: u32,
-    pub require_manual_approval: bool,
+    pub require_manual_approval:    bool,
 }
 
 /// Backup status for disaster recovery
@@ -222,10 +226,10 @@ pub enum BackupStatus {
 /// Encrypted credential data
 #[derive(Debug, Clone)]
 pub struct EncryptedCredential {
-    pub metadata: CredentialMetadata,
+    pub metadata:       CredentialMetadata,
     pub encrypted_data: Vec<u8>,
-    pub nonce: Vec<u8>,
-    pub key_id: String,
+    pub nonce:          Vec<u8>,
+    pub key_id:         String,
 }
 
 /// Key manager for cryptographic keys
@@ -246,11 +250,7 @@ pub trait KeyManager: Send + Sync {
     async fn rotate_key(&self, key_id: &str) -> SecurityResult<String>;
 
     /// Schedule key rotation
-    async fn schedule_key_rotation(
-        &self,
-        key_id: &str,
-        schedule: RotationSchedule,
-    ) -> SecurityResult<()>;
+    async fn schedule_key_rotation(&self, key_id: &str, schedule: RotationSchedule) -> SecurityResult<()>;
 
     /// Get key rotation status
     async fn get_rotation_status(&self, key_id: &str) -> SecurityResult<RotationStatus>;
@@ -275,77 +275,57 @@ pub trait KeyManager: Send + Sync {
 #[async_trait]
 pub trait CredentialManager: Send + Sync {
     /// Generate new credential
-    async fn generate_credential(
-        &self,
-        service: &str,
-        account_type: &str,
-    ) -> SecurityResult<String>;
+    async fn generate_credential(&self, service: &str, account_type: &str) -> SecurityResult<String>;
 
     /// Get credential metadata
-    async fn get_credential_metadata(
-        &self,
-        credential_id: &str,
-    ) -> SecurityResult<Option<CredentialMetadata>>;
+    async fn get_credential_metadata(&self, credential_id: &str) -> SecurityResult<Option<CredentialMetadata>>;
 
     /// Retrieve credential (decrypted)
     async fn get_credential(&self, credential_id: &str, requester: &str) -> SecurityResult<String>;
 
     /// Update credential
-    async fn update_credential(
-        &self,
-        credential_id: &str,
-        new_credential: &str,
-    ) -> SecurityResult<()>;
+    async fn update_credential(&self, credential_id: &str, new_credential: &str) -> SecurityResult<()>;
 
     /// Rotate credential
     async fn rotate_credential(&self, credential_id: &str) -> SecurityResult<String>;
 
     /// Schedule credential rotation
-    async fn schedule_credential_rotation(
-        &self,
-        credential_id: &str,
-        schedule: RotationSchedule,
-    ) -> SecurityResult<()>;
+    async fn schedule_credential_rotation(&self, credential_id: &str, schedule: RotationSchedule)
+        -> SecurityResult<()>;
 
     /// Revoke credential
     async fn revoke_credential(&self, credential_id: &str, reason: &str) -> SecurityResult<()>;
 
     /// Audit credential access
-    async fn audit_credential_access(
-        &self,
-        credential_id: &str,
-    ) -> SecurityResult<Vec<CredentialAccessEvent>>;
+    async fn audit_credential_access(&self, credential_id: &str) -> SecurityResult<Vec<CredentialAccessEvent>>;
 
     /// Backup credentials
     async fn backup_credentials(&self) -> SecurityResult<()>;
 
     /// Get rotation status
-    async fn get_credential_rotation_status(
-        &self,
-        credential_id: &str,
-    ) -> SecurityResult<RotationStatus>;
+    async fn get_credential_rotation_status(&self, credential_id: &str) -> SecurityResult<RotationStatus>;
 }
 
 /// Credential access event for audit
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CredentialAccessEvent {
     pub credential_id: String,
-    pub accessed_by: String,
-    pub access_time: DateTime<Utc>,
-    pub access_type: String, // retrieve, update, rotate, etc.
-    pub success: bool,
-    pub ip_address: Option<String>,
-    pub user_agent: Option<String>,
+    pub accessed_by:   String,
+    pub access_time:   DateTime<Utc>,
+    pub access_type:   String, // retrieve, update, rotate, etc.
+    pub success:       bool,
+    pub ip_address:    Option<String>,
+    pub user_agent:    Option<String>,
 }
 
 /// Rotation status for reporting
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RotationStatus {
-    pub scheduled_at: Option<DateTime<Utc>>,
-    pub last_rotated_at: Option<DateTime<Utc>>,
+    pub scheduled_at:     Option<DateTime<Utc>>,
+    pub last_rotated_at:  Option<DateTime<Utc>>,
     pub next_rotation_at: Option<DateTime<Utc>>,
-    pub rotation_count: u32,
-    pub status: RotationResult,
+    pub rotation_count:   u32,
+    pub status:           RotationResult,
 }
 
 /// Rotation result status
@@ -362,33 +342,33 @@ pub enum RotationResult {
 /// Key health status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeyHealthStatus {
-    pub backend_type: String,
+    pub backend_type:      String,
     pub connection_status: bool,
-    pub total_keys: u32,
-    pub active_keys: u32,
-    pub expired_keys: u32,
-    pub backed_up_keys: u32,
-    pub last_backup_time: Option<DateTime<Utc>>,
-    pub alerts: Vec<String>,
+    pub total_keys:        u32,
+    pub active_keys:       u32,
+    pub expired_keys:      u32,
+    pub backed_up_keys:    u32,
+    pub last_backup_time:  Option<DateTime<Utc>>,
+    pub alerts:            Vec<String>,
 }
 
 // Implementation: Default Key Manager
 
 /// Default key manager with software-based cryptography
 pub struct SoftwareKeyManager {
-    keys: Arc<RwLock<HashMap<String, KeyMetadata>>>,
-    key_storage: Arc<RwLock<HashMap<String, Vec<u8>>>>,
+    keys:              Arc<RwLock<HashMap<String, KeyMetadata>>>,
+    key_storage:       Arc<RwLock<HashMap<String, Vec<u8>>>>,
     rotation_policies: Arc<RwLock<HashMap<String, KeyRotationPolicy>>>,
-    backup_key: Vec<u8>, // Master key for encrypting key data
+    backup_key:        Vec<u8>, // Master key for encrypting key data
 }
 
 impl SoftwareKeyManager {
     pub fn new() -> Self {
         Self {
-            keys: Arc::new(RwLock::new(HashMap::new())),
-            key_storage: Arc::new(RwLock::new(HashMap::new())),
+            keys:              Arc::new(RwLock::new(HashMap::new())),
+            key_storage:       Arc::new(RwLock::new(HashMap::new())),
             rotation_policies: Arc::new(RwLock::new(HashMap::new())),
-            backup_key: crate::global_backup_key(), // In real implementation, this would be securely sourced
+            backup_key:        crate::global_backup_key(), // In real implementation, this would be securely sourced
         }
     }
 
@@ -428,11 +408,10 @@ impl KeyManager for SoftwareKeyManager {
         let algorithm = match algorithm {
             "aes256" | "aes256-gcm" => KeyAlgorithm::Aes256Gcm,
             "chacha20" => KeyAlgorithm::Chacha20Poly1305,
-            _ => {
+            _ =>
                 return Err(crate::SecurityError::ConfigurationError {
                     config_error: format!("Unsupported algorithm: {}", algorithm),
-                })
-            }
+                }),
         };
 
         let purpose_type = match purpose {
@@ -454,24 +433,24 @@ impl KeyManager for SoftwareKeyManager {
         let (encrypted_key, nonce) = crate::encrypt_with_backup_key(&key_material)?;
 
         let key_metadata = KeyMetadata {
-            key_id: key_id.clone(),
-            version: key_version,
-            algorithm: algorithm.clone(),
-            purpose: purpose_type,
-            usage_count: 0,
-            created_at: now,
-            expires_at: Some(now + chrono::Duration::days(365)),
-            rotated_at: None,
-            status: KeyStatus::Active,
-            backend_info: [("backend".to_string(), "software".to_string())].into(),
-            hsm_slot_id: None,
-            backup_available: true,
+            key_id:            key_id.clone(),
+            version:           key_version,
+            algorithm:         algorithm.clone(),
+            purpose:           purpose_type,
+            usage_count:       0,
+            created_at:        now,
+            expires_at:        Some(now + chrono::Duration::days(365)),
+            rotated_at:        None,
+            status:            KeyStatus::Active,
+            backend_info:      [("backend".to_string(), "software".to_string())].into(),
+            hsm_slot_id:       None,
+            backup_available:  true,
             encryption_policy: KeyEncryptionPolicy {
-                allow_export: false,
-                requires_mfa: false,
-                max_uses: Some(1000000),
+                allow_export:     false,
+                requires_mfa:     false,
+                max_uses:         Some(1000000),
                 allowed_networks: vec![],
-                audit_required: true,
+                audit_required:   true,
             },
         };
 
@@ -483,16 +462,16 @@ impl KeyManager for SoftwareKeyManager {
 
         // Set up default rotation policy
         let rotation_policy = KeyRotationPolicy {
-            automatic_rotation: true,
-            rotation_interval_days: 90,
-            keep_versions: 5,
+            automatic_rotation:         true,
+            rotation_interval_days:     90,
+            keep_versions:              5,
             rotation_notification_days: 7,
-            emergency_rotation: false,
-            rotation_schedule: Some(RotationSchedule {
-                timezone: "UTC".to_string(),
+            emergency_rotation:         false,
+            rotation_schedule:          Some(RotationSchedule {
+                timezone:                 "UTC".to_string(),
                 maintenance_window_start: "02:00".to_string(),
-                maintenance_window_end: "06:00".to_string(),
-                blackout_periods: vec![],
+                maintenance_window_end:   "06:00".to_string(),
+                blackout_periods:         vec![],
             }),
         };
 
@@ -509,18 +488,18 @@ impl KeyManager for SoftwareKeyManager {
 
     async fn encrypt_data(&self, key_id: &str, data: &[u8]) -> SecurityResult<Vec<u8>> {
         let key_storage = self.key_storage.read().await;
-        let key_data =
-            key_storage
-                .get(key_id)
-                .ok_or_else(|| crate::SecurityError::ConfigurationError {
-                    config_error: format!("Key not found: {}", key_id),
-                })?;
+        let key_data = key_storage
+            .get(key_id)
+            .ok_or_else(|| crate::SecurityError::ConfigurationError {
+                config_error: format!("Key not found: {}", key_id),
+            })?;
 
         // Decrypt the key
         let key_material = crate::decrypt_with_backup_key(key_data)?;
 
         // Use the key for encryption (simplified)
-        use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit, Nonce};
+        use aes_gcm::aead::Aead;
+        use aes_gcm::{Aes256Gcm, KeyInit, Nonce};
         let cipher_key = aes_gcm::Key::<Aes256Gcm>::from_slice(&key_material[0..32]);
         let nonce = Aes256Gcm::generate_nonce(&mut rand::rngs::OsRng);
         let cipher = Aes256Gcm::new(cipher_key);
@@ -545,12 +524,11 @@ impl KeyManager for SoftwareKeyManager {
         }
 
         let key_storage = self.key_storage.read().await;
-        let key_data =
-            key_storage
-                .get(key_id)
-                .ok_or_else(|| crate::SecurityError::ConfigurationError {
-                    config_error: format!("Key not found: {}", key_id),
-                })?;
+        let key_data = key_storage
+            .get(key_id)
+            .ok_or_else(|| crate::SecurityError::ConfigurationError {
+                config_error: format!("Key not found: {}", key_id),
+            })?;
 
         // Decrypt the key
         let key_material = crate::decrypt_with_backup_key(key_data)?;
@@ -561,11 +539,10 @@ impl KeyManager for SoftwareKeyManager {
         let ciphertext = &encrypted_data[12..];
 
         // Use the key for decryption
-        use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit};
-        let cipher = Aes256Gcm::new_from_slice(&key_material).map_err(|_| {
-            crate::SecurityError::EncryptionError {
-                source: "Invalid key format".into(),
-            }
+        use aes_gcm::aead::Aead;
+        use aes_gcm::{Aes256Gcm, KeyInit};
+        let cipher = Aes256Gcm::new_from_slice(&key_material).map_err(|_| crate::SecurityError::EncryptionError {
+            source: "Invalid key format".into(),
         })?;
 
         cipher
@@ -577,11 +554,11 @@ impl KeyManager for SoftwareKeyManager {
 
     async fn rotate_key(&self, key_id: &str) -> SecurityResult<String> {
         let mut keys = self.keys.write().await;
-        let current_key =
-            keys.get_mut(key_id)
-                .ok_or_else(|| crate::SecurityError::ConfigurationError {
-                    config_error: format!("Key not found: {}", key_id),
-                })?;
+        let current_key = keys
+            .get_mut(key_id)
+            .ok_or_else(|| crate::SecurityError::ConfigurationError {
+                config_error: format!("Key not found: {}", key_id),
+            })?;
 
         // Generate new key material
         let algorithm = current_key.algorithm.clone();
@@ -595,18 +572,18 @@ impl KeyManager for SoftwareKeyManager {
         let new_key_id = format!("{}_v{}", key_id, current_key.version + 1);
 
         let new_key_metadata = KeyMetadata {
-            key_id: new_key_id.clone(),
-            version: current_key.version + 1,
-            algorithm: algorithm.clone(),
-            purpose: current_key.purpose.clone(),
-            usage_count: 0,
-            created_at: now,
-            expires_at: Some(now + chrono::Duration::days(365)),
-            rotated_at: Some(now),
-            status: KeyStatus::Active,
-            backend_info: [("backend".to_string(), "software".to_string())].into(),
-            hsm_slot_id: None,
-            backup_available: true,
+            key_id:            new_key_id.clone(),
+            version:           current_key.version + 1,
+            algorithm:         algorithm.clone(),
+            purpose:           current_key.purpose.clone(),
+            usage_count:       0,
+            created_at:        now,
+            expires_at:        Some(now + chrono::Duration::days(365)),
+            rotated_at:        Some(now),
+            status:            KeyStatus::Active,
+            backend_info:      [("backend".to_string(), "software".to_string())].into(),
+            hsm_slot_id:       None,
+            backup_available:  true,
             encryption_policy: current_key.encryption_policy.clone(),
         };
 
@@ -622,11 +599,7 @@ impl KeyManager for SoftwareKeyManager {
         Ok(new_key_id)
     }
 
-    async fn schedule_key_rotation(
-        &self,
-        key_id: &str,
-        schedule: RotationSchedule,
-    ) -> SecurityResult<()> {
+    async fn schedule_key_rotation(&self, key_id: &str, schedule: RotationSchedule) -> SecurityResult<()> {
         let mut policies = self.rotation_policies.write().await;
         if let Some(policy) = policies.get_mut(key_id) {
             policy.rotation_schedule = Some(schedule);
@@ -648,19 +621,18 @@ impl KeyManager for SoftwareKeyManager {
                 config_error: format!("Key not found: {}", key_id),
             })?;
 
-        let policy =
-            policies
-                .get(key_id)
-                .ok_or_else(|| crate::SecurityError::ConfigurationError {
-                    config_error: format!("Rotation policy not found: {}", key_id),
-                })?;
+        let policy = policies
+            .get(key_id)
+            .ok_or_else(|| crate::SecurityError::ConfigurationError {
+                config_error: format!("Rotation policy not found: {}", key_id),
+            })?;
 
         Ok(RotationStatus {
-            scheduled_at: None, // Could be calculated based on policy
-            last_rotated_at: key.rotated_at,
+            scheduled_at:     None, // Could be calculated based on policy
+            last_rotated_at:  key.rotated_at,
             next_rotation_at: None, // Could be calculated
-            rotation_count: key.version - 1,
-            status: RotationResult::Scheduled,
+            rotation_count:   key.version - 1,
+            status:           RotationResult::Scheduled,
         })
     }
 
@@ -697,10 +669,7 @@ impl KeyManager for SoftwareKeyManager {
         }
     }
 
-    async fn list_keys(
-        &self,
-        status_filter: Option<KeyStatus>,
-    ) -> SecurityResult<Vec<KeyMetadata>> {
+    async fn list_keys(&self, status_filter: Option<KeyStatus>) -> SecurityResult<Vec<KeyMetadata>> {
         let keys = self.keys.read().await;
         let mut result: Vec<KeyMetadata> = keys.values().cloned().collect();
 
@@ -740,7 +709,8 @@ impl KeyManager for SoftwareKeyManager {
 // Utility functions (would be in separate module in real implementation)
 fn encrypt_with_backup_key(data: &[u8]) -> SecurityResult<(Vec<u8>, Vec<u8>)> {
     let backup_key = b"super_secret_backup_key_1234567890123456"; // NEVER USE IN PRODUCTION
-    use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit, Nonce};
+    use aes_gcm::aead::Aead;
+    use aes_gcm::{Aes256Gcm, KeyInit, Nonce};
 
     let cipher_key = aes_gcm::Key::<Aes256Gcm>::from_slice(backup_key);
     let nonce = Aes256Gcm::generate_nonce(&mut rand::rngs::OsRng);
@@ -762,11 +732,10 @@ fn decrypt_with_backup_key(encrypted_data: &[u8]) -> SecurityResult<Vec<u8>> {
         });
     }
 
-    use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit, Nonce};
-    let cipher = Aes256Gcm::new_from_slice(backup_key).map_err(|_| {
-        crate::SecurityError::EncryptionError {
-            source: "Invalid backup key".into(),
-        }
+    use aes_gcm::aead::Aead;
+    use aes_gcm::{Aes256Gcm, KeyInit, Nonce};
+    let cipher = Aes256Gcm::new_from_slice(backup_key).map_err(|_| crate::SecurityError::EncryptionError {
+        source: "Invalid backup key".into(),
     })?;
 
     let nonce = Nonce::from_slice(&encrypted_data[0..12]);
@@ -784,18 +753,14 @@ pub async fn create_software_key_manager() -> Arc<dyn KeyManager> {
     Arc::new(SoftwareKeyManager::new())
 }
 
-pub async fn create_hsm_key_manager(
-    _hsm_config: HashMap<String, String>,
-) -> SecurityResult<Arc<dyn KeyManager>> {
+pub async fn create_hsm_key_manager(_hsm_config: HashMap<String, String>) -> SecurityResult<Arc<dyn KeyManager>> {
     // In real implementation, this would create HSM-backed key manager
     Err(crate::SecurityError::ConfigurationError {
         config_error: "HSM key manager not implemented for this demo".to_string(),
     })
 }
 
-pub async fn create_aws_kms_key_manager(
-    _aws_config: HashMap<String, String>,
-) -> SecurityResult<Arc<dyn KeyManager>> {
+pub async fn create_aws_kms_key_manager(_aws_config: HashMap<String, String>) -> SecurityResult<Arc<dyn KeyManager>> {
     // In real implementation, this would create AWS KMS-backed key manager
     Err(crate::SecurityError::ConfigurationError {
         config_error: "AWS KMS key manager not implemented for this demo".to_string(),
@@ -805,24 +770,25 @@ pub async fn create_aws_kms_key_manager(
 // Configuration creation helper
 pub fn create_default_key_rotation_policy() -> KeyRotationPolicy {
     KeyRotationPolicy {
-        automatic_rotation: true,
-        rotation_interval_days: 90,
-        keep_versions: 5,
+        automatic_rotation:         true,
+        rotation_interval_days:     90,
+        keep_versions:              5,
         rotation_notification_days: 7,
-        emergency_rotation: false,
-        rotation_schedule: Some(RotationSchedule {
-            timezone: "UTC".to_string(),
+        emergency_rotation:         false,
+        rotation_schedule:          Some(RotationSchedule {
+            timezone:                 "UTC".to_string(),
             maintenance_window_start: "02:00".to_string(),
-            maintenance_window_end: "06:00".to_string(),
-            blackout_periods: vec!["2024-12-25".to_string(), "2024-12-31".to_string()],
+            maintenance_window_end:   "06:00".to_string(),
+            blackout_periods:         vec!["2024-12-25".to_string(), "2024-12-31".to_string()],
         }),
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test as async_test;
+
+    use super::*;
 
     #[async_test]
     async fn test_key_generation() {
@@ -956,7 +922,11 @@ mod tests {
         let purposes = vec!["production", "signing", "authentication", "emergency"];
         for purpose in purposes {
             let key_id = key_manager.generate_key(purpose, "aes256").await.unwrap();
-            let metadata = key_manager.get_key_metadata(&key_id).await.unwrap().unwrap();
+            let metadata = key_manager
+                .get_key_metadata(&key_id)
+                .await
+                .unwrap()
+                .unwrap();
 
             let expected_purpose = match purpose {
                 "signing" => KeyPurpose::Signing,
@@ -971,7 +941,11 @@ mod tests {
         let algorithms = vec!["aes256", "chacha20"];
         for algorithm in algorithms {
             let key_id = key_manager.generate_key("test", algorithm).await.unwrap();
-            let metadata = key_manager.get_key_metadata(&key_id).await.unwrap().unwrap();
+            let metadata = key_manager
+                .get_key_metadata(&key_id)
+                .await
+                .unwrap()
+                .unwrap();
 
             let expected_algo = match algorithm {
                 "aes256" => KeyAlgorithm::Aes256Gcm,
@@ -1019,17 +993,27 @@ mod tests {
         assert!(result.is_err());
 
         // Test multiple rotations
-        let key_id = key_manager.generate_key("production", "aes256").await.unwrap();
+        let key_id = key_manager
+            .generate_key("production", "aes256")
+            .await
+            .unwrap();
 
         for i in 1..=3 {
             let new_key_id = key_manager.rotate_key(&key_id).await.unwrap();
-            let new_metadata = key_manager.get_key_metadata(&new_key_id).await.unwrap().unwrap();
+            let new_metadata = key_manager
+                .get_key_metadata(&new_key_id)
+                .await
+                .unwrap()
+                .unwrap();
             assert_eq!(new_metadata.version, i + 1);
         }
 
         // Verify old versions are retired
         let all_keys = key_manager.list_keys(None).await.unwrap();
-        let retired_count = all_keys.iter().filter(|k| k.status == KeyStatus::Retired).count();
+        let retired_count = all_keys
+            .iter()
+            .filter(|k| k.status == KeyStatus::Retired)
+            .count();
         assert_eq!(retired_count, 3);
     }
 
@@ -1069,12 +1053,23 @@ mod tests {
 
         // Generate key - should be active
         let key_id = key_manager.generate_key("test", "aes256").await.unwrap();
-        let metadata = key_manager.get_key_metadata(&key_id).await.unwrap().unwrap();
+        let metadata = key_manager
+            .get_key_metadata(&key_id)
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(metadata.status, KeyStatus::Active);
 
         // Revoke key
-        key_manager.revoke_key(&key_id, "compromised").await.unwrap();
-        let metadata = key_manager.get_key_metadata(&key_id).await.unwrap().unwrap();
+        key_manager
+            .revoke_key(&key_id, "compromised")
+            .await
+            .unwrap();
+        let metadata = key_manager
+            .get_key_metadata(&key_id)
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(metadata.status, KeyStatus::Compromised);
 
         // Verify operations fail on revoked key
@@ -1094,7 +1089,9 @@ mod tests {
         assert!(backup_result.is_ok());
 
         // Test backup of non-existent key
-        let backup_result = key_manager.backup_key("nonexistent", "/tmp/test_backup").await;
+        let backup_result = key_manager
+            .backup_key("nonexistent", "/tmp/test_backup")
+            .await;
         assert!(backup_result.is_err());
 
         // Test recovery (not implemented in software backend)
@@ -1110,13 +1107,15 @@ mod tests {
 
         // Schedule rotation
         let schedule = RotationSchedule {
-            timezone: "UTC".to_string(),
+            timezone:                 "UTC".to_string(),
             maintenance_window_start: "01:00".to_string(),
-            maintenance_window_end: "03:00".to_string(),
-            blackout_periods: vec![],
+            maintenance_window_end:   "03:00".to_string(),
+            blackout_periods:         vec![],
         };
 
-        let result = key_manager.schedule_key_rotation(&key_id, schedule.clone()).await;
+        let result = key_manager
+            .schedule_key_rotation(&key_id, schedule.clone())
+            .await;
         assert!(result.is_ok());
 
         // Get rotation status
@@ -1125,7 +1124,9 @@ mod tests {
         assert_eq!(status.rotation_count, 0); // No rotations yet
 
         // Test scheduling on non-existent key
-        let result = key_manager.schedule_key_rotation("nonexistent", schedule).await;
+        let result = key_manager
+            .schedule_key_rotation("nonexistent", schedule)
+            .await;
         assert!(result.is_err());
     }
 
@@ -1136,7 +1137,11 @@ mod tests {
         let key_id = key_manager.generate_key("test", "aes256").await.unwrap();
 
         // Initial usage count should be 0
-        let metadata = key_manager.get_key_metadata(&key_id).await.unwrap().unwrap();
+        let metadata = key_manager
+            .get_key_metadata(&key_id)
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(metadata.usage_count, 0);
 
         // Perform multiple encryption operations
@@ -1147,7 +1152,11 @@ mod tests {
 
         // Usage count should be updated (note: current implementation doesn't track this)
         // This test verifies the structure exists for future implementation
-        let _metadata = key_manager.get_key_metadata(&key_id).await.unwrap().unwrap();
+        let _metadata = key_manager
+            .get_key_metadata(&key_id)
+            .await
+            .unwrap()
+            .unwrap();
         // assert_eq!(metadata.usage_count, 5); // Would be true with full implementation
     }
 
@@ -1165,8 +1174,15 @@ mod tests {
             let key_id = key_manager.generate_key("test", algorithm).await.unwrap();
             assert!(!key_id.is_empty());
 
-            let metadata = key_manager.get_key_metadata(&key_id).await.unwrap().unwrap();
-            assert!(matches!(metadata.algorithm, KeyAlgorithm::Aes256Gcm | KeyAlgorithm::Chacha20Poly1305));
+            let metadata = key_manager
+                .get_key_metadata(&key_id)
+                .await
+                .unwrap()
+                .unwrap();
+            assert!(matches!(
+                metadata.algorithm,
+                KeyAlgorithm::Aes256Gcm | KeyAlgorithm::Chacha20Poly1305
+            ));
         }
     }
 
@@ -1175,19 +1191,36 @@ mod tests {
         let key_manager = create_software_key_manager().await;
 
         // Generate keys with different purposes
-        let encryption_key = key_manager.generate_key("production", "aes256").await.unwrap();
+        let encryption_key = key_manager
+            .generate_key("production", "aes256")
+            .await
+            .unwrap();
         let signing_key = key_manager.generate_key("signing", "aes256").await.unwrap();
 
-        let enc_metadata = key_manager.get_key_metadata(&encryption_key).await.unwrap().unwrap();
-        let sign_metadata = key_manager.get_key_metadata(&signing_key).await.unwrap().unwrap();
+        let enc_metadata = key_manager
+            .get_key_metadata(&encryption_key)
+            .await
+            .unwrap()
+            .unwrap();
+        let sign_metadata = key_manager
+            .get_key_metadata(&signing_key)
+            .await
+            .unwrap()
+            .unwrap();
 
         assert_eq!(enc_metadata.purpose, KeyPurpose::Encryption);
         assert_eq!(sign_metadata.purpose, KeyPurpose::Signing);
 
         // Verify both can be used for encryption (in this implementation)
         let test_data = b"test";
-        let _enc_result = key_manager.encrypt_data(&encryption_key, test_data).await.unwrap();
-        let _sign_result = key_manager.encrypt_data(&signing_key, test_data).await.unwrap();
+        let _enc_result = key_manager
+            .encrypt_data(&encryption_key, test_data)
+            .await
+            .unwrap();
+        let _sign_result = key_manager
+            .encrypt_data(&signing_key, test_data)
+            .await
+            .unwrap();
     }
 
     #[async_test]
@@ -1225,7 +1258,11 @@ mod tests {
 
         // Manually set expiration to past (this would normally not be done)
         // In real implementation, keys would naturally expire
-        let mut metadata = key_manager.get_key_metadata(&key_id).await.unwrap().unwrap();
+        let mut metadata = key_manager
+            .get_key_metadata(&key_id)
+            .await
+            .unwrap()
+            .unwrap();
         metadata.expires_at = Some(Utc::now() - chrono::Duration::days(1));
         metadata.status = KeyStatus::Expired;
 
@@ -1242,7 +1279,10 @@ mod tests {
 
         // Test with large data (1MB)
         let large_data = vec![0u8; 1024 * 1024];
-        let encrypted = key_manager.encrypt_data(&key_id, &large_data).await.unwrap();
+        let encrypted = key_manager
+            .encrypt_data(&key_id, &large_data)
+            .await
+            .unwrap();
         let decrypted = key_manager.decrypt_data(&key_id, &encrypted).await.unwrap();
 
         assert_eq!(decrypted.len(), large_data.len());
@@ -1253,7 +1293,10 @@ mod tests {
     async fn test_multi_key_versioning() {
         let key_manager = create_software_key_manager().await;
 
-        let original_key = key_manager.generate_key("versioning", "aes256").await.unwrap();
+        let original_key = key_manager
+            .generate_key("versioning", "aes256")
+            .await
+            .unwrap();
 
         // Rotate multiple times to create version chain
         let mut current_key = original_key.clone();
@@ -1261,7 +1304,11 @@ mod tests {
 
         for version in 1..=5 {
             let new_key = key_manager.rotate_key(&current_key).await.unwrap();
-            let metadata = key_manager.get_key_metadata(&new_key).await.unwrap().unwrap();
+            let metadata = key_manager
+                .get_key_metadata(&new_key)
+                .await
+                .unwrap()
+                .unwrap();
             assert_eq!(metadata.version, version + 1);
             versions.push(new_key.clone());
             current_key = new_key;
@@ -1292,15 +1339,24 @@ mod tests {
         assert_eq!(all_keys.len(), 4); // active, rotated, rotated original (retired), revoked
 
         // Test listing only active keys
-        let active_keys = key_manager.list_keys(Some(KeyStatus::Active)).await.unwrap();
+        let active_keys = key_manager
+            .list_keys(Some(KeyStatus::Active))
+            .await
+            .unwrap();
         assert_eq!(active_keys.len(), 2); // Original active + newly rotated
 
         // Test listing only retired keys
-        let retired_keys = key_manager.list_keys(Some(KeyStatus::Retired)).await.unwrap();
+        let retired_keys = key_manager
+            .list_keys(Some(KeyStatus::Retired))
+            .await
+            .unwrap();
         assert_eq!(retired_keys.len(), 1); // The rotated original
 
         // Test listing only compromised keys
-        let compromised_keys = key_manager.list_keys(Some(KeyStatus::Compromised)).await.unwrap();
+        let compromised_keys = key_manager
+            .list_keys(Some(KeyStatus::Compromised))
+            .await
+            .unwrap();
         assert_eq!(compromised_keys.len(), 1); // The revoked key
     }
 }

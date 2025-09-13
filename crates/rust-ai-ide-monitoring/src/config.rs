@@ -1,9 +1,11 @@
 //! Configuration management for the monitoring framework
 
-use crate::errors::{MonitoringError, Result};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+
+use serde::{Deserialize, Serialize};
+
+use crate::errors::{MonitoringError, Result};
 
 /// Main configuration structure for monitoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -183,21 +185,21 @@ pub struct OutputConfig {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            workspace_root: PathBuf::from(".")
+            workspace_root:     PathBuf::from(".")
                 .canonicalize()
                 .unwrap_or_else(|_| PathBuf::from(".")),
-            report_dir: PathBuf::from(crate::defaults::DEFAULT_REPORT_DIR),
-            enabled_analyzers: Vec::new(),
+            report_dir:         PathBuf::from(crate::defaults::DEFAULT_REPORT_DIR),
+            enabled_analyzers:  Vec::new(),
             disabled_analyzers: Vec::new(),
-            thresholds: Thresholds::default(),
-            analyzer_configs: HashMap::new(),
-            target_platforms: Vec::new(),
-            notifications: NotificationConfig::default(),
-            performance: PerformanceConfig::default(),
-            output: OutputConfig::default(),
-            analysis_timeout: crate::defaults::DEFAULT_ANALYSIS_TIMEOUT_SECS,
-            verbose: false,
-            dry_run: false,
+            thresholds:         Thresholds::default(),
+            analyzer_configs:   HashMap::new(),
+            target_platforms:   Vec::new(),
+            notifications:      NotificationConfig::default(),
+            performance:        PerformanceConfig::default(),
+            output:             OutputConfig::default(),
+            analysis_timeout:   crate::defaults::DEFAULT_ANALYSIS_TIMEOUT_SECS,
+            verbose:            false,
+            dry_run:            false,
         }
     }
 }
@@ -205,14 +207,14 @@ impl Default for Config {
 impl Default for Thresholds {
     fn default() -> Self {
         Self {
-            quality_score_min: crate::defaults::DEFAULT_THRESHOLD_QUALITY,
-            quality_score_warn: 50.0,
-            max_warnings: crate::defaults::DEFAULT_THRESHOLD_WARNINGS,
-            max_errors: 0,
-            max_compilation_time_secs: 300, // 5 minutes
-            max_memory_mb: 4096,            // 4GB
+            quality_score_min:          crate::defaults::DEFAULT_THRESHOLD_QUALITY,
+            quality_score_warn:         50.0,
+            max_warnings:               crate::defaults::DEFAULT_THRESHOLD_WARNINGS,
+            max_errors:                 0,
+            max_compilation_time_secs:  300,  // 5 minutes
+            max_memory_mb:              4096, // 4GB
             security_vulnerability_max: 0,
-            dependency_failures_max: 0,
+            dependency_failures_max:    0,
         }
     }
 }
@@ -220,12 +222,12 @@ impl Default for Thresholds {
 impl Default for NotificationConfig {
     fn default() -> Self {
         Self {
-            enabled: false,
-            endpoints: Vec::new(),
-            min_severity: crate::types::Severity::Medium,
+            enabled:             false,
+            endpoints:           Vec::new(),
+            min_severity:        crate::types::Severity::Medium,
             notify_improvements: true,
-            notify_regressions: true,
-            cooldown_seconds: 300, // 5 minutes
+            notify_regressions:  true,
+            cooldown_seconds:    300, // 5 minutes
         }
     }
 }
@@ -233,12 +235,12 @@ impl Default for NotificationConfig {
 impl Default for PerformanceConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
+            enabled:              true,
             sampling_interval_ms: 1000,
-            track_memory: true,
-            track_cpu: true,
-            history_size: 1000,
-            window_size_minutes: 60,
+            track_memory:         true,
+            track_cpu:            true,
+            history_size:         1000,
+            window_size_minutes:  60,
         }
     }
 }
@@ -246,12 +248,12 @@ impl Default for PerformanceConfig {
 impl Default for OutputConfig {
     fn default() -> Self {
         Self {
-            format: "json".to_string(),
-            pretty_print: true,
-            include_details: true,
+            format:              "json".to_string(),
+            pretty_print:        true,
+            include_details:     true,
             include_performance: true,
             include_system_info: true,
-            compress: false,
+            compress:            false,
         }
     }
 }
@@ -259,10 +261,8 @@ impl Default for OutputConfig {
 impl Config {
     /// Load configuration from file
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let content =
-            std::fs::read_to_string(path).map_err(|e| MonitoringError::Fs { source: e })?;
-        serde_yaml::from_str(&content)
-            .map_err(|e| MonitoringError::other(format!("YAML parsing error: {}", e)))
+        let content = std::fs::read_to_string(path).map_err(|e| MonitoringError::Fs { source: e })?;
+        serde_yaml::from_str(&content).map_err(|e| MonitoringError::other(format!("YAML parsing error: {}", e)))
     }
 
     /// Save configuration to file
@@ -284,10 +284,10 @@ impl Config {
     /// Get configuration summary for reporting
     pub fn get_config_summary(&self) -> crate::types::ConfigSummary {
         crate::types::ConfigSummary {
-            workspace_root: self.workspace_root.clone(),
+            workspace_root:    self.workspace_root.clone(),
             enabled_analyzers: self.enabled_analyzers.clone(),
-            thresholds: std::collections::HashMap::new(), // Would be populated from config
-            target_platforms: self.target_platforms.clone(),
+            thresholds:        std::collections::HashMap::new(), // Would be populated from config
+            target_platforms:  self.target_platforms.clone(),
         }
     }
 
@@ -320,9 +320,9 @@ impl Config {
             .get(analyzer_name)
             .cloned()
             .unwrap_or_else(|| AnalyzerConfig {
-                enabled: true,
-                timeout_seconds: None,
-                parameters: HashMap::new(),
+                enabled:            true,
+                timeout_seconds:    None,
+                parameters:         HashMap::new(),
                 include_categories: Vec::new(),
                 exclude_categories: Vec::new(),
             })

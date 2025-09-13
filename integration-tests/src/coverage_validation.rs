@@ -7,52 +7,53 @@
 //! - Multi-format reporting (HTML, JSON, LCOV)
 //! - Coverage optimization recommendations
 
-use chrono::{DateTime, Utc};
-use rust_ai_ide_errors::IdeResult;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use chrono::{DateTime, Utc};
+use rust_ai_ide_errors::IdeResult;
+use serde::{Deserialize, Serialize};
+
 /// Coverage metric types and calculations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CoverageMetrics {
-    pub lines_covered: usize,
-    pub lines_total: usize,
-    pub functions_covered: usize,
-    pub functions_total: usize,
-    pub branches_covered: usize,
-    pub branches_total: usize,
-    pub coverage_percentage: f64,
-    pub line_coverage_percentage: f64,
+    pub lines_covered:                usize,
+    pub lines_total:                  usize,
+    pub functions_covered:            usize,
+    pub functions_total:              usize,
+    pub branches_covered:             usize,
+    pub branches_total:               usize,
+    pub coverage_percentage:          f64,
+    pub line_coverage_percentage:     f64,
     pub function_coverage_percentage: f64,
-    pub branch_coverage_percentage: f64,
+    pub branch_coverage_percentage:   f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileCoverage {
-    pub file_path: String,
-    pub file_name: String,
+    pub file_path:        String,
+    pub file_name:        String,
     pub coverage_metrics: CoverageMetrics,
-    pub uncovered_lines: Vec<usize>,
-    pub functions: Vec<FunctionCoverage>,
-    pub regions: Vec<CoverageRegion>,
+    pub uncovered_lines:  Vec<usize>,
+    pub functions:        Vec<FunctionCoverage>,
+    pub regions:          Vec<CoverageRegion>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FunctionCoverage {
-    pub name: String,
-    pub start_line: usize,
-    pub executed_count: usize,
+    pub name:              String,
+    pub start_line:        usize,
+    pub executed_count:    usize,
     pub function_coverage: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CoverageRegion {
-    pub start_line: usize,
-    pub end_line: usize,
+    pub start_line:      usize,
+    pub end_line:        usize,
     pub execution_count: usize,
-    pub coverage_type: RegionType,
+    pub coverage_type:   RegionType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -65,46 +66,46 @@ pub enum RegionType {
 /// Comprehensive coverage report
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CoverageReport {
-    pub timestamp: DateTime<Utc>,
-    pub test_run_id: String,
-    pub overall_coverage: CoverageMetrics,
-    pub file_coverages: Vec<FileCoverage>,
-    pub coverage_thresholds: CoverageThresholds,
-    pub coverage_trends: Vec<CoverageTrend>,
-    pub recommendations: Vec<String>,
+    pub timestamp:              DateTime<Utc>,
+    pub test_run_id:            String,
+    pub overall_coverage:       CoverageMetrics,
+    pub file_coverages:         Vec<FileCoverage>,
+    pub coverage_thresholds:    CoverageThresholds,
+    pub coverage_trends:        Vec<CoverageTrend>,
+    pub recommendations:        Vec<String>,
     pub coverage_quality_score: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CoverageThresholds {
-    pub overall_minimum: f64,
-    pub line_minimum: f64,
+    pub overall_minimum:  f64,
+    pub line_minimum:     f64,
     pub function_minimum: f64,
-    pub branch_minimum: f64,
-    pub file_minimum: f64,
+    pub branch_minimum:   f64,
+    pub file_minimum:     f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CoverageTrend {
-    pub date: DateTime<Utc>,
+    pub date:                DateTime<Utc>,
     pub coverage_percentage: f64,
-    pub lines_covered: usize,
-    pub functions_covered: usize,
+    pub lines_covered:       usize,
+    pub functions_covered:   usize,
 }
 
 #[derive(Debug)]
 pub struct CoverageAnalyzer {
-    thresholds: CoverageThresholds,
+    thresholds:       CoverageThresholds,
     report_generator: CoverageReportGenerator,
-    trend_analyzer: TrendAnalyzer,
+    trend_analyzer:   TrendAnalyzer,
 }
 
 impl CoverageAnalyzer {
     pub fn new() -> Self {
         Self {
-            thresholds: CoverageThresholds::default(),
+            thresholds:       CoverageThresholds::default(),
             report_generator: CoverageReportGenerator::new(),
-            trend_analyzer: TrendAnalyzer::new(),
+            trend_analyzer:   TrendAnalyzer::new(),
         }
     }
 
@@ -147,11 +148,7 @@ impl CoverageAnalyzer {
     }
 
     /// Generate coverage report in multiple formats
-    pub async fn generate_reports(
-        &self,
-        report: &CoverageReport,
-        output_dir: &Path,
-    ) -> IdeResult<()> {
+    pub async fn generate_reports(&self, report: &CoverageReport, output_dir: &Path) -> IdeResult<()> {
         println!("📋 Generating Coverage Reports...");
 
         // Create output directory
@@ -203,8 +200,7 @@ impl CoverageAnalyzer {
         if report.overall_coverage.function_coverage_percentage < self.thresholds.function_minimum {
             println!(
                 "❌ Function coverage below minimum threshold: {}% < {}%",
-                report.overall_coverage.function_coverage_percentage,
-                self.thresholds.function_minimum
+                report.overall_coverage.function_coverage_percentage, self.thresholds.function_minimum
             );
             all_passed = false;
         }
@@ -252,10 +248,7 @@ impl CoverageAnalyzer {
         Ok(data)
     }
 
-    async fn calculate_overall_metrics(
-        &self,
-        coverage_data: &HashMap<String, String>,
-    ) -> CoverageMetrics {
+    async fn calculate_overall_metrics(&self, coverage_data: &HashMap<String, String>) -> CoverageMetrics {
         let lines_covered = coverage_data
             .get("covered_lines")
             .and_then(|s| s.parse().ok())
@@ -290,16 +283,12 @@ impl CoverageAnalyzer {
             branches_total,
             coverage_percentage: (lines_covered as f64 / lines_total as f64) * 100.0,
             line_coverage_percentage: (lines_covered as f64 / lines_total as f64) * 100.0,
-            function_coverage_percentage: (functions_covered as f64 / functions_total as f64)
-                * 100.0,
+            function_coverage_percentage: (functions_covered as f64 / functions_total as f64) * 100.0,
             branch_coverage_percentage: (branches_covered as f64 / branches_total as f64) * 100.0,
         }
     }
 
-    async fn generate_file_coverages(
-        &self,
-        _coverage_data: &HashMap<String, String>,
-    ) -> Vec<FileCoverage> {
+    async fn generate_file_coverages(&self, _coverage_data: &HashMap<String, String>) -> Vec<FileCoverage> {
         // Placeholder file coverage generation
         let test_files = vec![
             ("src/main.rs", 120, 100),
@@ -321,16 +310,16 @@ impl CoverageAnalyzer {
                     file_path: path.to_string(),
                     file_name,
                     coverage_metrics: CoverageMetrics {
-                        lines_covered: covered,
-                        lines_total: total,
-                        functions_covered: 0,
-                        functions_total: 0,
-                        branches_covered: 0,
-                        branches_total: 0,
-                        coverage_percentage: (covered as f64 / total as f64) * 100.0,
-                        line_coverage_percentage: (covered as f64 / total as f64) * 100.0,
+                        lines_covered:                covered,
+                        lines_total:                  total,
+                        functions_covered:            0,
+                        functions_total:              0,
+                        branches_covered:             0,
+                        branches_total:               0,
+                        coverage_percentage:          (covered as f64 / total as f64) * 100.0,
+                        line_coverage_percentage:     (covered as f64 / total as f64) * 100.0,
                         function_coverage_percentage: 0.0,
-                        branch_coverage_percentage: 0.0,
+                        branch_coverage_percentage:   0.0,
                     },
                     uncovered_lines: Vec::new(),
                     functions: Vec::new(),
@@ -347,22 +336,15 @@ impl CoverageAnalyzer {
             && metrics.branch_coverage_percentage >= self.thresholds.branch_minimum
     }
 
-    fn generate_recommendations(
-        &self,
-        overall: &CoverageMetrics,
-        files: &Vec<FileCoverage>,
-    ) -> Vec<String> {
+    fn generate_recommendations(&self, overall: &CoverageMetrics, files: &Vec<FileCoverage>) -> Vec<String> {
         let mut recommendations = Vec::new();
 
         if overall.coverage_percentage < 80.0 {
-            recommendations.push(
-                "🔧 Overall coverage is below 80%. Add more comprehensive test cases.".to_string(),
-            );
+            recommendations.push("🔧 Overall coverage is below 80%. Add more comprehensive test cases.".to_string());
         }
 
         if overall.branch_coverage_percentage < 75.0 {
-            recommendations
-                .push("🌿 Branch coverage is low. Add tests for different code paths.".to_string());
+            recommendations.push("🌿 Branch coverage is low. Add tests for different code paths.".to_string());
         }
 
         // Check for files with low coverage
@@ -417,11 +399,11 @@ impl CoverageAnalyzer {
 impl Default for CoverageThresholds {
     fn default() -> Self {
         Self {
-            overall_minimum: 80.0,
-            line_minimum: 80.0,
+            overall_minimum:  80.0,
+            line_minimum:     80.0,
             function_minimum: 85.0,
-            branch_minimum: 75.0,
-            file_minimum: 70.0,
+            branch_minimum:   75.0,
+            file_minimum:     70.0,
         }
     }
 }
@@ -434,21 +416,13 @@ impl CoverageReportGenerator {
         Self
     }
 
-    async fn generate_html_report(
-        &self,
-        _report: &CoverageReport,
-        _output_dir: &Path,
-    ) -> IdeResult<()> {
+    async fn generate_html_report(&self, _report: &CoverageReport, _output_dir: &Path) -> IdeResult<()> {
         // Placeholder HTML report generation
         println!("📄 Generating HTML coverage report...");
         Ok(())
     }
 
-    async fn generate_json_report(
-        &self,
-        report: &CoverageReport,
-        output_dir: &Path,
-    ) -> IdeResult<()> {
+    async fn generate_json_report(&self, report: &CoverageReport, output_dir: &Path) -> IdeResult<()> {
         println!("📊 Generating JSON coverage report...");
         let json_path = output_dir.join("coverage.json");
         let json_content = serde_json::to_string_pretty(report)?;
@@ -456,11 +430,7 @@ impl CoverageReportGenerator {
         Ok(())
     }
 
-    async fn generate_lcov_report(
-        &self,
-        _report: &CoverageReport,
-        _output_dir: &Path,
-    ) -> IdeResult<()> {
+    async fn generate_lcov_report(&self, _report: &CoverageReport, _output_dir: &Path) -> IdeResult<()> {
         // Placeholder LCOV report generation
         println!("📈 Generating LCOV coverage report...");
         Ok(())
@@ -487,22 +457,22 @@ impl TrendAnalyzer {
         // Placeholder historical data
         vec![
             CoverageTrend {
-                date: Utc::now() - chrono::Duration::days(7),
+                date:                Utc::now() - chrono::Duration::days(7),
                 coverage_percentage: 78.5,
-                lines_covered: 785,
-                functions_covered: 110,
+                lines_covered:       785,
+                functions_covered:   110,
             },
             CoverageTrend {
-                date: Utc::now() - chrono::Duration::days(3),
+                date:                Utc::now() - chrono::Duration::days(3),
                 coverage_percentage: 82.3,
-                lines_covered: 823,
-                functions_covered: 115,
+                lines_covered:       823,
+                functions_covered:   115,
             },
             CoverageTrend {
-                date: Utc::now(),
+                date:                Utc::now(),
                 coverage_percentage: 85.0,
-                lines_covered: 850,
-                functions_covered: 125,
+                lines_covered:       850,
+                functions_covered:   125,
             },
         ]
     }
@@ -516,16 +486,16 @@ mod tests {
     async fn test_coverage_threshold_validation() -> IdeResult<()> {
         let analyzer = CoverageAnalyzer::new();
         let metrics = CoverageMetrics {
-            lines_covered: 850,
-            lines_total: 1000,
-            functions_covered: 120,
-            functions_total: 150,
-            branches_covered: 160,
-            branches_total: 200,
-            coverage_percentage: 85.0,
-            line_coverage_percentage: 85.0,
+            lines_covered:                850,
+            lines_total:                  1000,
+            functions_covered:            120,
+            functions_total:              150,
+            branches_covered:             160,
+            branches_total:               200,
+            coverage_percentage:          85.0,
+            line_coverage_percentage:     85.0,
             function_coverage_percentage: 80.0,
-            branch_coverage_percentage: 80.0,
+            branch_coverage_percentage:   80.0,
         };
 
         let thresholds_met = analyzer.check_thresholds(&metrics);
@@ -570,36 +540,36 @@ mod tests {
         let analyzer = CoverageAnalyzer::new();
 
         let overall = CoverageMetrics {
-            lines_covered: 750,
-            lines_total: 1000,
-            functions_covered: 100,
-            functions_total: 150,
-            branches_covered: 100,
-            branches_total: 200,
-            coverage_percentage: 75.0,
-            line_coverage_percentage: 75.0,
+            lines_covered:                750,
+            lines_total:                  1000,
+            functions_covered:            100,
+            functions_total:              150,
+            branches_covered:             100,
+            branches_total:               200,
+            coverage_percentage:          75.0,
+            line_coverage_percentage:     75.0,
             function_coverage_percentage: 66.7,
-            branch_coverage_percentage: 50.0,
+            branch_coverage_percentage:   50.0,
         };
 
         let files = vec![FileCoverage {
-            file_path: "src/main.rs".to_string(),
-            file_name: "main.rs".to_string(),
+            file_path:        "src/main.rs".to_string(),
+            file_name:        "main.rs".to_string(),
             coverage_metrics: CoverageMetrics {
-                lines_covered: 50,
-                lines_total: 100,
-                functions_covered: 0,
-                functions_total: 0,
-                branches_covered: 0,
-                branches_total: 0,
-                coverage_percentage: 50.0,
-                line_coverage_percentage: 50.0,
+                lines_covered:                50,
+                lines_total:                  100,
+                functions_covered:            0,
+                functions_total:              0,
+                branches_covered:             0,
+                branches_total:               0,
+                coverage_percentage:          50.0,
+                line_coverage_percentage:     50.0,
                 function_coverage_percentage: 0.0,
-                branch_coverage_percentage: 0.0,
+                branch_coverage_percentage:   0.0,
             },
-            uncovered_lines: (51..=100).collect(),
-            functions: Vec::new(),
-            regions: Vec::new(),
+            uncovered_lines:  (51..=100).collect(),
+            functions:        Vec::new(),
+            regions:          Vec::new(),
         }];
 
         let recommendations = analyzer.generate_recommendations(&overall, &files);

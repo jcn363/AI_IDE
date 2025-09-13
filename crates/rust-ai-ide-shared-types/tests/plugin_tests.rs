@@ -3,8 +3,9 @@
 //! This module validates the plugin loading, execution, and
 //! transformation capabilities of the shared types crate.
 
-use rust_ai_ide_shared_types::*;
 use std::collections::HashMap;
+
+use rust_ai_ide_shared_types::*;
 
 #[cfg(feature = "plugins")]
 #[tokio::test]
@@ -49,38 +50,38 @@ async fn test_plugin_loading_and_execution() {
         .unwrap();
 
     let test_type = ParsedType {
-        name: "TestPluginType".to_string(),
-        kind: TypeKind::Struct,
-        documentation: Some("A test type for plugin validation".to_string()),
-        visibility: Visibility::Public,
-        generics: vec![],
-        fields: vec![Field {
-            name: "id".to_string(),
-            ty: "String".to_string(),
+        name:             "TestPluginType".to_string(),
+        kind:             TypeKind::Struct,
+        documentation:    Some("A test type for plugin validation".to_string()),
+        visibility:       Visibility::Public,
+        generics:         vec![],
+        fields:           vec![Field {
+            name:          "id".to_string(),
+            ty:            "String".to_string(),
             documentation: None,
-            visibility: Visibility::Public,
-            is_mutable: false,
-            attributes: vec![],
+            visibility:    Visibility::Public,
+            is_mutable:    false,
+            attributes:    vec![],
         }],
-        variants: vec![],
+        variants:         vec![],
         associated_items: vec![],
-        attributes: vec![],
-        source_location: SourceLocation {
-            file: "test.rs".to_string(),
-            line: 1,
-            column: 1,
+        attributes:       vec![],
+        source_location:  SourceLocation {
+            file:        "test.rs".to_string(),
+            line:        1,
+            column:      1,
             module_path: vec![],
         },
-        dependencies: vec![],
-        metadata: TypeMetadata::default(),
+        dependencies:     vec![],
+        metadata:         TypeMetadata::default(),
     };
 
     let context = TransformationContext {
         source_platform: "rust".to_string(),
         target_platform: "json-schema".to_string(),
-        type_mappings: HashMap::new(),
-        rules: HashMap::new(),
-        options: HashMap::new(),
+        type_mappings:   HashMap::new(),
+        rules:           HashMap::new(),
+        options:         HashMap::new(),
     };
 
     let result = transformer
@@ -106,38 +107,38 @@ async fn test_built_in_transformer_plugins() {
 
     // Test simple transformation
     let simple_type = ParsedType {
-        name: "Simple".to_string(),
-        kind: TypeKind::Struct,
-        documentation: None,
-        visibility: Visibility::Public,
-        generics: vec![],
-        fields: vec![Field {
-            name: "name".to_string(),
-            ty: "String".to_string(),
+        name:             "Simple".to_string(),
+        kind:             TypeKind::Struct,
+        documentation:    None,
+        visibility:       Visibility::Public,
+        generics:         vec![],
+        fields:           vec![Field {
+            name:          "name".to_string(),
+            ty:            "String".to_string(),
             documentation: None,
-            visibility: Visibility::Public,
-            is_mutable: false,
-            attributes: vec![],
+            visibility:    Visibility::Public,
+            is_mutable:    false,
+            attributes:    vec![],
         }],
-        variants: vec![],
+        variants:         vec![],
         associated_items: vec![],
-        attributes: vec![],
-        source_location: SourceLocation {
-            file: "test.rs".to_string(),
-            line: 1,
-            column: 1,
+        attributes:       vec![],
+        source_location:  SourceLocation {
+            file:        "test.rs".to_string(),
+            line:        1,
+            column:      1,
             module_path: vec![],
         },
-        dependencies: vec![],
-        metadata: TypeMetadata::default(),
+        dependencies:     vec![],
+        metadata:         TypeMetadata::default(),
     };
 
     let context = TransformationContext {
         source_platform: "rust".to_string(),
         target_platform: "json-schema".to_string(),
-        type_mappings: HashMap::new(),
-        rules: HashMap::new(),
-        options: HashMap::new(),
+        type_mappings:   HashMap::new(),
+        rules:           HashMap::new(),
+        options:         HashMap::new(),
     };
 
     let result = json_plugin
@@ -165,40 +166,40 @@ async fn test_built_in_generator_plugins() {
 
     // Test dataclass generation
     let test_type = ParsedType {
-        name: "Person".to_string(),
-        kind: TypeKind::Struct,
-        documentation: None,
-        visibility: Visibility::Public,
-        generics: vec![],
-        fields: vec![
+        name:             "Person".to_string(),
+        kind:             TypeKind::Struct,
+        documentation:    None,
+        visibility:       Visibility::Public,
+        generics:         vec![],
+        fields:           vec![
             Field {
-                name: "name".to_string(),
-                ty: "String".to_string(),
+                name:          "name".to_string(),
+                ty:            "String".to_string(),
                 documentation: None,
-                visibility: Visibility::Public,
-                is_mutable: false,
-                attributes: vec![],
+                visibility:    Visibility::Public,
+                is_mutable:    false,
+                attributes:    vec![],
             },
             Field {
-                name: "age".to_string(),
-                ty: "i32".to_string(),
+                name:          "age".to_string(),
+                ty:            "i32".to_string(),
                 documentation: None,
-                visibility: Visibility::Public,
-                is_mutable: false,
-                attributes: vec![],
+                visibility:    Visibility::Public,
+                is_mutable:    false,
+                attributes:    vec![],
             },
         ],
-        variants: vec![],
+        variants:         vec![],
         associated_items: vec![],
-        attributes: vec![],
-        source_location: SourceLocation {
-            file: "test.rs".to_string(),
-            line: 1,
-            column: 1,
+        attributes:       vec![],
+        source_location:  SourceLocation {
+            file:        "test.rs".to_string(),
+            line:        1,
+            column:      1,
             module_path: vec![],
         },
-        dependencies: vec![],
-        metadata: TypeMetadata::default(),
+        dependencies:     vec![],
+        metadata:         TypeMetadata::default(),
     };
 
     let config = serde_json::json!({"format": "dataclass"});
@@ -253,31 +254,31 @@ async fn test_plugin_error_handling() {
 
     // Test with empty type (should handle gracefully)
     let empty_type = ParsedType {
-        name: "Empty".to_string(),
-        kind: TypeKind::Struct,
-        documentation: None,
-        visibility: Visibility::Public,
-        generics: vec![],
-        fields: vec![],
-        variants: vec![],
+        name:             "Empty".to_string(),
+        kind:             TypeKind::Struct,
+        documentation:    None,
+        visibility:       Visibility::Public,
+        generics:         vec![],
+        fields:           vec![],
+        variants:         vec![],
         associated_items: vec![],
-        attributes: vec![],
-        source_location: SourceLocation {
-            file: "test.rs".to_string(),
-            line: 1,
-            column: 1,
+        attributes:       vec![],
+        source_location:  SourceLocation {
+            file:        "test.rs".to_string(),
+            line:        1,
+            column:      1,
             module_path: vec![],
         },
-        dependencies: vec![],
-        metadata: TypeMetadata::default(),
+        dependencies:     vec![],
+        metadata:         TypeMetadata::default(),
     };
 
     let context = TransformationContext {
         source_platform: "rust".to_string(),
         target_platform: "json-schema".to_string(),
-        type_mappings: HashMap::new(),
-        rules: HashMap::new(),
-        options: HashMap::new(),
+        type_mappings:   HashMap::new(),
+        rules:           HashMap::new(),
+        options:         HashMap::new(),
     };
 
     let result = json_plugin
@@ -425,51 +426,51 @@ async fn test_plugin_extensions() {
     // Test multiple types at once
     let types = vec![
         ParsedType {
-            name: "Type1".to_string(),
-            kind: TypeKind::Struct,
-            documentation: None,
-            visibility: Visibility::Public,
-            generics: vec![],
-            fields: vec![],
-            variants: vec![],
+            name:             "Type1".to_string(),
+            kind:             TypeKind::Struct,
+            documentation:    None,
+            visibility:       Visibility::Public,
+            generics:         vec![],
+            fields:           vec![],
+            variants:         vec![],
             associated_items: vec![],
-            attributes: vec![],
-            source_location: SourceLocation {
-                file: "test.rs".to_string(),
-                line: 1,
-                column: 1,
+            attributes:       vec![],
+            source_location:  SourceLocation {
+                file:        "test.rs".to_string(),
+                line:        1,
+                column:      1,
                 module_path: vec![],
             },
-            dependencies: vec![],
-            metadata: TypeMetadata::default(),
+            dependencies:     vec![],
+            metadata:         TypeMetadata::default(),
         },
         ParsedType {
-            name: "Type2".to_string(),
-            kind: TypeKind::Struct,
-            documentation: None,
-            visibility: Visibility::Public,
-            generics: vec![],
-            fields: vec![],
-            variants: vec![],
+            name:             "Type2".to_string(),
+            kind:             TypeKind::Struct,
+            documentation:    None,
+            visibility:       Visibility::Public,
+            generics:         vec![],
+            fields:           vec![],
+            variants:         vec![],
             associated_items: vec![],
-            attributes: vec![],
-            source_location: SourceLocation {
-                file: "test.rs".to_string(),
-                line: 10,
-                column: 1,
+            attributes:       vec![],
+            source_location:  SourceLocation {
+                file:        "test.rs".to_string(),
+                line:        10,
+                column:      1,
                 module_path: vec![],
             },
-            dependencies: vec![],
-            metadata: TypeMetadata::default(),
+            dependencies:     vec![],
+            metadata:         TypeMetadata::default(),
         },
     ];
 
     let context = TransformationContext {
         source_platform: "rust".to_string(),
         target_platform: "json-schema".to_string(),
-        type_mappings: HashMap::new(),
-        rules: HashMap::new(),
-        options: HashMap::new(),
+        type_mappings:   HashMap::new(),
+        rules:           HashMap::new(),
+        options:         HashMap::new(),
     };
 
     let result = json_plugin.transform_file(&types, &context).await.unwrap();

@@ -1,13 +1,15 @@
-use super::*;
 use std::collections::HashSet;
+
 use syn::{visit, ItemImpl, ItemTrait, TypePath};
+
+use super::*;
 
 /// Visitor that analyzes dependency-related architectural issues
 pub struct DependencyVisitor<'a> {
-    analyzer: &'a ArchitecturalAnalyzer,
-    current_impl: Option<&'a ItemImpl>,
-    current_trait: Option<&'a TypePath>,
-    violations: Vec<DependencyInversionViolation>,
+    analyzer:              &'a ArchitecturalAnalyzer,
+    current_impl:          Option<&'a ItemImpl>,
+    current_trait:         Option<&'a TypePath>,
+    violations:            Vec<DependencyInversionViolation>,
     allowed_concrete_deps: HashSet<String>,
 }
 
@@ -54,7 +56,7 @@ impl<'a> DependencyVisitor<'a> {
         // Check if this is an allowed concrete dependency
         if !self.allowed_concrete_deps.contains(&path_str) {
             self.violations.push(DependencyInversionViolation {
-                message: format!(
+                message:  format!(
                     "Concrete type dependency on '{}' should be behind a trait",
                     path_str
                 ),
@@ -110,17 +112,26 @@ impl<'a> ArchitecturalVisitor for DependencyVisitor<'a> {
         self.violations.clear();
         self.visit_file(ast);
 
-        self.violations.drain(..).map(|violation| {
-            self.create_finding(
-                "dependency-inversion-violation",
-                format!("Dependency Inversion Principle violation: {}", violation.message),
-                violation.location.line,
-                Some("Depend on abstractions (traits) rather than concrete implementations. Consider creating and using a trait that represents the required behavior."),
-                Severity::Warning,
-                0.8,
-                "ARCH004",
-            )
-        }).collect()
+        self.violations
+            .drain(..)
+            .map(|violation| {
+                self.create_finding(
+                    "dependency-inversion-violation",
+                    format!(
+                        "Dependency Inversion Principle violation: {}",
+                        violation.message
+                    ),
+                    violation.location.line,
+                    Some(
+                        "Depend on abstractions (traits) rather than concrete implementations. Consider creating and \
+                         using a trait that represents the required behavior.",
+                    ),
+                    Severity::Warning,
+                    0.8,
+                    "ARCH004",
+                )
+            })
+            .collect()
     }
 
     fn analyzer(&self) -> &ArchitecturalAnalyzer {

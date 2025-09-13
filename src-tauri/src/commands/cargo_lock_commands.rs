@@ -1,14 +1,15 @@
+use std::path::PathBuf;
+
 use rust_ai_ide_common::read_file_to_string;
 use serde::Serialize;
-use std::path::PathBuf;
 use toml::Table;
 
 #[derive(Debug, Serialize)]
 pub struct LockDependency {
-    pub name: String,
-    pub version: String,
+    pub name:         String,
+    pub version:      String,
     pub dependencies: Vec<String>,
-    pub is_direct: bool,
+    pub is_direct:    bool,
 }
 
 #[tauri::command]
@@ -22,8 +23,7 @@ pub async fn parse_cargo_lock(project_path: PathBuf) -> Result<Vec<LockDependenc
         .await
         .map_err(|e| format!("Failed to read Cargo.lock: {}", e))?;
 
-    let lock_data: Table =
-        toml::from_str(&lock_content).map_err(|e| format!("Failed to parse Cargo.lock: {}", e))?;
+    let lock_data: Table = toml::from_str(&lock_content).map_err(|e| format!("Failed to parse Cargo.lock: {}", e))?;
 
     let mut dependencies = Vec::new();
 
@@ -51,10 +51,10 @@ pub async fn parse_cargo_lock(project_path: PathBuf) -> Result<Vec<LockDependenc
                     .unwrap_or_default();
 
                 dependencies.push(LockDependency {
-                    name: name_str.clone(),
-                    version: version_str,
+                    name:         name_str.clone(),
+                    version:      version_str,
                     dependencies: deps,
-                    is_direct: direct_deps.contains(&name_str),
+                    is_direct:    direct_deps.contains(&name_str),
                 });
             }
         }
@@ -73,8 +73,7 @@ async fn get_direct_dependencies(project_path: &PathBuf) -> Result<Vec<String>, 
         .await
         .map_err(|e| format!("Failed to read Cargo.toml: {}", e))?;
 
-    let cargo_toml: Table =
-        toml::from_str(&toml_content).map_err(|e| format!("Failed to parse Cargo.toml: {}", e))?;
+    let cargo_toml: Table = toml::from_str(&toml_content).map_err(|e| format!("Failed to parse Cargo.toml: {}", e))?;
 
     let mut deps = Vec::new();
 

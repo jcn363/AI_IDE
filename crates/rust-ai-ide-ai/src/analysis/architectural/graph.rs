@@ -1,6 +1,5 @@
 //! Graph-based analysis for detecting architectural issues like circular dependencies.
 
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -9,6 +8,7 @@ use petgraph::algo::kosaraju_scc as find_strongly_connected_components;
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::EdgeRef;
 use proc_macro2::Span;
+use serde::{Deserialize, Serialize};
 use syn::spanned::Spanned;
 
 use crate::analysis::CodeLocation;
@@ -17,11 +17,11 @@ use crate::analysis::CodeLocation;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyNode {
     /// The name of the module or item
-    pub name: String,
+    pub name:      String,
     /// The source file path
     pub file_path: String,
     /// The source code span for precise location reporting
-    pub span: Span,
+    pub span:      Span,
 }
 
 impl PartialEq for DependencyNode {
@@ -56,18 +56,18 @@ pub struct DependencyEdge {
 
 /// A graph representing dependencies between modules and items
 pub struct DependencyGraph {
-    graph: DiGraph<DependencyNode, DependencyEdge>,
+    graph:        DiGraph<DependencyNode, DependencyEdge>,
     node_indices: HashMap<String, NodeIndex>,
-    node_map: HashMap<NodeIndex, DependencyNode>,
+    node_map:     HashMap<NodeIndex, DependencyNode>,
 }
 
 impl DependencyGraph {
     /// Create a new empty dependency graph
     pub fn new() -> Self {
         Self {
-            graph: DiGraph::new(),
+            graph:        DiGraph::new(),
             node_indices: HashMap::new(),
-            node_map: HashMap::new(),
+            node_map:     HashMap::new(),
         }
     }
 
@@ -93,15 +93,7 @@ impl DependencyGraph {
     }
 
     /// Add a dependency edge between two nodes
-    pub fn add_dependency(
-        &mut self,
-        from: &str,
-        from_file: &str,
-        to: &str,
-        to_file: &str,
-        kind: &str,
-        span: Span,
-    ) {
+    pub fn add_dependency(&mut self, from: &str, from_file: &str, to: &str, to_file: &str, kind: &str, span: Span) {
         let from_idx = self.add_node(from, from_file, span);
         let to_idx = self.add_node(to, to_file, span);
 
@@ -111,14 +103,10 @@ impl DependencyGraph {
             .edges_connecting(from_idx, to_idx)
             .any(|e| e.weight().kind == kind)
         {
-            self.graph.add_edge(
-                from_idx,
-                to_idx,
-                DependencyEdge {
-                    kind: kind.to_string(),
-                    span,
-                },
-            );
+            self.graph.add_edge(from_idx, to_idx, DependencyEdge {
+                kind: kind.to_string(),
+                span,
+            });
         }
     }
 
@@ -187,8 +175,7 @@ impl<'de> Deserialize<'de> for DependencyGraph {
 
         let raw = DependencyGraphRaw::deserialize(deserializer)?;
         let mut graph = DiGraph::new();
-        let node_indices_vec: Vec<NodeIndex> =
-            raw.nodes.into_iter().map(|n| graph.add_node(n)).collect();
+        let node_indices_vec: Vec<NodeIndex> = raw.nodes.into_iter().map(|n| graph.add_node(n)).collect();
 
         for (source, target, weight) in raw.edges {
             if source >= node_indices_vec.len() || target >= node_indices_vec.len() {
@@ -223,8 +210,9 @@ impl<'de> Deserialize<'de> for DependencyGraph {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn test_add_node() {

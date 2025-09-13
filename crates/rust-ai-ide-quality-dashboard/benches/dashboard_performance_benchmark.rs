@@ -1,6 +1,7 @@
+use std::time::Duration;
+
 use criterion::{criterion_group, criterion_main, Criterion};
 use rust_ai_ide_quality_dashboard::*;
-use std::time::Duration;
 
 fn dashboard_performance_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("dashboard_performance");
@@ -13,9 +14,9 @@ fn dashboard_performance_benchmark(c: &mut Criterion) {
                 let metrics: Vec<_> = (0..data_size)
                     .map(|i| Metric {
                         timestamp: chrono::Utc::now(),
-                        value: i as f64,
-                        name: format!("metric_{}", i % 10),
-                        tags: vec![format!("tag_{}", i % 5)],
+                        value:     i as f64,
+                        name:      format!("metric_{}", i % 10),
+                        tags:      vec![format!("tag_{}", i % 5)],
                     })
                     .collect();
 
@@ -32,9 +33,9 @@ fn dashboard_performance_benchmark(c: &mut Criterion) {
         b.iter(|| {
             let metric = Metric {
                 timestamp: chrono::Utc::now(),
-                value: 42.0,
-                name: "sample_metric".to_string(),
-                tags: vec!["test".to_string()],
+                value:     42.0,
+                name:      "sample_metric".to_string(),
+                tags:      vec!["test".to_string()],
             };
             dashboard.update(metric);
         });

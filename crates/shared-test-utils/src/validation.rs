@@ -1,5 +1,6 @@
-use crate::error::{TestError, ValidationError};
 use std::path::Path;
+
+use crate::error::{TestError, ValidationError};
 
 /// Utility functions for validating test data and setup
 pub struct ValidationUtils;
@@ -29,10 +30,7 @@ impl ValidationUtils {
     }
 
     /// Validates content against expected patterns
-    pub fn validate_content<T: AsRef<str>>(
-        content: T,
-        expected_patterns: &[&str],
-    ) -> Result<(), TestError> {
+    pub fn validate_content<T: AsRef<str>>(content: T, expected_patterns: &[&str]) -> Result<(), TestError> {
         let content = content.as_ref();
 
         for pattern in expected_patterns {
@@ -70,8 +68,7 @@ impl ValidationUtils {
         payload: &T,
         required_fields: &[&str],
     ) -> Result<(), TestError> {
-        let serialized =
-            serde_json::to_value(payload).map_err(|e| TestError::Serialization(e.to_string()))?;
+        let serialized = serde_json::to_value(payload).map_err(|e| TestError::Serialization(e.to_string()))?;
 
         if let serde_json::Value::Object(map) = serialized {
             for field in required_fields {
@@ -91,10 +88,7 @@ impl ValidationUtils {
     }
 
     /// Validates that a result matches expected value
-    pub fn validate_result<T: PartialEq + std::fmt::Debug>(
-        actual: &T,
-        expected: &T,
-    ) -> Result<(), TestError> {
+    pub fn validate_result<T: PartialEq + std::fmt::Debug>(actual: &T, expected: &T) -> Result<(), TestError> {
         if actual != expected {
             return Err(TestError::Validation(ValidationError::content_validation(
                 format!("Expected {:?}, got {:?}", expected, actual),
@@ -108,8 +102,7 @@ impl ValidationUtils {
 #[macro_export]
 macro_rules! assert_validate_path {
     ($path:expr) => {
-        $crate::validation::ValidationUtils::validate_path_security($path)
-            .expect_test("Path validation failed");
+        $crate::validation::ValidationUtils::validate_path_security($path).expect_test("Path validation failed");
     };
 }
 

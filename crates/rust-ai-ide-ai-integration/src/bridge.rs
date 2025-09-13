@@ -3,8 +3,9 @@
 //! This module provides the LSP AI bridge that integrates AI capabilities
 //! with LSP service for real-time AI assistance in code editing workflows.
 
-use async_trait::async_trait;
 use std::sync::Arc;
+
+use async_trait::async_trait;
 use tokio::sync::RwLock;
 
 use crate::errors::{IntegrationError, LspBridgeError};
@@ -12,24 +13,24 @@ use crate::types::*;
 
 /// Main LSP AI Bridge structure
 pub struct LSPAiBridge {
-    lsp_client: Arc<rust_ai_ide_lsp::LSPClient>,
+    lsp_client:            Arc<rust_ai_ide_lsp::LSPClient>,
     ai_security_validator: Arc<AISecurityValidator>,
-    performance_monitor: Arc<AiPerformanceMonitor>,
-    completion_merger: Arc<AICompletionMerger>,
-    diagnostics_enhancer: Arc<AIDiagnosticsEnhancer>,
-    state: Arc<RwLock<LspBridgeState>>,
+    performance_monitor:   Arc<AiPerformanceMonitor>,
+    completion_merger:     Arc<AICompletionMerger>,
+    diagnostics_enhancer:  Arc<AIDiagnosticsEnhancer>,
+    state:                 Arc<RwLock<LspBridgeState>>,
 }
 
 /// Internal state for LSP AI Bridge
 pub struct LspBridgeState {
     /// Bridge configuration
-    config: LspBridgeConfig,
+    config:          LspBridgeConfig,
     /// Active AI requests
     active_requests: std::collections::HashMap<RequestId, AiRequestState>,
     /// Performance metrics
-    metrics: PerformanceMetrics,
+    metrics:         PerformanceMetrics,
     /// Bridge status
-    status: BridgeStatus,
+    status:          BridgeStatus,
 }
 
 /// Bridge status enumeration
@@ -51,15 +52,15 @@ pub enum BridgeStatus {
 #[derive(Debug, Clone)]
 pub struct LspBridgeConfig {
     /// Enable AI completion merging
-    pub enable_completion_merge: bool,
+    pub enable_completion_merge:        bool,
     /// Enable diagnostics enhancement
     pub enable_diagnostics_enhancement: bool,
     /// Maximum concurrent requests
-    pub max_concurrent_requests: usize,
+    pub max_concurrent_requests:        usize,
     /// Request timeout in seconds
-    pub request_timeout_secs: u64,
+    pub request_timeout_secs:           u64,
     /// Cache TTL in seconds
-    pub cache_ttl_secs: u64,
+    pub cache_ttl_secs:                 u64,
 }
 
 /// AI request state
@@ -69,9 +70,9 @@ pub struct AiRequestState {
     /// Request start time
     pub start_time: chrono::DateTime<chrono::Utc>,
     /// Request context
-    pub context: AiRequestContext,
+    pub context:    AiRequestContext,
     /// Request status
-    pub status: RequestStatus,
+    pub status:     RequestStatus,
 }
 
 /// Request status
@@ -92,10 +93,7 @@ pub trait LSPAiBridgeTrait {
     async fn initialize(&self) -> Result<(), LspBridgeError>;
 
     /// Process LSP completion request with AI enhancement
-    async fn process_completion_request(
-        &self,
-        request: serde_json::Value,
-    ) -> Result<LspAiCompletion, LspBridgeError>;
+    async fn process_completion_request(&self, request: serde_json::Value) -> Result<LspAiCompletion, LspBridgeError>;
 
     /// Process LSP diagnostics with AI enhancement
     async fn process_diagnostics(
@@ -116,17 +114,17 @@ pub trait LSPAiBridgeTrait {
 /// Enhanced LSP completion merger
 pub struct AICompletionMerger {
     config: CompletionMergerConfig,
-    cache: Arc<moka::future::Cache<String, LspAiCompletion>>,
+    cache:  Arc<moka::future::Cache<String, LspAiCompletion>>,
 }
 
 /// Completion merger configuration
 pub struct CompletionMergerConfig {
     /// Merge strategy
-    pub strategy: MergeStrategy,
+    pub strategy:             MergeStrategy,
     /// Confidence threshold for merging
     pub confidence_threshold: f64,
     /// Maximum suggestions to merge
-    pub max_merge_count: usize,
+    pub max_merge_count:      usize,
 }
 
 /// Merge strategy enumeration
@@ -142,29 +140,25 @@ pub enum MergeStrategy {
 
 /// AI diagnostics enhancer
 pub struct AIDiagnosticsEnhancer {
-    config: DiagnosticsEnhancerConfig,
+    config:   DiagnosticsEnhancerConfig,
     analyzer: Arc<CodeAnalyzer>,
 }
 
 /// Diagnostics enhancer configuration
 pub struct DiagnosticsEnhancerConfig {
     /// Enable AI-based diagnostic suggestions
-    pub enable_ai_suggestions: bool,
+    pub enable_ai_suggestions:          bool,
     /// Maximum suggestions per diagnostic
     pub max_suggestions_per_diagnostic: usize,
     /// Confidence threshold
-    pub confidence_threshold: f64,
+    pub confidence_threshold:           f64,
 }
 
 /// Code analyzer trait
 #[async_trait]
 pub trait CodeAnalyzer {
     /// Analyze code for potential issues and suggestions
-    async fn analyze_code(
-        &self,
-        code: &str,
-        language: &str,
-    ) -> Result<Vec<CodeAnalysisResult>, LspBridgeError>;
+    async fn analyze_code(&self, code: &str, language: &str) -> Result<Vec<CodeAnalysisResult>, LspBridgeError>;
 }
 
 /// Code analysis result
@@ -172,9 +166,9 @@ pub struct CodeAnalysisResult {
     /// Analysis type
     pub analysis_type: AnalysisType,
     /// Analysis result
-    pub result: serde_json::Value,
+    pub result:        serde_json::Value,
     /// Confidence score
-    pub confidence: f64,
+    pub confidence:    f64,
 }
 
 /// Analysis type enumeration
@@ -192,7 +186,7 @@ pub enum AnalysisType {
 
 /// AI security validator
 pub struct AISecurityValidator {
-    config: SecurityValidatorConfig,
+    config:  SecurityValidatorConfig,
     auditor: Arc<SecurityAuditor>,
 }
 
@@ -229,9 +223,9 @@ pub trait SecurityAuditor {
 /// Security audit result
 pub struct SecurityAuditResult {
     /// Security score (0.0-1.0, higher is better)
-    pub score: f64,
+    pub score:           f64,
     /// Security issues found
-    pub issues: Vec<SecurityIssue>,
+    pub issues:          Vec<SecurityIssue>,
     /// Audit recommendations
     pub recommendations: Vec<String>,
 }
@@ -239,11 +233,11 @@ pub struct SecurityAuditResult {
 /// Security issue
 pub struct SecurityIssue {
     /// Issue severity
-    pub severity: IssueSeverity,
+    pub severity:    IssueSeverity,
     /// Issue description
     pub description: String,
     /// Issue location (if applicable)
-    pub location: Option<String>,
+    pub location:    Option<String>,
 }
 
 /// Issue severity enumeration
@@ -261,18 +255,18 @@ pub enum IssueSeverity {
 
 /// AI performance monitor
 pub struct AiPerformanceMonitor {
-    config: PerformanceMonitorConfig,
+    config:            PerformanceMonitorConfig,
     metrics_collector: Arc<MetricsCollector>,
 }
 
 /// Performance monitor configuration
 pub struct PerformanceMonitorConfig {
     /// Enable performance monitoring
-    pub enable_monitoring: bool,
+    pub enable_monitoring:      bool,
     /// Metrics collection interval
     pub collection_interval_ms: u64,
     /// Metrics retention period
-    pub retention_period_secs: u64,
+    pub retention_period_secs:  u64,
 }
 
 #[async_trait]
@@ -286,11 +280,11 @@ impl LSPAiBridge {
     #[must_use]
     pub fn new() -> Self {
         let config = LspBridgeConfig {
-            enable_completion_merge: true,
+            enable_completion_merge:        true,
             enable_diagnostics_enhancement: true,
-            max_concurrent_requests: 50,
-            request_timeout_secs: 30,
-            cache_ttl_secs: 300,
+            max_concurrent_requests:        50,
+            request_timeout_secs:           30,
+            cache_ttl_secs:                 300,
         };
 
         // Placeholder implementations - in real implementation, these would be properly initialized
@@ -298,10 +292,10 @@ impl LSPAiBridge {
             config,
             active_requests: std::collections::HashMap::new(),
             metrics: PerformanceMetrics {
-                response_times_ms: Vec::new(),
-                success_rates: Vec::new(),
+                response_times_ms:       Vec::new(),
+                success_rates:           Vec::new(),
                 throughput_measurements: Vec::new(),
-                timestamp: chrono::Utc::now(),
+                timestamp:               chrono::Utc::now(),
             },
             status: BridgeStatus::Initializing,
         }));
@@ -326,11 +320,11 @@ impl LSPAiBridge {
     #[must_use]
     pub fn default_config() -> LspBridgeConfig {
         LspBridgeConfig {
-            enable_completion_merge: true,
+            enable_completion_merge:        true,
             enable_diagnostics_enhancement: true,
-            max_concurrent_requests: 50,
-            request_timeout_secs: 30,
-            cache_ttl_secs: 300,
+            max_concurrent_requests:        50,
+            request_timeout_secs:           30,
+            cache_ttl_secs:                 300,
         }
     }
 }
@@ -362,10 +356,7 @@ impl LSPAiBridgeTrait for LSPAiBridge {
         Ok(())
     }
 
-    async fn process_completion_request(
-        &self,
-        request: serde_json::Value,
-    ) -> Result<LspAiCompletion, LspBridgeError> {
+    async fn process_completion_request(&self, request: serde_json::Value) -> Result<LspAiCompletion, LspBridgeError> {
         // Check if completion merge is enabled
         let config = {
             let state = self.state.read().await;
@@ -373,10 +364,10 @@ impl LSPAiBridgeTrait for LSPAiBridge {
         };
 
         let mut completion = LspAiCompletion {
-            original_request: request.clone(),
-            ai_completion: None,
+            original_request:     request.clone(),
+            ai_completion:        None,
             enhancement_metadata: std::collections::HashMap::new(),
-            confidence_score: None,
+            confidence_score:     None,
         };
 
         if config.enable_completion_merge {
@@ -453,7 +444,7 @@ impl LSPAiBridgeTrait for LSPAiBridge {
 impl AISecurityValidator {
     fn new() -> Self {
         AISecurityValidator {
-            config: SecurityValidatorConfig {
+            config:  SecurityValidatorConfig {
                 enable_validation: true,
                 validation_levels: vec![SecurityLevel::Standard],
             },
@@ -465,10 +456,10 @@ impl AISecurityValidator {
 impl AiPerformanceMonitor {
     fn new() -> Self {
         AiPerformanceMonitor {
-            config: PerformanceMonitorConfig {
-                enable_monitoring: true,
+            config:            PerformanceMonitorConfig {
+                enable_monitoring:      true,
                 collection_interval_ms: 1000,
-                retention_period_secs: 3600,
+                retention_period_secs:  3600,
             },
             metrics_collector: Arc::new(PlaceholderMetricsCollector),
         }
@@ -479,11 +470,11 @@ impl AICompletionMerger {
     fn new() -> Self {
         AICompletionMerger {
             config: CompletionMergerConfig {
-                strategy: MergeStrategy::BestSingle,
+                strategy:             MergeStrategy::BestSingle,
                 confidence_threshold: 0.5,
-                max_merge_count: 10,
+                max_merge_count:      10,
             },
-            cache: Arc::new(
+            cache:  Arc::new(
                 moka::future::Cache::builder()
                     .time_to_live(std::time::Duration::from_secs(300))
                     .build(),
@@ -495,10 +486,10 @@ impl AICompletionMerger {
 impl AIDiagnosticsEnhancer {
     fn new() -> Self {
         AIDiagnosticsEnhancer {
-            config: DiagnosticsEnhancerConfig {
-                enable_ai_suggestions: true,
+            config:   DiagnosticsEnhancerConfig {
+                enable_ai_suggestions:          true,
                 max_suggestions_per_diagnostic: 3,
-                confidence_threshold: 0.7,
+                confidence_threshold:           0.7,
             },
             analyzer: Arc::new(PlaceholderCodeAnalyzer),
         }
@@ -518,8 +509,8 @@ impl SecurityAuditor for PlaceholderSecurityAuditor {
         _context: &AiRequestContext,
     ) -> Result<SecurityAuditResult, LspBridgeError> {
         Ok(SecurityAuditResult {
-            score: 0.95,
-            issues: Vec::new(),
+            score:           0.95,
+            issues:          Vec::new(),
             recommendations: Vec::new(),
         })
     }
@@ -529,21 +520,17 @@ impl SecurityAuditor for PlaceholderSecurityAuditor {
 impl MetricsCollector for PlaceholderMetricsCollector {
     async fn collect_metrics(&self) -> Result<PerformanceMetrics, LspBridgeError> {
         Ok(PerformanceMetrics {
-            response_times_ms: vec![100, 120, 95],
-            success_rates: vec![0.95, 0.98, 0.92],
+            response_times_ms:       vec![100, 120, 95],
+            success_rates:           vec![0.95, 0.98, 0.92],
             throughput_measurements: vec![10.5, 11.2, 9.8],
-            timestamp: chrono::Utc::now(),
+            timestamp:               chrono::Utc::now(),
         })
     }
 }
 
 #[async_trait]
 impl CodeAnalyzer for PlaceholderCodeAnalyzer {
-    async fn analyze_code(
-        &self,
-        _code: &str,
-        _language: &str,
-    ) -> Result<Vec<CodeAnalysisResult>, LspBridgeError> {
+    async fn analyze_code(&self, _code: &str, _language: &str) -> Result<Vec<CodeAnalysisResult>, LspBridgeError> {
         Ok(Vec::new())
     }
 }

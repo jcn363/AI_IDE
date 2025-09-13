@@ -8,10 +8,11 @@
 //!   cargo run --bin type_generator -- --platform typescript
 //!   cargo run --bin type_generator -- --all-platforms
 
-use clap::{Parser, ValueEnum};
-use rust_ai_ide_shared_types::*;
 use std::fs;
 use std::path::Path;
+
+use clap::{Parser, ValueEnum};
+use rust_ai_ide_shared_types::*;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -236,10 +237,7 @@ fn get_file_extension(platform: &str) -> &'static str {
     }
 }
 
-fn validate_generated_code(
-    content: &str,
-    platform: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn validate_generated_code(content: &str, platform: &str) -> Result<(), Box<dyn std::error::Error>> {
     match platform {
         "typescript" => {
             // Basic TypeScript syntax validation
@@ -251,9 +249,7 @@ fn validate_generated_code(
         "python" => {
             // Basic Python syntax validation
             if !content.contains("class ") && !content.contains("from typing import") {
-                eprintln!(
-                    "⚠️  Warning: Generated Python may not contain expected class definitions"
-                );
+                eprintln!("⚠️  Warning: Generated Python may not contain expected class definitions");
             }
             Ok(())
         }
@@ -267,9 +263,7 @@ fn validate_generated_code(
         "graphql" => {
             // Basic GraphQL syntax validation
             if !content.contains("type ") && !content.contains("schema") {
-                eprintln!(
-                    "⚠️  Warning: Generated GraphQL may not contain expected schema definitions"
-                );
+                eprintln!("⚠️  Warning: Generated GraphQL may not contain expected schema definitions");
             }
             Ok(())
         }
@@ -298,14 +292,14 @@ mod tests {
     #[test]
     fn test_platform_config() {
         let args = Args {
-            platform: Platform::Typescript,
-            all_platforms: false,
-            output: "generated".to_string(),
-            verbose: false,
-            type_guards: true,
-            strict_null: true,
-            python_format: "dataclass".to_string(),
-            go_package: "models".to_string(),
+            platform:       Platform::Typescript,
+            all_platforms:  false,
+            output:         "generated".to_string(),
+            verbose:        false,
+            type_guards:    true,
+            strict_null:    true,
+            python_format:  "dataclass".to_string(),
+            go_package:     "models".to_string(),
             graphql_schema: "basic".to_string(),
         };
 

@@ -1,7 +1,9 @@
+use std::fs;
+
+use async_trait::async_trait;
+
 use crate::types::*;
 use crate::RefactoringOperation;
-use async_trait::async_trait;
-use std::fs;
 
 /// Change Signature operation - changes the signature of a function or method
 pub struct ChangeSignatureOperation;
@@ -77,14 +79,14 @@ impl RefactoringOperation for ChangeSignatureOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: false,
+            is_safe:          false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::High,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Signature change may break callers".to_string()],
-            suggestions: vec![],
-            warnings: vec!["Change signature operation requires implementation".to_string()],
+            suggestions:      vec![],
+            warnings:         vec!["Change signature operation requires implementation".to_string()],
         })
     }
 
@@ -131,8 +133,7 @@ impl RefactoringOperation for RemoveParameterOperation {
         let mut syntax: syn::File = syn::parse_file(&content)?;
 
         // Find the function and parameter
-        let (function_info, param_index) =
-            self.find_parameter_to_remove(&syntax, function_name, &parameter_name)?;
+        let (function_info, param_index) = self.find_parameter_to_remove(&syntax, function_name, &parameter_name)?;
 
         // Validate parameter removal
         self.validate_parameter_removal(&function_info, param_index)?;
@@ -171,14 +172,14 @@ impl RefactoringOperation for RemoveParameterOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: false,
+            is_safe:          false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::High,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Removing parameter may break callers".to_string()],
-            suggestions: vec![],
-            warnings: vec!["Remove parameter operation requires implementation".to_string()],
+            suggestions:      vec![],
+            warnings:         vec!["Remove parameter operation requires implementation".to_string()],
         })
     }
 
@@ -234,8 +235,7 @@ impl RefactoringOperation for IntroduceParameterOperation {
         let changes = self.apply_parameter_introduction(&function_info, &new_param, &syntax)?;
 
         // Find callers that need updates
-        let caller_updates =
-            self.find_callers_to_update_for_intro(&syntax, function_name, &new_param);
+        let caller_updates = self.find_callers_to_update_for_intro(&syntax, function_name, &new_param);
 
         Ok(RefactoringResult {
             id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
@@ -265,14 +265,14 @@ impl RefactoringOperation for IntroduceParameterOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: false,
+            is_safe:          false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::Medium,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Adding parameter may affect callers".to_string()],
-            suggestions: vec![],
-            warnings: vec!["Introduce parameter operation requires implementation".to_string()],
+            suggestions:      vec![],
+            warnings:         vec!["Introduce parameter operation requires implementation".to_string()],
         })
     }
 
@@ -306,12 +306,12 @@ impl RefactoringOperation for IntroduceParameterOperation {
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         // Implementation above
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![],
             error_message: None,
-            warnings: vec!["Introduce parameter operation implemented".to_string()],
-            new_content: None,
+            warnings:      vec!["Introduce parameter operation implemented".to_string()],
+            new_content:   None,
         })
     }
 }
@@ -359,14 +359,14 @@ impl RefactoringOperation for ReplaceConstructorOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: false,
+            is_safe:          false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::High,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Constructor replacement may break object creation".to_string()],
-            suggestions: vec![],
-            warnings: vec!["Replace constructor operation requires implementation".to_string()],
+            suggestions:      vec![],
+            warnings:         vec!["Replace constructor operation requires implementation".to_string()],
         })
     }
 
@@ -400,32 +400,30 @@ impl ChangeSignatureOperation {
     ) -> Result<FunctionSignatureInfo, Box<dyn std::error::Error + Send + Sync>> {
         for item in &syntax.items {
             match item {
-                syn::Item::Fn(item_fn) => {
+                syn::Item::Fn(item_fn) =>
                     if item_fn.sig.ident == function_name {
                         return Ok(FunctionSignatureInfo {
-                            name: function_name.to_string(),
-                            parameters: self.extract_parameters(&item_fn.sig),
+                            name:        function_name.to_string(),
+                            parameters:  self.extract_parameters(&item_fn.sig),
                             return_type: self.extract_return_type(&item_fn.sig.output),
-                            is_async: item_fn.sig.asyncness.is_some(),
-                            visibility: self.extract_visibility(&item_fn.vis),
+                            is_async:    item_fn.sig.asyncness.is_some(),
+                            visibility:  self.extract_visibility(&item_fn.vis),
                         });
-                    }
-                }
-                syn::Item::Impl(impl_block) => {
+                    },
+                syn::Item::Impl(impl_block) =>
                     for impl_item in &impl_block.items {
                         if let syn::ImplItem::Method(method) = impl_item {
                             if method.sig.ident == function_name {
                                 return Ok(FunctionSignatureInfo {
-                                    name: function_name.to_string(),
-                                    parameters: self.extract_parameters(&method.sig),
+                                    name:        function_name.to_string(),
+                                    parameters:  self.extract_parameters(&method.sig),
                                     return_type: self.extract_return_type(&method.sig.output),
-                                    is_async: method.sig.asyncness.is_some(),
-                                    visibility: self.extract_visibility(&method.vis),
+                                    is_async:    method.sig.asyncness.is_some(),
+                                    visibility:  self.extract_visibility(&method.vis),
                                 });
                             }
                         }
-                    }
-                }
+                    },
                 _ => {}
             }
         }
@@ -439,16 +437,15 @@ impl ChangeSignatureOperation {
             .filter_map(|arg| {
                 match arg {
                     syn::FnArg::Receiver(_) => None, // Skip self parameter for now
-                    syn::FnArg::Typed(pat_type) => {
+                    syn::FnArg::Typed(pat_type) =>
                         if let syn::Pat::Ident(pat_ident) = &*pat_type.pat {
                             Some(ParameterInfo {
-                                name: pat_ident.ident.to_string(),
+                                name:      pat_ident.ident.to_string(),
                                 type_info: format!("{}", quote::quote!(#pat_type.ty)),
                             })
                         } else {
                             None
-                        }
-                    }
+                        },
                 }
             })
             .collect()
@@ -503,15 +500,15 @@ impl ChangeSignatureOperation {
     ) -> Result<Vec<CodeChange>, Box<dyn std::error::Error + Send + Sync>> {
         // Placeholder implementation - would generate actual AST changes
         Ok(vec![CodeChange {
-            file_path: "/target/file.rs".to_string(),
-            range: CodeRange {
-                start_line: 1,
+            file_path:   "/target/file.rs".to_string(),
+            range:       CodeRange {
+                start_line:      1,
                 start_character: 0,
-                end_line: 10,
-                end_character: 0,
+                end_line:        10,
+                end_character:   0,
             },
-            old_text: format!("// Old signature for {}", info.name),
-            new_text: format!("// New signature for {} - updated", info.name),
+            old_text:    format!("// Old signature for {}", info.name),
+            new_text:    format!("// New signature for {} - updated", info.name),
             change_type: ChangeType::Replacement,
         }])
     }
@@ -576,26 +573,21 @@ impl RemoveParameterOperation {
     ) -> Result<Vec<CodeChange>, Box<dyn std::error::Error + Send + Sync>> {
         // Placeholder implementation
         Ok(vec![CodeChange {
-            file_path: "/target/file.rs".to_string(),
-            range: CodeRange {
-                start_line: 1,
+            file_path:   "/target/file.rs".to_string(),
+            range:       CodeRange {
+                start_line:      1,
                 start_character: 0,
-                end_line: 10,
-                end_character: 0,
+                end_line:        10,
+                end_character:   0,
             },
-            old_text: "// Parameter removed from function".to_string(),
-            new_text: "// Function signature updated".to_string(),
+            old_text:    "// Parameter removed from function".to_string(),
+            new_text:    "// Function signature updated".to_string(),
             change_type: ChangeType::Replacement,
         }])
     }
 
     /// Find callers that need to be updated
-    fn find_callers_to_update(
-        &self,
-        syntax: &syn::File,
-        function_name: &str,
-        param_index: usize,
-    ) -> Vec<String> {
+    fn find_callers_to_update(&self, syntax: &syn::File, function_name: &str, param_index: usize) -> Vec<String> {
         let mut updates = Vec::new();
         updates.push(format!(
             "Remove argument at position {} from calls to '{}'",
@@ -607,22 +599,22 @@ impl RemoveParameterOperation {
 
 /// Information about a function's current signature
 struct FunctionSignatureInfo {
-    name: String,
-    parameters: Vec<ParameterInfo>,
+    name:        String,
+    parameters:  Vec<ParameterInfo>,
     return_type: Option<String>,
-    is_async: bool,
-    visibility: String,
+    is_async:    bool,
+    visibility:  String,
 }
 
 /// Information about a parameter
 struct ParameterInfo {
-    name: String,
+    name:      String,
     type_info: String,
 }
 
 /// Specification for new function signature
 struct NewSignatureSpec {
-    parameters: Vec<ParameterInfo>,
+    parameters:  Vec<ParameterInfo>,
     return_type: Option<String>,
-    is_async: bool,
+    is_async:    bool,
 }

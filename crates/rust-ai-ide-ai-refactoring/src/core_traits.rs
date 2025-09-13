@@ -1,5 +1,6 @@
-use crate::types::*;
 use async_trait::async_trait;
+
+use crate::types::*;
 
 /// Core trait for all refactoring operations
 #[async_trait]

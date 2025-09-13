@@ -2,13 +2,10 @@
 
 use std::path::Path;
 
-use crate::analysis::{
-    architectural::{
-        CircularDependencyAnalyzer, DependencyInversionAnalyzer, InterfaceSegregationAnalyzer,
-        LayerViolationDetector,
-    },
-    AnalysisRegistry, AnalysisResult, AnalysisType, Severity,
+use crate::analysis::architectural::{
+    CircularDependencyAnalyzer, DependencyInversionAnalyzer, InterfaceSegregationAnalyzer, LayerViolationDetector,
 };
+use crate::analysis::{AnalysisRegistry, AnalysisResult, AnalysisType, Severity};
 
 /// Create a test analysis registry with all architectural analyzers registered
 pub fn create_test_registry() -> AnalysisRegistry {
@@ -28,9 +25,10 @@ pub fn create_test_registry() -> AnalysisRegistry {
 macro_rules! assert_finding {
     ($result:expr, $type:expr, $severity:expr, $message:expr) => {
         assert!(
-            $result.findings.iter().any(|f| {
-                f.analysis_type == $type && f.severity == $severity && f.message.contains($message)
-            }),
+            $result
+                .findings
+                .iter()
+                .any(|f| { f.analysis_type == $type && f.severity == $severity && f.message.contains($message) }),
             "Expected finding with type {:?}, severity {:?} and message containing '{}' in {:?}",
             $type,
             $severity,
@@ -45,9 +43,10 @@ macro_rules! assert_finding {
 macro_rules! assert_no_finding {
     ($result:expr, $type:expr, $severity:expr, $message:expr) => {
         assert!(
-            !$result.findings.iter().any(|f| {
-                f.analysis_type == $type && f.severity == $severity && f.message.contains($message)
-            }),
+            !$result
+                .findings
+                .iter()
+                .any(|f| { f.analysis_type == $type && f.severity == $severity && f.message.contains($message) }),
             "Unexpected finding with type {:?}, severity {:?} and message containing '{}' in {:?}",
             $type,
             $severity,
@@ -104,11 +103,7 @@ pub fn assert_has_errors(result: &AnalysisResult, expected_errors: usize) {
 }
 
 /// Helper function to check for specific findings
-pub fn has_findings(
-    result: &AnalysisResult,
-    analysis_type: AnalysisType,
-    severity: Severity,
-) -> bool {
+pub fn has_findings(result: &AnalysisResult, analysis_type: AnalysisType, severity: Severity) -> bool {
     result
         .findings
         .iter()

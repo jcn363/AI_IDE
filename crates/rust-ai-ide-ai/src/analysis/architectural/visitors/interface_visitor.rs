@@ -1,16 +1,17 @@
-use super::*;
 use syn::{visit, ItemTrait};
+
+use super::*;
 
 /// Represents an interface segregation violation
 #[derive(Debug)]
 pub struct InterfaceViolation {
-    pub message: String,
+    pub message:  String,
     pub location: CodeLocation,
 }
 
 /// Visitor that analyzes interface-related architectural issues
 pub struct InterfaceVisitor<'a> {
-    analyzer: &'a ArchitecturalAnalyzer,
+    analyzer:   &'a ArchitecturalAnalyzer,
     violations: Vec<InterfaceViolation>,
 }
 
@@ -28,7 +29,7 @@ impl<'a> InterfaceVisitor<'a> {
         let method_count = item.items.len();
         if method_count > self.analyzer.max_trait_methods {
             self.violations.push(InterfaceViolation {
-                message: format!(
+                message:  format!(
                     "Trait '{}' has too many methods ({} > {})",
                     item.ident, method_count, self.analyzer.max_trait_methods
                 ),
@@ -43,17 +44,23 @@ impl<'a> ArchitecturalVisitor for InterfaceVisitor<'a> {
         self.violations.clear();
         self.visit_file(ast);
 
-        self.violations.drain(..).map(|violation| {
-            self.create_finding(
-                "interface-segregation-violation",
-                format!("Interface Segregation Principle violation: {}", violation.message),
-                violation.location.line,
-                Some("Split the trait into smaller, more focused interfaces that each serve a specific purpose."),
-                Severity::Warning,
-                0.7,
-                "ARCH005",
-            )
-        }).collect()
+        self.violations
+            .drain(..)
+            .map(|violation| {
+                self.create_finding(
+                    "interface-segregation-violation",
+                    format!(
+                        "Interface Segregation Principle violation: {}",
+                        violation.message
+                    ),
+                    violation.location.line,
+                    Some("Split the trait into smaller, more focused interfaces that each serve a specific purpose."),
+                    Severity::Warning,
+                    0.7,
+                    "ARCH005",
+                )
+            })
+            .collect()
     }
 
     fn analyzer(&self) -> &ArchitecturalAnalyzer {

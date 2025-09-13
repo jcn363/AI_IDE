@@ -35,65 +35,60 @@
 //! - Performance regression prevention with monitoring integration
 
 // Core async and concurrency
-use async_trait::async_trait;
+use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
 
+use async_trait::async_trait;
+// Types and serialization
+use chrono::{DateTime, Utc};
+// Caching infrastructure
+use moka::future::Cache;
 // ML infrastructure integration
 use rust_ai_ide_ai_inference::{InferenceEngine, ModelLoadConfig};
 use rust_ai_ide_ai_learning::LearningEngine;
 use rust_ai_ide_ai_quantization::{GGUFModel, QuantizationEngine};
-
 // Performance monitoring integration (Phase 1)
 use rust_ai_ide_performance_monitoring::{MetricsCollector, PerformanceMonitor};
-
 // Security foundation (Phase 1)
 use rust_ai_ide_security::{audit_logger, AuditLog, SecurityConfig, SecurityEngine};
-
-// Types and serialization
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-
-// Caching infrastructure
-use moka::future::Cache;
-
 // Statistical analysis
 use statrs::statistics::{Continuous, Distribution};
-use std::collections::HashMap;
+use tokio::sync::{Mutex, RwLock};
 
 /// Main orchestration engine for predictive quality intelligence
 pub struct PredictiveQualityEngine {
     vulnerability_predictor: Arc<MLVulnerabilityPredictor>,
-    maintenance_forecaster: Arc<MaintenanceForecaster>,
-    health_scorer: Arc<CodeHealthScorer>,
-    dependency_analyzer: Arc<CrossFileDependencyAnalyzer>,
-    model_service: Arc<PredictiveModelService>,
-    performance_monitor: Arc<PerformanceMonitor>,
-    cache: Cache<String, serde_json::Value>,
+    maintenance_forecaster:  Arc<MaintenanceForecaster>,
+    health_scorer:           Arc<CodeHealthScorer>,
+    dependency_analyzer:     Arc<CrossFileDependencyAnalyzer>,
+    model_service:           Arc<PredictiveModelService>,
+    performance_monitor:     Arc<PerformanceMonitor>,
+    cache:                   Cache<String, serde_json::Value>,
 }
 
 /// Configuration for predictive quality engine
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PredictiveConfig {
     pub vulnerability_prediction_enabled: bool,
-    pub maintenance_forecasting_enabled: bool,
-    pub health_scoring_enabled: bool,
-    pub cache_ttl_seconds: u64,
-    pub max_prediction_batch_size: usize,
-    pub prediction_accuracy_threshold: f64,
-    pub false_positive_tolerance: f64,
+    pub maintenance_forecasting_enabled:  bool,
+    pub health_scoring_enabled:           bool,
+    pub cache_ttl_seconds:                u64,
+    pub max_prediction_batch_size:        usize,
+    pub prediction_accuracy_threshold:    f64,
+    pub false_positive_tolerance:         f64,
 }
 
 impl Default for PredictiveConfig {
     fn default() -> Self {
         Self {
             vulnerability_prediction_enabled: true,
-            maintenance_forecasting_enabled: true,
-            health_scoring_enabled: true,
-            cache_ttl_seconds: 3600,
-            max_prediction_batch_size: 1000,
-            prediction_accuracy_threshold: 0.85,
-            false_positive_tolerance: 0.05,
+            maintenance_forecasting_enabled:  true,
+            health_scoring_enabled:           true,
+            cache_ttl_seconds:                3600,
+            max_prediction_batch_size:        1000,
+            prediction_accuracy_threshold:    0.85,
+            false_positive_tolerance:         0.05,
         }
     }
 }
@@ -109,11 +104,9 @@ impl PredictiveQualityEngine {
         performance_monitor: Arc<PerformanceMonitor>,
     ) -> Self {
         // Initialize sub-components with proper thread safety
-        let vulnerability_predictor =
-            Arc::new(MLVulnerabilityPredictor::new(Arc::clone(&inference_engine)).await);
+        let vulnerability_predictor = Arc::new(MLVulnerabilityPredictor::new(Arc::clone(&inference_engine)).await);
 
-        let dependency_analyzer =
-            Arc::new(CrossFileDependencyAnalyzer::new(Arc::clone(&learning_engine)).await);
+        let dependency_analyzer = Arc::new(CrossFileDependencyAnalyzer::new(Arc::clone(&learning_engine)).await);
 
         let model_service = Arc::new(
             PredictiveModelService::new(
@@ -123,18 +116,11 @@ impl PredictiveQualityEngine {
             .await,
         );
 
-        let health_scorer = Arc::new(
-            CodeHealthScorer::new(Arc::clone(&model_service), Arc::clone(&performance_monitor))
-                .await,
-        );
+        let health_scorer =
+            Arc::new(CodeHealthScorer::new(Arc::clone(&model_service), Arc::clone(&performance_monitor)).await);
 
-        let maintenance_forecaster = Arc::new(
-            MaintenanceForecaster::new(
-                Arc::clone(&dependency_analyzer),
-                Arc::clone(&health_scorer),
-            )
-            .await,
-        );
+        let maintenance_forecaster =
+            Arc::new(MaintenanceForecaster::new(Arc::clone(&dependency_analyzer), Arc::clone(&health_scorer)).await);
 
         let cache: Cache<String, serde_json::Value> = Cache::builder()
             .time_to_live(std::time::Duration::from_secs(config.cache_ttl_seconds))
@@ -191,10 +177,7 @@ impl PredictiveQualityEngine {
     }
 
     /// Score code health in real-time
-    pub async fn score_health(
-        &self,
-        health_request: &HealthScoreRequest,
-    ) -> Result<HealthScoreResult> {
+    pub async fn score_health(&self, health_request: &HealthScoreRequest) -> Result<HealthScoreResult> {
         let start_time = std::time::Instant::now();
 
         let result = self.health_scorer.score(health_request).await?;

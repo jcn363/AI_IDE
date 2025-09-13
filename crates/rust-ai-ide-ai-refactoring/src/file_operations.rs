@@ -1,6 +1,7 @@
+use async_trait::async_trait;
+
 use crate::types::*;
 use crate::RefactoringOperation;
-use async_trait::async_trait;
 
 /// Move Class operation - moves a class to a different file or location
 pub struct MoveClassOperation;
@@ -16,12 +17,12 @@ impl RefactoringOperation for MoveClassOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![],
             error_message: None,
-            warnings: vec!["Move class operation requires implementation".to_string()],
-            new_content: None,
+            warnings:      vec!["Move class operation requires implementation".to_string()],
+            new_content:   None,
         })
     }
 
@@ -30,14 +31,14 @@ impl RefactoringOperation for MoveClassOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: false,
+            is_safe:          false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::High,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Class move may break imports".to_string()],
-            suggestions: vec![],
-            warnings: vec!["Move class operation requires implementation".to_string()],
+            suggestions:      vec![],
+            warnings:         vec!["Move class operation requires implementation".to_string()],
         })
     }
 
@@ -70,12 +71,12 @@ impl RefactoringOperation for MoveFileOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![],
             error_message: None,
-            warnings: vec!["Move file operation requires implementation".to_string()],
-            new_content: None,
+            warnings:      vec!["Move file operation requires implementation".to_string()],
+            new_content:   None,
         })
     }
 
@@ -84,14 +85,14 @@ impl RefactoringOperation for MoveFileOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: false,
+            is_safe:          false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::High,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["File move may break imports".to_string()],
-            suggestions: vec![],
-            warnings: vec!["Move file operation requires implementation".to_string()],
+            suggestions:      vec![],
+            warnings:         vec!["Move file operation requires implementation".to_string()],
         })
     }
 

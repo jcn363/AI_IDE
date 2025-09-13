@@ -1,15 +1,16 @@
-/// Analysis algorithms for dependency graphs
-use super::models::*;
-use crate::dependency::graph::traversal;
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::path::Path;
+
 use anyhow::{anyhow, Result};
-use cargo_metadata::DependencyKind;
-use cargo_metadata::Package;
+use cargo_metadata::{DependencyKind, Package};
 use petgraph::algo::all_simple_paths;
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::{Dfs, EdgeRef};
 use petgraph::Direction;
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::path::Path;
+
+/// Analysis algorithms for dependency graphs
+use super::models::*;
+use crate::dependency::graph::traversal;
 
 impl DependencyGraph {
     /// Get a reference to the underlying graph
@@ -106,7 +107,7 @@ impl DependencyGraph {
 /// Builder for constructing a dependency graph from Cargo metadata
 #[derive(Debug)]
 pub struct DependencyGraphBuilder {
-    metadata: cargo_metadata::Metadata,
+    metadata:     cargo_metadata::Metadata,
     root_package: String,
 }
 
@@ -196,18 +197,18 @@ impl DependencyGraphBuilder {
                     .ok_or_else(|| anyhow!("Dependency info not found: {}", dep_pkg.name))?;
 
                 let edge = DependencyEdge {
-                    dep_type: if dep_info.kind == DependencyKind::Development {
+                    dep_type:              if dep_info.kind == DependencyKind::Development {
                         DependencyType::Dev
                     } else if dep_info.kind == DependencyKind::Build {
                         DependencyType::Build
                     } else {
                         DependencyType::Normal
                     },
-                    version_req: dep_info.req.to_string(),
-                    optional: dep_info.optional,
+                    version_req:           dep_info.req.to_string(),
+                    optional:              dep_info.optional,
                     uses_default_features: dep_info.uses_default_features,
-                    features: dep_info.features.clone(),
-                    target: dep_info.target.clone().map(|t| t.to_string()),
+                    features:              dep_info.features.clone(),
+                    target:                dep_info.target.clone().map(|t| t.to_string()),
                 };
 
                 graph.add_edge(source_idx, target_idx, edge);
@@ -398,7 +399,4 @@ impl DependencyFilter {
 }
 
 // Re-export traversal functions
-pub use traversal::depth_first_traverse;
-pub use traversal::find_all_dependencies;
-pub use traversal::find_all_paths;
-pub use traversal::find_reverse_dependencies;
+pub use traversal::{depth_first_traverse, find_all_dependencies, find_all_paths, find_reverse_dependencies};

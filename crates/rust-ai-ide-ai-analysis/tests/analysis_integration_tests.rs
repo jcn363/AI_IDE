@@ -1,33 +1,33 @@
-/*!!
+//! !
+//!
+//! Integration tests for rust-ai-ide-ai-analysis using shared-test-utils
+//!
+//! This module demonstrates sophisticated code analysis testing scenarios using the comprehensive
+//! test utilities from shared-test-utils, including:
+//!
+//! - Code analysis workspace management with temp directories
+//! - AST parsing and validation scenarios
+//! - Performance benchmarking for analysis operations
+//! - Concurrent code analysis workflows
+//! - Architectural pattern scanning and validation
+//! - Security analysis testing frameworks
+//! - Code metrics computation and validation
+//! - Analysis result serialization and validation
 
-Integration tests for rust-ai-ide-ai-analysis using shared-test-utils
-
-This module demonstrates sophisticated code analysis testing scenarios using the comprehensive
-test utilities from shared-test-utils, including:
-
-- Code analysis workspace management with temp directories
-- AST parsing and validation scenarios
-- Performance benchmarking for analysis operations
-- Concurrent code analysis workflows
-- Architectural pattern scanning and validation
-- Security analysis testing frameworks
-- Code metrics computation and validation
-- Analysis result serialization and validation
-
-*/
+use std::path::Path;
+use std::time::Duration;
 
 use shared_test_utils::async_utils::AsyncContext;
 use shared_test_utils::error::TestResult;
 use shared_test_utils::fixtures::FixturePresets;
 use shared_test_utils::*;
-use std::path::Path;
-use std::time::Duration;
 
 // Test that proves we have the right imports and can run tests
 #[cfg(test)]
 mod analysis_integration_tests {
-    use super::*;
     use std::fs;
+
+    use super::*;
 
     /// Integration test demonstrating code analysis workspace setup
     #[test]
@@ -400,10 +400,7 @@ mod analysis_tests {
         workspace.create_dir(Path::new("security_scans")).unwrap();
 
         // Simulate concurrent analysis operations
-        async fn simulate_analysis_operation(
-            operation_id: usize,
-            analysis_type: &str,
-        ) -> Result<String, TestError> {
+        async fn simulate_analysis_operation(operation_id: usize, analysis_type: &str) -> Result<String, TestError> {
             Ok(format!(
                 "analysis_{}_{}_completed",
                 analysis_type, operation_id
@@ -727,7 +724,10 @@ flag_unwrapped_results = true"#,
             "Should have at least 4 successful operations"
         );
 
-        println!("✅ Concurrent analysis operations test completed - {} operations processed across {} batches",
-                result_values.len(), batch_counts.len());
+        println!(
+            "✅ Concurrent analysis operations test completed - {} operations processed across {} batches",
+            result_values.len(),
+            batch_counts.len()
+        );
     }
 }

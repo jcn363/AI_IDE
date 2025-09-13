@@ -13,25 +13,25 @@ use super::types::LearningResult;
 /// Performance metrics collector
 #[derive(Debug, Clone)]
 pub struct PerformanceMetrics {
-    pub operation_count: u64,
-    pub total_duration: Duration,
+    pub operation_count:  u64,
+    pub total_duration:   Duration,
     pub average_duration: Duration,
-    pub min_duration: Duration,
-    pub max_duration: Duration,
-    pub success_count: u64,
-    pub error_count: u64,
+    pub min_duration:     Duration,
+    pub max_duration:     Duration,
+    pub success_count:    u64,
+    pub error_count:      u64,
 }
 
 impl PerformanceMetrics {
     fn new() -> Self {
         Self {
-            operation_count: 0,
-            total_duration: Duration::new(0, 0),
+            operation_count:  0,
+            total_duration:   Duration::new(0, 0),
             average_duration: Duration::new(0, 0),
-            min_duration: Duration::MAX,
-            max_duration: Duration::new(0, 0),
-            success_count: 0,
-            error_count: 0,
+            min_duration:     Duration::MAX,
+            max_duration:     Duration::new(0, 0),
+            success_count:    0,
+            error_count:      0,
         }
     }
 
@@ -98,14 +98,14 @@ impl std::fmt::Display for PerformanceMetrics {
 
 /// Performance profiler for tracking system performance
 pub struct PerformanceProfiler {
-    metrics: Mutex<HashMap<String, PerformanceMetrics>>,
+    metrics:     Mutex<HashMap<String, PerformanceMetrics>>,
     start_times: Mutex<HashMap<String, Instant>>,
 }
 
 impl PerformanceProfiler {
     pub fn new() -> Self {
         Self {
-            metrics: Mutex::new(HashMap::new()),
+            metrics:     Mutex::new(HashMap::new()),
             start_times: Mutex::new(HashMap::new()),
         }
     }
@@ -184,18 +184,18 @@ macro_rules! profile_operation {
 /// Memory usage profiler
 pub struct MemoryProfiler {
     pub initial_memory: usize,
-    pub peak_memory: usize,
+    pub peak_memory:    usize,
     pub current_memory: usize,
-    pub allocations: usize,
+    pub allocations:    usize,
 }
 
 impl MemoryProfiler {
     pub fn new() -> Self {
         Self {
             initial_memory: 0,
-            peak_memory: 0,
+            peak_memory:    0,
             current_memory: 0,
-            allocations: 0,
+            allocations:    0,
         }
     }
 
@@ -228,14 +228,14 @@ impl MemoryProfiler {
 /// Generic profiler that tracks both performance and memory
 pub struct AdvancedProfiler {
     performance_profiler: PerformanceProfiler,
-    memory_profiler: Mutex<MemoryProfiler>,
+    memory_profiler:      Mutex<MemoryProfiler>,
 }
 
 impl AdvancedProfiler {
     pub fn new() -> Self {
         Self {
             performance_profiler: PerformanceProfiler::new(),
-            memory_profiler: Mutex::new(MemoryProfiler::new()),
+            memory_profiler:      Mutex::new(MemoryProfiler::new()),
         }
     }
 
@@ -303,25 +303,25 @@ macro_rules! quick_profile {
 
 /// System health checker that combines performance metrics with health indicators
 pub struct SystemHealthChecker {
-    profiler: Arc<AdvancedProfiler>,
+    profiler:           Arc<AdvancedProfiler>,
     warning_thresholds: HealthThresholds,
 }
 
 #[derive(Debug, Clone)]
 pub struct HealthThresholds {
     pub max_average_response_time_ms: u128,
-    pub min_success_rate: f64,
-    pub max_error_rate: f64,
-    pub max_memory_usage_mb: usize,
+    pub min_success_rate:             f64,
+    pub max_error_rate:               f64,
+    pub max_memory_usage_mb:          usize,
 }
 
 impl Default for HealthThresholds {
     fn default() -> Self {
         Self {
             max_average_response_time_ms: 1000, // 1 second
-            min_success_rate: 0.95,             // 95% success rate
-            max_error_rate: 0.05,               // 5% error rate
-            max_memory_usage_mb: 100,           // 100MB
+            min_success_rate:             0.95, // 95% success rate
+            max_error_rate:               0.05, // 5% error rate
+            max_memory_usage_mb:          100,  // 100MB
         }
     }
 }
@@ -485,9 +485,10 @@ pub fn run_quick_performance_test(db_size: usize, query_count: usize) {
 mod tests {
     #![allow(unused_imports)]
 
-    use super::*;
     use tempfile::TempDir;
     use tokio::runtime::Runtime;
+
+    use super::*;
 
     #[test]
     fn test_performance_profiler_basic() {

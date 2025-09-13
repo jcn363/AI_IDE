@@ -1,28 +1,27 @@
-/*!
-# Test Utilities Module
-
-This module provides shared test utilities across the Rust AI IDE codebase to:
-- Eliminate duplication in test setup/teardown code
-- Standardize common mock implementations
-- Provide reusable test data generators
-- Assist with integration testing patterns
-- Support performance testing utilities
-
-## Usage
-
-Add to your test file:
-```rust
-use rust_ai_ide_common::test_utils::*;
-```
-
-## Features
-
-- **Test Setup Helpers**: Convenient setup for temporary directories, files, and project structures
-- **Mock Implementations**: Reusable mock objects for common dependencies
-- **Test Data Generators**: Factory functions for creating sample data (files, manifests, etc.)
-- **Integration Helpers**: Utilities for testing command handlers and event systems
-- **Performance Utilities**: Helpers for benchmarking and performance profiling
-*/
+//! # Test Utilities Module
+//!
+//! This module provides shared test utilities across the Rust AI IDE codebase to:
+//! - Eliminate duplication in test setup/teardown code
+//! - Standardize common mock implementations
+//! - Provide reusable test data generators
+//! - Assist with integration testing patterns
+//! - Support performance testing utilities
+//!
+//! ## Usage
+//!
+//! Add to your test file:
+//! ```rust
+//! use rust_ai_ide_common::test_utils::*;
+//! ```
+//!
+//! ## Features
+//!
+//! - **Test Setup Helpers**: Convenient setup for temporary directories, files, and project
+//!   structures
+//! - **Mock Implementations**: Reusable mock objects for common dependencies
+//! - **Test Data Generators**: Factory functions for creating sample data (files, manifests, etc.)
+//! - **Integration Helpers**: Utilities for testing command handlers and event systems
+//! - **Performance Utilities**: Helpers for benchmarking and performance profiling
 
 #[cfg(test)]
 use std::collections::HashMap;
@@ -34,22 +33,22 @@ use std::path::Path;
 use std::path::PathBuf;
 #[cfg(test)]
 use std::sync::Arc;
+
 #[cfg(test)]
 use tokio::sync::Mutex;
 
 #[cfg(test)]
 pub mod setup {
-    /*!
-    # Test Setup and Teardown Utilities
+    //! # Test Setup and Teardown Utilities
+    //!
+    //! Provides common setup/cleanup patterns for tests including:
+    //! - Temporary directory management
+    //! - Test file creation
+    //! - Project structure initialization
 
-    Provides common setup/cleanup patterns for tests including:
-    - Temporary directory management
-    - Test file creation
-    - Project structure initialization
-    */
+    use tempfile::{tempdir, TempDir};
 
     use super::*;
-    use tempfile::{tempdir, TempDir};
 
     /// Wrapper for temporary directory that provides convenient cleanup
     // Reusable shared test utilities - may be used across crates
@@ -147,25 +146,24 @@ mod tests {
 
 #[cfg(test)]
 pub mod mocks {
-    /*!
-    # Common Mock Implementations
+    //! # Common Mock Implementations
+    //!
+    //! Provides reusable mock objects and traits for testing:
+    //! - File system operations
+    //! - Network responses
+    //! - Time operations
+    //! - Event emitters
 
-    Provides reusable mock objects and traits for testing:
-    - File system operations
-    - Network responses
-    - Time operations
-    - Event emitters
-    */
-
-    use super::*;
     use std::io::{self, Read};
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    use super::*;
 
     /// Mock file system with in-memory storage
     // Reusable shared test utilities - may be used across crates
     pub struct MockFileSystem {
         files: HashMap<PathBuf, Vec<u8>>,
-        root: PathBuf,
+        root:  PathBuf,
     }
 
     impl MockFileSystem {
@@ -231,8 +229,8 @@ pub mod mocks {
     /// Mock network response builder
     // Reusable shared test utilities - may be used across crates
     pub struct MockHttpResponse {
-        status: u16,
-        body: Vec<u8>,
+        status:  u16,
+        body:    Vec<u8>,
         headers: HashMap<String, String>,
     }
 
@@ -277,18 +275,17 @@ pub mod mocks {
 
 #[cfg(test)]
 pub mod generators {
-    /*!
-    # Test Data Generators
+    //! # Test Data Generators
+    //!
+    //! Factory functions for creating sample test data including:
+    //! - Sample Rust source files
+    //! - Cargo.toml manifests
+    //! - Project structures
+    //! - Configuration data
 
-    Factory functions for creating sample test data including:
-    - Sample Rust source files
-    - Cargo.toml manifests
-    - Project structures
-    - Configuration data
-    */
+    use serde_json;
 
     use super::*;
-    use serde_json;
 
     /// Generate sample Rust source code
     // Reusable shared test utilities - may be used across crates
@@ -386,19 +383,19 @@ full = ["serde", "tokio"]
 
 #[cfg(test)]
 pub mod integration {
-    /*!
-    # Integration Test Helpers
+    //! # Integration Test Helpers
+    //!
+    //! Utilities for testing command handlers and event systems:
+    //! - Command execution helpers
+    //! - Event bus testing
+    //! - State management helpers
 
-    Utilities for testing command handlers and event systems:
-    - Command execution helpers
-    - Event bus testing
-    - State management helpers
-    */
-
-    use super::*;
-    use serde_json::Value;
     use std::future::Future;
     use std::pin::Pin;
+
+    use serde_json::Value;
+
+    use super::*;
 
     /// Helper for executing and validating commands in integration tests
     // Reusable shared test utilities - may be used across crates
@@ -501,22 +498,21 @@ pub mod integration {
 
 #[cfg(test)]
 pub mod performance {
-    /*!
-    # Performance Testing Utilities
+    //! # Performance Testing Utilities
+    //!
+    //! Helpers for benchmarking and performance profiling:
+    //! - Timing utilities
+    //! - Memory usage tracking
+    //! - Benchmark result analysis
 
-    Helpers for benchmarking and performance profiling:
-    - Timing utilities
-    - Memory usage tracking
-    - Benchmark result analysis
-    */
+    use std::time::{Duration, Instant};
 
     use super::*;
-    use std::time::{Duration, Instant};
 
     /// Simple performance timer
     // Reusable shared test utilities - may be used across crates
     pub struct PerformanceTimer {
-        name: String,
+        name:  String,
         start: Instant,
     }
 
@@ -524,7 +520,7 @@ pub mod performance {
         /// Start timing a named operation
         pub fn start(name: &str) -> Self {
             PerformanceTimer {
-                name: name.to_string(),
+                name:  name.to_string(),
                 start: Instant::now(),
             }
         }
@@ -545,8 +541,8 @@ pub mod performance {
     /// Benchmark runner for repeated operations
     // Reusable shared test utilities - may be used across crates
     pub struct BenchmarkRunner {
-        iterations: usize,
-        setup_fn: Option<Box<dyn Fn()>>,
+        iterations:  usize,
+        setup_fn:    Option<Box<dyn Fn()>>,
         teardown_fn: Option<Box<dyn Fn()>>,
     }
 
@@ -648,8 +644,9 @@ pub use setup::*;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::tempdir;
+
+    use super::*;
 
     #[test]
     fn test_test_temp_dir_creation() {

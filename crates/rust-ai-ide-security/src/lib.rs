@@ -24,7 +24,8 @@
 //! **Micro-segmentation Implementation:**
 //! - ✅ **MicroSegment**: Resource isolation with configurable trust levels
 //! - ✅ **TrustBoundary**: Cross-segment access control with verification rules
-//! - ✅ **BoundaryVerificationRule**: Risk-based boundary controls (trust score, time-based, geographic)
+//! - ✅ **BoundaryVerificationRule**: Risk-based boundary controls (trust score, time-based,
+//!   geographic)
 //! - ✅ **ContinuousVerificationStatus**: Real-time trust assessment with behavioral analysis
 //! - ✅ **SegmentationEvent**: Audit trail for all segmentation activities
 //!
@@ -248,8 +249,7 @@ pub mod webauthn;
 
 // Re-export new modules
 pub use rate_limiter::{
-    AuthRateLimiter, AuthRateLimiterConfig, EndpointType, RateLimitConfig,
-    RateLimitHeaders, RateLimitState, UserRole
+    AuthRateLimiter, AuthRateLimiterConfig, EndpointType, RateLimitConfig, RateLimitHeaders, RateLimitState, UserRole,
 };
 pub use secrets::{SecretFinding, SecretType, SecretsScanner, VulnerabilitySeverity};
 pub use threat_modeling::{Asset, StrideCategory, Threat, ThreatModel, ThreatModelingEngine};

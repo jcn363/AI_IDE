@@ -1,9 +1,10 @@
 //! Integration tests for rust-ai-ide-core using shared-test_utils
 
+use std::path::Path;
+
 use shared_test_utils::error::TestResult;
 use shared_test_utils::fixtures::FixturePresets;
 use shared_test_utils::*;
-use std::path::Path;
 
 /// Integration test demonstrating TempWorkspace for file operations
 #[test]
@@ -81,8 +82,7 @@ async fn test_async_operations_with_timeout() {
         Ok(format!("task_{}_result", name))
     }
 
-    let concurrent_result =
-        run_concurrent(vec![create_task("1"), create_task("2"), create_task("3")]).await;
+    let concurrent_result = run_concurrent(vec![create_task("1"), create_task("2"), create_task("3")]).await;
 
     assert!(concurrent_result.is_ok());
     let result_value = concurrent_result.unwrap();

@@ -3,12 +3,13 @@
 //! This module provides caching for debugger state, breakpoints, and execution context
 //! using the unified cache infrastructure from rust-ai-ide-cache.
 
-use rust_ai_ide_cache::{key_utils, Cache, CacheConfig, CacheStats, InMemoryCache};
-use rust_ai_ide_errors::IDEResult;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
+
+use rust_ai_ide_cache::{key_utils, Cache, CacheConfig, CacheStats, InMemoryCache};
+use rust_ai_ide_errors::IDEResult;
+use serde::{Deserialize, Serialize};
 
 use super::types::{BreakpointInfo, DebuggerState, StackFrame, VariableInfo};
 
@@ -16,32 +17,32 @@ use super::types::{BreakpointInfo, DebuggerState, StackFrame, VariableInfo};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CachedBreakpoints {
     /// File path breakpoints belong to
-    pub file_path: PathBuf,
+    pub file_path:   PathBuf,
     /// Collection of breakpoints for this file
     pub breakpoints: Vec<BreakpointInfo>,
     /// Cache timestamp
-    pub cached_at: SystemTime,
+    pub cached_at:   SystemTime,
 }
 
 /// Cached debugger state entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CachedDebuggerState {
     /// Session identifier (project/session ID)
-    pub session_id: String,
+    pub session_id:   String,
     /// Current debugger state
-    pub state: DebuggerState,
+    pub state:        DebuggerState,
     /// Stack frames at current pause point
     pub stack_frames: Vec<StackFrame>,
     /// Variable values at current scope
-    pub variables: HashMap<String, VariableInfo>,
+    pub variables:    HashMap<String, VariableInfo>,
     /// Cache timestamp
-    pub cached_at: SystemTime,
+    pub cached_at:    SystemTime,
 }
 
 /// Debugger cache for performance optimization
 pub struct DebuggerCache {
     unified_cache: InMemoryCache<String, serde_json::Value>,
-    config: CacheConfig,
+    config:        CacheConfig,
 }
 
 impl std::fmt::Debug for DebuggerCache {
@@ -56,7 +57,7 @@ impl DebuggerCache {
     /// Create a new debugger cache with optimized settings
     pub fn new() -> Self {
         let config = CacheConfig {
-            max_entries: Some(500), // Debugger sessions don't need as much storage
+            max_entries: Some(500),                       // Debugger sessions don't need as much storage
             default_ttl: Some(Duration::from_secs(3600)), // 1 hour for debugging state
             ..Default::default()
         };
@@ -79,15 +80,11 @@ impl DebuggerCache {
     }
 
     /// Cache breakpoints for a file
-    pub async fn cache_breakpoints(
-        &self,
-        file_path: PathBuf,
-        breakpoints: Vec<BreakpointInfo>,
-    ) -> IDEResult<()> {
-        let cache_key = key_utils::structured_key(
-            "debugger_breakpoints",
-            &[file_path.to_string_lossy().to_string().as_str()],
-        );
+    pub async fn cache_breakpoints(&self, file_path: PathBuf, breakpoints: Vec<BreakpointInfo>) -> IDEResult<()> {
+        let cache_key = key_utils::structured_key("debugger_breakpoints", &[file_path
+            .to_string_lossy()
+            .to_string()
+            .as_str()]);
 
         let cached = CachedBreakpoints {
             file_path,
@@ -115,10 +112,10 @@ impl DebuggerCache {
 
     /// Get cached breakpoints for a file
     pub async fn get_breakpoints(&self, file_path: &PathBuf) -> Option<Vec<BreakpointInfo>> {
-        let cache_key = key_utils::structured_key(
-            "debugger_breakpoints",
-            &[file_path.to_string_lossy().to_string().as_str()],
-        );
+        let cache_key = key_utils::structured_key("debugger_breakpoints", &[file_path
+            .to_string_lossy()
+            .to_string()
+            .as_str()]);
 
         if let Ok(Some(value)) = self.unified_cache.get(&cache_key).await {
             match serde_json::from_value::<CachedBreakpoints>(value) {
@@ -217,10 +214,10 @@ impl DebuggerCache {
 
     /// Remove cached breakpoints for a file
     pub async fn invalidate_breakpoints(&self, file_path: &PathBuf) -> IDEResult<()> {
-        let cache_key = key_utils::structured_key(
-            "debugger_breakpoints",
-            &[file_path.to_string_lossy().to_string().as_str()],
-        );
+        let cache_key = key_utils::structured_key("debugger_breakpoints", &[file_path
+            .to_string_lossy()
+            .to_string()
+            .as_str()]);
         self.unified_cache.remove(&cache_key).await?;
         Ok(())
     }

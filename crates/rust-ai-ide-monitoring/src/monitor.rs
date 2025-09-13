@@ -1,14 +1,14 @@
 //! Main monitoring orchestrator
 
-use crate::{
-    analyzers::AnalyzerRegistry,
-    config::Config,
-    errors::{MonitoringError, Result},
-    metrics::{MetricsAggregator, QualityScore},
-    types::AnalysisReport,
-};
-use chrono::Utc;
 use std::path::Path;
+
+use chrono::Utc;
+
+use crate::analyzers::AnalyzerRegistry;
+use crate::config::Config;
+use crate::errors::{MonitoringError, Result};
+use crate::metrics::{MetricsAggregator, QualityScore};
+use crate::types::AnalysisReport;
 
 /// Main monitoring orchestrator
 pub struct Monitor {
@@ -102,12 +102,12 @@ impl Monitor {
         let system = System::new_all();
 
         Ok(crate::types::SystemInfo {
-            os: std::env::consts::OS.to_string(),
-            arch: std::env::consts::ARCH.to_string(),
-            rust_version: self.get_rust_version()?,
-            cargo_version: self.get_cargo_version()?,
-            cpu_count: num_cpus::get(),
-            total_memory_mb: (system.total_memory() / 1024 / 1024) as usize,
+            os:                  std::env::consts::OS.to_string(),
+            arch:                std::env::consts::ARCH.to_string(),
+            rust_version:        self.get_rust_version()?,
+            cargo_version:       self.get_cargo_version()?,
+            cpu_count:           num_cpus::get(),
+            total_memory_mb:     (system.total_memory() / 1024 / 1024) as usize,
             available_memory_mb: (system.available_memory() / 1024 / 1024) as usize,
         })
     }

@@ -3,90 +3,92 @@
 //! This module provides comprehensive performance testing utilities with
 //! built-in integration to the rust-ai-ide-performance-monitoring system.
 
-use crate::utils::test_utils::utils;
-use rust_ai_ide_performance_monitoring::{MetricsCollector, PerformanceMonitor};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, Instant};
+
+use rust_ai_ide_performance_monitoring::{MetricsCollector, PerformanceMonitor};
+use serde::{Deserialize, Serialize};
 use sysinfo;
 use tokio::process::Command as AsyncCommand;
+
+use crate::utils::test_utils::utils;
 
 /// Enhanced Performance test configuration with monitoring integration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnhancedPerformanceTestConfig {
-    pub test_name: String,
-    pub iterations: u32,
-    pub enable_profiling: bool,
-    pub output_file: Option<PathBuf>,
-    pub profile: String, // "debug" or "release"
-    pub enable_incremental: bool,
+    pub test_name:                  String,
+    pub iterations:                 u32,
+    pub enable_profiling:           bool,
+    pub output_file:                Option<PathBuf>,
+    pub profile:                    String, // "debug" or "release"
+    pub enable_incremental:         bool,
     pub enable_baseline_comparison: bool,
-    pub baseline_file: Option<PathBuf>,
-    pub regression_threshold: f64,
-    pub environment: String, // "development", "staging", "production"
-    pub monitoring_integration: bool,
-    pub alert_on_regression: bool,
+    pub baseline_file:              Option<PathBuf>,
+    pub regression_threshold:       f64,
+    pub environment:                String, // "development", "staging", "production"
+    pub monitoring_integration:     bool,
+    pub alert_on_regression:        bool,
 }
 
 /// Enhanced Performance test result with monitoring integration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnhancedPerformanceTestResult {
-    pub test_name: String,
-    pub iteration_result: u64,
-    pub total_duration: Duration,
-    pub ops_per_second: f64,
-    pub avg_iteration_time: f64,
-    pub memory_usage: Option<u64>,
-    pub profile: String,
-    pub environment: String,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub test_name:           String,
+    pub iteration_result:    u64,
+    pub total_duration:      Duration,
+    pub ops_per_second:      f64,
+    pub avg_iteration_time:  f64,
+    pub memory_usage:        Option<u64>,
+    pub profile:             String,
+    pub environment:         String,
+    pub timestamp:           chrono::DateTime<chrono::Utc>,
     pub baseline_comparison: Option<BaselineComparison>,
     pub regression_detected: bool,
-    pub monitoring_data: Option<MonitoringData>,
+    pub monitoring_data:     Option<MonitoringData>,
 }
 
 /// Baseline comparison data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BaselineComparison {
-    pub baseline_ops_per_second: f64,
-    pub current_ops_per_second: f64,
-    pub percentage_change: f64,
+    pub baseline_ops_per_second:       f64,
+    pub current_ops_per_second:        f64,
+    pub percentage_change:             f64,
     pub regression_threshold_exceeded: bool,
 }
 
 /// Monitoring data integration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MonitoringData {
-    pub system_metrics: HashMap<String, f64>,
-    pub memory_profile: HashMap<String, u64>,
+    pub system_metrics:    HashMap<String, f64>,
+    pub memory_profile:    HashMap<String, u64>,
     pub cpu_usage_profile: Vec<f64>,
-    pub alerts: Vec<String>,
+    pub alerts:            Vec<String>,
 }
 
 /// Enhanced Performance analyzer with monitoring integration
 pub struct EnhancedPerformanceAnalyzer {
-    project_path: PathBuf,
-    config: EnhancedPerformanceTestConfig,
-    monitor: Option<PerformanceMonitor>,
+    project_path:  PathBuf,
+    config:        EnhancedPerformanceTestConfig,
+    monitor:       Option<PerformanceMonitor>,
     baseline_data: HashMap<String, BaselineData>,
 }
 
 /// Baseline data for historical comparison
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BaselineData {
-    pub test_name: String,
-    pub environment: String,
+    pub test_name:          String,
+    pub environment:        String,
     pub avg_ops_per_second: f64,
-    pub last_updated: chrono::DateTime<chrono::Utc>,
-    pub sample_count: u32,
+    pub last_updated:       chrono::DateTime<chrono::Utc>,
+    pub sample_count:       u32,
 }
 
 /// Comprehensive workspace metrics collector
 pub struct WorkspaceMetricsCollector {
-    workspace_path: PathBuf,
-    metrics_cache: HashMap<String, CrateMetrics>,
+    workspace_path:    PathBuf,
+    metrics_cache:     HashMap<String, CrateMetrics>,
     collection_config: MetricsCollectionConfig,
 }
 
@@ -174,10 +176,7 @@ impl WorkspaceMetricsCollector {
     }
 
     /// Collect metrics for a single crate
-    async fn collect_single_crate_metrics(
-        &self,
-        crate_path: PathBuf,
-    ) -> anyhow::Result<CrateMetrics> {
+    async fn collect_single_crate_metrics(&self, crate_path: PathBuf) -> anyhow::Result<CrateMetrics> {
         let crate_name = crate_path
             .file_name()
             .and_then(|n| n.to_str())
@@ -185,17 +184,17 @@ impl WorkspaceMetricsCollector {
             .to_string();
 
         let mut metrics = CrateMetrics {
-            crate_name: crate_name.clone(),
-            crate_path: crate_path.clone(),
-            build_time_ms: None,
-            test_time_ms: None,
-            binary_size_bytes: None,
-            dependencies_count: 0,
-            loc_count: None,
-            complexity_score: None,
-            last_modified: None,
+            crate_name:           crate_name.clone(),
+            crate_path:           crate_path.clone(),
+            build_time_ms:        None,
+            test_time_ms:         None,
+            binary_size_bytes:    None,
+            dependencies_count:   0,
+            loc_count:            None,
+            complexity_score:     None,
+            last_modified:        None,
             compilation_warnings: 0,
-            compilation_errors: 0,
+            compilation_errors:   0,
         };
 
         // Measure build time
@@ -418,10 +417,7 @@ impl WorkspaceMetricsCollector {
     }
 
     /// Get last modified timestamp for a crate
-    fn get_last_modified(
-        &self,
-        crate_path: &Path,
-    ) -> anyhow::Result<Option<chrono::DateTime<chrono::Utc>>> {
+    fn get_last_modified(&self, crate_path: &Path) -> anyhow::Result<Option<chrono::DateTime<chrono::Utc>>> {
         let src_path = crate_path.join("src");
         if !src_path.exists() {
             return Ok(None);
@@ -438,11 +434,10 @@ impl WorkspaceMetricsCollector {
                     let modified_time = chrono::DateTime::<chrono::Utc>::from(modified);
                     match latest_modified {
                         None => latest_modified = Some(modified_time),
-                        Some(current) => {
+                        Some(current) =>
                             if modified_time > current {
                                 latest_modified = Some(modified_time);
-                            }
-                        }
+                            },
                     }
                 }
             }
@@ -478,29 +473,29 @@ impl WorkspaceMetricsCollector {
 /// Configuration for metrics collection
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricsCollectionConfig {
-    pub enable_detailed_analysis: bool,
-    pub include_build_times: bool,
-    pub include_test_times: bool,
+    pub enable_detailed_analysis:    bool,
+    pub include_build_times:         bool,
+    pub include_test_times:          bool,
     pub include_dependency_analysis: bool,
-    pub parallel_collection: bool,
-    pub timeout_seconds: u64,
-    pub excluded_crates: Vec<String>,
+    pub parallel_collection:         bool,
+    pub timeout_seconds:             u64,
+    pub excluded_crates:             Vec<String>,
 }
 
 /// Metrics for individual crate
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CrateMetrics {
-    pub crate_name: String,
-    pub crate_path: PathBuf,
-    pub build_time_ms: Option<u64>,
-    pub test_time_ms: Option<u64>,
-    pub binary_size_bytes: Option<u64>,
-    pub dependencies_count: usize,
-    pub loc_count: Option<u64>, // Lines of code
-    pub complexity_score: Option<f64>,
-    pub last_modified: Option<chrono::DateTime<chrono::Utc>>,
+    pub crate_name:           String,
+    pub crate_path:           PathBuf,
+    pub build_time_ms:        Option<u64>,
+    pub test_time_ms:         Option<u64>,
+    pub binary_size_bytes:    Option<u64>,
+    pub dependencies_count:   usize,
+    pub loc_count:            Option<u64>, // Lines of code
+    pub complexity_score:     Option<f64>,
+    pub last_modified:        Option<chrono::DateTime<chrono::Utc>>,
     pub compilation_warnings: u32,
-    pub compilation_errors: u32,
+    pub compilation_errors:   u32,
 }
 
 impl EnhancedPerformanceAnalyzer {
@@ -516,18 +511,15 @@ impl EnhancedPerformanceAnalyzer {
 
     /// Create workspace metrics collector
     pub fn create_workspace_collector(&self) -> WorkspaceMetricsCollector {
-        WorkspaceMetricsCollector::new(
-            self.project_path.clone(),
-            MetricsCollectionConfig {
-                enable_detailed_analysis: true,
-                include_build_times: true,
-                include_test_times: true,
-                include_dependency_analysis: true,
-                parallel_collection: true,
-                timeout_seconds: 300,
-                excluded_crates: vec![],
-            },
-        )
+        WorkspaceMetricsCollector::new(self.project_path.clone(), MetricsCollectionConfig {
+            enable_detailed_analysis:    true,
+            include_build_times:         true,
+            include_test_times:          true,
+            include_dependency_analysis: true,
+            parallel_collection:         true,
+            timeout_seconds:             300,
+            excluded_crates:             vec![],
+        })
     }
 
     /// Initialize with performance monitoring integration
@@ -565,11 +557,7 @@ impl EnhancedPerformanceAnalyzer {
     }
 
     /// Perform baseline comparison
-    fn perform_baseline_comparison(
-        &self,
-        test_name: &str,
-        current_ops: f64,
-    ) -> Option<BaselineComparison> {
+    fn perform_baseline_comparison(&self, test_name: &str, current_ops: f64) -> Option<BaselineComparison> {
         if let Some(baseline) = self.baseline_data.get(test_name) {
             let baseline_ops = baseline.avg_ops_per_second;
             let percentage_change = if baseline_ops > 0.0 {
@@ -577,8 +565,7 @@ impl EnhancedPerformanceAnalyzer {
             } else {
                 0.0
             };
-            let regression_threshold_exceeded =
-                percentage_change.abs() > self.config.regression_threshold;
+            let regression_threshold_exceeded = percentage_change.abs() > self.config.regression_threshold;
 
             Some(BaselineComparison {
                 baseline_ops_per_second: baseline_ops,
@@ -627,26 +614,21 @@ impl EnhancedPerformanceAnalyzer {
     }
 
     /// Update baseline data with new results
-    pub async fn update_baseline(
-        &mut self,
-        test_name: &str,
-        new_result: f64,
-    ) -> anyhow::Result<()> {
+    pub async fn update_baseline(&mut self, test_name: &str, new_result: f64) -> anyhow::Result<()> {
         let baseline = self
             .baseline_data
             .entry(test_name.to_string())
             .or_insert(BaselineData {
-                test_name: test_name.to_string(),
-                environment: self.config.environment.clone(),
+                test_name:          test_name.to_string(),
+                environment:        self.config.environment.clone(),
                 avg_ops_per_second: new_result,
-                last_updated: chrono::Utc::now(),
-                sample_count: 0,
+                last_updated:       chrono::Utc::now(),
+                sample_count:       0,
             });
 
         // Simple moving average update
         let alpha = 0.1; // Learning rate
-        baseline.avg_ops_per_second =
-            baseline.avg_ops_per_second * (1.0 - alpha) + new_result * alpha;
+        baseline.avg_ops_per_second = baseline.avg_ops_per_second * (1.0 - alpha) + new_result * alpha;
         baseline.last_updated = chrono::Utc::now();
         baseline.sample_count += 1;
 
@@ -655,18 +637,14 @@ impl EnhancedPerformanceAnalyzer {
     }
 
     /// Run enhanced performance test suite with monitoring and baseline comparison
-    pub async fn run_enhanced_performance_test_suite(
-        &mut self,
-    ) -> anyhow::Result<Vec<EnhancedPerformanceTestResult>> {
+    pub async fn run_enhanced_performance_test_suite(&mut self) -> anyhow::Result<Vec<EnhancedPerformanceTestResult>> {
         println!(
             "=== Running Enhanced Performance Test Suite: {} ===",
             self.config.test_name
         );
         println!(
             "Environment: {}, Monitoring: {}, Baseline Comparison: {}",
-            self.config.environment,
-            self.config.monitoring_integration,
-            self.config.enable_baseline_comparison
+            self.config.environment, self.config.monitoring_integration, self.config.enable_baseline_comparison
         );
 
         let mut results = Vec::new();
@@ -730,8 +708,7 @@ impl EnhancedPerformanceAnalyzer {
 
         // Run I/O-bound workload test with enhanced results
         let (async_result, async_duration) = self.run_async_performance_workload().await?;
-        let async_ops_per_second =
-            self.calculate_ops_per_second(async_result as u64, async_duration);
+        let async_ops_per_second = self.calculate_ops_per_second(async_result as u64, async_duration);
 
         let async_baseline_comparison = if self.config.enable_baseline_comparison {
             self.perform_baseline_comparison(
@@ -817,10 +794,7 @@ impl EnhancedPerformanceAnalyzer {
     }
 
     /// Analyze build performance metrics
-    pub async fn analyze_build_performance(
-        &self,
-        enable_incremental: bool,
-    ) -> anyhow::Result<BuildPerformanceMetrics> {
+    pub async fn analyze_build_performance(&self, enable_incremental: bool) -> anyhow::Result<BuildPerformanceMetrics> {
         // Clean the project first
         utils::clean_and_prepare_project(&self.project_path)?;
 
@@ -1047,14 +1021,14 @@ impl EnhancedPerformanceAnalyzer {
         use tokio::fs;
 
         let export_data = EnhancedPerfExportData {
-            test_name: self.config.test_name.clone(),
-            profile: self.config.profile.clone(),
-            iterations: self.config.iterations,
-            environment: self.config.environment.clone(),
-            timestamp: chrono::Utc::now().to_rfc3339(),
-            results: results.to_vec(),
-            config: self.config.clone(),
-            system_info: self.collect_system_info().await,
+            test_name:        self.config.test_name.clone(),
+            profile:          self.config.profile.clone(),
+            iterations:       self.config.iterations,
+            environment:      self.config.environment.clone(),
+            timestamp:        chrono::Utc::now().to_rfc3339(),
+            results:          results.to_vec(),
+            config:           self.config.clone(),
+            system_info:      self.collect_system_info().await,
             baseline_updated: !self.baseline_data.is_empty(),
         };
 
@@ -1069,9 +1043,7 @@ impl EnhancedPerformanceAnalyzer {
     }
 
     /// Collect comprehensive workspace metrics
-    pub async fn collect_workspace_metrics(
-        &mut self,
-    ) -> anyhow::Result<HashMap<String, CrateMetrics>> {
+    pub async fn collect_workspace_metrics(&mut self) -> anyhow::Result<HashMap<String, CrateMetrics>> {
         let collector = self.create_workspace_collector();
         collector.collect_all_crate_metrics().await
     }
@@ -1151,22 +1123,22 @@ async fn run_async_workload(iterations: u32) -> u64 {
 /// Build performance metrics
 #[derive(Debug, Clone)]
 pub struct BuildPerformanceMetrics {
-    pub total_build_time_ms: f64,
+    pub total_build_time_ms:    f64,
     pub incremental_build_time: Option<Duration>,
-    pub profile: String,
+    pub profile:                String,
 }
 
 /// Export data structure for enhanced performance results
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 struct EnhancedPerfExportData {
-    test_name: String,
-    profile: String,
-    iterations: u32,
-    environment: String,
-    timestamp: String,
-    results: Vec<EnhancedPerformanceTestResult>,
-    config: EnhancedPerformanceTestConfig,
-    system_info: HashMap<String, String>,
+    test_name:        String,
+    profile:          String,
+    iterations:       u32,
+    environment:      String,
+    timestamp:        String,
+    results:          Vec<EnhancedPerformanceTestResult>,
+    config:           EnhancedPerformanceTestConfig,
+    system_info:      HashMap<String, String>,
     baseline_updated: bool,
 }
 
@@ -1184,11 +1156,7 @@ impl PerformanceReportGenerator {
         for result in results {
             report.push_str(&format!(
                 "Test: {}\nProfile: {}\nResult: {}\nDuration: {:.2?}\nOps/second: {:.2}\n\n",
-                result.test_name,
-                result.profile,
-                result.iteration_result,
-                result.total_duration,
-                result.ops_per_second
+                result.test_name, result.profile, result.iteration_result, result.total_duration, result.ops_per_second
             ));
         }
 
@@ -1288,10 +1256,12 @@ pub async fn run_async_workload(iterations: u32) -> u64 {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
+    use tokio::sync::Mutex;
+
     use super::*;
     use crate::utils::test_utils::utils;
-    use std::sync::Arc;
-    use tokio::sync::Mutex;
 
     #[tokio::test]
     async fn test_enhanced_performance_analyzer_creation() {
@@ -1300,23 +1270,22 @@ mod tests {
 
         // If the project doesn't exist, create a minimal one
         if !project_path.exists() {
-            TempPerformanceProject::create_minimal_project("test_performance_project", &temp_dir)
-                .unwrap();
+            TempPerformanceProject::create_minimal_project("test_performance_project", &temp_dir).unwrap();
         }
 
         let config = EnhancedPerformanceTestConfig {
-            test_name: "test_suite".to_string(),
-            iterations: 100,
-            enable_profiling: false,
-            output_file: None,
-            profile: "debug".to_string(),
-            enable_incremental: false,
+            test_name:                  "test_suite".to_string(),
+            iterations:                 100,
+            enable_profiling:           false,
+            output_file:                None,
+            profile:                    "debug".to_string(),
+            enable_incremental:         false,
             enable_baseline_comparison: true,
-            baseline_file: Some(temp_dir.join("baseline.json")),
-            regression_threshold: 5.0,
-            environment: "test".to_string(),
-            monitoring_integration: true,
-            alert_on_regression: false,
+            baseline_file:              Some(temp_dir.join("baseline.json")),
+            regression_threshold:       5.0,
+            environment:                "test".to_string(),
+            monitoring_integration:     true,
+            alert_on_regression:        false,
         };
 
         let mut analyzer = EnhancedPerformanceAnalyzer::new(project_path, config);
@@ -1332,33 +1301,32 @@ mod tests {
         let baseline_file = temp_dir.join("test_baseline.json");
 
         let config = EnhancedPerformanceTestConfig {
-            test_name: "baseline_test".to_string(),
-            iterations: 10,
-            enable_profiling: false,
-            output_file: None,
-            profile: "debug".to_string(),
-            enable_incremental: false,
+            test_name:                  "baseline_test".to_string(),
+            iterations:                 10,
+            enable_profiling:           false,
+            output_file:                None,
+            profile:                    "debug".to_string(),
+            enable_incremental:         false,
             enable_baseline_comparison: true,
-            baseline_file: Some(baseline_file.clone()),
-            regression_threshold: 10.0,
-            environment: "test".to_string(),
-            monitoring_integration: false,
-            alert_on_regression: false,
+            baseline_file:              Some(baseline_file.clone()),
+            regression_threshold:       10.0,
+            environment:                "test".to_string(),
+            monitoring_integration:     false,
+            alert_on_regression:        false,
         };
 
         let mut analyzer = EnhancedPerformanceAnalyzer::new(temp_dir.join("test_project"), config);
 
         // Add baseline data
-        analyzer.baseline_data.insert(
-            "baseline_test_sync".to_string(),
-            BaselineData {
-                test_name: "baseline_test_sync".to_string(),
-                environment: "test".to_string(),
+        analyzer
+            .baseline_data
+            .insert("baseline_test_sync".to_string(), BaselineData {
+                test_name:          "baseline_test_sync".to_string(),
+                environment:        "test".to_string(),
                 avg_ops_per_second: 100.0,
-                last_updated: chrono::Utc::now(),
-                sample_count: 1,
-            },
-        );
+                last_updated:       chrono::Utc::now(),
+                sample_count:       1,
+            });
 
         // Test baseline comparison
         let comparison = analyzer.perform_baseline_comparison("baseline_test_sync", 95.0);
@@ -1385,18 +1353,18 @@ mod tests {
     #[test]
     fn test_performance_report_generation() {
         let results = vec![EnhancedPerformanceTestResult {
-            test_name: "test1".to_string(),
-            iteration_result: 1000,
-            total_duration: Duration::from_millis(100),
-            ops_per_second: 10.0,
-            avg_iteration_time: 0.1,
-            memory_usage: None,
-            profile: "debug".to_string(),
-            environment: "test".to_string(),
-            timestamp: chrono::Utc::now(),
+            test_name:           "test1".to_string(),
+            iteration_result:    1000,
+            total_duration:      Duration::from_millis(100),
+            ops_per_second:      10.0,
+            avg_iteration_time:  0.1,
+            memory_usage:        None,
+            profile:             "debug".to_string(),
+            environment:         "test".to_string(),
+            timestamp:           chrono::Utc::now(),
             baseline_comparison: None,
             regression_detected: false,
-            monitoring_data: None,
+            monitoring_data:     None,
         }];
 
         let text_report = PerformanceReportGenerator::generate_text_report(&results);
@@ -1409,23 +1377,23 @@ mod tests {
     #[test]
     fn test_regression_detection() {
         let results = vec![EnhancedPerformanceTestResult {
-            test_name: "test_reg".to_string(),
-            iteration_result: 1000,
-            total_duration: Duration::from_millis(100),
-            ops_per_second: 10.0,
-            avg_iteration_time: 0.1,
-            memory_usage: None,
-            profile: "debug".to_string(),
-            environment: "test".to_string(),
-            timestamp: chrono::Utc::now(),
+            test_name:           "test_reg".to_string(),
+            iteration_result:    1000,
+            total_duration:      Duration::from_millis(100),
+            ops_per_second:      10.0,
+            avg_iteration_time:  0.1,
+            memory_usage:        None,
+            profile:             "debug".to_string(),
+            environment:         "test".to_string(),
+            timestamp:           chrono::Utc::now(),
             baseline_comparison: Some(BaselineComparison {
-                baseline_ops_per_second: 15.0,
-                current_ops_per_second: 10.0,
-                percentage_change: -33.33,
+                baseline_ops_per_second:       15.0,
+                current_ops_per_second:        10.0,
+                percentage_change:             -33.33,
                 regression_threshold_exceeded: true,
             }),
             regression_detected: true,
-            monitoring_data: None,
+            monitoring_data:     None,
         }];
 
         // Test that regression is properly detected

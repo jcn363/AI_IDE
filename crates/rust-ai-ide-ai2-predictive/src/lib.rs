@@ -3,23 +3,24 @@
 //! Revolutionary AI-powered development assistant that predicts issues,
 //! suggests optimizations, and enhances productivity through machine learning.
 
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::sync::Arc;
+
 #[cfg(feature = "ml_backend")]
 use ml_framework::{Model, ModelOutput};
 use rust_ai_ide_ai1_architecture::ArchitectureModernizationEngine;
 use rust_ai_ide_ai1_semantic::{SemanticAnalysis, SemanticConfig, SemanticUnderstandingEngine};
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 
 /// Main predictive AI development engine
 #[derive(Debug)]
 pub struct PredictiveAIDevelopmentEngine {
-    semantic_engine: SemanticUnderstandingEngine,
+    semantic_engine:     SemanticUnderstandingEngine,
     architecture_engine: ArchitectureModernizationEngine,
-    prediction_models: PredictionModelManager,
-    developer_context: DeveloperContextTracker,
-    learning_assistant: AdaptiveLearningAssistant,
+    prediction_models:   PredictionModelManager,
+    developer_context:   DeveloperContextTracker,
+    learning_assistant:  AdaptiveLearningAssistant,
     predictive_analyzer: PredictiveCodeAnalyzer,
 }
 
@@ -27,11 +28,11 @@ impl PredictiveAIDevelopmentEngine {
     /// Initialize the predictive AI development engine
     pub async fn new() -> Self {
         Self {
-            semantic_engine: SemanticUnderstandingEngine::new(SemanticConfig::default()),
+            semantic_engine:     SemanticUnderstandingEngine::new(SemanticConfig::default()),
             architecture_engine: ArchitectureModernizationEngine::new(),
-            prediction_models: PredictionModelManager::new().await,
-            developer_context: DeveloperContextTracker::new(),
-            learning_assistant: AdaptiveLearningAssistant::new(),
+            prediction_models:   PredictionModelManager::new().await,
+            developer_context:   DeveloperContextTracker::new(),
+            learning_assistant:  AdaptiveLearningAssistant::new(),
             predictive_analyzer: PredictiveCodeAnalyzer::new(),
         }
     }
@@ -114,8 +115,7 @@ impl PredictiveAIDevelopmentEngine {
             .unwrap_or_default();
 
         // Predict development conflicts
-        let conflict_predictions =
-            self.predict_development_conflicts(project_state, recent_changes, team_context);
+        let conflict_predictions = self.predict_development_conflicts(project_state, recent_changes, team_context);
 
         // Generate proactive recommendations
         let recommendations = self.generate_proactive_recommendations(
@@ -220,10 +220,10 @@ impl PredictiveAIDevelopmentEngine {
         for symbol in &analysis.context.definitions {
             if symbol.location.start_line < 10 && symbol.kind.to_string() == "Function" {
                 suggestions.push(CompletionSuggestion {
-                    completion_type: CompletionType::API,
-                    text: symbol.name.clone(),
-                    description: format!("Commonly used API in your project: {}", symbol.name),
-                    score: 0.85,
+                    completion_type:  CompletionType::API,
+                    text:             symbol.name.clone(),
+                    description:      format!("Commonly used API in your project: {}", symbol.name),
+                    score:            0.85,
                     predicted_impact: ImpactCategory::Productivity,
                 });
             }
@@ -251,10 +251,10 @@ impl PredictiveAIDevelopmentEngine {
             // Pattern: for loop completion
             if current_line.trim().starts_with("for ") && !current_line.contains('}') {
                 suggestions.push(CompletionSuggestion {
-                    completion_type: CompletionType::Pattern,
-                    text: "item in collection {\n\t\n}".to_string(),
-                    description: "Complete for-each pattern with indentation",
-                    score: 0.92,
+                    completion_type:  CompletionType::Pattern,
+                    text:             "item in collection {\n\t\n}".to_string(),
+                    description:      "Complete for-each pattern with indentation",
+                    score:            0.92,
                     predicted_impact: ImpactCategory::Completeness,
                 });
             }
@@ -268,10 +268,10 @@ impl PredictiveAIDevelopmentEngine {
                     .any(|line| line.contains("match "))
             {
                 suggestions.push(CompletionSuggestion {
-                    completion_type: CompletionType::ErrorHandling,
-                    text: ".unwrap_or_else(|e| { /* handle error */ })".to_string(),
-                    description: "Add error handling to prevent runtime panics",
-                    score: 0.88,
+                    completion_type:  CompletionType::ErrorHandling,
+                    text:             ".unwrap_or_else(|e| { /* handle error */ })".to_string(),
+                    description:      "Add error handling to prevent runtime panics",
+                    score:            0.88,
                     predicted_impact: ImpactCategory::Reliability,
                 });
             }
@@ -292,10 +292,10 @@ impl PredictiveAIDevelopmentEngine {
         if analysis.context.analyzed_files.is_empty() {
             // Single-file analysis warning
             suggestions.push(CompletionSuggestion {
-                completion_type: CompletionType::Guard,
-                text: "// Note: Consider modular structure for maintainability".to_string(),
-                description: "Preventive suggestion for code organization",
-                score: 0.75,
+                completion_type:  CompletionType::Guard,
+                text:             "// Note: Consider modular structure for maintainability".to_string(),
+                description:      "Preventive suggestion for code organization",
+                score:            0.75,
                 predicted_impact: ImpactCategory::Maintainability,
             });
         }
@@ -308,10 +308,10 @@ impl PredictiveAIDevelopmentEngine {
             > 10.0
         {
             suggestions.push(CompletionSuggestion {
-                completion_type: CompletionType::Optimization,
-                text: "// TODO: Consider breaking down complex functions".to_string(),
-                description: "Preventive maintenance suggestion for complex code",
-                score: 0.82,
+                completion_type:  CompletionType::Optimization,
+                text:             "// TODO: Consider breaking down complex functions".to_string(),
+                description:      "Preventive maintenance suggestion for complex code",
+                score:            0.82,
                 predicted_impact: ImpactCategory::Complexity,
             });
         }
@@ -338,17 +338,17 @@ impl PredictiveAIDevelopmentEngine {
                 .into_iter()
                 .take(5)
                 .collect(),
-            common_patterns: vec![
+            common_patterns:          vec![
                 "Test-Driven Development".to_string(),
                 "Pair Programming".to_string(),
                 "Continuous Integration".to_string(),
             ],
-            improvement_suggestions: vec![
+            improvement_suggestions:  vec![
                 "Increase code review frequency".to_string(),
                 "Adopt stricter linting rules".to_string(),
                 "Implement automated testing".to_string(),
             ],
-            collaboration_score: 0.87,
+            collaboration_score:      0.87,
         }
     }
 
@@ -370,17 +370,17 @@ impl PredictiveAIDevelopmentEngine {
         }
 
         ArchitecturalInsights {
-            drift_score: 0.35,
+            drift_score:       0.35,
             problematic_areas: vec![
                 "cross-cutting concerns".to_string(),
                 "data access layer coupling".to_string(),
             ],
-            recommendations: vec![
+            recommendations:   vec![
                 "Introduce dependency inversion".to_string(),
                 "Implement interface segregation".to_string(),
                 "Create separate business logic layer".to_string(),
             ],
-            confidence_level: 0.78,
+            confidence_level:  0.78,
         }
     }
 
@@ -393,17 +393,17 @@ impl PredictiveAIDevelopmentEngine {
         // Analyze potential merge conflicts and development conflicts
         ConflictPredictions {
             merge_conflict_probability: 0.25,
-            conflicting_changes: recent_changes
+            conflicting_changes:        recent_changes
                 .iter()
                 .filter(|change| change.conflicts_with.is_some())
                 .map(|change| format!("{} conflicts with team changes", change.file_path))
                 .collect(),
-            resolution_suggestions: vec![
+            resolution_suggestions:     vec![
                 "Review conflicting changes before merging".to_string(),
                 "Implement feature flags for conflicting functionality".to_string(),
                 "Schedule team meetings for conflict resolution".to_string(),
             ],
-            risk_assessment: "Medium".to_string(),
+            risk_assessment:            "Medium".to_string(),
         }
     }
 
@@ -418,30 +418,27 @@ impl PredictiveAIDevelopmentEngine {
         if team_insights.collaboration_score < 0.8 {
             recommendations.push(ProactiveRecommendation {
                 recommendation_type: RecommendationType::Teamwork,
-                description: "Increase team collaboration through more frequent code reviews"
-                    .to_string(),
-                priority: Priority::High,
-                expected_impact: "Improved code quality and team knowledge sharing".to_string(),
+                description:         "Increase team collaboration through more frequent code reviews".to_string(),
+                priority:            Priority::High,
+                expected_impact:     "Improved code quality and team knowledge sharing".to_string(),
             });
         }
 
         if architectural_insights.drift_score > 0.4 {
             recommendations.push(ProactiveRecommendation {
                 recommendation_type: RecommendationType::Architecture,
-                description: "Address architectural drift to maintain system integrity".to_string(),
-                priority: Priority::Critical,
-                expected_impact: "Better maintainability and reduced technical debt".to_string(),
+                description:         "Address architectural drift to maintain system integrity".to_string(),
+                priority:            Priority::Critical,
+                expected_impact:     "Better maintainability and reduced technical debt".to_string(),
             });
         }
 
         if conflict_predictions.merge_conflict_probability > 0.3 {
             recommendations.push(ProactiveRecommendation {
                 recommendation_type: RecommendationType::Development,
-                description: "Implement more frequent integrations to reduce merge conflict risk"
-                    .to_string(),
-                priority: Priority::Medium,
-                expected_impact: "Smoother development process and fewer merge conflicts"
-                    .to_string(),
+                description:         "Implement more frequent integrations to reduce merge conflict risk".to_string(),
+                priority:            Priority::Medium,
+                expected_impact:     "Smoother development process and fewer merge conflicts".to_string(),
             });
         }
 
@@ -474,63 +471,63 @@ pub trait PredictionModel {
 /// Prediction result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PredictionResult {
-    pub error_predictions: Vec<ErrorPrediction>,
-    pub performance_predictions: Vec<PerformancePrediction>,
-    pub intelligent_completions: Vec<CompletionSuggestion>,
+    pub error_predictions:        Vec<ErrorPrediction>,
+    pub performance_predictions:  Vec<PerformancePrediction>,
+    pub intelligent_completions:  Vec<CompletionSuggestion>,
     pub optimization_suggestions: Vec<OptimizationSuggestion>,
-    pub development_predictions: Vec<DevelopmentPrediction>,
-    pub confidence_score: f64,
-    pub analysis_timestamp: chrono::DateTime<chrono::Utc>,
+    pub development_predictions:  Vec<DevelopmentPrediction>,
+    pub confidence_score:         f64,
+    pub analysis_timestamp:       chrono::DateTime<chrono::Utc>,
 }
 
 /// Error prediction
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorPrediction {
-    pub error_type: String,
-    pub location: CodeLocation,
-    pub confidence: f64,
-    pub severity: Severity,
-    pub description: String,
+    pub error_type:       String,
+    pub location:         CodeLocation,
+    pub confidence:       f64,
+    pub severity:         Severity,
+    pub description:      String,
     pub mitigation_steps: Vec<String>,
 }
 
 /// Performance prediction
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformancePrediction {
-    pub code_segment: CodeLocation,
+    pub code_segment:                 CodeLocation,
     pub predicted_performance_impact: PerformanceImpact,
-    pub bottleneck_probability: f32,
-    pub optimization_suggestions: Vec<String>,
+    pub bottleneck_probability:       f32,
+    pub optimization_suggestions:     Vec<String>,
 }
 
 /// Intelligent completion suggestion
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompletionSuggestion {
-    pub completion_type: CompletionType,
-    pub text: String,
-    pub description: String,
-    pub score: f64,
+    pub completion_type:  CompletionType,
+    pub text:             String,
+    pub description:      String,
+    pub score:            f64,
     pub predicted_impact: ImpactCategory,
 }
 
 /// Development prediction
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DevelopmentPrediction {
-    pub prediction_type: String,
-    pub confidence: f64,
-    pub timeframe_months: u32,
-    pub description: String,
+    pub prediction_type:         String,
+    pub confidence:              f64,
+    pub timeframe_months:        u32,
+    pub description:             String,
     pub preparation_suggestions: Vec<String>,
 }
 
 /// Code location
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeLocation {
-    pub file: String,
-    pub start_line: usize,
-    pub end_line: usize,
+    pub file:         String,
+    pub start_line:   usize,
+    pub end_line:     usize,
     pub start_column: usize,
-    pub end_column: usize,
+    pub end_column:   usize,
 }
 
 /// Performance impact
@@ -576,9 +573,9 @@ pub enum Severity {
 /// Project context
 #[derive(Debug, Clone)]
 pub struct ProjectContext {
-    pub language: &'static str,
-    pub project_name: String,
-    pub dependencies: HashSet<String>,
+    pub language:      &'static str,
+    pub project_name:  String,
+    pub dependencies:  HashSet<String>,
     pub patterns_used: Vec<String>,
 }
 
@@ -586,9 +583,9 @@ pub struct ProjectContext {
 #[derive(Debug, Clone)]
 pub struct DeveloperAction {
     pub action_type: String,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
-    pub file_path: String,
-    pub changes: Vec<String>,
+    pub timestamp:   chrono::DateTime<chrono::Utc>,
+    pub file_path:   String,
+    pub changes:     Vec<String>,
 }
 
 /// Developer context tracker
@@ -623,9 +620,9 @@ impl AdaptiveLearningAssistant {
         historical_data: &[HistoricalDevelopmentData],
     ) -> Result<PatternInsights, PredictiveError> {
         Ok(PatternInsights {
-            error_patterns: vec![],
+            error_patterns:      vec![],
             successful_patterns: vec![],
-            improvement_trends: vec![],
+            improvement_trends:  vec![],
             learning_confidence: 0.85,
         })
     }
@@ -648,10 +645,7 @@ impl AdaptiveLearningAssistant {
         ])
     }
 
-    pub fn calculate_confidence_levels(
-        &self,
-        _historical_data: &[HistoricalDevelopmentData],
-    ) -> HashMap<String, f64> {
+    pub fn calculate_confidence_levels(&self, _historical_data: &[HistoricalDevelopmentData]) -> HashMap<String, f64> {
         let mut confidence_levels = HashMap::new();
         confidence_levels.insert("error_prediction".to_string(), 0.85);
         confidence_levels.insert("performance_prediction".to_string(), 0.78);
@@ -681,17 +675,17 @@ impl PredictiveCodeAnalyzer {
         // Check for null pointer dereferences
         if code.contains("unsafe") && code.contains("as_ref()") {
             predictions.push(ErrorPrediction {
-                error_type: "Potential Null Pointer Dereference".to_string(),
-                location: CodeLocation {
-                    file: "current".to_string(),
-                    start_line: 0,
-                    end_line: 0,
+                error_type:       "Potential Null Pointer Dereference".to_string(),
+                location:         CodeLocation {
+                    file:         "current".to_string(),
+                    start_line:   0,
+                    end_line:     0,
                     start_column: 0,
-                    end_column: 0,
+                    end_column:   0,
                 },
-                confidence: 0.75,
-                severity: Severity::High,
-                description: "Unsafe code with potential null dereference".to_string(),
+                confidence:       0.75,
+                severity:         Severity::High,
+                description:      "Unsafe code with potential null dereference".to_string(),
                 mitigation_steps: vec![
                     "Add null checks before dereferencing".to_string(),
                     "Consider using safe abstractions".to_string(),
@@ -708,17 +702,17 @@ impl PredictiveCodeAnalyzer {
             > 15.0
         {
             predictions.push(ErrorPrediction {
-                error_type: "High Complexity Function".to_string(),
-                location: CodeLocation {
-                    file: "current".to_string(),
-                    start_line: 0,
-                    end_line: 0,
+                error_type:       "High Complexity Function".to_string(),
+                location:         CodeLocation {
+                    file:         "current".to_string(),
+                    start_line:   0,
+                    end_line:     0,
                     start_column: 0,
-                    end_column: 0,
+                    end_column:   0,
                 },
-                confidence: 0.85,
-                severity: Severity::Medium,
-                description: "Function complexity may lead to maintenance issues".to_string(),
+                confidence:       0.85,
+                severity:         Severity::Medium,
+                description:      "Function complexity may lead to maintenance issues".to_string(),
                 mitigation_steps: vec![
                     "Break down complex functions".to_string(),
                     "Extract helper functions".to_string(),
@@ -730,24 +724,21 @@ impl PredictiveCodeAnalyzer {
         predictions
     }
 
-    pub async fn analyze_performance_impact(
-        &self,
-        semantic_analysis: &SemanticAnalysis,
-    ) -> Vec<PerformancePrediction> {
+    pub async fn analyze_performance_impact(&self, semantic_analysis: &SemanticAnalysis) -> Vec<PerformancePrediction> {
         let mut predictions = Vec::new();
 
         if semantic_analysis.context.complexity_metrics.total_lines > 1000 {
             predictions.push(PerformancePrediction {
-                code_segment: CodeLocation {
-                    file: "current".to_string(),
-                    start_line: 0,
-                    end_line: semantic_analysis.context.complexity_metrics.total_lines as usize,
+                code_segment:                 CodeLocation {
+                    file:         "current".to_string(),
+                    start_line:   0,
+                    end_line:     semantic_analysis.context.complexity_metrics.total_lines as usize,
                     start_column: 0,
-                    end_column: 0,
+                    end_column:   0,
                 },
                 predicted_performance_impact: PerformanceImpact::Negative,
-                bottleneck_probability: 0.6,
-                optimization_suggestions: vec![
+                bottleneck_probability:       0.6,
+                optimization_suggestions:     vec![
                     "Consider lazy loading".to_string(),
                     "Implement caching mechanisms".to_string(),
                     "Optimize memory usage".to_string(),
@@ -768,18 +759,17 @@ impl PredictiveCodeAnalyzer {
         // Check for performance anti-patterns
         if code.contains("vec!") && semantic_analysis.context.complexity_metrics.total_lines > 100 {
             suggestions.push(OptimizationSuggestion {
-                suggestion_type: "Memory Optimization".to_string(),
-                location: CodeLocation {
-                    file: "current".to_string(),
-                    start_line: 0,
-                    end_line: 0,
+                suggestion_type:       "Memory Optimization".to_string(),
+                location:              CodeLocation {
+                    file:         "current".to_string(),
+                    start_line:   0,
+                    end_line:     0,
                     start_column: 0,
-                    end_column: 0,
+                    end_column:   0,
                 },
-                impact_score: 7,
+                impact_score:          7,
                 implementation_effort: 3,
-                description: "Consider using alternative data structures for memory efficiency"
-                    .to_string(),
+                description:           "Consider using alternative data structures for memory efficiency".to_string(),
                 predicted_improvement: 25.0,
             });
         }
@@ -787,19 +777,18 @@ impl PredictiveCodeAnalyzer {
         // Check for algorithmic optimizations
         if code.contains("for ") && code.contains("nested") {
             suggestions.push(OptimizationSuggestion {
-                suggestion_type: "Algorithm Optimization".to_string(),
-                location: CodeLocation {
-                    file: "current".to_string(),
-                    start_line: 0,
-                    end_line: 0,
+                suggestion_type:       "Algorithm Optimization".to_string(),
+                location:              CodeLocation {
+                    file:         "current".to_string(),
+                    start_line:   0,
+                    end_line:     0,
                     start_column: 0,
-                    end_column: 0,
+                    end_column:   0,
                 },
-                impact_score: 8,
+                impact_score:          8,
                 implementation_effort: 5,
-                description:
-                    "Nested loops may cause performance bottlenecks - consider optimization"
-                        .to_string(),
+                description:           "Nested loops may cause performance bottlenecks - consider optimization"
+                    .to_string(),
                 predicted_improvement: 40.0,
             });
         }
@@ -813,12 +802,11 @@ impl PredictiveCodeAnalyzer {
         _user_actions: &[DeveloperAction],
     ) -> Result<Vec<DevelopmentPrediction>, PredictiveError> {
         Ok(vec![DevelopmentPrediction {
-            prediction_type: "Technical Debt Increase".to_string(),
-            confidence: 0.75,
-            timeframe_months: 6,
-            description:
-                "Projected increase in technical debt based on current development patterns"
-                    .to_string(),
+            prediction_type:         "Technical Debt Increase".to_string(),
+            confidence:              0.75,
+            timeframe_months:        6,
+            description:             "Projected increase in technical debt based on current development patterns"
+                .to_string(),
             preparation_suggestions: vec![
                 "Schedule regular refactoring sprints".to_string(),
                 "Implement stricter code reviews".to_string(),
@@ -833,58 +821,58 @@ impl PredictiveCodeAnalyzer {
 /// Optimization suggestion
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OptimizationSuggestion {
-    pub suggestion_type: String,
-    pub location: CodeLocation,
-    pub impact_score: u32,
+    pub suggestion_type:       String,
+    pub location:              CodeLocation,
+    pub impact_score:          u32,
     pub implementation_effort: u32,
-    pub description: String,
+    pub description:           String,
     pub predicted_improvement: f32,
 }
 
 /// Pattern knowledge
 #[derive(Debug, Clone)]
 pub struct PatternKnowledge {
-    pub pattern_id: String,
+    pub pattern_id:       String,
     pub confidence_score: f64,
-    pub usage_count: u32,
-    pub success_rate: f64,
+    pub usage_count:      u32,
+    pub success_rate:     f64,
 }
 
 /// Prediction input
 #[derive(Debug)]
 pub struct PredictionInput {
     pub features: Vec<f32>,
-    pub context: HashMap<String, String>,
+    pub context:  HashMap<String, String>,
 }
 
 /// Prediction output
 #[derive(Debug)]
 pub struct PredictionOutput {
     pub predictions: Vec<f32>,
-    pub confidence: f64,
+    pub confidence:  f64,
 }
 
 /// Project state
 #[derive(Debug)]
 pub struct ProjectState {
-    pub codebase: rust_ai_ide_ai1_architecture::Codebase,
-    pub active_branches: Vec<String>,
+    pub codebase:           rust_ai_ide_ai1_architecture::Codebase,
+    pub active_branches:    Vec<String>,
     pub current_developers: Vec<String>,
 }
 
 /// Code change
 #[derive(Debug)]
 pub struct CodeChange {
-    pub file_path: String,
-    pub change_type: String,
+    pub file_path:      String,
+    pub change_type:    String,
     pub conflicts_with: Option<String>,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:      chrono::DateTime<chrono::Utc>,
 }
 
 /// Team context
 #[derive(Debug)]
 pub struct TeamContext {
-    pub contributors: Vec<String>,
+    pub contributors:           Vec<String>,
     pub collaboration_patterns: Vec<String>,
     pub communication_channels: Vec<String>,
 }
@@ -892,90 +880,90 @@ pub struct TeamContext {
 /// Proactive assistance
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProactiveAssistance {
-    pub team_insights: TeamInsights,
+    pub team_insights:          TeamInsights,
     pub architectural_insights: ArchitecturalInsights,
-    pub conflict_predictions: ConflictPredictions,
-    pub recommendations: Vec<ProactiveRecommendation>,
-    pub generated_at: chrono::DateTime<chrono::Utc>,
+    pub conflict_predictions:   ConflictPredictions,
+    pub recommendations:        Vec<ProactiveRecommendation>,
+    pub generated_at:           chrono::DateTime<chrono::Utc>,
 }
 
 /// Team insights
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TeamInsights {
     pub most_active_contributors: Vec<String>,
-    pub common_patterns: Vec<String>,
-    pub improvement_suggestions: Vec<String>,
-    pub collaboration_score: f64,
+    pub common_patterns:          Vec<String>,
+    pub improvement_suggestions:  Vec<String>,
+    pub collaboration_score:      f64,
 }
 
 /// Architectural insights
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchitecturalInsights {
-    pub drift_score: f64,
+    pub drift_score:       f64,
     pub problematic_areas: Vec<String>,
-    pub recommendations: Vec<String>,
-    pub confidence_level: f64,
+    pub recommendations:   Vec<String>,
+    pub confidence_level:  f64,
 }
 
 /// Conflict predictions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictPredictions {
     pub merge_conflict_probability: f64,
-    pub conflicting_changes: Vec<String>,
-    pub resolution_suggestions: Vec<String>,
-    pub risk_assessment: String,
+    pub conflicting_changes:        Vec<String>,
+    pub resolution_suggestions:     Vec<String>,
+    pub risk_assessment:            String,
 }
 
 /// Proactive recommendation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProactiveRecommendation {
     pub recommendation_type: RecommendationType,
-    pub description: String,
-    pub priority: Priority,
-    pub expected_impact: String,
+    pub description:         String,
+    pub priority:            Priority,
+    pub expected_impact:     String,
 }
 
 /// ML insights
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MLInsights {
-    pub pattern_insights: PatternInsights,
-    pub pattern_based_predictions: Vec<PatternPrediction>,
+    pub pattern_insights:             PatternInsights,
+    pub pattern_based_predictions:    Vec<PatternPrediction>,
     pub personalized_recommendations: Vec<String>,
-    pub confidence_levels: HashMap<String, f64>,
+    pub confidence_levels:            HashMap<String, f64>,
 }
 
 /// Pattern insights
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PatternInsights {
-    pub error_patterns: Vec<String>,
+    pub error_patterns:      Vec<String>,
     pub successful_patterns: Vec<String>,
-    pub improvement_trends: Vec<String>,
+    pub improvement_trends:  Vec<String>,
     pub learning_confidence: f64,
 }
 
 /// Pattern prediction
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PatternPrediction {
-    pub pattern_type: String,
-    pub probability: f64,
+    pub pattern_type:    String,
+    pub probability:     f64,
     pub expected_impact: String,
 }
 
 /// Historical development data
 #[derive(Debug, Clone)]
 pub struct HistoricalDevelopmentData {
-    pub developer_id: String,
-    pub file_changes: Vec<FileChange>,
+    pub developer_id:        String,
+    pub file_changes:        Vec<FileChange>,
     pub error_introductions: Vec<String>,
-    pub successes: Vec<String>,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub successes:           Vec<String>,
+    pub timestamp:           chrono::DateTime<chrono::Utc>,
 }
 
 /// File change
 #[derive(Debug, Clone)]
 pub struct FileChange {
-    pub file_path: String,
-    pub change_type: String,
+    pub file_path:          String,
+    pub change_type:        String,
     pub success_indicators: Vec<String>,
 }
 
@@ -1022,7 +1010,9 @@ pub enum PredictiveError {
 // ```
 // use rust_ai_ide_ai2_predictive::PredictiveAIDevelopmentEngine;
 // let mut engine = PredictiveAIDevelopmentEngine::new().await;
-// let predictions = engine.predict_and_suggest(code, position, &project_context, &actions).await?;
+// let predictions = engine
+//     .predict_and_suggest(code, position, &project_context, &actions)
+//     .await?;
 // ```
 
 pub use PredictiveAIDevelopmentEngine;

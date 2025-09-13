@@ -1,14 +1,12 @@
-use crate::{
-    integration::{
-        NodeInfo, UnifiedCargoError, UnifiedCargoService, UnifiedEdge, UnifiedGraph, UnifiedNode,
-    },
-    license::LicenseComplianceChecker,
-    security::VulnerabilityScanner,
-};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
 use tauri::State;
+
+use crate::integration::{NodeInfo, UnifiedCargoError, UnifiedCargoService, UnifiedEdge, UnifiedGraph, UnifiedNode};
+use crate::license::LicenseComplianceChecker;
+use crate::security::VulnerabilityScanner;
 
 #[tauri::command]
 pub async fn check_vulnerabilities(
@@ -58,11 +56,11 @@ pub async fn check_dependency_updates(
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GraphNode {
-    id: String,
-    name: String,
-    version: String,
+    id:              String,
+    name:            String,
+    version:         String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    license: Option<String>,
+    license:         Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     vulnerabilities: Vec<String>,
 }
@@ -72,7 +70,7 @@ pub struct GraphLink {
     source: String,
     target: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    label: Option<String>,
+    label:  Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -94,10 +92,10 @@ pub async fn get_dependency_graph(project_path: PathBuf) -> Result<DependencyGra
         .nodes
         .into_iter()
         .map(|node| GraphNode {
-            id: node.id.clone(),
-            name: node.name,
-            version: node.version,
-            license: node.license,
+            id:              node.id.clone(),
+            name:            node.name,
+            version:         node.version,
+            license:         node.license,
             vulnerabilities: Vec::new(), // Will be populated from vulnerability scanner
         })
         .collect();
@@ -109,7 +107,7 @@ pub async fn get_dependency_graph(project_path: PathBuf) -> Result<DependencyGra
         .map(|edge| GraphLink {
             source: edge.from,
             target: edge.to,
-            label: Some(edge.dep_type),
+            label:  Some(edge.dep_type),
         })
         .collect();
 

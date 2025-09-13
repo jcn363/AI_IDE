@@ -1,6 +1,7 @@
+use std::time::Duration;
+
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use rust_ai_ide_advanced_refactoring::*;
-use std::time::Duration;
 
 // Helper function to generate test transformations
 fn generate_test_transformations(count: usize) -> Vec<CodeTransformation> {
@@ -61,8 +62,7 @@ fn transformation_validation_benchmark(c: &mut Criterion) {
             &transformations,
             |b, transforms| {
                 b.iter(|| {
-                    let results: Vec<_> =
-                        transforms.iter().map(|t| validator.validate(t)).collect();
+                    let results: Vec<_> = transforms.iter().map(|t| validator.validate(t)).collect();
                     black_box(results);
                 });
             },
@@ -132,12 +132,12 @@ pub enum TransformationType {
 
 #[derive(Debug, Clone)]
 pub struct CodeTransformation {
-    pub id: String,
+    pub id:             String,
     pub transform_type: TransformationType,
-    pub source: String,
-    pub target: String,
-    pub complexity: u8,
-    pub dependencies: Vec<String>,
+    pub source:         String,
+    pub target:         String,
+    pub complexity:     u8,
+    pub dependencies:   Vec<String>,
 }
 
 #[derive(Debug)]
@@ -149,28 +149,25 @@ pub enum ValidationError {
 
 pub struct TransformationValidator {
     max_complexity: u8,
-    rule_level: u8,
+    rule_level:     u8,
 }
 
 impl TransformationValidator {
     pub fn new() -> Self {
         Self {
             max_complexity: 8,
-            rule_level: 3,
+            rule_level:     3,
         }
     }
 
     pub fn with_rule_level(level: u8) -> Self {
         Self {
             max_complexity: 10 - (level / 2), // Stricter rules = lower max complexity
-            rule_level: level,
+            rule_level:     level,
         }
     }
 
-    pub fn validate_all(
-        &self,
-        transforms: &[CodeTransformation],
-    ) -> Vec<Result<(), ValidationError>> {
+    pub fn validate_all(&self, transforms: &[CodeTransformation]) -> Vec<Result<(), ValidationError>> {
         transforms.iter().map(|t| self.validate(t)).collect()
     }
 
@@ -201,10 +198,7 @@ impl TransformationValidator {
         Ok(())
     }
 
-    pub fn validate_batch(
-        &self,
-        transforms: &[&CodeTransformation],
-    ) -> Vec<Result<(), ValidationError>> {
+    pub fn validate_batch(&self, transforms: &[&CodeTransformation]) -> Vec<Result<(), ValidationError>> {
         let mut results = Vec::with_capacity(transforms.len());
 
         for (i, &t) in transforms.iter().enumerate() {
@@ -232,8 +226,7 @@ impl TransformationValidator {
         // Two transformations conflict if they modify the same file
         // and have overlapping dependencies or high complexity
         a.target == b.target
-            && (a.complexity + b.complexity > 10
-                || a.dependencies.iter().any(|d| b.dependencies.contains(d)))
+            && (a.complexity + b.complexity > 10 || a.dependencies.iter().any(|d| b.dependencies.contains(d)))
     }
 }
 

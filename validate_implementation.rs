@@ -12,15 +12,15 @@ enum TypeKind {
 
 #[derive(Debug, Clone)]
 struct ParsedType {
-    name: String,
-    kind: TypeKind,
+    name:   String,
+    kind:   TypeKind,
     fields: Vec<Field>,
 }
 
 #[derive(Debug, Clone)]
 struct Field {
     name: String,
-    ty: String,
+    ty:   String,
 }
 
 struct TypeTransformer;
@@ -66,20 +66,20 @@ fn main() {
 
     // Test Type Parsing
     let user_type = ParsedType {
-        name: "User".to_string(),
-        kind: TypeKind::Struct,
+        name:   "User".to_string(),
+        kind:   TypeKind::Struct,
         fields: vec![
             Field {
                 name: "id".to_string(),
-                ty: "u32".to_string(),
+                ty:   "u32".to_string(),
             },
             Field {
                 name: "name".to_string(),
-                ty: "String".to_string(),
+                ty:   "String".to_string(),
             },
             Field {
                 name: "email".to_string(),
-                ty: "Option<String>".to_string(),
+                ty:   "Option<String>".to_string(),
             },
         ],
     };

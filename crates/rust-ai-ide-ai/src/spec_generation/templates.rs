@@ -246,12 +246,7 @@ pub mod {{name}} {
     }
 
     /// Render a module definition
-    pub fn render_module(
-        &self,
-        name: &str,
-        items: &[(&str, bool)],
-        docs: &[&str],
-    ) -> anyhow::Result<String> {
+    pub fn render_module(&self, name: &str, items: &[(&str, bool)], docs: &[&str]) -> anyhow::Result<String> {
         let items_data: Vec<serde_json::Value> = items
             .iter()
             .map(|(name, is_pub)| {

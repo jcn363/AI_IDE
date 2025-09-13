@@ -13,23 +13,23 @@ use crate::analysis::{AnalysisFinding, AnalysisPreferences, Analyzer};
 #[typetag::serde]
 pub struct ArchitecturalAnalyzer {
     /// Maximum allowed cyclomatic complexity
-    pub max_cyclomatic_complexity: u32,
+    pub max_cyclomatic_complexity:   u32,
     /// Maximum allowed inheritance depth
-    pub max_inheritance_depth: usize,
+    pub max_inheritance_depth:       usize,
     /// Allowed architectural layers
-    pub allowed_layers: Vec<String>,
+    pub allowed_layers:              Vec<String>,
     /// Enable or disable circular dependency checking
     pub check_circular_dependencies: bool,
     /// Enable or disable layer dependency enforcement
-    pub enforce_layer_dependencies: bool,
+    pub enforce_layer_dependencies:  bool,
     /// Enable or disable dependency inversion checking
-    pub check_dependency_inversion: bool,
+    pub check_dependency_inversion:  bool,
     /// Enable or disable interface segregation checking
     pub check_interface_segregation: bool,
     /// Maximum module size in lines of code
-    pub max_module_size: usize,
+    pub max_module_size:             usize,
     /// Maximum number of public items allowed per module
-    pub max_public_items: usize,
+    pub max_public_items:            usize,
 }
 
 impl ArchitecturalAnalyzer {
@@ -113,11 +113,7 @@ impl ArchitecturalAnalyzer {
     }
 
     // Private helper methods for analysis
-    fn check_circular_dependencies(
-        &self,
-        _ast: &File,
-        _file_path: &str,
-    ) -> Vec<ArchitecturalFinding> {
+    fn check_circular_dependencies(&self, _ast: &File, _file_path: &str) -> Vec<ArchitecturalFinding> {
         // Implementation for circular dependency checking
         vec![]
     }
@@ -127,20 +123,12 @@ impl ArchitecturalAnalyzer {
         vec![]
     }
 
-    fn check_dependency_inversion_violations(
-        &self,
-        _ast: &File,
-        _file_path: &str,
-    ) -> Vec<ArchitecturalFinding> {
+    fn check_dependency_inversion_violations(&self, _ast: &File, _file_path: &str) -> Vec<ArchitecturalFinding> {
         // Implementation for dependency inversion checking
         vec![]
     }
 
-    fn check_interface_segregation_violations(
-        &self,
-        _ast: &File,
-        _file_path: &str,
-    ) -> Vec<ArchitecturalFinding> {
+    fn check_interface_segregation_violations(&self, _ast: &File, _file_path: &str) -> Vec<ArchitecturalFinding> {
         // Implementation for interface segregation checking
         vec![]
     }
@@ -180,8 +168,9 @@ impl Analyzer for ArchitecturalAnalyzer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::path::Path;
+
+    use super::*;
 
     #[test]
     fn test_analyzer_configuration() {

@@ -1,31 +1,32 @@
 //! Dependency conflict resolution utilities
 
+use std::collections::HashMap;
+
 use anyhow::Result;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Represents a version conflict between dependencies
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VersionConflict {
     pub package_name: String,
-    pub versions: Vec<ConflictVersion>,
-    pub dependents: Vec<DependentInfo>,
+    pub versions:     Vec<ConflictVersion>,
+    pub dependents:   Vec<DependentInfo>,
 }
 
 /// Information about a specific version in conflict
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictVersion {
-    pub version: String,
+    pub version:     String,
     pub required_by: Vec<DependentInfo>,
 }
 
 /// Information about a dependent package
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependentInfo {
-    pub name: String,
+    pub name:    String,
     pub version: String,
-    pub path: String,
+    pub path:    String,
 }
 
 /// Analyzes the dependency graph for version conflicts
@@ -39,9 +40,9 @@ pub fn find_version_conflicts(metadata: &cargo_metadata::Metadata) -> Vec<Versio
             let entry = version_map.entry(dep.name.to_string()).or_default();
 
             let dep_info = DependentInfo {
-                name: package.name.to_string(),
+                name:    package.name.to_string(),
                 version: package.version.to_string(),
-                path: package.manifest_path.to_string(),
+                path:    package.manifest_path.to_string(),
             };
 
             entry.entry(dep.req.to_string()).or_default().push(dep_info);
@@ -54,7 +55,7 @@ pub fn find_version_conflicts(metadata: &cargo_metadata::Metadata) -> Vec<Versio
             let conflict_versions: Vec<ConflictVersion> = versions
                 .into_iter()
                 .map(|(version_req, dependents)| ConflictVersion {
-                    version: version_req,
+                    version:     version_req,
                     required_by: dependents,
                 })
                 .collect();
@@ -103,15 +104,12 @@ pub fn suggest_resolution(conflict: &VersionConflict) -> Option<String> {
             // For range requirements, try to extract the minimum version
             if let Ok(req) = VersionReq::parse(&v.version) {
                 if let Some(cap) = req.comparators.first() {
-                    if cap.op == semver::Op::Caret
-                        || cap.op == semver::Op::Tilde
-                        || cap.op == semver::Op::GreaterEq
-                    {
+                    if cap.op == semver::Op::Caret || cap.op == semver::Op::Tilde || cap.op == semver::Op::GreaterEq {
                         return Some(Version {
                             major: cap.major,
                             minor: cap.minor.unwrap_or(0),
                             patch: cap.patch.unwrap_or(0),
-                            pre: cap.pre.clone(),
+                            pre:   cap.pre.clone(),
                             build: Default::default(),
                         });
                     }
@@ -129,10 +127,7 @@ pub fn suggest_resolution(conflict: &VersionConflict) -> Option<String> {
 }
 
 /// Applies a resolution to a dependency
-pub fn apply_resolution(
-    conflict: &VersionConflict,
-    chosen_version: &str,
-) -> Result<HashMap<String, String>> {
+pub fn apply_resolution(conflict: &VersionConflict, chosen_version: &str) -> Result<HashMap<String, String>> {
     let mut updates = HashMap::new();
 
     // Update all dependents to use the chosen version

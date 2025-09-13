@@ -1,7 +1,8 @@
-use anyhow::Context;
-use rust_ai_ide_cargo::performance::{BuildMetrics, PerformanceAnalyzer};
 use std::path::Path;
 use std::time::Duration;
+
+use anyhow::Context;
+use rust_ai_ide_cargo::performance::{BuildMetrics, PerformanceAnalyzer};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

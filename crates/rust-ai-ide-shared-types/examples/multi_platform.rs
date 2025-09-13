@@ -3,8 +3,9 @@
 //! This example demonstrates generating code for multiple target platforms
 //! using the shared types crate with the extended plugin system.
 
-use rust_ai_ide_shared_types::*;
 use std::collections::HashMap;
+
+use rust_ai_ide_shared_types::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

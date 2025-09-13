@@ -6,8 +6,9 @@
 //! - Validate cross-platform compatibility
 //! - Use configuration options
 
-use rust_ai_ide_shared_types::*;
 use std::path::Path;
+
+use rust_ai_ide_shared_types::*;
 
 /// Example showing basic type generation workflow
 #[tokio::main]
@@ -94,8 +95,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate cross-platform compatibility
     println!("\n=== Cross-Platform Validation ===");
-    let validation_result =
-        validate_cross_platform(&result.source_types, &default_config()).await?;
+    let validation_result = validate_cross_platform(&result.source_types, &default_config()).await?;
     println!(
         "✓ Compatibility Score: {:.2}%",
         validation_result.compatibility_score * 100.0

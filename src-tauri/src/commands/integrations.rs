@@ -3,16 +3,18 @@
 //! This module provides Tauri commands for managing cloud integrations, webhook handling,
 //! and third-party service connections.
 
-use crate::types::{IntegrationCommandResult, IntegrationStatus};
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+
+use serde::{Deserialize, Serialize};
 use tauri::State;
 use tokio::sync::RwLock;
 
+use crate::types::{IntegrationCommandResult, IntegrationStatus};
+
 /// State for managing integrations
 pub struct IntegrationState {
-    pub cloud_manager: Arc<RwLock<rust_ai_ide_cloud_integrations::CloudServiceManager>>,
-    pub webhook_registry: Option<Arc<rust_ai_ide_webhooks::WebhookRegistry>>,
+    pub cloud_manager:     Arc<RwLock<rust_ai_ide_cloud_integrations::CloudServiceManager>>,
+    pub webhook_registry:  Option<Arc<rust_ai_ide_webhooks::WebhookRegistry>>,
     pub connector_manager: Option<Arc<rust_ai_ide_connectors::ConnectorManager>>,
 }
 
@@ -42,7 +44,7 @@ pub async fn cloud_deploy_resource(
     Ok(IntegrationCommandResult {
         success: true,
         message: "Cloud deployment not implemented yet".to_string(),
-        data: resource_config,
+        data:    resource_config,
     })
 }
 
@@ -63,7 +65,7 @@ pub async fn webhook_register(
                         "github" => rust_ai_ide_webhooks::types::Provider::GitHub,
                         "gitlab" => rust_ai_ide_webhooks::types::Provider::GitLab,
                         _ => rust_ai_ide_webhooks::types::Provider::Custom {
-                            name: provider.clone(),
+                            name:             provider.clone(),
                             signature_header: config["signature_header"]
                                 .as_str()
                                 .unwrap_or("X-Signature-256")
@@ -77,7 +79,7 @@ pub async fn webhook_register(
         Ok(IntegrationCommandResult {
             success: true,
             message: format!("Webhook registered for provider: {}", provider),
-            data: config,
+            data:    config,
         })
     } else {
         Err("Webhook registry not initialized".to_string())
@@ -85,9 +87,7 @@ pub async fn webhook_register(
 }
 
 #[tauri::command]
-pub async fn webhook_get_status(
-    state: State<'_, Arc<IntegrationState>>,
-) -> Result<serde_json::Value, String> {
+pub async fn webhook_get_status(state: State<'_, Arc<IntegrationState>>) -> Result<serde_json::Value, String> {
     if let Some(webhook_registry) = &state.webhook_registry {
         let providers = webhook_registry.list_providers().await;
         let status = serde_json::json!({
@@ -115,12 +115,12 @@ pub async fn connector_send_message(
             Ok(message_id) => Ok(IntegrationCommandResult {
                 success: true,
                 message: format!("Message sent via {} to {}", connector, channel),
-                data: serde_json::json!({ "message_id": message_id }),
+                data:    serde_json::json!({ "message_id": message_id }),
             }),
             Err(e) => Ok(IntegrationCommandResult {
                 success: false,
                 message: format!("Failed to send message: {}", e),
-                data: serde_json::json!({ "error": e.to_string() }),
+                data:    serde_json::json!({ "error": e.to_string() }),
             }),
         }
     } else {
@@ -129,9 +129,7 @@ pub async fn connector_send_message(
 }
 
 #[tauri::command]
-pub async fn connector_get_status(
-    state: State<'_, Arc<IntegrationState>>,
-) -> Result<serde_json::Value, String> {
+pub async fn connector_get_status(state: State<'_, Arc<IntegrationState>>) -> Result<serde_json::Value, String> {
     if let Some(connector_manager) = &state.connector_manager {
         let status = connector_manager
             .get_status_all()
@@ -144,9 +142,7 @@ pub async fn connector_get_status(
 }
 
 #[tauri::command]
-pub async fn marketplace_get_plugins(
-    state: State<'_, Arc<IntegrationState>>,
-) -> Result<serde_json::Value, String> {
+pub async fn marketplace_get_plugins(state: State<'_, Arc<IntegrationState>>) -> Result<serde_json::Value, String> {
     // Placeholder for marketplace client
     let plugins = serde_json::json!({
         "plugins": [],
@@ -158,21 +154,18 @@ pub async fn marketplace_get_plugins(
 }
 
 #[tauri::command]
-pub async fn integrations_overview(
-    state: State<'_, Arc<IntegrationState>>,
-) -> Result<IntegrationStatus, String> {
-    let cloud_resources =
-        cloud_list_resources("".to_string(), "".to_string(), state.clone()).await?;
+pub async fn integrations_overview(state: State<'_, Arc<IntegrationState>>) -> Result<IntegrationStatus, String> {
+    let cloud_resources = cloud_list_resources("".to_string(), "".to_string(), state.clone()).await?;
     let webhook_status = webhook_get_status(state.clone()).await?;
     let connector_status = connector_get_status(state.clone()).await?;
 
     Ok(IntegrationStatus {
         cloud_integrations_available: true,
-        webhook_system_active: webhook_status.get("status").is_none(), // If no error in webhook
-        connector_services_count: connector_status
+        webhook_system_active:        webhook_status.get("status").is_none(), // If no error in webhook
+        connector_services_count:     connector_status
             .as_object()
             .map(|obj| obj.len())
             .unwrap_or(0),
-        marketplace_connected: false, // TODO: Check actual marketplace connection
+        marketplace_connected:        false, // TODO: Check actual marketplace connection
     })
 }

@@ -83,9 +83,7 @@ pub async fn get_compiler_diagnostics(
     for line in diagnostics_result.lines() {
         if let Ok(json) = serde_json::from_str::<serde_json::Value>(line) {
             if let Some(message) = json.get("message") {
-                if let Some(diagnostic) =
-                    parse_compiler_diagnostic(message, &request.workspace_path).await
-                {
+                if let Some(diagnostic) = parse_compiler_diagnostic(message, &request.workspace_path).await {
                     // Count diagnostic levels
                     match diagnostic.level.as_str() {
                         "error" => error_count += 1,
@@ -123,13 +121,13 @@ pub async fn get_compiler_diagnostics(
     }
 
     let metadata = DiagnosticMetadata {
-        workspace_path: request.workspace_path.clone(),
-        timestamp: chrono::Utc::now(),
+        workspace_path:      request.workspace_path.clone(),
+        timestamp:           chrono::Utc::now(),
         compilation_time_ms: compilation_time,
-        total_errors: error_count,
-        total_warnings: warning_count,
-        total_notes: note_count,
-        cached: false,
+        total_errors:        error_count,
+        total_warnings:      warning_count,
+        total_notes:         note_count,
+        cached:              false,
     };
 
     let result = CompilerDiagnosticsResult {
@@ -171,9 +169,7 @@ pub async fn explain_error_code(
 
 /// Lookup documentation for errors or keywords
 #[tauri::command]
-pub async fn lookup_documentation(
-    request: DocumentationLookupRequest,
-) -> Result<Vec<DocumentationLink>, String> {
+pub async fn lookup_documentation(request: DocumentationLookupRequest) -> Result<Vec<DocumentationLink>, String> {
     log::info!("Looking up documentation for: {:?}", request);
 
     let mut links = Vec::new();
@@ -210,11 +206,11 @@ pub async fn subscribe_to_diagnostics(
     let stream_id = uuid::Uuid::new_v4().to_string();
 
     let stream = DiagnosticStream {
-        id: stream_id.clone(),
+        id:             stream_id.clone(),
         workspace_path: request.workspace_path.clone(),
-        is_active: true,
-        last_update: SystemTime::now(),
-        subscribers: vec![request.subscriber_id],
+        is_active:      true,
+        last_update:    SystemTime::now(),
+        subscribers:    vec![request.subscriber_id],
     };
 
     {
@@ -318,11 +314,11 @@ pub async fn get_cache_statistics(
     let explanation_cache_guard = explanation_cache.read().await;
 
     let stats = CacheStatistics {
-        diagnostic_cache_size: diagnostic_cache_guard.len(),
-        diagnostic_cache_max_size: diagnostic_cache_guard.max_entries,
-        explanation_cache_size: explanation_cache_guard.len(),
-        explanation_cache_max_size: explanation_cache_guard.max_entries,
-        diagnostic_cache_hit_ratio: 0.0, // Would need to track hits/misses
+        diagnostic_cache_size:       diagnostic_cache_guard.len(),
+        diagnostic_cache_max_size:   diagnostic_cache_guard.max_entries,
+        explanation_cache_size:      explanation_cache_guard.len(),
+        explanation_cache_max_size:  explanation_cache_guard.max_entries,
+        diagnostic_cache_hit_ratio:  0.0, // Would need to track hits/misses
         explanation_cache_hit_ratio: 0.0, // Would need to track hits/misses
     };
 
@@ -332,11 +328,11 @@ pub async fn get_cache_statistics(
 /// Cache statistics
 #[derive(Debug, Serialize)]
 pub struct CacheStatistics {
-    pub diagnostic_cache_size: usize,
-    pub diagnostic_cache_max_size: usize,
-    pub explanation_cache_size: usize,
-    pub explanation_cache_max_size: usize,
-    pub diagnostic_cache_hit_ratio: f32,
+    pub diagnostic_cache_size:       usize,
+    pub diagnostic_cache_max_size:   usize,
+    pub explanation_cache_size:      usize,
+    pub explanation_cache_max_size:  usize,
+    pub diagnostic_cache_hit_ratio:  f32,
     pub explanation_cache_hit_ratio: f32,
 }
 
@@ -347,10 +343,7 @@ async fn run_cargo_check(workspace_path: &str) -> Result<String> {
     crate::diagnostics::error_handling::run_cargo_check(workspace_path).await
 }
 
-async fn parse_compiler_diagnostic(
-    message: &serde_json::Value,
-    workspace_path: &str,
-) -> Option<CompilerDiagnostic> {
+async fn parse_compiler_diagnostic(message: &serde_json::Value, workspace_path: &str) -> Option<CompilerDiagnostic> {
     // Use centralized parsing function
     parse_compiler_diagnostic(message, workspace_path).await
 }
@@ -375,12 +368,7 @@ async fn get_cached_error_explanation(
     ttl_seconds: u64,
 ) -> Result<ErrorCodeExplanation> {
     // Use centralized function
-    crate::diagnostics::error_handling::get_cached_error_explanation(
-        error_code,
-        explanation_cache,
-        ttl_seconds,
-    )
-    .await
+    crate::diagnostics::error_handling::get_cached_error_explanation(error_code, explanation_cache, ttl_seconds).await
 }
 
 async fn get_error_code_explanation(error_code: &str) -> Result<ErrorCodeExplanation> {
@@ -407,9 +395,9 @@ fn parse_rustc_explanation(text: &str) -> (String, String, Vec<ErrorExample>) {
                 // End of example
                 examples.push(ErrorExample {
                     description: example_description.clone(),
-                    code: current_example.clone(),
+                    code:        current_example.clone(),
                     explanation: "Example code".to_string(),
-                    fix: None,
+                    fix:         None,
                 });
                 current_example.clear();
                 example_description.clear();
@@ -502,26 +490,26 @@ async fn generate_suggested_fixes(diagnostic: &CompilerDiagnostic) -> Result<Vec
     for span in &diagnostic.spans {
         if let Some(replacement) = &span.suggested_replacement {
             let fix = FixSuggestion {
-                id: uuid::Uuid::new_v4().to_string(),
-                title: "Apply compiler suggestion".to_string(),
-                description: span
+                id:               uuid::Uuid::new_v4().to_string(),
+                title:            "Apply compiler suggestion".to_string(),
+                description:      span
                     .label
                     .clone()
                     .unwrap_or_else(|| "Compiler suggested fix".to_string()),
-                fix_type: FixType::QuickFix,
-                changes: vec![CodeChange {
-                    file_path: span.file_name.clone(),
-                    range: (
+                fix_type:         FixType::QuickFix,
+                changes:          vec![CodeChange {
+                    file_path:   span.file_name.clone(),
+                    range:       (
                         span.line_start,
                         span.column_start,
                         span.line_end,
                         span.column_end,
                     ),
-                    old_text: String::new(), // Would need to extract from source
-                    new_text: replacement.clone(),
+                    old_text:    String::new(), // Would need to extract from source
+                    new_text:    replacement.clone(),
                     change_type: CompilerChangeType::Replace,
                 }],
-                confidence: if span
+                confidence:       if span
                     .suggestion_applicability
                     .as_ref()
                     .map_or(false, |a| a == "machine-applicable")
@@ -531,8 +519,8 @@ async fn generate_suggested_fixes(diagnostic: &CompilerDiagnostic) -> Result<Vec
                     0.7
                 },
                 estimated_effort: EstimatedEffort::Trivial,
-                benefits: vec!["Fixes compiler error".to_string()],
-                risks: vec![],
+                benefits:         vec!["Fixes compiler error".to_string()],
+                risks:            vec![],
             };
             fixes.push(fix);
         }

@@ -86,17 +86,16 @@
 //! - Efficient retry logic with exponential backoff
 //! - Background task management with proper cleanup
 
-use rust_ai_ide_common::validation::{
-    validate_directory_exists, validate_file_exists, validate_file_size_content,
-    validate_path_not_excluded,
-};
-use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::path::Path;
-use tauri::{AppHandle, State};
-use uuid;
 
 pub use anyhow::{anyhow, Result};
+use rust_ai_ide_common::validation::{
+    validate_directory_exists, validate_file_exists, validate_file_size_content, validate_path_not_excluded,
+};
+use serde::{Deserialize, Serialize};
+use tauri::{AppHandle, State};
+use uuid;
 
 /// # Command Configuration Structure
 ///
@@ -122,11 +121,11 @@ pub use anyhow::{anyhow, Result};
 #[derive(Debug, Clone)]
 pub struct CommandConfig {
     /// Whether to enable logging for command execution (start/completion/failure)
-    pub enable_logging: bool,
+    pub enable_logging:     bool,
     /// Log level for command operations (Error, Warn, Info, Debug, Trace)
-    pub log_level: log::Level,
+    pub log_level:          log::Level,
     /// Whether to enable input validation using TauriInputSanitizer
-    pub enable_validation: bool,
+    pub enable_validation:  bool,
     /// Optional timeout for async operations in seconds (None = no timeout)
     pub async_timeout_secs: Option<u64>,
 }
@@ -134,9 +133,9 @@ pub struct CommandConfig {
 impl Default for CommandConfig {
     fn default() -> Self {
         Self {
-            enable_logging: true,
-            log_level: log::Level::Info,
-            enable_validation: true,
+            enable_logging:     true,
+            log_level:          log::Level::Info,
+            enable_validation:  true,
             async_timeout_secs: None,
         }
     }
@@ -168,7 +167,7 @@ impl Default for CommandConfig {
 /// ```
 pub struct CommandContext<'r, T> {
     /// Mutable reference to the service instance for this command
-    pub service: &'r mut T,
+    pub service:    &'r mut T,
     /// Optional Tauri AppHandle for UI interactions and event emission
     pub app_handle: Option<AppHandle>,
 }
@@ -218,7 +217,7 @@ pub trait CommandService {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommandError {
     pub message: String,
-    pub code: Option<String>,
+    pub code:    Option<String>,
     pub details: Option<String>,
 }
 
@@ -266,11 +265,7 @@ pub use validate_file_exists as validate_file_exists_legacy;
 // validate_directory_exists removed - use the one imported from rust_ai_ide_common
 
 /// Validate file size is within limits (legacy wrapper for String error type)
-pub fn validate_file_size(
-    content: &[u8],
-    max_size_kb: usize,
-    operation: &str,
-) -> Result<(), String> {
+pub fn validate_file_size(content: &[u8], max_size_kb: usize, operation: &str) -> Result<(), String> {
     match validate_file_size_content(content, max_size_kb, operation) {
         Ok(()) => Ok(()),
         Err(e) => Err(e.to_string()),
@@ -475,11 +470,7 @@ macro_rules! tauri_command_template_with_result {
 /// The service reference is held for the duration of the closure execution.
 #[macro_export]
 macro_rules! acquire_service_and_execute {
-    (
-        $service_state:expr,
-        $service_type:ty,
-        $closure:block
-    ) => {{
+    ($service_state:expr, $service_type:ty, $closure:block) => {{
         let service_guard = $service_state.lock().await;
         let service = service_guard.as_ref().ok_or(format_command_error(
             "Service not initialized",
@@ -509,11 +500,7 @@ macro_rules! validate_commands {
 }
 
 /// Helper for executing operations with retries
-pub async fn execute_with_retry<T, F, Fut>(
-    mut operation: F,
-    max_retries: usize,
-    operation_name: &str,
-) -> Result<T>
+pub async fn execute_with_retry<T, F, Fut>(mut operation: F, max_retries: usize, operation_name: &str) -> Result<T>
 where
     F: Fn() -> Fut,
     Fut: std::future::Future<Output = Result<T>>,
@@ -577,8 +564,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::path::PathBuf;
+
+    use super::*;
 
     #[test]
     fn test_validate_file_exists() {

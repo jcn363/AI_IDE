@@ -11,7 +11,6 @@
 //! - Cross-crate coordination extending existing EventBus patterns
 //! - Tauri command consolidation following existing macro patterns
 //! - Integration with existing LSP service and AI infrastructure
-//!
 
 pub mod commands;
 pub mod error;
@@ -27,10 +26,9 @@ pub use health_monitor::HealthMonitor;
 pub use lifecycle_manager::LifecycleManager;
 pub use message_router::MessageRouter;
 pub use orchestrator::ServiceOrchestrator;
-pub use service_registry::ServiceRegistry;
-pub use types::*;
-
 // Re-export commonly used items from dependencies
 pub use serde::{Deserialize, Serialize};
+pub use service_registry::ServiceRegistry;
 pub use tokio::sync::{mpsc, oneshot};
 pub use tracing::{debug, error, info, warn};
+pub use types::*;

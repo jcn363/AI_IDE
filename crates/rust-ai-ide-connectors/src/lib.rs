@@ -2,9 +2,10 @@ pub mod discord;
 pub mod slack;
 pub mod types;
 
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 
 /// Connector service trait for third-party integrations
@@ -17,11 +18,7 @@ pub trait ServiceConnector: Send + Sync {
     async fn disconnect(&self) -> Result<(), Box<dyn std::error::Error>>;
 
     /// Send a message
-    async fn send_message(
-        &self,
-        channel: &str,
-        message: &str,
-    ) -> Result<String, Box<dyn std::error::Error>>;
+    async fn send_message(&self, channel: &str, message: &str) -> Result<String, Box<dyn std::error::Error>>;
 
     /// Listen for events
     async fn listen_events(&self) -> Result<(), Box<dyn std::error::Error>>;

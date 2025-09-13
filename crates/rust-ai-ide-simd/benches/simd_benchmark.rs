@@ -1,7 +1,7 @@
+use std::{mem, ptr};
+
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use packed_simd::f32x8; // Using f32x8 for 256-bit SIMD (8 f32 lanes)
-use std::mem;
-use std::ptr;
 
 // Helper function to generate test data
 fn generate_test_data(size: usize) -> (Vec<f32>, Vec<f32>, Vec<f32>) {

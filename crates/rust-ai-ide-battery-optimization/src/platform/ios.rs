@@ -3,8 +3,10 @@
 //! Uses iOS's UIDevice battery monitoring APIs through Objective-C runtime
 //! to access battery level, charging state, and battery health information.
 
-use crate::{battery_monitor::PlatformBatteryMonitor, BatteryState};
 use chrono::{DateTime, Utc};
+
+use crate::battery_monitor::PlatformBatteryMonitor;
+use crate::BatteryState;
 
 pub struct IOSBatteryMonitor {
     initialized: bool,
@@ -26,32 +28,30 @@ impl IOSBatteryMonitor {
 
         // This is a placeholder for actual iOS implementation
         // Real implementation would look something like:
-        /*
-        use objc::{class, msg_send, sel, sel_impl};
-
-        let ui_device_class: objc::runtime::Class = class!(UIDevice);
-        let current_device: objc::runtime::Object = unsafe {
-            msg_send![ui_device_class, currentDevice]
-        };
-
+        // use objc::{class, msg_send, sel, sel_impl};
+        //
+        // let ui_device_class: objc::runtime::Class = class!(UIDevice);
+        // let current_device: objc::runtime::Object = unsafe {
+        // msg_send![ui_device_class, currentDevice]
+        // };
+        //
         // Enable battery monitoring
-        unsafe { msg_send![current_device, setBatteryMonitoringEnabled: YES] }
-
+        // unsafe { msg_send![current_device, setBatteryMonitoringEnabled: YES] }
+        //
         // Get battery level
-        let battery_level: f32 = unsafe { msg_send![current_device, batteryLevel] };
-
+        // let battery_level: f32 = unsafe { msg_send![current_device, batteryLevel] };
+        //
         // Get battery state
-        let battery_state: i32 = unsafe { msg_send![current_device, batteryState] };
-        */
+        // let battery_state: i32 = unsafe { msg_send![current_device, batteryState] };
 
         // Placeholder implementation for development
         Ok(BatteryState {
-            level: 0.78,             // 78% battery
-            voltage: Some(3.82),     // Typical iOS Li-ion voltage
-            temperature: Some(28.5), // Celsius (iOS-devices generally cooler)
-            is_charging: false,
-            health_percentage: Some(0.92), // 92% health (iOS reports this differently)
-            time_remaining_minutes: Some(180), // 3 hours remaining
+            level:                  0.78,       // 78% battery
+            voltage:                Some(3.82), // Typical iOS Li-ion voltage
+            temperature:            Some(28.5), // Celsius (iOS-devices generally cooler)
+            is_charging:            false,
+            health_percentage:      Some(0.92), // 92% health (iOS reports this differently)
+            time_remaining_minutes: Some(180),  // 3 hours remaining
         })
     }
 
@@ -130,11 +130,11 @@ impl IOSBatteryMonitor {
     async fn get_cached_battery_state() -> anyhow::Result<BatteryState> {
         // Return cached iOS state with slight modifications
         Ok(BatteryState {
-            level: 0.77,
-            voltage: Some(3.81),
-            temperature: Some(29.0),
-            is_charging: false,
-            health_percentage: Some(0.92),
+            level:                  0.77,
+            voltage:                Some(3.81),
+            temperature:            Some(29.0),
+            is_charging:            false,
+            health_percentage:      Some(0.92),
             time_remaining_minutes: Some(175),
         })
     }

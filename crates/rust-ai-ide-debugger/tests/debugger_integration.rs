@@ -1,28 +1,25 @@
-/*!
-
-Integration tests for rust-ai-ide-debugger using shared-test-utils
-
-This module demonstrates sophisticated debugging scenarios using the comprehensive
-test utilities from shared-test-utils, including:
-
-- Temp workspace management for debugging sessions
-- Async timeout handling for long-running debug operations
-- Fixture-based test setup for complex debugging scenarios
-- File system operations with automatic cleanup
-- Integration test runner framework for systematic testing
-
-*/
+//! Integration tests for rust-ai-ide-debugger using shared-test-utils
+//!
+//! This module demonstrates sophisticated debugging scenarios using the comprehensive
+//! test utilities from shared-test-utils, including:
+//!
+//! - Temp workspace management for debugging sessions
+//! - Async timeout handling for long-running debug operations
+//! - Fixture-based test setup for complex debugging scenarios
+//! - File system operations with automatic cleanup
+//! - Integration test runner framework for systematic testing
 
 // Test that proves we have the right imports and can run tests
 #[cfg(test)]
 mod integration_tests {
-    use shared_test_utils::error::TestResult;
-    use shared_test_utils::fixtures::FixturePresets;
-    use shared_test_utils::*;
     use std::fs;
     use std::path::Path;
     use std::process::Command;
     use std::time::Duration;
+
+    use shared_test_utils::error::TestResult;
+    use shared_test_utils::fixtures::FixturePresets;
+    use shared_test_utils::*;
 
     /// Integration test demonstrating debugger session with temp workspaces
     #[test]
@@ -157,10 +154,7 @@ mod tests {
         ];
 
         // Demonstrate concurrent debugging operations
-        async fn create_debug_scenario(
-            name: &str,
-            scenario_type: &str,
-        ) -> Result<String, TestError> {
+        async fn create_debug_scenario(name: &str, scenario_type: &str) -> Result<String, TestError> {
             Ok(format!(
                 "Debug {} scenario '{}' created",
                 scenario_type, name
@@ -187,10 +181,7 @@ mod tests {
         // we need to handle each inner Result
         for result in &result_strings {
             if let Ok(content) = result {
-                if content.contains("Debug")
-                    && content.contains("scenario")
-                    && content.contains("created")
-                {
+                if content.contains("Debug") && content.contains("scenario") && content.contains("created") {
                     assert!(true, "Result contains expected content");
                 } else {
                     assert!(
@@ -323,8 +314,9 @@ mod tests {
 
 #[cfg(test)]
 mod concurrent_debug_tests {
-    use shared_test_utils::*;
     use std::time::Duration;
+
+    use shared_test_utils::*;
 
     type TestResult<T> = Result<T, TestError>;
 
@@ -334,10 +326,7 @@ mod concurrent_debug_tests {
         println!("🔧 Testing concurrent debugger operations...");
 
         // Create a mechanism for testing multiple debugger instances
-        async fn simulate_debugger_operation(
-            id: usize,
-            duration_ms: u64,
-        ) -> Result<String, TestError> {
+        async fn simulate_debugger_operation(id: usize, duration_ms: u64) -> Result<String, TestError> {
             let result = with_timeout(
                 async {
                     tokio::time::sleep(Duration::from_millis(duration_ms)).await;

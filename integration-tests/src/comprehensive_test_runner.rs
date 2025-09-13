@@ -7,13 +7,14 @@
 //! - Code Coverage Analysis
 //! - Enterprise Security Validation
 
-use chrono::{DateTime, Utc};
-use rust_ai_ide_errors::IdeResult;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
+
+use chrono::{DateTime, Utc};
+use rust_ai_ide_errors::IdeResult;
+use serde::{Deserialize, Serialize};
 
 use crate::ai_capability_validation::{AICapabilityValidator, AIComprehensiveReport};
 use crate::coverage_validation::{CoverageAnalyzer, CoverageReport, CoverageThresholds};
@@ -23,116 +24,116 @@ use crate::performance_validation::PerformanceValidator;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TestSuiteResult {
     pub test_suite_name: String,
-    pub start_time: DateTime<Utc>,
-    pub end_time: DateTime<Utc>,
-    pub execution_time: std::time::Duration,
-    pub success: bool,
-    pub results: HashMap<String, serde_json::Value>,
-    pub summary: TestSuiteSummary,
+    pub start_time:      DateTime<Utc>,
+    pub end_time:        DateTime<Utc>,
+    pub execution_time:  std::time::Duration,
+    pub success:         bool,
+    pub results:         HashMap<String, serde_json::Value>,
+    pub summary:         TestSuiteSummary,
     pub recommendations: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TestSuiteSummary {
-    pub total_tests: usize,
-    pub passed_tests: usize,
-    pub failed_tests: usize,
+    pub total_tests:   usize,
+    pub passed_tests:  usize,
+    pub failed_tests:  usize,
     pub skipped_tests: usize,
-    pub error_tests: usize,
-    pub pass_rate: f64,
+    pub error_tests:   usize,
+    pub pass_rate:     f64,
     pub overall_score: f32,
     pub quality_score: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComprehensiveTestReport {
-    pub timestamp: DateTime<Utc>,
-    pub test_run_id: String,
-    pub configuration: TestConfiguration,
-    pub overall_summary: OverallSummary,
-    pub suite_results: Vec<TestSuiteResult>,
+    pub timestamp:              DateTime<Utc>,
+    pub test_run_id:            String,
+    pub configuration:          TestConfiguration,
+    pub overall_summary:        OverallSummary,
+    pub suite_results:          Vec<TestSuiteResult>,
     pub performance_benchmarks: Vec<BenchmarkResult>,
-    pub security_findings: Vec<SecurityFinding>,
-    pub coverage_metrics: CoverageMetrics,
-    pub quality_assessment: QualityAssessment,
-    pub production_readiness: ProductionReadiness,
-    pub recommendations: Vec<String>,
+    pub security_findings:      Vec<SecurityFinding>,
+    pub coverage_metrics:       CoverageMetrics,
+    pub quality_assessment:     QualityAssessment,
+    pub production_readiness:   ProductionReadiness,
+    pub recommendations:        Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TestConfiguration {
-    pub include_ai_tests: bool,
-    pub include_security_tests: bool,
+    pub include_ai_tests:          bool,
+    pub include_security_tests:    bool,
     pub include_performance_tests: bool,
-    pub include_coverage_tests: bool,
-    pub parallel_execution: bool,
-    pub strict_mode: bool,
-    pub coverage_thresholds: CoverageThresholds,
-    pub security_thresholds: HashMap<String, f64>,
-    pub performance_thresholds: HashMap<String, f64>,
+    pub include_coverage_tests:    bool,
+    pub parallel_execution:        bool,
+    pub strict_mode:               bool,
+    pub coverage_thresholds:       CoverageThresholds,
+    pub security_thresholds:       HashMap<String, f64>,
+    pub performance_thresholds:    HashMap<String, f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OverallSummary {
-    pub total_test_suites: usize,
-    pub successful_suites: usize,
-    pub failed_suites: usize,
-    pub overall_pass_rate: f64,
-    pub overall_execution_time: std::time::Duration,
+    pub total_test_suites:          usize,
+    pub successful_suites:          usize,
+    pub failed_suites:              usize,
+    pub overall_pass_rate:          f64,
+    pub overall_execution_time:     std::time::Duration,
     pub production_readiness_score: f32,
-    pub risk_assessment: RiskAssessment,
+    pub risk_assessment:            RiskAssessment,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BenchmarkResult {
-    pub test_suite: String,
+    pub test_suite:  String,
     pub metric_name: String,
-    pub value: f64,
-    pub unit: String,
-    pub threshold: Option<f64>,
-    pub passed: bool,
-    pub timestamp: DateTime<Utc>,
+    pub value:       f64,
+    pub unit:        String,
+    pub threshold:   Option<f64>,
+    pub passed:      bool,
+    pub timestamp:   DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityFinding {
-    pub severity: String,
-    pub category: String,
+    pub severity:    String,
+    pub category:    String,
     pub description: String,
-    pub location: Option<String>,
-    pub mitigation: Vec<String>,
-    pub confidence: f32,
-    pub timestamp: DateTime<Utc>,
+    pub location:    Option<String>,
+    pub mitigation:  Vec<String>,
+    pub confidence:  f32,
+    pub timestamp:   DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CoverageMetrics {
-    pub overall_coverage: f64,
-    pub line_coverage: f64,
-    pub function_coverage: f64,
-    pub branch_coverage: f64,
+    pub overall_coverage:       f64,
+    pub line_coverage:          f64,
+    pub function_coverage:      f64,
+    pub branch_coverage:        f64,
     pub coverage_quality_score: f32,
-    pub coverage_passed: bool,
+    pub coverage_passed:        bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityAssessment {
-    pub overall_quality_score: f32,
-    pub reliability_score: f32,
-    pub performance_score: f32,
-    pub security_score: f32,
-    pub functionality_score: f32,
-    pub strengths: Vec<String>,
-    pub weaknesses: Vec<String>,
+    pub overall_quality_score:  f32,
+    pub reliability_score:      f32,
+    pub performance_score:      f32,
+    pub security_score:         f32,
+    pub functionality_score:    f32,
+    pub strengths:              Vec<String>,
+    pub weaknesses:             Vec<String>,
     pub improvement_priorities: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProductionReadiness {
     pub deployment_ready: bool,
-    pub risk_level: String,
-    pub blockers: Vec<String>,
-    pub prerequisites: Vec<String>,
+    pub risk_level:       String,
+    pub blockers:         Vec<String>,
+    pub prerequisites:    Vec<String>,
     pub confidence_level: f32,
 }
 
@@ -147,17 +148,17 @@ pub enum RiskAssessment {
 
 /// Master test runner that orchestrates all validation suites
 pub struct ComprehensiveTestRunner {
-    configuration: TestConfiguration,
-    validators: ValidatorSuite,
+    configuration:    TestConfiguration,
+    validators:       ValidatorSuite,
     report_generator: ReportGenerator,
 }
 
 #[derive(Debug)]
 struct ValidatorSuite {
-    ai_validator: AICapabilityValidator,
-    security_validator: OWASPScanner,
+    ai_validator:          AICapabilityValidator,
+    security_validator:    OWASPScanner,
     performance_validator: PerformanceValidator,
-    coverage_validator: CoverageAnalyzer,
+    coverage_validator:    CoverageAnalyzer,
 }
 
 #[derive(Debug)]
@@ -173,10 +174,7 @@ impl ComprehensiveTestRunner {
     }
 
     /// Run the complete test suite validation
-    pub async fn run_comprehensive_validation(
-        &self,
-        output_dir: &Path,
-    ) -> IdeResult<ComprehensiveTestReport> {
+    pub async fn run_comprehensive_validation(&self, output_dir: &Path) -> IdeResult<ComprehensiveTestReport> {
         println!("🚀 Starting Comprehensive AI IDE Validation Suite...");
         println!("📊 Running multiple validation categories...");
 
@@ -296,18 +294,18 @@ impl ComprehensiveTestRunner {
                 println!("⚠️  LCOV coverage file not found. Skipping coverage analysis.");
                 results.push(TestSuiteResult {
                     test_suite_name: "Code Coverage".to_string(),
-                    start_time: Utc::now(),
-                    end_time: Utc::now(),
-                    execution_time: std::time::Duration::from_secs(0),
-                    success: false,
-                    results: HashMap::new(),
-                    summary: TestSuiteSummary {
-                        total_tests: 0,
-                        passed_tests: 0,
-                        failed_tests: 0,
+                    start_time:      Utc::now(),
+                    end_time:        Utc::now(),
+                    execution_time:  std::time::Duration::from_secs(0),
+                    success:         false,
+                    results:         HashMap::new(),
+                    summary:         TestSuiteSummary {
+                        total_tests:   0,
+                        passed_tests:  0,
+                        failed_tests:  0,
                         skipped_tests: 1,
-                        error_tests: 0,
-                        pass_rate: 0.0,
+                        error_tests:   0,
+                        pass_rate:     0.0,
                         overall_score: 0.0,
                         quality_score: 0.0,
                     },
@@ -357,9 +355,8 @@ impl ComprehensiveTestRunner {
             0.0
         };
 
-        let production_readiness_score = (overall_pass_rate as f32 / 100.0)
-            * (successful_suites as f32 / total_suites as f32)
-            * 100.0;
+        let production_readiness_score =
+            (overall_pass_rate as f32 / 100.0) * (successful_suites as f32 / total_suites as f32) * 100.0;
 
         let risk_assessment = if production_readiness_score >= 85.0 {
             RiskAssessment::Low
@@ -395,20 +392,20 @@ impl ComprehensiveTestRunner {
             success: report.quality_assessment.production_readiness,
             results: HashMap::new(),
             summary: TestSuiteSummary {
-                total_tests: report.category_reports.len(),
-                passed_tests: report
+                total_tests:   report.category_reports.len(),
+                passed_tests:  report
                     .category_reports
                     .values()
                     .filter(|cr| cr.passed_tests > 0)
                     .count(),
-                failed_tests: report
+                failed_tests:  report
                     .category_reports
                     .values()
                     .filter(|cr| cr.passed_tests == 0)
                     .count(),
                 skipped_tests: 0,
-                error_tests: 0,
-                pass_rate: report
+                error_tests:   0,
+                pass_rate:     report
                     .overall_metrics
                     .get("overall_pass_rate")
                     .copied()
@@ -518,65 +515,65 @@ impl ComprehensiveTestRunner {
     async fn collect_performance_benchmarks(&self) -> Vec<BenchmarkResult> {
         vec![
             BenchmarkResult {
-                test_suite: "AI Completion".to_string(),
+                test_suite:  "AI Completion".to_string(),
                 metric_name: "Response Time".to_string(),
-                value: 45.2,
-                unit: "ms".to_string(),
-                threshold: Some(100.0),
-                passed: true,
-                timestamp: Utc::now(),
+                value:       45.2,
+                unit:        "ms".to_string(),
+                threshold:   Some(100.0),
+                passed:      true,
+                timestamp:   Utc::now(),
             },
             BenchmarkResult {
-                test_suite: "Performance".to_string(),
+                test_suite:  "Performance".to_string(),
                 metric_name: "Memory Usage".to_string(),
-                value: 256.0,
-                unit: "MB".to_string(),
-                threshold: Some(512.0),
-                passed: true,
-                timestamp: Utc::now(),
+                value:       256.0,
+                unit:        "MB".to_string(),
+                threshold:   Some(512.0),
+                passed:      true,
+                timestamp:   Utc::now(),
             },
         ]
     }
 
     async fn collect_security_findings(&self) -> Vec<SecurityFinding> {
         vec![SecurityFinding {
-            severity: "Low".to_string(),
-            category: "OWASP-A03".to_string(),
+            severity:    "Low".to_string(),
+            category:    "OWASP-A03".to_string(),
             description: "Potential injection vulnerability detected".to_string(),
-            location: Some("src/main.rs:15".to_string()),
-            mitigation: vec![
+            location:    Some("src/main.rs:15".to_string()),
+            mitigation:  vec![
                 "Use parameterized queries".to_string(),
                 "Validate input data".to_string(),
             ],
-            confidence: 85.0,
-            timestamp: Utc::now(),
+            confidence:  85.0,
+            timestamp:   Utc::now(),
         }]
     }
 
     async fn collect_coverage_metrics(&self) -> CoverageMetrics {
         CoverageMetrics {
-            overall_coverage: 85.0,
-            line_coverage: 83.5,
-            function_coverage: 87.2,
-            branch_coverage: 75.8,
+            overall_coverage:       85.0,
+            line_coverage:          83.5,
+            function_coverage:      87.2,
+            branch_coverage:        75.8,
             coverage_quality_score: 82.5,
-            coverage_passed: true,
+            coverage_passed:        true,
         }
     }
 
     async fn generate_quality_assessment(&self) -> QualityAssessment {
         QualityAssessment {
-            overall_quality_score: 84.5,
-            reliability_score: 88.0,
-            performance_score: 82.0,
-            security_score: 87.0,
-            functionality_score: 85.0,
-            strengths: vec![
+            overall_quality_score:  84.5,
+            reliability_score:      88.0,
+            performance_score:      82.0,
+            security_score:         87.0,
+            functionality_score:    85.0,
+            strengths:              vec![
                 "AI capabilities well-implemented".to_string(),
                 "Performance optimization effective".to_string(),
                 "Security features comprehensive".to_string(),
             ],
-            weaknesses: vec![
+            weaknesses:             vec![
                 "Branch coverage could be improved".to_string(),
                 "Some error handling scenarios untested".to_string(),
             ],
@@ -591,12 +588,12 @@ impl ComprehensiveTestRunner {
     fn assess_production_readiness(&self) -> ProductionReadiness {
         ProductionReadiness {
             deployment_ready: false, // Will be set based on validation results
-            risk_level: "Medium".to_string(),
-            blockers: vec![
+            risk_level:       "Medium".to_string(),
+            blockers:         vec![
                 "Complete security validation missing".to_string(),
                 "Performance benchmarks incomplete".to_string(),
             ],
-            prerequisites: vec![
+            prerequisites:    vec![
                 "Complete all security scanning".to_string(),
                 "Verify performance requirements".to_string(),
                 "Generate comprehensive test reports".to_string(),
@@ -761,10 +758,10 @@ Found {} security issues across {} categories.
 impl ValidatorSuite {
     fn new() -> Self {
         Self {
-            ai_validator: AICapabilityValidator::new(),
-            security_validator: OWASPScanner::new(),
+            ai_validator:          AICapabilityValidator::new(),
+            security_validator:    OWASPScanner::new(),
             performance_validator: PerformanceValidator::new(),
-            coverage_validator: CoverageAnalyzer::new(),
+            coverage_validator:    CoverageAnalyzer::new(),
         }
     }
 }
@@ -776,15 +773,15 @@ mod tests {
     #[tokio::test]
     async fn test_comprehensive_test_runner_initialization() {
         let config = TestConfiguration {
-            include_ai_tests: true,
-            include_security_tests: true,
+            include_ai_tests:          true,
+            include_security_tests:    true,
             include_performance_tests: true,
-            include_coverage_tests: true,
-            parallel_execution: false,
-            strict_mode: false,
-            coverage_thresholds: CoverageThresholds::default(),
-            security_thresholds: HashMap::new(),
-            performance_thresholds: HashMap::new(),
+            include_coverage_tests:    true,
+            parallel_execution:        false,
+            strict_mode:               false,
+            coverage_thresholds:       CoverageThresholds::default(),
+            security_thresholds:       HashMap::new(),
+            performance_thresholds:    HashMap::new(),
         };
 
         let runner = ComprehensiveTestRunner::new(config);
@@ -797,15 +794,15 @@ mod tests {
     #[tokio::test]
     async fn test_production_readiness_assessment() {
         let runner = ComprehensiveTestRunner::new(TestConfiguration {
-            include_ai_tests: false,
-            include_security_tests: false,
+            include_ai_tests:          false,
+            include_security_tests:    false,
             include_performance_tests: false,
-            include_coverage_tests: false,
-            parallel_execution: false,
-            strict_mode: false,
-            coverage_thresholds: CoverageThresholds::default(),
-            security_thresholds: HashMap::new(),
-            performance_thresholds: HashMap::new(),
+            include_coverage_tests:    false,
+            parallel_execution:        false,
+            strict_mode:               false,
+            coverage_thresholds:       CoverageThresholds::default(),
+            security_thresholds:       HashMap::new(),
+            performance_thresholds:    HashMap::new(),
         });
 
         let readiness = runner.assess_production_readiness();
@@ -819,32 +816,32 @@ mod tests {
     #[tokio::test]
     async fn test_aggregate_results_calculation() {
         let runner = ComprehensiveTestRunner::new(TestConfiguration {
-            include_ai_tests: false,
-            include_security_tests: false,
+            include_ai_tests:          false,
+            include_security_tests:    false,
             include_performance_tests: false,
-            include_coverage_tests: false,
-            parallel_execution: false,
-            strict_mode: false,
-            coverage_thresholds: CoverageThresholds::default(),
-            security_thresholds: HashMap::new(),
-            performance_thresholds: HashMap::new(),
+            include_coverage_tests:    false,
+            parallel_execution:        false,
+            strict_mode:               false,
+            coverage_thresholds:       CoverageThresholds::default(),
+            security_thresholds:       HashMap::new(),
+            performance_thresholds:    HashMap::new(),
         });
 
         let suite_results = vec![
             TestSuiteResult {
                 test_suite_name: "Test Suite 1".to_string(),
-                start_time: Utc::now(),
-                end_time: Utc::now(),
-                execution_time: std::time::Duration::from_secs(5),
-                success: true,
-                results: HashMap::new(),
-                summary: TestSuiteSummary {
-                    total_tests: 10,
-                    passed_tests: 8,
-                    failed_tests: 2,
+                start_time:      Utc::now(),
+                end_time:        Utc::now(),
+                execution_time:  std::time::Duration::from_secs(5),
+                success:         true,
+                results:         HashMap::new(),
+                summary:         TestSuiteSummary {
+                    total_tests:   10,
+                    passed_tests:  8,
+                    failed_tests:  2,
                     skipped_tests: 0,
-                    error_tests: 0,
-                    pass_rate: 80.0,
+                    error_tests:   0,
+                    pass_rate:     80.0,
                     overall_score: 85.0,
                     quality_score: 82.0,
                 },
@@ -852,18 +849,18 @@ mod tests {
             },
             TestSuiteResult {
                 test_suite_name: "Test Suite 2".to_string(),
-                start_time: Utc::now(),
-                end_time: Utc::now(),
-                execution_time: std::time::Duration::from_secs(3),
-                success: true,
-                results: HashMap::new(),
-                summary: TestSuiteSummary {
-                    total_tests: 5,
-                    passed_tests: 5,
-                    failed_tests: 0,
+                start_time:      Utc::now(),
+                end_time:        Utc::now(),
+                execution_time:  std::time::Duration::from_secs(3),
+                success:         true,
+                results:         HashMap::new(),
+                summary:         TestSuiteSummary {
+                    total_tests:   5,
+                    passed_tests:  5,
+                    failed_tests:  0,
                     skipped_tests: 0,
-                    error_tests: 0,
-                    pass_rate: 100.0,
+                    error_tests:   0,
+                    pass_rate:     100.0,
                     overall_score: 90.0,
                     quality_score: 88.0,
                 },

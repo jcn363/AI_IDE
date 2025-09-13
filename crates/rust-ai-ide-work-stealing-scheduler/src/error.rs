@@ -10,10 +10,7 @@ pub enum SchedulerError {
     /// Task submission failed
     TaskSubmissionFailed(String),
     /// Task execution timeout
-    TaskExecutionTimeout {
-        task_id: String,
-        timeout_ms: u64,
-    },
+    TaskExecutionTimeout { task_id: String, timeout_ms: u64 },
     /// Worker communication error
     WorkerCommunicationError(String),
     /// Queue overflow
@@ -37,8 +34,15 @@ impl fmt::Display for SchedulerError {
             SchedulerError::TaskSubmissionFailed(msg) => {
                 write!(f, "Failed to submit task: {}", msg)
             }
-            SchedulerError::TaskExecutionTimeout { task_id, timeout_ms } => {
-                write!(f, "Task {} execution timed out after {}ms", task_id, timeout_ms)
+            SchedulerError::TaskExecutionTimeout {
+                task_id,
+                timeout_ms,
+            } => {
+                write!(
+                    f,
+                    "Task {} execution timed out after {}ms",
+                    task_id, timeout_ms
+                )
             }
             SchedulerError::WorkerCommunicationError(msg) => {
                 write!(f, "Worker communication error: {}", msg)
@@ -95,9 +99,7 @@ pub struct ErrorAggregator {
 impl ErrorAggregator {
     /// Create new error aggregator
     pub fn new() -> Self {
-        Self {
-            errors: Vec::new(),
-        }
+        Self { errors: Vec::new() }
     }
 
     /// Add error to aggregator

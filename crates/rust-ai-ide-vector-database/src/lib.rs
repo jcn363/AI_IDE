@@ -1,21 +1,21 @@
+use std::collections::HashMap;
+use std::path::Path;
+use std::sync::Arc;
+
 use memmap2::MmapMut;
 use ndarray::{ArrayD, ArrayViewD, IxDynImpl};
 use parking_lot::Mutex;
-use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::Path, sync::Arc};
-use tokio::sync::RwLock;
-
 use rust_ai_ide_cache::strategies::AdaptiveCache;
 use rust_ai_ide_common::validation::validate_secure_path;
-use rust_ai_ide_shared_types::{
-    FilterOperator, SearchFilter, VectorSearchRequest, VectorSearchResult,
-};
+use rust_ai_ide_shared_types::{FilterOperator, SearchFilter, VectorSearchRequest, VectorSearchResult};
+use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VectorIndexConfig {
-    pub max_vectors: usize,
-    pub dimensionality: usize,
-    pub index_type: IndexType,
+    pub max_vectors:       usize,
+    pub dimensionality:    usize,
+    pub index_type:        IndexType,
     pub quantization_bits: Option<u8>,
     pub compression_ratio: f32,
 }
@@ -30,18 +30,18 @@ pub enum IndexType {
 
 #[derive(Clone)]
 pub struct VectorDocument {
-    pub id: String,
-    pub vector: Vec<f32>,
-    pub content: Option<String>,
+    pub id:       String,
+    pub vector:   Vec<f32>,
+    pub content:  Option<String>,
     pub metadata: HashMap<String, serde_json::Value>,
 }
 
 impl Default for VectorIndexConfig {
     fn default() -> Self {
         Self {
-            max_vectors: 1_000_000,
-            dimensionality: 768,
-            index_type: IndexType::HNSW,
+            max_vectors:       1_000_000,
+            dimensionality:    768,
+            index_type:        IndexType::HNSW,
             quantization_bits: Some(8),
             compression_ratio: 0.8,
         }
@@ -50,10 +50,10 @@ impl Default for VectorIndexConfig {
 
 /// Memory-mapped vector database with zero-copy operations
 pub struct VectorDatabase {
-    config: VectorIndexConfig,
-    vectors: Arc<Mutex<HashMap<String, VectorDocument>>>,
-    index: Arc<RwLock<HNSWIndex>>,
-    cache: Arc<AdaptiveCache<Vec<f32>>>,
+    config:    VectorIndexConfig,
+    vectors:   Arc<Mutex<HashMap<String, VectorDocument>>>,
+    index:     Arc<RwLock<HNSWIndex>>,
+    cache:     Arc<AdaptiveCache<Vec<f32>>>,
     mmap_area: Option<MmapMut>,
 }
 
@@ -74,10 +74,7 @@ impl VectorDatabase {
     }
 
     /// Memory-map the vector storage file for zero-copy operations
-    pub async fn load_from_disk(
-        &mut self,
-        file_path: &Path,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn load_from_disk(&mut self, file_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
         validate_secure_path(file_path.to_str().unwrap())?;
 
         if file_path.exists() {
@@ -97,10 +94,7 @@ impl VectorDatabase {
     }
 
     /// Persist vectors to disk using memory mapping
-    pub async fn save_to_disk(
-        &mut self,
-        file_path: &Path,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn save_to_disk(&mut self, file_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
         validate_secure_path(file_path.to_str().unwrap())?;
 
         let serialized = self.serialize_vectors()?;
@@ -119,10 +113,7 @@ impl VectorDatabase {
     }
 
     /// Add multiple vectors in batch for optimal performance
-    pub async fn add_batch(
-        &self,
-        documents: Vec<VectorDocument>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn add_batch(&self, documents: Vec<VectorDocument>) -> Result<(), Box<dyn std::error::Error>> {
         let mut vectors_lock = self.vectors.lock();
         let mut index_lock = self.index.write().await;
 
@@ -222,11 +213,7 @@ impl VectorDatabase {
     }
 
     /// Update vector in-place
-    pub async fn update(
-        &self,
-        id: &str,
-        new_vector: Vec<f32>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn update(&self, id: &str, new_vector: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> {
         if new_vector.len() != self.config.dimensionality {
             return Err(format!(
                 "Vector dimension mismatch: expected {}, got {}",
@@ -270,15 +257,14 @@ impl VectorDatabase {
         if let Some(filters) = filters {
             for filter in filters {
                 match filter.operator {
-                    FilterOperator::Equal => {
+                    FilterOperator::Equal =>
                         if let Some(value) = doc.metadata.get(&filter.field) {
                             if value != &filter.value {
                                 return false;
                             }
                         } else {
                             return false;
-                        }
-                    }
+                        },
                     FilterOperator::GreaterThan => {
                         if let (Some(doc_val), Some(filter_val)) = (
                             doc.metadata.get(&filter.field).and_then(|v| v.as_f64()),
@@ -309,13 +295,12 @@ impl VectorDatabase {
                             }
                         }
                     }
-                    FilterOperator::NotEqual => {
+                    FilterOperator::NotEqual =>
                         if let Some(value) = doc.metadata.get(&filter.field) {
                             if value == &filter.value {
                                 return false;
                             }
-                        }
-                    }
+                        },
                 }
             }
         }
@@ -341,7 +326,7 @@ impl VectorDatabase {
 /// Hierarchical Navigable Small World index implementation
 struct HNSWIndex {
     config: VectorIndexConfig,
-    nodes: HashMap<String, Vec<f32>>,
+    nodes:  HashMap<String, Vec<f32>>,
 }
 
 impl HNSWIndex {
@@ -357,11 +342,7 @@ impl HNSWIndex {
         self.nodes.insert(id, vector);
     }
 
-    fn search(
-        &self,
-        query: &[f32],
-        top_k: usize,
-    ) -> Result<Vec<(String, f32)>, Box<dyn std::error::Error>> {
+    fn search(&self, query: &[f32], top_k: usize) -> Result<Vec<(String, f32)>, Box<dyn std::error::Error>> {
         let mut results: Vec<(String, f32)> = self
             .nodes
             .iter()
@@ -453,9 +434,9 @@ mod tests {
         let db = VectorDatabase::new(config).await.unwrap();
 
         let doc = VectorDocument {
-            id: "test".to_string(),
-            vector: vec![1.0, 2.0, 3.0],
-            content: Some("test content".to_string()),
+            id:       "test".to_string(),
+            vector:   vec![1.0, 2.0, 3.0],
+            content:  Some("test content".to_string()),
             metadata: HashMap::new(),
         };
 
@@ -493,9 +474,9 @@ mod tests {
         db.add(doc).await.unwrap();
 
         let filter = SearchFilter {
-            field: "type".to_string(),
+            field:    "type".to_string(),
             operator: FilterOperator::Equal,
-            value: serde_json::json!("function"),
+            value:    serde_json::json!("function"),
         };
 
         let request = VectorSearchRequest {

@@ -3,11 +3,13 @@
 //! This module provides intelligent pattern recognition across multiple programming languages
 //! to identify common programming patterns, anti-patterns, and architectural smells.
 
-use crate::analysis::types::Severity;
-use crate::multi_ast::{ASTNode, Language, MultiASTParser, UnifiedAST};
+use std::collections::HashMap;
+
 use rust_ai_ide_common::{IdeError, IdeResult};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
+use crate::analysis::types::Severity;
+use crate::multi_ast::{ASTNode, Language, MultiASTParser, UnifiedAST};
 
 /// Pattern recognition engine for multi-language analysis
 #[derive(Debug)]
@@ -15,7 +17,7 @@ pub struct LanguageAwarePatternRecognizer {
     /// AST parser for multiple languages
     ast_parser: MultiASTParser,
     /// Registered patterns for each language
-    patterns: HashMap<Language, Vec<PatternDefinition>>,
+    patterns:   HashMap<Language, Vec<PatternDefinition>>,
     /// Pattern confidence thresholds
     thresholds: PatternThresholds,
 }
@@ -23,16 +25,16 @@ pub struct LanguageAwarePatternRecognizer {
 /// Configuration for pattern recognition thresholds
 #[derive(Debug, Clone)]
 pub struct PatternThresholds {
-    pub min_confidence: f64,
-    pub high_confidence: f64,
+    pub min_confidence:      f64,
+    pub high_confidence:     f64,
     pub critical_confidence: f64,
 }
 
 impl Default for PatternThresholds {
     fn default() -> Self {
         Self {
-            min_confidence: 0.3,
-            high_confidence: 0.7,
+            min_confidence:      0.3,
+            high_confidence:     0.7,
             critical_confidence: 0.9,
         }
     }
@@ -41,12 +43,12 @@ impl Default for PatternThresholds {
 /// Pattern definition for recognition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PatternDefinition {
-    pub id: String,
-    pub name: String,
-    pub description: String,
-    pub category: PatternCategory,
-    pub severity: Severity,
-    pub ast_pattern: ASTPattern,
+    pub id:              String,
+    pub name:            String,
+    pub description:     String,
+    pub category:        PatternCategory,
+    pub severity:        Severity,
+    pub ast_pattern:     ASTPattern,
     pub confidence_rule: ConfidenceRule,
 }
 
@@ -64,16 +66,16 @@ pub enum PatternCategory {
 /// Abstract syntax tree pattern for matching
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ASTPattern {
-    pub node_types: Vec<String>,
+    pub node_types:     Vec<String>,
     pub child_patterns: Vec<ChildPattern>,
-    pub properties: HashMap<String, String>,
+    pub properties:     HashMap<String, String>,
 }
 
 /// Child pattern specifications
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChildPattern {
     pub relation: RelationType,
-    pub pattern: Box<ASTPattern>,
+    pub pattern:  Box<ASTPattern>,
 }
 
 /// Relationship types between AST nodes
@@ -88,24 +90,24 @@ pub enum RelationType {
 /// Confidence calculation rules
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfidenceRule {
-    pub base_score: f64,
+    pub base_score:  f64,
     pub multipliers: Vec<ConfidenceMultiplier>,
 }
 
 /// Confidence multipliers based on context
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfidenceMultiplier {
-    pub condition: String,
+    pub condition:  String,
     pub multiplier: f64,
 }
 
 /// Recognized pattern result
 #[derive(Debug, Clone)]
 pub struct RecognizedPattern {
-    pub pattern: PatternDefinition,
-    pub location: String,
-    pub confidence: f64,
-    pub context: HashMap<String, String>,
+    pub pattern:     PatternDefinition,
+    pub location:    String,
+    pub confidence:  f64,
+    pub context:     HashMap<String, String>,
     pub suggestions: Vec<String>,
 }
 
@@ -120,7 +122,7 @@ impl LanguageAwarePatternRecognizer {
     pub fn new() -> Self {
         let mut recognizer = Self {
             ast_parser: MultiASTParser::new(),
-            patterns: HashMap::new(),
+            patterns:   HashMap::new(),
             thresholds: Default::default(),
         };
 
@@ -139,7 +141,7 @@ impl LanguageAwarePatternRecognizer {
         let ast = self.ast_parser.parse(language, content).map_err(|e| {
             eprintln!("Failed to parse code: {}", e);
             IdeError::Analysis {
-                message: format!("Parse error: {}", e),
+                message:   format!("Parse error: {}", e),
                 file_path: file_path.to_string(),
             }
         })?;
@@ -153,8 +155,7 @@ impl LanguageAwarePatternRecognizer {
         for pattern in language_patterns {
             if let Some(matches) = self.find_pattern_matches(&ast, &pattern) {
                 for match_context in matches {
-                    let confidence =
-                        self.calculate_confidence(&pattern.confidence_rule, &match_context);
+                    let confidence = self.calculate_confidence(&pattern.confidence_rule, &match_context);
 
                     if confidence >= self.thresholds.min_confidence {
                         let recognized = RecognizedPattern {
@@ -247,21 +248,18 @@ impl LanguageAwarePatternRecognizer {
             }
             | ASTNode::Expression {
                 operands: children, ..
-            } => {
+            } =>
                 for child in children {
                     self.walk_ast_for_pattern(child, pattern, matches, context, depth);
-                }
-            }
-            ASTNode::Function { body, .. } => {
+                },
+            ASTNode::Function { body, .. } =>
                 for child in body {
                     self.walk_ast_for_pattern(child, pattern, matches, context, depth);
-                }
-            }
-            ASTNode::Class { methods, .. } => {
+                },
+            ASTNode::Class { methods, .. } =>
                 for method in methods {
                     self.walk_ast_for_pattern(method, pattern, matches, context, depth);
-                }
-            }
+                },
             _ => {
                 // Other node types don't have children to walk
             }
@@ -321,11 +319,7 @@ impl LanguageAwarePatternRecognizer {
     }
 
     /// Calculate pattern confidence
-    fn calculate_confidence(
-        &self,
-        rule: &ConfidenceRule,
-        context: &HashMap<String, String>,
-    ) -> f64 {
+    fn calculate_confidence(&self, rule: &ConfidenceRule, context: &HashMap<String, String>) -> f64 {
         let mut confidence = rule.base_score;
 
         for multiplier in &rule.multipliers {
@@ -380,21 +374,20 @@ impl LanguageAwarePatternRecognizer {
     fn initialize_standard_patterns(&mut self) {
         // Long function pattern (applies to most languages)
         let long_function_pattern = PatternDefinition {
-            id: "long_function".to_string(),
-            name: "Long Function".to_string(),
-            description: "Function with excessive number of lines indicating poor cohesion"
-                .to_string(),
-            category: PatternCategory::MaintainabilityProblem,
-            severity: Severity::Warning,
-            ast_pattern: ASTPattern {
-                node_types: vec!["function".to_string()],
+            id:              "long_function".to_string(),
+            name:            "Long Function".to_string(),
+            description:     "Function with excessive number of lines indicating poor cohesion".to_string(),
+            category:        PatternCategory::MaintainabilityProblem,
+            severity:        Severity::Warning,
+            ast_pattern:     ASTPattern {
+                node_types:     vec!["function".to_string()],
                 child_patterns: vec![],
-                properties: HashMap::new(),
+                properties:     HashMap::new(),
             },
             confidence_rule: ConfidenceRule {
-                base_score: 0.8,
+                base_score:  0.8,
                 multipliers: vec![ConfidenceMultiplier {
-                    condition: "line_count".to_string(),
+                    condition:  "line_count".to_string(),
                     multiplier: 1.2,
                 }],
             },
@@ -402,57 +395,55 @@ impl LanguageAwarePatternRecognizer {
 
         // Large class pattern
         let large_class_pattern = PatternDefinition {
-            id: "large_class".to_string(),
-            name: "Large Class".to_string(),
-            description: "Class with too many methods or fields indicating SRP violation"
-                .to_string(),
-            category: PatternCategory::AntiPattern,
-            severity: Severity::Error,
-            ast_pattern: ASTPattern {
-                node_types: vec!["class".to_string()],
+            id:              "large_class".to_string(),
+            name:            "Large Class".to_string(),
+            description:     "Class with too many methods or fields indicating SRP violation".to_string(),
+            category:        PatternCategory::AntiPattern,
+            severity:        Severity::Error,
+            ast_pattern:     ASTPattern {
+                node_types:     vec!["class".to_string()],
                 child_patterns: vec![],
-                properties: HashMap::new(),
+                properties:     HashMap::new(),
             },
             confidence_rule: ConfidenceRule {
-                base_score: 0.9,
+                base_score:  0.9,
                 multipliers: vec![], // Would be based on method/field count
             },
         };
 
         // Primitive obsession pattern
         let primitive_obsession_pattern = PatternDefinition {
-            id: "primitive_obsession".to_string(),
-            name: "Primitive Obsession".to_string(),
-            description: "Excessive use of primitive types instead of domain objects".to_string(),
-            category: PatternCategory::CodeSmell,
-            severity: Severity::Info,
-            ast_pattern: ASTPattern {
-                node_types: vec!["function".to_string(), "variable".to_string()],
+            id:              "primitive_obsession".to_string(),
+            name:            "Primitive Obsession".to_string(),
+            description:     "Excessive use of primitive types instead of domain objects".to_string(),
+            category:        PatternCategory::CodeSmell,
+            severity:        Severity::Info,
+            ast_pattern:     ASTPattern {
+                node_types:     vec!["function".to_string(), "variable".to_string()],
                 child_patterns: vec![],
-                properties: HashMap::new(),
+                properties:     HashMap::new(),
             },
             confidence_rule: ConfidenceRule {
-                base_score: 0.6,
+                base_score:  0.6,
                 multipliers: vec![],
             },
         };
 
         // God object pattern
         let god_object_pattern = PatternDefinition {
-            id: "god_object".to_string(),
-            name: "God Object".to_string(),
-            description:
-                "Class with too many responsibilities (violates Single Responsibility Principle)"
-                    .to_string(),
-            category: PatternCategory::AntiPattern,
-            severity: Severity::Critical,
-            ast_pattern: ASTPattern {
-                node_types: vec!["class".to_string()],
+            id:              "god_object".to_string(),
+            name:            "God Object".to_string(),
+            description:     "Class with too many responsibilities (violates Single Responsibility Principle)"
+                .to_string(),
+            category:        PatternCategory::AntiPattern,
+            severity:        Severity::Critical,
+            ast_pattern:     ASTPattern {
+                node_types:     vec!["class".to_string()],
                 child_patterns: vec![],
-                properties: HashMap::new(),
+                properties:     HashMap::new(),
             },
             confidence_rule: ConfidenceRule {
-                base_score: 0.95,
+                base_score:  0.95,
                 multipliers: vec![],
             },
         };
@@ -532,7 +523,16 @@ mod tests {
     #[test]
     fn test_analyze_typescript_function() {
         let mut recognizer = LanguageAwarePatternRecognizer::new();
-        let code = "function veryLongFunctionName(parameter1: string, parameter2: number, parameter3: boolean) {\n    console.log('line 1');\n    console.log('line 2');\n    console.log('line 3');\n    console.log('line 4');\n    console.log('line 5');\n    console.log('line 6');\n    console.log('line 7');\n    console.log('line 8');\n    console.log('line 9');\n    console.log('line 10');\n    console.log('line 11');\n    console.log('line 12');\n    console.log('line 13');\n    console.log('line 14');\n    console.log('line 15');\n    console.log('line 16');\n    console.log('line 17');\n    console.log('line 18');\n    console.log('line 19');\n    console.log('line 20');\n    console.log('line 21');\n    console.log('line 22');\n    console.log('line 23');\n    console.log('line 24');\n    console.log('line 25');\n}";
+        let code = "function veryLongFunctionName(parameter1: string, parameter2: number, parameter3: boolean) {\n    \
+                    console.log('line 1');\n    console.log('line 2');\n    console.log('line 3');\n    \
+                    console.log('line 4');\n    console.log('line 5');\n    console.log('line 6');\n    \
+                    console.log('line 7');\n    console.log('line 8');\n    console.log('line 9');\n    \
+                    console.log('line 10');\n    console.log('line 11');\n    console.log('line 12');\n    \
+                    console.log('line 13');\n    console.log('line 14');\n    console.log('line 15');\n    \
+                    console.log('line 16');\n    console.log('line 17');\n    console.log('line 18');\n    \
+                    console.log('line 19');\n    console.log('line 20');\n    console.log('line 21');\n    \
+                    console.log('line 22');\n    console.log('line 23');\n    console.log('line 24');\n    \
+                    console.log('line 25');\n}";
 
         let result = recognizer.analyze_code(code, &Language::TypeScript, "test.ts");
         assert!(result.is_ok());

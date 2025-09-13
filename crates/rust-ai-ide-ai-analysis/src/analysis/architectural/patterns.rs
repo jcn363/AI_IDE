@@ -3,10 +3,12 @@
 //! This module defines architectural patterns, anti-patterns, and pattern detection
 //! results for AI-powered code analysis.
 
-use crate::analysis::{AnalysisCategory, Severity};
+use std::collections::HashMap;
+
 use rust_ai_ide_common::{IdeError, IdeResult};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
+use crate::analysis::{AnalysisCategory, Severity};
 
 /// Core architectural pattern types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -88,89 +90,89 @@ pub enum AntiPattern {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DetectedPattern {
     pub pattern_type: ArchitecturalPattern,
-    pub confidence: f32,
-    pub location: CodeLocation,
-    pub context: PatternContext,
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub confidence:   f32,
+    pub location:     CodeLocation,
+    pub context:      PatternContext,
+    pub metadata:     HashMap<String, serde_json::Value>,
 }
 
 /// Detected anti-pattern result with severity and suggestions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DetectedAntiPattern {
     pub anti_pattern_type: AntiPattern,
-    pub severity: Severity,
-    pub confidence: f32,
-    pub location: CodeLocation,
-    pub suggestions: Vec<String>,
-    pub context: PatternContext,
-    pub metrics: AntiPatternMetrics,
+    pub severity:          Severity,
+    pub confidence:        f32,
+    pub location:          CodeLocation,
+    pub suggestions:       Vec<String>,
+    pub context:           PatternContext,
+    pub metrics:           AntiPatternMetrics,
 }
 
 /// Context information for pattern detection
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PatternContext {
-    pub code_snippet: String,
+    pub code_snippet:        String,
     pub surrounding_context: String,
-    pub structural_info: StructuralInfo,
-    pub semantic_info: SemanticInfo,
+    pub structural_info:     StructuralInfo,
+    pub semantic_info:       SemanticInfo,
 }
 
 /// Code location information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeLocation {
-    pub file_path: String,
-    pub start_line: u32,
-    pub start_column: u32,
-    pub end_line: u32,
-    pub end_column: u32,
+    pub file_path:     String,
+    pub start_line:    u32,
+    pub start_column:  u32,
+    pub end_line:      u32,
+    pub end_column:    u32,
     pub function_name: Option<String>,
-    pub class_name: Option<String>,
+    pub class_name:    Option<String>,
 }
 
 /// Structural information extracted from code
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StructuralInfo {
-    pub lines_of_code: usize,
+    pub lines_of_code:         usize,
     pub cyclomatic_complexity: u32,
-    pub nesting_depth: u32,
-    pub method_count: usize,
-    pub field_count: usize,
-    pub dependency_count: usize,
+    pub nesting_depth:         u32,
+    pub method_count:          usize,
+    pub field_count:           usize,
+    pub dependency_count:      usize,
 }
 
 /// Semantic information from LSP analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SemanticInfo {
-    pub symbols: Vec<String>,
-    pub references: Vec<String>,
+    pub symbols:     Vec<String>,
+    pub references:  Vec<String>,
     pub definitions: Vec<String>,
-    pub usages: HashMap<String, usize>,
+    pub usages:      HashMap<String, usize>,
 }
 
 /// Metrics specific to anti-pattern detection
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AntiPatternMetrics {
-    pub violation_score: f32,
-    pub maintainability_impact: f32,
-    pub testability_impact: f32,
-    pub performance_impact: f32,
-    pub affected_lines: usize,
+    pub violation_score:         f32,
+    pub maintainability_impact:  f32,
+    pub testability_impact:      f32,
+    pub performance_impact:      f32,
+    pub affected_lines:          usize,
     pub refactoring_effort_days: f32,
 }
 
 /// Intelligence suggestion with ML-enhanced confidence
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IntelligenceSuggestion {
-    pub category: SuggestionCategory,
-    pub title: String,
-    pub description: String,
-    pub confidence: f32,
-    pub priority: Priority,
-    pub location: CodeLocation,
-    pub refactoring_type: RefactoringType,
-    pub expected_benefits: Vec<String>,
+    pub category:                SuggestionCategory,
+    pub title:                   String,
+    pub description:             String,
+    pub confidence:              f32,
+    pub priority:                Priority,
+    pub location:                CodeLocation,
+    pub refactoring_type:        RefactoringType,
+    pub expected_benefits:       Vec<String>,
     pub implementation_guidance: String,
-    pub automated_fix: Option<AutomatedFix>,
+    pub automated_fix:           Option<AutomatedFix>,
 }
 
 /// Categories of intelligence suggestions
@@ -215,8 +217,8 @@ pub enum RefactoringType {
 /// Automated fix specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutomatedFix {
-    pub kind: FixKind,
-    pub actions: Vec<RefactoringAction>,
+    pub kind:          FixKind,
+    pub actions:       Vec<RefactoringAction>,
     pub prerequisites: Vec<String>,
 }
 
@@ -232,9 +234,9 @@ pub enum FixKind {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefactoringAction {
     pub action_type: ActionType,
-    pub range: CodeLocation,
-    pub new_text: String,
-    pub old_text: Option<String>,
+    pub range:       CodeLocation,
+    pub new_text:    String,
+    pub old_text:    Option<String>,
 }
 
 /// Types of refactoring actions
@@ -300,9 +302,7 @@ impl AntiPattern {
     pub fn default_severity(&self) -> Severity {
         match self {
             AntiPattern::GodObject | AntiPattern::CircularDependency => Severity::Error,
-            AntiPattern::LongMethod | AntiPattern::LargeClass | AntiPattern::CodeDuplication => {
-                Severity::Warning
-            }
+            AntiPattern::LongMethod | AntiPattern::LargeClass | AntiPattern::CodeDuplication => Severity::Warning,
             AntiPattern::TightCoupling | AntiPattern::SynchronousBlocking => Severity::Error,
             _ => Severity::Info,
         }

@@ -7,10 +7,11 @@
 //! - Behavioral anomaly detection
 //! - Attack chain reconstruction
 
+use std::sync::Arc;
+
 use chrono::{DateTime, Duration, Utc};
 use moka::future::Cache;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{info, warn};
 
@@ -19,24 +20,24 @@ use crate::{MonitoringError, Result, SecurityEvent};
 #[derive(Clone)]
 pub struct CorrelationEngine {
     correlation_rules: Arc<RwLock<Vec<CorrelationRule>>>,
-    event_buffer: Arc<Cache<String, Vec<SecurityEvent>>>,
+    event_buffer:      Arc<Cache<String, Vec<SecurityEvent>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CorrelationRule {
-    pub id: String,
-    pub name: String,
-    pub window: Duration,
+    pub id:         String,
+    pub name:       String,
+    pub window:     Duration,
     pub max_events: usize,
     pub conditions: Vec<CorrelationCondition>,
-    pub scoring: CorrelationScoring,
+    pub scoring:    CorrelationScoring,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CorrelationCondition {
-    pub field: String,
+    pub field:   String,
     pub pattern: CorrelationPattern,
-    pub weight: f64,
+    pub weight:  f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,16 +52,16 @@ pub enum CorrelationPattern {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CorrelationScoring {
     pub threshold: f64,
-    pub factors: std::collections::HashMap<String, f64>,
+    pub factors:   std::collections::HashMap<String, f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CorrelationResult {
-    pub rule_id: String,
-    pub confidence: f64,
-    pub events: Vec<SecurityEvent>,
-    pub description: String,
-    pub risk_score: f64,
+    pub rule_id:             String,
+    pub confidence:          f64,
+    pub events:              Vec<SecurityEvent>,
+    pub description:         String,
+    pub risk_score:          f64,
     pub recommended_actions: Vec<String>,
 }
 
@@ -68,7 +69,7 @@ impl CorrelationEngine {
     pub fn new() -> Self {
         Self {
             correlation_rules: Arc::new(RwLock::new(Vec::new())),
-            event_buffer: Arc::new(
+            event_buffer:      Arc::new(
                 Cache::builder()
                     .time_to_live(tokio::time::Duration::from_secs(1800))
                     .build(),
@@ -89,11 +90,7 @@ impl CorrelationEngine {
         Ok(results)
     }
 
-    async fn evaluate_rule(
-        &self,
-        rule: &CorrelationRule,
-        event: &SecurityEvent,
-    ) -> Option<CorrelationResult> {
+    async fn evaluate_rule(&self, rule: &CorrelationRule, event: &SecurityEvent) -> Option<CorrelationResult> {
         // Buffer event for time-window analysis
         let buffer_key = format!("rule_{}", rule.id);
         let mut buffer = self.event_buffer.get(&buffer_key).await.unwrap_or_default();
@@ -129,15 +126,15 @@ impl CorrelationEngine {
         // Check if score exceeds threshold
         if score >= rule.scoring.threshold {
             Some(CorrelationResult {
-                rule_id: rule.id.clone(),
-                confidence: (score / rule.conditions.len() as f64).min(1.0),
-                events: matched_events,
-                description: format!(
+                rule_id:             rule.id.clone(),
+                confidence:          (score / rule.conditions.len() as f64).min(1.0),
+                events:              matched_events,
+                description:         format!(
                     "Correlated {} events using rule '{}'",
                     matched_events.len(),
                     rule.name
                 ),
-                risk_score: score,
+                risk_score:          score,
                 recommended_actions: vec![
                     "Review correlated events".to_string(),
                     "Investigate potential attack pattern".to_string(),
@@ -173,20 +170,18 @@ fn matches_condition(event: &SecurityEvent, condition: &CorrelationCondition) ->
     match &condition.pattern {
         CorrelationPattern::Equal(expected) => field_value == expected,
         CorrelationPattern::Contains(substr) => field_value.contains(substr),
-        CorrelationPattern::Regex(pattern) => {
+        CorrelationPattern::Regex(pattern) =>
             if let Ok(regex) = regex::Regex::new(pattern) {
                 regex.is_match(field_value)
             } else {
                 false
-            }
-        }
-        CorrelationPattern::Range { min, max } => {
+            },
+        CorrelationPattern::Range { min, max } =>
             if let Ok(num) = field_value.parse::<f64>() {
                 num >= *min && num <= *max
             } else {
                 false
-            }
-        }
+            },
         CorrelationPattern::Sequence(sequence) => sequence.contains(&field_value.to_string()),
     }
 }

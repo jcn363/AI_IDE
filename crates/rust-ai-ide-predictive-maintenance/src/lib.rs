@@ -14,11 +14,11 @@ mod priority_scorer;
 mod recommender;
 mod types;
 
-pub use errors::*;
-pub use types::*;
-
 use std::sync::Arc;
+
+pub use errors::*;
 use tokio::sync::RwLock;
+pub use types::*;
 
 // Type aliases for component modules
 type DebtPredictor = debt_predictor::DebtPredictor;
@@ -77,13 +77,13 @@ impl PredictiveMaintenanceEngine {
         )?;
 
         Ok(Self {
-            debt_predictor: Arc::new(RwLock::new(debt_predictor)),
-            cost_estimator: Arc::new(RwLock::new(cost_estimator)),
+            debt_predictor:  Arc::new(RwLock::new(debt_predictor)),
+            cost_estimator:  Arc::new(RwLock::new(cost_estimator)),
             impact_analyzer: Arc::new(RwLock::new(impact_analyzer)),
             priority_scorer: Arc::new(RwLock::new(priority_scorer)),
-            recommender: Arc::new(RwLock::new(recommender)),
+            recommender:     Arc::new(RwLock::new(recommender)),
             forecast_engine: Arc::new(RwLock::new(forecast_engine)),
-            cache_manager: Arc::new(cache_manager),
+            cache_manager:   Arc::new(cache_manager),
         })
     }
 
@@ -136,10 +136,7 @@ impl PredictiveMaintenanceEngine {
     }
 
     /// Estimate costs for maintenance tasks
-    async fn estimate_maintenance_costs(
-        &self,
-        debt_forecast: &DebtForecast,
-    ) -> MaintenanceResult<CostEstimation> {
+    async fn estimate_maintenance_costs(&self, debt_forecast: &DebtForecast) -> MaintenanceResult<CostEstimation> {
         let estimator = self.cost_estimator.read().await;
         let mut costs = Vec::new();
 
@@ -150,8 +147,8 @@ impl PredictiveMaintenanceEngine {
 
         Ok(CostEstimation {
             total_estimated_cost: costs.iter().map(|c| c.estimated_effort_hours).sum(),
-            breakdown: costs,
-            currency: "developer-hours".to_string(),
+            breakdown:            costs,
+            currency:             "developer-hours".to_string(),
         })
     }
 
@@ -181,18 +178,18 @@ impl PredictiveMaintenanceEngine {
                 .get(index)
                 .unwrap_or(&CostBreakdown {
                     estimated_effort_hours: 0.0,
-                    risk_factor: 0.5,
-                    complexity_multiplier: 1.0,
-                    urgency_score: 0.5,
+                    risk_factor:            0.5,
+                    complexity_multiplier:  1.0,
+                    urgency_score:          0.5,
                 });
 
             if let Some(impact) = impact_analysis.impacts.get(index) {
                 let priority = scorer.calculate_priority(impact, cost).await?;
                 prioritized.push(PrioritizedTask {
-                    original_index: index,
-                    priority_score: priority.score,
+                    original_index:       index,
+                    priority_score:       priority.score,
                     recommended_timeline: priority.timeline,
-                    rationale: priority.rationale,
+                    rationale:            priority.rationale,
                 });
             }
         }
@@ -201,7 +198,7 @@ impl PredictiveMaintenanceEngine {
         prioritized.sort_by(|a, b| b.priority_score.partial_cmp(&a.priority_score).unwrap());
 
         Ok(PrioritizedTaskList {
-            tasks: prioritized,
+            tasks:                   prioritized,
             prioritization_strategy: "multi-criteria-weighted".to_string(),
         })
     }
@@ -218,11 +215,7 @@ impl PredictiveMaintenanceEngine {
     }
 
     /// Calculate overall confidence score for the forecast
-    fn calculate_overall_confidence(
-        &self,
-        debt_forecast: &DebtForecast,
-        cost_estimation: &CostEstimation,
-    ) -> f64 {
+    fn calculate_overall_confidence(&self, debt_forecast: &DebtForecast, cost_estimation: &CostEstimation) -> f64 {
         // Simple weighted average of confidence scores
         let debt_confidence = debt_forecast.confidence_score;
         let cost_confidence = if cost_estimation.total_estimated_cost > 0.0 {

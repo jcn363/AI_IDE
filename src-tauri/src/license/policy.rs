@@ -1,21 +1,20 @@
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
+
 use anyhow::{Context, Result};
 use rust_ai_ide_common::fs::{read_file_to_string, write_string_to_file};
 use serde::{Deserialize, Serialize};
 use spdx::Expression;
-use std::{
-    collections::HashSet,
-    path::{Path, PathBuf},
-};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct LicensePolicy {
-    pub allowed: Vec<String>,
-    pub denied: Vec<String>,
-    pub warn_on: Vec<String>,
+    pub allowed:  Vec<String>,
+    pub denied:   Vec<String>,
+    pub warn_on:  Vec<String>,
     #[serde(skip)]
     allowed_expr: Option<Expression>,
     #[serde(skip)]
-    denied_expr: Option<Expression>,
+    denied_expr:  Option<Expression>,
     #[serde(skip)]
     warn_on_expr: Option<Expression>,
 }
@@ -30,8 +29,8 @@ impl LicensePolicy {
             .await
             .with_context(|| format!("Failed to read license policy from {:?}", path))?;
 
-        let mut policy: Self = toml::from_str(&content)
-            .with_context(|| format!("Failed to parse license policy from {:?}", path))?;
+        let mut policy: Self =
+            toml::from_str(&content).with_context(|| format!("Failed to parse license policy from {:?}", path))?;
 
         policy.compile_expressions()?;
         Ok(policy)

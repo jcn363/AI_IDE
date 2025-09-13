@@ -3,55 +3,56 @@
 //! This module provides comprehensive job management, progress tracking, and orchestration
 //! capabilities for fine-tuning CodeLlama and StarCoder models.
 
-use anyhow::Result;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
+
+use anyhow::Result;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, RwLock};
 use uuid::Uuid;
 
 /// Training orchestrator for managing fine-tuning jobs
 #[derive(Debug)]
 pub struct TrainingOrchestrator {
-    jobs: Arc<RwLock<HashMap<String, JobState>>>,
-    event_sender: mpsc::UnboundedSender<TrainingEvent>,
-    event_receiver: Arc<RwLock<Option<mpsc::UnboundedReceiver<TrainingEvent>>>>,
+    jobs:                Arc<RwLock<HashMap<String, JobState>>>,
+    event_sender:        mpsc::UnboundedSender<TrainingEvent>,
+    event_receiver:      Arc<RwLock<Option<mpsc::UnboundedReceiver<TrainingEvent>>>>,
     max_concurrent_jobs: usize,
-    active_jobs: Arc<RwLock<usize>>,
-    resource_manager: Arc<ResourceManager>,
+    active_jobs:         Arc<RwLock<usize>>,
+    resource_manager:    Arc<ResourceManager>,
 }
 
 /// Job state information
 #[derive(Debug, Clone)]
 struct JobState {
-    job: crate::finetune::FineTuneJob,
-    status: TrainingStatus,
-    start_time: Option<DateTime<Utc>>,
-    end_time: Option<DateTime<Utc>>,
-    last_progress: Option<TrainingProgress>,
-    error_message: Option<String>,
+    job:            crate::finetune::FineTuneJob,
+    status:         TrainingStatus,
+    start_time:     Option<DateTime<Utc>>,
+    end_time:       Option<DateTime<Utc>>,
+    last_progress:  Option<TrainingProgress>,
+    error_message:  Option<String>,
     process_handle: Option<std::process::Child>,
 }
 
 /// Resource manager for tracking hardware resources
 #[derive(Debug)]
 pub struct ResourceManager {
-    available_memory_gb: f64,
+    available_memory_gb:     f64,
     available_gpu_memory_gb: Vec<f64>,
-    current_memory_usage: Arc<RwLock<f64>>,
-    current_gpu_usage: Arc<RwLock<Vec<f64>>>,
-    job_resource_map: Arc<RwLock<HashMap<String, JobResources>>>,
+    current_memory_usage:    Arc<RwLock<f64>>,
+    current_gpu_usage:       Arc<RwLock<Vec<f64>>>,
+    job_resource_map:        Arc<RwLock<HashMap<String, JobResources>>>,
 }
 
 /// Resources allocated to a specific job
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JobResources {
-    pub allocated_memory_gb: f64,
+    pub allocated_memory_gb:     f64,
     pub allocated_gpu_memory_gb: f64,
-    pub gpu_devices: Vec<usize>,
-    pub cpu_cores: usize,
+    pub gpu_devices:             Vec<usize>,
+    pub cpu_cores:               usize,
 }
 
 /// External training process interface
@@ -79,27 +80,27 @@ pub use crate::finetune::{FineTuneJob, TrainingMetrics, TrainingProgress, Traini
 /// Orchestration configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrchestrationConfig {
-    pub max_concurrent_jobs: usize,
-    pub max_memory_per_job_gb: f64,
-    pub max_gpu_memory_per_job_gb: f64,
-    pub enable_resource_monitoring: bool,
+    pub max_concurrent_jobs:            usize,
+    pub max_memory_per_job_gb:          f64,
+    pub max_gpu_memory_per_job_gb:      f64,
+    pub enable_resource_monitoring:     bool,
     pub progress_poll_interval_seconds: u64,
-    pub job_timeout_hours: u64,
-    pub enable_auto_recovery: bool,
-    pub checkpoint_interval_minutes: u64,
+    pub job_timeout_hours:              u64,
+    pub enable_auto_recovery:           bool,
+    pub checkpoint_interval_minutes:    u64,
 }
 
 impl Default for OrchestrationConfig {
     fn default() -> Self {
         Self {
-            max_concurrent_jobs: 2,
-            max_memory_per_job_gb: 16.0,
-            max_gpu_memory_per_job_gb: 8.0,
-            enable_resource_monitoring: true,
+            max_concurrent_jobs:            2,
+            max_memory_per_job_gb:          16.0,
+            max_gpu_memory_per_job_gb:      8.0,
+            enable_resource_monitoring:     true,
             progress_poll_interval_seconds: 30,
-            job_timeout_hours: 48,
-            enable_auto_recovery: true,
-            checkpoint_interval_minutes: 30,
+            job_timeout_hours:              48,
+            enable_auto_recovery:           true,
+            checkpoint_interval_minutes:    30,
         }
     }
 }
@@ -134,12 +135,12 @@ impl TrainingOrchestrator {
 
         // Create job state
         let job_state = JobState {
-            job: job.clone(),
-            status: TrainingStatus::Created,
-            start_time: None,
-            end_time: None,
-            last_progress: None,
-            error_message: None,
+            job:            job.clone(),
+            status:         TrainingStatus::Created,
+            start_time:     None,
+            end_time:       None,
+            last_progress:  None,
+            error_message:  None,
             process_handle: None,
         };
 
@@ -156,7 +157,7 @@ impl TrainingOrchestrator {
 
         // Emit job started event
         self.emit_event(TrainingEvent::JobStarted {
-            job_id: job_id.clone(),
+            job_id:    job_id.clone(),
             timestamp: Utc::now(),
         })
         .await;
@@ -189,9 +190,7 @@ impl TrainingOrchestrator {
     pub async fn cancel_job(&self, job_id: &str) -> Result<()> {
         let mut jobs = self.jobs.write().await;
         if let Some(job_state) = jobs.get_mut(job_id) {
-            if job_state.status != TrainingStatus::Completed
-                && job_state.status != TrainingStatus::Failed
-            {
+            if job_state.status != TrainingStatus::Completed && job_state.status != TrainingStatus::Failed {
                 job_state.status = TrainingStatus::Cancelled;
                 job_state.end_time = Some(Utc::now());
 
@@ -208,8 +207,8 @@ impl TrainingOrchestrator {
 
                 // Emit cancellation event
                 self.emit_event(TrainingEvent::JobFailed {
-                    job_id: job_id.to_string(),
-                    error: "Job cancelled by user".to_string(),
+                    job_id:    job_id.to_string(),
+                    error:     "Job cancelled by user".to_string(),
                     timestamp: Utc::now(),
                 })
                 .await;
@@ -367,15 +366,15 @@ impl TrainingOrchestrator {
     /// Monitor a specific job's progress
     async fn monitor_job(&self, job_id: String) -> Result<()> {
         let mut progress = TrainingProgress {
-            epoch: 0,
-            total_epochs: 3,
-            step: 0,
-            total_steps: 1000,
-            loss: Some(2.5),
-            learning_rate: Some(2e-5),
+            epoch:                    0,
+            total_epochs:             3,
+            step:                     0,
+            total_steps:              1000,
+            loss:                     Some(2.5),
+            learning_rate:            Some(2e-5),
             estimated_time_remaining: Some(std::time::Duration::from_secs(3600)),
-            memory_usage_mb: Some(4096),
-            gpu_utilization: Some(85.0),
+            memory_usage_mb:          Some(4096),
+            gpu_utilization:          Some(85.0),
         };
 
         loop {
@@ -388,8 +387,7 @@ impl TrainingOrchestrator {
                     TrainingStatus::Training => {
                         // Simulate progress updates
                         progress.step += 10;
-                        progress.epoch =
-                            progress.step / (progress.total_steps / progress.total_epochs);
+                        progress.epoch = progress.step / (progress.total_steps / progress.total_epochs);
 
                         if progress.step >= progress.total_steps {
                             // Training completed
@@ -400,21 +398,20 @@ impl TrainingOrchestrator {
                             // Release resources
                             drop(jobs);
                             self.resource_manager.release_resources(&job_id).await?;
-                            *self.active_jobs.write().await =
-                                self.active_jobs.read().await.saturating_sub(1);
+                            *self.active_jobs.write().await = self.active_jobs.read().await.saturating_sub(1);
 
                             // Emit completion event
                             self.emit_event(TrainingEvent::JobCompleted {
-                                job_id: job_id.clone(),
-                                metrics: TrainingMetrics {
-                                    final_loss: 0.5,
+                                job_id:    job_id.clone(),
+                                metrics:   TrainingMetrics {
+                                    final_loss:            0.5,
                                     training_time_seconds: 3600,
-                                    peak_memory_usage_mb: 4096,
-                                    samples_per_second: 100.0,
-                                    validation_loss: Some(0.6),
-                                    perplexity: Some(15.0),
-                                    bleu_score: Some(0.8),
-                                    code_bleu_score: Some(0.75),
+                                    peak_memory_usage_mb:  4096,
+                                    samples_per_second:    100.0,
+                                    validation_loss:       Some(0.6),
+                                    perplexity:            Some(15.0),
+                                    bleu_score:            Some(0.8),
+                                    code_bleu_score:       Some(0.75),
                                 },
                                 timestamp: Utc::now(),
                             })
@@ -442,8 +439,8 @@ impl TrainingOrchestrator {
 
             // Emit progress event
             self.emit_event(TrainingEvent::JobProgress {
-                job_id: job_id.clone(),
-                progress: progress.clone(),
+                job_id:    job_id.clone(),
+                progress:  progress.clone(),
                 timestamp: Utc::now(),
             })
             .await;
@@ -486,9 +483,7 @@ impl TrainingOrchestrator {
             for (job_id, job_state) in jobs.iter() {
                 if matches!(
                     job_state.status,
-                    TrainingStatus::Training
-                        | TrainingStatus::PreparingData
-                        | TrainingStatus::Initializing
+                    TrainingStatus::Training | TrainingStatus::PreparingData | TrainingStatus::Initializing
                 ) {
                     if let Some(start_time) = job_state.start_time {
                         if Utc::now().signed_duration_since(start_time) > timeout_duration {
@@ -527,8 +522,8 @@ impl TrainingOrchestrator {
 
             // Emit failure event
             self.emit_event(TrainingEvent::JobFailed {
-                job_id: job_id.to_string(),
-                error: "Job timed out after 48 hours".to_string(),
+                job_id:    job_id.to_string(),
+                error:     "Job timed out after 48 hours".to_string(),
                 timestamp: Utc::now(),
             })
             .await;
@@ -621,12 +616,12 @@ impl TrainingOrchestrator {
 impl Clone for TrainingOrchestrator {
     fn clone(&self) -> Self {
         Self {
-            jobs: self.jobs.clone(),
-            event_sender: self.event_sender.clone(),
-            event_receiver: self.event_receiver.clone(),
+            jobs:                self.jobs.clone(),
+            event_sender:        self.event_sender.clone(),
+            event_receiver:      self.event_receiver.clone(),
             max_concurrent_jobs: self.max_concurrent_jobs,
-            active_jobs: self.active_jobs.clone(),
-            resource_manager: self.resource_manager.clone(),
+            active_jobs:         self.active_jobs.clone(),
+            resource_manager:    self.resource_manager.clone(),
         }
     }
 }
@@ -688,10 +683,10 @@ impl ResourceManager {
         gpu_usage[gpu_index] += required_gpu_memory;
 
         let allocation = JobResources {
-            allocated_memory_gb: required_memory,
+            allocated_memory_gb:     required_memory,
             allocated_gpu_memory_gb: required_gpu_memory,
-            gpu_devices: vec![gpu_index],
-            cpu_cores: 4, // Allocate 4 CPU cores
+            gpu_devices:             vec![gpu_index],
+            cpu_cores:               4, // Allocate 4 CPU cores
         };
 
         job_map.insert(job_id.to_string(), allocation);
@@ -753,10 +748,10 @@ impl ResourceManager {
         };
 
         Ok(ResourceStatus {
-            memory_gb: memory_usage,
-            total_memory_gb: self.available_memory_gb,
-            gpu_count: gpu_usage.len(),
-            gpu_utilization: total_gpu_utilization * 100.0,
+            memory_gb:               memory_usage,
+            total_memory_gb:         self.available_memory_gb,
+            gpu_count:               gpu_usage.len(),
+            gpu_utilization:         total_gpu_utilization * 100.0,
             available_gpu_memory_gb: self.available_gpu_memory_gb.clone(),
         })
     }
@@ -779,20 +774,20 @@ impl ResourceManager {
 /// Resource status information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceStatus {
-    pub memory_gb: f64,
-    pub total_memory_gb: f64,
-    pub gpu_count: usize,
-    pub gpu_utilization: f32,
+    pub memory_gb:               f64,
+    pub total_memory_gb:         f64,
+    pub gpu_count:               usize,
+    pub gpu_utilization:         f32,
     pub available_gpu_memory_gb: Vec<f64>,
 }
 
 /// Orchestrator statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrchestratorStatistics {
-    pub total_jobs: usize,
-    pub active_jobs: usize,
-    pub completed_jobs: usize,
-    pub failed_jobs: usize,
+    pub total_jobs:          usize,
+    pub active_jobs:         usize,
+    pub completed_jobs:      usize,
+    pub failed_jobs:         usize,
     pub status_distribution: HashMap<TrainingStatus, usize>,
 }
 
@@ -811,29 +806,29 @@ mod tests {
 
         // Test resource allocation
         let job = FineTuneJob {
-            id: "test_job".to_string(),
-            name: "Test Job".to_string(),
-            description: Some("Test job description".to_string()),
-            base_model: "codellama-7b".to_string(),
-            model_type: crate::finetune::ModelType::CodeLlama,
-            dataset_path: PathBuf::from("test_dataset.jsonl"),
-            config: crate::finetune::default_codellama_config(),
-            status: TrainingStatus::Created,
-            progress: TrainingProgress {
-                epoch: 0,
-                total_epochs: 3,
-                step: 0,
-                total_steps: 100,
-                loss: None,
-                learning_rate: None,
+            id:            "test_job".to_string(),
+            name:          "Test Job".to_string(),
+            description:   Some("Test job description".to_string()),
+            base_model:    "codellama-7b".to_string(),
+            model_type:    crate::finetune::ModelType::CodeLlama,
+            dataset_path:  PathBuf::from("test_dataset.jsonl"),
+            config:        crate::finetune::default_codellama_config(),
+            status:        TrainingStatus::Created,
+            progress:      TrainingProgress {
+                epoch:                    0,
+                total_epochs:             3,
+                step:                     0,
+                total_steps:              100,
+                loss:                     None,
+                learning_rate:            None,
                 estimated_time_remaining: None,
-                memory_usage_mb: None,
-                gpu_utilization: None,
+                memory_usage_mb:          None,
+                gpu_utilization:          None,
             },
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-            output_path: None,
-            metrics: None,
+            created_at:    Utc::now(),
+            updated_at:    Utc::now(),
+            output_path:   None,
+            metrics:       None,
             error_message: None,
         };
 
@@ -856,29 +851,29 @@ mod tests {
         let orchestrator = TrainingOrchestrator::new().unwrap();
 
         let job = FineTuneJob {
-            id: Uuid::new_v4().to_string(),
-            name: "Test Training Job".to_string(),
-            description: Some("Integration test for orchestrator".to_string()),
-            base_model: "codellama-7b".to_string(),
-            model_type: crate::finetune::ModelType::CodeLlama,
-            dataset_path: PathBuf::from("test_dataset.jsonl"),
-            config: crate::finetune::default_codellama_config(),
-            status: TrainingStatus::Created,
-            progress: TrainingProgress {
-                epoch: 0,
-                total_epochs: 3,
-                step: 0,
-                total_steps: 1000,
-                loss: None,
-                learning_rate: None,
+            id:            Uuid::new_v4().to_string(),
+            name:          "Test Training Job".to_string(),
+            description:   Some("Integration test for orchestrator".to_string()),
+            base_model:    "codellama-7b".to_string(),
+            model_type:    crate::finetune::ModelType::CodeLlama,
+            dataset_path:  PathBuf::from("test_dataset.jsonl"),
+            config:        crate::finetune::default_codellama_config(),
+            status:        TrainingStatus::Created,
+            progress:      TrainingProgress {
+                epoch:                    0,
+                total_epochs:             3,
+                step:                     0,
+                total_steps:              1000,
+                loss:                     None,
+                learning_rate:            None,
                 estimated_time_remaining: None,
-                memory_usage_mb: None,
-                gpu_utilization: None,
+                memory_usage_mb:          None,
+                gpu_utilization:          None,
             },
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-            output_path: None,
-            metrics: None,
+            created_at:    Utc::now(),
+            updated_at:    Utc::now(),
+            output_path:   None,
+            metrics:       None,
             error_message: None,
         };
 

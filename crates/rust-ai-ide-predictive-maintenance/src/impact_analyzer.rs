@@ -1,9 +1,12 @@
 //! Cross-file dependency impact analysis component
 
-use crate::{errors::*, types::*};
+use std::collections::{HashMap, HashSet};
+
 use async_trait::async_trait;
 use petgraph::{Directed, Graph};
-use std::collections::{HashMap, HashSet};
+
+use crate::errors::*;
+use crate::types::*;
 
 /// Core impact analyzer
 #[derive(Debug)]
@@ -26,9 +29,9 @@ impl ImpactAnalyzer {
         // Analysis implementation would go here
         // For now, return placeholder analysis
         Ok(ImpactAnalysis {
-            impacts: vec![],
+            impacts:            vec![],
             overall_risk_score: 0.5,
-            safe_sequences: vec![],
+            safe_sequences:     vec![],
         })
     }
 }

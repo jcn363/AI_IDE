@@ -6,16 +6,16 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 pub struct InfiniteScalabilityEngine {
-    pub fractal_scaler: FractalScaler,
-    pub quantum_recursion: QuantumRecursion,
+    pub fractal_scaler:      FractalScaler,
+    pub quantum_recursion:   QuantumRecursion,
     pub ecosystem_expansion: EcosystemExpansion,
 }
 
 impl InfiniteScalabilityEngine {
     pub fn new() -> Self {
         Self {
-            fractal_scaler: FractalScaler::new(),
-            quantum_recursion: QuantumRecursion::new(),
+            fractal_scaler:      FractalScaler::new(),
+            quantum_recursion:   QuantumRecursion::new(),
             ecosystem_expansion: EcosystemExpansion::new(),
         }
     }
@@ -50,14 +50,11 @@ impl FractalScaler {
         }
     }
 
-    pub fn scale_fractal(
-        &self,
-        system: &ScalableSystem,
-    ) -> Result<FractalScaleResult, InfiniteScalabilityError> {
+    pub fn scale_fractal(&self, system: &ScalableSystem) -> Result<FractalScaleResult, InfiniteScalabilityError> {
         Ok(FractalScaleResult {
-            system_id: system.id,
-            fractal_dimension: 2.5,
-            scaling_factor: 1000.0,
+            system_id:                  system.id,
+            fractal_dimension:          2.5,
+            scaling_factor:             1000.0,
             infinite_capacity_achieved: true,
         })
     }
@@ -79,9 +76,9 @@ impl QuantumRecursion {
         scale_result: FractalScaleResult,
     ) -> Result<QuantumRecursiveResult, InfiniteScalabilityError> {
         Ok(QuantumRecursiveResult {
-            system_id: scale_result.system_id,
-            recursion_level: u32::MAX, // Truly infinite recursion
-            quantum_amplification: scale_result.scaling_factor * 1000.0,
+            system_id:                   scale_result.system_id,
+            recursion_level:             u32::MAX, // Truly infinite recursion
+            quantum_amplification:       scale_result.scaling_factor * 1000.0,
             infinite_scalability_locked: true,
         })
     }
@@ -103,10 +100,10 @@ impl EcosystemExpansion {
         recursive_result: QuantumRecursiveResult,
     ) -> Result<InfiniteScaleResult, InfiniteScalabilityError> {
         Ok(InfiniteScaleResult {
-            system_id: recursive_result.system_id,
-            infinite_capacity_achieved: true,
-            fractal_scaling_active: true,
-            quantum_recursion_enabled: true,
+            system_id:                    recursive_result.system_id,
+            infinite_capacity_achieved:   true,
+            fractal_scaling_active:       true,
+            quantum_recursion_enabled:    true,
             ecosystem_expansion_complete: true,
         })
     }
@@ -123,47 +120,47 @@ pub struct ScalableSystem {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FractalScaleResult {
-    pub system_id: Uuid,
-    pub fractal_dimension: f64,
-    pub scaling_factor: f64,
+    pub system_id:                  Uuid,
+    pub fractal_dimension:          f64,
+    pub scaling_factor:             f64,
     pub infinite_capacity_achieved: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QuantumRecursiveResult {
-    pub system_id: Uuid,
-    pub recursion_level: u32, // Using u32 for implementation, conceptually infinite
-    pub quantum_amplification: f64,
+    pub system_id:                   Uuid,
+    pub recursion_level:             u32, // Using u32 for implementation, conceptually infinite
+    pub quantum_amplification:       f64,
     pub infinite_scalability_locked: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InfiniteScaleResult {
-    pub system_id: Uuid,
-    pub infinite_capacity_achieved: bool,
-    pub fractal_scaling_active: bool,
-    pub quantum_recursion_enabled: bool,
+    pub system_id:                    Uuid,
+    pub infinite_capacity_achieved:   bool,
+    pub fractal_scaling_active:       bool,
+    pub quantum_recursion_enabled:    bool,
     pub ecosystem_expansion_complete: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FractalPattern {
-    pub pattern_name: String,
-    pub dimension_factor: f64,
+    pub pattern_name:       String,
+    pub dimension_factor:   f64,
     pub scaling_efficiency: f32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RecursionDepth {
-    pub depth_level: u32,
+    pub depth_level:          u32,
     pub amplification_factor: f64,
     pub stability_maintained: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ExpansionStrategy {
-    pub strategy_name: String,
-    pub expansion_factor: f64,
+    pub strategy_name:       String,
+    pub expansion_factor:    f64,
     pub infinite_boundaries: Vec<String>,
 }
 

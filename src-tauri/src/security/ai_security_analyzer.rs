@@ -10,22 +10,21 @@ pub mod integration;
 pub mod security_rules;
 pub mod types;
 
-use regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::path::Path;
-use syn::{
-    spanned::Spanned, visit::Visit, Expr, ExprCall, ExprMacro, ExprMethodCall, ExprPath, File, Lit,
-    LitStr, Span,
-};
-use walkdir;
 
 // Re-export types and implementations
 pub use ai_visitor_base::*;
-pub use integration::*;
-pub use security_rules::*;
-pub use types::*;
 // Re-export base visitor macro for use in this module
 pub use ai_visitor_base::*;
+pub use integration::*;
+use regex::Regex;
+pub use security_rules::*;
+use serde::{Deserialize, Serialize};
+use syn::spanned::Spanned;
+use syn::visit::Visit;
+use syn::{Expr, ExprCall, ExprMacro, ExprMethodCall, ExprPath, File, Lit, LitStr, Span};
+pub use types::*;
+use walkdir;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SecuritySeverity {
@@ -52,59 +51,59 @@ pub enum SecurityCategory {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityIssue {
-    pub category: SecurityCategory,
-    pub severity: SecuritySeverity,
-    pub title: String,
-    pub description: String,
-    pub file_path: String,
-    pub line_number: Option<usize>,
-    pub column: Option<usize>,
+    pub category:     SecurityCategory,
+    pub severity:     SecuritySeverity,
+    pub title:        String,
+    pub description:  String,
+    pub file_path:    String,
+    pub line_number:  Option<usize>,
+    pub column:       Option<usize>,
     pub code_snippet: Option<String>,
-    pub remediation: String,
-    pub confidence: f32, // 0.0 to 1.0
-    pub cwe_id: Option<u32>,
+    pub remediation:  String,
+    pub confidence:   f32, // 0.0 to 1.0
+    pub cwe_id:       Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityAnalysisResult {
-    pub issues: Vec<SecurityIssue>,
-    pub summary: SecuritySummary,
+    pub issues:                     Vec<SecurityIssue>,
+    pub summary:                    SecuritySummary,
     pub dependency_vulnerabilities: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecuritySummary {
-    pub total_issues: usize,
+    pub total_issues:   usize,
     pub critical_count: usize,
-    pub high_count: usize,
-    pub medium_count: usize,
-    pub low_count: usize,
-    pub info_count: usize,
-    pub overall_score: f32, // 0.0 to 100.0
+    pub high_count:     usize,
+    pub medium_count:   usize,
+    pub low_count:      usize,
+    pub info_count:     usize,
+    pub overall_score:  f32, // 0.0 to 100.0
 }
 
 pub struct AISecurityAnalyzer {
     secret_patterns: Vec<SecretPattern>,
-    security_rules: Vec<SecurityRule>,
+    security_rules:  Vec<SecurityRule>,
 }
 
 #[derive(Debug, Clone)]
 struct SecretPattern {
-    name: String,
-    pattern: Regex,
-    severity: SecuritySeverity,
+    name:       String,
+    pattern:    Regex,
+    severity:   SecuritySeverity,
     confidence: f32,
 }
 
 #[derive(Debug, Clone)]
 struct SecurityRule {
-    name: String,
-    category: SecurityCategory,
-    pattern: Regex,
-    severity: SecuritySeverity,
+    name:        String,
+    category:    SecurityCategory,
+    pattern:     Regex,
+    severity:    SecuritySeverity,
     description: String,
     remediation: String,
-    cwe_id: Option<u32>,
+    cwe_id:      Option<u32>,
 }
 
 // Manually implement BaseSecurityVisitor trait for all visitor structs
@@ -179,7 +178,7 @@ impl<'ast> BaseSecurityVisitor<'ast> for ComplexitySecurityVisitor {
 }
 
 struct UnsafeCodeVisitor {
-    issues: Vec<SecurityIssue>,
+    issues:    Vec<SecurityIssue>,
     file_path: String,
 }
 
@@ -197,18 +196,17 @@ impl<'ast> Visit<'ast> for UnsafeCodeVisitor {
         // Check for unsafe blocks
         if let Expr::Unsafe(block) = node {
             self.issues.push(SecurityIssue {
-                category: SecurityCategory::UnsafeCode,
-                severity: SecuritySeverity::High,
-                title: "Unsafe block usage".to_string(),
-                description: "Unsafe code block detected - manually verify safety".to_string(),
-                file_path: self.file_path.clone(),
-                line_number: Some(block.unsafe_token.span().line as usize),
-                column: Some(block.unsafe_token.span().column as usize),
+                category:     SecurityCategory::UnsafeCode,
+                severity:     SecuritySeverity::High,
+                title:        "Unsafe block usage".to_string(),
+                description:  "Unsafe code block detected - manually verify safety".to_string(),
+                file_path:    self.file_path.clone(),
+                line_number:  Some(block.unsafe_token.span().line as usize),
+                column:       Some(block.unsafe_token.span().column as usize),
                 code_snippet: Some(format!("{:?}", block)),
-                remediation: "Ensure all unsafe code is properly documented and justified"
-                    .to_string(),
-                confidence: 0.9,
-                cwe_id: Some(628), // CWE-628: Function Call with Incorrectly Specified Arguments
+                remediation:  "Ensure all unsafe code is properly documented and justified".to_string(),
+                confidence:   0.9,
+                cwe_id:       Some(628), // CWE-628: Function Call with Incorrectly Specified Arguments
             });
         }
 
@@ -219,18 +217,16 @@ impl<'ast> Visit<'ast> for UnsafeCodeVisitor {
 
 /// Visitor for detecting panic/unwrap calls in inappropriate contexts
 struct PanicUnwrapVisitor {
-    issues: Vec<SecurityIssue>,
-    file_path: String,
+    issues:          Vec<SecurityIssue>,
+    file_path:       String,
     in_library_code: bool,
-    in_test_code: bool,
+    in_test_code:    bool,
 }
 
 impl PanicUnwrapVisitor {
     fn new(file_path: String) -> Self {
         let in_library_code = file_path.contains("/src/lib.rs")
-            || file_path.contains("/src/")
-                && !file_path.contains("/examples/")
-                && !file_path.contains("/tests/");
+            || file_path.contains("/src/") && !file_path.contains("/examples/") && !file_path.contains("/tests/");
         let in_test_code = file_path.contains("/tests/") || file_path.contains("test.rs");
 
         Self {
@@ -251,34 +247,38 @@ impl<'ast> Visit<'ast> for PanicUnwrapVisitor {
                 "panic" => {
                     if self.in_library_code {
                         self.issues.push(SecurityIssue {
-                            category: SecurityCategory::MemorySafety,
-                            severity: SecuritySeverity::High,
-                            title: "Panic in library code".to_string(),
-                            description: "panic! macro used in library code can cause denial of service".to_string(),
-                            file_path: self.file_path.clone(),
-                            line_number: None,
-                            column: None,
+                            category:     SecurityCategory::MemorySafety,
+                            severity:     SecuritySeverity::High,
+                            title:        "Panic in library code".to_string(),
+                            description:  "panic! macro used in library code can cause denial of service".to_string(),
+                            file_path:    self.file_path.clone(),
+                            line_number:  None,
+                            column:       None,
                             code_snippet: None,
-                            remediation: "Return Result<T, E> instead of panicking. Use panic! only in unrecoverable situations".to_string(),
-                            confidence: 0.9,
-                            cwe_id: Some(248), // CWE-248: Uncaught Exception
+                            remediation:  "Return Result<T, E> instead of panicking. Use panic! only in unrecoverable \
+                                           situations"
+                                .to_string(),
+                            confidence:   0.9,
+                            cwe_id:       Some(248), // CWE-248: Uncaught Exception
                         });
                     }
                 }
                 "unreachable" => {
                     if self.in_library_code {
                         self.issues.push(SecurityIssue {
-                            category: SecurityCategory::MemorySafety,
-                            severity: SecuritySeverity::Medium,
-                            title: "Unreachable code in library".to_string(),
-                            description: "unreachable! macro in library code may indicate logic errors".to_string(),
-                            file_path: self.file_path.clone(),
-                            line_number: None,
-                            column: None,
+                            category:     SecurityCategory::MemorySafety,
+                            severity:     SecuritySeverity::Medium,
+                            title:        "Unreachable code in library".to_string(),
+                            description:  "unreachable! macro in library code may indicate logic errors".to_string(),
+                            file_path:    self.file_path.clone(),
+                            line_number:  None,
+                            column:       None,
                             code_snippet: None,
-                            remediation: "Review logic to ensure unreachable code is truly unreachable or handle the case properly".to_string(),
-                            confidence: 0.7,
-                            cwe_id: Some(561), // CWE-561: Dead Code
+                            remediation:  "Review logic to ensure unreachable code is truly unreachable or handle the \
+                                           case properly"
+                                .to_string(),
+                            confidence:   0.7,
+                            cwe_id:       Some(561), // CWE-561: Dead Code
                         });
                     }
                 }
@@ -304,12 +304,16 @@ impl<'ast> Visit<'ast> for PanicUnwrapVisitor {
                         category: SecurityCategory::MemorySafety,
                         severity,
                         title: format!("Use of {} in library code", method_name),
-                        description: format!("{} can cause panics and denial of service in library code", method_name),
+                        description: format!(
+                            "{} can cause panics and denial of service in library code",
+                            method_name
+                        ),
                         file_path: self.file_path.clone(),
                         line_number: None,
                         column: None,
                         code_snippet: None,
-                        remediation: "Use pattern matching, if let, or proper error handling instead of unwrap/expect".to_string(),
+                        remediation: "Use pattern matching, if let, or proper error handling instead of unwrap/expect"
+                            .to_string(),
                         confidence: 0.85,
                         cwe_id: Some(248), // CWE-248: Uncaught Exception
                     });
@@ -317,20 +321,19 @@ impl<'ast> Visit<'ast> for PanicUnwrapVisitor {
             }
             "unwrap_unchecked" => {
                 self.issues.push(SecurityIssue {
-                    category: SecurityCategory::MemorySafety,
-                    severity: SecuritySeverity::Critical,
-                    title: "Use of unwrap_unchecked".to_string(),
-                    description:
-                        "unwrap_unchecked bypasses safety checks and can cause undefined behavior"
-                            .to_string(),
-                    file_path: self.file_path.clone(),
-                    line_number: None,
-                    column: None,
-                    code_snippet: None,
-                    remediation: "Use safe alternatives or ensure the preconditions are always met"
+                    category:     SecurityCategory::MemorySafety,
+                    severity:     SecuritySeverity::Critical,
+                    title:        "Use of unwrap_unchecked".to_string(),
+                    description:  "unwrap_unchecked bypasses safety checks and can cause undefined behavior"
                         .to_string(),
-                    confidence: 0.95,
-                    cwe_id: Some(119), // CWE-119: Improper Restriction of Operations within the Bounds of a Memory Buffer
+                    file_path:    self.file_path.clone(),
+                    line_number:  None,
+                    column:       None,
+                    code_snippet: None,
+                    remediation:  "Use safe alternatives or ensure the preconditions are always met".to_string(),
+                    confidence:   0.95,
+                    cwe_id:       Some(119), /* CWE-119: Improper Restriction of Operations within the Bounds of a
+                                              * Memory Buffer */
                 });
             }
             _ => {}
@@ -342,7 +345,7 @@ impl<'ast> Visit<'ast> for PanicUnwrapVisitor {
 
 /// Visitor for detecting command injection vulnerabilities
 struct CommandInjectionVisitor {
-    issues: Vec<SecurityIssue>,
+    issues:    Vec<SecurityIssue>,
     file_path: String,
 }
 
@@ -369,10 +372,7 @@ impl<'ast> Visit<'ast> for CommandInjectionVisitor {
         // Check for dangerous functions like std::process::Command::output()
         if let Expr::Path(expr_path) = &*node.func {
             if let Some(segment) = expr_path.path.segments.last() {
-                if segment.ident == "output"
-                    || segment.ident == "spawn"
-                    || segment.ident == "status"
-                {
+                if segment.ident == "output" || segment.ident == "spawn" || segment.ident == "status" {
                     // This is an ExprCall, so we can analyze it
                     // We need to create a separate analysis for method calls on expressions
                     // For now, skip this since it requires more complex AST analysis
@@ -415,17 +415,19 @@ impl CommandInjectionVisitor {
                 if let Lit::Str(lit_str) = &lit.lit {
                     if self.is_potentially_unsafe_input(&lit_str.value()) {
                         let issue = SecurityIssue {
-                            category: SecurityCategory::CommandInjection,
-                            severity: SecuritySeverity::High,
-                            title: "Potential command injection vulnerability".to_string(),
-                            description: "Command contains potentially unsafe user input".to_string(),
-                            file_path: self.file_path.clone(),
-                            line_number: Some(lit_str.span().line as usize),
-                            column: Some(lit_str.span().column as usize),
+                            category:     SecurityCategory::CommandInjection,
+                            severity:     SecuritySeverity::High,
+                            title:        "Potential command injection vulnerability".to_string(),
+                            description:  "Command contains potentially unsafe user input".to_string(),
+                            file_path:    self.file_path.clone(),
+                            line_number:  Some(lit_str.span().line as usize),
+                            column:       Some(lit_str.span().column as usize),
                             code_snippet: Some(format!("{:?}", node)),
-                            remediation: "Use std::process::Command with explicit arguments instead of string interpolation".to_string(),
-                            confidence: 0.8,
-                            cwe_id: Some(78),
+                            remediation:  "Use std::process::Command with explicit arguments instead of string \
+                                           interpolation"
+                                .to_string(),
+                            confidence:   0.8,
+                            cwe_id:       Some(78),
                         };
                         self.issues.push(issue);
                     }
@@ -441,17 +443,19 @@ impl CommandInjectionVisitor {
                 if let Lit::Str(lit_str) = &lit.lit {
                     if self.is_potentially_unsafe_input(&lit_str.value()) {
                         let issue = SecurityIssue {
-                            category: SecurityCategory::CommandInjection,
-                            severity: SecuritySeverity::High,
-                            title: "Potential command injection vulnerability".to_string(),
-                            description: "Command contains potentially unsafe user input".to_string(),
-                            file_path: self.file_path.clone(),
-                            line_number: Some(lit_str.span().line as usize),
-                            column: Some(lit_str.span().column as usize),
+                            category:     SecurityCategory::CommandInjection,
+                            severity:     SecuritySeverity::High,
+                            title:        "Potential command injection vulnerability".to_string(),
+                            description:  "Command contains potentially unsafe user input".to_string(),
+                            file_path:    self.file_path.clone(),
+                            line_number:  Some(lit_str.span().line as usize),
+                            column:       Some(lit_str.span().column as usize),
                             code_snippet: Some(format!("{:?}", node)),
-                            remediation: "Use std::process::Command with explicit arguments instead of string interpolation".to_string(),
-                            confidence: 0.8,
-                            cwe_id: Some(78),
+                            remediation:  "Use std::process::Command with explicit arguments instead of string \
+                                           interpolation"
+                                .to_string(),
+                            confidence:   0.8,
+                            cwe_id:       Some(78),
                         };
                         self.issues.push(issue);
                     }
@@ -470,17 +474,18 @@ impl CommandInjectionVisitor {
                             if let Lit::Str(lit_str) = &lit.lit {
                                 if self.is_potentially_unsafe_input(&lit_str.value()) {
                                     let issue = SecurityIssue {
-                                        category: SecurityCategory::CommandInjection,
-                                        severity: SecuritySeverity::High,
-                                        title: "Potential command injection in argument".to_string(),
-                                        description: "Command argument contains potentially unsafe user input".to_string(),
-                                        file_path: self.file_path.clone(),
-                                        line_number: Some(lit_str.span().line as usize),
-                                        column: Some(lit_str.span().column as usize),
+                                        category:     SecurityCategory::CommandInjection,
+                                        severity:     SecuritySeverity::High,
+                                        title:        "Potential command injection in argument".to_string(),
+                                        description:  "Command argument contains potentially unsafe user input"
+                                            .to_string(),
+                                        file_path:    self.file_path.clone(),
+                                        line_number:  Some(lit_str.span().line as usize),
+                                        column:       Some(lit_str.span().column as usize),
                                         code_snippet: Some(format!("{:?}", node)),
-                                        remediation: "Validate and sanitize all command arguments".to_string(),
-                                        confidence: 0.9,
-                                        cwe_id: Some(78),
+                                        remediation:  "Validate and sanitize all command arguments".to_string(),
+                                        confidence:   0.9,
+                                        cwe_id:       Some(78),
                                     };
                                     self.issues.push(issue);
                                 }
@@ -495,8 +500,7 @@ impl CommandInjectionVisitor {
     /// Check if a string contains potentially dangerous shell metacharacters
     fn is_potentially_unsafe_input(&self, input: &str) -> bool {
         let dangerous_patterns = [
-            "&&", "||", ";", "|", "`", "$", "(", ")", "{", "}", "<", ">", "*", "?", "[", "]", "..",
-            "/", "\\",
+            "&&", "||", ";", "|", "`", "$", "(", ")", "{", "}", "<", ">", "*", "?", "[", "]", "..", "/", "\\",
         ];
 
         dangerous_patterns.iter().any(|&p| input.contains(p))
@@ -505,7 +509,7 @@ impl CommandInjectionVisitor {
 
 /// Placeholder visitor for arithmetic overflow analysis - TODO: implement
 struct ArithmeticOverflowVisitor {
-    issues: Vec<SecurityIssue>,
+    issues:    Vec<SecurityIssue>,
     file_path: String,
 }
 
@@ -528,7 +532,7 @@ impl<'ast> Visit<'ast> for ArithmeticOverflowVisitor {
 
 /// Placeholder visitor for complexity security analysis - TODO: implement
 struct ComplexitySecurityVisitor {
-    issues: Vec<SecurityIssue>,
+    issues:    Vec<SecurityIssue>,
     file_path: String,
 }
 
@@ -631,22 +635,21 @@ impl AISecurityAnalyzer {
                 let line_number = code[..mat.start()].lines().count();
 
                 issues.push(SecurityIssue {
-                    category: SecurityCategory::HardcodedSecrets,
-                    severity: pattern.severity.clone(),
-                    title: format!("Hardcoded {} detected", pattern.name),
-                    description: format!(
+                    category:     SecurityCategory::HardcodedSecrets,
+                    severity:     pattern.severity.clone(),
+                    title:        format!("Hardcoded {} detected", pattern.name),
+                    description:  format!(
                         "A {} appears to be hardcoded in the source code",
                         pattern.name
                     ),
-                    file_path: file_path.to_string(),
-                    line_number: Some(line_number),
-                    column: Some(mat.start()),
+                    file_path:    file_path.to_string(),
+                    line_number:  Some(line_number),
+                    column:       Some(mat.start()),
                     code_snippet: Some(mat.as_str().to_string()),
-                    remediation:
-                        "Move sensitive data to environment variables or secure configuration files"
-                            .to_string(),
-                    confidence: pattern.confidence,
-                    cwe_id: Some(798), // CWE-798: Use of Hard-coded Credentials
+                    remediation:  "Move sensitive data to environment variables or secure configuration files"
+                        .to_string(),
+                    confidence:   pattern.confidence,
+                    cwe_id:       Some(798), // CWE-798: Use of Hard-coded Credentials
                 });
             }
         }
@@ -662,17 +665,17 @@ impl AISecurityAnalyzer {
                 let line_number = code[..mat.start()].lines().count();
 
                 issues.push(SecurityIssue {
-                    category: rule.category.clone(),
-                    severity: rule.severity.clone(),
-                    title: rule.name.clone(),
-                    description: rule.description.clone(),
-                    file_path: file_path.to_string(),
-                    line_number: Some(line_number),
-                    column: Some(mat.start()),
+                    category:     rule.category.clone(),
+                    severity:     rule.severity.clone(),
+                    title:        rule.name.clone(),
+                    description:  rule.description.clone(),
+                    file_path:    file_path.to_string(),
+                    line_number:  Some(line_number),
+                    column:       Some(mat.start()),
                     code_snippet: Some(mat.as_str().to_string()),
-                    remediation: rule.remediation.clone(),
-                    confidence: 0.8,
-                    cwe_id: rule.cwe_id,
+                    remediation:  rule.remediation.clone(),
+                    confidence:   0.8,
+                    cwe_id:       rule.cwe_id,
                 });
             }
         }
@@ -698,21 +701,13 @@ impl AISecurityAnalyzer {
         visitor.get_issues().clone()
     }
 
-    fn analyze_arithmetic_overflow(
-        &self,
-        syntax_tree: &File,
-        file_path: &str,
-    ) -> Vec<SecurityIssue> {
+    fn analyze_arithmetic_overflow(&self, syntax_tree: &File, file_path: &str) -> Vec<SecurityIssue> {
         let mut visitor = ArithmeticOverflowVisitor::new(file_path.to_string());
         syn::visit::visit_file(&mut visitor, syntax_tree);
         visitor.get_issues().clone()
     }
 
-    fn analyze_complexity_security(
-        &self,
-        syntax_tree: &File,
-        file_path: &str,
-    ) -> Vec<SecurityIssue> {
+    fn analyze_complexity_security(&self, syntax_tree: &File, file_path: &str) -> Vec<SecurityIssue> {
         let mut visitor = ComplexitySecurityVisitor::new(file_path.to_string());
         syn::visit::visit_file(&mut visitor, syntax_tree);
         visitor.get_issues().clone()
@@ -736,8 +731,7 @@ impl AISecurityAnalyzer {
         let overall_score = if total_issues == 0 {
             100.0
         } else {
-            let weighted_score =
-                (critical_count * 10 + high_count * 5 + medium_count * 2 + low_count) as f32;
+            let weighted_score = (critical_count * 10 + high_count * 5 + medium_count * 2 + low_count) as f32;
             let max_possible_score = total_issues as f32 * 10.0;
             ((max_possible_score - weighted_score) / max_possible_score * 100.0).max(0.0)
         };
@@ -764,19 +758,19 @@ impl AISecurityAnalyzer {
     /// Convert SecurityIssue to analysis engine format for consistency
     pub fn to_analysis_finding(&self, issue: &SecurityIssue) -> AnalysisEngineFinding {
         AnalysisEngineFinding {
-            message: issue.description.clone(),
-            severity: self.map_security_severity(&issue.severity),
-            category: AnalysisEngineCategory::Security,
-            range: AnalysisEngineRange {
-                start_line: issue.line_number.unwrap_or(1) as u32,
+            message:    issue.description.clone(),
+            severity:   self.map_security_severity(&issue.severity),
+            category:   AnalysisEngineCategory::Security,
+            range:      AnalysisEngineRange {
+                start_line:   issue.line_number.unwrap_or(1) as u32,
                 start_column: issue.column.unwrap_or(1) as u32,
-                end_line: issue.line_number.unwrap_or(1) as u32,
-                end_column: (issue.column.unwrap_or(1) + 10) as u32,
+                end_line:     issue.line_number.unwrap_or(1) as u32,
+                end_column:   (issue.column.unwrap_or(1) + 10) as u32,
             },
             suggestion: Some(issue.remediation.clone()),
             confidence: issue.confidence,
-            rule_id: issue.title.clone(),
-            cwe_id: issue.cwe_id,
+            rule_id:    issue.title.clone(),
+            cwe_id:     issue.cwe_id,
         }
     }
 
@@ -857,14 +851,14 @@ impl AISecurityAnalyzer {
 /// Types for integration with analysis engine
 #[derive(Debug, Clone)]
 pub struct AnalysisEngineFinding {
-    pub message: String,
-    pub severity: AnalysisEngineSeverity,
-    pub category: AnalysisEngineCategory,
-    pub range: AnalysisEngineRange,
+    pub message:    String,
+    pub severity:   AnalysisEngineSeverity,
+    pub category:   AnalysisEngineCategory,
+    pub range:      AnalysisEngineRange,
     pub suggestion: Option<String>,
     pub confidence: f32,
-    pub rule_id: String,
-    pub cwe_id: Option<u32>,
+    pub rule_id:    String,
+    pub cwe_id:     Option<u32>,
 }
 
 #[derive(Debug, Clone)]
@@ -882,10 +876,10 @@ pub enum AnalysisEngineCategory {
 
 #[derive(Debug, Clone)]
 pub struct AnalysisEngineRange {
-    pub start_line: u32,
+    pub start_line:   u32,
     pub start_column: u32,
-    pub end_line: u32,
-    pub end_column: u32,
+    pub end_line:     u32,
+    pub end_column:   u32,
 }
 
 impl Default for AISecurityAnalyzer {

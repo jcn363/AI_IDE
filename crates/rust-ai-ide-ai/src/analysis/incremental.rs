@@ -27,13 +27,13 @@ struct FileState {
     /// Last modification time of the file when it was analyzed
     modified_time: u64,
     /// Size of the file when it was analyzed
-    size: u64,
+    size:          u64,
     /// Hash of the file contents when it was analyzed
-    content_hash: String,
+    content_hash:  String,
     /// Whether the file was successfully analyzed
-    analyzed: bool,
+    analyzed:      bool,
     /// Any dependencies this file has on other files
-    dependencies: Vec<PathBuf>,
+    dependencies:  Vec<PathBuf>,
 }
 
 impl IncrementalState {
@@ -122,8 +122,7 @@ impl IncrementalState {
                 }
             };
 
-            let modified_time =
-                FileTime::from_last_modification_time(&metadata).unix_seconds() as u64;
+            let modified_time = FileTime::from_last_modification_time(&metadata).unix_seconds() as u64;
             let file_size = metadata.len();
             let content_hash = self.calculate_file_hash(path)?;
 
@@ -145,31 +144,23 @@ impl IncrementalState {
             }
 
             // Update the state with current file info
-            self.file_states.insert(
-                path.to_path_buf(),
-                FileState {
-                    modified_time,
-                    size: file_size,
-                    content_hash,
-                    analyzed: !needs_analysis, // Mark as analyzed if not changed
-                    dependencies: Vec::new(),  // Will be updated during analysis
-                },
-            );
+            self.file_states.insert(path.to_path_buf(), FileState {
+                modified_time,
+                size: file_size,
+                content_hash,
+                analyzed: !needs_analysis, // Mark as analyzed if not changed
+                dependencies: Vec::new(),  // Will be updated during analysis
+            });
         }
 
         Ok(changed_files)
     }
 
     /// Updates the analysis state for a file
-    pub fn update_file_analysis(
-        &mut self,
-        path: &Path,
-        mut dependencies: Vec<PathBuf>,
-        success: bool,
-    ) -> Result<()> {
+    pub fn update_file_analysis(&mut self, path: &Path, mut dependencies: Vec<PathBuf>, success: bool) -> Result<()> {
         // Get file metadata
-        let metadata = std::fs::metadata(path)
-            .with_context(|| format!("Failed to get metadata for file: {}", path.display()))?;
+        let metadata =
+            std::fs::metadata(path).with_context(|| format!("Failed to get metadata for file: {}", path.display()))?;
 
         let modified_time = FileTime::from_last_modification_time(&metadata).unix_seconds() as u64;
         let size = metadata.len();
@@ -184,16 +175,13 @@ impl IncrementalState {
             .collect();
 
         // Update or insert the file state
-        self.file_states.insert(
-            path.to_path_buf(),
-            FileState {
-                modified_time,
-                size,
-                content_hash,
-                analyzed: success,
-                dependencies,
-            },
-        );
+        self.file_states.insert(path.to_path_buf(), FileState {
+            modified_time,
+            size,
+            content_hash,
+            analyzed: success,
+            dependencies,
+        });
 
         Ok(())
     }
@@ -204,8 +192,7 @@ impl IncrementalState {
             for dep_path in &state.dependencies {
                 if let Some(dep_state) = self.file_states.get(dep_path) {
                     let current_mtime =
-                        FileTime::from_last_modification_time(&std::fs::metadata(dep_path)?)
-                            .unix_seconds() as u64;
+                        FileTime::from_last_modification_time(&std::fs::metadata(dep_path)?).unix_seconds() as u64;
 
                     if dep_state.modified_time < current_mtime {
                         debug!("Dependency changed: {}", dep_path.display());
@@ -229,8 +216,7 @@ impl IncrementalState {
         // Check if the file has been modified since last analysis
         match std::fs::metadata(path) {
             Ok(metadata) => {
-                let modified =
-                    FileTime::from_last_modification_time(&metadata).unix_seconds() as u64;
+                let modified = FileTime::from_last_modification_time(&metadata).unix_seconds() as u64;
                 if modified > state.modified_time {
                     return true;
                 }
@@ -259,12 +245,13 @@ impl IncrementalState {
 
     /// Calculates a hash of the file contents for change detection
     fn calculate_file_hash(&self, path: &Path) -> Result<String> {
-        use blake3;
         use std::fs::File;
         use std::io::Read;
 
-        let mut file = File::open(path)
-            .with_context(|| format!("Failed to open file for hashing: {}", path.display()))?;
+        use blake3;
+
+        let mut file =
+            File::open(path).with_context(|| format!("Failed to open file for hashing: {}", path.display()))?;
 
         let mut hasher = blake3::Hasher::new();
         let mut buffer = [0; 8192];
@@ -322,11 +309,13 @@ pub fn analyze_incrementally(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs::{self, File};
     use std::io::Write;
     use std::time::{SystemTime, UNIX_EPOCH};
+
     use tempfile::tempdir;
+
+    use super::*;
 
     #[test]
     fn test_incremental_analysis() -> Result<()> {

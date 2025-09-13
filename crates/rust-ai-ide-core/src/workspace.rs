@@ -1,9 +1,11 @@
 //! Core workspace management implementation using shared services
 
-use crate::error::IDEError;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use rust_ai_ide_shared_services::{WorkspaceConfig, WorkspaceManager, WorkspaceManagerTrait};
-use std::sync::Arc;
+
+use crate::error::IDEError;
 
 /// Core workspace manager with additional functionality
 pub struct CoreWorkspaceManager {
@@ -19,16 +21,12 @@ impl CoreWorkspaceManager {
     }
 
     /// Initialize workspace from configuration
-    pub async fn initialize_from_config<P: AsRef<std::path::Path>>(
-        &self,
-        config_path: P,
-    ) -> Result<(), IDEError> {
+    pub async fn initialize_from_config<P: AsRef<std::path::Path>>(&self, config_path: P) -> Result<(), IDEError> {
         // Load workspace configuration from file
         let config_file_path = config_path.as_ref().join(".rust-ai-ide/workspace.json");
 
         if config_file_path.exists() {
-            let config_content =
-                std::fs::read_to_string(&config_file_path).map_err(|e| IDEError::from(e))?;
+            let config_content = std::fs::read_to_string(&config_file_path).map_err(|e| IDEError::from(e))?;
 
             let config: serde_json::Map<String, serde_json::Value> =
                 serde_json::from_str(&config_content).map_err(|e| IDEError::from(e))?;
@@ -64,19 +62,19 @@ impl CoreWorkspaceManager {
         &self,
         path: P,
     ) -> Result<WorkspaceCapabilities, IDEError> {
-        let workspace =
-            self.inner
-                .get_workspace(&path)
-                .await
-                .ok_or_else(|| IDEError::FileSystem {
-                    message: format!("workspace not found for path: {}", path.as_ref().display()),
-                })?;
+        let workspace = self
+            .inner
+            .get_workspace(&path)
+            .await
+            .ok_or_else(|| IDEError::FileSystem {
+                message: format!("workspace not found for path: {}", path.as_ref().display()),
+            })?;
 
         let mut capabilities = WorkspaceCapabilities {
-            rust_support: false,
-            cargo_support: false,
+            rust_support:     false,
+            cargo_support:    false,
             analysis_support: false,
-            file_watching: workspace.watch,
+            file_watching:    workspace.watch,
         };
 
         // Check for Rust project files
@@ -102,13 +100,13 @@ impl CoreWorkspaceManager {
         key: &str,
         value: serde_json::Value,
     ) -> Result<(), IDEError> {
-        let mut workspace =
-            self.inner
-                .get_workspace(&path)
-                .await
-                .ok_or_else(|| IDEError::FileSystem {
-                    message: format!("workspace not found for path: {}", path.as_ref().display()),
-                })?;
+        let mut workspace = self
+            .inner
+            .get_workspace(&path)
+            .await
+            .ok_or_else(|| IDEError::FileSystem {
+                message: format!("workspace not found for path: {}", path.as_ref().display()),
+            })?;
 
         workspace
             .set_setting(key, value)
@@ -159,19 +157,20 @@ impl Default for CoreWorkspaceManager {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct WorkspaceCapabilities {
     /// Whether Rust development is supported
-    pub rust_support: bool,
+    pub rust_support:     bool,
     /// Whether Cargo is available and configured
-    pub cargo_support: bool,
+    pub cargo_support:    bool,
     /// Whether analysis tools are supported
     pub analysis_support: bool,
     /// Whether file watching is enabled
-    pub file_watching: bool,
+    pub file_watching:    bool,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::tempdir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_core_workspace_manager() {

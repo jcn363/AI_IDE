@@ -2,19 +2,20 @@
 //!
 //! Advanced architecture analysis and modernization capabilities for evolutionary software design.
 
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+
 use petgraph::{Directed, Graph};
 use rayon::prelude::*;
 use rust_ai_ide_ai1_semantic::{SemanticAnalysis, SemanticConfig, SemanticUnderstandingEngine};
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use tokio::sync::Mutex;
 
 /// Architecture modernization engine
 #[derive(Debug)]
 pub struct ArchitectureModernizationEngine {
-    analyzer: ArchitectureAnalyzer,
-    modernizer: CodeModernizer,
-    quality_scorer: QualityScorer,
+    analyzer:            ArchitectureAnalyzer,
+    modernizer:          CodeModernizer,
+    quality_scorer:      QualityScorer,
     refactoring_planner: RefactoringPlanner,
 }
 
@@ -22,18 +23,15 @@ impl ArchitectureModernizationEngine {
     /// Initialize the architecture modernization engine
     pub fn new() -> Self {
         Self {
-            analyzer: ArchitectureAnalyzer::new(),
-            modernizer: CodeModernizer::new(),
-            quality_scorer: QualityScorer::new(),
+            analyzer:            ArchitectureAnalyzer::new(),
+            modernizer:          CodeModernizer::new(),
+            quality_scorer:      QualityScorer::new(),
             refactoring_planner: RefactoringPlanner::new(),
         }
     }
 
     /// Analyze architecture and generate modernization plan
-    pub async fn analyze_and_modernize(
-        &self,
-        codebase: &Codebase,
-    ) -> Result<ModernizationPlan, ArchitectureError> {
+    pub async fn analyze_and_modernize(&self, codebase: &Codebase) -> Result<ModernizationPlan, ArchitectureError> {
         // Analyze current architecture
         let architecture = self.analyzer.analyze_architecture(codebase).await?;
 
@@ -115,15 +113,15 @@ impl ArchitectureModernizationEngine {
         for (module_name, module) in &architecture.modules {
             if module.complexity_score > 0.8 && module.dependencies.len() > 20 {
                 smells.push(ArchitectureSmell {
-                    smell_type: ArchitectureSmellType::GodObject,
-                    location: module_name.clone(),
-                    severity: SmellSeverity::High,
+                    smell_type:  ArchitectureSmellType::GodObject,
+                    location:    module_name.clone(),
+                    severity:    SmellSeverity::High,
                     description: format!(
                         "Module '{}' has high complexity and too many dependencies",
                         module_name
                     ),
-                    impact: "Makes code difficult to understand and maintain".to_string(),
-                    resolution: "Break down into smaller, focused modules".to_string(),
+                    impact:      "Makes code difficult to understand and maintain".to_string(),
+                    resolution:  "Break down into smaller, focused modules".to_string(),
                 });
             }
         }
@@ -132,15 +130,15 @@ impl ArchitectureModernizationEngine {
         let circular_deps = self.analyzer.find_circular_dependencies(architecture);
         for (module1, module2) in circular_deps {
             smells.push(ArchitectureSmell {
-                smell_type: ArchitectureSmellType::CircularDependency,
-                location: format!("{} ↔ {}", module1, module2),
-                severity: SmellSeverity::Medium,
+                smell_type:  ArchitectureSmellType::CircularDependency,
+                location:    format!("{} ↔ {}", module1, module2),
+                severity:    SmellSeverity::Medium,
                 description: format!(
                     "Circular dependency between '{}' and '{}'",
                     module1, module2
                 ),
-                impact: "Creates tight coupling and makes testing difficult".to_string(),
-                resolution: "Introduce interfaces or mediator pattern".to_string(),
+                impact:      "Creates tight coupling and makes testing difficult".to_string(),
+                resolution:  "Introduce interfaces or mediator pattern".to_string(),
             });
         }
 
@@ -162,10 +160,7 @@ impl ArchitectureAnalyzer {
     }
 
     /// Perform comprehensive architecture analysis
-    pub async fn analyze_architecture(
-        &self,
-        codebase: &Codebase,
-    ) -> Result<Architecture, ArchitectureError> {
+    pub async fn analyze_architecture(&self, codebase: &Codebase) -> Result<Architecture, ArchitectureError> {
         let mut modules = HashMap::new();
         let mut relationships = Vec::new();
 
@@ -178,14 +173,14 @@ impl ArchitectureAnalyzer {
                 .await?;
 
             let module = ModuleInfo {
-                name: module_name.clone(),
-                file_path: file.path.clone(),
-                language: file.language.clone(),
-                dependencies: self.extract_dependencies(&analysis, codebase),
+                name:             module_name.clone(),
+                file_path:        file.path.clone(),
+                language:         file.language.clone(),
+                dependencies:     self.extract_dependencies(&analysis, codebase),
                 complexity_score: self.calculate_complexity(&analysis),
-                lines_of_code: file.content.lines().count(),
-                abstractness: self.calculate_abstractness(&analysis),
-                instability: self.calculate_instability(&analysis),
+                lines_of_code:    file.content.lines().count(),
+                abstractness:     self.calculate_abstractness(&analysis),
+                instability:      self.calculate_instability(&analysis),
             };
 
             modules.insert(module_name, module);
@@ -195,10 +190,10 @@ impl ArchitectureAnalyzer {
         for (module_name, module) in &modules {
             for dependency in &module.dependencies {
                 relationships.push(ModuleRelationship {
-                    from: module_name.clone(),
-                    to: dependency.clone(),
+                    from:              module_name.clone(),
+                    to:                dependency.clone(),
                     relationship_type: RelationshipType::DependsOn,
-                    strength: 1.0, // Could be calculated based on usage frequency
+                    strength:          1.0, // Could be calculated based on usage frequency
                 });
             }
         }
@@ -281,11 +276,7 @@ impl ArchitectureAnalyzer {
             .to_string()
     }
 
-    fn extract_dependencies(
-        &self,
-        _analysis: &SemanticAnalysis,
-        _codebase: &Codebase,
-    ) -> HashSet<String> {
+    fn extract_dependencies(&self, _analysis: &SemanticAnalysis, _codebase: &Codebase) -> HashSet<String> {
         // Extract dependencies from semantic analysis
         // This would examine imports, function calls, etc.
         HashSet::new()
@@ -312,10 +303,7 @@ impl ArchitectureAnalyzer {
         0.3 // Placeholder
     }
 
-    fn infer_architecture_layers(
-        &self,
-        modules: &HashMap<String, ModuleInfo>,
-    ) -> Vec<ArchitectureLayer> {
+    fn infer_architecture_layers(&self, modules: &HashMap<String, ModuleInfo>) -> Vec<ArchitectureLayer> {
         // Infer architectural layers based on module names and dependencies
         // Simple categorization
         let mut presentation = Vec::new();
@@ -324,14 +312,9 @@ impl ArchitectureAnalyzer {
 
         for (name, _) in modules {
             let name_lower = name.to_lowercase();
-            if name_lower.contains("ui")
-                || name_lower.contains("view")
-                || name_lower.contains("controller")
-            {
+            if name_lower.contains("ui") || name_lower.contains("view") || name_lower.contains("controller") {
                 presentation.push(name.clone());
-            } else if name_lower.contains("service")
-                || name_lower.contains("business")
-                || name_lower.contains("logic")
+            } else if name_lower.contains("service") || name_lower.contains("business") || name_lower.contains("logic")
             {
                 business.push(name.clone());
             } else {
@@ -341,15 +324,15 @@ impl ArchitectureAnalyzer {
 
         vec![
             ArchitectureLayer {
-                name: "Presentation".to_string(),
+                name:    "Presentation".to_string(),
                 modules: presentation,
             },
             ArchitectureLayer {
-                name: "Business Logic".to_string(),
+                name:    "Business Logic".to_string(),
                 modules: business,
             },
             ArchitectureLayer {
-                name: "Data Access".to_string(),
+                name:    "Data Access".to_string(),
                 modules: data,
             },
         ]
@@ -366,10 +349,7 @@ impl CodeModernizer {
     }
 
     /// Identify modernization opportunities
-    pub async fn identify_opportunities(
-        &self,
-        architecture: &Architecture,
-    ) -> Vec<ModernizationOpportunity> {
+    pub async fn identify_opportunities(&self, architecture: &Architecture) -> Vec<ModernizationOpportunity> {
         let mut opportunities = Vec::new();
 
         // Look for patterns that can be modernized
@@ -377,20 +357,20 @@ impl CodeModernizer {
             if self.is_legacy_pattern(module) {
                 opportunities.push(ModernizationOpportunity {
                     opportunity_type: OpportunityType::ModernizePattern,
-                    location: module_name.clone(),
-                    description: "Module uses legacy architectural patterns".to_string(),
-                    benefit: "Improved maintainability and modern best practices".to_string(),
-                    effort: EffortLevel::Medium,
+                    location:         module_name.clone(),
+                    description:      "Module uses legacy architectural patterns".to_string(),
+                    benefit:          "Improved maintainability and modern best practices".to_string(),
+                    effort:           EffortLevel::Medium,
                 });
             }
 
             if self.can_improve_abstraction(layer) {
                 opportunities.push(ModernizationOpportunity {
                     opportunity_type: OpportunityType::ImproveAbstraction,
-                    location: module_name.clone(),
-                    description: "Add better abstraction layer".to_string(),
-                    benefit: "Better separation of concerns".to_string(),
-                    effort: EffortLevel::High,
+                    location:         module_name.clone(),
+                    description:      "Add better abstraction layer".to_string(),
+                    benefit:          "Better separation of concerns".to_string(),
+                    effort:           EffortLevel::High,
                 });
             }
         }
@@ -422,10 +402,10 @@ impl QualityScorer {
     /// Calculate comprehensive quality scores
     pub fn calculate_quality_scores(&self, architecture: &Architecture) -> QualityScores {
         QualityScores {
-            maintainability_index: self.calculate_maintainability(architecture),
-            architecture_quality: self.calculate_architecture_quality(architecture),
+            maintainability_index:   self.calculate_maintainability(architecture),
+            architecture_quality:    self.calculate_architecture_quality(architecture),
             coupling_cohesion_ratio: self.calculate_coupling_cohesion(architecture),
-            overall_score: 0.0, // Calculated below
+            overall_score:           0.0, // Calculated below
         }
     }
 
@@ -446,10 +426,8 @@ impl QualityScorer {
     fn calculate_architecture_quality(&self, architecture: &Architecture) -> f64 {
         // Based on D (Distance from Main Sequence)
         let modules: Vec<&ModuleInfo> = architecture.modules.values().collect();
-        let avg_abstractness: f64 =
-            modules.iter().map(|m| m.abstractness).sum::<f64>() / modules.len() as f64;
-        let avg_instability: f64 =
-            modules.iter().map(|m| m.instability).sum::<f64>() / modules.len() as f64;
+        let avg_abstractness: f64 = modules.iter().map(|m| m.abstractness).sum::<f64>() / modules.len() as f64;
+        let avg_instability: f64 = modules.iter().map(|m| m.instability).sum::<f64>() / modules.len() as f64;
 
         // D = |A + I - 1| (normalized)
         let d = (avg_abstractness + avg_instability - 1.0).abs();
@@ -488,18 +466,18 @@ impl RefactoringPlanner {
         // Plan the modernization steps in optimal order
         let steps = vec![
             ModernizationStep {
-                step_type: StepType::ReorganizeModules,
-                description: "Reorganize modules using composition over inheritance".to_string(),
+                step_type:        StepType::ReorganizeModules,
+                description:      "Reorganize modules using composition over inheritance".to_string(),
                 estimated_effort: 8,
-                impact_score: 7,
-                dependencies: vec![],
+                impact_score:     7,
+                dependencies:     vec![],
             },
             ModernizationStep {
-                step_type: StepType::ImplementDependencyInjection,
-                description: "Replace tight coupling with dependency injection".to_string(),
+                step_type:        StepType::ImplementDependencyInjection,
+                description:      "Replace tight coupling with dependency injection".to_string(),
                 estimated_effort: 12,
-                impact_score: 8,
-                dependencies: vec![0],
+                impact_score:     8,
+                dependencies:     vec![0],
             },
         ];
 
@@ -517,11 +495,11 @@ impl RefactoringPlanner {
         _codebase: &mut Codebase,
     ) -> Result<StepExecution, ArchitectureError> {
         Ok(StepExecution {
-            step_id: 0,
-            success: true,
+            step_id:         0,
+            success:         true,
             changes_applied: 5,
-            warnings: vec![],
-            errors: vec![],
+            warnings:        vec![],
+            errors:          vec![],
         })
     }
 }
@@ -531,37 +509,37 @@ impl RefactoringPlanner {
 /// Architecture representation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Architecture {
-    pub modules: HashMap<String, ModuleInfo>,
+    pub modules:       HashMap<String, ModuleInfo>,
     pub relationships: Vec<ModuleRelationship>,
-    pub layers: Vec<ArchitectureLayer>,
+    pub layers:        Vec<ArchitectureLayer>,
 }
 
 /// Module information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModuleInfo {
-    pub name: String,
-    pub file_path: String,
-    pub language: String,
-    pub dependencies: HashSet<String>,
+    pub name:             String,
+    pub file_path:        String,
+    pub language:         String,
+    pub dependencies:     HashSet<String>,
     pub complexity_score: f64,
-    pub lines_of_code: usize,
-    pub abstractness: f64,
-    pub instability: f64,
+    pub lines_of_code:    usize,
+    pub abstractness:     f64,
+    pub instability:      f64,
 }
 
 /// Module relationship
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModuleRelationship {
-    pub from: String,
-    pub to: String,
+    pub from:              String,
+    pub to:                String,
     pub relationship_type: RelationshipType,
-    pub strength: f64,
+    pub strength:          f64,
 }
 
 /// Architecture layer (presentation, business, data, etc.)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchitectureLayer {
-    pub name: String,
+    pub name:    String,
     pub modules: Vec<String>,
 }
 
@@ -569,14 +547,14 @@ pub struct ArchitectureLayer {
 #[derive(Debug, Clone)]
 pub struct Codebase {
     pub files: Vec<CodeFile>,
-    pub name: String,
+    pub name:  String,
 }
 
 /// Code file
 #[derive(Debug, Clone)]
 pub struct CodeFile {
-    pub path: String,
-    pub content: String,
+    pub path:     String,
+    pub content:  String,
     pub language: String,
 }
 
@@ -593,12 +571,12 @@ pub enum RelationshipType {
 /// Architecture smell
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchitectureSmell {
-    pub smell_type: ArchitectureSmellType,
-    pub location: String,
-    pub severity: SmellSeverity,
+    pub smell_type:  ArchitectureSmellType,
+    pub location:    String,
+    pub severity:    SmellSeverity,
     pub description: String,
-    pub impact: String,
-    pub resolution: String,
+    pub impact:      String,
+    pub resolution:  String,
 }
 
 /// Architecture smell types
@@ -622,19 +600,19 @@ pub enum SmellSeverity {
 /// Modernization plan
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModernizationPlan {
-    pub steps: Vec<ModernizationStep>,
-    pub estimated_effort: u32,
+    pub steps:                Vec<ModernizationStep>,
+    pub estimated_effort:     u32,
     pub expected_improvement: f64,
 }
 
 /// Modernization step
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModernizationStep {
-    pub step_type: StepType,
-    pub description: String,
+    pub step_type:        StepType,
+    pub description:      String,
     pub estimated_effort: u32,
-    pub impact_score: u32,
-    pub dependencies: Vec<usize>,
+    pub impact_score:     u32,
+    pub dependencies:     Vec<usize>,
 }
 
 /// Step types
@@ -650,10 +628,10 @@ pub enum StepType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModernizationOpportunity {
     pub opportunity_type: OpportunityType,
-    pub location: String,
-    pub description: String,
-    pub benefit: String,
-    pub effort: EffortLevel,
+    pub location:         String,
+    pub description:      String,
+    pub benefit:          String,
+    pub effort:           EffortLevel,
 }
 
 /// Opportunity types
@@ -678,26 +656,26 @@ pub enum EffortLevel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExecutionResult {
     pub executed_steps: Vec<StepExecution>,
-    pub has_failures: bool,
+    pub has_failures:   bool,
 }
 
 /// Step execution
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StepExecution {
-    pub step_id: usize,
-    pub success: bool,
+    pub step_id:         usize,
+    pub success:         bool,
     pub changes_applied: usize,
-    pub warnings: Vec<String>,
-    pub errors: Vec<String>,
+    pub warnings:        Vec<String>,
+    pub errors:          Vec<String>,
 }
 
 /// Quality scores
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityScores {
-    pub maintainability_index: f64,
-    pub architecture_quality: f64,
+    pub maintainability_index:   f64,
+    pub architecture_quality:    f64,
     pub coupling_cohesion_ratio: f64,
-    pub overall_score: f64,
+    pub overall_score:           f64,
 }
 
 // Default implementations
@@ -705,7 +683,7 @@ impl Default for ExecutionResult {
     fn default() -> Self {
         Self {
             executed_steps: vec![],
-            has_failures: false,
+            has_failures:   false,
         }
     }
 }
@@ -713,8 +691,8 @@ impl Default for ExecutionResult {
 impl Default for SemanticConfig {
     fn default() -> Self {
         Self {
-            max_function_complexity: 10,
-            enable_code_smell_detection: true,
+            max_function_complexity:      10,
+            enable_code_smell_detection:  true,
             enable_relationship_analysis: true,
         }
     }

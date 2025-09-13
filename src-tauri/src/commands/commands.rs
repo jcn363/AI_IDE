@@ -1,24 +1,21 @@
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Instant;
-use tauri::{command, State};
-use tokio::sync::Mutex;
-use uuid::Uuid;
 
 use rust_ai_ide_ai::refactoring::analysis::RefactoringAnalyzer;
 use rust_ai_ide_ai::refactoring::batch::BatchRefactoringHandler;
 use rust_ai_ide_ai::refactoring::test_generation::TestGenerator;
-use rust_ai_ide_ai::refactoring::ChangeType as RefactoringChangeType;
-use rust_ai_ide_ai::refactoring::{BackupManager, RefactoringOperationFactory};
 use rust_ai_ide_ai::refactoring::{
-    BatchRefactoring, CodeRange, RefactoringContext, RefactoringEngine, RefactoringOptions,
-    RefactoringType, SymbolKind,
+    BackupManager, BatchRefactoring, ChangeType as RefactoringChangeType, CodeRange, RefactoringContext,
+    RefactoringEngine, RefactoringOperationFactory, RefactoringOptions, RefactoringType, SymbolKind,
 };
+use serde::{Deserialize, Serialize};
+use tauri::{command, State};
+use tokio::sync::Mutex;
+use uuid::Uuid;
 
 // Re-export for convenience
 pub use crate::commands::types::*;
-
 // Import the RefactoringEngineState from lib for dependency injection
 use crate::RefactoringEngineState;
 
@@ -42,38 +39,38 @@ pub async fn analyze_refactoring_context(
     ];
 
     let analysis_result = AnalysisResultDto {
-        analysis_id: uuid::Uuid::new_v4().to_string(),
-        timestamp: std::time::SystemTime::now()
+        analysis_id:             uuid::Uuid::new_v4().to_string(),
+        timestamp:               std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_millis()
             .to_string(),
-        file_path: request.filePath.clone(),
-        symbol_info: Some(SymbolAnalysisDto {
-            name: Some("sample_function".to_string()),
-            kind: "function".to_string(),
-            range: CodeRangeResponse {
-                start_line: 10,
+        file_path:               request.filePath.clone(),
+        symbol_info:             Some(SymbolAnalysisDto {
+            name:       Some("sample_function".to_string()),
+            kind:       "function".to_string(),
+            range:      CodeRangeResponse {
+                start_line:      10,
                 start_character: 0,
-                end_line: 25,
-                end_character: 1,
+                end_line:        25,
+                end_character:   1,
             },
             references: 3,
-            can_move: true,
+            can_move:   true,
             can_rename: true,
         }),
-        structural_analysis: StructuralAnalysisDto {
-            complexity_score: 0.7,
-            has_complex_functions: true,
+        structural_analysis:     StructuralAnalysisDto {
+            complexity_score:          0.7,
+            has_complex_functions:     true,
             has_large_functions_count: 2,
-            can_extract_methods: true,
-            can_extract_variables: true,
-            has_classes: false,
-            has_interfaces: true,
+            can_extract_methods:       true,
+            can_extract_variables:     true,
+            has_classes:               false,
+            has_interfaces:            true,
         },
         applicable_refactorings: applicable_refactorings.clone(),
-        possible_refactorings: applicable_refactorings.clone(),
-        confidence_levels: [
+        possible_refactorings:   applicable_refactorings.clone(),
+        confidence_levels:       [
             ("rename".to_string(), 0.9),
             ("extract-function".to_string(), 0.85),
             ("extract-variable".to_string(), 0.75),
@@ -81,15 +78,14 @@ pub async fn analyze_refactoring_context(
         ]
         .into_iter()
         .collect(),
-        warnings: vec!["Consider breaking down large functions".to_string()],
-        recommendations: vec![
+        warnings:                vec!["Consider breaking down large functions".to_string()],
+        recommendations:         vec![
             "Function complexity suggests method extraction".to_string(),
             "Consider renaming for better clarity".to_string(),
         ],
     };
 
-    Ok(serde_json::to_value(analysis_result)
-        .map_err(|e| format!("Failed to serialize analysis result: {}", e))?)
+    Ok(serde_json::to_value(analysis_result).map_err(|e| format!("Failed to serialize analysis result: {}", e))?)
 }
 
 /// Command to execute refactoring
@@ -152,12 +148,12 @@ pub async fn execute_refactoring(
         .context
         .map(|ctx| map_refactoring_context(&ctx))
         .unwrap_or_else(|| RefactoringContext {
-            file_path: String::new(),
-            cursor_line: 0,
+            file_path:        String::new(),
+            cursor_line:      0,
             cursor_character: 0,
-            selection: None,
-            symbol_name: None,
-            symbol_kind: None,
+            selection:        None,
+            symbol_name:      None,
+            symbol_kind:      None,
         });
 
     let options = map_refactoring_options(&request.options);
@@ -189,15 +185,15 @@ pub async fn execute_refactoring(
             .changes
             .into_iter()
             .map(|change| CodeChangeResponse {
-                file_path: change.file_path,
-                code_range: CodeRangeResponse {
-                    start_line: change.range.start_line,
+                file_path:   change.file_path,
+                code_range:  CodeRangeResponse {
+                    start_line:      change.range.start_line,
                     start_character: change.range.start_character,
-                    end_line: change.range.end_line,
-                    end_character: change.range.end_character,
+                    end_line:        change.range.end_line,
+                    end_character:   change.range.end_character,
                 },
-                old_text: change.old_text,
-                new_text: change.new_text,
+                old_text:    change.old_text,
+                new_text:    change.new_text,
                 change_type: match change.change_type {
                     RefactoringChangeType::Insertion => "Insertion".to_string(),
                     RefactoringChangeType::Replacement => "Replacement".to_string(),
@@ -209,30 +205,30 @@ pub async fn execute_refactoring(
             // Parse detailed error information
             if msg.contains("File permission") {
                 RefactoringError {
-                    code: "PERMISSION_DENIED".to_string(),
-                    message: "File access permission denied".to_string(),
-                    details: Some(msg.clone()),
+                    code:        "PERMISSION_DENIED".to_string(),
+                    message:     "File access permission denied".to_string(),
+                    details:     Some(msg.clone()),
                     recoverable: false,
                 }
             } else if msg.contains("Circular") || msg.contains("conflict") {
                 RefactoringError {
-                    code: "DEPENDENCY_CONFLICT".to_string(),
-                    message: "Refactoring would create circular dependencies".to_string(),
-                    details: Some(msg.clone()),
+                    code:        "DEPENDENCY_CONFLICT".to_string(),
+                    message:     "Refactoring would create circular dependencies".to_string(),
+                    details:     Some(msg.clone()),
                     recoverable: true,
                 }
             } else if msg.contains("Not initialized") {
                 RefactoringError {
-                    code: "ENGINE_NOT_READY".to_string(),
-                    message: "Refactoring engine not properly initialized".to_string(),
-                    details: Some(msg.clone()),
+                    code:        "ENGINE_NOT_READY".to_string(),
+                    message:     "Refactoring engine not properly initialized".to_string(),
+                    details:     Some(msg.clone()),
                     recoverable: true,
                 }
             } else {
                 RefactoringError {
-                    code: "REFACTORING_FAILED".to_string(),
-                    message: msg.clone(),
-                    details: None,
+                    code:        "REFACTORING_FAILED".to_string(),
+                    message:     msg.clone(),
+                    details:     None,
                     recoverable: false,
                 }
             }
@@ -248,9 +244,9 @@ pub async fn execute_refactoring(
         metrics: Some(RefactoringMetrics {
             operations_attempted: result.changes.len() as u32,
             operations_succeeded: result.changes.len() as u32,
-            operations_failed: 0,
-            total_bytes_changed: result.changes.iter().map(|c| c.new_text.len() as u64).sum(),
-            average_complexity: 0.7, // Placeholder - could be calculated based on change complexity
+            operations_failed:    0,
+            total_bytes_changed:  result.changes.iter().map(|c| c.new_text.len() as u64).sum(),
+            average_complexity:   0.7, // Placeholder - could be calculated based on change complexity
         }),
     };
 
@@ -286,12 +282,11 @@ pub async fn analyze_refactoring_impact(
             // Map refactoring type
             let refactoring_type = match map_refactoring_type(&request.refactoringType) {
                 Some(rt) => rt,
-                None => {
+                None =>
                     return Err(format!(
                         "Unsupported refactoring type: {}",
                         request.refactoringType
-                    ))
-                }
+                    )),
             };
 
             // Map context if provided
@@ -299,12 +294,12 @@ pub async fn analyze_refactoring_impact(
                 .context
                 .map(|ctx| map_refactoring_context(&ctx))
                 .unwrap_or_else(|| RefactoringContext {
-                    file_path: String::new(),
-                    cursor_line: 0,
+                    file_path:        String::new(),
+                    cursor_line:      0,
                     cursor_character: 0,
-                    selection: None,
-                    symbol_name: None,
-                    symbol_kind: None,
+                    selection:        None,
+                    symbol_name:      None,
+                    symbol_kind:      None,
                 });
 
             let options = map_refactoring_options(&request.configuration);
@@ -386,12 +381,12 @@ pub async fn identify_refactoring_target(
                 .context
                 .map(|ctx| map_refactoring_context(&ctx))
                 .unwrap_or_else(|| RefactoringContext {
-                    file_path: String::new(),
-                    cursor_line: 0,
+                    file_path:        String::new(),
+                    cursor_line:      0,
                     cursor_character: 0,
-                    selection: None,
-                    symbol_name: None,
-                    symbol_kind: None,
+                    selection:        None,
+                    symbol_name:      None,
+                    symbol_kind:      None,
                 });
 
             let options = map_refactoring_options(&request.configuration);
@@ -504,10 +499,10 @@ pub async fn batch_refactoring(
             }
 
             let batch = BatchRefactoring {
-                operations: batch_operations,
-                validate_independently: true, // Enable validation
-                stop_on_first_error: false,   // Continue on errors by default
-                backup_strategy: crate::Default::default(), // Use default backup strategy
+                operations:             batch_operations,
+                validate_independently: true,                      // Enable validation
+                stop_on_first_error:    false,                     // Continue on errors by default
+                backup_strategy:        crate::Default::default(), // Use default backup strategy
             };
 
             // Execute batch using RefactoringEngine
@@ -578,16 +573,14 @@ pub async fn generate_refactoring_tests(
                 ) {
                     let context = parse_context_from_hashmap(context_hashmap);
 
-                    if let (Some(refactoring_type), Some(ctx)) =
-                        (map_refactoring_type(refactoring_type_str), context)
-                    {
+                    if let (Some(refactoring_type), Some(ctx)) = (map_refactoring_type(refactoring_type_str), context) {
                         let test_options = RefactoringOptions {
-                            create_backup: false, // Don't create backups for test generation
-                            generate_tests: true, // Enable test generation
+                            create_backup:            false, // Don't create backups for test generation
+                            generate_tests:           true,  // Enable test generation
                             apply_to_all_occurrences: false,
-                            preserve_references: true,
-                            ignore_safe_operations: false,
-                            extra_options: None,
+                            preserve_references:      true,
+                            ignore_safe_operations:   false,
+                            extra_options:            None,
                         };
 
                         match engine
@@ -631,11 +624,11 @@ pub async fn generate_refactoring_tests(
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EnhancedAnalysisRequest {
-    pub filePath: String,
-    pub codeContent: Option<String>,
-    pub context: Option<crate::commands::types::RefactoringContextData>,
+    pub filePath:             String,
+    pub codeContent:          Option<String>,
+    pub context:              Option<crate::commands::types::RefactoringContextData>,
     pub includeAiSuggestions: Option<bool>,
-    pub includeLspAnalysis: Option<bool>,
+    pub includeLspAnalysis:   Option<bool>,
 }
 
 /// Command for enhanced LSP/AI-powered analysis
@@ -690,13 +683,9 @@ pub async fn analyze_refactoring_context_enhanced(
 
     // Get basic analysis first with explicit construction instead of .into()
     let basic_analysis_request = AnalyzeContextRequest {
-        filePath: request.filePath.clone(),
-        selection: request.context.as_ref().and_then(|ctx| {
-            if ctx.startLine != 0
-                || ctx.startCharacter != 0
-                || ctx.endLine != 0
-                || ctx.endCharacter != 0
-            {
+        filePath:       request.filePath.clone(),
+        selection:      request.context.as_ref().and_then(|ctx| {
+            if ctx.startLine != 0 || ctx.startCharacter != 0 || ctx.endLine != 0 || ctx.endCharacter != 0 {
                 Some(
                     serde_json::json!({
                         "start": {"line": ctx.startLine, "character": ctx.startCharacter},
@@ -719,7 +708,7 @@ pub async fn analyze_refactoring_context_enhanced(
             .unwrap()
             .clone(),
         ),
-        configuration: Some(
+        configuration:  Some(
             serde_json::json!({
                 "includeAiSuggestions": request.includeAiSuggestions,
                 "includeLspAnalysis": request.includeLspAnalysis
@@ -782,10 +771,10 @@ pub async fn analyze_refactoring_context_enhanced(
 #[derive(Serialize)]
 pub struct BackendCapabilitiesResponse {
     pub supported_refactorings: Vec<String>,
-    pub supported_file_types: Vec<String>,
-    pub features: BackendFeatures,
-    pub performance_metrics: HashMap<String, u64>,
-    pub configuration_options: Vec<String>,
+    pub supported_file_types:   Vec<String>,
+    pub features:               BackendFeatures,
+    pub performance_metrics:    HashMap<String, u64>,
+    pub configuration_options:  Vec<String>,
 }
 
 /// Command to query backend capabilities and supported features
@@ -915,9 +904,7 @@ pub async fn get_available_refactorings(
 }
 
 /// Helper function to parse context from hashmap
-pub fn parse_context_from_hashmap(
-    hashmap: &serde_json::Map<String, serde_json::Value>,
-) -> Option<RefactoringContext> {
+pub fn parse_context_from_hashmap(hashmap: &serde_json::Map<String, serde_json::Value>) -> Option<RefactoringContext> {
     let file_path = hashmap.get("filePath").and_then(|v| v.as_str())?;
     let start_line = hashmap
         .get("startLine")

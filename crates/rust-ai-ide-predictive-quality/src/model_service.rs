@@ -3,30 +3,27 @@
 //! Integrates with Phase 2.1 model quantization infrastructure for
 //! ML-powered predictive quality intelligence capabilities.
 
-use async_trait::async_trait;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
+use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use rust_ai_ide_ai_inference::InferenceEngine;
 use rust_ai_ide_ai_quantization::{GGUFModel, QuantizationEngine, QuantizationMetrics};
+use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
 
 /// Core predictive model service
 pub struct PredictiveModelService {
-    inference_engine: Arc<InferenceEngine>,
-    quantization_engine: Arc<QuantizationEngine>,
-    active_models: Arc<RwLock<HashMap<String, Arc<ModelInstance>>>>,
+    inference_engine:        Arc<InferenceEngine>,
+    quantization_engine:     Arc<QuantizationEngine>,
+    active_models:           Arc<RwLock<HashMap<String, Arc<ModelInstance>>>>,
     model_performance_cache: moka::future::Cache<String, ModelPerformanceMetrics>,
 }
 
 impl PredictiveModelService {
     /// Create new predictive model service
-    pub async fn new(
-        inference_engine: Arc<InferenceEngine>,
-        quantization_engine: Arc<QuantizationEngine>,
-    ) -> Self {
+    pub async fn new(inference_engine: Arc<InferenceEngine>, quantization_engine: Arc<QuantizationEngine>) -> Self {
         let active_models = Arc::new(RwLock::new(HashMap::new()));
         let model_performance_cache: moka::future::Cache<String, ModelPerformanceMetrics> =
             moka::future::Cache::builder()
@@ -80,9 +77,9 @@ impl PredictiveModelService {
 /// Model instance for predictive operations
 #[derive(Debug, Clone)]
 pub struct ModelInstance {
-    pub id: String,
-    pub model_type: ModelType,
-    pub loaded_at: DateTime<Utc>,
+    pub id:                  String,
+    pub model_type:          ModelType,
+    pub loaded_at:           DateTime<Utc>,
     pub performance_metrics: Option<ModelPerformanceMetrics>,
 }
 
@@ -110,9 +107,9 @@ impl ModelType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelPerformanceMetrics {
     pub inference_time_ms: f64,
-    pub memory_usage_mb: f64,
-    pub accuracy_score: f64,
-    pub last_updated: DateTime<Utc>,
+    pub memory_usage_mb:   f64,
+    pub accuracy_score:    f64,
+    pub last_updated:      DateTime<Utc>,
 }
 
 #[cfg(test)]

@@ -12,22 +12,30 @@
 //! to provide intelligent, adaptive, and context-aware IDE functionality:
 //!
 //! ### 🤖 Intelligent Context Management
-//! - **Adaptive Context Learning**: ML-powered context understanding that learns from developer behavior
+//! - **Adaptive Context Learning**: ML-powered context understanding that learns from developer
+//!   behavior
 //! - **Context Preservation Architecture**: Advanced state management with predictive retention
-//! - **Semantic Context Expansion**: AI-driven expansion of development context beyond literal boundaries
-//! - **Contextual Memory Optimization**: Intelligent caching of contextual information with predictive expiration
+//! - **Semantic Context Expansion**: AI-driven expansion of development context beyond literal
+//!   boundaries
+//! - **Contextual Memory Optimization**: Intelligent caching of contextual information with
+//!   predictive expiration
 //!
 //! ### 🏗️ Adaptive Resource Management
-//! - **Predictive Resource Allocation**: ML algorithms predicting resource needs based on usage patterns
-//! - **Intelligent Performance Optimization**: Adaptive resource management with learning-based optimization
-//! - **Context-Aware Resource Prioritization**: Dynamic resource distribution based on developer intent
+//! - **Predictive Resource Allocation**: ML algorithms predicting resource needs based on usage
+//!   patterns
+//! - **Intelligent Performance Optimization**: Adaptive resource management with learning-based
+//!   optimization
+//! - **Context-Aware Resource Prioritization**: Dynamic resource distribution based on developer
+//!   intent
 //! - **Resource Usage Forecasting**: Predictive analytics for optimal resource planning
 //!
 //! ### 📊 AI-Enhanced File System Operations
 //! - **Intelligent Path Resolution**: ML-powered file discovery and path prediction
-//! - **Semantic File Classification**: AI-driven file categorization beyond extension-based classification
+//! - **Semantic File Classification**: AI-driven file categorization beyond extension-based
+//!   classification
 //! - **Predictive File Access**: Learning-based file access prediction and prefetching
-//! - **Adaptive File System Caching**: Intelligent file system caching with usage-based eviction policies
+//! - **Adaptive File System Caching**: Intelligent file system caching with usage-based eviction
+//!   policies
 //!
 //! ## Core Architectural Patterns Implementation
 //!
@@ -77,8 +85,16 @@
 //!     type ValidationContext;
 //!     type MLValidationModel;
 //!
-//!     fn ml_validate(&self, context: &ValidationContext, model: &MLValidationModel) -> MLValidationResult;
-//!     fn adaptive_validate(&self, context: &ValidationContext, history: &[ValidationResult]) -> AdaptiveValidationResult;
+//!     fn ml_validate(
+//!         &self,
+//!         context: &ValidationContext,
+//!         model: &MLValidationModel,
+//!     ) -> MLValidationResult;
+//!     fn adaptive_validate(
+//!         &self,
+//!         context: &ValidationContext,
+//!         history: &[ValidationResult],
+//!     ) -> AdaptiveValidationResult;
 //!     fn predictive_validate(&self, context: &ValidationContext) -> PredictiveValidationResult;
 //! }
 //! ```
@@ -97,10 +113,10 @@
 //! ### Contextual Resource Allocation
 //! ```rust
 //! struct IntelligentResourceManager {
-//!     resource_predictor: MLPredictor<ResourceDemand>,
-//!     context_analyzer: MLContextAnalyzer,
+//!     resource_predictor:   MLPredictor<ResourceDemand>,
+//!     context_analyzer:     MLContextAnalyzer,
 //!     allocation_optimizer: AdaptiveAllocator,
-//!     performance_monitor: ContinuousPerformanceTracker
+//!     performance_monitor:  ContinuousPerformanceTracker,
 //! }
 //! ```
 //!
@@ -117,7 +133,7 @@
 //!     self.performance_monitor.track_allocation_efficiency().await;
 //! }
 //! ```
-//!
+//! 
 //! ## AI-Powered Path and File Management
 //!
 //! ### Semantic Path Intelligence
@@ -138,7 +154,7 @@
 //!     }
 //! }
 //! ```
-//!
+//! 
 //! ### Intelligent File Discovery
 //! ```rust
 //! struct MLFileDiscovery {
@@ -148,7 +164,7 @@
 //!     caching_optimizer: AdaptiveCacheManager
 //! }
 //! ```
-//!
+//! 
 //! ## Cross-Crate AI Integration Architecture
 //!
 //! ### Foundation Layer (rust-ai-ide-core-fundamentals)
@@ -200,21 +216,16 @@
 //! maintaining backward compatibility through its re-export architecture.
 
 // Re-exports from fundamentals (base layer)
-pub use rust_ai_ide_core_fundamentals::error::*;
-pub use rust_ai_ide_core_fundamentals::formatters;
-pub use rust_ai_ide_core_fundamentals::*;
-
-// Re-exports from shell operations
-pub use rust_ai_ide_core_shell::*;
-
-// Re-exports from file operations
-pub use rust_ai_ide_core_file::*;
-
 // Re-exports from AI operations
 pub use rust_ai_ide_core_ai::*;
-
+// Re-exports from file operations
+pub use rust_ai_ide_core_file::*;
+pub use rust_ai_ide_core_fundamentals::error::*;
+pub use rust_ai_ide_core_fundamentals::{formatters, *};
 // Re-exports from metrics
 pub use rust_ai_ide_core_metrics::*;
+// Re-exports from shell operations
+pub use rust_ai_ide_core_shell::*;
 
 // Deprecated modules removed - use direct re-exports above
 
@@ -256,9 +267,7 @@ pub mod traits {
         }
 
         fn is_workspace_root(&self) -> bool {
-            self.join("Cargo.toml").exists()
-                && self.join("src").exists()
-                && self.join("src/lib.rs").exists()
+            self.join("Cargo.toml").exists() && self.join("src").exists() && self.join("src/lib.rs").exists()
         }
 
         fn find_ancestor_with(&self, file_name: &str) -> Option<std::path::PathBuf> {
@@ -339,8 +348,8 @@ pub mod constants {
 
     /// File extensions for source code
     pub const SOURCE_EXTENSIONS: &[&str] = &[
-        "rs", "js", "ts", "py", "java", "cpp", "c", "hpp", "h", "cs", "php", "rb", "go", "swift",
-        "kt", "scala", "clj", "hs", "ml", "fs", "ex",
+        "rs", "js", "ts", "py", "java", "cpp", "c", "hpp", "h", "cs", "php", "rb", "go", "swift", "kt", "scala", "clj",
+        "hs", "ml", "fs", "ex",
     ];
 
     /// Temporary directory prefix
@@ -385,8 +394,9 @@ pub mod cold_start_optimizer;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::path::Path;
+
+    use super::*;
 
     #[test]
     fn test_path_extensions_work() {

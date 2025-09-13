@@ -3,16 +3,18 @@
 //! This module contains handlers for file system related Tauri commands.
 
 // Import validation from unified rust-ai-ide-common
+use std::path::Path;
+
 use rust_ai_ide_common::validation::{
     validate_file_extension, validate_file_size, validate_secure_path, validate_string_input,
 };
+use rust_ai_ide_common::{file_exists, is_directory, read_dir, read_file_to_bytes};
 use rust_ai_ide_common::{ContextualError, IDEError, IDEResult}; // Error types re-exported from common
-                                                                // Protocol-specific types not available in current workspace - using local FileInfo
+use sha2::{Digest, Sha256};
+
+// Protocol-specific types not available in current workspace - using local FileInfo
 use crate::infra::{EventBus, RateLimiter};
 use crate::FileInfo; // Using local FileInfo definition
-use rust_ai_ide_common::{file_exists, is_directory, read_dir, read_file_to_bytes};
-use sha2::{Digest, Sha256};
-use std::path::Path;
 
 /// List files in a directory with comprehensive validation
 #[tauri::command]

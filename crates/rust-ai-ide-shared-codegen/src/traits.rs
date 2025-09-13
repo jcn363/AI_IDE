@@ -1,8 +1,9 @@
 //! Common traits for test generation and code generation interfaces
 
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use rust_ai_ide_common::types::*;
-use std::collections::HashMap;
 
 /// Unified trait for test generation across different modules
 #[async_trait]
@@ -146,11 +147,7 @@ pub trait CodeAnalyzer {
     ) -> Result<CodeAnalysisResult, Box<dyn std::error::Error + Send + Sync>>;
 
     /// Extract function and method signatures
-    fn extract_signatures(
-        &self,
-        code: &str,
-        language: &ProgrammingLanguage,
-    ) -> Vec<FunctionSignature>;
+    fn extract_signatures(&self, code: &str, language: &ProgrammingLanguage) -> Vec<FunctionSignature>;
 
     /// Find potential test cases in code
     fn identify_test_targets(&self, code: &str, language: &ProgrammingLanguage) -> Vec<TestTarget>;
@@ -163,15 +160,10 @@ pub trait CodeAnalyzer {
 #[async_trait]
 pub trait ConfigurationProvider {
     /// Load test generation configuration
-    async fn load_config(
-        &self,
-    ) -> Result<TestGenerationConfig, Box<dyn std::error::Error + Send + Sync>>;
+    async fn load_config(&self) -> Result<TestGenerationConfig, Box<dyn std::error::Error + Send + Sync>>;
 
     /// Save test generation configuration
-    async fn save_config(
-        &self,
-        config: &TestGenerationConfig,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+    async fn save_config(&self, config: &TestGenerationConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
     /// Get language-specific configuration
     fn get_language_config(&self, language: &ProgrammingLanguage) -> Option<LanguageConfig>;
@@ -199,60 +191,60 @@ pub enum ValidationError {
 #[derive(Debug, Clone)]
 pub struct CodeAnalysisResult {
     /// Extracted function signatures
-    pub functions: Vec<FunctionSignature>,
+    pub functions:    Vec<FunctionSignature>,
     /// Identified classes/structs
-    pub classes: Vec<ClassDefinition>,
+    pub classes:      Vec<ClassDefinition>,
     /// Identified imports/dependencies
-    pub imports: Vec<String>,
+    pub imports:      Vec<String>,
     /// Potential test targets
     pub test_targets: Vec<TestTarget>,
     /// Language-specific analysis data
-    pub metadata: HashMap<String, String>,
+    pub metadata:     HashMap<String, String>,
 }
 
 /// Function/method signature information
 #[derive(Debug, Clone)]
 pub struct FunctionSignature {
     /// Function name
-    pub name: String,
+    pub name:        String,
     /// Parameters with types
-    pub parameters: Vec<Parameter>,
+    pub parameters:  Vec<Parameter>,
     /// Return type (if any)
     pub return_type: Option<String>,
     /// Access modifier (public, private, etc.)
-    pub visibility: Option<String>,
+    pub visibility:  Option<String>,
     /// Whether the function is async
-    pub is_async: bool,
+    pub is_async:    bool,
     /// Line where function starts
-    pub line_start: usize,
+    pub line_start:  usize,
     /// Line where function ends
-    pub line_end: usize,
+    pub line_end:    usize,
 }
 
 /// Class/struct definition information
 #[derive(Debug, Clone)]
 pub struct ClassDefinition {
     /// Class/struct name
-    pub name: String,
+    pub name:       String,
     /// Fields/properties
-    pub fields: Vec<Field>,
+    pub fields:     Vec<Field>,
     /// Methods
-    pub methods: Vec<FunctionSignature>,
+    pub methods:    Vec<FunctionSignature>,
     /// Inheritance information
-    pub inherits: Vec<String>,
+    pub inherits:   Vec<String>,
     /// Line where class starts
     pub line_start: usize,
     /// Line where class ends
-    pub line_end: usize,
+    pub line_end:   usize,
 }
 
 /// Parameter information
 #[derive(Debug, Clone)]
 pub struct Parameter {
     /// Parameter name
-    pub name: String,
+    pub name:        String,
     /// Parameter type
-    pub param_type: String,
+    pub param_type:  String,
     /// Whether parameter has a default value
     pub has_default: bool,
 }
@@ -261,7 +253,7 @@ pub struct Parameter {
 #[derive(Debug, Clone)]
 pub struct Field {
     /// Field name
-    pub name: String,
+    pub name:       String,
     /// Field type
     pub field_type: String,
     /// Access modifier
@@ -276,13 +268,13 @@ pub struct TestTarget {
     /// Type of test target (function, class, module, etc.)
     pub target_type: TestTargetType,
     /// Name of the target
-    pub name: String,
+    pub name:        String,
     /// Line where target starts
-    pub line_start: usize,
+    pub line_start:  usize,
     /// Line where target ends
-    pub line_end: usize,
+    pub line_end:    usize,
     /// Suggested test coverage priority (0.0-1.0)
-    pub priority: f32,
+    pub priority:    f32,
 }
 
 /// Types of test targets

@@ -1,12 +1,8 @@
 //! Security analysis tests for the Rust AI IDE
 
-use rust_ai_ide_ai::{
-    analysis::{
-        security::{HardcodedSecretsDetector, InsecureCryptoDetector, SqlInjectionDetector},
-        AnalysisRegistry, AnalysisResult, AnalysisType, Severity,
-    },
-    test_helpers::*,
-};
+use rust_ai_ide_ai::analysis::security::{HardcodedSecretsDetector, InsecureCryptoDetector, SqlInjectionDetector};
+use rust_ai_ide_ai::analysis::{AnalysisRegistry, AnalysisResult, AnalysisType, Severity};
+use rust_ai_ide_ai::test_helpers::*;
 
 /// Test detection of insecure cryptographic functions
 #[test]
@@ -171,8 +167,7 @@ fn test_sql_injection_detection() {
         !result
             .findings
             .iter()
-            .any(|f| f.message.contains("get_user_safe")
-                || f.message.contains("get_user_safe_builder")),
+            .any(|f| f.message.contains("get_user_safe") || f.message.contains("get_user_safe_builder")),
         "Safe SQL queries should not be flagged"
     );
 }

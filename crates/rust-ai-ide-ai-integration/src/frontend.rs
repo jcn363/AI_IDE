@@ -3,8 +3,9 @@
 //! This module provides the Tauri frontend interface for AI feedback and results,
 //! enabling seamless communication between the AI service layer and the frontend.
 
-use async_trait::async_trait;
 use std::sync::Arc;
+
+use async_trait::async_trait;
 use tokio::sync::RwLock;
 
 use crate::errors::{FrontendInterfaceError, IntegrationError};
@@ -12,34 +13,34 @@ use crate::types::*;
 
 /// Main AI Tauri Interface structure
 pub struct AITauriInterface {
-    command_handler: Arc<TauriCommandHandler>,
-    response_formatter: Arc<AiResponseFormatter>,
+    command_handler:         Arc<TauriCommandHandler>,
+    response_formatter:      Arc<AiResponseFormatter>,
     user_feedback_collector: Arc<UserFeedbackCollector>,
-    ui_state_manager: Arc<AiUiStateManager>,
-    error_reporter: Arc<AiErrorReporter>,
-    state: Arc<RwLock<FrontendState>>,
+    ui_state_manager:        Arc<AiUiStateManager>,
+    error_reporter:          Arc<AiErrorReporter>,
+    state:                   Arc<RwLock<FrontendState>>,
 }
 
 /// Frontend interface state
 pub struct FrontendState {
     /// Active UI sessions
-    pub ui_sessions: std::collections::HashMap<String, UiSession>,
+    pub ui_sessions:    std::collections::HashMap<String, UiSession>,
     /// Response cache
     pub response_cache: moka::future::Cache<String, FrontendAiResponse>,
     /// Interface status
-    pub status: InterfaceStatus,
+    pub status:         InterfaceStatus,
 }
 
 /// UI session data
 pub struct UiSession {
     /// Session ID
-    pub session_id: String,
+    pub session_id:      String,
     /// Active request IDs
     pub active_requests: Vec<RequestId>,
     /// Last activity timestamp
-    pub last_activity: chrono::DateTime<chrono::Utc>,
+    pub last_activity:   chrono::DateTime<chrono::Utc>,
     /// Session metadata
-    pub metadata: Option<serde_json::Value>,
+    pub metadata:        Option<serde_json::Value>,
 }
 
 /// Interface status enumeration
@@ -77,10 +78,7 @@ pub trait TauriCommandHandler {
     ) -> Result<FrontendAiResponse, FrontendInterfaceError>;
 
     /// Handle user feedback submission
-    async fn handle_user_feedback(
-        &self,
-        feedback: UserFeedback,
-    ) -> Result<(), FrontendInterfaceError>;
+    async fn handle_user_feedback(&self, feedback: UserFeedback) -> Result<(), FrontendInterfaceError>;
 
     /// Get interface status
     async fn get_status(&self) -> InterfaceStatus;
@@ -137,11 +135,8 @@ pub trait AiUiStateManager {
 #[async_trait]
 pub trait AiErrorReporter {
     /// Report error to frontend and logging systems
-    async fn report_error(
-        &self,
-        error: &IntegrationError,
-        context: ErrorContext,
-    ) -> Result<(), FrontendInterfaceError>;
+    async fn report_error(&self, error: &IntegrationError, context: ErrorContext)
+        -> Result<(), FrontendInterfaceError>;
 
     /// Get error statistics
     async fn get_error_statistics(&self) -> Result<ErrorStatistics, FrontendInterfaceError>;
@@ -153,20 +148,20 @@ pub trait AiErrorReporter {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiCompletionRequest {
     /// Request ID
-    pub request_id: RequestId,
+    pub request_id:   RequestId,
     /// Code context
     pub code_context: CodeContext,
     /// Completion options
-    pub options: CompletionOptions,
+    pub options:      CompletionOptions,
 }
 
 /// Code context
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeContext {
     /// Source code
-    pub code: String,
+    pub code:            String,
     /// Language ID
-    pub language: String,
+    pub language:        String,
     /// Cursor position
     pub cursor_position: Option<CursorPosition>,
     /// Selection range
@@ -176,7 +171,7 @@ pub struct CodeContext {
 /// Cursor position
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CursorPosition {
-    pub line: u32,
+    pub line:      u32,
     pub character: u32,
 }
 
@@ -188,7 +183,7 @@ pub struct CompletionOptions {
     /// Maximum suggestions
     pub max_suggestions: Option<usize>,
     /// Filter options
-    pub filters: Option<CompletionFilters>,
+    pub filters:         Option<CompletionFilters>,
 }
 
 /// Completion type enumeration
@@ -210,24 +205,24 @@ pub struct CompletionFilters {
     /// Exclude deprecated suggestions
     pub exclude_deprecated: bool,
     /// Include private members
-    pub include_private: bool,
+    pub include_private:    bool,
     /// Prefix filter
-    pub prefix_filter: Option<String>,
+    pub prefix_filter:      Option<String>,
 }
 
 /// Code refactoring request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeRefactoringRequest {
     /// Request ID
-    pub request_id: RequestId,
+    pub request_id:       RequestId,
     /// Code to refactor
-    pub code: String,
+    pub code:             String,
     /// Language ID
-    pub language: String,
+    pub language:         String,
     /// Refactoring type
     pub refactoring_type: RefactoringType,
     /// Refactoring options
-    pub options: RefactoringOptions,
+    pub options:          RefactoringOptions,
 }
 
 /// Refactoring type enumeration
@@ -251,9 +246,9 @@ pub struct RefactoringOptions {
     /// Preserve behavior
     pub preserve_behavior: bool,
     /// Create backups
-    pub create_backups: bool,
+    pub create_backups:    bool,
     /// Custom options
-    pub custom_options: Option<serde_json::Value>,
+    pub custom_options:    Option<serde_json::Value>,
 }
 
 /// Diagnostics request
@@ -262,11 +257,11 @@ pub struct DiagnosticsRequest {
     /// Request ID
     pub request_id: RequestId,
     /// Code to analyze
-    pub code: String,
+    pub code:       String,
     /// Language ID
-    pub language: String,
+    pub language:   String,
     /// Analysis scope
-    pub scope: AnalysisScope,
+    pub scope:      AnalysisScope,
 }
 
 /// Analysis scope enumeration
@@ -284,15 +279,15 @@ pub enum AnalysisScope {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserFeedback {
     /// Request ID that triggered feedback
-    pub request_id: RequestId,
+    pub request_id:    RequestId,
     /// Feedback type
     pub feedback_type: FeedbackType,
     /// Rating (1-5 scale)
-    pub rating: Option<u8>,
+    pub rating:        Option<u8>,
     /// Comment
-    pub comment: Option<String>,
+    pub comment:       Option<String>,
     /// Categories
-    pub categories: Vec<FeedbackCategory>,
+    pub categories:    Vec<FeedbackCategory>,
 }
 
 /// Feedback type enumeration
@@ -329,9 +324,9 @@ pub struct FeedbackContext {
     /// Session ID
     pub session_id: String,
     /// User ID
-    pub user_id: Option<String>,
+    pub user_id:    Option<String>,
     /// Timestamp
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:  chrono::DateTime<chrono::Utc>,
 }
 
 /// AI operation enumeration
@@ -351,13 +346,13 @@ pub enum AiOperation {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UiState {
     /// Loading state
-    pub loading: bool,
+    pub loading:           bool,
     /// Progress percentage (0-100)
-    pub progress: Option<u8>,
+    pub progress:          Option<u8>,
     /// Status message
-    pub status_message: Option<String>,
+    pub status_message:    Option<String>,
     /// Error message
-    pub error_message: Option<String>,
+    pub error_message:     Option<String>,
     /// Available actions
     pub available_actions: Vec<String>,
 }
@@ -366,11 +361,11 @@ pub struct UiState {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FormatOptions {
     /// Formatting style
-    pub style: FormatStyle,
+    pub style:            FormatStyle,
     /// Include metadata
     pub include_metadata: bool,
     /// Pretty printing
-    pub pretty: bool,
+    pub pretty:           bool,
 }
 
 /// Format style enumeration
@@ -388,20 +383,20 @@ pub enum FormatStyle {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FormattedResponse {
     /// Formatted content
-    pub content: String,
+    pub content:      String,
     /// Content type
     pub content_type: String,
     /// Metadata
-    pub metadata: Option<serde_json::Value>,
+    pub metadata:     Option<serde_json::Value>,
 }
 
 /// Error format options
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorFormatOptions {
     /// Include stack trace
-    pub include_stack: bool,
+    pub include_stack:        bool,
     /// User-friendly message
-    pub user_friendly: bool,
+    pub user_friendly:        bool,
     /// Recovery suggestions
     pub recovery_suggestions: bool,
 }
@@ -410,9 +405,9 @@ pub struct ErrorFormatOptions {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FormattedError {
     /// Error message
-    pub message: String,
+    pub message:  String,
     /// Error code
-    pub code: Option<String>,
+    pub code:     Option<String>,
     /// Recovery suggestions
     pub recovery: Option<Vec<String>>,
 }
@@ -421,9 +416,9 @@ pub struct FormattedError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorContext {
     /// Operation that caused the error
-    pub operation: String,
+    pub operation:  String,
     /// User ID
-    pub user_id: Option<String>,
+    pub user_id:    Option<String>,
     /// Session ID
     pub session_id: String,
 }
@@ -432,13 +427,13 @@ pub struct ErrorContext {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorStatistics {
     /// Total errors
-    pub total_errors: u64,
+    pub total_errors:        u64,
     /// Errors by category
-    pub errors_by_category: std::collections::HashMap<String, u64>,
+    pub errors_by_category:  std::collections::HashMap<String, u64>,
     /// Errors by operation
     pub errors_by_operation: std::collections::HashMap<String, u64>,
     /// Error rate (errors per minute)
-    pub error_rate: f64,
+    pub error_rate:          f64,
 }
 
 /// Feedback analysis result
@@ -447,11 +442,11 @@ pub struct FeedbackAnalysis {
     /// Overall satisfaction score (1-5)
     pub overall_satisfaction: f64,
     /// Category scores
-    pub category_scores: std::collections::HashMap<FeedbackCategory, f64>,
+    pub category_scores:      std::collections::HashMap<FeedbackCategory, f64>,
     /// Common issues
-    pub common_issues: Vec<String>,
+    pub common_issues:        Vec<String>,
     /// Trends
-    pub trends: Vec<FeedbackTrend>,
+    pub trends:               Vec<FeedbackTrend>,
 }
 
 /// Feedback trend
@@ -460,9 +455,9 @@ pub struct FeedbackTrend {
     /// Trend description
     pub description: String,
     /// Trend direction
-    pub direction: TrendDirection,
+    pub direction:   TrendDirection,
     /// Impact level
-    pub impact: f64,
+    pub impact:      f64,
 }
 
 /// Trend direction
@@ -482,11 +477,11 @@ impl AITauriInterface {
     pub fn new() -> Self {
         // Placeholder implementations - in real implementation, these would be properly initialized
         let state = Arc::new(RwLock::new(FrontendState {
-            ui_sessions: std::collections::HashMap::new(),
+            ui_sessions:    std::collections::HashMap::new(),
             response_cache: moka::future::Cache::builder()
                 .time_to_live(std::time::Duration::from_secs(300))
                 .build(),
-            status: InterfaceStatus::Initializing,
+            status:         InterfaceStatus::Initializing,
         }));
 
         let command_handler = Arc::new(PlaceholderCommandHandler); // Placeholder
@@ -529,12 +524,12 @@ impl TauriCommandHandler for PlaceholderCommandHandler {
     ) -> Result<FrontendAiResponse, FrontendInterfaceError> {
         Ok(FrontendAiResponse {
             request_id: RequestId::new(),
-            content: AiResponseContent::Status {
-                message: "AI completion request processed".to_string(),
+            content:    AiResponseContent::Status {
+                message:  "AI completion request processed".to_string(),
                 progress: None,
             },
-            metadata: std::collections::HashMap::new(),
-            status: ResponseStatus::Success,
+            metadata:   std::collections::HashMap::new(),
+            status:     ResponseStatus::Success,
         })
     }
 
@@ -544,12 +539,12 @@ impl TauriCommandHandler for PlaceholderCommandHandler {
     ) -> Result<FrontendAiResponse, FrontendInterfaceError> {
         Ok(FrontendAiResponse {
             request_id: RequestId::new(),
-            content: AiResponseContent::Status {
-                message: "Code refactoring request processed".to_string(),
+            content:    AiResponseContent::Status {
+                message:  "Code refactoring request processed".to_string(),
                 progress: None,
             },
-            metadata: std::collections::HashMap::new(),
-            status: ResponseStatus::Success,
+            metadata:   std::collections::HashMap::new(),
+            status:     ResponseStatus::Success,
         })
     }
 
@@ -559,19 +554,16 @@ impl TauriCommandHandler for PlaceholderCommandHandler {
     ) -> Result<FrontendAiResponse, FrontendInterfaceError> {
         Ok(FrontendAiResponse {
             request_id: RequestId::new(),
-            content: AiResponseContent::Status {
-                message: "Diagnostics request processed".to_string(),
+            content:    AiResponseContent::Status {
+                message:  "Diagnostics request processed".to_string(),
                 progress: None,
             },
-            metadata: std::collections::HashMap::new(),
-            status: ResponseStatus::Success,
+            metadata:   std::collections::HashMap::new(),
+            status:     ResponseStatus::Success,
         })
     }
 
-    async fn handle_user_feedback(
-        &self,
-        _feedback: UserFeedback,
-    ) -> Result<(), FrontendInterfaceError> {
+    async fn handle_user_feedback(&self, _feedback: UserFeedback) -> Result<(), FrontendInterfaceError> {
         Ok(())
     }
 
@@ -588,9 +580,9 @@ impl AiResponseFormatter for PlaceholderResponseFormatter {
         _format_options: FormatOptions,
     ) -> Result<FormattedResponse, FrontendInterfaceError> {
         Ok(FormattedResponse {
-            content: "Formatted response".to_string(),
+            content:      "Formatted response".to_string(),
             content_type: "text/plain".to_string(),
-            metadata: None,
+            metadata:     None,
         })
     }
 
@@ -600,8 +592,8 @@ impl AiResponseFormatter for PlaceholderResponseFormatter {
         _error_options: ErrorFormatOptions,
     ) -> Result<FormattedError, FrontendInterfaceError> {
         Ok(FormattedError {
-            message: "Formatted error".to_string(),
-            code: None,
+            message:  "Formatted error".to_string(),
+            code:     None,
             recovery: None,
         })
     }
@@ -620,9 +612,9 @@ impl UserFeedbackCollector for PlaceholderUserFeedbackCollector {
     async fn analyze_feedback_patterns(&self) -> Result<FeedbackAnalysis, FrontendInterfaceError> {
         Ok(FeedbackAnalysis {
             overall_satisfaction: 4.2,
-            category_scores: std::collections::HashMap::new(),
-            common_issues: Vec::new(),
-            trends: Vec::new(),
+            category_scores:      std::collections::HashMap::new(),
+            common_issues:        Vec::new(),
+            trends:               Vec::new(),
         })
     }
 }
@@ -640,10 +632,10 @@ impl AiUiStateManager for PlaceholderUiStateManager {
 
     async fn get_ui_state(&self, _session_id: &str) -> Result<UiState, FrontendInterfaceError> {
         Ok(UiState {
-            loading: false,
-            progress: None,
-            status_message: None,
-            error_message: None,
+            loading:           false,
+            progress:          None,
+            status_message:    None,
+            error_message:     None,
             available_actions: Vec::new(),
         })
     }
@@ -661,10 +653,10 @@ impl AiErrorReporter for PlaceholderErrorReporter {
 
     async fn get_error_statistics(&self) -> Result<ErrorStatistics, FrontendInterfaceError> {
         Ok(ErrorStatistics {
-            total_errors: 0,
-            errors_by_category: std::collections::HashMap::new(),
+            total_errors:        0,
+            errors_by_category:  std::collections::HashMap::new(),
             errors_by_operation: std::collections::HashMap::new(),
-            error_rate: 0.0,
+            error_rate:          0.0,
         })
     }
 }

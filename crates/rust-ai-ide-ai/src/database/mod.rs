@@ -1,7 +1,9 @@
-use crate::types::{AIResult, AIServiceError};
-use rusqlite::{params, Connection, Result as SqliteResult};
 use std::path::Path;
+
+use rusqlite::{params, Connection, Result as SqliteResult};
 use tokio::task;
+
+use crate::types::{AIResult, AIServiceError};
 
 /// Async database wrapper using rusqlite with spawn_blocking
 pub struct AsyncDatabase {
@@ -110,10 +112,7 @@ pub struct PreparedStatement {
 
 impl PreparedStatement {
     /// Execute the prepared statement with parameters
-    pub async fn execute<P: rusqlite::Params + Send + 'static>(
-        &mut self,
-        params: P,
-    ) -> AIResult<usize> {
+    pub async fn execute<P: rusqlite::Params + Send + 'static>(&mut self, params: P) -> AIResult<usize> {
         task::spawn_blocking(move || self.stmt.execute(params))
             .await
             .map_err(|e| AIServiceError::DatabaseError(format!("Async spawn error: {}", e)))?

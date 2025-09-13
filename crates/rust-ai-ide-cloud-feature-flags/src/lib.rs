@@ -3,10 +3,11 @@
 //! This crate provides a dynamic feature flag system that integrates with
 //! Kubernetes ConfigMaps for runtime feature flag updates.
 
+use std::sync::Arc;
+
 use dashmap::DashMap;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::info;
 
@@ -17,8 +18,7 @@ pub use errors::FeatureFlagError;
 pub use provider::FeatureFlagProvider;
 
 /// Global feature flag registry with thread-safe access
-static FEATURE_FLAGS: Lazy<Arc<FeatureFlagRegistry>> =
-    Lazy::new(|| Arc::new(FeatureFlagRegistry::default()));
+static FEATURE_FLAGS: Lazy<Arc<FeatureFlagRegistry>> = Lazy::new(|| Arc::new(FeatureFlagRegistry::default()));
 
 /// Feature flag value types
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -33,24 +33,24 @@ pub enum FeatureFlagValue {
 /// Feature flag with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeatureFlag {
-    pub name: String,
-    pub value: FeatureFlagValue,
-    pub enabled: bool,
+    pub name:               String,
+    pub value:              FeatureFlagValue,
+    pub enabled:            bool,
     pub rollout_percentage: Option<u8>,
-    pub description: Option<String>,
-    pub dependencies: Option<Vec<String>>,
+    pub description:        Option<String>,
+    pub dependencies:       Option<Vec<String>>,
 }
 
 /// Feature flag registry for thread-safe access
 pub struct FeatureFlagRegistry {
-    flags: RwLock<DashMap<String, FeatureFlag>>,
+    flags:     RwLock<DashMap<String, FeatureFlag>>,
     providers: RwLock<Vec<Arc<dyn FeatureFlagProvider>>>,
 }
 
 impl Default for FeatureFlagRegistry {
     fn default() -> Self {
         Self {
-            flags: RwLock::new(DashMap::new()),
+            flags:     RwLock::new(DashMap::new()),
             providers: RwLock::new(Vec::new()),
         }
     }
@@ -72,9 +72,7 @@ impl FeatureFlagManager {
     /// Initialize from ConfigMap data
     pub async fn load_from_configmap(&self, config_data: &str) -> Result<(), FeatureFlagError> {
         let parsed: std::collections::HashMap<String, String> = serde_json::from_str(config_data)
-            .map_err(|e| {
-            FeatureFlagError::ParseError(format!("Failed to parse configmap: {}", e))
-        })?;
+            .map_err(|e| FeatureFlagError::ParseError(format!("Failed to parse configmap: {}", e)))?;
 
         let flags = self.registry.flags.write().await;
 
@@ -147,8 +145,7 @@ impl FeatureFlagManager {
                     let flags = self.registry.flags.write().await;
                     if let Some(mut flag) = flags.get_mut(&flag_name) {
                         flag.value = value.clone();
-                        flag.enabled =
-                            self.calculate_enabled_state(&flag.value, rollout_percentage);
+                        flag.enabled = self.calculate_enabled_state(&flag.value, rollout_percentage);
                         flag.rollout_percentage = rollout_percentage;
                     } else {
                         let flag = FeatureFlag {
@@ -168,10 +165,7 @@ impl FeatureFlagManager {
     }
 
     /// Register a provider
-    pub async fn register_provider(
-        &self,
-        provider: Arc<dyn FeatureFlagProvider>,
-    ) -> Result<(), FeatureFlagError> {
+    pub async fn register_provider(&self, provider: Arc<dyn FeatureFlagProvider>) -> Result<(), FeatureFlagError> {
         let mut providers = self.registry.providers.write().await;
         providers.push(provider);
         Ok(())
@@ -212,11 +206,7 @@ impl FeatureFlagManager {
     }
 
     /// Calculate if feature should be enabled based on rollout percentage
-    fn calculate_enabled_state(
-        &self,
-        value: &FeatureFlagValue,
-        rollout_percentage: Option<u8>,
-    ) -> bool {
+    fn calculate_enabled_state(&self, value: &FeatureFlagValue, rollout_percentage: Option<u8>) -> bool {
         // Check base value first
         let base_enabled = matches!(value, FeatureFlagValue::Boolean(true))
             || matches!(value, FeatureFlagValue::String(ref s) if s == "true");

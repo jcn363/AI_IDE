@@ -3,17 +3,15 @@
 //! Comprehensive GDPR compliance implementation including data protection principles,
 //! individual rights management, and data breach notification.
 
-use crate::core::{
-    ComplianceConfig, ComplianceError, ComplianceResult, ComplianceStatus,
-    FrameworkProcessingResult,
-};
-use crate::engine::{ComplianceProcessor, DataBreachNotification, DataProcessingContext};
 use async_trait::async_trait;
+
+use crate::core::{ComplianceConfig, ComplianceError, ComplianceResult, ComplianceStatus, FrameworkProcessingResult};
+use crate::engine::{ComplianceProcessor, DataBreachNotification, DataProcessingContext};
 
 /// GDPR compliance processor
 #[derive(Debug)]
 pub struct GdprProcessor {
-    config: ComplianceConfig,
+    config:          ComplianceConfig,
     privacy_notices: std::collections::HashMap<String, PrivacyNotice>,
 }
 
@@ -21,7 +19,7 @@ impl GdprProcessor {
     /// Create a new GDPR processor
     pub async fn new(config: std::sync::Arc<ComplianceConfig>) -> ComplianceResult<Self> {
         Ok(Self {
-            config: (*config).clone(),
+            config:          (*config).clone(),
             privacy_notices: std::collections::HashMap::new(),
         })
     }
@@ -64,14 +62,10 @@ impl ComplianceProcessor for GdprProcessor {
         }))
     }
 
-    async fn handle_breach_notification(
-        &self,
-        breach: &DataBreachNotification,
-    ) -> ComplianceResult<()> {
+    async fn handle_breach_notification(&self, breach: &DataBreachNotification) -> ComplianceResult<()> {
         log::warn!("GDPR breach notification received: {}", breach.details);
 
-        if breach.affected_records > 100 || breach.severity == crate::core::AuditSeverity::Critical
-        {
+        if breach.affected_records > 100 || breach.severity == crate::core::AuditSeverity::Critical {
             log::error!("GDPR breach requires regulatory notification within 72 hours");
         }
 
@@ -93,7 +87,7 @@ impl GdprProcessor {
     ) -> ComplianceResult<SubjectAccessResponse> {
         // Implementation for GDPR Article 15 - right of access
         Ok(SubjectAccessResponse {
-            data: Vec::new(),
+            data:     Vec::new(),
             metadata: std::collections::HashMap::new(),
         })
     }
@@ -114,47 +108,47 @@ impl GdprProcessor {
 /// Privacy notice structure
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct PrivacyNotice {
-    pub id: String,
-    pub version: String,
-    pub language: String,
-    pub content: String,
+    pub id:           String,
+    pub version:      String,
+    pub language:     String,
+    pub content:      String,
     pub last_updated: chrono::DateTime<chrono::Utc>,
 }
 
 /// Subject access request structure
 #[derive(Debug, Clone)]
 pub struct SubjectAccessRequest {
-    pub subject_id: String,
+    pub subject_id:     String,
     pub requested_data: Vec<String>,
-    pub time_range: Option<(chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>,
+    pub time_range:     Option<(chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>,
 }
 
 /// Subject access response structure
 #[derive(Debug, Clone)]
 pub struct SubjectAccessResponse {
-    pub data: Vec<serde_json::Value>,
+    pub data:     Vec<serde_json::Value>,
     pub metadata: std::collections::HashMap<String, String>,
 }
 
 /// Consent management structure
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Consent {
-    pub subject_id: String,
-    pub purpose: String,
-    pub granted: bool,
-    pub granted_at: chrono::DateTime<chrono::Utc>,
-    pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub subject_id:           String,
+    pub purpose:              String,
+    pub granted:              bool,
+    pub granted_at:           chrono::DateTime<chrono::Utc>,
+    pub expires_at:           Option<chrono::DateTime<chrono::Utc>>,
     pub withdrawal_requested: bool,
 }
 
 impl Default for Consent {
     fn default() -> Self {
         Self {
-            subject_id: String::new(),
-            purpose: String::new(),
-            granted: false,
-            granted_at: chrono::Utc::now(),
-            expires_at: None,
+            subject_id:           String::new(),
+            purpose:              String::new(),
+            granted:              false,
+            granted_at:           chrono::Utc::now(),
+            expires_at:           None,
             withdrawal_requested: false,
         }
     }

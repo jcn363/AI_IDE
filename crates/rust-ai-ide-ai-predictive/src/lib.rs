@@ -14,23 +14,20 @@
 extern crate tracing;
 
 // Import external dependencies
-pub use serde::{Deserialize, Serialize};
-pub use tokio;
-pub use uuid;
-
 // Import internal dependencies
 pub use rust_ai_ide_common::validation::TauriInputSanitizer;
 pub use rust_ai_ide_errors::IDError;
 pub use rust_ai_ide_types::{Language, Position, Range, TextDocument};
+pub use serde::{Deserialize, Serialize};
+pub use {tokio, uuid};
 
 // Re-export main modules
 pub mod predictive_development;
 pub use predictive_development::*;
-
 // Explicit re-exports for easier module usage
 pub use predictive_development::{
-    AnalysisMode, CacheEvictionPolicy, CodeSuggestion, IntentPrediction, PerformanceMetrics,
-    PredictionContext, PredictionSettings, PredictiveDevelopmentEngine, RefactoringRecommendation,
+    AnalysisMode, CacheEvictionPolicy, CodeSuggestion, IntentPrediction, PerformanceMetrics, PredictionContext,
+    PredictionSettings, PredictiveDevelopmentEngine, RefactoringRecommendation,
 };
 
 /// Errors specific to predictive development functionality
@@ -71,23 +68,23 @@ impl From<rust_ai_ide_errors::IDError> for PredictiveError {
 /// Performance metrics tracker
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceTracker {
-    pub total_predictions: u64,
-    pub successful_predictions: u64,
+    pub total_predictions:        u64,
+    pub successful_predictions:   u64,
     pub average_response_time_ms: f64,
-    pub cache_hit_rate: f64,
-    pub memory_usage_bytes: u64,
-    pub last_update: chrono::DateTime<chrono::Utc>,
+    pub cache_hit_rate:           f64,
+    pub memory_usage_bytes:       u64,
+    pub last_update:              chrono::DateTime<chrono::Utc>,
 }
 
 impl Default for PerformanceTracker {
     fn default() -> Self {
         Self {
-            total_predictions: 0,
-            successful_predictions: 0,
+            total_predictions:        0,
+            successful_predictions:   0,
             average_response_time_ms: 0.0,
-            cache_hit_rate: 0.0,
-            memory_usage_bytes: 0,
-            last_update: chrono::Utc::now(),
+            cache_hit_rate:           0.0,
+            memory_usage_bytes:       0,
+            last_update:              chrono::Utc::now(),
         }
     }
 }
@@ -101,8 +98,7 @@ impl PerformanceTracker {
         }
 
         // Update rolling average
-        self.average_response_time_ms = (self.average_response_time_ms
-            * (self.total_predictions - 1) as f64
+        self.average_response_time_ms = (self.average_response_time_ms * (self.total_predictions - 1) as f64
             + response_time_ms)
             / self.total_predictions as f64;
 

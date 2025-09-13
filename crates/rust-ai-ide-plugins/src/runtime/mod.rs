@@ -3,33 +3,35 @@
 //! This module provides the PluginRuntime struct that handles loading,
 //! executing, and managing plugins during the editor's runtime.
 
-use crate::interfaces::{Plugin, PluginContext, PluginError, PluginResult};
-use crate::registry::PluginRegistry;
 use std::collections::HashMap;
 use std::sync::Arc;
+
 use tokio::sync::RwLock;
 use uuid::Uuid;
+
+use crate::interfaces::{Plugin, PluginContext, PluginError, PluginResult};
+use crate::registry::PluginRegistry;
 
 /// Configuration for the plugin runtime
 #[derive(Debug, Clone)]
 pub struct RuntimeConfig {
     /// Maximum number of plugins to load simultaneously
-    pub max_plugin_count: usize,
+    pub max_plugin_count:          usize,
     /// Timeout for plugin operations in seconds
     pub operation_timeout_seconds: u64,
     /// Whether to enable plugin sandboxing
-    pub enable_sandboxing: bool,
+    pub enable_sandboxing:         bool,
     /// Directory for plugin storage
-    pub plugin_directory: String,
+    pub plugin_directory:          String,
 }
 
 impl Default for RuntimeConfig {
     fn default() -> Self {
         Self {
-            max_plugin_count: 100,
+            max_plugin_count:          100,
             operation_timeout_seconds: 30,
-            enable_sandboxing: true,
-            plugin_directory: "./plugins".to_string(),
+            enable_sandboxing:         true,
+            plugin_directory:          "./plugins".to_string(),
         }
     }
 }
@@ -37,9 +39,9 @@ impl Default for RuntimeConfig {
 /// Runtime environment for managing plugin execution
 pub struct PluginRuntime {
     /// Plugin registry for loaded plugins
-    registry: Arc<PluginRegistry>,
+    registry:        Arc<PluginRegistry>,
     /// Runtime configuration
-    config: RuntimeConfig,
+    config:          RuntimeConfig,
     /// Plugin contexts
     plugin_contexts: RwLock<HashMap<Uuid, PluginContext>>,
 }

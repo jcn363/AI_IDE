@@ -8,12 +8,8 @@ pub struct SimilarityCalculator;
 
 impl SimilarityCalculator {
     /// Calculate similarity between error context and learned pattern
-    pub fn calculate_pattern_similarity(
-        error_context: &str,
-        pattern: &LearnedPattern,
-    ) -> PatternSimilarity {
-        let error_similarity =
-            Self::calculate_text_similarity(error_context, &pattern.error_pattern);
+    pub fn calculate_pattern_similarity(error_context: &str, pattern: &LearnedPattern) -> PatternSimilarity {
+        let error_similarity = Self::calculate_text_similarity(error_context, &pattern.error_pattern);
 
         let context_similarity = if pattern.context_patterns.is_empty() {
             0.5 // Neutral score for patterns without context
@@ -25,8 +21,7 @@ impl SimilarityCalculator {
         let structure_similarity = Self::calculate_structure_similarity(error_context, pattern);
 
         // Weighted combination of similarity factors
-        let overall_score =
-            (error_similarity * 0.5) + (context_similarity * 0.3) + (structure_similarity * 0.2);
+        let overall_score = (error_similarity * 0.5) + (context_similarity * 0.3) + (structure_similarity * 0.2);
 
         PatternSimilarity {
             overall_score,
@@ -127,10 +122,7 @@ impl SimilarityCalculator {
     }
 
     /// Filter patterns by minimum confidence threshold
-    pub fn filter_by_confidence(
-        mut similarities: Vec<PatternSimilarity>,
-        threshold: f32,
-    ) -> Vec<PatternSimilarity> {
+    pub fn filter_by_confidence(mut similarities: Vec<PatternSimilarity>, threshold: f32) -> Vec<PatternSimilarity> {
         similarities.retain(|s| s.overall_score >= threshold);
         similarities
     }
@@ -180,8 +172,9 @@ impl SimilarityCalculator {
 
 /// Helper functions for pattern analysis
 pub mod analysis {
-    use super::*;
     use std::collections::HashMap;
+
+    use super::*;
 
     /// Analyze patterns for common themes
     pub fn analyze_pattern_themes(patterns: &[LearnedPattern]) -> HashMap<String, f32> {
@@ -203,9 +196,7 @@ pub mod analysis {
     }
 
     /// Group patterns by error type
-    pub fn group_patterns_by_error_type(
-        patterns: &[LearnedPattern],
-    ) -> HashMap<String, Vec<&LearnedPattern>> {
+    pub fn group_patterns_by_error_type(patterns: &[LearnedPattern]) -> HashMap<String, Vec<&LearnedPattern>> {
         let mut grouped = HashMap::new();
 
         for pattern in patterns {
@@ -236,17 +227,12 @@ pub mod analysis {
     }
 
     /// Find patterns with similar fix templates
-    pub fn find_similar_fixes<'a>(
-        patterns: &'a [LearnedPattern],
-        target_pattern: &str,
-    ) -> Vec<&'a LearnedPattern> {
+    pub fn find_similar_fixes<'a>(patterns: &'a [LearnedPattern], target_pattern: &str) -> Vec<&'a LearnedPattern> {
         patterns
             .iter()
             .filter(|p| {
-                SimilarityCalculator::calculate_text_similarity(
-                    target_pattern,
-                    &p.fix_template.description_template,
-                ) > 0.5
+                SimilarityCalculator::calculate_text_similarity(target_pattern, &p.fix_template.description_template)
+                    > 0.5
             })
             .collect()
     }
@@ -257,15 +243,16 @@ pub mod analysis {
 // This module provides AI-optimized caching for similarity computations
 // using the unified cache infrastructure from rust-ai-ide-cache.
 
-use rust_ai_ide_cache::{key_utils, AiCacheExt, Cache, CacheConfig, CacheStats, InMemoryCache};
-use rust_ai_ide_errors::IDEResult;
 // serde is imported via the unified cache crate
 use std::time::Duration;
+
+use rust_ai_ide_cache::{key_utils, AiCacheExt, Cache, CacheConfig, CacheStats, InMemoryCache};
+use rust_ai_ide_errors::IDEResult;
 
 /// Unified AI similarity cache implementation
 pub struct SimilarityCache {
     unified_cache: InMemoryCache<String, serde_json::Value>,
-    config: CacheConfig,
+    config:        CacheConfig,
 }
 
 impl std::fmt::Debug for SimilarityCache {
@@ -293,7 +280,7 @@ impl SimilarityCache {
     /// Create a new AI similarity cache with optimized settings
     pub fn new() -> Self {
         let config = CacheConfig {
-            max_entries: Some(5000), // Higher limit for AI computations
+            max_entries: Some(5000),                      // Higher limit for AI computations
             default_ttl: Some(Duration::from_secs(1800)), // 30 minutes
             ..Default::default()
         };
@@ -326,18 +313,13 @@ impl SimilarityCache {
     }
 
     /// Store similarities in cache with AI optimizations
-    pub async fn insert(
-        &mut self,
-        key: String,
-        similarities: Vec<PatternSimilarity>,
-    ) -> IDEResult<()> {
+    pub async fn insert(&mut self, key: String, similarities: Vec<PatternSimilarity>) -> IDEResult<()> {
         // Calculate token usage estimate for AI metrics
         let tokens_used = similarities.len() as u32;
 
         // Serialize to JSON for unified cache storage
-        let json_value = serde_json::to_value(&similarities).map_err(|e| {
-            rust_ai_ide_errors::RustAIError::Serialization(format!("Serialization error: {}", e))
-        })?;
+        let json_value = serde_json::to_value(&similarities)
+            .map_err(|e| rust_ai_ide_errors::RustAIError::Serialization(format!("Serialization error: {}", e)))?;
 
         // Use unified AI cache extension
         self.unified_cache

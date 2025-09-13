@@ -1,16 +1,11 @@
 //! Performance analysis tests for the Rust AI IDE
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use rust_ai_ide_ai::{
-    analysis::{
-        architectural::{
-            CircularDependencyAnalyzer, DependencyInversionAnalyzer, InterfaceSegregationAnalyzer,
-            LayerViolationDetector,
-        },
-        AnalysisRegistry, AnalysisType,
-    },
-    test_helpers::create_test_ast,
+use rust_ai_ide_ai::analysis::architectural::{
+    CircularDependencyAnalyzer, DependencyInversionAnalyzer, InterfaceSegregationAnalyzer, LayerViolationDetector,
 };
+use rust_ai_ide_ai::analysis::{AnalysisRegistry, AnalysisType};
+use rust_ai_ide_ai::test_helpers::create_test_ast;
 
 /// Performance test for the circular dependency analyzer
 fn benchmark_circular_dependency_analyzer(c: &mut Criterion) {

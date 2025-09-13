@@ -7,11 +7,12 @@
 //! - Debugging assistance capability validation
 //! - Code review feedback accuracy
 
+use std::collections::HashMap;
+use std::time::{Duration, Instant};
+
 use chrono::{DateTime, Utc};
 use rust_ai_ide_errors::IdeResult;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::time::{Duration, Instant};
 
 /// AI capability metrics and evaluation scores
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,21 +29,21 @@ pub enum AIMetric {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIScoringCriteria {
-    pub criteria: String,
-    pub weight: f32,
-    pub min_threshold: f32,
+    pub criteria:       String,
+    pub weight:         f32,
+    pub min_threshold:  f32,
     pub achieved_score: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AITestCase {
-    pub id: String,
-    pub description: String,
-    pub input_code: String,
-    pub expected_output: Option<String>,
+    pub id:                   String,
+    pub description:          String,
+    pub input_code:           String,
+    pub expected_output:      Option<String>,
     pub expected_suggestions: Vec<String>,
-    pub complexity_level: TestComplexity,
-    pub category: AITestCategory,
+    pub complexity_level:     TestComplexity,
+    pub category:             AITestCategory,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -65,74 +66,74 @@ pub enum AITestCategory {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIValidationResult {
-    pub test_case_id: String,
-    pub success: bool,
-    pub actual_output: String,
+    pub test_case_id:          String,
+    pub success:               bool,
+    pub actual_output:         String,
     pub generated_suggestions: Vec<String>,
-    pub execution_time: Duration,
-    pub accuracy_score: f32,
-    pub quality_score: f32,
-    pub feedback: Vec<String>,
+    pub execution_time:        Duration,
+    pub accuracy_score:        f32,
+    pub quality_score:         f32,
+    pub feedback:              Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIComprehensiveReport {
-    pub timestamp: DateTime<Utc>,
-    pub category_reports: HashMap<String, AICategoryReport>,
-    pub overall_metrics: HashMap<String, f32>,
+    pub timestamp:              DateTime<Utc>,
+    pub category_reports:       HashMap<String, AICategoryReport>,
+    pub overall_metrics:        HashMap<String, f32>,
     pub performance_benchmarks: Vec<AIPerformanceBenchmark>,
-    pub recommendations: Vec<String>,
-    pub quality_assessment: AIQualityAssessment,
+    pub recommendations:        Vec<String>,
+    pub quality_assessment:     AIQualityAssessment,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AICategoryReport {
-    pub category: AITestCategory,
-    pub total_tests: usize,
-    pub passed_tests: usize,
+    pub category:         AITestCategory,
+    pub total_tests:      usize,
+    pub passed_tests:     usize,
     pub average_accuracy: f32,
-    pub average_latency: Duration,
-    pub quality_score: f32,
-    pub test_results: Vec<AIValidationResult>,
+    pub average_latency:  Duration,
+    pub quality_score:    f32,
+    pub test_results:     Vec<AIValidationResult>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIPerformanceBenchmark {
-    pub operation: String,
+    pub operation:       String,
     pub average_latency: Duration,
-    pub p95_latency: Duration,
-    pub throughput: f32,
-    pub resource_usage: ResourceUsage,
+    pub p95_latency:     Duration,
+    pub throughput:      f32,
+    pub resource_usage:  ResourceUsage,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceUsage {
-    pub cpu_percent: f32,
-    pub memory_mb: f32,
+    pub cpu_percent:    f32,
+    pub memory_mb:      f32,
     pub peak_memory_mb: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIQualityAssessment {
     pub overall_quality_score: f32,
-    pub strengths: Vec<String>,
-    pub weaknesses: Vec<String>,
-    pub improvement_areas: Vec<String>,
-    pub production_readiness: bool,
+    pub strengths:             Vec<String>,
+    pub weaknesses:            Vec<String>,
+    pub improvement_areas:     Vec<String>,
+    pub production_readiness:  bool,
 }
 
 /// Advanced AI capability validator
 pub struct AICapabilityValidator {
-    test_cases: HashMap<AITestCategory, Vec<AITestCase>>,
-    scorer: AIScorer,
+    test_cases:           HashMap<AITestCategory, Vec<AITestCase>>,
+    scorer:               AIScorer,
     performance_analyzer: AIPerformanceAnalyzer,
 }
 
 impl AICapabilityValidator {
     pub fn new() -> Self {
         Self {
-            test_cases: Self::load_test_cases(),
-            scorer: AIScorer::new(),
+            test_cases:           Self::load_test_cases(),
+            scorer:               AIScorer::new(),
             performance_analyzer: AIPerformanceAnalyzer::new(),
         }
     }
@@ -141,8 +142,8 @@ impl AICapabilityValidator {
 impl Default for ResourceUsage {
     fn default() -> Self {
         Self {
-            cpu_percent: 0.0,
-            memory_mb: 0.0,
+            cpu_percent:    0.0,
+            memory_mb:      0.0,
             peak_memory_mb: 0.0,
         }
     }
@@ -217,8 +218,7 @@ impl AICapabilityValidator {
             };
 
             // Score the completion
-            let (accuracy, quality, feedback) =
-                self.score_completion(&test_case.input_code, &result);
+            let (accuracy, quality, feedback) = self.score_completion(&test_case.input_code, &result);
             validation_result.success = accuracy >= 70.0;
             validation_result.accuracy_score = accuracy;
             validation_result.quality_score = quality;
@@ -257,8 +257,7 @@ impl AICapabilityValidator {
             };
 
             // Score the refactoring
-            let (accuracy, quality, feedback) =
-                self.score_refactoring(&test_case.input_code, &result);
+            let (accuracy, quality, feedback) = self.score_refactoring(&test_case.input_code, &result);
             validation_result.success = accuracy >= 60.0 && quality >= 70.0;
             validation_result.accuracy_score = accuracy;
             validation_result.quality_score = quality;
@@ -297,8 +296,7 @@ impl AICapabilityValidator {
             };
 
             // Score the test generation
-            let (accuracy, quality, feedback) =
-                self.score_test_generation(&test_case.input_code, &result);
+            let (accuracy, quality, feedback) = self.score_test_generation(&test_case.input_code, &result);
             validation_result.success = accuracy >= 50.0 && quality >= 80.0;
             validation_result.accuracy_score = accuracy;
             validation_result.quality_score = quality;
@@ -316,59 +314,66 @@ impl AICapabilityValidator {
         let mut test_cases = HashMap::new();
 
         // Load predictive completion test cases
-        test_cases.insert(
-            AITestCategory::PredictiveCompletion,
-            vec![
-                AITestCase {
-                    id: "completion_001".to_string(),
-                    description: "Variable name completion".to_string(),
-                    input_code: "fn main() {\n    let user_name".to_string(),
-                    expected_output: Some("fn main() {\n    let user_name: String;\n}".to_string()),
-                    expected_suggestions: vec!["user_name".to_string(), ": String".to_string()],
-                    complexity_level: TestComplexity::Basic,
-                    category: AITestCategory::PredictiveCompletion,
-                },
-                AITestCase {
-                    id: "completion_002".to_string(),
-                    description: "Function completion".to_string(),
-                    input_code: "fn calculate_sum(vec: &Vec<i32>) -> i32 {\n    vec.iter().sum"
-                        .to_string(),
-                    expected_output: Some(
-                        "fn calculate_sum(vec: &Vec<i32>) -> i32 {\n    vec.iter().sum()\n}"
-                            .to_string(),
-                    ),
-                    expected_suggestions: vec![".sum()".to_string()],
-                    complexity_level: TestComplexity::Basic,
-                    category: AITestCategory::PredictiveCompletion,
-                },
-            ],
-        );
+        test_cases.insert(AITestCategory::PredictiveCompletion, vec![
+            AITestCase {
+                id:                   "completion_001".to_string(),
+                description:          "Variable name completion".to_string(),
+                input_code:           "fn main() {\n    let user_name".to_string(),
+                expected_output:      Some("fn main() {\n    let user_name: String;\n}".to_string()),
+                expected_suggestions: vec!["user_name".to_string(), ": String".to_string()],
+                complexity_level:     TestComplexity::Basic,
+                category:             AITestCategory::PredictiveCompletion,
+            },
+            AITestCase {
+                id:                   "completion_002".to_string(),
+                description:          "Function completion".to_string(),
+                input_code:           "fn calculate_sum(vec: &Vec<i32>) -> i32 {\n    vec.iter().sum".to_string(),
+                expected_output:      Some(
+                    "fn calculate_sum(vec: &Vec<i32>) -> i32 {\n    vec.iter().sum()\n}".to_string(),
+                ),
+                expected_suggestions: vec![".sum()".to_string()],
+                complexity_level:     TestComplexity::Basic,
+                category:             AITestCategory::PredictiveCompletion,
+            },
+        ]);
 
         // Load refactoring test cases
-        test_cases.insert(AITestCategory::CodeRefactoring, vec![
-            AITestCase {
-                id: "refactor_001".to_string(),
-                description: "Extract method".to_string(),
-                input_code: "fn main() {\n    let a = 5;\n    let b = 10;\n    println!(\"Result: {}\", a + b);\n    let c = a + b;\n    save(c);\n}".to_string(),
-                expected_output: Some("fn calculate_and_print(a: i32, b: i32) {\n    println!(\"Result: {}\", a + b);\n    a + b\n}\n\nfn main() {\n    let a = 5;\n    let b = 10;\n    let c = calculate_and_print(a, b);\n    save(c);\n}".to_string()),
-                expected_suggestions: vec!["Extract method".to_string(), "calculate_and_print".to_string()],
-                complexity_level: TestComplexity::Intermediate,
-                category: AITestCategory::CodeRefactoring,
-            },
-        ]);
+        test_cases.insert(AITestCategory::CodeRefactoring, vec![AITestCase {
+            id:                   "refactor_001".to_string(),
+            description:          "Extract method".to_string(),
+            input_code:           "fn main() {\n    let a = 5;\n    let b = 10;\n    println!(\"Result: {}\", a + \
+                                   b);\n    let c = a + b;\n    save(c);\n}"
+                .to_string(),
+            expected_output:      Some(
+                "fn calculate_and_print(a: i32, b: i32) {\n    println!(\"Result: {}\", a + b);\n    a + b\n}\n\nfn \
+                 main() {\n    let a = 5;\n    let b = 10;\n    let c = calculate_and_print(a, b);\n    save(c);\n}"
+                    .to_string(),
+            ),
+            expected_suggestions: vec![
+                "Extract method".to_string(),
+                "calculate_and_print".to_string(),
+            ],
+            complexity_level:     TestComplexity::Intermediate,
+            category:             AITestCategory::CodeRefactoring,
+        }]);
 
         // Load test generation test cases
-        test_cases.insert(AITestCategory::TestGeneration, vec![
-            AITestCase {
-                id: "testgen_001".to_string(),
-                description: "Generate function tests".to_string(),
-                input_code: "fn add(a: i32, b: i32) -> i32 {\n    a + b\n}".to_string(),
-                expected_output: Some("#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn test_add_positive_numbers() {\n        assert_eq!(add(2, 3), 5);\n    }\n\n    #[test]\n    fn test_add_negative_numbers() {\n        assert_eq!(add(-2, -3), -5);\n    }\n\n    #[test]\n    fn test_add_mixed_numbers() {\n        assert_eq!(add(2, -3), -1);\n    }\n}".to_string()),
-                expected_suggestions: vec!["generate unit tests".to_string()],
-                complexity_level: TestComplexity::Basic,
-                category: AITestCategory::TestGeneration,
-            },
-        ]);
+        test_cases.insert(AITestCategory::TestGeneration, vec![AITestCase {
+            id:                   "testgen_001".to_string(),
+            description:          "Generate function tests".to_string(),
+            input_code:           "fn add(a: i32, b: i32) -> i32 {\n    a + b\n}".to_string(),
+            expected_output:
+                Some(
+                    "#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn test_add_positive_numbers() \
+                     {\n        assert_eq!(add(2, 3), 5);\n    }\n\n    #[test]\n    fn test_add_negative_numbers() \
+                     {\n        assert_eq!(add(-2, -3), -5);\n    }\n\n    #[test]\n    fn test_add_mixed_numbers() \
+                     {\n        assert_eq!(add(2, -3), -1);\n    }\n}"
+                        .to_string(),
+                ),
+            expected_suggestions: vec!["generate unit tests".to_string()],
+            complexity_level:     TestComplexity::Basic,
+            category:             AITestCategory::TestGeneration,
+        }]);
 
         test_cases
     }
@@ -394,14 +399,14 @@ impl AICapabilityValidator {
         for test_case in test_cases {
             // Placeholder validation - actual implementation would call AI services
             let result = AIValidationResult {
-                test_case_id: test_case.id.clone(),
-                success: true,
-                actual_output: "Test output".to_string(),
+                test_case_id:          test_case.id.clone(),
+                success:               true,
+                actual_output:         "Test output".to_string(),
                 generated_suggestions: vec!["Suggestion 1".to_string()],
-                execution_time: Duration::from_millis(100),
-                accuracy_score: 85.0,
-                quality_score: 80.0,
-                feedback: vec!["Good performance".to_string()],
+                execution_time:        Duration::from_millis(100),
+                accuracy_score:        85.0,
+                quality_score:         80.0,
+                feedback:              vec!["Good performance".to_string()],
             };
             results.push(result);
         }
@@ -409,15 +414,10 @@ impl AICapabilityValidator {
         Ok(results)
     }
 
-    fn generate_category_report(
-        &self,
-        category: &AITestCategory,
-        results: &[AIValidationResult],
-    ) -> AICategoryReport {
+    fn generate_category_report(&self, category: &AITestCategory, results: &[AIValidationResult]) -> AICategoryReport {
         let total_tests = results.len();
         let passed_tests = results.iter().filter(|r| r.success).count();
-        let avg_accuracy =
-            results.iter().map(|r| r.accuracy_score).sum::<f32>() / total_tests as f32;
+        let avg_accuracy = results.iter().map(|r| r.accuracy_score).sum::<f32>() / total_tests as f32;
         let avg_latency = Duration::from_millis(
             (results
                 .iter()
@@ -432,8 +432,7 @@ impl AICapabilityValidator {
             passed_tests,
             average_accuracy: avg_accuracy,
             average_latency: avg_latency,
-            quality_score: results.iter().map(|r| r.quality_score).sum::<f32>()
-                / total_tests as f32,
+            quality_score: results.iter().map(|r| r.quality_score).sum::<f32>() / total_tests as f32,
             test_results: results.to_vec(),
         }
     }
@@ -457,8 +456,7 @@ impl AICapabilityValidator {
             results.iter().map(|r| r.quality_score).sum::<f32>() / total_tests,
         );
 
-        let avg_latency =
-            results.iter().map(|r| r.execution_time).sum::<Duration>() / total_tests as u32;
+        let avg_latency = results.iter().map(|r| r.execution_time).sum::<Duration>() / total_tests as u32;
         metrics.insert(
             "average_latency_ms".to_string(),
             avg_latency.as_millis() as f32,
@@ -468,10 +466,8 @@ impl AICapabilityValidator {
     }
 
     async fn assess_ai_quality(&self, results: &[AIValidationResult]) -> AIQualityAssessment {
-        let avg_accuracy =
-            results.iter().map(|r| r.accuracy_score).sum::<f32>() / results.len() as f32;
-        let avg_quality =
-            results.iter().map(|r| r.quality_score).sum::<f32>() / results.len() as f32;
+        let avg_accuracy = results.iter().map(|r| r.accuracy_score).sum::<f32>() / results.len() as f32;
+        let avg_quality = results.iter().map(|r| r.quality_score).sum::<f32>() / results.len() as f32;
 
         let overall_score = (avg_accuracy + avg_quality) / 2.0;
 
@@ -502,86 +498,58 @@ impl AICapabilityValidator {
         }
     }
 
-    fn generate_recommendations(
-        &self,
-        metrics: &HashMap<String, f32>,
-        quality: &AIQualityAssessment,
-    ) -> Vec<String> {
+    fn generate_recommendations(&self, metrics: &HashMap<String, f32>, quality: &AIQualityAssessment) -> Vec<String> {
         let mut recommendations = Vec::new();
 
         if let Some(pass_rate) = metrics.get("overall_pass_rate") {
             if *pass_rate < 80.0 {
-                recommendations
-                    .push("🔧 Increase test coverage and improve AI model training".to_string());
+                recommendations.push("🔧 Increase test coverage and improve AI model training".to_string());
             }
         }
 
         if quality.overall_quality_score < 70.0 {
-            recommendations
-                .push("📈 Enhance AI model quality and suggestion algorithms".to_string());
+            recommendations.push("📈 Enhance AI model quality and suggestion algorithms".to_string());
         }
 
-        recommendations
-            .push("✅ Consider A/B testing with different AI model configurations".to_string());
+        recommendations.push("✅ Consider A/B testing with different AI model configurations".to_string());
 
         recommendations
     }
 
     // Placeholder methods for scoring - actual implementation would use AI models
-    async fn validate_completion_test_case(
-        &self,
-        _test_case: &AITestCase,
-    ) -> IdeResult<CompletionResult> {
+    async fn validate_completion_test_case(&self, _test_case: &AITestCase) -> IdeResult<CompletionResult> {
         Ok(CompletionResult {
             generated_code: "let user_name: String;".to_string(),
-            suggestions: vec!["user_name".to_string(), ": String".to_string()],
-            confidence: 85.0,
+            suggestions:    vec!["user_name".to_string(), ": String".to_string()],
+            confidence:     85.0,
         })
     }
 
-    async fn validate_refactoring_test_case(
-        &self,
-        _test_case: &AITestCase,
-    ) -> IdeResult<RefactoringResult> {
+    async fn validate_refactoring_test_case(&self, _test_case: &AITestCase) -> IdeResult<RefactoringResult> {
         Ok(RefactoringResult {
             refactored_code: "fn extracted_method() {}".to_string(),
-            suggestions: vec!["Extract method".to_string()],
-            confidence: 78.0,
+            suggestions:     vec!["Extract method".to_string()],
+            confidence:      78.0,
         })
     }
 
-    async fn validate_test_generation_test_case(
-        &self,
-        _test_case: &AITestCase,
-    ) -> IdeResult<TestGenerationResult> {
+    async fn validate_test_generation_test_case(&self, _test_case: &AITestCase) -> IdeResult<TestGenerationResult> {
         Ok(TestGenerationResult {
             generated_tests: "#[test]\nfn test_function() {}".to_string(),
-            suggestions: vec!["Unit test".to_string()],
-            coverage: 90.0,
+            suggestions:     vec!["Unit test".to_string()],
+            coverage:        90.0,
         })
     }
 
-    fn score_completion(
-        &self,
-        _input_code: &str,
-        _result: &CompletionResult,
-    ) -> (f32, f32, Vec<String>) {
+    fn score_completion(&self, _input_code: &str, _result: &CompletionResult) -> (f32, f32, Vec<String>) {
         (85.0, 82.0, vec!["Accurate suggestions".to_string()])
     }
 
-    fn score_refactoring(
-        &self,
-        _input_code: &str,
-        _result: &RefactoringResult,
-    ) -> (f32, f32, Vec<String>) {
+    fn score_refactoring(&self, _input_code: &str, _result: &RefactoringResult) -> (f32, f32, Vec<String>) {
         (78.0, 85.0, vec!["Good refactoring quality".to_string()])
     }
 
-    fn score_test_generation(
-        &self,
-        _input_code: &str,
-        _result: &TestGenerationResult,
-    ) -> (f32, f32, Vec<String>) {
+    fn score_test_generation(&self, _input_code: &str, _result: &TestGenerationResult) -> (f32, f32, Vec<String>) {
         (75.0, 88.0, vec!["Comprehensive test coverage".to_string()])
     }
 }
@@ -590,22 +558,22 @@ impl AICapabilityValidator {
 #[derive(Debug)]
 struct CompletionResult {
     generated_code: String,
-    suggestions: Vec<String>,
-    confidence: f32,
+    suggestions:    Vec<String>,
+    confidence:     f32,
 }
 
 #[derive(Debug)]
 struct RefactoringResult {
     refactored_code: String,
-    suggestions: Vec<String>,
-    confidence: f32,
+    suggestions:     Vec<String>,
+    confidence:      f32,
 }
 
 #[derive(Debug)]
 struct TestGenerationResult {
     generated_tests: String,
-    suggestions: Vec<String>,
-    coverage: f32,
+    suggestions:     Vec<String>,
+    coverage:        f32,
 }
 
 #[derive(Debug)]
@@ -632,24 +600,24 @@ impl AIPerformanceAnalyzer {
     async fn generate_benchmarks(&self) -> IdeResult<Vec<AIPerformanceBenchmark>> {
         Ok(vec![
             AIPerformanceBenchmark {
-                operation: "Code Completion".to_string(),
+                operation:       "Code Completion".to_string(),
                 average_latency: Duration::from_millis(50),
-                p95_latency: Duration::from_millis(120),
-                throughput: 20.0,
-                resource_usage: ResourceUsage {
-                    cpu_percent: 15.0,
-                    memory_mb: 128.0,
+                p95_latency:     Duration::from_millis(120),
+                throughput:      20.0,
+                resource_usage:  ResourceUsage {
+                    cpu_percent:    15.0,
+                    memory_mb:      128.0,
                     peak_memory_mb: 256.0,
                 },
             },
             AIPerformanceBenchmark {
-                operation: "Code Refactoring".to_string(),
+                operation:       "Code Refactoring".to_string(),
                 average_latency: Duration::from_millis(200),
-                p95_latency: Duration::from_millis(500),
-                throughput: 5.0,
-                resource_usage: ResourceUsage {
-                    cpu_percent: 25.0,
-                    memory_mb: 256.0,
+                p95_latency:     Duration::from_millis(500),
+                throughput:      5.0,
+                resource_usage:  ResourceUsage {
+                    cpu_percent:    25.0,
+                    memory_mb:      256.0,
                     peak_memory_mb: 512.0,
                 },
             },
@@ -713,14 +681,14 @@ mod tests {
     async fn test_quality_assessment_functionality() -> IdeResult<()> {
         let validator = AICapabilityValidator::new();
         let mock_results = vec![AIValidationResult {
-            test_case_id: "test_001".to_string(),
-            success: true,
-            actual_output: "output".to_string(),
+            test_case_id:          "test_001".to_string(),
+            success:               true,
+            actual_output:         "output".to_string(),
             generated_suggestions: vec![],
-            execution_time: Duration::from_millis(100),
-            accuracy_score: 85.0,
-            quality_score: 80.0,
-            feedback: vec![],
+            execution_time:        Duration::from_millis(100),
+            accuracy_score:        85.0,
+            quality_score:         80.0,
+            feedback:              vec![],
         }];
 
         let quality = validator.assess_ai_quality(&mock_results).await;

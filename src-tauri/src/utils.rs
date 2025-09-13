@@ -1,13 +1,14 @@
-use crate::errors::{IDEError, IDEResult};
-use rust_ai_ide_lsp::AIService;
 use std::ffi::OsStr;
-use std::fs;
-use std::io;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::{fs, io};
+
+use rust_ai_ide_lsp::AIService;
 use tokio::signal;
 use tokio::sync::broadcast;
 use tokio::time::{interval, Duration};
+
+use crate::errors::{IDEError, IDEResult};
 
 // Implement Clone for AIService since it's not Clone in external crate
 impl Clone for AIService {
@@ -29,8 +30,7 @@ pub fn get_model_path() -> String {
 
 /// Get AI endpoint from environment or default
 pub fn get_ai_endpoint() -> String {
-    std::env::var("AI_ENDPOINT")
-        .unwrap_or_else(|_| "http://localhost:11434/v1/completions".to_string())
+    std::env::var("AI_ENDPOINT").unwrap_or_else(|_| "http://localhost:11434/v1/completions".to_string())
 }
 
 use std::process::{Command, Stdio};
@@ -72,10 +72,10 @@ pub async fn initialize_cache_cleanup_task(
     tokio::spawn({
         let shutdown_tx_signal = shutdown_tx.clone();
         async move {
-            let mut sigterm = signal::unix::signal(signal::unix::SignalKind::terminate())
-                .expect("Failed to install SIGTERM handler");
-            let mut sigint = signal::unix::signal(signal::unix::SignalKind::interrupt())
-                .expect("Failed to install SIGINT handler");
+            let mut sigterm =
+                signal::unix::signal(signal::unix::SignalKind::terminate()).expect("Failed to install SIGTERM handler");
+            let mut sigint =
+                signal::unix::signal(signal::unix::SignalKind::interrupt()).expect("Failed to install SIGINT handler");
 
             tokio::select! {
                 _ = sigterm.recv() => {
@@ -127,9 +127,7 @@ pub async fn initialize_cache_cleanup_task(
 }
 
 /// Initialize AI service on startup
-pub async fn initialize_ai_service_on_startup(
-    ai_service_state: &crate::AIServiceState,
-) -> IDEResult<()> {
+pub async fn initialize_ai_service_on_startup(ai_service_state: &crate::AIServiceState) -> IDEResult<()> {
     log::info!("Initializing AI service on startup");
 
     // Create default AI service configuration with environment-configurable endpoints
@@ -176,8 +174,17 @@ pub async fn get_or_create_ai_service(
             .join("rust-ai-ide");
 
         if let Err(e) = std::fs::create_dir_all(&config_dir) {
-            log::error!("Failed to create config directory '{}': {}. This may be due to permission issues or insufficient disk space.", config_dir.display(), e);
-            return Err(IDEError::Configuration(format!("Failed to create config directory '{}': {}. Check permissions and available disk space.", config_dir.display(), e)));
+            log::error!(
+                "Failed to create config directory '{}': {}. This may be due to permission issues or insufficient \
+                 disk space.",
+                config_dir.display(),
+                e
+            );
+            return Err(IDEError::Configuration(format!(
+                "Failed to create config directory '{}': {}. Check permissions and available disk space.",
+                config_dir.display(),
+                e
+            )));
         }
 
         let db_path = config_dir.join(LEARNING_DB_FILENAME);
@@ -204,8 +211,7 @@ pub fn read_file_with_limit(path: &str, max_size: u64) -> IDEResult<String> {
     crate::errors::validate_path_security(path)?;
     crate::errors::validate_file_size(path, max_size)?;
 
-    std::fs::read_to_string(path)
-        .map_err(|e| IDEError::FileOperation(format!("Failed to read file: {}", e)))
+    std::fs::read_to_string(path).map_err(|e| IDEError::FileOperation(format!("Failed to read file: {}", e)))
 }
 
 /// Path existence and type checks
@@ -284,10 +290,7 @@ pub fn create_backup<P: AsRef<Path>>(file_path: P) -> IDEResult<PathBuf> {
 }
 
 /// Recursively finds files with a specific extension in a directory
-pub fn find_files_by_extension<P: AsRef<Path>>(
-    dir: P,
-    extension: &str,
-) -> io::Result<Vec<PathBuf>> {
+pub fn find_files_by_extension<P: AsRef<Path>>(dir: P, extension: &str) -> io::Result<Vec<PathBuf>> {
     let mut result = Vec::new();
 
     for entry in fs::read_dir(dir)? {
@@ -327,11 +330,7 @@ pub fn calculate_directory_size<P: AsRef<Path>>(path: P) -> io::Result<u64> {
 }
 
 /// Executes a command with timeout
-pub async fn execute_with_timeout<F, T, E>(
-    future: F,
-    duration: Duration,
-    error: E,
-) -> Result<T, IDEError>
+pub async fn execute_with_timeout<F, T, E>(future: F, duration: Duration, error: E) -> Result<T, IDEError>
 where
     F: std::future::Future<Output = Result<T, E>>,
     E: std::fmt::Display,
@@ -348,21 +347,22 @@ where
 /// Sanitize Tauri command inputs with comprehensive security checks
 pub mod input_sanitization {
 
-    use crate::errors::{IDEError, IDEResult};
     use std::path::Path;
+
+    use crate::errors::{IDEError, IDEResult};
 
     /// Comprehensive input sanitizer for Tauri commands
     pub struct TauriInputSanitizer {
-        pub max_string_length: usize,
-        pub max_path_length: usize,
+        pub max_string_length:  usize,
+        pub max_path_length:    usize,
         pub allowed_extensions: Vec<String>,
     }
 
     impl Default for TauriInputSanitizer {
         fn default() -> Self {
             Self {
-                max_string_length: 50 * 1024, // 50KB
-                max_path_length: 4096,
+                max_string_length:  50 * 1024, // 50KB
+                max_path_length:    4096,
                 allowed_extensions: vec![
                     "rs".to_string(),
                     "toml".to_string(),
@@ -483,8 +483,7 @@ pub mod input_sanitization {
 
     /// Global sanitizer function for Tauri commands
     pub fn get_tauri_sanitizer() -> &'static TauriInputSanitizer {
-        static TAURI_SANITIZER: std::sync::OnceLock<TauriInputSanitizer> =
-            std::sync::OnceLock::new();
+        static TAURI_SANITIZER: std::sync::OnceLock<TauriInputSanitizer> = std::sync::OnceLock::new();
         TAURI_SANITIZER.get_or_init(TauriInputSanitizer::default)
     }
 

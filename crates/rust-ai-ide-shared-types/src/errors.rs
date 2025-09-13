@@ -126,10 +126,10 @@ impl Default for ErrorContext {
     fn default() -> Self {
         Self {
             operation: "unknown".to_string(),
-            source: None,
-            line: None,
-            column: None,
-            context: serde_json::Value::Null,
+            source:    None,
+            line:      None,
+            column:    None,
+            context:   serde_json::Value::Null,
         }
     }
 }
@@ -161,8 +161,9 @@ pub type PluginResult<T> = Result<T, PluginError>;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::io;
+
+    use super::*;
 
     #[test]
     fn test_error_creation() {
@@ -172,8 +173,7 @@ mod tests {
             "Type analysis failed: Test error"
         );
 
-        let io_error =
-            TypeGenerationError::from(io::Error::new(io::ErrorKind::NotFound, "File not found"));
+        let io_error = TypeGenerationError::from(io::Error::new(io::ErrorKind::NotFound, "File not found"));
         assert!(io_error.to_string().contains("File operation failed"));
     }
 
@@ -181,10 +181,10 @@ mod tests {
     fn test_error_context() {
         let context = ErrorContext {
             operation: "type_analysis".to_string(),
-            source: Some("types.rs".to_string()),
-            line: Some(42),
-            column: Some(10),
-            context: serde_json::json!({"additional": "info"}),
+            source:    Some("types.rs".to_string()),
+            line:      Some(42),
+            column:    Some(10),
+            context:   serde_json::json!({"additional": "info"}),
         };
 
         assert_eq!(

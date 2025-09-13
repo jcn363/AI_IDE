@@ -31,17 +31,17 @@
 //! let diff = parser.get_ast_diff(&initial_tree, &new_tree).await?;
 //! ```
 
-use rust_ai_ide_common::validation::{validate_file_exists, ValidatedFilePath};
-use rust_ai_ide_errors::{IdeError, IdeResult};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use tokio::sync::RwLock;
-use tree_sitter::Language;
 
+use rust_ai_ide_common::validation::{validate_file_exists, ValidatedFilePath};
+use rust_ai_ide_errors::{IdeError, IdeResult};
+use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
 // Re-export tree-sitter for convenience
 pub use tree_sitter;
+use tree_sitter::Language;
 
 /// Types of changes that can occur in the AST
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -60,45 +60,45 @@ pub enum ASTChangeType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ASTChange {
     /// Type of change
-    pub change_type: ASTChangeType,
+    pub change_type:    ASTChangeType,
     /// Start position of the change
     pub start_position: tree_sitter::Point,
     /// End position of the change
-    pub end_position: tree_sitter::Point,
+    pub end_position:   tree_sitter::Point,
     /// Old text content (for modifications/removals)
-    pub old_text: Option<String>,
+    pub old_text:       Option<String>,
     /// New text content (for additions/modifications)
-    pub new_text: Option<String>,
+    pub new_text:       Option<String>,
     /// Node type affected (function, variable, etc.)
-    pub node_type: String,
+    pub node_type:      String,
 }
 
 /// Summary of differences between two AST trees
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ASTDiff {
     /// List of individual changes
-    pub changes: Vec<ASTChange>,
+    pub changes:       Vec<ASTChange>,
     /// Total number of additions
-    pub additions: usize,
+    pub additions:     usize,
     /// Total number of removals
-    pub removals: usize,
+    pub removals:      usize,
     /// Total number of modifications
     pub modifications: usize,
     /// Total number of moves
-    pub moves: usize,
+    pub moves:         usize,
     /// Timestamp when diff was generated
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:     chrono::DateTime<chrono::Utc>,
 }
 
 impl Default for ASTDiff {
     fn default() -> Self {
         Self {
-            changes: Vec::new(),
-            additions: 0,
-            removals: 0,
+            changes:       Vec::new(),
+            additions:     0,
+            removals:      0,
             modifications: 0,
-            moves: 0,
-            timestamp: chrono::Utc::now(),
+            moves:         0,
+            timestamp:     chrono::Utc::now(),
         }
     }
 }
@@ -109,23 +109,23 @@ pub struct ParserConfig {
     /// Maximum size for incremental parses (in bytes)
     pub max_incremental_size: usize,
     /// Timeout for parsing operations (in milliseconds)
-    pub parse_timeout_ms: u64,
+    pub parse_timeout_ms:     u64,
     /// Enable AST caching
-    pub enable_caching: bool,
+    pub enable_caching:       bool,
     /// Cache TTL in seconds
-    pub cache_ttl_seconds: u64,
+    pub cache_ttl_seconds:    u64,
     /// Language-specific options
-    pub language_options: HashMap<String, String>,
+    pub language_options:     HashMap<String, String>,
 }
 
 impl Default for ParserConfig {
     fn default() -> Self {
         Self {
             max_incremental_size: 1024 * 1024, // 1MB
-            parse_timeout_ms: 5000,            // 5 seconds
-            enable_caching: true,
-            cache_ttl_seconds: 300, // 5 minutes
-            language_options: HashMap::new(),
+            parse_timeout_ms:     5000,        // 5 seconds
+            enable_caching:       true,
+            cache_ttl_seconds:    300, // 5 minutes
+            language_options:     HashMap::new(),
         }
     }
 }
@@ -134,19 +134,19 @@ impl Default for ParserConfig {
 #[derive(Debug, Clone)]
 pub struct ParseTree {
     /// The underlying tree-sitter tree
-    pub tree: tree_sitter::Tree,
+    pub tree:          tree_sitter::Tree,
     /// Root node of the tree
-    pub root: tree_sitter::Node,
+    pub root:          tree_sitter::Node,
     /// Source code content
-    pub source: String,
+    pub source:        String,
     /// Language used for parsing
-    pub language: Option<String>,
+    pub language:      Option<String>,
     /// File path if applicable
-    pub file_path: Option<PathBuf>,
+    pub file_path:     Option<PathBuf>,
     /// Last modification time
     pub last_modified: Option<std::time::SystemTime>,
     /// Parse configuration used
-    pub config: ParserConfig,
+    pub config:        ParserConfig,
 }
 
 impl ParseTree {
@@ -230,7 +230,7 @@ pub trait IncrementalParser: Send + Sync {
 /// Parser factory for creating language-specific parsers
 #[derive(Clone)]
 pub struct ParserFactory {
-    config: ParserConfig,
+    config:  ParserConfig,
     parsers: Arc<RwLock<HashMap<String, Box<dyn IncrementalParser>>>>,
 }
 
@@ -238,7 +238,7 @@ impl ParserFactory {
     /// Create a new parser factory
     pub fn new() -> Self {
         Self {
-            config: ParserConfig::default(),
+            config:  ParserConfig::default(),
             parsers: Arc::new(RwLock::new(HashMap::new())),
         }
     }
@@ -267,12 +267,11 @@ impl ParserFactory {
             "java" => Box::new(JavaParser::new(self.config.clone())),
             #[cfg(feature = "cpp")]
             "cpp" | "c++" => Box::new(CppParser::new(self.config.clone())),
-            _ => {
+            _ =>
                 return Err(IdeError::Validation {
-                    field: "language".to_string(),
+                    field:  "language".to_string(),
                     reason: format!("Unsupported language: {}", language),
-                })
-            }
+                }),
         };
 
         // Store in cache
@@ -339,9 +338,9 @@ where
 /// Base parser implementation with common functionality
 #[derive(Clone)]
 pub struct BaseParser {
-    config: ParserConfig,
-    parser: Arc<RwLock<tree_sitter::Parser>>,
-    language: Language,
+    config:        ParserConfig,
+    parser:        Arc<RwLock<tree_sitter::Parser>>,
+    language:      Language,
     language_name: String,
 }
 
@@ -380,7 +379,7 @@ impl BaseParser {
         let tree = parser
             .parse(new_source, None)
             .ok_or_else(|| IdeError::Parsing {
-                file: "input".to_string(),
+                file:   "input".to_string(),
                 reason: "Failed to parse source code".to_string(),
             })?;
 
@@ -424,11 +423,7 @@ impl BaseParser {
     }
 
     /// Compute AST diff between two trees
-    pub async fn get_ast_diff_base(
-        &self,
-        old_tree: &ParseTree,
-        new_tree: &ParseTree,
-    ) -> IdeResult<ASTDiff> {
+    pub async fn get_ast_diff_base(&self, old_tree: &ParseTree, new_tree: &ParseTree) -> IdeResult<ASTDiff> {
         let mut diff = ASTDiff::default();
 
         // Walk both trees and find differences
@@ -456,22 +451,34 @@ impl BaseParser {
         if new_count > old_count {
             diff.additions = new_count - old_count;
             diff.changes.push(ASTChange {
-                change_type: ASTChangeType::Added,
-                start_position: tree_sitter::Point { row: 0, column: 0 },
-                end_position: tree_sitter::Point { row: 0, column: 0 },
-                old_text: None,
-                new_text: None,
-                node_type: "unknown".to_string(),
+                change_type:    ASTChangeType::Added,
+                start_position: tree_sitter::Point {
+                    row:    0,
+                    column: 0,
+                },
+                end_position:   tree_sitter::Point {
+                    row:    0,
+                    column: 0,
+                },
+                old_text:       None,
+                new_text:       None,
+                node_type:      "unknown".to_string(),
             });
         } else if old_count > new_count {
             diff.removals = old_count - new_count;
             diff.changes.push(ASTChange {
-                change_type: ASTChangeType::Removed,
-                start_position: tree_sitter::Point { row: 0, column: 0 },
-                end_position: tree_sitter::Point { row: 0, column: 0 },
-                old_text: None,
-                new_text: None,
-                node_type: "unknown".to_string(),
+                change_type:    ASTChangeType::Removed,
+                start_position: tree_sitter::Point {
+                    row:    0,
+                    column: 0,
+                },
+                end_position:   tree_sitter::Point {
+                    row:    0,
+                    column: 0,
+                },
+                old_text:       None,
+                new_text:       None,
+                node_type:      "unknown".to_string(),
             });
         }
 
@@ -533,7 +540,7 @@ impl IncrementalParser for RustParser {
         let content = tokio::fs::read_to_string(validated_path.as_path())
             .await
             .map_err(|e| IdeError::Io {
-                path: file_path.to_path_buf(),
+                path:   file_path.to_path_buf(),
                 reason: format!("Failed to read file: {}", e),
             })?;
 
@@ -603,7 +610,7 @@ impl IncrementalParser for TypeScriptParser {
         let content = tokio::fs::read_to_string(validated_path.as_path())
             .await
             .map_err(|e| IdeError::Io {
-                path: file_path.to_path_buf(),
+                path:   file_path.to_path_buf(),
                 reason: format!("Failed to read file: {}", e),
             })?;
 
@@ -673,7 +680,7 @@ impl IncrementalParser for PythonParser {
         let content = tokio::fs::read_to_string(validated_path.as_path())
             .await
             .map_err(|e| IdeError::Io {
-                path: file_path.to_path_buf(),
+                path:   file_path.to_path_buf(),
                 reason: format!("Failed to read file: {}", e),
             })?;
 
@@ -743,7 +750,7 @@ impl IncrementalParser for JavaParser {
         let content = tokio::fs::read_to_string(validated_path.as_path())
             .await
             .map_err(|e| IdeError::Io {
-                path: file_path.to_path_buf(),
+                path:   file_path.to_path_buf(),
                 reason: format!("Failed to read file: {}", e),
             })?;
 
@@ -813,7 +820,7 @@ impl IncrementalParser for CppParser {
         let content = tokio::fs::read_to_string(validated_path.as_path())
             .await
             .map_err(|e| IdeError::Io {
-                path: file_path.to_path_buf(),
+                path:   file_path.to_path_buf(),
                 reason: format!("Failed to read file: {}", e),
             })?;
 
@@ -911,10 +918,7 @@ pub fn extract_nodes_by_type(tree: &ParseTree, node_type: &str) -> Vec<tree_sitt
 }
 
 /// Find the smallest node containing a position
-pub fn find_node_at_position(
-    tree: &ParseTree,
-    position: tree_sitter::Point,
-) -> Option<tree_sitter::Node> {
+pub fn find_node_at_position(tree: &ParseTree, position: tree_sitter::Point) -> Option<tree_sitter::Node> {
     let mut cursor = tree.tree.walk();
     cursor.goto_first_child_for_index(position.row as usize);
 
@@ -939,14 +943,13 @@ pub fn find_node_at_position(
 
 /// Validate file content before parsing
 pub async fn validate_file_for_parsing(file_path: &Path, max_size: usize) -> IdeResult<()> {
-    let validated_path =
-        ValidatedFilePath::new(&file_path.to_string_lossy(), "validate_file_for_parsing")?;
+    let validated_path = ValidatedFilePath::new(&file_path.to_string_lossy(), "validate_file_for_parsing")?;
 
     // Check file size
     if let Ok(metadata) = std::fs::metadata(&validated_path.as_path()) {
         if metadata.len() > max_size as u64 {
             return Err(IdeError::Validation {
-                field: "file_size".to_string(),
+                field:  "file_size".to_string(),
                 reason: format!(
                     "File size {} exceeds maximum allowed size {}",
                     metadata.len(),
@@ -960,7 +963,7 @@ pub async fn validate_file_for_parsing(file_path: &Path, max_size: usize) -> Ide
     match tokio::fs::read(&validated_path.as_path()).await {
         Ok(_) => Ok(()),
         Err(e) => Err(IdeError::Io {
-            path: file_path.to_path_buf(),
+            path:   file_path.to_path_buf(),
             reason: format!("Cannot read file: {}", e),
         }),
     }

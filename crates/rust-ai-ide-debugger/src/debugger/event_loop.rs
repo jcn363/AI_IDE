@@ -38,16 +38,15 @@
 //! # Ok(())
 //! # }
 
-use log::{debug, info, trace};
 use std::collections::VecDeque;
 use std::sync::Arc;
 use std::time::Duration;
+
+use log::{debug, info, trace};
 use tokio::sync::{mpsc, Mutex};
 use tokio::time as tokio_time;
 
-use crate::debugger::{
-    Debugger, DebuggerError, DebuggerEvent, DebuggerResult, DebuggerState, VariableInfo,
-};
+use crate::debugger::{Debugger, DebuggerError, DebuggerEvent, DebuggerResult, DebuggerState, VariableInfo};
 
 /// The main debugger event loop.
 ///
@@ -74,25 +73,21 @@ use crate::debugger::{
 /// let (event_sender, _) = mpsc::unbounded_channel();
 /// let debugger = Arc::new(Mutex::new(Debugger::new()));
 ///
-/// let event_loop = DebuggerEventLoop::new(
-///     debugger,
-///     command_receiver,
-///     event_sender
-/// );
+/// let event_loop = DebuggerEventLoop::new(debugger, command_receiver, event_sender);
 /// # Ok(())
 /// # }
 /// ```
 pub struct DebuggerEventLoop {
     /// The debugger instance
-    debugger: Arc<Mutex<Debugger>>,
+    debugger:         Arc<Mutex<Debugger>>,
     /// Channel for receiving commands
     command_receiver: mpsc::UnboundedReceiver<DebuggerCommand>,
     /// Channel for sending events to the UI
-    event_sender: mpsc::UnboundedSender<DebuggerEvent>,
+    event_sender:     mpsc::UnboundedSender<DebuggerEvent>,
     /// Queue of pending commands
-    command_queue: VecDeque<DebuggerCommand>,
+    command_queue:    VecDeque<DebuggerCommand>,
     /// Whether the event loop is currently running
-    running: bool,
+    running:          bool,
 }
 
 /// Commands that can be sent to the debugger event loop.
@@ -127,7 +122,7 @@ pub enum DebuggerCommand {
     /// Set a variable value
     SetVariable {
         /// The name of the variable to set
-        name: String,
+        name:  String,
         /// The value to assign to the variable
         value: String,
     },
@@ -176,11 +171,7 @@ impl DebuggerEventLoop {
     /// let (event_sender, _) = mpsc::unbounded_channel();
     /// let debugger = Arc::new(Mutex::new(Debugger::new()));
     ///
-    /// let event_loop = DebuggerEventLoop::new(
-    ///     debugger,
-    ///     command_receiver,
-    ///     event_sender
-    /// );
+    /// let event_loop = DebuggerEventLoop::new(debugger, command_receiver, event_sender);
     /// # Ok(())
     /// # }
     /// ```
@@ -224,11 +215,7 @@ impl DebuggerEventLoop {
     /// # let (event_sender, _) = mpsc::unbounded_channel();
     /// # let debugger = Arc::new(Mutex::new(Debugger::new()));
     /// #
-    /// let event_loop = DebuggerEventLoop::new(
-    ///     debugger,
-    ///     command_receiver,
-    ///     event_sender
-    /// );
+    /// let event_loop = DebuggerEventLoop::new(debugger, command_receiver, event_sender);
     ///
     /// // Run the event loop in a separate task
     /// tokio::spawn(async move {
@@ -509,12 +496,12 @@ impl DebuggerEventLoop {
                 let mut debugger = self.debugger.lock().await;
                 let id = debugger.expressions.get_next_id();
                 let var_info = VariableInfo {
-                    id: Some(id),
-                    name: expr.clone(),
-                    value: "".to_string(),
-                    type_name: "unknown".to_string(),
-                    in_scope: true,
-                    children: Vec::new(),
+                    id:         Some(id),
+                    name:       expr.clone(),
+                    value:      "".to_string(),
+                    type_name:  "unknown".to_string(),
+                    in_scope:   true,
+                    children:   Vec::new(),
                     expression: Some(expr.clone()),
                 };
                 let id = debugger.expressions.add_watch_expression(expr)?;

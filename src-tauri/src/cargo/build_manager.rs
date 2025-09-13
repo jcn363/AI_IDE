@@ -1,30 +1,30 @@
-use super::build_task::{BuildConfig, BuildHooks};
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+
 use rust_ai_ide_core::Result;
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-    process::Command,
-};
 use tokio::sync::mpsc;
+
+use super::build_task::{BuildConfig, BuildHooks};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildResult {
-    pub success: bool,
-    pub output: String,
+    pub success:  bool,
+    pub output:   String,
     pub duration: std::time::Duration,
 }
 
 #[derive(Debug, Clone)]
 pub struct BuildManager {
-    config: BuildConfig,
+    config:      BuildConfig,
     config_path: Option<PathBuf>,
 }
 
 impl BuildManager {
     pub fn new() -> Self {
         Self {
-            config: BuildConfig::default(),
+            config:      BuildConfig::default(),
             config_path: None,
         }
     }
@@ -59,8 +59,8 @@ impl BuildManager {
         if let Err(e) = self.config.hooks.execute_pre_build(project_path).await {
             tx.send(format!("Pre-build hook failed: {}\n", e)).await?;
             return Ok(BuildResult {
-                success: false,
-                output: format!("Pre-build hook failed: {}", e),
+                success:  false,
+                output:   format!("Pre-build hook failed: {}", e),
                 duration: start.elapsed(),
             });
         }
@@ -74,8 +74,8 @@ impl BuildManager {
         if let Err(e) = self.config.hooks.execute_post_build(project_path).await {
             tx.send(format!("Post-build hook failed: {}\n", e)).await?;
             return Ok(BuildResult {
-                success: false,
-                output: format!("Build completed but post-build hook failed: {}", e),
+                success:  false,
+                output:   format!("Build completed but post-build hook failed: {}", e),
                 duration: start.elapsed(),
             });
         }
@@ -134,8 +134,8 @@ impl BuildManager {
         }
 
         Ok(BuildResult {
-            success: output.status.success(),
-            output: format!("{}\n{}", output_str, error_str),
+            success:  output.status.success(),
+            output:   format!("{}\n{}", output_str, error_str),
             duration: start.elapsed(),
         })
     }

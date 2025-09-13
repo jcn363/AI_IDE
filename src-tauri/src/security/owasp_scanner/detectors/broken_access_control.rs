@@ -1,20 +1,21 @@
 //! A01:2021 - Broken Access Control Detector
 //! Implementation of OWASP Top 10 A01:2021 Broken Access Control detection
 
-use super::{
-    AttackComplexity, AttackVector, AvailabilityImpact, ConfidentialityImpact, DetectionResult,
-    ExploitabilityScore, ImpactScore, IntegrityImpact, OWASPCategory, OWASPDetector,
-    PrivilegesRequired, Scope, UserInteraction,
-};
-use crate::security::*;
-use async_trait::async_trait;
-use regex::Regex;
 use std::path::Path;
 
+use async_trait::async_trait;
+use regex::Regex;
+
+use super::{
+    AttackComplexity, AttackVector, AvailabilityImpact, ConfidentialityImpact, DetectionResult, ExploitabilityScore,
+    ImpactScore, IntegrityImpact, OWASPCategory, OWASPDetector, PrivilegesRequired, Scope, UserInteraction,
+};
+use crate::security::*;
+
 pub struct BrokenAccessControlDetector {
-    access_patterns: Vec<Regex>,
+    access_patterns:        Vec<Regex>,
     authorization_patterns: Vec<Regex>,
-    elevation_patterns: Vec<Regex>,
+    elevation_patterns:     Vec<Regex>,
 }
 
 impl BrokenAccessControlDetector {
@@ -32,14 +33,11 @@ impl BrokenAccessControlDetector {
 
     fn initialize_access_patterns() -> Vec<Regex> {
         vec![
-            Regex::new(
-                r"pub\s+(?:struct|fn)\s+(?:get_|set_|add_|remove_|modify_|admin_|super_)\w+",
-            )
-            .unwrap(), // Public sensitive methods
+            Regex::new(r"pub\s+(?:struct|fn)\s+(?:get_|set_|add_|remove_|modify_|admin_|super_)\w+").unwrap(), /* Public sensitive methods */
             Regex::new(r"allow_anonymous_access\s*:\s*true").unwrap(), // Anonymous access enabled
             Regex::new(r"require_authentication\s*:\s*false").unwrap(), // Missing authentication requirement
-            Regex::new(r"skip_authorization").unwrap(),                 // Skipped authorization
-            Regex::new(r"\.force_wrap_unchecked\(").unwrap(), // Forced unchecked operations
+            Regex::new(r"skip_authorization").unwrap(),                // Skipped authorization
+            Regex::new(r"\.force_wrap_unchecked\(").unwrap(),          // Forced unchecked operations
         ]
     }
 
@@ -47,18 +45,18 @@ impl BrokenAccessControlDetector {
         vec![
             Regex::new(r"role.*==.*admin|admin.*==.*role").unwrap(), // Hardcoded admin role checks
             Regex::new(r"\bREAD\b.*\|\s*\WRITE\b.*\|\s*\DELETE\b").unwrap(), // File permission checks
-            Regex::new(r"#\[derive.*Debug.*\]").unwrap(), // Debug trait that may leak sensitive data
-            Regex::new(r"unsafe\s*\{.*std::fs::.*\}").unwrap(), // Unsafe file operations
+            Regex::new(r"#\[derive.*Debug.*\]").unwrap(),            // Debug trait that may leak sensitive data
+            Regex::new(r"unsafe\s*\{.*std::fs::.*\}").unwrap(),      // Unsafe file operations
         ]
     }
 
     fn initialize_elevation_patterns() -> Vec<Regex> {
         vec![
             Regex::new(r"setuid.*setgid|geteuid.*getegid").unwrap(), // UID/GID manipulation
-            Regex::new(r"sudo|su\s+").unwrap(), // Privilege escalation commands
-            Regex::new(r"pkexec|gksudo").unwrap(), // Administrative privilege escalation
-            Regex::new(r"cap_set_proc|cap_get_proc").unwrap(), // Linux capabilities manipulation
-            Regex::new(r"schg|sappnd").unwrap(), // File system flags for immutability bypass
+            Regex::new(r"sudo|su\s+").unwrap(),                      // Privilege escalation commands
+            Regex::new(r"pkexec|gksudo").unwrap(),                   // Administrative privilege escalation
+            Regex::new(r"cap_set_proc|cap_get_proc").unwrap(),       // Linux capabilities manipulation
+            Regex::new(r"schg|sappnd").unwrap(),                     // File system flags for immutability bypass
         ]
     }
 }
@@ -114,31 +112,34 @@ impl BrokenAccessControlDetector {
             for mat in pattern.find_iter(code) {
                 let line_number = code[..mat.start()].lines().count();
                 let exploitability = ExploitabilityScore {
-                    attack_vector: AttackVector::Network,
-                    attack_complexity: AttackComplexity::Low,
+                    attack_vector:       AttackVector::Network,
+                    attack_complexity:   AttackComplexity::Low,
                     privileges_required: PrivilegesRequired::None,
-                    user_interaction: UserInteraction::None,
-                    scope: Scope::Unchanged,
+                    user_interaction:    UserInteraction::None,
+                    scope:               Scope::Unchanged,
                 };
                 let impact = ImpactScore {
                     confidentiality: ConfidentialityImpact::High,
-                    integrity: IntegrityImpact::High,
-                    availability: AvailabilityImpact::Low,
+                    integrity:       IntegrityImpact::High,
+                    availability:    AvailabilityImpact::Low,
                 };
 
                 results.push(DetectionResult {
                     security_issue: SecurityIssue {
-                        category: SecurityCategory::command_injection, // Should map to appropriate category
-                        severity: SecuritySeverity::High,
-                        title: "Missing Access Control".to_string(),
-                        description: "Detected potentially sensitive public access without proper access controls".to_string(),
-                        file_path: file_path.to_string(),
-                        line_number: Some(line_number),
-                        column: Some(mat.start()),
+                        category:     SecurityCategory::command_injection, // Should map to appropriate category
+                        severity:     SecuritySeverity::High,
+                        title:        "Missing Access Control".to_string(),
+                        description:  "Detected potentially sensitive public access without proper access controls"
+                            .to_string(),
+                        file_path:    file_path.to_string(),
+                        line_number:  Some(line_number),
+                        column:       Some(mat.start()),
                         code_snippet: Some(mat.as_str().to_string()),
-                        remediation: "Implement proper access control checks. Use role-based access control (RBAC) or attribute-based access control (ABAC).".to_string(),
-                        confidence: 0.8,
-                        cwe_id: Some(862), // CWE-862: Missing Authorization
+                        remediation:  "Implement proper access control checks. Use role-based access control (RBAC) \
+                                       or attribute-based access control (ABAC)."
+                            .to_string(),
+                        confidence:   0.8,
+                        cwe_id:       Some(862), // CWE-862: Missing Authorization
                     },
                     exploitability,
                     impact,
@@ -164,31 +165,34 @@ impl BrokenAccessControlDetector {
             for mat in pattern.find_iter(code) {
                 let line_number = code[..mat.start()].lines().count();
                 let exploitability = ExploitabilityScore {
-                    attack_vector: AttackVector::AdjacentNetwork,
-                    attack_complexity: AttackComplexity::Low,
+                    attack_vector:       AttackVector::AdjacentNetwork,
+                    attack_complexity:   AttackComplexity::Low,
                     privileges_required: PrivilegesRequired::Low,
-                    user_interaction: UserInteraction::None,
-                    scope: Scope::Unchanged,
+                    user_interaction:    UserInteraction::None,
+                    scope:               Scope::Unchanged,
                 };
                 let impact = ImpactScore {
                     confidentiality: ConfidentialityImpact::High,
-                    integrity: IntegrityImpact::High,
-                    availability: AvailabilityImpact::Low,
+                    integrity:       IntegrityImpact::High,
+                    availability:    AvailabilityImpact::Low,
                 };
 
                 results.push(DetectionResult {
                     security_issue: SecurityIssue {
-                        category: SecurityCategory::unsafe_code, // Should map to appropriate category
-                        severity: SecuritySeverity::High,
-                        title: "Insecure Authorization Logic".to_string(),
-                        description: "Detected potential authorization bypass or insecure authorization mechanism".to_string(),
-                        file_path: file_path.to_string(),
-                        line_number: Some(line_number),
-                        column: Some(mat.start()),
+                        category:     SecurityCategory::unsafe_code, // Should map to appropriate category
+                        severity:     SecuritySeverity::High,
+                        title:        "Insecure Authorization Logic".to_string(),
+                        description:  "Detected potential authorization bypass or insecure authorization mechanism"
+                            .to_string(),
+                        file_path:    file_path.to_string(),
+                        line_number:  Some(line_number),
+                        column:       Some(mat.start()),
                         code_snippet: Some(mat.as_str().to_string()),
-                        remediation: "Implement secure authorization mechanisms. Avoid hardcoded role checks and use proper access control systems.".to_string(),
-                        confidence: 0.75,
-                        cwe_id: Some(285), // CWE-285: Improper Authorization
+                        remediation:  "Implement secure authorization mechanisms. Avoid hardcoded role checks and use \
+                                       proper access control systems."
+                            .to_string(),
+                        confidence:   0.75,
+                        cwe_id:       Some(285), // CWE-285: Improper Authorization
                     },
                     exploitability,
                     impact,
@@ -214,31 +218,34 @@ impl BrokenAccessControlDetector {
             for mat in pattern.find_iter(code) {
                 let line_number = code[..mat.start()].lines().count();
                 let exploitability = ExploitabilityScore {
-                    attack_vector: AttackVector::Local,
-                    attack_complexity: AttackComplexity::High,
+                    attack_vector:       AttackVector::Local,
+                    attack_complexity:   AttackComplexity::High,
                     privileges_required: PrivilegesRequired::Low,
-                    user_interaction: UserInteraction::None,
-                    scope: Scope::Changed,
+                    user_interaction:    UserInteraction::None,
+                    scope:               Scope::Changed,
                 };
                 let impact = ImpactScore {
                     confidentiality: ConfidentialityImpact::High,
-                    integrity: IntegrityImpact::High,
-                    availability: AvailabilityImpact::High,
+                    integrity:       IntegrityImpact::High,
+                    availability:    AvailabilityImpact::High,
                 };
 
                 results.push(DetectionResult {
                     security_issue: SecurityIssue {
-                        category: SecurityCategory::command_injection, // Should map to appropriate category
-                        severity: SecuritySeverity::Critical,
-                        title: "Privilege Escalation Vulnerability".to_string(),
-                        description: "Detected potential privilege escalation or unauthorized privilege manipulation".to_string(),
-                        file_path: file_path.to_string(),
-                        line_number: Some(line_number),
-                        column: Some(mat.start()),
+                        category:     SecurityCategory::command_injection, // Should map to appropriate category
+                        severity:     SecuritySeverity::Critical,
+                        title:        "Privilege Escalation Vulnerability".to_string(),
+                        description:  "Detected potential privilege escalation or unauthorized privilege manipulation"
+                            .to_string(),
+                        file_path:    file_path.to_string(),
+                        line_number:  Some(line_number),
+                        column:       Some(mat.start()),
                         code_snippet: Some(mat.as_str().to_string()),
-                        remediation: "Remove privilege manipulation code or implement strict privilege validation. Use system-level privilege management.".to_string(),
-                        confidence: 0.95,
-                        cwe_id: Some(269), // CWE-269: Improper Privilege Management
+                        remediation:  "Remove privilege manipulation code or implement strict privilege validation. \
+                                       Use system-level privilege management."
+                            .to_string(),
+                        confidence:   0.95,
+                        cwe_id:       Some(269), // CWE-269: Improper Privilege Management
                     },
                     exploitability,
                     impact,

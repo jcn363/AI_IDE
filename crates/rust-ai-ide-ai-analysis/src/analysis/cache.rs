@@ -6,7 +6,7 @@ use std::sync::{Arc, RwLock};
 /// Analysis cache for storing computed results
 #[derive(Debug)]
 pub struct AnalysisCache {
-    inner: Arc<RwLock<HashMap<String, String>>>,
+    inner:    Arc<RwLock<HashMap<String, String>>>,
     max_size: usize,
 }
 

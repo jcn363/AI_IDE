@@ -3,24 +3,23 @@
 //! This module implements AES-256-GCM encryption for secure communication
 //! between the webview and extension, with proper key management and rotation.
 
-use aes_gcm::{
-    aead::{Aead, KeyInit},
-    Aes256Gcm, Key, Nonce,
-};
-use rand::{thread_rng, Rng};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use aes_gcm::aead::{Aead, KeyInit};
+use aes_gcm::{Aes256Gcm, Key, Nonce};
+use rand::{thread_rng, Rng};
+use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
 /// Encryption manager for handling cryptographic operations
 pub struct EncryptionManager {
     /// Current session key for encryption/decryption
-    session_key: Key<Aes256Gcm>,
+    session_key:      Key<Aes256Gcm>,
     /// Key rotation history for forward secrecy
-    key_history: HashMap<String, Key<Aes256Gcm>>,
+    key_history:      HashMap<String, Key<Aes256Gcm>>,
     /// Session key identifier
-    session_id: String,
+    session_id:       String,
     /// Key rotation counter
     rotation_counter: u64,
 }
@@ -28,21 +27,21 @@ pub struct EncryptionManager {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptedPayload {
     /// Base64-encoded encrypted data
-    pub ciphertext: String,
+    pub ciphertext:       String,
     /// Base64-encoded nonce
-    pub nonce: String,
+    pub nonce:            String,
     /// Session identifier
-    pub session_id: String,
+    pub session_id:       String,
     /// Key rotation counter
     pub rotation_counter: u64,
     /// HMAC for integrity verification
-    pub hmac: String,
+    pub hmac:             String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionKey {
     /// Base64-encoded session key
-    pub key: String,
+    pub key:        String,
     /// Session identifier
     pub session_id: String,
     /// Creation timestamp
@@ -111,10 +110,8 @@ impl EncryptionManager {
 
         // Verify HMAC for integrity
         let expected_hmac = self.generate_hmac(
-            &base64::decode(&payload.ciphertext)
-                .map_err(|e| format!("Invalid base64 ciphertext: {:?}", e))?,
-            &base64::decode(&payload.nonce)
-                .map_err(|e| format!("Invalid base64 nonce: {:?}", e))?,
+            &base64::decode(&payload.ciphertext).map_err(|e| format!("Invalid base64 ciphertext: {:?}", e))?,
+            &base64::decode(&payload.nonce).map_err(|e| format!("Invalid base64 nonce: {:?}", e))?,
         );
 
         if expected_hmac != payload.hmac {
@@ -123,12 +120,11 @@ impl EncryptionManager {
 
         let cipher = Aes256Gcm::new(&self.session_key);
 
-        let nonce_bytes =
-            base64::decode(&payload.nonce).map_err(|e| format!("Invalid base64 nonce: {:?}", e))?;
+        let nonce_bytes = base64::decode(&payload.nonce).map_err(|e| format!("Invalid base64 nonce: {:?}", e))?;
         let nonce = Nonce::from_slice(&nonce_bytes);
 
-        let ciphertext = base64::decode(&payload.ciphertext)
-            .map_err(|e| format!("Invalid base64 ciphertext: {:?}", e))?;
+        let ciphertext =
+            base64::decode(&payload.ciphertext).map_err(|e| format!("Invalid base64 ciphertext: {:?}", e))?;
 
         cipher
             .decrypt(nonce, ciphertext.as_ref())
@@ -170,7 +166,7 @@ impl EncryptionManager {
         let now = chrono::Utc::now().timestamp() as u64;
 
         SessionKey {
-            key: base64::encode(self.session_key.as_slice()),
+            key:        base64::encode(self.session_key.as_slice()),
             session_id: self.session_id.clone(),
             created_at: now,
             expires_at: now + 3600, // 1 hour expiration
@@ -179,26 +175,23 @@ impl EncryptionManager {
 
     /// Encrypt data for IPC communication
     pub fn encrypt_ipc_payload(&self, payload: &serde_json::Value) -> Result<String, String> {
-        let json_string = serde_json::to_string(payload)
-            .map_err(|e| format!("JSON serialization failed: {:?}", e))?;
+        let json_string = serde_json::to_string(payload).map_err(|e| format!("JSON serialization failed: {:?}", e))?;
 
         let encrypted = self.encrypt_payload(json_string.as_bytes())?;
-        serde_json::to_string(&encrypted)
-            .map_err(|e| format!("Encrypted payload serialization failed: {:?}", e))
+        serde_json::to_string(&encrypted).map_err(|e| format!("Encrypted payload serialization failed: {:?}", e))
     }
 
     /// Decrypt data from IPC communication
     pub fn decrypt_ipc_payload(&self, encrypted_json: &str) -> Result<serde_json::Value, String> {
-        let encrypted: EncryptedPayload = serde_json::from_str(encrypted_json)
-            .map_err(|e| format!("Invalid encrypted payload format: {:?}", e))?;
+        let encrypted: EncryptedPayload =
+            serde_json::from_str(encrypted_json).map_err(|e| format!("Invalid encrypted payload format: {:?}", e))?;
 
         let decrypted_bytes = self.decrypt_payload(&encrypted)?;
 
-        let json_string = String::from_utf8(decrypted_bytes)
-            .map_err(|e| format!("Invalid UTF-8 in decrypted data: {:?}", e))?;
+        let json_string =
+            String::from_utf8(decrypted_bytes).map_err(|e| format!("Invalid UTF-8 in decrypted data: {:?}", e))?;
 
-        serde_json::from_str(&json_string)
-            .map_err(|e| format!("JSON deserialization failed: {:?}", e))
+        serde_json::from_str(&json_string).map_err(|e| format!("JSON deserialization failed: {:?}", e))
     }
 
     /// Generate HMAC for integrity verification
@@ -206,8 +199,8 @@ impl EncryptionManager {
         use hmac::{Hmac, Mac, NewMac};
         use sha2::Sha256;
 
-        let mut mac = Hmac::<Sha256>::new_from_slice(self.session_key.as_slice())
-            .expect("HMAC can take key of any size");
+        let mut mac =
+            Hmac::<Sha256>::new_from_slice(self.session_key.as_slice()).expect("HMAC can take key of any size");
 
         mac.update(ciphertext);
         mac.update(nonce);

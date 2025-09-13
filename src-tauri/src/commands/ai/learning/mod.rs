@@ -6,10 +6,9 @@
 use std::sync::Arc;
 
 use anyhow::Result;
+use rust_ai_ide_lsp::{AIService, ErrorPattern, FixSuggestion, LearnedPattern, LearningSystemData};
 use serde::{Deserialize, Serialize};
 use tauri::State;
-
-use rust_ai_ide_lsp::{AIService, ErrorPattern, FixSuggestion, LearnedPattern, LearningSystemData};
 
 /// AI service state (re-exported for convenience)
 pub type AIServiceState = Arc<tokio::sync::Mutex<Option<AIService>>>;
@@ -18,10 +17,10 @@ pub type AIServiceState = Arc<tokio::sync::Mutex<Option<AIService>>>;
 #[derive(Debug, Deserialize)]
 pub struct LearningSystemRequest {
     pub error_pattern: ErrorPattern,
-    pub applied_fix: FixSuggestion,
-    pub success: bool,
+    pub applied_fix:   FixSuggestion,
+    pub success:       bool,
     pub user_feedback: Option<String>, // "positive", "negative", "neutral"
-    pub context: String,
+    pub context:       String,
 }
 
 /// Update learning preferences request
@@ -66,9 +65,7 @@ pub async fn get_learned_patterns(
 
 /// Update learning preferences
 #[tauri::command]
-pub async fn update_learning_preferences(
-    request: UpdateLearningPreferencesRequest,
-) -> Result<String, String> {
+pub async fn update_learning_preferences(request: UpdateLearningPreferencesRequest) -> Result<String, String> {
     log::info!("Updating learning preferences");
 
     execute_command!(
@@ -84,9 +81,7 @@ pub async fn update_learning_preferences(
 
 /// Get learning system statistics
 #[tauri::command]
-pub async fn get_learning_statistics(
-    ai_service: State<'_, AIServiceState>,
-) -> Result<LearningSystemData, String> {
+pub async fn get_learning_statistics(ai_service: State<'_, AIServiceState>) -> Result<LearningSystemData, String> {
     log::info!("Getting learning statistics");
 
     execute_command!(
@@ -98,11 +93,11 @@ pub async fn get_learning_statistics(
                 let stats = LearningSystemData {
                     learned_patterns: Vec::new(),
                     user_preferences: crate::commands::ai::services::LearningPreferences::default(),
-                    statistics: rust_ai_ide_lsp::learning::LearningStatistics {
-                        total_patterns_learned: 0,
+                    statistics:       rust_ai_ide_lsp::learning::LearningStatistics {
+                        total_patterns_learned:   0,
                         successful_fixes_applied: 0,
                         average_confidence_score: 0.0,
-                        last_updated: chrono::Utc::now(),
+                        last_updated:             chrono::Utc::now(),
                     },
                 };
                 Ok(stats)
@@ -119,17 +114,17 @@ pub use crate::commands::ai::services::{LearningPreferences, PrivacyMode};
 /// Learning statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LearningStatistics {
-    pub total_patterns_learned: usize,
+    pub total_patterns_learned:   usize,
     pub successful_fixes_applied: usize,
     pub average_confidence_score: f32,
-    pub last_updated: chrono::DateTime<chrono::Utc>,
+    pub last_updated:             chrono::DateTime<chrono::Utc>,
 }
 
 /// Learning pattern analysis request
 #[derive(Debug, Deserialize)]
 pub struct PatternAnalysisRequest {
     pub error_description: String,
-    pub code_context: String,
+    pub code_context:      String,
     pub existing_patterns: Vec<LearnedPattern>,
 }
 
@@ -172,37 +167,35 @@ pub async fn apply_learned_pattern(
 
         // Return the successful fix from the pattern
         Ok(rust_ai_ide_lsp::FixSuggestion {
-            id: format!("applied_{}", pattern_id),
-            title: pattern.successful_fix.title,
-            description: format!(
+            id:               format!("applied_{}", pattern_id),
+            title:            pattern.successful_fix.title,
+            description:      format!(
                 "Applied learned pattern (confidence: {:.2})",
                 pattern.confidence
             ),
-            fix_type: pattern.successful_fix.fix_type,
-            changes: pattern.successful_fix.changes,
-            confidence: pattern.confidence,
+            fix_type:         pattern.successful_fix.fix_type,
+            changes:          pattern.successful_fix.changes,
+            confidence:       pattern.confidence,
             estimated_effort: pattern.successful_fix.estimated_effort,
-            benefits: pattern.successful_fix.benefits,
-            risks: pattern.successful_fix.risks,
+            benefits:         pattern.successful_fix.benefits,
+            risks:            pattern.successful_fix.risks,
         })
     })
 }
 
 /// Get learning system health status
 #[tauri::command]
-pub async fn get_learning_system_health(
-    ai_service: State<'_, AIServiceState>,
-) -> Result<LearningSystemHealth, String> {
+pub async fn get_learning_system_health(ai_service: State<'_, AIServiceState>) -> Result<LearningSystemHealth, String> {
     log::info!("Getting learning system health");
 
     acquire_service_and_execute!(ai_service, AIServiceState, {
         // In a real implementation, this would check the learning system's health
         Ok(LearningSystemHealth {
-            is_healthy: true,
+            is_healthy:     true,
             storage_status: StorageHealth::Good,
-            pattern_count: 0,
-            last_sync: Some(chrono::Utc::now()),
-            errors: vec![],
+            pattern_count:  0,
+            last_sync:      Some(chrono::Utc::now()),
+            errors:         vec![],
         })
     })
 }
@@ -210,11 +203,11 @@ pub async fn get_learning_system_health(
 /// Learning system health status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LearningSystemHealth {
-    pub is_healthy: bool,
+    pub is_healthy:     bool,
     pub storage_status: StorageHealth,
-    pub pattern_count: usize,
-    pub last_sync: Option<chrono::DateTime<chrono::Utc>>,
-    pub errors: Vec<String>,
+    pub pattern_count:  usize,
+    pub last_sync:      Option<chrono::DateTime<chrono::Utc>>,
+    pub errors:         Vec<String>,
 }
 
 /// Storage health status
@@ -259,6 +252,4 @@ macro_rules! format_command_error {
     };
 }
 
-pub(crate) use acquire_service_and_execute;
-pub(crate) use execute_command;
-pub(crate) use format_command_error;
+pub(crate) use {acquire_service_and_execute, execute_command, format_command_error};

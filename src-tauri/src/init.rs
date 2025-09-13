@@ -2,21 +2,21 @@
 //!
 //! This module contains initialization functions and startup routines.
 
-use crate::state::AppState;
+use std::path::PathBuf;
+
 use dirs;
 use rust_ai_ide_lsp::{AIProvider, AIService};
-use std::path::PathBuf;
+
+use crate::state::AppState;
 
 /// Initialize AI service on application startup
 pub async fn initialize_ai_service_on_startup(ai_service_state: &AppState) -> Result<(), String> {
     log::info!("Initializing AI service on startup");
 
     // Create default AI service configuration with environment-configurable endpoints
-    let model_path =
-        std::env::var("RUST_AI_IDE_MODEL_PATH").unwrap_or_else(|_| "default".to_string());
+    let model_path = std::env::var("RUST_AI_IDE_MODEL_PATH").unwrap_or_else(|_| "default".to_string());
 
-    let endpoint = std::env::var("RUST_AI_IDE_AI_ENDPOINT")
-        .unwrap_or_else(|_| "https://api.example.com".to_string());
+    let endpoint = std::env::var("RUST_AI_IDE_AI_ENDPOINT").unwrap_or_else(|_| "https://api.example.com".to_string());
 
     let default_provider = AIProvider::Local {
         model_path,
@@ -33,12 +33,15 @@ pub async fn initialize_ai_service_on_startup(ai_service_state: &AppState) -> Re
     // Handle directory creation with detailed error logging
     if let Err(e) = std::fs::create_dir_all(&config_dir) {
         log::error!(
-            "Failed to create config directory '{}': {}. This may be due to permission issues or insufficient disk space.",
-            config_dir.display(), e
+            "Failed to create config directory '{}': {}. This may be due to permission issues or insufficient disk \
+             space.",
+            config_dir.display(),
+            e
         );
         return Err(format!(
             "Failed to create config directory '{}': {}. Check permissions and available disk space.",
-            config_dir.display(), e
+            config_dir.display(),
+            e
         ));
     }
 
@@ -122,7 +125,9 @@ pub async fn initialize_lsp_service(state: &AppState) -> Result<(), String> {
         .map_err(|e| format!("Failed to check rust-analyzer: {}", e))?;
 
     if !output.status.success() {
-        return Err("rust-analyzer is not installed. Please install it with 'rustup component add rust-analyzer'".to_string());
+        return Err(
+            "rust-analyzer is not installed. Please install it with 'rustup component add rust-analyzer'".to_string(),
+        );
     }
 
     log::info!("LSP service initialized successfully");

@@ -1,9 +1,10 @@
 //! Conflict analyzer for dependency version conflicts and resolution suggestions
 
+use std::collections::{HashMap, HashSet};
+
 use rayon::prelude::*;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
 
 use crate::error::*;
 use crate::graph::*;
@@ -11,10 +12,10 @@ use crate::resolver::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VersionConflict {
-    pub package_name: String,
-    pub constraints: Vec<ConstraintInfo>,
+    pub package_name:         String,
+    pub constraints:          Vec<ConstraintInfo>,
     pub suggested_resolution: Option<String>,
-    pub conflict_level: ConflictLevel,
+    pub conflict_level:       ConflictLevel,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -27,9 +28,9 @@ pub enum ConflictLevel {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConstraintInfo {
-    pub source_package: String,
+    pub source_package:      String,
     pub version_requirement: String,
-    pub depth: usize,
+    pub depth:               usize,
 }
 
 impl ConstraintInfo {
@@ -65,13 +66,14 @@ impl ConflictAnalyzer {
                 let dependencies = graph.get_dependencies(&node.name)?;
                 for (dep_name, dep_edge) in dependencies {
                     if let Some(version_req) = &dep_edge.version_constraint {
-                        constraint_map.entry(dep_name.clone()).or_default().push(
-                            ConstraintInfo::new(
+                        constraint_map
+                            .entry(dep_name.clone())
+                            .or_default()
+                            .push(ConstraintInfo::new(
                                 node.name.clone(),
                                 version_req.clone(),
                                 dep_edge.req_depth,
-                            ),
-                        );
+                            ));
                     }
                 }
             }
@@ -110,15 +112,14 @@ impl ConflictAnalyzer {
         }
 
         let mut conflict = VersionConflict {
-            package_name: package_name.to_string(),
-            constraints: constraints.to_vec(),
+            package_name:         package_name.to_string(),
+            constraints:          constraints.to_vec(),
             suggested_resolution: None,
-            conflict_level: ConflictLevel::None,
+            conflict_level:       ConflictLevel::None,
         };
 
         if unique_reqs.len() > 1 {
-            conflict.conflict_level =
-                self.determine_conflict_level(constraints.len(), unique_reqs.len());
+            conflict.conflict_level = self.determine_conflict_level(constraints.len(), unique_reqs.len());
             conflict.suggested_resolution = Some(self.suggest_resolution(&constraints).await?);
         }
 
@@ -137,11 +138,7 @@ impl ConflictAnalyzer {
         ])
     }
 
-    fn determine_conflict_level(
-        &self,
-        constraint_count: usize,
-        unique_reqs: usize,
-    ) -> ConflictLevel {
+    fn determine_conflict_level(&self, constraint_count: usize, unique_reqs: usize) -> ConflictLevel {
         match constraint_count {
             2..=3 => ConflictLevel::Warning,
             4..=6 => ConflictLevel::Error,
@@ -182,7 +179,7 @@ impl ConflictAnalyzer {
             .map(|(version, _)| version)
             .ok_or_else(|| DependencyError::ResolutionError {
                 package: "unknown".to_string(),
-                reason: "No compatible version found".to_string(),
+                reason:  "No compatible version found".to_string(),
             })
     }
 
@@ -212,10 +209,10 @@ impl ConflictAnalyzer {
         }
 
         Ok(ConflictStats {
-            total_conflicts: conflicts.len(),
-            warning_conflicts: warning_count,
-            error_conflicts: error_count,
-            critical_conflicts: critical_count,
+            total_conflicts:         conflicts.len(),
+            warning_conflicts:       warning_count,
+            error_conflicts:         error_count,
+            critical_conflicts:      critical_count,
             total_affected_packages: affected_packages.len(),
         })
     }
@@ -223,9 +220,9 @@ impl ConflictAnalyzer {
     /// Check if there are any unresolvable conflicts
     pub async fn has_unresolvable_conflicts(&self) -> DependencyResult<bool> {
         let conflicts = self.analyze_conflicts().await?;
-        let has_unresolvable = conflicts.iter().any(|c| {
-            c.conflict_level == ConflictLevel::Critical && c.suggested_resolution.is_none()
-        });
+        let has_unresolvable = conflicts
+            .iter()
+            .any(|c| c.conflict_level == ConflictLevel::Critical && c.suggested_resolution.is_none());
 
         Ok(has_unresolvable)
     }
@@ -233,10 +230,10 @@ impl ConflictAnalyzer {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictStats {
-    pub total_conflicts: usize,
-    pub warning_conflicts: usize,
-    pub error_conflicts: usize,
-    pub critical_conflicts: usize,
+    pub total_conflicts:         usize,
+    pub warning_conflicts:       usize,
+    pub error_conflicts:         usize,
+    pub critical_conflicts:      usize,
     pub total_affected_packages: usize,
 }
 
@@ -253,17 +250,17 @@ impl ConflictStats {
 /// Resolution suggestions and conflict resolution plan
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResolutionPlan {
-    pub conflicts: Vec<VersionConflict>,
-    pub resolutions: HashMap<String, String>,
+    pub conflicts:            Vec<VersionConflict>,
+    pub resolutions:          HashMap<String, String>,
     pub unresolved_conflicts: Vec<String>,
-    pub impact_analysis: ImpactAnalysis,
+    pub impact_analysis:      ImpactAnalysis,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImpactAnalysis {
-    pub packages_to_update: Vec<String>,
+    pub packages_to_update:         Vec<String>,
     pub potential_breaking_changes: usize,
-    pub compatibility_risk: RiskLevel,
+    pub compatibility_risk:         RiskLevel,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -306,9 +303,9 @@ impl ComprehensiveConflictAnalyzer {
         }
 
         let impact_analysis = ImpactAnalysis {
-            packages_to_update: packages_to_update.into_iter().collect(),
+            packages_to_update:         packages_to_update.into_iter().collect(),
             potential_breaking_changes: self.estimate_breaking_changes(&resolutions).await?,
-            compatibility_risk: self.assess_compatibility_risk(&conflicts),
+            compatibility_risk:         self.assess_compatibility_risk(&conflicts),
         };
 
         Ok(ResolutionPlan {
@@ -319,10 +316,7 @@ impl ComprehensiveConflictAnalyzer {
         })
     }
 
-    async fn estimate_breaking_changes(
-        &self,
-        resolutions: &HashMap<String, String>,
-    ) -> DependencyResult<usize> {
+    async fn estimate_breaking_changes(&self, resolutions: &HashMap<String, String>) -> DependencyResult<usize> {
         // Rough estimation based on major version changes
         let mut breaking_changes = 0;
 

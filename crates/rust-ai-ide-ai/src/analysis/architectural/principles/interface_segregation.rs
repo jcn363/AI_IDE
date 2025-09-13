@@ -1,5 +1,7 @@
+use syn::visit::Visit;
+use syn::ItemTrait;
+
 use super::super::types::CodeLocation;
-use syn::{visit::Visit, ItemTrait};
 
 /// Analyzer for the Interface Segregation Principle
 ///
@@ -7,30 +9,30 @@ use syn::{visit::Visit, ItemTrait};
 /// parameters, which might indicate that the trait is doing too much.
 pub struct InterfaceSegregationAnalyzer {
     /// Maximum number of methods allowed in a trait before it's considered a violation
-    max_methods: usize,
+    max_methods:    usize,
     /// Maximum number of parameters allowed in a method before it's considered a violation
     max_parameters: usize,
     /// List of violations found during analysis
-    violations: Vec<InterfaceSegregationViolation>,
+    violations:     Vec<InterfaceSegregationViolation>,
 }
 
 /// Represents a violation of the Interface Segregation Principle
 #[derive(Debug)]
 pub struct InterfaceSegregationViolation {
     /// Name of the trait with too many methods
-    pub trait_name: String,
+    pub trait_name:   String,
     /// Number of methods in the trait
     pub method_count: usize,
     /// Location of the trait definition
-    pub location: CodeLocation,
+    pub location:     CodeLocation,
 }
 
 impl Default for InterfaceSegregationAnalyzer {
     fn default() -> Self {
         Self {
-            max_methods: 10,
+            max_methods:    10,
             max_parameters: 5,
-            violations: Vec::new(),
+            violations:     Vec::new(),
         }
     }
 }
@@ -67,8 +69,8 @@ impl InterfaceSegregationAnalyzer {
                 method_count,
                 location: CodeLocation {
                     file_path: String::new(), // Will be filled in by the caller
-                    line: item_trait.span().start().line as u32,
-                    column: item_trait.span().start().column as u32,
+                    line:      item_trait.span().start().line as u32,
+                    column:    item_trait.span().start().column as u32,
                 },
             };
             self.violations.push(violation);
@@ -80,12 +82,12 @@ impl InterfaceSegregationAnalyzer {
                 let param_count = method.sig.inputs.len();
                 if param_count > self.max_parameters {
                     let violation = InterfaceSegregationViolation {
-                        trait_name: format!("{}::{}(...)", item_trait.ident, method.sig.ident),
+                        trait_name:   format!("{}::{}(...)", item_trait.ident, method.sig.ident),
                         method_count: param_count,
-                        location: CodeLocation {
+                        location:     CodeLocation {
                             file_path: String::new(), // Will be filled in by the caller
-                            line: method.span().start().line as u32,
-                            column: method.span().start().column as u32,
+                            line:      method.span().start().line as u32,
+                            column:    method.span().start().column as u32,
                         },
                     };
                     self.violations.push(violation);
@@ -102,8 +104,9 @@ impl InterfaceSegregationAnalyzer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn test_interface_segregation() {

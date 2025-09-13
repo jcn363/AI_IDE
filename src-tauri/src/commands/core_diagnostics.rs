@@ -3,14 +3,16 @@
 //! This module contains the primary diagnostic functions including
 //! compilation analysis, error explanation, and documentation lookup.
 
+use std::collections::HashMap;
+use std::time::{Duration, SystemTime};
+
+use anyhow::{anyhow, Result};
+use tauri::State;
+use tokio::time::timeout;
+
 use crate::commands::documentation::helpers::*;
 use crate::commands::utils::*;
 use crate::modules::shared::diagnostics::*;
-use anyhow::{anyhow, Result};
-use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
-use tauri::State;
-use tokio::time::timeout;
 
 /// Get compiler diagnostics for a workspace
 #[tauri::command]
@@ -73,9 +75,7 @@ pub async fn get_compiler_diagnostics(
     for line in diagnostics_result.lines() {
         if let Ok(json) = serde_json::from_str::<serde_json::Value>(line) {
             if let Some(message) = json.get("message") {
-                if let Some(diagnostic) =
-                    parse_compiler_diagnostic(message, &request.workspace_path).await
-                {
+                if let Some(diagnostic) = parse_compiler_diagnostic(message, &request.workspace_path).await {
                     // Count diagnostic levels
                     match diagnostic.level.as_str() {
                         "error" => error_count += 1,
@@ -113,13 +113,13 @@ pub async fn get_compiler_diagnostics(
     }
 
     let metadata = DiagnosticMetadata {
-        workspace_path: request.workspace_path.clone(),
-        timestamp: chrono::Utc::now(),
+        workspace_path:      request.workspace_path.clone(),
+        timestamp:           chrono::Utc::now(),
         compilation_time_ms: compilation_time,
-        total_errors: error_count,
-        total_warnings: warning_count,
-        total_notes: note_count,
-        cached: false,
+        total_errors:        error_count,
+        total_warnings:      warning_count,
+        total_notes:         note_count,
+        cached:              false,
     };
 
     let result = CompilerDiagnosticsResult {
@@ -161,9 +161,7 @@ pub async fn explain_error_code(
 
 /// Lookup documentation for errors or keywords
 #[tauri::command]
-pub async fn lookup_documentation(
-    request: DocumentationLookupRequest,
-) -> Result<Vec<DocumentationLink>, String> {
+pub async fn lookup_documentation(request: DocumentationLookupRequest) -> Result<Vec<DocumentationLink>, String> {
     log::info!("Looking up documentation for: {:?}", request);
 
     let mut links = Vec::new();

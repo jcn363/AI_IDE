@@ -1,33 +1,33 @@
-/*!!
+//! !
+//!
+//! Integration tests for rust-ai-ide-common using shared-test-utils
+//!
+//! This module demonstrates shared functionality testing patterns using the comprehensive
+//! test utilities from shared-test-utils, including:
+//!
+//! - Common utility functions and helpers
+//! - Configuration management testing
+//! - Performance and caching utilities
+//! - Concurrent operations and synchronization
+//! - Serialization and data management
+//! - Error handling and validation patterns
+//! - Workspace-wide utility testing
 
-Integration tests for rust-ai-ide-common using shared-test-utils
-
-This module demonstrates shared functionality testing patterns using the comprehensive
-test utilities from shared-test-utils, including:
-
-- Common utility functions and helpers
-- Configuration management testing
-- Performance and caching utilities
-- Concurrent operations and synchronization
-- Serialization and data management
-- Error handling and validation patterns
-- Workspace-wide utility testing
-
-*/
+use std::collections::HashMap;
+use std::path::Path;
+use std::time::Duration;
 
 use shared_test_utils::async_utils::AsyncContext;
 use shared_test_utils::error::TestResult;
 use shared_test_utils::fixtures::FixturePresets;
 use shared_test_utils::*;
-use std::collections::HashMap;
-use std::path::Path;
-use std::time::Duration;
 
 // Test that demonstrates common functionality integration
 #[cfg(test)]
 mod common_integration_tests {
-    use super::*;
     use std::fs;
+
+    use super::*;
 
     /// Integration test demonstrating common workspace setup patterns
     #[test]
@@ -355,16 +355,11 @@ mod common_integration_tests {
         ];
         let component_names = vec!["Caching", "Logging", "Metrics"];
 
-        assert!(
-            ValidationUtils::validate_test_setup(&common_components, &component_names).is_err()
-        );
+        assert!(ValidationUtils::validate_test_setup(&common_components, &component_names).is_err());
 
         // Valid common component setup
         let valid_common_components = vec![Some("caching"), Some("logging"), Some("metrics")];
-        assert!(
-            ValidationUtils::validate_test_setup(&valid_common_components, &component_names)
-                .is_ok()
-        );
+        assert!(ValidationUtils::validate_test_setup(&valid_common_components, &component_names).is_ok());
 
         println!("✅ Common error handling and validation test completed");
     }
@@ -480,10 +475,7 @@ mod common_integration_tests {
         println!("🔧 Testing concurrent common operations with resource management...");
 
         // Create a mechanism for testing multiple common operations concurrently
-        async fn simulate_common_operation(
-            operation_type: &str,
-            resource_id: usize,
-        ) -> Result<String, TestError> {
+        async fn simulate_common_operation(operation_type: &str, resource_id: usize) -> Result<String, TestError> {
             // Simulate varying execution times for different common operations
             let base_time = match operation_type {
                 "cache" => 30,
@@ -704,19 +696,16 @@ mod common_integration_tests {
         assert_test_file_exists!(workspace, Path::new("locks/resource_locks.json"));
 
         // Verify resource management configuration
-        let allocation_config =
-            fs::read_to_string(workspace.path().join("resources/allocation_config.json")).unwrap();
+        let allocation_config = fs::read_to_string(workspace.path().join("resources/allocation_config.json")).unwrap();
         assert!(allocation_config.contains("memory_pools"));
         assert!(allocation_config.contains("cache_pool"));
         assert!(allocation_config.contains("log_pool"));
 
-        let flow_control_state =
-            fs::read_to_string(workspace.path().join("state/flow_control.json")).unwrap();
+        let flow_control_state = fs::read_to_string(workspace.path().join("state/flow_control.json")).unwrap();
         assert!(flow_control_state.contains("flow_control"));
         assert!(flow_control_state.contains("congestion_window"));
 
-        let lock_state =
-            fs::read_to_string(workspace.path().join("locks/resource_locks.json")).unwrap();
+        let lock_state = fs::read_to_string(workspace.path().join("locks/resource_locks.json")).unwrap();
         assert!(lock_state.contains("active_locks"));
         assert!(lock_state.contains("worker_1"));
 

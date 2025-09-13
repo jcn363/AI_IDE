@@ -1,18 +1,20 @@
 //! Template management and execution
 
-use crate::ast::{Parameter, ParameterType, Template};
-use crate::error::DslResult;
-use crate::types::*;
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use rust_ai_ide_common::ProgrammingLanguage;
 use serde_json;
-use std::collections::HashMap;
+
+use crate::ast::{Parameter, ParameterType, Template};
+use crate::error::DslResult;
+use crate::types::*;
 
 /// Executable template implementation
 #[derive(Debug)]
 pub struct ExecutableTemplate {
     /// The parsed template AST
-    ast: Template,
+    ast:     Template,
     /// Template execution context
     context: HashMap<String, serde_json::Value>,
 }
@@ -52,10 +54,7 @@ impl DslTemplate for ExecutableTemplate {
         &self.ast.parameters
     }
 
-    async fn validate_parameters(
-        &self,
-        params: &HashMap<String, serde_json::Value>,
-    ) -> DslResult<()> {
+    async fn validate_parameters(&self, params: &HashMap<String, serde_json::Value>) -> DslResult<()> {
         // Check required parameters
         for param in &self.ast.parameters {
             if param.required {
@@ -110,8 +109,7 @@ impl ExecutableTemplate {
         for part in &self.ast.generate.content.parts {
             match part {
                 crate::ast::ContentPart::Literal(text) => {
-                    generated_code
-                        .push_str(&self.interpolate_template(text, params, context).await?);
+                    generated_code.push_str(&self.interpolate_template(text, params, context).await?);
                 }
                 crate::ast::ContentPart::Placeholder(_) => {
                     // Placeholder interpolation will be handled here
@@ -203,13 +201,12 @@ fn validate_parameter_type(value: &serde_json::Value, expected_type: &ParameterT
         ParameterType::Integer => value.is_i64() || value.is_u64(),
         ParameterType::Boolean => value.is_boolean(),
         ParameterType::Float => value.is_f64() || value.is_number(),
-        ParameterType::Array(element_type) => {
+        ParameterType::Array(element_type) =>
             if let serde_json::Value::Array(arr) = value {
                 arr.iter().all(|v| validate_parameter_type(v, element_type))
             } else {
                 false
-            }
-        }
+            },
         ParameterType::Custom(_) => true, // Accept any type for custom types
         ParameterType::ProgrammingLanguage => value.is_string(),
         ParameterType::Identifier(_) => value.is_string(),
@@ -269,11 +266,11 @@ mod tests {
     async fn test_template_validation() {
         let mut ast = Template::new("TestTemplate");
         ast.parameters.push(Parameter {
-            name: "required_param".to_string(),
-            param_type: ParameterType::String,
-            required: true,
+            name:          "required_param".to_string(),
+            param_type:    ParameterType::String,
+            required:      true,
             default_value: None,
-            description: None,
+            description:   None,
         });
 
         let template = ExecutableTemplate::new(ast);

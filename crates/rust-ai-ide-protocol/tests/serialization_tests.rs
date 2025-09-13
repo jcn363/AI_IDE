@@ -12,8 +12,8 @@ mod tests {
     #[test]
     fn test_file_info_serialization() {
         let file_info = FileInfo {
-            name: "test.rs".to_string(),
-            path: "/tmp/test.rs".to_string(),
+            name:         "test.rs".to_string(),
+            path:         "/tmp/test.rs".to_string(),
             is_directory: false,
         };
 
@@ -28,8 +28,8 @@ mod tests {
     #[test]
     fn test_list_files_request_serialization() {
         let request = ListFilesRequest {
-            path: "/tmp".to_string(),
-            recursive: Some(true),
+            path:           "/tmp".to_string(),
+            recursive:      Some(true),
             include_hidden: Some(false),
         };
 
@@ -45,7 +45,7 @@ mod tests {
     fn test_git_request_serialization() {
         let status_request = GitStatusRequest {
             directory: "/tmp/repo".to_string(),
-            quiet: Some(true),
+            quiet:     Some(true),
         };
 
         let serialized = serde_json::to_string(&status_request).unwrap();
@@ -58,9 +58,9 @@ mod tests {
     #[test]
     fn test_git_commit_request_serialization() {
         let commit_request = GitCommitRequest {
-            directory: "/tmp/repo".to_string(),
-            message: "Fix critical bug".to_string(),
-            author_name: Some("John Doe".to_string()),
+            directory:    "/tmp/repo".to_string(),
+            message:      "Fix critical bug".to_string(),
+            author_name:  Some("John Doe".to_string()),
             author_email: Some("john@example.com".to_string()),
         };
 
@@ -148,8 +148,8 @@ mod tests {
     fn test_protocol_versioning() {
         // Test that we can detect protocol version information
         let file_info = FileInfo {
-            name: "version_test.rs".to_string(),
-            path: "/test/version.rs".to_string(),
+            name:         "version_test.rs".to_string(),
+            path:         "/test/version.rs".to_string(),
             is_directory: false,
         };
 

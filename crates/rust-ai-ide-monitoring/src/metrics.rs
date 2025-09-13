@@ -1,7 +1,8 @@
 //! Quality metrics and scoring system
 
-use crate::errors::Result;
 use serde::{Deserialize, Serialize};
+
+use crate::errors::Result;
 
 /// Overall quality metrics for analysis results
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -80,16 +81,16 @@ pub struct QualityScore {
 impl Default for QualityScore {
     fn default() -> Self {
         Self {
-            overall: 0.0,
+            overall:         0.0,
             static_analysis: 0.0,
-            performance: 0.0,
-            security: 0.0,
-            code_quality: 0.0,
-            dependencies: 0.0,
-            cross_platform: 0.0,
-            calculated_at: chrono::Utc::now(),
+            performance:     0.0,
+            security:        0.0,
+            code_quality:    0.0,
+            dependencies:    0.0,
+            cross_platform:  0.0,
+            calculated_at:   chrono::Utc::now(),
             trend_direction: crate::types::TrendDirection::Unknown,
-            change_percent: None,
+            change_percent:  None,
         }
     }
 }
@@ -298,8 +299,7 @@ impl MetricsAggregator {
             + (self.metrics.low_issues * 25)
             + (self.metrics.info_issues * 10);
 
-        self.metrics.average_severity =
-            total_severity_score as f64 / self.metrics.total_issues as f64;
+        self.metrics.average_severity = total_severity_score as f64 / self.metrics.total_issues as f64;
     }
 
     /// Get the accumulated metrics

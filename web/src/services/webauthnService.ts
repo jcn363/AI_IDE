@@ -66,7 +66,7 @@ class WebAuthnService {
     try {
       console.log('Starting WebAuthn registration for user:', request.user_name);
       const result = await invoke<WebAuthnChallengeResponse>('webauthn_start_registration', {
-        input: request
+        input: request,
       });
       console.log('WebAuthn registration challenge created');
       return result;
@@ -84,7 +84,7 @@ class WebAuthnService {
     try {
       console.log('Finishing WebAuthn registration for challenge:', request.challenge_id);
       const result = await invoke<WebAuthnResult>('webauthn_finish_registration', {
-        input: request
+        input: request,
       });
       console.log('WebAuthn registration completed successfully');
       return result;
@@ -98,11 +98,13 @@ class WebAuthnService {
    * Start WebAuthn authentication ceremony
    * Initiates the process of authenticating with an existing WebAuthn credential
    */
-  async startAuthentication(request: StartAuthenticationRequest): Promise<WebAuthnChallengeResponse> {
+  async startAuthentication(
+    request: StartAuthenticationRequest
+  ): Promise<WebAuthnChallengeResponse> {
     try {
       console.log('Starting WebAuthn authentication for user:', request.user_id);
       const result = await invoke<WebAuthnChallengeResponse>('webauthn_start_authentication', {
-        input: request
+        input: request,
       });
       console.log('WebAuthn authentication challenge created');
       return result;
@@ -120,7 +122,7 @@ class WebAuthnService {
     try {
       console.log('Finishing WebAuthn authentication for challenge:', request.challenge_id);
       const result = await invoke<WebAuthnResult>('webauthn_finish_authentication', {
-        input: request
+        input: request,
       });
       console.log('WebAuthn authentication completed successfully');
       return result;
@@ -154,7 +156,7 @@ class WebAuthnService {
     try {
       console.log('Deleting WebAuthn credential:', request.credential_id);
       const result = await invoke<WebAuthnResult>('webauthn_delete_credential', {
-        input: request
+        input: request,
       });
       console.log('WebAuthn credential deleted successfully');
       return result;
@@ -187,7 +189,10 @@ class WebAuthnService {
   async cleanupExpiredChallenges(): Promise<{ cleaned_challenges: number; status: string }> {
     try {
       console.log('Cleaning up expired WebAuthn challenges');
-      const result = await invoke<{ cleaned_challenges: number; status: string }>('webauthn_cleanup_expired_challenges', {});
+      const result = await invoke<{ cleaned_challenges: number; status: string }>(
+        'webauthn_cleanup_expired_challenges',
+        {}
+      );
       console.log(`Cleaned up ${result.cleaned_challenges} expired challenges`);
       return result;
     } catch (error) {
@@ -224,7 +229,8 @@ class WebAuthnService {
     try {
       // Check for platform authenticator (Windows Hello, Touch ID, etc.)
       if (typeof window !== 'undefined' && window.PublicKeyCredential) {
-        const platformAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        const platformAvailable =
+          await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         if (platformAvailable) {
           authenticators.push('platform'); // Windows Hello, Touch ID, Face ID
         }
@@ -274,11 +280,7 @@ export async function webauthnApiCall<T>(
 /**
  * Create a standardized WebAuthn result
  */
-export function createWebAuthnResult(
-  success: boolean,
-  data?: any,
-  error?: string
-): WebAuthnResult {
+export function createWebAuthnResult(success: boolean, data?: any, error?: string): WebAuthnResult {
   return {
     success,
     ...data,
@@ -311,7 +313,8 @@ export async function checkWebAuthnSupport(): Promise<WebAuthnBrowserSupport> {
       support.supported = true;
 
       // Check platform authenticator
-      support.platformAuthenticator = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      support.platformAuthenticator =
+        await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
 
       // Cross-platform is always assumed available if WebAuthn is supported
       support.crossPlatformAuthenticator = true;

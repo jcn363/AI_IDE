@@ -11,16 +11,16 @@ use crate::modules::shared::diagnostics::*;
 pub fn get_error_documentation_links(error_code: &str) -> Vec<DocumentationLink> {
     vec![
         DocumentationLink {
-            title: format!("Rust Error Index - {}", error_code),
-            url: format!("https://doc.rust-lang.org/error-index.html#{}", error_code),
+            title:       format!("Rust Error Index - {}", error_code),
+            url:         format!("https://doc.rust-lang.org/error-index.html#{}", error_code),
             description: "Official Rust documentation for this error".to_string(),
-            category: "official".to_string(),
+            category:    "official".to_string(),
         },
         DocumentationLink {
-            title: "Rust Compiler Error Index".to_string(),
-            url: "https://doc.rust-lang.org/error-index.html".to_string(),
+            title:       "Rust Compiler Error Index".to_string(),
+            url:         "https://doc.rust-lang.org/error-index.html".to_string(),
             description: "Complete list of Rust compiler errors".to_string(),
-            category: "reference".to_string(),
+            category:    "reference".to_string(),
         },
     ]
 }
@@ -29,19 +29,19 @@ pub fn get_error_documentation_links(error_code: &str) -> Vec<DocumentationLink>
 pub fn get_keyword_documentation_links(keyword: &str) -> Vec<DocumentationLink> {
     vec![
         DocumentationLink {
-            title: format!("Rust Reference - {}", keyword),
-            url: format!(
+            title:       format!("Rust Reference - {}", keyword),
+            url:         format!(
                 "https://doc.rust-lang.org/reference/keywords.html#{}",
                 keyword
             ),
             description: format!("Official documentation for the '{}' keyword", keyword),
-            category: "official".to_string(),
+            category:    "official".to_string(),
         },
         DocumentationLink {
-            title: "Rust by Example".to_string(),
-            url: "https://doc.rust-lang.org/rust-by-example/".to_string(),
+            title:       "Rust by Example".to_string(),
+            url:         "https://doc.rust-lang.org/rust-by-example/".to_string(),
             description: "Learn Rust with examples".to_string(),
-            category: "tutorial".to_string(),
+            category:    "tutorial".to_string(),
         },
     ]
 }
@@ -51,10 +51,10 @@ pub fn get_context_documentation_links(context: &str) -> Vec<DocumentationLink> 
     // This would analyze the context and return relevant links
     // For now, return some general helpful links
     vec![DocumentationLink {
-        title: "Rust Standard Library".to_string(),
-        url: "https://doc.rust-lang.org/std/".to_string(),
+        title:       "Rust Standard Library".to_string(),
+        url:         "https://doc.rust-lang.org/std/".to_string(),
         description: "Standard library documentation".to_string(),
-        category: "reference".to_string(),
+        category:    "reference".to_string(),
     }]
 }
 
@@ -62,29 +62,28 @@ pub fn get_context_documentation_links(context: &str) -> Vec<DocumentationLink> 
 pub fn get_general_documentation_links() -> Vec<DocumentationLink> {
     vec![
         DocumentationLink {
-            title: "The Rust Programming Language".to_string(),
-            url: "https://doc.rust-lang.org/book/".to_string(),
+            title:       "The Rust Programming Language".to_string(),
+            url:         "https://doc.rust-lang.org/book/".to_string(),
             description: "The official Rust book".to_string(),
-            category: "official".to_string(),
+            category:    "official".to_string(),
         },
         DocumentationLink {
-            title: "Rust Reference".to_string(),
-            url: "https://doc.rust-lang.org/reference/".to_string(),
+            title:       "Rust Reference".to_string(),
+            url:         "https://doc.rust-lang.org/reference/".to_string(),
             description: "The Rust language reference".to_string(),
-            category: "reference".to_string(),
+            category:    "reference".to_string(),
         },
         DocumentationLink {
-            title: "Rustlings".to_string(),
-            url: "https://github.com/rust-lang/rustlings".to_string(),
-            description: "Small exercises to get you used to reading and writing Rust code"
-                .to_string(),
-            category: "tutorial".to_string(),
+            title:       "Rustlings".to_string(),
+            url:         "https://github.com/rust-lang/rustlings".to_string(),
+            description: "Small exercises to get you used to reading and writing Rust code".to_string(),
+            category:    "tutorial".to_string(),
         },
         DocumentationLink {
-            title: "Rust Community".to_string(),
-            url: "https://www.rust-lang.org/community".to_string(),
+            title:       "Rust Community".to_string(),
+            url:         "https://www.rust-lang.org/community".to_string(),
             description: "Get help from the Rust community".to_string(),
-            category: "community".to_string(),
+            category:    "community".to_string(),
         },
     ]
 }

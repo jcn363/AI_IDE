@@ -1,32 +1,33 @@
-/*!!
+//! !
+//!
+//! Integration tests for rust-ai-ide-lsp using shared-test-utils
+//!
+//! This module demonstrates sophisticated Language Server Protocol testing scenarios using the
+//! comprehensive test utilities from shared-test-utils, including:
+//!
+//! - Temp workspace management for LSP workspace scenarios
+//! - Async timeout handling for language server operations
+//! - Validation utilities for LSP diagnostic scenarios
+//! - Fixture-based test setup for consistent LSP test environments
+//! - File system operations with automatic cleanup
+//! - Integration test runner framework for systematic LSP testing
+//! - Concurrent LSP client scenarios with proper synchronization
+//!
 
-Integration tests for rust-ai-ide-lsp using shared-test-utils
-
-This module demonstrates sophisticated Language Server Protocol testing scenarios using the comprehensive
-test utilities from shared-test-utils, including:
-
-- Temp workspace management for LSP workspace scenarios
-- Async timeout handling for language server operations
-- Validation utilities for LSP diagnostic scenarios
-- Fixture-based test setup for consistent LSP test environments
-- File system operations with automatic cleanup
-- Integration test runner framework for systematic LSP testing
-- Concurrent LSP client scenarios with proper synchronization
-
-*/
-
-use shared_test_utils::async_utils::AsyncContext;
-use shared_test_utils::fixtures::FixturePresets;
-use shared_test_utils::*;
 use std::fs;
 use std::path::Path;
 use std::time::Duration;
 
+use shared_test_utils::async_utils::AsyncContext;
+use shared_test_utils::fixtures::FixturePresets;
+use shared_test_utils::*;
+
 // Test that proves we have the right imports and can run tests
 #[cfg(test)]
 mod integration_tests {
-    use super::*;
     use rust_ai_ide_lsp::client::{LSPClient, LSPClientConfig};
+
+    use super::*;
 
     /// Integration test demonstrating LSP workspace setup with temp workspaces
     #[test]
@@ -223,11 +224,7 @@ mod lsp_integration_tests {
         ];
 
         // Simulate concurrent LSP file operations
-        async fn create_file_async(
-            workspace: &TempWorkspace,
-            file: &str,
-            content: &str,
-        ) -> Result<String, TestError> {
+        async fn create_file_async(workspace: &TempWorkspace, file: &str, content: &str) -> Result<String, TestError> {
             workspace.create_file(Path::new(file), content)?;
             Ok(format!("Created LSP file: {}", file))
         }
@@ -261,7 +258,10 @@ mod lsp_integration_tests {
             workspace.create_file(Path::new(file), content).unwrap();
         }
 
-        println!("✅ Complex LSP workspace scenario test completed successfully - {} LSP operations processed", result_strings.len());
+        println!(
+            "✅ Complex LSP workspace scenario test completed successfully - {} LSP operations processed",
+            result_strings.len()
+        );
     }
 
     /// Integration test for LSP error handling and validation
@@ -424,10 +424,7 @@ mod lsp_integration_tests {
         println!("🔧 Testing concurrent LSP client operations...");
 
         // Test simulating multiple LSP clients working concurrently
-        async fn simulate_lsp_client_operation(
-            client_id: usize,
-            operation: &str,
-        ) -> Result<String, TestError> {
+        async fn simulate_lsp_client_operation(client_id: usize, operation: &str) -> Result<String, TestError> {
             // Simulate different LSP operation times
             let delay = match operation {
                 "initialize" => 100,

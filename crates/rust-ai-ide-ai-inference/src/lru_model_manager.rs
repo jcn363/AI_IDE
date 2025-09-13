@@ -1,20 +1,21 @@
-use moka::future::Cache;
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use moka::future::Cache;
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
 use tokio::sync::{Mutex, RwLock};
 use tokio::task::spawn_blocking;
 
 /// Least Recently Used (LRU) model management for AI models
 pub struct LRUModelManager {
-    pub(crate) model_access: Arc<RwLock<HashMap<String, Instant>>>,
-    pub(crate) model_sizes: Arc<RwLock<HashMap<String, usize>>>,
-    pub(crate) access_order: Arc<Mutex<VecDeque<String>>>,
+    pub(crate) model_access:             Arc<RwLock<HashMap<String, Instant>>>,
+    pub(crate) model_sizes:              Arc<RwLock<HashMap<String, usize>>>,
+    pub(crate) access_order:             Arc<Mutex<VecDeque<String>>>,
     pub(crate) memory_pressure_detector: Arc<MemoryPressureDetector>,
-    pub(crate) eviction_policy: Arc<EvictionPolicy>,
-    pub(crate) max_memory_usage: usize,
-    pub(crate) current_memory_usage: Arc<Mutex<usize>>,
+    pub(crate) eviction_policy:          Arc<EvictionPolicy>,
+    pub(crate) max_memory_usage:         usize,
+    pub(crate) current_memory_usage:     Arc<Mutex<usize>>,
 }
 
 impl LRUModelManager {
@@ -103,10 +104,7 @@ impl LRUModelManager {
         Ok(())
     }
 
-    pub async fn evict_oldest_models_until_space(
-        &self,
-        required_space: usize,
-    ) -> Result<usize, IDEError> {
+    pub async fn evict_oldest_models_until_space(&self, required_space: usize) -> Result<usize, IDEError> {
         let mut total_evicted = 0;
         let model_access = self.model_access.read().await;
         let model_sizes = self.model_sizes.read().await;
@@ -115,8 +113,7 @@ impl LRUModelManager {
         let mut keys_to_evict = Vec::new();
 
         while !access_order.is_empty()
-            && (self.get_current_memory_usage().await + required_space - total_evicted
-                > self.max_memory_usage)
+            && (self.get_current_memory_usage().await + required_space - total_evicted > self.max_memory_usage)
         {
             if let Some(oldest_key) = access_order.front().cloned() {
                 if let Some(size) = model_sizes.get(&oldest_key) {
@@ -265,7 +262,7 @@ impl LRUModelManager {
 pub struct MemoryPressureDetector {
     pub(crate) pressure_threshold: f64,
     pub(crate) measurement_window: Duration,
-    pub(crate) measurements: Arc<Mutex<VecDeque<usize>>>,
+    pub(crate) measurements:       Arc<Mutex<VecDeque<usize>>>,
 }
 
 impl MemoryPressureDetector {
@@ -273,7 +270,7 @@ impl MemoryPressureDetector {
         Self {
             pressure_threshold: 0.85,                    // 85% usage
             measurement_window: Duration::from_secs(60), // 1 minute window
-            measurements: Arc::new(Mutex::new(VecDeque::new())),
+            measurements:       Arc::new(Mutex::new(VecDeque::new())),
         }
     }
 
@@ -317,15 +314,15 @@ impl MemoryPressureDetector {
 
 /// Intelligent model eviction policy
 pub struct EvictionPolicy {
-    pub(crate) max_memory: usize,
-    pub(crate) access_patterns: Arc<Mutex<HashMap<String, AccessPattern>>>,
+    pub(crate) max_memory:           usize,
+    pub(crate) access_patterns:      Arc<Mutex<HashMap<String, AccessPattern>>>,
     pub(crate) predictive_threshold: f64,
 }
 
 #[derive(Debug, Clone)]
 pub struct AccessPattern {
-    pub frequency: f64,
-    pub recency: Instant,
+    pub frequency:     f64,
+    pub recency:       Instant,
     pub utility_score: f64,
 }
 
@@ -343,8 +340,8 @@ impl EvictionPolicy {
         let pattern = patterns
             .entry(model_key.to_string())
             .or_insert(AccessPattern {
-                frequency: 1.0,
-                recency: Instant::now(),
+                frequency:     1.0,
+                recency:       Instant::now(),
                 utility_score: 1.0,
             });
 
@@ -374,8 +371,7 @@ impl EvictionPolicy {
             let time_since_access = now.duration_since(pattern.recency);
 
             // Retain if recently accessed or high utility
-            time_since_access < Duration::from_secs(300)
-                || pattern.utility_score > self.predictive_threshold
+            time_since_access < Duration::from_secs(300) || pattern.utility_score > self.predictive_threshold
         } else {
             false
         }
@@ -421,23 +417,23 @@ impl EvictionPolicy {
 
         EvictionStats {
             total_registered_models: total_patterns,
-            average_utility_score: avg_utility,
-            high_value_models: high_utility_count,
-            low_value_models: total_patterns.saturating_sub(high_utility_count),
+            average_utility_score:   avg_utility,
+            high_value_models:       high_utility_count,
+            low_value_models:        total_patterns.saturating_sub(high_utility_count),
         }
     }
 }
 
 /// Model preloader for predictive loading
 pub struct ModelPreloader {
-    pub(crate) usage_patterns: Arc<Mutex<HashMap<String, UsagePattern>>>,
+    pub(crate) usage_patterns:   Arc<Mutex<HashMap<String, UsagePattern>>>,
     pub(crate) predictive_model: Arc<Mutex<PredictiveModel>>,
-    pub(crate) preload_queue: Arc<Mutex<Vec<String>>>,
+    pub(crate) preload_queue:    Arc<Mutex<Vec<String>>>,
 }
 
 #[derive(Clone, Debug)]
 pub struct UsagePattern {
-    pub access_history: VecDeque<Instant>,
+    pub access_history:   VecDeque<Instant>,
     pub confidence_score: f64,
 }
 
@@ -449,11 +445,11 @@ pub struct PredictiveModel {
 impl ModelPreloader {
     pub fn new() -> Self {
         Self {
-            usage_patterns: Arc::new(Mutex::new(HashMap::new())),
+            usage_patterns:   Arc::new(Mutex::new(HashMap::new())),
             predictive_model: Arc::new(Mutex::new(PredictiveModel {
                 patterns: HashMap::new(),
             })),
-            preload_queue: Arc::new(Mutex::new(Vec::new())),
+            preload_queue:    Arc::new(Mutex::new(Vec::new())),
         }
     }
 
@@ -462,7 +458,7 @@ impl ModelPreloader {
         let pattern = patterns
             .entry(model_key.to_string())
             .or_insert(UsagePattern {
-                access_history: VecDeque::new(),
+                access_history:   VecDeque::new(),
                 confidence_score: 0.5,
             });
 
@@ -555,7 +551,7 @@ impl ModelPreloader {
 #[derive(Clone, Debug)]
 pub struct EvictionStats {
     pub total_registered_models: usize,
-    pub average_utility_score: f64,
-    pub high_value_models: usize,
-    pub low_value_models: usize,
+    pub average_utility_score:   f64,
+    pub high_value_models:       usize,
+    pub low_value_models:        usize,
 }

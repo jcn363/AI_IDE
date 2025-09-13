@@ -1,6 +1,7 @@
+use std::time::Duration;
+
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use rust_ai_ide_advanced_refactoring::*;
-use std::time::Duration;
 
 // Helper function to generate a mock codebase
 fn generate_mock_codebase(size: usize) -> Codebase {
@@ -59,8 +60,8 @@ fn refactoring_benchmark(c: &mut Criterion) {
             &codebase,
             |b, codebase| {
                 let refactoring = Refactoring {
-                    name: "extract_method".to_string(),
-                    target: "module_0".to_string(),
+                    name:       "extract_method".to_string(),
+                    target:     "module_0".to_string(),
                     parameters: vec!["function1".to_string()],
                 };
 
@@ -101,11 +102,11 @@ fn refactoring_benchmark(c: &mut Criterion) {
 // Mock implementations for the benchmark
 #[derive(Clone)]
 struct CodeModule {
-    name: String,
-    path: String,
-    complexity: u32,
+    name:         String,
+    path:         String,
+    complexity:   u32,
     dependencies: Vec<String>,
-    size: usize,
+    size:         usize,
 }
 
 #[derive(Clone)]
@@ -143,8 +144,8 @@ impl RefactoringAnalyzer {
 }
 
 struct Refactoring {
-    name: String,
-    target: String,
+    name:       String,
+    target:     String,
     parameters: Vec<String>,
 }
 

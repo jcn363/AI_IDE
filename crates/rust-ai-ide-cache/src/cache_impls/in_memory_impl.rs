@@ -1,11 +1,12 @@
 //! Advanced in-memory cache implementation using Moka LRU with compression and TTL support
 
-use async_trait::async_trait;
-use moka::future::Cache as MokaCache;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+
+use async_trait::async_trait;
 #[cfg(feature = "compression")]
 use bincode;
+use moka::future::Cache as MokaCache;
+use tokio::sync::RwLock;
 
 use crate::{Cache, CacheConfig, CacheEntry, CacheStats, IDEResult};
 
@@ -13,8 +14,8 @@ use crate::{Cache, CacheConfig, CacheEntry, CacheStats, IDEResult};
 #[cfg(feature = "compression")]
 #[derive(Debug, Clone)]
 struct CompressedData {
-    data: Vec<u8>,
-    original_size: usize,
+    data:            Vec<u8>,
+    original_size:   usize,
     compressed_size: usize,
 }
 
@@ -50,9 +51,9 @@ impl CompressedData {
 
 /// Enhanced in-memory cache implementation with Moka LRU, TTL, and compression
 pub struct InMemoryCache<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static> {
-    cache: MokaCache<K, CacheEntry<V>>,
-    config: CacheConfig,
-    stats: Arc<RwLock<CacheStats>>,
+    cache:            MokaCache<K, CacheEntry<V>>,
+    config:           CacheConfig,
+    stats:            Arc<RwLock<CacheStats>>,
     #[cfg(feature = "compression")]
     compressed_cache: Option<MokaCache<String, CompressedData>>,
 }
@@ -89,10 +90,12 @@ impl<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + C
         // Initialize compressed cache if compression is enabled
         #[cfg(feature = "compression")]
         let compressed_cache = if config.compression_threshold_kb.is_some() {
-            Some(MokaCache::builder()
+            Some(
+                MokaCache::builder()
                 .max_capacity(1000) // Separate capacity for compressed entries
                 .time_to_live(config.default_ttl.unwrap_or(std::time::Duration::from_secs(3600)))
-                .build())
+                .build(),
+            )
         } else {
             None
         };
@@ -156,7 +159,9 @@ where
                 if let Some(compressed_cache) = &self.compressed_cache {
                     if let Ok(compressed_data) = CompressedData::compress(&value) {
                         let compressed_key = format!("{:?}", key);
-                        compressed_cache.insert(compressed_key, compressed_data).await;
+                        compressed_cache
+                            .insert(compressed_key, compressed_data)
+                            .await;
                         stats.record_set();
                         return Ok(());
                     }
@@ -263,7 +268,9 @@ where
     }
 }
 
-impl<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static> Drop for InMemoryCache<K, V> {
+impl<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static> Drop
+    for InMemoryCache<K, V>
+{
     fn drop(&mut self) {
         // Cleanup on drop - Moka handles this automatically
         // but we can run pending tasks to ensure cleanup
@@ -336,8 +343,8 @@ where
 impl Default for CompressedData {
     fn default() -> Self {
         Self {
-            data: Vec::new(),
-            original_size: 0,
+            data:            Vec::new(),
+            original_size:   0,
             compressed_size: 0,
         }
     }
@@ -461,34 +468,34 @@ impl CryptoKeyCache {
 
 /// Performance monitoring and metrics for cache operations
 pub struct CachePerformanceMonitor {
-    cache_name: String,
-    metrics: Arc<RwLock<CacheMetrics>>,
+    cache_name:         String,
+    metrics:            Arc<RwLock<CacheMetrics>>,
     reporting_interval: std::time::Duration,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CacheMetrics {
-    pub total_operations: u64,
-    pub hit_count: u64,
-    pub miss_count: u64,
-    pub eviction_count: u64,
-    pub compression_ratio_avg: f64,
+    pub total_operations:         u64,
+    pub hit_count:                u64,
+    pub miss_count:               u64,
+    pub eviction_count:           u64,
+    pub compression_ratio_avg:    f64,
     pub average_response_time_ms: f64,
-    pub memory_usage_mb: f64,
-    pub last_updated: chrono::DateTime<chrono::Utc>,
+    pub memory_usage_mb:          f64,
+    pub last_updated:             chrono::DateTime<chrono::Utc>,
 }
 
 impl Default for CacheMetrics {
     fn default() -> Self {
         Self {
-            total_operations: 0,
-            hit_count: 0,
-            miss_count: 0,
-            eviction_count: 0,
-            compression_ratio_avg: 1.0,
+            total_operations:         0,
+            hit_count:                0,
+            miss_count:               0,
+            eviction_count:           0,
+            compression_ratio_avg:    1.0,
             average_response_time_ms: 0.0,
-            memory_usage_mb: 0.0,
-            last_updated: chrono::Utc::now(),
+            memory_usage_mb:          0.0,
+            last_updated:             chrono::Utc::now(),
         }
     }
 }
@@ -496,8 +503,8 @@ impl Default for CacheMetrics {
 impl CachePerformanceMonitor {
     pub fn new(cache_name: impl Into<String>) -> Self {
         Self {
-            cache_name: cache_name.into(),
-            metrics: Arc::new(RwLock::new(CacheMetrics::default())),
+            cache_name:         cache_name.into(),
+            metrics:            Arc::new(RwLock::new(CacheMetrics::default())),
             reporting_interval: std::time::Duration::from_secs(60), // Report every minute
         }
     }
@@ -566,16 +573,9 @@ impl CachePerformanceMonitor {
         let efficiency_score = self.get_cache_efficiency_score().await;
 
         format!(
-            "Cache Performance Report for '{}'\n\
-             ======================================\n\
-             Total Operations: {}\n\
-             Hit Rate: {:.2}%\n\
-             Cache Efficiency Score: {:.3}\n\
-             Average Response Time: {:.2}ms\n\
-             Memory Usage: {:.2}MB\n\
-             Compression Ratio: {:.2}x\n\
-             Evictions: {}\n\
-             Last Updated: {}\n",
+            "Cache Performance Report for '{}'\n======================================\nTotal Operations: {}\nHit \
+             Rate: {:.2}%\nCache Efficiency Score: {:.3}\nAverage Response Time: {:.2}ms\nMemory Usage: \
+             {:.2}MB\nCompression Ratio: {:.2}x\nEvictions: {}\nLast Updated: {}\n",
             self.cache_name,
             metrics.total_operations,
             hit_rate * 100.0,
@@ -602,12 +602,17 @@ impl CachePerformanceMonitor {
 }
 
 /// Enhanced cache with performance monitoring
-pub struct MonitoredInMemoryCache<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static> {
-    inner: InMemoryCache<K, V>,
+pub struct MonitoredInMemoryCache<
+    K: std::hash::Hash + Eq + Send + Sync + Clone + 'static,
+    V: Send + Sync + Clone + 'static,
+> {
+    inner:   InMemoryCache<K, V>,
     monitor: Arc<CachePerformanceMonitor>,
 }
 
-impl<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static> MonitoredInMemoryCache<K, V> {
+impl<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static>
+    MonitoredInMemoryCache<K, V>
+{
     pub fn new(cache_name: impl Into<String>, config: &CacheConfig) -> Self {
         let monitor = Arc::new(CachePerformanceMonitor::new(cache_name));
         let inner = InMemoryCache::new(config);
@@ -662,8 +667,9 @@ pub type DependencyGraphCache = MonitoredInMemoryCache<String, serde_json::Value
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_in_memory_cache_basic_operations() {

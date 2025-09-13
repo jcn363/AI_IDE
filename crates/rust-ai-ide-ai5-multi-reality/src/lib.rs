@@ -1,36 +1,37 @@
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+
 use chrono::{DateTime, Utc};
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
 /// Represents a quantum state in superposition across multiple realities
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QuantumState {
-    pub id: Uuid,
-    pub qubits: Vec<QuantumBit>,
-    pub coherence_level: f64,
+    pub id:                  Uuid,
+    pub qubits:              Vec<QuantumBit>,
+    pub coherence_level:     f64,
     pub entanglement_matrix: Vec<Vec<f64>>,
-    pub reality_branches: HashSet<Uuid>,
-    pub timestamp: DateTime<Utc>,
+    pub reality_branches:    HashSet<Uuid>,
+    pub timestamp:           DateTime<Utc>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QuantumBit {
-    pub id: Uuid,
+    pub id:                    Uuid,
     pub probability_amplitude: num_complex::Complex64,
-    pub phase: num_complex::Complex64,
+    pub phase:                 num_complex::Complex64,
 }
 
 impl QuantumState {
     pub fn new(num_qubits: usize) -> Self {
         let qubits = (0..num_qubits)
             .map(|_| QuantumBit {
-                id: Uuid::new_v4(),
+                id:                    Uuid::new_v4(),
                 probability_amplitude: num_complex::Complex64::new(1.0, 0.0),
-                phase: num_complex::Complex64::new(0.0, 0.0),
+                phase:                 num_complex::Complex64::new(0.0, 0.0),
             })
             .collect();
 
@@ -123,35 +124,35 @@ impl RealityBranch {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CodebaseSnapshot {
-    pub files: HashMap<String, String>, // file_path -> content_hash
+    pub files:        HashMap<String, String>, // file_path -> content_hash
     pub dependencies: HashSet<String>,
-    pub metadata: HashMap<String, String>,
+    pub metadata:     HashMap<String, String>,
 }
 
 impl Default for CodebaseSnapshot {
     fn default() -> Self {
         Self {
-            files: HashMap::new(),
+            files:        HashMap::new(),
             dependencies: HashSet::new(),
-            metadata: HashMap::new(),
+            metadata:     HashMap::new(),
         }
     }
 }
 
 /// Main coordinator for multi-reality development frameworks
 pub struct MultiRealityCoordinator {
-    pub quantum_engine: Arc<QuantumProcessor>,
-    pub reality_branches: Arc<RwLock<HashMap<Uuid, RealityBranch>>>,
-    pub entanglement_manager: Arc<RwLock<QuantumEntangleManager>>,
+    pub quantum_engine:          Arc<QuantumProcessor>,
+    pub reality_branches:        Arc<RwLock<HashMap<Uuid, RealityBranch>>>,
+    pub entanglement_manager:    Arc<RwLock<QuantumEntangleManager>>,
     pub synchronization_handler: Arc<SynchronizationHandler>,
 }
 
 impl MultiRealityCoordinator {
     pub async fn new() -> Self {
         Self {
-            quantum_engine: Arc::new(QuantumProcessor::new().await),
-            reality_branches: Arc::new(RwLock::new(HashMap::new())),
-            entanglement_manager: Arc::new(RwLock::new(QuantumEntangleManager::new())),
+            quantum_engine:          Arc::new(QuantumProcessor::new().await),
+            reality_branches:        Arc::new(RwLock::new(HashMap::new())),
+            entanglement_manager:    Arc::new(RwLock::new(QuantumEntangleManager::new())),
             synchronization_handler: Arc::new(SynchronizationHandler::new()),
         }
     }
@@ -192,20 +193,14 @@ impl MultiRealityCoordinator {
         Ok(())
     }
 
-    pub async fn quantum_entangle_codebases(
-        &self,
-        branch_a: Uuid,
-        branch_b: Uuid,
-    ) -> Result<(), QuantumError> {
+    pub async fn quantum_entangle_codebases(&self, branch_a: Uuid, branch_b: Uuid) -> Result<(), QuantumError> {
         let mut entanglement_mgr = self.entanglement_manager.write().await;
         entanglement_mgr
             .create_entanglement(branch_a, branch_b)
             .await?;
 
         // Update quantum states in both branches
-        if let (Some(branch_a_state), Some(branch_b_state)) =
-            self.get_branch_pair_states(branch_a, branch_b).await
-        {
+        if let (Some(branch_a_state), Some(branch_b_state)) = self.get_branch_pair_states(branch_a, branch_b).await {
             self.quantum_engine
                 .entangle_states(branch_a_state, branch_b_state)
                 .await?;
@@ -284,11 +279,7 @@ impl QuantumEntangleManager {
         }
     }
 
-    pub async fn create_entanglement(
-        &mut self,
-        branch_a: Uuid,
-        branch_b: Uuid,
-    ) -> Result<(), QuantumError> {
+    pub async fn create_entanglement(&mut self, branch_a: Uuid, branch_b: Uuid) -> Result<(), QuantumError> {
         let key = (branch_a, branch_b);
         let entanglement = Entanglement::new();
         self.entanglement_pairs.insert(key, entanglement);
@@ -298,17 +289,17 @@ impl QuantumEntangleManager {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Entanglement {
-    pub strength: f64,
+    pub strength:       f64,
     pub established_at: DateTime<Utc>,
-    pub last_sync: DateTime<Utc>,
+    pub last_sync:      DateTime<Utc>,
 }
 
 impl Entanglement {
     pub fn new() -> Self {
         Self {
-            strength: 1.0,
+            strength:       1.0,
             established_at: Utc::now(),
-            last_sync: Utc::now(),
+            last_sync:      Utc::now(),
         }
     }
 }

@@ -1,14 +1,16 @@
-use crate::error::TestError;
 use std::fs;
 use std::path::{Path, PathBuf};
+
 use tempfile::{NamedTempFile, TempDir};
+
+use crate::error::TestError;
 
 /// A temporary workspace for tests that automatically cleans up after test completion
 // Prepared for shared test workspace management across crates
 #[derive(Debug)]
 pub struct TempWorkspace {
     /// The underlying temporary directory
-    _temp_dir: TempDir,
+    _temp_dir:      TempDir,
     /// Path to the temporary workspace directory
     workspace_path: PathBuf,
 }

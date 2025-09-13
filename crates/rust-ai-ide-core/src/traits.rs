@@ -4,14 +4,13 @@
 //! This module defines the core traits that provide extensibility and plugin
 //! interfaces for AI components throughout the Rust AI IDE.
 
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use super::ai::{
-    AIContext, AIProvider, AnalysisConfig, AnalysisResult, ComponentStatus, ModelConfig, ModelState,
-};
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
+
+use super::ai::{AIContext, AIProvider, AnalysisConfig, AnalysisResult, ComponentStatus, ModelConfig, ModelState};
 use super::analysis::AnalysisTarget;
 use super::config::AppConfig;
 use super::error::IDEResult;
@@ -38,16 +37,16 @@ pub trait ComponentLifecycle: Send + Sync {
 /// Component metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentMetadata {
-    pub name: String,
-    pub version: String,
-    pub description: String,
-    pub category: ComponentCategory,
-    pub authors: Vec<String>,
+    pub name:           String,
+    pub version:        String,
+    pub description:    String,
+    pub category:       ComponentCategory,
+    pub authors:        Vec<String>,
     pub repository_url: Option<String>,
-    pub license: Option<String>,
-    pub capabilities: Vec<String>,
-    pub dependencies: Vec<ComponentDependency>,
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub license:        Option<String>,
+    pub capabilities:   Vec<String>,
+    pub dependencies:   Vec<ComponentDependency>,
+    pub metadata:       HashMap<String, serde_json::Value>,
 }
 
 /// Component categories
@@ -68,19 +67,19 @@ pub enum ComponentCategory {
 /// Component dependencies
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentDependency {
-    pub name: String,
+    pub name:               String,
     pub version_constraint: String,
-    pub optional: bool,
-    pub description: Option<String>,
+    pub optional:           bool,
+    pub description:        Option<String>,
 }
 
 /// Component health status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentHealth {
-    pub status: HealthStatus,
-    pub details: String,
+    pub status:     HealthStatus,
+    pub details:    String,
     pub last_check: chrono::DateTime<chrono::Utc>,
-    pub metrics: HashMap<String, f64>,
+    pub metrics:    HashMap<String, f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -124,8 +123,8 @@ pub struct ModelHandle(Arc<ModelHandleInner>);
 
 #[derive(Debug)]
 struct ModelHandleInner {
-    id: String,
-    provider: AIProvider,
+    id:         String,
+    provider:   AIProvider,
     created_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -155,28 +154,28 @@ impl ModelHandle {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InferenceOptions {
     /// Temperature for generation (0.0-2.0)
-    pub temperature: Option<f32>,
+    pub temperature:    Option<f32>,
     /// Top-P sampling parameter
-    pub top_p: Option<f32>,
+    pub top_p:          Option<f32>,
     /// Top-K sampling parameter
-    pub top_k: Option<u32>,
+    pub top_k:          Option<u32>,
     /// Maximum tokens to generate
-    pub max_tokens: Option<u32>,
+    pub max_tokens:     Option<u32>,
     /// Stop sequences
     pub stop_sequences: Vec<String>,
     /// Additional provider-specific options
-    pub extra_options: HashMap<String, serde_json::Value>,
+    pub extra_options:  HashMap<String, serde_json::Value>,
 }
 
 impl Default for InferenceOptions {
     fn default() -> Self {
         Self {
-            temperature: Some(0.7),
-            top_p: Some(0.9),
-            top_k: Some(40),
-            max_tokens: Some(2048),
+            temperature:    Some(0.7),
+            top_p:          Some(0.9),
+            top_k:          Some(40),
+            max_tokens:     Some(2048),
             stop_sequences: Vec::new(),
-            extra_options: HashMap::new(),
+            extra_options:  HashMap::new(),
         }
     }
 }
@@ -185,13 +184,13 @@ impl Default for InferenceOptions {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InferenceResult {
     /// Generated text
-    pub text: String,
+    pub text:          String,
     /// Finish reason
     pub finish_reason: FinishReason,
     /// Token usage information
-    pub usage: Option<TokenUsage>,
+    pub usage:         Option<TokenUsage>,
     /// Generation metadata
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata:      HashMap<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -205,11 +204,11 @@ pub enum FinishReason {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TokenUsage {
     /// Tokens in the prompt
-    pub prompt_tokens: u32,
+    pub prompt_tokens:     u32,
     /// Tokens in the completion
     pub completion_tokens: u32,
     /// Total tokens
-    pub total_tokens: u32,
+    pub total_tokens:      u32,
 }
 
 /// Analysis trait for extensible analysis capabilities
@@ -241,63 +240,54 @@ pub trait CodeGenerationTrait: ComponentLifecycle {
 /// Code generation specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeGenSpec {
-    pub description: String,
-    pub requirements: Vec<String>,
-    pub constraints: Vec<String>,
-    pub language: String,
-    pub framework: Option<String>,
+    pub description:   String,
+    pub requirements:  Vec<String>,
+    pub constraints:   Vec<String>,
+    pub language:      String,
+    pub framework:     Option<String>,
     pub template_path: Option<String>,
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata:      HashMap<String, serde_json::Value>,
 }
 
 /// Code generation result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeGenResult {
-    pub code: String,
-    pub explanation: Option<String>,
-    pub tests: Vec<String>,
+    pub code:         String,
+    pub explanation:  Option<String>,
+    pub tests:        Vec<String>,
     pub dependencies: Vec<String>,
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata:     HashMap<String, serde_json::Value>,
 }
 
 /// Validation result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationResult {
-    pub valid: bool,
+    pub valid:  bool,
     pub issues: Vec<String>,
-    pub score: Option<f64>,
+    pub score:  Option<f64>,
 }
 
 /// Refactoring trait for code transformation
 #[async_trait]
 pub trait RefactoringTrait: ComponentLifecycle {
     /// Analyze refactoring possibilities
-    async fn analyze_opportunities(
-        &self,
-        target: AnalysisTarget,
-    ) -> IDEResult<Vec<RefactoringOpportunity>>;
+    async fn analyze_opportunities(&self, target: AnalysisTarget) -> IDEResult<Vec<RefactoringOpportunity>>;
 
     /// Execute a refactoring
-    async fn execute_refactoring(
-        &self,
-        opportunity: RefactoringOpportunity,
-    ) -> IDEResult<RefactoringResult>;
+    async fn execute_refactoring(&self, opportunity: RefactoringOpportunity) -> IDEResult<RefactoringResult>;
 
     /// Preview refactoring changes
-    async fn preview_refactoring(
-        &self,
-        opportunity: RefactoringOpportunity,
-    ) -> IDEResult<RefactoringPreview>;
+    async fn preview_refactoring(&self, opportunity: RefactoringOpportunity) -> IDEResult<RefactoringPreview>;
 }
 
 /// Refactoring opportunity
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefactoringOpportunity {
-    pub id: String,
-    pub description: String,
-    pub impact: RefactoringImpact,
-    pub confidence: f32,
-    pub affected_files: Vec<String>,
+    pub id:              String,
+    pub description:     String,
+    pub impact:          RefactoringImpact,
+    pub confidence:      f32,
+    pub affected_files:  Vec<String>,
     pub preview_changes: Vec<CodeChange>,
 }
 
@@ -313,25 +303,25 @@ pub enum RefactoringImpact {
 /// Refactoring result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefactoringResult {
-    pub success: bool,
-    pub changes: Vec<CodeChange>,
-    pub errors: Vec<String>,
+    pub success:       bool,
+    pub changes:       Vec<CodeChange>,
+    pub errors:        Vec<String>,
     pub rollback_info: Option<String>,
 }
 
 /// Refactoring preview
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefactoringPreview {
-    pub changes: Vec<CodeChange>,
-    pub warnings: Vec<String>,
+    pub changes:           Vec<CodeChange>,
+    pub warnings:          Vec<String>,
     pub impact_assessment: String,
 }
 
 /// Code change representation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeChange {
-    pub file_path: String,
-    pub old_range: super::ai::Range,
+    pub file_path:   String,
+    pub old_range:   super::ai::Range,
     pub new_content: String,
     pub change_type: ChangeType,
     pub description: Option<String>,
@@ -362,11 +352,11 @@ pub trait PluginTrait: ComponentLifecycle {
 /// Plugin event
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginEvent {
-    pub id: String,
+    pub id:         String,
     pub event_type: String,
-    pub payload: serde_json::Value,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
-    pub source: String,
+    pub payload:    serde_json::Value,
+    pub timestamp:  chrono::DateTime<chrono::Utc>,
+    pub source:     String,
 }
 
 /// Plugin command
@@ -374,15 +364,14 @@ pub struct PluginEvent {
 pub struct PluginCommand {
     pub command_id: String,
     pub parameters: HashMap<String, serde_json::Value>,
-    pub timeout: Option<std::time::Duration>,
+    pub timeout:    Option<std::time::Duration>,
 }
 
 /// Component registry trait for managing components
 #[async_trait]
 pub trait ComponentRegistry: Send + Sync {
     /// Register a component
-    async fn register_component(&self, component: Box<dyn ComponentLifecycle>)
-        -> IDEResult<String>;
+    async fn register_component(&self, component: Box<dyn ComponentLifecycle>) -> IDEResult<String>;
 
     /// Unregister a component
     async fn unregister_component(&self, id: &str) -> IDEResult<()>;
@@ -397,12 +386,12 @@ pub trait ComponentRegistry: Send + Sync {
 /// Component information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentInfo {
-    pub id: String,
-    pub name: String,
-    pub version: String,
+    pub id:       String,
+    pub name:     String,
+    pub version:  String,
     pub category: ComponentCategory,
-    pub status: ComponentStatus,
-    pub enabled: bool,
+    pub status:   ComponentStatus,
+    pub enabled:  bool,
 }
 
 /// Service coordination trait for multi-component workflows
@@ -425,19 +414,19 @@ pub trait ServiceCoordinatorTrait: Send + Sync {
 /// Workflow handle
 #[derive(Debug, Clone)]
 pub struct WorkflowHandle {
-    pub id: String,
+    pub id:         String,
     pub started_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// Workflow status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkflowStatus {
-    pub status: WorkflowState,
-    pub progress: f32,
+    pub status:       WorkflowState,
+    pub progress:     f32,
     pub current_step: Option<String>,
-    pub errors: Vec<String>,
-    pub results: HashMap<String, AnalysisResult>,
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub errors:       Vec<String>,
+    pub results:      HashMap<String, AnalysisResult>,
+    pub metadata:     HashMap<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

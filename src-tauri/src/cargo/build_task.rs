@@ -1,49 +1,48 @@
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-    process::Command,
-};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildTask {
-    pub name: String,
-    pub command: String,
-    pub args: Vec<String>,
-    pub env: HashMap<String, String>,
-    pub working_dir: Option<PathBuf>,
-    pub run_in_parallel: bool,
+    pub name:              String,
+    pub command:           String,
+    pub args:              Vec<String>,
+    pub env:               HashMap<String, String>,
+    pub working_dir:       Option<PathBuf>,
+    pub run_in_parallel:   bool,
     pub continue_on_error: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildHooks {
-    pub pre_build: Vec<BuildTask>,
+    pub pre_build:  Vec<BuildTask>,
     pub post_build: Vec<BuildTask>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildConfig {
-    pub hooks: BuildHooks,
-    pub env: HashMap<String, String>,
-    pub target: Option<String>,
-    pub features: Vec<String>,
-    pub all_features: bool,
+    pub hooks:               BuildHooks,
+    pub env:                 HashMap<String, String>,
+    pub target:              Option<String>,
+    pub features:            Vec<String>,
+    pub all_features:        bool,
     pub no_default_features: bool,
 }
 
 impl Default for BuildConfig {
     fn default() -> Self {
         Self {
-            hooks: BuildHooks {
-                pre_build: Vec::new(),
+            hooks:               BuildHooks {
+                pre_build:  Vec::new(),
                 post_build: Vec::new(),
             },
-            env: HashMap::new(),
-            target: None,
-            features: Vec::new(),
-            all_features: false,
+            env:                 HashMap::new(),
+            target:              None,
+            features:            Vec::new(),
+            all_features:        false,
             no_default_features: false,
         }
     }

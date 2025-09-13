@@ -1,11 +1,12 @@
+use syn::{visit, Block, Expr, ImplItem, ItemFn, ItemImpl};
+
 use super::super::types::{ArchitecturalFinding, CodeLocation, Severity};
 use super::ArchitecturalVisitor;
-use syn::{visit, Block, Expr, ImplItem, ItemFn, ItemImpl};
 
 /// Visitor that analyzes code complexity metrics
 pub struct ComplexityVisitor<'a> {
-    analyzer: &'a ArchitecturalAnalyzer,
-    findings: Vec<ArchitecturalFinding>,
+    analyzer:     &'a ArchitecturalAnalyzer,
+    findings:     Vec<ArchitecturalFinding>,
     current_file: String,
 }
 
@@ -69,23 +70,22 @@ impl<'a> visit::Visit<'a> for ComplexityVisitor<'a> {
 
         if complexity > self.analyzer.max_cyclomatic_complexity {
             self.findings.push(ArchitecturalFinding {
-                id: format!("high_complexity_{}", node.sig.ident),
-                message: format!(
+                id:         format!("high_complexity_{}", node.sig.ident),
+                message:    format!(
                     "Function '{}' has a cyclomatic complexity of {} (max allowed is {})",
                     node.sig.ident, complexity, self.analyzer.max_cyclomatic_complexity
                 ),
-                severity: Severity::Warning,
-                location: CodeLocation {
+                severity:   Severity::Warning,
+                location:   CodeLocation {
                     file_path: self.current_file.clone(),
-                    line: node.sig.span().line() as u32,
-                    column: node.sig.span().column() as u32,
+                    line:      node.sig.span().line() as u32,
+                    column:    node.sig.span().column() as u32,
                 },
                 suggestion: Some(
-                    "Consider refactoring this function into smaller, more focused functions."
-                        .to_string(),
+                    "Consider refactoring this function into smaller, more focused functions.".to_string(),
                 ),
                 confidence: 0.9,
-                rule_id: "HIGH_COMPLEXITY".to_string(),
+                rule_id:    "HIGH_COMPLEXITY".to_string(),
             });
         }
 
@@ -101,23 +101,22 @@ impl<'a> visit::Visit<'a> for ComplexityVisitor<'a> {
 
                 if complexity > self.analyzer.max_cyclomatic_complexity {
                     self.findings.push(ArchitecturalFinding {
-                        id: format!("high_complexity_{}", method.sig.ident),
-                        message: format!(
+                        id:         format!("high_complexity_{}", method.sig.ident),
+                        message:    format!(
                             "Method '{}' has a cyclomatic complexity of {} (max allowed is {})",
                             method.sig.ident, complexity, self.analyzer.max_cyclomatic_complexity
                         ),
-                        severity: Severity::Warning,
-                        location: CodeLocation {
+                        severity:   Severity::Warning,
+                        location:   CodeLocation {
                             file_path: self.current_file.clone(),
-                            line: method.span().line() as u32,
-                            column: method.span().column() as u32,
+                            line:      method.span().line() as u32,
+                            column:    method.span().column() as u32,
                         },
                         suggestion: Some(
-                            "Consider refactoring this method into smaller, more focused methods."
-                                .to_string(),
+                            "Consider refactoring this method into smaller, more focused methods.".to_string(),
                         ),
                         confidence: 0.9,
-                        rule_id: "HIGH_COMPLEXITY".to_string(),
+                        rule_id:    "HIGH_COMPLEXITY".to_string(),
                     });
                 }
             }

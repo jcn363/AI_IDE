@@ -35,7 +35,7 @@ pub use router::AiPerformanceRouter;
 /// This struct serves as the central hub for all AI integration functionality,
 /// managing the interaction between LSP service, frontend, and backend AI components.
 pub struct AIServiceIntegrationLayer {
-    lsp_bridge: std::sync::Arc<bridge::LSPAiBridge>,
+    lsp_bridge:         std::sync::Arc<bridge::LSPAiBridge>,
     frontend_interface: std::sync::Arc<frontend::AITauriInterface>,
     performance_router: std::sync::Arc<router::AiPerformanceRouter>,
 }

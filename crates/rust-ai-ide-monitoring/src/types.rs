@@ -1,9 +1,12 @@
 //! Core types and data structures for the monitoring framework
 
-use crate::{errors::Result, metrics::QualityMetrics};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+use crate::errors::Result;
+use crate::metrics::QualityMetrics;
 
 /// Main analysis report containing all monitoring results
 #[derive(Debug, Clone, Serialize, Deserialize)]

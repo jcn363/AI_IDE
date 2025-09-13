@@ -3,10 +3,11 @@
 //! This module provides functionality for validating types across different
 //! platforms and ensuring compatibility between Rust backend and frontend types.
 
+use std::collections::HashMap;
+
 use crate::config::GenerationConfig;
 use crate::errors::TypeBridgeError;
 use crate::types::*;
-use std::collections::HashMap;
 
 /// Main type bridge for cross-platform validation
 #[derive(Debug)]
@@ -146,14 +147,11 @@ impl TypeBridge {
         ts_mappings.insert("i32".to_string(), "number".to_string());
         ts_mappings.insert("bool".to_string(), "boolean".to_string());
 
-        platform_mappings.insert(
-            "typescript".to_string(),
-            PlatformMapping {
-                type_mappings: ts_mappings,
-                features: vec!["interfaces".to_string(), "unions".to_string()],
-                compatibility_flags: HashMap::new(),
-            },
-        );
+        platform_mappings.insert("typescript".to_string(), PlatformMapping {
+            type_mappings:       ts_mappings,
+            features:            vec!["interfaces".to_string(), "unions".to_string()],
+            compatibility_flags: HashMap::new(),
+        });
 
         // Initialize JavaScript mappings
         let mut js_mappings = HashMap::new();
@@ -161,28 +159,25 @@ impl TypeBridge {
         js_mappings.insert("i32".to_string(), "number".to_string());
         js_mappings.insert("bool".to_string(), "boolean".to_string());
 
-        platform_mappings.insert(
-            "javascript".to_string(),
-            PlatformMapping {
-                type_mappings: js_mappings,
-                features: vec!["objects".to_string(), "functions".to_string()],
-                compatibility_flags: HashMap::new(),
-            },
-        );
+        platform_mappings.insert("javascript".to_string(), PlatformMapping {
+            type_mappings:       js_mappings,
+            features:            vec!["objects".to_string(), "functions".to_string()],
+            compatibility_flags: HashMap::new(),
+        });
 
         // Initialize validation rules
         let validation_rules = vec![
             ValidationRule {
-                name: "check_basic_types".to_string(),
+                name:      "check_basic_types".to_string(),
                 platforms: vec!["typescript".to_string(), "javascript".to_string()],
-                rule: "basic_type_check".to_string(),
-                severity: ValidationSeverity::Error,
+                rule:      "basic_type_check".to_string(),
+                severity:  ValidationSeverity::Error,
             },
             ValidationRule {
-                name: "check_complex_types".to_string(),
+                name:      "check_complex_types".to_string(),
                 platforms: vec!["typescript".to_string()],
-                rule: "complex_type_check".to_string(),
-                severity: ValidationSeverity::Warning,
+                rule:      "complex_type_check".to_string(),
+                severity:  ValidationSeverity::Warning,
             },
         ];
 
@@ -213,10 +208,7 @@ impl TypeBridge {
     }
 
     /// Validate types for cross-platform compatibility
-    pub async fn validate_types(
-        &self,
-        types: &[ParsedType],
-    ) -> Result<ValidationResult, TypeBridgeError> {
+    pub async fn validate_types(&self, types: &[ParsedType]) -> Result<ValidationResult, TypeBridgeError> {
         let mut issues = Vec::new();
         let mut applied_mappings = HashMap::new();
         let mut compatible_types = 0;
@@ -253,10 +245,7 @@ impl TypeBridge {
     }
 
     /// Validate a single parsed type
-    async fn validate_single_type(
-        &self,
-        parsed_type: &ParsedType,
-    ) -> Result<TypeValidationResult, TypeBridgeError> {
+    async fn validate_single_type(&self, parsed_type: &ParsedType) -> Result<TypeValidationResult, TypeBridgeError> {
         let mut issues = Vec::new();
         let mut mappings = HashMap::new();
         let mut compatible = true;
@@ -264,8 +253,7 @@ impl TypeBridge {
         // Check each field for each supported platform
         for (platform_name, platform_mapping) in &self.platform_mappings {
             for field in &parsed_type.fields {
-                let field_issues =
-                    self.validate_field_type(&field.ty, platform_name, platform_mapping)?;
+                let field_issues = self.validate_field_type(&field.ty, platform_name, platform_mapping)?;
                 issues.extend(field_issues);
 
                 if let Some(mapping) = platform_mapping.type_mappings.get(&field.ty) {
@@ -280,12 +268,14 @@ impl TypeBridge {
         // Check overall type compatibility
         if !self.check_type_compatibility(parsed_type) {
             issues.push(ValidationIssue {
-                issue_type: ValidationIssueType::CompatibilityIssue,
-                severity: ValidationSeverity::Warning,
-                source_type: parsed_type.name.clone(),
+                issue_type:      ValidationIssueType::CompatibilityIssue,
+                severity:        ValidationSeverity::Warning,
+                source_type:     parsed_type.name.clone(),
                 target_platform: "all".to_string(),
-                description: format!("Type '{}' may have compatibility issues", parsed_type.name),
-                suggestion: Some("Consider simplifying the type structure or adding platform-specific attributes".to_string()),
+                description:     format!("Type '{}' may have compatibility issues", parsed_type.name),
+                suggestion:      Some(
+                    "Consider simplifying the type structure or adding platform-specific attributes".to_string(),
+                ),
             });
         }
 
@@ -318,15 +308,15 @@ impl TypeBridge {
 
         if !is_mapped && is_basic_rust_type {
             issues.push(ValidationIssue {
-                issue_type: ValidationIssueType::UnknownMapping,
-                severity: ValidationSeverity::Error,
-                source_type: field_type.to_string(),
+                issue_type:      ValidationIssueType::UnknownMapping,
+                severity:        ValidationSeverity::Error,
+                source_type:     field_type.to_string(),
                 target_platform: platform.to_string(),
-                description: format!(
+                description:     format!(
                     "No mapping found for type '{}' on platform '{}'",
                     field_type, platform
                 ),
-                suggestion: Some(format!(
+                suggestion:      Some(format!(
                     "Add type mapping for '{}' in the configuration",
                     field_type
                 )),
@@ -336,14 +326,12 @@ impl TypeBridge {
         // Check for complex types that might not be supported
         if field_type.contains("Result<") {
             issues.push(ValidationIssue {
-                issue_type: ValidationIssueType::CompatibilityIssue,
-                severity: ValidationSeverity::Warning,
-                source_type: field_type.to_string(),
+                issue_type:      ValidationIssueType::CompatibilityIssue,
+                severity:        ValidationSeverity::Warning,
+                source_type:     field_type.to_string(),
                 target_platform: platform.to_string(),
-                description: format!("Result types are simplified on platform '{}'", platform),
-                suggestion: Some(
-                    "Consider using union types or separate success/error responses".to_string(),
-                ),
+                description:     format!("Result types are simplified on platform '{}'", platform),
+                suggestion:      Some("Consider using union types or separate success/error responses".to_string()),
             });
         }
 
@@ -353,13 +341,10 @@ impl TypeBridge {
     /// Check if a type is a basic Rust type that should have a mapping
     fn is_basic_rust_type(type_name: &str) -> bool {
         let basic_types = [
-            "String", "str", "i8", "i16", "i32", "i64", "u8", "u16", "u32", "u64", "f32", "f64",
-            "bool", "char",
+            "String", "str", "i8", "i16", "i32", "i64", "u8", "u16", "u32", "u64", "f32", "f64", "bool", "char",
         ];
 
-        basic_types.contains(&type_name)
-            || type_name.starts_with("Option<")
-            || type_name.starts_with("Result<")
+        basic_types.contains(&type_name) || type_name.starts_with("Option<") || type_name.starts_with("Result<")
     }
 
     /// Check overall type compatibility
@@ -371,8 +356,7 @@ impl TypeBridge {
             }
             TypeKind::Enum => {
                 // Check for enums with too many variants or complex associated data
-                parsed_type.variants.len() <= 20
-                    && parsed_type.variants.iter().all(|v| v.fields.len() <= 5)
+                parsed_type.variants.len() <= 20 && parsed_type.variants.iter().all(|v| v.fields.len() <= 5)
             }
             TypeKind::Union => {
                 // Unions are generally complex to represent
@@ -418,8 +402,7 @@ impl TypeBridge {
             .count();
 
         if unknown_mappings > 0 {
-            recommendations
-                .push("Add type mappings for unmapped types in the configuration".to_string());
+            recommendations.push("Add type mappings for unmapped types in the configuration".to_string());
         }
 
         recommendations
@@ -429,8 +412,8 @@ impl TypeBridge {
 /// Internal result type for single type validation
 struct TypeValidationResult {
     compatible: bool,
-    issues: Vec<ValidationIssue>,
-    mappings: HashMap<String, String>,
+    issues:     Vec<ValidationIssue>,
+    mappings:   HashMap<String, String>,
 }
 
 #[cfg(test)]

@@ -3,8 +3,10 @@
 //! Provides OpenTelemetry-compatible tracing with structured logging,
 //! span management, and distributed tracing capabilities.
 
-use crate::{errors::Result, ObservabilityConfig};
 use std::env;
+
+use crate::errors::Result;
+use crate::ObservabilityConfig;
 
 /// Tracer for managing distributed tracing
 pub struct Tracer {
@@ -54,10 +56,7 @@ impl Tracer {
         };
 
         tracing::subscriber::set_global_default(subscriber).map_err(|e| {
-            crate::errors::ObservabilityError::tracing(format!(
-                "Failed to set global subscriber: {}",
-                e
-            ))
+            crate::errors::ObservabilityError::tracing(format!("Failed to set global subscriber: {}", e))
         })?;
 
         tracing::info!(
@@ -94,10 +93,7 @@ impl Tracer {
                 .with_trace_config(trace::config().with_resource(resource))
                 .install_batch(opentelemetry::runtime::Tokio)
                 .map_err(|e| {
-                    crate::errors::ObservabilityError::tracing(format!(
-                        "Failed to create OTLP tracer: {}",
-                        e
-                    ))
+                    crate::errors::ObservabilityError::tracing(format!("Failed to create OTLP tracer: {}", e))
                 })?;
 
             Ok(tracer)

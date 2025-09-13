@@ -3,23 +3,25 @@
 //! This module provides Tauri command handlers for AI-powered features
 //! including code completion, refactoring, and analysis.
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
+use rust_ai_ide_common::validation::TauriInputSanitizer;
+use serde::{Deserialize, Serialize};
+use tauri::State;
+use tokio::sync::Mutex;
+
 use crate::command_templates::{acquire_service_and_execute, tauri_command_template};
 use crate::commands::ai::services::{AIServiceState, FinetuneService};
 use crate::errors::IDEServiceError;
-use rust_ai_ide_common::validation::TauriInputSanitizer;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
-use tauri::State;
-use tokio::sync::Mutex;
 
 /// Request for AI code completion
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompletionRequest {
-    pub code: String,
-    pub language: String,
+    pub code:            String,
+    pub language:        String,
     pub cursor_position: usize,
-    pub context: Option<String>,
+    pub context:         Option<String>,
 }
 
 /// Response for code completion
@@ -32,26 +34,26 @@ pub struct CompletionResponse {
 /// Request for code refactoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefactorRequest {
-    pub code: String,
+    pub code:          String,
     pub refactor_type: String,
-    pub options: Option<serde_json::Value>,
+    pub options:       Option<serde_json::Value>,
 }
 
 /// Response for code analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisResponse {
     pub recommendations: Vec<String>,
-    pub issues: Vec<String>,
-    pub score: Option<f32>,
+    pub issues:          Vec<String>,
+    pub score:           Option<f32>,
 }
 
 /// Collaboration session state
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollaborationSession {
-    pub session_id: String,
-    pub participants: Vec<String>,
+    pub session_id:     String,
+    pub participants:   Vec<String>,
     pub shared_context: serde_json::Value,
-    pub created_at: u64,
+    pub created_at:     u64,
 }
 
 /// Collaboration service state
@@ -61,48 +63,48 @@ pub type CollaborationState = Arc<Mutex<HashMap<String, CollaborationSession>>>;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionRequest {
     pub session_id: Option<String>,
-    pub user_id: String,
-    pub action: String, // "create", "join", "leave"
+    pub user_id:    String,
+    pub action:     String, // "create", "join", "leave"
 }
 
 /// Response for session operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionResponse {
-    pub session_id: String,
+    pub session_id:   String,
     pub participants: Vec<String>,
-    pub success: bool,
-    pub message: String,
+    pub success:      bool,
+    pub message:      String,
 }
 
 /// Request for sharing AI context
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ShareContextRequest {
-    pub session_id: String,
+    pub session_id:   String,
     pub context_data: serde_json::Value,
 }
 
 /// Response for shared context
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SharedContextResponse {
-    pub session_id: String,
+    pub session_id:   String,
     pub context_data: serde_json::Value,
 }
 
 /// Request for collaborative AI completion
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollaborativeCompletionRequest {
-    pub session_id: String,
-    pub code: String,
-    pub language: String,
+    pub session_id:      String,
+    pub code:            String,
+    pub language:        String,
     pub cursor_position: usize,
-    pub shared_context: Option<serde_json::Value>,
+    pub shared_context:  Option<serde_json::Value>,
 }
 
 /// Response for collaborative completion
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollaborativeCompletionResponse {
-    pub session_id: String,
-    pub completions: Vec<String>,
+    pub session_id:      String,
+    pub completions:     Vec<String>,
     pub consensus_score: f32,
 }
 
@@ -112,10 +114,7 @@ pub struct CollaborativeCompletionResponse {
 
 /// AI code analysis handler
 #[tauri::command]
-pub async fn ai_analyze_code(
-    code: String,
-    ai_state: State<'_, AIServiceState>,
-) -> Result<AnalysisResponse, String> {
+pub async fn ai_analyze_code(code: String, ai_state: State<'_, AIServiceState>) -> Result<AnalysisResponse, String> {
     // Placeholder implementation
     log::info!("Analyzing code with length: {}", code.len());
 
@@ -123,17 +122,14 @@ pub async fn ai_analyze_code(
 
     Ok(AnalysisResponse {
         recommendations: vec!["Consider adding unit tests".to_string()],
-        issues: vec![],
-        score: Some(85.0),
+        issues:          vec![],
+        score:           Some(85.0),
     })
 }
 
 /// AI documentation generation handler
 #[tauri::command]
-pub async fn ai_generate_docs(
-    code: String,
-    ai_state: State<'_, AIServiceState>,
-) -> Result<String, String> {
+pub async fn ai_generate_docs(code: String, ai_state: State<'_, AIServiceState>) -> Result<String, String> {
     // Placeholder implementation
     log::info!("Generating documentation for code");
 
@@ -144,9 +140,7 @@ pub async fn ai_generate_docs(
 
 /// Get AI service status
 #[tauri::command]
-pub async fn ai_service_status(
-    ai_state: State<'_, AIServiceState>,
-) -> Result<serde_json::Value, String> {
+pub async fn ai_service_status(ai_state: State<'_, AIServiceState>) -> Result<serde_json::Value, String> {
     // Placeholder status response
     Ok(serde_json::json!({
         "status": "operational",
@@ -184,17 +178,17 @@ pub async fn ai_manage_session(
         "create" => {
             if sessions.contains_key(&session_id) {
                 return Ok(SessionResponse {
-                    session_id: session_id.clone(),
+                    session_id:   session_id.clone(),
                     participants: vec![],
-                    success: false,
-                    message: "Session already exists".to_string(),
+                    success:      false,
+                    message:      "Session already exists".to_string(),
                 });
             }
             let session = CollaborationSession {
-                session_id: session_id.clone(),
-                participants: vec![request.user_id],
+                session_id:     session_id.clone(),
+                participants:   vec![request.user_id],
                 shared_context: serde_json::json!({}),
-                created_at: std::time::SystemTime::now()
+                created_at:     std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap()
                     .as_secs(),
@@ -207,7 +201,7 @@ pub async fn ai_manage_session(
                 message: "Session created".to_string(),
             })
         }
-        "join" => {
+        "join" =>
             if let Some(session) = sessions.get_mut(&session_id) {
                 if !session.participants.contains(&request.user_id) {
                     session.participants.push(request.user_id.clone());
@@ -220,14 +214,13 @@ pub async fn ai_manage_session(
                 })
             } else {
                 Ok(SessionResponse {
-                    session_id: session_id.clone(),
+                    session_id:   session_id.clone(),
                     participants: vec![],
-                    success: false,
-                    message: "Session not found".to_string(),
+                    success:      false,
+                    message:      "Session not found".to_string(),
                 })
-            }
-        }
-        "leave" => {
+            },
+        "leave" =>
             if let Some(session) = sessions.get_mut(&session_id) {
                 session.participants.retain(|u| u != &request.user_id);
                 Ok(SessionResponse {
@@ -238,13 +231,12 @@ pub async fn ai_manage_session(
                 })
             } else {
                 Ok(SessionResponse {
-                    session_id: session_id.clone(),
+                    session_id:   session_id.clone(),
                     participants: vec![],
-                    success: false,
-                    message: "Session not found".to_string(),
+                    success:      false,
+                    message:      "Session not found".to_string(),
                 })
-            }
-        }
+            },
         _ => Err("Invalid action".to_string()),
     }
 }
@@ -260,7 +252,7 @@ pub async fn ai_share_context(
     if let Some(session) = sessions.get_mut(&request.session_id) {
         session.shared_context = request.context_data.clone();
         Ok(SharedContextResponse {
-            session_id: request.session_id,
+            session_id:   request.session_id,
             context_data: request.context_data,
         })
     } else {

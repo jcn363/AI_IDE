@@ -13,8 +13,7 @@ use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
 
 use crate::types::{
-    AnalysisTrigger, FileSystemEventData, FileSystemEventType, FileWatchConfig, TaskPriority,
-    TriggerSource,
+    AnalysisTrigger, FileSystemEventData, FileSystemEventType, FileWatchConfig, TaskPriority, TriggerSource,
 };
 
 /// File system watching errors
@@ -81,7 +80,7 @@ struct FileSystemWatcherInner {
 #[derive(Debug, Clone)]
 struct WatchEntry {
     /// Timestamp of last change
-    last_change: Instant,
+    last_change:     Instant,
     /// Pending changes counter
     pending_changes: usize,
 }
@@ -103,18 +102,18 @@ struct PendingChange {
     /// First event timestamp
     first_seen: Instant,
     /// Last event timestamp
-    last_seen: Instant,
+    last_seen:  Instant,
     /// Event counter (for rate limiting)
-    count: usize,
+    count:      usize,
 }
 
 /// File filter engine for determining which files to watch
 #[derive(Clone)]
 struct FileFilterEngine {
     /// Allowed file extensions
-    extensions: Vec<String>,
+    extensions:      Vec<String>,
     /// Maximum file size to watch
-    max_file_size: u64,
+    max_file_size:   u64,
     /// Paths to ignore
     ignore_patterns: Vec<String>,
 }
@@ -124,8 +123,7 @@ impl FileSystemWatcher {
     pub async fn new(config: FileWatchConfig) -> WatcherResult<Self> {
         let (event_sender, event_receiver) = mpsc::unbounded_channel();
 
-        let filter_engine =
-            FileFilterEngine::new(config.watch_extensions.clone(), config.max_file_size);
+        let filter_engine = FileFilterEngine::new(config.watch_extensions.clone(), config.max_file_size);
 
         let change_coalescer = ChangeCoalescer::new(config.debounce_duration);
 
@@ -151,9 +149,7 @@ impl FileSystemWatcher {
         let config_clone = config.clone();
 
         tokio::spawn(async move {
-            if let Err(e) =
-                Self::process_events_loop(inner_clone, event_receiver, config_clone, token).await
-            {
+            if let Err(e) = Self::process_events_loop(inner_clone, event_receiver, config_clone, token).await {
                 error!("Event processing loop failed: {}", e);
             }
         });
@@ -269,10 +265,7 @@ impl FileSystemWatcher {
     }
 
     /// Convert notify event to our internal event format
-    fn convert_and_send_event(
-        sender: &mpsc::UnboundedSender<FileSystemEventData>,
-        event: &Event,
-    ) -> WatcherResult<()> {
+    fn convert_and_send_event(sender: &mpsc::UnboundedSender<FileSystemEventData>, event: &Event) -> WatcherResult<()> {
         for path in &event.paths {
             let event_type = match event.kind {
                 EventKind::Create(_) => FileSystemEventType::Created,
@@ -378,10 +371,7 @@ impl FileSystemWatcher {
 
 impl FileSystemWatcherInner {
     /// Filter and coalesce an incoming event
-    async fn filter_and_coalesce_event(
-        &self,
-        event: FileSystemEventData,
-    ) -> Option<FileSystemEventData> {
+    async fn filter_and_coalesce_event(&self, event: FileSystemEventData) -> Option<FileSystemEventData> {
         // Apply file filtering
         if !self.filter_engine.should_watch(&event.path).await.ok()? {
             return None;
@@ -390,7 +380,7 @@ impl FileSystemWatcherInner {
         // Update watch state
         let mut watch_state = self.watch_state.write().await;
         let entry = watch_state.entry(event.path.clone()).or_insert(WatchEntry {
-            last_change: event.timestamp,
+            last_change:     event.timestamp,
             pending_changes: 0,
         });
 
@@ -416,18 +406,15 @@ impl ChangeCoalescer {
     }
 
     /// Coalesce a change, returning it only if it should be processed
-    pub async fn coalesce_change(
-        &self,
-        event: &FileSystemEventData,
-    ) -> Option<FileSystemEventData> {
+    pub async fn coalesce_change(&self, event: &FileSystemEventData) -> Option<FileSystemEventData> {
         let mut pending = self.pending_changes.write().await;
         let now = Instant::now();
 
         let entry = pending.entry(event.path.clone()).or_insert(PendingChange {
             event_type: event.event_type.clone(),
             first_seen: now,
-            last_seen: now,
-            count: 1,
+            last_seen:  now,
+            count:      1,
         });
 
         entry.last_seen = now;
@@ -437,9 +424,9 @@ impl ChangeCoalescer {
         if entry.first_seen.elapsed() >= self.window_duration {
             let coalesced_event = FileSystemEventData {
                 event_type: entry.event_type.clone(),
-                path: event.path.clone(),
-                timestamp: now,
-                metadata: event.metadata.clone(),
+                path:       event.path.clone(),
+                timestamp:  now,
+                metadata:   event.metadata.clone(),
             };
 
             // Remove the entry to allow new events for this path
@@ -533,10 +520,10 @@ impl FileEventProcessor for DefaultFileEventProcessor {
     async fn process_events(&mut self, events: Vec<FileSystemEventData>) -> WatcherResult<()> {
         for event in events {
             let trigger = AnalysisTrigger {
-                source: TriggerSource::FileSystem,
+                source:     TriggerSource::FileSystem,
                 file_paths: vec![event.path.clone()],
-                priority: TaskPriority::Normal,
-                timestamp: event.timestamp,
+                priority:   TaskPriority::Normal,
+                timestamp:  event.timestamp,
             };
 
             // Call the trigger callback
@@ -568,8 +555,9 @@ impl FileEventProcessor for DefaultFileEventProcessor {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_file_filter_engine() {
@@ -599,9 +587,9 @@ mod tests {
 
         let event = FileSystemEventData {
             event_type: FileSystemEventType::Modified,
-            path: test_file,
-            timestamp: Instant::now(),
-            metadata: HashMap::new(),
+            path:       test_file,
+            timestamp:  Instant::now(),
+            metadata:   HashMap::new(),
         };
 
         // First event should not immediately produce output

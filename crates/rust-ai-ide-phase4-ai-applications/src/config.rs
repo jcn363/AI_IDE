@@ -2,8 +2,9 @@
 //!
 //! This module handles all configuration aspects for the Advanced AI Applications system.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 /// Main Phase 4 configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,12 +39,12 @@ impl Default for Phase4Config {
         Self {
             development_assistance: DevelopmentAssistanceConfig::default(),
             workflow_orchestration: WorkflowOrchestrationConfig::default(),
-            code_analysis: CodeAnalysisConfig::default(),
-            testing: TestingConfig::default(),
-            collaboration: CollaborationConfig::default(),
-            performance: PerformanceConfig::default(),
-            security: SecurityConfig::default(),
-            caching: CachingConfig::default(),
+            code_analysis:          CodeAnalysisConfig::default(),
+            testing:                TestingConfig::default(),
+            collaboration:          CollaborationConfig::default(),
+            performance:            PerformanceConfig::default(),
+            security:               SecurityConfig::default(),
+            caching:                CachingConfig::default(),
         }
     }
 }
@@ -73,12 +74,12 @@ pub struct DevelopmentAssistanceConfig {
 impl Default for DevelopmentAssistanceConfig {
     fn default() -> Self {
         Self {
-            smart_suggestions: true,
-            proactive_improvements: true,
+            smart_suggestions:        true,
+            proactive_improvements:   true,
             context_aware_generation: true,
-            max_suggestions: 5,
-            confidence_threshold: 0.7,
-            learning_enabled: true,
+            max_suggestions:          5,
+            confidence_threshold:     0.7,
+            learning_enabled:         true,
         }
     }
 }
@@ -108,12 +109,12 @@ pub struct WorkflowOrchestrationConfig {
 impl Default for WorkflowOrchestrationConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            max_concurrent_workflows: 10,
-            workflow_timeout_seconds: 300, // 5 minutes
-            auto_optimization: true,
+            enabled:                   true,
+            max_concurrent_workflows:  10,
+            workflow_timeout_seconds:  300, // 5 minutes
+            auto_optimization:         true,
             service_discovery_enabled: true,
-            load_balancing_strategy: LoadBalancingStrategy::RoundRobin,
+            load_balancing_strategy:   LoadBalancingStrategy::RoundRobin,
         }
     }
 }
@@ -165,14 +166,14 @@ pub struct CodeAnalysisConfig {
 impl Default for CodeAnalysisConfig {
     fn default() -> Self {
         Self {
-            semantic_analysis: true,
-            pattern_recognition: true,
-            dependency_analysis: true,
-            performance_profiling: true,
-            cache_size_mb: 512,
+            semantic_analysis:        true,
+            pattern_recognition:      true,
+            dependency_analysis:      true,
+            performance_profiling:    true,
+            cache_size_mb:            512,
             analysis_timeout_seconds: 60,
-            parallel_processing: true,
-            max_analysis_depth: 10,
+            parallel_processing:      true,
+            max_analysis_depth:       10,
         }
     }
 }
@@ -208,14 +209,14 @@ pub struct TestingConfig {
 impl Default for TestingConfig {
     fn default() -> Self {
         Self {
-            auto_test_generation: true,
-            coverage_optimization: true,
+            auto_test_generation:    true,
+            coverage_optimization:   true,
             target_coverage_percent: 85.0,
-            mutation_testing: false,
-            test_timeout_seconds: 60,
-            parallel_execution: true,
-            max_test_processes: 4,
-            generation_strategies: vec![
+            mutation_testing:        false,
+            test_timeout_seconds:    60,
+            parallel_execution:      true,
+            max_test_processes:      4,
+            generation_strategies:   vec![
                 TestGenerationStrategy::UnitTests,
                 TestGenerationStrategy::IntegrationTests,
             ],
@@ -267,12 +268,12 @@ pub struct CollaborationConfig {
 impl Default for CollaborationConfig {
     fn default() -> Self {
         Self {
-            real_time_enabled: true,
-            max_collaborators: 10,
+            real_time_enabled:       true,
+            max_collaborators:       10,
             session_timeout_minutes: 120,
-            shared_insights: true,
+            shared_insights:         true,
             collaborative_workflows: true,
-            features: vec![
+            features:                vec![
                 CollaborationFeature::CodeReview,
                 CollaborationFeature::SharedEditing,
             ],
@@ -327,12 +328,12 @@ pub struct PerformanceConfig {
 impl Default for PerformanceConfig {
     fn default() -> Self {
         Self {
-            memory_limit_mb: 2048,
-            cpu_limit_percent: 80.0,
-            resource_monitoring: true,
+            memory_limit_mb:          2048,
+            cpu_limit_percent:        80.0,
+            resource_monitoring:      true,
             background_task_priority: TaskPriority::Normal,
-            cache_refresh_interval: 300, // 5 minutes
-            performance_profiling: true,
+            cache_refresh_interval:   300, // 5 minutes
+            performance_profiling:    true,
             profiling_retention_days: 30,
         }
     }
@@ -382,13 +383,13 @@ pub struct SecurityConfig {
 impl Default for SecurityConfig {
     fn default() -> Self {
         Self {
-            security_scanning: true,
+            security_scanning:             true,
             vulnerability_check_frequency: CheckFrequency::Daily,
-            audit_logging: true,
-            data_encryption: true,
-            api_rate_limiting: true,
-            scan_depth: SecurityScanDepth::Comprehensive,
-            security_approval: false,
+            audit_logging:                 true,
+            data_encryption:               true,
+            api_rate_limiting:             true,
+            scan_depth:                    SecurityScanDepth::Comprehensive,
+            security_approval:             false,
         }
     }
 }
@@ -453,13 +454,13 @@ pub struct CachingConfig {
 impl Default for CachingConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            cache_size_mb: 1024,
+            enabled:           true,
+            cache_size_mb:     1024,
             cache_ttl_seconds: 3600, // 1 hour
             cache_tti_seconds: 1800, // 30 minutes
             distributed_cache: false,
             cache_compression: true,
-            cache_monitoring: true,
+            cache_monitoring:  true,
         }
     }
 }
@@ -480,8 +481,8 @@ impl ConfigurationManager {
     /// Create a new configuration manager
     pub fn new() -> Self {
         Self {
-            config: std::sync::RwLock::new(Phase4Config::default()),
-            config_path: None,
+            config:           std::sync::RwLock::new(Phase4Config::default()),
+            config_path:      None,
             validation_rules: Vec::new(),
         }
     }
@@ -489,21 +490,17 @@ impl ConfigurationManager {
     /// Load configuration from file
     pub async fn load_from_file(&mut self, path: &str) -> crate::errors::Phase4Result<()> {
         let content = tokio::fs::read_to_string(path).await.map_err(|e| {
-            crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::FileAccess(format!(
-                    "Failed to read config file: {}",
-                    e
-                )),
-            )
+            crate::errors::Phase4Error::Configuration(crate::errors::ConfigurationError::FileAccess(format!(
+                "Failed to read config file: {}",
+                e
+            )))
         })?;
 
         let config: Phase4Config = serde_json::from_str(&content).map_err(|e| {
-            crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::ParseError(format!(
-                    "Failed to parse config: {}",
-                    e
-                )),
-            )
+            crate::errors::Phase4Error::Configuration(crate::errors::ConfigurationError::ParseError(format!(
+                "Failed to parse config: {}",
+                e
+            )))
         })?;
 
         self.validate_configuration(&config)?;
@@ -517,22 +514,18 @@ impl ConfigurationManager {
     pub async fn save_to_file(&self) -> crate::errors::Phase4Result<()> {
         let config = self.config.read().unwrap().clone();
         let content = serde_json::to_string_pretty(&config).map_err(|e| {
-            crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::ParseError(format!(
-                    "Failed to serialize config: {}",
-                    e
-                )),
-            )
+            crate::errors::Phase4Error::Configuration(crate::errors::ConfigurationError::ParseError(format!(
+                "Failed to serialize config: {}",
+                e
+            )))
         })?;
 
         if let Some(path) = &self.config_path {
             tokio::fs::write(path, content).await.map_err(|e| {
-                crate::errors::Phase4Error::Configuration(
-                    crate::errors::ConfigurationError::FileAccess(format!(
-                        "Failed to write config file: {}",
-                        e
-                    )),
-                )
+                crate::errors::Phase4Error::Configuration(crate::errors::ConfigurationError::FileAccess(format!(
+                    "Failed to write config file: {}",
+                    e
+                )))
             })?;
         }
 
@@ -556,17 +549,13 @@ impl ConfigurationManager {
         // Basic validation rules
         if config.performance.memory_limit_mb == 0 {
             return Err(crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::InvalidValue(
-                    "Memory limit cannot be zero".to_string(),
-                ),
+                crate::errors::ConfigurationError::InvalidValue("Memory limit cannot be zero".to_string()),
             ));
         }
 
         if config.workflow_orchestration.max_concurrent_workflows == 0 {
             return Err(crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::InvalidValue(
-                    "Max concurrent workflows cannot be zero".to_string(),
-                ),
+                crate::errors::ConfigurationError::InvalidValue("Max concurrent workflows cannot be zero".to_string()),
             ));
         }
 
@@ -605,8 +594,7 @@ pub struct SecurityValidationRule;
 impl ValidationRule for SecurityValidationRule {
     fn validate(&self, config: &Phase4Config) -> crate::errors::Phase4Result<()> {
         // Ensure security settings are reasonable
-        if config.security.security_scanning
-            && config.security.vulnerability_check_frequency == CheckFrequency::Weekly
+        if config.security.security_scanning && config.security.vulnerability_check_frequency == CheckFrequency::Weekly
         {
             // This is a warning, but still valid
         }
@@ -630,9 +618,7 @@ impl ValidationRule for PerformanceValidationRule {
 
         if config.performance.cpu_limit_percent > 100.0 {
             return Err(crate::errors::Phase4Error::Configuration(
-                crate::errors::ConfigurationError::InvalidValue(
-                    "CPU limit percentage cannot exceed 100%".to_string(),
-                ),
+                crate::errors::ConfigurationError::InvalidValue("CPU limit percentage cannot exceed 100%".to_string()),
             ));
         }
 

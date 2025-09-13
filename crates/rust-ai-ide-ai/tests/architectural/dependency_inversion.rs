@@ -1,7 +1,8 @@
 //! Tests for dependency inversion principle analysis
 
 use super::*;
-use crate::analysis::{architectural::DependencyInversionAnalyzer, AnalysisType, Severity};
+use crate::analysis::architectural::DependencyInversionAnalyzer;
+use crate::analysis::{AnalysisType, Severity};
 
 #[test]
 fn test_proper_dependency_inversion() {

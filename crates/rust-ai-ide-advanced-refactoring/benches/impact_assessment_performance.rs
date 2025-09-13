@@ -1,6 +1,7 @@
+use std::time::Duration;
+
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use rust_ai_ide_advanced_refactoring::*;
-use std::time::Duration;
 
 fn impact_assessment_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("impact_assessment");
@@ -26,10 +27,10 @@ fn impact_assessment_benchmark(c: &mut Criterion) {
                     // Simulate impact assessment
                     let impact = ImpactAssessment {
                         affected_modules: codebase.modules.len() / 10, // 10% of modules affected
-                        estimated_effort: loc / 100, // 1% of total LOC needs changes
-                        complexity: if *loc > 50_000 { "high" } else { "medium" }.to_string(),
-                        risk_level: if *loc > 50_000 { "high" } else { "medium" }.to_string(),
-                        dependencies: codebase.dependencies.len(),
+                        estimated_effort: loc / 100,                   // 1% of total LOC needs changes
+                        complexity:       if *loc > 50_000 { "high" } else { "medium" }.to_string(),
+                        risk_level:       if *loc > 50_000 { "high" } else { "medium" }.to_string(),
+                        dependencies:     codebase.dependencies.len(),
                     };
                     impact
                 });
@@ -57,20 +58,19 @@ fn impact_assessment_benchmark(c: &mut Criterion) {
                     let impact = ImpactAssessment {
                         affected_modules: affected,
                         estimated_effort: (codebase_size as f64 * scope_factor * 0.1) as usize, // 10% of scope
-                        complexity: if *scope_factor > 0.3 {
+                        complexity:       if *scope_factor > 0.3 {
                             "high"
                         } else {
                             "medium"
                         }
                         .to_string(),
-                        risk_level: if *scope_factor > 0.3 {
+                        risk_level:       if *scope_factor > 0.3 {
                             "high"
                         } else {
                             "medium"
                         }
                         .to_string(),
-                        dependencies: (codebase.dependencies.len() as f64 * *scope_factor).ceil()
-                            as usize,
+                        dependencies:     (codebase.dependencies.len() as f64 * *scope_factor).ceil() as usize,
                     };
                     impact
                 });
@@ -87,9 +87,9 @@ fn impact_assessment_benchmark(c: &mut Criterion) {
             let mut impact = ImpactAssessment {
                 affected_modules: 0,
                 estimated_effort: 0,
-                complexity: "medium".to_string(),
-                risk_level: "medium".to_string(),
-                dependencies: 0,
+                complexity:       "medium".to_string(),
+                risk_level:       "medium".to_string(),
+                dependencies:     0,
             };
 
             // Analyze dependencies (simplified)
@@ -108,12 +108,12 @@ fn impact_assessment_benchmark(c: &mut Criterion) {
 
 // Helper structs and functions for the benchmark
 struct MockCodebase {
-    modules: Vec<MockModule>,
+    modules:      Vec<MockModule>,
     dependencies: Vec<MockDependency>,
 }
 
 struct MockModule {
-    loc: usize,
+    loc:        usize,
     complexity: usize,
 }
 
@@ -128,8 +128,8 @@ fn generate_mock_codebase(loc: usize) -> MockCodebase {
 
     let modules = (0..module_count)
         .map(|_| MockModule {
-            loc: 100,      // Average 100 LOC per module
-            complexity: 5, // Medium complexity
+            loc:        100, // Average 100 LOC per module
+            complexity: 5,   // Medium complexity
         })
         .collect();
 

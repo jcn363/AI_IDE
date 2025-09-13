@@ -1,30 +1,29 @@
-use crate::handlers::default_webhook_handler;
-use crate::types::{EventHandlerResponse, WebhookPayload};
-use axum::{
-    extract::State,
-    middleware,
-    routing::{any, post},
-    Router,
-};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
+
+use axum::extract::State;
+use axum::routing::{any, post};
+use axum::{middleware, Router};
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 use tokio::task::JoinHandle;
 
+use crate::handlers::default_webhook_handler;
+use crate::types::{EventHandlerResponse, WebhookPayload};
+
 /// Webhook server state
 pub struct ServerState {
     pub providers: RwLock<HashMap<String, Arc<dyn crate::WebhookProvider>>>,
-    pub stats: RwLock<std::collections::HashMap<String, u64>>,
+    pub stats:     RwLock<std::collections::HashMap<String, u64>>,
 }
 
 /// Webhook server implementation
 pub struct WebhookServer {
-    port: u16,
-    state: Arc<ServerState>,
+    port:          u16,
+    state:         Arc<ServerState>,
     server_handle: Option<JoinHandle<()>>,
-    router: Option<Router>,
+    router:        Option<Router>,
 }
 
 impl WebhookServer {
@@ -32,7 +31,7 @@ impl WebhookServer {
     pub async fn new(port: u16) -> Result<Self, Box<dyn std::error::Error>> {
         let state = Arc::new(ServerState {
             providers: RwLock::new(HashMap::new()),
-            stats: RwLock::new(HashMap::new()),
+            stats:     RwLock::new(HashMap::new()),
         });
 
         let router = Self::create_router(state.clone());
@@ -55,11 +54,7 @@ impl WebhookServer {
     }
 
     /// Register a webhook handler for a specific provider
-    pub async fn register_handler(
-        &self,
-        provider_name: String,
-        provider: Arc<dyn crate::WebhookProvider>,
-    ) {
+    pub async fn register_handler(&self, provider_name: String, provider: Arc<dyn crate::WebhookProvider>) {
         let mut providers = self.state.providers.write().await;
         providers.insert(provider_name, provider);
     }
@@ -124,7 +119,7 @@ async fn webhook_post_handler(
                 Ok(axum::Json(EventHandlerResponse {
                     success: true,
                     message: "Webhook processed successfully".to_string(),
-                    data: None,
+                    data:    None,
                 }))
             }
             Err(e) => {
@@ -153,10 +148,7 @@ async fn health_check() -> axum::Json<serde_json::Value> {
 }
 
 /// Logging middleware
-async fn logging_middleware(
-    req: axum::extract::Request,
-    next: middleware::Next,
-) -> axum::response::Response {
+async fn logging_middleware(req: axum::extract::Request, next: middleware::Next) -> axum::response::Response {
     let method = req.method().clone();
     let uri = req.uri().clone();
 

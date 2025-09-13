@@ -1,6 +1,7 @@
+use async_trait::async_trait;
+
 use crate::types::*;
 use crate::RefactoringOperation;
-use async_trait::async_trait;
 
 /// Batch Interface Extraction operation - extracts interfaces from multiple classes
 pub struct BatchInterfaceExtractionOperation;
@@ -13,14 +14,12 @@ impl RefactoringOperation for BatchInterfaceExtractionOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![],
             error_message: None,
-            warnings: vec![
-                "Batch interface extraction operation requires implementation".to_string(),
-            ],
-            new_content: None,
+            warnings:      vec!["Batch interface extraction operation requires implementation".to_string()],
+            new_content:   None,
         })
     }
 
@@ -29,16 +28,14 @@ impl RefactoringOperation for BatchInterfaceExtractionOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: false,
+            is_safe:          false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::Medium,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Batch operations may affect multiple files".to_string()],
-            suggestions: vec![],
-            warnings: vec![
-                "Batch interface extraction operation requires implementation".to_string(),
-            ],
+            suggestions:      vec![],
+            warnings:         vec!["Batch interface extraction operation requires implementation".to_string()],
         })
     }
 

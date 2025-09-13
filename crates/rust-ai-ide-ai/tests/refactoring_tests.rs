@@ -1,11 +1,12 @@
 // Basic integration tests for refactoring functionality
 // Tests end-to-end refactoring workflows and API compatibility
 
-use rust_ai_ide_ai::refactoring::{
-    BackendFeatures, RefactoringContext, RefactoringEngine, RefactoringOperationFactory,
-    RefactoringOptions, RefactoringType, SymbolKind,
-};
 use std::collections::HashMap;
+
+use rust_ai_ide_ai::refactoring::{
+    BackendFeatures, RefactoringContext, RefactoringEngine, RefactoringOperationFactory, RefactoringOptions,
+    RefactoringType, SymbolKind,
+};
 
 #[cfg(test)]
 mod tests {
@@ -36,15 +37,15 @@ mod tests {
     #[test]
     fn test_backend_capabilities_structure() {
         let features = BackendFeatures {
-            batch_operations: true,
-            analysis: true,
-            backup_recovery: true,
-            test_generation: false,
-            ai_analysis: false,
-            lsp_integration: false,
-            git_integration: false,
+            batch_operations:       true,
+            analysis:               true,
+            backup_recovery:        true,
+            test_generation:        false,
+            ai_analysis:            false,
+            lsp_integration:        false,
+            git_integration:        false,
             cross_language_support: true,
-            parallel_processing: true,
+            parallel_processing:    true,
         };
 
         assert!(features.batch_operations);
@@ -56,12 +57,12 @@ mod tests {
     #[test]
     fn test_refactoring_context_creation() {
         let context = RefactoringContext {
-            file_path: "/tmp/test.rs".to_string(),
-            cursor_line: 10,
+            file_path:        "/tmp/test.rs".to_string(),
+            cursor_line:      10,
             cursor_character: 5,
-            selection: None,
-            symbol_name: Some("test_function".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
+            selection:        None,
+            symbol_name:      Some("test_function".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
         };
 
         assert_eq!(context.file_path, "/tmp/test.rs");
@@ -73,11 +74,11 @@ mod tests {
     #[test]
     fn test_refactoring_options_defaults() {
         let options = RefactoringOptions {
-            create_backup: true,
-            generate_tests: false,
+            create_backup:            true,
+            generate_tests:           false,
             apply_to_all_occurrences: false,
-            preserve_references: true,
-            ignore_safe_operations: false,
+            preserve_references:      true,
+            ignore_safe_operations:   false,
         };
 
         assert!(options.create_backup);
@@ -96,11 +97,11 @@ mod tests {
     #[test]
     fn test_cache_feedback_mechanism() {
         let mut options = RefactoringOptions {
-            create_backup: false,
-            generate_tests: true,
+            create_backup:            false,
+            generate_tests:           true,
             apply_to_all_occurrences: false,
-            preserve_references: true,
-            ignore_safe_operations: false,
+            preserve_references:      true,
+            ignore_safe_operations:   false,
         };
 
         // Test that options can be modified and are properly handled
@@ -111,17 +112,16 @@ mod tests {
     #[test]
     fn test_operation_applicability_checks() {
         let context_without_symbol = RefactoringContext {
-            file_path: "/tmp/test.rs".to_string(),
-            cursor_line: 1,
+            file_path:        "/tmp/test.rs".to_string(),
+            cursor_line:      1,
             cursor_character: 0,
-            selection: None,
-            symbol_name: None,
-            symbol_kind: None,
+            selection:        None,
+            symbol_name:      None,
+            symbol_kind:      None,
         };
 
         // Test a simple operation that should be inapplicable without a symbol
-        let operation =
-            RefactoringOperationFactory::create_operation(&RefactoringType::Rename).unwrap();
+        let operation = RefactoringOperationFactory::create_operation(&RefactoringType::Rename).unwrap();
         // This test assumes the operation would check for symbol presence, but the actual
         // implementation might be different. For now, we just ensure the operation is created.
         assert!(operation.refactoring_type() == RefactoringType::Rename);
@@ -171,12 +171,12 @@ mod tests {
 
         // Default options with no extra_options
         let default_options = RefactoringOptions {
-            create_backup: true,
-            generate_tests: false,
+            create_backup:            true,
+            generate_tests:           false,
             apply_to_all_occurrences: false,
-            preserve_references: true,
-            ignore_safe_operations: false,
-            extra_options: None,
+            preserve_references:      true,
+            ignore_safe_operations:   false,
+            extra_options:            None,
         };
 
         // Operation options with extra_options containing newName, functionName
@@ -192,12 +192,12 @@ mod tests {
         );
 
         let operation_options = RefactoringOptions {
-            create_backup: false,
-            generate_tests: true,
+            create_backup:            false,
+            generate_tests:           true,
             apply_to_all_occurrences: true,
-            preserve_references: false,
-            ignore_safe_operations: true,
-            extra_options: Some(extra_hashmap),
+            preserve_references:      false,
+            ignore_safe_operations:   true,
+            extra_options:            Some(extra_hashmap),
         };
 
         // Merge options
@@ -238,12 +238,12 @@ mod tests {
         default_extra.insert("sharedField".to_string(), serde_json::json!("fromDefault"));
 
         let default_options = RefactoringOptions {
-            create_backup: true,
-            generate_tests: false,
+            create_backup:            true,
+            generate_tests:           false,
             apply_to_all_occurrences: false,
-            preserve_references: true,
-            ignore_safe_operations: false,
-            extra_options: Some(default_extra),
+            preserve_references:      true,
+            ignore_safe_operations:   false,
+            extra_options:            Some(default_extra),
         };
 
         // Operation options with overlapping extra_options
@@ -255,12 +255,12 @@ mod tests {
         );
 
         let operation_options = RefactoringOptions {
-            create_backup: false,
-            generate_tests: true,
+            create_backup:            false,
+            generate_tests:           true,
             apply_to_all_occurrences: true,
-            preserve_references: false,
-            ignore_safe_operations: true,
-            extra_options: Some(operation_extra),
+            preserve_references:      false,
+            ignore_safe_operations:   true,
+            extra_options:            Some(operation_extra),
         };
 
         // Merge options
@@ -296,22 +296,22 @@ mod tests {
         default_extra.insert("newName".to_string(), serde_json::json!("defaultRenamed"));
 
         let default_options = RefactoringOptions {
-            create_backup: true,
-            generate_tests: false,
+            create_backup:            true,
+            generate_tests:           false,
             apply_to_all_occurrences: false,
-            preserve_references: true,
-            ignore_safe_operations: false,
-            extra_options: Some(default_extra),
+            preserve_references:      true,
+            ignore_safe_operations:   false,
+            extra_options:            Some(default_extra),
         };
 
         // Operation options without extra_options
         let operation_options = RefactoringOptions {
-            create_backup: false,
-            generate_tests: true,
+            create_backup:            false,
+            generate_tests:           true,
             apply_to_all_occurrences: true,
-            preserve_references: false,
-            ignore_safe_operations: true,
-            extra_options: None,
+            preserve_references:      false,
+            ignore_safe_operations:   true,
+            extra_options:            None,
         };
 
         // Merge options
@@ -329,8 +329,9 @@ mod tests {
 
     #[test]
     fn test_file_permissions_validation() {
-        use rust_ai_ide_ai::refactoring::RefactoringEngine;
         use std::fs;
+
+        use rust_ai_ide_ai::refactoring::RefactoringEngine;
         use tempfile::TempDir;
 
         // Create a temporary directory for testing
@@ -347,9 +348,9 @@ mod tests {
         assert!(result.is_none(), "Should be able to access writable file");
 
         // Test permissions validation method
-        let perm_result = tokio::runtime::Runtime::new().unwrap().block_on(async {
-            engine.validate_file_permissions(&test_file_path.to_string_lossy())
-        });
+        let perm_result = tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(async { engine.validate_file_permissions(&test_file_path.to_string_lossy()) });
         assert!(
             perm_result.is_ok(),
             "Should validate permissions for writable file"
@@ -361,9 +362,10 @@ mod tests {
 
     #[test]
     fn test_readonly_directory_validation() {
-        use rust_ai_ide_ai::refactoring::RefactoringEngine;
         use std::fs;
         use std::os::unix::fs::PermissionsExt;
+
+        use rust_ai_ide_ai::refactoring::RefactoringEngine;
         use tempfile::TempDir;
 
         // Create a temporary directory for testing
@@ -385,9 +387,9 @@ mod tests {
         let engine = RefactoringEngine::new();
 
         // Test permissions validation method for read-only directory
-        let perm_result = tokio::runtime::Runtime::new().unwrap().block_on(async {
-            engine.validate_file_permissions(&test_file_path.to_string_lossy())
-        });
+        let perm_result = tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(async { engine.validate_file_permissions(&test_file_path.to_string_lossy()) });
 
         // On Unix systems, this should fail because we can't create temp files in readonly directory
         #[cfg(unix)]

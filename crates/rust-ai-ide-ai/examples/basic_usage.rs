@@ -1,6 +1,7 @@
+use std::println;
+
 use anyhow::Result;
 use rust_ai_ide_ai::model_loader::*;
-use std::println;
 
 /// Basic usage example demonstrating model registry functionality
 #[tokio::main]
@@ -90,23 +91,16 @@ async fn main() -> Result<()> {
 
     let policies = vec![
         ("LRU", UnloadingPolicy::LRU { max_age_hours: 24 }),
-        (
-            "Memory Threshold",
-            UnloadingPolicy::MemoryThreshold {
-                max_memory_gb: 16.0,
-            },
-        ),
-        (
-            "Time-based",
-            UnloadingPolicy::TimeBased { max_age_hours: 48 },
-        ),
-        (
-            "Hybrid",
-            UnloadingPolicy::Hybrid {
-                max_age_hours: 24,
-                max_memory_gb: 12.0,
-            },
-        ),
+        ("Memory Threshold", UnloadingPolicy::MemoryThreshold {
+            max_memory_gb: 16.0,
+        }),
+        ("Time-based", UnloadingPolicy::TimeBased {
+            max_age_hours: 48,
+        }),
+        ("Hybrid", UnloadingPolicy::Hybrid {
+            max_age_hours: 24,
+            max_memory_gb: 12.0,
+        }),
     ];
 
     for (name, policy) in policies {

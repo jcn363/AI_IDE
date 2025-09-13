@@ -54,20 +54,20 @@ pub use test_generation::{GeneratedTests, TestGenerator};
 // Core context for code generation
 #[derive(Debug, Clone)]
 pub struct CodeGenerationContext {
-    pub project_context: ProjectContext,
-    pub language: TargetLanguage,
-    pub target_scope: GenerationScope,
+    pub project_context:      ProjectContext,
+    pub language:             TargetLanguage,
+    pub target_scope:         GenerationScope,
     pub quality_requirements: QualityRequirements,
-    pub user_preferences: UserPreferences,
+    pub user_preferences:     UserPreferences,
 }
 
 // Project context information
 #[derive(Debug, Clone)]
 pub struct ProjectContext {
     pub project_structure: std::collections::HashMap<String, String>,
-    pub dependencies: Vec<Dependency>,
+    pub dependencies:      Vec<Dependency>,
     pub existing_patterns: Vec<CodePattern>,
-    pub coding_standards: CodingStandards,
+    pub coding_standards:  CodingStandards,
 }
 
 // Target language
@@ -113,11 +113,11 @@ pub enum GenerationScope {
 // Quality requirements
 #[derive(Debug, Clone)]
 pub struct QualityRequirements {
-    pub min_complexity_score: f32,
-    pub require_documentation: bool,
-    pub require_error_handling: bool,
-    pub require_tests: bool,
-    pub code_style: String,
+    pub min_complexity_score:     f32,
+    pub require_documentation:    bool,
+    pub require_error_handling:   bool,
+    pub require_tests:            bool,
+    pub code_style:               String,
     pub performance_requirements: Option<PerformanceReqs>,
 }
 
@@ -125,69 +125,69 @@ pub struct QualityRequirements {
 #[derive(Debug, Clone)]
 pub struct UserPreferences {
     pub naming_convention: String,
-    pub max_line_length: usize,
-    pub indentation: String,
-    pub comment_style: String,
+    pub max_line_length:   usize,
+    pub indentation:       String,
+    pub comment_style:     String,
 }
 
 // Generated code quality assessment
 #[derive(Debug, Clone)]
 pub struct GenerationQuality {
-    pub readability_score: f32,
+    pub readability_score:     f32,
     pub maintainability_score: f32,
-    pub performance_score: f32,
-    pub security_score: f32,
-    pub compliance_score: f32,
-    pub overall_score: f32,
-    pub issues: Vec<QualityIssue>,
+    pub performance_score:     f32,
+    pub security_score:        f32,
+    pub compliance_score:      f32,
+    pub overall_score:         f32,
+    pub issues:                Vec<QualityIssue>,
 }
 
 // Quality issues found during validation
 #[derive(Debug, Clone)]
 pub struct QualityIssue {
-    pub category: String,
-    pub severity: String,
-    pub message: String,
+    pub category:   String,
+    pub severity:   String,
+    pub message:    String,
     pub suggestion: Option<String>,
 }
 
 // Generator metadata
 #[derive(Debug, Clone)]
 pub struct GeneratorMetadata {
-    pub name: String,
-    pub version: String,
+    pub name:             String,
+    pub version:          String,
     pub language_support: Vec<TargetLanguage>,
-    pub description: String,
-    pub author: String,
+    pub description:      String,
+    pub author:           String,
 }
 
 // Supporting types
 #[derive(Debug, Clone)]
 pub struct Dependency {
-    pub name: String,
-    pub version: String,
+    pub name:     String,
+    pub version:  String,
     pub features: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct CodePattern {
-    pub pattern_type: String,
-    pub example: String,
+    pub pattern_type:  String,
+    pub example:       String,
     pub usage_context: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct CodingStandards {
-    pub formatting_rules: Vec<String>,
-    pub naming_rules: Vec<String>,
+    pub formatting_rules:    Vec<String>,
+    pub naming_rules:        Vec<String>,
     pub documentation_rules: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct PerformanceReqs {
     pub max_execution_time: std::time::Duration,
-    pub memory_limit: u64,
-    pub thread_safety: bool,
+    pub memory_limit:       u64,
+    pub thread_safety:      bool,
 }
 
 // Error types for code generation
@@ -218,8 +218,7 @@ pub enum CodeGenerationError {
 /// Main code generation service
 #[derive(Debug)]
 pub struct CodeGenerationService {
-    function_generators:
-        std::collections::HashMap<TargetLanguage, Vec<function_generation::FunctionGenerator>>,
+    function_generators: std::collections::HashMap<TargetLanguage, Vec<function_generation::FunctionGenerator>>,
 }
 
 impl CodeGenerationService {
@@ -245,16 +244,11 @@ impl CodeGenerationService {
     }
 
     /// Generate code using the appropriate generator
-    pub async fn generate_code(
-        &self,
-        context: CodeGenerationContext,
-    ) -> Result<String, CodeGenerationError> {
+    pub async fn generate_code(&self, context: CodeGenerationContext) -> Result<String, CodeGenerationError> {
         let generators = self
             .function_generators
             .get(&context.language)
-            .ok_or_else(|| {
-                CodeGenerationError::UnsupportedLanguage(format!("{:?}", context.language))
-            })?;
+            .ok_or_else(|| CodeGenerationError::UnsupportedLanguage(format!("{:?}", context.language)))?;
 
         // For now, use the first available generator
         // In a more sophisticated implementation, we might rank/select generators

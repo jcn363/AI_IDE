@@ -1,7 +1,8 @@
 //! Template engine for code generation
 
-use handlebars::Handlebars;
 use std::collections::HashMap;
+
+use handlebars::Handlebars;
 
 /// Template engine for rendering code templates
 #[derive(Clone)]
@@ -29,20 +30,12 @@ impl TemplateEngine {
     }
 
     /// Render a template with context
-    pub fn render(
-        &self,
-        template: &str,
-        context: &serde_json::Value,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    pub fn render(&self, template: &str, context: &serde_json::Value) -> Result<String, Box<dyn std::error::Error>> {
         self.engine.render(template, context).map_err(Into::into)
     }
 
     /// Register a custom template
-    pub fn register_template(
-        &mut self,
-        name: &str,
-        template: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn register_template(&mut self, name: &str, template: &str) -> Result<(), Box<dyn std::error::Error>> {
         self.engine
             .register_template_string(name, template)
             .map_err(Into::into)
@@ -62,8 +55,9 @@ impl Default for TemplateEngine {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn test_template_engine_creation() {
@@ -76,6 +70,7 @@ mod tests {
         let engine = TemplateEngine::new();
         let context = json!({"name": "User", "fields": ["id", "name"]});
         let result = engine.render("struct", &context);
-        assert!(result.is_ok() || !engine.has_template("struct")); // Either renders or template doesn't exist
+        assert!(result.is_ok() || !engine.has_template("struct")); // Either renders or template
+                                                                   // doesn't exist
     }
 }

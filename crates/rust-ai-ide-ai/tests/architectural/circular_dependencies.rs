@@ -1,7 +1,8 @@
 //! Tests for circular dependency detection
 
 use super::*;
-use crate::analysis::{architectural::CircularDependencyAnalyzer, AnalysisType, Severity};
+use crate::analysis::architectural::CircularDependencyAnalyzer;
+use crate::analysis::{AnalysisType, Severity};
 
 #[test]
 fn test_no_circular_dependencies() {

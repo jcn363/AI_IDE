@@ -6,35 +6,32 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 pub struct QuantumEthicsFramework {
-    pub ethical_principles: std::collections::HashMap<String, EthicalPrinciple>,
-    pub consciousness_ethics: ConsciousnessEthicsEngine,
+    pub ethical_principles:          std::collections::HashMap<String, EthicalPrinciple>,
+    pub consciousness_ethics:        ConsciousnessEthicsEngine,
     pub reality_manipulation_ethics: RealityManipulationEthics,
 }
 
 impl QuantumEthicsFramework {
     pub fn new() -> Self {
         Self {
-            ethical_principles: std::collections::HashMap::new(),
-            consciousness_ethics: ConsciousnessEthicsEngine::new(),
+            ethical_principles:          std::collections::HashMap::new(),
+            consciousness_ethics:        ConsciousnessEthicsEngine::new(),
             reality_manipulation_ethics: RealityManipulationEthics::new(),
         }
     }
 
-    pub fn evaluate_quantum_action(
-        &self,
-        action: &QuantumAction,
-    ) -> Result<EthicalEvaluation, QuantumEthicsError> {
+    pub fn evaluate_quantum_action(&self, action: &QuantumAction) -> Result<EthicalEvaluation, QuantumEthicsError> {
         let consciousness_evaluation = self.consciousness_ethics.evaluate_consciousness(action)?;
         let reality_evaluation = self.reality_manipulation_ethics.evaluate_reality(action)?;
         let overall_score = (consciousness_evaluation.score + reality_evaluation.score) / 2.0;
 
         Ok(EthicalEvaluation {
-            score: overall_score,
+            score:     overall_score,
             reasoning: format!(
                 "Consciousness: {}, Reality: {}",
                 consciousness_evaluation.reasoning, reality_evaluation.reasoning
             ),
-            approved: overall_score >= 0.7,
+            approved:  overall_score >= 0.7,
         })
     }
 }
@@ -50,14 +47,11 @@ impl ConsciousnessEthicsEngine {
         }
     }
 
-    pub fn evaluate_consciousness(
-        &self,
-        action: &QuantumAction,
-    ) -> Result<EthicalEvaluation, QuantumEthicsError> {
+    pub fn evaluate_consciousness(&self, action: &QuantumAction) -> Result<EthicalEvaluation, QuantumEthicsError> {
         Ok(EthicalEvaluation {
-            score: 0.85,
+            score:     0.85,
             reasoning: "Consciousness enhancement is ethically sound".to_string(),
-            approved: true,
+            approved:  true,
         })
     }
 }
@@ -73,14 +67,11 @@ impl RealityManipulationEthics {
         }
     }
 
-    pub fn evaluate_reality(
-        &self,
-        action: &QuantumAction,
-    ) -> Result<EthicalEvaluation, QuantumEthicsError> {
+    pub fn evaluate_reality(&self, action: &QuantumAction) -> Result<EthicalEvaluation, QuantumEthicsError> {
         Ok(EthicalEvaluation {
-            score: 0.8,
+            score:     0.8,
             reasoning: "Reality manipulation within ethical boundaries".to_string(),
-            approved: true,
+            approved:  true,
         })
     }
 }
@@ -95,27 +86,27 @@ pub struct QuantumAction {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EthicalEvaluation {
-    pub score: f32,
+    pub score:     f32,
     pub reasoning: String,
-    pub approved: bool,
+    pub approved:  bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EthicalPrinciple {
-    pub name: String,
+    pub name:        String,
     pub description: String,
-    pub weight: f32,
+    pub weight:      f32,
 }
 
 #[derive(Clone, Debug, Default)]
 pub struct EthicalThresholds {
     pub consciousness_threshold: f32,
-    pub reality_threshold: f32,
+    pub reality_threshold:       f32,
 }
 
 #[derive(Clone, Debug, Default)]
 pub struct ManipulationLimits {
-    pub max_reality_distortion: f32,
+    pub max_reality_distortion:       f32,
     pub consciousness_increase_limit: f32,
 }
 

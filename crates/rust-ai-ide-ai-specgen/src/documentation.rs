@@ -17,9 +17,9 @@ impl DocumentationGenerator {
         _format: DocumentationFormat,
     ) -> Result<DocumentationFile> {
         Ok(DocumentationFile {
-            path: "README.md".to_string(),
-            content: "# Documentation\n\nNot implemented yet.".to_string(),
-            format: DocumentationFormat::Markdown,
+            path:     "README.md".to_string(),
+            content:  "# Documentation\n\nNot implemented yet.".to_string(),
+            format:   DocumentationFormat::Markdown,
             doc_type: DocumentationType::UserGuide,
         })
     }

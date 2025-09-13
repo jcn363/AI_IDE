@@ -8,32 +8,26 @@ use uuid::Uuid;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PluginMetadata {
     /// Unique identifier for the plugin (UUID)
-    pub id: Uuid,
+    pub id:                  Uuid,
     /// Human-readable name of the plugin
-    pub name: String,
+    pub name:                String,
     /// Version of the plugin (using semantic versioning)
-    pub version: Version,
+    pub version:             Version,
     /// Author or organization responsible for the plugin
-    pub author: String,
+    pub author:              String,
     /// Description of the plugin's functionality
-    pub description: String,
+    pub description:         String,
     /// Repository URL for the plugin
-    pub repository: Option<String>,
+    pub repository:          Option<String>,
     /// Website URL for the plugin
-    pub homepage: Option<String>,
+    pub homepage:            Option<String>,
     /// Minimum version of the IDE required
     pub minimum_ide_version: Option<String>,
 }
 
 impl PluginMetadata {
     /// Creates a new PluginMetadata instance.
-    pub fn new(
-        id: Uuid,
-        name: String,
-        version: Version,
-        author: String,
-        description: String,
-    ) -> Self {
+    pub fn new(id: Uuid, name: String, version: Version, author: String, description: String) -> Self {
         Self {
             id,
             name,

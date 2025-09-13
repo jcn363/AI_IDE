@@ -1,13 +1,10 @@
 //! Main learning system implementation that orchestrates all subsystems
 
-use super::types::{
-    db_types::{ChangeType as DBChangeType, ErrorPattern, FixSuggestion},
-    AIResult, AIServiceError, PrivacyMode,
-};
-use chrono::Utc;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
+
+use chrono::Utc;
 use uuid::Uuid;
 
 // Import our submodules
@@ -15,27 +12,30 @@ use super::database::LearningDatabase;
 use super::models::{LearnedPattern, LearningPreferences, PatternSimilarity};
 use super::preferences::PreferencesManager;
 use super::similarity::SimilarityCalculator;
-use super::statistics::{analysis::generate_insights, LearningStatistics};
+use super::statistics::analysis::generate_insights;
+use super::statistics::LearningStatistics;
+use super::types::db_types::{ChangeType as DBChangeType, ErrorPattern, FixSuggestion};
+use super::types::{AIResult, AIServiceError, PrivacyMode};
 use super::SimilarityCache;
 
 /// Main learning system that coordinates all learning functionality
 #[derive(Debug)]
 pub struct LearningSystem {
     /// Database manager for persistence
-    database: LearningDatabase,
+    database:              LearningDatabase,
     /// Preferences manager for user settings
-    preferences_manager: PreferencesManager,
+    preferences_manager:   PreferencesManager,
     /// Similarity calculator for pattern matching
     // Prepared for direct similarity calculations and advanced pattern matching
     similarity_calculator: SimilarityCalculator,
     /// Cache for similarity computations
-    similarity_cache: Arc<RwLock<SimilarityCache>>,
+    similarity_cache:      Arc<RwLock<SimilarityCache>>,
     /// In-memory cache for frequently used patterns
-    pattern_cache: Arc<RwLock<HashMap<String, Vec<LearnedPattern>>>>,
+    pattern_cache:         Arc<RwLock<HashMap<String, Vec<LearnedPattern>>>>,
     /// User preferences (cached for performance)
-    preferences: LearningPreferences,
+    preferences:           LearningPreferences,
     /// User identifier (anonymized if privacy mode is enabled)
-    user_id: String,
+    user_id:               String,
 }
 
 impl LearningSystem {
@@ -90,11 +90,7 @@ impl LearningSystem {
     }
 
     /// Record a successful fix application
-    pub async fn record_successful_fix(
-        &self,
-        error_pattern: ErrorPattern,
-        fix: FixSuggestion,
-    ) -> AIResult<()> {
+    pub async fn record_successful_fix(&self, error_pattern: ErrorPattern, fix: FixSuggestion) -> AIResult<()> {
         if !self.preferences.enable_learning {
             return Ok(());
         }
@@ -130,11 +126,7 @@ impl LearningSystem {
     }
 
     /// Record a failed fix application
-    pub async fn record_failed_fix(
-        &self,
-        error_pattern: ErrorPattern,
-        fix: FixSuggestion,
-    ) -> AIResult<()> {
+    pub async fn record_failed_fix(&self, error_pattern: ErrorPattern, fix: FixSuggestion) -> AIResult<()> {
         if !self.preferences.enable_learning {
             return Ok(());
         }
@@ -181,10 +173,7 @@ impl LearningSystem {
     }
 
     /// Find patterns similar to the given error context
-    pub async fn find_similar_patterns(
-        &self,
-        error_context: &str,
-    ) -> AIResult<Vec<PatternSimilarity>> {
+    pub async fn find_similar_patterns(&self, error_context: &str) -> AIResult<Vec<PatternSimilarity>> {
         // Check cache first
         let cache_key = SimilarityCalculator::create_cache_key(error_context);
 
@@ -215,10 +204,7 @@ impl LearningSystem {
     }
 
     /// Get learned patterns by error type
-    pub async fn get_patterns_by_error_type(
-        &self,
-        error_code: &str,
-    ) -> AIResult<Vec<LearnedPattern>> {
+    pub async fn get_patterns_by_error_type(&self, error_code: &str) -> AIResult<Vec<LearnedPattern>> {
         let max_count = self.preferences.max_patterns_per_type;
         self.database
             .get_patterns_by_error_type(error_code, max_count)
@@ -286,28 +272,28 @@ impl LearningSystem {
 
         let fix_template = FixTemplate {
             description_template: fix.description.clone(),
-            change_templates: fix
+            change_templates:     fix
                 .changes
                 .iter()
                 .map(|change| {
                     use super::models::{ChangeScope, ChangeTemplate as CT};
 
                     CT {
-                        match_pattern: change.original_text.clone(),
+                        match_pattern:       change.original_text.clone(),
                         replacement_pattern: change.new_text.clone(),
-                        change_type: match change.change_type {
+                        change_type:         match change.change_type {
                             DBChangeType::Insert => ModelChangeType::InsertAfter,
                             DBChangeType::Delete => ModelChangeType::Delete,
                             DBChangeType::Replace => ModelChangeType::Replace,
                             DBChangeType::Move => ModelChangeType::Replace,
                         },
-                        scope: ChangeScope::Local, // Default scope
+                        scope:               ChangeScope::Local, // Default scope
                     }
                 })
                 .collect(),
-            variables: HashMap::new(),
-            conditions: vec![],
-            warnings: fix.warnings.clone(),
+            variables:            HashMap::new(),
+            conditions:           vec![],
+            warnings:             fix.warnings.clone(),
         };
 
         let context_hash = format!(
@@ -428,8 +414,8 @@ impl LearningDatabase {
     pub async fn import_patterns_from_json(&self, patterns_json: &str) -> AIResult<usize> {
         use super::models::LearnedPattern;
 
-        let patterns: Vec<LearnedPattern> = serde_json::from_str(patterns_json)
-            .map_err(|e| AIServiceError::SerializationError(e.to_string()))?;
+        let patterns: Vec<LearnedPattern> =
+            serde_json::from_str(patterns_json).map_err(|e| AIServiceError::SerializationError(e.to_string()))?;
 
         self.import_patterns(&patterns).await
     }

@@ -1,7 +1,8 @@
 //! Debugger command handling and execution
 
-use crate::debugger::types::DebuggerEvent;
 use async_trait::async_trait;
+
+use crate::debugger::types::DebuggerEvent;
 
 /// Trait for debugger commands
 #[async_trait]
@@ -95,7 +96,7 @@ impl DebuggerCommand for PauseCommand {
         // and wait for it to pause
         vec![DebuggerEvent::StateChanged(
             crate::debugger::types::DebuggerState::Paused {
-                reason: "Paused by user".to_string(),
+                reason:   "Paused by user".to_string(),
                 location: None,
             },
         )]

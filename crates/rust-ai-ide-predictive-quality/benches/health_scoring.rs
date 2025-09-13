@@ -3,8 +3,9 @@
 //! These benchmarks verify that health scoring operations meet the
 //! performance requirement of <300ms response time.
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::sync::Arc;
+
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use tokio::runtime::Runtime;
 
 /// Benchmark for health scoring performance

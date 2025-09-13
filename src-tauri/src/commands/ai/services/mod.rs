@@ -5,18 +5,18 @@
 
 pub mod finetune;
 
-use crate::acquire_service_and_execute; // Import exported macro from crate root
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
+use rust_ai_ide_lsp::analysis::AnalysisPreferences;
+use rust_ai_ide_lsp::{AIContext, AIProvider, AIService};
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
+use crate::acquire_service_and_execute; // Import exported macro from crate root
 use crate::security::vulnerability_scanner::{VulnerabilityReport, VulnerabilityScanner};
-use rust_ai_ide_lsp::analysis::AnalysisPreferences;
-use rust_ai_ide_lsp::{AIContext, AIProvider, AIService};
 
 /// Shared AI service state
 pub type AIServiceState = Arc<Mutex<Option<AIService>>>;
@@ -25,14 +25,14 @@ pub type AIServiceState = Arc<Mutex<Option<AIService>>>;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AIAnalysisConfig {
-    pub provider: AIProvider,
-    pub analysis_preferences: AnalysisPreferences,
-    pub enable_real_time: bool,
+    pub provider:                  AIProvider,
+    pub analysis_preferences:      AnalysisPreferences,
+    pub enable_real_time:          bool,
     pub enable_workspace_analysis: bool,
-    pub max_file_size_kb: u64,
-    pub excluded_paths: Vec<String>,
-    pub learning_preferences: LearningPreferences,
-    pub compiler_integration: CompilerIntegrationConfig,
+    pub max_file_size_kb:          u64,
+    pub excluded_paths:            Vec<String>,
+    pub learning_preferences:      LearningPreferences,
+    pub compiler_integration:      CompilerIntegrationConfig,
 }
 
 /// Learning system preferences
@@ -51,10 +51,10 @@ pub struct LearningPreferences {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompilerIntegrationConfig {
     pub enable_compiler_integration: bool,
-    pub parse_cargo_check_output: bool,
-    pub enable_error_explanations: bool,
-    pub enable_suggested_fixes: bool,
-    pub cache_explanations: bool,
+    pub parse_cargo_check_output:    bool,
+    pub enable_error_explanations:   bool,
+    pub enable_suggested_fixes:      bool,
+    pub cache_explanations:          bool,
     pub explanation_cache_ttl_hours: u32,
 }
 
@@ -76,10 +76,10 @@ impl Default for CompilerIntegrationConfig {
     fn default() -> Self {
         Self {
             enable_compiler_integration: true,
-            parse_cargo_check_output: true,
-            enable_error_explanations: true,
-            enable_suggested_fixes: true,
-            cache_explanations: true,
+            parse_cargo_check_output:    true,
+            enable_error_explanations:   true,
+            enable_suggested_fixes:      true,
+            cache_explanations:          true,
             explanation_cache_ttl_hours: 24,
         }
     }
@@ -88,20 +88,20 @@ impl Default for CompilerIntegrationConfig {
 impl Default for AIAnalysisConfig {
     fn default() -> Self {
         Self {
-            provider: AIProvider::OpenAI,
-            analysis_preferences: AnalysisPreferences::default(),
-            enable_real_time: true,
+            provider:                  AIProvider::OpenAI,
+            analysis_preferences:      AnalysisPreferences::default(),
+            enable_real_time:          true,
             enable_workspace_analysis: true,
-            max_file_size_kb: 1024, // 1MB max file size
-            excluded_paths: vec![
+            max_file_size_kb:          1024, // 1MB max file size
+            excluded_paths:            vec![
                 "target/".to_string(),
                 "node_modules/".to_string(),
                 ".git/".to_string(),
                 "dist/".to_string(),
                 "build/".to_string(),
             ],
-            learning_preferences: LearningPreferences::default(),
-            compiler_integration: CompilerIntegrationConfig::default(),
+            learning_preferences:      LearningPreferences::default(),
+            compiler_integration:      CompilerIntegrationConfig::default(),
         }
     }
 }
@@ -204,11 +204,11 @@ pub async fn get_loaded_models(
     // Fallback to original placeholder implementation
     acquire_service_and_execute!(ai_service, AIServiceState, {
         Ok(vec![ModelInfo {
-            name: "gpt-4".to_string(),
-            version: "latest".to_string(),
-            size_mb: 0, // Placeholder
+            name:      "gpt-4".to_string(),
+            version:   "latest".to_string(),
+            size_mb:   0, // Placeholder
             loaded_at: chrono::Utc::now(),
-            status: ModelStatus::Loaded,
+            status:    ModelStatus::Loaded,
         }])
     })
 }
@@ -224,8 +224,8 @@ pub async fn load_model(
     if let Ok(mut bridge_guard) = bridge.lock().await {
         if let Ok(model_mgr) = bridge_guard.model_manager().await {
             let request = rust_ai_ide_commands_ai::models::LoadModelRequest {
-                model_id: model_name.clone(),
-                priority: 1,
+                model_id:     model_name.clone(),
+                priority:     1,
                 force_reload: false,
             };
 
@@ -261,7 +261,7 @@ pub async fn unload_model(
     if let Ok(mut bridge_guard) = bridge.lock().await {
         if let Ok(model_mgr) = bridge_guard.model_manager().await {
             let request = rust_ai_ide_commands_ai::models::UnloadModelRequest {
-                model_id: model_name.clone(),
+                model_id:          model_name.clone(),
                 graceful_shutdown: true,
             };
 
@@ -288,33 +288,28 @@ pub async fn unload_model(
 
 /// Get model status
 #[tauri::command]
-pub async fn get_model_status(
-    model_name: String,
-    ai_service: State<'_, AIServiceState>,
-) -> Result<ModelInfo, String> {
+pub async fn get_model_status(model_name: String, ai_service: State<'_, AIServiceState>) -> Result<ModelInfo, String> {
     acquire_service_and_execute!(ai_service, AIServiceState, {
         // In a real implementation, this would query model status
         Ok(ModelInfo {
-            name: model_name,
-            version: "latest".to_string(),
-            size_mb: 0, // Placeholder
+            name:      model_name,
+            version:   "latest".to_string(),
+            size_mb:   0, // Placeholder
             loaded_at: chrono::Utc::now(),
-            status: ModelStatus::Loaded,
+            status:    ModelStatus::Loaded,
         })
     })
 }
 
 /// Get resource status
 #[tauri::command]
-pub async fn get_resource_status(
-    ai_service: State<'_, AIServiceState>,
-) -> Result<ResourceStatus, String> {
+pub async fn get_resource_status(ai_service: State<'_, AIServiceState>) -> Result<ResourceStatus, String> {
     acquire_service_and_execute!(ai_service, AIServiceState, {
         Ok(ResourceStatus {
-            memory_usage_mb: 0,     // Placeholder
-            cpu_usage_percent: 0.0, // Placeholder
-            active_models: vec![],
-            max_memory_mb: 8192,       // Placeholder
+            memory_usage_mb:     0,   // Placeholder
+            cpu_usage_percent:   0.0, // Placeholder
+            active_models:       vec![],
+            max_memory_mb:       8192, // Placeholder
             available_memory_mb: 8192, // Placeholder
         })
     })
@@ -326,7 +321,7 @@ pub async fn validate_model_config(config: ModelConfig) -> Result<ValidationResu
     // In a real implementation, this would validate the model configuration
     Ok(ValidationResult {
         is_valid: true,
-        errors: vec![],
+        errors:   vec![],
         warnings: vec![],
     })
 }
@@ -344,11 +339,11 @@ pub async fn download_model(model_name: String, version: Option<String>) -> Resu
 /// Model information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelInfo {
-    pub name: String,
-    pub version: String,
-    pub size_mb: u64,
+    pub name:      String,
+    pub version:   String,
+    pub size_mb:   u64,
     pub loaded_at: chrono::DateTime<chrono::Utc>,
-    pub status: ModelStatus,
+    pub status:    ModelStatus,
 }
 
 /// Model status
@@ -364,10 +359,10 @@ pub enum ModelStatus {
 /// Resource status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceStatus {
-    pub memory_usage_mb: u64,
-    pub cpu_usage_percent: f32,
-    pub active_models: Vec<String>,
-    pub max_memory_mb: u64,
+    pub memory_usage_mb:     u64,
+    pub cpu_usage_percent:   f32,
+    pub active_models:       Vec<String>,
+    pub max_memory_mb:       u64,
     pub available_memory_mb: u64,
 }
 
@@ -375,8 +370,8 @@ pub struct ResourceStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelConfig {
     pub model_name: String,
-    pub provider: String,
-    pub version: String,
+    pub provider:   String,
+    pub version:    String,
     pub parameters: HashMap<String, serde_json::Value>,
 }
 
@@ -384,6 +379,6 @@ pub struct ModelConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationResult {
     pub is_valid: bool,
-    pub errors: Vec<String>,
+    pub errors:   Vec<String>,
     pub warnings: Vec<String>,
 }

@@ -2,9 +2,11 @@
 //!
 //! This module contains handlers for test execution and coverage.
 
-use crate::handlers::validation::validate_secure_path;
 use std::process::Command;
+
 use tokio::process::Command as TokioCommand;
+
+use crate::handlers::validation::validate_secure_path;
 
 /// Run tests for a Rust project
 #[tauri::command]

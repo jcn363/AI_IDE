@@ -59,31 +59,31 @@ pub enum CoverageType {
 #[derive(Debug, Clone)]
 pub struct LanguageConfig {
     pub naming_conventions: Vec<String>,
-    pub test_patterns: Vec<String>,
-    pub assertion_styles: Vec<String>,
-    pub mock_frameworks: Vec<String>,
+    pub test_patterns:      Vec<String>,
+    pub assertion_styles:   Vec<String>,
+    pub mock_frameworks:    Vec<String>,
 }
 
 /// Test generation configuration
 #[derive(Debug, Clone)]
 pub struct TestGenerationConfig {
-    pub include_edge_cases: bool,
+    pub include_edge_cases:         bool,
     pub generate_integration_tests: bool,
-    pub max_tests_per_generation: usize,
+    pub max_tests_per_generation:   usize,
     pub target_coverage_percentage: f32,
-    pub language_specific: HashMap<ProgrammingLanguage, LanguageConfig>,
-    pub timeout_seconds: u32,
+    pub language_specific:          HashMap<ProgrammingLanguage, LanguageConfig>,
+    pub timeout_seconds:            u32,
 }
 
 impl Default for TestGenerationConfig {
     fn default() -> Self {
         Self {
-            include_edge_cases: true,
+            include_edge_cases:         true,
             generate_integration_tests: false,
-            max_tests_per_generation: 10,
+            max_tests_per_generation:   10,
             target_coverage_percentage: 80.0,
-            language_specific: HashMap::new(),
-            timeout_seconds: 30,
+            language_specific:          HashMap::new(),
+            timeout_seconds:            30,
         }
     }
 }
@@ -91,15 +91,15 @@ impl Default for TestGenerationConfig {
 /// Test generation context for codegen compatibility
 #[derive(Debug, Clone)]
 pub struct TestGenerationContext {
-    pub file_path: String,
+    pub file_path:               String,
     pub is_performance_critical: bool,
-    pub required_coverage: Option<f32>,
-    pub target_languages: Vec<ProgrammingLanguage>,
+    pub required_coverage:       Option<f32>,
+    pub target_languages:        Vec<ProgrammingLanguage>,
 }
-
-/// Test framework information is defined in language_detector.rs
-pub use super::language_detector::TestFrameworkInfo;
 
 // Compatibility aliases for codegen crate
 pub use ProgrammingLanguage::*;
 pub use TestType::*;
+
+/// Test framework information is defined in language_detector.rs
+pub use super::language_detector::TestFrameworkInfo;

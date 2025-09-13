@@ -1,6 +1,7 @@
 //! Automated maintenance prioritization component
 
-use crate::{errors::*, types::*};
+use crate::errors::*;
+use crate::types::*;
 
 #[derive(Debug)]
 pub struct PriorityScorer {
@@ -20,8 +21,8 @@ impl PriorityScorer {
         _cost: &CostBreakdown,
     ) -> MaintenanceResult<PriorityResult> {
         Ok(PriorityResult {
-            score: 0.7,
-            timeline: TimeFrame::ThisMonth,
+            score:     0.7,
+            timeline:  TimeFrame::ThisMonth,
             rationale: vec!["Based on default priority calculation".to_string()],
         })
     }
@@ -29,7 +30,7 @@ impl PriorityScorer {
 
 #[derive(Debug)]
 pub struct PriorityResult {
-    pub score: f64,
-    pub timeline: TimeFrame,
+    pub score:     f64,
+    pub timeline:  TimeFrame,
     pub rationale: Vec<String>,
 }

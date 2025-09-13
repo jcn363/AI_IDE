@@ -3,10 +3,12 @@
 //! This module provides comprehensive parsing capabilities to extract
 //! type information from Rust source files using the syn crate.
 
+use std::collections::HashMap;
+
+use syn::{Attribute, Fields, File, Item, Type, Variant as SynVariant, Visibility};
+
 use crate::errors::TypeGenerationError;
 use crate::types::*;
-use std::collections::HashMap;
-use syn::{Attribute, Fields, File, Item, Type, Variant as SynVariant, Visibility};
 
 /// Parser for extracting types from Rust source code
 #[derive(Debug, Clone)]
@@ -35,9 +37,9 @@ impl Default for ParserConfig {
     fn default() -> Self {
         Self {
             include_private: false,
-            include_docs: true,
+            include_docs:    true,
             skip_attributes: vec!["skip_typescript".to_string()],
-            custom_rules: HashMap::new(),
+            custom_rules:    HashMap::new(),
         }
     }
 }
@@ -56,14 +58,9 @@ impl TypeParser {
     }
 
     /// Parse a Rust source file and extract type information
-    pub fn parse_file(
-        &self,
-        source: &str,
-        file_path: &str,
-    ) -> Result<Vec<ParsedType>, TypeGenerationError> {
-        let ast: File = syn::parse_str(source).map_err(|e| {
-            TypeGenerationError::AnalysisError(format!("Failed to parse Rust file: {}", e))
-        })?;
+    pub fn parse_file(&self, source: &str, file_path: &str) -> Result<Vec<ParsedType>, TypeGenerationError> {
+        let ast: File = syn::parse_str(source)
+            .map_err(|e| TypeGenerationError::AnalysisError(format!("Failed to parse Rust file: {}", e)))?;
 
         let mut types = Vec::new();
 
@@ -77,11 +74,7 @@ impl TypeParser {
     }
 
     /// Parse a single item from the AST
-    fn parse_item(
-        &self,
-        item: &Item,
-        file_path: &str,
-    ) -> Result<Option<ParsedType>, TypeGenerationError> {
+    fn parse_item(&self, item: &Item, file_path: &str) -> Result<Option<ParsedType>, TypeGenerationError> {
         match item {
             Item::Struct(item_struct) => {
                 if self.should_skip_item(&item_struct.attrs) {
@@ -231,9 +224,7 @@ impl TypeParser {
             Visibility::Public(_) => TypesVisibility::Public,
             Visibility::Restricted(restricted) => {
                 // Check if it's crate-level restricted visibility
-                if restricted.path.segments.len() == 1
-                    && restricted.path.segments[0].ident == "crate"
-                {
+                if restricted.path.segments.len() == 1 && restricted.path.segments[0].ident == "crate" {
                     TypesVisibility::Crate
                 } else {
                     TypesVisibility::Module
@@ -251,9 +242,7 @@ impl TypeParser {
             .filter_map(|param| match param {
                 syn::GenericParam::Type(type_param) => Some(type_param.ident.to_string()),
                 syn::GenericParam::Const(const_param) => Some(const_param.ident.to_string()),
-                syn::GenericParam::Lifetime(lifetime_param) => {
-                    Some(lifetime_param.lifetime.ident.to_string())
-                }
+                syn::GenericParam::Lifetime(lifetime_param) => Some(lifetime_param.lifetime.ident.to_string()),
             })
             .collect()
     }
@@ -268,13 +257,13 @@ impl TypeParser {
                     .map(|field| {
                         let type_str = self.type_to_string(&field.ty);
                         Field {
-                            name: field.ident.as_ref().unwrap().to_string(),
-                            ty: type_str.clone(),
-                            field_type: type_str,
+                            name:          field.ident.as_ref().unwrap().to_string(),
+                            ty:            type_str.clone(),
+                            field_type:    type_str,
                             documentation: self.extract_documentation(&field.attrs),
-                            visibility: self.convert_visibility(&field.vis),
-                            is_mutable: false, // Can't determine from struct fields
-                            attributes: self.parse_attributes(&field.attrs),
+                            visibility:    self.convert_visibility(&field.vis),
+                            is_mutable:    false, // Can't determine from struct fields
+                            attributes:    self.parse_attributes(&field.attrs),
                         }
                     })
                     .collect()
@@ -286,13 +275,13 @@ impl TypeParser {
                 .map(|(index, field)| {
                     let type_str = self.type_to_string(&field.ty);
                     Field {
-                        name: format!("field_{}", index),
-                        ty: type_str.clone(),
-                        field_type: type_str,
+                        name:          format!("field_{}", index),
+                        ty:            type_str.clone(),
+                        field_type:    type_str,
                         documentation: self.extract_documentation(&field.attrs),
-                        visibility: self.convert_visibility(&field.vis),
-                        is_mutable: false,
-                        attributes: self.parse_attributes(&field.attrs),
+                        visibility:    self.convert_visibility(&field.vis),
+                        is_mutable:    false,
+                        attributes:    self.parse_attributes(&field.attrs),
                     }
                 })
                 .collect(),
@@ -301,10 +290,7 @@ impl TypeParser {
     }
 
     /// Parse enum variants
-    fn parse_enum_variants(
-        &self,
-        variants: &syn::punctuated::Punctuated<SynVariant, syn::Token![,]>,
-    ) -> Vec<Variant> {
+    fn parse_enum_variants(&self, variants: &syn::punctuated::Punctuated<SynVariant, syn::Token![,]>) -> Vec<Variant> {
         variants
             .iter()
             .map(|variant| {
@@ -315,8 +301,8 @@ impl TypeParser {
                         .map(|field| {
                             let type_str = self.type_to_string(&field.ty);
                             VariantField {
-                                name: field.ident.as_ref().map(|id| id.to_string()),
-                                ty: type_str.clone(),
+                                name:       field.ident.as_ref().map(|id| id.to_string()),
+                                ty:         type_str.clone(),
                                 field_type: type_str,
                             }
                         })
@@ -327,8 +313,8 @@ impl TypeParser {
                         .map(|field| {
                             let type_str = self.type_to_string(&field.ty);
                             VariantField {
-                                name: None,
-                                ty: type_str.clone(),
+                                name:       None,
+                                ty:         type_str.clone(),
                                 field_type: type_str,
                             }
                         })
@@ -399,10 +385,10 @@ impl TypeParser {
         // Note: In a real implementation, you'd use span information to get exact line/column
         // For now, we'll use placeholder values based on the file path
         SourceLocation {
-            file: file_path.to_string(),
-            file_path: file_path.to_string(),
-            line: 0, // proc_macro2::Span doesn't have start() in the same way syn spans do
-            column: 0,
+            file:        file_path.to_string(),
+            file_path:   file_path.to_string(),
+            line:        0, // proc_macro2::Span doesn't have start() in the same way syn spans do
+            column:      0,
             module_path: vec![], // Would need more context to determine module path
         }
     }
@@ -412,16 +398,14 @@ impl TypeParser {
         let mut deps = Vec::new();
 
         match fields {
-            Fields::Named(fields_named) => {
+            Fields::Named(fields_named) =>
                 for field in &fields_named.named {
                     deps.extend(self.extract_types_from_type(&field.ty));
-                }
-            }
-            Fields::Unnamed(fields_unnamed) => {
+                },
+            Fields::Unnamed(fields_unnamed) =>
                 for field in &fields_unnamed.unnamed {
                     deps.extend(self.extract_types_from_type(&field.ty));
-                }
-            }
+                },
             Fields::Unit => {}
         }
 
@@ -437,16 +421,14 @@ impl TypeParser {
 
         for variant in variants {
             match &variant.fields {
-                Fields::Named(fields_named) => {
+                Fields::Named(fields_named) =>
                     for field in &fields_named.named {
                         deps.extend(self.extract_types_from_type(&field.ty));
-                    }
-                }
-                Fields::Unnamed(fields_unnamed) => {
+                    },
+                Fields::Unnamed(fields_unnamed) =>
                     for field in &fields_unnamed.unnamed {
                         deps.extend(self.extract_types_from_type(&field.ty));
-                    }
-                }
+                    },
                 Fields::Unit => {}
             }
         }
@@ -457,13 +439,12 @@ impl TypeParser {
     /// Extract type names from a type
     fn extract_types_from_type(&self, ty: &Type) -> Vec<String> {
         match ty {
-            Type::Path(type_path) => {
+            Type::Path(type_path) =>
                 if let Some(segment) = type_path.path.segments.last() {
                     vec![segment.ident.to_string()]
                 } else {
                     vec![]
-                }
-            }
+                },
             Type::Array(type_array) => self.extract_types_from_type(&type_array.elem),
             Type::Slice(type_slice) => self.extract_types_from_type(&type_slice.elem),
             Type::Ptr(type_ptr) => self.extract_types_from_type(&type_ptr.elem),
@@ -484,13 +465,13 @@ impl TypeParser {
                 // Convert path to type-like structure for type_to_string
                 let path_type = Type::Path(syn::TypePath {
                     qself: None,
-                    path: trait_bound.path.clone(),
+                    path:  trait_bound.path.clone(),
                 });
                 self.type_to_string(&path_type)
             }
             syn::TypeParamBound::Lifetime(lifetime) => lifetime.ident.to_string(),
             syn::TypeParamBound::PreciseCapture(_) => "precise".to_string(), // Placeholder
-            _ => "unknown".to_string(), // Handle non-exhaustive pattern
+            _ => "unknown".to_string(),                                      // Handle non-exhaustive pattern
         }
     }
 
@@ -596,9 +577,9 @@ mod tests {
     fn test_parser_config() {
         let config = ParserConfig {
             include_private: true,
-            include_docs: false,
+            include_docs:    false,
             skip_attributes: vec!["custom_skip".to_string()],
-            custom_rules: HashMap::new(),
+            custom_rules:    HashMap::new(),
         };
 
         let parser = TypeParser::with_config(config);

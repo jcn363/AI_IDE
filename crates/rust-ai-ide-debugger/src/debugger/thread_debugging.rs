@@ -1,33 +1,33 @@
-//! Advanced thread debugging for async/await code with execution visualization and deadlock detection
+//! Advanced thread debugging for async/await code with execution visualization and deadlock
+//! detection
 //!
 //! This module provides advanced debugging capabilities for multi-threaded and async code,
 //! including execution visualization, deadlock detection, and async task tracking.
 
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
+
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::{HashMap, HashSet},
-    sync::{Arc, Mutex},
-    time::{Duration, Instant},
-};
 use tokio::sync::mpsc;
 
 /// Represents an async task or future being executed
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AsyncTask {
     /// Unique task ID
-    pub id: u32,
+    pub id:               u32,
     /// Human-readable task name
-    pub name: String,
+    pub name:             String,
     /// Current execution state
-    pub state: AsyncTaskState,
+    pub state:            AsyncTaskState,
     /// Thread ID where this task is running
-    pub thread_id: Option<u32>,
+    pub thread_id:        Option<u32>,
     /// Wakeup timestamp (for tracking scheduling)
-    pub created_at: u64,
+    pub created_at:       u64,
     /// Current wakeup source
-    pub wakeup_source: Option<String>,
+    pub wakeup_source:    Option<String>,
     /// Task dependencies (other tasks it depends on)
-    pub dependencies: Vec<u32>,
+    pub dependencies:     Vec<u32>,
     /// Position in the async call stack
     pub async_call_stack: Vec<AsyncFrame>,
 }
@@ -53,7 +53,7 @@ pub struct AsyncFrame {
     /// Future name or type
     pub future_name: String,
     /// Source location (file and line)
-    pub location: String,
+    pub location:    String,
     /// Current state of this frame
     pub frame_state: String,
 }
@@ -62,19 +62,19 @@ pub struct AsyncFrame {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThreadInfo {
     /// Thread ID
-    pub id: u32,
+    pub id:            u32,
     /// Thread name
-    pub name: String,
+    pub name:          String,
     /// Current native call stack
-    pub call_stack: Vec<String>,
+    pub call_stack:    Vec<String>,
     /// Currently executing async task (if any)
-    pub current_task: Option<u32>,
+    pub current_task:  Option<u32>,
     /// CPU time consumed
-    pub cpu_time: Duration,
+    pub cpu_time:      Duration,
     /// Thread state
-    pub state: ThreadState,
+    pub state:         ThreadState,
     /// Locks currently held by this thread
-    pub held_locks: HashSet<u64>,
+    pub held_locks:    HashSet<u64>,
     /// Locks this thread is waiting on
     pub waiting_locks: HashSet<u64>,
 }
@@ -100,20 +100,20 @@ pub struct DeadlockInfo {
     /// Thread IDs involved in the deadlock
     pub involved_threads: Vec<u32>,
     /// Lock IDs that are causing the deadlock
-    pub contested_locks: Vec<u64>,
+    pub contested_locks:  Vec<u64>,
     /// Description of the deadlock scenario
-    pub description: String,
+    pub description:      String,
     /// Timestamp when deadlock was detected
-    pub detected_at: u64,
+    pub detected_at:      u64,
 }
 
 /// Execution timeline for visualization
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExecutionTimeline {
     /// Thread ID
-    pub thread_id: u32,
+    pub thread_id:      u32,
     /// Sequence of execution events
-    pub events: Vec<TimelineEvent>,
+    pub events:         Vec<TimelineEvent>,
     /// Total CPU time for this thread
     pub total_cpu_time: Duration,
 }
@@ -122,13 +122,13 @@ pub struct ExecutionTimeline {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimelineEvent {
     /// Event timestamp
-    pub timestamp: u64,
+    pub timestamp:   u64,
     /// Event type
-    pub event_type: TimelineEventType,
+    pub event_type:  TimelineEventType,
     /// Description of the event
     pub description: String,
     /// Associated async task ID
-    pub task_id: Option<u32>,
+    pub task_id:     Option<u32>,
 }
 
 /// Types of timeline events
@@ -157,19 +157,19 @@ pub enum TimelineEventType {
 /// Advanced thread debugger for async/await code
 pub struct ThreadDebugger {
     /// All known threads
-    threads: HashMap<u32, ThreadInfo>,
+    threads:      HashMap<u32, ThreadInfo>,
     /// All active async tasks
-    tasks: HashMap<u32, AsyncTask>,
+    tasks:        HashMap<u32, AsyncTask>,
     /// Execution timelines for all threads
-    timelines: HashMap<u32, ExecutionTimeline>,
+    timelines:    HashMap<u32, ExecutionTimeline>,
     /// Known locks and their current holders
-    locks: HashMap<u64, Option<u32>>,
+    locks:        HashMap<u64, Option<u32>>,
     /// Next task ID to assign
     next_task_id: u32,
     /// Event sender for debugger integration
     event_sender: Option<mpsc::UnboundedSender<ThreadDebuggerEvent>>,
     /// Last update timestamp
-    last_update: Instant,
+    last_update:  Instant,
 }
 
 /// Events generated by the thread debugger
@@ -188,7 +188,7 @@ pub enum ThreadDebuggerEvent {
     TaskCreated(AsyncTask),
     /// Async task state changed
     TaskStateChanged {
-        task_id: u32,
+        task_id:   u32,
         new_state: AsyncTaskState,
     },
     /// Async task completed
@@ -197,7 +197,7 @@ pub enum ThreadDebuggerEvent {
     DeadlockDetected(DeadlockInfo),
     /// Lock contention detected
     LockContention {
-        lock_id: u64,
+        lock_id:            u64,
         contending_threads: Vec<u32>,
     },
 }
@@ -217,10 +217,7 @@ impl ThreadDebugger {
     }
 
     /// Send an event to the debugger system
-    fn send_event(
-        &self,
-        event: ThreadDebuggerEvent,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    fn send_event(&self, event: ThreadDebuggerEvent) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(sender) = &self.event_sender {
             sender.send(event)?;
         }
@@ -234,23 +231,23 @@ impl ThreadDebugger {
         name: String,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let thread_info = ThreadInfo {
-            id: thread_id,
-            name: name.clone(),
-            call_stack: Vec::new(),
-            current_task: None,
-            cpu_time: Duration::new(0, 0),
-            state: ThreadState::Running,
-            held_locks: HashSet::new(),
+            id:            thread_id,
+            name:          name.clone(),
+            call_stack:    Vec::new(),
+            current_task:  None,
+            cpu_time:      Duration::new(0, 0),
+            state:         ThreadState::Running,
+            held_locks:    HashSet::new(),
             waiting_locks: HashSet::new(),
         };
 
         let timeline = ExecutionTimeline {
             thread_id,
             events: vec![TimelineEvent {
-                timestamp: self.get_timestamp(),
-                event_type: TimelineEventType::TaskStarted,
+                timestamp:   self.get_timestamp(),
+                event_type:  TimelineEventType::TaskStarted,
                 description: format!("Thread '{}' started", name),
-                task_id: None,
+                task_id:     None,
             }],
             total_cpu_time: Duration::new(0, 0),
         };
@@ -288,10 +285,10 @@ impl ThreadDebugger {
         if let Some(tid) = thread_id {
             if let Some(timeline) = self.timelines.get_mut(&tid) {
                 timeline.events.push(TimelineEvent {
-                    timestamp: self.get_timestamp(),
-                    event_type: TimelineEventType::TaskStarted,
+                    timestamp:   self.get_timestamp(),
+                    event_type:  TimelineEventType::TaskStarted,
                     description: format!("Async task '{}' started", task_name),
-                    task_id: Some(task_id),
+                    task_id:     Some(task_id),
                 });
             }
         }
@@ -312,10 +309,10 @@ impl ThreadDebugger {
             // Update timeline
             if let Some(timeline) = self.timelines.get_mut(&thread_id) {
                 timeline.events.push(TimelineEvent {
-                    timestamp: self.get_timestamp(),
-                    event_type: TimelineEventType::TaskStarted, // Using as generic thread event
+                    timestamp:   self.get_timestamp(),
+                    event_type:  TimelineEventType::TaskStarted, // Using as generic thread event
                     description: format!("Thread state: {:?} -> {:?}", old_state, new_state),
-                    task_id: None,
+                    task_id:     None,
                 });
             }
 
@@ -401,10 +398,10 @@ impl ThreadDebugger {
         // Update timeline
         if let Some(timeline) = self.timelines.get_mut(&thread_id) {
             timeline.events.push(TimelineEvent {
-                timestamp: self.get_timestamp(),
-                event_type: TimelineEventType::LockAcquired(lock_id),
+                timestamp:   self.get_timestamp(),
+                event_type:  TimelineEventType::LockAcquired(lock_id),
                 description: format!("Lock {} acquired", lock_id),
-                task_id: self.threads.get(&thread_id).and_then(|t| t.current_task),
+                task_id:     self.threads.get(&thread_id).and_then(|t| t.current_task),
             });
         }
 
@@ -430,10 +427,10 @@ impl ThreadDebugger {
         // Update timeline
         if let Some(timeline) = self.timelines.get_mut(&thread_id) {
             timeline.events.push(TimelineEvent {
-                timestamp: self.get_timestamp(),
-                event_type: TimelineEventType::LockReleased(lock_id),
+                timestamp:   self.get_timestamp(),
+                event_type:  TimelineEventType::LockReleased(lock_id),
                 description: format!("Lock {} released", lock_id),
-                task_id: self.threads.get(&thread_id).and_then(|t| t.current_task),
+                task_id:     self.threads.get(&thread_id).and_then(|t| t.current_task),
             });
         }
 
@@ -456,10 +453,10 @@ impl ThreadDebugger {
         // Update timeline
         if let Some(timeline) = self.timelines.get_mut(&thread_id) {
             timeline.events.push(TimelineEvent {
-                timestamp: self.get_timestamp(),
-                event_type: TimelineEventType::LockWaiting(lock_id),
+                timestamp:   self.get_timestamp(),
+                event_type:  TimelineEventType::LockWaiting(lock_id),
                 description: format!("Waiting for lock {}", lock_id),
-                task_id: self.threads.get(&thread_id).and_then(|t| t.current_task),
+                task_id:     self.threads.get(&thread_id).and_then(|t| t.current_task),
             });
         }
 
@@ -506,9 +503,7 @@ impl ThreadDebugger {
         let waiting_threads: Vec<_> = self
             .threads
             .values()
-            .filter(|t| {
-                t.waiting_locks.contains(&lock_id) && matches!(t.state, ThreadState::Blocked)
-            })
+            .filter(|t| t.waiting_locks.contains(&lock_id) && matches!(t.state, ThreadState::Blocked))
             .map(|t| t.id)
             .collect();
 
@@ -551,9 +546,7 @@ impl ThreadDebugger {
         // Standard cycle detection in directed graph
         for thread in self.threads.keys() {
             if !visited.contains(thread) {
-                if let Some(deadlock) =
-                    self.detect_cycle(*thread, &mut visited, &mut recursion_stack)
-                {
+                if let Some(deadlock) = self.detect_cycle(*thread, &mut visited, &mut recursion_stack) {
                     deadlocks.push(deadlock);
                 }
             }
@@ -577,9 +570,7 @@ impl ThreadDebugger {
             for waiting_lock in &thread.waiting_locks {
                 if let Some(Some(holder_id)) = self.locks.get(waiting_lock) {
                     if !visited.contains(holder_id) {
-                        if let Some(deadlock) =
-                            self.detect_cycle(*holder_id, visited, recursion_stack)
-                        {
+                        if let Some(deadlock) = self.detect_cycle(*holder_id, visited, recursion_stack) {
                             return Some(deadlock);
                         }
                     } else if recursion_stack.contains(holder_id) {
@@ -594,10 +585,7 @@ impl ThreadDebugger {
                         return Some(DeadlockInfo {
                             involved_threads,
                             contested_locks,
-                            description: format!(
-                                "Deadlock detected involving threads: {:?}",
-                                recursion_stack
-                            ),
+                            description: format!("Deadlock detected involving threads: {:?}", recursion_stack),
                             detected_at: self.get_timestamp(),
                         });
                     }

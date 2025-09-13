@@ -1,10 +1,11 @@
 //! Dependency management for Cargo projects
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use anyhow::{Context, Result};
 use cargo_metadata::Package;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub mod alignment;
@@ -16,15 +17,15 @@ pub use conflict::{ConflictVersion, DependentInfo, VersionConflict};
 /// Represents a dependency in the project
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyInfo {
-    pub name: String,
-    pub version: String,
-    pub features: Vec<String>,
-    pub optional: bool,
+    pub name:             String,
+    pub version:          String,
+    pub features:         Vec<String>,
+    pub optional:         bool,
     pub default_features: bool,
-    pub target: Option<String>,
-    pub kind: DependencyKind,
-    pub registry: Option<String>,
-    pub source: Option<String>,
+    pub target:           Option<String>,
+    pub kind:             DependencyKind,
+    pub registry:         Option<String>,
+    pub source:           Option<String>,
 }
 
 /// The kind of dependency
@@ -39,8 +40,8 @@ pub enum DependencyKind {
 #[derive(Debug)]
 pub struct DependencyManager {
     workspace_path: String,
-    dependencies: Arc<RwLock<HashMap<String, DependencyInfo>>>,
-    metadata: Arc<tokio::sync::RwLock<Option<cargo_metadata::Metadata>>>,
+    dependencies:   Arc<RwLock<HashMap<String, DependencyInfo>>>,
+    metadata:       Arc<tokio::sync::RwLock<Option<cargo_metadata::Metadata>>>,
 }
 
 impl DependencyManager {
@@ -48,8 +49,8 @@ impl DependencyManager {
     pub fn new(workspace_path: impl Into<String>) -> Self {
         Self {
             workspace_path: workspace_path.into(),
-            dependencies: Arc::new(RwLock::new(HashMap::new())),
-            metadata: Arc::new(tokio::sync::RwLock::new(None)),
+            dependencies:   Arc::new(RwLock::new(HashMap::new())),
+            metadata:       Arc::new(tokio::sync::RwLock::new(None)),
         }
     }
 
@@ -109,15 +110,15 @@ impl DependencyManager {
 
         for dep in deps {
             let dep_info = DependencyInfo {
-                name: dep.name.clone(),
-                version: dep.req.to_string(),
-                features: dep.features.clone(),
-                optional: dep.optional,
+                name:             dep.name.clone(),
+                version:          dep.req.to_string(),
+                features:         dep.features.clone(),
+                optional:         dep.optional,
                 default_features: dep.uses_default_features,
-                target: dep.target.as_ref().map(|t| t.to_string()),
-                kind: kind.clone(),
-                registry: dep.registry.as_ref().map(|s| s.to_string()),
-                source: dep.source.as_ref().map(|s| s.to_string()),
+                target:           dep.target.as_ref().map(|t| t.to_string()),
+                kind:             kind.clone(),
+                registry:         dep.registry.as_ref().map(|s| s.to_string()),
+                source:           dep.source.as_ref().map(|s| s.to_string()),
             };
 
             deps_map.insert(dep.name.clone(), dep_info);

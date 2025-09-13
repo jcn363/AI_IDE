@@ -1,17 +1,18 @@
 //! Model versioning utilities for Rust AI IDE
 
+use std::collections::HashMap;
+
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use thiserror::Error;
 
 /// Represents a versioned model
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VersionedModel {
     /// Model identifier
-    pub id: String,
+    pub id:       String,
     /// Current version
-    pub version: Version,
+    pub version:  Version,
     /// Model metadata
     pub metadata: HashMap<String, String>,
 }
@@ -34,10 +35,7 @@ pub enum ModelVersioningError {
 
 impl VersionedModel {
     /// Create a new versioned model
-    pub fn new(
-        id: impl Into<String>,
-        version: impl AsRef<str>,
-    ) -> Result<Self, ModelVersioningError> {
+    pub fn new(id: impl Into<String>, version: impl AsRef<str>) -> Result<Self, ModelVersioningError> {
         let version = Version::parse(version.as_ref())
             .map_err(|_| ModelVersioningError::InvalidVersion(version.as_ref().to_string()))?;
 

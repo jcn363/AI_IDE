@@ -1,7 +1,8 @@
 //! Main work-stealing scheduler implementation
 
-use crossbeam_deque::Injector;
 use std::sync::Arc;
+
+use crossbeam_deque::Injector;
 use tokio::sync::{mpsc, RwLock};
 use tokio::task;
 
@@ -14,19 +15,19 @@ use crate::SchedulerConfig;
 /// Main work-stealing scheduler
 pub struct WorkStealingScheduler {
     /// Worker pool
-    worker_pool: WorkerPool,
+    worker_pool:     WorkerPool,
     /// Global task injector
     global_injector: Arc<Injector<BoxedTask>>,
     /// Metrics collector
-    metrics: Arc<MetricsCollector>,
+    metrics:         Arc<MetricsCollector>,
     /// Result receiver
-    result_rx: mpsc::UnboundedReceiver<TaskResult<serde_json::Value>>,
+    result_rx:       mpsc::UnboundedReceiver<TaskResult<serde_json::Value>>,
     /// Configuration
-    config: SchedulerConfig,
+    config:          SchedulerConfig,
     /// Running flag
-    is_running: std::sync::atomic::AtomicBool,
+    is_running:      std::sync::atomic::AtomicBool,
     /// Start time for uptime tracking
-    start_time: std::time::Instant,
+    start_time:      std::time::Instant,
 }
 
 impl WorkStealingScheduler {
@@ -55,17 +56,11 @@ impl WorkStealingScheduler {
 
         // Start metrics collection task if enabled
         if config.enable_cpu_monitoring {
-            Self::start_metrics_collection(
-                Arc::clone(&metrics),
-                config.metrics_interval_ms,
-            );
+            Self::start_metrics_collection(Arc::clone(&metrics), config.metrics_interval_ms);
         }
 
         // Start result processor task
-        Self::start_result_processor(
-            result_rx.resubscribe(),
-            Arc::clone(&metrics),
-        );
+        Self::start_result_processor(result_rx.resubscribe(), Arc::clone(&metrics));
 
         Ok(Self {
             worker_pool,
@@ -82,20 +77,20 @@ impl WorkStealingScheduler {
     fn validate_config(config: &SchedulerConfig) -> SchedulerResult<()> {
         if config.max_queue_size == 0 {
             return Err(SchedulerError::InvalidConfiguration(
-                "max_queue_size must be greater than 0".to_string()
+                "max_queue_size must be greater than 0".to_string(),
             ));
         }
 
         if config.max_steal_attempts == 0 {
             return Err(SchedulerError::InvalidConfiguration(
-                "max_steal_attempts must be greater than 0".to_string()
+                "max_steal_attempts must be greater than 0".to_string(),
             ));
         }
 
         if let Some(num_workers) = config.num_workers {
             if num_workers == 0 {
                 return Err(SchedulerError::InvalidConfiguration(
-                    "num_workers must be greater than 0 if specified".to_string()
+                    "num_workers must be greater than 0 if specified".to_string(),
                 ));
             }
         }
@@ -107,7 +102,7 @@ impl WorkStealingScheduler {
     pub async fn submit_task(&self, task: BoxedTask) -> SchedulerResult<String> {
         if !self.is_running.load(std::sync::atomic::Ordering::Acquire) {
             return Err(SchedulerError::SchedulerShutdownError(
-                "Scheduler is shutting down".to_string()
+                "Scheduler is shutting down".to_string(),
             ));
         }
 
@@ -131,10 +126,7 @@ impl WorkStealingScheduler {
     }
 
     /// Wait for task completion and get result
-    pub async fn wait_for_task(
-        &mut self,
-        task_id: &str,
-    ) -> SchedulerResult<TaskResult<serde_json::Value>> {
+    pub async fn wait_for_task(&mut self, task_id: &str) -> SchedulerResult<TaskResult<serde_json::Value>> {
         while let Some(result) = self.result_rx.recv().await {
             if result.task_id == task_id {
                 return Ok(result);
@@ -143,16 +135,13 @@ impl WorkStealingScheduler {
         }
 
         Err(SchedulerError::TaskExecutionTimeout {
-            task_id: task_id.to_string(),
+            task_id:    task_id.to_string(),
             timeout_ms: 0, // Would need timeout implementation
         })
     }
 
     /// Wait for multiple tasks to complete
-    pub async fn wait_for_batch(
-        &mut self,
-        task_ids: &[String],
-    ) -> SchedulerResult<Vec<TaskResult<serde_json::Value>>> {
+    pub async fn wait_for_batch(&mut self, task_ids: &[String]) -> SchedulerResult<Vec<TaskResult<serde_json::Value>>> {
         let mut results = Vec::new();
         let mut remaining_ids: std::collections::HashSet<_> = task_ids.iter().cloned().collect();
 
@@ -179,20 +168,25 @@ impl WorkStealingScheduler {
         let metrics = self.metrics().await.unwrap_or_default();
 
         SchedulerStatus {
-            is_running: self.is_running.load(std::sync::atomic::Ordering::Acquire),
-            num_workers: self.worker_pool.num_workers(),
-            uptime_seconds: self.start_time.elapsed().as_secs() as u64,
+            is_running:           self.is_running.load(std::sync::atomic::Ordering::Acquire),
+            num_workers:          self.worker_pool.num_workers(),
+            uptime_seconds:       self.start_time.elapsed().as_secs() as u64,
             total_tasks_executed: metrics.task_metrics.total_executed,
-            active_tasks: self.worker_pool.status().await.iter()
+            active_tasks:         self
+                .worker_pool
+                .status()
+                .await
+                .iter()
                 .map(|w| w.queue_depth)
                 .sum::<usize>(),
-            worker_status: self.worker_pool.status().await,
+            worker_status:        self.worker_pool.status().await,
         }
     }
 
     /// Shutdown scheduler gracefully
     pub async fn shutdown(self) -> SchedulerResult<()> {
-        self.is_running.store(false, std::sync::atomic::Ordering::Release);
+        self.is_running
+            .store(false, std::sync::atomic::Ordering::Release);
 
         // Stop worker pool
         self.worker_pool.stop().await?;
@@ -204,10 +198,7 @@ impl WorkStealingScheduler {
     }
 
     /// Start metrics collection background task
-    fn start_metrics_collection(
-        metrics: Arc<MetricsCollector>,
-        interval_ms: u64,
-    ) {
+    fn start_metrics_collection(metrics: Arc<MetricsCollector>, interval_ms: u64) {
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(std::time::Duration::from_millis(interval_ms));
 
@@ -231,7 +222,9 @@ impl WorkStealingScheduler {
         tokio::spawn(async move {
             while let Some(result) = result_rx.recv().await {
                 // Record execution time
-                let _ = metrics.record_execution_time(result.execution_time_ms).await;
+                let _ = metrics
+                    .record_execution_time(result.execution_time_ms)
+                    .await;
 
                 // Record task completion
                 let success = result.result.is_ok();
@@ -257,28 +250,28 @@ impl WorkStealingScheduler {
 #[derive(Debug, Clone)]
 pub struct SchedulerStatus {
     /// Whether scheduler is running
-    pub is_running: bool,
+    pub is_running:           bool,
     /// Number of worker threads
-    pub num_workers: usize,
+    pub num_workers:          usize,
     /// Scheduler uptime in seconds
-    pub uptime_seconds: u64,
+    pub uptime_seconds:       u64,
     /// Total tasks executed
     pub total_tasks_executed: u64,
     /// Currently active tasks (in queues)
-    pub active_tasks: usize,
+    pub active_tasks:         usize,
     /// Individual worker status
-    pub worker_status: Vec<crate::worker::WorkerStatus>,
+    pub worker_status:        Vec<crate::worker::WorkerStatus>,
 }
 
 impl Default for SchedulerStatus {
     fn default() -> Self {
         Self {
-            is_running: false,
-            num_workers: 0,
-            uptime_seconds: 0,
+            is_running:           false,
+            num_workers:          0,
+            uptime_seconds:       0,
             total_tasks_executed: 0,
-            active_tasks: 0,
-            worker_status: Vec::new(),
+            active_tasks:         0,
+            worker_status:        Vec::new(),
         }
     }
 }
@@ -364,15 +357,11 @@ mod tests {
             .await
             .unwrap();
 
-        let task = helpers::cpu_task(
-            "test-task",
-            42i32,
-            |data| async move {
-                // Simulate CPU work
-                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
-                Ok(serde_json::json!({ "result": data, "processed": true }))
-            }
-        );
+        let task = helpers::cpu_task("test-task", 42i32, |data| async move {
+            // Simulate CPU work
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            Ok(serde_json::json!({ "result": data, "processed": true }))
+        });
 
         let task_id = scheduler.submit_task(Box::new(task)).await;
         assert!(task_id.is_ok());

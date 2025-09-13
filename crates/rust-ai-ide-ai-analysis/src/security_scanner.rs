@@ -1,25 +1,27 @@
-use crate::analysis::types::*;
-use crate::error_handling::{AnalysisConfig, AnalysisResult};
-use regex::Regex;
 use std::collections::HashMap;
+
+use regex::Regex;
 use syn::visit::Visit;
 use syn::*;
 use uuid::Uuid;
 
+use crate::analysis::types::*;
+use crate::error_handling::{AnalysisConfig, AnalysisResult};
+
 /// Security scanner for detecting vulnerabilities
 #[derive(Clone, Debug)]
 pub struct SecurityScanner {
-    rules: HashMap<String, SecurityRule>,
+    rules:  HashMap<String, SecurityRule>,
     config: AnalysisConfig,
 }
 
 #[derive(Clone, Debug)]
 pub struct SecurityRule {
-    pub pattern: Regex,
-    pub category: SecurityCategory,
-    pub severity: Severity,
+    pub pattern:     Regex,
+    pub category:    SecurityCategory,
+    pub severity:    Severity,
     pub description: String,
-    pub mitigation: String,
+    pub mitigation:  String,
 }
 
 impl SecurityScanner {
@@ -41,89 +43,67 @@ impl SecurityScanner {
     /// Load default security rules
     fn load_default_rules(&mut self) {
         // SQL Injection patterns
-        self.add_rule(
-            "sql_concat",
-            SecurityRule {
-                pattern: Regex::new(r#"(?i)(select|insert|update|delete).*\+\s*".*\$\{.*?\}"#)
-                    .unwrap(),
-                category: SecurityCategory::Injection,
-                severity: Severity::Critical,
-                description: "Potential SQL injection through string concatenation".to_string(),
-                mitigation: "Use parameterized queries or prepared statements".to_string(),
-            },
-        );
+        self.add_rule("sql_concat", SecurityRule {
+            pattern:     Regex::new(r#"(?i)(select|insert|update|delete).*\+\s*".*\$\{.*?\}"#).unwrap(),
+            category:    SecurityCategory::Injection,
+            severity:    Severity::Critical,
+            description: "Potential SQL injection through string concatenation".to_string(),
+            mitigation:  "Use parameterized queries or prepared statements".to_string(),
+        });
 
         // XSS in HTML generation
-        self.add_rule(
-            "xss_innerHTML",
-            SecurityRule {
-                pattern: Regex::new(r#"(?i)innerHTML\s*\+=\s*".*\$\{.*?\}"#).unwrap(),
-                category: SecurityCategory::InputValidation,
-                severity: Severity::Error,
-                description: "Potential XSS vulnerability in HTML manipulation".to_string(),
-                mitigation: "Use DOM methods or sanitize input with a trusted library".to_string(),
-            },
-        );
+        self.add_rule("xss_innerHTML", SecurityRule {
+            pattern:     Regex::new(r#"(?i)innerHTML\s*\+=\s*".*\$\{.*?\}"#).unwrap(),
+            category:    SecurityCategory::InputValidation,
+            severity:    Severity::Error,
+            description: "Potential XSS vulnerability in HTML manipulation".to_string(),
+            mitigation:  "Use DOM methods or sanitize input with a trusted library".to_string(),
+        });
 
         // Unsafe code patterns
-        self.add_rule(
-            "use_after_free",
-            SecurityRule {
-                pattern: Regex::new(r#"(?i)Rc|Arc|Box).*drop.*\1"#).unwrap(),
-                category: SecurityCategory::Memory,
-                severity: Severity::Warning,
-                description: "Potential use-after-free vulnerability".to_string(),
-                mitigation: "Ensure proper lifetime management and memory safety".to_string(),
-            },
-        );
+        self.add_rule("use_after_free", SecurityRule {
+            pattern:     Regex::new(r#"(?i)Rc|Arc|Box).*drop.*\1"#).unwrap(),
+            category:    SecurityCategory::Memory,
+            severity:    Severity::Warning,
+            description: "Potential use-after-free vulnerability".to_string(),
+            mitigation:  "Ensure proper lifetime management and memory safety".to_string(),
+        });
 
         // Cryptographic issues
-        self.add_rule(
-            "weak_randomness",
-            SecurityRule {
-                pattern: Regex::new(r#"(?i)rand::thread_rng\(\)"#).unwrap(),
-                category: SecurityCategory::Cryptography,
-                severity: Severity::Warning,
-                description: "Using weak randomness for sensitive operations".to_string(),
-                mitigation: "Use cryptographically secure random number generators".to_string(),
-            },
-        );
+        self.add_rule("weak_randomness", SecurityRule {
+            pattern:     Regex::new(r#"(?i)rand::thread_rng\(\)"#).unwrap(),
+            category:    SecurityCategory::Cryptography,
+            severity:    Severity::Warning,
+            description: "Using weak randomness for sensitive operations".to_string(),
+            mitigation:  "Use cryptographically secure random number generators".to_string(),
+        });
 
         // Race conditions
-        self.add_rule(
-            "race_condition",
-            SecurityRule {
-                pattern: Regex::new(r#"(?i)(&mut|&)\s+(Arc|Rc)\s*<.*>\s*,.*,.*&"#).unwrap(),
-                category: SecurityCategory::RaceConditions,
-                severity: Severity::Error,
-                description: "Potential race condition detected".to_string(),
-                mitigation: "Use proper synchronization primitives or message passing".to_string(),
-            },
-        );
+        self.add_rule("race_condition", SecurityRule {
+            pattern:     Regex::new(r#"(?i)(&mut|&)\s+(Arc|Rc)\s*<.*>\s*,.*,.*&"#).unwrap(),
+            category:    SecurityCategory::RaceConditions,
+            severity:    Severity::Error,
+            description: "Potential race condition detected".to_string(),
+            mitigation:  "Use proper synchronization primitives or message passing".to_string(),
+        });
 
         // Command injection
-        self.add_rule(
-            "command_injection",
-            SecurityRule {
-                pattern: Regex::new(r#"Command::new.*\+.*\$"#).unwrap(),
-                category: SecurityCategory::Injection,
-                severity: Severity::Critical,
-                description: "Potential command injection vulnerability".to_string(),
-                mitigation: "Use validated input or safe alternatives".to_string(),
-            },
-        );
+        self.add_rule("command_injection", SecurityRule {
+            pattern:     Regex::new(r#"Command::new.*\+.*\$"#).unwrap(),
+            category:    SecurityCategory::Injection,
+            severity:    Severity::Critical,
+            description: "Potential command injection vulnerability".to_string(),
+            mitigation:  "Use validated input or safe alternatives".to_string(),
+        });
 
         // Hardcoded passwords
-        self.add_rule(
-            "hardcoded_password",
-            SecurityRule {
-                pattern: Regex::new(r#"(?i)(password|passwd|secret).*=\s*".*"#).unwrap(),
-                category: SecurityCategory::Configuration,
-                severity: Severity::Warning,
-                description: "Hardcoded secrets detected".to_string(),
-                mitigation: "Use environment variables or secure key management".to_string(),
-            },
-        );
+        self.add_rule("hardcoded_password", SecurityRule {
+            pattern:     Regex::new(r#"(?i)(password|passwd|secret).*=\s*".*"#).unwrap(),
+            category:    SecurityCategory::Configuration,
+            severity:    Severity::Warning,
+            description: "Hardcoded secrets detected".to_string(),
+            mitigation:  "Use environment variables or secure key management".to_string(),
+        });
     }
 
     /// Add a custom security rule
@@ -147,23 +127,20 @@ impl SecurityScanner {
                     for capture in captures {
                         // Regex match capture is available, proceed with analysis
                         let issue = SecurityIssue {
-                            id: Uuid::new_v4(),
-                            cwe_id: self.map_to_cwe(&rule.category),
-                            title: rule.description.clone(),
-                            description: format!(
-                                "Security vulnerability found: {}",
-                                rule.description
-                            ),
-                            severity: rule.severity,
-                            location: Location {
-                                file: file_path.to_string(),
-                                line: line_no + 1,
+                            id:          Uuid::new_v4(),
+                            cwe_id:      self.map_to_cwe(&rule.category),
+                            title:       rule.description.clone(),
+                            description: format!("Security vulnerability found: {}", rule.description),
+                            severity:    rule.severity,
+                            location:    Location {
+                                file:   file_path.to_string(),
+                                line:   line_no + 1,
                                 column: capture.start(),
                                 offset: capture.start(),
                             },
-                            evidence: format!("Found '{}'", capture.as_str()),
-                            mitigation: rule.mitigation.clone(),
-                            category: rule.category.clone(),
+                            evidence:    format!("Found '{}'", capture.as_str()),
+                            mitigation:  rule.mitigation.clone(),
+                            category:    rule.category.clone(),
                         };
                         issues.push(issue);
                     }
@@ -197,7 +174,7 @@ impl SecurityScanner {
         let mut issues = Vec::new();
         let mut visitor = UnsafeBlockVisitor {
             issues: &mut issues,
-            file: "AST",
+            file:   "AST",
         };
         visitor.visit_file(ast);
         issues
@@ -208,7 +185,7 @@ impl SecurityScanner {
         let mut issues = Vec::new();
         let mut visitor = SecretVulnerabilityVisitor {
             issues: &mut issues,
-            file: "AST",
+            file:   "AST",
         };
         visitor.visit_file(ast);
         issues
@@ -219,7 +196,7 @@ impl SecurityScanner {
         let mut issues = Vec::new();
         let mut visitor = ConfigVulnerabilityVisitor {
             issues: &mut issues,
-            file: "AST",
+            file:   "AST",
         };
         visitor.visit_file(ast);
         issues
@@ -251,27 +228,27 @@ impl SecurityScanner {
 #[derive(Debug)]
 struct UnsafeBlockVisitor<'a> {
     issues: &'a mut Vec<SecurityIssue>,
-    file: &'a str,
+    file:   &'a str,
 }
 
 impl<'a, 'ast> Visit<'ast> for UnsafeBlockVisitor<'a> {
     fn visit_expr_unsafe(&mut self, node: &'ast ExprUnsafe) {
         let issue = SecurityIssue {
-            id: Uuid::new_v4(),
-            cwe_id: Some("CWE-120".to_string()),
-            title: "Unsafe block detected".to_string(),
+            id:          Uuid::new_v4(),
+            cwe_id:      Some("CWE-120".to_string()),
+            title:       "Unsafe block detected".to_string(),
             description: "Usage of unsafe block - requires manual safety verification".to_string(),
-            severity: Severity::Warning,
-            location: Location {
-                file: self.file.to_string(),
+            severity:    Severity::Warning,
+            location:    Location {
+                file:   self.file.to_string(),
                 // Using simplified span info for token-level spans
-                line: 0, // AST nodes don't have reliable line info from span
+                line:   0, // AST nodes don't have reliable line info from span
                 column: 0,
                 offset: 0,
             },
-            evidence: "unsafe { ... }".to_string(),
-            mitigation: "Review unsafe code thoroughly for memory safety".to_string(),
-            category: SecurityCategory::Memory,
+            evidence:    "unsafe { ... }".to_string(),
+            mitigation:  "Review unsafe code thoroughly for memory safety".to_string(),
+            category:    SecurityCategory::Memory,
         };
         self.issues.push(issue);
         syn::visit::visit_expr_unsafe(self, node);
@@ -281,7 +258,7 @@ impl<'a, 'ast> Visit<'ast> for UnsafeBlockVisitor<'a> {
 /// AST visitor for secret exposure detection
 struct SecretVulnerabilityVisitor<'a> {
     issues: &'a mut Vec<SecurityIssue>,
-    file: &'a str,
+    file:   &'a str,
 }
 
 impl<'a, 'ast> Visit<'ast> for SecretVulnerabilityVisitor<'a> {
@@ -293,20 +270,20 @@ impl<'a, 'ast> Visit<'ast> for SecretVulnerabilityVisitor<'a> {
             && !lower.contains("env::var")
         {
             let issue = SecurityIssue {
-                id: Uuid::new_v4(),
-                cwe_id: Some("CWE-798".to_string()),
-                title: "Hardcoded secret detected".to_string(),
+                id:          Uuid::new_v4(),
+                cwe_id:      Some("CWE-798".to_string()),
+                title:       "Hardcoded secret detected".to_string(),
                 description: "Potential hardcoded secret or credential".to_string(),
-                severity: Severity::Error,
-                location: Location {
-                    file: self.file.to_string(),
-                    line: 0, // AST nodes don't have reliable line info from span
+                severity:    Severity::Error,
+                location:    Location {
+                    file:   self.file.to_string(),
+                    line:   0, // AST nodes don't have reliable line info from span
                     column: 0,
                     offset: 0,
                 },
-                evidence: format!("Literal: {}", value.chars().take(20).collect::<String>()),
-                mitigation: "Move secrets to environment variables or secure config".to_string(),
-                category: SecurityCategory::Configuration,
+                evidence:    format!("Literal: {}", value.chars().take(20).collect::<String>()),
+                mitigation:  "Move secrets to environment variables or secure config".to_string(),
+                category:    SecurityCategory::Configuration,
             };
             self.issues.push(issue);
         }
@@ -318,7 +295,7 @@ impl<'a, 'ast> Visit<'ast> for SecretVulnerabilityVisitor<'a> {
 /// AST visitor for insecure configuration detection
 struct ConfigVulnerabilityVisitor<'a> {
     issues: &'a mut Vec<SecurityIssue>,
-    file: &'a str,
+    file:   &'a str,
 }
 
 impl<'a, 'ast> Visit<'ast> for ConfigVulnerabilityVisitor<'a> {
@@ -331,21 +308,20 @@ impl<'a, 'ast> Visit<'ast> for ConfigVulnerabilityVisitor<'a> {
                     || seg.ident == "disable_ssl_verify"
             }) {
                 let issue = SecurityIssue {
-                    id: Uuid::new_v4(),
-                    cwe_id: Some("CWE-16".to_string()),
-                    title: "Insecure configuration detected".to_string(),
-                    description: "Security-critical configuration that may allow attacks"
-                        .to_string(),
-                    severity: Severity::Critical,
-                    location: Location {
-                        file: self.file.to_string(),
-                        line: 0, // AST nodes don't have reliable line info from span
+                    id:          Uuid::new_v4(),
+                    cwe_id:      Some("CWE-16".to_string()),
+                    title:       "Insecure configuration detected".to_string(),
+                    description: "Security-critical configuration that may allow attacks".to_string(),
+                    severity:    Severity::Critical,
+                    location:    Location {
+                        file:   self.file.to_string(),
+                        line:   0, // AST nodes don't have reliable line info from span
                         column: 0,
                         offset: 0,
                     },
-                    evidence: "Insecure config call".to_string(),
-                    mitigation: "Review security implications of this configuration".to_string(),
-                    category: SecurityCategory::Configuration,
+                    evidence:    "Insecure config call".to_string(),
+                    mitigation:  "Review security implications of this configuration".to_string(),
+                    category:    SecurityCategory::Configuration,
                 };
                 self.issues.push(issue);
             }
@@ -361,8 +337,7 @@ mod tests {
     #[test]
     fn test_sql_injection_detection() {
         let scanner = SecurityScanner::new();
-        let code =
-            r#"let query = "SELECT * FROM users WHERE id = ".to_string() + &user_input + ";"#;
+        let code = r#"let query = "SELECT * FROM users WHERE id = ".to_string() + &user_input + ";"#;
 
         let issues = scanner.scan_code(code, "test.rs");
 

@@ -1,12 +1,13 @@
 #![feature(impl_trait_in_bindings)]
 
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+
 use candle_core::{DType, Device, Error as CandleError, Tensor};
 use candle_nn::VarBuilder;
 pub use rust_ai_ide_errors::RustAIError as IDEError;
 use rust_ai_ide_errors::{IDEResult, RustAIError};
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
 use tokio::sync::Mutex;
 
 /// Stub implementation for validate_secure_path
@@ -18,19 +19,16 @@ pub fn validate_secure_path(_path: &str) -> IDEResult<()> {
 impl From<candle_core::Error> for IDEError {
     fn from(error: candle_core::Error) -> Self {
         match error {
-            candle_core::Error::Msg(msg) => {
-                IDEError::Generic(format!("Candle core error: {}", msg))
-            }
-            candle_core::Error::Wrapper(err) => {
-                IDEError::InternalError(format!("Candle core wrapper error: {}", err))
-            }
+            candle_core::Error::Msg(msg) => IDEError::Generic(format!("Candle core error: {}", msg)),
+            candle_core::Error::Wrapper(err) => IDEError::InternalError(format!("Candle core wrapper error: {}", err)),
             _ => IDEError::InternalError("Unknown candle core error".into()),
         }
     }
 }
+use std::time::Duration;
+
 use moka::future::Cache as MokaCache;
 use rust_ai_ide_cache::{Cache, CacheConfig};
-use std::time::Duration;
 
 // Public module exports
 pub mod benchmark;
@@ -46,9 +44,7 @@ pub mod validation;
 
 // Re-export main types
 pub use benchmark::{BenchmarkResults, PerformanceTargets, QuantizationBenchmarkSuite};
-pub use context_window::{
-    ContextWindowConfig, ContextWindowManager, ContextWindowPerformanceMetrics, WindowState,
-};
+pub use context_window::{ContextWindowConfig, ContextWindowManager, ContextWindowPerformanceMetrics, WindowState};
 pub use formats::*;
 pub use gguf_optimization::{DeployedGGUFModel, GGUFConfig, GGUFOptimizationEngine};
 pub use memory_manager::{AllocatorStats, MemoryManagerConfig, QuantizedMemoryManager};
@@ -60,28 +56,28 @@ pub use validation::*;
 #[derive(Clone)]
 pub struct QuantizationService {
     /// Moka cache for quantized models with TTL
-    cache: MokaCache<String, Arc<QuantizedModel>>,
+    cache:              MokaCache<String, Arc<QuantizedModel>>,
     /// Background quantization queue
     quantization_queue: Arc<Mutex<Vec<QuantizationTask>>>,
     /// Performance metrics tracker
-    metrics: Arc<QuantizationMetrics>,
+    metrics:            Arc<QuantizationMetrics>,
 }
 
 /// Task for background quantization
 #[derive(Clone)]
 pub struct QuantizationTask {
     pub model_path: PathBuf,
-    pub config: QuantizationConfig,
-    pub strategy: QuantizationStrategy,
+    pub config:     QuantizationConfig,
+    pub strategy:   QuantizationStrategy,
 }
 
 /// Performance metrics for quantization operations
 #[derive(Clone, Default)]
 pub struct QuantizationMetrics {
-    pub total_models_quantized: u64,
+    pub total_models_quantized:       u64,
     pub average_quantization_time_ms: f64,
-    pub memory_usage_bytes: u64,
-    pub cache_hit_rate: f64,
+    pub memory_usage_bytes:           u64,
+    pub cache_hit_rate:               f64,
 }
 
 impl QuantizationService {
@@ -152,24 +148,21 @@ impl QuantizationService {
         let quantized_tensors = match config.strategy {
             QuantizationStrategy::GGUF_Q4_0 => self.quantize_to_gguf_q4(&tensors, config)?,
             QuantizationStrategy::GGUF_Q5_0 => self.quantize_to_gguf_q5(&tensors, config)?,
-            QuantizationStrategy::SafeTensorOptimized => {
-                self.optimize_safetensors(&tensors, config)?
-            }
+            QuantizationStrategy::SafeTensorOptimized => self.optimize_safetensors(&tensors, config)?,
         };
 
         let quantization_time = start_time.elapsed().as_millis() as f64;
 
         // Update metrics
         let mut metrics = self.metrics.as_ref().clone();
-        metrics.average_quantization_time_ms =
-            (metrics.average_quantization_time_ms + quantization_time) / 2.0;
+        metrics.average_quantization_time_ms = (metrics.average_quantization_time_ms + quantization_time) / 2.0;
 
         Ok(QuantizedModel {
-            tensors: quantized_tensors,
-            original_path: model_path.to_path_buf(),
-            strategy: config.strategy,
+            tensors:              quantized_tensors,
+            original_path:        model_path.to_path_buf(),
+            strategy:             config.strategy,
             quantization_time_ms: quantization_time,
-            size_bytes: quantized_tensors
+            size_bytes:           quantized_tensors
                 .iter()
                 .map(|(_, t)| t.dims().iter().product::<usize>() * 4)
                 .sum(), // Estimate size

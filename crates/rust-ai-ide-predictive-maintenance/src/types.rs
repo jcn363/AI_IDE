@@ -1,8 +1,9 @@
 //! Core type definitions for predictive maintenance forecasting system
 
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Configuration for the predictive maintenance system
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,14 +36,14 @@ pub struct MaintenanceConfig {
 impl Default for MaintenanceConfig {
     fn default() -> Self {
         Self {
-            cache_ttl_seconds: 3600, // 1 hour
-            max_historical_points: 1000,
-            confidence_threshold: 0.7,
-            forecast_horizons: vec![4, 8, 12, 24], // 1, 2, 3, 6 months
-            min_file_size_threshold: 1024,         // 1KB
-            max_dependency_depth: 10,
-            cost_multiplier_base: 1.0,
-            database_path: None,
+            cache_ttl_seconds:       3600, // 1 hour
+            max_historical_points:   1000,
+            confidence_threshold:    0.7,
+            forecast_horizons:       vec![4, 8, 12, 24], // 1, 2, 3, 6 months
+            min_file_size_threshold: 1024,               // 1KB
+            max_dependency_depth:    10,
+            cost_multiplier_base:    1.0,
+            database_path:           None,
         }
     }
 }
@@ -50,12 +51,12 @@ impl Default for MaintenanceConfig {
 /// Workspace and project context for analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Workspace {
-    pub id: String,
-    pub name: String,
-    pub root_path: String,
+    pub id:                  String,
+    pub name:                String,
+    pub root_path:           String,
     pub total_lines_of_code: u64,
-    pub file_count: usize,
-    pub last_modified: DateTime<Utc>,
+    pub file_count:          usize,
+    pub last_modified:       DateTime<Utc>,
 }
 
 /// Analysis context containing current state and historical data

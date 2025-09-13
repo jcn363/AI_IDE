@@ -6,10 +6,10 @@ use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone)]
 pub struct CacheEntry<T> {
-    pub value: T,
-    created_at: Instant,
+    pub value:   T,
+    created_at:  Instant,
     accessed_at: Instant,
-    ttl: Option<Duration>,
+    ttl:         Option<Duration>,
 }
 
 impl<T> CacheEntry<T> {
@@ -38,9 +38,9 @@ impl<T> CacheEntry<T> {
 
 pub struct LRUCache<K, V> {
     /// Cache storage with proper lifetime bounds
-    cache: HashMap<K, CacheEntry<V>>,
+    cache:        HashMap<K, CacheEntry<V>>,
     /// Capacity limit for memory safety
-    capacity: usize,
+    capacity:     usize,
     /// Access order tracking for LRU eviction with pre-allocated capacity
     access_order: Vec<K>,
 }
@@ -81,7 +81,8 @@ where
                     self.access_order.push(key.clone());
                 }
                 // Note: Access order corruption handling removed to avoid borrow checker issues
-                // This is a trade-off for memory safety - we prefer correctness over perfect LRU order
+                // This is a trade-off for memory safety - we prefer correctness over perfect LRU
+                // order
             } else {
                 // Key not found in access order, add it with bounds checking
                 if self.access_order.len() < self.capacity {
@@ -189,7 +190,7 @@ where
 
 // Prefetch caching for predictive loading
 pub struct PrefetchCache<K, V> {
-    cache: LRUCache<K, V>,
+    cache:              LRUCache<K, V>,
     prefetch_threshold: usize,
 }
 

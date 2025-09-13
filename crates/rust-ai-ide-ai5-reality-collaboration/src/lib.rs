@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 pub struct RealityCollaborationHub {
-    pub participants: std::collections::HashMap<Uuid, RealityCollaborator>,
+    pub participants:         std::collections::HashMap<Uuid, RealityCollaborator>,
     pub entanglement_network: Graph<CollaborationNode, EntanglementEdge>,
     pub quantum_communicator: QuantumCommunicator,
 }
@@ -16,7 +16,7 @@ pub struct RealityCollaborationHub {
 impl RealityCollaborationHub {
     pub fn new() -> Self {
         Self {
-            participants: std::collections::HashMap::new(),
+            participants:         std::collections::HashMap::new(),
             entanglement_network: Graph::new(),
             quantum_communicator: QuantumCommunicator::new(),
         }
@@ -50,14 +50,10 @@ impl QuantumCommunicator {
         }
     }
 
-    pub async fn create_entanglement(
-        &mut self,
-        a: Uuid,
-        b: Uuid,
-    ) -> Result<(), RealityCollaborationError> {
+    pub async fn create_entanglement(&mut self, a: Uuid, b: Uuid) -> Result<(), RealityCollaborationError> {
         let entanglement = Entanglement {
-            strength: 1.0,
-            established_at: Utc::now(),
+            strength:          1.0,
+            established_at:    Utc::now(),
             quantum_coherence: 0.95,
         };
         self.entanglement_pairs.insert((a, b), entanglement);
@@ -67,16 +63,16 @@ impl QuantumCommunicator {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RealityCollaborator {
-    pub id: Uuid,
+    pub id:                  Uuid,
     pub reality_coordinates: Vec<f64>,
-    pub specialization: String,
-    pub quantum_signature: Vec<f32>,
+    pub specialization:      String,
+    pub quantum_signature:   Vec<f32>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Entanglement {
-    pub strength: f32,
-    pub established_at: chrono::DateTime<Utc>,
+    pub strength:          f32,
+    pub established_at:    chrono::DateTime<Utc>,
     pub quantum_coherence: f32,
 }
 

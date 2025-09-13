@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
     use rust_ai_ide_ai_refactoring::ast_utils::{is_ast_supported, IdentifierRenamer};
-    use syn::{parse_str, visit_mut::VisitMut};
+    use syn::parse_str;
+    use syn::visit_mut::VisitMut;
 
     #[test]
     fn test_is_ast_supported_rust_files() {

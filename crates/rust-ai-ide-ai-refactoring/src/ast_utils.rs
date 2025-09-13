@@ -1,5 +1,7 @@
 use std::path::Path;
-use syn::{visit_mut::VisitMut, Ident};
+
+use syn::visit_mut::VisitMut;
+use syn::Ident;
 
 /// Check if a file is supported by AST-based operations (Rust files)
 pub fn is_ast_supported(file_path: &str) -> bool {
@@ -10,8 +12,8 @@ pub fn is_ast_supported(file_path: &str) -> bool {
 
 /// AST visitor to rename identifiers in code
 pub struct IdentifierRenamer {
-    old_name: String,
-    new_name: String,
+    old_name:     String,
+    new_name:     String,
     rename_count: usize,
 }
 
@@ -30,9 +32,9 @@ impl VisitMut for IdentifierRenamer {
         if i.to_string() == self.old_name {
             // Only rename if this isn't a keyword or built-in identifier
             if ![
-                "fn", "let", "const", "mut", "if", "else", "while", "for", "loop", "match",
-                "return", "break", "continue", "struct", "enum", "trait", "impl", "pub", "use",
-                "mod", "type", "where", "as", "crate", "super", "self", "Self", "true", "false",
+                "fn", "let", "const", "mut", "if", "else", "while", "for", "loop", "match", "return", "break",
+                "continue", "struct", "enum", "trait", "impl", "pub", "use", "mod", "type", "where", "as", "crate",
+                "super", "self", "Self", "true", "false",
             ]
             .contains(&self.old_name.as_str())
             {

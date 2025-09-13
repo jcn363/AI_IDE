@@ -3,7 +3,7 @@
 /// Location information for AST nodes
 #[derive(Debug, Clone, PartialEq)]
 pub struct Location {
-    pub line: usize,
+    pub line:   usize,
     pub column: usize,
 }
 
@@ -11,31 +11,31 @@ pub struct Location {
 #[derive(Debug, Clone, PartialEq)]
 pub struct DslDocument {
     pub templates: Vec<Template>,
-    pub metadata: Vec<Metadata>,
-    pub location: Option<Location>,
+    pub metadata:  Vec<Metadata>,
+    pub location:  Option<Location>,
 }
 
 /// Template definition with all its components
 #[derive(Debug, Clone, PartialEq)]
 pub struct Template {
-    pub name: String,
+    pub name:        String,
     pub description: Option<String>,
-    pub parameters: Vec<Parameter>,
-    pub guards: Vec<Guard>,
-    pub generate: GenerateBlock,
-    pub patterns: Vec<String>,
-    pub metadata: Vec<Metadata>,
-    pub location: Option<Location>,
+    pub parameters:  Vec<Parameter>,
+    pub guards:      Vec<Guard>,
+    pub generate:    GenerateBlock,
+    pub patterns:    Vec<String>,
+    pub metadata:    Vec<Metadata>,
+    pub location:    Option<Location>,
 }
 
 /// Parameter definition with type and constraints
 #[derive(Debug, Clone, PartialEq)]
 pub struct Parameter {
-    pub name: String,
-    pub param_type: ParameterType,
-    pub required: bool,
+    pub name:          String,
+    pub param_type:    ParameterType,
+    pub required:      bool,
     pub default_value: Option<Literal>,
-    pub description: Option<String>,
+    pub description:   Option<String>,
 }
 
 /// Parameter types supported by the DSL
@@ -55,7 +55,7 @@ pub enum ParameterType {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Guard {
     pub condition: Expression,
-    pub location: Option<Location>,
+    pub location:  Option<Location>,
 }
 
 /// Expressions for guards and template logic
@@ -72,9 +72,9 @@ pub enum Expression {
 /// Binary operations
 #[derive(Debug, Clone, PartialEq)]
 pub struct BinaryOp {
-    pub left: Box<Expression>,
+    pub left:     Box<Expression>,
     pub operator: BinaryOperator,
-    pub right: Box<Expression>,
+    pub right:    Box<Expression>,
 }
 
 /// Available binary operators
@@ -96,7 +96,7 @@ pub enum BinaryOperator {
 #[derive(Debug, Clone, PartialEq)]
 pub struct UnaryOp {
     pub operator: UnaryOperator,
-    pub operand: Box<Expression>,
+    pub operand:  Box<Expression>,
 }
 
 /// Available unary operators
@@ -120,17 +120,17 @@ pub enum Literal {
 /// Function calls in expressions
 #[derive(Debug, Clone, PartialEq)]
 pub struct FunctionCall {
-    pub name: String,
+    pub name:      String,
     pub arguments: Vec<Expression>,
 }
 
 /// Template generation block
 #[derive(Debug, Clone, PartialEq)]
 pub struct GenerateBlock {
-    pub kind: GenerationKind,
-    pub content: TemplateContent,
+    pub kind:        GenerationKind,
+    pub content:     TemplateContent,
     pub validations: Vec<ValidationRule>,
-    pub metadata: Vec<Metadata>,
+    pub metadata:    Vec<Metadata>,
 }
 
 /// Types of code generation
@@ -163,8 +163,8 @@ pub enum ContentPart {
 /// Placeholder for template interpolation
 #[derive(Debug, Clone, PartialEq)]
 pub struct Placeholder {
-    pub name: String,
-    pub filters: Vec<Filter>,
+    pub name:     String,
+    pub filters:  Vec<Filter>,
     pub location: Option<Location>,
 }
 
@@ -196,14 +196,14 @@ pub struct Conditional {
 pub struct Loop {
     pub variable: String,
     pub iterable: Expression,
-    pub body: Vec<ContentPart>,
+    pub body:     Vec<ContentPart>,
 }
 
 /// Validation rules for generated code
 #[derive(Debug, Clone, PartialEq)]
 pub struct ValidationRule {
-    pub name: String,
-    pub rule: String,
+    pub name:     String,
+    pub rule:     String,
     pub severity: ValidationSeverity,
 }
 
@@ -218,7 +218,7 @@ pub enum ValidationSeverity {
 /// Metadata attachments
 #[derive(Debug, Clone, PartialEq)]
 pub struct Metadata {
-    pub key: String,
+    pub key:   String,
     pub value: MetadataValue,
 }
 
@@ -236,8 +236,8 @@ impl Default for DslDocument {
     fn default() -> Self {
         Self {
             templates: Vec::new(),
-            metadata: Vec::new(),
-            location: None,
+            metadata:  Vec::new(),
+            location:  None,
         }
     }
 }
@@ -246,14 +246,14 @@ impl Template {
     /// Create a new template with required fields
     pub fn new(name: impl Into<String>) -> Self {
         Self {
-            name: name.into(),
+            name:        name.into(),
             description: None,
-            parameters: Vec::new(),
-            guards: Vec::new(),
-            generate: GenerateBlock::default(),
-            patterns: Vec::new(),
-            metadata: Vec::new(),
-            location: None,
+            parameters:  Vec::new(),
+            guards:      Vec::new(),
+            generate:    GenerateBlock::default(),
+            patterns:    Vec::new(),
+            metadata:    Vec::new(),
+            location:    None,
         }
     }
 }
@@ -261,10 +261,10 @@ impl Template {
 impl Default for GenerateBlock {
     fn default() -> Self {
         Self {
-            kind: GenerationKind::Function,
-            content: TemplateContent::new(),
+            kind:        GenerationKind::Function,
+            content:     TemplateContent::new(),
             validations: Vec::new(),
-            metadata: Vec::new(),
+            metadata:    Vec::new(),
         }
     }
 }

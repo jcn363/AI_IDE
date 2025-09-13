@@ -10,11 +10,7 @@ impl TemplateEngine {
         Self {}
     }
 
-    pub fn render_template(
-        &self,
-        _template_name: &str,
-        _data: &serde_json::Value,
-    ) -> Result<String> {
+    pub fn render_template(&self, _template_name: &str, _data: &serde_json::Value) -> Result<String> {
         Ok("// Template not implemented".to_string())
     }
 

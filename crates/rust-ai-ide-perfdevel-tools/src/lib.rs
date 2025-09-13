@@ -8,9 +8,9 @@ pub struct PerformanceMetrics {
     /// Name of the operation being measured
     pub operation: String,
     /// Duration of the operation
-    pub duration: Duration,
+    pub duration:  Duration,
     /// Additional metadata
-    pub metadata: std::collections::HashMap<String, String>,
+    pub metadata:  std::collections::HashMap<String, String>,
 }
 
 impl PerformanceMetrics {
@@ -18,8 +18,8 @@ impl PerformanceMetrics {
     pub fn new(operation: impl Into<String>) -> Self {
         Self {
             operation: operation.into(),
-            duration: Duration::default(),
-            metadata: std::collections::HashMap::new(),
+            duration:  Duration::default(),
+            metadata:  std::collections::HashMap::new(),
         }
     }
 

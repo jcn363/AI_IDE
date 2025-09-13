@@ -1,23 +1,24 @@
 //! Module defining the edge type for the dependency graph
 
-use super::DependencyType;
 use serde::{Deserialize, Serialize};
+
+use super::DependencyType;
 
 /// Represents an edge in the dependency graph
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DependencyEdge {
     /// Type of dependency
-    pub dep_type: DependencyType,
+    pub dep_type:              DependencyType,
     /// Version requirement
-    pub version_req: String,
+    pub version_req:           String,
     /// Whether this is an optional dependency
-    pub optional: bool,
+    pub optional:              bool,
     /// Whether default features are used
     pub uses_default_features: bool,
     /// Enabled features for this dependency
-    pub features: Vec<String>,
+    pub features:              Vec<String>,
     /// Target platform (if specified)
-    pub target: Option<String>,
+    pub target:                Option<String>,
 }
 
 // Builder methods for DependencyEdge

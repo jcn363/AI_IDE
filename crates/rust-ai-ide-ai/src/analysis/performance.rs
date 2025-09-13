@@ -1,16 +1,18 @@
-use super::{AnalysisCategory, AnalysisFinding, AnalysisPreferences, Analyzer, Range, Severity};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use syn::{visit::Visit, Expr, File};
+use syn::visit::Visit;
+use syn::{Expr, File};
+
+use super::{AnalysisCategory, AnalysisFinding, AnalysisPreferences, Analyzer, Range, Severity};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceIssue {
-    pub file_path: String,
-    pub line: usize,
-    pub column: usize,
-    pub message: String,
+    pub file_path:  String,
+    pub line:       usize,
+    pub column:     usize,
+    pub message:    String,
     pub suggestion: String,
-    pub severity: PerformanceIssueSeverity,
+    pub severity:   PerformanceIssueSeverity,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -23,7 +25,7 @@ pub enum PerformanceIssueSeverity {
 /// Performance analyzer that identifies potential performance bottlenecks
 #[derive(Debug)]
 pub struct PerformanceAnalyzer {
-    pub issues: Vec<PerformanceIssue>,
+    pub issues:   Vec<PerformanceIssue>,
     current_file: String,
 }
 
@@ -63,9 +65,9 @@ impl Analyzer for PerformanceAnalyzer {
 
                 let range = Range {
                     start_line: issue.line as u32,
-                    start_col: issue.column as u32,
-                    end_line: issue.line as u32,
-                    end_col: issue.column as u32 + 10, // Arbitrary end column
+                    start_col:  issue.column as u32,
+                    end_line:   issue.line as u32,
+                    end_col:    issue.column as u32 + 10, // Arbitrary end column
                 };
 
                 crate::analysis::AnalysisFinding {
@@ -95,14 +97,14 @@ impl Analyzer for PerformanceAnalyzer {
 }
 
 struct PerformanceVisitor {
-    issues: Vec<PerformanceIssue>,
+    issues:       Vec<PerformanceIssue>,
     current_file: String,
 }
 
 impl PerformanceVisitor {
     fn new(file_path: &str) -> Self {
         Self {
-            issues: Vec::new(),
+            issues:       Vec::new(),
             current_file: file_path.to_string(),
         }
     }
@@ -134,14 +136,12 @@ impl PerformanceVisitor {
 
                 if prev_method == "map" {
                     self.issues.push(PerformanceIssue {
-                        file_path: self.current_file.clone(),
-                        line: node.method.span().line() as usize,
-                        column: node.method.span().column() as usize,
-                        message: "Inefficient iterator chain: map().collect()".to_string(),
-                        suggestion:
-                            "Consider using filter_map() or another more efficient operation"
-                                .to_string(),
-                        severity: PerformanceIssueSeverity::Medium,
+                        file_path:  self.current_file.clone(),
+                        line:       node.method.span().line() as usize,
+                        column:     node.method.span().column() as usize,
+                        message:    "Inefficient iterator chain: map().collect()".to_string(),
+                        suggestion: "Consider using filter_map() or another more efficient operation".to_string(),
+                        severity:   PerformanceIssueSeverity::Medium,
                     });
                 }
             }
@@ -155,12 +155,12 @@ impl PerformanceVisitor {
 
                 if prev_method == "iter" || prev_method == "into_iter" {
                     self.issues.push(PerformanceIssue {
-                        file_path: self.current_file.clone(),
-                        line: node.method.span().line() as usize,
-                        column: node.method.span().column() as usize,
-                        message: "Unnecessary clone() in iterator chain".to_string(),
+                        file_path:  self.current_file.clone(),
+                        line:       node.method.span().line() as usize,
+                        column:     node.method.span().column() as usize,
+                        message:    "Unnecessary clone() in iterator chain".to_string(),
                         suggestion: "Consider removing clone() if possible".to_string(),
-                        severity: PerformanceIssueSeverity::Low,
+                        severity:   PerformanceIssueSeverity::Low,
                     });
                 }
             }

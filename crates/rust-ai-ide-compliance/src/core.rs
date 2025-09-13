@@ -1,8 +1,9 @@
 //! Core compliance types and error handling
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
 
 /// Compliance error types
 #[derive(Debug, Clone, Serialize, Deserialize, thiserror::Error)]
@@ -11,14 +12,14 @@ pub enum ComplianceError {
     #[error("GDPR compliance violation: {details}")]
     GdprViolation {
         details: String,
-        code: Option<String>,
+        code:    Option<String>,
     },
 
     /// HIPAA-related compliance failures
     #[error("HIPAA compliance violation: {details}")]
     HipaaViolation {
         details: String,
-        code: Option<String>,
+        code:    Option<String>,
     },
 
     /// Data protection and privacy errors
@@ -32,27 +33,27 @@ pub enum ComplianceError {
     #[error("Audit error: {details}")]
     AuditError {
         details: String,
-        source: Option<String>,
+        source:  Option<String>,
     },
 
     /// Policy enforcement failures
     #[error("Policy enforcement error: {details}")]
     PolicyError {
-        details: String,
+        details:   String,
         policy_id: Option<String>,
     },
 
     /// Report generation failures
     #[error("Report generation error: {details}")]
     ReportError {
-        details: String,
+        details:     String,
         report_type: Option<String>,
     },
 
     /// External integration errors
     #[error("Integration error: {details}")]
     IntegrationError {
-        details: String,
+        details:  String,
         provider: Option<String>,
     },
 
@@ -67,7 +68,7 @@ pub enum ComplianceError {
     #[error("Validation error: {details}")]
     ValidationError {
         details: String,
-        field: Option<String>,
+        field:   Option<String>,
     },
 }
 
@@ -162,54 +163,50 @@ impl From<AuditSeverity> for log::Level {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditEntry {
     /// Unique identifier
-    pub id: uuid::Uuid,
+    pub id:         uuid::Uuid,
     /// Event timestamp
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:  chrono::DateTime<chrono::Utc>,
     /// Event severity
-    pub severity: AuditSeverity,
+    pub severity:   AuditSeverity,
     /// Event category (gdpr, hipaa, policy, etc.)
-    pub category: String,
+    pub category:   String,
     /// User ID if applicable
-    pub user_id: Option<String>,
+    pub user_id:    Option<String>,
     /// Session ID for tracking
     pub session_id: Option<String>,
     /// Action performed
-    pub action: String,
+    pub action:     String,
     /// Resource affected
-    pub resource: String,
+    pub resource:   String,
     /// Event details
-    pub details: String,
+    pub details:    String,
     /// Additional metadata
-    pub metadata: HashMap<String, String>,
+    pub metadata:   HashMap<String, String>,
     /// Source of the event
-    pub source: String,
+    pub source:     String,
 }
 
 impl Default for AuditEntry {
     fn default() -> Self {
         Self {
-            id: uuid::Uuid::new_v4(),
-            timestamp: chrono::Utc::now(),
-            severity: AuditSeverity::Info,
-            category: String::new(),
-            user_id: None,
+            id:         uuid::Uuid::new_v4(),
+            timestamp:  chrono::Utc::now(),
+            severity:   AuditSeverity::Info,
+            category:   String::new(),
+            user_id:    None,
             session_id: None,
-            action: String::new(),
-            resource: String::new(),
-            details: String::new(),
-            metadata: HashMap::new(),
-            source: "compliance_engine".to_string(),
+            action:     String::new(),
+            resource:   String::new(),
+            details:    String::new(),
+            metadata:   HashMap::new(),
+            source:     "compliance_engine".to_string(),
         }
     }
 }
 
 impl AuditEntry {
     /// Create a new audit entry
-    pub fn new(
-        severity: AuditSeverity,
-        category: impl Into<String>,
-        action: impl Into<String>,
-    ) -> Self {
+    pub fn new(severity: AuditSeverity, category: impl Into<String>, action: impl Into<String>) -> Self {
         Self {
             severity,
             category: category.into(),
@@ -259,15 +256,15 @@ impl AuditEntry {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceConfig {
     /// Enable GDPR compliance
-    pub gdpr_enabled: bool,
+    pub gdpr_enabled:  bool,
     /// Enable HIPAA compliance
     pub hipaa_enabled: bool,
     /// Compliance frameworks to enforce
-    pub frameworks: Vec<String>,
+    pub frameworks:    Vec<String>,
     /// Audit configuration
-    pub audit: AuditConfig,
+    pub audit:         AuditConfig,
     /// Policy configuration
-    pub policies: PolicyConfig,
+    pub policies:      PolicyConfig,
     /// Notification configuration
     pub notifications: NotificationConfig,
 }
@@ -275,11 +272,11 @@ pub struct ComplianceConfig {
 impl Default for ComplianceConfig {
     fn default() -> Self {
         Self {
-            gdpr_enabled: true,
+            gdpr_enabled:  true,
             hipaa_enabled: false,
-            frameworks: vec!["gdpr".to_string()],
-            audit: AuditConfig::default(),
-            policies: PolicyConfig::default(),
+            frameworks:    vec!["gdpr".to_string()],
+            audit:         AuditConfig::default(),
+            policies:      PolicyConfig::default(),
             notifications: NotificationConfig::default(),
         }
     }
@@ -289,22 +286,22 @@ impl Default for ComplianceConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditConfig {
     /// Enable audit logging
-    pub enabled: bool,
+    pub enabled:        bool,
     /// Audit log retention days
     pub retention_days: u32,
     /// Maximum audit entries to keep
-    pub max_entries: usize,
+    pub max_entries:    usize,
     /// Audit path (if file-based)
-    pub path: Option<String>,
+    pub path:           Option<String>,
 }
 
 impl Default for AuditConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
+            enabled:        true,
             retention_days: 2555, // 7 years
-            max_entries: 1_000_000,
-            path: None,
+            max_entries:    1_000_000,
+            path:           None,
         }
     }
 }
@@ -315,7 +312,7 @@ pub struct PolicyConfig {
     /// Enable automatic policy enforcement
     pub enforcement_enabled: bool,
     /// Policy validation mode
-    pub validation_mode: PolicyValidationMode,
+    pub validation_mode:     PolicyValidationMode,
     /// Policy conflict resolution strategy
     pub conflict_resolution: PolicyConflictResolution,
 }
@@ -324,7 +321,7 @@ impl Default for PolicyConfig {
     fn default() -> Self {
         Self {
             enforcement_enabled: true,
-            validation_mode: PolicyValidationMode::Strict,
+            validation_mode:     PolicyValidationMode::Strict,
             conflict_resolution: PolicyConflictResolution::DenyAll,
         }
     }
@@ -356,9 +353,9 @@ pub enum PolicyConflictResolution {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NotificationConfig {
     /// Enable notifications
-    pub enabled: bool,
+    pub enabled:             bool,
     /// Notification channels
-    pub channels: Vec<NotificationChannel>,
+    pub channels:            Vec<NotificationChannel>,
     /// Critical notification recipients
     pub critical_recipients: Vec<String>,
 }
@@ -366,8 +363,8 @@ pub struct NotificationConfig {
 impl Default for NotificationConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            channels: vec![],
+            enabled:             true,
+            channels:            vec![],
             critical_recipients: vec![],
         }
     }

@@ -6,17 +6,17 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 pub struct QuantumRealityBridge {
-    pub tunneling_engine: TunnelingEngine,
+    pub tunneling_engine:     TunnelingEngine,
     pub reality_synchronizer: RealitySynchronizer,
-    pub dimension_connector: DimensionConnector,
+    pub dimension_connector:  DimensionConnector,
 }
 
 impl QuantumRealityBridge {
     pub fn new() -> Self {
         Self {
-            tunneling_engine: TunnelingEngine::new(),
+            tunneling_engine:     TunnelingEngine::new(),
             reality_synchronizer: RealitySynchronizer::new(),
-            dimension_connector: DimensionConnector::new(),
+            dimension_connector:  DimensionConnector::new(),
         }
     }
 
@@ -33,10 +33,7 @@ impl QuantumRealityBridge {
         Ok(connection)
     }
 
-    pub async fn synchronize_state(
-        &self,
-        connection: &BridgeConnection,
-    ) -> Result<(), QuantumBridgeError> {
+    pub async fn synchronize_state(&self, connection: &BridgeConnection) -> Result<(), QuantumBridgeError> {
         self.reality_synchronizer.synchronize(connection).await?;
         log::info!(
             "Synchronized reality states across bridge {}",
@@ -64,11 +61,11 @@ impl TunnelingEngine {
     ) -> Result<QuantumTunnel, QuantumBridgeError> {
         let tunnel_id = Uuid::new_v4();
         let tunnel = QuantumTunnel {
-            id: tunnel_id,
+            id:                tunnel_id,
             source_reality_id: source.id,
             target_reality_id: target.id,
-            stability_factor: 0.9,
-            data_throughput: 1000.0,
+            stability_factor:  0.9,
+            data_throughput:   1000.0,
         };
         self.active_tunnels.insert(tunnel_id, tunnel.clone());
         Ok(tunnel)
@@ -86,10 +83,7 @@ impl RealitySynchronizer {
         }
     }
 
-    pub async fn synchronize(
-        &self,
-        connection: &BridgeConnection,
-    ) -> Result<(), QuantumBridgeError> {
+    pub async fn synchronize(&self, connection: &BridgeConnection) -> Result<(), QuantumBridgeError> {
         // Implement quantum state synchronization
         log::debug!("Synchronized bridge connection {}", connection.id);
         Ok(())
@@ -107,15 +101,12 @@ impl DimensionConnector {
         }
     }
 
-    pub async fn connect_dimensions(
-        &mut self,
-        tunnel: QuantumTunnel,
-    ) -> Result<BridgeConnection, QuantumBridgeError> {
+    pub async fn connect_dimensions(&mut self, tunnel: QuantumTunnel) -> Result<BridgeConnection, QuantumBridgeError> {
         let connection = BridgeConnection {
-            id: Uuid::new_v4(),
-            tunnel_id: tunnel.id,
+            id:             Uuid::new_v4(),
+            tunnel_id:      tunnel.id,
             established_at: chrono::Utc::now(),
-            stability: tunnel.stability_factor,
+            stability:      tunnel.stability_factor,
         };
         self.connections.insert(connection.id, connection.clone());
         Ok(connection)
@@ -133,26 +124,26 @@ pub struct Reality {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QuantumTunnel {
-    pub id: Uuid,
+    pub id:                Uuid,
     pub source_reality_id: Uuid,
     pub target_reality_id: Uuid,
-    pub stability_factor: f32,
-    pub data_throughput: f32,
+    pub stability_factor:  f32,
+    pub data_throughput:   f32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BridgeConnection {
-    pub id: Uuid,
-    pub tunnel_id: Uuid,
+    pub id:             Uuid,
+    pub tunnel_id:      Uuid,
     pub established_at: chrono::DateTime<chrono::Utc>,
-    pub stability: f32,
+    pub stability:      f32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SyncProtocol {
-    pub protocol_name: String,
+    pub protocol_name:          String,
     pub synchronization_method: String,
-    pub reliability_factor: f32,
+    pub reliability_factor:     f32,
 }
 
 #[derive(thiserror::Error, Debug)]

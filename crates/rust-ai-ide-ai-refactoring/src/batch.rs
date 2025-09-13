@@ -6,18 +6,18 @@ use crate::types::*;
 #[derive(Debug, Clone)]
 pub struct BatchRefactoringResult {
     pub successful_operations: usize,
-    pub failed_operations: usize,
-    pub results: Vec<RefactoringOperationResult>,
-    pub errors: Vec<String>,
+    pub failed_operations:     usize,
+    pub results:               Vec<RefactoringOperationResult>,
+    pub errors:                Vec<String>,
 }
 
 /// Batch operation configuration
 #[derive(Debug, Clone)]
 pub struct BatchOperation {
     pub refactoring_type: RefactoringType,
-    pub context: RefactoringContext,
-    pub options: RefactoringOptions,
-    pub dependencies: Vec<String>,
+    pub context:          RefactoringContext,
+    pub options:          RefactoringOptions,
+    pub dependencies:     Vec<String>,
 }
 
 /// Backup strategy for batch operations
@@ -32,19 +32,19 @@ pub enum BackupStrategy {
 /// Batch refactoring configuration
 #[derive(Debug, Clone)]
 pub struct BatchRefactoring {
-    pub operations: Vec<BatchOperation>,
+    pub operations:             Vec<BatchOperation>,
     pub validate_independently: bool,
-    pub stop_on_first_error: bool,
-    pub backup_strategy: BackupStrategy,
+    pub stop_on_first_error:    bool,
+    pub backup_strategy:        BackupStrategy,
 }
 
 impl Default for BatchRefactoring {
     fn default() -> Self {
         BatchRefactoring {
-            operations: Vec::new(),
+            operations:             Vec::new(),
             validate_independently: true,
-            stop_on_first_error: false,
-            backup_strategy: BackupStrategy::NoBackup,
+            stop_on_first_error:    false,
+            backup_strategy:        BackupStrategy::NoBackup,
         }
     }
 }

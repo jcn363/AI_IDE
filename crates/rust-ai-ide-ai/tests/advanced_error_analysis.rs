@@ -7,11 +7,13 @@
 //! - Error clustering and impact analysis
 //! - Error evolution tracking and quality trends
 
+use std::collections::HashMap;
+
+use chrono::Utc;
+
 use crate::advanced_error_analysis::*;
 use crate::error_resolution::ErrorContext;
 use crate::learning::types::AIContext;
-use chrono::Utc;
-use std::collections::HashMap;
 
 #[cfg(test)]
 mod advanced_error_analysis_tests {
@@ -43,12 +45,12 @@ mod advanced_error_analysis_tests {
 
         // Test that we can analyze an error without panicking
         let error_context = ErrorContext {
-            message: "Test error".to_string(),
-            error_code: None,
+            message:       "Test error".to_string(),
+            error_code:    None,
             context_lines: vec![],
-            file_path: Some("test.rs".to_string()),
-            line: Some(1),
-            column: Some(1),
+            file_path:     Some("test.rs".to_string()),
+            line:          Some(1),
+            column:        Some(1),
         };
 
         let project_context = AIContext::default();
@@ -64,18 +66,17 @@ mod advanced_error_analysis_tests {
 
         // Test basic functionality
         let error_context = ErrorContext {
-            message: "Compilation error".to_string(),
-            error_code: None,
+            message:       "Compilation error".to_string(),
+            error_code:    None,
             context_lines: vec![],
-            file_path: Some("src/main.rs".to_string()),
-            line: Some(10),
-            column: Some(5),
+            file_path:     Some("src/main.rs".to_string()),
+            line:          Some(10),
+            column:        Some(5),
         };
 
         let project_context = AIContext::default();
 
-        let result =
-            tokio_test::block_on(engine.analyze_root_cause(&error_context, &project_context));
+        let result = tokio_test::block_on(engine.analyze_root_cause(&error_context, &project_context));
         assert!(result.is_ok());
 
         let analysis = result.unwrap();
@@ -88,20 +89,20 @@ mod advanced_error_analysis_tests {
     fn test_impact_scope_identification() {
         // Test that impact scope correctly identifies risk levels
         let local_impact = ImpactAssessment {
-            scope: ImpactScope::Local,
-            affected_files: vec!["single_file.rs".to_string()],
-            risk_level: RiskLevel::Low,
+            scope:           ImpactScope::Local,
+            affected_files:  vec!["single_file.rs".to_string()],
+            risk_level:      RiskLevel::Low,
             level_breakdown: [(ErrorLevel::Line, 1)].iter().cloned().collect(),
-            urgency_score: 0.3,
+            urgency_score:   0.3,
             business_impact: "Single file affected".to_string(),
         };
 
         let project_impact = ImpactAssessment {
-            scope: ImpactScope::ProjectLevel,
-            affected_files: vec!["file1.rs".to_string(), "file2.rs".to_string()],
-            risk_level: RiskLevel::High,
+            scope:           ImpactScope::ProjectLevel,
+            affected_files:  vec!["file1.rs".to_string(), "file2.rs".to_string()],
+            risk_level:      RiskLevel::High,
             level_breakdown: [(ErrorLevel::Module, 3)].iter().cloned().collect(),
-            urgency_score: 0.8,
+            urgency_score:   0.8,
             business_impact: "Multiple modules affected".to_string(),
         };
 
@@ -131,16 +132,15 @@ mod advanced_error_analysis_tests {
         // Test template system initialization
         let mock_root_cause = create_mock_root_cause_analysis();
         let error_context = ErrorContext {
-            message: "Unused variable error".to_string(),
-            error_code: Some("E0308".to_string()),
+            message:       "Unused variable error".to_string(),
+            error_code:    Some("E0308".to_string()),
             context_lines: vec![],
-            file_path: Some("src/main.rs".to_string()),
-            line: Some(5),
-            column: Some(9),
+            file_path:     Some("src/main.rs".to_string()),
+            line:          Some(5),
+            column:        Some(9),
         };
 
-        let result =
-            tokio_test::block_on(generator.generate_solutions(&mock_root_cause, &error_context));
+        let result = tokio_test::block_on(generator.generate_solutions(&mock_root_cause, &error_context));
         assert!(result.is_ok());
     }
 
@@ -152,8 +152,7 @@ mod advanced_error_analysis_tests {
         let mock_root_cause = create_mock_root_cause_analysis();
         let mock_predictions = vec![];
 
-        let result =
-            tokio_test::block_on(analyzer.assess_impacts(&mock_root_cause, &mock_predictions));
+        let result = tokio_test::block_on(analyzer.assess_impacts(&mock_root_cause, &mock_predictions));
         assert!(result.is_ok());
 
         let impact = result.unwrap();
@@ -168,16 +167,15 @@ mod advanced_error_analysis_tests {
         // Test evolution tracking
         let mock_root_cause = create_mock_root_cause_analysis();
         let error_context = ErrorContext {
-            message: "Evolution test error".to_string(),
-            error_code: None,
+            message:       "Evolution test error".to_string(),
+            error_code:    None,
             context_lines: vec![],
-            file_path: Some("test.rs".to_string()),
-            line: Some(1),
-            column: Some(1),
+            file_path:     Some("test.rs".to_string()),
+            line:          Some(1),
+            column:        Some(1),
         };
 
-        let result =
-            tokio_test::block_on(tracker.track_evolution(&mock_root_cause, &error_context));
+        let result = tokio_test::block_on(tracker.track_evolution(&mock_root_cause, &error_context));
         assert!(result.is_ok());
     }
 
@@ -217,11 +215,11 @@ mod advanced_error_analysis_tests {
     #[test]
     fn test_error_location_tracking() {
         let location = ErrorLocation {
-            file_path: "src/main.rs".to_string(),
-            line: 42,
-            column: 15,
+            file_path:     "src/main.rs".to_string(),
+            line:          42,
+            column:        15,
             function_name: Some("process_data".to_string()),
-            module_path: Some("utils".to_string()),
+            module_path:   Some("utils".to_string()),
         };
 
         // Test location fields
@@ -237,12 +235,12 @@ mod advanced_error_analysis_tests {
         let analyzer = AdvancedErrorAnalyzer::new(crate::AIProvider::Mock);
 
         let error_context = ErrorContext {
-            message: "Expected type `String` but found `&str`".to_string(),
-            error_code: Some("E0308".to_string()),
+            message:       "Expected type `String` but found `&str`".to_string(),
+            error_code:    Some("E0308".to_string()),
             context_lines: vec!["let name: String = \"hello\";".to_string()],
-            file_path: Some("src/main.rs".to_string()),
-            line: Some(5),
-            column: Some(19),
+            file_path:     Some("src/main.rs".to_string()),
+            line:          Some(5),
+            column:        Some(19),
         };
 
         let project_context = AIContext {
@@ -272,11 +270,11 @@ mod advanced_error_analysis_tests {
     #[test]
     fn test_prediction_result_structure() {
         let _prediction = PredictionResult {
-            prediction_id: "pred_001".to_string(),
-            error_type: "type_mismatch".to_string(),
-            likelihood: 0.85,
-            time_window_hours: 24,
-            contributing_factors: vec![
+            prediction_id:          "pred_001".to_string(),
+            error_type:             "type_mismatch".to_string(),
+            likelihood:             0.85,
+            time_window_hours:      24,
+            contributing_factors:   vec![
                 "Recent changes to function signatures".to_string(),
                 "Updated dependency versions".to_string(),
             ],
@@ -293,20 +291,20 @@ mod advanced_error_analysis_tests {
     #[test]
     fn test_fix_template_system() {
         let template = FixTemplate {
-            template_id: "fix_unused_var".to_string(),
-            name: "Fix unused variable".to_string(),
-            error_patterns: vec!["unused variable".to_string(), "E0308".to_string()],
-            strategy: FixStrategy::TemplateSubstitution,
-            template_content: "let _${variable_name} = ${expression};".to_string(),
+            template_id:         "fix_unused_var".to_string(),
+            name:                "Fix unused variable".to_string(),
+            error_patterns:      vec!["unused variable".to_string(), "E0308".to_string()],
+            strategy:            FixStrategy::TemplateSubstitution,
+            template_content:    "let _${variable_name} = ${expression};".to_string(),
             required_parameters: vec![TemplateParameter {
-                name: "variable_name".to_string(),
-                parameter_type: ParameterType::String,
-                default_value: None,
+                name:            "variable_name".to_string(),
+                parameter_type:  ParameterType::String,
+                default_value:   None,
                 validation_rule: Some("^[a-zA-Z_][a-zA-Z0-9_]*$".to_string()),
-                description: "Name of the variable to prefix".to_string(),
+                description:     "Name of the variable to prefix".to_string(),
             }],
-            success_rate: 0.95,
-            usage_count: 42,
+            success_rate:        0.95,
+            usage_count:         42,
         };
 
         // Test template properties
@@ -319,20 +317,20 @@ mod advanced_error_analysis_tests {
     #[test]
     fn test_systemic_pattern_detection() {
         let pattern = SystemicPattern {
-            pattern_id: "memory_leak_cluster".to_string(),
-            description: "Cluster of memory management issues".to_string(),
-            error_types: vec![
+            pattern_id:          "memory_leak_cluster".to_string(),
+            description:         "Cluster of memory management issues".to_string(),
+            error_types:         vec![
                 "E0309".to_string(),
                 "E0382".to_string(),
                 "E0505".to_string(),
             ],
-            severity: "high".to_string(),
-            systemic_impact: ImpactAssessment {
-                scope: ImpactScope::ProjectLevel,
-                affected_files: vec!["src/memory.rs".to_string(), "src/data.rs".to_string()],
-                risk_level: RiskLevel::High,
+            severity:            "high".to_string(),
+            systemic_impact:     ImpactAssessment {
+                scope:           ImpactScope::ProjectLevel,
+                affected_files:  vec!["src/memory.rs".to_string(), "src/data.rs".to_string()],
+                risk_level:      RiskLevel::High,
                 level_breakdown: [(ErrorLevel::Function, 5)].iter().cloned().collect(),
-                urgency_score: 0.9,
+                urgency_score:   0.9,
                 business_impact: "Memory leaks causing performance degradation".to_string(),
             },
             resolution_strategy: "Implement RAII patterns and ownership tracking".to_string(),
@@ -351,28 +349,28 @@ mod advanced_error_analysis_tests {
     fn test_evolution_stage_tracking() {
         let stages = vec![
             EvolutionStage {
-                stage_name: "Initial detection".to_string(),
-                characteristics: vec!["First occurrence".to_string(), "Isolated case".to_string()],
-                average_duration_days: 1.0,
+                stage_name:             "Initial detection".to_string(),
+                characteristics:        vec!["First occurrence".to_string(), "Isolated case".to_string()],
+                average_duration_days:  1.0,
                 transition_probability: 0.3,
             },
             EvolutionStage {
-                stage_name: "Patterns emerging".to_string(),
-                characteristics: vec![
+                stage_name:             "Patterns emerging".to_string(),
+                characteristics:        vec![
                     "Multiple occurrences".to_string(),
                     "Similar contexts".to_string(),
                 ],
-                average_duration_days: 7.0,
+                average_duration_days:  7.0,
                 transition_probability: 0.6,
             },
         ];
 
         let evolution = EvolutionPattern {
-            pattern_id: "null_pointer_evolution".to_string(),
-            description: "Evolution of null pointer dereference errors".to_string(),
+            pattern_id:       "null_pointer_evolution".to_string(),
+            description:      "Evolution of null pointer dereference errors".to_string(),
             evolution_stages: stages,
-            frequency: 15,
-            impact_severity: "medium".to_string(),
+            frequency:        15,
+            impact_severity:  "medium".to_string(),
         };
 
         // Test evolution pattern
@@ -384,33 +382,33 @@ mod advanced_error_analysis_tests {
     // Helper function to create mock root cause analysis for testing
     fn create_mock_root_cause_analysis() -> RootCauseAnalysis {
         RootCauseAnalysis {
-            analysis_id: "test_analysis_001".to_string(),
-            primary_level: ErrorLevel::Line,
-            cause_chain: vec![CauseLink {
-                level: ErrorLevel::Line,
-                category: "syntax_error".to_string(),
-                message: "Expected semicolon".to_string(),
+            analysis_id:       "test_analysis_001".to_string(),
+            primary_level:     ErrorLevel::Line,
+            cause_chain:       vec![CauseLink {
+                level:      ErrorLevel::Line,
+                category:   "syntax_error".to_string(),
+                message:    "Expected semicolon".to_string(),
                 confidence: 0.95,
-                evidence: vec!["Direct syntax error in code".to_string()],
-                location: Some(ErrorLocation {
-                    file_path: "test.rs".to_string(),
-                    line: 1,
-                    column: 1,
+                evidence:   vec!["Direct syntax error in code".to_string()],
+                location:   Some(ErrorLocation {
+                    file_path:     "test.rs".to_string(),
+                    line:          1,
+                    column:        1,
                     function_name: None,
-                    module_path: None,
+                    module_path:   None,
                 }),
             }],
-            confidence: 0.88,
-            dependencies: vec![],
+            confidence:        0.88,
+            dependencies:      vec![],
             impact_assessment: ImpactAssessment {
-                scope: ImpactScope::Local,
-                affected_files: vec!["test.rs".to_string()],
-                risk_level: RiskLevel::Low,
+                scope:           ImpactScope::Local,
+                affected_files:  vec!["test.rs".to_string()],
+                risk_level:      RiskLevel::Low,
                 level_breakdown: [(ErrorLevel::Line, 1)].iter().cloned().collect(),
-                urgency_score: 0.5,
+                urgency_score:   0.5,
                 business_impact: "Minimal compilation failure".to_string(),
             },
-            analyzed_at: Utc::now(),
+            analyzed_at:       Utc::now(),
         }
     }
 }
@@ -418,20 +416,21 @@ mod advanced_error_analysis_tests {
 /// Performance and accuracy tests for the advanced error analysis system
 #[cfg(test)]
 mod performance_tests {
-    use super::*;
     use std::time::Instant;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_analysis_performance() {
         let analyzer = AdvancedErrorAnalyzer::new(crate::AIProvider::Mock);
 
         let error_context = ErrorContext {
-            message: "Performance test error".to_string(),
-            error_code: None,
+            message:       "Performance test error".to_string(),
+            error_code:    None,
             context_lines: (0..50).map(|i| format!("line {}", i)).collect(),
-            file_path: Some("src/long_file.rs".to_string()),
-            line: Some(25),
-            column: Some(10),
+            file_path:     Some("src/long_file.rs".to_string()),
+            line:          Some(25),
+            column:        Some(10),
         };
 
         let project_context = AIContext::default();
@@ -470,12 +469,12 @@ mod performance_tests {
 
         let contexts = (0..10)
             .map(|i| ErrorContext {
-                message: format!("Concurrent test error {}", i),
-                error_code: None,
+                message:       format!("Concurrent test error {}", i),
+                error_code:    None,
                 context_lines: vec![],
-                file_path: Some(format!("test{}.rs", i)),
-                line: Some(1),
-                column: Some(1),
+                file_path:     Some(format!("test{}.rs", i)),
+                line:          Some(1),
+                column:        Some(1),
             })
             .collect::<Vec<_>>();
 
@@ -488,9 +487,7 @@ mod performance_tests {
                 let analyzer_clone = Arc::clone(&analyzer);
                 let context_clone = project_context.clone();
 
-                tokio::spawn(
-                    async move { analyzer_clone.analyze_error(&ctx, &context_clone).await },
-                )
+                tokio::spawn(async move { analyzer_clone.analyze_error(&ctx, &context_clone).await })
             })
             .collect();
 
@@ -515,8 +512,8 @@ mod integration_tests {
 
         // Scenario: Complex build error with multiple potential causes
         let error_context = ErrorContext {
-            message: "Borrow checker error in async function".to_string(),
-            error_code: Some("E0505".to_string()),
+            message:       "Borrow checker error in async function".to_string(),
+            error_code:    Some("E0505".to_string()),
             context_lines: vec![
                 "async fn process_data(data: &mut Vec<String>) {".to_string(),
                 "    let future = async move {".to_string(),
@@ -524,9 +521,9 @@ mod integration_tests {
                 "    };".to_string(),
                 "}".to_string(),
             ],
-            file_path: Some("src/async_processor.rs".to_string()),
-            line: Some(3),
-            column: Some(9),
+            file_path:     Some("src/async_processor.rs".to_string()),
+            line:          Some(3),
+            column:        Some(9),
         };
 
         let project_context = AIContext {
@@ -567,12 +564,12 @@ mod integration_tests {
 
         for i in 0..5 {
             let error_context = ErrorContext {
-                message: format!("Evolving error iteration {}", i),
-                error_code: Some("E0308".to_string()),
+                message:       format!("Evolving error iteration {}", i),
+                error_code:    Some("E0308".to_string()),
                 context_lines: vec![],
-                file_path: Some("src/evolution_test.rs".to_string()),
-                line: Some(i + 1),
-                column: Some(1),
+                file_path:     Some("src/evolution_test.rs".to_string()),
+                line:          Some(i + 1),
+                column:        Some(1),
             };
 
             let project_context = AIContext::default();

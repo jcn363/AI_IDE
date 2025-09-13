@@ -4,6 +4,7 @@
 //! AI processing system, following the project's error handling guidelines.
 
 use std::fmt;
+
 use thiserror::Error;
 
 /// Main error type for multi-modal AI operations

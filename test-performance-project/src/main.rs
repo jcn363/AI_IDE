@@ -1,4 +1,5 @@
 use std::time::Instant;
+
 use test_performance_project::{do_async_work, do_some_work};
 
 #[tokio::main]

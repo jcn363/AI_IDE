@@ -1,108 +1,110 @@
 //! Statistics and analytics for the learning system
 
+use std::collections::HashMap;
+use std::fmt;
+
+use chrono::{DateTime, Datelike, Utc};
+use serde::{Deserialize, Serialize};
+
 use super::database::LearningDatabase;
 use super::models::{LearnedPattern, PatternStatistics};
 use super::types::AIResult;
-use chrono::{DateTime, Datelike, Utc};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fmt;
 
 /// Comprehensive statistics tracker for learning patterns
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LearningStatistics {
-    pub overview: PatternStatistics,
-    pub error_type_breakdown: HashMap<String, ErrorTypeStats>,
-    pub temporal_distribution: TemporalStats,
+    pub overview:                PatternStatistics,
+    pub error_type_breakdown:    HashMap<String, ErrorTypeStats>,
+    pub temporal_distribution:   TemporalStats,
     pub confidence_distribution: ConfidenceStats,
-    pub effectiveness_metrics: EffectivenessMetrics,
-    pub usage_patterns: UsagePatterns,
-    pub performance_summary: PerformanceSummary,
-    pub last_updated: DateTime<Utc>,
+    pub effectiveness_metrics:   EffectivenessMetrics,
+    pub usage_patterns:          UsagePatterns,
+    pub performance_summary:     PerformanceSummary,
+    pub last_updated:            DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorTypeStats {
-    pub error_code: String,
-    pub pattern_count: u32,
-    pub avg_confidence: f32,
-    pub success_rate: f32,
-    pub avg_attempts: f32,
+    pub error_code:        String,
+    pub pattern_count:     u32,
+    pub avg_confidence:    f32,
+    pub success_rate:      f32,
+    pub avg_attempts:      f32,
     pub most_common_fixes: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TemporalStats {
     pub total_days_tracked: i64,
-    pub patterns_per_day: f32,
-    pub recent_activity: Vec<DailyActivity>,
-    pub growth_rate: f32,
-    pub maturity_score: f32, // 0-1 score based on historical data
+    pub patterns_per_day:   f32,
+    pub recent_activity:    Vec<DailyActivity>,
+    pub growth_rate:        f32,
+    pub maturity_score:     f32, // 0-1 score based on historical data
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DailyActivity {
-    pub date: DateTime<Utc>,
+    pub date:         DateTime<Utc>,
     pub new_patterns: u32,
     pub applications: u32,
-    pub successes: u32,
-    pub failures: u32,
+    pub successes:    u32,
+    pub failures:     u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfidenceStats {
-    pub distribution: Vec<ConfidenceBucket>,
+    pub distribution:       Vec<ConfidenceBucket>,
     pub average_confidence: f32,
-    pub median_confidence: f32,
-    pub confidence_trend: f32, // Recent trend (-1 to 1)
+    pub median_confidence:  f32,
+    pub confidence_trend:   f32, // Recent trend (-1 to 1)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfidenceBucket {
     pub range_start: f32,
-    pub range_end: f32,
-    pub count: u32,
-    pub percentage: f32,
+    pub range_end:   f32,
+    pub count:       u32,
+    pub percentage:  f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EffectivenessMetrics {
-    pub overall_success_rate: f32,
+    pub overall_success_rate:            f32,
     pub average_confidence_when_applied: f32,
-    pub improvement_over_time: f32,
-    pub user_satisfaction_estimate: f32, // Would be based on user feedback
-    pub automation_potential: f32,       // Percentage of fixes that could be automated
+    pub improvement_over_time:           f32,
+    pub user_satisfaction_estimate:      f32, // Would be based on user feedback
+    pub automation_potential:            f32, // Percentage of fixes that could be automated
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UsagePatterns {
-    pub most_used_patterns: Vec<PatternUsage>,
-    pub category_distribution: HashMap<String, u32>,
-    pub time_of_day_usage: Vec<HourlyUsage>,
+    pub most_used_patterns:      Vec<PatternUsage>,
+    pub category_distribution:   HashMap<String, u32>,
+    pub time_of_day_usage:       Vec<HourlyUsage>,
     pub average_resolution_time: Option<f32>, // In seconds, if tracked
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PatternUsage {
-    pub pattern_id: String,
-    pub usage_count: u32,
-    pub last_used: Option<DateTime<Utc>>,
+    pub pattern_id:   String,
+    pub usage_count:  u32,
+    pub last_used:    Option<DateTime<Utc>>,
     pub unique_users: Option<u32>, // If tracking multi-user scenarios
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HourlyUsage {
-    pub hour: u32, // 0-23
+    pub hour:             u32, // 0-23
     pub usage_percentage: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceSummary {
     pub avg_query_time_ms: f32,
-    pub cache_hit_rate: f32,
-    pub memory_usage_mb: Option<f32>,
-    pub database_size_mb: Option<f32>,
-    pub recommendations: Vec<String>,
+    pub cache_hit_rate:    f32,
+    pub memory_usage_mb:   Option<f32>,
+    pub database_size_mb:  Option<f32>,
+    pub recommendations:   Vec<String>,
 }
 
 impl LearningStatistics {
@@ -130,9 +132,7 @@ impl LearningStatistics {
         })
     }
 
-    fn calculate_error_type_breakdown(
-        patterns: &[LearnedPattern],
-    ) -> HashMap<String, ErrorTypeStats> {
+    fn calculate_error_type_breakdown(patterns: &[LearnedPattern]) -> HashMap<String, ErrorTypeStats> {
         let mut breakdown = HashMap::new();
 
         for pattern in patterns {
@@ -144,11 +144,11 @@ impl LearningStatistics {
             let stats = breakdown
                 .entry(error_code.clone())
                 .or_insert_with(|| ErrorTypeStats {
-                    error_code: error_code.clone(),
-                    pattern_count: 0,
-                    avg_confidence: 0.0,
-                    success_rate: 0.0,
-                    avg_attempts: 0.0,
+                    error_code:        error_code.clone(),
+                    pattern_count:     0,
+                    avg_confidence:    0.0,
+                    success_rate:      0.0,
+                    avg_attempts:      0.0,
                     most_common_fixes: Vec::new(),
                 });
 
@@ -164,10 +164,10 @@ impl LearningStatistics {
         // Calculate temporal distribution
         Ok(TemporalStats {
             total_days_tracked: 0,
-            patterns_per_day: 0.0,
-            recent_activity: Vec::new(),
-            growth_rate: 0.0,
-            maturity_score: 0.0,
+            patterns_per_day:   0.0,
+            recent_activity:    Vec::new(),
+            growth_rate:        0.0,
+            maturity_score:     0.0,
         })
     }
 
@@ -175,33 +175,33 @@ impl LearningStatistics {
         let mut distribution = vec![
             ConfidenceBucket {
                 range_start: 0.0,
-                range_end: 0.2,
-                count: 0,
-                percentage: 0.0,
+                range_end:   0.2,
+                count:       0,
+                percentage:  0.0,
             },
             ConfidenceBucket {
                 range_start: 0.2,
-                range_end: 0.4,
-                count: 0,
-                percentage: 0.0,
+                range_end:   0.4,
+                count:       0,
+                percentage:  0.0,
             },
             ConfidenceBucket {
                 range_start: 0.4,
-                range_end: 0.6,
-                count: 0,
-                percentage: 0.0,
+                range_end:   0.6,
+                count:       0,
+                percentage:  0.0,
             },
             ConfidenceBucket {
                 range_start: 0.6,
-                range_end: 0.8,
-                count: 0,
-                percentage: 0.0,
+                range_end:   0.8,
+                count:       0,
+                percentage:  0.0,
             },
             ConfidenceBucket {
                 range_start: 0.8,
-                range_end: 1.0,
-                count: 0,
-                percentage: 0.0,
+                range_end:   1.0,
+                count:       0,
+                percentage:  0.0,
             },
         ];
 
@@ -295,9 +295,9 @@ impl LearningStatistics {
 
             if pattern.attempt_count > 0 {
                 most_used_patterns.push(PatternUsage {
-                    pattern_id: pattern.id.clone(),
-                    usage_count: pattern.attempt_count,
-                    last_used: Some(pattern.updated_at),
+                    pattern_id:   pattern.id.clone(),
+                    usage_count:  pattern.attempt_count,
+                    last_used:    Some(pattern.updated_at),
                     unique_users: None,
                 });
             }
@@ -316,10 +316,10 @@ impl LearningStatistics {
     fn calculate_performance_metrics() -> PerformanceSummary {
         PerformanceSummary {
             avg_query_time_ms: 0.0, // Would need query timing data
-            cache_hit_rate: 0.0,    // Would need cache statistics
-            memory_usage_mb: None,
-            database_size_mb: None,
-            recommendations: Self::generate_recommendations(),
+            cache_hit_rate:    0.0, // Would need cache statistics
+            memory_usage_mb:   None,
+            database_size_mb:  None,
+            recommendations:   Self::generate_recommendations(),
         }
     }
 
@@ -380,10 +380,10 @@ pub mod analysis {
             let stats = monthly_stats
                 .entry(month_key.clone())
                 .or_insert(MonthlyStats {
-                    month: month_key.clone(),
+                    month:        month_key.clone(),
                     new_patterns: 0,
-                    successes: 0,
-                    failures: 0,
+                    successes:    0,
+                    failures:     0,
                 });
 
             stats.new_patterns += 1;
@@ -394,24 +394,24 @@ pub mod analysis {
         let months: Vec<_> = monthly_stats.values().collect();
 
         TrendAnalysis {
-            monthly_stats: months.into_iter().cloned().collect(),
-            growth_trend: calculate_growth_trend(&monthly_stats),
+            monthly_stats:     months.into_iter().cloned().collect(),
+            growth_trend:      calculate_growth_trend(&monthly_stats),
             performance_trend: calculate_performance_trend(&monthly_stats),
         }
     }
 
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct MonthlyStats {
-        pub month: String,
+        pub month:        String,
         pub new_patterns: u32,
-        pub successes: u32,
-        pub failures: u32,
+        pub successes:    u32,
+        pub failures:     u32,
     }
 
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct TrendAnalysis {
-        pub monthly_stats: Vec<MonthlyStats>,
-        pub growth_trend: f32, // -1 to 1 (decreasing to increasing)
+        pub monthly_stats:     Vec<MonthlyStats>,
+        pub growth_trend:      f32, // -1 to 1 (decreasing to increasing)
         pub performance_trend: f32,
     }
 

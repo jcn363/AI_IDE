@@ -1,7 +1,7 @@
 //! # Code Style Consistency Checker for Rust AI IDE
 //!
-//! This crate provides comprehensive code style consistency checking and architecture pattern suggestions,
-//! ensuring that code follows consistent formatting and design guidelines.
+//! This crate provides comprehensive code style consistency checking and architecture pattern
+//! suggestions, ensuring that code follows consistent formatting and design guidelines.
 
 pub mod formatter;
 pub mod pattern_suggestions;
@@ -9,26 +9,24 @@ pub mod style;
 pub mod style_rules;
 
 // Re-exports
-pub use formatter::*;
-pub use pattern_suggestions::*;
-pub use style::*;
-pub use style_rules::*;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use rust_ai_ide_ai_analysis::{
-    ArchitectureSuggestion, CodeMetrics, CodeSmellType, Location, Severity, Suggestion,
-};
+pub use formatter::*;
+pub use pattern_suggestions::*;
+use rust_ai_ide_ai_analysis::{ArchitectureSuggestion, CodeMetrics, CodeSmellType, Location, Severity, Suggestion};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+pub use style::*;
+pub use style_rules::*;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
 /// Main code style checker
 #[derive(Clone)]
 pub struct CodeStyleChecker {
-    rules: Arc<RwLock<Vec<StyleRule>>>,
-    formatter: RustFormatter,
+    rules:            Arc<RwLock<Vec<StyleRule>>>,
+    formatter:        RustFormatter,
     pattern_analyzer: ArchitecturePatternAnalyzer,
 }
 
@@ -45,8 +43,8 @@ impl CodeStyleChecker {
         ];
 
         Self {
-            rules: Arc::new(RwLock::new(rules)),
-            formatter: RustFormatter::new(),
+            rules:            Arc::new(RwLock::new(rules)),
+            formatter:        RustFormatter::new(),
             pattern_analyzer: ArchitecturePatternAnalyzer::new(),
         }
     }
@@ -59,11 +57,7 @@ impl CodeStyleChecker {
     }
 
     /// Check code style consistency across a file or directory
-    pub async fn check_style(
-        &self,
-        content: &str,
-        file_path: &str,
-    ) -> Result<StyleCheckResult, StyleCheckError> {
+    pub async fn check_style(&self, content: &str, file_path: &str) -> Result<StyleCheckResult, StyleCheckError> {
         let mut issues = Vec::new();
         let rules = self.rules.read().await;
 
@@ -132,9 +126,7 @@ impl CodeStyleChecker {
             StyleRule::Indentation => Ok(self.check_indentation(content, file_path)),
             StyleRule::LineLength => Ok(self.check_line_length(content, file_path)),
             StyleRule::CommentStyle => Ok(self.check_comment_style(content, file_path)),
-            StyleRule::FunctionLength => {
-                Ok(self.check_function_length_ast(content, file_path).await?)
-            }
+            StyleRule::FunctionLength => Ok(self.check_function_length_ast(content, file_path).await?),
             StyleRule::PackageStructure => Ok(self.check_package_structure(content, file_path)),
         }
     }
@@ -152,19 +144,16 @@ impl CodeStyleChecker {
                 if let Some(var_name) = self.extract_variable_name(line) {
                     if !self.is_screaming_snake_case(&var_name) {
                         issues.push(StyleIssue {
-                            id: Uuid::new_v4(),
-                            rule: StyleRule::NamingConvention,
-                            message: format!(
-                                "Constant '{}' should be in SCREAMING_SNAKE_CASE",
-                                var_name
-                            ),
-                            location: Location {
-                                file: file_path.to_string(),
-                                line: line_no + 1,
+                            id:         Uuid::new_v4(),
+                            rule:       StyleRule::NamingConvention,
+                            message:    format!("Constant '{}' should be in SCREAMING_SNAKE_CASE", var_name),
+                            location:   Location {
+                                file:   file_path.to_string(),
+                                line:   line_no + 1,
                                 column: 0,
                                 offset: line_no,
                             },
-                            severity: Severity::Info,
+                            severity:   Severity::Info,
                             suggestion: Some("Use SCREAMING_SNAKE_CASE for constants".to_string()),
                         });
                     }
@@ -176,19 +165,17 @@ impl CodeStyleChecker {
                 if let Some(name) = self.extract_identifier(line) {
                     if !self.is_snake_case(&name) {
                         issues.push(StyleIssue {
-                            id: Uuid::new_v4(),
-                            rule: StyleRule::NamingConvention,
-                            message: format!("Identifier '{}' should be in snake_case", name),
-                            location: Location {
-                                file: file_path.to_string(),
-                                line: line_no + 1,
+                            id:         Uuid::new_v4(),
+                            rule:       StyleRule::NamingConvention,
+                            message:    format!("Identifier '{}' should be in snake_case", name),
+                            location:   Location {
+                                file:   file_path.to_string(),
+                                line:   line_no + 1,
                                 column: 0,
                                 offset: line_no,
                             },
-                            severity: Severity::Info,
-                            suggestion: Some(
-                                "Use snake_case for variables and functions".to_string(),
-                            ),
+                            severity:   Severity::Info,
+                            suggestion: Some("Use snake_case for variables and functions".to_string()),
                         });
                     }
                 }
@@ -207,16 +194,16 @@ impl CodeStyleChecker {
             // Check for mixed tabs and spaces
             if line.contains('\t') && line.contains(' ') && leading_spaces > 0 {
                 issues.push(StyleIssue {
-                    id: Uuid::new_v4(),
-                    rule: StyleRule::Indentation,
-                    message: "Mixed tabs and spaces detected".to_string(),
-                    location: Location {
-                        file: file_path.to_string(),
-                        line: line_no + 1,
+                    id:         Uuid::new_v4(),
+                    rule:       StyleRule::Indentation,
+                    message:    "Mixed tabs and spaces detected".to_string(),
+                    location:   Location {
+                        file:   file_path.to_string(),
+                        line:   line_no + 1,
                         column: 0,
                         offset: line_no,
                     },
-                    severity: Severity::Warning,
+                    severity:   Severity::Warning,
                     suggestion: Some("Use consistent indentation (spaces only)".to_string()),
                 });
             }
@@ -224,16 +211,16 @@ impl CodeStyleChecker {
             // Check for proper 4-space indentation
             if leading_spaces % 4 != 0 && !line.trim().is_empty() {
                 issues.push(StyleIssue {
-                    id: Uuid::new_v4(),
-                    rule: StyleRule::Indentation,
-                    message: "Indentation should be multiple of 4 spaces".to_string(),
-                    location: Location {
-                        file: file_path.to_string(),
-                        line: line_no + 1,
+                    id:         Uuid::new_v4(),
+                    rule:       StyleRule::Indentation,
+                    message:    "Indentation should be multiple of 4 spaces".to_string(),
+                    location:   Location {
+                        file:   file_path.to_string(),
+                        line:   line_no + 1,
                         column: 0,
                         offset: line_no,
                     },
-                    severity: Severity::Info,
+                    severity:   Severity::Info,
                     suggestion: Some("Use 4 space indentation".to_string()),
                 });
             }
@@ -250,20 +237,20 @@ impl CodeStyleChecker {
             if line.len() > MAX_LINE_LENGTH && !line.contains("/// ") {
                 // Skip doc comments
                 issues.push(StyleIssue {
-                    id: Uuid::new_v4(),
-                    rule: StyleRule::LineLength,
-                    message: format!(
+                    id:         Uuid::new_v4(),
+                    rule:       StyleRule::LineLength,
+                    message:    format!(
                         "Line too long ({} characters, max {})",
                         line.len(),
                         MAX_LINE_LENGTH
                     ),
-                    location: Location {
-                        file: file_path.to_string(),
-                        line: line_no + 1,
+                    location:   Location {
+                        file:   file_path.to_string(),
+                        line:   line_no + 1,
                         column: 0,
                         offset: line_no,
                     },
-                    severity: Severity::Info,
+                    severity:   Severity::Info,
                     suggestion: Some("Break long lines into multiple lines".to_string()),
                 });
             }
@@ -279,16 +266,16 @@ impl CodeStyleChecker {
             // Check for C-style comments in Rust
             if line.contains("/*") || line.contains("*/") {
                 issues.push(StyleIssue {
-                    id: Uuid::new_v4(),
-                    rule: StyleRule::CommentStyle,
-                    message: "Use Rust-style comments (//) instead of C-style (/* */)".to_string(),
-                    location: Location {
-                        file: file_path.to_string(),
-                        line: line_no + 1,
+                    id:         Uuid::new_v4(),
+                    rule:       StyleRule::CommentStyle,
+                    message:    "Use Rust-style comments (//) instead of C-style (/* */)".to_string(),
+                    location:   Location {
+                        file:   file_path.to_string(),
+                        line:   line_no + 1,
                         column: 0,
                         offset: line_no,
                     },
-                    severity: Severity::Warning,
+                    severity:   Severity::Warning,
                     suggestion: Some("Replace /* */ with //".to_string()),
                 });
             }
@@ -296,16 +283,16 @@ impl CodeStyleChecker {
             // Check for TODO comments
             if line.contains("TODO") || line.contains("FIXME") {
                 issues.push(StyleIssue {
-                    id: Uuid::new_v4(),
-                    rule: StyleRule::CommentStyle,
-                    message: "TODO/FIXME comment found".to_string(),
-                    location: Location {
-                        file: file_path.to_string(),
-                        line: line_no + 1,
+                    id:         Uuid::new_v4(),
+                    rule:       StyleRule::CommentStyle,
+                    message:    "TODO/FIXME comment found".to_string(),
+                    location:   Location {
+                        file:   file_path.to_string(),
+                        line:   line_no + 1,
                         column: 0,
                         offset: line_no,
                     },
-                    severity: Severity::Info,
+                    severity:   Severity::Info,
                     suggestion: Some("Consider creating an issue or task".to_string()),
                 });
             }
@@ -319,14 +306,13 @@ impl CodeStyleChecker {
         content: &str,
         file_path: &str,
     ) -> Result<Vec<StyleIssue>, StyleCheckError> {
-        let ast =
-            syn::parse_file(content).map_err(|e| StyleCheckError::ParseError(e.to_string()))?;
+        let ast = syn::parse_file(content).map_err(|e| StyleCheckError::ParseError(e.to_string()))?;
 
         let mut issues = Vec::new();
         let mut visitor = FunctionLengthVisitor {
             max_length: 50,
-            issues: &mut issues,
-            file: file_path,
+            issues:     &mut issues,
+            file:       file_path,
         };
         visitor.visit_file(&ast);
         Ok(issues)
@@ -373,10 +359,7 @@ impl CodeStyleChecker {
         })
     }
 
-    async fn generate_style_suggestions(
-        &self,
-        issues: &[StyleIssue],
-    ) -> Result<Vec<Suggestion>, StyleCheckError> {
+    async fn generate_style_suggestions(&self, issues: &[StyleIssue]) -> Result<Vec<Suggestion>, StyleCheckError> {
         let mut suggestions = Vec::new();
 
         // Group issues by type
@@ -392,15 +375,15 @@ impl CodeStyleChecker {
             if rule_issues.len() > 3 {
                 // If there are many issues of the same rule
                 suggestions.push(Suggestion {
-                    id: Uuid::new_v4(),
-                    title: format!("Multiple {} issues found", rule.rule_name()),
+                    id:          Uuid::new_v4(),
+                    title:       format!("Multiple {} issues found", rule.rule_name()),
                     description: format!(
                         "Found {} style issues that can be auto-fixed",
                         rule_issues.len()
                     ),
-                    location: Some(rule_issues[0].location.clone()),
-                    actions: vec![],
-                    priority: rust_ai_ide_ai_analysis::Priority::Medium,
+                    location:    Some(rule_issues[0].location.clone()),
+                    actions:     vec![],
+                    priority:    rust_ai_ide_ai_analysis::Priority::Medium,
                 });
             }
         }
@@ -428,8 +411,7 @@ impl CodeStyleChecker {
         for pattern in &patterns {
             if let Some(start) = line.find(pattern) {
                 let after_pattern = &line[start + pattern.len()..];
-                if let Some(end) = after_pattern.find(|c: char| !(c.is_alphanumeric() || c == '_'))
-                {
+                if let Some(end) = after_pattern.find(|c: char| !(c.is_alphanumeric() || c == '_')) {
                     return Some(after_pattern[..end].trim().to_string());
                 }
             }

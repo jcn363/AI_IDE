@@ -1,5 +1,6 @@
-use rust_ai_ide_debugger::debugger::error::{DebuggerError, OptionExt};
 use std::io;
+
+use rust_ai_ide_debugger::debugger::error::{DebuggerError, OptionExt};
 
 #[test]
 fn test_debugger_error_display() {

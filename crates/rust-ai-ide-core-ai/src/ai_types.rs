@@ -1,7 +1,9 @@
-use crate::IDEError;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::IDEError;
 
 /// Unique identifier for AI assistant sessions
 pub type AiSessionId = Uuid;
@@ -10,26 +12,26 @@ pub type AiSessionId = Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiModelConfig {
     /// Model identifier
-    pub model_name: String,
+    pub model_name:  String,
     /// Temperature for generation (0.0 to 1.0)
     pub temperature: f64,
     /// Maximum tokens to generate
-    pub max_tokens: Option<u32>,
+    pub max_tokens:  Option<u32>,
     /// Additional model parameters
-    pub parameters: HashMap<String, serde_json::Value>,
+    pub parameters:  HashMap<String, serde_json::Value>,
 }
 
 /// Request to an AI service
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiRequest {
     /// Session identifier
-    pub session_id: AiSessionId,
+    pub session_id:   AiSessionId,
     /// Input prompt or messages
-    pub input: AiInput,
+    pub input:        AiInput,
     /// Model configuration
     pub model_config: AiModelConfig,
     /// Optional conversation context
-    pub context: Option<AiContext>,
+    pub context:      Option<AiContext>,
 }
 
 /// Different types of AI input
@@ -51,7 +53,7 @@ pub enum AiInput {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatMessage {
     /// Message role (system, user, assistant)
-    pub role: MessageRole,
+    pub role:    MessageRole,
     /// Message content
     pub content: String,
 }
@@ -71,7 +73,7 @@ pub enum MessageRole {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiContext {
     /// Previous messages in conversation
-    pub history: Vec<ChatMessage>,
+    pub history:  Vec<ChatMessage>,
     /// Additional context data
     pub metadata: HashMap<String, String>,
 }
@@ -82,13 +84,13 @@ pub struct AiResponse {
     /// Session identifier
     pub session_id: AiSessionId,
     /// Generated content
-    pub content: AiOutput,
+    pub content:    AiOutput,
     /// Model used
-    pub model: String,
+    pub model:      String,
     /// Usage statistics
-    pub usage: Option<AiUsage>,
+    pub usage:      Option<AiUsage>,
     /// Response metadata
-    pub metadata: Option<AiMetadata>,
+    pub metadata:   Option<AiMetadata>,
 }
 
 /// Different types of AI output
@@ -107,40 +109,40 @@ pub enum AiOutput {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiUsage {
     /// Prompt tokens used
-    pub prompt_tokens: Option<u32>,
+    pub prompt_tokens:     Option<u32>,
     /// Completion tokens used
     pub completion_tokens: Option<u32>,
     /// Total tokens used
-    pub total_tokens: Option<u32>,
+    pub total_tokens:      Option<u32>,
 }
 
 /// Additional response metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiMetadata {
     /// Confidence score (0.0 to 1.0)
-    pub confidence: Option<f64>,
+    pub confidence:         Option<f64>,
     /// Processing time in milliseconds
     pub processing_time_ms: Option<u64>,
     /// Finish reason
-    pub finish_reason: Option<String>,
+    pub finish_reason:      Option<String>,
 }
 
 /// AI provider interface
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiProvider {
     /// Provider name (e.g., "openai", "anthropic")
-    pub name: String,
+    pub name:             String,
     /// Supported models
     pub supported_models: Vec<String>,
     /// Provider configuration
-    pub config: HashMap<String, serde_json::Value>,
+    pub config:           HashMap<String, serde_json::Value>,
 }
 
 /// Error returned by AI services
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiServiceError {
     /// Error code
-    pub code: String,
+    pub code:    String,
     /// Error message
     pub message: String,
     /// Optional error details

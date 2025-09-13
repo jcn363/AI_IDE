@@ -1,7 +1,11 @@
 //! # Advanced ML Model Management System
 //!
 //! Comprehensive machine learning model lifecycle management within the Rust AI IDE.
-//! Features model registry, versioning, deployment tracking, performance monitoring, and ecosystem integration.
+//! Features model registry, versioning, deployment tracking, performance monitoring, and ecosystem
+//! integration.
+
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -9,8 +13,6 @@ use petgraph::{Directed, Graph};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
-use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 use uuid::Uuid;
 
@@ -18,19 +20,19 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct MLModelManager {
     /// Core model registry
-    model_registry: Arc<RwLock<ModelRegistry>>,
+    model_registry:         Arc<RwLock<ModelRegistry>>,
     /// Deployment management
-    deployment_manager: DeploymentManager,
+    deployment_manager:     DeploymentManager,
     /// Performance monitoring
-    performance_monitor: PerformanceMonitor,
+    performance_monitor:    PerformanceMonitor,
     /// Version control system
-    version_manager: VersionManager,
+    version_manager:        VersionManager,
     /// Model training orchestrator
-    training_orchestrator: Arc<Mutex<TrainingOrchestrator>>,
+    training_orchestrator:  Arc<Mutex<TrainingOrchestrator>>,
     /// Quality assurance system
-    quality_assurance: QualityAssurance,
+    quality_assurance:      QualityAssurance,
     /// A/B testing framework
-    experiment_manager: ExperimentManager,
+    experiment_manager:     ExperimentManager,
     /// Model serving infrastructure
     serving_infrastructure: ServingInfrastructure,
 }
@@ -48,8 +50,7 @@ impl MLModelManager {
         )));
         let quality_assurance = QualityAssurance::new(system_config.quality_config.clone());
         let experiment_manager = ExperimentManager::new();
-        let serving_infrastructure =
-            ServingInfrastructure::new(system_config.serving_config.clone());
+        let serving_infrastructure = ServingInfrastructure::new(system_config.serving_config.clone());
 
         Ok(Self {
             model_registry,
@@ -73,17 +74,17 @@ impl MLModelManager {
 
         // Create model entry
         let metadata = ModelMetadata {
-            id: model_id.clone(),
-            name: model.name.clone(),
-            description: model.description.clone(),
-            model_type: model.model_type.clone(),
-            framework: model.framework.clone(),
-            language: model.language.clone(),
-            domain: model.domain.clone(),
-            tags: model.tags.clone(),
-            created_at: Utc::now(),
+            id:            model_id.clone(),
+            name:          model.name.clone(),
+            description:   model.description.clone(),
+            model_type:    model.model_type.clone(),
+            framework:     model.framework.clone(),
+            language:      model.language.clone(),
+            domain:        model.domain.clone(),
+            tags:          model.tags.clone(),
+            created_at:    Utc::now(),
             last_modified: Utc::now(),
-            author: model.author.clone(),
+            author:        model.author.clone(),
         };
 
         // Register in model registry
@@ -141,10 +142,7 @@ impl MLModelManager {
     }
 
     /// Deploy model version to production or staging
-    pub async fn deploy_model(
-        &self,
-        deployment_request: DeploymentRequest,
-    ) -> Result<DeploymentId, MLError> {
+    pub async fn deploy_model(&self, deployment_request: DeploymentRequest) -> Result<DeploymentId, MLError> {
         // Pre-deployment validation
         self.deployment_manager
             .validate_deployment(&deployment_request)
@@ -255,13 +253,13 @@ impl MLModelManager {
 
         // Create optimization task
         let task = OptimizationTask {
-            id: Uuid::new_v4(),
-            model_id: model_id.clone(),
+            id:                Uuid::new_v4(),
+            model_id:          model_id.clone(),
             optimization_type: optimization_config.optimization_type,
             compute_resources: optimization_config.compute_resources,
-            status: OptimizationStatus::Queued,
-            created_at: Utc::now(),
-            config: optimization_config,
+            status:            OptimizationStatus::Queued,
+            created_at:        Utc::now(),
+            config:            optimization_config,
         };
 
         // Queue the optimization task
@@ -373,18 +371,18 @@ impl MLModelManager {
     ) -> Result<RollbackResult, MLError> {
         // Create emergency rollback plan
         let plan = EmergencyRollbackPlan {
-            id: Uuid::new_v4(),
-            model_id: model_id.clone(),
-            reason: rollback_reason,
-            target_version: self.deployment_manager.find_safe_version(model_id).await?,
-            rollback_strategy: RollbackStrategy::Immediate,
-            safety_checks: vec![
+            id:                 Uuid::new_v4(),
+            model_id:           model_id.clone(),
+            reason:             rollback_reason,
+            target_version:     self.deployment_manager.find_safe_version(model_id).await?,
+            rollback_strategy:  RollbackStrategy::Immediate,
+            safety_checks:      vec![
                 "Performance baseline restoration".to_string(),
                 "Traffic verification".to_string(),
                 "Data integrity check".to_string(),
             ],
             estimated_downtime: std::time::Duration::from_secs(300), // 5 minutes
-            created_at: Utc::now(),
+            created_at:         Utc::now(),
         };
 
         // Execute emergency rollback
@@ -415,10 +413,10 @@ impl MLModelManager {
         // Send notifications (email, Slack, etc.)
         // Implementation would integrate with notification services
         for contact in contacts {
-            println!("NOTIFICATION: Emergency rollback triggered for model {}, reason: {:?}, contact: {}",
-                     rollback_plan.model_id.0,
-                     rollback_plan.reason,
-                     contact);
+            println!(
+                "NOTIFICATION: Emergency rollback triggered for model {}, reason: {:?}, contact: {}",
+                rollback_plan.model_id.0, rollback_plan.reason, contact
+            );
         }
         Ok(())
     }
@@ -433,14 +431,14 @@ pub struct ModelId(Uuid);
 /// Model definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelDefinition {
-    pub name: String,
+    pub name:        String,
     pub description: String,
-    pub model_type: ModelType,
-    pub framework: String,
-    pub language: String,
-    pub domain: Vec<String>,
-    pub tags: Vec<String>,
-    pub author: String,
+    pub model_type:  ModelType,
+    pub framework:   String,
+    pub language:    String,
+    pub domain:      Vec<String>,
+    pub tags:        Vec<String>,
+    pub author:      String,
 }
 
 /// Model types
@@ -457,59 +455,59 @@ pub enum ModelType {
 /// Model metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelMetadata {
-    pub id: ModelId,
-    pub name: String,
-    pub description: String,
-    pub model_type: ModelType,
-    pub framework: String,
-    pub language: String,
-    pub domain: Vec<String>,
-    pub tags: Vec<String>,
-    pub created_at: DateTime<Utc>,
-    pub last_modified: DateTime<Utc>,
-    pub author: String,
+    pub id:                 ModelId,
+    pub name:               String,
+    pub description:        String,
+    pub model_type:         ModelType,
+    pub framework:          String,
+    pub language:           String,
+    pub domain:             Vec<String>,
+    pub tags:               Vec<String>,
+    pub created_at:         DateTime<Utc>,
+    pub last_modified:      DateTime<Utc>,
+    pub author:             String,
     pub emergency_contacts: Vec<String>,
 }
 
 /// Model version information
 #[derive(Debug, Clone)]
 pub struct VersionInfo {
-    pub model_id: ModelId,
+    pub model_id:       ModelId,
     pub version_number: Version,
-    pub status: VersionStatus,
-    pub created_at: DateTime<Utc>,
-    pub size_bytes: u64,
-    pub hash: String,
+    pub status:         VersionStatus,
+    pub created_at:     DateTime<Utc>,
+    pub size_bytes:     u64,
+    pub hash:           String,
 }
 
 /// Model version
 #[derive(Debug, Clone)]
 pub struct ModelVersion {
     pub version_number: Version,
-    pub data: VersionData,
-    pub build_info: BuildInfo,
-    pub status: VersionStatus,
-    pub created_at: DateTime<Utc>,
-    pub approved_at: Option<DateTime<Utc>>,
-    pub deployed_at: Option<DateTime<Utc>>,
+    pub data:           VersionData,
+    pub build_info:     BuildInfo,
+    pub status:         VersionStatus,
+    pub created_at:     DateTime<Utc>,
+    pub approved_at:    Option<DateTime<Utc>>,
+    pub deployed_at:    Option<DateTime<Utc>>,
 }
 
 /// Version data container
 #[derive(Debug, Clone)]
 pub struct VersionData {
     pub model_binary: Vec<u8>,
-    pub config: HashMap<String, serde_json::Value>,
-    pub metadata: HashMap<String, String>,
+    pub config:       HashMap<String, serde_json::Value>,
+    pub metadata:     HashMap<String, String>,
 }
 
 /// Build information
 #[derive(Debug, Clone)]
 pub struct BuildInfo {
-    pub build_id: String,
-    pub builder: String,
-    pub build_version: String,
-    pub build_timestamp: DateTime<Utc>,
-    pub dependencies: Vec<String>,
+    pub build_id:            String,
+    pub builder:             String,
+    pub build_version:       String,
+    pub build_timestamp:     DateTime<Utc>,
+    pub dependencies:        Vec<String>,
     pub training_parameters: HashMap<String, serde_json::Value>,
 }
 
@@ -526,13 +524,13 @@ pub enum VersionStatus {
 /// Deployment request
 #[derive(Debug, Clone)]
 pub struct DeploymentRequest {
-    pub model_id: ModelId,
-    pub version: Version,
-    pub target_environment: Environment,
-    pub traffic_percentage: f64,
-    pub rollback_policy: Option<RollbackPolicy>,
+    pub model_id:            ModelId,
+    pub version:             Version,
+    pub target_environment:  Environment,
+    pub traffic_percentage:  f64,
+    pub rollback_policy:     Option<RollbackPolicy>,
     pub bypass_quality_gate: bool,
-    pub health_checks: Vec<HealthCheck>,
+    pub health_checks:       Vec<HealthCheck>,
 }
 
 /// Deployment environments
@@ -547,14 +545,14 @@ pub enum Environment {
 /// Deployment information
 #[derive(Debug, Clone)]
 pub struct DeploymentInfo {
-    pub id: DeploymentId,
-    pub model_id: ModelId,
-    pub version: Version,
-    pub environment: Environment,
-    pub status: DeploymentStatus,
-    pub deployed_at: DateTime<Utc>,
+    pub id:                 DeploymentId,
+    pub model_id:           ModelId,
+    pub version:            Version,
+    pub environment:        Environment,
+    pub status:             DeploymentStatus,
+    pub deployed_at:        DateTime<Utc>,
     pub traffic_percentage: f64,
-    pub health_status: Option<HealthStatus>,
+    pub health_status:      Option<HealthStatus>,
 }
 
 /// Deployment identifier
@@ -576,18 +574,18 @@ pub enum DeploymentStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthStatus {
     pub checks_passed: u32,
-    pub checks_total: u32,
-    pub last_check: DateTime<Utc>,
-    pub issues: Vec<String>,
+    pub checks_total:  u32,
+    pub last_check:    DateTime<Utc>,
+    pub issues:        Vec<String>,
 }
 
 /// Health check definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthCheck {
-    pub name: String,
-    pub endpoint: String,
+    pub name:              String,
+    pub endpoint:          String,
     pub expected_response: String,
-    pub timeout_seconds: u32,
+    pub timeout_seconds:   u32,
 }
 
 /// Rollback policy
@@ -601,24 +599,24 @@ pub enum RollbackPolicy {
 /// A/B test configuration
 #[derive(Debug, Clone)]
 pub struct ABTestConfig {
-    pub name: String,
-    pub model_id: ModelId,
-    pub versions: Vec<(Version, f64)>, // (version, traffic_distribution)
-    pub test_duration_days: u32,
-    pub success_metric: String,
+    pub name:                String,
+    pub model_id:            ModelId,
+    pub versions:            Vec<(Version, f64)>, // (version, traffic_distribution)
+    pub test_duration_days:  u32,
+    pub success_metric:      String,
     pub target_user_segment: String,
 }
 
 /// Experiment information
 #[derive(Debug, Clone)]
 pub struct ExperimentInfo {
-    pub id: ExperimentId,
-    pub model_id: ModelId,
-    pub name: String,
-    pub status: ExperimentStatus,
-    pub versions: Vec<(Version, f64)>,
+    pub id:         ExperimentId,
+    pub model_id:   ModelId,
+    pub name:       String,
+    pub status:     ExperimentStatus,
+    pub versions:   Vec<(Version, f64)>,
     pub created_at: DateTime<Utc>,
-    pub winner: Option<Version>,
+    pub winner:     Option<Version>,
 }
 
 /// Experiment identifier
@@ -638,40 +636,40 @@ pub enum ExperimentStatus {
 /// Performance metrics
 #[derive(Debug, Clone)]
 pub struct PerformanceMetrics {
-    pub latency_ms: Vec<f64>,
+    pub latency_ms:     Vec<f64>,
     pub throughput_qps: Vec<f64>,
-    pub error_rate: f64,
+    pub error_rate:     f64,
     pub resource_usage: HashMap<String, f64>,
-    pub collected_at: DateTime<Utc>,
+    pub collected_at:   DateTime<Utc>,
 }
 
 /// Performance dashboard
 #[derive(Debug, Clone)]
 pub struct PerformanceDashboard {
     pub current_metrics: PerformanceMetrics,
-    pub predictions: Vec<PerformancePrediction>,
-    pub alerts: Vec<PerformanceAlert>,
-    pub generated_at: DateTime<Utc>,
+    pub predictions:     Vec<PerformancePrediction>,
+    pub alerts:          Vec<PerformanceAlert>,
+    pub generated_at:    DateTime<Utc>,
 }
 
 /// Performance prediction
 #[derive(Debug, Clone)]
 pub struct PerformancePrediction {
-    pub metric_name: String,
-    pub current_value: f64,
+    pub metric_name:     String,
+    pub current_value:   f64,
     pub predicted_value: f64,
-    pub confidence: f64,
+    pub confidence:      f64,
     pub timeframe_hours: f64,
-    pub reason: String,
+    pub reason:          String,
 }
 
 /// Performance alert
 #[derive(Debug, Clone)]
 pub struct PerformanceAlert {
-    pub alert_type: AlertType,
-    pub severity: Severity,
-    pub message: String,
-    pub triggered_at: DateTime<Utc>,
+    pub alert_type:        AlertType,
+    pub severity:          Severity,
+    pub message:           String,
+    pub triggered_at:      DateTime<Utc>,
     pub suggested_actions: Vec<String>,
 }
 
@@ -699,8 +697,8 @@ pub enum Severity {
 pub struct OptimizationRequest {
     pub optimization_type: OptimizationType,
     pub compute_resources: ComputeResources,
-    pub target_metrics: HashMap<String, f64>,
-    pub constraints: Vec<String>,
+    pub target_metrics:    HashMap<String, f64>,
+    pub constraints:       Vec<String>,
 }
 
 /// Optimization types
@@ -716,9 +714,9 @@ pub enum OptimizationType {
 /// Compute resources for optimization
 #[derive(Debug, Clone)]
 pub struct ComputeResources {
-    pub gpu_memory_gb: f64,
-    pub cpu_cores: u32,
-    pub storage_gb: u64,
+    pub gpu_memory_gb:      f64,
+    pub cpu_cores:          u32,
+    pub storage_gb:         u64,
     pub max_duration_hours: f32,
 }
 
@@ -734,23 +732,23 @@ pub enum OptimizationResult {
 /// Optimized model information
 #[derive(Debug, Clone)]
 pub struct OptimizedModelInfo {
-    pub original_version: Version,
-    pub optimized_version: Version,
+    pub original_version:         Version,
+    pub optimized_version:        Version,
     pub performance_improvements: HashMap<String, f64>,
-    pub compression_ratio: f64,
-    pub accuracy_retention: f64,
+    pub compression_ratio:        f64,
+    pub accuracy_retention:       f64,
 }
 
 /// Optimization task
 #[derive(Debug, Clone)]
 pub struct OptimizationTask {
-    pub id: Uuid,
-    pub model_id: ModelId,
+    pub id:                Uuid,
+    pub model_id:          ModelId,
     pub optimization_type: OptimizationType,
     pub compute_resources: ComputeResources,
-    pub status: OptimizationStatus,
-    pub created_at: DateTime<Utc>,
-    pub config: OptimizationRequest,
+    pub status:            OptimizationStatus,
+    pub created_at:        DateTime<Utc>,
+    pub config:            OptimizationRequest,
 }
 
 /// Optimization status
@@ -765,36 +763,36 @@ pub enum OptimizationStatus {
 /// Model analytics
 #[derive(Debug, Clone)]
 pub struct ModelAnalytics {
-    pub model_id: ModelId,
-    pub model_info: ModelMetadata,
+    pub model_id:            ModelId,
+    pub model_info:          ModelMetadata,
     pub performance_metrics: PerformanceMetrics,
-    pub usage_metrics: ModelUsageMetrics,
-    pub active_experiments: Vec<ExperimentInfo>,
-    pub deployment_history: Vec<DeploymentInfo>,
-    pub version_history: Vec<VersionInfo>,
-    pub data_quality_score: f64,
-    pub risk_assessment: RiskAssessment,
-    pub generated_at: DateTime<Utc>,
+    pub usage_metrics:       ModelUsageMetrics,
+    pub active_experiments:  Vec<ExperimentInfo>,
+    pub deployment_history:  Vec<DeploymentInfo>,
+    pub version_history:     Vec<VersionInfo>,
+    pub data_quality_score:  f64,
+    pub risk_assessment:     RiskAssessment,
+    pub generated_at:        DateTime<Utc>,
 }
 
 /// Model usage metrics
 #[derive(Debug, Clone)]
 pub struct ModelUsageMetrics {
-    pub total_requests: u64,
-    pub requests_per_minute: f64,
-    pub error_requests: u64,
-    pub latency_percentiles: HashMap<String, f64>,
-    pub data_quality_score: f64,
+    pub total_requests:       u64,
+    pub requests_per_minute:  f64,
+    pub error_requests:       u64,
+    pub latency_percentiles:  HashMap<String, f64>,
+    pub data_quality_score:   f64,
     pub concepts_drift_score: f64,
 }
 
 /// Risk assessment
 #[derive(Debug, Clone)]
 pub struct RiskAssessment {
-    pub risk_level: RiskLevel,
-    pub risk_factors: Vec<String>,
+    pub risk_level:            RiskLevel,
+    pub risk_factors:          Vec<String>,
     pub mitigation_strategies: Vec<String>,
-    pub confidence_score: f64,
+    pub confidence_score:      f64,
 }
 
 /// Risk levels
@@ -812,12 +810,12 @@ pub enum LifecycleEvent {
     ModelCreated(ModelId),
     VersionPromoted {
         model_id: ModelId,
-        version: Version,
+        version:  Version,
     },
     DeploymentStarted(DeploymentId),
     ExperimentCompleted(ExperimentId),
     PerformanceThresholdExceeded {
-        model_id: ModelId,
+        model_id:       ModelId,
         threshold_type: String,
     },
 }
@@ -835,14 +833,14 @@ pub enum RollbackReason {
 /// Emergency rollback plan
 #[derive(Debug, Clone)]
 pub struct EmergencyRollbackPlan {
-    pub id: Uuid,
-    pub model_id: ModelId,
-    pub reason: RollbackReason,
-    pub target_version: Version,
-    pub rollback_strategy: RollbackStrategy,
-    pub safety_checks: Vec<String>,
+    pub id:                 Uuid,
+    pub model_id:           ModelId,
+    pub reason:             RollbackReason,
+    pub target_version:     Version,
+    pub rollback_strategy:  RollbackStrategy,
+    pub safety_checks:      Vec<String>,
     pub estimated_downtime: std::time::Duration,
-    pub created_at: DateTime<Utc>,
+    pub created_at:         DateTime<Utc>,
 }
 
 /// Rollback strategy
@@ -856,48 +854,48 @@ pub enum RollbackStrategy {
 /// Rollback result
 #[derive(Debug, Clone)]
 pub struct RollbackResult {
-    pub plan: EmergencyRollbackPlan,
-    pub executed_at: DateTime<Utc>,
+    pub plan:                    EmergencyRollbackPlan,
+    pub executed_at:             DateTime<Utc>,
     pub estimated_recovery_time: std::time::Duration,
 }
 
 /// System configuration
 #[derive(Debug, Clone)]
 pub struct MLSystemConfig {
-    pub max_models: usize,
+    pub max_models:             usize,
     pub max_versions_per_model: u32,
-    pub monitoring_enabled: bool,
-    pub experiment_enabled: bool,
-    pub training_config: TrainingConfig,
-    pub quality_config: QualityConfig,
-    pub serving_config: ServingConfig,
+    pub monitoring_enabled:     bool,
+    pub experiment_enabled:     bool,
+    pub training_config:        TrainingConfig,
+    pub quality_config:         QualityConfig,
+    pub serving_config:         ServingConfig,
 }
 
 /// Training configuration
 #[derive(Debug, Clone)]
 pub struct TrainingConfig {
-    pub max_concurrent_trainings: u32,
-    pub gpu_memory_limit_gb: f64,
-    pub cpu_cores_limit: u32,
+    pub max_concurrent_trainings:       u32,
+    pub gpu_memory_limit_gb:            f64,
+    pub cpu_cores_limit:                u32,
     pub default_training_timeout_hours: f64,
 }
 
 /// Quality configuration
 #[derive(Debug, Clone)]
 pub struct QualityConfig {
-    pub min_accuracy_threshold: f64,
-    pub min_precision_threshold: f64,
-    pub enable_data_drift_detection: bool,
+    pub min_accuracy_threshold:         f64,
+    pub min_precision_threshold:        f64,
+    pub enable_data_drift_detection:    bool,
     pub enable_concept_drift_detection: bool,
 }
 
 /// Serving configuration
 #[derive(Debug, Clone)]
 pub struct ServingConfig {
-    pub max_model_instances: u32,
-    pub auto_scaling_enabled: bool,
+    pub max_model_instances:           u32,
+    pub auto_scaling_enabled:          bool,
     pub health_check_interval_seconds: u32,
-    pub request_timeout_seconds: u32,
+    pub request_timeout_seconds:       u32,
 }
 
 /// Error type for ML operations
@@ -942,14 +940,14 @@ pub enum MLError {
 // Model registry
 #[derive(Debug)]
 pub struct ModelRegistry {
-    models: HashMap<ModelId, ModelMetadata>,
+    models:  HashMap<ModelId, ModelMetadata>,
     storage: HashMap<ModelId, ModelUsageMetrics>,
 }
 
 impl ModelRegistry {
     pub fn new() -> Result<Self, MLError> {
         Ok(Self {
-            models: HashMap::new(),
+            models:  HashMap::new(),
             storage: HashMap::new(),
         })
     }
@@ -978,11 +976,11 @@ impl ModelRegistry {
             .get(model_id)
             .cloned()
             .unwrap_or_else(|| ModelUsageMetrics {
-                total_requests: 0,
-                requests_per_minute: 0.0,
-                error_requests: 0,
-                latency_percentiles: HashMap::new(),
-                data_quality_score: 1.0,
+                total_requests:       0,
+                requests_per_minute:  0.0,
+                error_requests:       0,
+                latency_percentiles:  HashMap::new(),
+                data_quality_score:   1.0,
                 concepts_drift_score: 0.0,
             })
     }
@@ -991,14 +989,14 @@ impl ModelRegistry {
 #[derive(Debug)]
 pub struct DeploymentManager {
     model_registry: Arc<RwLock<ModelRegistry>>,
-    deployments: HashMap<DeploymentId, DeploymentInfo>,
+    deployments:    HashMap<DeploymentId, DeploymentInfo>,
 }
 
 impl DeploymentManager {
     pub fn new(registry: Arc<RwLock<ModelRegistry>>) -> Self {
         Self {
             model_registry: registry,
-            deployments: HashMap::new(),
+            deployments:    HashMap::new(),
         }
     }
 
@@ -1006,19 +1004,16 @@ impl DeploymentManager {
         Ok(())
     }
 
-    pub async fn create_deployment(
-        &mut self,
-        request: DeploymentRequest,
-    ) -> Result<DeploymentInfo, MLError> {
+    pub async fn create_deployment(&mut self, request: DeploymentRequest) -> Result<DeploymentInfo, MLError> {
         let deployment = DeploymentInfo {
-            id: DeploymentId(Uuid::new_v4()),
-            model_id: request.model_id,
-            version: request.version,
-            environment: request.target_environment,
-            status: DeploymentStatus::Pending,
-            deployed_at: Utc::now(),
+            id:                 DeploymentId(Uuid::new_v4()),
+            model_id:           request.model_id,
+            version:            request.version,
+            environment:        request.target_environment,
+            status:             DeploymentStatus::Pending,
+            deployed_at:        Utc::now(),
             traffic_percentage: request.traffic_percentage,
-            health_status: None,
+            health_status:      None,
         };
 
         self.deployments
@@ -1034,11 +1029,7 @@ impl DeploymentManager {
         Ok(())
     }
 
-    pub async fn promote_version(
-        &self,
-        _model_id: &ModelId,
-        _version: &Version,
-    ) -> Result<(), MLError> {
+    pub async fn promote_version(&self, _model_id: &ModelId, _version: &Version) -> Result<(), MLError> {
         Ok(())
     }
 
@@ -1054,10 +1045,7 @@ impl DeploymentManager {
         Ok(Version::new(1, 0, 0))
     }
 
-    pub async fn execute_emergency_rollback(
-        &mut self,
-        _plan: &EmergencyRollbackPlan,
-    ) -> Result<(), MLError> {
+    pub async fn execute_emergency_rollback(&mut self, _plan: &EmergencyRollbackPlan) -> Result<(), MLError> {
         Ok(())
     }
 
@@ -1088,15 +1076,15 @@ impl PerformanceMonitor {
 
     pub async fn gather_metrics(&self) -> Result<PerformanceMetrics, MLError> {
         Ok(PerformanceMetrics {
-            latency_ms: vec![100.0, 95.0, 110.0],
+            latency_ms:     vec![100.0, 95.0, 110.0],
             throughput_qps: vec![50.0, 52.0, 48.0],
-            error_rate: 0.02,
+            error_rate:     0.02,
             resource_usage: HashMap::from([
                 ("cpu".to_string(), 65.0),
                 ("memory".to_string(), 45.0),
                 ("gpu".to_string(), 78.0),
             ]),
-            collected_at: Utc::now(),
+            collected_at:   Utc::now(),
         })
     }
 
@@ -1105,12 +1093,12 @@ impl PerformanceMonitor {
         metrics: &PerformanceMetrics,
     ) -> Result<Vec<PerformancePrediction>, MLError> {
         Ok(vec![PerformancePrediction {
-            metric_name: "latency".to_string(),
-            current_value: metrics.latency_ms.iter().sum::<f64>() / metrics.latency_ms.len() as f64,
+            metric_name:     "latency".to_string(),
+            current_value:   metrics.latency_ms.iter().sum::<f64>() / metrics.latency_ms.len() as f64,
             predicted_value: 105.0,
-            confidence: 0.85,
+            confidence:      0.85,
             timeframe_hours: 24.0,
-            reason: "Based on recent usage patterns and seasonal trends".to_string(),
+            reason:          "Based on recent usage patterns and seasonal trends".to_string(),
         }])
     }
 
@@ -1126,18 +1114,11 @@ impl PerformanceMonitor {
         Ok(())
     }
 
-    pub async fn start_deployment_monitoring(
-        &self,
-        _deployment_id: &DeploymentId,
-    ) -> Result<(), MLError> {
+    pub async fn start_deployment_monitoring(&self, _deployment_id: &DeploymentId) -> Result<(), MLError> {
         Ok(())
     }
 
-    pub async fn handle_threshold_breach(
-        &self,
-        _model_id: &ModelId,
-        _threshold_type: String,
-    ) -> Result<(), MLError> {
+    pub async fn handle_threshold_breach(&self, _model_id: &ModelId, _threshold_type: String) -> Result<(), MLError> {
         Ok(())
     }
 
@@ -1175,7 +1156,7 @@ impl VersionManager {
             major: latest_version.major,
             minor: latest_version.minor + 1,
             patch: 0,
-            pre: semver::Prerelease::EMPTY,
+            pre:   semver::Prerelease::EMPTY,
             build: semver::BuildMetadata::EMPTY,
         })
     }
@@ -1189,11 +1170,7 @@ impl VersionManager {
         })
     }
 
-    pub async fn create_version(
-        &mut self,
-        model_id: &ModelId,
-        version: ModelVersion,
-    ) -> Result<VersionInfo, MLError> {
+    pub async fn create_version(&mut self, model_id: &ModelId, version: ModelVersion) -> Result<VersionInfo, MLError> {
         let versions = self
             .versions
             .entry(model_id.clone())
@@ -1201,30 +1178,27 @@ impl VersionManager {
         versions.push(version.clone());
 
         Ok(VersionInfo {
-            model_id: model_id.clone(),
+            model_id:       model_id.clone(),
             version_number: version.version_number,
-            status: version.status,
-            created_at: version.created_at,
-            size_bytes: version.data.model_binary.len() as u64,
-            hash: format!("{:x}", Sha256::digest(&version.data.model_binary)),
+            status:         version.status,
+            created_at:     version.created_at,
+            size_bytes:     version.data.model_binary.len() as u64,
+            hash:           format!("{:x}", Sha256::digest(&version.data.model_binary)),
         })
     }
 
-    pub async fn get_version_history(
-        &self,
-        model_id: &ModelId,
-    ) -> Result<Vec<VersionInfo>, MLError> {
+    pub async fn get_version_history(&self, model_id: &ModelId) -> Result<Vec<VersionInfo>, MLError> {
         let versions = self.versions.get(model_id).cloned().unwrap_or_default();
 
         let version_infos = versions
             .into_iter()
             .map(|v| VersionInfo {
-                model_id: model_id.clone(),
+                model_id:       model_id.clone(),
                 version_number: v.version_number,
-                status: v.status,
-                created_at: v.created_at,
-                size_bytes: v.data.model_binary.len() as u64,
-                hash: format!("{:x}", Sha256::digest(&v.data.model_binary)),
+                status:         v.status,
+                created_at:     v.created_at,
+                size_bytes:     v.data.model_binary.len() as u64,
+                hash:           format!("{:x}", Sha256::digest(&v.data.model_binary)),
             })
             .collect();
 
@@ -1258,11 +1232,7 @@ impl QualityAssurance {
         Self
     }
 
-    pub async fn validate_model(
-        &self,
-        _model_id: &ModelId,
-        _version: &ModelVersion,
-    ) -> Result<(), MLError> {
+    pub async fn validate_model(&self, _model_id: &ModelId, _version: &ModelVersion) -> Result<(), MLError> {
         Ok(())
     }
 
@@ -1274,11 +1244,7 @@ impl QualityAssurance {
         Ok(())
     }
 
-    pub async fn get_quality_report(
-        &self,
-        _model_id: &ModelId,
-        _version: &Version,
-    ) -> Result<(), MLError> {
+    pub async fn get_quality_report(&self, _model_id: &ModelId, _version: &Version) -> Result<(), MLError> {
         Ok(())
     }
 
@@ -1292,10 +1258,10 @@ impl QualityAssurance {
 
     pub async fn assess_risk(&self, _model_id: &ModelId) -> RiskAssessment {
         RiskAssessment {
-            risk_level: RiskLevel::Low,
-            risk_factors: vec![],
+            risk_level:            RiskLevel::Low,
+            risk_factors:          vec![],
             mitigation_strategies: vec![],
-            confidence_score: 0.9,
+            confidence_score:      0.9,
         }
     }
 
@@ -1332,18 +1298,15 @@ impl ExperimentManager {
         }
     }
 
-    pub async fn create_experiment(
-        &mut self,
-        config: ABTestConfig,
-    ) -> Result<ExperimentInfo, MLError> {
+    pub async fn create_experiment(&mut self, config: ABTestConfig) -> Result<ExperimentInfo, MLError> {
         let experiment = ExperimentInfo {
-            id: ExperimentId(Uuid::new_v4()),
-            model_id: config.model_id,
-            name: config.name,
-            status: ExperimentStatus::Planning,
-            versions: config.versions,
+            id:         ExperimentId(Uuid::new_v4()),
+            model_id:   config.model_id,
+            name:       config.name,
+            status:     ExperimentStatus::Planning,
+            versions:   config.versions,
             created_at: Utc::now(),
-            winner: None,
+            winner:     None,
         };
 
         self.experiments
@@ -1358,10 +1321,7 @@ impl ExperimentManager {
         Ok(())
     }
 
-    pub async fn get_active_experiments(
-        &self,
-        model_id: &ModelId,
-    ) -> Result<Vec<ExperimentInfo>, MLError> {
+    pub async fn get_active_experiments(&self, model_id: &ModelId) -> Result<Vec<ExperimentInfo>, MLError> {
         Ok(self
             .experiments
             .values()
@@ -1370,10 +1330,7 @@ impl ExperimentManager {
             .collect())
     }
 
-    pub async fn finish_experiment(
-        &mut self,
-        experiment_id: &ExperimentId,
-    ) -> Result<&Version, MLError> {
+    pub async fn finish_experiment(&mut self, experiment_id: &ExperimentId) -> Result<&Version, MLError> {
         if let Some(experiment) = self.experiments.get_mut(experiment_id) {
             experiment.status = ExperimentStatus::Completed;
             // For demo purposes, return the first version as winner
@@ -1386,11 +1343,7 @@ impl ExperimentManager {
         ))
     }
 
-    pub async fn notify_promotion(
-        &self,
-        _model_id: &ModelId,
-        _version: &Version,
-    ) -> Result<(), MLError> {
+    pub async fn notify_promotion(&self, _model_id: &ModelId, _version: &Version) -> Result<(), MLError> {
         Ok(())
     }
 }
@@ -1427,20 +1380,22 @@ pub trait PredictionModel: Send + Sync {
 #[derive(Debug)]
 pub struct PredictionInput {
     pub features: Vec<f32>,
-    pub context: HashMap<String, String>,
+    pub context:  HashMap<String, String>,
 }
 
 #[derive(Debug)]
 pub struct PredictionOutput {
     pub predictions: Vec<f32>,
-    pub confidence: f64,
+    pub confidence:  f64,
 }
 
 // Usage example:
 // ```
 // let config = MLSystemConfig::default();
 // let ml_manager = MLModelManager::initialize(config).await?;
-// let model_id = ml_manager.register_model(model_definition, initial_version).await?;
+// let model_id = ml_manager
+//     .register_model(model_definition, initial_version)
+//     .await?;
 // ```
 
 pub use MLModelManager;

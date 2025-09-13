@@ -3,18 +3,16 @@
 //! This module contains commands for managing projects, dependencies,
 //! build configurations, and other project-level operations.
 
-use crate::{
-    dependency::{
-        graph::{self, Edge, Graph, Node},
-        DependencyInfo, DependencyUpdate, DependencyUpdateChecker, DependencyUpdater,
-    },
-    license::LicenseComplianceChecker,
-    security::VulnerabilityScanner,
-};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
 use tauri::State;
+
+use crate::dependency::graph::{self, Edge, Graph, Node};
+use crate::dependency::{DependencyInfo, DependencyUpdate, DependencyUpdateChecker, DependencyUpdater};
+use crate::license::LicenseComplianceChecker;
+use crate::security::VulnerabilityScanner;
 
 #[tauri::command]
 pub async fn check_vulnerabilities(
@@ -35,10 +33,7 @@ pub async fn check_license_compliance(
 }
 
 #[tauri::command]
-pub async fn update_dependencies(
-    manifest_path: PathBuf,
-    dry_run: bool,
-) -> Result<Vec<DependencyUpdate>, String> {
+pub async fn update_dependencies(manifest_path: PathBuf, dry_run: bool) -> Result<Vec<DependencyUpdate>, String> {
     let updater = DependencyUpdater::new(manifest_path);
     updater
         .update_dependencies(dry_run)
@@ -47,29 +42,27 @@ pub async fn update_dependencies(
 }
 
 #[tauri::command]
-pub async fn check_dependency_updates(
-    project_path: PathBuf,
-) -> Result<Vec<DependencyInfo>, String> {
+pub async fn check_dependency_updates(project_path: PathBuf) -> Result<Vec<DependencyInfo>, String> {
     let checker = DependencyUpdateChecker::new(project_path);
     checker.check_updates()
 }
 
 #[derive(Serialize)]
 pub struct ProjectDependencyInfo {
-    name: String,
-    version: String,
-    license: Option<String>,
+    name:            String,
+    version:         String,
+    license:         Option<String>,
     vulnerabilities: Vec<String>,
-    updates: Vec<DependencyUpdate>,
+    updates:         Vec<DependencyUpdate>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GraphNode {
-    id: String,
-    name: String,
-    version: String,
+    id:              String,
+    name:            String,
+    version:         String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    license: Option<String>,
+    license:         Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     vulnerabilities: Vec<String>,
 }
@@ -79,7 +72,7 @@ pub struct GraphLink {
     source: String,
     target: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    label: Option<String>,
+    label:  Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -101,10 +94,10 @@ pub async fn get_dependency_graph(project_path: PathBuf) -> Result<DependencyGra
         .values()
         .map(|node| {
             GraphNode {
-                id: node.id().to_string(),
-                name: node.name().to_string(),
-                version: node.version().to_string(),
-                license: node.license().map(|l| l.to_string()),
+                id:              node.id().to_string(),
+                name:            node.name().to_string(),
+                version:         node.version().to_string(),
+                license:         node.license().map(|l| l.to_string()),
                 vulnerabilities: Vec::new(), // Will be populated from vulnerability scanner
             }
         })
@@ -117,7 +110,7 @@ pub async fn get_dependency_graph(project_path: PathBuf) -> Result<DependencyGra
         .map(|edge| GraphLink {
             source: edge.source().to_string(),
             target: edge.target().to_string(),
-            label: edge.label().map(|s| s.to_string()),
+            label:  edge.label().map(|s| s.to_string()),
         })
         .collect();
 
@@ -125,9 +118,7 @@ pub async fn get_dependency_graph(project_path: PathBuf) -> Result<DependencyGra
 }
 
 #[tauri::command]
-pub async fn get_project_dependency_info(
-    manifest_path: PathBuf,
-) -> Result<Vec<ProjectDependencyInfo>, String> {
+pub async fn get_project_dependency_info(manifest_path: PathBuf) -> Result<Vec<ProjectDependencyInfo>, String> {
     // This would combine all the above functionality
     // Implementation omitted for brevity
     Ok(Vec::new())

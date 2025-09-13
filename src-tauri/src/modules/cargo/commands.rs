@@ -2,9 +2,10 @@
 //!
 //! This module provides all Cargo-related Tauri commands for the Rust AI IDE.
 
+use std::path::{Path, PathBuf};
+
 use anyhow::Result;
 use rust_ai_ide_core::shell_utils::cargo;
-use std::path::{Path, PathBuf};
 use tokio::sync::mpsc;
 
 // Testing Commands
@@ -16,7 +17,7 @@ pub async fn test_list(project_path: String) -> Result<Vec<String>, String> {
 
     // Use unified cargo test_list utility
     match cargo::test_list(project_path_buf) {
-        Ok(result) => {
+        Ok(result) =>
             if result.success {
                 let stdout = result.stdout;
                 let mut tests = Vec::new();
@@ -33,8 +34,7 @@ pub async fn test_list(project_path: String) -> Result<Vec<String>, String> {
                 Ok(tests)
             } else {
                 Err(result.stderr)
-            }
-        }
+            },
         Err(e) => Err(format!("Failed to execute cargo test --list: {}", e)),
     }
 }
@@ -81,8 +81,7 @@ pub async fn test_run_stream(
 pub async fn check_dependency_updates(
     project_path: String,
 ) -> Result<Vec<super::super::dependency::DependencyInfo>, String> {
-    let checker =
-        super::super::dependency::update_checker::DependencyUpdateChecker::new(project_path.into());
+    let checker = super::super::dependency::update_checker::DependencyUpdateChecker::new(project_path.into());
     checker.check_updates()
 }
 
@@ -136,9 +135,7 @@ pub async fn init_build_manager(project_path: String) -> Result<(), String> {
 
 /// Get build configuration for a Cargo project
 #[tauri::command]
-pub async fn get_build_config(
-    project_path: String,
-) -> Result<super::super::cargo::BuildConfig, String> {
+pub async fn get_build_config(project_path: String) -> Result<super::super::cargo::BuildConfig, String> {
     let state = crate::state::AppState::new()?;
     let build_managers = state.build_managers.lock().map_err(|e| e.to_string())?;
     let manager = build_managers
@@ -150,10 +147,7 @@ pub async fn get_build_config(
 
 /// Update build configuration for a Cargo project
 #[tauri::command]
-pub async fn update_build_config(
-    project_path: String,
-    config: super::super::cargo::BuildConfig,
-) -> Result<(), String> {
+pub async fn update_build_config(project_path: String, config: super::super::cargo::BuildConfig) -> Result<(), String> {
     let state = crate::state::AppState::new()?;
     let mut build_managers = state.build_managers.lock().map_err(|e| e.to_string())?;
     let manager = build_managers

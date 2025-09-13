@@ -1,12 +1,13 @@
+use std::{env, fs};
+
 use rust_ai_ide_shared_types::{create_typescript_generator, default_config};
-use std::env;
-use std::fs;
 
 /// Type generator binary for automated TypeScript generation from Rust types
 ///
 /// Usage:
 ///   cargo run --bin type_generator [--file PATH | --types TYPE1 TYPE2 ...] [--output FILE]
-///   cargo run --bin type_generator < crates/rust-ai-ide-shared-types/examples/types.rs > web/src/types/generated.ts
+///   cargo run --bin type_generator < crates/rust-ai-ide-shared-types/examples/types.rs >
+/// web/src/types/generated.ts
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().skip(1).collect();
@@ -27,15 +28,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
-            "--file" => {
+            "--file" =>
                 if i + 1 < args.len() {
                     file_path = Some(args[i + 1].clone());
                     i += 2;
                 } else {
                     eprintln!("Error: --file requires a file path");
                     std::process::exit(1);
-                }
-            }
+                },
             "--types" => {
                 i += 1;
                 while i < args.len() && !args[i].starts_with("--") {
@@ -43,15 +43,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     i += 1;
                 }
             }
-            "--output" => {
+            "--output" =>
                 if i + 1 < args.len() {
                     output_path = Some(args[i + 1].clone());
                     i += 2;
                 } else {
                     eprintln!("Error: --output requires a file path");
                     std::process::exit(1);
-                }
-            }
+                },
             "--help" | "-h" => {
                 print_help();
                 return Ok(());
@@ -95,9 +94,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .source_types;
 
     if !rust_types.is_empty() {
-        let validation =
-            rust_ai_ide_shared_types::validate_cross_platform(&rust_types, &default_config())
-                .await?;
+        let validation = rust_ai_ide_shared_types::validate_cross_platform(&rust_types, &default_config()).await?;
 
         if !validation.compatible {
             eprintln!("Warning: Cross-platform compatibility issues detected:");
@@ -139,9 +136,7 @@ fn print_help() {
     eprintln!();
     eprintln!("OPTIONS:");
     eprintln!("  --file PATH       Path to Rust source file containing type definitions");
-    eprintln!(
-        "  --types TYPE...   Specific type names to generate (if not provided, generates all)"
-    );
+    eprintln!("  --types TYPE...   Specific type names to generate (if not provided, generates all)");
     eprintln!("  --output FILE     Output file path (if not provided, writes to stdout)");
     eprintln!("  --help, -h        Show this help message");
     eprintln!();

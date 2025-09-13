@@ -8,19 +8,19 @@
 //! - Multi-language support with pattern recognition
 //! - Memory-efficient caching and prediction models
 
+use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::sync::Arc;
+
 use chrono::{DateTime, Utc};
 use moka::future::Cache;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, VecDeque};
-use std::sync::Arc;
-use tokio::sync::{mpsc, oneshot, RwLock};
-
 // Import internal dependencies
 use rust_ai_ide_common::validation::TauriInputSanitizer;
 use rust_ai_ide_lsp::Client;
 use rust_ai_ide_shared_types::{FileChange, ProjectContext};
 use rust_ai_ide_types::{DocumentUri, Language, Position, Range, TextDocument};
+use serde::{Deserialize, Serialize};
+use tokio::sync::{mpsc, oneshot, RwLock};
 
 // Re-export types
 pub use crate::{PredictiveError, PredictiveResult, SharedPerformanceTracker};
@@ -29,36 +29,36 @@ pub use crate::{PredictiveError, PredictiveResult, SharedPerformanceTracker};
 #[derive(Debug)]
 pub struct PredictiveDevelopmentEngine {
     /// LSP client for semantic analysis
-    lsp_client: Option<Arc<Client>>,
+    lsp_client:             Option<Arc<Client>>,
     /// Context-aware suggestion engine
-    suggestion_engine: Arc<RwLock<SuggestionEngine>>,
+    suggestion_engine:      Arc<RwLock<SuggestionEngine>>,
     /// Intent prediction model
-    intent_predictor: Arc<RwLock<IntentPredictor>>,
+    intent_predictor:       Arc<RwLock<IntentPredictor>>,
     /// Pattern recognition system
-    pattern_recognizer: Arc<RwLock<PatternRecognitionSystem>>,
+    pattern_recognizer:     Arc<RwLock<PatternRecognitionSystem>>,
     /// Memory-efficient cache system
-    prediction_cache: Arc<PredictionCache>,
+    prediction_cache:       Arc<PredictionCache>,
     /// Performance tracker
-    performance_tracker: SharedPerformanceTracker,
+    performance_tracker:    SharedPerformanceTracker,
     /// Background task channel for async processing
     background_task_sender: mpsc::UnboundedSender<BackgroundTask>,
     /// Configuration settings
-    config: Arc<RwLock<PredictionSettings>>,
+    config:                 Arc<RwLock<PredictionSettings>>,
 }
 
 /// Context for prediction operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PredictionContext {
     /// Current document being edited
-    pub document: TextDocument,
+    pub document:         TextDocument,
     /// Cursor position in the document
-    pub cursor_position: Position,
+    pub cursor_position:  Position,
     /// Project-level context
-    pub project_context: ProjectContext,
+    pub project_context:  ProjectContext,
     /// Recent file changes
-    pub recent_changes: Vec<FileChange>,
+    pub recent_changes:   Vec<FileChange>,
     /// User interaction history
-    pub user_actions: Vec<DeveloperAction>,
+    pub user_actions:     Vec<DeveloperAction>,
     /// Language-specific context
     pub language_context: LanguageContext,
 }
@@ -67,11 +67,11 @@ pub struct PredictionContext {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LanguageContext {
     /// Programming language
-    pub language: Language,
+    pub language:          Language,
     /// Language version/configuration
-    pub version: String,
+    pub version:           String,
     /// Framework/library context
-    pub frameworks: Vec<String>,
+    pub frameworks:        Vec<String>,
     /// Compiler/interpreter settings
     pub compiler_settings: HashMap<String, String>,
 }
@@ -80,19 +80,19 @@ pub struct LanguageContext {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeSuggestion {
     /// The suggested code text
-    pub text: String,
+    pub text:             String,
     /// Description of the suggestion
-    pub description: String,
+    pub description:      String,
     /// Confidence score (0.0 to 1.0)
     pub confidence_score: f64,
     /// Type of suggestion
-    pub suggestion_type: SuggestionType,
+    pub suggestion_type:  SuggestionType,
     /// Location in code where suggestion applies
-    pub location: Range,
+    pub location:         Range,
     /// Associated actions that could be taken
-    pub related_actions: Vec<String>,
+    pub related_actions:  Vec<String>,
     /// Expected benefits of applying suggestion
-    pub expected_impact: ExpectedImpact,
+    pub expected_impact:  ExpectedImpact,
 }
 
 /// Types of code suggestions
@@ -142,19 +142,19 @@ pub enum ImpactLevel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefactoringRecommendation {
     /// Description of the refactoring
-    pub description: String,
+    pub description:         String,
     /// Files involved in the refactoring
-    pub affected_files: Vec<DocumentUri>,
+    pub affected_files:      Vec<DocumentUri>,
     /// Priority level
-    pub priority: RecommendationPriority,
+    pub priority:            RecommendationPriority,
     /// Estimated effort required
-    pub effort_estimate: EffortLevel,
+    pub effort_estimate:     EffortLevel,
     /// Potential benefits
-    pub benefits: Vec<String>,
+    pub benefits:            Vec<String>,
     /// Success probability
     pub success_probability: f64,
     /// Prerequisites for the refactoring
-    pub prerequisites: Vec<String>,
+    pub prerequisites:       Vec<String>,
 }
 
 /// Priority levels for recommendations
@@ -179,15 +179,15 @@ pub enum EffortLevel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IntentPrediction {
     /// Current user intent category
-    pub intent: DeveloperIntent,
+    pub intent:              DeveloperIntent,
     /// Confidence in the prediction
-    pub confidence: f64,
+    pub confidence:          f64,
     /// Predicted next actions
-    pub predicted_actions: Vec<PredictedAction>,
+    pub predicted_actions:   Vec<PredictedAction>,
     /// Alternative interpretations
     pub alternative_intents: Vec<(DeveloperIntent, f64)>,
     /// Context factors influencing prediction
-    pub context_factors: Vec<String>,
+    pub context_factors:     Vec<String>,
 }
 
 /// User development intents
@@ -215,11 +215,11 @@ pub enum DeveloperIntent {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PredictedAction {
     /// Action description
-    pub description: String,
+    pub description:        String,
     /// Action probability
-    pub probability: f64,
+    pub probability:        f64,
     /// Required context for action
-    pub required_context: Vec<String>,
+    pub required_context:   Vec<String>,
     /// Potential outcomes
     pub potential_outcomes: Vec<String>,
 }
@@ -228,28 +228,28 @@ pub struct PredictedAction {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeveloperAction {
     /// Action type identifier
-    pub action_type: String,
+    pub action_type:  String,
     /// Timestamp of the action
-    pub timestamp: DateTime<Utc>,
+    pub timestamp:    DateTime<Utc>,
     /// File involved in the action
-    pub file_path: String,
+    pub file_path:    String,
     /// Code changes made
     pub code_changes: Vec<CodeChange>,
     /// Additional metadata
-    pub metadata: HashMap<String, String>,
+    pub metadata:     HashMap<String, String>,
 }
 
 /// Code change representation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeChange {
     /// Type of change
-    pub change_type: ChangeType,
+    pub change_type:      ChangeType,
     /// Line range affected
-    pub line_range: Range,
+    pub line_range:       Range,
     /// Original code content
     pub original_content: String,
     /// New code content
-    pub new_content: String,
+    pub new_content:      String,
 }
 
 /// Types of code changes
@@ -265,31 +265,31 @@ pub enum ChangeType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PredictionSettings {
     /// Enable/disable predictive features
-    pub enabled: bool,
+    pub enabled:                  bool,
     /// Cache size limit
-    pub cache_size_limit: usize,
+    pub cache_size_limit:         usize,
     /// Minimum confidence threshold
     pub min_confidence_threshold: f64,
     /// Analysis timeout in milliseconds
-    pub analysis_timeout_ms: u64,
+    pub analysis_timeout_ms:      u64,
     /// Supported languages
-    pub supported_languages: Vec<Language>,
+    pub supported_languages:      Vec<Language>,
     /// Performance optimization settings
-    pub performance_settings: PerformanceSettings,
+    pub performance_settings:     PerformanceSettings,
     /// Memory limits
-    pub memory_limits: MemorySettings,
+    pub memory_limits:            MemorySettings,
     /// Security settings
-    pub security_settings: SecuritySettings,
+    pub security_settings:        SecuritySettings,
 }
 /// Security configuration for predictive features
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecuritySettings {
     /// Enable input sanitization
-    pub input_sanitization: bool,
+    pub input_sanitization:        bool,
     /// Trusted sources for suggestions
-    pub trusted_sources: Vec<String>,
+    pub trusted_sources:           Vec<String>,
     /// Audit logging enabled
-    pub audit_logging: bool,
+    pub audit_logging:             bool,
     /// Maximum suggestion size limit
     pub max_suggestion_size_bytes: usize,
 }
@@ -328,9 +328,9 @@ struct PredictionCache {
     /// Refactoring cache
     refactoring_cache: Cache<String, Vec<RefactoringRecommendation>>,
     /// Intent predictions cache
-    intent_cache: Cache<String, IntentPrediction>,
+    intent_cache:      Cache<String, IntentPrediction>,
     /// Analysis results cache
-    analysis_cache: Cache<String, serde_json::Value>,
+    analysis_cache:    Cache<String, serde_json::Value>,
 }
 
 /// Context-aware suggestion engine
@@ -339,9 +339,9 @@ struct SuggestionEngine {
     /// Pattern database for different languages
     language_patterns: HashMap<Language, PatternDatabase>,
     /// ML-based scoring model (simplified implementation)
-    scoring_engine: ScoringEngine,
+    scoring_engine:    ScoringEngine,
     /// Safety checks for suggestions
-    safety_filter: SafetyFilter,
+    safety_filter:     SafetyFilter,
 }
 
 /// Pattern database for language-specific patterns
@@ -350,37 +350,37 @@ struct PatternDatabase {
     /// Common code patterns
     common_patterns: HashMap<String, CodePattern>,
     /// Anti-patterns to avoid
-    anti_patterns: HashMap<String, AntiPattern>,
+    anti_patterns:   HashMap<String, AntiPattern>,
     /// Language-specific templates
-    templates: HashMap<String, CodeTemplate>,
+    templates:       HashMap<String, CodeTemplate>,
 }
 
 /// Code pattern representation
 #[derive(Debug, Clone)]
 struct CodePattern {
     /// Pattern identifier
-    id: String,
+    id:          String,
     /// Pattern description
     description: String,
     /// Confidence score
-    confidence: f64,
+    confidence:  f64,
     /// Applicable contexts
-    contexts: Vec<String>,
+    contexts:    Vec<String>,
     /// Pattern matches
-    patterns: Vec<PatternMatch>,
+    patterns:    Vec<PatternMatch>,
 }
 
 /// Anti-pattern to avoid
 #[derive(Debug, Clone)]
 struct AntiPattern {
     /// Anti-pattern ID
-    id: String,
+    id:           String,
     /// Description of issues caused
-    issues: Vec<String>,
+    issues:       Vec<String>,
     /// Alternative approaches
     alternatives: Vec<String>,
     /// Severity level
-    severity: AntiPatternSeverity,
+    severity:     AntiPatternSeverity,
 }
 
 /// Anti-pattern severity levels
@@ -396,24 +396,24 @@ pub enum AntiPatternSeverity {
 #[derive(Debug, Clone)]
 struct CodeTemplate {
     /// Template ID
-    id: String,
+    id:          String,
     /// Template description
     description: String,
     /// Parameters needed
-    parameters: Vec<TemplateParameter>,
+    parameters:  Vec<TemplateParameter>,
     /// Template content
-    content: String,
+    content:     String,
 }
 
 /// Template parameter specification
 #[derive(Debug, Clone)]
 struct TemplateParameter {
     /// Parameter name
-    name: String,
+    name:          String,
     /// Parameter type
-    param_type: String,
+    param_type:    String,
     /// Parameter description
-    description: String,
+    description:   String,
     /// Default value (optional)
     default_value: Option<String>,
 }
@@ -422,66 +422,66 @@ struct TemplateParameter {
 #[derive(Debug, Clone)]
 struct PatternMatch {
     /// Match regular expression
-    regex: Regex,
+    regex:       Regex,
     /// Expected replacement template
     replacement: String,
     /// Conditions for match application
-    conditions: Vec<String>,
+    conditions:  Vec<String>,
 }
 
 /// ML-based scoring engine
 #[derive(Debug)]
 struct ScoringEngine {
     /// Scoring model weights
-    weights: HashMap<String, f64>,
+    weights:          HashMap<String, f64>,
     /// Historical performance data
     performance_data: VecDeque<ScoringResult>,
     /// Context factors
-    context_factors: Vec<ContextFactor>,
+    context_factors:  Vec<ContextFactor>,
 }
 
 /// Scoring result for model improvement
 #[derive(Debug, Clone)]
 struct ScoringResult {
     /// Input features
-    features: Vec<f64>,
+    features:        Vec<f64>,
     /// Predicted score
     predicted_score: f64,
     /// Actual user acceptance
-    user_accepted: bool,
+    user_accepted:   bool,
     /// Timestamp of scoring
-    timestamp: DateTime<Utc>,
+    timestamp:       DateTime<Utc>,
 }
 
 /// Context factors for scoring
 #[derive(Debug, Clone)]
 struct ContextFactor {
     /// Factor name
-    name: String,
+    name:   String,
     /// Factor weight
     weight: f64,
     /// Calculated value
-    value: f64,
+    value:  f64,
 }
 
 /// Safety filter for suggestions
 #[derive(Debug)]
 struct SafetyFilter {
     /// Dangerous pattern detectors
-    dangerous_patterns: Vec<DangerousPattern>,
+    dangerous_patterns:  Vec<DangerousPattern>,
     /// Security violations
     security_violations: Vec<SecurityViolation>,
     /// Input validation rules
-    validation_rules: Vec<ValidationRule>,
+    validation_rules:    Vec<ValidationRule>,
 }
 
 /// Dangerous code patterns
 #[derive(Debug, Clone)]
 struct DangerousPattern {
     /// Pattern identifier
-    pattern: String,
+    pattern:       String,
     /// Risk description
-    risk: String,
+    risk:          String,
     /// Detection regex
     pattern_regex: Regex,
 }
@@ -492,9 +492,9 @@ struct SecurityViolation {
     /// Violation type
     violation_type: String,
     /// Risk level
-    risk_level: RiskLevel,
+    risk_level:     RiskLevel,
     /// Detection pattern
-    pattern: String,
+    pattern:        String,
 }
 
 /// Risk levels for violations
@@ -510,11 +510,11 @@ pub enum RiskLevel {
 #[derive(Debug, Clone)]
 struct ValidationRule {
     /// Rule name
-    name: String,
+    name:          String,
     /// Rule description
-    description: String,
+    description:   String,
     /// Validation pattern
-    pattern: Regex,
+    pattern:       Regex,
     /// Error message
     error_message: String,
 }
@@ -525,7 +525,7 @@ struct IntentPredictor {
     /// Historical action sequences
     action_sequences: VecDeque<ActionSequence>,
     /// Intent state machine
-    intent_machine: IntentStateMachine,
+    intent_machine:   IntentStateMachine,
     /// Context analyzer
     context_analyzer: ContextAnalyzer,
 }
@@ -534,22 +534,22 @@ struct IntentPredictor {
 #[derive(Debug, Clone)]
 struct ActionSequence {
     /// Actions in sequence
-    actions: Vec<String>,
+    actions:          Vec<String>,
     /// Final intent achieved
     resulting_intent: DeveloperIntent,
     /// Success rate of this sequence
-    success_rate: f64,
+    success_rate:     f64,
     /// Occurrence count
-    occurrences: u32,
+    occurrences:      u32,
 }
 
 /// Intent state machine
 #[derive(Debug)]
 struct IntentStateMachine {
     /// Current state
-    current_state: IntentState,
+    current_state:     IntentState,
     /// State transition probabilities
-    transitions: HashMap<(IntentState, String), f64>,
+    transitions:       HashMap<(IntentState, String), f64>,
     /// State definitions
     state_definitions: HashMap<IntentState, StateDefinition>,
 }
@@ -572,9 +572,9 @@ pub enum IntentState {
 #[derive(Debug, Clone)]
 struct StateDefinition {
     /// State description
-    description: String,
+    description:          String,
     /// Common actions in this state
-    common_actions: Vec<String>,
+    common_actions:       Vec<String>,
     /// Next possible states
     possible_transitions: Vec<IntentState>,
 }
@@ -583,11 +583,11 @@ struct StateDefinition {
 #[derive(Debug)]
 struct ContextAnalyzer {
     /// File type patterns
-    file_patterns: HashMap<String, Vec<String>>,
+    file_patterns:       HashMap<String, Vec<String>>,
     /// Code structure analyzers
     structure_analyzers: HashMap<Language, StructureAnalyzer>,
     /// User preference model
-    preference_model: UserPreferenceModel,
+    preference_model:    UserPreferenceModel,
 }
 
 /// Structure analyzer for code analysis
@@ -596,16 +596,16 @@ struct StructureAnalyzer {
     /// Language-specific parsers
     parsers: HashMap<String, Parser>,
     /// Analysis rules
-    rules: Vec<AnalysisRule>,
+    rules:   Vec<AnalysisRule>,
 }
 
 /// Code parser interface
 #[derive(Debug)]
 struct Parser {
     /// Parser identifier
-    id: String,
+    id:                 String,
     /// Regular expressions for matching
-    matchers: Vec<Regex>,
+    matchers:           Vec<Regex>,
     /// Extracted elements
     extracted_elements: Vec<String>,
 }
@@ -614,24 +614,24 @@ struct Parser {
 #[derive(Debug, Clone)]
 struct AnalysisRule {
     /// Rule identifier
-    id: String,
+    id:          String,
     /// Rule description
     description: String,
     /// Matching conditions
-    conditions: Vec<String>,
+    conditions:  Vec<String>,
     /// Actions to take
-    actions: Vec<String>,
+    actions:     Vec<String>,
 }
 
 /// User preference model
 #[derive(Debug)]
 struct UserPreferenceModel {
     /// User preferences by category
-    preferences: HashMap<String, f64>,
+    preferences:      HashMap<String, f64>,
     /// Learning history
     learning_history: VecDeque<LearningEvent>,
     /// Preference stability
-    stability: f64,
+    stability:        f64,
 }
 
 /// Learning event for Preferences
@@ -640,20 +640,20 @@ struct LearningEvent {
     /// Event type
     event_type: String,
     /// Event data
-    data: HashMap<String, String>,
+    data:       HashMap<String, String>,
     /// Timestamp
-    timestamp: DateTime<Utc>,
+    timestamp:  DateTime<Utc>,
     /// Outcome
-    outcome: String,
+    outcome:    String,
 }
 
 /// Pattern recognition system
 #[derive(Debug)]
 struct PatternRecognitionSystem {
     /// Code pattern recognizers
-    recognizers: HashMap<Language, CodeRecognizer>,
+    recognizers:         HashMap<Language, CodeRecognizer>,
     /// Pattern evolution tracker
-    evolution_tracker: PatternEvolutionTracker,
+    evolution_tracker:   PatternEvolutionTracker,
     /// Similarity analyzer
     similarity_analyzer: SimilarityAnalyzer,
 }
@@ -666,18 +666,18 @@ struct CodeRecognizer {
     /// Known patterns
     patterns: Vec<Pattern>,
     /// Recognition rules
-    rules: Vec<RecognitionRule>,
+    rules:    Vec<RecognitionRule>,
 }
 
 /// Code pattern definition
 #[derive(Debug, Clone)]
 struct Pattern {
     /// Pattern identifier
-    id: String,
+    id:       String,
     /// Pattern category
     category: PatternCategory,
     /// Pattern content
-    content: String,
+    content:  String,
     /// Pattern metadata
     metadata: PatternMetadata,
 }
@@ -699,11 +699,11 @@ pub enum PatternCategory {
 #[derive(Debug, Clone)]
 struct PatternMetadata {
     /// Complexity score
-    complexity: f64,
+    complexity:   f64,
     /// Quality score
-    quality: f64,
+    quality:      f64,
     /// Usage frequency
-    frequency: f64,
+    frequency:    f64,
     /// Last updated
     last_updated: DateTime<Utc>,
 }
@@ -712,11 +712,11 @@ struct PatternMetadata {
 #[derive(Debug, Clone)]
 struct RecognitionRule {
     /// Rule identifier
-    id: String,
+    id:                  String,
     /// Matching criteria
-    criteria: Vec<String>,
+    criteria:            Vec<String>,
     /// Matching score
-    score: f64,
+    score:               f64,
     /// False positive rate
     false_positive_rate: f64,
 }
@@ -727,20 +727,20 @@ struct PatternEvolutionTracker {
     /// Pattern evolution history
     evolution_history: VecDeque<PatternEvolution>,
     /// Evolution trends
-    trends: HashMap<String, Trend>,
+    trends:            HashMap<String, Trend>,
 }
 
 /// Pattern evolution event
 #[derive(Debug, Clone)]
 struct PatternEvolution {
     /// Pattern that evolved
-    pattern_id: String,
+    pattern_id:     String,
     /// Evolution type
     evolution_type: EvolutionType,
     /// Changes made
-    changes: Vec<String>,
+    changes:        Vec<String>,
     /// Timestamp
-    timestamp: DateTime<Utc>,
+    timestamp:      DateTime<Utc>,
 }
 
 /// Types of pattern evolution
@@ -757,9 +757,9 @@ pub enum EvolutionType {
 #[derive(Debug, Clone)]
 struct Trend {
     /// Trend direction
-    direction: TrendDirection,
+    direction:   TrendDirection,
     /// Confidence in trend
-    confidence: f64,
+    confidence:  f64,
     /// Data points
     data_points: Vec<f64>,
 }
@@ -777,7 +777,7 @@ pub enum TrendDirection {
 #[derive(Debug)]
 struct SimilarityAnalyzer {
     /// Similarity algorithms
-    algorithms: HashMap<String, SimilarityAlgorithm>,
+    algorithms:          HashMap<String, SimilarityAlgorithm>,
     /// Cached similarity results
     cached_similarities: Cache<String, f64>,
 }
@@ -786,11 +786,11 @@ struct SimilarityAnalyzer {
 #[derive(Debug)]
 struct SimilarityAlgorithm {
     /// Algorithm identifier
-    id: String,
+    id:             String,
     /// Algorithm implementation
     implementation: String,
     /// Accuracy score
-    accuracy: f64,
+    accuracy:       f64,
 }
 
 /// Performance metrics collector
@@ -799,35 +799,35 @@ pub struct PerformanceMetrics {
     /// Response time in milliseconds
     pub response_time_ms: u64,
     /// Memory usage in bytes
-    pub memory_usage: u64,
+    pub memory_usage:     u64,
     /// CPU usage percentage
-    pub cpu_usage: f64,
+    pub cpu_usage:        f64,
     /// Cache hit rate
-    pub cache_hit_rate: f64,
+    pub cache_hit_rate:   f64,
     /// Throughput (operations per second)
-    pub throughput: f64,
+    pub throughput:       f64,
     /// Error rate percentage
-    pub error_rate: f64,
+    pub error_rate:       f64,
     /// Timestamp of measurement
-    pub timestamp: DateTime<Utc>,
+    pub timestamp:        DateTime<Utc>,
 }
 
 impl Default for PredictionSettings {
     fn default() -> Self {
         Self {
-            enabled: true,
-            cache_size_limit: 10000,
+            enabled:                  true,
+            cache_size_limit:         10000,
             min_confidence_threshold: 0.5,
-            analysis_timeout_ms: 5000,
-            supported_languages: vec![
+            analysis_timeout_ms:      5000,
+            supported_languages:      vec![
                 Language::Rust,
                 Language::TypeScript,
                 Language::JavaScript,
                 Language::Python,
             ],
-            performance_settings: PerformanceSettings::default(),
-            memory_limits: MemorySettings::default(),
-            security_settings: SecuritySettings::default(),
+            performance_settings:     PerformanceSettings::default(),
+            memory_limits:            MemorySettings::default(),
+            security_settings:        SecuritySettings::default(),
         }
     }
 }
@@ -836,28 +836,28 @@ impl Default for PredictionSettings {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceSettings {
     /// Enable parallel processing
-    pub parallel_processing: bool,
+    pub parallel_processing:  bool,
     /// Maximum concurrent analysis tasks
     pub max_concurrent_tasks: usize,
     /// Enable prediction caching
-    pub caching_enabled: bool,
+    pub caching_enabled:      bool,
     /// Cache TTL in seconds
-    pub cache_ttl_seconds: u64,
+    pub cache_ttl_seconds:    u64,
     /// Batch size for bulk operations
-    pub batch_size: usize,
+    pub batch_size:           usize,
 }
 
 /// Memory management settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemorySettings {
     /// Maximum memory usage (bytes)
-    pub max_memory_usage: u64,
+    pub max_memory_usage:         u64,
     /// Cache eviction policy
-    pub eviction_policy: CacheEvictionPolicy,
+    pub eviction_policy:          CacheEvictionPolicy,
     /// Memory cleanup interval (seconds)
     pub cleanup_interval_seconds: u64,
     /// Virtual memory limit for large workspaces
-    pub virtual_memory_limit: Option<u64>,
+    pub virtual_memory_limit:     Option<u64>,
 }
 
 /// Cache eviction policies
@@ -876,11 +876,11 @@ pub enum CacheEvictionPolicy {
 impl Default for PerformanceSettings {
     fn default() -> Self {
         Self {
-            parallel_processing: true,
+            parallel_processing:  true,
             max_concurrent_tasks: 4,
-            caching_enabled: true,
-            cache_ttl_seconds: 3600,
-            batch_size: 100,
+            caching_enabled:      true,
+            cache_ttl_seconds:    3600,
+            batch_size:           100,
         }
     }
 }
@@ -888,10 +888,10 @@ impl Default for PerformanceSettings {
 impl Default for MemorySettings {
     fn default() -> Self {
         Self {
-            max_memory_usage: 1_073_741_824, // 1GB
-            eviction_policy: CacheEvictionPolicy::Lru,
+            max_memory_usage:         1_073_741_824, // 1GB
+            eviction_policy:          CacheEvictionPolicy::Lru,
             cleanup_interval_seconds: 300,
-            virtual_memory_limit: Some(10_737_418_240), // 10GB
+            virtual_memory_limit:     Some(10_737_418_240), // 10GB
         }
     }
 }
@@ -899,13 +899,13 @@ impl Default for MemorySettings {
 impl Default for SecuritySettings {
     fn default() -> Self {
         Self {
-            input_sanitization: true,
-            trusted_sources: vec![
+            input_sanitization:        true,
+            trusted_sources:           vec![
                 "built-in".to_string(),
                 "lsp".to_string(),
                 "project-analysis".to_string(),
             ],
-            audit_logging: true,
+            audit_logging:             true,
             max_suggestion_size_bytes: 10_000,
         }
     }
@@ -943,20 +943,17 @@ impl PredictiveDevelopmentEngine {
         let tracker = self.performance_tracker.read().await;
         PerformanceMetrics {
             response_time_ms: tracker.average_response_time_ms as u64,
-            memory_usage: tracker.memory_usage_bytes,
-            cpu_usage: 0.0, // Would need external monitoring for CPU
-            cache_hit_rate: tracker.cache_hit_rate,
-            throughput: 1000.0 / tracker.average_response_time_ms.max(1.0),
-            error_rate: 100.0 - tracker.success_rate(),
-            timestamp: Utc::now(),
+            memory_usage:     tracker.memory_usage_bytes,
+            cpu_usage:        0.0, // Would need external monitoring for CPU
+            cache_hit_rate:   tracker.cache_hit_rate,
+            throughput:       1000.0 / tracker.average_response_time_ms.max(1.0),
+            error_rate:       100.0 - tracker.success_rate(),
+            timestamp:        Utc::now(),
         }
     }
 
     /// Update configuration
-    pub async fn update_configuration(
-        &self,
-        new_config: PredictionSettings,
-    ) -> PredictiveResult<()> {
+    pub async fn update_configuration(&self, new_config: PredictionSettings) -> PredictiveResult<()> {
         // Validate configuration
         self.validate_configuration(&new_config)?;
 
@@ -1045,16 +1042,16 @@ impl PredictiveDevelopmentEngine {
         _context: &ProjectContext,
     ) -> PredictiveResult<Vec<RefactoringRecommendation>> {
         Ok(vec![RefactoringRecommendation {
-            description: "Example: Consider extracting common functionality".to_string(),
-            affected_files: vec![],
-            priority: RecommendationPriority::Medium,
-            effort_estimate: EffortLevel::Moderate,
-            benefits: vec![
+            description:         "Example: Consider extracting common functionality".to_string(),
+            affected_files:      vec![],
+            priority:            RecommendationPriority::Medium,
+            effort_estimate:     EffortLevel::Moderate,
+            benefits:            vec![
                 "Improved maintainability".to_string(),
                 "Reduced duplication".to_string(),
             ],
             success_probability: 0.85,
-            prerequisites: vec!["Code analysis complete".to_string()],
+            prerequisites:       vec!["Code analysis complete".to_string()],
         }])
     }
 
@@ -1099,14 +1096,14 @@ impl PredictiveDevelopmentEngine {
 impl Clone for PredictiveDevelopmentEngine {
     fn clone(&self) -> Self {
         Self {
-            lsp_client: self.lsp_client.clone(),
-            suggestion_engine: self.suggestion_engine.clone(),
-            intent_predictor: self.intent_predictor.clone(),
-            pattern_recognizer: self.pattern_recognizer.clone(),
-            prediction_cache: self.prediction_cache.clone(),
-            performance_tracker: self.performance_tracker.clone(),
+            lsp_client:             self.lsp_client.clone(),
+            suggestion_engine:      self.suggestion_engine.clone(),
+            intent_predictor:       self.intent_predictor.clone(),
+            pattern_recognizer:     self.pattern_recognizer.clone(),
+            prediction_cache:       self.prediction_cache.clone(),
+            performance_tracker:    self.performance_tracker.clone(),
             background_task_sender: self.background_task_sender.clone(),
-            config: self.config.clone(),
+            config:                 self.config.clone(),
         }
     }
 }
@@ -1154,8 +1151,8 @@ impl SuggestionEngine {
     async fn new() -> PredictiveResult<Self> {
         Ok(Self {
             language_patterns: HashMap::new(),
-            scoring_engine: ScoringEngine::new(),
-            safety_filter: SafetyFilter::new(),
+            scoring_engine:    ScoringEngine::new(),
+            safety_filter:     SafetyFilter::new(),
         })
     }
 
@@ -1174,22 +1171,22 @@ impl SuggestionEngine {
         _analysis_mode: AnalysisMode,
     ) -> PredictiveResult<Vec<CodeSuggestion>> {
         Ok(vec![CodeSuggestion {
-            text: "Example suggestion".to_string(),
-            description: "Context-aware code completion".to_string(),
+            text:             "Example suggestion".to_string(),
+            description:      "Context-aware code completion".to_string(),
             confidence_score: 0.8,
-            suggestion_type: SuggestionType::Completion,
-            location: Range {
+            suggestion_type:  SuggestionType::Completion,
+            location:         Range {
                 start: Position {
-                    line: 0,
+                    line:      0,
                     character: 0,
                 },
-                end: Position {
-                    line: 0,
+                end:   Position {
+                    line:      0,
                     character: 10,
                 },
             },
-            related_actions: vec![],
-            expected_impact: ExpectedImpact::Productivity(ImpactLevel::Moderate),
+            related_actions:  vec![],
+            expected_impact:  ExpectedImpact::Productivity(ImpactLevel::Moderate),
         }])
     }
 }
@@ -1197,9 +1194,9 @@ impl SuggestionEngine {
 impl ScoringEngine {
     fn new() -> Self {
         Self {
-            weights: HashMap::new(),
+            weights:          HashMap::new(),
             performance_data: VecDeque::with_capacity(1000),
-            context_factors: vec![],
+            context_factors:  vec![],
         }
     }
 }
@@ -1207,9 +1204,9 @@ impl ScoringEngine {
 impl SafetyFilter {
     fn new() -> Self {
         Self {
-            dangerous_patterns: vec![],
+            dangerous_patterns:  vec![],
             security_violations: vec![],
-            validation_rules: vec![],
+            validation_rules:    vec![],
         }
     }
 }
@@ -1218,7 +1215,7 @@ impl IntentPredictor {
     fn new() -> Self {
         Self {
             action_sequences: VecDeque::with_capacity(500),
-            intent_machine: IntentStateMachine::new(),
+            intent_machine:   IntentStateMachine::new(),
             context_analyzer: ContextAnalyzer::new(),
         }
     }
@@ -1229,11 +1226,11 @@ impl IntentPredictor {
         _config: &PredictionSettings,
     ) -> PredictiveResult<IntentPrediction> {
         Ok(IntentPrediction {
-            intent: DeveloperIntent::Implementation,
-            confidence: 0.8,
-            predicted_actions: vec![],
+            intent:              DeveloperIntent::Implementation,
+            confidence:          0.8,
+            predicted_actions:   vec![],
             alternative_intents: vec![],
-            context_factors: vec!["cursor_position".to_string(), "recent_edits".to_string()],
+            context_factors:     vec!["cursor_position".to_string(), "recent_edits".to_string()],
         })
     }
 
@@ -1246,8 +1243,8 @@ impl IntentPredictor {
 impl IntentStateMachine {
     fn new() -> Self {
         Self {
-            current_state: IntentState::Unknown,
-            transitions: HashMap::new(),
+            current_state:     IntentState::Unknown,
+            transitions:       HashMap::new(),
             state_definitions: HashMap::new(),
         }
     }
@@ -1256,9 +1253,9 @@ impl IntentStateMachine {
 impl ContextAnalyzer {
     fn new() -> Self {
         Self {
-            file_patterns: HashMap::new(),
+            file_patterns:       HashMap::new(),
             structure_analyzers: HashMap::new(),
-            preference_model: UserPreferenceModel::new(),
+            preference_model:    UserPreferenceModel::new(),
         }
     }
 }
@@ -1266,9 +1263,9 @@ impl ContextAnalyzer {
 impl UserPreferenceModel {
     fn new() -> Self {
         Self {
-            preferences: HashMap::new(),
+            preferences:      HashMap::new(),
             learning_history: VecDeque::with_capacity(1000),
-            stability: 1.0,
+            stability:        1.0,
         }
     }
 }
@@ -1276,16 +1273,13 @@ impl UserPreferenceModel {
 impl PatternRecognitionSystem {
     async fn new() -> PredictiveResult<Self> {
         Ok(Self {
-            recognizers: HashMap::new(),
-            evolution_tracker: PatternEvolutionTracker::new(),
+            recognizers:         HashMap::new(),
+            evolution_tracker:   PatternEvolutionTracker::new(),
             similarity_analyzer: SimilarityAnalyzer::new().await?,
         })
     }
 
-    async fn analyze_patterns(
-        &self,
-        _context: &PredictionContext,
-    ) -> PredictiveResult<Vec<CodeSuggestion>> {
+    async fn analyze_patterns(&self, _context: &PredictionContext) -> PredictiveResult<Vec<CodeSuggestion>> {
         Ok(vec![])
     }
 
@@ -1298,7 +1292,7 @@ impl PatternEvolutionTracker {
     fn new() -> Self {
         Self {
             evolution_history: VecDeque::with_capacity(200),
-            trends: HashMap::new(),
+            trends:            HashMap::new(),
         }
     }
 }
@@ -1306,7 +1300,7 @@ impl PatternEvolutionTracker {
 impl SimilarityAnalyzer {
     async fn new() -> PredictiveResult<Self> {
         Ok(Self {
-            algorithms: HashMap::new(),
+            algorithms:          HashMap::new(),
             cached_similarities: Cache::builder()
                 .max_capacity(10000)
                 .time_to_live(std::time::Duration::from_secs(86400)) // 24 hours
@@ -1383,27 +1377,27 @@ mod tests {
         let engine = PredictiveDevelopmentEngine::new().await.unwrap();
 
         let context = PredictionContext {
-            document: TextDocument {
-                uri: DocumentUri::from("file:///test.rs"),
+            document:         TextDocument {
+                uri:         DocumentUri::from("file:///test.rs"),
                 language_id: Some("rust".to_string()),
-                version: 1,
-                content: "// test".to_string(),
+                version:     1,
+                content:     "// test".to_string(),
             },
-            cursor_position: Position {
-                line: 5,
+            cursor_position:  Position {
+                line:      5,
                 character: 10,
             },
-            project_context: rust_ai_ide_shared_types::ProjectContext {
-                workspace: None,
+            project_context:  rust_ai_ide_shared_types::ProjectContext {
+                workspace:    None,
                 project_path: None,
                 build_target: None,
             },
-            recent_changes: vec![],
-            user_actions: vec![],
+            recent_changes:   vec![],
+            user_actions:     vec![],
             language_context: LanguageContext {
-                language: Language::Rust,
-                version: "nightly".to_string(),
-                frameworks: vec![],
+                language:          Language::Rust,
+                version:           "nightly".to_string(),
+                frameworks:        vec![],
                 compiler_settings: HashMap::new(),
             },
         };

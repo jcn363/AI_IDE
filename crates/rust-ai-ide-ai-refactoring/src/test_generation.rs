@@ -1,16 +1,16 @@
-use crate::types;
-use rust_ai_ide_common::types::{
-    GeneratedTest, GeneratedTests, ProgrammingLanguage, TestCoverage, TestType,
-};
 use std::collections::HashMap;
 use std::path::Path;
+
+use rust_ai_ide_common::types::{GeneratedTest, GeneratedTests, ProgrammingLanguage, TestCoverage, TestType};
+
+use crate::types;
 
 /// Language detection configuration and information for test generation
 #[derive(Debug, Clone)]
 pub struct LanguageInfo {
-    pub language: ProgrammingLanguage,
-    pub test_frameworks: Vec<String>,
-    pub file_extensions: Vec<String>,
+    pub language:            ProgrammingLanguage,
+    pub test_frameworks:     Vec<String>,
+    pub file_extensions:     Vec<String>,
     pub preferred_framework: String,
 }
 
@@ -31,115 +31,88 @@ impl LanguageDetector {
         let mut language_patterns = HashMap::new();
 
         // Rust
-        language_patterns.insert(
-            "rs".to_string(),
-            LanguageInfo {
-                language: ProgrammingLanguage::Rust,
-                test_frameworks: vec!["cargo-test".to_string(), "rust_test".to_string()],
-                file_extensions: vec!["rs".to_string()],
-                preferred_framework: "cargo-test".to_string(),
-            },
-        );
+        language_patterns.insert("rs".to_string(), LanguageInfo {
+            language:            ProgrammingLanguage::Rust,
+            test_frameworks:     vec!["cargo-test".to_string(), "rust_test".to_string()],
+            file_extensions:     vec!["rs".to_string()],
+            preferred_framework: "cargo-test".to_string(),
+        });
 
         // TypeScript
-        language_patterns.insert(
-            "ts".to_string(),
-            LanguageInfo {
-                language: ProgrammingLanguage::TypeScript,
-                test_frameworks: vec![
-                    "jest".to_string(),
-                    "mocha".to_string(),
-                    "vitest".to_string(),
-                ],
-                file_extensions: vec!["ts".to_string()],
-                preferred_framework: "jest".to_string(),
-            },
-        );
+        language_patterns.insert("ts".to_string(), LanguageInfo {
+            language:            ProgrammingLanguage::TypeScript,
+            test_frameworks:     vec![
+                "jest".to_string(),
+                "mocha".to_string(),
+                "vitest".to_string(),
+            ],
+            file_extensions:     vec!["ts".to_string()],
+            preferred_framework: "jest".to_string(),
+        });
 
         // JavaScript
-        language_patterns.insert(
-            "js".to_string(),
-            LanguageInfo {
-                language: ProgrammingLanguage::JavaScript,
-                test_frameworks: vec![
-                    "jest".to_string(),
-                    "mocha".to_string(),
-                    "jasmine".to_string(),
-                ],
-                file_extensions: vec!["js".to_string(), "mjs".to_string()],
-                preferred_framework: "jest".to_string(),
-            },
-        );
+        language_patterns.insert("js".to_string(), LanguageInfo {
+            language:            ProgrammingLanguage::JavaScript,
+            test_frameworks:     vec![
+                "jest".to_string(),
+                "mocha".to_string(),
+                "jasmine".to_string(),
+            ],
+            file_extensions:     vec!["js".to_string(), "mjs".to_string()],
+            preferred_framework: "jest".to_string(),
+        });
 
         // Python
-        language_patterns.insert(
-            "py".to_string(),
-            LanguageInfo {
-                language: ProgrammingLanguage::Python,
-                test_frameworks: vec!["pytest".to_string(), "unittest".to_string()],
-                file_extensions: vec!["py".to_string()],
-                preferred_framework: "pytest".to_string(),
-            },
-        );
+        language_patterns.insert("py".to_string(), LanguageInfo {
+            language:            ProgrammingLanguage::Python,
+            test_frameworks:     vec!["pytest".to_string(), "unittest".to_string()],
+            file_extensions:     vec!["py".to_string()],
+            preferred_framework: "pytest".to_string(),
+        });
 
         // Java
-        language_patterns.insert(
-            "java".to_string(),
-            LanguageInfo {
-                language: ProgrammingLanguage::Java,
-                test_frameworks: vec!["junit".to_string(), "testng".to_string()],
-                file_extensions: vec!["java".to_string()],
-                preferred_framework: "junit".to_string(),
-            },
-        );
+        language_patterns.insert("java".to_string(), LanguageInfo {
+            language:            ProgrammingLanguage::Java,
+            test_frameworks:     vec!["junit".to_string(), "testng".to_string()],
+            file_extensions:     vec!["java".to_string()],
+            preferred_framework: "junit".to_string(),
+        });
 
         // C#
-        language_patterns.insert(
-            "cs".to_string(),
-            LanguageInfo {
-                language: ProgrammingLanguage::CSharp,
-                test_frameworks: vec![
-                    "nunit".to_string(),
-                    "xunit".to_string(),
-                    "mstest".to_string(),
-                ],
-                file_extensions: vec!["cs".to_string()],
-                preferred_framework: "xunit".to_string(),
-            },
-        );
+        language_patterns.insert("cs".to_string(), LanguageInfo {
+            language:            ProgrammingLanguage::CSharp,
+            test_frameworks:     vec![
+                "nunit".to_string(),
+                "xunit".to_string(),
+                "mstest".to_string(),
+            ],
+            file_extensions:     vec!["cs".to_string()],
+            preferred_framework: "xunit".to_string(),
+        });
 
         // Go
-        language_patterns.insert(
-            "go".to_string(),
-            LanguageInfo {
-                language: ProgrammingLanguage::Go,
-                test_frameworks: vec!["testing".to_string()],
-                file_extensions: vec!["go".to_string()],
-                preferred_framework: "testing".to_string(),
-            },
-        );
+        language_patterns.insert("go".to_string(), LanguageInfo {
+            language:            ProgrammingLanguage::Go,
+            test_frameworks:     vec!["testing".to_string()],
+            file_extensions:     vec!["go".to_string()],
+            preferred_framework: "testing".to_string(),
+        });
 
         // C++
-        language_patterns.insert(
-            "cpp".to_string(),
-            LanguageInfo {
-                language: ProgrammingLanguage::Cpp,
-                test_frameworks: vec!["googletest".to_string(), "catch2".to_string()],
-                file_extensions: vec!["cpp".to_string(), "cc".to_string(), "cxx".to_string()],
-                preferred_framework: "googletest".to_string(),
-            },
-        );
+        language_patterns.insert("cpp".to_string(), LanguageInfo {
+            language:            ProgrammingLanguage::Cpp,
+            test_frameworks:     vec!["googletest".to_string(), "catch2".to_string()],
+            file_extensions:     vec!["cpp".to_string(), "cc".to_string(), "cxx".to_string()],
+            preferred_framework: "googletest".to_string(),
+        });
 
         // C
-        language_patterns.insert(
-            "c".to_string(),
-            LanguageInfo {
-                language: ProgrammingLanguage::C,
-                test_frameworks: vec!["cmocka".to_string(), "criterion".to_string()],
-                file_extensions: vec!["c".to_string(), "h".to_string()],
-                preferred_framework: "cmocka".to_string(),
-            },
-        );
+        language_patterns.insert("c".to_string(), LanguageInfo {
+            language:            ProgrammingLanguage::C,
+            test_frameworks:     vec!["cmocka".to_string(), "criterion".to_string()],
+            file_extensions:     vec!["c".to_string(), "h".to_string()],
+            preferred_framework: "cmocka".to_string(),
+        });
 
         LanguageDetector { language_patterns }
     }
@@ -196,10 +169,10 @@ impl rust_ai_ide_shared_codegen::traits::TestGenerator for RefactoringTestGenera
     ) -> Result<GeneratedTests, Box<dyn std::error::Error + Send + Sync>> {
         // For now, just return empty test suite - not implemented for refactoring-specific generator
         Ok(GeneratedTests {
-            unit_tests: Vec::new(),
-            integration_tests: vec![],
-            property_tests: vec![],
-            benchmark_tests: vec![],
+            unit_tests:         Vec::new(),
+            integration_tests:  vec![],
+            property_tests:     vec![],
+            benchmark_tests:    vec![],
             coverage_estimates: vec![],
         })
     }
@@ -257,18 +230,12 @@ impl rust_ai_ide_shared_codegen::traits::TestGenerator for RefactoringTestGenera
     }
 
     /// Get available test frameworks for a language
-    fn get_test_frameworks(
-        &self,
-        language: &rust_ai_ide_common::types::ProgrammingLanguage,
-    ) -> Vec<String> {
+    fn get_test_frameworks(&self, language: &rust_ai_ide_common::types::ProgrammingLanguage) -> Vec<String> {
         self.language_detector.get_test_frameworks(language)
     }
 
     /// Validate generated tests for correctness
-    fn validate_tests(
-        &self,
-        _tests: &[GeneratedTest],
-    ) -> Vec<rust_ai_ide_shared_codegen::traits::ValidationError> {
+    fn validate_tests(&self, _tests: &[GeneratedTest]) -> Vec<rust_ai_ide_shared_codegen::traits::ValidationError> {
         Vec::new()
     }
 
@@ -281,28 +248,20 @@ impl rust_ai_ide_shared_codegen::traits::TestGenerator for RefactoringTestGenera
     ) -> Result<Vec<GeneratedTest>, Box<dyn std::error::Error + Send + Sync>> {
         // Convert common types to local types for internal processing
         let local_refactoring_type = match refactoring_type {
-            rust_ai_ide_common::types::RefactoringType::Rename => {
-                Some(types::RefactoringType::Rename)
-            }
-            rust_ai_ide_common::types::RefactoringType::ExtractFunction => {
-                Some(types::RefactoringType::ExtractFunction)
-            }
-            rust_ai_ide_common::types::RefactoringType::ExtractVariable => {
-                Some(types::RefactoringType::ExtractVariable)
-            }
-            rust_ai_ide_common::types::RefactoringType::ExtractInterface => {
-                Some(types::RefactoringType::ExtractInterface)
-            }
-            rust_ai_ide_common::types::RefactoringType::ConvertToAsync => {
-                Some(types::RefactoringType::ConvertToAsync)
-            }
+            rust_ai_ide_common::types::RefactoringType::Rename => Some(types::RefactoringType::Rename),
+            rust_ai_ide_common::types::RefactoringType::ExtractFunction =>
+                Some(types::RefactoringType::ExtractFunction),
+            rust_ai_ide_common::types::RefactoringType::ExtractVariable =>
+                Some(types::RefactoringType::ExtractVariable),
+            rust_ai_ide_common::types::RefactoringType::ExtractInterface =>
+                Some(types::RefactoringType::ExtractInterface),
+            rust_ai_ide_common::types::RefactoringType::ConvertToAsync => Some(types::RefactoringType::ConvertToAsync),
             _ => None, // Unsupported refactoring type
         };
 
         match local_refactoring_type {
             Some(ref_type) => {
-                let (language, framework) =
-                    self.language_detector.detect_language(&context.file_path);
+                let (language, framework) = self.language_detector.detect_language(&context.file_path);
                 let mut tests = Vec::new();
 
                 match ref_type {
@@ -314,46 +273,32 @@ impl rust_ai_ide_shared_codegen::traits::TestGenerator for RefactoringTestGenera
                     }
                     types::RefactoringType::ExtractFunction => {
                         tests.extend(
-                            self.generate_extract_function_tests(
-                                context, result, &language, &framework,
-                            )
-                            .await?,
+                            self.generate_extract_function_tests(context, result, &language, &framework)
+                                .await?,
                         );
                     }
                     types::RefactoringType::ExtractVariable => {
                         tests.extend(
-                            self.generate_extract_variable_tests(
-                                context, result, &language, &framework,
-                            )
-                            .await?,
+                            self.generate_extract_variable_tests(context, result, &language, &framework)
+                                .await?,
                         );
                     }
                     types::RefactoringType::ExtractInterface => {
                         tests.extend(
-                            self.generate_extract_interface_tests(
-                                context, result, &language, &framework,
-                            )
-                            .await?,
+                            self.generate_extract_interface_tests(context, result, &language, &framework)
+                                .await?,
                         );
                     }
                     types::RefactoringType::ConvertToAsync => {
                         tests.extend(
-                            self.generate_async_conversion_tests(
-                                context, result, &language, &framework,
-                            )
-                            .await?,
+                            self.generate_async_conversion_tests(context, result, &language, &framework)
+                                .await?,
                         );
                     }
                     _ => {
                         tests.extend(
-                            self.generate_generic_tests(
-                                refactoring_type,
-                                context,
-                                result,
-                                &language,
-                                &framework,
-                            )
-                            .await?,
+                            self.generate_generic_tests(refactoring_type, context, result, &language, &framework)
+                                .await?,
                         );
                     }
                 }
@@ -398,29 +343,20 @@ fn test_rename_{}_to_{}() {{
     assert_eq!(result, "{}");
 }}
 "#,
-                    old_name,
-                    new_name,
-                    new_name,
-                    old_name,
-                    new_name,
-                    old_name,
-                    new_name,
-                    new_name,
-                    new_name,
-                    old_name
+                    old_name, new_name, new_name, old_name, new_name, old_name, new_name, new_name, new_name, old_name
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_rename_{}_to_{}", old_name, new_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Test renaming {} to {} in Rust", old_name, new_name),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    name:              format!("test_rename_{}_to_{}", old_name, new_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Test renaming {} to {} in Rust", old_name, new_name),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             ProgrammingLanguage::TypeScript => {
@@ -469,19 +405,16 @@ describe("Rename Test: {} -> {}", () => {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_rename_{}_to_{}", old_name, new_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!(
-                        "Test renaming {} to {} in TypeScript",
-                        old_name, new_name
-                    ),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    name:              format!("test_rename_{}_to_{}", old_name, new_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Test renaming {} to {} in TypeScript", old_name, new_name),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             ProgrammingLanguage::JavaScript => {
@@ -501,32 +434,20 @@ describe("Rename Test: {} -> {}", () => {{
     }});
 }});
 "#,
-                    old_name,
-                    new_name,
-                    new_name,
-                    old_name,
-                    new_name,
-                    old_name,
-                    new_name,
-                    new_name,
-                    new_name,
-                    old_name
+                    old_name, new_name, new_name, old_name, new_name, old_name, new_name, new_name, new_name, old_name
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_rename_{}_to_{}", old_name, new_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!(
-                        "Test renaming {} to {} in JavaScript",
-                        old_name, new_name
-                    ),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    name:              format!("test_rename_{}_to_{}", old_name, new_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Test renaming {} to {} in JavaScript", old_name, new_name),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             ProgrammingLanguage::Python => {
@@ -562,16 +483,16 @@ class TestRename:
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_rename_{}_to_{}", old_name, new_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Test renaming {} to {} in Python", old_name, new_name),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    name:              format!("test_rename_{}_to_{}", old_name, new_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Test renaming {} to {} in Python", old_name, new_name),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             ProgrammingLanguage::Java => {
@@ -594,29 +515,20 @@ public class TestRename_{}To{} {{
     }}
 }}
 "#,
-                    old_name,
-                    new_name,
-                    new_name,
-                    old_name,
-                    old_name,
-                    new_name,
-                    old_name,
-                    old_name,
-                    new_name,
-                    new_name
+                    old_name, new_name, new_name, old_name, old_name, new_name, old_name, old_name, new_name, new_name
                 );
 
                 vec![GeneratedTest {
-                    name: format!("TestRename{}To{}", old_name, new_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Test renaming {} to {} in Java", old_name, new_name),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    name:              format!("TestRename{}To{}", old_name, new_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Test renaming {} to {} in Java", old_name, new_name),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             _ => {
@@ -634,16 +546,16 @@ test_rename_{}_to_{}() {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_rename_{}_to_{}", old_name, new_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Generic test for renaming {} to {}", old_name, new_name),
-                    framework: "unknown".to_string(),
-                    language: ProgrammingLanguage::Unknown,
+                    name:              format!("test_rename_{}_to_{}", old_name, new_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Generic test for renaming {} to {}", old_name, new_name),
+                    framework:         "unknown".to_string(),
+                    language:          ProgrammingLanguage::Unknown,
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.5,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.5,
                 }]
             }
         };
@@ -711,19 +623,19 @@ fn test_{}_handles_boundary_conditions() {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_{}_unit", function_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!(
+                    name:              format!("test_{}_unit", function_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!(
                         "Unit tests for extracted function {} in Rust",
                         function_name
                     ),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             ProgrammingLanguage::TypeScript => {
@@ -758,16 +670,16 @@ describe("Extracted Function: {}", () => {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_extracted_function_{}", function_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Test extracted function {} in TypeScript", function_name),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    name:              format!("test_extracted_function_{}", function_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Test extracted function {} in TypeScript", function_name),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             ProgrammingLanguage::Python => {
@@ -804,16 +716,16 @@ class TestExtractedFunction:
                 );
 
                 vec![GeneratedTest {
-                    name: format!("TestExtractedFunction{}", function_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Test extracted function {} in Python", function_name),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    name:              format!("TestExtractedFunction{}", function_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Test extracted function {} in Python", function_name),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             _ => {
@@ -831,16 +743,16 @@ test_{}_function() {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_extracted_{}", function_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Generic test for extracted function {}", function_name),
-                    framework: "unknown".to_string(),
-                    language: ProgrammingLanguage::Unknown,
+                    name:              format!("test_extracted_{}", function_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Generic test for extracted function {}", function_name),
+                    framework:         "unknown".to_string(),
+                    language:          ProgrammingLanguage::Unknown,
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.5,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.5,
                 }]
             }
         };
@@ -911,16 +823,16 @@ fn test_{}_type_safety() {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_{}_extraction", variable_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Test extraction of variable {} in Rust", variable_name),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    name:              format!("test_{}_extraction", variable_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Test extraction of variable {} in Rust", variable_name),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             ProgrammingLanguage::TypeScript => {
@@ -957,19 +869,19 @@ describe("Extract Variable: {}", () => {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_extract_variable_{}", variable_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!(
+                    name:              format!("test_extract_variable_{}", variable_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!(
                         "Test extraction of variable {} in TypeScript",
                         variable_name
                     ),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             ProgrammingLanguage::Python => {
@@ -1009,16 +921,16 @@ class TestExtractVariable{}:
                     constant_name
                 );
                 vec![GeneratedTest {
-                    name: format!("TestExtractVariable{}", variable_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Test extraction of variable {} in Python", variable_name),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    name:              format!("TestExtractVariable{}", variable_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Test extraction of variable {} in Python", variable_name),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             _ => {
@@ -1036,16 +948,16 @@ test_{}_value() {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_variable_{}", variable_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Generic test for extracted variable {}", variable_name),
-                    framework: "unknown".to_string(),
-                    language: ProgrammingLanguage::Unknown,
+                    name:              format!("test_variable_{}", variable_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Generic test for extracted variable {}", variable_name),
+                    framework:         "unknown".to_string(),
+                    language:          ProgrammingLanguage::Unknown,
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.5,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.5,
                 }]
             }
         };
@@ -1108,16 +1020,16 @@ fn test_{}_inheritance() {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_{}_extraction", interface_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Test {} trait extraction in Rust", interface_name),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    name:              format!("test_{}_extraction", interface_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Test {} trait extraction in Rust", interface_name),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             ProgrammingLanguage::TypeScript => {
@@ -1157,19 +1069,16 @@ describe("Extract Interface: {}", () => {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_extract_interface_{}", interface_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!(
-                        "Test {} interface extraction in TypeScript",
-                        interface_name
-                    ),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    name:              format!("test_extract_interface_{}", interface_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Test {} interface extraction in TypeScript", interface_name),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             _ => {
@@ -1187,16 +1096,16 @@ test_{}_implementation() {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_interface_{}", interface_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Generic test for extracted interface {}", interface_name),
-                    framework: "unknown".to_string(),
-                    language: ProgrammingLanguage::Unknown,
+                    name:              format!("test_interface_{}", interface_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Generic test for extracted interface {}", interface_name),
+                    framework:         "unknown".to_string(),
+                    language:          ProgrammingLanguage::Unknown,
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.5,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.5,
                 }]
             }
         };
@@ -1260,25 +1169,20 @@ async fn test_{}_error_handling() {{
     }}
 }}
 "#,
-                    function_name,
-                    function_name,
-                    function_name,
-                    function_name,
-                    function_name,
-                    function_name
+                    function_name, function_name, function_name, function_name, function_name, function_name
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_async_{}", function_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Test async conversion of {} in Rust", function_name),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    name:              format!("test_async_{}", function_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Test async conversion of {} in Rust", function_name),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             ProgrammingLanguage::JavaScript | ProgrammingLanguage::TypeScript => {
@@ -1322,19 +1226,14 @@ describe("Async Conversion: {}", () => {{
     }});
 }});
 "#,
-                    function_name,
-                    await_syntax,
-                    function_name,
-                    function_name,
-                    function_name,
-                    function_name
+                    function_name, await_syntax, function_name, function_name, function_name, function_name
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_async_conversion_{}", function_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!(
+                    name:              format!("test_async_conversion_{}", function_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!(
                         "Test async conversion of {} in {}Script",
                         function_name,
                         if matches!(language, ProgrammingLanguage::TypeScript) {
@@ -1343,12 +1242,12 @@ describe("Async Conversion: {}", () => {{
                             "Java"
                         }
                     ),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             ProgrammingLanguage::Python => {
@@ -1394,16 +1293,16 @@ class TestAsyncConversion:
                 );
 
                 vec![GeneratedTest {
-                    name: format!("TestAsyncConversion{}", function_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Test async conversion of {} in Python", function_name),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    name:              format!("TestAsyncConversion{}", function_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Test async conversion of {} in Python", function_name),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             _ => {
@@ -1421,16 +1320,16 @@ test_{}_async() {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_async_{}", function_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!("Generic test for async conversion of {}", function_name),
-                    framework: "unknown".to_string(),
-                    language: ProgrammingLanguage::Unknown,
+                    name:              format!("test_async_{}", function_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!("Generic test for async conversion of {}", function_name),
+                    framework:         "unknown".to_string(),
+                    language:          ProgrammingLanguage::Unknown,
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.5,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.5,
                 }]
             }
         };
@@ -1484,19 +1383,19 @@ fn test_{}_handles_edge_cases() {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_{}_generic", refactoring_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!(
+                    name:              format!("test_{}_generic", refactoring_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!(
                         "Generic safety tests for {:?} refactoring in Rust",
                         refactoring_type
                     ),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             ProgrammingLanguage::TypeScript => {
@@ -1523,19 +1422,19 @@ describe("{} Generic Tests", () => {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_generic_{}", refactoring_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!(
+                    name:              format!("test_generic_{}", refactoring_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!(
                         "Generic safety tests for {:?} refactoring in TypeScript",
                         refactoring_type
                     ),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             ProgrammingLanguage::Python => {
@@ -1567,19 +1466,19 @@ class TestGeneric{}:
                 );
 
                 vec![GeneratedTest {
-                    name: format!("TestGeneric{}", refactoring_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!(
+                    name:              format!("TestGeneric{}", refactoring_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!(
                         "Generic safety tests for {:?} refactoring in Python",
                         refactoring_type
                     ),
-                    framework: framework.to_string(),
-                    language: language.clone(),
+                    framework:         framework.to_string(),
+                    language:          language.clone(),
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.8,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.8,
                 }]
             }
             _ => {
@@ -1597,19 +1496,19 @@ test_{}_preserves_behavior() {{
                 );
 
                 vec![GeneratedTest {
-                    name: format!("test_generic_{}", refactoring_name),
-                    code: test_code,
-                    test_type: TestType::Unit,
-                    description: format!(
+                    name:              format!("test_generic_{}", refactoring_name),
+                    code:              test_code,
+                    test_type:         TestType::Unit,
+                    description:       format!(
                         "Generic safety tests for {:?} refactoring",
                         refactoring_type
                     ),
-                    framework: "unknown".to_string(),
-                    language: ProgrammingLanguage::Unknown,
+                    framework:         "unknown".to_string(),
+                    language:          ProgrammingLanguage::Unknown,
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.5,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.5,
                 }]
             }
         };

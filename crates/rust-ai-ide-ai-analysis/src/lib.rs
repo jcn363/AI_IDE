@@ -17,22 +17,20 @@ pub mod performance_analyzer;
 pub mod security_scanner;
 
 // Re-exports
-pub use analysis::types::{
-    AnalysisResult, ArchitectureSuggestion, CodeChange, CodeMetrics, CodeSmell, CodeSmellType,
-    Location, PerformanceHint, PerformanceImpact, Priority, SecurityCategory, SecurityIssue,
-    Severity, Suggestion, SuggestionAction,
-};
-pub use architecture_analyzer::*;
-pub use code_quality_checker::*;
-pub use error_handling::{
-    AnalysisConfig, AnalysisError, AnalysisResult as ErrorResult, RecoveryStrategy,
-};
-pub use performance_analyzer::*;
-pub use security_scanner::*;
-
-use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+pub use analysis::types::{
+    AnalysisResult, ArchitectureSuggestion, CodeChange, CodeMetrics, CodeSmell, CodeSmellType, Location,
+    PerformanceHint, PerformanceImpact, Priority, SecurityCategory, SecurityIssue, Severity, Suggestion,
+    SuggestionAction,
+};
+pub use architecture_analyzer::*;
+use chrono::{DateTime, Utc};
+pub use code_quality_checker::*;
+pub use error_handling::{AnalysisConfig, AnalysisError, AnalysisResult as ErrorResult, RecoveryStrategy};
+pub use performance_analyzer::*;
+pub use security_scanner::*;
 use tokio::sync::RwLock;
 use tracing::{info, warn};
 use uuid::Uuid;
@@ -40,10 +38,10 @@ use uuid::Uuid;
 /// Main analyzer for the AI IDE
 #[derive(Clone)]
 pub struct AdvancedCodeAnalyzer {
-    analysis_store: Arc<RwLock<HashMap<Uuid, AnalysisResult>>>,
-    security_scanner: Arc<SecurityScanner>,
-    performance_analyzer: Arc<PerformanceAnalyzer>,
-    code_quality_checker: Arc<CodeQualityChecker>,
+    analysis_store:        Arc<RwLock<HashMap<Uuid, AnalysisResult>>>,
+    security_scanner:      Arc<SecurityScanner>,
+    performance_analyzer:  Arc<PerformanceAnalyzer>,
+    code_quality_checker:  Arc<CodeQualityChecker>,
     architecture_analyzer: Arc<ArchitectureAnalyzer>,
 }
 
@@ -51,20 +49,16 @@ impl AdvancedCodeAnalyzer {
     /// Create a new instance of the advanced code analyzer
     pub fn new() -> Self {
         Self {
-            analysis_store: Arc::new(RwLock::new(HashMap::new())),
-            security_scanner: Arc::new(SecurityScanner::new()),
-            performance_analyzer: Arc::new(PerformanceAnalyzer::new()),
-            code_quality_checker: Arc::new(CodeQualityChecker::new()),
+            analysis_store:        Arc::new(RwLock::new(HashMap::new())),
+            security_scanner:      Arc::new(SecurityScanner::new()),
+            performance_analyzer:  Arc::new(PerformanceAnalyzer::new()),
+            code_quality_checker:  Arc::new(CodeQualityChecker::new()),
             architecture_analyzer: Arc::new(ArchitectureAnalyzer::new()),
         }
     }
 
     /// Analyze a code file comprehensively
-    pub async fn analyze_file(
-        &self,
-        file_path: &str,
-        content: &str,
-    ) -> Result<Uuid, AnalysisError> {
+    pub async fn analyze_file(&self, file_path: &str, content: &str) -> Result<Uuid, AnalysisError> {
         let analysis_id = Uuid::new_v4();
         info!(
             "Starting comprehensive analysis for file: {} (ID: {})",

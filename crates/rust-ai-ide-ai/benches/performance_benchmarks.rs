@@ -1,23 +1,19 @@
 //! Benchmarks for performance-critical paths in the analysis pipeline
 
-use criterion::{criterion_group, criterion_main, Criterion};
-use rust_ai_ide_ai::{
-    analysis::{
-        architectural::{
-            CircularDependencyAnalyzer, DependencyInversionAnalyzer, InterfaceSegregationAnalyzer,
-            LayerViolationDetector,
-        },
-        metrics::{
-            CognitiveComplexityCalculator, CyclomaticComplexityCalculator, HalsteadMetrics,
-            MaintainabilityIndex, MetricsAnalyzer, SourceLinesOfCode,
-        },
-        security::{HardcodedSecretsDetector, InsecureCryptoDetector, SqlInjectionDetector},
-        AnalysisPipeline, AnalysisPipelineBuilder, AnalysisResult, AnalysisType,
-    },
-    test_helpers::create_test_ast,
-};
 use std::hint::black_box;
 use std::path::Path;
+
+use criterion::{criterion_group, criterion_main, Criterion};
+use rust_ai_ide_ai::analysis::architectural::{
+    CircularDependencyAnalyzer, DependencyInversionAnalyzer, InterfaceSegregationAnalyzer, LayerViolationDetector,
+};
+use rust_ai_ide_ai::analysis::metrics::{
+    CognitiveComplexityCalculator, CyclomaticComplexityCalculator, HalsteadMetrics, MaintainabilityIndex,
+    MetricsAnalyzer, SourceLinesOfCode,
+};
+use rust_ai_ide_ai::analysis::security::{HardcodedSecretsDetector, InsecureCryptoDetector, SqlInjectionDetector};
+use rust_ai_ide_ai::analysis::{AnalysisPipeline, AnalysisPipelineBuilder, AnalysisResult, AnalysisType};
+use rust_ai_ide_ai::test_helpers::create_test_ast;
 
 /// Benchmark the analysis of a small code snippet
 fn benchmark_small_code_analysis(c: &mut Criterion) {
@@ -116,8 +112,12 @@ fn benchmark_circular_dependency_analyzer(c: &mut Criterion) {
     }
 
     // Add a circular dependency
-    code.push_str("mod module_circular_a {\n    use super::module_circular_b;\n    pub fn a() { module_circular_b::b(); }\n}\n\n");
-    code.push_str("mod module_circular_b {\n    use super::module_circular_a;\n    pub fn b() { module_circular_a::a(); }\n}\n\n");
+    code.push_str(
+        "mod module_circular_a {\n    use super::module_circular_b;\n    pub fn a() { module_circular_b::b(); }\n}\n\n",
+    );
+    code.push_str(
+        "mod module_circular_b {\n    use super::module_circular_a;\n    pub fn b() { module_circular_a::a(); }\n}\n\n",
+    );
 
     // Add main function
     code.push_str("fn main() {\n    module19::func();\n    module_circular_a::a();\n}\n");

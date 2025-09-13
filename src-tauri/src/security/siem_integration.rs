@@ -11,15 +11,17 @@
 //! - Integration with security manager for centralized security state
 //! - Background task spawning for long-running operations
 
-use crate::command_templates::*;
-use crate::infra::event_bus::EventBus;
-use crate::security::audit_logger::{AuditEvent, AuditLogger};
+use std::sync::Arc;
+
 use chrono::{DateTime, Utc};
 use rust_ai_ide_common::errors::IDEError;
 use rust_ai_ide_common::validation::validate_secure_path;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
+
+use crate::command_templates::*;
+use crate::infra::event_bus::EventBus;
+use crate::security::audit_logger::{AuditEvent, AuditLogger};
 
 // Event types for SIEM processing
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,14 +39,14 @@ pub enum SiemEventType {
 // Security event structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SiemEvent {
-    pub id: String,
-    pub timestamp: DateTime<Utc>,
-    pub event_type: SiemEventType,
-    pub source: String,
-    pub user_id: Option<String>,
-    pub severity: SiemSeverity,
+    pub id:          String,
+    pub timestamp:   DateTime<Utc>,
+    pub event_type:  SiemEventType,
+    pub source:      String,
+    pub user_id:     Option<String>,
+    pub severity:    SiemSeverity,
     pub description: String,
-    pub metadata: serde_json::Value,
+    pub metadata:    serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -58,20 +60,20 @@ pub enum SiemSeverity {
 // Compliance report structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceReport {
-    pub report_id: String,
-    pub generated_at: DateTime<Utc>,
-    pub period_start: DateTime<Utc>,
-    pub period_end: DateTime<Utc>,
+    pub report_id:         String,
+    pub generated_at:      DateTime<Utc>,
+    pub period_start:      DateTime<Utc>,
+    pub period_end:        DateTime<Utc>,
     pub compliance_checks: Vec<ComplianceCheck>,
-    pub overall_status: ComplianceStatus,
+    pub overall_status:    ComplianceStatus,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceCheck {
-    pub check_id: String,
-    pub rule: String,
-    pub status: ComplianceStatus,
-    pub findings: Vec<String>,
+    pub check_id:    String,
+    pub rule:        String,
+    pub status:      ComplianceStatus,
+    pub findings:    Vec<String>,
     pub remediation: Option<String>,
 }
 
@@ -85,38 +87,35 @@ pub enum ComplianceStatus {
 // Internal state for SIEM integration
 #[derive(Debug)]
 pub struct SiemState {
-    events: Vec<SiemEvent>,
+    events:             Vec<SiemEvent>,
     compliance_reports: Vec<ComplianceReport>,
-    event_bus: Arc<EventBus>,
-    audit_logger: Arc<AuditLogger>,
+    event_bus:          Arc<EventBus>,
+    audit_logger:       Arc<AuditLogger>,
 }
 
 // Main SIEM integration struct
 #[derive(Debug)]
 pub struct SiemIntegration {
-    state: Arc<Mutex<SiemState>>,
-    event_sender: mpsc::UnboundedSender<SiemEvent>,
+    state:          Arc<Mutex<SiemState>>,
+    event_sender:   mpsc::UnboundedSender<SiemEvent>,
     event_receiver: Mutex<mpsc::UnboundedReceiver<SiemEvent>>,
 }
 
 impl SiemIntegration {
     /// Creates a new SIEM integration instance
-    pub async fn new(
-        event_bus: Arc<EventBus>,
-        audit_logger: Arc<AuditLogger>,
-    ) -> Result<Self, IDEError> {
+    pub async fn new(event_bus: Arc<EventBus>, audit_logger: Arc<AuditLogger>) -> Result<Self, IDEError> {
         let (tx, rx) = mpsc::unbounded_channel();
 
         let state = Arc::new(Mutex::new(SiemState {
-            events: Vec::new(),
+            events:             Vec::new(),
             compliance_reports: Vec::new(),
-            event_bus: event_bus.clone(),
-            audit_logger: audit_logger.clone(),
+            event_bus:          event_bus.clone(),
+            audit_logger:       audit_logger.clone(),
         }));
 
         let siem = Self {
-            state: state.clone(),
-            event_sender: tx,
+            state:          state.clone(),
+            event_sender:   tx,
             event_receiver: Mutex::new(rx),
         };
 
@@ -178,11 +177,11 @@ impl SiemIntegration {
     async fn audit_log_event(&self, event: &SiemEvent) {
         let audit_event = AuditEvent {
             timestamp: event.timestamp,
-            user_id: event.user_id.clone(),
-            action: format!("{:?}", event.event_type),
-            resource: event.source.clone(),
-            details: event.description.clone(),
-            success: true,
+            user_id:   event.user_id.clone(),
+            action:    format!("{:?}", event.event_type),
+            resource:  event.source.clone(),
+            details:   event.description.clone(),
+            success:   true,
         };
 
         if let Err(e) = self
@@ -252,27 +251,24 @@ impl SiemIntegration {
         // Placeholder compliance checks - in real implementation, these would be comprehensive
         vec![
             ComplianceCheck {
-                check_id: "auth-compliance".to_string(),
-                rule: "All authentication events must be logged".to_string(),
-                status: ComplianceStatus::Compliant,
-                findings: vec![],
+                check_id:    "auth-compliance".to_string(),
+                rule:        "All authentication events must be logged".to_string(),
+                status:      ComplianceStatus::Compliant,
+                findings:    vec![],
                 remediation: None,
             },
             ComplianceCheck {
-                check_id: "access-control".to_string(),
-                rule: "Unauthorized access attempts must be flagged".to_string(),
-                status: ComplianceStatus::Compliant,
-                findings: vec![],
+                check_id:    "access-control".to_string(),
+                rule:        "Unauthorized access attempts must be flagged".to_string(),
+                status:      ComplianceStatus::Compliant,
+                findings:    vec![],
                 remediation: None,
             },
         ]
     }
 
     /// Retrieves stored events with optional filtering
-    pub async fn get_events(
-        &self,
-        filter: Option<SiemEventFilter>,
-    ) -> Result<Vec<SiemEvent>, IDEError> {
+    pub async fn get_events(&self, filter: Option<SiemEventFilter>) -> Result<Vec<SiemEvent>, IDEError> {
         let state = self.state.lock().await;
         let mut events = state.events.clone();
 
@@ -310,11 +306,11 @@ impl SiemIntegration {
     async fn log_error(&self, context: &str, error: &IDEError) {
         let audit_event = AuditEvent {
             timestamp: Utc::now(),
-            user_id: None,
-            action: "error".to_string(),
-            resource: "siem_integration".to_string(),
-            details: format!("{}: {:?}", context, error),
-            success: false,
+            user_id:   None,
+            action:    "error".to_string(),
+            resource:  "siem_integration".to_string(),
+            details:   format!("{}: {:?}", context, error),
+            success:   false,
         };
 
         if let Err(e) = self
@@ -335,16 +331,16 @@ impl SiemIntegration {
 #[derive(Debug, Clone)]
 pub struct SiemEventFilter {
     pub event_type: Option<SiemEventType>,
-    pub severity: Option<SiemSeverity>,
-    pub user_id: Option<String>,
+    pub severity:   Option<SiemSeverity>,
+    pub user_id:    Option<String>,
 }
 
 impl SiemEventFilter {
     pub fn new() -> Self {
         Self {
             event_type: None,
-            severity: None,
-            user_id: None,
+            severity:   None,
+            user_id:    None,
         }
     }
 
@@ -372,14 +368,14 @@ mod tests {
     async fn test_siem_event_validation() {
         // Test validation logic
         let event = SiemEvent {
-            id: "".to_string(),
-            timestamp: Utc::now(),
-            event_type: SiemEventType::Authentication,
-            source: "test".to_string(),
-            user_id: Some("user1".to_string()),
-            severity: SiemSeverity::Medium,
+            id:          "".to_string(),
+            timestamp:   Utc::now(),
+            event_type:  SiemEventType::Authentication,
+            source:      "test".to_string(),
+            user_id:     Some("user1".to_string()),
+            severity:    SiemSeverity::Medium,
             description: "Test event".to_string(),
-            metadata: serde_json::json!({}),
+            metadata:    serde_json::json!({}),
         };
 
         // This should fail validation due to empty ID

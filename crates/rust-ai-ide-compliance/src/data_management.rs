@@ -83,10 +83,10 @@ impl ConsentManager {
 /// Consent structure
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Consent {
-    pub id: String,
+    pub id:         String,
     pub subject_id: String,
-    pub purpose: String,
-    pub granted: bool,
+    pub purpose:    String,
+    pub granted:    bool,
     pub granted_at: chrono::DateTime<chrono::Utc>,
     pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
 }

@@ -1,32 +1,33 @@
+use std::path::{Path, PathBuf};
+
 use anyhow::{Context, Result};
 use cargo_edit::{get_dep_version, set_dep_version, upgrade_requirement, LocalManifest};
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BatchUpdateResult {
     pub updated: Vec<DependencyUpdate>,
     pub skipped: Vec<DependencyUpdate>,
-    pub failed: Vec<FailedUpdate>,
+    pub failed:  Vec<FailedUpdate>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DependencyUpdate {
-    pub name: String,
+    pub name:         String,
     pub from_version: String,
-    pub to_version: String,
+    pub to_version:   String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FailedUpdate {
-    pub name: String,
+    pub name:  String,
     pub error: String,
 }
 
 pub struct BatchUpdater {
     manifest_path: PathBuf,
-    dry_run: bool,
+    dry_run:       bool,
 }
 
 impl BatchUpdater {
@@ -38,13 +39,12 @@ impl BatchUpdater {
     }
 
     pub fn update_dependencies(&self, updates: &[(&str, &str)]) -> Result<BatchUpdateResult> {
-        let mut manifest =
-            LocalManifest::try_new(&self.manifest_path).context("Failed to load Cargo.toml")?;
+        let mut manifest = LocalManifest::try_new(&self.manifest_path).context("Failed to load Cargo.toml")?;
 
         let mut result = BatchUpdateResult {
             updated: Vec::new(),
             skipped: Vec::new(),
-            failed: Vec::new(),
+            failed:  Vec::new(),
         };
 
         for (name, version) in updates {
@@ -52,14 +52,14 @@ impl BatchUpdater {
                 Ok(Some(update)) => result.updated.push(update),
                 Ok(None) => {
                     result.skipped.push(DependencyUpdate {
-                        name: name.to_string(),
+                        name:         name.to_string(),
                         from_version: "unknown".to_string(),
-                        to_version: version.to_string(),
+                        to_version:   version.to_string(),
                     });
                 }
                 Err(e) => {
                     result.failed.push(FailedUpdate {
-                        name: name.to_string(),
+                        name:  name.to_string(),
                         error: e.to_string(),
                     });
                 }
@@ -100,8 +100,7 @@ impl BatchUpdater {
             .get_mut("dependencies")
             .and_then(|t| t.get_mut(name))
         {
-            semver::Version::parse(version)
-                .map_err(|e| anyhow::anyhow!("Invalid version {}: {}", version, e))?;
+            semver::Version::parse(version).map_err(|e| anyhow::anyhow!("Invalid version {}: {}", version, e))?;
             set_dep_version(dep_item, version)?;
         } else {
             return Err(anyhow::anyhow!("Dependency {} not found", name));

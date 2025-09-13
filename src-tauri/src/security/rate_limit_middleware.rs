@@ -15,9 +15,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use rust_ai_ide_common::validation::TauriInputSanitizer;
-use rust_ai_ide_security::{
-    AuthRateLimiter, EndpointType, RateLimitHeaders, SecurityError, UserContext
-};
+use rust_ai_ide_security::{AuthRateLimiter, EndpointType, RateLimitHeaders, SecurityError, UserContext};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State};
 
@@ -27,9 +25,9 @@ use crate::command_templates::*;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RateLimitMiddlewareConfig {
     /// Whether the middleware is enabled
-    pub enabled: bool,
+    pub enabled:                  bool,
     /// Commands that should be rate limited
-    pub rate_limited_commands: Vec<String>,
+    pub rate_limited_commands:    Vec<String>,
     /// Command to endpoint type mapping
     pub command_endpoint_mapping: HashMap<String, EndpointType>,
 }
@@ -81,16 +79,13 @@ impl Default for RateLimitMiddlewareConfig {
 
 /// Rate limit middleware for Tauri commands
 pub struct RateLimitMiddleware {
-    config: RateLimitMiddlewareConfig,
+    config:       RateLimitMiddlewareConfig,
     rate_limiter: Arc<AuthRateLimiter>,
 }
 
 impl RateLimitMiddleware {
     /// Create a new rate limit middleware
-    pub fn new(
-        config: RateLimitMiddlewareConfig,
-        rate_limiter: Arc<AuthRateLimiter>,
-    ) -> Self {
+    pub fn new(config: RateLimitMiddlewareConfig, rate_limiter: Arc<AuthRateLimiter>) -> Self {
         Self {
             config,
             rate_limiter,
@@ -99,12 +94,19 @@ impl RateLimitMiddleware {
 
     /// Check if a command should be rate limited
     pub fn should_rate_limit(&self, command_name: &str) -> bool {
-        self.config.enabled && self.config.rate_limited_commands.contains(&command_name.to_string())
+        self.config.enabled
+            && self
+                .config
+                .rate_limited_commands
+                .contains(&command_name.to_string())
     }
 
     /// Get the endpoint type for a command
     pub fn get_endpoint_type(&self, command_name: &str) -> Option<EndpointType> {
-        self.config.command_endpoint_mapping.get(command_name).cloned()
+        self.config
+            .command_endpoint_mapping
+            .get(command_name)
+            .cloned()
     }
 
     /// Apply rate limiting to a command execution
@@ -118,11 +120,16 @@ impl RateLimitMiddleware {
             return Ok(None);
         }
 
-        let endpoint_type = self.get_endpoint_type(command_name)
+        let endpoint_type = self
+            .get_endpoint_type(command_name)
             .ok_or_else(|| format!("No endpoint type mapping for command: {}", command_name))?;
 
         // Check rate limit
-        match self.rate_limiter.check_rate_limit(user_context, endpoint_type, client_ip).await {
+        match self
+            .rate_limiter
+            .check_rate_limit(user_context, endpoint_type, client_ip)
+            .await
+        {
             Ok((rate_limited, headers)) => {
                 if rate_limited {
                     return Err(self.create_rate_limit_error(headers));
@@ -166,7 +173,8 @@ impl RateLimitMiddleware {
         user_context: &UserContext,
         client_ip: Option<&str>,
     ) -> Result<Option<RateLimitHeaders>, String> {
-        self.apply_rate_limit(command_name, user_context, client_ip).await
+        self.apply_rate_limit(command_name, user_context, client_ip)
+            .await
     }
 }
 
@@ -282,16 +290,15 @@ pub fn extract_client_ip(_app_handle: &AppHandle) -> Option<String> {
 }
 
 /// Initialize rate limiting middleware with default configuration
-pub fn create_default_rate_limit_middleware(
-    rate_limiter: Arc<AuthRateLimiter>,
-) -> RateLimitMiddleware {
+pub fn create_default_rate_limit_middleware(rate_limiter: Arc<AuthRateLimiter>) -> RateLimitMiddleware {
     RateLimitMiddleware::new(RateLimitMiddlewareConfig::default(), rate_limiter)
 }
 
 #[cfg(test)]
 mod tests {
+    use rust_ai_ide_security::{AuditLogger, AuthRateLimiterConfig};
+
     use super::*;
-    use rust_ai_ide_security::{AuthRateLimiterConfig, AuditLogger};
 
     #[tokio::test]
     async fn test_middleware_configuration() {

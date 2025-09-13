@@ -3,19 +3,18 @@
 //! Comprehensive audit logging and tracking for compliance operations,
 //! including security events, data access patterns, and regulatory requirements.
 
-use async_trait::async_trait;
 use std::sync::Arc;
+
+use async_trait::async_trait;
 use tokio::sync::Mutex;
 
-use crate::core::{
-    AuditConfig, AuditEntry, AuditSeverity, ComplianceConfig, ComplianceError, ComplianceResult,
-};
+use crate::core::{AuditConfig, AuditEntry, AuditSeverity, ComplianceConfig, ComplianceError, ComplianceResult};
 
 /// Audit trail manager for compliance logging
 #[derive(Debug)]
 pub struct AuditTrailManager {
-    entries: Arc<Mutex<Vec<AuditEntry>>>,
-    config: Arc<ComplianceConfig>,
+    entries:     Arc<Mutex<Vec<AuditEntry>>>,
+    config:      Arc<ComplianceConfig>,
     initialized: bool,
 }
 
@@ -23,8 +22,8 @@ impl AuditTrailManager {
     /// Create a new audit trail manager
     pub async fn new() -> ComplianceResult<Self> {
         Ok(Self {
-            entries: Arc::new(Mutex::new(Vec::new())),
-            config: Arc::new(ComplianceConfig::default()),
+            entries:     Arc::new(Mutex::new(Vec::new())),
+            config:      Arc::new(ComplianceConfig::default()),
             initialized: false,
         })
     }
@@ -42,7 +41,7 @@ impl AuditTrailManager {
         if !self.initialized {
             return Err(ComplianceError::AuditError {
                 details: "Audit manager not initialized".to_string(),
-                source: Some("log_entry".to_string()),
+                source:  Some("log_entry".to_string()),
             });
         }
 
@@ -53,10 +52,7 @@ impl AuditTrailManager {
     }
 
     /// Get audit entries with filtering
-    pub async fn get_entries(
-        &self,
-        filter: Option<AuditFilter>,
-    ) -> ComplianceResult<Vec<AuditEntry>> {
+    pub async fn get_entries(&self, filter: Option<AuditFilter>) -> ComplianceResult<Vec<AuditEntry>> {
         let entries = self.entries.lock().await;
 
         if let Some(filter) = filter {
@@ -75,24 +71,24 @@ impl AuditTrailManager {
         let entries = self.entries.lock().await;
 
         let summary = AuditSummary {
-            total_entries: entries.len(),
+            total_entries:    entries.len(),
             critical_entries: entries
                 .iter()
                 .filter(|e| matches!(e.severity, AuditSeverity::Critical))
                 .count(),
-            error_entries: entries
+            error_entries:    entries
                 .iter()
                 .filter(|e| matches!(e.severity, AuditSeverity::Error))
                 .count(),
-            warning_entries: entries
+            warning_entries:  entries
                 .iter()
                 .filter(|e| matches!(e.severity, AuditSeverity::Warning))
                 .count(),
-            info_entries: entries
+            info_entries:     entries
                 .iter()
                 .filter(|e| matches!(e.severity, AuditSeverity::Info))
                 .count(),
-            time_range: entries
+            time_range:       entries
                 .last()
                 .map(|e| e.timestamp)
                 .unwrap_or_else(|| chrono::Utc::now()),
@@ -100,7 +96,7 @@ impl AuditTrailManager {
 
         serde_json::to_value(summary).map_err(|e| ComplianceError::AuditError {
             details: format!("Failed to serialize audit summary: {}", e),
-            source: Some("generate_audit_summary".to_string()),
+            source:  Some("generate_audit_summary".to_string()),
         })
     }
 
@@ -124,12 +120,10 @@ impl AuditTrailManager {
         let entries = self.entries.lock().await;
 
         match format {
-            ExportFormat::Json => {
-                serde_json::to_vec(&*entries).map_err(|e| ComplianceError::AuditError {
-                    details: format!("Failed to export audit entries as JSON: {}", e),
-                    source: Some("export_entries".to_string()),
-                })
-            }
+            ExportFormat::Json => serde_json::to_vec(&*entries).map_err(|e| ComplianceError::AuditError {
+                details: format!("Failed to export audit entries as JSON: {}", e),
+                source:  Some("export_entries".to_string()),
+            }),
             ExportFormat::Csv => {
                 // CSV export implementation would go here
                 Ok(b"CSV export not implemented".to_vec())
@@ -147,22 +141,22 @@ impl AuditTrailManager {
 /// Audit entry filter for querying
 #[derive(Debug, Clone)]
 pub struct AuditFilter {
-    pub severity: Option<AuditSeverity>,
-    pub category: Option<String>,
-    pub user_id: Option<String>,
-    pub date_from: Option<chrono::DateTime<chrono::Utc>>,
-    pub date_to: Option<chrono::DateTime<chrono::Utc>>,
+    pub severity:    Option<AuditSeverity>,
+    pub category:    Option<String>,
+    pub user_id:     Option<String>,
+    pub date_from:   Option<chrono::DateTime<chrono::Utc>>,
+    pub date_to:     Option<chrono::DateTime<chrono::Utc>>,
     pub search_text: Option<String>,
 }
 
 impl AuditFilter {
     pub fn new() -> Self {
         Self {
-            severity: None,
-            category: None,
-            user_id: None,
-            date_from: None,
-            date_to: None,
+            severity:    None,
+            category:    None,
+            user_id:     None,
+            date_from:   None,
+            date_to:     None,
             search_text: None,
         }
     }
@@ -182,11 +176,7 @@ impl AuditFilter {
         self
     }
 
-    pub fn date_range(
-        mut self,
-        from: chrono::DateTime<chrono::Utc>,
-        to: chrono::DateTime<chrono::Utc>,
-    ) -> Self {
+    pub fn date_range(mut self, from: chrono::DateTime<chrono::Utc>, to: chrono::DateTime<chrono::Utc>) -> Self {
         self.date_from = Some(from);
         self.date_to = Some(to);
         self
@@ -245,12 +235,12 @@ impl AuditFilter {
 /// Audit summary statistics
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct AuditSummary {
-    pub total_entries: usize,
+    pub total_entries:    usize,
     pub critical_entries: usize,
-    pub error_entries: usize,
-    pub warning_entries: usize,
-    pub info_entries: usize,
-    pub time_range: chrono::DateTime<chrono::Utc>,
+    pub error_entries:    usize,
+    pub warning_entries:  usize,
+    pub info_entries:     usize,
+    pub time_range:       chrono::DateTime<chrono::Utc>,
 }
 
 /// Export format options
@@ -278,7 +268,7 @@ impl AuditExporter for JsonAuditExporter {
     async fn export_entries(&self, entries: &[AuditEntry]) -> ComplianceResult<Vec<u8>> {
         serde_json::to_vec(entries).map_err(|e| ComplianceError::AuditError {
             details: format!("Failed to export audit entries as JSON: {}", e),
-            source: Some("JsonAuditExporter".to_string()),
+            source:  Some("JsonAuditExporter".to_string()),
         })
     }
 
@@ -296,7 +286,7 @@ impl AuditExporter for CsvAuditExporter {
         // CSV export implementation would go here
         Err(ComplianceError::AuditError {
             details: "CSV export not implemented".to_string(),
-            source: Some("CsvAuditExporter".to_string()),
+            source:  Some("CsvAuditExporter".to_string()),
         })
     }
 

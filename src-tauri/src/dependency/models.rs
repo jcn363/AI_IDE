@@ -1,11 +1,12 @@
 //! Data structures for dependency analysis
 
+use std::collections::HashMap;
+use std::path::PathBuf;
+
 use cargo_metadata::Package;
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::{EdgeRef, NodeRef};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::PathBuf;
 
 /// Types of dependencies in the graph
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -24,12 +25,12 @@ pub enum DependencyType {
 /// Information about a specific version of a dependency
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct VersionInfo {
-    pub version: String,
-    pub features: Vec<String>,
-    pub optional: bool,
+    pub version:          String,
+    pub features:         Vec<String>,
+    pub optional:         bool,
     pub default_features: bool,
-    pub target: Option<String>,
-    pub registry: Option<String>,
+    pub target:           Option<String>,
+    pub registry:         Option<String>,
 }
 
 /// Information about a dependency's source
@@ -42,10 +43,10 @@ pub enum Source {
     CratesIo,
     /// From a git repository
     Git {
-        url: String,
-        rev: Option<String>,
+        url:    String,
+        rev:    Option<String>,
         branch: Option<String>,
-        tag: Option<String>,
+        tag:    Option<String>,
     },
     /// From a local path
     Path(PathBuf),
@@ -59,48 +60,48 @@ pub enum Source {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DependencyInfo {
     /// Name of the dependent package
-    pub name: String,
+    pub name:                  String,
     /// Version requirement
-    pub version_req: String,
+    pub version_req:           String,
     /// Type of dependency
-    pub dep_type: DependencyType,
+    pub dep_type:              DependencyType,
     /// Whether this is an optional dependency
-    pub optional: bool,
+    pub optional:              bool,
     /// Whether default features are used
     pub uses_default_features: bool,
     /// Enabled features
-    pub features: Vec<String>,
+    pub features:              Vec<String>,
     /// Target platform (if specified)
-    pub target: Option<String>,
+    pub target:                Option<String>,
 }
 
 /// Represents a node in the dependency graph
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DependencyNode {
     /// Name of the package
-    pub name: String,
+    pub name:                 String,
     /// Current version
-    pub version: String,
+    pub version:              String,
     /// Latest version available
-    pub latest_version: Option<String>,
+    pub latest_version:       Option<String>,
     /// Description of the package
-    pub description: Option<String>,
+    pub description:          Option<String>,
     /// Repository URL
-    pub repository: Option<String>,
+    pub repository:           Option<String>,
     /// License information
-    pub license: Option<String>,
+    pub license:              Option<String>,
     /// Source of the dependency
-    pub source: Source,
+    pub source:               Source,
     /// Whether this is a workspace member
-    pub is_workspace_member: bool,
+    pub is_workspace_member:  bool,
     /// Path to the package (if local)
-    pub path: Option<PathBuf>,
+    pub path:                 Option<PathBuf>,
     /// Features defined in this package
-    pub features: Vec<String>,
+    pub features:             Vec<String>,
     /// Default features
-    pub default_features: bool,
+    pub default_features:     bool,
     /// Dependencies of this package
-    pub dependencies: Vec<DependencyInfo>,
+    pub dependencies:         Vec<DependencyInfo>,
     /// Reverse dependencies (who depends on this package)
     pub reverse_dependencies: Vec<DependencyInfo>,
 }
@@ -151,10 +152,10 @@ impl DependencyNode {
                 Source::CratesIo
             } else if let Some(git_ref) = src.repr.strip_prefix("git+") {
                 Source::Git {
-                    url: git_ref.to_string(),
-                    rev: None,
+                    url:    git_ref.to_string(),
+                    rev:    None,
                     branch: None,
-                    tag: None,
+                    tag:    None,
                 }
             } else {
                 Source::Unknown
@@ -189,7 +190,7 @@ impl DependencyNode {
 /// Represents a complete dependency graph for a Rust project
 #[derive(Debug, Clone)]
 pub struct DependencyGraph {
-    pub graph: DiGraph<DependencyNode, DependencyEdge>,
+    pub graph:        DiGraph<DependencyNode, DependencyEdge>,
     pub node_indices: HashMap<String, NodeIndex>,
     pub root_package: String,
 }
@@ -232,16 +233,15 @@ impl<'de> Deserialize<'de> for DependencyGraph {
     {
         #[derive(Deserialize)]
         struct DependencyGraphRaw {
-            nodes: Vec<DependencyNode>,
-            edges: Vec<(usize, usize, DependencyEdge)>,
+            nodes:        Vec<DependencyNode>,
+            edges:        Vec<(usize, usize, DependencyEdge)>,
             node_indices: HashMap<String, usize>,
             root_package: String,
         }
 
         let raw = DependencyGraphRaw::deserialize(deserializer)?;
         let mut graph = DiGraph::new();
-        let node_indices_vec: Vec<NodeIndex> =
-            raw.nodes.into_iter().map(|n| graph.add_node(n)).collect();
+        let node_indices_vec: Vec<NodeIndex> = raw.nodes.into_iter().map(|n| graph.add_node(n)).collect();
 
         for (source, target, weight) in raw.edges {
             if source >= node_indices_vec.len() || target >= node_indices_vec.len() {
@@ -278,7 +278,7 @@ impl<'de> Deserialize<'de> for DependencyGraph {
 impl Default for DependencyGraph {
     fn default() -> Self {
         Self {
-            graph: DiGraph::default(),
+            graph:        DiGraph::default(),
             node_indices: HashMap::default(),
             root_package: String::default(),
         }
@@ -288,14 +288,14 @@ impl Default for DependencyGraph {
 /// A filter for dependency graphs
 #[derive(Debug, Clone, Default)]
 pub struct DependencyFilter {
-    pub include_types: std::collections::HashSet<DependencyType>,
-    pub exclude_types: std::collections::HashSet<DependencyType>,
-    pub include_pattern: Option<String>,
-    pub exclude_pattern: Option<String>,
-    pub max_depth: Option<usize>,
-    pub direct_only: bool,
-    pub workspace_only: bool,
-    pub has_updates: Option<bool>,
+    pub include_types:       std::collections::HashSet<DependencyType>,
+    pub exclude_types:       std::collections::HashSet<DependencyType>,
+    pub include_pattern:     Option<String>,
+    pub exclude_pattern:     Option<String>,
+    pub max_depth:           Option<usize>,
+    pub direct_only:         bool,
+    pub workspace_only:      bool,
+    pub has_updates:         Option<bool>,
     pub has_vulnerabilities: Option<bool>,
 }
 

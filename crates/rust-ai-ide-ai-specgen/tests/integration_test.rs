@@ -1,8 +1,7 @@
 //! Integration tests for the rust-ai-ide-ai-specgen crate
 
 use rust_ai_ide_ai_specgen::{
-    IntelligentSpecGenerator, SpecGenBuilder, SpecificationGenerator, SpecificationParser,
-    SpecificationRequest,
+    IntelligentSpecGenerator, SpecGenBuilder, SpecificationGenerator, SpecificationParser, SpecificationRequest,
 };
 
 #[tokio::test]
@@ -13,16 +12,16 @@ async fn test_public_api_basic_functionality() {
 
     // Test specification request creation
     let request = SpecificationRequest {
-        description: "Create a simple user struct".to_string(),
-        language: "rust".to_string(),
-        context: Some(std::collections::HashMap::from([(
+        description:              "Create a simple user struct".to_string(),
+        language:                 "rust".to_string(),
+        context:                  Some(std::collections::HashMap::from([(
             "requirements".to_string(),
             "User management".to_string(),
         )])),
-        preferred_pattern: Some("struct".to_string()),
-        quality_threshold: Some(0.8),
+        preferred_pattern:        Some("struct".to_string()),
+        quality_threshold:        Some(0.8),
         performance_requirements: Some(vec!["memory-efficient".to_string()]),
-        security_requirements: Some(vec![]),
+        security_requirements:    Some(vec![]),
     };
 
     // Test basic parsing - should handle basic specifications
@@ -92,13 +91,13 @@ mod types_integration {
     async fn test_types_serialization() {
         // Test that types can be serialized/deserialized
         let request = SpecificationRequest {
-            description: "test spec".to_string(),
-            language: "rust".to_string(),
-            context: None,
-            preferred_pattern: None,
-            quality_threshold: None,
+            description:              "test spec".to_string(),
+            language:                 "rust".to_string(),
+            context:                  None,
+            preferred_pattern:        None,
+            quality_threshold:        None,
             performance_requirements: None,
-            security_requirements: None,
+            security_requirements:    None,
         };
 
         // Convert to JSON and back

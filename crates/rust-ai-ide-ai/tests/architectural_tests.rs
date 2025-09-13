@@ -2,8 +2,7 @@
 
 use rust_ai_ide_ai::analysis::architectural::*;
 use rust_ai_ide_ai::analysis::CodeLocation;
-use syn::parse_quote;
-use syn::File;
+use syn::{parse_quote, File};
 
 #[test]
 fn test_complexity_analysis() {
@@ -39,19 +38,36 @@ fn test_complexity_analysis() {
     };
 
     // Test simple function
-    let findings = analyzer.analyze(&simple_fn, "test.rs", "fn simple() { if true { println!(\"Hello\"); } }");
-    assert!(findings.is_empty(), "Simple function should have no findings");
+    let findings = analyzer.analyze(
+        &simple_fn,
+        "test.rs",
+        "fn simple() { if true { println!(\"Hello\"); } }",
+    );
+    assert!(
+        findings.is_empty(),
+        "Simple function should have no findings"
+    );
 
     // Test complex function
-    let findings = analyzer.analyze(&complex_fn, "test.rs", "fn complex() { if true { for i in 0..10 { match i { 0 => println!(\"Zero\"), 1..=5 => println!(\"Low\"), _ => println!(\"High\"), } } while true { break; } }");
-    assert!(!findings.is_empty(), "Complex function should have findings");
-    assert!(findings.iter().any(|f| f.id == "high-complexity-method"), "Should find high complexity method");
+    let findings = analyzer.analyze(
+        &complex_fn,
+        "test.rs",
+        "fn complex() { if true { for i in 0..10 { match i { 0 => println!(\"Zero\"), 1..=5 => println!(\"Low\"), _ \
+         => println!(\"High\"), } } while true { break; } }",
+    );
+    assert!(
+        !findings.is_empty(),
+        "Complex function should have findings"
+    );
+    assert!(
+        findings.iter().any(|f| f.id == "high-complexity-method"),
+        "Should find high complexity method"
+    );
 }
 
 #[test]
 fn test_dependency_inversion() {
-    let analyzer = ArchitecturalAnalyzer::with_all_checks()
-        .with_allowed_concrete_dependency("ConcreteType");
+    let analyzer = ArchitecturalAnalyzer::with_all_checks().with_allowed_concrete_dependency("ConcreteType");
 
     // Violation: Direct concrete type dependency
     let violation: File = parse_quote! {
@@ -84,18 +100,28 @@ fn test_dependency_inversion() {
     };
 
     // Test violation
-    let findings = analyzer.analyze(&violation, "test.rs", "struct ConcreteType { value: i32 } impl ConcreteType { fn new() -> Self { Self { value: 0 } } }");
-    assert!(!findings.is_empty(), "Should find dependency inversion violation");
+    let findings = analyzer.analyze(
+        &violation,
+        "test.rs",
+        "struct ConcreteType { value: i32 } impl ConcreteType { fn new() -> Self { Self { value: 0 } } }",
+    );
+    assert!(
+        !findings.is_empty(),
+        "Should find dependency inversion violation"
+    );
 
     // Test no violation
-    let findings = analyzer.analyze(&no_violation, "test.rs", "trait GoodTrait {} struct GoodStruct<T: GoodTrait> { good: T }");
+    let findings = analyzer.analyze(
+        &no_violation,
+        "test.rs",
+        "trait GoodTrait {} struct GoodStruct<T: GoodTrait> { good: T }",
+    );
     assert!(findings.is_empty(), "Should not find any violations");
 }
 
 #[test]
 fn test_interface_segregation() {
-    let analyzer = ArchitecturalAnalyzer::with_all_checks()
-        .with_max_trait_methods(2);
+    let analyzer = ArchitecturalAnalyzer::with_all_checks().with_max_trait_methods(2);
 
     // Violation: Too many methods in trait
     let violation: File = parse_quote! {
@@ -114,18 +140,32 @@ fn test_interface_segregation() {
     };
 
     // Test violation
-    let findings = analyzer.analyze(&violation, "test.rs", "trait TooBigTrait { fn method1(&self); fn method2(&self); fn method3(&self); }");
-    assert!(!findings.is_empty(), "Should find interface segregation violation");
+    let findings = analyzer.analyze(
+        &violation,
+        "test.rs",
+        "trait TooBigTrait { fn method1(&self); fn method2(&self); fn method3(&self); }",
+    );
+    assert!(
+        !findings.is_empty(),
+        "Should find interface segregation violation"
+    );
 
     // Test no violation
-    let findings = analyzer.analyze(&no_violation, "test.rs", "trait GoodTrait { fn do_one_thing(&self); }");
-    assert!(findings.is_empty(), "Should not find any violations: {:?}", findings);
+    let findings = analyzer.analyze(
+        &no_violation,
+        "test.rs",
+        "trait GoodTrait { fn do_one_thing(&self); }",
+    );
+    assert!(
+        findings.is_empty(),
+        "Should not find any violations: {:?}",
+        findings
+    );
 }
 
 #[test]
 fn test_module_size_validation() {
-    let analyzer = ArchitecturalAnalyzer::with_all_checks()
-        .with_max_module_size(5);
+    let analyzer = ArchitecturalAnalyzer::with_all_checks().with_max_module_size(5);
 
     // Create a file with too many lines
     let code = "// Line 1\n// Line 2\n// Line 3\n// Line 4\n// Line 5\n// Line 6";
@@ -139,8 +179,7 @@ fn test_module_size_validation() {
 
 #[test]
 fn test_public_items_validation() {
-    let analyzer = ArchitecturalAnalyzer::with_all_checks()
-        .with_max_public_items(2);
+    let analyzer = ArchitecturalAnalyzer::with_all_checks().with_max_public_items(2);
 
     // File with too many public items
     let code = "

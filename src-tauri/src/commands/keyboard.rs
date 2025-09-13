@@ -3,13 +3,14 @@
 //! This module provides comprehensive keybinding management for the IDE,
 //! including customizable keymaps, conflict resolution, and cross-platform support.
 
+use std::collections::HashMap;
+use std::fmt;
+use std::sync::Arc;
+
 use lazy_static::lazy_static;
 use rust_ai_ide_core::security::{audit_action, audit_logger};
 use rust_ai_ide_core::validation::validate_secure_path;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fmt;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::command_templates::*;
@@ -32,55 +33,55 @@ pub enum ShortcutContext {
 /// Key combination structure
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct KeyCombination {
-    pub key: String,
-    pub ctrl: bool,
-    pub alt: bool,
+    pub key:   String,
+    pub ctrl:  bool,
+    pub alt:   bool,
     pub shift: bool,
-    pub meta: bool, // Cmd on Mac, Windows key on Windows
+    pub meta:  bool, // Cmd on Mac, Windows key on Windows
 }
 
 /// Keyboard shortcut action
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ShortcutAction {
-    pub id: String,
-    pub name: String,
-    pub description: String,
-    pub context: ShortcutContext,
+    pub id:           String,
+    pub name:         String,
+    pub description:  String,
+    pub context:      ShortcutContext,
     pub default_keys: Vec<KeyCombination>,
 }
 
 /// User keybinding profile
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeybindingsProfile {
-    pub id: String,
-    pub name: String,
+    pub id:          String,
+    pub name:        String,
     pub description: String,
-    pub shortcuts: HashMap<String, Vec<KeyCombination>>,
-    pub is_default: bool,
-    pub created_at: u64,
-    pub updated_at: u64,
+    pub shortcuts:   HashMap<String, Vec<KeyCombination>>,
+    pub is_default:  bool,
+    pub created_at:  u64,
+    pub updated_at:  u64,
 }
 
 /// Keybinding conflict information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeybindingConflict {
-    pub keys: String,
+    pub keys:    String,
     pub actions: Vec<String>,
 }
 
 /// Keybinding manager service
 #[derive(Debug)]
 pub struct KeybindingManager {
-    profiles: Arc<Mutex<HashMap<String, KeybindingsProfile>>>,
-    current_profile: Arc<Mutex<String>>,
+    profiles:          Arc<Mutex<HashMap<String, KeybindingsProfile>>>,
+    current_profile:   Arc<Mutex<String>>,
     available_actions: Arc<Mutex<Vec<ShortcutAction>>>,
 }
 
 impl KeybindingManager {
     pub fn new() -> Self {
         Self {
-            profiles: Arc::new(Mutex::new(HashMap::new())),
-            current_profile: Arc::new(Mutex::new("default".to_string())),
+            profiles:          Arc::new(Mutex::new(HashMap::new())),
+            current_profile:   Arc::new(Mutex::new("default".to_string())),
             available_actions: Arc::new(Mutex::new(Vec::new())),
         }
     }
@@ -94,16 +95,16 @@ impl KeybindingManager {
 
         // Create default profile
         let default_profile = KeybindingsProfile {
-            id: "default".to_string(),
-            name: "Default Profile".to_string(),
+            id:          "default".to_string(),
+            name:        "Default Profile".to_string(),
             description: "Default keybindings profile".to_string(),
-            shortcuts: self.create_default_shortcuts(&actions),
-            is_default: true,
-            created_at: std::time::SystemTime::now()
+            shortcuts:   self.create_default_shortcuts(&actions),
+            is_default:  true,
+            created_at:  std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_secs(),
-            updated_at: std::time::SystemTime::now()
+            updated_at:  std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_secs(),
@@ -115,150 +116,147 @@ impl KeybindingManager {
     pub async fn initialize_default_actions(&self, actions: &mut Vec<ShortcutAction>) {
         // Editor actions
         actions.push(ShortcutAction {
-            id: "editor.save".to_string(),
-            name: "Save File".to_string(),
-            description: "Save the current file".to_string(),
-            context: ShortcutContext::Editor,
+            id:           "editor.save".to_string(),
+            name:         "Save File".to_string(),
+            description:  "Save the current file".to_string(),
+            context:      ShortcutContext::Editor,
             default_keys: vec![KeyCombination {
-                key: "s".to_string(),
-                ctrl: true,
-                alt: false,
+                key:   "s".to_string(),
+                ctrl:  true,
+                alt:   false,
                 shift: false,
-                meta: false,
+                meta:  false,
             }],
         });
 
         actions.push(ShortcutAction {
-            id: "editor.undo".to_string(),
-            name: "Undo".to_string(),
-            description: "Undo last action".to_string(),
-            context: ShortcutContext::Editor,
+            id:           "editor.undo".to_string(),
+            name:         "Undo".to_string(),
+            description:  "Undo last action".to_string(),
+            context:      ShortcutContext::Editor,
             default_keys: vec![KeyCombination {
-                key: "z".to_string(),
-                ctrl: true,
-                alt: false,
+                key:   "z".to_string(),
+                ctrl:  true,
+                alt:   false,
                 shift: false,
-                meta: false,
+                meta:  false,
             }],
         });
 
         actions.push(ShortcutAction {
-            id: "editor.redo".to_string(),
-            name: "Redo".to_string(),
-            description: "Redo last undone action".to_string(),
-            context: ShortcutContext::Editor,
+            id:           "editor.redo".to_string(),
+            name:         "Redo".to_string(),
+            description:  "Redo last undone action".to_string(),
+            context:      ShortcutContext::Editor,
             default_keys: vec![
                 KeyCombination {
-                    key: "z".to_string(),
-                    ctrl: true,
-                    alt: false,
+                    key:   "z".to_string(),
+                    ctrl:  true,
+                    alt:   false,
                     shift: true,
-                    meta: false,
+                    meta:  false,
                 },
                 KeyCombination {
-                    key: "y".to_string(),
-                    ctrl: true,
-                    alt: false,
+                    key:   "y".to_string(),
+                    ctrl:  true,
+                    alt:   false,
                     shift: false,
-                    meta: false,
+                    meta:  false,
                 },
             ],
         });
 
         // Terminal actions
         actions.push(ShortcutAction {
-            id: "terminal.new".to_string(),
-            name: "New Terminal".to_string(),
-            description: "Open new terminal instance".to_string(),
-            context: ShortcutContext::Terminal,
+            id:           "terminal.new".to_string(),
+            name:         "New Terminal".to_string(),
+            description:  "Open new terminal instance".to_string(),
+            context:      ShortcutContext::Terminal,
             default_keys: vec![KeyCombination {
-                key: "`".to_string(),
-                ctrl: true,
-                alt: false,
+                key:   "`".to_string(),
+                ctrl:  true,
+                alt:   false,
                 shift: true,
-                meta: false,
+                meta:  false,
             }],
         });
 
         // Search actions
         actions.push(ShortcutAction {
-            id: "search.find".to_string(),
-            name: "Find".to_string(),
-            description: "Open find dialog".to_string(),
-            context: ShortcutContext::Search,
+            id:           "search.find".to_string(),
+            name:         "Find".to_string(),
+            description:  "Open find dialog".to_string(),
+            context:      ShortcutContext::Search,
             default_keys: vec![KeyCombination {
-                key: "f".to_string(),
-                ctrl: true,
-                alt: false,
+                key:   "f".to_string(),
+                ctrl:  true,
+                alt:   false,
                 shift: false,
-                meta: false,
+                meta:  false,
             }],
         });
 
         actions.push(ShortcutAction {
-            id: "search.replace".to_string(),
-            name: "Replace".to_string(),
-            description: "Open find and replace dialog".to_string(),
-            context: ShortcutContext::Search,
+            id:           "search.replace".to_string(),
+            name:         "Replace".to_string(),
+            description:  "Open find and replace dialog".to_string(),
+            context:      ShortcutContext::Search,
             default_keys: vec![KeyCombination {
-                key: "h".to_string(),
-                ctrl: true,
-                alt: false,
+                key:   "h".to_string(),
+                ctrl:  true,
+                alt:   false,
                 shift: false,
-                meta: false,
+                meta:  false,
             }],
         });
 
         // Command palette
         actions.push(ShortcutAction {
-            id: "command.palette".to_string(),
-            name: "Command Palette".to_string(),
-            description: "Open command palette".to_string(),
-            context: ShortcutContext::CommandPalette,
+            id:           "command.palette".to_string(),
+            name:         "Command Palette".to_string(),
+            description:  "Open command palette".to_string(),
+            context:      ShortcutContext::CommandPalette,
             default_keys: vec![KeyCombination {
-                key: "p".to_string(),
-                ctrl: true,
-                alt: false,
+                key:   "p".to_string(),
+                ctrl:  true,
+                alt:   false,
                 shift: true,
-                meta: false,
+                meta:  false,
             }],
         });
 
         // Git actions
         actions.push(ShortcutAction {
-            id: "git.status".to_string(),
-            name: "Git Status".to_string(),
-            description: "Show git status".to_string(),
-            context: ShortcutContext::Git,
+            id:           "git.status".to_string(),
+            name:         "Git Status".to_string(),
+            description:  "Show git status".to_string(),
+            context:      ShortcutContext::Git,
             default_keys: vec![KeyCombination {
-                key: "g".to_string(),
-                ctrl: true,
-                alt: false,
+                key:   "g".to_string(),
+                ctrl:  true,
+                alt:   false,
                 shift: true,
-                meta: false,
+                meta:  false,
             }],
         });
 
         // File explorer actions
         actions.push(ShortcutAction {
-            id: "explorer.toggle".to_string(),
-            name: "Toggle Explorer".to_string(),
-            description: "Toggle file explorer visibility".to_string(),
-            context: ShortcutContext::FileExplorer,
+            id:           "explorer.toggle".to_string(),
+            name:         "Toggle Explorer".to_string(),
+            description:  "Toggle file explorer visibility".to_string(),
+            context:      ShortcutContext::FileExplorer,
             default_keys: vec![KeyCombination {
-                key: "b".to_string(),
-                ctrl: true,
-                alt: false,
+                key:   "b".to_string(),
+                ctrl:  true,
+                alt:   false,
                 shift: true,
-                meta: false,
+                meta:  false,
             }],
         });
     }
 
-    pub fn create_default_shortcuts(
-        &self,
-        actions: &[ShortcutAction],
-    ) -> HashMap<String, Vec<KeyCombination>> {
+    pub fn create_default_shortcuts(&self, actions: &[ShortcutAction]) -> HashMap<String, Vec<KeyCombination>> {
         let mut shortcuts = HashMap::new();
 
         for action in actions {
@@ -300,9 +298,7 @@ impl KeybindingManager {
 
     pub async fn create_profile(&self, profile_data: serde_json::Value) -> Result<String, String> {
         let name: String = match profile_data.get("name") {
-            Some(n) => {
-                serde_json::from_value(n.clone()).map_err(|e| format!("Invalid name: {}", e))?
-            }
+            Some(n) => serde_json::from_value(n.clone()).map_err(|e| format!("Invalid name: {}", e))?,
             None => return Err("Profile name is required".to_string()),
         };
 

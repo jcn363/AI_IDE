@@ -4,14 +4,15 @@
 //! identified in the audit report without requiring full workspace dependencies.
 
 use std::collections::HashMap;
-use std::time::{Duration, Instant};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
+
 use tokio::sync::Mutex;
 
 /// Simple cache implementation for testing
 struct SimpleCache<K, V> {
-    entries: HashMap<K, V>,
-    max_size: usize,
+    entries:     HashMap<K, V>,
+    max_size:    usize,
     ttl_seconds: u64,
 }
 
@@ -200,30 +201,57 @@ async fn main() {
     println!("\n1. Testing AI Inference Performance:");
     let cache = Arc::new(Mutex::new(SimpleCache::new(1000, 3600)));
     let inference_time = simulate_ai_inference(cache, 1000).await;
-    println!("   AI Inference (1000 iterations): {:.2}ms", inference_time.as_millis());
-    println!("   Ops/second: {:.2}", 1000.0 / inference_time.as_secs_f64());
+    println!(
+        "   AI Inference (1000 iterations): {:.2}ms",
+        inference_time.as_millis()
+    );
+    println!(
+        "   Ops/second: {:.2}",
+        1000.0 / inference_time.as_secs_f64()
+    );
 
     // Test 2: LSP Symbol Resolution
     println!("\n2. Testing LSP Symbol Resolution:");
     let lsp_time = simulate_lsp_symbol_resolution(4, 1000).await;
-    println!("   LSP Symbol Resolution (4 servers × 1000 symbols): {:.2}ms", lsp_time.as_millis());
+    println!(
+        "   LSP Symbol Resolution (4 servers × 1000 symbols): {:.2}ms",
+        lsp_time.as_millis()
+    );
     println!("   Total symbols processed: {}", 4 * 1000);
 
     // Test 3: Security Policy Evaluation
     println!("\n3. Testing Security Policy Evaluation:");
     let security_time = simulate_security_policy_evaluation(10000);
-    println!("   Security Policy Evaluation (10,000 requests): {:.2}ms", security_time.as_millis());
-    println!("   Ops/second: {:.2}", 10000.0 / security_time.as_secs_f64());
+    println!(
+        "   Security Policy Evaluation (10,000 requests): {:.2}ms",
+        security_time.as_millis()
+    );
+    println!(
+        "   Ops/second: {:.2}",
+        10000.0 / security_time.as_secs_f64()
+    );
 
     // Test 4: SIMD Operations
     println!("\n4. Testing SIMD-like Operations:");
     let simd_time = simulate_simd_operations(100000);
-    println!("   SIMD Operations (100,000 iterations): {:.2}ms", simd_time.as_millis());
+    println!(
+        "   SIMD Operations (100,000 iterations): {:.2}ms",
+        simd_time.as_millis()
+    );
     println!("   Ops/second: {:.2}", 100000.0 / simd_time.as_secs_f64());
 
     println!("\n✅ Performance profiling completed!");
     println!("\n📊 Key Findings:");
-    println!("   - AI Inference: {:.2} ops/sec", 1000.0 / inference_time.as_secs_f64());
-    println!("   - Security Evaluation: {:.2} ops/sec", 10000.0 / security_time.as_secs_f64());
-    println!("   - SIMD Operations: {:.2} ops/sec", 100000.0 / simd_time.as_secs_f64());
+    println!(
+        "   - AI Inference: {:.2} ops/sec",
+        1000.0 / inference_time.as_secs_f64()
+    );
+    println!(
+        "   - Security Evaluation: {:.2} ops/sec",
+        10000.0 / security_time.as_secs_f64()
+    );
+    println!(
+        "   - SIMD Operations: {:.2} ops/sec",
+        100000.0 / simd_time.as_secs_f64()
+    );
 }

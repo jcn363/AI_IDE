@@ -1,8 +1,10 @@
 //! Commands for workspace version alignment
 
-use crate::dependency::{DependencyManager, VersionAlignment};
 use std::sync::Arc;
+
 use tauri::{Manager, State};
+
+use crate::dependency::{DependencyManager, VersionAlignment};
 
 /// State for version alignment commands
 pub struct VersionAlignmentState {

@@ -1,11 +1,13 @@
 //! Visualization of performance metrics
 
-use crate::performance::{BuildMetrics, OptimizationSuggestion};
+use std::collections::HashMap;
+use std::path::Path;
+
 use anyhow::Result;
 use petgraph::dot::{Config, Dot};
 use petgraph::graph::DiGraph;
-use std::collections::HashMap;
-use std::path::Path;
+
+use crate::performance::{BuildMetrics, OptimizationSuggestion};
 
 /// Generate a flamegraph from build metrics
 pub fn generate_flamegraph(_metrics: &BuildMetrics, _output_path: &Path) -> Result<()> {

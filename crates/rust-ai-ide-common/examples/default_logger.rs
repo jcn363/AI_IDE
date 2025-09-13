@@ -1,11 +1,10 @@
 //! Example demonstrating the usage of DefaultLogger
 
-use rust_ai_ide_common::{
-    default_logger::{global_logger, init_default_logger, DefaultLogger},
-    logging::{LogContext, LogLevel},
-    Loggable, LoggableError, UnifiedLogger,
-};
 use std::time::Duration;
+
+use rust_ai_ide_common::default_logger::{global_logger, init_default_logger, DefaultLogger};
+use rust_ai_ide_common::logging::{LogContext, LogLevel};
+use rust_ai_ide_common::{Loggable, LoggableError, UnifiedLogger};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

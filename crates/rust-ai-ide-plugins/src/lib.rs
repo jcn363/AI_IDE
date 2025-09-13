@@ -16,7 +16,8 @@ pub use dependency_resolver::*;
 /// Re-export the main plugin system components for user convenience.
 pub use interfaces::*;
 pub use loader::PluginLoader;
-pub use marketplace::{client::MarketplaceClient, registry::PluginRegistry as MarketplaceRegistry};
+pub use marketplace::client::MarketplaceClient;
+pub use marketplace::registry::PluginRegistry as MarketplaceRegistry;
 pub use registry::PluginRegistry;
 
 /// Enhanced plugin initialization using Mission Control architecture

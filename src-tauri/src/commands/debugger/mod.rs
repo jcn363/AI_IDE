@@ -1,8 +1,9 @@
+use std::collections::HashMap;
+
 use rust_ai_ide_plugins::debugger::{
     BreakpointInfo, Debugger, DebuggerConfig, DebuggerState, StackFrame, VariableInfo,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use tokio::sync::{mpsc, Mutex};
 
 // Placeholder types for IDEState - these should match lib.rs definitions
@@ -17,9 +18,9 @@ pub struct File;
 #[derive(Default)]
 pub struct IDEState {
     pub current_workspace: Option<Workspace>,
-    pub open_files: HashMap<String, File>,
-    pub current_project: Option<Project>,
-    pub debugger: Arc<Mutex<Debugger>>,
+    pub open_files:        HashMap<String, File>,
+    pub current_project:   Option<Project>,
+    pub debugger:          Arc<Mutex<Debugger>>,
 }
 
 // Uncomment if FileWatcher is used
@@ -30,9 +31,9 @@ impl IDEState {
     pub fn new() -> Self {
         Self {
             current_workspace: None,
-            open_files: HashMap::new(),
-            current_project: None,
-            debugger: Arc::new(Mutex::new(Debugger::new())),
+            open_files:        HashMap::new(),
+            current_project:   None,
+            debugger:          Arc::new(Mutex::new(Debugger::new())),
         }
     }
 }
@@ -40,16 +41,17 @@ impl IDEState {
 // Import types needed for debugger commands
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TerminalEvent {
-    pub id: String,
+    pub id:          String,
     pub stream_type: String,
-    pub line: String,
+    pub line:        String,
 }
 
 // Design pattern comments from task:
 // Session Management: 8 commands (start_debug_session to debug_stop)
-// Breakpoints: 4 commands (debugger_set_breakpoint to debugger_toggle_breakpoint, debugger_get_breakpoints)
-// Variable Inspection: 6 commands (debugger_evaluate to debugger_get_call_stack, debugger_get_state)
-// Variable Objects: 3 commands (debugger_var_create to debugger_var_children)
+// Breakpoints: 4 commands (debugger_set_breakpoint to debugger_toggle_breakpoint,
+// debugger_get_breakpoints) Variable Inspection: 6 commands (debugger_evaluate to
+// debugger_get_call_stack, debugger_get_state) Variable Objects: 3 commands (debugger_var_create to
+// debugger_var_children)
 
 #[tauri::command]
 pub async fn start_debug_session(
@@ -62,8 +64,7 @@ pub async fn start_debug_session(
     let ide_state = state.lock().await;
     let mut debugger = ide_state.debugger.lock().await;
 
-    let backend =
-        Debugger::detect_backend().ok_or("No debugger backend (GDB/LLDB) found on system")?;
+    let backend = Debugger::detect_backend().ok_or("No debugger backend (GDB/LLDB) found on system")?;
 
     let config = DebuggerConfig {
         backend,
@@ -164,20 +165,14 @@ pub async fn debugger_set_breakpoint(
 }
 
 #[tauri::command]
-pub async fn debugger_remove_breakpoint(
-    id: u32,
-    state: tauri::State<'_, Arc<Mutex<IDEState>>>,
-) -> Result<(), String> {
+pub async fn debugger_remove_breakpoint(id: u32, state: tauri::State<'_, Arc<Mutex<IDEState>>>) -> Result<(), String> {
     let ide_state = state.lock().await;
     let mut debugger = ide_state.debugger.lock().await;
     debugger.remove_breakpoint(id).await
 }
 
 #[tauri::command]
-pub async fn debugger_toggle_breakpoint(
-    id: u32,
-    state: tauri::State<'_, Arc<Mutex<IDEState>>>,
-) -> Result<(), String> {
+pub async fn debugger_toggle_breakpoint(id: u32, state: tauri::State<'_, Arc<Mutex<IDEState>>>) -> Result<(), String> {
     let ide_state = state.lock().await;
     let mut debugger = ide_state.debugger.lock().await;
     debugger.toggle_breakpoint(id).await
@@ -205,10 +200,7 @@ pub async fn debugger_set_variable(
 }
 
 #[tauri::command]
-pub async fn debugger_select_frame(
-    frame_id: u32,
-    state: tauri::State<'_, Arc<Mutex<IDEState>>>,
-) -> Result<(), String> {
+pub async fn debugger_select_frame(frame_id: u32, state: tauri::State<'_, Arc<Mutex<IDEState>>>) -> Result<(), String> {
     let ide_state = state.lock().await;
     let mut debugger = ide_state.debugger.lock().await;
     debugger.select_frame(frame_id).await
@@ -224,14 +216,13 @@ pub async fn debugger_get_variables(
 
     // Use provided scope or default to "local", with explicit handling
     let scope = match scope {
-        Some(s) => {
+        Some(s) =>
             if s.is_empty() {
                 log::warn!("Empty scope provided for debugger variables, using 'local'");
                 "local".to_string()
             } else {
                 s
-            }
-        }
+            },
         None => {
             let default_scope = "local".to_string();
             log::debug!(
@@ -246,9 +237,7 @@ pub async fn debugger_get_variables(
 }
 
 #[tauri::command]
-pub async fn debugger_get_call_stack(
-    state: tauri::State<'_, Arc<Mutex<IDEState>>>,
-) -> Result<Vec<StackFrame>, String> {
+pub async fn debugger_get_call_stack(state: tauri::State<'_, Arc<Mutex<IDEState>>>) -> Result<Vec<StackFrame>, String> {
     let ide_state = state.lock().await;
     let debugger = ide_state.debugger.lock().await;
     debugger.get_call_stack().await
@@ -264,9 +253,7 @@ pub async fn debugger_get_breakpoints(
 }
 
 #[tauri::command]
-pub async fn debugger_get_state(
-    state: tauri::State<'_, Arc<Mutex<IDEState>>>,
-) -> Result<DebuggerState, String> {
+pub async fn debugger_get_state(state: tauri::State<'_, Arc<Mutex<IDEState>>>) -> Result<DebuggerState, String> {
     let ide_state = state.lock().await;
     let debugger = ide_state.debugger.lock().await;
     Ok(debugger.get_state().clone())
@@ -284,10 +271,7 @@ pub async fn debugger_var_create(
 }
 
 #[tauri::command]
-pub async fn debugger_var_delete(
-    name: String,
-    state: tauri::State<'_, Arc<Mutex<IDEState>>>,
-) -> Result<(), String> {
+pub async fn debugger_var_delete(name: String, state: tauri::State<'_, Arc<Mutex<IDEState>>>) -> Result<(), String> {
     let ide_state = state.lock().await;
     let mut debugger = ide_state.debugger.lock().await;
     debugger.delete_var_object(&name).await

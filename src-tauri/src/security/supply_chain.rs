@@ -12,25 +12,25 @@ use crate::security::audit_logger;
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SupplyChainConfig {
     /// Workspace root path
-    pub workspace_path: PathBuf,
+    pub workspace_path:                PathBuf,
     /// Allowed licenses (default: MIT, Apache-2.0)
-    pub allowed_licenses: Vec<String>,
+    pub allowed_licenses:              Vec<String>,
     /// Enable vulnerability scanning
     pub enable_vulnerability_scanning: bool,
     /// Enable license compliance checking
-    pub enable_license_checking: bool,
+    pub enable_license_checking:       bool,
     /// Enable cargo-deny integration
-    pub enable_cargo_deny: bool,
+    pub enable_cargo_deny:             bool,
 }
 
 impl Default for SupplyChainConfig {
     fn default() -> Self {
         Self {
-            workspace_path: PathBuf::from("."),
-            allowed_licenses: vec!["MIT".to_string(), "Apache-2.0".to_string()],
+            workspace_path:                PathBuf::from("."),
+            allowed_licenses:              vec!["MIT".to_string(), "Apache-2.0".to_string()],
             enable_vulnerability_scanning: true,
-            enable_license_checking: true,
-            enable_cargo_deny: true,
+            enable_license_checking:       true,
+            enable_cargo_deny:             true,
         }
     }
 }
@@ -39,15 +39,15 @@ impl Default for SupplyChainConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SupplyChainAnalysisResult {
     /// Dependency analysis results
-    pub dependencies: Vec<DependencyInfo>,
+    pub dependencies:      Vec<DependencyInfo>,
     /// License compliance issues
-    pub license_issues: Vec<LicenseIssue>,
+    pub license_issues:    Vec<LicenseIssue>,
     /// Vulnerability findings
-    pub vulnerabilities: Vec<Vulnerability>,
+    pub vulnerabilities:   Vec<Vulnerability>,
     /// Cargo-deny results
     pub cargo_deny_result: Option<CargoDenyResult>,
     /// Overall status
-    pub status: AnalysisStatus,
+    pub status:            AnalysisStatus,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -60,10 +60,10 @@ pub enum AnalysisStatus {
 /// Dependency information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyInfo {
-    pub name: String,
-    pub version: String,
-    pub source: String,
-    pub license: Option<String>,
+    pub name:         String,
+    pub version:      String,
+    pub source:       String,
+    pub license:      Option<String>,
     pub dependencies: Vec<String>,
 }
 
@@ -72,22 +72,22 @@ pub struct DependencyInfo {
 pub struct LicenseIssue {
     pub package: String,
     pub license: String,
-    pub issue: String,
+    pub issue:   String,
 }
 
 /// Vulnerability finding
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Vulnerability {
-    pub package: String,
+    pub package:     String,
     pub advisory_id: String,
-    pub severity: String,
+    pub severity:    String,
     pub description: String,
 }
 
 /// Cargo-deny result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CargoDenyResult {
-    pub output: String,
+    pub output:    String,
     pub exit_code: i32,
 }
 
@@ -173,8 +173,7 @@ impl SupplyChainService {
             None
         };
 
-        let status = if errors.is_empty() && vulnerabilities.is_empty() && license_issues.is_empty()
-        {
+        let status = if errors.is_empty() && vulnerabilities.is_empty() && license_issues.is_empty() {
             AnalysisStatus::Passed
         } else if !vulnerabilities.is_empty() || !license_issues.is_empty() {
             AnalysisStatus::Failed
@@ -204,10 +203,7 @@ impl SupplyChainService {
     }
 
     /// Analyze project dependencies using cargo_metadata
-    async fn analyze_dependencies(
-        &self,
-        workspace_path: &PathBuf,
-    ) -> Result<Vec<DependencyInfo>, IDEError> {
+    async fn analyze_dependencies(&self, workspace_path: &PathBuf) -> Result<Vec<DependencyInfo>, IDEError> {
         use cargo_metadata::{MetadataCommand, Package};
 
         let metadata = MetadataCommand::new()
@@ -227,13 +223,13 @@ impl SupplyChainService {
                 .collect::<Vec<_>>();
 
             dependencies.push(DependencyInfo {
-                name: package.name,
-                version: package.version.to_string(),
-                source: package
+                name:         package.name,
+                version:      package.version.to_string(),
+                source:       package
                     .source
                     .map(|s| s.to_string())
                     .unwrap_or_else(|| "local".to_string()),
-                license: package.license,
+                license:      package.license,
                 dependencies: deps,
             });
         }
@@ -260,7 +256,7 @@ impl SupplyChainService {
                         issues.push(LicenseIssue {
                             package: dep.name.clone(),
                             license: license_str.clone(),
-                            issue: "Invalid SPDX license expression".to_string(),
+                            issue:   "Invalid SPDX license expression".to_string(),
                         });
                         continue;
                     }
@@ -276,7 +272,7 @@ impl SupplyChainService {
                     issues.push(LicenseIssue {
                         package: dep.name.clone(),
                         license: license_str.clone(),
-                        issue: format!(
+                        issue:   format!(
                             "License '{}' not in allowed list: {:?}",
                             license_str, config.allowed_licenses
                         ),
@@ -286,7 +282,7 @@ impl SupplyChainService {
                 issues.push(LicenseIssue {
                     package: dep.name.clone(),
                     license: "None".to_string(),
-                    issue: "No license specified".to_string(),
+                    issue:   "No license specified".to_string(),
                 });
             }
         }
@@ -295,10 +291,7 @@ impl SupplyChainService {
     }
 
     /// Scan for vulnerabilities using rustsec
-    async fn scan_vulnerabilities(
-        &self,
-        dependencies: &[DependencyInfo],
-    ) -> Result<Vec<Vulnerability>, IDEError> {
+    async fn scan_vulnerabilities(&self, dependencies: &[DependencyInfo]) -> Result<Vec<Vulnerability>, IDEError> {
         use rustsec::Database;
 
         let database = Database::fetch()
@@ -310,16 +303,13 @@ impl SupplyChainService {
         let mut vulnerabilities = Vec::new();
 
         for dep in dependencies {
-            let package_name = rustsec::package::Name::parse(&dep.name).map_err(|e| {
-                IDEError::VulnerabilityScanFailed {
+            let package_name =
+                rustsec::package::Name::parse(&dep.name).map_err(|e| IDEError::VulnerabilityScanFailed {
                     reason: format!("Invalid package name '{}': {}", dep.name, e),
-                }
-            })?;
+                })?;
 
-            let version = rustsec::Version::parse(&dep.version).map_err(|e| {
-                IDEError::VulnerabilityScanFailed {
-                    reason: format!("Invalid version '{}': {}", dep.version, e),
-                }
+            let version = rustsec::Version::parse(&dep.version).map_err(|e| IDEError::VulnerabilityScanFailed {
+                reason: format!("Invalid version '{}': {}", dep.version, e),
             })?;
 
             let package = rustsec::package::Package {
@@ -330,9 +320,9 @@ impl SupplyChainService {
             let vulns = database.query(&package);
             for vuln in vulns {
                 vulnerabilities.push(Vulnerability {
-                    package: dep.name.clone(),
+                    package:     dep.name.clone(),
                     advisory_id: vuln.advisory.id.to_string(),
-                    severity: vuln.advisory.severity.to_string(),
+                    severity:    vuln.advisory.severity.to_string(),
                     description: vuln.advisory.description.clone(),
                 });
             }
@@ -354,7 +344,7 @@ impl SupplyChainService {
             })?;
 
         let result = CargoDenyResult {
-            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            output:    String::from_utf8_lossy(&output.stdout).to_string(),
             exit_code: output.status.code().unwrap_or(1),
         };
 

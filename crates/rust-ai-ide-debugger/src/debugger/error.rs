@@ -1,7 +1,7 @@
 //! Error handling for the debugger
 
-use std::fmt;
-use std::io;
+use std::{fmt, io};
+
 use thiserror::Error;
 
 /// Main error type for the debugger

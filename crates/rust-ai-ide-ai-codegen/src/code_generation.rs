@@ -38,20 +38,17 @@ use crate::{CodeGenerationContext, CodeGenerationError, TargetLanguage};
 /// Generator metadata (ai-codegen specific)
 #[derive(Debug, Clone)]
 pub struct GeneratorMetadata {
-    pub name: String,
-    pub version: String,
+    pub name:             String,
+    pub version:          String,
     pub language_support: Vec<TargetLanguage>,
-    pub description: String,
-    pub author: String,
+    pub description:      String,
+    pub author:           String,
 }
 
 /// Main code generation service
 #[derive(Debug)]
 pub struct CodeGenerationService {
-    function_generators: std::collections::HashMap<
-        TargetLanguage,
-        Vec<crate::function_generation::FunctionGenerator>,
-    >,
+    function_generators: std::collections::HashMap<TargetLanguage, Vec<crate::function_generation::FunctionGenerator>>,
 }
 
 impl CodeGenerationService {
@@ -77,16 +74,11 @@ impl CodeGenerationService {
     }
 
     /// Generate code using the appropriate generator
-    pub async fn generate_code(
-        &self,
-        context: CodeGenerationContext,
-    ) -> Result<String, CodeGenerationError> {
+    pub async fn generate_code(&self, context: CodeGenerationContext) -> Result<String, CodeGenerationError> {
         let generators = self
             .function_generators
             .get(&context.language)
-            .ok_or_else(|| {
-                CodeGenerationError::UnsupportedLanguage(format!("{:?}", context.language))
-            })?;
+            .ok_or_else(|| CodeGenerationError::UnsupportedLanguage(format!("{:?}", context.language)))?;
 
         // For now, use the first available generator
         // In a more sophisticated implementation, we might rank/select generators

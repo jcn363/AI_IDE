@@ -1,18 +1,18 @@
 //! Parallel compilation system for Rust AI IDE
 //! Provides SIMD-accelerated parallel compilation with dependency analysis
 
-use anyhow::{Context, Result};
-use cargo_metadata::{Metadata, Package};
-use rayon::prelude::*;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
-use tokio::sync::Mutex;
-use tracing::{error, info, warn};
 
+use anyhow::{Context, Result};
+use cargo_metadata::{Metadata, Package};
+use rayon::prelude::*;
 use rust_ai_ide_cargo::dependency::DependencyManager;
 use rust_ai_ide_simd::{get_simd_processor, SIMDProcessor};
+use serde::{Deserialize, Serialize};
+use tokio::sync::Mutex;
+use tracing::{error, info, warn};
 
 /// Represents compilation targets that can be parallelized
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -25,10 +25,10 @@ pub enum CompilationTarget {
 /// Compilation unit with dependencies
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompilationUnit {
-    pub target: CompilationTarget,
-    pub dependencies: Vec<CompilationTarget>,
+    pub target:             CompilationTarget,
+    pub dependencies:       Vec<CompilationTarget>,
     pub estimated_workload: u64, // Estimated compilation units
-    pub priority: u32,           // Higher number = higher priority
+    pub priority:           u32, // Higher number = higher priority
 }
 
 /// Compilation graph for dependency resolution
@@ -149,11 +149,11 @@ impl Hash for CompilationTarget {
 /// Compilation progress tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompilationProgress {
-    pub target: CompilationTarget,
-    pub status: CompilationStatus,
-    pub start_time: String,
-    pub completed_at: Option<String>,
-    pub duration_ms: Option<u64>,
+    pub target:        CompilationTarget,
+    pub status:        CompilationStatus,
+    pub start_time:    String,
+    pub completed_at:  Option<String>,
+    pub duration_ms:   Option<u64>,
     pub error_message: Option<String>,
 }
 
@@ -168,13 +168,13 @@ pub enum CompilationStatus {
 /// Core parallel compilation orchestrator
 pub struct ParallelCompiler {
     /// SIMD processor integration for vectorized operations
-    simd_processor: Option<SIMDProcessor>,
+    simd_processor:   Option<SIMDProcessor>,
     /// Thread pool configuration for optimal resource usage
-    thread_pool: rayon::ThreadPool,
+    thread_pool:      rayon::ThreadPool,
     /// Dependency graph for safe parallel execution
     dependency_graph: Arc<Mutex<CompilationGraph>>,
     /// Build cache integration
-    build_cache: Arc<Mutex<BuildCacheManager>>,
+    build_cache:      Arc<Mutex<BuildCacheManager>>,
     /// Resource utilization monitoring
     resource_monitor: Arc<CompilationMonitor>,
     /// Compilation progress tracking
@@ -185,16 +185,16 @@ pub struct ParallelCompiler {
 #[derive(Debug)]
 pub struct BuildCacheManager {
     /// Cache of file modification times
-    file_times: HashMap<String, String>,
+    file_times:          HashMap<String, String>,
     /// Cache of compilation results
     compilation_results: HashMap<CompilationTarget, CacheEntry>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CacheEntry {
-    pub hash: String,
+    pub hash:      String,
     pub timestamp: String,
-    pub success: bool,
+    pub success:   bool,
     pub artifacts: Vec<String>,
 }
 
@@ -202,24 +202,24 @@ pub struct CacheEntry {
 #[derive(Debug)]
 pub struct CompilationMonitor {
     /// CPU usage samples (SIMD-optimized storage)
-    cpu_samples: Vec<f64>,
+    cpu_samples:       Vec<f64>,
     /// Memory usage samples
-    memory_samples: Vec<f64>,
+    memory_samples:    Vec<f64>,
     /// Disk I/O samples
-    disk_io_samples: Vec<f64>,
+    disk_io_samples:   Vec<f64>,
     /// Active thread count
-    active_threads: usize,
+    active_threads:    usize,
     /// SIMD fallback flag
     use_simd_fallback: bool,
     /// Resource limits
-    resource_limits: ResourceLimits,
+    resource_limits:   ResourceLimits,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceLimits {
-    pub max_cpu_percent: f64,
-    pub max_memory_mb: f64,
-    pub max_threads: usize,
+    pub max_cpu_percent:        f64,
+    pub max_memory_mb:          f64,
+    pub max_threads:            usize,
     pub max_disk_io_mb_per_sec: f64,
     pub enable_resource_limits: bool,
 }
@@ -227,9 +227,9 @@ pub struct ResourceLimits {
 impl Default for ResourceLimits {
     fn default() -> Self {
         Self {
-            max_cpu_percent: 80.0,
-            max_memory_mb: 8000.0, // 8GB
-            max_threads: num_cpus::get().saturating_mul(4),
+            max_cpu_percent:        80.0,
+            max_memory_mb:          8000.0, // 8GB
+            max_threads:            num_cpus::get().saturating_mul(4),
             max_disk_io_mb_per_sec: 500.0,
             enable_resource_limits: true,
         }
@@ -240,7 +240,7 @@ impl CompilationMonitor {
     /// Create new compilation monitor
     pub fn new() -> Self {
         Self {
-            cpu_samples: Vec::with_capacity(60), // 1 minute worth of samples
+            cpu_samples:    Vec::with_capacity(60), // 1 minute worth of samples
             memory_samples: Vec::with_capacity(60),
             active_threads: 0,
         }
@@ -321,8 +321,8 @@ impl ParallelCompiler {
         info!("Analyzing workspace: {}", workspace_path);
 
         // Load dependency metadata
-        let metadata_command = cargo_metadata::MetadataCommand::new()
-            .manifest_path(format!("{}/Cargo.toml", workspace_path));
+        let metadata_command =
+            cargo_metadata::MetadataCommand::new().manifest_path(format!("{}/Cargo.toml", workspace_path));
 
         let metadata = metadata_command
             .exec()
@@ -428,11 +428,7 @@ impl ParallelCompiler {
     }
 
     /// Execute parallel compilation of workspace
-    pub async fn compile_parallel(
-        &self,
-        workspace_path: &str,
-        incremental: bool,
-    ) -> Result<CompilationResult> {
+    pub async fn compile_parallel(&self, workspace_path: &str, incremental: bool) -> Result<CompilationResult> {
         info!(
             "Starting parallel compilation with incremental={}, SIMD={}",
             incremental,
@@ -526,20 +522,13 @@ impl ParallelCompiler {
     }
 
     /// Check if target needs recompilation
-    async fn needs_recompilation(
-        &self,
-        target: &CompilationTarget,
-        cache: &BuildCacheManager,
-    ) -> Result<bool> {
+    async fn needs_recompilation(&self, target: &CompilationTarget, cache: &BuildCacheManager) -> Result<bool> {
         // For now, always recompile - in a real implementation this would check file modification times
         Ok(true)
     }
 
     /// Compile targets in parallel using Rayon
-    async fn compile_targets_parallel(
-        &self,
-        targets: Vec<CompilationTarget>,
-    ) -> Vec<(CompilationTarget, bool)> {
+    async fn compile_targets_parallel(&self, targets: Vec<CompilationTarget>) -> Vec<(CompilationTarget, bool)> {
         // Prepare compilation functions for each target
         let compilation_tasks: Vec<_> = targets
             .into_iter()
@@ -551,17 +540,14 @@ impl ParallelCompiler {
                 let start_time = chrono::Utc::now().to_rfc3339();
                 {
                     let mut tracker = progress_tracker.lock().await;
-                    tracker.insert(
-                        target.clone(),
-                        CompilationProgress {
-                            target: target.clone(),
-                            status: CompilationStatus::InProgress,
-                            start_time: start_time.clone(),
-                            completed_at: None,
-                            duration_ms: None,
-                            error_message: None,
-                        },
-                    );
+                    tracker.insert(target.clone(), CompilationProgress {
+                        target:        target.clone(),
+                        status:        CompilationStatus::InProgress,
+                        start_time:    start_time.clone(),
+                        completed_at:  None,
+                        duration_ms:   None,
+                        error_message: None,
+                    });
                 }
 
                 let target_clone = target.clone();
@@ -571,14 +557,12 @@ impl ParallelCompiler {
                         // Record completion
                         let end_time = chrono::Utc::now().to_rfc3339();
                         let duration = chrono::Utc::now()
-                            .signed_duration_since(
-                                chrono::DateTime::parse_from_rfc3339(&start_time).unwrap(),
-                            )
+                            .signed_duration_since(chrono::DateTime::parse_from_rfc3339(&start_time).unwrap())
                             .num_milliseconds() as u64;
 
                         {
-                            let mut tracker = tokio::runtime::Handle::current()
-                                .block_on(async { progress_tracker.lock().await });
+                            let mut tracker =
+                                tokio::runtime::Handle::current().block_on(async { progress_tracker.lock().await });
 
                             if let Some(progress) = tracker.get_mut(&target_clone) {
                                 progress.status = if success {
@@ -604,7 +588,8 @@ impl ParallelCompiler {
             // In practice, you'd use a parallel executor here
             // For now, execute sequentially but mark for potential parallelism
             let result = task();
-            results.push(result.unwrap_or((targets[0].clone(), false))); // Simplified error handling
+            results.push(result.unwrap_or((targets[0].clone(), false))); // Simplified error
+                                                                         // handling
         }
 
         results
@@ -662,9 +647,9 @@ impl ParallelCompiler {
 /// Compilation result summary
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompilationResult {
-    pub total_time: std::time::Duration,
-    pub successful: usize,
-    pub failed: usize,
+    pub total_time:     std::time::Duration,
+    pub successful:     usize,
+    pub failed:         usize,
     pub target_results: HashMap<CompilationTarget, bool>,
 }
 
@@ -672,7 +657,7 @@ impl BuildCacheManager {
     /// Create new build cache manager
     pub fn new() -> Self {
         Self {
-            file_times: HashMap::new(),
+            file_times:          HashMap::new(),
             compilation_results: HashMap::new(),
         }
     }
@@ -680,8 +665,9 @@ impl BuildCacheManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::path::Path;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_parallel_compiler_creation() {
@@ -708,17 +694,17 @@ mod tests {
         let mut graph = CompilationGraph::new();
 
         let unit1 = CompilationUnit {
-            target: CompilationTarget::Crate("crate1".to_string()),
-            dependencies: vec![],
+            target:             CompilationTarget::Crate("crate1".to_string()),
+            dependencies:       vec![],
             estimated_workload: 100,
-            priority: 50,
+            priority:           50,
         };
 
         let unit2 = CompilationUnit {
-            target: CompilationTarget::Crate("crate2".to_string()),
-            dependencies: vec![CompilationTarget::Crate("crate1".to_string())],
+            target:             CompilationTarget::Crate("crate2".to_string()),
+            dependencies:       vec![CompilationTarget::Crate("crate1".to_string())],
             estimated_workload: 150,
-            priority: 40,
+            priority:           40,
         };
 
         graph.add_unit(unit1);
@@ -748,17 +734,17 @@ mod tests {
         let mut graph = CompilationGraph::new();
 
         let unit1 = CompilationUnit {
-            target: CompilationTarget::Crate("base".to_string()),
-            dependencies: vec![],
+            target:             CompilationTarget::Crate("base".to_string()),
+            dependencies:       vec![],
             estimated_workload: 50,
-            priority: 100,
+            priority:           100,
         };
 
         let unit2 = CompilationUnit {
-            target: CompilationTarget::Crate("dependent".to_string()),
-            dependencies: vec![CompilationTarget::Crate("base".to_string())],
+            target:             CompilationTarget::Crate("dependent".to_string()),
+            dependencies:       vec![CompilationTarget::Crate("base".to_string())],
             estimated_workload: 100,
-            priority: 80,
+            priority:           80,
         };
 
         graph.add_unit(unit1);

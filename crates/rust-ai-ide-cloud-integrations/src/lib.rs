@@ -3,11 +3,13 @@ pub mod azure;
 pub mod gcp;
 pub mod types;
 
-use crate::types::{CloudAuth, CloudConfig, CloudResource};
+use std::fmt::Debug;
+
 use anyhow::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
+
+use crate::types::{CloudAuth, CloudConfig, CloudResource};
 
 /// Core trait for cloud provider integrations
 #[async_trait]
@@ -47,8 +49,7 @@ impl CloudProviderFactory {
     /// Create Azure provider
     pub async fn azure(
         config: azure::AzureConfig,
-    ) -> Result<Box<dyn CloudProvider<Config = azure::AzureConfig, Client = azure::AzureClient>>>
-    {
+    ) -> Result<Box<dyn CloudProvider<Config = azure::AzureConfig, Client = azure::AzureClient>>> {
         Ok(Box::new(azure::AzureClient::new(config).await?))
     }
 
@@ -103,11 +104,7 @@ impl CloudServiceManager {
     }
 
     /// Register a cloud provider
-    pub fn register_provider(
-        &mut self,
-        name: impl Into<String>,
-        provider: Box<dyn CloudProviderAny>,
-    ) {
+    pub fn register_provider(&mut self, name: impl Into<String>, provider: Box<dyn CloudProviderAny>) {
         self.providers.insert(name.into(), provider);
     }
 

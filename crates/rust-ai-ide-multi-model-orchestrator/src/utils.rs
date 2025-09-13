@@ -6,8 +6,9 @@ use crate::Result;
 
 /// Utility functions for model ID generation and validation
 pub mod identity {
-    use crate::types::ModelId;
     use uuid::Uuid;
+
+    use crate::types::ModelId;
 
     pub fn generate_model_id() -> ModelId {
         ModelId(Uuid::new_v4())

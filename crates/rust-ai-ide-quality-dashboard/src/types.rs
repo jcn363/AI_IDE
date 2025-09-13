@@ -3,8 +3,9 @@
 //! This module defines all the core types used throughout the quality intelligence dashboard.
 //! These types provide the foundation for metric collection, visualization, and interaction.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 /// Core quality metric types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,9 +36,9 @@ pub enum QualityMetric {
 
     /// Custom metric with name and value
     Custom {
-        name: String,
+        name:  String,
         value: MetricValue,
-        unit: Option<String>,
+        unit:  Option<String>,
     },
 }
 
@@ -163,9 +164,9 @@ impl Default for DashboardConfiguration {
     fn default() -> Self {
         Self {
             update_interval: 30, // 30 seconds
-            retention_days: 90,  // 90 days
-            thresholds: AlertThresholds::default(),
-            ui_prefs: UiPreferences::default(),
+            retention_days:  90, // 90 days
+            thresholds:      AlertThresholds::default(),
+            ui_prefs:        UiPreferences::default(),
             enabled_metrics: vec![
                 "code_quality".to_string(),
                 "performance".to_string(),
@@ -173,7 +174,7 @@ impl Default for DashboardConfiguration {
                 "testing".to_string(),
                 "complexity".to_string(),
             ],
-            Integrations: IntegrationConfig::default(),
+            Integrations:    IntegrationConfig::default(),
         }
     }
 }
@@ -195,25 +196,25 @@ impl Default for AlertThresholds {
     fn default() -> Self {
         Self {
             critical: Thresholds {
-                code_quality_min: 0.2,
+                code_quality_min:       0.2,
                 performance_latent_max: 1000.0,
-                security_vulns_max: 10,
-                test_coverage_min: 0.1,
-                maintainability_min: 0.3,
+                security_vulns_max:     10,
+                test_coverage_min:      0.1,
+                maintainability_min:    0.3,
             },
-            warning: Thresholds {
-                code_quality_min: 0.5,
+            warning:  Thresholds {
+                code_quality_min:       0.5,
                 performance_latent_max: 500.0,
-                security_vulns_max: 5,
-                test_coverage_min: 0.5,
-                maintainability_min: 0.6,
+                security_vulns_max:     5,
+                test_coverage_min:      0.5,
+                maintainability_min:    0.6,
             },
-            info: Thresholds {
-                code_quality_min: 0.7,
+            info:     Thresholds {
+                code_quality_min:       0.7,
                 performance_latent_max: 200.0,
-                security_vulns_max: 2,
-                test_coverage_min: 0.7,
-                maintainability_min: 0.8,
+                security_vulns_max:     2,
+                test_coverage_min:      0.7,
+                maintainability_min:    0.8,
             },
         }
     }
@@ -260,11 +261,11 @@ pub struct UiPreferences {
 impl Default for UiPreferences {
     fn default() -> Self {
         Self {
-            theme: "auto".to_string(),
-            chart_style: "lines".to_string(),
+            theme:              "auto".to_string(),
+            chart_style:        "lines".to_string(),
             default_time_range: "24h".to_string(),
-            layout: "grid".to_string(),
-            auto_refresh: true,
+            layout:             "grid".to_string(),
+            auto_refresh:       true,
         }
     }
 }
@@ -288,10 +289,10 @@ pub struct IntegrationConfig {
 impl Default for IntegrationConfig {
     fn default() -> Self {
         Self {
-            real_time_analysis: IntegrationSettings::default(),
+            real_time_analysis:     IntegrationSettings::default(),
             predictive_maintenance: IntegrationSettings::default(),
-            collaboration: CollaborationSettings::default(),
-            export: ExportSettings::default(),
+            collaboration:          CollaborationSettings::default(),
+            export:                 ExportSettings::default(),
         }
     }
 }
@@ -312,9 +313,9 @@ pub struct IntegrationSettings {
 impl Default for IntegrationSettings {
     fn default() -> Self {
         Self {
-            enabled: true,
+            enabled:          true,
             update_frequency: 30,
-            endpoint: None,
+            endpoint:         None,
         }
     }
 }
@@ -339,8 +340,8 @@ impl Default for CollaborationSettings {
     fn default() -> Self {
         Self {
             team_features: true,
-            sharing: true,
-            real_time: true,
+            sharing:       true,
+            real_time:     true,
             max_team_size: 50,
         }
     }
@@ -365,9 +366,9 @@ pub struct ExportSettings {
 impl Default for ExportSettings {
     fn default() -> Self {
         Self {
-            csv_export: true,
-            json_export: true,
-            pdf_reports: true,
+            csv_export:      true,
+            json_export:     true,
+            pdf_reports:     true,
             max_export_size: 100.0,
         }
     }
@@ -402,7 +403,7 @@ pub struct WidgetPosition {
 /// Widget size
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WidgetSize {
-    pub width: i32,
+    pub width:  i32,
     pub height: i32,
 }
 

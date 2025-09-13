@@ -15,23 +15,20 @@
 //! - Unified statistics and monitoring
 //! - Type-safe cache adapters for common use cases
 
-use rust_ai_ide_cache::*;
-use rust_ai_ide_errors::*;
-use rust_ai_ide_types::*;
 use std::sync::Arc;
 use std::time::Duration;
 
-/// Re-export the core cache types for easy access
-pub use rust_ai_ide_cache::{Cache, CacheConfig, CacheEntry, CacheStats, EvictionPolicy};
-
 /// Re-export specific implementations
 pub use rust_ai_ide_cache::cache_impls::*;
-
-/// Re-export strategies
-pub use rust_ai_ide_cache::strategies::*;
-
 /// Re-export storage backends
 pub use rust_ai_ide_cache::storage::*;
+/// Re-export strategies
+pub use rust_ai_ide_cache::strategies::*;
+use rust_ai_ide_cache::*;
+/// Re-export the core cache types for easy access
+pub use rust_ai_ide_cache::{Cache, CacheConfig, CacheEntry, CacheStats, EvictionPolicy};
+use rust_ai_ide_errors::*;
+use rust_ai_ide_types::*;
 
 /// Centralized cache configuration presets
 pub mod presets {
@@ -76,17 +73,17 @@ pub mod presets {
 
 /// Unified cache manager for the application
 pub struct UnifiedCacheManager {
-    diagnostic_cache: Arc<InMemoryCache<DiagnosticCacheKey, CompilerDiagnosticsResult>>,
+    diagnostic_cache:  Arc<InMemoryCache<DiagnosticCacheKey, CompilerDiagnosticsResult>>,
     explanation_cache: Arc<InMemoryCache<String, ErrorCodeExplanation>>,
     performance_cache: Arc<InMemoryCache<String, serde_json::Value>>,
-    stats: std::sync::Arc<std::sync::Mutex<GlobalCacheStats>>,
+    stats:             std::sync::Arc<std::sync::Mutex<GlobalCacheStats>>,
 }
 
 /// Generalized diagnostic cache key
 #[derive(Debug, Clone, Hash, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct DiagnosticCacheKey {
     pub workspace_path: String,
-    pub request_hash: u64, // Hash of request parameters
+    pub request_hash:   u64, // Hash of request parameters
 }
 
 impl DiagnosticCacheKey {
@@ -116,23 +113,23 @@ impl DiagnosticCacheKey {
 /// Global cache statistics combining all cache types
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct GlobalCacheStats {
-    pub diagnostic: CacheStats,
-    pub explanation: CacheStats,
-    pub performance: CacheStats,
+    pub diagnostic:      CacheStats,
+    pub explanation:     CacheStats,
+    pub performance:     CacheStats,
     pub total_evictions: u64,
-    pub total_hits: u64,
-    pub total_misses: u64,
+    pub total_hits:      u64,
+    pub total_misses:    u64,
 }
 
 impl Default for GlobalCacheStats {
     fn default() -> Self {
         Self {
-            diagnostic: CacheStats::default(),
-            explanation: CacheStats::default(),
-            performance: CacheStats::default(),
+            diagnostic:      CacheStats::default(),
+            explanation:     CacheStats::default(),
+            performance:     CacheStats::default(),
             total_evictions: 0,
-            total_hits: 0,
-            total_misses: 0,
+            total_hits:      0,
+            total_misses:    0,
         }
     }
 }
@@ -140,23 +137,19 @@ impl Default for GlobalCacheStats {
 impl UnifiedCacheManager {
     pub fn new() -> Self {
         Self {
-            diagnostic_cache: Arc::new(InMemoryCache::new(presets::diagnostic_cache())),
+            diagnostic_cache:  Arc::new(InMemoryCache::new(presets::diagnostic_cache())),
             explanation_cache: Arc::new(InMemoryCache::new(presets::explanation_cache())),
             performance_cache: Arc::new(InMemoryCache::new(presets::performance_cache())),
-            stats: Arc::new(std::sync::Mutex::new(GlobalCacheStats::default())),
+            stats:             Arc::new(std::sync::Mutex::new(GlobalCacheStats::default())),
         }
     }
 
-    pub fn new_with_configs(
-        diagnostic: CacheConfig,
-        explanation: CacheConfig,
-        performance: CacheConfig,
-    ) -> Self {
+    pub fn new_with_configs(diagnostic: CacheConfig, explanation: CacheConfig, performance: CacheConfig) -> Self {
         Self {
-            diagnostic_cache: Arc::new(InMemoryCache::new(diagnostic)),
+            diagnostic_cache:  Arc::new(InMemoryCache::new(diagnostic)),
             explanation_cache: Arc::new(InMemoryCache::new(explanation)),
             performance_cache: Arc::new(InMemoryCache::new(performance)),
-            stats: Arc::new(std::sync::Mutex::new(GlobalCacheStats::default())),
+            stats:             Arc::new(std::sync::Mutex::new(GlobalCacheStats::default())),
         }
     }
 
@@ -192,10 +185,7 @@ impl UnifiedCacheManager {
     }
 
     /// Get error explanation from cache
-    pub async fn get_explanation(
-        &self,
-        error_code: &str,
-    ) -> IDEResult<Option<ErrorCodeExplanation>> {
+    pub async fn get_explanation(&self, error_code: &str) -> IDEResult<Option<ErrorCodeExplanation>> {
         let result = self.explanation_cache.get(error_code).await?;
 
         // Update global stats
@@ -262,15 +252,11 @@ impl UnifiedCacheManager {
         stats.performance = self.performance_cache.stats().await?;
 
         // Calculate totals
-        stats.total_hits = stats.diagnostic.total_hits
-            + stats.explanation.total_hits
-            + stats.performance.total_hits;
-        stats.total_misses = stats.diagnostic.total_misses
-            + stats.explanation.total_misses
-            + stats.performance.total_misses;
-        stats.total_evictions = stats.diagnostic.total_evictions
-            + stats.explanation.total_evictions
-            + stats.performance.total_evictions;
+        stats.total_hits = stats.diagnostic.total_hits + stats.explanation.total_hits + stats.performance.total_hits;
+        stats.total_misses =
+            stats.diagnostic.total_misses + stats.explanation.total_misses + stats.performance.total_misses;
+        stats.total_evictions =
+            stats.diagnostic.total_evictions + stats.explanation.total_evictions + stats.performance.total_evictions;
 
         Ok(stats.clone())
     }
@@ -310,13 +296,14 @@ impl UnifiedCacheManager {
 
 // Legacy compatibility wrappers for gradual migration
 pub mod legacy {
-    use super::*;
     use std::collections::HashMap;
+
+    use super::*;
 
     /// Legacy diagnostic cache for backward compatibility
     #[async_trait::async_trait]
     impl rust_ai_ide_types::cache::Cache for CachedDiagnosticsProvider {
-        /* ... legacy implementation pointing to UnifiedCacheManager ... */
+        // ... legacy implementation pointing to UnifiedCacheManager ...
     }
 
     #[derive(Clone)]
@@ -329,10 +316,7 @@ pub mod legacy {
             Self { manager }
         }
 
-        pub async fn get(
-            &self,
-            request: &CompilerDiagnosticsRequest,
-        ) -> IDEResult<Option<CompilerDiagnosticsResult>> {
+        pub async fn get(&self, request: &CompilerDiagnosticsRequest) -> IDEResult<Option<CompilerDiagnosticsResult>> {
             let key = DiagnosticCacheKey::new(request.workspace_path.clone(), request);
             self.manager.diagnostic_cache.get(&key).await
         }
@@ -437,8 +421,9 @@ pub mod key_utils {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_unified_cache_manager_basic_operations() {
@@ -446,26 +431,26 @@ mod tests {
 
         // Test diagnostic cache
         let request = CompilerDiagnosticsRequest {
-            workspace_path: "/tmp/test".to_string(),
-            include_explanations: true,
+            workspace_path:          "/tmp/test".to_string(),
+            include_explanations:    true,
             include_suggested_fixes: false,
-            use_cache: true,
-            cache_ttl_seconds: Some(300),
-            timeout_seconds: Some(30),
+            use_cache:               true,
+            cache_ttl_seconds:       Some(300),
+            timeout_seconds:         Some(30),
         };
 
         let result = CompilerDiagnosticsResult {
-            diagnostics: vec![],
-            explanations: HashMap::new(),
+            diagnostics:     vec![],
+            explanations:    HashMap::new(),
             suggested_fixes: vec![],
-            metadata: DiagnosticMetadata {
-                workspace_path: "/tmp/test".to_string(),
-                timestamp: chrono::Utc::now(),
+            metadata:        DiagnosticMetadata {
+                workspace_path:      "/tmp/test".to_string(),
+                timestamp:           chrono::Utc::now(),
                 compilation_time_ms: 100,
-                total_errors: 0,
-                total_warnings: 0,
-                total_notes: 0,
-                cached: false,
+                total_errors:        0,
+                total_warnings:      0,
+                total_notes:         0,
+                cached:              false,
             },
         };
 
@@ -478,15 +463,15 @@ mod tests {
 
         // Test explanation cache
         let explanation = ErrorCodeExplanation {
-            error_code: "E001".to_string(),
-            title: "Test Error".to_string(),
-            description: "A test error".to_string(),
-            examples: vec![],
-            solutions: vec![],
+            error_code:     "E001".to_string(),
+            title:          "Test Error".to_string(),
+            description:    "A test error".to_string(),
+            examples:       vec![],
+            solutions:      vec![],
             related_errors: vec![],
-            severity: ErrorSeverity::Error,
-            category: ErrorCategory::Syntax,
-            rustc_code: "".to_string(),
+            severity:       ErrorSeverity::Error,
+            category:       ErrorCategory::Syntax,
+            rustc_code:     "".to_string(),
         };
 
         manager
@@ -521,26 +506,26 @@ mod tests {
 
         // Add entries with short TTL
         let request = CompilerDiagnosticsRequest {
-            workspace_path: "/tmp/test".to_string(),
-            include_explanations: false,
+            workspace_path:          "/tmp/test".to_string(),
+            include_explanations:    false,
             include_suggested_fixes: false,
-            use_cache: true,
-            cache_ttl_seconds: Some(1), // 1 second TTL
-            timeout_seconds: Some(30),
+            use_cache:               true,
+            cache_ttl_seconds:       Some(1), // 1 second TTL
+            timeout_seconds:         Some(30),
         };
 
         let result = CompilerDiagnosticsResult {
-            diagnostics: vec![],
-            explanations: HashMap::new(),
+            diagnostics:     vec![],
+            explanations:    HashMap::new(),
             suggested_fixes: vec![],
-            metadata: DiagnosticMetadata {
-                workspace_path: "/tmp/test".to_string(),
-                timestamp: chrono::Utc::now(),
+            metadata:        DiagnosticMetadata {
+                workspace_path:      "/tmp/test".to_string(),
+                timestamp:           chrono::Utc::now(),
                 compilation_time_ms: 100,
-                total_errors: 0,
-                total_warnings: 0,
-                total_notes: 0,
-                cached: false,
+                total_errors:        0,
+                total_warnings:      0,
+                total_notes:         0,
+                cached:              false,
             },
         };
 

@@ -1,11 +1,14 @@
+use std::fs;
+
+use async_trait::async_trait;
+use prettyplease;
+use syn::visit_mut::VisitMut;
+use syn::Ident;
+
 use crate::ast_utils::*;
 use crate::types::*;
 use crate::utils::*;
 use crate::RefactoringOperation;
-use async_trait::async_trait;
-use prettyplease;
-use std::fs;
-use syn::{visit_mut::VisitMut, Ident};
 
 /// Extract Function operation with AST safety
 pub struct ExtractFunctionOperation;
@@ -19,7 +22,11 @@ impl RefactoringOperation for ExtractFunctionOperation {
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         // Check experimental feature flag for non-AST-safe operations
         if !self.is_experimental_enabled(options) {
-            return Err("Extract Function operation uses placeholder text editing instead of full AST analysis. Set options.extra_options.experimental = true to use this feature.".into());
+            return Err(
+                "Extract Function operation uses placeholder text editing instead of full AST analysis. Set \
+                 options.extra_options.experimental = true to use this feature."
+                    .into(),
+            );
         }
 
         let selection = context
@@ -50,41 +57,32 @@ impl RefactoringOperation for ExtractFunctionOperation {
         let syntax_tree: syn::File =
             syn::parse_file(&content).map_err(|e| format!("Failed to parse Rust file: {}", e))?;
 
-        // Extract the selected code (simplified - in a real implementation, we'd need more sophisticated AST analysis)
+        // Extract the selected code (simplified - in a real implementation, we'd need more sophisticated
+        // AST analysis)
         let lines: Vec<&str> = content.lines().collect();
 
         // Normalize frontend range (1-based) to backend range (0-based)
         let normalized_selection = crate::utils::RangeNormalizer::frontend_to_backend(&selection);
 
         // Validate and clamp the normalized range
-        crate::utils::RangeNormalizer::validate_range(
-            &normalized_selection,
-            "ExtractFunctionOperation",
-        )?;
-        let clamped_selection = crate::utils::RangeNormalizer::clamp_to_file_bounds(
-            &normalized_selection,
-            lines.len(),
-            &content,
-        );
+        crate::utils::RangeNormalizer::validate_range(&normalized_selection, "ExtractFunctionOperation")?;
+        let clamped_selection =
+            crate::utils::RangeNormalizer::clamp_to_file_bounds(&normalized_selection, lines.len(), &content);
 
-        if clamped_selection.start_line > lines.len() as usize
-            || clamped_selection.end_line > lines.len() as usize
-        {
+        if clamped_selection.start_line > lines.len() as usize || clamped_selection.end_line > lines.len() as usize {
             return Err("Selection is out of bounds".into());
         }
 
         // Extract code using consistent 0-based indexing
-        let extracted_code: Vec<&str> =
-            if clamped_selection.end_line >= clamped_selection.start_line {
-                lines[clamped_selection.start_line..=clamped_selection.end_line].to_vec()
-            } else {
-                vec![] // Empty selection
-            };
+        let extracted_code: Vec<&str> = if clamped_selection.end_line >= clamped_selection.start_line {
+            lines[clamped_selection.start_line..=clamped_selection.end_line].to_vec()
+        } else {
+            vec![] // Empty selection
+        };
         let extracted_text = extracted_code.join("\n");
 
         // Generate the extracted function
-        let function_definition =
-            format!("fn {}() {{\n    {}\n}}\n", function_name, extracted_text);
+        let function_definition = format!("fn {}() {{\n    {}\n}}\n", function_name, extracted_text);
 
         // Create the extracted function call
         let function_call = format!("{}();\n", function_name);
@@ -117,25 +115,25 @@ impl RefactoringOperation for ExtractFunctionOperation {
         let modified_content = result_lines.join("\n");
 
         let change = CodeChange {
-            file_path: context.file_path.clone(),
-            range: CodeRange {
-                start_line: 1,
+            file_path:   context.file_path.clone(),
+            range:       CodeRange {
+                start_line:      1,
                 start_character: 0,
-                end_line: lines.len(),
-                end_character: lines.last().map_or(0, |line| line.len()),
+                end_line:        lines.len(),
+                end_character:   lines.last().map_or(0, |line| line.len()),
             },
-            old_text: content,
-            new_text: modified_content.clone(),
+            old_text:    content,
+            new_text:    modified_content.clone(),
             change_type: ChangeType::Replacement,
         };
 
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![change],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![change],
             error_message: None,
-            warnings: vec!["Function extraction may need parameter adjustment".to_string()],
-            new_content: Some(modified_content),
+            warnings:      vec!["Function extraction may need parameter adjustment".to_string()],
+            new_content:   Some(modified_content),
         })
     }
 
@@ -144,18 +142,18 @@ impl RefactoringOperation for ExtractFunctionOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: context.selection.is_some(),
+            is_safe:          context.selection.is_some(),
             confidence_score: if context.selection.is_some() {
                 0.8
             } else {
                 0.5
             },
             potential_impact: RefactoringImpact::Medium,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec![],
-            suggestions: vec!["Function extraction requires valid selection".to_string()],
-            warnings: if context.selection.is_none() {
+            suggestions:      vec!["Function extraction requires valid selection".to_string()],
+            warnings:         if context.selection.is_none() {
                 vec!["No selection provided for extraction".to_string()]
             } else {
                 vec![]
@@ -203,12 +201,12 @@ impl RefactoringOperation for InlineFunctionOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![],
             error_message: None,
-            warnings: vec!["Inline function operation requires implementation".to_string()],
-            new_content: None,
+            warnings:      vec!["Inline function operation requires implementation".to_string()],
+            new_content:   None,
         })
     }
     async fn analyze(
@@ -216,14 +214,14 @@ impl RefactoringOperation for InlineFunctionOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: false,
+            is_safe:          false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::High,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Feature not yet implemented".to_string()],
-            suggestions: vec![],
-            warnings: vec!["Operation not yet implemented".to_string()],
+            suggestions:      vec![],
+            warnings:         vec!["Operation not yet implemented".to_string()],
         })
     }
     async fn is_applicable(
@@ -254,12 +252,12 @@ impl RefactoringOperation for InlineMethodOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![],
             error_message: None,
-            warnings: vec!["Inline method operation requires implementation".to_string()],
-            new_content: None,
+            warnings:      vec!["Inline method operation requires implementation".to_string()],
+            new_content:   None,
         })
     }
     async fn analyze(
@@ -267,14 +265,14 @@ impl RefactoringOperation for InlineMethodOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: false,
+            is_safe:          false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::High,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Feature not yet implemented".to_string()],
-            suggestions: vec![],
-            warnings: vec!["Operation not yet implemented".to_string()],
+            suggestions:      vec![],
+            warnings:         vec!["Operation not yet implemented".to_string()],
         })
     }
     async fn is_applicable(
@@ -305,14 +303,12 @@ impl RefactoringOperation for ConvertMethodToFunctionOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![],
             error_message: None,
-            warnings: vec![
-                "Convert method to function operation requires implementation".to_string(),
-            ],
-            new_content: None,
+            warnings:      vec!["Convert method to function operation requires implementation".to_string()],
+            new_content:   None,
         })
     }
     async fn analyze(
@@ -320,16 +316,14 @@ impl RefactoringOperation for ConvertMethodToFunctionOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: false,
+            is_safe:          false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::High,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Method conversion may break inheritance".to_string()],
-            suggestions: vec![],
-            warnings: vec![
-                "Convert method to function operation requires implementation".to_string(),
-            ],
+            suggestions:      vec![],
+            warnings:         vec!["Convert method to function operation requires implementation".to_string()],
         })
     }
     async fn is_applicable(
@@ -360,12 +354,12 @@ impl RefactoringOperation for MoveMethodOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![],
             error_message: None,
-            warnings: vec!["Move method operation requires implementation".to_string()],
-            new_content: None,
+            warnings:      vec!["Move method operation requires implementation".to_string()],
+            new_content:   None,
         })
     }
     async fn analyze(
@@ -373,14 +367,14 @@ impl RefactoringOperation for MoveMethodOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: false,
+            is_safe:          false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::High,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Feature not yet implemented".to_string()],
-            suggestions: vec![],
-            warnings: vec!["Operation not yet implemented".to_string()],
+            suggestions:      vec![],
+            warnings:         vec!["Operation not yet implemented".to_string()],
         })
     }
     async fn is_applicable(

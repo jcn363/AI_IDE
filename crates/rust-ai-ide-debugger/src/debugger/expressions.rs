@@ -1,7 +1,8 @@
 //! Expression evaluation and watch expression management
 
-use log::{debug, trace};
 use std::collections::HashMap;
+
+use log::{debug, trace};
 
 use crate::debugger::error::{DebuggerError, Result as DebuggerResult};
 use crate::debugger::types::{DebuggerEvent, DebuggerState, VariableInfo};
@@ -27,8 +28,8 @@ impl ExpressionManager {
     pub fn new() -> Self {
         Self {
             watch_expressions: HashMap::new(),
-            next_id: 1,
-            auto_evaluate: true,
+            next_id:           1,
+            auto_evaluate:     true,
         }
     }
 }
@@ -86,12 +87,12 @@ impl ExpressionManager {
         self.next_id += 1;
 
         let var_info = VariableInfo {
-            id: Some(id),
-            name: format!("${}", id), // Temporary name until evaluated
-            value: String::new(),
-            type_name: String::new(),
-            in_scope: false,
-            children: Vec::new(),
+            id:         Some(id),
+            name:       format!("${}", id), // Temporary name until evaluated
+            value:      String::new(),
+            type_name:  String::new(),
+            in_scope:   false,
+            children:   Vec::new(),
             expression: Some(expr.clone()),
         };
 
@@ -226,9 +227,7 @@ impl ExpressionManager {
             match self.evaluate_expression(&expr, state) {
                 Ok(new_var_info) => {
                     // Only update and send event if the value changed
-                    if var_info.value != new_var_info.value
-                        || var_info.in_scope != new_var_info.in_scope
-                    {
+                    if var_info.value != new_var_info.value || var_info.in_scope != new_var_info.in_scope {
                         // Update the stored variable info
                         if let Some(stored_info) = self.watch_expressions.get_mut(&expr) {
                             *stored_info = new_var_info.clone();
@@ -263,20 +262,16 @@ impl ExpressionManager {
 
     /// Evaluate a single expression
     /// Evaluate an expression in the current debug context
-    pub fn evaluate_expression(
-        &self,
-        expression: &str,
-        _state: &DebuggerState,
-    ) -> DebuggerResult<VariableInfo> {
+    pub fn evaluate_expression(&self, expression: &str, _state: &DebuggerState) -> DebuggerResult<VariableInfo> {
         // TODO: Implement actual expression evaluation using the debugger backend
         // For now, return a placeholder value
         Ok(VariableInfo {
-            id: None, // Will be set by the caller
-            name: expression.to_string(),
-            value: "<evaluating...>".to_string(),
-            type_name: "unknown".to_string(),
-            in_scope: true,
-            children: Vec::new(),
+            id:         None, // Will be set by the caller
+            name:       expression.to_string(),
+            value:      "<evaluating...>".to_string(),
+            type_name:  "unknown".to_string(),
+            in_scope:   true,
+            children:   Vec::new(),
             expression: Some(expression.to_string()),
         })
     }

@@ -1,26 +1,28 @@
-use crate::analysis::types::*;
-use crate::error_handling::AnalysisResult;
 use std::collections::HashMap;
+
 /// Visitor trait for syn 2.0
 use syn::{
-    visit::Visit, ExprAsync, ExprAwait, ExprCall, ExprForLoop, ExprIf, ExprMatch, ExprWhile, File,
-    ItemFn, LitInt, PatIdent,
+    visit::Visit, ExprAsync, ExprAwait, ExprCall, ExprForLoop, ExprIf, ExprMatch, ExprWhile, File, ItemFn, LitInt,
+    PatIdent,
 };
 use uuid::Uuid;
+
+use crate::analysis::types::*;
+use crate::error_handling::AnalysisResult;
 
 /// Code quality checker for maintainability, readability, and best practices
 #[derive(Clone, Debug)]
 pub struct CodeQualityChecker {
     max_function_length: usize,
-    max_class_length: usize,
-    min_comment_ratio: f64,
-    allowed_complexity: usize,
+    max_class_length:    usize,
+    min_comment_ratio:   f64,
+    allowed_complexity:  usize,
 }
 
 #[derive(Clone, Debug)]
 pub struct QualityAssessment {
-    pub code_smells: Vec<CodeSmell>,
-    pub metrics: CodeMetrics,
+    pub code_smells:   Vec<CodeSmell>,
+    pub metrics:       CodeMetrics,
     pub overall_score: f64, // 0-100 scale
 }
 
@@ -29,9 +31,9 @@ impl CodeQualityChecker {
     pub fn new() -> Self {
         Self {
             max_function_length: 50,
-            max_class_length: 300,
-            min_comment_ratio: 0.15,
-            allowed_complexity: 10,
+            max_class_length:    300,
+            min_comment_ratio:   0.15,
+            allowed_complexity:  10,
         }
     }
 
@@ -77,13 +79,13 @@ impl CodeQualityChecker {
     /// Calculate code metrics
     fn calculate_metrics(&self, ast: &File) -> AnalysisResult<CodeMetrics> {
         let mut metrics = CodeMetrics {
-            lines_of_code: 0,
-            complexity: 0.0,
-            maintainability_index: 0.0,
-            cyclomatic_complexity: 0,
-            coupling: 0.0,
-            cohesion: 0.0,
-            test_coverage: None,
+            lines_of_code:          0,
+            complexity:             0.0,
+            maintainability_index:  0.0,
+            cyclomatic_complexity:  0,
+            coupling:               0.0,
+            cohesion:               0.0,
+            test_coverage:          None,
             documentation_coverage: 0.0,
         };
 
@@ -100,8 +102,7 @@ impl CodeQualityChecker {
         // Calculate maintainability index (simple approximation)
         let hv = (complexity_visitor.complexity as f64).ln();
         let hv_loc = (loc as f64).ln();
-        metrics.maintainability_index =
-            171.0 - 5.2 * hv - 0.23 * metrics.complexity - 16.2 * hv_loc;
+        metrics.maintainability_index = 171.0 - 5.2 * hv - 0.23 * metrics.complexity - 16.2 * hv_loc;
 
         // Clamp to valid range
         if metrics.maintainability_index < 0.0 {
@@ -137,8 +138,8 @@ impl CodeQualityChecker {
         let mut smells = Vec::new();
         let mut visitor = FunctionLengthVisitor {
             max_length: self.max_function_length,
-            smells: &mut smells,
-            file: "AST",
+            smells:     &mut smells,
+            file:       "AST",
         };
         visitor.visit_file(ast);
         smells
@@ -161,7 +162,7 @@ impl CodeQualityChecker {
         let mut smells = Vec::new();
         let mut visitor = NamingConventionVisitor {
             smells: &mut smells,
-            file: "AST",
+            file:   "AST",
         };
         visitor.visit_file(ast);
         smells
@@ -172,7 +173,7 @@ impl CodeQualityChecker {
         let mut smells = Vec::new();
         let mut visitor = MagicNumberVisitor {
             smells: &mut smells,
-            file: "AST",
+            file:   "AST",
         };
         visitor.visit_file(ast);
         smells
@@ -201,20 +202,18 @@ impl CodeQualityChecker {
         for block in seen_blocks.keys() {
             if let Some(count) = seen_blocks.get(block).filter(|&&count| count > 1) {
                 let smell = CodeSmell {
-                    id: Uuid::new_v4(),
-                    smell_type: CodeSmellType::DuplicateCode,
-                    title: "Duplicate code block detected".to_string(),
-                    description: format!("Code block appears {} times", count),
-                    location: Location {
-                        file: "AST".to_string(),
-                        line: 1,
+                    id:                  Uuid::new_v4(),
+                    smell_type:          CodeSmellType::DuplicateCode,
+                    title:               "Duplicate code block detected".to_string(),
+                    description:         format!("Code block appears {} times", count),
+                    location:            Location {
+                        file:   "AST".to_string(),
+                        line:   1,
                         column: 0,
                         offset: 0,
                     },
-                    severity: Severity::Warning,
-                    refactoring_pattern: Some(
-                        "Extract common functionality into a function".to_string(),
-                    ),
+                    severity:            Severity::Warning,
+                    refactoring_pattern: Some("Extract common functionality into a function".to_string()),
                 };
                 smells.push(smell);
             }
@@ -228,7 +227,7 @@ impl CodeQualityChecker {
         let mut smells = Vec::new();
         let mut visitor = ErrorHandlingVisitor {
             smells: &mut smells,
-            file: "AST",
+            file:   "AST",
         };
         visitor.visit_file(ast);
         smells
@@ -239,7 +238,7 @@ impl CodeQualityChecker {
         let mut smells = Vec::new();
         let mut visitor = ResourceManagementVisitor {
             smells: &mut smells,
-            file: "AST",
+            file:   "AST",
         };
         visitor.visit_file(ast);
         smells
@@ -249,8 +248,8 @@ impl CodeQualityChecker {
     fn check_threading_issues(&self, ast: &File) -> Vec<CodeSmell> {
         let mut smells = Vec::new();
         let mut visitor = ThreadingVisitor {
-            smells: &mut smells,
-            file: "AST",
+            smells:         &mut smells,
+            file:           "AST",
             async_contexts: Vec::new(),
         };
         visitor.visit_file(ast);
@@ -300,8 +299,8 @@ impl CodeQualityChecker {
 #[derive(Debug)]
 struct FunctionLengthVisitor<'a> {
     max_length: usize,
-    smells: &'a mut Vec<CodeSmell>,
-    file: &'a str,
+    smells:     &'a mut Vec<CodeSmell>,
+    file:       &'a str,
 }
 
 impl<'a, 'ast> Visit<'ast> for FunctionLengthVisitor<'a> {
@@ -310,23 +309,21 @@ impl<'a, 'ast> Visit<'ast> for FunctionLengthVisitor<'a> {
 
         if function_span > self.max_length {
             let smell = CodeSmell {
-                id: Uuid::new_v4(),
-                smell_type: CodeSmellType::LongMethod,
-                title: "Function too long".to_string(),
-                description: format!(
+                id:                  Uuid::new_v4(),
+                smell_type:          CodeSmellType::LongMethod,
+                title:               "Function too long".to_string(),
+                description:         format!(
                     "Function '{}' has {} statements, exceeding limit of {}",
                     node.sig.ident, function_span, self.max_length
                 ),
-                location: Location {
-                    file: self.file.to_string(),
-                    line: 0, // AST nodes don't have reliable line info from span
+                location:            Location {
+                    file:   self.file.to_string(),
+                    line:   0, // AST nodes don't have reliable line info from span
                     column: 0,
                     offset: 0,
                 },
-                severity: Severity::Warning,
-                refactoring_pattern: Some(
-                    "Extract smaller functions or use composition".to_string(),
-                ),
+                severity:            Severity::Warning,
+                refactoring_pattern: Some("Extract smaller functions or use composition".to_string()),
             };
             self.smells.push(smell);
         }
@@ -338,14 +335,14 @@ impl<'a, 'ast> Visit<'ast> for FunctionLengthVisitor<'a> {
 #[derive(Clone, Debug)]
 struct ComplexityVisitor {
     complexity: usize,
-    smells: Vec<CodeSmell>,
+    smells:     Vec<CodeSmell>,
 }
 
 impl ComplexityVisitor {
     fn new() -> Self {
         Self {
             complexity: 1, // Base complexity
-            smells: Vec::new(),
+            smells:     Vec::new(),
         }
     }
 }
@@ -375,7 +372,7 @@ impl<'ast> Visit<'ast> for ComplexityVisitor {
 /// Visitor for naming conventions
 struct NamingConventionVisitor<'a> {
     smells: &'a mut Vec<CodeSmell>,
-    file: &'a str,
+    file:   &'a str,
 }
 
 impl<'a, 'ast> Visit<'ast> for NamingConventionVisitor<'a> {
@@ -391,20 +388,17 @@ impl<'a, 'ast> Visit<'ast> for NamingConventionVisitor<'a> {
                 // For now, we'll check if it's not a constant pattern
                 // This is simplified compared to the original logic
                 let smell = CodeSmell {
-                    id: Uuid::new_v4(),
-                    smell_type: CodeSmellType::InconsistentNaming,
-                    title: "Inconsistent naming convention".to_string(),
-                    description: format!(
-                        "Constant '{}' should be in SCREAMING_SNAKE_CASE",
-                        ident_str
-                    ),
-                    location: Location {
-                        file: self.file.to_string(),
-                        line: 0, // AST nodes don't have reliable line info from span
+                    id:                  Uuid::new_v4(),
+                    smell_type:          CodeSmellType::InconsistentNaming,
+                    title:               "Inconsistent naming convention".to_string(),
+                    description:         format!("Constant '{}' should be in SCREAMING_SNAKE_CASE", ident_str),
+                    location:            Location {
+                        file:   self.file.to_string(),
+                        line:   0, // AST nodes don't have reliable line info from span
                         column: 0,
                         offset: 0,
                     },
-                    severity: Severity::Info,
+                    severity:            Severity::Info,
                     refactoring_pattern: Some("Use SCREAMING_SNAKE_CASE for constants".to_string()),
                 };
                 self.smells.push(smell);
@@ -506,22 +500,20 @@ mod tests {
         let assessment = checker.assess(&ast).await.unwrap();
 
         assert!(assessment.metrics.lines_of_code > 0);
-        assert!(
-            assessment.metrics.overall_score <= 100.0 && assessment.metrics.overall_score >= 0.0
-        );
+        assert!(assessment.metrics.overall_score <= 100.0 && assessment.metrics.overall_score >= 0.0);
     }
 }
 
 #[derive(Clone, Debug, Default)]
 struct DocumentationVisitor {
-    total_items: usize,
+    total_items:      usize,
     documented_items: usize,
 }
 
 impl DocumentationVisitor {
     fn new() -> Self {
         Self {
-            total_items: 0,
+            total_items:      0,
             documented_items: 0,
         }
     }
@@ -578,7 +570,7 @@ impl<'ast> Visit<'ast> for CouplingVisitor {
 /// Additional visitors for quality checks
 struct MagicNumberVisitor<'a> {
     smells: &'a mut Vec<CodeSmell>,
-    file: &'a str,
+    file:   &'a str,
 }
 
 impl<'a, 'ast> Visit<'ast> for MagicNumberVisitor<'a> {
@@ -587,17 +579,17 @@ impl<'a, 'ast> Visit<'ast> for MagicNumberVisitor<'a> {
         // Flag numbers that are not 0, 1, or common constants
         if value != 0 && value != 1 && !(2..=10).contains(&value) {
             let smell = CodeSmell {
-                id: Uuid::new_v4(),
-                smell_type: CodeSmellType::MagicNumbers,
-                title: "Magic number detected".to_string(),
-                description: format!("Magic number {} found", value),
-                location: Location {
-                    file: self.file.to_string(),
-                    line: 0, // AST nodes don't have reliable line info from span
+                id:                  Uuid::new_v4(),
+                smell_type:          CodeSmellType::MagicNumbers,
+                title:               "Magic number detected".to_string(),
+                description:         format!("Magic number {} found", value),
+                location:            Location {
+                    file:   self.file.to_string(),
+                    line:   0, // AST nodes don't have reliable line info from span
                     column: 0,
                     offset: 0,
                 },
-                severity: Severity::Info,
+                severity:            Severity::Info,
                 refactoring_pattern: Some("Extract magic number to named constant".to_string()),
             };
             self.smells.push(smell);
@@ -608,7 +600,7 @@ impl<'a, 'ast> Visit<'ast> for MagicNumberVisitor<'a> {
 
 struct ErrorHandlingVisitor<'a> {
     smells: &'a mut Vec<CodeSmell>,
-    file: &'a str,
+    file:   &'a str,
 }
 
 impl<'a, 'ast> Visit<'ast> for ErrorHandlingVisitor<'a> {
@@ -617,7 +609,7 @@ impl<'a, 'ast> Visit<'ast> for ErrorHandlingVisitor<'a> {
 
 struct ResourceManagementVisitor<'a> {
     smells: &'a mut Vec<CodeSmell>,
-    file: &'a str,
+    file:   &'a str,
 }
 
 impl<'a, 'ast> Visit<'ast> for ResourceManagementVisitor<'a> {
@@ -632,17 +624,17 @@ impl<'a, 'ast> Visit<'ast> for ResourceManagementVisitor<'a> {
 
         if arms_without_cleanup > node.arms.len() / 2 {
             let smell = CodeSmell {
-                id: Uuid::new_v4(),
-                smell_type: CodeSmellType::ResourceLeak,
-                title: "Potential resource leak in match".to_string(),
-                description: "Match statement may have resource leaks".to_string(),
-                location: Location {
-                    file: self.file.to_string(),
-                    line: 0, // AST nodes don't have reliable line info from span
+                id:                  Uuid::new_v4(),
+                smell_type:          CodeSmellType::ResourceLeak,
+                title:               "Potential resource leak in match".to_string(),
+                description:         "Match statement may have resource leaks".to_string(),
+                location:            Location {
+                    file:   self.file.to_string(),
+                    line:   0, // AST nodes don't have reliable line info from span
                     column: 0,
                     offset: 0,
                 },
-                severity: Severity::Warning,
+                severity:            Severity::Warning,
                 refactoring_pattern: Some("Ensure resource cleanup in all match arms".to_string()),
             };
             self.smells.push(smell);
@@ -662,8 +654,8 @@ impl<'a> ResourceManagementVisitor<'a> {
 }
 
 struct ThreadingVisitor<'a> {
-    smells: &'a mut Vec<CodeSmell>,
-    file: &'a str,
+    smells:         &'a mut Vec<CodeSmell>,
+    file:           &'a str,
     async_contexts: Vec<bool>,
 }
 
@@ -674,20 +666,18 @@ impl<'a, 'ast> Visit<'ast> for ThreadingVisitor<'a> {
         // Check for raw thread spawning without proper error handling
         if call_str.contains("std::thread::spawn(") && !call_str.contains("join_handle") {
             let smell = CodeSmell {
-                id: Uuid::new_v4(),
-                smell_type: CodeSmellType::ThreadingIssue,
-                title: "Unguarded thread spawn".to_string(),
-                description: "Thread spawn without proper join or error handling".to_string(),
-                location: Location {
-                    file: self.file.to_string(),
-                    line: 0, // AST nodes don't have reliable line info from span
+                id:                  Uuid::new_v4(),
+                smell_type:          CodeSmellType::ThreadingIssue,
+                title:               "Unguarded thread spawn".to_string(),
+                description:         "Thread spawn without proper join or error handling".to_string(),
+                location:            Location {
+                    file:   self.file.to_string(),
+                    line:   0, // AST nodes don't have reliable line info from span
                     column: 0,
                     offset: 0,
                 },
-                severity: Severity::Warning,
-                refactoring_pattern: Some(
-                    "Use join handles or channel communication for thread safety".to_string(),
-                ),
+                severity:            Severity::Warning,
+                refactoring_pattern: Some("Use join handles or channel communication for thread safety".to_string()),
             };
             self.smells.push(smell);
         }
@@ -695,19 +685,18 @@ impl<'a, 'ast> Visit<'ast> for ThreadingVisitor<'a> {
         // Check for potentially blocking operations in async contexts
         if ThreadingVisitor::in_async_context(self) && call_str.contains("std::fs::") {
             let smell = CodeSmell {
-                id: Uuid::new_v4(),
-                smell_type: CodeSmellType::ThreadingIssue,
-                title: "Blocking operation in async context".to_string(),
-                description:
-                    "Synchronous file operations in async code can cause performance issues"
-                        .to_string(),
-                location: Location {
-                    file: self.file.to_string(),
-                    line: 0, // AST nodes don't have reliable line info from span
+                id:                  Uuid::new_v4(),
+                smell_type:          CodeSmellType::ThreadingIssue,
+                title:               "Blocking operation in async context".to_string(),
+                description:         "Synchronous file operations in async code can cause performance issues"
+                    .to_string(),
+                location:            Location {
+                    file:   self.file.to_string(),
+                    line:   0, // AST nodes don't have reliable line info from span
                     column: 0,
                     offset: 0,
                 },
-                severity: Severity::Warning,
+                severity:            Severity::Warning,
                 refactoring_pattern: Some("Use tokio::fs or spawn blocking tasks".to_string()),
             };
             self.smells.push(smell);

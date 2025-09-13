@@ -1,38 +1,40 @@
-use crate::IDEError;
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
+
+use crate::IDEError;
 
 /// Performance metrics for quantization operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuantizationMetrics {
     /// Number of models quantized
-    pub models_quantized: u64,
+    pub models_quantized:             u64,
     /// Total quantization time in milliseconds
-    pub total_quantization_time_ms: u64,
+    pub total_quantization_time_ms:   u64,
     /// Average quantization time per model
     pub average_quantization_time_ms: f64,
     /// Peak memory usage in bytes
-    pub peak_memory_usage_bytes: u64,
+    pub peak_memory_usage_bytes:      u64,
     /// Current memory usage in bytes
-    pub current_memory_usage_bytes: u64,
+    pub current_memory_usage_bytes:   u64,
     /// Cache hit ratio (0.0 to 1.0)
-    pub cache_hit_ratio: f64,
+    pub cache_hit_ratio:              f64,
     /// Quantization success rate (0.0 to 1.0)
-    pub success_rate: f64,
+    pub success_rate:                 f64,
 }
 
 impl Default for QuantizationMetrics {
     fn default() -> Self {
         Self {
-            models_quantized: 0,
-            total_quantization_time_ms: 0,
+            models_quantized:             0,
+            total_quantization_time_ms:   0,
             average_quantization_time_ms: 0.0,
-            peak_memory_usage_bytes: 0,
-            current_memory_usage_bytes: 0,
-            cache_hit_ratio: 0.0,
-            success_rate: 1.0,
+            peak_memory_usage_bytes:      0,
+            current_memory_usage_bytes:   0,
+            cache_hit_ratio:              0.0,
+            success_rate:                 1.0,
         }
     }
 }
@@ -40,26 +42,26 @@ impl Default for QuantizationMetrics {
 /// Performance tracker for quantization operations
 pub struct QuantizationPerformanceTracker {
     /// Collected metrics
-    metrics: Arc<Mutex<QuantizationMetrics>>,
+    metrics:               Arc<Mutex<QuantizationMetrics>>,
     /// Number of successful operations
     successful_operations: Arc<Mutex<u64>>,
     /// Total operations attempted
-    total_operations: Arc<Mutex<u64>>,
+    total_operations:      Arc<Mutex<u64>>,
     /// Cache hits counter
-    cache_hits: Arc<Mutex<u64>>,
+    cache_hits:            Arc<Mutex<u64>>,
     /// Cache misses counter
-    cache_misses: Arc<Mutex<u64>>,
+    cache_misses:          Arc<Mutex<u64>>,
 }
 
 impl QuantizationPerformanceTracker {
     /// Create new performance tracker
     pub fn new() -> Self {
         Self {
-            metrics: Arc::new(Mutex::new(QuantizationMetrics::default())),
+            metrics:               Arc::new(Mutex::new(QuantizationMetrics::default())),
             successful_operations: Arc::new(Mutex::new(0)),
-            total_operations: Arc::new(Mutex::new(0)),
-            cache_hits: Arc::new(Mutex::new(0)),
-            cache_misses: Arc::new(Mutex::new(0)),
+            total_operations:      Arc::new(Mutex::new(0)),
+            cache_hits:            Arc::new(Mutex::new(0)),
+            cache_misses:          Arc::new(Mutex::new(0)),
         }
     }
 
@@ -169,9 +171,9 @@ impl QuantizationPerformanceTracker {
 
 /// Context manager for tracking quantization performance
 pub struct QuantizationPerformanceContext<'a> {
-    tracker: &'a QuantizationPerformanceTracker,
-    start_time: Instant,
-    memory_start: u64,
+    tracker:              &'a QuantizationPerformanceTracker,
+    start_time:           Instant,
+    memory_start:         u64,
     operation_successful: bool,
 }
 

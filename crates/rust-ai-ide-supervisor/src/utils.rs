@@ -1,9 +1,10 @@
 //! Utility functions for supervisor operations
 
-use chrono::{DateTime, Utc};
-use rust_ai_ide_common::validation::{validate_secure_path, TauriInputSanitizer};
 use std::path::Path;
 use std::time::Duration;
+
+use chrono::{DateTime, Utc};
+use rust_ai_ide_common::validation::{validate_secure_path, TauriInputSanitizer};
 
 use crate::error::{SupervisorError, SupervisorResult};
 
@@ -64,11 +65,7 @@ pub struct TimeUtils;
 
 impl TimeUtils {
     /// Calculate exponential backoff delay
-    pub fn calculate_exponential_backoff(
-        attempt: u32,
-        base_delay: Duration,
-        max_delay: Duration,
-    ) -> Duration {
+    pub fn calculate_exponential_backoff(attempt: u32, base_delay: Duration, max_delay: Duration) -> Duration {
         let delay_ms = base_delay.as_millis() as u64;
         let multiplier = 2_u64.pow(attempt.saturating_sub(1).min(20)); // Cap at 2^20 to prevent overflow
         let calculated_delay_ms = delay_ms.saturating_mul(multiplier);
@@ -92,14 +89,10 @@ impl TimeUtils {
     }
 
     /// Calculate time until next health check
-    pub fn time_until_next_check(
-        last_check: Option<DateTime<Utc>>,
-        interval: Duration,
-    ) -> Duration {
+    pub fn time_until_next_check(last_check: Option<DateTime<Utc>>, interval: Duration) -> Duration {
         if let Some(last) = last_check {
-            let next_check_due = last
-                + chrono::Duration::from_std(interval)
-                    .unwrap_or_else(|_| chrono::Duration::minutes(5));
+            let next_check_due =
+                last + chrono::Duration::from_std(interval).unwrap_or_else(|_| chrono::Duration::minutes(5));
             let now = Utc::now();
 
             if next_check_due > now {
@@ -198,11 +191,7 @@ impl ResourceMonitor {
     }
 
     /// Check if system resource limits are exceeded
-    pub fn check_resource_limits(
-        current: u64,
-        limit: u64,
-        resource_name: &str,
-    ) -> SupervisorResult<()> {
+    pub fn check_resource_limits(current: u64, limit: u64, resource_name: &str) -> SupervisorResult<()> {
         if current >= limit {
             return Err(SupervisorError::resource_limit_exceeded(
                 resource_name,
@@ -303,11 +292,7 @@ impl MetricsCalculator {
     }
 
     /// Calculate health score based on various metrics
-    pub fn calculate_health_score(
-        available_time_percent: f64,
-        error_rate: f64,
-        response_time_ms: f64,
-    ) -> f64 {
+    pub fn calculate_health_score(available_time_percent: f64, error_rate: f64, response_time_ms: f64) -> f64 {
         let availability_weight = 0.5;
         let error_weight = 0.3;
         let performance_weight = 0.2;
@@ -393,20 +378,10 @@ mod tests {
     #[test]
     fn test_command_args_validation() {
         // Valid args
-        assert!(ServiceValidator::validate_command_args(&[
-            "--help".to_string(),
-            "--verbose".to_string()
-        ])
-        .is_ok());
+        assert!(ServiceValidator::validate_command_args(&["--help".to_string(), "--verbose".to_string()]).is_ok());
 
         // Dangerous args
-        assert!(
-            ServiceValidator::validate_command_args(&["rm -rf /tmp && true".to_string()]).is_err()
-        );
-        assert!(ServiceValidator::validate_command_args(&[
-            "echo".to_string(),
-            "test | cat".to_string()
-        ])
-        .is_err());
+        assert!(ServiceValidator::validate_command_args(&["rm -rf /tmp && true".to_string()]).is_err());
+        assert!(ServiceValidator::validate_command_args(&["echo".to_string(), "test | cat".to_string()]).is_err());
     }
 }

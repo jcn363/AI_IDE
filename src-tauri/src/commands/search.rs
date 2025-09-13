@@ -1,88 +1,82 @@
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
+
+use rust_ai_ide_common::validation::validate_secure_path;
+use serde::{Deserialize, Serialize};
 use tauri::State;
 use tokio::sync::Mutex;
 
-use rust_ai_ide_common::validation::validate_secure_path;
-
-use crate::command_templates::{
-    acquire_service_and_execute, spawn_background_task, TAURI_COMMAND_TEMPLATE,
-};
+use crate::command_templates::{acquire_service_and_execute, spawn_background_task, TAURI_COMMAND_TEMPLATE};
 use crate::errors::IDError;
-use crate::infra::EventBus;
-use crate::infra::RateLimiter;
-use crate::modules::shared::{
-    diagnostics::DiagnosticCache,
-    types::{FileMetadata, SymbolInfo, WorkspaceMetadata},
-};
+use crate::infra::{EventBus, RateLimiter};
+use crate::modules::shared::diagnostics::DiagnosticCache;
+use crate::modules::shared::types::{FileMetadata, SymbolInfo, WorkspaceMetadata};
 
 // Search state structure
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct SearchState {
-    pub search_history: Vec<String>,
-    pub recent_searches: Vec<String>,
-    pub search_results: HashMap<String, Vec<SearchResult>>,
-    pub symbol_index: HashMap<String, Vec<SymbolInfo>>,
+    pub search_history:     Vec<String>,
+    pub recent_searches:    Vec<String>,
+    pub search_results:     HashMap<String, Vec<SearchResult>>,
+    pub symbol_index:       HashMap<String, Vec<SymbolInfo>>,
     pub navigation_history: Vec<NavigationLocation>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchResult {
-    pub id: String,
-    pub file_path: String,
-    pub line_number: u32,
-    pub column_start: u32,
-    pub column_end: u32,
-    pub content: String,
-    pub match_type: String,
-    pub score: f32,
+    pub id:             String,
+    pub file_path:      String,
+    pub line_number:    u32,
+    pub column_start:   u32,
+    pub column_end:     u32,
+    pub content:        String,
+    pub match_type:     String,
+    pub score:          f32,
     pub context_before: Vec<String>,
-    pub context_after: Vec<String>,
+    pub context_after:  Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchOptions {
-    pub query: String,
-    pub case_sensitive: bool,
-    pub whole_word: bool,
-    pub regex: bool,
-    pub include_hidden: bool,
-    pub include_binary: bool,
-    pub file_patterns: Vec<String>,
+    pub query:            String,
+    pub case_sensitive:   bool,
+    pub whole_word:       bool,
+    pub regex:            bool,
+    pub include_hidden:   bool,
+    pub include_binary:   bool,
+    pub file_patterns:    Vec<String>,
     pub exclude_patterns: Vec<String>,
-    pub max_results: Option<usize>,
-    pub context_lines: usize,
+    pub max_results:      Option<usize>,
+    pub context_lines:    usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SymbolSearchResult {
-    pub symbols: Vec<SymbolInfo>,
-    pub total_count: usize,
+    pub symbols:        Vec<SymbolInfo>,
+    pub total_count:    usize,
     pub search_time_ms: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NavigationLocation {
-    pub file_path: String,
+    pub file_path:   String,
     pub line_number: u32,
-    pub column: u32,
-    pub context: String,
-    pub timestamp: u64,
+    pub column:      u32,
+    pub context:     String,
+    pub timestamp:   u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BreadcrumbItem {
-    pub name: String,
-    pub kind: String,
+    pub name:     String,
+    pub kind:     String,
     pub location: NavigationLocation,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NavigationPath {
-    pub path: String,
+    pub path:  String,
     pub parts: Vec<BreadcrumbItem>,
 }
 
@@ -118,32 +112,28 @@ impl SearchService {
         // 4. Return contextual results with line numbers
 
         results.push(SearchResult {
-            id: "result_1".to_string(),
-            file_path: workspace_path
+            id:             "result_1".to_string(),
+            file_path:      workspace_path
                 .join("src/main.rs")
                 .to_string_lossy()
                 .to_string(),
-            line_number: 42,
-            column_start: 5,
-            column_end: 10,
-            content: "println!(\"Hello, World!\");".to_string(),
-            match_type: "text".to_string(),
-            score: 0.95,
+            line_number:    42,
+            column_start:   5,
+            column_end:     10,
+            content:        "println!(\"Hello, World!\");".to_string(),
+            match_type:     "text".to_string(),
+            score:          0.95,
             context_before: vec![
                 "fn main() {".to_string(),
                 "    let message = \"Hello, World!\";".to_string(),
             ],
-            context_after: vec!["}".to_string()],
+            context_after:  vec!["}".to_string()],
         });
 
         Ok(results)
     }
 
-    pub async fn search_symbols(
-        &self,
-        workspace_path: &Path,
-        query: String,
-    ) -> Result<SymbolSearchResult, IDError> {
+    pub async fn search_symbols(&self, workspace_path: &Path, query: String) -> Result<SymbolSearchResult, IDError> {
         validate_secure_path(workspace_path)?;
 
         let start_time = std::time::Instant::now();
@@ -154,18 +144,18 @@ impl SearchService {
         // 3. Support fuzzy matching and ranking
 
         let symbols = vec![SymbolInfo {
-            name: "main".to_string(),
-            kind: "function".to_string(),
-            location: rust_ai_ide_common::types::Location {
+            name:           "main".to_string(),
+            kind:           "function".to_string(),
+            location:       rust_ai_ide_common::types::Location {
                 file_path: workspace_path
                     .join("src/main.rs")
                     .to_string_lossy()
                     .to_string(),
-                line: 40,
-                column: 0,
+                line:      40,
+                column:    0,
             },
             container_name: Some("main.rs".to_string()),
-            documentation: Some("Main entry point".to_string()),
+            documentation:  Some("Main entry point".to_string()),
         }];
 
         let search_time = start_time.elapsed().as_millis() as u64;
@@ -177,33 +167,25 @@ impl SearchService {
         })
     }
 
-    pub async fn navigate_to_symbol(
-        &self,
-        symbol_name: &str,
-    ) -> Result<NavigationLocation, IDError> {
+    pub async fn navigate_to_symbol(&self, symbol_name: &str) -> Result<NavigationLocation, IDError> {
         // Placeholder: In real implementation, this would:
         // 1. Query symbol index
         // 2. Find best match
         // 3. Update navigation history
 
         Ok(NavigationLocation {
-            file_path: "src/main.rs".to_string(),
+            file_path:   "src/main.rs".to_string(),
             line_number: 40,
-            column: 0,
-            context: "fn main() {".to_string(),
-            timestamp: std::time::SystemTime::now()
+            column:      0,
+            context:     "fn main() {".to_string(),
+            timestamp:   std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_secs(),
         })
     }
 
-    pub async fn get_breadcrumbs(
-        &self,
-        file_path: &Path,
-        line: u32,
-        column: u32,
-    ) -> Result<NavigationPath, IDError> {
+    pub async fn get_breadcrumbs(&self, file_path: &Path, line: u32, column: u32) -> Result<NavigationPath, IDError> {
         validate_secure_path(file_path)?;
 
         // Placeholder: In real implementation, this would:
@@ -213,19 +195,19 @@ impl SearchService {
 
         let parts = vec![
             BreadcrumbItem {
-                name: "src".to_string(),
-                kind: "directory".to_string(),
+                name:     "src".to_string(),
+                kind:     "directory".to_string(),
                 location: NavigationLocation {
-                    file_path: "src".to_string(),
+                    file_path:   "src".to_string(),
                     line_number: 0,
-                    column: 0,
-                    context: "Source directory".to_string(),
-                    timestamp: 0,
+                    column:      0,
+                    context:     "Source directory".to_string(),
+                    timestamp:   0,
                 },
             },
             BreadcrumbItem {
-                name: "main".to_string(),
-                kind: "function".to_string(),
+                name:     "main".to_string(),
+                kind:     "function".to_string(),
                 location: NavigationLocation {
                     file_path: file_path.to_string_lossy().to_string(),
                     line_number: line,
@@ -255,11 +237,11 @@ impl SearchService {
         // 2. Handle different symbol types (struct, function, trait, etc.)
 
         Ok(NavigationLocation {
-            file_path: "src/lib.rs".to_string(),
+            file_path:   "src/lib.rs".to_string(),
             line_number: 15,
-            column: 10,
-            context: "pub struct MyStruct {".to_string(),
-            timestamp: std::time::SystemTime::now()
+            column:      10,
+            context:     "pub struct MyStruct {".to_string(),
+            timestamp:   std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_secs(),
@@ -288,11 +270,11 @@ impl SearchService {
                 timestamp: 0,
             },
             NavigationLocation {
-                file_path: "src/tests.rs".to_string(),
+                file_path:   "src/tests.rs".to_string(),
                 line_number: 25,
-                column: 5,
-                context: "Function call in test".to_string(),
-                timestamp: 0,
+                column:      5,
+                context:     "Function call in test".to_string(),
+                timestamp:   0,
             },
         ])
     }

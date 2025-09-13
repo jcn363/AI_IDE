@@ -5,17 +5,18 @@
 
 use std::path::PathBuf;
 use std::sync::Arc;
+
 use tempfile::TempDir;
 
-use super::{
-    database::LearningDatabase,
-    models::{FixTemplate, LearnedPattern, LearningPreferences},
-    preferences::{utils::apply_privacy_implications, PreferencesManager},
-    similarity::SimilarityCalculator,
-    statistics::{analysis::generate_insights, LearningStatistics},
-    system::LearningSystem,
-    types::{AIProvider, AIResult, AnalysisPreferences, PrivacyMode},
-};
+use super::database::LearningDatabase;
+use super::models::{FixTemplate, LearnedPattern, LearningPreferences};
+use super::preferences::utils::apply_privacy_implications;
+use super::preferences::PreferencesManager;
+use super::similarity::SimilarityCalculator;
+use super::statistics::analysis::generate_insights;
+use super::statistics::LearningStatistics;
+use super::system::LearningSystem;
+use super::types::{AIProvider, AIResult, AnalysisPreferences, PrivacyMode};
 
 /// Helper function to create a temporary learning system for testing
 async fn create_temp_learning_system() -> (LearningSystem, TempDir) {
@@ -379,107 +380,110 @@ async fn test_similarity_algorithm_stress() {
 // ============================================================================
 
 fn create_test_learned_pattern() -> LearnedPattern {
-    use super::models::{ChangeScope, ChangeTemplate, ChangeType, FixTemplate};
     use chrono::Utc;
 
+    use super::models::{ChangeScope, ChangeTemplate, ChangeType, FixTemplate};
+
     LearnedPattern {
-        id: "test_pattern_1".to_string(),
-        description: "Test pattern for integration testing".to_string(),
-        error_pattern: "test error pattern".to_string(),
-        error_code: Some("E0308".to_string()),
+        id:               "test_pattern_1".to_string(),
+        description:      "Test pattern for integration testing".to_string(),
+        error_pattern:    "test error pattern".to_string(),
+        error_code:       Some("E0308".to_string()),
         context_patterns: vec!["fn test_function() {".to_string(), "let x = 1;".to_string()],
-        fix_template: FixTemplate {
+        fix_template:     FixTemplate {
             description_template: "Test fix template".to_string(),
-            change_templates: vec![ChangeTemplate {
-                match_pattern: "let x = 1;".to_string(),
+            change_templates:     vec![ChangeTemplate {
+                match_pattern:       "let x = 1;".to_string(),
                 replacement_pattern: "let _x = 1;".to_string(),
-                change_type: ChangeType::Replace,
-                scope: ChangeScope::Local,
+                change_type:         ChangeType::Replace,
+                scope:               ChangeScope::Local,
             }],
-            variables: std::collections::HashMap::new(),
-            conditions: vec![],
-            warnings: vec![],
+            variables:            std::collections::HashMap::new(),
+            conditions:           vec![],
+            warnings:             vec![],
         },
-        confidence: 0.85,
-        success_count: 5,
-        attempt_count: 6,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-        context_hash: "test_hash_123".to_string(),
-        tags: vec!["test".to_string(), "integration".to_string()],
-        contributor_id: None,
+        confidence:       0.85,
+        success_count:    5,
+        attempt_count:    6,
+        created_at:       Utc::now(),
+        updated_at:       Utc::now(),
+        context_hash:     "test_hash_123".to_string(),
+        tags:             vec!["test".to_string(), "integration".to_string()],
+        contributor_id:   None,
     }
 }
 
 fn create_similar_learned_pattern() -> LearnedPattern {
-    use super::models::{ChangeScope, ChangeTemplate, ChangeType, FixTemplate};
     use chrono::Utc;
 
+    use super::models::{ChangeScope, ChangeTemplate, ChangeType, FixTemplate};
+
     LearnedPattern {
-        id: "test_pattern_2".to_string(),
-        description: "Similar test pattern".to_string(),
-        error_pattern: "similar test error".to_string(),
-        error_code: Some("E0308".to_string()),
+        id:               "test_pattern_2".to_string(),
+        description:      "Similar test pattern".to_string(),
+        error_pattern:    "similar test error".to_string(),
+        error_code:       Some("E0308".to_string()),
         context_patterns: vec![
             "fn another_function() {".to_string(),
             "let y = 2;".to_string(),
         ],
-        fix_template: FixTemplate {
+        fix_template:     FixTemplate {
             description_template: "Similar test fix".to_string(),
-            change_templates: vec![ChangeTemplate {
-                match_pattern: "let y = 2;".to_string(),
+            change_templates:     vec![ChangeTemplate {
+                match_pattern:       "let y = 2;".to_string(),
                 replacement_pattern: "let _y = 2;".to_string(),
-                change_type: ChangeType::Replace,
-                scope: ChangeScope::Local,
+                change_type:         ChangeType::Replace,
+                scope:               ChangeScope::Local,
             }],
-            variables: std::collections::HashMap::new(),
-            conditions: vec![],
-            warnings: vec![],
+            variables:            std::collections::HashMap::new(),
+            conditions:           vec![],
+            warnings:             vec![],
         },
-        confidence: 0.75,
-        success_count: 3,
-        attempt_count: 4,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-        context_hash: "similar_hash_456".to_string(),
-        tags: vec!["test".to_string(), "similar".to_string()],
-        contributor_id: None,
+        confidence:       0.75,
+        success_count:    3,
+        attempt_count:    4,
+        created_at:       Utc::now(),
+        updated_at:       Utc::now(),
+        context_hash:     "similar_hash_456".to_string(),
+        tags:             vec!["test".to_string(), "similar".to_string()],
+        contributor_id:   None,
     }
 }
 
 fn create_test_learned_pattern_with_id(id_num: usize) -> LearnedPattern {
-    use super::models::{ChangeScope, ChangeTemplate, ChangeType, FixTemplate};
     use chrono::Utc;
 
+    use super::models::{ChangeScope, ChangeTemplate, ChangeType, FixTemplate};
+
     LearnedPattern {
-        id: format!("perf_test_pattern_{}", id_num),
-        description: format!("Performance test pattern {}", id_num),
-        error_pattern: format!("perf test error {}", id_num),
-        error_code: Some(format!("E0{}", id_num % 1000)),
+        id:               format!("perf_test_pattern_{}", id_num),
+        description:      format!("Performance test pattern {}", id_num),
+        error_pattern:    format!("perf test error {}", id_num),
+        error_code:       Some(format!("E0{}", id_num % 1000)),
         context_patterns: vec![
             format!("fn perf_function_{}() {{", id_num),
             format!("let var_{} = {};", id_num, id_num),
         ],
-        fix_template: FixTemplate {
+        fix_template:     FixTemplate {
             description_template: format!("Perf fix for {}", id_num),
-            change_templates: vec![ChangeTemplate {
-                match_pattern: format!("let var_{} = {};", id_num, id_num),
+            change_templates:     vec![ChangeTemplate {
+                match_pattern:       format!("let var_{} = {};", id_num, id_num),
                 replacement_pattern: format!("let _var_{} = {};", id_num, id_num),
-                change_type: ChangeType::Replace,
-                scope: ChangeScope::Local,
+                change_type:         ChangeType::Replace,
+                scope:               ChangeScope::Local,
             }],
-            variables: std::collections::HashMap::new(),
-            conditions: vec![],
-            warnings: vec![],
+            variables:            std::collections::HashMap::new(),
+            conditions:           vec![],
+            warnings:             vec![],
         },
-        confidence: 0.7 + (id_num as f32 * 0.001), // Slightly different confidences
-        success_count: (id_num % 10 + 1) as u32,
-        attempt_count: (id_num % 15 + 2) as u32,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-        context_hash: format!("perf_hash_{}", id_num),
-        tags: vec!["performance".to_string(), format!("batch_{}", id_num / 10)],
-        contributor_id: None,
+        confidence:       0.7 + (id_num as f32 * 0.001), // Slightly different confidences
+        success_count:    (id_num % 10 + 1) as u32,
+        attempt_count:    (id_num % 15 + 2) as u32,
+        created_at:       Utc::now(),
+        updated_at:       Utc::now(),
+        context_hash:     format!("perf_hash_{}", id_num),
+        tags:             vec!["performance".to_string(), format!("batch_{}", id_num / 10)],
+        contributor_id:   None,
     }
 }
 
@@ -496,14 +500,10 @@ fn create_diverse_test_patterns() -> Vec<LearnedPattern> {
     ]
 }
 
-fn create_pattern_with_context(
-    keyword1: &str,
-    keyword2: &str,
-    fix_desc: &str,
-    confidence: f32,
-) -> LearnedPattern {
-    use super::models::{ChangeScope, ChangeTemplate, ChangeType, FixTemplate};
+fn create_pattern_with_context(keyword1: &str, keyword2: &str, fix_desc: &str, confidence: f32) -> LearnedPattern {
     use chrono::Utc;
+
+    use super::models::{ChangeScope, ChangeTemplate, ChangeType, FixTemplate};
 
     LearnedPattern {
         id: format!("{}_{}_pattern", keyword1, keyword2),
@@ -516,15 +516,15 @@ fn create_pattern_with_context(
         ],
         fix_template: FixTemplate {
             description_template: fix_desc.to_string(),
-            change_templates: vec![ChangeTemplate {
-                match_pattern: format!("let {} = {};", keyword2, keyword1),
+            change_templates:     vec![ChangeTemplate {
+                match_pattern:       format!("let {} = {};", keyword2, keyword1),
                 replacement_pattern: format!("let {} = {}.clone();", keyword2, keyword1),
-                change_type: ChangeType::Replace,
-                scope: ChangeScope::Local,
+                change_type:         ChangeType::Replace,
+                scope:               ChangeScope::Local,
             }],
-            variables: std::collections::HashMap::new(),
-            conditions: vec![],
-            warnings: vec!["This is a test pattern".to_string()],
+            variables:            std::collections::HashMap::new(),
+            conditions:           vec![],
+            warnings:             vec!["This is a test pattern".to_string()],
         },
         confidence,
         success_count: (confidence * 10.0) as u32,

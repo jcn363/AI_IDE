@@ -6,8 +6,9 @@
 
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
-use serde::{Deserialize, Serialize};
+
 use rust_ai_ide_errors::IDEError;
+use serde::{Deserialize, Serialize};
 
 /// Represents different reality modes supported by the system
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -31,23 +32,23 @@ pub enum RealityMode {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MultiRealityConfig {
     /// Maximum number of concurrent AR/VR sessions
-    pub max_concurrent_sessions: usize,
+    pub max_concurrent_sessions:      usize,
     /// Performance mode for adaptive quality scaling
-    pub performance_mode: PerformanceMode,
+    pub performance_mode:             PerformanceMode,
     /// Device capabilities configuration
-    pub device_caps: DeviceCapabilities,
+    pub device_caps:                  DeviceCapabilities,
     /// Security configuration for multi-reality features
-    pub security_config: SecurityConfig,
+    pub security_config:              SecurityConfig,
     /// WebXR configuration for browser-based features
-    pub webxr_config: Option<WebXRConfig>,
+    pub webxr_config:                 Option<WebXRConfig>,
     /// Collaboration settings
-    pub collaboration_config: CollaborationConfig,
+    pub collaboration_config:         CollaborationConfig,
     /// Spatial audio configuration
-    pub spatial_audio_enabled: bool,
+    pub spatial_audio_enabled:        bool,
     /// Adaptive quality scaling thresholds
-    pub quality_scaling_thresholds: QualityScalingThresholds,
+    pub quality_scaling_thresholds:   QualityScalingThresholds,
     /// Connection pooling settings
-    pub connection_pool_size: usize,
+    pub connection_pool_size:         usize,
     /// Session persistence duration
     pub session_persistence_duration: Duration,
 }
@@ -55,15 +56,15 @@ pub struct MultiRealityConfig {
 impl Default for MultiRealityConfig {
     fn default() -> Self {
         Self {
-            max_concurrent_sessions: 10,
-            performance_mode: PerformanceMode::Balanced,
-            device_caps: DeviceCapabilities::default(),
-            security_config: SecurityConfig::default(),
-            webxr_config: None,
-            collaboration_config: CollaborationConfig::default(),
-            spatial_audio_enabled: true,
-            quality_scaling_thresholds: QualityScalingThresholds::default(),
-            connection_pool_size: 20,
+            max_concurrent_sessions:      10,
+            performance_mode:             PerformanceMode::Balanced,
+            device_caps:                  DeviceCapabilities::default(),
+            security_config:              SecurityConfig::default(),
+            webxr_config:                 None,
+            collaboration_config:         CollaborationConfig::default(),
+            spatial_audio_enabled:        true,
+            quality_scaling_thresholds:   QualityScalingThresholds::default(),
+            connection_pool_size:         20,
             session_persistence_duration: Duration::from_secs(3600), // 1 hour
         }
     }
@@ -85,32 +86,32 @@ pub enum PerformanceMode {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeviceCapabilities {
     /// Minimum GPU memory required (in MB)
-    pub min_gpu_memory_mb: usize,
+    pub min_gpu_memory_mb:      usize,
     /// Minimum CPU cores required
-    pub min_cpu_cores: usize,
+    pub min_cpu_cores:          usize,
     /// Minimum RAM required (in MB)
-    pub min_ram_mb: usize,
+    pub min_ram_mb:             usize,
     /// Supported camera types for AR
     pub supported_camera_types: Vec<CameraType>,
     /// Supported VR headset types
-    pub supported_vr_headsets: Vec<VrHeadsetType>,
+    pub supported_vr_headsets:  Vec<VrHeadsetType>,
     /// WebXR support required
-    pub webxr_required: bool,
+    pub webxr_required:         bool,
 }
 
 impl Default for DeviceCapabilities {
     fn default() -> Self {
         Self {
-            min_gpu_memory_mb: 1024, // 1GB
-            min_cpu_cores: 4,
-            min_ram_mb: 8192, // 8GB
+            min_gpu_memory_mb:      1024, // 1GB
+            min_cpu_cores:          4,
+            min_ram_mb:             8192, // 8GB
             supported_camera_types: vec![CameraType::RGB, CameraType::Depth],
-            supported_vr_headsets: vec![
+            supported_vr_headsets:  vec![
                 VrHeadsetType::MetaQuest,
                 VrHeadsetType::ValveIndex,
                 VrHeadsetType::OculusRift,
             ],
-            webxr_required: false,
+            webxr_required:         false,
         }
     }
 }
@@ -151,25 +152,25 @@ pub enum VrHeadsetType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityConfig {
     /// End-to-end encryption enabled
-    pub encryption_enabled: bool,
+    pub encryption_enabled:     bool,
     /// Encryption algorithm for secure communication
-    pub encryption_algorithm: EncryptionAlgorithm,
+    pub encryption_algorithm:   EncryptionAlgorithm,
     /// Session key rotation interval
-    pub key_rotation_interval: Duration,
+    pub key_rotation_interval:  Duration,
     /// Access control for multi-reality sessions
     pub access_control_enabled: bool,
     /// Audit logging enabled
-    pub audit_logging_enabled: bool,
+    pub audit_logging_enabled:  bool,
 }
 
 impl Default for SecurityConfig {
     fn default() -> Self {
         Self {
-            encryption_enabled: true,
-            encryption_algorithm: EncryptionAlgorithm::Aes256Gcm,
-            key_rotation_interval: Duration::from_secs(1800), // 30 minutes
+            encryption_enabled:     true,
+            encryption_algorithm:   EncryptionAlgorithm::Aes256Gcm,
+            key_rotation_interval:  Duration::from_secs(1800), // 30 minutes
             access_control_enabled: true,
-            audit_logging_enabled: true,
+            audit_logging_enabled:  true,
         }
     }
 }
@@ -192,7 +193,7 @@ pub struct WebXRConfig {
     /// Optional WebXR features
     pub optional_features: Vec<WebXRFeature>,
     /// XR session mode preference
-    pub preferred_mode: WebXRSessionMode,
+    pub preferred_mode:    WebXRSessionMode,
     /// Frame rate target
     pub target_frame_rate: f32,
 }
@@ -200,16 +201,13 @@ pub struct WebXRConfig {
 impl Default for WebXRConfig {
     fn default() -> Self {
         Self {
-            required_features: vec![
-                WebXRFeature::LocalFloor,
-                WebXRFeature::HitTest,
-            ],
+            required_features: vec![WebXRFeature::LocalFloor, WebXRFeature::HitTest],
             optional_features: vec![
                 WebXRFeature::Anchors,
                 WebXRFeature::HandTracking,
                 WebXRFeature::Layers,
             ],
-            preferred_mode: WebXRSessionMode::ImmersiveVr,
+            preferred_mode:    WebXRSessionMode::ImmersiveVr,
             target_frame_rate: 72.0,
         }
     }
@@ -251,28 +249,28 @@ pub enum WebXRSessionMode {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollaborationConfig {
     /// Maximum participants per session
-    pub max_participants: usize,
+    pub max_participants:           usize,
     /// Session timeout duration
-    pub session_timeout: Duration,
+    pub session_timeout:            Duration,
     /// Audio conferencing enabled
     pub audio_conferencing_enabled: bool,
     /// Screen sharing enabled
-    pub screen_sharing_enabled: bool,
+    pub screen_sharing_enabled:     bool,
     /// File sharing enabled
-    pub file_sharing_enabled: bool,
+    pub file_sharing_enabled:       bool,
     /// Real-time synchronization enabled
-    pub realtime_sync_enabled: bool,
+    pub realtime_sync_enabled:      bool,
 }
 
 impl Default for CollaborationConfig {
     fn default() -> Self {
         Self {
-            max_participants: 8,
-            session_timeout: Duration::from_secs(7200), // 2 hours
+            max_participants:           8,
+            session_timeout:            Duration::from_secs(7200), // 2 hours
             audio_conferencing_enabled: true,
-            screen_sharing_enabled: true,
-            file_sharing_enabled: true,
-            realtime_sync_enabled: true,
+            screen_sharing_enabled:     true,
+            file_sharing_enabled:       true,
+            realtime_sync_enabled:      true,
         }
     }
 }
@@ -281,25 +279,25 @@ impl Default for CollaborationConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityScalingThresholds {
     /// CPU usage threshold for quality reduction (percentage)
-    pub cpu_threshold: f32,
+    pub cpu_threshold:        f32,
     /// GPU usage threshold for quality reduction (percentage)
-    pub gpu_threshold: f32,
+    pub gpu_threshold:        f32,
     /// Memory usage threshold for quality reduction (percentage)
-    pub memory_threshold: f32,
+    pub memory_threshold:     f32,
     /// Frame rate threshold for quality reduction (FPS)
     pub frame_rate_threshold: f32,
     /// Quality level step size for adjustments
-    pub quality_step: f32,
+    pub quality_step:         f32,
 }
 
 impl Default for QualityScalingThresholds {
     fn default() -> Self {
         Self {
-            cpu_threshold: 80.0,
-            gpu_threshold: 85.0,
-            memory_threshold: 90.0,
+            cpu_threshold:        80.0,
+            gpu_threshold:        85.0,
+            memory_threshold:     90.0,
             frame_rate_threshold: 60.0,
-            quality_step: 0.1,
+            quality_step:         0.1,
         }
     }
 }
@@ -308,25 +306,25 @@ impl Default for QualityScalingThresholds {
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct SpatialPosition {
     /// X coordinate in spatial space
-    pub x: f32,
+    pub x:        f32,
     /// Y coordinate in spatial space (up/down)
-    pub y: f32,
+    pub y:        f32,
     /// Z coordinate in spatial space (forward/backward)
-    pub z: f32,
+    pub z:        f32,
     /// Rotation around Y axis (yaw) in degrees
     pub rotation: Option<f32>,
     /// Scale factor for object sizing
-    pub scale: Option<f32>,
+    pub scale:    Option<f32>,
 }
 
 impl Default for SpatialPosition {
     fn default() -> Self {
         Self {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
+            x:        0.0,
+            y:        0.0,
+            z:        0.0,
             rotation: Some(0.0),
-            scale: Some(1.0),
+            scale:    Some(1.0),
         }
     }
 }
@@ -379,9 +377,9 @@ pub enum ControllerInputType {
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct EyeGazeData {
     /// Horizontal gaze position (normalized)
-    pub x: f32,
+    pub x:          f32,
     /// Vertical gaze position (normalized)
-    pub y: f32,
+    pub y:          f32,
     /// Confident gaze detection
     pub confidence: f32,
 }
@@ -392,59 +390,59 @@ pub struct EyeGazeData {
 pub enum ImmeriveEvent {
     /// Spatial positioning changed
     PositionChanged {
-        object_id: String,
+        object_id:    String,
         new_position: SpatialPosition,
-        timestamp: SystemTime,
+        timestamp:    SystemTime,
     },
 
     /// Gesture input received
     GesturePerformed {
         gesture_type: GestureType,
-        position: SpatialPosition,
-        timestamp: SystemTime,
+        position:     SpatialPosition,
+        timestamp:    SystemTime,
     },
 
     /// Voice command processed
     VoiceCommand {
-        command: String,
+        command:    String,
         confidence: f32,
-        timestamp: SystemTime,
+        timestamp:  SystemTime,
     },
 
     /// Reality mode switched
     RealityModeChanged {
         previous_mode: RealityMode,
-        new_mode: RealityMode,
-        timestamp: SystemTime,
+        new_mode:      RealityMode,
+        timestamp:     SystemTime,
     },
 
     /// Collaboration session started
     SessionStarted {
-        session_id: String,
+        session_id:   String,
         participants: Vec<String>,
-        timestamp: SystemTime,
+        timestamp:    SystemTime,
     },
 
     /// Collaboration session ended
     SessionEnded {
         session_id: String,
-        reason: SessionTerminationReason,
-        timestamp: SystemTime,
+        reason:     SessionTerminationReason,
+        timestamp:  SystemTime,
     },
 
     /// AI suggestion generated
     AISuggestion {
         suggestion_type: AISuggestionType,
-        content: String,
-        confidence: f32,
-        timestamp: SystemTime,
+        content:         String,
+        confidence:      f32,
+        timestamp:       SystemTime,
     },
 
     /// Performance metric updated
     PerformanceMetric {
         metric_type: PerformanceMetricType,
-        value: f32,
-        timestamp: SystemTime,
+        value:       f32,
+        timestamp:   SystemTime,
     },
 }
 
@@ -498,15 +496,15 @@ pub enum PerformanceMetricType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeviceRegistration {
     /// Unique device identifier
-    pub device_id: String,
+    pub device_id:         String,
     /// Device type
-    pub device_type: DeviceType,
+    pub device_type:       DeviceType,
     /// Device capabilities
-    pub capabilities: DeviceCapabilities,
+    pub capabilities:      DeviceCapabilities,
     /// Device status
-    pub status: DeviceStatus,
+    pub status:            DeviceStatus,
     /// Last seen timestamp
-    pub last_seen: SystemTime,
+    pub last_seen:         SystemTime,
     /// Connection settings
     pub connection_config: DeviceConnectionConfig,
 }
@@ -561,13 +559,13 @@ pub enum DeviceStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeviceConnectionConfig {
     /// Connection protocol (e.g., "usb", "bluetooth", "wifi")
-    pub protocol: String,
+    pub protocol:     String,
     /// Connection endpoint/address
-    pub endpoint: String,
+    pub endpoint:     String,
     /// Authentication configuration
-    pub auth_config: DeviceAuthConfig,
+    pub auth_config:  DeviceAuthConfig,
     /// Connection timeout duration
-    pub timeout: Duration,
+    pub timeout:      Duration,
     /// Retry configuration
     pub retry_config: ConnectionRetryConfig,
 }
@@ -576,7 +574,7 @@ pub struct DeviceConnectionConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeviceAuthConfig {
     /// Authentication method
-    pub method: AuthMethod,
+    pub method:      AuthMethod,
     /// Authentication token or credentials
     pub credentials: Option<String>,
     /// Certificate data for TLS connections
@@ -603,11 +601,11 @@ pub enum AuthMethod {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionRetryConfig {
     /// Maximum number of retry attempts
-    pub max_retries: usize,
+    pub max_retries:        usize,
     /// Initial delay between retries
-    pub initial_delay: Duration,
+    pub initial_delay:      Duration,
     /// Maximum delay between retries
-    pub max_delay: Duration,
+    pub max_delay:          Duration,
     /// Exponential backoff multiplier
     pub backoff_multiplier: f32,
 }
@@ -615,9 +613,9 @@ pub struct ConnectionRetryConfig {
 impl Default for ConnectionRetryConfig {
     fn default() -> Self {
         Self {
-            max_retries: 5,
-            initial_delay: Duration::from_millis(100),
-            max_delay: Duration::from_secs(30),
+            max_retries:        5,
+            initial_delay:      Duration::from_millis(100),
+            max_delay:          Duration::from_secs(30),
             backoff_multiplier: 2.0,
         }
     }
@@ -627,17 +625,17 @@ impl Default for ConnectionRetryConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImmersiveSession {
     /// Unique session identifier
-    pub session_id: String,
+    pub session_id:     String,
     /// Current reality mode
-    pub reality_mode: RealityMode,
+    pub reality_mode:   RealityMode,
     /// Session participants
-    pub participants: Vec<String>,
+    pub participants:   Vec<String>,
     /// Session start time
-    pub start_time: SystemTime,
+    pub start_time:     SystemTime,
     /// Session configuration
-    pub config: MultiRealityConfig,
+    pub config:         MultiRealityConfig,
     /// Session state
-    pub state: SessionState,
+    pub state:          SessionState,
     /// Shared objects in the session
     pub shared_objects: HashMap<String, SpatialEntity>,
 }
@@ -664,17 +662,17 @@ pub enum SessionState {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpatialEntity {
     /// Unique entity identifier
-    pub id: String,
+    pub id:           String,
     /// Entity type
-    pub entity_type: SpatialEntityType,
+    pub entity_type:  SpatialEntityType,
     /// Current spatial position
-    pub position: SpatialPosition,
+    pub position:     SpatialPosition,
     /// Entity properties
-    pub properties: HashMap<String, String>,
+    pub properties:   HashMap<String, String>,
     /// Last updated timestamp
     pub last_updated: SystemTime,
     /// Entity visibility setting
-    pub visible: bool,
+    pub visible:      bool,
 }
 
 /// Types of spatial entities
@@ -732,11 +730,15 @@ pub mod utils {
     /// Validate spatial position bounds
     pub fn validate_spatial_position(position: &SpatialPosition) -> Result<(), IDEError> {
         if !position.x.is_finite() || !position.y.is_finite() || !position.z.is_finite() {
-            return Err(IDEError::InvalidSpatialPosition("Non-finite coordinates".into()));
+            return Err(IDEError::InvalidSpatialPosition(
+                "Non-finite coordinates".into(),
+            ));
         }
 
         if position.x.abs() > 10000.0 || position.y.abs() > 10000.0 || position.z.abs() > 10000.0 {
-            return Err(IDEError::InvalidSpatialPosition("Coordinates out of bounds".into()));
+            return Err(IDEError::InvalidSpatialPosition(
+                "Coordinates out of bounds".into(),
+            ));
         }
 
         Ok(())
@@ -754,14 +756,14 @@ pub mod utils {
     pub fn interpolate_spatial_position(pos1: &SpatialPosition, pos2: &SpatialPosition, t: f32) -> SpatialPosition {
         let t = t.clamp(0.0, 1.0);
         SpatialPosition {
-            x: pos1.x + (pos2.x - pos1.x) * t,
-            y: pos1.y + (pos2.y - pos1.y) * t,
-            z: pos1.z + (pos2.z - pos1.z) * t,
+            x:        pos1.x + (pos2.x - pos1.x) * t,
+            y:        pos1.y + (pos2.y - pos1.y) * t,
+            z:        pos1.z + (pos2.z - pos1.z) * t,
             rotation: pos1.rotation.map(|r1| {
                 let r2 = pos2.rotation.unwrap_or(0.0);
                 normalize_angle(r1 + (angle_difference(r1, r2)) * t)
             }),
-            scale: pos1.scale.map(|s1| {
+            scale:    pos1.scale.map(|s1| {
                 let s2 = pos2.scale.unwrap_or(1.0);
                 s1 + (s2 - s1) * t
             }),
@@ -810,8 +812,20 @@ mod tests {
 
     #[test]
     fn test_spatial_distance_calculation() {
-        let pos1 = SpatialPosition { x: 0.0, y: 0.0, z: 0.0, rotation: None, scale: None };
-        let pos2 = SpatialPosition { x: 3.0, y: 4.0, z: 0.0, rotation: None, scale: None };
+        let pos1 = SpatialPosition {
+            x:        0.0,
+            y:        0.0,
+            z:        0.0,
+            rotation: None,
+            scale:    None,
+        };
+        let pos2 = SpatialPosition {
+            x:        3.0,
+            y:        4.0,
+            z:        0.0,
+            rotation: None,
+            scale:    None,
+        };
         let distance = utils::spatial_distance(&pos1, &pos2);
         assert!((distance - 5.0).abs() < 0.001); // Should be 5 (3-4-5 triangle)
     }

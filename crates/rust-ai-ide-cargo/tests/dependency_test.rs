@@ -1,8 +1,6 @@
-use rust_ai_ide_cargo::{
-    build::{BuildError, BuildStatus, ErrorLevel},
-    dependency::{DependencyInfo, DependencyKind, DependencyManager},
-    models::BuildMetrics,
-};
+use rust_ai_ide_cargo::build::{BuildError, BuildStatus, ErrorLevel};
+use rust_ai_ide_cargo::dependency::{DependencyInfo, DependencyKind, DependencyManager};
+use rust_ai_ide_cargo::models::BuildMetrics;
 use tempfile::tempdir;
 
 #[tokio::test]
@@ -58,15 +56,15 @@ async fn test_dependency_management() {
 
     // Test adding a new dependency
     let new_dep = DependencyInfo {
-        name: "tokio".to_string(),
-        version: "1.0".to_string(),
-        features: vec!["full".to_string()],
-        optional: false,
+        name:             "tokio".to_string(),
+        version:          "1.0".to_string(),
+        features:         vec!["full".to_string()],
+        optional:         false,
         default_features: true,
-        target: None,
-        kind: DependencyKind::Normal,
-        registry: None,
-        source: None,
+        target:           None,
+        kind:             DependencyKind::Normal,
+        registry:         None,
+        source:           None,
     };
 
     manager
@@ -93,30 +91,30 @@ async fn test_dependency_management() {
 
     // Simulate build status updates
     let building = BuildStatus::Building {
-        progress: 0.5,
+        progress:       0.5,
         current_target: Some("test_crate".to_string()),
-        jobs_running: 1,
-        jobs_total: 2,
+        jobs_running:   1,
+        jobs_total:     2,
     };
 
     let success = BuildStatus::Success {
         duration: 5000.0,
-        metrics: BuildMetrics {
+        metrics:  BuildMetrics {
             warning_count: 0,
             ..Default::default()
         },
     };
 
     let failed = BuildStatus::Failed {
-        error: "Build failed".to_string(),
-        duration: 10000.0,
+        error:         "Build failed".to_string(),
+        duration:      10000.0,
         error_details: vec![BuildError {
             message: "Build failed".to_string(),
-            file: None,
-            line: None,
-            column: None,
-            code: None,
-            level: ErrorLevel::Error,
+            file:    None,
+            line:    None,
+            column:  None,
+            code:    None,
+            level:   ErrorLevel::Error,
         }],
     };
 

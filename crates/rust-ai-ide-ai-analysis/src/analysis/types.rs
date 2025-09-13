@@ -1,6 +1,7 @@
+use std::fmt;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::fmt;
 use uuid::Uuid;
 
 /// Severity levels for analysis issues
@@ -26,8 +27,8 @@ impl fmt::Display for Severity {
 /// Location in source code
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Location {
-    pub file: String,
-    pub line: usize,
+    pub file:   String,
+    pub line:   usize,
     pub column: usize,
     pub offset: usize,
 }
@@ -35,18 +36,18 @@ pub struct Location {
 /// Suggestion for improvement
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Suggestion {
-    pub id: Uuid,
-    pub title: String,
+    pub id:          Uuid,
+    pub title:       String,
     pub description: String,
-    pub location: Option<Location>,
-    pub actions: Vec<SuggestionAction>,
-    pub priority: Priority,
+    pub location:    Option<Location>,
+    pub actions:     Vec<SuggestionAction>,
+    pub priority:    Priority,
 }
 
 /// Action that can be taken to resolve an issue
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SuggestionAction {
-    pub description: String,
+    pub description:  String,
     pub code_changes: Vec<CodeChange>,
 }
 
@@ -62,9 +63,9 @@ pub enum Priority {
 /// Code change specification
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CodeChange {
-    pub file: String,
-    pub start_line: usize,
-    pub end_line: usize,
+    pub file:        String,
+    pub start_line:  usize,
+    pub end_line:    usize,
     pub replacement: String,
     pub description: String,
 }
@@ -72,15 +73,15 @@ pub struct CodeChange {
 /// Security vulnerability
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SecurityIssue {
-    pub id: Uuid,
-    pub cwe_id: Option<String>,
-    pub title: String,
+    pub id:          Uuid,
+    pub cwe_id:      Option<String>,
+    pub title:       String,
     pub description: String,
-    pub severity: Severity,
-    pub location: Location,
-    pub evidence: String,
-    pub mitigation: String,
-    pub category: SecurityCategory,
+    pub severity:    Severity,
+    pub location:    Location,
+    pub evidence:    String,
+    pub mitigation:  String,
+    pub category:    SecurityCategory,
 }
 
 /// Security vulnerability categories
@@ -103,12 +104,12 @@ pub enum SecurityCategory {
 /// Performance issue
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PerformanceHint {
-    pub id: Uuid,
-    pub title: String,
+    pub id:          Uuid,
+    pub title:       String,
     pub description: String,
-    pub impact: PerformanceImpact,
-    pub location: Location,
-    pub suggestion: String,
+    pub impact:      PerformanceImpact,
+    pub location:    Location,
+    pub suggestion:  String,
 }
 
 /// Performance impact levels
@@ -124,12 +125,12 @@ pub enum PerformanceImpact {
 /// Code smell detection result
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CodeSmell {
-    pub id: Uuid,
-    pub smell_type: CodeSmellType,
-    pub title: String,
-    pub description: String,
-    pub location: Location,
-    pub severity: Severity,
+    pub id:                  Uuid,
+    pub smell_type:          CodeSmellType,
+    pub title:               String,
+    pub description:         String,
+    pub location:            Location,
+    pub severity:            Severity,
     pub refactoring_pattern: Option<String>,
 }
 
@@ -156,24 +157,24 @@ pub enum CodeSmellType {
 /// Code quality metrics
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct CodeMetrics {
-    pub lines_of_code: usize,
-    pub complexity: f64,
-    pub maintainability_index: f64,
-    pub cyclomatic_complexity: usize,
-    pub coupling: f64,
-    pub cohesion: f64,
-    pub test_coverage: Option<f64>,
+    pub lines_of_code:          usize,
+    pub complexity:             f64,
+    pub maintainability_index:  f64,
+    pub cyclomatic_complexity:  usize,
+    pub coupling:               f64,
+    pub cohesion:               f64,
+    pub test_coverage:          Option<f64>,
     pub documentation_coverage: f64,
 }
 
 /// Architecture pattern suggestion
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ArchitectureSuggestion {
-    pub pattern: String,
-    pub confidence: f64,
-    pub location: Location,
-    pub description: String,
-    pub benefits: Vec<String>,
+    pub pattern:              String,
+    pub confidence:           f64,
+    pub location:             Location,
+    pub description:          String,
+    pub benefits:             Vec<String>,
     pub implementation_steps: Vec<String>,
 }
 

@@ -9,47 +9,47 @@
 //! - Model performance validation
 //! - Learning system accuracy testing
 
-use crate::common::{scenarios::AIScenarioBuilder, ExtendedIntegrationContext};
-use crate::IntegrationTestResult;
+use std::sync::Arc;
+
 use rust_ai_ide_ai_analysis::AnalysisEngine;
 use rust_ai_ide_ai_codegen::{CodeGenerator, GenerationConfig};
 use rust_ai_ide_ai_inference::{AIModel, InferenceEngine};
 use rust_ai_ide_ai_learning::{LearningSystem, TrainingData};
 use rust_ai_ide_ai_refactoring::{RefactoringContext, RefactoringEngine};
 use rust_ai_ide_errors::RustAIError;
-use std::sync::Arc;
 use tokio::sync::Mutex;
+
+use crate::common::scenarios::AIScenarioBuilder;
+use crate::common::ExtendedIntegrationContext;
+use crate::IntegrationTestResult;
 
 /// AI/ML Integration Test Suite Runner
 #[derive(Clone)]
 pub struct AIMLIntegrationTestRunner {
-    context: Option<ExtendedIntegrationContext>,
-    analysis_engine: Option<Arc<AnalysisEngine>>,
-    inference_engine: Option<Arc<InferenceEngine>>,
-    learning_system: Option<Arc<LearningSystem>>,
-    code_generator: Option<Arc<CodeGenerator>>,
+    context:            Option<ExtendedIntegrationContext>,
+    analysis_engine:    Option<Arc<AnalysisEngine>>,
+    inference_engine:   Option<Arc<InferenceEngine>>,
+    learning_system:    Option<Arc<LearningSystem>>,
+    code_generator:     Option<Arc<CodeGenerator>>,
     refactoring_engine: Option<Arc<RefactoringEngine>>,
-    results: Vec<IntegrationTestResult>,
+    results:            Vec<IntegrationTestResult>,
 }
 
 impl AIMLIntegrationTestRunner {
     pub fn new() -> Self {
         Self {
-            context: None,
-            analysis_engine: None,
-            inference_engine: None,
-            learning_system: None,
-            code_generator: None,
+            context:            None,
+            analysis_engine:    None,
+            inference_engine:   None,
+            learning_system:    None,
+            code_generator:     None,
             refactoring_engine: None,
-            results: Vec::new(),
+            results:            Vec::new(),
         }
     }
 
     /// Setup AI/ML test environment with engines and models
-    pub async fn setup_test_environment(
-        &mut self,
-        context: ExtendedIntegrationContext,
-    ) -> Result<(), RustAIError> {
+    pub async fn setup_test_environment(&mut self, context: ExtendedIntegrationContext) -> Result<(), RustAIError> {
         self.context = Some(context);
 
         // Initialize AI engines
@@ -97,9 +97,9 @@ impl AIMLIntegrationTestRunner {
         let bug_detection_data = TrainingData::new()
             .with_category("bug_detection")
             .with_samples(vec![
-                ("fn test() { let x = 5; }", true), // contains unused variable bug
+                ("fn test() { let x = 5; }", true),             // contains unused variable bug
                 ("fn test() { println!(\"{}\", 42); }", false), // no bugs
-                ("fn test(x: i32) { let y = x + 1; }", true), // unused variable bug
+                ("fn test(x: i32) { let y = x + 1; }", true),   // unused variable bug
             ])
             .build()?;
 
@@ -407,8 +407,7 @@ impl AIMLIntegrationTestRunner {
     }
 
     async fn perform_refactoring_test(&self) -> Result<(), RustAIError> {
-        if let (Some(refactoring_engine), Some(context)) = (&self.refactoring_engine, &self.context)
-        {
+        if let (Some(refactoring_engine), Some(context)) = (&self.refactoring_engine, &self.context) {
             // Test code that can be refactored
             let messy_code = r#"fn process_data() {
     let mut result = Vec::new();
@@ -650,8 +649,8 @@ mod tests {
 
         let context = ExtendedIntegrationContext::new(shared_test_utils::IntegrationContext {
             test_dir: workspace_path,
-            config: shared_test_utils::IntegrationConfig::default(),
-            state: std::collections::HashMap::new(),
+            config:   shared_test_utils::IntegrationConfig::default(),
+            state:    std::collections::HashMap::new(),
         });
 
         let scenario = AIScenarioBuilder::new("code_quality")

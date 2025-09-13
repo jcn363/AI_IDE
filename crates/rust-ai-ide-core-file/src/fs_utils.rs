@@ -1,25 +1,23 @@
-use super::IDEResult;
-use rust_ai_ide_core_fundamentals::error::IDEError;
-use sha2::Digest;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use rust_ai_ide_core_fundamentals::error::IDEError;
+use sha2::Digest;
+
+use super::IDEResult;
 
 /// File operation utilities
 pub mod file_ops {
     use super::*;
 
     /// Safe file reading with size limits and error handling
-    pub fn read_file_with_limits<P: AsRef<Path>>(
-        path: P,
-        max_size: Option<u64>,
-    ) -> IDEResult<String> {
+    pub fn read_file_with_limits<P: AsRef<Path>>(path: P, max_size: Option<u64>) -> IDEResult<String> {
         let path = path.as_ref();
-        let max_size =
-            max_size.unwrap_or(rust_ai_ide_core_fundamentals::constants::MAX_FILE_SIZE_BYTES);
+        let max_size = max_size.unwrap_or(rust_ai_ide_core_fundamentals::constants::MAX_FILE_SIZE_BYTES);
 
         // Check file size before reading
-        let metadata = fs::metadata(path)
-            .map_err(|e| IDEError::FileSystem(format!("Failed to read file metadata: {}", e)))?;
+        let metadata =
+            fs::metadata(path).map_err(|e| IDEError::FileSystem(format!("Failed to read file metadata: {}", e)))?;
         if metadata.len() > max_size {
             return Err(IDEError::FileSystem(format!(
                 "File {} exceeds maximum size of {} bytes",
@@ -29,9 +27,10 @@ pub mod file_ops {
         }
 
         // Read with proper error handling
-        let mut reader = std::io::BufReader::new(fs::File::open(path).map_err(|e| {
-            IDEError::FileSystem(format!("Failed to open file {}: {}", path.display(), e))
-        })?);
+        let mut reader = std::io::BufReader::new(
+            fs::File::open(path)
+                .map_err(|e| IDEError::FileSystem(format!("Failed to open file {}: {}", path.display(), e)))?,
+        );
         let mut content = String::new();
         std::io::Read::read_to_string(&mut reader, &mut content)
             .map_err(|e| IDEError::FileSystem(format!("Failed to read file content: {}", e)))?;
@@ -49,8 +48,7 @@ pub mod file_ops {
                 .map_err(|e| IDEError::FileSystem(format!("Failed to create directory: {}", e)))?;
         }
 
-        fs::write(path, content)
-            .map_err(|e| IDEError::FileSystem(format!("Failed to write file: {}", e)))?;
+        fs::write(path, content).map_err(|e| IDEError::FileSystem(format!("Failed to write file: {}", e)))?;
         Ok(())
     }
 }
@@ -64,8 +62,7 @@ pub mod dir_ops {
         let path = path.as_ref();
 
         if !path.exists() {
-            fs::create_dir_all(path)
-                .map_err(|e| IDEError::FileSystem(format!("Failed to create directory: {}", e)))?;
+            fs::create_dir_all(path).map_err(|e| IDEError::FileSystem(format!("Failed to create directory: {}", e)))?;
         } else if !path.is_dir() {
             return Err(IDEError::FileSystem(format!(
                 "Path {:?} exists but is not a directory",
@@ -101,8 +98,9 @@ pub mod dir_ops {
 
 /// Path utilities specific to file system operations
 pub mod path_utils {
-    use super::*;
     use std::io::Read;
+
+    use super::*;
 
     /// Calculate file hash using SHA256
     pub fn hash_file<P: AsRef<Path>>(path: P) -> IDEResult<String> {
@@ -114,9 +112,9 @@ pub mod path_utils {
         let mut buffer = vec![0; 8192]; // 8KB buffer
 
         loop {
-            let bytes_read = file.read(&mut buffer).map_err(|e| {
-                IDEError::FileSystem(format!("Failed to read file for hashing: {}", e))
-            })?;
+            let bytes_read = file
+                .read(&mut buffer)
+                .map_err(|e| IDEError::FileSystem(format!("Failed to read file for hashing: {}", e)))?;
 
             if bytes_read == 0 {
                 break;

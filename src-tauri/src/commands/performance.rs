@@ -3,10 +3,11 @@
 //! This module provides Tauri commands for performance monitoring,
 //! memory optimization, low-power mode, and system diagnostics.
 
-use crate::command_templates::tauri_command_template;
-use crate::state::AppState;
 use rust_ai_ide_common::validation::TauriInputSanitizer;
 use tauri::State;
+
+use crate::command_templates::tauri_command_template;
+use crate::state::AppState;
 
 /// Get current system performance metrics
 #[tauri::command]
@@ -203,10 +204,7 @@ pub async fn get_optimization_stats(state: State<'_, AppState>) -> Result<String
 
 /// Get process-level performance metrics
 #[tauri::command]
-pub async fn get_process_metrics(
-    pid: Option<u32>,
-    state: State<'_, AppState>,
-) -> Result<String, String> {
+pub async fn get_process_metrics(pid: Option<u32>, state: State<'_, AppState>) -> Result<String, String> {
     execute_command!(
         "get_process_metrics",
         &Default::default(),
@@ -253,10 +251,7 @@ pub async fn get_process_metrics(
 
 /// Enable or disable low-power mode
 #[tauri::command]
-pub async fn set_low_power_mode(
-    enabled: bool,
-    state: State<'_, AppState>,
-) -> Result<String, String> {
+pub async fn set_low_power_mode(enabled: bool, state: State<'_, AppState>) -> Result<String, String> {
     execute_command!("set_low_power_mode", &Default::default(), async move || {
         // This would configure system-wide low-power settings
         // For now, return success
@@ -337,9 +332,7 @@ pub async fn get_cross_platform_memory(state: State<'_, AppState>) -> Result<Str
 
 // Command to initialize performance services (for lazy initialization)
 #[tauri::command]
-pub async fn initialize_performance_monitoring(
-    state: State<'_, AppState>,
-) -> Result<String, String> {
+pub async fn initialize_performance_monitoring(state: State<'_, AppState>) -> Result<String, String> {
     execute_command!(
         "initialize_performance_monitoring",
         &Default::default(),
@@ -354,15 +347,14 @@ pub async fn initialize_performance_monitoring(
 
             // Initialize battery monitor
             let battery_config = rust_ai_ide_performance_monitoring::battery::LowPowerConfig {
-                enable_cpu_throttling: true,
-                reduce_refresh_rate: false,
-                disable_animations: false,
+                enable_cpu_throttling:  true,
+                reduce_refresh_rate:    false,
+                disable_animations:     false,
                 limit_background_tasks: true,
-                reduce_cache_sizes: false,
-                battery_threshold: 0.2,
+                reduce_cache_sizes:     false,
+                battery_threshold:      0.2,
             };
-            let battery_monitor =
-                rust_ai_ide_performance_monitoring::battery::BatteryMonitor::new(battery_config);
+            let battery_monitor = rust_ai_ide_performance_monitoring::battery::BatteryMonitor::new(battery_config);
             state.set_battery_monitor(battery_monitor).await;
 
             Ok(serde_json::json!({

@@ -3,14 +3,16 @@
 //! Provides Tauri command handlers for collaborative editing, session management,
 //! AI coaching, and real-time communication operations with enhanced features.
 
-use crate::command_templates::*;
+use std::sync::Arc;
+
 use rust_ai_ide_ai_inference::{CodeCompletionResult, InferenceEngine};
 use rust_ai_ide_collaboration::*;
 use rust_ai_ide_common::validation::TauriInputSanitizer;
 use rust_ai_ide_security::audit_logger;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tokio::sync::RwLock;
+
+use crate::command_templates::*;
 
 /// State for collaboration services
 pub type CollaborationState = Arc<RwLock<Option<CollaborationService>>>;
@@ -20,9 +22,9 @@ pub type PresenceState = Arc<RwLock<Option<PresenceService>>>;
 pub type TeamManagementState = Arc<RwLock<Option<TeamManagementService>>>;
 
 static CONFIG: CommandConfig = CommandConfig {
-    enable_logging: true,
-    log_level: log::Level::Info,
-    enable_validation: true,
+    enable_logging:     true,
+    log_level:          log::Level::Info,
+    enable_validation:  true,
     async_timeout_secs: Some(30),
 };
 
@@ -719,40 +721,40 @@ tauri_command_template! {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CollabInitPayload {
-    pub document_id: String,
-    pub user_id: String,
+    pub document_id:  String,
+    pub user_id:      String,
     pub session_name: String,
 }
 
 /// Simple session initializer (placeholder for full implementation)
 pub struct CollabSessionInitializer {
-    pub document_id: String,
-    pub user_id: String,
+    pub document_id:  String,
+    pub user_id:      String,
     pub session_name: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CoachingStartPayload {
-    pub session_id: String,
-    pub participants: Vec<String>,
+    pub session_id:         String,
+    pub participants:       Vec<String>,
     pub real_time_feedback: bool,
-    pub goals: Vec<String>,
-    pub coaching_style: String,
+    pub goals:              Vec<String>,
+    pub coaching_style:     String,
 }
 
 pub struct CoachingConfig {
-    pub session_id: String,
+    pub session_id:                String,
     pub enable_real_time_feedback: bool,
-    pub coaching_style: String,
+    pub coaching_style:            String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CRDTOperationPayload {
-    pub document_id: String,
-    pub site_id: String,
+    pub document_id:    String,
+    pub site_id:        String,
     pub operation_type: CRDTOperationType,
-    pub position: usize,
-    pub content: Option<String>,
+    pub position:       usize,
+    pub content:        Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -763,12 +765,12 @@ pub enum CRDTOperationType {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct OTOperationPayload {
-    pub document_id: String,
-    pub user_id: String,
+    pub document_id:    String,
+    pub user_id:        String,
     pub operation_type: OTOperationType,
-    pub position: usize,
-    pub content: Option<String>,
-    pub length: Option<usize>,
+    pub position:       usize,
+    pub content:        Option<String>,
+    pub length:         Option<usize>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -779,52 +781,52 @@ pub enum OTOperationType {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct MergeOperationsPayload {
-    pub document_id: String,
+    pub document_id:  String,
     pub participants: Vec<String>,
-    pub operations: Vec<OTOperationPayload>,
+    pub operations:   Vec<OTOperationPayload>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CoachingRequestPayload {
-    pub session_id: String,
-    pub context_code: String,
-    pub file_path: Option<String>,
+    pub session_id:      String,
+    pub context_code:    String,
+    pub file_path:       Option<String>,
     pub cursor_position: Vec<usize>,
-    pub language: String,
+    pub language:        String,
     pub project_context: String,
-    pub user_actions: Vec<UserActionPayload>,
+    pub user_actions:    Vec<UserActionPayload>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct UserActionPayload {
     pub action_type: String,
-    pub content: String,
-    pub timestamp: u64,
+    pub content:     String,
+    pub timestamp:   u64,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SuggestionRequestPayload {
-    pub session_id: String,
-    pub context_code: String,
-    pub file_path: Option<String>,
-    pub cursor_position: Vec<usize>,
-    pub language: String,
-    pub project_context: String,
+    pub session_id:           String,
+    pub context_code:         String,
+    pub file_path:            Option<String>,
+    pub cursor_position:      Vec<usize>,
+    pub language:             String,
+    pub project_context:      String,
     pub previous_suggestions: Vec<SuggestionPayload>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SuggestionPayload {
     pub suggestion_type: String,
-    pub content: String,
-    pub alternatives: Vec<String>,
-    pub reasoning: String,
+    pub content:         String,
+    pub alternatives:    Vec<String>,
+    pub reasoning:       String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct KnowledgeTransferPayload {
-    pub session_id: String,
-    pub topic: String,
+    pub session_id:      String,
+    pub topic:           String,
     pub learner_profile: LearnerProfilePayload,
 }
 
@@ -832,8 +834,8 @@ pub struct KnowledgeTransferPayload {
 pub struct LearnerProfilePayload {
     pub experience_level: String,
     pub preferred_styles: Vec<String>,
-    pub knowledge_gaps: Vec<String>,
-    pub interests: Vec<String>,
+    pub knowledge_gaps:   Vec<String>,
+    pub interests:        Vec<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -843,17 +845,17 @@ pub struct DocumentContentPayload {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CodeAnalysisPayload {
-    pub session_id: String,
-    pub code: String,
-    pub file_path: Option<String>,
+    pub session_id:      String,
+    pub code:            String,
+    pub file_path:       Option<String>,
     pub cursor_position: Vec<usize>,
-    pub language: String,
+    pub language:        String,
     pub project_context: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct EndSessionPayload {
-    pub session_id: String,
+    pub session_id:   String,
     pub service_type: String,
 }
 
@@ -863,8 +865,8 @@ impl CRDTOperation {
     pub fn from_payload(payload: &CRDTOperationPayload) -> Result<Self> {
         match payload.operation_type {
             CRDTOperationType::Insert => Ok(CRDTOperation::Insert {
-                pos: payload.position,
-                char: payload
+                pos:           payload.position,
+                char:          payload
                     .content
                     .as_ref()
                     .and_then(|c| c.chars().next())
@@ -872,14 +874,14 @@ impl CRDTOperation {
                 lamport_clock: std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)?
                     .as_millis() as u64,
-                site_id: payload.site_id.parse().unwrap_or(0),
+                site_id:       payload.site_id.parse().unwrap_or(0),
             }),
             CRDTOperationType::Delete => Ok(CRDTOperation::Delete {
-                pos: payload.position,
+                pos:           payload.position,
                 lamport_clock: std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)?
                     .as_millis() as u64,
-                site_id: payload.site_id.parse().unwrap_or(0),
+                site_id:       payload.site_id.parse().unwrap_or(0),
             }),
         }
     }
@@ -889,19 +891,19 @@ impl Operation {
     pub fn from_payload(payload: &OTOperationPayload) -> Result<Self> {
         match payload.operation_type {
             OTOperationType::Insert => Ok(Operation::InsertOp(InsertOperation {
-                id: uuid::Uuid::new_v4(),
-                position: payload.position,
-                content: payload.content.clone().unwrap_or_default(),
-                site_id: 0, // Would come from payload
+                id:        uuid::Uuid::new_v4(),
+                position:  payload.position,
+                content:   payload.content.clone().unwrap_or_default(),
+                site_id:   0, // Would come from payload
                 timestamp: std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)?
                     .as_millis() as u64,
             })),
             OTOperationType::Delete => Ok(Operation::DeleteOp(DeleteOperation {
-                id: uuid::Uuid::new_v4(),
-                position: payload.position,
-                length: payload.length.unwrap_or(1),
-                site_id: 0, // Would come from payload
+                id:        uuid::Uuid::new_v4(),
+                position:  payload.position,
+                length:    payload.length.unwrap_or(1),
+                site_id:   0, // Would come from payload
                 timestamp: std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)?
                     .as_millis() as u64,
@@ -921,9 +923,9 @@ impl DynamicSuggestion {
                 "testing" => SuggestionType::Testing,
                 _ => SuggestionType::Debugging,
             },
-            content: payload.content.clone(),
-            alternatives: payload.alternatives.clone(),
-            reasoning: payload.reasoning.clone(),
+            content:         payload.content.clone(),
+            alternatives:    payload.alternatives.clone(),
+            reasoning:       payload.reasoning.clone(),
         }
     }
 }
@@ -943,61 +945,61 @@ impl From<String> for ExperienceLevel {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CreateAuthenticatedSessionPayload {
-    pub user_id: String,
-    pub username: String,
+    pub user_id:     String,
+    pub username:    String,
     pub document_id: String,
-    pub user_role: Option<UserRole>,
+    pub user_role:   Option<UserRole>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct UpdatePresencePayload {
-    pub user_id: String,
-    pub username: String,
-    pub status: Option<PresenceStatus>,
-    pub document_id: Option<String>,
-    pub session_id: Option<String>,
+    pub user_id:       String,
+    pub username:      String,
+    pub status:        Option<PresenceStatus>,
+    pub document_id:   Option<String>,
+    pub session_id:    Option<String>,
     pub activity_type: Option<ActivityType>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct UpdateCursorPayload {
-    pub user_id: String,
-    pub document_id: String,
-    pub line: usize,
-    pub column: usize,
+    pub user_id:         String,
+    pub document_id:     String,
+    pub line:            usize,
+    pub column:          usize,
     pub selection_start: Option<(usize, usize)>,
-    pub selection_end: Option<(usize, usize)>,
+    pub selection_end:   Option<(usize, usize)>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct GetIndicatorsPayload {
-    pub session_id: String,
+    pub session_id:  String,
     pub document_id: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CreateTeamPayload {
-    pub name: String,
+    pub name:        String,
     pub description: Option<String>,
-    pub owner_id: String,
-    pub settings: Option<TeamSettings>,
+    pub owner_id:    String,
+    pub settings:    Option<TeamSettings>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct InviteToTeamPayload {
-    pub team_id: String,
-    pub invited_by: String,
+    pub team_id:            String,
+    pub invited_by:         String,
     pub invited_user_email: String,
-    pub role: Option<UserRole>,
-    pub message: Option<String>,
+    pub role:               Option<UserRole>,
+    pub message:            Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ShareProjectPayload {
-    pub project_id: String,
-    pub shared_by: String,
-    pub team_id: String,
+    pub project_id:  String,
+    pub shared_by:   String,
+    pub team_id:     String,
     pub permissions: Option<Vec<Permission>>,
-    pub share_type: Option<ShareType>,
-    pub expires_at: Option<std::time::SystemTime>,
+    pub share_type:  Option<ShareType>,
+    pub expires_at:  Option<std::time::SystemTime>,
 }

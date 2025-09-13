@@ -1,13 +1,13 @@
-use rust_ai_ide_debugger::debugger::{
-    Debugger, DebuggerBackendTrait, DebuggerCommand, DebuggerConfig, DebuggerError, DebuggerEvent,
-    DebuggerState,
-};
 use std::time::Duration;
+
+use rust_ai_ide_debugger::debugger::{
+    Debugger, DebuggerBackendTrait, DebuggerCommand, DebuggerConfig, DebuggerError, DebuggerEvent, DebuggerState,
+};
 use tokio::sync::mpsc;
 
 // Mock debugger backend for testing
 pub struct MockDebuggerBackend {
-    sender: mpsc::UnboundedSender<()>,
+    sender:  mpsc::UnboundedSender<()>,
     running: bool,
 }
 
@@ -22,10 +22,7 @@ impl MockDebuggerBackend {
 
 #[async_trait::async_trait]
 impl DebuggerBackendTrait for MockDebuggerBackend {
-    fn set_event_sender(
-        &mut self,
-        _sender: tokio::sync::mpsc::UnboundedSender<crate::debugger::DebuggerEvent>,
-    ) {
+    fn set_event_sender(&mut self, _sender: tokio::sync::mpsc::UnboundedSender<crate::debugger::DebuggerEvent>) {
         // Store the sender if needed for testing
     }
 
@@ -71,9 +68,7 @@ impl DebuggerBackendTrait for MockDebuggerBackend {
         Ok(())
     }
 
-    async fn get_stack_trace(
-        &self,
-    ) -> Result<Vec<crate::debugger::types::StackFrame>, DebuggerError> {
+    async fn get_stack_trace(&self) -> Result<Vec<crate::debugger::types::StackFrame>, DebuggerError> {
         Ok(Vec::new())
     }
 
@@ -122,11 +117,8 @@ async fn test_breakpoint_commands() {
     let (event_sender, mut event_receiver) = mpsc::unbounded_channel();
 
     // Create the event loop
-    let event_loop = crate::debugger::event_loop::DebuggerEventLoop::new(
-        debugger.clone(),
-        command_receiver,
-        event_sender,
-    );
+    let event_loop =
+        crate::debugger::event_loop::DebuggerEventLoop::new(debugger.clone(), command_receiver, event_sender);
 
     // Start the event loop in a background task
     let handle = tokio::spawn(async move {

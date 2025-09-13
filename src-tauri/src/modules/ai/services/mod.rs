@@ -10,9 +10,7 @@ pub mod finetune;
 
 // Re-export the main components for easy access
 pub use common::{
-    AIServiceRegistry, AIServiceTrait, PoolGuard, PoolStatus, PooledServiceConfig,
-    WrappedAIService, GLOBAL_AI_REGISTRY,
+    AIServiceRegistry, AIServiceTrait, PoolGuard, PoolStatus, PooledServiceConfig, WrappedAIService, GLOBAL_AI_REGISTRY,
 };
-
 // Re-export finetune functionality
 pub use finetune::*;

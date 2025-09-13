@@ -159,15 +159,7 @@ impl SimdMathAccelerator {
     }
 
     /// SIMD-accelerated matrix multiplication
-    pub fn matrix_multiply(
-        &self,
-        a: &[f32],
-        b: &[f32],
-        result: &mut [f32],
-        m: usize,
-        n: usize,
-        p: usize,
-    ) {
+    pub fn matrix_multiply(&self, a: &[f32], b: &[f32], result: &mut [f32], m: usize, n: usize, p: usize) {
         assert_eq!(a.len(), m * n);
         assert_eq!(b.len(), n * p);
         assert_eq!(result.len(), m * p);
@@ -181,15 +173,7 @@ impl SimdMathAccelerator {
     /// AVX2-optimized matrix multiplication
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[target_feature(enable = "avx2")]
-    unsafe fn matrix_multiply_avx2(
-        &self,
-        a: &[f32],
-        b: &[f32],
-        result: &mut [f32],
-        m: usize,
-        n: usize,
-        p: usize,
-    ) {
+    unsafe fn matrix_multiply_avx2(&self, a: &[f32], b: &[f32], result: &mut [f32], m: usize, n: usize, p: usize) {
         for i in 0..m {
             for j in 0..p {
                 let mut sum = f32x8::splat(0.0);
@@ -213,15 +197,7 @@ impl SimdMathAccelerator {
     }
 
     /// Fallback scalar matrix multiplication
-    fn matrix_multiply_scalar(
-        &self,
-        a: &[f32],
-        b: &[f32],
-        result: &mut [f32],
-        m: usize,
-        n: usize,
-        p: usize,
-    ) {
+    fn matrix_multiply_scalar(&self, a: &[f32], b: &[f32], result: &mut [f32], m: usize, n: usize, p: usize) {
         for i in 0..m {
             for j in 0..p {
                 let mut sum = 0.0;
@@ -255,8 +231,7 @@ impl SimdTextProcessor {
         } else {
             // Fallback to scalar search
             for pattern in patterns {
-                let positions: Vec<usize> =
-                    text.match_indices(pattern).map(|(pos, _)| pos).collect();
+                let positions: Vec<usize> = text.match_indices(pattern).map(|(pos, _)| pos).collect();
                 results.insert(pattern.to_string(), positions);
             }
         }
@@ -318,7 +293,7 @@ impl SimdSortingEngine {
     pub fn new() -> Self {
         Self {
             comparison_results: Vec::new(),
-            indices: Vec::new(),
+            indices:            Vec::new(),
         }
     }
 
@@ -462,12 +437,12 @@ impl SimdMemoryManager {
 
 /// SIMD configuration and feature detection
 pub struct SimdConfig {
-    pub has_avx2: bool,
-    pub has_avx512: bool,
-    pub has_sse4: bool,
+    pub has_avx2:         bool,
+    pub has_avx512:       bool,
+    pub has_sse4:         bool,
     pub vector_width_f32: usize,
     pub vector_width_i32: usize,
-    pub cache_line_size: usize,
+    pub cache_line_size:  usize,
 }
 
 impl SimdConfig {
@@ -513,7 +488,7 @@ impl SimdConfig {
 
 /// SIMD performance benchmarking utilities
 pub struct SimdBenchmarker {
-    config: SimdConfig,
+    config:              SimdConfig,
     performance_metrics: HashMap<String, f64>,
 }
 
@@ -521,7 +496,7 @@ impl SimdBenchmarker {
     /// Create a new SIMD benchmarker
     pub fn new() -> Self {
         Self {
-            config: SimdConfig::detect(),
+            config:              SimdConfig::detect(),
             performance_metrics: HashMap::new(),
         }
     }

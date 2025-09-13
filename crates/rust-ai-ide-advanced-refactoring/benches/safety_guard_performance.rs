@@ -1,22 +1,23 @@
+use std::time::Duration;
+
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use rust_ai_ide_advanced_refactoring::*;
-use std::time::Duration;
 
 // Helper function to generate test data
 fn generate_test_data(size: usize) -> Vec<CodeChange> {
     (0..size)
         .map(|i| CodeChange {
-            id: i.to_string(),
-            change_type: match i % 5 {
+            id:             i.to_string(),
+            change_type:    match i % 5 {
                 0 => ChangeType::FunctionModification,
                 1 => ChangeType::VariableRename,
                 2 => ChangeType::StructureChange,
                 3 => ChangeType::DependencyUpdate,
                 _ => ChangeType::Other,
             },
-            risk_level: (i % 10) + 1, // 1-10 scale
+            risk_level:     (i % 10) + 1, // 1-10 scale
             affected_files: (i % 5) + 1,
-            complexity: (i % 10) + 1, // 1-10 scale
+            complexity:     (i % 10) + 1, // 1-10 scale
         })
         .collect()
 }
@@ -72,8 +73,7 @@ fn safety_guard_benchmark(c: &mut Criterion) {
                 let guard = SafetyGuard::with_threshold(threshold);
 
                 b.iter(|| {
-                    let risky_changes: Vec<_> =
-                        changes.iter().filter(|c| guard.is_risky(c)).count();
+                    let risky_changes: Vec<_> = changes.iter().filter(|c| guard.is_risky(c)).count();
                     black_box(risky_changes);
                 });
             },
@@ -120,11 +120,11 @@ pub enum ChangeType {
 
 #[derive(Debug, Clone)]
 pub struct CodeChange {
-    pub id: String,
-    pub change_type: ChangeType,
-    pub risk_level: u8,
+    pub id:             String,
+    pub change_type:    ChangeType,
+    pub risk_level:     u8,
     pub affected_files: usize,
-    pub complexity: u8,
+    pub complexity:     u8,
 }
 
 pub struct SafetyGuard {

@@ -4,16 +4,19 @@
 //! patterns and anti-patterns, using ML-enhanced prioritization and context-aware
 //! refactoring recommendations.
 
-use crate::analysis::architectural::{detectors::*, patterns::*};
-use rust_ai_ide_common::{IdeError, IdeResult};
 use std::collections::HashMap;
+
+use rust_ai_ide_common::{IdeError, IdeResult};
+
+use crate::analysis::architectural::detectors::*;
+use crate::analysis::architectural::patterns::*;
 
 /// Advanced suggestion generator with context awareness
 pub struct AdvancedSuggestionGenerator {
     /// Refactoring rule engine
-    refactoring_rules: RefactoringRuleEngine,
+    refactoring_rules:    RefactoringRuleEngine,
     /// Context analyzer
-    context_analyzer: ContextAnalyzer,
+    context_analyzer:     ContextAnalyzer,
     /// Pattern suggestion templates
     suggestion_templates: HashMap<String, PatternSuggestionTemplate>,
     /// Performance profiling data
@@ -25,13 +28,13 @@ pub struct RefactoringRuleEngine {
     /// Rules for different anti-patterns
     anti_pattern_rules: HashMap<AntiPattern, RefactoringRule>,
     /// Rules for architectural patterns
-    pattern_rules: HashMap<ArchitecturalPattern, EnhancementRule>,
+    pattern_rules:      HashMap<ArchitecturalPattern, EnhancementRule>,
 }
 
 /// Context analyzer for semantic understanding
 pub struct ContextAnalyzer {
     /// Semantic analysis capabilities
-    semantic_analyzer: SemanticAnalyzer,
+    semantic_analyzer:   SemanticAnalyzer,
     /// Dependency analyzer
     dependency_analyzer: DependencyAnalyzer,
 }
@@ -48,11 +51,11 @@ pub struct PatternSuggestionTemplate {
     /// Pattern type this template applies to
     pub pattern_type: ArchitecturalPattern,
     /// Template text with placeholders
-    pub template: String,
+    pub template:     String,
     /// Available placeholders
     pub placeholders: Vec<String>,
     /// Priority for this suggestion
-    pub priority: Priority,
+    pub priority:     Priority,
 }
 
 /// Performance profile for optimization suggestions
@@ -61,20 +64,20 @@ pub struct PerformanceProfile {
     /// Average execution time
     pub avg_execution_time_ms: f64,
     /// Memory usage pattern
-    pub memory_usage_kb: usize,
+    pub memory_usage_kb:       usize,
     /// Common bottlenecks
-    pub common_bottlenecks: Vec<String>,
+    pub common_bottlenecks:    Vec<String>,
 }
 
 /// Refactoring rule for anti-pattern fixes
 #[derive(Debug, Clone)]
 pub struct RefactoringRule {
     /// Rule description
-    pub description: String,
+    pub description:       String,
     /// Applicable conditions
-    pub conditions: Vec<RefactoringCondition>,
+    pub conditions:        Vec<RefactoringCondition>,
     /// Recommended actions
-    pub actions: Vec<String>,
+    pub actions:           Vec<String>,
     /// Expected outcomes
     pub expected_outcomes: Vec<String>,
 }
@@ -87,7 +90,7 @@ pub struct EnhancementRule {
     /// Improvement suggestions
     pub suggestions: Vec<String>,
     /// Benefits
-    pub benefits: Vec<String>,
+    pub benefits:    Vec<String>,
 }
 
 /// Condition for applying refactoring rules
@@ -107,25 +110,25 @@ pub enum RefactoringCondition {
 #[derive(Debug, Clone)]
 pub struct SuggestionSet {
     pub suggestions: Vec<IntelligenceSuggestion>,
-    pub summary: SuggestionSummary,
+    pub summary:     SuggestionSummary,
 }
 
 /// Summary of the suggestion set
 #[derive(Debug, Clone)]
 pub struct SuggestionSummary {
-    pub total_suggestions: usize,
-    pub critical_count: usize,
-    pub high_priority_count: usize,
+    pub total_suggestions:                 usize,
+    pub critical_count:                    usize,
+    pub high_priority_count:               usize,
     pub estimated_refactoring_effort_days: f32,
-    pub expected_improvement_score: f32,
+    pub expected_improvement_score:        f32,
 }
 
 impl AdvancedSuggestionGenerator {
     /// Create a new advanced suggestion generator
     pub fn new() -> Self {
         Self {
-            refactoring_rules: RefactoringRuleEngine::new(),
-            context_analyzer: ContextAnalyzer::new(),
+            refactoring_rules:    RefactoringRuleEngine::new(),
+            context_analyzer:     ContextAnalyzer::new(),
             suggestion_templates: Self::load_suggestion_templates(),
             performance_profiles: HashMap::new(),
         }
@@ -141,9 +144,7 @@ impl AdvancedSuggestionGenerator {
 
         // Generate suggestions from anti-patterns
         for anti_pattern in &analysis_result.detected_anti_patterns {
-            if let Some(suggestion_set) =
-                self.generate_anti_pattern_suggestions(anti_pattern, context)?
-            {
+            if let Some(suggestion_set) = self.generate_anti_pattern_suggestions(anti_pattern, context)? {
                 suggestions.extend(suggestion_set);
             }
         }
@@ -191,9 +192,7 @@ impl AdvancedSuggestionGenerator {
         }
 
         // Add template-based suggestions
-        if let Some(template_suggestions) =
-            self.apply_suggestion_templates(anti_pattern, context)?
-        {
+        if let Some(template_suggestions) = self.apply_suggestion_templates(anti_pattern, context)? {
             suggestions.extend(template_suggestions);
         }
 
@@ -257,9 +256,7 @@ impl AdvancedSuggestionGenerator {
         for condition in &rule.conditions {
             match condition {
                 RefactoringCondition::ComplexityAbove(threshold) => {
-                    if anti_pattern.context.structural_info.cyclomatic_complexity as f32
-                        <= *threshold
-                    {
+                    if anti_pattern.context.structural_info.cyclomatic_complexity as f32 <= *threshold {
                         return Ok(false);
                     }
                 }
@@ -380,10 +377,7 @@ impl AdvancedSuggestionGenerator {
     }
 
     /// Prioritize suggestions based on multiple factors
-    fn prioritize_suggestions(
-        &self,
-        suggestions: Vec<IntelligenceSuggestion>,
-    ) -> Vec<IntelligenceSuggestion> {
+    fn prioritize_suggestions(&self, suggestions: Vec<IntelligenceSuggestion>) -> Vec<IntelligenceSuggestion> {
         // Sort by composite score: confidence * priority_weight * context_relevance
         let mut scored_suggestions: Vec<(IntelligenceSuggestion, f32)> = suggestions
             .into_iter()
@@ -401,26 +395,20 @@ impl AdvancedSuggestionGenerator {
             })
             .collect();
 
-        scored_suggestions
-            .sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        scored_suggestions.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
 
         scored_suggestions.into_iter().map(|(s, _)| s).collect()
     }
 
     /// Filter similar or duplicate suggestions
-    fn filter_similar_suggestions(
-        &self,
-        suggestions: Vec<IntelligenceSuggestion>,
-    ) -> Vec<IntelligenceSuggestion> {
+    fn filter_similar_suggestions(&self, suggestions: Vec<IntelligenceSuggestion>) -> Vec<IntelligenceSuggestion> {
         let mut filtered = Vec::new();
 
         for suggestion in suggestions {
             let is_duplicate = filtered.iter().any(|existing| {
                 existing.suggestion_type == suggestion.suggestion_type
                     && existing.location.file_path == suggestion.location.file_path
-                    && (existing.location.start_line as i32 - suggestion.location.start_line as i32)
-                        .abs()
-                        < 10
+                    && (existing.location.start_line as i32 - suggestion.location.start_line as i32).abs() < 10
             });
 
             if !is_duplicate {
@@ -432,10 +420,7 @@ impl AdvancedSuggestionGenerator {
     }
 
     /// Create a summary of the suggestion set
-    fn create_suggestion_summary(
-        &self,
-        suggestions: &[IntelligenceSuggestion],
-    ) -> SuggestionSummary {
+    fn create_suggestion_summary(&self, suggestions: &[IntelligenceSuggestion]) -> SuggestionSummary {
         let critical_count = suggestions
             .iter()
             .filter(|s| matches!(s.priority, Priority::Critical))
@@ -535,15 +520,13 @@ impl AdvancedSuggestionGenerator {
     fn load_suggestion_templates() -> HashMap<String, PatternSuggestionTemplate> {
         let mut templates = HashMap::new();
 
-        templates.insert(
-            "Repository".to_string(),
-            PatternSuggestionTemplate {
-                pattern_type: ArchitecturalPattern::Repository,
-                template: "Consider implementing caching layer for repository pattern to improve performance".to_string(),
-                placeholders: vec!["repository_interface".to_string()],
-                priority: Priority::Low,
-            }
-        );
+        templates.insert("Repository".to_string(), PatternSuggestionTemplate {
+            pattern_type: ArchitecturalPattern::Repository,
+            template:     "Consider implementing caching layer for repository pattern to improve performance"
+                .to_string(),
+            placeholders: vec!["repository_interface".to_string()],
+            priority:     Priority::Low,
+        });
 
         templates
     }
@@ -553,7 +536,7 @@ impl RefactoringRuleEngine {
     fn new() -> Self {
         Self {
             anti_pattern_rules: Self::load_anti_pattern_rules(),
-            pattern_rules: Self::load_pattern_rules(),
+            pattern_rules:      Self::load_pattern_rules(),
         }
     }
 
@@ -568,47 +551,41 @@ impl RefactoringRuleEngine {
     fn load_anti_pattern_rules() -> HashMap<AntiPattern, RefactoringRule> {
         let mut rules = HashMap::new();
 
-        rules.insert(
-            AntiPattern::LongMethod,
-            RefactoringRule {
-                description: "Long method refactoring".to_string(),
-                conditions: vec![
-                    RefactoringCondition::ComplexityAbove(10.0),
-                    RefactoringCondition::SizeAbove(50),
-                ],
-                actions: vec![
-                    "Extract method for each distinct responsibility".to_string(),
-                    "Create helper methods for complex logic".to_string(),
-                    "Consider early returns to reduce nesting".to_string(),
-                ],
-                expected_outcomes: vec![
-                    "Improved readability".to_string(),
-                    "Easier testing".to_string(),
-                    "Better maintainability".to_string(),
-                ],
-            },
-        );
+        rules.insert(AntiPattern::LongMethod, RefactoringRule {
+            description:       "Long method refactoring".to_string(),
+            conditions:        vec![
+                RefactoringCondition::ComplexityAbove(10.0),
+                RefactoringCondition::SizeAbove(50),
+            ],
+            actions:           vec![
+                "Extract method for each distinct responsibility".to_string(),
+                "Create helper methods for complex logic".to_string(),
+                "Consider early returns to reduce nesting".to_string(),
+            ],
+            expected_outcomes: vec![
+                "Improved readability".to_string(),
+                "Easier testing".to_string(),
+                "Better maintainability".to_string(),
+            ],
+        });
 
-        rules.insert(
-            AntiPattern::LargeClass,
-            RefactoringRule {
-                description: "Large class refactoring".to_string(),
-                conditions: vec![
-                    RefactoringCondition::SizeAbove(300),
-                    RefactoringCondition::ComplexityAbove(5.0),
-                ],
-                actions: vec![
-                    "Identify responsibilities and extract classes".to_string(),
-                    "Apply Single Responsibility Principle".to_string(),
-                    "Use composition over inheritance".to_string(),
-                ],
-                expected_outcomes: vec![
-                    "Better separation of concerns".to_string(),
-                    "Improved testability".to_string(),
-                    "Reduced complexity".to_string(),
-                ],
-            },
-        );
+        rules.insert(AntiPattern::LargeClass, RefactoringRule {
+            description:       "Large class refactoring".to_string(),
+            conditions:        vec![
+                RefactoringCondition::SizeAbove(300),
+                RefactoringCondition::ComplexityAbove(5.0),
+            ],
+            actions:           vec![
+                "Identify responsibilities and extract classes".to_string(),
+                "Apply Single Responsibility Principle".to_string(),
+                "Use composition over inheritance".to_string(),
+            ],
+            expected_outcomes: vec![
+                "Better separation of concerns".to_string(),
+                "Improved testability".to_string(),
+                "Reduced complexity".to_string(),
+            ],
+        });
 
         rules
     }
@@ -616,22 +593,19 @@ impl RefactoringRuleEngine {
     fn load_pattern_rules() -> HashMap<ArchitecturalPattern, EnhancementRule> {
         let mut rules = HashMap::new();
 
-        rules.insert(
-            ArchitecturalPattern::Repository,
-            EnhancementRule {
-                description: "Repository pattern enhancements".to_string(),
-                suggestions: vec![
-                    "Add specification pattern for complex queries".to_string(),
-                    "Implement caching layer for improved performance".to_string(),
-                    "Consider pagination for large datasets".to_string(),
-                ],
-                benefits: vec![
-                    "Better query performance".to_string(),
-                    "Improved maintainability".to_string(),
-                    "Enhanced scalability".to_string(),
-                ],
-            },
-        );
+        rules.insert(ArchitecturalPattern::Repository, EnhancementRule {
+            description: "Repository pattern enhancements".to_string(),
+            suggestions: vec![
+                "Add specification pattern for complex queries".to_string(),
+                "Implement caching layer for improved performance".to_string(),
+                "Consider pagination for large datasets".to_string(),
+            ],
+            benefits:    vec![
+                "Better query performance".to_string(),
+                "Improved maintainability".to_string(),
+                "Enhanced scalability".to_string(),
+            ],
+        });
 
         rules
     }
@@ -640,7 +614,7 @@ impl RefactoringRuleEngine {
 impl ContextAnalyzer {
     fn new() -> Self {
         Self {
-            semantic_analyzer: SemanticAnalyzer,
+            semantic_analyzer:   SemanticAnalyzer,
             dependency_analyzer: DependencyAnalyzer,
         }
     }

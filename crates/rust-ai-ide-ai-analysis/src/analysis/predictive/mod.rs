@@ -13,26 +13,26 @@ pub struct PredictiveConfig {
     /// Enable vulnerability prediction
     pub enable_vulnerability_prediction: bool,
     /// Enable performance forecasting
-    pub enable_performance_forecasting: bool,
+    pub enable_performance_forecasting:  bool,
     /// Enable code health scoring
-    pub enable_health_scoring: bool,
+    pub enable_health_scoring:           bool,
     /// Enable automated recommendations
-    pub enable_recommendations: bool,
+    pub enable_recommendations:          bool,
     /// Prediction confidence threshold (0.0-1.0)
-    pub confidence_threshold: f32,
+    pub confidence_threshold:            f32,
     /// Historical data window for trend analysis
-    pub historical_window_days: u32,
+    pub historical_window_days:          u32,
 }
 
 impl Default for PredictiveConfig {
     fn default() -> Self {
         Self {
             enable_vulnerability_prediction: true,
-            enable_performance_forecasting: true,
-            enable_health_scoring: true,
-            enable_recommendations: true,
-            confidence_threshold: 0.7,
-            historical_window_days: 30,
+            enable_performance_forecasting:  true,
+            enable_health_scoring:           true,
+            enable_recommendations:          true,
+            confidence_threshold:            0.7,
+            historical_window_days:          30,
         }
     }
 }
@@ -50,11 +50,11 @@ pub use vulnerability::*;
 /// scoring, and automated maintenance recommendations into a unified system.
 #[derive(Debug)]
 pub struct PredictiveQualityEngine {
-    config: PredictiveConfig,
+    config:                  PredictiveConfig,
     vulnerability_predictor: VulnerabilityPredictor,
-    performance_forecaster: PerformanceForecaster,
-    health_scorer: HealthScorer,
-    recommendation_engine: RecommendationEngine,
+    performance_forecaster:  PerformanceForecaster,
+    health_scorer:           HealthScorer,
+    recommendation_engine:   RecommendationEngine,
 }
 
 impl PredictiveQualityEngine {
@@ -86,12 +86,7 @@ impl PredictiveQualityEngine {
                 .vulnerability_predictor
                 .predict_vulnerabilities(project_path, historical_data)
                 .await
-                .map_err(|e| {
-                    PredictiveError::AnalysisFailed(format!(
-                        "Vulnerability prediction failed: {}",
-                        e
-                    ))
-                })?;
+                .map_err(|e| PredictiveError::AnalysisFailed(format!("Vulnerability prediction failed: {}", e)))?;
         }
 
         // Performance forecasting
@@ -100,12 +95,7 @@ impl PredictiveQualityEngine {
                 .performance_forecaster
                 .forecast_bottlenecks(project_path, historical_data)
                 .await
-                .map_err(|e| {
-                    PredictiveError::AnalysisFailed(format!(
-                        "Performance forecasting failed: {}",
-                        e
-                    ))
-                })?;
+                .map_err(|e| PredictiveError::AnalysisFailed(format!("Performance forecasting failed: {}", e)))?;
         }
 
         // Code health scoring
@@ -114,20 +104,14 @@ impl PredictiveQualityEngine {
                 .health_scorer
                 .score_project_health(project_path)
                 .await
-                .map_err(|e| {
-                    PredictiveError::AnalysisFailed(format!("Health scoring failed: {}", e))
-                })?;
+                .map_err(|e| PredictiveError::AnalysisFailed(format!("Health scoring failed: {}", e)))?;
         }
 
         // Generate recommendations
         if self.config.enable_recommendations {
             recommendations = self
                 .recommendation_engine
-                .generate_recommendations(
-                    &vulnerabilities,
-                    &performance_bottlenecks,
-                    &health_scores,
-                )
+                .generate_recommendations(&vulnerabilities, &performance_bottlenecks, &health_scores)
                 .await?;
         }
 
@@ -146,26 +130,26 @@ impl PredictiveQualityEngine {
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct PredictiveAnalysisReport {
     /// Predicted vulnerabilities
-    pub vulnerabilities: Vec<PredictedVulnerability>,
+    pub vulnerabilities:         Vec<PredictedVulnerability>,
     /// Performance bottlenecks forecast
     pub performance_bottlenecks: Vec<PerformanceBottleneckForecast>,
     /// Code health scores
-    pub health_scores: Vec<HealthScore>,
+    pub health_scores:           Vec<HealthScore>,
     /// Maintenance recommendations
-    pub recommendations: Vec<MaintenanceRecommendation>,
+    pub recommendations:         Vec<MaintenanceRecommendation>,
     /// Overall confidence threshold used
-    pub confidence: f32,
+    pub confidence:              f32,
     /// When the report was generated
-    pub generated_at: chrono::DateTime<chrono::Utc>,
+    pub generated_at:            chrono::DateTime<chrono::Utc>,
 }
 
 /// Historical data for trend analysis
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct HistoricalData {
     /// Previous analysis reports
-    pub reports: Vec<AnalysisReport>,
+    pub reports:         Vec<AnalysisReport>,
     /// Commit history data
-    pub commit_history: Vec<CommitData>,
+    pub commit_history:  Vec<CommitData>,
     /// Code metrics over time
     pub metrics_history: Vec<MetricsSnapshot>,
 }
@@ -174,22 +158,22 @@ pub struct HistoricalData {
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct AnalysisReport {
     /// Report timestamp
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:             chrono::DateTime<chrono::Utc>,
     /// Vulnerabilities found
     pub vulnerabilities_found: u32,
     /// Performance issues detected
-    pub performance_issues: u32,
+    pub performance_issues:    u32,
 }
 
 /// Commit data for trend analysis
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct CommitData {
     /// Commit timestamp
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:     chrono::DateTime<chrono::Utc>,
     /// Files changed
     pub files_changed: Vec<String>,
     /// Lines added
-    pub lines_added: u32,
+    pub lines_added:   u32,
     /// Lines deleted
     pub lines_deleted: u32,
 }
@@ -198,13 +182,13 @@ pub struct CommitData {
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct MetricsSnapshot {
     /// Snapshot timestamp
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:                 chrono::DateTime<chrono::Utc>,
     /// Cyclomatic complexity average
     pub avg_cyclomatic_complexity: f64,
     /// Maintainability index
-    pub maintainability_index: f64,
+    pub maintainability_index:     f64,
     /// Total lines of code
-    pub total_loc: usize,
+    pub total_loc:                 usize,
 }
 
 /// Predictive analysis errors

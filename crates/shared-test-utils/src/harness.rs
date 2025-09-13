@@ -1,6 +1,8 @@
-use crate::error::TestError;
-use async_trait::async_trait;
 use std::fmt::Debug;
+
+use async_trait::async_trait;
+
+use crate::error::TestError;
 
 /// Core trait for unified test harness
 /// Follows setup-execute-validate async pattern
@@ -25,11 +27,7 @@ pub trait TestHarness: Send + Sync {
 
     /// Validate phase: Assert expected behavior and state
     /// Returns validation results or errors
-    async fn validate(
-        &self,
-        context: Self::Context,
-        output: Self::Output,
-    ) -> Result<TestResult, TestError>;
+    async fn validate(&self, context: Self::Context, output: Self::Output) -> Result<TestResult, TestError>;
 
     /// Cleanup phase: tear down test resources (optional)
     async fn cleanup(&self, _context: Self::Context) -> Result<(), TestError> {
@@ -53,8 +51,8 @@ pub trait TestHarness: Send + Sync {
     /// Get harness metadata for diagnostics
     fn metadata(&self) -> TestHarnessMetadata {
         TestHarnessMetadata {
-            name: std::any::type_name::<Self>().to_string(),
-            version: "1.0.0".to_string(),
+            name:        std::any::type_name::<Self>().to_string(),
+            version:     "1.0.0".to_string(),
             description: "Unified test harness implementation".to_string(),
         }
     }
@@ -63,25 +61,25 @@ pub trait TestHarness: Send + Sync {
 /// Test result returned by validation phase
 #[derive(Debug, Clone)]
 pub struct TestResult {
-    pub passed: bool,
-    pub message: String,
-    pub details: Option<TestDetails>,
+    pub passed:   bool,
+    pub message:  String,
+    pub details:  Option<TestDetails>,
     pub duration: std::time::Duration,
 }
 
 /// Detailed test information
 #[derive(Debug, Clone)]
 pub struct TestDetails {
-    pub assertions_made: Vec<String>,
+    pub assertions_made:    Vec<String>,
     pub expected_vs_actual: Option<(String, String)>,
-    pub additional_data: std::collections::HashMap<String, String>,
+    pub additional_data:    std::collections::HashMap<String, String>,
 }
 
 /// Metadata for test harness identification and diagnostics
 #[derive(Debug, Clone)]
 pub struct TestHarnessMetadata {
-    pub name: String,
-    pub version: String,
+    pub name:        String,
+    pub version:     String,
     pub description: String,
 }
 
@@ -111,10 +109,7 @@ impl<T: TestHarness> TestHarnessSuite<T> {
     }
 
     /// Run all harnesses in the suite
-    pub async fn run_all(
-        &mut self,
-        inputs: Vec<T::Input>,
-    ) -> Result<Vec<Result<TestResult, TestError>>, TestError>
+    pub async fn run_all(&mut self, inputs: Vec<T::Input>) -> Result<Vec<Result<TestResult, TestError>>, TestError>
     where
         T: Clone,
     {
@@ -153,9 +148,9 @@ pub trait TestHarnessValidator {
 impl Default for TestResult {
     fn default() -> Self {
         Self {
-            passed: false,
-            message: "Test not executed".to_string(),
-            details: None,
+            passed:   false,
+            message:  "Test not executed".to_string(),
+            details:  None,
             duration: std::time::Duration::from_nanos(0),
         }
     }

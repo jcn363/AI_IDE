@@ -17,7 +17,7 @@ pub enum AIError {
     #[error("Model loading error: {model} - {message}")]
     ModelLoadingError {
         /// Name of the model that failed to load
-        model: String,
+        model:   String,
         /// Detailed error message explaining the failure
         message: String,
     },
@@ -35,7 +35,7 @@ pub enum AIError {
         /// Name of the AI provider with configuration issues
         provider: String,
         /// Detailed error message about the configuration problem
-        message: String,
+        message:  String,
     },
 
     /// Error during context preparation for AI operations
@@ -56,7 +56,7 @@ pub enum AIError {
     #[error("Rate limit exceeded: {limit} per {time_window}")]
     RateLimitError {
         /// Maximum number of requests allowed
-        limit: u32,
+        limit:       u32,
         /// Time window for the rate limit
         time_window: String,
     },
@@ -72,7 +72,7 @@ pub enum AIError {
     #[error("Inference timeout: {operation} took longer than {timeout_seconds}s")]
     InferenceTimeout {
         /// Description of the operation that timed out
-        operation: String,
+        operation:       String,
         /// Timeout duration in seconds
         timeout_seconds: u32,
     },
@@ -81,7 +81,7 @@ pub enum AIError {
     #[error("Provider API error: {provider} returned {status_code}")]
     ProviderAPIError {
         /// Name of the AI provider
-        provider: String,
+        provider:    String,
         /// HTTP status code returned by the API
         status_code: u16,
     },
@@ -108,9 +108,9 @@ pub enum AnalysisError {
 
     #[error("File too large: {path} is {size_mb}MB (max: {max_mb}MB)")]
     FileTooLarge {
-        path: String,
+        path:    String,
         size_mb: f64,
-        max_mb: f64,
+        max_mb:  f64,
     },
 
     #[error("Unsupported language: {language}")]
@@ -118,14 +118,14 @@ pub enum AnalysisError {
 
     #[error("Parser error: {parser} failed at line {line}")]
     ParserError {
-        parser: String,
-        line: u32,
+        parser:  String,
+        line:    u32,
         message: String,
     },
 
     #[error("Analysis timeout: {analyzer} took longer than {timeout_seconds}s")]
     AnalysisTimeout {
-        analyzer: String,
+        analyzer:        String,
         timeout_seconds: u32,
     },
 
@@ -158,7 +158,7 @@ pub struct ErrorTrace {
     /// Component or module where the error occurred
     pub component: String,
     /// Additional metadata associated with the error
-    pub metadata: std::collections::HashMap<String, String>,
+    pub metadata:  std::collections::HashMap<String, String>,
 }
 
 impl Default for ErrorTrace {
@@ -167,7 +167,7 @@ impl Default for ErrorTrace {
             operation: "unknown".to_string(),
             timestamp: std::time::SystemTime::now(),
             component: "unknown".to_string(),
-            metadata: std::collections::HashMap::new(),
+            metadata:  std::collections::HashMap::new(),
         }
     }
 }
@@ -193,8 +193,8 @@ impl ErrorTrace {
 #[derive(Debug, thiserror::Error)]
 pub struct TracedError<E> {
     #[source]
-    pub inner: E,
-    pub trace: ErrorTrace,
+    pub inner:                E,
+    pub trace:                ErrorTrace,
     pub recovery_suggestions: Vec<String>,
 }
 
@@ -255,8 +255,8 @@ impl fmt::Display for ErrorSeverity {
     }
 }
 
-// Note: From implementations for external types to external IDEError cannot be added here due to orphan rules
-// Consider using conversion functions instead if needed
+// Note: From implementations for external types to external IDEError cannot be added here due to
+// orphan rules Consider using conversion functions instead if needed
 
 /// Error handling utilities
 pub mod utils {
@@ -268,7 +268,7 @@ pub mod utils {
             operation: operation.to_string(),
             component: component.to_string(),
             timestamp: std::time::SystemTime::now(),
-            metadata: std::collections::HashMap::new(),
+            metadata:  std::collections::HashMap::new(),
         };
 
         TracedError {

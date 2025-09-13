@@ -8,13 +8,18 @@
 //! ## Core AI/ML Context Intelligence Capabilities
 //!
 //! ### 🤖 Advanced Semantic Context Understanding
-//! - **Multi-Modal Context Analysis**: Integrating code semantics, developer intent, and project context
-//! - **Dynamic Context Expansion**: AI-driven expansion of context boundaries beyond immediate locality
-//! - **Contextual Memory Optimization**: Intelligent retention and recall of relevant contextual information
-//! - **Cross-Session Context Preservation**: Long-term learning and context transfer across development sessions
+//! - **Multi-Modal Context Analysis**: Integrating code semantics, developer intent, and project
+//!   context
+//! - **Dynamic Context Expansion**: AI-driven expansion of context boundaries beyond immediate
+//!   locality
+//! - **Contextual Memory Optimization**: Intelligent retention and recall of relevant contextual
+//!   information
+//! - **Cross-Session Context Preservation**: Long-term learning and context transfer across
+//!   development sessions
 //!
 //! ### 🧠 Intelligent Context Evolution
-//! - **Adaptive Context Learning**: ML-powered learning of developer behavior patterns and preferences
+//! - **Adaptive Context Learning**: ML-powered learning of developer behavior patterns and
+//!   preferences
 //! - **Predictive Context Anticipation**: Pre-emptive context preparation based on usage patterns
 //! - **Semantic Context Association**: Algorithmic discovery of related contextual information
 //! - **Contextual Relevance Scoring**: ML-based ranking of contextual information importance
@@ -68,8 +73,14 @@
 //! ```rust
 //! async fn enrich_context_with_ml(context: RawContext) -> EnrichedContext {
 //!     let semantic_analysis = self.semantic_analyzer.analyze_semantics(&context).await;
-//!     let intent_prediction = self.intent_predictor.predict_developer_intent(&context).await;
-//!     let relevance_scoring = self.relevance_scorer.score_information_relevance(&context).await;
+//!     let intent_prediction = self
+//!         .intent_predictor
+//!         .predict_developer_intent(&context)
+//!         .await;
+//!     let relevance_scoring = self
+//!         .relevance_scorer
+//!         .score_information_relevance(&context)
+//!         .await;
 //!     let context_expansion = self.expander.expand_context_boundaries(context).await;
 //!
 //!     EnrichedContext {
@@ -77,7 +88,7 @@
 //!         intent_prediction,
 //!         relevance_scoring,
 //!         context_expansion,
-//!         generated_metadata: generate_metadata()
+//!         generated_metadata: generate_metadata(),
 //!     }
 //! }
 //! ```
@@ -85,10 +96,10 @@
 //! #### Predictive Context Management
 //! ```rust
 //! struct PredictiveContextManager {
-//!     usage_pattern_analyzer: MLPatternAnalyzer,
-//!     context_necessity_predictor: MLPredictor<ContextNecessity>,
+//!     usage_pattern_analyzer:       MLPatternAnalyzer,
+//!     context_necessity_predictor:  MLPredictor<ContextNecessity>,
 //!     optimal_retention_calculator: OptimizationCalculator,
-//!     context_evolution_tracker: EvolutionTracker
+//!     context_evolution_tracker:    EvolutionTracker,
 //! }
 //! ```
 //!
@@ -103,48 +114,49 @@
 //! - **Adaptive Memory Management**: Intelligent context retention and expiration
 //! - **Cross-Session Learning**: Preservation of learned patterns across development sessions
 
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Core AI context for all operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIContext {
     /// Current code content
-    pub current_code: String,
+    pub current_code:    String,
     /// File name/path context
-    pub file_name: Option<String>,
+    pub file_name:       Option<String>,
     /// Cursor position (line, column)
     pub cursor_position: Option<(u32, u32)>,
     /// Selected text range
-    pub selection: Option<String>,
+    pub selection:       Option<String>,
     /// Project context information
     pub project_context: HashMap<String, String>,
     /// Language/language-family context
-    pub language: Option<String>,
+    pub language:        Option<String>,
     /// Additional contextual data
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata:        HashMap<String, serde_json::Value>,
     /// Origin/source of the context
-    pub source: String,
+    pub source:          String,
     /// Session ID for grouping related operations
-    pub session_id: Option<String>,
+    pub session_id:      Option<String>,
     /// Request timestamp
-    pub created_at: DateTime<Utc>,
+    pub created_at:      DateTime<Utc>,
 }
 
 impl Default for AIContext {
     fn default() -> Self {
         Self {
-            current_code: String::new(),
-            file_name: None,
+            current_code:    String::new(),
+            file_name:       None,
             cursor_position: None,
-            selection: None,
+            selection:       None,
             project_context: HashMap::new(),
-            language: Some("rust".to_string()),
-            metadata: HashMap::new(),
-            source: "unknown".to_string(),
-            session_id: None,
-            created_at: Utc::now(),
+            language:        Some("rust".to_string()),
+            metadata:        HashMap::new(),
+            source:          "unknown".to_string(),
+            session_id:      None,
+            created_at:      Utc::now(),
         }
     }
 }
@@ -178,21 +190,13 @@ impl AIContext {
     }
 
     /// Add project context
-    pub fn with_project_context<K: Into<String>, V: Into<String>>(
-        mut self,
-        key: K,
-        value: V,
-    ) -> Self {
+    pub fn with_project_context<K: Into<String>, V: Into<String>>(mut self, key: K, value: V) -> Self {
         self.project_context.insert(key.into(), value.into());
         self
     }
 
     /// Add metadata
-    pub fn with_metadata<K: Into<String>, V: Into<serde_json::Value>>(
-        mut self,
-        key: K,
-        value: V,
-    ) -> Self {
+    pub fn with_metadata<K: Into<String>, V: Into<serde_json::Value>>(mut self, key: K, value: V) -> Self {
         self.metadata.insert(key.into(), value.into());
         self
     }
@@ -214,34 +218,34 @@ impl AIContext {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OperationContext {
     /// Unique operation ID
-    pub operation_id: String,
+    pub operation_id:    String,
     /// Operation type
-    pub operation_type: String,
+    pub operation_type:  String,
     /// User ID or session identifier
-    pub user_id: Option<String>,
+    pub user_id:         Option<String>,
     /// Client/request source
-    pub client_info: Option<ClientInfo>,
+    pub client_info:     Option<ClientInfo>,
     /// Context stack for nested operations
-    pub context_stack: Vec<String>,
+    pub context_stack:   Vec<String>,
     /// Start timestamp
-    pub started_at: DateTime<Utc>,
+    pub started_at:      DateTime<Utc>,
     /// Timeout (seconds)
     pub timeout_seconds: Option<u32>,
     /// Metadata
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata:        HashMap<String, serde_json::Value>,
 }
 
 impl OperationContext {
     pub fn new(operation_type: impl Into<String>) -> Self {
         Self {
-            operation_id: format!("op_{}", uuid::Uuid::new_v4().simple()),
-            operation_type: operation_type.into(),
-            user_id: None,
-            client_info: None,
-            context_stack: Vec::new(),
-            started_at: Utc::now(),
+            operation_id:    format!("op_{}", uuid::Uuid::new_v4().simple()),
+            operation_type:  operation_type.into(),
+            user_id:         None,
+            client_info:     None,
+            context_stack:   Vec::new(),
+            started_at:      Utc::now(),
             timeout_seconds: None,
-            metadata: HashMap::new(),
+            metadata:        HashMap::new(),
         }
     }
 
@@ -265,11 +269,7 @@ impl OperationContext {
         self
     }
 
-    pub fn with_metadata<K: Into<String>, V: Into<serde_json::Value>>(
-        mut self,
-        key: K,
-        value: V,
-    ) -> Self {
+    pub fn with_metadata<K: Into<String>, V: Into<serde_json::Value>>(mut self, key: K, value: V) -> Self {
         self.metadata.insert(key.into(), value.into());
         self
     }
@@ -279,46 +279,46 @@ impl OperationContext {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClientInfo {
     /// Client ID
-    pub client_id: String,
+    pub client_id:      String,
     /// Client version
     pub client_version: Option<String>,
     /// Operating system
-    pub os: Option<String>,
+    pub os:             Option<String>,
     /// IP address (redacted for privacy)
-    pub client_ip: Option<String>,
+    pub client_ip:      Option<String>,
     /// User agent
-    pub user_agent: Option<String>,
+    pub user_agent:     Option<String>,
 }
 
 /// Request context for tracking requests across components
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RequestContext {
     /// Request ID
-    pub request_id: String,
+    pub request_id:        String,
     /// Request type/category
-    pub request_type: String,
+    pub request_type:      String,
     /// Parent request ID (for nested requests)
     pub parent_request_id: Option<String>,
     /// Timestamp when request was received
-    pub received_at: DateTime<Utc>,
+    pub received_at:       DateTime<Utc>,
     /// Request deadline
-    pub deadline: Option<DateTime<Utc>>,
+    pub deadline:          Option<DateTime<Utc>>,
     /// Request priority
-    pub priority: u32,
+    pub priority:          u32,
     /// Request metadata
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata:          HashMap<String, serde_json::Value>,
 }
 
 impl RequestContext {
     pub fn new(request_type: impl Into<String>) -> Self {
         Self {
-            request_id: format!("req_{}", uuid::Uuid::new_v4().simple()),
-            request_type: request_type.into(),
+            request_id:        format!("req_{}", uuid::Uuid::new_v4().simple()),
+            request_type:      request_type.into(),
             parent_request_id: None,
-            received_at: Utc::now(),
-            deadline: None,
-            priority: 0,
-            metadata: HashMap::new(),
+            received_at:       Utc::now(),
+            deadline:          None,
+            priority:          0,
+            metadata:          HashMap::new(),
         }
     }
 

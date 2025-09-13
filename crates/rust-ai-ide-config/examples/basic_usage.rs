@@ -10,16 +10,18 @@
 //! - Environment variable support
 //! - Migration support
 
-use rust_ai_ide_config::{config::ManagerConfig, *};
-use serde::{Deserialize, Serialize};
 use std::time::Duration;
+
+use rust_ai_ide_config::config::ManagerConfig;
+use rust_ai_ide_config::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct MyAppConfig {
     /// Application name
     app_name: String,
     /// API configuration
-    api: ApiConfig,
+    api:      ApiConfig,
     /// Database configuration
     database: DatabaseConfig,
     /// Feature flags
@@ -29,13 +31,13 @@ struct MyAppConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ApiConfig {
     /// API endpoint URL
-    endpoint: String,
+    endpoint:        String,
     /// API key
-    api_key: String,
+    api_key:         String,
     /// Request timeout
     timeout_seconds: u32,
     /// Maximum retries
-    max_retries: u32,
+    max_retries:     u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,9 +53,9 @@ struct DatabaseConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct FeatureFlags {
     /// Enable new UI
-    new_ui: bool,
+    new_ui:        bool,
     /// Enable experimental features
-    experimental: bool,
+    experimental:  bool,
     /// Beta features
     beta_features: Vec<String>,
 }
@@ -83,11 +85,11 @@ impl Config for MyAppConfig {
     fn default_config() -> Self {
         Self {
             app_name: "My App".to_string(),
-            api: ApiConfig {
-                endpoint: "https://api.example.com".to_string(),
-                api_key: "default_key".to_string(),
+            api:      ApiConfig {
+                endpoint:        "https://api.example.com".to_string(),
+                api_key:         "default_key".to_string(),
                 timeout_seconds: 30,
-                max_retries: 3,
+                max_retries:     3,
             },
             database: DatabaseConfig {
                 url: "postgres://localhost/mydb".to_string(),
@@ -95,8 +97,8 @@ impl Config for MyAppConfig {
                 connection_timeout_seconds: 10,
             },
             features: FeatureFlags {
-                new_ui: false,
-                experimental: false,
+                new_ui:        false,
+                experimental:  false,
                 beta_features: Vec::new(),
             },
         }

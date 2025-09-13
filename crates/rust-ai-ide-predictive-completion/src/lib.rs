@@ -18,17 +18,17 @@
 //! - **Learning Component**: Adapt to user patterns over time
 //! - **LSP Integration**: Interface with existing LSP completion
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use lsp_types::{CompletionItem, CompletionParams, Position};
 use moka::future::Cache;
+use rust_ai_ide_errors::RustAIError;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 use tracing::{debug, info, warn};
 use tree_sitter::{Language, Parser, Query, QueryCursor};
-
-use rust_ai_ide_errors::RustAIError;
 
 /// Language-specific completion provider
 pub trait LanguageCompletionProvider: Send + Sync {
@@ -44,38 +44,38 @@ pub trait LanguageCompletionProvider: Send + Sync {
 /// Completion context information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompletionContext {
-    pub cursor_position: Position,
-    pub current_line: String,
-    pub surrounding_lines: Vec<String>,
-    pub imports: Vec<String>,
+    pub cursor_position:    Position,
+    pub current_line:       String,
+    pub surrounding_lines:  Vec<String>,
+    pub imports:            Vec<String>,
     pub variables_in_scope: Vec<String>,
-    pub functions_defined: Vec<String>,
-    pub project_path: Option<String>,
-    pub file_path: String,
-    pub language: String,
+    pub functions_defined:  Vec<String>,
+    pub project_path:       Option<String>,
+    pub file_path:          String,
+    pub language:           String,
 }
 
 /// Predictive completion configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PredictiveCompletionConfig {
-    pub enabled: bool,
-    pub max_suggestions: usize,
-    pub history_size: usize,
-    pub context_window: usize,
-    pub confidence_threshold: f64,
-    pub enable_pattern_learning: bool,
+    pub enabled:                  bool,
+    pub max_suggestions:          usize,
+    pub history_size:             usize,
+    pub context_window:           usize,
+    pub confidence_threshold:     f64,
+    pub enable_pattern_learning:  bool,
     pub enable_semantic_analysis: bool,
 }
 
 impl Default for PredictiveCompletionConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            max_suggestions: 10,
-            history_size: 1000,
-            context_window: 5,
-            confidence_threshold: 0.3,
-            enable_pattern_learning: true,
+            enabled:                  true,
+            max_suggestions:          10,
+            history_size:             1000,
+            context_window:           5,
+            confidence_threshold:     0.3,
+            enable_pattern_learning:  true,
             enable_semantic_analysis: true,
         }
     }
@@ -84,39 +84,39 @@ impl Default for PredictiveCompletionConfig {
 /// Main predictive completion engine
 #[derive(Debug)]
 pub struct PredictiveCompletionEngine {
-    config: Arc<PredictiveCompletionConfig>,
-    providers: Arc<RwLock<HashMap<String, Arc<dyn LanguageCompletionProvider>>>>,
-    history_cache: Arc<Cache<String, Vec<String>>>,
+    config:           Arc<PredictiveCompletionConfig>,
+    providers:        Arc<RwLock<HashMap<String, Arc<dyn LanguageCompletionProvider>>>>,
+    history_cache:    Arc<Cache<String, Vec<String>>>,
     pattern_analyzer: Arc<Mutex<PatternAnalyzer>>,
-    semantic_engine: Arc<Mutex<SemanticAnalyzer>>,
-    parsers: Arc<Mutex<HashMap<String, Parser>>>,
+    semantic_engine:  Arc<Mutex<SemanticAnalyzer>>,
+    parsers:          Arc<Mutex<HashMap<String, Parser>>>,
 }
 
 struct PatternAnalyzer {
-    patterns: HashMap<String, Pattern>,
+    patterns:  HashMap<String, Pattern>,
     frequency: HashMap<String, usize>,
 }
 
 #[derive(Debug, Clone)]
 struct Pattern {
-    prefix: String,
+    prefix:      String,
     completions: Vec<String>,
-    score: f64,
+    score:       f64,
     usage_count: usize,
-    last_used: chrono::DateTime<chrono::Utc>,
+    last_used:   chrono::DateTime<chrono::Utc>,
 }
 
 struct SemanticAnalyzer {
     type_registry: HashMap<String, TypeInfo>,
-    symbol_graph: HashMap<String, Vec<String>>,
+    symbol_graph:  HashMap<String, Vec<String>>,
 }
 
 #[derive(Debug, Clone)]
 struct TypeInfo {
-    name: String,
-    kind: String,
-    scope: String,
-    methods: Vec<String>,
+    name:       String,
+    kind:       String,
+    scope:      String,
+    methods:    Vec<String>,
     properties: Vec<String>,
 }
 
@@ -133,13 +133,13 @@ impl PredictiveCompletionEngine {
         );
 
         let pattern_analyzer = Arc::new(Mutex::new(PatternAnalyzer {
-            patterns: HashMap::new(),
+            patterns:  HashMap::new(),
             frequency: HashMap::new(),
         }));
 
         let semantic_engine = Arc::new(Mutex::new(SemanticAnalyzer {
             type_registry: HashMap::new(),
-            symbol_graph: HashMap::new(),
+            symbol_graph:  HashMap::new(),
         }));
 
         let parsers = Arc::new(Mutex::new(HashMap::new()));
@@ -230,11 +230,11 @@ impl PredictiveCompletionEngine {
                 .patterns
                 .entry(pattern_key.clone())
                 .or_insert_with(|| Pattern {
-                    prefix: prefix.to_string(),
+                    prefix:      prefix.to_string(),
                     completions: Vec::new(),
-                    score: 0.0,
+                    score:       0.0,
                     usage_count: 0,
-                    last_used: chrono::Utc::now(),
+                    last_used:   chrono::Utc::now(),
                 });
 
             pattern.completions.push(accepted_completion.to_string());
@@ -264,15 +264,13 @@ impl PredictiveCompletionEngine {
 
         // Tree-Sitter syntax analysis
         // Placeholder for actual tree-sitter integration
-        /*
-        Pseudocode for Tree-Sitter integration:
-        - Parse the current file using Tree-Sitter
-        - Extract AST nodes within cursor vicinity
-        - Identify available variables, functions, types
-        - Analyze function call contexts
-        - Determine type implications for completions
-        - Build symbol relationship graph
-        */
+        // Pseudocode for Tree-Sitter integration:
+        // - Parse the current file using Tree-Sitter
+        // - Extract AST nodes within cursor vicinity
+        // - Identify available variables, functions, types
+        // - Analyze function call contexts
+        // - Determine type implications for completions
+        // - Build symbol relationship graph
 
         debug!(
             "Analyzed semantic context for {} at position {}:{}",
@@ -342,8 +340,7 @@ impl PredictiveCompletionEngine {
         // Add predictive suggestions based on learned patterns
         if self.config.enable_pattern_learning {
             let analyzer = self.pattern_analyzer.lock().await;
-            let prefix =
-                self.extract_prefix(&context.current_line, context.cursor_position.character);
+            let prefix = self.extract_prefix(&context.current_line, context.cursor_position.character);
 
             for pattern in analyzer.patterns.values() {
                 if pattern.prefix.starts_with(&prefix) {
@@ -352,10 +349,7 @@ impl PredictiveCompletionEngine {
                             enhanced.push(CompletionItem {
                                 label: completion.clone(),
                                 kind: Some(lsp_types::CompletionItemKind::SNIPPET),
-                                detail: Some(format!(
-                                    "Predicted (confidence: {:.2})",
-                                    pattern.score
-                                )),
+                                detail: Some(format!("Predicted (confidence: {:.2})", pattern.score)),
                                 ..Default::default()
                             });
                         }
@@ -547,9 +541,11 @@ impl LanguageCompletionProvider for RustCompletionProvider {
 
 #[cfg(feature = "tauri")]
 mod tauri_integration {
-    use super::*;
     use std::sync::Arc;
+
     use tauri::{Manager, State};
+
+    use super::*;
 
     type PredictiveCompletionState = Arc<Mutex<Option<PredictiveCompletionEngine>>>;
 
@@ -604,8 +600,9 @@ mod tauri_integration {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use lsp_types::{Position, Range};
+
+    use super::*;
 
     #[tokio::test]
     async fn test_rust_completion_provider() {
@@ -615,19 +612,19 @@ mod tests {
 
         let code = "let x = 1;";
         let position = Position {
-            line: 0,
+            line:      0,
             character: 6,
         }; // Cursor after "let "
         let context = CompletionContext {
-            cursor_position: position.clone(),
-            current_line: "let x = 1;".to_string(),
-            surrounding_lines: vec!["let x = 1;".to_string()],
-            imports: vec![],
+            cursor_position:    position.clone(),
+            current_line:       "let x = 1;".to_string(),
+            surrounding_lines:  vec!["let x = 1;".to_string()],
+            imports:            vec![],
             variables_in_scope: vec![],
-            functions_defined: vec![],
-            project_path: None,
-            file_path: "test.rs".to_string(),
-            language: "rust".to_string(),
+            functions_defined:  vec![],
+            project_path:       None,
+            file_path:          "test.rs".to_string(),
+            language:           "rust".to_string(),
         };
 
         let completions = provider
@@ -657,7 +654,7 @@ mod tests {
             .predict_completions(
                 "test.rs".to_string(),
                 Position {
-                    line: 0,
+                    line:      0,
                     character: 0,
                 },
                 "fn main() {}".to_string(),
@@ -671,6 +668,4 @@ mod tests {
     }
 }
 
-pub use CompletionContext;
-pub use LanguageCompletionProvider;
-pub use PredictiveCompletionEngine as CompletionEngine;
+pub use {CompletionContext, LanguageCompletionProvider, PredictiveCompletionEngine as CompletionEngine};

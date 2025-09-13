@@ -1,7 +1,8 @@
 //! Tests for interface segregation principle analysis
 
 use super::*;
-use crate::analysis::{architectural::InterfaceSegregationAnalyzer, AnalysisType, Severity};
+use crate::analysis::architectural::InterfaceSegregationAnalyzer;
+use crate::analysis::{AnalysisType, Severity};
 
 #[test]
 fn test_proper_interface_segregation() {

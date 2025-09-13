@@ -3,39 +3,41 @@
 //! Automated performance gate checking system that integrates with CI/CD pipelines
 //! to prevent performance regressions and ensure quality standards.
 
-use crate::{GlobalTestConfig, IntegrationTestResult};
+use std::collections::{HashMap, HashSet};
+use std::time::Duration;
+
 use chrono::{DateTime, Utc};
 use rust_ai_ide_errors::RustAIError;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use std::time::Duration;
 use tokio::sync::Mutex;
+
+use crate::{GlobalTestConfig, IntegrationTestResult};
 
 /// Main performance gate checker
 #[derive(Debug)]
 pub struct PerformanceGateChecker {
-    baseline_metrics: HashMap<String, PerformanceBaseline>,
+    baseline_metrics:   HashMap<String, PerformanceBaseline>,
     current_thresholds: PerformanceThresholds,
-    gate_config: GateConfig,
-    enabled_gates: HashSet<PerformanceGate>,
+    gate_config:        GateConfig,
+    enabled_gates:      HashSet<PerformanceGate>,
 }
 
 #[derive(Debug, Clone)]
 pub struct PerformanceBaseline {
-    pub timestamp: DateTime<Utc>,
-    pub value: f64,
-    pub branch: String,
+    pub timestamp:   DateTime<Utc>,
+    pub value:       f64,
+    pub branch:      String,
     pub commit_hash: String,
-    pub metadata: HashMap<String, String>,
+    pub metadata:    HashMap<String, String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct PerformanceThresholds {
     pub max_regression_percent: f64,
-    pub max_variation_percent: f64,
-    pub min_samples_required: u32,
-    pub confidence_level: f64,
-    pub statistical_test: StatisticalTest,
+    pub max_variation_percent:  f64,
+    pub min_samples_required:   u32,
+    pub confidence_level:       f64,
+    pub statistical_test:       StatisticalTest,
 }
 
 #[derive(Debug, Clone)]
@@ -48,11 +50,11 @@ pub enum StatisticalTest {
 
 #[derive(Debug, Clone)]
 pub struct GateConfig {
-    pub fail_on_regression: bool,
-    pub warn_on_degradation: bool,
-    pub strict_mode: bool,
-    pub allow_waiver: bool,
-    pub collect_trends: bool,
+    pub fail_on_regression:   bool,
+    pub warn_on_degradation:  bool,
+    pub strict_mode:          bool,
+    pub allow_waiver:         bool,
+    pub collect_trends:       bool,
     pub notification_channel: Option<String>,
 }
 
@@ -77,35 +79,35 @@ pub enum PerformanceGate {
 /// Performance measurement result
 #[derive(Debug, Clone)]
 pub struct PerformanceMeasurement {
-    pub metric_name: String,
-    pub value: f64,
-    pub unit: String,
-    pub timestamp: DateTime<Utc>,
-    pub baseline_name: String,
+    pub metric_name:         String,
+    pub value:               f64,
+    pub unit:                String,
+    pub timestamp:           DateTime<Utc>,
+    pub baseline_name:       String,
     pub confidence_interval: Option<(f64, f64)>,
-    pub metadata: HashMap<String, String>,
+    pub metadata:            HashMap<String, String>,
 }
 
 /// Gate check result
 #[derive(Debug, Clone)]
 pub struct GateCheckResult {
-    pub gate: PerformanceGate,
-    pub status: GateCheckStatus,
-    pub measurements: Vec<PerformanceMeasurement>,
-    pub violations: Vec<PerformanceGateViolation>,
+    pub gate:            PerformanceGate,
+    pub status:          GateCheckStatus,
+    pub measurements:    Vec<PerformanceMeasurement>,
+    pub violations:      Vec<PerformanceGateViolation>,
     pub recommendations: Vec<String>,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp:       DateTime<Utc>,
 }
 
 #[derive(Debug, Clone)]
 pub struct PerformanceGateViolation {
-    pub metric_name: String,
-    pub measured_value: f64,
-    pub baseline_value: f64,
+    pub metric_name:          String,
+    pub measured_value:       f64,
+    pub baseline_value:       f64,
     pub threshold_percentage: f64,
-    pub violation_type: ViolationType,
-    pub severity: ViolationSeverity,
-    pub description: String,
+    pub violation_type:       ViolationType,
+    pub severity:             ViolationSeverity,
+    pub description:          String,
 }
 
 #[derive(Debug, Clone)]
@@ -137,10 +139,10 @@ impl Default for PerformanceThresholds {
     fn default() -> Self {
         Self {
             max_regression_percent: 5.0,
-            max_variation_percent: 10.0,
-            min_samples_required: 5,
-            confidence_level: 0.95,
-            statistical_test: StatisticalTest::TTest,
+            max_variation_percent:  10.0,
+            min_samples_required:   5,
+            confidence_level:       0.95,
+            statistical_test:       StatisticalTest::TTest,
         }
     }
 }
@@ -148,11 +150,11 @@ impl Default for PerformanceThresholds {
 impl Default for GateConfig {
     fn default() -> Self {
         Self {
-            fail_on_regression: true,
-            warn_on_degradation: true,
-            strict_mode: false,
-            allow_waiver: true,
-            collect_trends: true,
+            fail_on_regression:   true,
+            warn_on_degradation:  true,
+            strict_mode:          false,
+            allow_waiver:         true,
+            collect_trends:       true,
             notification_channel: Some("performance-alerts".to_string()),
         }
     }
@@ -161,10 +163,10 @@ impl Default for GateConfig {
 impl PerformanceGateChecker {
     pub fn new() -> Self {
         Self {
-            baseline_metrics: HashMap::new(),
+            baseline_metrics:   HashMap::new(),
             current_thresholds: PerformanceThresholds::default(),
-            gate_config: GateConfig::default(),
-            enabled_gates: HashSet::from([
+            gate_config:        GateConfig::default(),
+            enabled_gates:      HashSet::from([
                 PerformanceGate::BuildTime,
                 PerformanceGate::RuntimePerformance,
                 PerformanceGate::MemoryUsage,
@@ -222,10 +224,7 @@ impl PerformanceGateChecker {
     }
 
     /// Collect performance measurements for a gate
-    async fn collect_measurements(
-        &self,
-        gate: &PerformanceGate,
-    ) -> Result<Vec<PerformanceMeasurement>, RustAIError> {
+    async fn collect_measurements(&self, gate: &PerformanceGate) -> Result<Vec<PerformanceMeasurement>, RustAIError> {
         // Simulate collecting real performance metrics
         // In practice, this would integrate with the actual performance measurement tools
 
@@ -234,13 +233,13 @@ impl PerformanceGateChecker {
                 // Simulate build time measurement
                 let build_time = self.measure_build_time().await?;
                 Ok(vec![PerformanceMeasurement {
-                    metric_name: "build_time".to_string(),
-                    value: build_time,
-                    unit: "ms".to_string(),
-                    timestamp: Utc::now(),
-                    baseline_name: "main_brach_build_time".to_string(),
+                    metric_name:         "build_time".to_string(),
+                    value:               build_time,
+                    unit:                "ms".to_string(),
+                    timestamp:           Utc::now(),
+                    baseline_name:       "main_brach_build_time".to_string(),
                     confidence_interval: Some((build_time * 0.95, build_time * 1.05)),
-                    metadata: HashMap::new(),
+                    metadata:            HashMap::new(),
                 }])
             }
             PerformanceGate::RuntimePerformance => {
@@ -269,39 +268,41 @@ impl PerformanceGateChecker {
 
         for measurement in measurements {
             if let Some(baseline) = self.baseline_metrics.get(&measurement.metric_name) {
-                let regression_percent =
-                    ((measurement.value - baseline.value) / baseline.value) * 100.0;
+                let regression_percent = ((measurement.value - baseline.value) / baseline.value) * 100.0;
 
                 // Check if regression exceeds threshold
                 if regression_percent.abs() > self.current_thresholds.max_regression_percent {
-                    let violation =
-                        PerformanceGateViolation {
-                            metric_name: measurement.metric_name.clone(),
-                            measured_value: measurement.value,
-                            baseline_value: baseline.value,
-                            threshold_percentage: self.current_thresholds.max_regression_percent,
-                            violation_type: if regression_percent > 0.0 {
-                                ViolationType::Regression
-                            } else {
-                                ViolationType::Degradation
-                            },
-                            severity: if regression_percent.abs() > 10.0 {
-                                ViolationSeverity::Critical
-                            } else if regression_percent.abs() > 7.0 {
-                                ViolationSeverity::High
-                            } else {
-                                ViolationSeverity::Medium
-                            },
-                            description: format!(
+                    let violation = PerformanceGateViolation {
+                        metric_name:          measurement.metric_name.clone(),
+                        measured_value:       measurement.value,
+                        baseline_value:       baseline.value,
+                        threshold_percentage: self.current_thresholds.max_regression_percent,
+                        violation_type:       if regression_percent > 0.0 {
+                            ViolationType::Regression
+                        } else {
+                            ViolationType::Degradation
+                        },
+                        severity:             if regression_percent.abs() > 10.0 {
+                            ViolationSeverity::Critical
+                        } else if regression_percent.abs() > 7.0 {
+                            ViolationSeverity::High
+                        } else {
+                            ViolationSeverity::Medium
+                        },
+                        description:          format!(
                             "Performance {} of {:.1}% detected in {} ({:.2} {} vs baseline {:.2})",
-                            if regression_percent > 0.0 { "regression" } else { "improvement" },
+                            if regression_percent > 0.0 {
+                                "regression"
+                            } else {
+                                "improvement"
+                            },
                             regression_percent.abs(),
                             measurement.metric_name,
                             measurement.value,
                             measurement.unit,
                             baseline.value
                         ),
-                        };
+                    };
 
                     violations.push(violation);
                 }
@@ -337,29 +338,28 @@ impl PerformanceGateChecker {
             match violation.violation_type {
                 ViolationType::Regression => {
                     recommendations.push(format!(
-                        "Address {}.{} performance regression: optimize {}, potentially reduce to below threshold of {:.1}%",
-                        violation.metric_name, violation.violation_type, violation.metric_name, violation.threshold_percentage
+                        "Address {}.{} performance regression: optimize {}, potentially reduce to below threshold of \
+                         {:.1}%",
+                        violation.metric_name,
+                        violation.violation_type,
+                        violation.metric_name,
+                        violation.threshold_percentage
                     ));
 
                     if violation.metric_name.contains("build") {
-                        recommendations.push(
-                            "Consider incremental compilation or parallel builds".to_string(),
-                        );
+                        recommendations.push("Consider incremental compilation or parallel builds".to_string());
                     } else if violation.metric_name.contains("memory") {
-                        recommendations.push(
-                            "Review memory allocation patterns and consider memory pooling"
-                                .to_string(),
-                        );
+                        recommendations
+                            .push("Review memory allocation patterns and consider memory pooling".to_string());
                     }
                 }
-                ViolationType::Degradation => {
+                ViolationType::Degradation =>
                     if self.gate_config.strict_mode {
                         recommendations.push(format!(
                             "Monitor {}.{} improvement trend",
                             violation.metric_name, violation.violation_type
                         ));
-                    }
-                }
+                    },
                 _ => {
                     recommendations.push(format!(
                         "Investigate {}.{} anomaly",
@@ -418,14 +418,14 @@ impl PerformanceGateChecker {
 /// Summary of all gate check results
 #[derive(Debug, Clone)]
 pub struct GateCheckSummary {
-    pub total_gates: usize,
-    pub passed_gates: usize,
-    pub warning_gates: usize,
-    pub failed_gates: usize,
-    pub overall_status: GateCheckStatus,
+    pub total_gates:      usize,
+    pub passed_gates:     usize,
+    pub warning_gates:    usize,
+    pub failed_gates:     usize,
+    pub overall_status:   GateCheckStatus,
     pub violations_count: usize,
-    pub recommendations: Vec<String>,
-    pub timestamp: DateTime<Utc>,
+    pub recommendations:  Vec<String>,
+    pub timestamp:        DateTime<Utc>,
 }
 
 // Implementation of measurement methods (simulated for now)
@@ -441,13 +441,13 @@ impl PerformanceGateChecker {
         // In practice, this would run benchmarks and measure execution time
         tokio::time::sleep(Duration::from_millis(50)).await;
         Ok(PerformanceMeasurement {
-            metric_name: "runtime_performance".to_string(),
-            value: 120.5, // Simulated response time in milliseconds
-            unit: "ms".to_string(),
-            timestamp: Utc::now(),
-            baseline_name: "runtime_baseline".to_string(),
+            metric_name:         "runtime_performance".to_string(),
+            value:               120.5, // Simulated response time in milliseconds
+            unit:                "ms".to_string(),
+            timestamp:           Utc::now(),
+            baseline_name:       "runtime_baseline".to_string(),
             confidence_interval: Some((118.0, 123.0)),
-            metadata: HashMap::new(),
+            metadata:            HashMap::new(),
         })
     }
 
@@ -455,13 +455,13 @@ impl PerformanceGateChecker {
         // In practice, this would monitor memory usage during execution
         tokio::time::sleep(Duration::from_millis(30)).await;
         Ok(PerformanceMeasurement {
-            metric_name: "memory_usage".to_string(),
-            value: 128.5, // Simulated memory usage in MB
-            unit: "MB".to_string(),
-            timestamp: Utc::now(),
-            baseline_name: "memory_baseline".to_string(),
+            metric_name:         "memory_usage".to_string(),
+            value:               128.5, // Simulated memory usage in MB
+            unit:                "MB".to_string(),
+            timestamp:           Utc::now(),
+            baseline_name:       "memory_baseline".to_string(),
             confidence_interval: Some((126.0, 131.0)),
-            metadata: HashMap::new(),
+            metadata:            HashMap::new(),
         })
     }
 
@@ -469,13 +469,13 @@ impl PerformanceGateChecker {
         // In practice, this would measure compilation speed metrics
         tokio::time::sleep(Duration::from_millis(20)).await;
         Ok(PerformanceMeasurement {
-            metric_name: "compile_speed".to_string(),
-            value: 45.2, // Simulated compilation speed
-            unit: "files_per_second".to_string(),
-            timestamp: Utc::now(),
-            baseline_name: "compile_baseline".to_string(),
+            metric_name:         "compile_speed".to_string(),
+            value:               45.2, // Simulated compilation speed
+            unit:                "files_per_second".to_string(),
+            timestamp:           Utc::now(),
+            baseline_name:       "compile_baseline".to_string(),
             confidence_interval: Some((43.0, 47.0)),
-            metadata: HashMap::new(),
+            metadata:            HashMap::new(),
         })
     }
 }
@@ -512,11 +512,11 @@ mod tests {
         let mut checker = PerformanceGateChecker::new();
 
         let baseline = PerformanceBaseline {
-            timestamp: Utc::now(),
-            value: 4000.0,
-            branch: "main".to_string(),
+            timestamp:   Utc::now(),
+            value:       4000.0,
+            branch:      "main".to_string(),
             commit_hash: "abc123".to_string(),
-            metadata: HashMap::new(),
+            metadata:    HashMap::new(),
         };
 
         checker.set_threshold("test_metric", baseline);
@@ -533,13 +533,13 @@ mod tests {
 
         // Test with critical violation
         let critical_violation = PerformanceGateViolation {
-            metric_name: "test_metric".to_string(),
-            measured_value: 5000.0,
-            baseline_value: 4000.0,
+            metric_name:          "test_metric".to_string(),
+            measured_value:       5000.0,
+            baseline_value:       4000.0,
             threshold_percentage: 5.0,
-            violation_type: ViolationType::Regression,
-            severity: ViolationSeverity::Critical,
-            description: "Test violation".to_string(),
+            violation_type:       ViolationType::Regression,
+            severity:             ViolationSeverity::Critical,
+            description:          "Test violation".to_string(),
         };
 
         let status = checker.determine_gate_status(&[critical_violation]);

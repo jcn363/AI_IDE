@@ -44,7 +44,7 @@
 //! ### Enhanced Context Usage
 //!
 //! ```rust
-//! use rust_ai_ide_errors::{RustAIError, EnhancedContext, ResultContextExt};
+//! use rust_ai_ide_errors::{EnhancedContext, ResultContextExt, RustAIError};
 //!
 //! // Old way: Custom error handling
 //! // New way: Leverage built-in context
@@ -55,7 +55,7 @@
 //! ### Automatic Conversions
 //!
 //! ```rust
-//! use rust_ai_ide_errors::{RustAIError, IDEResult};
+//! use rust_ai_ide_errors::{IDEResult, RustAIError};
 //!
 //! fn old_function() -> Result<i32, std::io::Error> {
 //!     // Implementation
@@ -68,8 +68,9 @@
 //! }
 //! ```
 
-use chrono::{DateTime, Utc};
 use std::collections::HashMap;
+
+use chrono::{DateTime, Utc};
 
 /// Result type alias for IDE operations
 ///
@@ -79,7 +80,7 @@ use std::collections::HashMap;
 /// # Examples
 ///
 /// ```rust
-/// use rust_ai_ide_errors::{IDEResult, RustAIError, EnhancedContext};
+/// use rust_ai_ide_errors::{EnhancedContext, IDEResult, RustAIError};
 ///
 /// fn safe_file_operation() -> IDEResult<String> {
 ///     // Some file operation that might fail
@@ -254,15 +255,15 @@ pub enum RustAIError {
 #[derive(Debug, Clone, Default)]
 pub struct EnhancedContext {
     /// Operation that failed
-    pub operation: String,
+    pub operation:       String,
     /// Resource involved (file path, URL, etc.)
-    pub resource: Option<String>,
+    pub resource:        Option<String>,
     /// Additional metadata as key-value pairs
-    pub metadata: HashMap<String, String>,
+    pub metadata:        HashMap<String, String>,
     /// Timestamp of error occurrence
-    pub timestamp: DateTime<Utc>,
+    pub timestamp:       DateTime<Utc>,
     /// Stack trace or span information
-    pub trace_id: Option<String>,
+    pub trace_id:        Option<String>,
     /// Source location (file:line)
     pub source_location: Option<String>,
     /// Chain of operations leading to this error
@@ -352,12 +353,8 @@ impl From<std::io::Error> for RustAIError {
     fn from(error: std::io::Error) -> Self {
         match error.kind() {
             std::io::ErrorKind::NotFound => RustAIError::Path(PathError::new("File not found")),
-            std::io::ErrorKind::PermissionDenied => {
-                RustAIError::Path(PathError::new("Permission denied"))
-            }
-            std::io::ErrorKind::AlreadyExists => {
-                RustAIError::InternalError("Resource already exists".into())
-            }
+            std::io::ErrorKind::PermissionDenied => RustAIError::Path(PathError::new("Permission denied")),
+            std::io::ErrorKind::AlreadyExists => RustAIError::InternalError("Resource already exists".into()),
             std::io::ErrorKind::TimedOut => RustAIError::Timeout("I/O operation timed out".into()),
             _ => RustAIError::Io(IoError::new(error.to_string())),
         }
@@ -391,14 +388,14 @@ impl From<std::num::ParseIntError> for RustAIError {
 #[error("{message}")]
 pub struct PathError {
     message: String,
-    path: Option<String>,
+    path:    Option<String>,
 }
 
 impl PathError {
     pub fn new(message: impl Into<String>) -> Self {
         Self {
             message: message.into(),
-            path: None,
+            path:    None,
         }
     }
 
@@ -413,14 +410,14 @@ impl PathError {
 #[error("Configuration error: {message}")]
 pub struct ConfigError {
     message: String,
-    field: Option<String>,
+    field:   Option<String>,
 }
 
 impl ConfigError {
     pub fn new(message: impl Into<String>) -> Self {
         Self {
             message: message.into(),
-            field: None,
+            field:   None,
         }
     }
 

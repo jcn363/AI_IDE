@@ -1,5 +1,7 @@
+use syn::visit::Visit;
+use syn::{ItemImpl, TypePath};
+
 use super::super::types::CodeLocation;
-use syn::{visit::Visit, ItemImpl, TypePath};
 
 /// Analyzer for the Dependency Inversion Principle
 ///
@@ -7,7 +9,7 @@ use syn::{visit::Visit, ItemImpl, TypePath};
 /// modules directly instead of depending on abstractions.
 pub struct DependencyInversionAnalyzer {
     /// List of violations found during analysis
-    violations: Vec<DependencyInversionViolation>,
+    violations:         Vec<DependencyInversionViolation>,
     /// List of known abstractions (traits)
     known_abstractions: Vec<String>,
 }
@@ -18,14 +20,14 @@ pub struct DependencyInversionViolation {
     /// The concrete type that should be behind an interface
     pub concrete_type: String,
     /// Location of the violation
-    pub location: CodeLocation,
+    pub location:      CodeLocation,
 }
 
 impl DependencyInversionAnalyzer {
     /// Create a new DependencyInversionAnalyzer
     pub fn new() -> Self {
         Self {
-            violations: Vec::new(),
+            violations:         Vec::new(),
             known_abstractions: Vec::new(),
         }
     }
@@ -39,7 +41,7 @@ impl DependencyInversionAnalyzer {
     /// Analyze an implementation block for dependency inversion violations
     pub fn analyze_impl(&mut self, item_impl: &ItemImpl) {
         let mut visitor = DependencyInversionVisitor {
-            analyzer: self,
+            analyzer:           self,
             current_impl_trait: item_impl.trait_.as_ref().map(|(_, path, _)| path).cloned(),
         };
         visitor.visit_item_impl(item_impl);
@@ -52,7 +54,7 @@ impl DependencyInversionAnalyzer {
 }
 
 struct DependencyInversionVisitor<'a> {
-    analyzer: &'a mut DependencyInversionAnalyzer,
+    analyzer:           &'a mut DependencyInversionAnalyzer,
     current_impl_trait: Option<syn::Path>,
 }
 
@@ -91,8 +93,8 @@ impl<'ast> Visit<'ast> for DependencyInversionVisitor<'_> {
             // This is a potential violation
             let location = CodeLocation {
                 file_path: String::new(), // Will be filled in by the caller
-                line: ty.span().start().line as u32,
-                column: ty.span().start().column as u32,
+                line:      ty.span().start().line as u32,
+                column:    ty.span().start().column as u32,
             };
 
             self.analyzer.violations.push(DependencyInversionViolation {
@@ -167,8 +169,9 @@ fn path_to_string(path: &syn::Path) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn test_dependency_inversion() {
@@ -186,7 +189,7 @@ mod tests {
         for item in &file.items {
             if let syn::Item::Struct(s) = item {
                 let mut visitor = DependencyInversionVisitor {
-                    analyzer: &mut analyzer,
+                    analyzer:           &mut analyzer,
                     current_impl_trait: None,
                 };
                 visitor.visit_item_struct(s);

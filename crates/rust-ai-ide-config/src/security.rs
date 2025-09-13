@@ -6,9 +6,10 @@
 //! - Input sanitization
 //! - Threat detection and logging
 
+use std::path::{Path, PathBuf};
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 
 use crate::config::SecurityLevel;
 
@@ -131,11 +132,7 @@ impl SecurityValidator {
     }
 
     /// Validate a file path for security
-    pub fn validate_path(
-        &self,
-        path: &Path,
-        base_path: Option<&Path>,
-    ) -> crate::IDEResult<PathBuf> {
+    pub fn validate_path(&self, path: &Path, base_path: Option<&Path>) -> crate::IDEResult<PathBuf> {
         let path_str = path.to_string_lossy();
 
         // Length check
@@ -211,8 +208,7 @@ impl SecurityValidator {
     {
         // For now, serialize to JSON and scan for dangerous patterns
         // In a full implementation, this could be more sophisticated
-        let json = serde_json::to_string(config)
-            .map_err(|e| crate::RustAIError::Serialization(e.to_string()))?;
+        let json = serde_json::to_string(config).map_err(|e| crate::RustAIError::Serialization(e.to_string()))?;
 
         let json_lower = json.to_lowercase();
 
@@ -246,19 +242,12 @@ impl SecurityValidator {
     }
 
     /// Create a security violation error
-    fn create_violation(
-        &self,
-        violation: SecurityViolation,
-        field: &str,
-        message: &str,
-    ) -> crate::RustAIError {
+    fn create_violation(&self, violation: SecurityViolation, field: &str, message: &str) -> crate::RustAIError {
         let threat_level = match violation {
             SecurityViolation::PathTraversal
             | SecurityViolation::CommandInjection
             | SecurityViolation::NullByteInjection => ThreatLevel::High,
-            SecurityViolation::DangerousCharacters | SecurityViolation::PathOutsideSandbox => {
-                ThreatLevel::Medium
-            }
+            SecurityViolation::DangerousCharacters | SecurityViolation::PathOutsideSandbox => ThreatLevel::Medium,
             _ => ThreatLevel::Low,
         };
 
@@ -308,8 +297,9 @@ pub enum ThreatLevel {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::path::Path;
+
+    use super::*;
 
     #[test]
     fn test_basic_input_sanitization() {

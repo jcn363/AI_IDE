@@ -1,3 +1,5 @@
+use rust_ai_ide_sanitizer::TauriInputSanitizer;
+
 /// AI code completion and generation commands module
 ///
 /// This module handles code completion suggestions and code generation
@@ -5,7 +7,6 @@
 use crate::commands::ai::services::AIServiceState;
 use crate::errors::{IDEError, IDEResult};
 use crate::utils;
-use rust_ai_ide_sanitizer::TauriInputSanitizer;
 
 /// Get code completion suggestions from AI service
 ///
@@ -125,9 +126,8 @@ pub async fn ai_generate_code(
                 "Context code cannot be empty string".to_string(),
             ));
         }
-        TauriInputSanitizer::sanitize_text(code).map_err(|e| {
-            IDEError::Validation(format!("Context code sanitization failed: {}", e))
-        })?;
+        TauriInputSanitizer::sanitize_text(code)
+            .map_err(|e| IDEError::Validation(format!("Context code sanitization failed: {}", e)))?;
     }
 
     // Validate file_name if provided
@@ -144,7 +144,7 @@ pub async fn ai_generate_code(
     // Create AI service instance with error handling
     let ai_service = rust_ai_ide_lsp::AIService::new(rust_ai_ide_lsp::AIProvider::Local {
         model_path: crate::utils::get_model_path(),
-        endpoint: crate::utils::get_ai_endpoint(),
+        endpoint:   crate::utils::get_ai_endpoint(),
     });
 
     let ctx = rust_ai_ide_lsp::AIContext {

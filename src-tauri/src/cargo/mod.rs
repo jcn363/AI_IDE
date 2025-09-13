@@ -11,15 +11,14 @@ pub mod build_task;
 pub mod service;
 
 // Re-exports
+use std::path::Path;
+
 pub use build_manager::BuildManager;
 pub use build_task::{BuildConfig, BuildHooks, BuildTask};
-pub use service::{
-    CargoDependency, CargoManifest, CargoMetadata, CargoPackage, CargoService, CrateMetrics,
-    PerformanceMetrics,
-};
-
 use rust_ai_ide_core::Result;
-use std::path::Path;
+pub use service::{
+    CargoDependency, CargoManifest, CargoMetadata, CargoPackage, CargoService, CrateMetrics, PerformanceMetrics,
+};
 use tokio::sync::mpsc;
 
 /// Initialize the Cargo build system for a project

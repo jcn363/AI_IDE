@@ -1,16 +1,17 @@
-use crate::spec_generation::types::{
-    ArchitecturalPattern, Entity, EntityType, FunctionSpec, Parameter, ParsedSpecification,
-    PatternComponent, Requirement,
-};
 use anyhow::Result;
 use regex::Regex;
 use tokio;
 
+use crate::spec_generation::types::{
+    ArchitecturalPattern, Entity, EntityType, FunctionSpec, Parameter, ParsedSpecification, PatternComponent,
+    Requirement,
+};
+
 /// Parser for natural language specifications
 pub struct SpecificationParser {
     // Cache for compiled regex patterns
-    entity_regex: Regex,
-    function_regex: Regex,
+    entity_regex:      Regex,
+    function_regex:    Regex,
     requirement_regex: Regex,
 }
 
@@ -42,12 +43,10 @@ impl SpecificationParser {
     /// ```
     pub fn new() -> Self {
         Self {
-            entity_regex: Regex::new(r#"(?i)(struct|enum|trait|type)\s+([A-Za-z_][A-Za-z0-9_]*)"#)
+            entity_regex:      Regex::new(r#"(?i)(struct|enum|trait|type)\s+([A-Za-z_][A-Za-z0-9_]*)"#)
                 .expect("Invalid entity regex"),
-            function_regex: Regex::new(
-                r#"(?i)fn\s+([a-z_][a-z0-9_]*)\s*(\([^)]*\))(?:\s*->\s*([^{\s]+))?"#,
-            )
-            .expect("Invalid function regex"),
+            function_regex:    Regex::new(r#"(?i)fn\s+([a-z_][a-z0-9_]*)\s*(\([^)]*\))(?:\s*->\s*([^{\s]+))?"#)
+                .expect("Invalid function regex"),
             requirement_regex: Regex::new(r#"(?i)(REQ-\d+|requirement\s+[A-Za-z0-9-]+)"#)
                 .expect("Invalid requirement regex"),
         }
@@ -104,8 +103,8 @@ impl SpecificationParser {
 
         tokio::task::spawn_blocking(move || {
             let parser = SpecificationParser {
-                entity_regex: regex_entity,
-                function_regex: regex_function,
+                entity_regex:      regex_entity,
+                function_regex:    regex_function,
                 requirement_regex: regex_requirement,
             };
             parser.parse_specification_sync(&text_clone)
@@ -158,7 +157,8 @@ impl SpecificationParser {
 
             // Generate detailed error with position information for debugging
             anyhow::bail!(
-                "No entities or functions found. Perhaps the input is not in the expected format. Line: {}, Position: {}, Snippet: '{}'",
+                "No entities or functions found. Perhaps the input is not in the expected format. Line: {}, Position: \
+                 {}, Snippet: '{}'",
                 line,
                 char_pos,
                 snippet
@@ -441,15 +441,22 @@ impl SpecificationParser {
 
         if has_repository && has_service {
             patterns.push(ArchitecturalPattern {
-                name: "Repository Pattern".to_string(),
-                confidence: 0.8,
-                description: "Detected Repository and Service components, suggesting the Repository pattern is being used.".to_string(),
-                components: entities
+                name:        "Repository Pattern".to_string(),
+                confidence:  0.8,
+                description: "Detected Repository and Service components, suggesting the Repository pattern is being \
+                              used."
+                    .to_string(),
+                components:  entities
                     .iter()
                     .filter(|e| e.name.ends_with("Repository") || e.name.ends_with("Service"))
                     .map(|e| PatternComponent {
-                        role: if e.name.ends_with("Repository") { "Repository" } else { "Service" }.to_string(),
-                        name: e.name.clone(),
+                        role:           if e.name.ends_with("Repository") {
+                            "Repository"
+                        } else {
+                            "Service"
+                        }
+                        .to_string(),
+                        name:           e.name.clone(),
                         component_type: e.entity_type.to_string(),
                     })
                     .collect(),
@@ -464,22 +471,21 @@ impl SpecificationParser {
 
         if has_commands && has_handlers {
             patterns.push(ArchitecturalPattern {
-                name: "CQRS Pattern".to_string(),
-                confidence: 0.7,
-                description:
-                    "Detected Command/Query and Handler components, suggesting CQRS pattern usage."
-                        .to_string(),
-                components: entities
+                name:        "CQRS Pattern".to_string(),
+                confidence:  0.7,
+                description: "Detected Command/Query and Handler components, suggesting CQRS pattern usage."
+                    .to_string(),
+                components:  entities
                     .iter()
                     .filter(|e| e.name.ends_with("Command") || e.name.ends_with("Query"))
                     .map(|e| PatternComponent {
-                        role: if e.name.ends_with("Command") {
+                        role:           if e.name.ends_with("Command") {
                             "Command"
                         } else {
                             "Query"
                         }
                         .to_string(),
-                        name: e.name.clone(),
+                        name:           e.name.clone(),
                         component_type: e.entity_type.to_string(),
                     })
                     .chain(
@@ -487,8 +493,8 @@ impl SpecificationParser {
                             .iter()
                             .filter(|f| f.name.ends_with("Handler"))
                             .map(|f| PatternComponent {
-                                role: "Handler".to_string(),
-                                name: f.name.clone(),
+                                role:           "Handler".to_string(),
+                                name:           f.name.clone(),
                                 component_type: "Function".to_string(),
                             }),
                     )

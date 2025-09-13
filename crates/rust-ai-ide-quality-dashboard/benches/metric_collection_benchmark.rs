@@ -1,6 +1,7 @@
+use std::time::Duration;
+
 use criterion::{criterion_group, criterion_main, Criterion};
 use rust_ai_ide_quality_dashboard::*;
-use std::time::Duration;
 
 fn metric_collection_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("metric_collection");
@@ -12,9 +13,9 @@ fn metric_collection_benchmark(c: &mut Criterion) {
             let metrics: Vec<_> = (0..batch_size)
                 .map(|i| Metric {
                     timestamp: chrono::Utc::now(),
-                    value: i as f64,
-                    name: format!("metric_{}", i % 10),
-                    tags: vec![format!("tag_{}", i % 5)],
+                    value:     i as f64,
+                    name:      format!("metric_{}", i % 10),
+                    tags:      vec![format!("tag_{}", i % 5)],
                 })
                 .collect();
 

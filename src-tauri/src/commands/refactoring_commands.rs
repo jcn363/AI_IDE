@@ -12,21 +12,21 @@
 //! - Undo/redo functionality with history management
 
 // Re-export the advanced refactoring operations
-use crate::commands::types::*;
-use crate::validation;
 pub use rust_ai_ide_ai_refactoring::*;
 use rust_ai_ide_common::types::*;
 
+use crate::commands::types::*;
+use crate::validation;
+
 /// Global configuration for command operations
-static COMMAND_CONFIG: std::sync::OnceLock<super::command_templates::CommandConfig> =
-    std::sync::OnceLock::new();
+static COMMAND_CONFIG: std::sync::OnceLock<super::command_templates::CommandConfig> = std::sync::OnceLock::new();
 
 /// Initialize the command configuration
 fn get_command_config() -> &'static super::command_templates::CommandConfig {
     COMMAND_CONFIG.get_or_init(|| super::command_templates::CommandConfig {
-        enable_logging: true,
-        log_level: log::Level::Info,
-        enable_validation: true,
+        enable_logging:     true,
+        log_level:          log::Level::Info,
+        enable_validation:  true,
         async_timeout_secs: Some(300), // 5 minutes for complex refactoring operations
     })
 }
@@ -141,10 +141,10 @@ pub async fn analyze_refactoring_candidates(
 
         // Create basic context for analysis
         let context = RefactoringContext {
-            file_path: request.file_path.clone(),
-            symbol_name: request.target_symbol.clone(),
-            symbol_kind: request.symbol_kind.map(|k| k.into()),
-            cursor_line: request
+            file_path:        request.file_path.clone(),
+            symbol_name:      request.target_symbol.clone(),
+            symbol_kind:      request.symbol_kind.map(|k| k.into()),
+            cursor_line:      request
                 .cursor_position
                 .map(|p| p.line as usize)
                 .unwrap_or(0),
@@ -152,10 +152,10 @@ pub async fn analyze_refactoring_candidates(
                 .cursor_position
                 .map(|p| p.character as usize)
                 .unwrap_or(0),
-            selection: request.selection.map(|s| s.into()),
-            context_lines: vec![], // Would be populated from LSP
-            language: ProgrammingLanguage::Rust,
-            project_root: request.project_root.clone(),
+            selection:        request.selection.map(|s| s.into()),
+            context_lines:    vec![], // Would be populated from LSP
+            language:         ProgrammingLanguage::Rust,
+            project_root:     request.project_root.clone(),
         };
 
         let basic_options = RefactoringOptions::default();
@@ -166,12 +166,12 @@ pub async fn analyze_refactoring_candidates(
         {
             if let Ok(analysis) = operation.analyze(&context).await {
                 candidates.push(RefactoringCandidate {
-                    operation_type: *operation_type,
-                    confidence_score: analysis.confidence_score,
+                    operation_type:      *operation_type,
+                    confidence_score:    analysis.confidence_score,
                     suitability_reasons: analysis.suggestions,
-                    potential_impact: analysis.potential_impact.into(),
-                    breaking_changes: analysis.breaking_changes,
-                    affected_files: analysis.affected_files,
+                    potential_impact:    analysis.potential_impact.into(),
+                    breaking_changes:    analysis.breaking_changes,
+                    affected_files:      analysis.affected_files,
                 });
 
                 analysis_summary.push(format!(
@@ -216,19 +216,19 @@ pub async fn execute_batch_refactoring(
     // Create batch executor
     let executor = BatchRefactoringOperationExecutor;
     let batch_options = BatchRefactoringOptions {
-        operations: request
+        operations:                request
             .operations
             .into_iter()
             .map(|op| BatchRefactoringOperation {
                 operation_type: op.operation_type,
-                context: op.context.try_into().unwrap_or_default(),
-                options: op.options.try_into().unwrap_or_default(),
+                context:        op.context.try_into().unwrap_or_default(),
+                options:        op.options.try_into().unwrap_or_default(),
             })
             .collect(),
-        parallel_execution: request.parallel_execution,
-        stop_on_failure: request.stop_on_failure,
-        create_backup_directory: true,
-        validate_dependencies: true,
+        parallel_execution:        request.parallel_execution,
+        stop_on_failure:           request.stop_on_failure,
+        create_backup_directory:   true,
+        validate_dependencies:     true,
         max_concurrent_operations: request.max_concurrent_operations,
     };
 
@@ -244,17 +244,17 @@ pub async fn execute_batch_refactoring(
                 .map_err(|e| format!("Batch refactoring failed: {}", e))?;
 
             Ok::<_, String>(BatchRefactoringResult {
-                operation_count: batch_result.results.len(),
-                successes: batch_result.results.len(),
-                failures: 0,
-                warning_count: batch_result
+                operation_count:   batch_result.results.len(),
+                successes:         batch_result.results.len(),
+                failures:          0,
+                warning_count:     batch_result
                     .results
                     .iter()
                     .map(|r| r.result.warnings.len())
                     .sum(),
                 execution_time_ms: 0, // Would be tracked by progress tracker
-                results: batch_result.results.into_iter().map(|r| r.result).collect(),
-                progress_summary: progress_tracker.get_summary(),
+                results:           batch_result.results.into_iter().map(|r| r.result).collect(),
+                progress_summary:  progress_tracker.get_summary(),
             })
         }
     )
@@ -291,52 +291,45 @@ pub async fn generate_refactoring_tests(
             async move || {
                 // Create basic result for test generation
                 let mock_result = RefactoringResult {
-                    id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-                    success: true,
-                    changes: vec![], // Would be populated from actual operation
+                    id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+                    success:       true,
+                    changes:       vec![], // Would be populated from actual operation
                     error_message: None,
-                    warnings: vec![],
-                    new_content: Some(request.original_content.clone()),
+                    warnings:      vec![],
+                    new_content:   Some(request.original_content.clone()),
                 };
 
                 // Generate tests
                 let tests_result = test_generator
-                    .generate_refactoring_tests(
-                        &request.operation_type,
-                        &mock_result,
-                        &RefactoringContext {
-                            file_path: request.file_path.clone(),
-                            symbol_name: request.symbol_name,
-                            symbol_kind: request.symbol_kind,
-                            cursor_line: request.cursor_line,
-                            cursor_character: request.cursor_character,
-                            selection: request.selection,
-                            context_lines: vec![],
-                            language: ProgrammingLanguage::Rust,
-                            project_root: request.project_root,
-                        },
-                    )
+                    .generate_refactoring_tests(&request.operation_type, &mock_result, &RefactoringContext {
+                        file_path:        request.file_path.clone(),
+                        symbol_name:      request.symbol_name,
+                        symbol_kind:      request.symbol_kind,
+                        cursor_line:      request.cursor_line,
+                        cursor_character: request.cursor_character,
+                        selection:        request.selection,
+                        context_lines:    vec![],
+                        language:         ProgrammingLanguage::Rust,
+                        project_root:     request.project_root,
+                    })
                     .await
                     .map_err(|e| format!("Test generation failed: {}", e))?;
 
                 Ok::<_, String>(TestGenerationResponse {
-                    operation_type: request.operation_type,
-                    generated_tests: tests_result
+                    operation_type:    request.operation_type,
+                    generated_tests:   tests_result
                         .unit_tests
                         .into_iter()
                         .map(|test| GeneratedTestInfo {
-                            test_type: test.test_type.to_string(),
-                            language: "Rust".to_string(),
-                            framework: test.framework.clone(),
-                            content: test.code,
-                            filename: format!(
-                                "test_{}.rs",
-                                test.name.to_lowercase().replace(" ", "_")
-                            ),
+                            test_type:    test.test_type.to_string(),
+                            language:     "Rust".to_string(),
+                            framework:    test.framework.clone(),
+                            content:      test.code,
+                            filename:     format!("test_{}.rs", test.name.to_lowercase().replace(" ", "_")),
                             dependencies: vec![], // Would be analyzed
                         })
                         .collect(),
-                    test_count: tests_result.unit_tests.len(),
+                    test_count:        tests_result.unit_tests.len(),
                     coverage_estimate: 0.85, // Estimated good coverage for refactoring tests
                 })
             }
@@ -401,10 +394,10 @@ pub async fn undo_refactoring_operation(
 
     // For now, return a placeholder - would integrate with a real undo system
     Ok(UndoResult {
-        success: true,
-        operation_id: request.operation_id,
+        success:          true,
+        operation_id:     request.operation_id,
         reverted_changes: vec![], // Would contain the actual reverted changes
-        warnings: vec!["Undo system integration pending".to_string()],
+        warnings:         vec!["Undo system integration pending".to_string()],
     })
 }
 
@@ -438,13 +431,13 @@ pub async fn validate_refactoring_safety(
             .map_err(|e| format!("Safety analysis failed: {}", e))?;
 
         Ok(SafetyValidationResult {
-            operation_type: request.operation_type,
-            is_safe: analysis.is_safe,
-            confidence_score: analysis.confidence_score,
-            potential_impact: analysis.potential_impact.into(),
-            breaking_changes: analysis.breaking_changes,
+            operation_type:         request.operation_type,
+            is_safe:                analysis.is_safe,
+            confidence_score:       analysis.confidence_score,
+            potential_impact:       analysis.potential_impact.into(),
+            breaking_changes:       analysis.breaking_changes,
             suggested_alternatives: analysis.suggestions,
-            recommendations: generate_safety_recommendations(&analysis),
+            recommendations:        generate_safety_recommendations(&analysis),
         })
     } else {
         Err(format!(
@@ -487,14 +480,14 @@ pub async fn get_refactoring_preferences(
 
     // Return default preferences - would be loaded from user settings
     Ok(RefactoringPreferences {
-        enable_auto_preview: true,
-        enable_safety_validation: true,
-        default_confidence_threshold: 0.7,
-        auto_generate_tests: true,
-        enable_backup: true,
-        max_concurrent_operations: 3,
+        enable_auto_preview:           true,
+        enable_safety_validation:      true,
+        default_confidence_threshold:  0.7,
+        auto_generate_tests:           true,
+        enable_backup:                 true,
+        max_concurrent_operations:     3,
         experimental_features_enabled: false,
-        lsp_integration_level: "full".to_string(),
+        lsp_integration_level:         "full".to_string(),
     })
 }
 
@@ -514,6 +507,4 @@ pub async fn update_refactoring_preferences(
 }
 
 // Module exports for the commands
-pub use rust_ai_ide_ai_refactoring::{
-    BatchRefactoringOperationExecutor, ProgressTracker, RefactoringTestGenerator,
-};
+pub use rust_ai_ide_ai_refactoring::{BatchRefactoringOperationExecutor, ProgressTracker, RefactoringTestGenerator};

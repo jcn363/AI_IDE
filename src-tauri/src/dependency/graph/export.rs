@@ -1,9 +1,10 @@
 //! Module for exporting dependency graphs to various formats
 
-use super::{DependencyEdge, DependencyGraph, DependencyNode};
 use anyhow::Result;
 use petgraph::visit::EdgeRef;
 use serde::{Deserialize, Serialize};
+
+use super::{DependencyEdge, DependencyGraph, DependencyNode};
 
 /// Supported export formats for the dependency graph
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -88,9 +89,9 @@ fn export_dot(graph: &DependencyGraph) -> Result<Vec<u8>> {
 fn export_json(graph: &DependencyGraph) -> Result<Vec<u8>> {
     #[derive(Serialize)]
     struct ExportNode {
-        id: String,
-        name: String,
-        version: String,
+        id:           String,
+        name:         String,
+        version:      String,
         is_workspace: bool,
     }
 
@@ -107,9 +108,9 @@ fn export_json(graph: &DependencyGraph) -> Result<Vec<u8>> {
     for node_idx in graph.graph().node_indices() {
         if let Some(node) = graph.graph().node_weight(node_idx) {
             export.0.push(ExportNode {
-                id: format!("{}:{}", node.name, node.version),
-                name: node.name.clone(),
-                version: node.version.clone(),
+                id:           format!("{}:{}", node.name, node.version),
+                name:         node.name.clone(),
+                version:      node.version.clone(),
                 is_workspace: node.is_workspace(),
             });
         }

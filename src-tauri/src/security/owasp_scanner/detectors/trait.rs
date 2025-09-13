@@ -1,8 +1,10 @@
 //! OWASP Detector Trait definition
 
-use super::DetectionResult;
-use async_trait::async_trait;
 use std::path::Path;
+
+use async_trait::async_trait;
+
+use super::DetectionResult;
 
 #[async_trait]
 pub trait OWASPDetector: Send + Sync {
@@ -13,10 +15,8 @@ pub trait OWASPDetector: Send + Sync {
     fn name(&self) -> &str;
 
     /// Analyze a codebase for vulnerabilities in this OWASP category
-    async fn analyze_codebase(
-        &self,
-        workspace_path: &Path,
-    ) -> Result<Vec<DetectionResult>, Box<dyn std::error::Error>>;
+    async fn analyze_codebase(&self, workspace_path: &Path)
+        -> Result<Vec<DetectionResult>, Box<dyn std::error::Error>>;
 
     /// Analyze a single file
     fn analyze_file(&self, code: &str, file_path: &str) -> Vec<DetectionResult>;

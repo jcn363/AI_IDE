@@ -1,9 +1,10 @@
+use syn::spanned::Spanned;
+
 use super::code_analyzer::CodeAnalyzer;
 use crate::{
-    AnalysisPreferences, ArchitectureIssue, CodeAnalysisResult, CodeMetrics, CodeSmell,
-    PerformanceIssue, SecurityIssue, Severity, StyleIssue,
+    AnalysisPreferences, ArchitectureIssue, CodeAnalysisResult, CodeMetrics, CodeSmell, PerformanceIssue,
+    SecurityIssue, Severity, StyleIssue,
 };
-use syn::spanned::Spanned;
 
 pub struct AnalysisEngine {
     analyzer: CodeAnalyzer,
@@ -30,11 +31,11 @@ impl AnalysisEngine {
             .iter()
             .filter(|f| f.is_code_smell())
             .map(|f| CodeSmell {
-                message: f.message.clone(),
-                severity: map_severity(&f.severity),
-                line: f.range.start_line,
-                column: f.range.start_col,
-                end_line: f.range.end_line,
+                message:    f.message.clone(),
+                severity:   map_severity(&f.severity),
+                line:       f.range.start_line,
+                column:     f.range.start_col,
+                end_line:   f.range.end_line,
                 end_column: f.range.end_col,
                 suggestion: f.suggestion.clone(),
             })

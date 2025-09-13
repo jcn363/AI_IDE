@@ -2,11 +2,12 @@
 //!
 //! Provides common testing utilities for refactoring system integration tests
 
-use rust_ai_ide_ai::refactoring::{
-    BackendCapabilitiesResponse, BackendFeatures, CodeRange, RefactoringContext,
-    RefactoringOptions, RefactoringType, SymbolKind,
-};
 use std::collections::HashMap;
+
+use rust_ai_ide_ai::refactoring::{
+    BackendCapabilitiesResponse, BackendFeatures, CodeRange, RefactoringContext, RefactoringOptions, RefactoringType,
+    SymbolKind,
+};
 
 // Test file paths and content
 pub const TEST_RUST_FILE: &str = "tests/data/test_file.rs";
@@ -66,12 +67,12 @@ impl Calculator {
 /// Create a standard test refactoring context
 pub fn create_test_context(file_path: &str, line: usize, column: usize) -> RefactoringContext {
     RefactoringContext {
-        file_path: file_path.to_string(),
-        cursor_line: line,
+        file_path:        file_path.to_string(),
+        cursor_line:      line,
         cursor_character: column,
-        selection: None,
-        symbol_name: Some("test_symbol".to_string()),
-        symbol_kind: Some(SymbolKind::Function),
+        selection:        None,
+        symbol_name:      Some("test_symbol".to_string()),
+        symbol_kind:      Some(SymbolKind::Function),
     }
 }
 
@@ -84,17 +85,17 @@ pub fn create_test_context_with_selection(
     end_col: usize,
 ) -> RefactoringContext {
     RefactoringContext {
-        file_path: file_path.to_string(),
-        cursor_line: start_line,
+        file_path:        file_path.to_string(),
+        cursor_line:      start_line,
         cursor_character: start_col,
-        selection: Some(CodeRange {
+        selection:        Some(CodeRange {
             start_line,
             start_character: start_col,
             end_line,
             end_character: end_col,
         }),
-        symbol_name: Some("selected_code".to_string()),
-        symbol_kind: Some(SymbolKind::Function),
+        symbol_name:      Some("selected_code".to_string()),
+        symbol_kind:      Some(SymbolKind::Function),
     }
 }
 
@@ -145,26 +146,26 @@ pub fn create_mock_capabilities() -> BackendCapabilitiesResponse {
             "inline-function".to_string(),
             "move-method".to_string(),
         ],
-        supported_file_types: vec!["rs".to_string(), "ts".to_string(), "js".to_string()],
-        features: BackendFeatures {
-            batch_operations: true,
-            analysis: true,
-            backup_recovery: true,
-            test_generation: false,
-            ai_analysis: false,
-            lsp_integration: false,
-            git_integration: true,
+        supported_file_types:   vec!["rs".to_string(), "ts".to_string(), "js".to_string()],
+        features:               BackendFeatures {
+            batch_operations:       true,
+            analysis:               true,
+            backup_recovery:        true,
+            test_generation:        false,
+            ai_analysis:            false,
+            lsp_integration:        false,
+            git_integration:        true,
             cross_language_support: true,
-            parallel_processing: true,
+            parallel_processing:    true,
         },
-        performance_metrics: {
+        performance_metrics:    {
             let mut metrics = HashMap::new();
             metrics.insert("fresh_cache_entries".to_string(), 10);
             metrics.insert("total_cache_entries".to_string(), 20);
             metrics.insert("operation_count".to_string(), 5);
             metrics
         },
-        configuration_options: vec![
+        configuration_options:  vec![
             "create_backup".to_string(),
             "generate_tests".to_string(),
             "apply_to_all_occurrences".to_string(),
@@ -174,27 +175,27 @@ pub fn create_mock_capabilities() -> BackendCapabilitiesResponse {
 
 /// Mock frontend context structure for testing
 pub struct MockFrontendContext {
-    pub filePath: String,
-    pub startLine: u32,
+    pub filePath:       String,
+    pub startLine:      u32,
     pub startCharacter: u32,
-    pub endLine: u32,
-    pub endCharacter: u32,
-    pub selectedText: Option<String>,
-    pub symbolName: Option<String>,
-    pub symbolKind: Option<String>,
+    pub endLine:        u32,
+    pub endCharacter:   u32,
+    pub selectedText:   Option<String>,
+    pub symbolName:     Option<String>,
+    pub symbolKind:     Option<String>,
 }
 
 /// Create mock frontend context
 pub fn create_frontend_test_context() -> MockFrontendContext {
     MockFrontendContext {
-        filePath: "src/main.rs".to_string(),
-        startLine: 10,
+        filePath:       "src/main.rs".to_string(),
+        startLine:      10,
         startCharacter: 5,
-        endLine: 15,
-        endCharacter: 10,
-        selectedText: Some("let x = 42;".to_string()),
-        symbolName: Some("calculate".to_string()),
-        symbolKind: Some("function".to_string()),
+        endLine:        15,
+        endCharacter:   10,
+        selectedText:   Some("let x = 42;".to_string()),
+        symbolName:     Some("calculate".to_string()),
+        symbolKind:     Some("function".to_string()),
     }
 }
 
@@ -206,10 +207,10 @@ pub fn map_to_backend_context(frontend: &MockFrontendContext) -> RefactoringCont
         || frontend.endCharacter != 0
     {
         Some(CodeRange {
-            start_line: frontend.startLine as usize,
+            start_line:      frontend.startLine as usize,
             start_character: frontend.startCharacter as usize,
-            end_line: std::cmp::max(frontend.endLine, frontend.startLine) as usize,
-            end_character: if frontend.endLine == frontend.startLine {
+            end_line:        std::cmp::max(frontend.endLine, frontend.startLine) as usize,
+            end_character:   if frontend.endLine == frontend.startLine {
                 std::cmp::max(frontend.endCharacter, frontend.startCharacter) as usize
             } else {
                 frontend.endCharacter as usize
@@ -283,26 +284,26 @@ pub fn get_all_refactoring_types() -> Vec<RefactoringType> {
 
 /// Performance and reliability test utilities
 pub struct PerformanceMetrics {
-    pub total_operations: i32,
+    pub total_operations:         i32,
     pub average_response_time_ms: f64,
-    pub cache_hit_ratio: f64,
-    pub error_rate: f64,
+    pub cache_hit_ratio:          f64,
+    pub error_rate:               f64,
 }
 
 pub struct CacheStatistics {
-    pub total_entries: i64,
-    pub fresh_entries: i64,
-    pub stale_entries: i64,
+    pub total_entries:   i64,
+    pub fresh_entries:   i64,
+    pub stale_entries:   i64,
     pub evicted_entries: i64,
 }
 
 impl Default for PerformanceMetrics {
     fn default() -> Self {
         PerformanceMetrics {
-            total_operations: 0,
+            total_operations:         0,
             average_response_time_ms: 0.0,
-            cache_hit_ratio: 0.0,
-            error_rate: 0.0,
+            cache_hit_ratio:          0.0,
+            error_rate:               0.0,
         }
     }
 }
@@ -310,9 +311,9 @@ impl Default for PerformanceMetrics {
 impl Default for CacheStatistics {
     fn default() -> Self {
         CacheStatistics {
-            total_entries: 0,
-            fresh_entries: 0,
-            stale_entries: 0,
+            total_entries:   0,
+            fresh_entries:   0,
+            stale_entries:   0,
             evicted_entries: 0,
         }
     }

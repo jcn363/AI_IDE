@@ -1,21 +1,17 @@
 //! End-to-end integration tests for the Rust AI IDE analysis engine
 
-use rust_ai_ide_ai::{
-    analysis::{
-        architectural::{
-            CircularDependencyAnalyzer, DependencyInversionAnalyzer, InterfaceSegregationAnalyzer,
-            LayerViolationDetector,
-        },
-        metrics::{
-            CognitiveComplexityCalculator, CyclomaticComplexityCalculator, HalsteadMetrics,
-            MaintainabilityIndex, MetricsAnalyzer, SourceLinesOfCode,
-        },
-        security::{HardcodedSecretsDetector, InsecureCryptoDetector, SqlInjectionDetector},
-        AnalysisPipeline, AnalysisPipelineBuilder, AnalysisResult, AnalysisType, Severity,
-    },
-    test_helpers::*,
-};
 use std::path::Path;
+
+use rust_ai_ide_ai::analysis::architectural::{
+    CircularDependencyAnalyzer, DependencyInversionAnalyzer, InterfaceSegregationAnalyzer, LayerViolationDetector,
+};
+use rust_ai_ide_ai::analysis::metrics::{
+    CognitiveComplexityCalculator, CyclomaticComplexityCalculator, HalsteadMetrics, MaintainabilityIndex,
+    MetricsAnalyzer, SourceLinesOfCode,
+};
+use rust_ai_ide_ai::analysis::security::{HardcodedSecretsDetector, InsecureCryptoDetector, SqlInjectionDetector};
+use rust_ai_ide_ai::analysis::{AnalysisPipeline, AnalysisPipelineBuilder, AnalysisResult, AnalysisType, Severity};
+use rust_ai_ide_ai::test_helpers::*;
 
 /// Test a complete analysis pipeline with all analyzers
 #[test]
@@ -106,11 +102,10 @@ fn test_complete_analysis_pipeline() {
             AnalysisType::SqlInjection => {
                 found_issues.insert("sql_injection");
             }
-            AnalysisType::CodeMetrics => {
+            AnalysisType::CodeMetrics =>
                 if finding.message.contains("high complexity") {
                     found_issues.insert("high_complexity");
-                }
-            }
+                },
             _ => {}
         }
     }
@@ -503,9 +498,7 @@ fn test_language_feature_analysis() {
     assert!(
         !result.findings.iter().any(|f| matches!(
             f.analysis_type,
-            AnalysisType::InsecureCrypto
-                | AnalysisType::HardcodedSecret
-                | AnalysisType::SqlInjection
+            AnalysisType::InsecureCrypto | AnalysisType::HardcodedSecret | AnalysisType::SqlInjection
         )),
         "Should not find security issues in valid code"
     );

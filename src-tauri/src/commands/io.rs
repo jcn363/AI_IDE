@@ -3,17 +3,16 @@
 //! This module contains commands that handle file operations, external API calls,
 //! and I/O-related functionality.
 
-use anyhow::{anyhow, Result};
-use chrono;
-use log;
-use rust_ai_ide_core::read_file_to_string;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs as std_fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+use anyhow::{anyhow, Result};
+use rust_ai_ide_core::read_file_to_string;
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State};
 use tokio::fs;
 use tokio::io::{AsyncBufReadExt, BufReader};
@@ -21,39 +20,38 @@ use tokio::process::Command as TokioCommand;
 use tokio::sync::{Mutex, RwLock};
 use tokio::time::timeout;
 use toml::Table;
-use uuid;
-
-use crate::security::vulnerability_scanner::{VulnerabilityReport, VulnerabilityScanner};
+use {chrono, log, uuid};
 
 // Import diagnostic types from the new shared diagnostics module
 use crate::modules::shared::diagnostics::*;
+use crate::security::vulnerability_scanner::{VulnerabilityReport, VulnerabilityScanner};
 
 /// Real-time diagnostic stream
 #[derive(Debug)]
 pub struct DiagnosticStream {
-    pub id: String,
+    pub id:             String,
     pub workspace_path: String,
-    pub is_active: bool,
-    pub last_update: SystemTime,
-    pub subscribers: Vec<String>, // Frontend connection IDs
+    pub is_active:      bool,
+    pub last_update:    SystemTime,
+    pub subscribers:    Vec<String>, // Frontend connection IDs
 }
 
 /// Compiler diagnostics request
 #[derive(Debug, Deserialize)]
 pub struct CompilerDiagnosticsRequest {
-    pub workspace_path: String,
-    pub include_explanations: bool,
+    pub workspace_path:          String,
+    pub include_explanations:    bool,
     pub include_suggested_fixes: bool,
-    pub use_cache: bool,
-    pub cache_ttl_seconds: Option<u64>,
-    pub timeout_seconds: Option<u64>,
+    pub use_cache:               bool,
+    pub cache_ttl_seconds:       Option<u64>,
+    pub timeout_seconds:         Option<u64>,
 }
 
 /// Error code explanation request
 #[derive(Debug, Deserialize)]
 pub struct ErrorCodeExplanationRequest {
-    pub error_code: String,
-    pub use_cache: bool,
+    pub error_code:        String,
+    pub use_cache:         bool,
     pub cache_ttl_seconds: Option<u64>,
 }
 
@@ -61,25 +59,25 @@ pub struct ErrorCodeExplanationRequest {
 #[derive(Debug, Deserialize)]
 pub struct DocumentationLookupRequest {
     pub error_code: Option<String>,
-    pub keyword: Option<String>,
-    pub context: Option<String>,
+    pub keyword:    Option<String>,
+    pub context:    Option<String>,
 }
 
 /// Real-time diagnostics subscription request
 #[derive(Debug, Deserialize)]
 pub struct DiagnosticStreamRequest {
-    pub workspace_path: String,
-    pub subscriber_id: String,
+    pub workspace_path:                String,
+    pub subscriber_id:                 String,
     pub auto_refresh_interval_seconds: Option<u64>,
 }
 
 /// LockDependency structure for parsing Cargo.lock
 #[derive(Debug, Serialize)]
 pub struct LockDependency {
-    pub name: String,
-    pub version: String,
+    pub name:         String,
+    pub version:      String,
     pub dependencies: Vec<String>,
-    pub is_direct: bool,
+    pub is_direct:    bool,
 }
 
 /// Get compiler diagnostics for a workspace
@@ -143,9 +141,7 @@ pub async fn get_compiler_diagnostics(
     for line in diagnostics_result.lines() {
         if let Ok(json) = serde_json::from_str::<serde_json::Value>(line) {
             if let Some(message) = json.get("message") {
-                if let Some(diagnostic) =
-                    parse_compiler_diagnostic(message, &request.workspace_path).await
-                {
+                if let Some(diagnostic) = parse_compiler_diagnostic(message, &request.workspace_path).await {
                     // Count diagnostic levels
                     match diagnostic.level.as_str() {
                         "error" => error_count += 1,
@@ -183,13 +179,13 @@ pub async fn get_compiler_diagnostics(
     }
 
     let metadata = DiagnosticMetadata {
-        workspace_path: request.workspace_path.clone(),
-        timestamp: chrono::Utc::now(),
+        workspace_path:      request.workspace_path.clone(),
+        timestamp:           chrono::Utc::now(),
         compilation_time_ms: compilation_time,
-        total_errors: error_count,
-        total_warnings: warning_count,
-        total_notes: note_count,
-        cached: false,
+        total_errors:        error_count,
+        total_warnings:      warning_count,
+        total_notes:         note_count,
+        cached:              false,
     };
 
     let result = CompilerDiagnosticsResult {
@@ -224,8 +220,7 @@ pub async fn parse_cargo_lock(project_path: PathBuf) -> Result<Vec<LockDependenc
         .await
         .map_err(|e| format!("Failed to read Cargo.lock: {}", e))?;
 
-    let lock_data: Table =
-        toml::from_str(&lock_content).map_err(|e| format!("Failed to parse Cargo.lock: {}", e))?;
+    let lock_data: Table = toml::from_str(&lock_content).map_err(|e| format!("Failed to parse Cargo.lock: {}", e))?;
 
     let mut dependencies = Vec::new();
 
@@ -253,10 +248,10 @@ pub async fn parse_cargo_lock(project_path: PathBuf) -> Result<Vec<LockDependenc
                     .unwrap_or_default();
 
                 dependencies.push(LockDependency {
-                    name: name_str.clone(),
-                    version: version_str,
+                    name:         name_str.clone(),
+                    version:      version_str,
                     dependencies: deps,
-                    is_direct: direct_deps.contains(&name_str),
+                    is_direct:    direct_deps.contains(&name_str),
                 });
             }
         }
@@ -278,8 +273,7 @@ async fn get_direct_dependencies(project_path: &PathBuf) -> Result<Vec<String>, 
         .await
         .map_err(|e| format!("Failed to read Cargo.toml: {}", e))?;
 
-    let cargo_toml: Table =
-        toml::from_str(&toml_content).map_err(|e| format!("Failed to parse Cargo.toml: {}", e))?;
+    let cargo_toml: Table = toml::from_str(&toml_content).map_err(|e| format!("Failed to parse Cargo.toml: {}", e))?;
 
     let mut deps = Vec::new();
 
@@ -348,16 +342,13 @@ async fn run_cargo_check(workspace_path: &str) -> Result<String> {
     Ok(output)
 }
 
-async fn parse_compiler_diagnostic(
-    message: &serde_json::Value,
-    workspace_path: &str,
-) -> Option<CompilerDiagnostic> {
+async fn parse_compiler_diagnostic(message: &serde_json::Value, workspace_path: &str) -> Option<CompilerDiagnostic> {
     let level = message.get("level")?.as_str()?.to_string();
     let msg = message.get("message")?.as_str()?.to_string();
 
     let code = if let Some(code_obj) = message.get("code") {
         Some(CompilerErrorCode {
-            code: code_obj.get("code")?.as_str()?.to_string(),
+            code:        code_obj.get("code")?.as_str()?.to_string(),
             explanation: code_obj
                 .get("explanation")
                 .and_then(|e| e.as_str())
@@ -373,8 +364,7 @@ async fn parse_compiler_diagnostic(
         Vec::new()
     };
 
-    let children = if let Some(children_array) = message.get("children").and_then(|c| c.as_array())
-    {
+    let children = if let Some(children_array) = message.get("children").and_then(|c| c.as_array()) {
         let mut children = Vec::new();
         for child in children_array {
             if let Some(child_diagnostic) = parse_compiler_diagnostic(child, workspace_path).await {
@@ -462,15 +452,12 @@ fn parse_span_text(text: &serde_json::Value) -> Option<SpanText> {
     })
 }
 
-async fn extract_diagnostic_context(
-    spans: &[CompilerSpan],
-    workspace_path: &str,
-) -> DiagnosticContext {
+async fn extract_diagnostic_context(spans: &[CompilerSpan], workspace_path: &str) -> DiagnosticContext {
     let mut context = DiagnosticContext {
-        file_path: String::new(),
-        function_name: None,
-        module_path: None,
-        surrounding_code: None,
+        file_path:           String::new(),
+        function_name:       None,
+        module_path:         None,
+        surrounding_code:    None,
         related_diagnostics: Vec::new(),
     };
 
@@ -478,9 +465,7 @@ async fn extract_diagnostic_context(
         context.file_path = main_span.file_name.clone();
 
         // Try to extract surrounding code context
-        if let Ok(file_content) =
-            rust_ai_ide_common::read_file_to_string(&main_span.file_name).await
-        {
+        if let Ok(file_content) = rust_ai_ide_common::read_file_to_string(&main_span.file_name).await {
             let lines: Vec<&str> = file_content.lines().collect();
             let start_line = main_span.line_start.saturating_sub(3) as usize;
             let end_line = ((main_span.line_end + 3) as usize).min(lines.len());
@@ -590,16 +575,16 @@ async fn get_error_code_explanation(error_code: &str) -> Result<ErrorCodeExplana
     // Generate documentation links
     let documentation_links = vec![
         DocumentationLink {
-            title: format!("Rust Error Index - {}", error_code),
-            url: format!("https://doc.rust-lang.org/error-index.html#{}", error_code),
+            title:       format!("Rust Error Index - {}", error_code),
+            url:         format!("https://doc.rust-lang.org/error-index.html#{}", error_code),
             description: "Official Rust documentation for this error".to_string(),
-            category: "official".to_string(),
+            category:    "official".to_string(),
         },
         DocumentationLink {
-            title: "Rust Book".to_string(),
-            url: "https://doc.rust-lang.org/book/".to_string(),
+            title:       "Rust Book".to_string(),
+            url:         "https://doc.rust-lang.org/book/".to_string(),
             description: "The Rust Programming Language book".to_string(),
-            category: "official".to_string(),
+            category:    "official".to_string(),
         },
     ];
 
@@ -622,26 +607,26 @@ async fn generate_suggested_fixes(diagnostic: &CompilerDiagnostic) -> Result<Vec
     for span in &diagnostic.spans {
         if let Some(replacement) = &span.suggested_replacement {
             let fix = FixSuggestion {
-                id: uuid::Uuid::new_v4().to_string(),
-                title: format!("Apply compiler suggestion"),
-                description: span
+                id:               uuid::Uuid::new_v4().to_string(),
+                title:            format!("Apply compiler suggestion"),
+                description:      span
                     .label
                     .clone()
                     .unwrap_or_else(|| "Compiler suggested fix".to_string()),
-                fix_type: FixType::QuickFix,
-                changes: vec![CodeChange {
-                    file_path: span.file_name.clone(),
-                    range: (
+                fix_type:         FixType::QuickFix,
+                changes:          vec![CodeChange {
+                    file_path:   span.file_name.clone(),
+                    range:       (
                         span.line_start,
                         span.column_start,
                         span.line_end,
                         span.column_end,
                     ),
-                    old_text: String::new(), // Would need to extract from source
-                    new_text: replacement.clone(),
+                    old_text:    String::new(), // Would need to extract from source
+                    new_text:    replacement.clone(),
                     change_type: CompilerChangeType::Replace,
                 }],
-                confidence: if span
+                confidence:       if span
                     .suggestion_applicability
                     .as_ref()
                     .map_or(false, |a| a == "machine-applicable")
@@ -651,8 +636,8 @@ async fn generate_suggested_fixes(diagnostic: &CompilerDiagnostic) -> Result<Vec
                     0.7
                 },
                 estimated_effort: EstimatedEffort::Trivial,
-                benefits: vec!["Fixes compiler error".to_string()],
-                risks: vec![],
+                benefits:         vec!["Fixes compiler error".to_string()],
+                risks:            vec![],
             };
             fixes.push(fix);
         }
@@ -708,9 +693,7 @@ pub async fn clear_diagnostic_cache(
     _cache_config: serde_json::Value,
     _state: tauri::State<'_, std::sync::Arc<tokio::sync::Mutex<crate::IDEState>>>,
 ) -> Result<serde_json::Value, String> {
-    Ok(
-        serde_json::json!({"cleared_entries": 0, "message": "Diagnostic cache clearing placeholder"}),
-    )
+    Ok(serde_json::json!({"cleared_entries": 0, "message": "Diagnostic cache clearing placeholder"}))
 }
 
 #[tauri::command]
@@ -725,9 +708,7 @@ pub async fn analyze_workspace_structure(
     _workspace_path: String,
     _state: tauri::State<'_, std::sync::Arc<tokio::sync::Mutex<crate::IDEState>>>,
 ) -> Result<serde_json::Value, String> {
-    Ok(
-        serde_json::json!({"structure_analysis": {}, "message": "Workspace structure analysis placeholder"}),
-    )
+    Ok(serde_json::json!({"structure_analysis": {}, "message": "Workspace structure analysis placeholder"}))
 }
 
 #[tauri::command]
@@ -736,9 +717,7 @@ pub async fn validate_file_integrity(
     _validation_config: serde_json::Value,
     _state: tauri::State<'_, std::sync::Arc<tokio::sync::Mutex<crate::IDEState>>>,
 ) -> Result<serde_json::Value, String> {
-    Ok(
-        serde_json::json!({"integrity_check": {}, "message": "File integrity validation placeholder"}),
-    )
+    Ok(serde_json::json!({"integrity_check": {}, "message": "File integrity validation placeholder"}))
 }
 
 #[tauri::command]
@@ -755,9 +734,7 @@ pub async fn backup_workspace_data(
     _backup_config: serde_json::Value,
     _state: tauri::State<'_, std::sync::Arc<tokio::sync::Mutex<crate::IDEState>>>,
 ) -> Result<serde_json::Value, String> {
-    Ok(
-        serde_json::json!({"backup_id": "placeholder-backup-id", "message": "Workspace data backup placeholder"}),
-    )
+    Ok(serde_json::json!({"backup_id": "placeholder-backup-id", "message": "Workspace data backup placeholder"}))
 }
 
 #[tauri::command]
@@ -775,9 +752,7 @@ pub async fn generate_workspace_summary(
     _summary_config: serde_json::Value,
     _state: tauri::State<'_, std::sync::Arc<tokio::sync::Mutex<crate::IDEState>>>,
 ) -> Result<serde_json::Value, String> {
-    Ok(
-        serde_json::json!({"workspace_summary": {}, "message": "Workspace summary generation placeholder"}),
-    )
+    Ok(serde_json::json!({"workspace_summary": {}, "message": "Workspace summary generation placeholder"}))
 }
 
 #[tauri::command]
@@ -786,9 +761,7 @@ pub async fn optimize_workspace_storage(
     _optimization_config: serde_json::Value,
     _state: tauri::State<'_, std::sync::Arc<tokio::sync::Mutex<crate::IDEState>>>,
 ) -> Result<serde_json::Value, String> {
-    Ok(
-        serde_json::json!({"optimization_result": {}, "message": "Workspace storage optimization placeholder"}),
-    )
+    Ok(serde_json::json!({"optimization_result": {}, "message": "Workspace storage optimization placeholder"}))
 }
 
 #[tauri::command]

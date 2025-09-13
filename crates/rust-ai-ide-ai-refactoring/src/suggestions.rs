@@ -1,26 +1,25 @@
+use std::collections::HashMap;
+
+use async_trait::async_trait;
+
 use crate::analysis::RefactoringAnalyzer;
 use crate::confidence::{ConfidenceResult, ConfidenceScorer};
 use crate::safety::RefactoringRisk;
 use crate::types::*;
-use async_trait::async_trait;
-use std::collections::HashMap;
 
 /// Trait for suggestion engines
 #[async_trait]
 pub trait SuggestionEngine {
     /// Get suggestions based on refactoring context
-    async fn get_suggestions(
-        &self,
-        context: &SuggestionContext,
-    ) -> Result<Vec<RefactoringSuggestion>, String>;
+    async fn get_suggestions(&self, context: &SuggestionContext) -> Result<Vec<RefactoringSuggestion>, String>;
 }
 
 /// Context for suggestion generation
 #[derive(Debug, Clone)]
 pub struct SuggestionContext {
-    pub file_path: String,
-    pub symbol_name: Option<String>,
-    pub symbol_kind: Option<SymbolKind>,
+    pub file_path:       String,
+    pub symbol_name:     Option<String>,
+    pub symbol_kind:     Option<SymbolKind>,
     pub project_context: std::collections::HashMap<String, String>,
 }
 
@@ -36,18 +35,15 @@ struct SuggestionEngineWrapper {
 
 #[async_trait]
 impl SuggestionEngine for SuggestionEngineWrapper {
-    async fn get_suggestions(
-        &self,
-        context: &SuggestionContext,
-    ) -> Result<Vec<RefactoringSuggestion>, String> {
+    async fn get_suggestions(&self, context: &SuggestionContext) -> Result<Vec<RefactoringSuggestion>, String> {
         // Convert to refactoring context
         let refactoring_context = RefactoringContext {
-            file_path: context.file_path.clone(),
-            cursor_line: 0, // Default values
+            file_path:        context.file_path.clone(),
+            cursor_line:      0, // Default values
             cursor_character: 0,
-            selection: None,
-            symbol_name: context.symbol_name.clone(),
-            symbol_kind: context.symbol_kind.clone(),
+            selection:        None,
+            symbol_name:      context.symbol_name.clone(),
+            symbol_kind:      context.symbol_kind.clone(),
         };
 
         let suggestions = self
@@ -57,9 +53,9 @@ impl SuggestionEngine for SuggestionEngineWrapper {
         let suggestions = suggestions
             .into_iter()
             .map(|s| RefactoringSuggestion {
-                operation_type: s.refactoring_type.to_string(),
+                operation_type:   s.refactoring_type.to_string(),
                 confidence_score: s.confidence.overall_score,
-                description: s.reasoning,
+                description:      s.reasoning,
             })
             .collect();
 
@@ -80,29 +76,26 @@ impl AISuggestionEngine {
 
 #[async_trait]
 impl SuggestionEngine for AISuggestionEngine {
-    async fn get_suggestions(
-        &self,
-        context: &SuggestionContext,
-    ) -> Result<Vec<RefactoringSuggestion>, String> {
+    async fn get_suggestions(&self, context: &SuggestionContext) -> Result<Vec<RefactoringSuggestion>, String> {
         self.base_engine.get_suggestions(context).await
     }
 }
 
 /// Context-aware suggestion engine for intelligent refactoring recommendations
 pub struct SuggestionEngineImpl {
-    analyzer: RefactoringAnalyzer,
+    analyzer:          RefactoringAnalyzer,
     confidence_scorer: ConfidenceScorer,
-    suggestion_cache: HashMap<String, Vec<SmartSuggestion>>,
-    context_patterns: Vec<ContextPattern>,
+    suggestion_cache:  HashMap<String, Vec<SmartSuggestion>>,
+    context_patterns:  Vec<ContextPattern>,
 }
 
 impl SuggestionEngineImpl {
     pub fn new() -> Self {
         SuggestionEngineImpl {
-            analyzer: RefactoringAnalyzer::new(),
+            analyzer:          RefactoringAnalyzer::new(),
             confidence_scorer: ConfidenceScorer::new(),
-            suggestion_cache: HashMap::new(),
-            context_patterns: Self::create_default_patterns(),
+            suggestion_cache:  HashMap::new(),
+            context_patterns:  Self::create_default_patterns(),
         }
     }
 
@@ -168,8 +161,7 @@ impl SuggestionEngineImpl {
             .calculate_confidence(refactoring_type, context, &Some(analysis.clone()))
             .await;
 
-        let context_relevance =
-            self.calculate_context_relevance(refactoring_type, context, &analysis);
+        let context_relevance = self.calculate_context_relevance(refactoring_type, context, &analysis);
         let impact_assessment = self.assess_impact(refactoring_type, &analysis);
 
         // Only suggest if confidence is above threshold
@@ -251,11 +243,7 @@ impl SuggestionEngineImpl {
     }
 
     /// Assess impact of the refactoring
-    fn assess_impact(
-        &self,
-        _refactoring_type: &RefactoringType,
-        analysis: &RefactoringAnalysis,
-    ) -> ImpactAssessment {
+    fn assess_impact(&self, _refactoring_type: &RefactoringType, analysis: &RefactoringAnalysis) -> ImpactAssessment {
         let affected_files = analysis.affected_files.len();
         let breaking_changes = analysis.breaking_changes.len();
 
@@ -286,15 +274,11 @@ impl SuggestionEngineImpl {
             SuggestionPriority::High
         }
         // Medium confidence, medium risk = medium priority
-        else if confidence.overall_score >= 0.6
-            && matches!(impact.risk_level, RefactoringRisk::Medium)
-        {
+        else if confidence.overall_score >= 0.6 && matches!(impact.risk_level, RefactoringRisk::Medium) {
             SuggestionPriority::Medium
         }
         // High confidence, high risk = consider carefully
-        else if confidence.overall_score >= 0.7
-            && matches!(impact.risk_level, RefactoringRisk::High)
-        {
+        else if confidence.overall_score >= 0.7 && matches!(impact.risk_level, RefactoringRisk::High) {
             SuggestionPriority::Medium
         }
         // Low confidence or critical risk = low priority
@@ -416,8 +400,8 @@ impl SuggestionEngineImpl {
     fn create_default_patterns() -> Vec<ContextPattern> {
         vec![
             ContextPattern {
-                name: "LongFunction".to_string(),
-                conditions: vec![
+                name:                "LongFunction".to_string(),
+                conditions:          vec![
                     PatternCondition::SymbolKind(SymbolKind::Function),
                     PatternCondition::SelectionLongerThan(30),
                 ],
@@ -425,20 +409,20 @@ impl SuggestionEngineImpl {
                     RefactoringType::ExtractFunction,
                     RefactoringType::ExtractVariable,
                 ],
-                relevance_boost: 0.6,
+                relevance_boost:     0.6,
             },
             ContextPattern {
-                name: "MagicNumber".to_string(),
-                conditions: vec![
+                name:                "MagicNumber".to_string(),
+                conditions:          vec![
                     PatternCondition::SelectionShorterThan(10),
                     PatternCondition::SelectionNumeric,
                 ],
                 target_refactorings: vec![RefactoringType::ExtractVariable],
-                relevance_boost: 0.4,
+                relevance_boost:     0.4,
             },
             ContextPattern {
-                name: "ComplexExpression".to_string(),
-                conditions: vec![
+                name:                "ComplexExpression".to_string(),
+                conditions:          vec![
                     PatternCondition::SelectionLongerThan(20),
                     PatternCondition::SelectionComplex,
                 ],
@@ -446,7 +430,7 @@ impl SuggestionEngineImpl {
                     RefactoringType::ExtractVariable,
                     RefactoringType::ExtractFunction,
                 ],
-                relevance_boost: 0.5,
+                relevance_boost:     0.5,
             },
         ]
     }
@@ -460,57 +444,57 @@ impl SuggestionEngineImpl {
 /// Smart refactoring suggestion with context and reasoning
 #[derive(Debug, Clone)]
 pub struct SmartSuggestion {
-    pub refactoring_type: RefactoringType,
-    pub confidence: ConfidenceResult,
+    pub refactoring_type:  RefactoringType,
+    pub confidence:        ConfidenceResult,
     pub context_relevance: ContextRelevance,
     pub impact_assessment: ImpactAssessment,
-    pub priority: SuggestionPriority,
+    pub priority:          SuggestionPriority,
     pub suggested_context: RefactoringContext,
-    pub reasoning: String,
-    pub alternatives: Vec<RefactoringType>,
-    pub prerequisites: Vec<String>,
+    pub reasoning:         String,
+    pub alternatives:      Vec<RefactoringType>,
+    pub prerequisites:     Vec<String>,
 }
 
 /// Context relevance assessment
 #[derive(Debug, Clone)]
 pub struct ContextRelevance {
-    pub score: f64,
+    pub score:   f64,
     pub factors: Vec<String>,
 }
 
 /// Impact assessment
 #[derive(Debug, Clone)]
 pub struct ImpactAssessment {
-    pub risk_level: RefactoringRisk,
-    pub affected_files_count: usize,
+    pub risk_level:             RefactoringRisk,
+    pub affected_files_count:   usize,
     pub breaking_changes_count: usize,
-    pub estimated_effort: EffortEstimate,
+    pub estimated_effort:       EffortEstimate,
 }
 
 /// Suggestion priority
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SuggestionPriority {
-    Low = 1,
+    Low    = 1,
     Medium = 2,
-    High = 3,
+    High   = 3,
 }
 
 /// Effort estimate
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EffortEstimate {
-    Low = 1,
-    Medium = 2,
-    High = 3,
+    Low      = 1,
+    Medium   = 2,
+    High     = 3,
     VeryHigh = 4,
 }
 
 /// Context pattern for intelligent suggestions
 #[derive(Debug, Clone)]
 pub struct ContextPattern {
-    pub name: String,
-    pub conditions: Vec<PatternCondition>,
+    pub name:                String,
+    pub conditions:          Vec<PatternCondition>,
     pub target_refactorings: Vec<RefactoringType>,
-    pub relevance_boost: f64,
+    pub relevance_boost:     f64,
 }
 
 impl ContextPattern {

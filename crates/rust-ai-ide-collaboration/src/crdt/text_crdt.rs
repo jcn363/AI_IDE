@@ -7,26 +7,26 @@ use std::collections::HashMap;
 pub enum EditorOperation {
     Insert {
         position: usize,
-        content: String,
-        op_id: String,
+        content:  String,
+        op_id:    String,
     },
     Delete {
         position: usize,
-        length: usize,
-        op_id: String,
+        length:   usize,
+        op_id:    String,
     },
     Update {
-        position: usize,
+        position:    usize,
         old_content: String,
         new_content: String,
-        op_id: String,
+        op_id:       String,
     },
 }
 
 #[derive(Debug, Clone)]
 pub struct OperationResult {
-    pub success: bool,
-    pub new_content: String,
+    pub success:            bool,
+    pub new_content:        String,
     pub applied_operations: Vec<String>, // Operation IDs that were applied
 }
 
@@ -47,9 +47,9 @@ impl OperationResult {
 // CRDT-based text document
 #[derive(Debug, Clone)]
 pub struct TextDocument {
-    pub content: String,
-    pub operation_count: u64,
-    pub client_id: String,
+    pub content:            String,
+    pub operation_count:    u64,
+    pub client_id:          String,
     pub applied_operations: HashMap<String, EditorOperation>,
 }
 
@@ -104,14 +104,12 @@ impl TextDocument {
 
         if position <= self.content.len() {
             self.content.insert_str(position, &content);
-            self.applied_operations.insert(
-                op_id.clone(),
-                EditorOperation::Insert {
+            self.applied_operations
+                .insert(op_id.clone(), EditorOperation::Insert {
                     position,
                     content,
                     op_id,
-                },
-            );
+                });
 
             OperationResult::new(true, self.content.clone())
         } else {
@@ -127,14 +125,12 @@ impl TextDocument {
 
         if position <= self.content.len() && position + length <= self.content.len() {
             self.content.replace_range(position..position + length, "");
-            self.applied_operations.insert(
-                op_id.clone(),
-                EditorOperation::Delete {
+            self.applied_operations
+                .insert(op_id.clone(), EditorOperation::Delete {
                     position,
                     length,
                     op_id,
-                },
-            );
+                });
 
             OperationResult::new(true, self.content.clone())
         } else {
@@ -159,15 +155,13 @@ impl TextDocument {
             if self.content[position..position + old_content.len()] == old_content {
                 self.content
                     .replace_range(position..position + old_content.len(), &new_content);
-                self.applied_operations.insert(
-                    op_id.clone(),
-                    EditorOperation::Update {
+                self.applied_operations
+                    .insert(op_id.clone(), EditorOperation::Update {
                         position,
                         old_content,
                         new_content,
                         op_id,
-                    },
-                );
+                    });
 
                 OperationResult::new(true, self.content.clone())
             } else {
@@ -202,8 +196,8 @@ mod tests {
         // Test insert operation
         let insert_op = EditorOperation::Insert {
             position: 5,
-            content: " Beautiful".to_string(),
-            op_id: "op1".to_string(),
+            content:  " Beautiful".to_string(),
+            op_id:    "op1".to_string(),
         };
 
         let result = doc.apply_operation(insert_op);
@@ -219,8 +213,8 @@ mod tests {
 
         let op = EditorOperation::Insert {
             position: 0,
-            content: "test".to_string(),
-            op_id: "dup".to_string(),
+            content:  "test".to_string(),
+            op_id:    "dup".to_string(),
         };
 
         // First application should succeed
@@ -239,8 +233,8 @@ mod tests {
         // Try to insert beyond document length
         let invalid_insert = EditorOperation::Insert {
             position: 10,
-            content: "invalid".to_string(),
-            op_id: "invalid1".to_string(),
+            content:  "invalid".to_string(),
+            op_id:    "invalid1".to_string(),
         };
 
         let result = doc.apply_operation(invalid_insert);

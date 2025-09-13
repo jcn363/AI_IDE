@@ -27,7 +27,7 @@
 //! ## Usage
 //!
 //! ```rust,no_run
-//! use rust_ai_ide_observability::{ObservabilityManager, ObservabilityConfig};
+//! use rust_ai_ide_observability::{ObservabilityConfig, ObservabilityManager};
 //!
 //! // Initialize observability with default configuration
 //! let config = ObservabilityConfig::default();
@@ -57,10 +57,9 @@ pub use config::ObservabilityConfig;
 pub use errors::{ObservabilityError, Result};
 pub use manager::ObservabilityManager;
 pub use metrics::{MetricsRecorder, PerformanceMetrics, SystemMetrics};
-pub use tracing::Tracer;
-
 // Re-export commonly used types
 pub use serde::{Deserialize, Serialize};
+pub use tracing::Tracer;
 
 /// Version information
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

@@ -152,8 +152,7 @@ pub use architectural_advisor::*;
 // Re-export inference modules from separate crate
 pub mod inference {
     pub use rust_ai_ide_ai_inference::inference::*;
-    pub use rust_ai_ide_ai_inference::loaders;
-    pub use rust_ai_ide_ai_inference::model_loader;
+    pub use rust_ai_ide_ai_inference::{loaders, model_loader};
 }
 
 // Re-export learning functionality from separate crate
@@ -202,11 +201,10 @@ pub use architectural_advisor::types::{
     QualityScenario,
     RiskAssessment,
 };
-
 // Re-export inference types from the inference crate
 pub use rust_ai_ide_ai_inference::{
-    AIAnalysisConfig, AIProvider, AIService, AnalysisIssue, CodeAnalysisResult, ModelDevice,
-    ModelHandle, ModelInfo, ModelLoadConfig, ModelSize, Quantization,
+    AIAnalysisConfig, AIProvider, AIService, AnalysisIssue, CodeAnalysisResult, ModelDevice, ModelHandle, ModelInfo,
+    ModelLoadConfig, ModelSize, Quantization,
 };
 
 // Re-export code generation functionality from the codegen crate

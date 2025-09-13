@@ -1,12 +1,14 @@
 //! Core types and traits for the DSL code generation system
 
-use crate::ast::*;
-use crate::error::DslResult;
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use rust_ai_ide_cache::Cache;
 use rust_ai_ide_common::{GeneratedTest, ProgrammingLanguage};
 use rust_ai_ide_lsp::diagnostics::AIAnalysisResult;
-use std::collections::HashMap;
+
+use crate::ast::*;
+use crate::error::DslResult;
 
 /// Core trait for DSL templates - executable code generation units
 #[async_trait]
@@ -24,10 +26,7 @@ pub trait DslTemplate: Send + Sync + 'static {
     fn parameters(&self) -> &[Parameter];
 
     /// Validate template parameters before execution
-    async fn validate_parameters(
-        &self,
-        params: &HashMap<String, serde_json::Value>,
-    ) -> DslResult<()>;
+    async fn validate_parameters(&self, params: &HashMap<String, serde_json::Value>) -> DslResult<()>;
 
     /// Execute the template with given parameters and context
     async fn execute(
@@ -41,15 +40,15 @@ pub trait DslTemplate: Send + Sync + 'static {
 #[derive(Clone)]
 pub struct GenerationContext {
     /// Target programming language
-    pub language: ProgrammingLanguage,
+    pub language:       ProgrammingLanguage,
     /// Generation configuration
-    pub config: GenerationConfig,
+    pub config:         GenerationConfig,
     /// Current workspace information
     pub workspace_root: std::path::PathBuf,
     /// AI analysis results (for context-aware generation)
-    pub ai_analysis: Option<AIAnalysisResult>,
+    pub ai_analysis:    Option<AIAnalysisResult>,
     /// Cache for template results
-    pub cache: Option<std::sync::Arc<dyn Cache<String, serde_json::Value>>>,
+    pub cache:          Option<std::sync::Arc<dyn Cache<String, serde_json::Value>>>,
 }
 
 /// Configuration for code generation
@@ -58,23 +57,23 @@ pub struct GenerationConfig {
     /// Enable security validation
     pub security_validation: bool,
     /// Enable AI-enhanced suggestions
-    pub ai_suggestions: bool,
+    pub ai_suggestions:      bool,
     /// Generate tests alongside code
-    pub generate_tests: bool,
+    pub generate_tests:      bool,
     /// Validation level (strict, relaxed, none)
-    pub validation_level: ValidationLevel,
+    pub validation_level:    ValidationLevel,
     /// Custom generation settings
-    pub custom_settings: HashMap<String, serde_json::Value>,
+    pub custom_settings:     HashMap<String, serde_json::Value>,
 }
 
 impl Default for GenerationConfig {
     fn default() -> Self {
         Self {
             security_validation: true,
-            ai_suggestions: true,
-            generate_tests: false,
-            validation_level: ValidationLevel::Strict,
-            custom_settings: HashMap::new(),
+            ai_suggestions:      true,
+            generate_tests:      false,
+            validation_level:    ValidationLevel::Strict,
+            custom_settings:     HashMap::new(),
         }
     }
 }
@@ -94,13 +93,13 @@ pub enum ValidationLevel {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct GeneratedCode {
     /// The generated code content
-    pub code: String,
+    pub code:     String,
     /// Language-specific information
     pub language: ProgrammingLanguage,
     /// Generated imports/dependencies
-    pub imports: Vec<String>,
+    pub imports:  Vec<String>,
     /// Generated tests (if requested)
-    pub tests: Vec<GeneratedTest>,
+    pub tests:    Vec<GeneratedTest>,
     /// Validation warnings
     pub warnings: Vec<String>,
     /// Generation metadata
@@ -161,38 +160,38 @@ pub trait DslEngine: Send + Sync + 'static {
 #[derive(Debug, Clone)]
 pub struct TemplateInfo {
     /// Template name
-    pub name: String,
+    pub name:                String,
     /// Description
-    pub description: Option<String>,
+    pub description:         Option<String>,
     /// Supported languages
     pub supported_languages: Vec<ProgrammingLanguage>,
     /// Required parameters
-    pub parameters: Vec<Parameter>,
+    pub parameters:          Vec<Parameter>,
     /// Associated patterns
-    pub patterns: Vec<String>,
+    pub patterns:            Vec<String>,
     /// Version information
-    pub version: Option<String>,
+    pub version:             Option<String>,
 }
 
 /// Builder pattern for creating DSL templates
 pub struct DslTemplateBuilder {
-    name: String,
-    description: Option<String>,
-    parameters: Vec<Parameter>,
-    guards: Vec<Guard>,
+    name:           String,
+    description:    Option<String>,
+    parameters:     Vec<Parameter>,
+    guards:         Vec<Guard>,
     generate_block: GenerateBlock,
-    patterns: Vec<String>,
+    patterns:       Vec<String>,
 }
 
 impl DslTemplateBuilder {
     pub fn new(name: impl Into<String>) -> Self {
         Self {
-            name: name.into(),
-            description: None,
-            parameters: Vec::new(),
-            guards: Vec::new(),
+            name:           name.into(),
+            description:    None,
+            parameters:     Vec::new(),
+            guards:         Vec::new(),
             generate_block: GenerateBlock::default(),
-            patterns: Vec::new(),
+            patterns:       Vec::new(),
         }
     }
 
@@ -223,14 +222,14 @@ impl DslTemplateBuilder {
 
     pub fn build(self) -> Template {
         Template {
-            name: self.name,
+            name:        self.name,
             description: self.description,
-            parameters: self.parameters,
-            guards: self.guards,
-            generate: self.generate_block,
-            patterns: self.patterns,
-            metadata: Vec::new(),
-            location: None,
+            parameters:  self.parameters,
+            guards:      self.guards,
+            generate:    self.generate_block,
+            patterns:    self.patterns,
+            metadata:    Vec::new(),
+            location:    None,
         }
     }
 }
@@ -238,11 +237,11 @@ impl DslTemplateBuilder {
 impl Default for GenerationContext {
     fn default() -> Self {
         Self {
-            language: ProgrammingLanguage::Rust,
-            config: GenerationConfig::default(),
+            language:       ProgrammingLanguage::Rust,
+            config:         GenerationConfig::default(),
             workspace_root: std::env::current_dir().unwrap_or_default(),
-            ai_analysis: None,
-            cache: None,
+            ai_analysis:    None,
+            cache:          None,
         }
     }
 }
@@ -287,7 +286,7 @@ impl ToCommonType for ProgrammingLanguage {
             ProgrammingLanguage::Cpp => LanguageServerKind::JavaScript,  // placeholder
             ProgrammingLanguage::C => LanguageServerKind::JavaScript,    // placeholder
             ProgrammingLanguage::Unknown => LanguageServerKind::Python,  // placeholder
-            _ => LanguageServerKind::Python, // handle any future variants
+            _ => LanguageServerKind::Python,                             // handle any future variants
         }
     }
 }

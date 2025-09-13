@@ -3,21 +3,23 @@
 //! This module provides automated detection of performance regressions
 //! using statistical analysis and trend detection algorithms.
 
-use crate::PerformanceAlert as LocalPerformanceAlert;
+use std::collections::{HashMap, VecDeque};
+
 use chrono::{DateTime, TimeZone, Utc};
 use rust_ai_ide_shared_types::PerformanceMetrics;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+
+use crate::PerformanceAlert as LocalPerformanceAlert;
 
 /// Configuration for regression detection
 #[derive(Debug, Clone)]
 pub struct RegressionConfig {
     /// Number of baseline data points to maintain
-    pub baseline_window_size: usize,
+    pub baseline_window_size:  usize,
     /// Threshold for detecting regression (percentage)
-    pub regression_threshold: f64,
+    pub regression_threshold:  f64,
     /// Minimum confidence required for regression alert
-    pub minimum_confidence: f64,
+    pub minimum_confidence:    f64,
     /// Enable trend analysis
     pub enable_trend_analysis: bool,
 }
@@ -25,9 +27,9 @@ pub struct RegressionConfig {
 impl Default for RegressionConfig {
     fn default() -> Self {
         Self {
-            baseline_window_size: 10,
-            regression_threshold: 0.1, // 10% degradation
-            minimum_confidence: 0.8,   // 80% confidence
+            baseline_window_size:  10,
+            regression_threshold:  0.1, // 10% degradation
+            minimum_confidence:    0.8, // 80% confidence
             enable_trend_analysis: true,
         }
     }
@@ -35,20 +37,20 @@ impl Default for RegressionConfig {
 
 /// Performance regression detector
 pub struct RegressionDetector {
-    config: RegressionConfig,
+    config:           RegressionConfig,
     baseline_metrics: VecDeque<PerformanceMetrics>,
     /// Statistical baseline for each metric type
-    baselines: HashMap<String, MetricBaseline>,
+    baselines:        HashMap<String, MetricBaseline>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct MetricBaseline {
     /// Mean value for this metric
-    mean: f64,
+    mean:              f64,
     /// Standard deviation
-    std_dev: f64,
+    std_dev:           f64,
     /// Number of samples used to calculate baseline
-    sample_count: usize,
+    sample_count:      usize,
     /// Trend direction (positive for improvement, negative for regression)
     trend_coefficient: f64,
 }
@@ -112,11 +114,11 @@ impl RegressionDetector {
                 if self.is_regression(base_cpu, current_cpu) {
                     let degradation = (current_cpu - base_cpu) / base_cpu;
                     alerts.push(LocalPerformanceAlert::RegressionDetected {
-                        metric_name: "cpu_usage_percent".to_string(),
-                        baseline_value: base_cpu,
-                        current_value: current_cpu,
+                        metric_name:         "cpu_usage_percent".to_string(),
+                        baseline_value:      base_cpu,
+                        current_value:       current_cpu,
                         degradation_percent: degradation,
-                        timestamp: Utc.timestamp_millis_opt(current.timestamp as i64).unwrap(),
+                        timestamp:           Utc.timestamp_millis_opt(current.timestamp as i64).unwrap(),
                     });
                 }
             }
@@ -126,14 +128,13 @@ impl RegressionDetector {
         if let Some(base_response) = baseline_avg.timing.response_time_ns {
             if let Some(current_response) = current.timing.response_time_ns {
                 if self.is_regression_response_time(base_response, current_response) {
-                    let degradation =
-                        (current_response as f64 - base_response as f64) / base_response as f64;
+                    let degradation = (current_response as f64 - base_response as f64) / base_response as f64;
                     alerts.push(LocalPerformanceAlert::RegressionDetected {
-                        metric_name: "response_time_ns".to_string(),
-                        baseline_value: base_response as f64,
-                        current_value: current_response as f64,
+                        metric_name:         "response_time_ns".to_string(),
+                        baseline_value:      base_response as f64,
+                        current_value:       current_response as f64,
                         degradation_percent: degradation,
-                        timestamp: Utc.timestamp_millis_opt(current.timestamp as i64).unwrap(),
+                        timestamp:           Utc.timestamp_millis_opt(current.timestamp as i64).unwrap(),
                     });
                 }
             }
@@ -143,13 +144,12 @@ impl RegressionDetector {
         if let Some(base_memory) = baseline_avg.resources.memory_bytes {
             if let Some(current_memory) = current.resources.memory_bytes {
                 if self.is_regression_memory(base_memory, current_memory) {
-                    let degradation =
-                        (current_memory as f64 - base_memory as f64) / base_memory as f64;
+                    let degradation = (current_memory as f64 - base_memory as f64) / base_memory as f64;
                     alerts.push(LocalPerformanceAlert::ThresholdExceeded {
-                        metric_name: "memory_bytes".to_string(),
+                        metric_name:   "memory_bytes".to_string(),
                         current_value: current_memory as f64,
-                        threshold: base_memory as f64,
-                        timestamp: Utc.timestamp_millis_opt(current.timestamp as i64).unwrap(),
+                        threshold:     base_memory as f64,
+                        timestamp:     Utc.timestamp_millis_opt(current.timestamp as i64).unwrap(),
                     });
                 }
             }
@@ -174,12 +174,10 @@ impl RegressionDetector {
         for metrics in &self.baseline_metrics {
             // Sum up the metrics
             if let Some(cpu) = metrics.rates.cpu_usage_percent {
-                sum.rates.cpu_usage_percent =
-                    Some(sum.rates.cpu_usage_percent.unwrap_or(0.0) + cpu);
+                sum.rates.cpu_usage_percent = Some(sum.rates.cpu_usage_percent.unwrap_or(0.0) + cpu);
             }
             if let Some(response) = metrics.timing.response_time_ns {
-                sum.timing.response_time_ns =
-                    Some(sum.timing.response_time_ns.unwrap_or(0) + response);
+                sum.timing.response_time_ns = Some(sum.timing.response_time_ns.unwrap_or(0) + response);
             }
             if let Some(memory) = metrics.resources.memory_bytes {
                 sum.resources.memory_bytes = Some(sum.resources.memory_bytes.unwrap_or(0) + memory);
@@ -262,15 +260,13 @@ impl RegressionDetector {
             let (mean, std_dev) = self.calculate_mean_and_std(&cpu_values);
             let trend = self.calculate_trend_coefficient(&cpu_values);
 
-            self.baselines.insert(
-                "cpu_usage".to_string(),
-                MetricBaseline {
+            self.baselines
+                .insert("cpu_usage".to_string(), MetricBaseline {
                     mean,
                     std_dev,
                     sample_count: cpu_values.len(),
                     trend_coefficient: trend,
-                },
-            );
+                });
         }
     }
 
@@ -286,15 +282,13 @@ impl RegressionDetector {
             let (mean, std_dev) = self.calculate_mean_and_std(&rt_values);
             let trend = self.calculate_trend_coefficient(&rt_values);
 
-            self.baselines.insert(
-                "response_time".to_string(),
-                MetricBaseline {
+            self.baselines
+                .insert("response_time".to_string(), MetricBaseline {
                     mean,
                     std_dev,
                     sample_count: rt_values.len(),
                     trend_coefficient: trend,
-                },
-            );
+                });
         }
     }
 
@@ -310,15 +304,13 @@ impl RegressionDetector {
             let (mean, std_dev) = self.calculate_mean_and_std(&mem_values);
             let trend = self.calculate_trend_coefficient(&mem_values);
 
-            self.baselines.insert(
-                "memory_usage".to_string(),
-                MetricBaseline {
+            self.baselines
+                .insert("memory_usage".to_string(), MetricBaseline {
                     mean,
                     std_dev,
                     sample_count: mem_values.len(),
                     trend_coefficient: trend,
-                },
-            );
+                });
         }
     }
 
@@ -327,8 +319,7 @@ impl RegressionDetector {
         let sum: f64 = values.iter().sum();
         let mean = sum / values.len() as f64;
 
-        let variance =
-            values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / (values.len() - 1) as f64;
+        let variance = values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / (values.len() - 1) as f64;
         let std_dev = variance.sqrt();
 
         (mean, std_dev)
@@ -423,8 +414,9 @@ impl PerformanceStatistics {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_ai_ide_shared_types::PerformanceMetrics;
+
+    use super::*;
 
     #[test]
     fn test_regression_detection_cpu_usage() {

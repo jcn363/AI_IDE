@@ -1,10 +1,10 @@
-use rust_ai_ide_ai::spec_generation::{
-    generator::CodeGenerator,
-    parser::SpecificationParser,
-    system::IntelligentSpecGenerator,
-    types::{Entity, EntityType, Field, FunctionSpec, ParsedSpecification, SpecificationRequest},
-    validation::CodeValidator,
+use rust_ai_ide_ai::spec_generation::generator::CodeGenerator;
+use rust_ai_ide_ai::spec_generation::parser::SpecificationParser;
+use rust_ai_ide_ai::spec_generation::system::IntelligentSpecGenerator;
+use rust_ai_ide_ai::spec_generation::types::{
+    Entity, EntityType, Field, FunctionSpec, ParsedSpecification, SpecificationRequest,
 };
+use rust_ai_ide_ai::spec_generation::validation::CodeValidator;
 
 #[tokio::test]
 async fn test_spec_generation_workflow() {
@@ -63,8 +63,8 @@ async fn test_spec_generation_workflow() {
     let system = IntelligentSpecGenerator::new();
     let request = SpecificationRequest {
         description: spec_text.to_string(),
-        language: "rust".to_string(),
-        context: None,
+        language:    "rust".to_string(),
+        context:     None,
     };
 
     let result = system.generate_from_spec(&request).await;

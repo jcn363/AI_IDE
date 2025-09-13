@@ -9,31 +9,28 @@
 //! 4. **Real-Time Adaptation** - Live performance monitoring and adjustment
 //! 5. **Performance Analytics** - Comprehensive insights and reporting
 
-use chrono::{DateTime, Utc};
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
+use chrono::{DateTime, Utc};
 pub use rust_ai_ide_ai_sql_lsp::*;
+use tokio::sync::RwLock;
 
 /// Demo query scenarios with different complexity levels
 const DEMO_QUERIES: &[&str] = &[
     // Simple SELECT
     "SELECT * FROM users",
-
     // Complex JOIN
     "SELECT u.name, p.title FROM users u LEFT JOIN posts p ON u.id = p.user_id WHERE u.active = true",
-
     // Aggregate query
     "SELECT COUNT(*) as total_users, AVG(age) as avg_age FROM users GROUP BY department",
-
     // Subquery pattern
     "SELECT * FROM users WHERE id IN (SELECT user_id FROM active_sessions)",
-
     // Complex CTE with window functions
-    "WITH ranked_users AS (SELECT name, score, ROW_NUMBER() OVER (ORDER BY score DESC) as rank FROM users) SELECT * FROM ranked_users WHERE rank <= 10",
-
+    "WITH ranked_users AS (SELECT name, score, ROW_NUMBER() OVER (ORDER BY score DESC) as rank FROM users) SELECT * \
+     FROM ranked_users WHERE rank <= 10",
     // DISTINCT query with multiple conditions
-    "SELECT DISTINCT category, COUNT(*) FROM products WHERE price > 100 AND availability = true GROUP BY category HAVING COUNT(*) > 5",
+    "SELECT DISTINCT category, COUNT(*) FROM products WHERE price > 100 AND availability = true GROUP BY category \
+     HAVING COUNT(*) > 5",
 ];
 
 /// Sample complex database schema for context awareness
@@ -46,12 +43,12 @@ const DEMO_SCHEMA: &[&str] = &[
 
 #[derive(Debug, Clone)]
 struct DemoMetrics {
-    pub total_queries_processed: usize,
-    pub ai_suggestions_generated: usize,
+    pub total_queries_processed:           usize,
+    pub ai_suggestions_generated:          usize,
     pub performance_improvements_detected: usize,
-    pub total_analysis_time_ms: u64,
-    pub average_prediction_accuracy: f32,
-    pub cache_hit_rate_improvement: f32,
+    pub total_analysis_time_ms:            u64,
+    pub average_prediction_accuracy:       f32,
+    pub cache_hit_rate_improvement:        f32,
 }
 
 #[tokio::main]
@@ -64,12 +61,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("✅ AI-enhanced SQL LSP server initialized\n");
 
     let mut demo_metrics = DemoMetrics {
-        total_queries_processed: 0,
-        ai_suggestions_generated: 0,
+        total_queries_processed:           0,
+        ai_suggestions_generated:          0,
         performance_improvements_detected: 0,
-        total_analysis_time_ms: 0,
-        average_prediction_accuracy: 0.0,
-        cache_hit_rate_improvement: 0.0,
+        total_analysis_time_ms:            0,
+        average_prediction_accuracy:       0.0,
+        cache_hit_rate_improvement:        0.0,
     };
 
     // Demonstrate Pattern Recognition
@@ -517,12 +514,7 @@ pub mod utils {
     use super::*;
 
     /// Format performance metrics for display
-    pub fn format_performance_metric(
-        name: &str,
-        value: f64,
-        unit: &str,
-        improvement: Option<f32>,
-    ) -> String {
+    pub fn format_performance_metric(name: &str, value: f64, unit: &str, improvement: Option<f32>) -> String {
         let base = format!("{}: {:.2}{}", name, value, unit);
         if let Some(imp) = improvement {
             format!("{} (↑{:.1}%)", base, imp)
@@ -532,11 +524,7 @@ pub mod utils {
     }
 
     /// Calculate ROI for AI enhancements
-    pub fn calculate_ai_roi(
-        current_costs: f64,
-        optimized_costs: f64,
-        improvement_factor: f32,
-    ) -> f64 {
+    pub fn calculate_ai_roi(current_costs: f64, optimized_costs: f64, improvement_factor: f32) -> f64 {
         let savings = current_costs - optimized_costs;
         let yearly_benefit = savings * 365.0 * improvement_factor as f64;
 

@@ -3,9 +3,11 @@
 //! This module provides core functionality for workspace management,
 //! project initialization, and basic IDE operations.
 
-use crate::errors::IDEServiceError;
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+use crate::errors::IDEServiceError;
 
 /// Core service for IDE operations
 pub struct CoreService;
@@ -14,7 +16,7 @@ pub struct CoreService;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkspaceConfig {
     pub root_path: PathBuf,
-    pub name: String,
+    pub name:      String,
 }
 
 impl CoreService {

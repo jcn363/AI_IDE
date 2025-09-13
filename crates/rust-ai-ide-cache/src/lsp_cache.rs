@@ -3,32 +3,34 @@
 //! This module provides LSP-oriented cache implementations using the unified
 //! cache infrastructure, with optimizations for LSP analysis patterns.
 
-use crate::{key_utils, Cache, CacheConfig, CacheStats, IDEResult, InMemoryCache, LspCacheExt};
-use async_trait::async_trait;
-use serde_json::Value as JsonValue;
 use std::path::PathBuf;
 use std::time::Duration;
+
+use async_trait::async_trait;
+use serde_json::Value as JsonValue;
+
+use crate::{key_utils, Cache, CacheConfig, CacheStats, IDEResult, InMemoryCache, LspCacheExt};
 
 /// LSP-specific cache configuration
 #[derive(Debug, Clone)]
 pub struct LspCacheConfig {
-    pub base_config: CacheConfig,
-    pub enable_file_validation: bool,
+    pub base_config:                CacheConfig,
+    pub enable_file_validation:     bool,
     pub max_file_cache_age_seconds: u64,
-    pub analysis_ttl_seconds: u64,
+    pub analysis_ttl_seconds:       u64,
 }
 
 impl Default for LspCacheConfig {
     fn default() -> Self {
         Self {
-            base_config: CacheConfig {
+            base_config:                CacheConfig {
                 max_entries: Some(5000),                      // Higher limit for LSP analysis
                 default_ttl: Some(Duration::from_secs(1800)), // 30 minutes
                 ..Default::default()
             },
-            enable_file_validation: true,
+            enable_file_validation:     true,
             max_file_cache_age_seconds: 3600, // 1 hour
-            analysis_ttl_seconds: 1800,       // 30 minutes
+            analysis_ttl_seconds:       1800, // 30 minutes
         }
     }
 }
@@ -36,7 +38,7 @@ impl Default for LspCacheConfig {
 /// LSP-optimized cache implementation
 pub struct LspAnalysisCache {
     pub cache: InMemoryCache<String, JsonValue>,
-    config: LspCacheConfig,
+    config:    LspCacheConfig,
 }
 
 impl LspAnalysisCache {
@@ -106,7 +108,8 @@ impl LspAnalysisCache {
         if let Ok(Some(cached_result)) = self.cache.get(&key).await {
             // For LSP results, we trust the TTL and hash validation from the unified system
             // Additional file content validation can be added here if needed
-            !self.cache.stats().await.hit_ratio.is_nan() // Hack: use stats to determine if we have valid data
+            !self.cache.stats().await.hit_ratio.is_nan() // Hack: use stats to determine if we have
+                                                         // valid data
         } else {
             false
         }
@@ -163,8 +166,9 @@ impl Cache<String, JsonValue> for LspAnalysisCache {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_lsp_analysis_cache_basic() {

@@ -3,17 +3,18 @@
 //! This module orchestrates the processing of multiple modalities combining
 //! vision, audio, and text analysis with intelligent fusion.
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use crate::audio::AudioProcessor;
 use crate::errors::{MultimodalError, ProcessingError};
 use crate::types::*;
 use crate::vision::VisionProcessor;
-use std::collections::HashMap;
-use std::sync::Arc;
 
 /// Multi-modal analyzer that combines different modality processors
 pub struct MultiModalAnalyzer {
     vision_processor: Arc<VisionProcessor>,
-    audio_processor: Arc<AudioProcessor>,
+    audio_processor:  Arc<AudioProcessor>,
     // TODO: Text processor when available
 }
 
@@ -34,10 +35,7 @@ impl MultiModalAnalyzer {
     /// Process an analysis request combining multiple modalities
     /// # Errors
     /// Returns an error if multi-modal processing fails
-    pub async fn analyze(
-        &self,
-        request: AnalysisRequest,
-    ) -> Result<AnalysisResponse, MultimodalError> {
+    pub async fn analyze(&self, request: AnalysisRequest) -> Result<AnalysisResponse, MultimodalError> {
         let timestamp = chrono::Utc::now();
         let mut modality_results = HashMap::new();
 
@@ -61,9 +59,7 @@ impl MultiModalAnalyzer {
                 ModalityType::Audio => {
                     let audio_clone = Arc::clone(&self.audio_processor);
                     let request_clone = request.clone();
-                    tokio::spawn(async move {
-                        audio_clone.recognize_voice_command(&request_clone).await
-                    })
+                    tokio::spawn(async move { audio_clone.recognize_voice_command(&request_clone).await })
                 }
                 _ => {
                     // TODO: Handle other modalities

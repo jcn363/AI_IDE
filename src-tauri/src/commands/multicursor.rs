@@ -3,12 +3,13 @@
 //! This module provides comprehensive multi-cursor functionality for the IDE,
 //! including cursor management, find and match operations, and Monaco Editor integration.
 
+use std::fmt;
+use std::sync::Arc;
+
 use lazy_static::lazy_static;
 use rust_ai_ide_core::security::{audit_action, audit_logger};
 use rust_ai_ide_core::validation::validate_secure_path;
 use serde::{Deserialize, Serialize};
-use std::fmt;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::command_templates::*;
@@ -16,46 +17,46 @@ use crate::command_templates::*;
 /// Cursor position structure for Monaco Editor
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CursorPosition {
-    pub line: u32,
+    pub line:   u32,
     pub column: u32,
 }
 
 /// Multi-cursor state for a document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MultiCursorState {
-    pub primary_cursor: CursorPosition,
+    pub primary_cursor:    CursorPosition,
     pub secondary_cursors: Vec<CursorPosition>,
-    pub document_version: Option<String>,
-    pub last_updated: u64,
+    pub document_version:  Option<String>,
+    pub last_updated:      u64,
 }
 
 /// Find and match operation configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FindMatchConfig {
-    pub query: String,
+    pub query:          String,
     pub case_sensitive: bool,
-    pub whole_word: bool,
-    pub regex: bool,
+    pub whole_word:     bool,
+    pub regex:          bool,
 }
 
 /// Word boundary position
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WordBoundary {
     pub start: CursorPosition,
-    pub end: CursorPosition,
+    pub end:   CursorPosition,
 }
 
 /// Multi-cursor manager service
 #[derive(Debug)]
 pub struct MultiCursorManager {
-    active_cursors: Arc<Mutex<Vec<MultiCursorState>>>,
+    active_cursors:  Arc<Mutex<Vec<MultiCursorState>>>,
     document_states: Arc<Mutex<std::collections::HashMap<String, MultiCursorState>>>,
 }
 
 impl MultiCursorManager {
     pub fn new() -> Self {
         Self {
-            active_cursors: Arc::new(Mutex::new(Vec::new())),
+            active_cursors:  Arc::new(Mutex::new(Vec::new())),
             document_states: Arc::new(Mutex::new(std::collections::HashMap::new())),
         }
     }
@@ -71,10 +72,10 @@ impl MultiCursorManager {
         let state = states
             .entry(document_uri.to_string())
             .or_insert_with(|| MultiCursorState {
-                primary_cursor: position.clone(),
+                primary_cursor:    position.clone(),
                 secondary_cursors: Vec::new(),
-                document_version: None,
-                last_updated: std::time::SystemTime::now()
+                document_version:  None,
+                last_updated:      std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap_or_default()
                     .as_secs(),
@@ -96,11 +97,7 @@ impl MultiCursorManager {
         Ok(())
     }
 
-    pub async fn remove_cursor_at_position(
-        &self,
-        document_uri: &str,
-        position: CursorPosition,
-    ) -> Result<(), String> {
+    pub async fn remove_cursor_at_position(&self, document_uri: &str, position: CursorPosition) -> Result<(), String> {
         let mut states = self.document_states.lock().await;
 
         if let Some(state) = states.get_mut(document_uri) {
@@ -137,13 +134,16 @@ impl MultiCursorManager {
         // This would integrate with Monaco's find functionality
         // For now, return placeholder positions
         Ok(vec![
-            CursorPosition { line: 1, column: 5 },
             CursorPosition {
-                line: 3,
+                line:   1,
+                column: 5,
+            },
+            CursorPosition {
+                line:   3,
                 column: 10,
             },
             CursorPosition {
-                line: 7,
+                line:   7,
                 column: 15,
             },
         ])
@@ -157,11 +157,11 @@ impl MultiCursorManager {
         // Placeholder implementation - would analyze text around position
         Ok(WordBoundary {
             start: CursorPosition {
-                line: position.line,
+                line:   position.line,
                 column: position.column.saturating_sub(3),
             },
-            end: CursorPosition {
-                line: position.line,
+            end:   CursorPosition {
+                line:   position.line,
                 column: position.column + 3,
             },
         })
@@ -189,11 +189,7 @@ impl MultiCursorManager {
         states.get(document_uri).cloned()
     }
 
-    pub async fn update_document_version(
-        &self,
-        document_uri: &str,
-        version: &str,
-    ) -> Result<(), String> {
+    pub async fn update_document_version(&self, document_uri: &str, version: &str) -> Result<(), String> {
         let mut states = self.document_states.lock().await;
 
         if let Some(state) = states.get_mut(document_uri) {

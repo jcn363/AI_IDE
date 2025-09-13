@@ -4,33 +4,35 @@
 //! including semantic code understanding, architecture recommendations, and
 //! advanced pattern detection.
 
+use std::sync::Arc;
+
+use tokio::sync::Mutex;
+
 use crate::command_templates::{execute_command, CommandConfig};
 use crate::commands::types::*;
 use crate::state::AppState;
 use crate::validation;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 
 /// Global configuration for analysis commands
 static ANALYSIS_CONFIG: std::sync::OnceLock<CommandConfig> = std::sync::OnceLock::new();
 
 /// AI analysis service wrapper
 pub struct AIAnalysisService {
-    context_analyzer: SemanticContextAnalyzer,
+    context_analyzer:     SemanticContextAnalyzer,
     architecture_advisor: ArchitectureAdvisor,
-    pattern_detector: AdvancedPatternDetector,
+    pattern_detector:     AdvancedPatternDetector,
     performance_analyzer: PerformanceAnalyzer,
-    security_scanner: SecurityScanner,
+    security_scanner:     SecurityScanner,
 }
 
 impl AIAnalysisService {
     pub fn new() -> Self {
         Self {
-            context_analyzer: SemanticContextAnalyzer::new(),
+            context_analyzer:     SemanticContextAnalyzer::new(),
             architecture_advisor: ArchitectureAdvisor::new(),
-            pattern_detector: AdvancedPatternDetector::new(),
+            pattern_detector:     AdvancedPatternDetector::new(),
             performance_analyzer: PerformanceAnalyzer::new(),
-            security_scanner: SecurityScanner::new(),
+            security_scanner:     SecurityScanner::new(),
         }
     }
 }
@@ -78,8 +80,7 @@ pub async fn analyze_file(
     request: AnalyzeFileRequest,
     app_state: tauri::State<'_, Arc<Mutex<AppState>>>,
 ) -> Result<AnalyzeFileResponse, String> {
-    validation::validate_secure_path(&request.file_path, false)
-        .map_err(|e| format!("Invalid file path: {}", e))?;
+    validation::validate_secure_path(&request.file_path, false).map_err(|e| format!("Invalid file path: {}", e))?;
 
     let config = get_analysis_config();
 
@@ -210,9 +211,9 @@ async fn perform_semantic_analysis(
     let analyzer = SemanticContextAnalyzer::new();
 
     Ok(SemanticAnalysis {
-        complexity: analyzer.analyze_complexity(file_content).await?,
-        dependencies: analyzer.extract_dependencies(file_content).await?,
-        patterns: analyzer.detect_patterns(file_content).await?,
+        complexity:        analyzer.analyze_complexity(file_content).await?,
+        dependencies:      analyzer.extract_dependencies(file_content).await?,
+        patterns:          analyzer.detect_patterns(file_content).await?,
         context_awareness: analyzer.evaluate_context(file_content).await?,
     })
 }
@@ -221,10 +222,10 @@ async fn analyze_architecture(file_content: &str) -> Result<ArchitectureRecommen
     let advisor = ArchitectureAdvisor::new();
 
     Ok(ArchitectureRecommendations {
-        suggestions: advisor.analyze_patterns(file_content).await?,
+        suggestions:      advisor.analyze_patterns(file_content).await?,
         confidence_score: advisor.calculate_confidence(file_content).await?,
-        rationale: advisor.provide_rationale(file_content).await?,
-        priority: "medium".to_string(),
+        rationale:        advisor.provide_rationale(file_content).await?,
+        priority:         "medium".to_string(),
     })
 }
 
@@ -232,10 +233,10 @@ async fn detect_patterns(file_content: &str) -> Result<PatternAnalysis, String> 
     let detector = AdvancedPatternDetector::new();
 
     Ok(PatternAnalysis {
-        code_smells: detector.find_code_smells(file_content).await?,
+        code_smells:               detector.find_code_smells(file_content).await?,
         refactoring_opportunities: detector.identify_refactoring_targets(file_content).await?,
-        architectural_patterns: detector.detect_architecture_patterns(file_content).await?,
-        quality_metrics: detector.calculate_quality_metrics(file_content).await?,
+        architectural_patterns:    detector.detect_architecture_patterns(file_content).await?,
+        quality_metrics:           detector.calculate_quality_metrics(file_content).await?,
     })
 }
 
@@ -246,12 +247,12 @@ async fn analyze_performance(
     let analyzer = PerformanceAnalyzer::new();
 
     Ok(PerformanceInsights {
-        bottlenecks: analyzer.identify_bottlenecks(file_content, context).await?,
+        bottlenecks:                analyzer.identify_bottlenecks(file_content, context).await?,
         optimization_opportunities: analyzer
             .find_optimization_opportunities(file_content)
             .await?,
-        memory_usage_patterns: analyzer.analyze_memory_usage(file_content).await?,
-        performance_metrics: analyzer.calculate_performance_metrics(file_content).await?,
+        memory_usage_patterns:      analyzer.analyze_memory_usage(file_content).await?,
+        performance_metrics:        analyzer.calculate_performance_metrics(file_content).await?,
     })
 }
 
@@ -259,9 +260,9 @@ async fn scan_security(file_content: &str) -> Result<SecurityAnalysis, String> {
     let scanner = SecurityScanner::new();
 
     Ok(SecurityAnalysis {
-        vulnerabilities: scanner.find_vulnerabilities(file_content).await?,
-        owasp_compliance: scanner.check_owasp_compliance(file_content).await?,
-        audit_logging: scanner.analyze_audit_logging(file_content).await?,
+        vulnerabilities:          scanner.find_vulnerabilities(file_content).await?,
+        owasp_compliance:         scanner.check_owasp_compliance(file_content).await?,
+        audit_logging:            scanner.analyze_audit_logging(file_content).await?,
         security_recommendations: scanner
             .provide_security_recommendations(file_content)
             .await?,
@@ -353,8 +354,8 @@ impl AdvancedPatternDetector {
 
     async fn calculate_quality_metrics(&self, content: &str) -> Result<QualityMetrics, String> {
         Ok(QualityMetrics {
-            maintainability_index: 75.0,
-            cyclomatic_complexity: 12,
+            maintainability_index:   75.0,
+            cyclomatic_complexity:   12,
             technical_debt_estimate: "Low".to_string(),
         })
     }
@@ -394,14 +395,11 @@ impl PerformanceAnalyzer {
         ])
     }
 
-    async fn calculate_performance_metrics(
-        &self,
-        content: &str,
-    ) -> Result<PerformanceMetrics, String> {
+    async fn calculate_performance_metrics(&self, content: &str) -> Result<PerformanceMetrics, String> {
         Ok(PerformanceMetrics {
             estimated_complexity: "O(n log n)".to_string(),
-            memory_efficiency: 0.90,
-            cpu_intensity: "Medium".to_string(),
+            memory_efficiency:    0.90,
+            cpu_intensity:        "Medium".to_string(),
         })
     }
 }
@@ -441,9 +439,9 @@ impl SecurityScanner {
 
 fn get_analysis_config() -> &'static CommandConfig {
     ANALYSIS_CONFIG.get_or_init(|| CommandConfig {
-        enable_logging: true,
-        log_level: log::Level::Info,
-        enable_validation: true,
+        enable_logging:     true,
+        log_level:          log::Level::Info,
+        enable_validation:  true,
         async_timeout_secs: Some(300),
     })
 }
@@ -474,11 +472,11 @@ fn extract_dependencies_from_code(content: &str) -> Vec<String> {
 // Placeholder functions for non-implemented features
 async fn perform_workspace_analysis() -> Result<WorkspaceAnalysis, String> {
     Ok(WorkspaceAnalysis {
-        total_files: 42,
-        total_lines: 12345,
-        languages_used: vec!["Rust".to_string(), "TypeScript".to_string()],
+        total_files:        42,
+        total_lines:        12345,
+        languages_used:     vec!["Rust".to_string(), "TypeScript".to_string()],
         architecture_score: 8.5,
-        maintenance_index: 78.0,
+        maintenance_index:  78.0,
     })
 }
 
@@ -486,27 +484,25 @@ async fn generate_architectural_recommendations(
     request: &ArchitectureAnalysisRequest,
 ) -> Result<ArchitectureRecommendations, String> {
     Ok(ArchitectureRecommendations {
-        suggestions: vec![
+        suggestions:      vec![
             "Consider microservices architecture for scalability".to_string(),
             "Implement CQRS pattern for complex domains".to_string(),
         ],
         confidence_score: 0.82,
-        rationale: "Based on project complexity and usage patterns".to_string(),
-        priority: "high".to_string(),
+        rationale:        "Based on project complexity and usage patterns".to_string(),
+        priority:         "high".to_string(),
     })
 }
 
-async fn generate_code_from_spec(
-    request: &CodeSpecificationRequest,
-) -> Result<CodeGenerationResult, String> {
+async fn generate_code_from_spec(request: &CodeSpecificationRequest) -> Result<CodeGenerationResult, String> {
     Ok(CodeGenerationResult {
-        code: format!("// Generated code for: {}", request.specification),
-        explanation: format!(
+        code:          format!("// Generated code for: {}", request.specification),
+        explanation:   format!(
             "Implemented based on specification: {}",
             request.specification
         ),
         quality_score: 0.85,
-        tests: vec![
+        tests:         vec![
             "Unit test for generated functionality".to_string(),
             "Integration test for API endpoints".to_string(),
         ],
@@ -517,115 +513,115 @@ async fn generate_code_from_spec(
 
 #[derive(serde::Deserialize)]
 pub struct AnalyzeFileRequest {
-    pub file_path: String,
-    pub context: AnalysisContext,
+    pub file_path:      String,
+    pub context:        AnalysisContext,
     pub analysis_types: Vec<String>,
 }
 
 #[derive(serde::Deserialize)]
 pub struct ArchitectureAnalysisRequest {
-    pub context: AnalysisContext,
+    pub context:              AnalysisContext,
     pub complexity_threshold: Option<f64>,
 }
 
 #[derive(serde::Deserialize)]
 pub struct CodeSpecificationRequest {
     pub specification: String,
-    pub language: String,
-    pub framework: Option<String>,
+    pub language:      String,
+    pub framework:     Option<String>,
 }
 
 #[derive(serde::Deserialize)]
 pub struct AnalysisContext {
-    pub current_file: String,
-    pub workspace_root: String,
+    pub current_file:    String,
+    pub workspace_root:  String,
     pub cursor_position: Option<Position>,
 }
 
 #[derive(serde::Deserialize)]
 pub struct Position {
-    pub line: usize,
+    pub line:   usize,
     pub column: usize,
 }
 
 #[derive(serde::Serialize)]
 pub struct AnalyzeFileResponse {
-    pub file_path: String,
-    pub semantic_analysis: SemanticAnalysis,
+    pub file_path:                    String,
+    pub semantic_analysis:            SemanticAnalysis,
     pub architecture_recommendations: ArchitectureRecommendations,
-    pub pattern_analysis: PatternAnalysis,
-    pub performance_insights: PerformanceInsights,
-    pub security_analysis: SecurityAnalysis,
-    pub analysis_timestamp: i64,
+    pub pattern_analysis:             PatternAnalysis,
+    pub performance_insights:         PerformanceInsights,
+    pub security_analysis:            SecurityAnalysis,
+    pub analysis_timestamp:           i64,
 }
 
 #[derive(serde::Serialize)]
 pub struct SemanticAnalysis {
-    pub complexity: f64,
-    pub dependencies: Vec<String>,
-    pub patterns: Vec<String>,
+    pub complexity:        f64,
+    pub dependencies:      Vec<String>,
+    pub patterns:          Vec<String>,
     pub context_awareness: f64,
 }
 
 #[derive(serde::Serialize)]
 pub struct ArchitectureRecommendations {
-    pub suggestions: Vec<String>,
+    pub suggestions:      Vec<String>,
     pub confidence_score: f64,
-    pub rationale: String,
-    pub priority: String,
+    pub rationale:        String,
+    pub priority:         String,
 }
 
 #[derive(serde::Serialize)]
 pub struct PatternAnalysis {
-    pub code_smells: Vec<String>,
+    pub code_smells:               Vec<String>,
     pub refactoring_opportunities: Vec<String>,
-    pub architectural_patterns: Vec<String>,
-    pub quality_metrics: QualityMetrics,
+    pub architectural_patterns:    Vec<String>,
+    pub quality_metrics:           QualityMetrics,
 }
 
 #[derive(serde::Serialize)]
 pub struct QualityMetrics {
-    pub maintainability_index: f64,
-    pub cyclomatic_complexity: i32,
+    pub maintainability_index:   f64,
+    pub cyclomatic_complexity:   i32,
     pub technical_debt_estimate: String,
 }
 
 #[derive(serde::Serialize)]
 pub struct PerformanceInsights {
-    pub bottlenecks: Vec<String>,
+    pub bottlenecks:                Vec<String>,
     pub optimization_opportunities: Vec<String>,
-    pub memory_usage_patterns: Vec<String>,
-    pub performance_metrics: PerformanceMetrics,
+    pub memory_usage_patterns:      Vec<String>,
+    pub performance_metrics:        PerformanceMetrics,
 }
 
 #[derive(serde::Serialize)]
 pub struct PerformanceMetrics {
     pub estimated_complexity: String,
-    pub memory_efficiency: f64,
-    pub cpu_intensity: String,
+    pub memory_efficiency:    f64,
+    pub cpu_intensity:        String,
 }
 
 #[derive(serde::Serialize)]
 pub struct SecurityAnalysis {
-    pub vulnerabilities: Vec<String>,
-    pub owasp_compliance: Vec<String>,
-    pub audit_logging: Vec<String>,
+    pub vulnerabilities:          Vec<String>,
+    pub owasp_compliance:         Vec<String>,
+    pub audit_logging:            Vec<String>,
     pub security_recommendations: Vec<String>,
 }
 
 #[derive(serde::Serialize)]
 pub struct WorkspaceAnalysis {
-    pub total_files: usize,
-    pub total_lines: usize,
-    pub languages_used: Vec<String>,
+    pub total_files:        usize,
+    pub total_lines:        usize,
+    pub languages_used:     Vec<String>,
     pub architecture_score: f64,
-    pub maintenance_index: f64,
+    pub maintenance_index:  f64,
 }
 
 #[derive(serde::Serialize)]
 pub struct CodeGenerationResult {
-    pub code: String,
-    pub explanation: String,
+    pub code:          String,
+    pub explanation:   String,
     pub quality_score: f64,
-    pub tests: Vec<String>,
+    pub tests:         Vec<String>,
 }

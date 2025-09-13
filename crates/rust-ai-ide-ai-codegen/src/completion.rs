@@ -4,23 +4,24 @@
 // for code completion, import statements, and code snippets.
 
 // Imports moved to main file context
-use crate::{CodeGenerationError, ProjectContext};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use crate::{CodeGenerationError, ProjectContext};
 
 /// Completion context containing information about the current code state
 #[derive(Debug, Clone)]
 pub struct CompletionContext {
-    pub current_line: String,
-    pub cursor_position: usize,
+    pub current_line:     String,
+    pub cursor_position:  usize,
     pub surrounding_code: Vec<String>,
     pub imported_modules: Vec<String>,
-    pub project_context: ProjectContext,
-    pub completion_type: CompletionType,
-    pub file_path: String,
-    pub project_files: Vec<String>, // All files in the project for context analysis
-    pub recent_edits: Vec<String>,  // Recent code changes for relevance
-    pub user_patterns: Vec<String>, // User's coding patterns for personalization
+    pub project_context:  ProjectContext,
+    pub completion_type:  CompletionType,
+    pub file_path:        String,
+    pub project_files:    Vec<String>, // All files in the project for context analysis
+    pub recent_edits:     Vec<String>, // Recent code changes for relevance
+    pub user_patterns:    Vec<String>, // User's coding patterns for personalization
 }
 
 #[derive(Debug, Clone)]
@@ -38,15 +39,15 @@ pub enum CompletionType {
 /// Completion suggestion with enhanced metadata
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CompletionSuggestion {
-    pub text: String,
-    pub kind: CompletionKind,
-    pub description: String,
-    pub confidence: f32,
-    pub additional_info: Option<String>,
-    pub context_relevance: f32, // How relevant this completion is to current context
-    pub project_usage_count: u32, // How often this pattern is used in the project
-    pub semantic_score: f32,    // Semantic similarity to surrounding code
-    pub edit_distance: usize,   // Distance from cursor to completion match
+    pub text:                String,
+    pub kind:                CompletionKind,
+    pub description:         String,
+    pub confidence:          f32,
+    pub additional_info:     Option<String>,
+    pub context_relevance:   f32,   // How relevant this completion is to current context
+    pub project_usage_count: u32,   // How often this pattern is used in the project
+    pub semantic_score:      f32,   // Semantic similarity to surrounding code
+    pub edit_distance:       usize, // Distance from cursor to completion match
 }
 
 /// Enhanced completion kind with more categories
@@ -76,18 +77,18 @@ pub enum CompletionKind {
 /// Intelligent code completer implementation
 #[derive(Debug)]
 pub struct CodeCompleter {
-    templates: HashMap<String, Vec<CompletionSuggestion>>,
+    templates:        HashMap<String, Vec<CompletionSuggestion>>,
     context_analyzer: Arc<ContextAnalyzer>,
     pattern_analyzer: Arc<PatternAnalyzer>,
     project_analyzer: Arc<ProjectAnalyzer>,
-    semantic_engine: Arc<SemanticEngine>,
+    semantic_engine:  Arc<SemanticEngine>,
 }
 
 /// Context analyzer for understanding code relationships and patterns
 #[derive(Debug)]
 struct ContextAnalyzer {
     semantic_understanding: SemanticUnderstanding,
-    pattern_memory: PatternMemory,
+    pattern_memory:         PatternMemory,
 }
 
 /// Pattern analyzer for identifying common coding patterns
@@ -100,30 +101,30 @@ struct PatternAnalyzer {
 /// Project-wide analyzer for understanding the entire codebase
 #[derive(Debug)]
 struct ProjectAnalyzer {
-    file_index: HashMap<String, FileAnalysis>,
-    symbol_graph: SymbolGraph,
+    file_index:       HashMap<String, FileAnalysis>,
+    symbol_graph:     SymbolGraph,
     usage_statistics: UsageStatistics,
 }
 
 /// Semantic understanding engine
 #[derive(Debug)]
 struct SemanticEngine {
-    vector_embeddings: HashMap<String, Vec<f32>>, // Simple in-memory embeddings
+    vector_embeddings:    HashMap<String, Vec<f32>>, // Simple in-memory embeddings
     similarity_threshold: f32,
 }
 
 #[derive(Debug)]
 struct PatternInfo {
     usage_count: u32,
-    confidence: f32,
-    contexts: Vec<String>,
+    confidence:  f32,
+    contexts:    Vec<String>,
 }
 
 #[derive(Debug)]
 struct FileAnalysis {
-    symbols: Vec<String>,
-    imports: Vec<String>,
-    patterns: Vec<String>,
+    symbols:          Vec<String>,
+    imports:          Vec<String>,
+    patterns:         Vec<String>,
     complexity_score: f32,
 }
 
@@ -135,16 +136,16 @@ struct SymbolGraph {
 
 #[derive(Debug)]
 struct SymbolNode {
-    name: String,
-    kind: SymbolKind,
+    name:          String,
+    kind:          SymbolKind,
     file_location: String,
-    references: Vec<String>,
+    references:    Vec<String>,
 }
 
 #[derive(Debug)]
 struct SymbolEdge {
-    from: String,
-    to: String,
+    from:         String,
+    to:           String,
     relationship: RelationshipType,
 }
 
@@ -170,52 +171,52 @@ enum RelationshipType {
 
 #[derive(Debug)]
 struct UsageStatistics {
-    symbol_frequencies: HashMap<String, u32>,
+    symbol_frequencies:  HashMap<String, u32>,
     pattern_frequencies: HashMap<String, u32>,
-    temporal_patterns: Vec<TemporalPattern>,
+    temporal_patterns:   Vec<TemporalPattern>,
 }
 
 #[derive(Debug)]
 struct TemporalPattern {
-    pattern: String,
+    pattern:     String,
     occurrences: Vec<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug)]
 struct PatternMemory {
     learned_patterns: HashMap<String, LearnedPattern>,
-    pattern_weights: HashMap<String, f32>,
+    pattern_weights:  HashMap<String, f32>,
 }
 
 #[derive(Debug)]
 struct LearnedPattern {
-    pattern: String,
-    context: String,
+    pattern:      String,
+    context:      String,
     success_rate: f32,
-    last_used: chrono::DateTime<chrono::Utc>,
+    last_used:    chrono::DateTime<chrono::Utc>,
 }
 
 /// Data structure to hold project-wide context analysis
 #[derive(Debug)]
 struct ProjectContextData {
-    relevant_symbols: Vec<String>,
-    common_patterns: Vec<String>,
-    import_frequency: HashMap<String, u32>,
+    relevant_symbols:    Vec<String>,
+    common_patterns:     Vec<String>,
+    import_frequency:    HashMap<String, u32>,
     function_signatures: Vec<String>,
-    type_definitions: Vec<String>,
+    type_definitions:    Vec<String>,
 }
 
 /// Data structure to hold semantic analysis results
 #[derive(Debug)]
 struct SemanticContext {
-    similar_functions: Vec<String>,
-    related_types: Vec<String>,
+    similar_functions:    Vec<String>,
+    related_types:        Vec<String>,
     semantic_suggestions: Vec<String>,
 }
 
 #[derive(Debug)]
 struct SemanticUnderstanding {
-    code_embeddings: HashMap<String, Vec<f32>>,
+    code_embeddings:     HashMap<String, Vec<f32>>,
     semantic_similarity: HashMap<String, HashMap<String, f32>>,
 }
 
@@ -223,11 +224,11 @@ impl CodeCompleter {
     /// Create a new intelligent code completer
     pub fn new() -> Self {
         Self {
-            templates: HashMap::new(),
+            templates:        HashMap::new(),
             context_analyzer: Arc::new(ContextAnalyzer::new()),
             pattern_analyzer: Arc::new(PatternAnalyzer::new()),
             project_analyzer: Arc::new(ProjectAnalyzer::new()),
-            semantic_engine: Arc::new(SemanticEngine::new()),
+            semantic_engine:  Arc::new(SemanticEngine::new()),
         }
     }
 
@@ -259,30 +260,24 @@ impl CodeCompleter {
 
         // Stage 3: Context-aware completions for specific types
         let context_suggestions = match context.completion_type {
-            CompletionType::Function => {
+            CompletionType::Function =>
                 self.generate_function_completions(&context, &project_context, &semantic_context)
-                    .await?
-            }
-            CompletionType::Import => {
+                    .await?,
+            CompletionType::Import =>
                 self.generate_import_completions(&context, &project_context)
-                    .await?
-            }
-            CompletionType::Type => {
+                    .await?,
+            CompletionType::Type =>
                 self.generate_type_completions(&context, &project_context)
-                    .await?
-            }
-            CompletionType::Variable => {
+                    .await?,
+            CompletionType::Variable =>
                 self.generate_variable_completions(&context, &semantic_context)
-                    .await?
-            }
-            CompletionType::Method => {
+                    .await?,
+            CompletionType::Method =>
                 self.generate_method_completions(&context, &project_context)
-                    .await?
-            }
-            _ => {
+                    .await?,
+            _ =>
                 self.generate_general_completions(&context, &project_context, &semantic_context)
-                    .await?
-            }
+                    .await?,
         };
         suggestions.extend(context_suggestions);
 
@@ -312,19 +307,19 @@ impl CodeCompleter {
         for signature in &project_context.function_signatures {
             if signature.contains("async") && context.current_line.contains("fn") {
                 let suggestion = CompletionSuggestion {
-                    text: signature.clone(),
-                    kind: CompletionKind::Function,
-                    description: format!("Function pattern from project: {}", signature),
-                    confidence: 0.9,
-                    additional_info: Some("Based on project patterns".to_string()),
-                    context_relevance: 0.95,
+                    text:                signature.clone(),
+                    kind:                CompletionKind::Function,
+                    description:         format!("Function pattern from project: {}", signature),
+                    confidence:          0.9,
+                    additional_info:     Some("Based on project patterns".to_string()),
+                    context_relevance:   0.95,
                     project_usage_count: project_context
                         .function_signatures
                         .iter()
                         .filter(|s| *s == signature)
                         .count() as u32,
-                    semantic_score: semantic_context.similar_functions.len() as f32 / 10.0,
-                    edit_distance: 0,
+                    semantic_score:      semantic_context.similar_functions.len() as f32 / 10.0,
+                    edit_distance:       0,
                 };
                 suggestions.push(suggestion);
             }
@@ -332,17 +327,15 @@ impl CodeCompleter {
 
         // Add standard async function pattern
         let async_completion = CompletionSuggestion {
-            text: "async fn process_data(input: Vec<String>) -> Result<(), String> {".to_string(),
-            kind: CompletionKind::Snippet,
-            description: "Async function with error handling".to_string(),
-            confidence: 0.8,
-            additional_info: Some(
-                "Generates async function with proper error handling".to_string(),
-            ),
-            context_relevance: 0.7,
+            text:                "async fn process_data(input: Vec<String>) -> Result<(), String> {".to_string(),
+            kind:                CompletionKind::Snippet,
+            description:         "Async function with error handling".to_string(),
+            confidence:          0.8,
+            additional_info:     Some("Generates async function with proper error handling".to_string()),
+            context_relevance:   0.7,
             project_usage_count: 0,
-            semantic_score: 0.6,
-            edit_distance: 0,
+            semantic_score:      0.6,
+            edit_distance:       0,
         };
         suggestions.push(async_completion);
 
@@ -361,15 +354,15 @@ impl CodeCompleter {
         for (import_path, frequency) in &project_context.import_frequency {
             let confidence = (*frequency.min(&10) as f32) / 10.0; // Cap at 10 for confidence calculation
             let suggestion = CompletionSuggestion {
-                text: import_path.clone(),
-                kind: CompletionKind::Import,
-                description: format!("Frequently used import (used {} times)", frequency),
-                confidence: confidence.max(0.8),
-                additional_info: Some("Based on project usage patterns".to_string()),
-                context_relevance: 0.95,
+                text:                import_path.clone(),
+                kind:                CompletionKind::Import,
+                description:         format!("Frequently used import (used {} times)", frequency),
+                confidence:          confidence.max(0.8),
+                additional_info:     Some("Based on project usage patterns".to_string()),
+                context_relevance:   0.95,
                 project_usage_count: *frequency,
-                semantic_score: 0.9,
-                edit_distance: 0,
+                semantic_score:      0.9,
+                edit_distance:       0,
             };
             suggestions.push(suggestion);
         }
@@ -399,15 +392,15 @@ impl CodeCompleter {
 
         for (import_text, desc, conf, usage) in std_imports {
             suggestions.push(CompletionSuggestion {
-                text: import_text.to_string(),
-                kind: CompletionKind::Import,
-                description: desc.to_string(),
-                confidence: conf,
-                additional_info: Some("Standard library import".to_string()),
-                context_relevance: 0.7,
+                text:                import_text.to_string(),
+                kind:                CompletionKind::Import,
+                description:         desc.to_string(),
+                confidence:          conf,
+                additional_info:     Some("Standard library import".to_string()),
+                context_relevance:   0.7,
                 project_usage_count: usage,
-                semantic_score: 0.8,
-                edit_distance: 0,
+                semantic_score:      0.8,
+                edit_distance:       0,
             });
         }
 
@@ -432,19 +425,19 @@ impl CodeCompleter {
                 > 1
             {
                 let suggestion = CompletionSuggestion {
-                    text: type_def.clone(),
-                    kind: CompletionKind::Type,
-                    description: format!("Type frequently used in project: {}", type_def),
-                    confidence: 0.95,
-                    additional_info: Some("Based on project type definitions".to_string()),
-                    context_relevance: 0.9,
+                    text:                type_def.clone(),
+                    kind:                CompletionKind::Type,
+                    description:         format!("Type frequently used in project: {}", type_def),
+                    confidence:          0.95,
+                    additional_info:     Some("Based on project type definitions".to_string()),
+                    context_relevance:   0.9,
                     project_usage_count: project_context
                         .type_definitions
                         .iter()
                         .filter(|t| *t == type_def)
                         .count() as u32,
-                    semantic_score: 0.85,
-                    edit_distance: 0,
+                    semantic_score:      0.85,
+                    edit_distance:       0,
                 };
                 suggestions.push(suggestion);
             }
@@ -492,15 +485,15 @@ impl CodeCompleter {
 
         for (type_text, desc, conf, info) in std_types {
             suggestions.push(CompletionSuggestion {
-                text: type_text.to_string(),
-                kind: CompletionKind::Type,
-                description: desc.to_string(),
-                confidence: conf,
-                additional_info: info,
-                context_relevance: 0.8,
+                text:                type_text.to_string(),
+                kind:                CompletionKind::Type,
+                description:         desc.to_string(),
+                confidence:          conf,
+                additional_info:     info,
+                context_relevance:   0.8,
                 project_usage_count: 0,
-                semantic_score: 0.9,
-                edit_distance: 0,
+                semantic_score:      0.9,
+                edit_distance:       0,
             });
         }
 
@@ -529,15 +522,15 @@ impl CodeCompleter {
         let suggestions = methods
             .into_iter()
             .map(|(method, desc, conf)| CompletionSuggestion {
-                text: method.to_string(),
-                kind: CompletionKind::Method,
-                description: desc.to_string(),
-                confidence: conf,
-                additional_info: Some("Common method pattern".to_string()),
-                context_relevance: 0.85,
+                text:                method.to_string(),
+                kind:                CompletionKind::Method,
+                description:         desc.to_string(),
+                confidence:          conf,
+                additional_info:     Some("Common method pattern".to_string()),
+                context_relevance:   0.85,
                 project_usage_count: 0,
-                semantic_score: 0.8,
-                edit_distance: 0,
+                semantic_score:      0.8,
+                edit_distance:       0,
             })
             .collect();
 
@@ -560,21 +553,20 @@ impl CodeCompleter {
             if word.starts_with(|c: char| c.is_lowercase())
                 && word.len() > 2
                 && ![
-                    "let", "const", "fn", "struct", "enum", "impl", "use", "mod", "pub", "async",
-                    "mut",
+                    "let", "const", "fn", "struct", "enum", "impl", "use", "mod", "pub", "async", "mut",
                 ]
                 .contains(&word)
             {
                 suggestions.push(CompletionSuggestion {
-                    text: word.to_string(),
-                    kind: CompletionKind::Variable,
-                    description: format!("Variable from context: {}", word),
-                    confidence: 0.7,
-                    additional_info: Some("Based on surrounding code".to_string()),
-                    context_relevance: 0.75,
+                    text:                word.to_string(),
+                    kind:                CompletionKind::Variable,
+                    description:         format!("Variable from context: {}", word),
+                    confidence:          0.7,
+                    additional_info:     Some("Based on surrounding code".to_string()),
+                    context_relevance:   0.75,
                     project_usage_count: 0,
-                    semantic_score: semantic_context.similar_functions.len() as f32 / 20.0,
-                    edit_distance: 0,
+                    semantic_score:      semantic_context.similar_functions.len() as f32 / 20.0,
+                    edit_distance:       0,
                 });
             }
         }
@@ -714,7 +706,7 @@ impl ContextAnalyzer {
     fn new() -> Self {
         Self {
             semantic_understanding: SemanticUnderstanding::new(),
-            pattern_memory: PatternMemory::new(),
+            pattern_memory:         PatternMemory::new(),
         }
     }
 }
@@ -739,18 +731,15 @@ impl PatternAnalyzer {
         for pattern in &context.user_patterns {
             if context.current_line.contains(pattern) {
                 let suggestion = CompletionSuggestion {
-                    text: pattern.to_string(),
-                    kind: CompletionKind::Snippet,
-                    description: format!(
-                        "Pattern suggestion based on your coding style: {}",
-                        pattern
-                    ),
-                    confidence: 0.8,
-                    additional_info: Some("Personalized suggestion".to_string()),
-                    context_relevance: 0.9,
+                    text:                pattern.to_string(),
+                    kind:                CompletionKind::Snippet,
+                    description:         format!("Pattern suggestion based on your coding style: {}", pattern),
+                    confidence:          0.8,
+                    additional_info:     Some("Personalized suggestion".to_string()),
+                    context_relevance:   0.9,
                     project_usage_count: 1,
-                    semantic_score: 0.8,
-                    edit_distance: 0,
+                    semantic_score:      0.8,
+                    edit_distance:       0,
                 };
                 suggestions.push(suggestion);
             }
@@ -763,8 +752,8 @@ impl PatternAnalyzer {
 impl ProjectAnalyzer {
     fn new() -> Self {
         Self {
-            file_index: HashMap::new(),
-            symbol_graph: SymbolGraph::new(),
+            file_index:       HashMap::new(),
+            symbol_graph:     SymbolGraph::new(),
             usage_statistics: UsageStatistics::new(),
         }
     }
@@ -775,11 +764,11 @@ impl ProjectAnalyzer {
     ) -> Result<ProjectContextData, CodeGenerationError> {
         // Analyze the entire project context
         let mut context_data = ProjectContextData {
-            relevant_symbols: Vec::new(),
-            common_patterns: Vec::new(),
-            import_frequency: HashMap::new(),
+            relevant_symbols:    Vec::new(),
+            common_patterns:     Vec::new(),
+            import_frequency:    HashMap::new(),
             function_signatures: Vec::new(),
-            type_definitions: Vec::new(),
+            type_definitions:    Vec::new(),
         };
 
         // Analyze project files for symbols and patterns
@@ -831,7 +820,7 @@ impl ProjectAnalyzer {
 impl SemanticEngine {
     fn new() -> Self {
         Self {
-            vector_embeddings: HashMap::new(),
+            vector_embeddings:    HashMap::new(),
             similarity_threshold: 0.7,
         }
     }
@@ -842,8 +831,8 @@ impl SemanticEngine {
     ) -> Result<SemanticContext, CodeGenerationError> {
         // Compute semantic similarity with project code
         let mut semantic_context = SemanticContext {
-            similar_functions: Vec::new(),
-            related_types: Vec::new(),
+            similar_functions:    Vec::new(),
+            related_types:        Vec::new(),
             semantic_suggestions: Vec::new(),
         };
 
@@ -888,9 +877,9 @@ impl SymbolGraph {
 impl UsageStatistics {
     fn new() -> Self {
         Self {
-            symbol_frequencies: HashMap::new(),
+            symbol_frequencies:  HashMap::new(),
             pattern_frequencies: HashMap::new(),
-            temporal_patterns: Vec::new(),
+            temporal_patterns:   Vec::new(),
         }
     }
 }
@@ -898,7 +887,7 @@ impl UsageStatistics {
 impl SemanticUnderstanding {
     fn new() -> Self {
         Self {
-            code_embeddings: HashMap::new(),
+            code_embeddings:     HashMap::new(),
             semantic_similarity: HashMap::new(),
         }
     }
@@ -908,7 +897,7 @@ impl PatternMemory {
     fn new() -> Self {
         Self {
             learned_patterns: HashMap::new(),
-            pattern_weights: HashMap::new(),
+            pattern_weights:  HashMap::new(),
         }
     }
 }

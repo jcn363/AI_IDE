@@ -1,6 +1,7 @@
 //! # Rust AI IDE Learning System
 //!
-//! This crate provides a comprehensive learning system for storing and retrieving successful error resolution patterns.
+//! This crate provides a comprehensive learning system for storing and retrieving successful error
+//! resolution patterns.
 //!
 //! ## Features
 //!
@@ -54,36 +55,24 @@ pub mod system;
 pub mod types;
 
 // Re-export main types and interfaces for convenient access
-pub use models::{
-    ChangeScope, ChangeTemplate, ChangeType, ConditionType, FixTemplate, LearnedPattern,
-    LearningPreferences, PatternSimilarity, PatternStatistics, TemplateCondition,
-};
-
 pub use database::LearningDatabase;
-pub use preferences::{
-    templates as preference_templates, utils as preference_utils, PreferencesManager,
+pub use models::{
+    ChangeScope, ChangeTemplate, ChangeType, ConditionType, FixTemplate, LearnedPattern, LearningPreferences,
+    PatternSimilarity, PatternStatistics, TemplateCondition,
 };
-pub use similarity::SimilarityCalculator;
+// Re-export preference templates for easy access
+pub use preferences::templates::{balanced, development, maximum_learning, privacy_first};
+// Re-export preference utilities
+pub use preferences::utils::{apply_privacy_implications, calculate_privacy_score, get_privacy_recommendation};
+pub use preferences::{templates as preference_templates, utils as preference_utils, PreferencesManager};
+// Re-export similarity analysis utilities
+pub use similarity::analysis::{analyze_pattern_themes, find_similar_fixes, group_patterns_by_error_type};
+pub use similarity::{SimilarityCache, SimilarityCalculator};
+// Re-export statistical analysis functions
+pub use statistics::analysis::{analyze_trends, generate_insights};
 pub use statistics::{analysis as stats_analysis, LearningStatistics};
 pub use system::LearningSystem;
 pub use types::PrivacyMode;
-
-// Re-export similarity analysis utilities
-pub use similarity::analysis::{
-    analyze_pattern_themes, find_similar_fixes, group_patterns_by_error_type,
-};
-pub use similarity::SimilarityCache;
-
-// Re-export preference templates for easy access
-pub use preferences::templates::{balanced, development, maximum_learning, privacy_first};
-
-// Re-export preference utilities
-pub use preferences::utils::{
-    apply_privacy_implications, calculate_privacy_score, get_privacy_recommendation,
-};
-
-// Re-export statistical analysis functions
-pub use statistics::analysis::{analyze_trends, generate_insights};
 
 /// Version information for the learning system
 pub const LEARNING_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -125,9 +114,7 @@ pub mod helpers {
     }
 
     /// Export patterns to JSON with automatic anonymization
-    pub async fn export_patterns_safe(
-        system: &LearningSystem,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn export_patterns_safe(system: &LearningSystem) -> Result<String, Box<dyn std::error::Error>> {
         let json = system.export_patterns().await?;
         Ok(json)
     }
@@ -136,10 +123,10 @@ pub mod helpers {
     pub fn get_system_status(system: &LearningSystem) -> SystemStatus {
         let prefs = system.get_preferences();
         SystemStatus {
-            learning_enabled: prefs.enable_learning,
-            privacy_mode: prefs.privacy_mode.clone(),
+            learning_enabled:     prefs.enable_learning,
+            privacy_mode:         prefs.privacy_mode.clone(),
             confidence_threshold: prefs.confidence_threshold,
-            version: LEARNING_VERSION.to_string(),
+            version:              LEARNING_VERSION.to_string(),
         }
     }
 }
@@ -148,13 +135,13 @@ pub mod helpers {
 #[derive(Debug, Clone)]
 pub struct SystemStatus {
     /// Whether learning is currently enabled
-    pub learning_enabled: bool,
+    pub learning_enabled:     bool,
     /// Current privacy mode
-    pub privacy_mode: PrivacyMode,
+    pub privacy_mode:         PrivacyMode,
     /// Current confidence threshold
     pub confidence_threshold: f32,
     /// System version
-    pub version: String,
+    pub version:              String,
 }
 
 impl std::fmt::Display for SystemStatus {
@@ -188,8 +175,9 @@ pub async fn initialize() -> Result<LearningSystem, Box<dyn std::error::Error>> 
 /// Cleanup utility for testing
 #[cfg(test)]
 pub mod test_utils {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     /// Create a temporary learning system for testing
     pub async fn create_temp_learning_system() -> (LearningSystem, TempDir) {

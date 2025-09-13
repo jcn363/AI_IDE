@@ -1,73 +1,74 @@
-use crate::error::{SIMDError, SIMDResult};
 /// Runtime SIMD capability detection for optimal instruction set selection
 use std::collections::HashSet;
+
+use crate::error::{SIMDError, SIMDResult};
 
 /// Comprehensive SIMD capability information for the current platform
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct SIMDCapabilities {
     /// Whether SIMD is supported at all
-    pub has_simd: bool,
+    pub has_simd:             bool,
     /// SSE instruction support
-    pub has_sse: bool,
+    pub has_sse:              bool,
     /// SSE2 instruction support
-    pub has_sse2: bool,
+    pub has_sse2:             bool,
     /// SSE3 instruction support
-    pub has_sse3: bool,
+    pub has_sse3:             bool,
     /// SSSE3 instruction support
-    pub has_ssse3: bool,
+    pub has_ssse3:            bool,
     /// SSE4.1 support
-    pub has_sse41: bool,
+    pub has_sse41:            bool,
     /// SSE4.2 support
-    pub has_sse42: bool,
+    pub has_sse42:            bool,
     /// AVX instruction support
-    pub has_avx: bool,
+    pub has_avx:              bool,
     /// AVX2 instruction support
-    pub has_avx2: bool,
+    pub has_avx2:             bool,
     /// AVX512 foundation support
-    pub has_avx512f: bool,
+    pub has_avx512f:          bool,
     /// AVX512 vector neural network instructions
-    pub has_avx512vnni: bool,
+    pub has_avx512vnni:       bool,
     /// AVX512 byte and word instructions
-    pub has_avx512bw: bool,
+    pub has_avx512bw:         bool,
     /// AVX512 conflict detection instructions
-    pub has_avx512cd: bool,
+    pub has_avx512cd:         bool,
     /// AVX512 doubleword and quadword instructions
-    pub has_avx512dq: bool,
+    pub has_avx512dq:         bool,
     /// AVX512 exponential and reciprocal instructions
-    pub has_avx512er: bool,
+    pub has_avx512er:         bool,
     /// AVX512 prefetch instructions
-    pub has_avx512pf: bool,
+    pub has_avx512pf:         bool,
     /// AVX512 vector length extensions
-    pub has_avx512vl: bool,
+    pub has_avx512vl:         bool,
     /// FMA (Fused Multiply-Add) support
-    pub has_fma: bool,
+    pub has_fma:              bool,
     /// AES instruction support
-    pub has_aes: bool,
+    pub has_aes:              bool,
     /// PCLMULQDQ support
-    pub has_pclmulqdq: bool,
+    pub has_pclmulqdq:        bool,
     /// BMI (Bit Manipulation Instructions)
-    pub has_bmi1: bool,
-    pub has_bmi2: bool,
+    pub has_bmi1:             bool,
+    pub has_bmi2:             bool,
     /// LZCNT (Leading Zero Count)
-    pub has_lzcnt: bool,
+    pub has_lzcnt:            bool,
     /// POPCNT (Population Count)
-    pub has_popcnt: bool,
+    pub has_popcnt:           bool,
     /// TSX (Transactional Synchronization Extensions)
-    pub has_tsx: bool,
+    pub has_tsx:              bool,
     /// RDSEED random number generation
-    pub has_rdseed: bool,
+    pub has_rdseed:           bool,
     /// RDPID (Read Processor ID)
-    pub has_rdpid: bool,
+    pub has_rdpid:            bool,
     /// SHA (Secure Hash Algorithm) extensions
-    pub has_sha: bool,
+    pub has_sha:              bool,
     /// UMIP (User-Mode Instruction Prevention)
-    pub has_umip: bool,
+    pub has_umip:             bool,
     /// Mitigations enabled (Spectre/Meltdown)
-    pub has_mitigations: bool,
+    pub has_mitigations:      bool,
     /// Maximum vector width in bytes
-    pub max_vector_width: usize,
+    pub max_vector_width:     usize,
     /// Preferred vector alignment
-    pub preferred_alignment: usize,
+    pub preferred_alignment:  usize,
     /// Supported data types for SIMD operations
     pub supported_data_types: HashSet<String>,
 }
@@ -75,38 +76,38 @@ pub struct SIMDCapabilities {
 impl Default for SIMDCapabilities {
     fn default() -> Self {
         Self {
-            has_simd: false,
-            has_sse: false,
-            has_sse2: false,
-            has_sse3: false,
-            has_ssse3: false,
-            has_sse41: false,
-            has_sse42: false,
-            has_avx: false,
-            has_avx2: false,
-            has_avx512f: false,
-            has_avx512vnni: false,
-            has_avx512bw: false,
-            has_avx512cd: false,
-            has_avx512dq: false,
-            has_avx512er: false,
-            has_avx512pf: false,
-            has_avx512vl: false,
-            has_fma: false,
-            has_aes: false,
-            has_pclmulqdq: false,
-            has_bmi1: false,
-            has_bmi2: false,
-            has_lzcnt: false,
-            has_popcnt: false,
-            has_tsx: false,
-            has_rdseed: false,
-            has_rdpid: false,
-            has_sha: false,
-            has_umip: false,
-            has_mitigations: false,
-            max_vector_width: 1, // Scalar fallback
-            preferred_alignment: 8,
+            has_simd:             false,
+            has_sse:              false,
+            has_sse2:             false,
+            has_sse3:             false,
+            has_ssse3:            false,
+            has_sse41:            false,
+            has_sse42:            false,
+            has_avx:              false,
+            has_avx2:             false,
+            has_avx512f:          false,
+            has_avx512vnni:       false,
+            has_avx512bw:         false,
+            has_avx512cd:         false,
+            has_avx512dq:         false,
+            has_avx512er:         false,
+            has_avx512pf:         false,
+            has_avx512vl:         false,
+            has_fma:              false,
+            has_aes:              false,
+            has_pclmulqdq:        false,
+            has_bmi1:             false,
+            has_bmi2:             false,
+            has_lzcnt:            false,
+            has_popcnt:           false,
+            has_tsx:              false,
+            has_rdseed:           false,
+            has_rdpid:            false,
+            has_sha:              false,
+            has_umip:             false,
+            has_mitigations:      false,
+            max_vector_width:     1, // Scalar fallback
+            preferred_alignment:  8,
             supported_data_types: HashSet::from(["f32".into(), "i32".into()]),
         }
     }

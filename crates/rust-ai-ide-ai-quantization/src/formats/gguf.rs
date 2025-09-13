@@ -1,14 +1,16 @@
-use crate::IDEError;
-use candle_core::{DType, Device, Tensor};
 use std::collections::HashMap;
 use std::io::{Read, Seek, SeekFrom};
+
+use candle_core::{DType, Device, Tensor};
+
+use crate::IDEError;
 
 /// GGUF file header structure
 #[derive(Debug)]
 pub struct GGUFHeader {
-    pub magic: [u8; 4],
-    pub version: u32,
-    pub tensor_count: u64,
+    pub magic:             [u8; 4],
+    pub version:           u32,
+    pub tensor_count:      u64,
     pub metadata_kv_count: u64,
 }
 
@@ -31,18 +33,18 @@ pub enum GGUFMetadataType {
 /// GGUF tensor information
 #[derive(Debug)]
 pub struct GGUFTensorInfo {
-    pub name: String,
+    pub name:         String,
     pub n_dimensions: u32,
-    pub dimensions: Vec<u64>,
-    pub dtype: GGUFDType,
-    pub offset: u64,
+    pub dimensions:   Vec<u64>,
+    pub dtype:        GGUFDType,
+    pub offset:       u64,
 }
 
 /// GGUF data types
 #[derive(Debug, Clone, Copy)]
 pub enum GGUFDType {
-    F32 = 0,
-    F16 = 1,
+    F32  = 0,
+    F16  = 1,
     Q4_0 = 2,
     Q4_1 = 3,
     Q5_0 = 6,
@@ -112,8 +114,7 @@ impl GGUFQuantizer {
         let quantized_data: Vec<u8> = flat_data
             .into_iter()
             .map(|val| {
-                let quantized =
-                    ((val - min_val) / (max_val - min_val) * 15.0).clamp(0.0, 15.0) as u8;
+                let quantized = ((val - min_val) / (max_val - min_val) * 15.0).clamp(0.0, 15.0) as u8;
                 quantized
             })
             .collect();
@@ -145,8 +146,7 @@ impl GGUFQuantizer {
         let quantized_data: Vec<u8> = flat_data
             .into_iter()
             .map(|val| {
-                let quantized =
-                    ((val - min_val) / (max_val - min_val) * 31.0).clamp(0.0, 31.0) as u8;
+                let quantized = ((val - min_val) / (max_val - min_val) * 31.0).clamp(0.0, 31.0) as u8;
                 quantized
             })
             .collect();
@@ -193,8 +193,8 @@ impl GGUFQuantizer {
         let mut packed = Vec::with_capacity((data.len() + 1) / 2);
 
         for chunk in data.chunks(2) {
-            let high = (chunk[0] & 0xF) << 4;
-            let low = chunk.get(1).map(|&x| x & 0xF).unwrap_or(0);
+            let high = (chunk[0] & 0xf) << 4;
+            let low = chunk.get(1).map(|&x| x & 0xf).unwrap_or(0);
             packed.push(high | low);
         }
 
@@ -209,14 +209,14 @@ impl GGUFQuantizer {
 
         for &value in data {
             if bits_used + 5 <= 8 {
-                current_byte |= (value & 0x1F) << bits_used;
+                current_byte |= (value & 0x1f) << bits_used;
                 bits_used += 5;
             } else {
                 let remaining_bits = 8 - bits_used;
-                current_byte |= ((value & 0x1F) & ((1 << remaining_bits) - 1)) << bits_used;
+                current_byte |= ((value & 0x1f) & ((1 << remaining_bits) - 1)) << bits_used;
                 packed.push(current_byte);
 
-                current_byte = (value & 0x1F) >> remaining_bits;
+                current_byte = (value & 0x1f) >> remaining_bits;
                 bits_used = 5 - remaining_bits;
             }
         }

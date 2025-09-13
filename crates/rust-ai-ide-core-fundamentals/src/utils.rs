@@ -4,11 +4,13 @@
 //! This module provides shared utility functions for validation, sanitization,
 //! type conversion, and common operations used across the Rust AI IDE.
 
-use crate::error::{IDEError, IDEResult};
-use once_cell::sync::Lazy;
-use regex::Regex;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+
+use once_cell::sync::Lazy;
+use regex::Regex;
+
+use crate::error::{IDEError, IDEResult};
 
 /// Sanitization utilities
 pub mod sanitization {
@@ -44,11 +46,7 @@ pub mod sanitization {
     }
 
     /// Sanitize user input for generic strings
-    pub fn sanitize_string_input(
-        input: &str,
-        max_len: usize,
-        allow_special_chars: bool,
-    ) -> IDEResult<String> {
+    pub fn sanitize_string_input(input: &str, max_len: usize, allow_special_chars: bool) -> IDEResult<String> {
         let trimmed = input.trim();
 
         if trimmed.is_empty() {
@@ -173,8 +171,9 @@ pub mod validation {
 
 /// Type conversion utilities
 pub mod conversion {
-    use super::*;
     use std::str::FromStr;
+
+    use super::*;
 
     /// Convert a string to a value of type T
     pub fn parse_from_string<T>(s: &str) -> IDEResult<T>
@@ -199,14 +198,12 @@ pub mod conversion {
         <V2 as TryFrom<V1>>::Error: std::fmt::Display,
         V1: Clone,
     {
-        V2::try_from(value.clone())
-            .map_err(|e| IDEError::Generic(format!("Failed to convert value: {}", e)))
+        V2::try_from(value.clone()).map_err(|e| IDEError::Generic(format!("Failed to convert value: {}", e)))
     }
 
     /// Convert hashmap keys to camel case
     pub fn convert_keys_to_camel_case(map: &mut serde_json::Map<String, serde_json::Value>) {
-        let keys_to_convert: Vec<String> =
-            map.keys().filter(|k| k.contains('_')).cloned().collect();
+        let keys_to_convert: Vec<String> = map.keys().filter(|k| k.contains('_')).cloned().collect();
 
         for key in keys_to_convert {
             if let Some(value) = map.remove(&key) {
@@ -240,8 +237,7 @@ pub mod conversion {
     where
         T: serde::Serialize,
     {
-        serde_json::to_string_pretty(value)
-            .map_err(|e| IDEError::Generic(format!("JSON serialization error: {}", e)))
+        serde_json::to_string_pretty(value).map_err(|e| IDEError::Generic(format!("JSON serialization error: {}", e)))
     }
 
     /// Parse from JSON string
@@ -249,8 +245,7 @@ pub mod conversion {
     where
         T: for<'de> serde::Deserialize<'de>,
     {
-        serde_json::from_str(json)
-            .map_err(|e| IDEError::Generic(format!("JSON deserialization error: {}", e)))
+        serde_json::from_str(json).map_err(|e| IDEError::Generic(format!("JSON deserialization error: {}", e)))
     }
 }
 
@@ -277,9 +272,8 @@ pub mod path_utils {
     /// Ensure a directory exists, creating it if necessary
     pub fn ensure_directory_exists(dir: &Path) -> IDEResult<()> {
         if !dir.exists() {
-            std::fs::create_dir_all(dir).map_err(|e| {
-                IDEError::Generic(format!("Failed to create directory {:?}: {}", dir, e))
-            })?;
+            std::fs::create_dir_all(dir)
+                .map_err(|e| IDEError::Generic(format!("Failed to create directory {:?}: {}", dir, e)))?;
         } else if !dir.is_dir() {
             return Err(IDEError::Generic(format!(
                 "Path {:?} exists but is not a directory",
@@ -296,7 +290,8 @@ pub mod path_utils {
         rust_ai_ide_shared_utils::get_extension(path)
     }
 
-    /// Check if path is a supported code file - DEPRECATED: Use rust_ai_ide_shared_utils::is_code_file instead
+    /// Check if path is a supported code file - DEPRECATED: Use
+    /// rust_ai_ide_shared_utils::is_code_file instead
     #[deprecated(since = "0.2.0", note = "Use rust_ai_ide_shared_utils::is_code_file")]
     pub fn is_code_file(path: &Path) -> bool {
         rust_ai_ide_shared_utils::is_code_file(path)
@@ -311,12 +306,10 @@ pub mod path_utils {
             Ok(metadata.len())
         } else if path.is_dir() {
             let mut total_size = 0u64;
-            for entry in std::fs::read_dir(path)
-                .map_err(|e| IDEError::Generic(format!("Failed to read directory: {}", e)))?
+            for entry in
+                std::fs::read_dir(path).map_err(|e| IDEError::Generic(format!("Failed to read directory: {}", e)))?
             {
-                let entry = entry.map_err(|e| {
-                    IDEError::Generic(format!("Failed to read directory entry: {}", e))
-                })?;
+                let entry = entry.map_err(|e| IDEError::Generic(format!("Failed to read directory entry: {}", e)))?;
 
                 let size = get_size(&entry.path())?;
                 total_size = total_size.saturating_add(size);
@@ -330,8 +323,9 @@ pub mod path_utils {
 
 /// Async utilities for common patterns
 pub mod async_utils {
-    use super::*;
     use tokio::time::{timeout, Duration};
+
+    use super::*;
 
     /// Timeout wrapper for operations
     pub async fn with_timeout<T, Fut>(future: Fut, timeout_duration: Duration) -> IDEResult<T>
@@ -456,13 +450,14 @@ pub mod id_utils {
 
 /// Configuration merge utilities
 pub mod config_merge {
-    use super::*;
     use serde_json::Value;
+
+    use super::*;
 
     /// Deep merge two JSON values
     pub fn deep_merge(base: &mut Value, other: Value) {
         match (&*base, other) {
-            (Value::Object(_), Value::Object(other_map)) => {
+            (Value::Object(_), Value::Object(other_map)) =>
                 if let Value::Object(base_map) = base {
                     for (key, value) in other_map {
                         match base_map.get_mut(&key) {
@@ -472,20 +467,16 @@ pub mod config_merge {
                             }
                         }
                     }
-                }
-            }
+                },
             (_base, other) => *base = other,
         }
     }
 
     /// Merge two configuration hashmaps
-    pub fn merge_configs(
-        base: &mut HashMap<String, serde_json::Value>,
-        other: HashMap<String, serde_json::Value>,
-    ) {
+    pub fn merge_configs(base: &mut HashMap<String, serde_json::Value>, other: HashMap<String, serde_json::Value>) {
         for (key, value) in other {
             match base.get_mut(&key) {
-                Some(existing) => {
+                Some(existing) =>
                     if let Value::Object(other_obj) = value {
                         if let Value::Object(ref mut base_obj) = existing {
                             for (sub_key, sub_value) in other_obj {
@@ -496,8 +487,7 @@ pub mod config_merge {
                         }
                     } else {
                         base.insert(key, value);
-                    }
-                }
+                    },
                 None => {
                     base.insert(key, value);
                 }
@@ -508,8 +498,9 @@ pub mod config_merge {
 
 /// Logging helpers with structured fields
 pub mod log_utils {
-    use log::Level;
     use std::collections::HashMap;
+
+    use log::Level;
 
     /// Logger that supports structured logging with key-value metadata fields
     pub struct StructuredLogger {
@@ -532,11 +523,7 @@ pub mod log_utils {
         }
 
         /// Adds a key-value field to be included in log messages
-        pub fn with_field<K: Into<String>, V: Into<serde_json::Value>>(
-            mut self,
-            key: K,
-            value: V,
-        ) -> Self {
+        pub fn with_field<K: Into<String>, V: Into<serde_json::Value>>(mut self, key: K, value: V) -> Self {
             self.fields.insert(key.into(), value.into());
             self
         }

@@ -1,71 +1,67 @@
-/*!
-# Unified Configuration Management System
+//! # Unified Configuration Management System
+//!
+//! This module provides a unified, type-safe configuration management system that consolidates
+//! all configuration handling across the Rust AI IDE codebase.
+//!
+//! ## Features
+//!
+//! - **Multi-format support**: Load from TOML, JSON, and YAML files
+//! - **Environment variable overrides**: Override any config value using environment variables
+//! - **Platform-specific paths**: Automatically discover config files based on platform conventions
+//! - **Schema validation**: Validate configuration using JSON Schema
+//! - **Merge strategies**: Intelligent merging of multiple configuration sources
+//! - **Hot-reload capability**: Watch config files for changes and auto-reload
+//! - **Type-safe access**: Strongly-typed configuration access with fallbacks
+//!
+//! ## Usage
+//!
+//! ```rust
+//! use crate::config::{ConfigManager, SourcePriority as Priority};
+//!
+//! Load configuration with default settings
+//! let config: AppConfig = ConfigManager::load_with_defaults(
+//! "app".to_string(),
+//! AppConfig::default()
+//! ).await?;
+//!
+//! Load with environment overrides
+//! let config_with_env: AppConfig = ConfigManager::load_with_env_override(
+//! "app".to_string(),
+//! AppConfig::default(),
+//! &["APP_AI_PROVIDER", "APP_API_KEY"]
+//! ).await?;
+//! ```
+//!
+//! ## Configuration Sources (in priority order)
+//!
+//! 1. **Environment variables**: Highest priority, override any other setting
+//! 2. **Project config files**: `{project_root}/config/{app}.config.*`
+//! 3. **User config files**: `{user_config_dir}/rust-ai-ide/{app}.config.*`
+//! 4. **System config files**: `{system_config_dir}/rust-ai-ide/{app}.config.*`
+//! 5. **Built-in defaults**: Lowest priority, used when no other source provides a value
+//!
+//! ## Supported Formats
+//!
+//! - TOML (.toml)
+//! - JSON (.json)
+//! - YAML (.yaml or .yml)
+//! - Environment variables (prefix with `APP_` or custom prefix)
 
-This module provides a unified, type-safe configuration management system that consolidates
-all configuration handling across the Rust AI IDE codebase.
-
-## Features
-
-- **Multi-format support**: Load from TOML, JSON, and YAML files
-- **Environment variable overrides**: Override any config value using environment variables
-- **Platform-specific paths**: Automatically discover config files based on platform conventions
-- **Schema validation**: Validate configuration using JSON Schema
-- **Merge strategies**: Intelligent merging of multiple configuration sources
-- **Hot-reload capability**: Watch config files for changes and auto-reload
-- **Type-safe access**: Strongly-typed configuration access with fallbacks
-
-## Usage
-
-```rust
-use crate::config::{ConfigManager, SourcePriority as Priority};
-
-// Load configuration with default settings
-let config: AppConfig = ConfigManager::load_with_defaults(
-    "app".to_string(),
-    AppConfig::default()
-).await?;
-
-// Load with environment overrides
-let config_with_env: AppConfig = ConfigManager::load_with_env_override(
-    "app".to_string(),
-    AppConfig::default(),
-    &["APP_AI_PROVIDER", "APP_API_KEY"]
-).await?;
-```
-
-## Configuration Sources (in priority order)
-
-1. **Environment variables**: Highest priority, override any other setting
-2. **Project config files**: `{project_root}/config/{app}.config.*`
-3. **User config files**: `{user_config_dir}/rust-ai-ide/{app}.config.*`
-4. **System config files**: `{system_config_dir}/rust-ai-ide/{app}.config.*`
-5. **Built-in defaults**: Lowest priority, used when no other source provides a value
-
-## Supported Formats
-
-- TOML (.toml)
-- JSON (.json)
-- YAML (.yaml or .yml)
-- Environment variables (prefix with `APP_` or custom prefix)
-*/
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
 #[cfg(feature = "json_schema")]
 use jsonschema::JSONSchema;
 use notify::RecommendedWatcher;
-use serde::{de::DeserializeOwned, Serialize};
-use serde_json::Value;
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
-use tokio::sync::RwLock;
-
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 // Re-exports for convenience
 pub use serde_json;
-pub use serde_yaml;
-pub use toml;
+use serde_json::Value;
+use tokio::sync::RwLock;
+pub use {serde_yaml, toml};
 
 /// Configuration format types
 #[derive(Debug, Clone, Copy)]
@@ -79,46 +75,46 @@ pub enum ConfigFormat {
 /// Configuration source priority levels
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SourcePriority {
-    Default = 0,
-    System = 1,
-    User = 2,
-    Project = 3,
+    Default     = 0,
+    System      = 1,
+    User        = 2,
+    Project     = 3,
     Environment = 4,
 }
 
 /// Configuration source with associated priority
 #[derive(Debug, Clone)]
 pub struct ConfigSource<T> {
-    pub data: T,
-    pub priority: SourcePriority,
+    pub data:        T,
+    pub priority:    SourcePriority,
     pub source_path: Option<PathBuf>,
 }
 
 /// Configuration loading options
 #[derive(Debug, Clone)]
 pub struct LoadOptions {
-    pub enable_env_override: bool,
-    pub env_prefix: Option<String>,
-    pub enable_hot_reload: bool,
+    pub enable_env_override:    bool,
+    pub env_prefix:             Option<String>,
+    pub enable_hot_reload:      bool,
     pub hot_reload_debounce_ms: u64,
-    pub search_includes: Vec<String>,
-    pub search_excludes: Vec<String>,
+    pub search_includes:        Vec<String>,
+    pub search_excludes:        Vec<String>,
 }
 
 impl Default for LoadOptions {
     fn default() -> Self {
         Self {
-            enable_env_override: true,
-            env_prefix: Some("APP_".to_string()),
-            enable_hot_reload: false,
+            enable_env_override:    true,
+            env_prefix:             Some("APP_".to_string()),
+            enable_hot_reload:      false,
             hot_reload_debounce_ms: 500,
-            search_includes: vec![
+            search_includes:        vec![
                 "*.toml".to_string(),
                 "*.json".to_string(),
                 "*.yaml".to_string(),
                 "*.yml".to_string(),
             ],
-            search_excludes: vec![
+            search_excludes:        vec![
                 "target/".to_string(),
                 "node_modules/".to_string(),
                 ".git/".to_string(),
@@ -138,8 +134,8 @@ pub enum MergeStrategy {
 
 /// Configuration manager for type-safe configuration handling
 pub struct ConfigManager<T: Config> {
-    config: Arc<RwLock<ConfigSource<T>>>,
-    options: LoadOptions,
+    config:   Arc<RwLock<ConfigSource<T>>>,
+    options:  LoadOptions,
     watchers: Arc<RwLock<Vec<RecommendedWatcher>>>,
 }
 
@@ -170,21 +166,21 @@ pub trait Config: Clone + Serialize + DeserializeOwned + Send + Sync + 'static {
 
 /// Utility functions for platform-specific path discovery
 pub mod paths {
-    use super::SourcePriority;
-    use dirs_next::{config_dir, data_dir, executable_dir};
     use std::path::{Path, PathBuf};
+
+    use dirs_next::{config_dir, data_dir, executable_dir};
+
+    use super::SourcePriority;
 
     /// Get the standard user config directory for the application
     pub fn user_config_dir() -> Result<PathBuf, anyhow::Error> {
-        let base = config_dir()
-            .ok_or_else(|| anyhow::anyhow!("Unable to determine user config directory"))?;
+        let base = config_dir().ok_or_else(|| anyhow::anyhow!("Unable to determine user config directory"))?;
         Ok(base.join("rust-ai-ide"))
     }
 
     /// Get the standard user data directory for the application
     pub fn user_data_dir() -> Result<PathBuf, anyhow::Error> {
-        let base =
-            data_dir().ok_or_else(|| anyhow::anyhow!("Unable to determine user data directory"))?;
+        let base = data_dir().ok_or_else(|| anyhow::anyhow!("Unable to determine user data directory"))?;
         Ok(base.join("rust-ai-ide"))
     }
 
@@ -264,8 +260,9 @@ pub mod paths {
 
 /// Environment variable override utilities
 pub mod env_override {
-    use serde_json::Value;
     use std::env;
+
+    use serde_json::Value;
 
     /// Apply environment variable overrides to a configuration map
     pub fn apply_overrides_to_map(
@@ -289,11 +286,7 @@ pub mod env_override {
 
                     // Parse and set the value
                     if let Ok(parsed) = serde_json::from_str::<Value>(&env_value) {
-                        set_nested_value(
-                            config,
-                            &config_key.split('.').collect::<Vec<_>>(),
-                            parsed,
-                        );
+                        set_nested_value(config, &config_key.split('.').collect::<Vec<_>>(), parsed);
                     }
                 }
             }
@@ -325,10 +318,12 @@ pub mod env_override {
 
 /// File loading utilities
 pub mod file_loader {
-    use crate::config::{Config, ConfigFormat};
-    use anyhow::{Context, Result};
     use std::path::Path;
+
+    use anyhow::{Context, Result};
     use tokio::fs;
+
+    use crate::config::{Config, ConfigFormat};
 
     /// Format detection utilities
     pub mod format {
@@ -359,8 +354,8 @@ pub mod file_loader {
         let format = format::detect_format(path)?;
 
         match format {
-            ConfigFormat::Toml => toml::from_str(&content)
-                .with_context(|| format!("Failed to parse TOML config: {}", path.display())),
+            ConfigFormat::Toml =>
+                toml::from_str(&content).with_context(|| format!("Failed to parse TOML config: {}", path.display())),
             ConfigFormat::Json => serde_json::from_str(&content)
                 .with_context(|| format!("Failed to parse JSON config: {}", path.display())),
             ConfigFormat::Yaml => serde_yaml::from_str(&content)
@@ -375,9 +370,10 @@ pub mod file_loader {
 
 /// Merger utilities for combining configuration sources
 pub mod merger {
-    use crate::config::MergeStrategy;
     use anyhow::Context;
     use serde_json::Value;
+
+    use crate::config::MergeStrategy;
 
     /// Strategy implementations for merging configurations
     pub mod strategies {
@@ -388,7 +384,8 @@ pub mod merger {
             high.clone()
         }
 
-        /// Deep merge strategy: recursively merge objects, arrays, and take scalar values from high priority
+        /// Deep merge strategy: recursively merge objects, arrays, and take scalar values from high
+        /// priority
         pub fn deep_merge(high: &Value, low: &Value) -> Value {
             if high.is_null() {
                 return low.clone();
@@ -455,13 +452,11 @@ pub mod merger {
 /// Configuration validation utilities
 #[cfg(feature = "json_schema")]
 pub mod validator {
-    use super::*;
     use jsonschema::JSONSchema;
 
-    pub fn validate_schema(
-        config: &serde_json::Value,
-        schema: &serde_json::Value,
-    ) -> Result<Vec<String>> {
+    use super::*;
+
+    pub fn validate_schema(config: &serde_json::Value, schema: &serde_json::Value) -> Result<Vec<String>> {
         let compiled = JSONSchema::compile(schema)?;
         let validation = compiled.validate(config);
 
@@ -485,12 +480,12 @@ impl<T: Config> ConfigManager<T> {
     /// Create a new ConfigManager with default options
     pub fn new() -> Self {
         Self {
-            config: Arc::new(RwLock::new(ConfigSource {
-                data: T::default_config(),
-                priority: SourcePriority::Default,
+            config:   Arc::new(RwLock::new(ConfigSource {
+                data:        T::default_config(),
+                priority:    SourcePriority::Default,
                 source_path: None,
             })),
-            options: LoadOptions::default(),
+            options:  LoadOptions::default(),
             watchers: Arc::new(RwLock::new(Vec::new())),
         }
     }
@@ -499,8 +494,8 @@ impl<T: Config> ConfigManager<T> {
     pub fn with_options(options: LoadOptions) -> Self {
         Self {
             config: Arc::new(RwLock::new(ConfigSource {
-                data: T::default_config(),
-                priority: SourcePriority::Default,
+                data:        T::default_config(),
+                priority:    SourcePriority::Default,
                 source_path: None,
             })),
             options,
@@ -514,8 +509,8 @@ impl<T: Config> ConfigManager<T> {
 
         // Apply defaults
         *manager.config.write().await = ConfigSource {
-            data: defaults,
-            priority: SourcePriority::Default,
+            data:        defaults,
+            priority:    SourcePriority::Default,
             source_path: None,
         };
 
@@ -524,19 +519,15 @@ impl<T: Config> ConfigManager<T> {
     }
 
     /// Load configuration with file support
-    pub async fn load_with_files(
-        app_name: String,
-        project_root: Option<&Path>,
-        defaults: T,
-    ) -> Result<Self> {
+    pub async fn load_with_files(app_name: String, project_root: Option<&Path>, defaults: T) -> Result<Self> {
         let manager = Self::load_with_defaults(app_name.clone(), defaults).await?;
 
         // Discover and load configuration files
         let config_paths = paths::discover_config_paths(&app_name, project_root)?;
 
         let mut sources = vec![ConfigSource {
-            data: manager.get().await,
-            priority: SourcePriority::Default,
+            data:        manager.get().await,
+            priority:    SourcePriority::Default,
             source_path: None,
         }];
 
@@ -555,19 +546,18 @@ impl<T: Config> ConfigManager<T> {
         let json_sources: Vec<_> = sources
             .into_iter()
             .map(|s| ConfigSource {
-                data: serde_json::to_value(&s.data).unwrap_or(Value::Null),
-                priority: s.priority,
+                data:        serde_json::to_value(&s.data).unwrap_or(Value::Null),
+                priority:    s.priority,
                 source_path: s.source_path,
             })
             .collect();
 
-        let merged_config: T =
-            merger::merge_configurations(json_sources, MergeStrategy::DeepMerge)?;
+        let merged_config: T = merger::merge_configurations(json_sources, MergeStrategy::DeepMerge)?;
 
         // Update the manager with merged config
         *manager.config.write().await = ConfigSource {
-            data: merged_config,
-            priority: SourcePriority::Project, // Merged from multiple sources
+            data:        merged_config,
+            priority:    SourcePriority::Project, // Merged from multiple sources
             source_path: None,
         };
 
@@ -576,11 +566,7 @@ impl<T: Config> ConfigManager<T> {
     }
 
     /// Load configuration with environment variable overrides
-    pub async fn load_with_env_override(
-        app_name: String,
-        defaults: T,
-        env_vars: &[&str],
-    ) -> Result<Self> {
+    pub async fn load_with_env_override(app_name: String, defaults: T, env_vars: &[&str]) -> Result<Self> {
         let manager = Self::load_with_defaults(app_name, defaults).await?;
 
         if manager.options.enable_env_override {
@@ -597,8 +583,8 @@ impl<T: Config> ConfigManager<T> {
             // Update manager
             let current = manager.config.write().await;
             *manager.config.write().await = ConfigSource {
-                data: overridden_config,
-                priority: SourcePriority::Environment,
+                data:        overridden_config,
+                priority:    SourcePriority::Environment,
                 source_path: current.source_path.clone(),
             };
         }
@@ -728,10 +714,10 @@ mod tests {
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     struct TestConfig {
-        pub app_name: String,
-        pub port: u16,
+        pub app_name:     String,
+        pub port:         u16,
         pub database_url: String,
-        pub features: Vec<String>,
+        pub features:     Vec<String>,
     }
 
     impl Config for TestConfig {
@@ -740,10 +726,10 @@ mod tests {
 
         fn default_config() -> Self {
             Self {
-                app_name: "test_app".to_string(),
-                port: 8080,
+                app_name:     "test_app".to_string(),
+                port:         8080,
                 database_url: "sqlite:///test.db".to_string(),
-                features: vec!["basic".to_string()],
+                features:     vec!["basic".to_string()],
             }
         }
 
@@ -764,10 +750,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_config_manager_basic() {
-        let config: TestConfig =
-            ConfigManager::load_with_defaults("test".to_string(), TestConfig::default_config())
-                .await
-                .unwrap();
+        let config: TestConfig = ConfigManager::load_with_defaults("test".to_string(), TestConfig::default_config())
+            .await
+            .unwrap();
 
         assert_eq!(config.app_name, "test_app");
         assert_eq!(config.port, 8080);
@@ -782,8 +767,8 @@ mod tests {
         invalid_config.port = 0;
 
         *manager.config.write().await = ConfigSource {
-            data: invalid_config,
-            priority: SourcePriority::Default,
+            data:        invalid_config,
+            priority:    SourcePriority::Default,
             source_path: None,
         };
 
@@ -795,17 +780,15 @@ mod tests {
         std::env::set_var("TEST_PORT", "3000");
         std::env::set_var("TEST_APP_NAME", "overridden_app");
 
-        let mut manager =
-            ConfigManager::load_with_defaults("test".to_string(), TestConfig::default_config())
-                .await
-                .unwrap();
+        let mut manager = ConfigManager::load_with_defaults("test".to_string(), TestConfig::default_config())
+            .await
+            .unwrap();
 
         let mut json_config = serde_json::to_value(manager.get().await).unwrap();
-        env_override::apply_overrides_to_map(
-            &mut json_config,
-            Some("TEST_"),
-            &["TEST_PORT", "TEST_APP_NAME"],
-        )
+        env_override::apply_overrides_to_map(&mut json_config, Some("TEST_"), &[
+            "TEST_PORT",
+            "TEST_APP_NAME",
+        ])
         .unwrap();
 
         let updated_config: TestConfig = serde_json::from_value(json_config).unwrap();

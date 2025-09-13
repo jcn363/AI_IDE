@@ -3,13 +3,16 @@
 //! This module provides core traits and implementations for AI service management,
 //! including service discovery, connection pooling, and unified interfaces.
 
-use crate::command_templates::{execute_with_retry, spawn_background_task};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex, RwLock};
+use std::time::{Duration, Instant};
+
 use async_trait::async_trait;
 /// Add chrono for timestamps
 use chrono;
 use rust_ai_ide_ai_inference::{
-    AIProvider as InferenceAIProvider, AnalysisType, CodeCompletionConfig, GenerationConfig,
-    InferenceEngine, LocalInferenceEngine, ModelSize,
+    AIProvider as InferenceAIProvider, AnalysisType, CodeCompletionConfig, GenerationConfig, InferenceEngine,
+    LocalInferenceEngine, ModelSize,
 };
 use rust_ai_ide_common::validation::{validate_secure_path, TauriInputSanitizer};
 use rust_ai_ide_errors::{IDEError, IDEResult};
@@ -17,10 +20,9 @@ use rust_ai_ide_lsp::{AIContext, Completion, LSPClient, LSPClientConfig};
 use rust_ai_ide_security::audit_logger;
 use rust_ai_ide_security::encryption::{EncryptionManager, GLOBAL_ENCRYPTION_MANAGER};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex, RwLock};
-use std::time::{Duration, Instant};
 use tokio::sync::{oneshot, RwLock as TokioRwLock, Semaphore};
+
+use crate::command_templates::{execute_with_retry, spawn_background_task};
 
 /// Add logging capability
 #[macro_use]
@@ -29,9 +31,9 @@ extern crate log;
 /// Core AI Service with LSP integration
 #[derive(Clone)]
 pub struct AIService {
-    lsp_client: Arc<RwLock<Option<LSPClient>>>,
-    initialized: Arc<RwLock<bool>>,
-    provider_config: Arc<RwLock<Option<AIProvider>>>,
+    lsp_client:         Arc<RwLock<Option<LSPClient>>>,
+    initialized:        Arc<RwLock<bool>>,
+    provider_config:    Arc<RwLock<Option<AIProvider>>>,
     encryption_manager: Arc<EncryptionManager>,
 }
 
@@ -39,18 +41,19 @@ impl AIService {
     /// Create a new AI service instance
     pub fn new() -> Self {
         Self {
-            lsp_client: Arc::new(RwLock::new(None)),
-            initialized: Arc::new(RwLock::new(false)),
-            provider_config: Arc::new(RwLock::new(None)),
+            lsp_client:         Arc::new(RwLock::new(None)),
+            initialized:        Arc::new(RwLock::new(false)),
+            provider_config:    Arc::new(RwLock::new(None)),
             encryption_manager: GLOBAL_ENCRYPTION_MANAGER.clone(),
         }
     }
 
     /// Initialize the AI service with LSP integration
     pub async fn initialize(&self, provider: AIProvider) -> IDEResult<()> {
-        let mut initialized = self.initialized.write().map_err(|e| {
-            IDEError::AIService(format!("Failed to acquire initialization lock: {}", e))
-        })?;
+        let mut initialized = self
+            .initialized
+            .write()
+            .map_err(|e| IDEError::AIService(format!("Failed to acquire initialization lock: {}", e)))?;
 
         if *initialized {
             return Ok(());
@@ -77,9 +80,10 @@ impl AIService {
             .map_err(|e| IDEError::AIService(format!("Failed to acquire config lock: {}", e)))?;
         *config = Some(provider);
 
-        let mut client_lock = self.lsp_client.write().map_err(|e| {
-            IDEError::AIService(format!("Failed to acquire LSP client lock: {}", e))
-        })?;
+        let mut client_lock = self
+            .lsp_client
+            .write()
+            .map_err(|e| IDEError::AIService(format!("Failed to acquire LSP client lock: {}", e)))?;
         *client_lock = Some(lsp_client);
 
         *initialized = true;
@@ -170,14 +174,16 @@ impl AIService {
 
     /// Shutdown the service
     pub async fn shutdown(&self) -> IDEResult<()> {
-        let mut initialized = self.initialized.write().map_err(|e| {
-            IDEError::AIService(format!("Failed to acquire initialization lock: {}", e))
-        })?;
+        let mut initialized = self
+            .initialized
+            .write()
+            .map_err(|e| IDEError::AIService(format!("Failed to acquire initialization lock: {}", e)))?;
         *initialized = false;
 
-        let mut client_lock = self.lsp_client.write().map_err(|e| {
-            IDEError::AIService(format!("Failed to acquire LSP client lock: {}", e))
-        })?;
+        let mut client_lock = self
+            .lsp_client
+            .write()
+            .map_err(|e| IDEError::AIService(format!("Failed to acquire LSP client lock: {}", e)))?;
         *client_lock = None;
 
         audit_logger::log_event(
@@ -220,11 +226,11 @@ pub enum AIProvider {
     },
     GenericAPI {
         /// Base URL for the API endpoint
-        base_url: String,
+        base_url:   String,
         /// Encrypted API key identifier
         api_key_id: String,
         /// Model identifier for the API
-        model: String,
+        model:      String,
     },
 }
 
@@ -278,12 +284,11 @@ impl AIProvider {
         let key_id = match self {
             AIProvider::Claude { api_key_id } => api_key_id,
             AIProvider::GenericAPI { api_key_id, .. } => api_key_id,
-            _ => {
+            _ =>
                 return Err(IDEError::Validation(format!(
                     "Provider {} does not have API key",
                     self.provider_name()
-                )))
-            }
+                ))),
         };
 
         // In a real implementation, retrieve encrypted_key from secure storage using key_id
@@ -296,8 +301,7 @@ impl AIProvider {
             .await
             .map_err(|e| IDEError::Security(format!("Failed to decrypt API key: {}", e)))?;
 
-        String::from_utf8(decrypted_key)
-            .map_err(|e| IDEError::Security(format!("Invalid decrypted API key: {}", e)))
+        String::from_utf8(decrypted_key).map_err(|e| IDEError::Security(format!("Invalid decrypted API key: {}", e)))
     }
 
     /// Get provider name for logging
@@ -326,8 +330,8 @@ pub trait AIServiceTrait: Send + Sync {
 
 /// Wrapper for AIService to implement AIServiceTrait with enhanced functionality
 pub struct WrappedAIService {
-    service: Arc<AIService>,
-    provider: AIProvider,
+    service:          Arc<AIService>,
+    provider:         AIProvider,
     inference_engine: Arc<TokioRwLock<Option<Arc<Mutex<dyn InferenceEngine + Send + Sync>>>>>,
     background_tasks: Arc<TokioRwLock<Vec<String>>>,
 }
@@ -369,9 +373,11 @@ impl WrappedAIService {
             "ai_service_init",
         );
 
-        let mut tasks = self.background_tasks.write().await.map_err(|e| {
-            IDEError::AIService(format!("Failed to acquire background tasks lock: {}", e))
-        })?;
+        let mut tasks = self
+            .background_tasks
+            .write()
+            .await
+            .map_err(|e| IDEError::AIService(format!("Failed to acquire background tasks lock: {}", e)))?;
         tasks.push(task_id);
 
         Ok(())
@@ -380,9 +386,11 @@ impl WrappedAIService {
     /// Cleanup background tasks on drop
     pub async fn cleanup(&self) -> IDEResult<()> {
         let tasks: Vec<String> = {
-            let mut tasks_lock = self.background_tasks.write().await.map_err(|e| {
-                IDEError::AIService(format!("Failed to acquire background tasks lock: {}", e))
-            })?;
+            let mut tasks_lock = self
+                .background_tasks
+                .write()
+                .await
+                .map_err(|e| IDEError::AIService(format!("Failed to acquire background tasks lock: {}", e)))?;
             tasks_lock.drain(..).collect()
         };
 
@@ -395,9 +403,7 @@ impl WrappedAIService {
     }
 
     /// Create inference engine based on provider configuration
-    async fn create_inference_engine(
-        &self,
-    ) -> Result<Arc<Mutex<dyn InferenceEngine + Send + Sync>>, String> {
+    async fn create_inference_engine(&self) -> Result<Arc<Mutex<dyn InferenceEngine + Send + Sync>>, String> {
         match &self.provider {
             AIProvider::OpenAI => {
                 // Create OpenAI inference engine
@@ -457,9 +463,7 @@ impl WrappedAIService {
     }
 
     /// Get or create inference engine
-    async fn get_inference_engine(
-        &mut self,
-    ) -> Result<Arc<Mutex<dyn InferenceEngine + Send + Sync>>, String> {
+    async fn get_inference_engine(&mut self) -> Result<Arc<Mutex<dyn InferenceEngine + Send + Sync>>, String> {
         if let Some(engine) = &self.inference_engine {
             return Ok(engine.clone());
         }
@@ -511,19 +515,16 @@ impl AIServiceTrait for WrappedAIService {
                         // Fallback to inference engine
                         let engine_lock = self.inference_engine.read().await;
                         if let Some(engine) = engine_lock.as_ref() {
-                            let mut engine = engine.lock().map_err(|e| {
-                                IDEError::AIService(format!(
-                                    "Failed to lock inference engine: {}",
-                                    e
-                                ))
-                            })?;
+                            let mut engine = engine
+                                .lock()
+                                .map_err(|e| IDEError::AIService(format!("Failed to lock inference engine: {}", e)))?;
 
                             let config = CodeCompletionConfig {
-                                max_length: 100,
-                                context_lines: 5,
-                                use_fim: matches!(self.provider, AIProvider::StarCoderRust { .. }),
-                                indentation: "    ".to_string(),
-                                use_context_digest: true,
+                                max_length:           100,
+                                context_lines:        5,
+                                use_fim:              matches!(self.provider, AIProvider::StarCoderRust { .. }),
+                                indentation:          "    ".to_string(),
+                                use_context_digest:   true,
                                 return_full_function: false,
                             };
 
@@ -562,9 +563,7 @@ impl AIServiceTrait for WrappedAIService {
                                 "inference engine completion",
                             )
                             .await
-                            .map_err(|e| {
-                                IDEError::AIService(format!("Inference engine error: {:?}", e))
-                            })?;
+                            .map_err(|e| IDEError::AIService(format!("Inference engine error: {:?}", e)))?;
 
                             let completion = Completion {
                                 label: result.completion.clone(),
@@ -572,9 +571,7 @@ impl AIServiceTrait for WrappedAIService {
                                 documentation: None,
                                 kind: Some(rust_ai_ide_lsp::CompletionItemKind::Function),
                                 insert_text: Some(result.completion),
-                                insert_text_format: Some(
-                                    rust_ai_ide_lsp::InsertTextFormat::PlainText,
-                                ),
+                                insert_text_format: Some(rust_ai_ide_lsp::InsertTextFormat::PlainText),
                                 ..Default::default()
                             };
 
@@ -618,19 +615,19 @@ impl AIServiceTrait for WrappedAIService {
                 // Use inference engine with retry logic
                 let engine_lock = self.inference_engine.read().await;
                 if let Some(engine) = engine_lock.as_ref() {
-                    let mut engine = engine.lock().map_err(|e| {
-                        IDEError::AIService(format!("Failed to lock inference engine: {}", e))
-                    })?;
+                    let mut engine = engine
+                        .lock()
+                        .map_err(|e| IDEError::AIService(format!("Failed to lock inference engine: {}", e)))?;
 
                     let config = GenerationConfig {
-                        max_tokens: 500,
-                        temperature: 0.7,
-                        top_p: 0.9,
+                        max_tokens:        500,
+                        temperature:       0.7,
+                        top_p:             0.9,
                         frequency_penalty: 0.0,
-                        presence_penalty: 0.0,
-                        stop_sequences: vec![],
-                        echo: false,
-                        stream: false,
+                        presence_penalty:  0.0,
+                        stop_sequences:    vec![],
+                        echo:              false,
+                        stream:            false,
                     };
 
                     let prompt = format!("{}\n\nTask: {}", context.current_code, sanitized_task);
@@ -665,10 +662,10 @@ impl AIServiceTrait for WrappedAIService {
                 let lsp_healthy = match self
                     .service
                     .get_completions_lsp(&AIContext {
-                        current_code: "test".to_string(),
-                        file_name: None,
+                        current_code:    "test".to_string(),
+                        file_name:       None,
                         cursor_position: Some((0, 0)),
-                        selection: None,
+                        selection:       None,
                         project_context: HashMap::new(),
                     })
                     .await
@@ -734,17 +731,17 @@ impl Drop for WrappedAIService {
 /// Configuration for a pooled service
 #[derive(Clone, Debug)]
 pub struct PooledServiceConfig {
-    pub provider: AIProvider,
-    pub max_connections: usize,
+    pub provider:           AIProvider,
+    pub max_connections:    usize,
     pub connection_timeout: Duration,
-    pub idle_timeout: Duration,
+    pub idle_timeout:       Duration,
 }
 
 /// Connection pool entry
 pub struct PooledConnection<T> {
-    service: Arc<T>,
+    service:   Arc<T>,
     last_used: Instant,
-    in_use: bool,
+    in_use:    bool,
 }
 
 impl<T> PooledConnection<T> {
@@ -763,9 +760,9 @@ impl<T> PooledConnection<T> {
 
 /// Generic connection pool for any AI service
 pub struct ConnectionPool<T: Send + Sync> {
-    config: PooledServiceConfig,
+    config:      PooledServiceConfig,
     connections: Mutex<Vec<PooledConnection<T>>>,
-    semaphore: Semaphore,
+    semaphore:   Semaphore,
 }
 
 impl<T: Send + Sync> ConnectionPool<T> {
@@ -784,12 +781,15 @@ impl<T: Send + Sync> ConnectionPool<T> {
 
     /// Acquire a service connection from the pool
     pub async fn acquire(&self) -> IDEResult<PoolGuard<T>> {
-        let permit = self.semaphore.acquire().await.map_err(|e| {
-            IDEError::AIService(format!("Failed to acquire semaphore permit: {}", e))
-        })?;
-        let mut connections = self.connections.lock().map_err(|e| {
-            IDEError::AIService(format!("Failed to acquire connections lock: {}", e))
-        })?;
+        let permit = self
+            .semaphore
+            .acquire()
+            .await
+            .map_err(|e| IDEError::AIService(format!("Failed to acquire semaphore permit: {}", e)))?;
+        let mut connections = self
+            .connections
+            .lock()
+            .map_err(|e| IDEError::AIService(format!("Failed to acquire connections lock: {}", e)))?;
 
         // Find an available connection
         for conn in connections.iter_mut() {
@@ -798,8 +798,8 @@ impl<T: Send + Sync> ConnectionPool<T> {
                 conn.last_used = Instant::now();
                 return Ok(PoolGuard {
                     connection: conn.service.clone(),
-                    _permit: permit,
-                    pool: self,
+                    _permit:    permit,
+                    pool:       self,
                 });
             }
         }
@@ -829,18 +829,20 @@ impl<T: Send + Sync> ConnectionPool<T> {
 
     /// Add a new service to the pool
     pub fn add_service(&self, service: Arc<T>) -> IDEResult<()> {
-        let mut connections = self.connections.lock().map_err(|e| {
-            IDEError::AIService(format!("Failed to acquire connections lock: {}", e))
-        })?;
+        let mut connections = self
+            .connections
+            .lock()
+            .map_err(|e| IDEError::AIService(format!("Failed to acquire connections lock: {}", e)))?;
         connections.push(PooledConnection::new(service));
         Ok(())
     }
 
     /// Get pool status
     pub fn status(&self) -> IDEResult<PoolStatus> {
-        let connections = self.connections.lock().map_err(|e| {
-            IDEError::AIService(format!("Failed to acquire connections lock: {}", e))
-        })?;
+        let connections = self
+            .connections
+            .lock()
+            .map_err(|e| IDEError::AIService(format!("Failed to acquire connections lock: {}", e)))?;
         let total = connections.len();
         let in_use = connections.iter().filter(|c| c.in_use).count();
         let available = total - in_use;
@@ -856,8 +858,8 @@ impl<T: Send + Sync> ConnectionPool<T> {
 /// Guard for pooled connections
 pub struct PoolGuard<'a, T: Send + Sync> {
     connection: Arc<T>,
-    _permit: tokio::sync::SemaphorePermit<'a>,
-    pool: &'a ConnectionPool<T>,
+    _permit:    tokio::sync::SemaphorePermit<'a>,
+    pool:       &'a ConnectionPool<T>,
 }
 
 impl<'a, T: Send + Sync> std::ops::Deref for PoolGuard<'a, T> {
@@ -877,22 +879,22 @@ impl<'a, T: Send + Sync> Drop for PoolGuard<'a, T> {
 /// Pool status information
 #[derive(Debug, Clone)]
 pub struct PoolStatus {
-    pub total: usize,
+    pub total:     usize,
     pub available: usize,
-    pub in_use: usize,
+    pub in_use:    usize,
 }
 
 /// AI Service Registry for service discovery and management
 pub struct AIServiceRegistry {
     services: Mutex<HashMap<String, Arc<WrappedAIService>>>,
-    pools: Mutex<HashMap<String, Arc<ConnectionPool<WrappedAIService>>>>,
+    pools:    Mutex<HashMap<String, Arc<ConnectionPool<WrappedAIService>>>>,
 }
 
 impl AIServiceRegistry {
     pub fn new() -> Self {
         Self {
             services: Mutex::new(HashMap::new()),
-            pools: Mutex::new(HashMap::new()),
+            pools:    Mutex::new(HashMap::new()),
         }
     }
 
@@ -929,8 +931,7 @@ impl AIServiceRegistry {
         config: PooledServiceConfig,
         initial_services: Vec<WrappedAIService>,
     ) -> IDEResult<()> {
-        let services: Vec<Arc<WrappedAIService>> =
-            initial_services.into_iter().map(Arc::new).collect();
+        let services: Vec<Arc<WrappedAIService>> = initial_services.into_iter().map(Arc::new).collect();
         let pool = Arc::new(ConnectionPool::new(config, services));
 
         let mut pools = self
@@ -1024,9 +1025,9 @@ impl AIServiceRegistry {
             .map_err(|e| IDEError::AIService(format!("Failed to acquire pools lock: {}", e)))?;
 
         for (name, pool) in pools.iter() {
-            let pool_status = pool.status().map_err(|e| {
-                IDEError::AIService(format!("Failed to get pool status for {}: {}", name, e))
-            })?;
+            let pool_status = pool
+                .status()
+                .map_err(|e| IDEError::AIService(format!("Failed to get pool status for {}: {}", name, e)))?;
             let is_healthy = pool_status.available > 0;
             status.insert(name.clone(), is_healthy);
         }

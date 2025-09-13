@@ -4,32 +4,33 @@
 //! systems for coordinating development across infinite parallel universes,
 //! quantum states, and consciousness dimensions.
 
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::sync::Arc;
+
 use chrono::{DateTime, Utc};
 use ndarray::{Array2, Array3};
 use petgraph::Graph;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
 /// Hyper-dimensional project management system
 pub struct MetaUniverseOrchestrator {
-    pub dimension_graph: Arc<RwLock<DimensionGraph>>,
+    pub dimension_graph:         Arc<RwLock<DimensionGraph>>,
     pub quantum_workflow_engine: Arc<RwLock<QuantumWorkflowEngine>>,
-    pub multiverse_coordinator: Arc<RwLock<MultiverseCoordinator>>,
-    pub predictive_analytics: Arc<RwLock<PredictiveAnalyticsEngine>>,
-    pub event_processor: Arc<RwLock<EventProcessor>>,
+    pub multiverse_coordinator:  Arc<RwLock<MultiverseCoordinator>>,
+    pub predictive_analytics:    Arc<RwLock<PredictiveAnalyticsEngine>>,
+    pub event_processor:         Arc<RwLock<EventProcessor>>,
 }
 
 impl MetaUniverseOrchestrator {
     pub async fn new() -> Self {
         Self {
-            dimension_graph: Arc::new(RwLock::new(DimensionGraph::new())),
+            dimension_graph:         Arc::new(RwLock::new(DimensionGraph::new())),
             quantum_workflow_engine: Arc::new(RwLock::new(QuantumWorkflowEngine::new())),
-            multiverse_coordinator: Arc::new(RwLock::new(MultiverseCoordinator::new())),
-            predictive_analytics: Arc::new(RwLock::new(PredictiveAnalyticsEngine::new())),
-            event_processor: Arc::new(RwLock::new(EventProcessor::new())),
+            multiverse_coordinator:  Arc::new(RwLock::new(MultiverseCoordinator::new())),
+            predictive_analytics:    Arc::new(RwLock::new(PredictiveAnalyticsEngine::new())),
+            event_processor:         Arc::new(RwLock::new(EventProcessor::new())),
         }
     }
 
@@ -60,10 +61,7 @@ impl MetaUniverseOrchestrator {
         })
     }
 
-    async fn initialize_quantum_project(
-        &self,
-        project: &HyperdimensionalProject,
-    ) -> Result<Uuid, MetaUniverseError> {
+    async fn initialize_quantum_project(&self, project: &HyperdimensionalProject) -> Result<Uuid, MetaUniverseError> {
         let project_id = Uuid::new_v4();
 
         // Initialize dimension graph for project
@@ -102,10 +100,7 @@ impl MetaUniverseOrchestrator {
         Ok(())
     }
 
-    async fn establish_quantum_entanglement(
-        &self,
-        project_id: Uuid,
-    ) -> Result<(), MetaUniverseError> {
+    async fn establish_quantum_entanglement(&self, project_id: Uuid) -> Result<(), MetaUniverseError> {
         let coordinator = self.multiverse_coordinator.read().await;
         coordinator.create_entanglement_network(project_id).await?;
         log::debug!(
@@ -115,10 +110,7 @@ impl MetaUniverseOrchestrator {
         Ok(())
     }
 
-    async fn initialize_predictive_monitoring(
-        &self,
-        project_id: Uuid,
-    ) -> Result<(), MetaUniverseError> {
+    async fn initialize_predictive_monitoring(&self, project_id: Uuid) -> Result<(), MetaUniverseError> {
         let analytics = self.predictive_analytics.read().await;
         analytics.start_monitoring(project_id).await?;
         log::debug!("Started predictive monitoring for project {}", project_id);
@@ -139,12 +131,12 @@ pub struct HyperdimensionalProject {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Dimension {
-    pub id: Uuid,
-    pub name: String,
-    pub dimensionality: usize,
-    pub quantum_signature: Vec<f32>,
+    pub id:                  Uuid,
+    pub name:                String,
+    pub dimensionality:      usize,
+    pub quantum_signature:   Vec<f32>,
     pub consciousness_level: f32,
-    pub reality_type: RealityType,
+    pub reality_type:        RealityType,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -170,35 +162,35 @@ pub struct HyperTask {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QuantumConstraint {
-    pub constraint_type: String,
-    pub dimensional_limits: HashMap<String, f32>,
+    pub constraint_type:           String,
+    pub dimensional_limits:        HashMap<String, f32>,
     pub entanglement_requirements: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ConsciousnessRequirement {
-    pub capability: String,
-    pub minimum_level: f32,
+    pub capability:      String,
+    pub minimum_level:   f32,
     pub training_method: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OrchestrationResult {
-    pub project_id: Uuid,
-    pub dimensional_coordinates: Vec<Dimension>,
+    pub project_id:                    Uuid,
+    pub dimensional_coordinates:       Vec<Dimension>,
     pub quantum_entanglement_strength: f32,
 }
 
 /// Dimension graph for hyper-dimensional coordination
 pub struct DimensionGraph {
-    pub graph: Graph<Dimension, DimensionEdge>,
+    pub graph:                   Graph<Dimension, DimensionEdge>,
     pub dimensional_coordinates: HashMap<Uuid, Vec<f64>>, // n-dimensional coordinates
 }
 
 impl DimensionGraph {
     pub fn new() -> Self {
         Self {
-            graph: Graph::new(),
+            graph:                   Graph::new(),
             dimensional_coordinates: HashMap::new(),
         }
     }
@@ -249,21 +241,21 @@ impl DimensionGraph {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DimensionEdge {
     pub entanglement_strength: f32,
-    pub coherence_level: f32,
-    pub reality_bridge_type: String,
+    pub coherence_level:       f32,
+    pub reality_bridge_type:   String,
 }
 
 /// Quantum workflow engine for task orchestration
 pub struct QuantumWorkflowEngine {
     pub active_workflows: HashMap<Uuid, QuantumWorkflow>,
-    pub workflow_graph: Graph<WorkflowNode, WorkflowEdge>,
+    pub workflow_graph:   Graph<WorkflowNode, WorkflowEdge>,
 }
 
 impl QuantumWorkflowEngine {
     pub fn new() -> Self {
         Self {
             active_workflows: HashMap::new(),
-            workflow_graph: Graph::new(),
+            workflow_graph:   Graph::new(),
         }
     }
 
@@ -300,10 +292,7 @@ impl QuantumWorkflowEngine {
         Ok(())
     }
 
-    async fn execute_quantum_parallel(
-        &self,
-        workflow: &mut QuantumWorkflow,
-    ) -> Result<(), MetaUniverseError> {
+    async fn execute_quantum_parallel(&self, workflow: &mut QuantumWorkflow) -> Result<(), MetaUniverseError> {
         // Implement quantum parallel execution
         let futures = workflow.tasks.iter().map(|task| {
             async move {
@@ -342,29 +331,29 @@ pub enum ExecutionState {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WorkflowNode {
-    pub task_id: Uuid,
+    pub task_id:            Uuid,
     pub dimension_assigned: Option<String>,
-    pub quantum_state: Vec<f32>,
+    pub quantum_state:      Vec<f32>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WorkflowEdge {
     pub dependency_strength: f32,
-    pub quantum_coupling: f32,
+    pub quantum_coupling:    f32,
 }
 
 /// Multi-verse coordinator for reality-spanning operations
 pub struct MultiverseCoordinator {
-    pub reality_nodes: HashMap<Uuid, RealityNode>,
-    pub entanglement_network: HashMap<Uuid, Vec<Uuid>>,
+    pub reality_nodes:              HashMap<Uuid, RealityNode>,
+    pub entanglement_network:       HashMap<Uuid, Vec<Uuid>>,
     pub cross_reality_communicator: CrossRealityCommunicator,
 }
 
 impl MultiverseCoordinator {
     pub fn new() -> Self {
         Self {
-            reality_nodes: HashMap::new(),
-            entanglement_network: HashMap::new(),
+            reality_nodes:              HashMap::new(),
+            entanglement_network:       HashMap::new(),
             cross_reality_communicator: CrossRealityCommunicator::new(),
         }
     }
@@ -391,10 +380,7 @@ impl MultiverseCoordinator {
         Ok(())
     }
 
-    pub async fn create_entanglement_network(
-        &self,
-        project_id: Uuid,
-    ) -> Result<(), MetaUniverseError> {
+    pub async fn create_entanglement_network(&self, project_id: Uuid) -> Result<(), MetaUniverseError> {
         // Create quantum entanglement network
         self.entanglement_network.insert(project_id, vec![]);
         log::debug!("Created entanglement network for project {}", project_id);
@@ -410,11 +396,11 @@ impl MultiverseCoordinator {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RealityNode {
-    pub id: Uuid,
-    pub project_id: Uuid,
-    pub dimension_id: Uuid,
-    pub dimension_index: usize,
-    pub quantum_state: Vec<f32>,
+    pub id:                  Uuid,
+    pub project_id:          Uuid,
+    pub dimension_id:        Uuid,
+    pub dimension_index:     usize,
+    pub quantum_state:       Vec<f32>,
     pub consciousness_level: f32,
 }
 
@@ -430,11 +416,7 @@ impl CrossRealityCommunicator {
         }
     }
 
-    pub async fn send_message(
-        &self,
-        _target_reality: Uuid,
-        _message: String,
-    ) -> Result<(), MetaUniverseError> {
+    pub async fn send_message(&self, _target_reality: Uuid, _message: String) -> Result<(), MetaUniverseError> {
         // Implement cross-reality communication
         Ok(())
     }
@@ -442,23 +424,23 @@ impl CrossRealityCommunicator {
 
 #[derive(Clone, Debug)]
 pub struct CommunicationChannel {
-    pub channel_id: Uuid,
-    pub protocol: String,
+    pub channel_id:       Uuid,
+    pub protocol:         String,
     pub encryption_level: String,
 }
 
 /// Predictive analytics for project evolution
 pub struct PredictiveAnalyticsEngine {
-    pub prediction_models: HashMap<String, PredictionModel>,
-    pub time_series_data: VecDeque<TimeSeriesPoint>,
+    pub prediction_models:         HashMap<String, PredictionModel>,
+    pub time_series_data:          VecDeque<TimeSeriesPoint>,
     pub quantum_prediction_engine: QuantumPredictionEngine,
 }
 
 impl PredictiveAnalyticsEngine {
     pub fn new() -> Self {
         Self {
-            prediction_models: HashMap::new(),
-            time_series_data: VecDeque::with_capacity(1000),
+            prediction_models:         HashMap::new(),
+            time_series_data:          VecDeque::with_capacity(1000),
             quantum_prediction_engine: QuantumPredictionEngine::new(),
         }
     }
@@ -475,25 +457,25 @@ impl PredictiveAnalyticsEngine {
     ) -> Result<PredictionResult, MetaUniverseError> {
         // Generate quantum-powered predictions
         Ok(PredictionResult {
-            predicted_completion: Utc::now() + chrono::Duration::days(30),
-            risk_factors: vec!["quantum decoherence".to_string()],
+            predicted_completion:     Utc::now() + chrono::Duration::days(30),
+            risk_factors:             vec!["quantum decoherence".to_string()],
             optimization_suggestions: vec!["increase entanglement".to_string()],
-            confidence_level: 0.87,
+            confidence_level:         0.87,
         })
     }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PredictionModel {
-    pub model_type: String,
-    pub parameters: HashMap<String, f32>,
+    pub model_type:       String,
+    pub parameters:       HashMap<String, f32>,
     pub accuracy_history: Vec<f32>,
 }
 
 #[derive(Clone, Debug)]
 pub struct TimeSeriesPoint {
     pub timestamp: DateTime<Utc>,
-    pub metrics: HashMap<String, f32>,
+    pub metrics:   HashMap<String, f32>,
 }
 
 #[derive(Clone, Debug)]
@@ -507,29 +489,29 @@ impl QuantumPredictionEngine {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PredictionResult {
-    pub predicted_completion: DateTime<Utc>,
-    pub risk_factors: Vec<String>,
+    pub predicted_completion:     DateTime<Utc>,
+    pub risk_factors:             Vec<String>,
     pub optimization_suggestions: Vec<String>,
-    pub confidence_level: f32,
+    pub confidence_level:         f32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CommunicationChannel {
-    pub channel_id: Uuid,
-    pub protocol: String,
+    pub channel_id:       Uuid,
+    pub protocol:         String,
     pub encryption_level: String,
 }
 
 #[derive(Clone, Debug)]
 pub struct EventProcessor {
-    pub event_queue: VecDeque<UniverseEvent>,
+    pub event_queue:    VecDeque<UniverseEvent>,
     pub event_handlers: HashMap<String, Box<dyn Fn(UniverseEvent) + Send + Sync>>,
 }
 
 impl EventProcessor {
     pub fn new() -> Self {
         Self {
-            event_queue: VecDeque::new(),
+            event_queue:    VecDeque::new(),
             event_handlers: HashMap::new(),
         }
     }
@@ -546,19 +528,19 @@ impl EventProcessor {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UniverseEvent {
-    pub event_id: Uuid,
-    pub event_type: String,
-    pub event_data: serde_json::Value,
-    pub timestamp: DateTime<Utc>,
-    pub source_reality: Uuid,
+    pub event_id:         Uuid,
+    pub event_type:       String,
+    pub event_data:       serde_json::Value,
+    pub timestamp:        DateTime<Utc>,
+    pub source_reality:   Uuid,
     pub target_realities: Vec<Uuid>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ProjectState {
-    pub progress: f32,
-    pub dimensional_alignment: f32,
-    pub quantum_coherence: f32,
+    pub progress:                  f32,
+    pub dimensional_alignment:     f32,
+    pub quantum_coherence:         f32,
     pub consciousness_development: f32,
 }
 
@@ -601,12 +583,12 @@ mod tests {
         let project = HyperdimensionalProject {
             project_name: "Quantum IDE".to_string(),
             dimensions: vec![Dimension {
-                id: Uuid::new_v4(),
-                name: "Physical".to_string(),
-                dimensionality: 3,
-                quantum_signature: vec![1.0, 0.0, 0.0],
+                id:                  Uuid::new_v4(),
+                name:                "Physical".to_string(),
+                dimensionality:      3,
+                quantum_signature:   vec![1.0, 0.0, 0.0],
                 consciousness_level: 0.8,
-                reality_type: RealityType::Physical,
+                reality_type:        RealityType::Physical,
             }],
             tasks: vec![],
             quantum_constraints: vec![],
@@ -620,12 +602,12 @@ mod tests {
     async fn test_dimension_graph_operations() {
         let mut graph = DimensionGraph::new();
         let dimension = Dimension {
-            id: Uuid::new_v4(),
-            name: "Test Dimension".to_string(),
-            dimensionality: 4,
-            quantum_signature: vec![0.5, 0.5, 0.5, 0.5],
+            id:                  Uuid::new_v4(),
+            name:                "Test Dimension".to_string(),
+            dimensionality:      4,
+            quantum_signature:   vec![0.5, 0.5, 0.5, 0.5],
             consciousness_level: 0.9,
-            reality_type: RealityType::Quantum,
+            reality_type:        RealityType::Quantum,
         };
 
         graph.add_dimension(dimension).unwrap();
@@ -661,9 +643,9 @@ mod tests {
         analytics.start_monitoring(project_id).await.unwrap();
 
         let state = ProjectState {
-            progress: 0.5,
-            dimensional_alignment: 0.8,
-            quantum_coherence: 0.9,
+            progress:                  0.5,
+            dimensional_alignment:     0.8,
+            quantum_coherence:         0.9,
             consciousness_development: 0.7,
         };
 

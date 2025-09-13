@@ -34,9 +34,9 @@
 
 // Re-export shared types for convenience
 pub use rust_ai_ide_shared_codegen::generator::{
-    CodeGenerationContext, CodeGenerationContextBuilder, CodeGenerationError, CodePattern,
-    CodingStandards, Dependency, GenerationQuality, GenerationScope, PerformanceReqs,
-    ProjectContext, QualityIssue, QualityRequirements, TargetLanguage, UserPreferences,
+    CodeGenerationContext, CodeGenerationContextBuilder, CodeGenerationError, CodePattern, CodingStandards, Dependency,
+    GenerationQuality, GenerationScope, PerformanceReqs, ProjectContext, QualityIssue, QualityRequirements,
+    TargetLanguage, UserPreferences,
 };
 
 // Core submodules

@@ -3,11 +3,12 @@
 //! This crate provides comprehensive performance monitoring with real-time metrics,
 //! cross-platform support, and integration with the EventBus for distributed events.
 
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
+
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use sysinfo::{CpuExt, ProcessExt, System, SystemExt};
 use tokio::sync::{Mutex, RwLock};
 use tokio::time;
@@ -25,52 +26,52 @@ pub use processing::*;
 /// Performance metrics collection
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemMetrics {
-    pub cpu_usage_percent: f64,
-    pub memory_used_mb: f64,
-    pub memory_total_mb: f64,
+    pub cpu_usage_percent:    f64,
+    pub memory_used_mb:       f64,
+    pub memory_total_mb:      f64,
     pub memory_usage_percent: f64,
-    pub disk_read_mb: f64,
-    pub disk_write_mb: f64,
-    pub network_rx_mb: f64,
-    pub network_tx_mb: f64,
-    pub process_count: usize,
-    pub temperature_celsius: Option<f64>,
-    pub uptime_seconds: u64,
-    pub timestamp: DateTime<Utc>,
+    pub disk_read_mb:         f64,
+    pub disk_write_mb:        f64,
+    pub network_rx_mb:        f64,
+    pub network_tx_mb:        f64,
+    pub process_count:        usize,
+    pub temperature_celsius:  Option<f64>,
+    pub uptime_seconds:       u64,
+    pub timestamp:            DateTime<Utc>,
 }
 
 /// Process-specific metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProcessMetrics {
-    pub pid: u32,
-    pub name: String,
-    pub cpu_usage_percent: f64,
-    pub memory_used_mb: f64,
-    pub disk_read_mb: f64,
-    pub disk_write_mb: f64,
-    pub virtual_memory_mb: f64,
+    pub pid:                u32,
+    pub name:               String,
+    pub cpu_usage_percent:  f64,
+    pub memory_used_mb:     f64,
+    pub disk_read_mb:       f64,
+    pub disk_write_mb:      f64,
+    pub virtual_memory_mb:  f64,
     pub resident_memory_mb: f64,
-    pub thread_count: usize,
-    pub uptime_seconds: u64,
+    pub thread_count:       usize,
+    pub uptime_seconds:     u64,
 }
 
 /// Performance alert thresholds
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceThresholds {
-    pub high_cpu_threshold: f64,
-    pub high_memory_threshold: f64,
-    pub low_disk_space_threshold: f64,
+    pub high_cpu_threshold:        f64,
+    pub high_memory_threshold:     f64,
+    pub low_disk_space_threshold:  f64,
     pub network_anomaly_threshold: f64,
 }
 
 /// Unified Performance Monitor
 #[derive(Debug)]
 pub struct PerformanceMonitor {
-    system: Arc<RwLock<System>>,
-    thresholds: PerformanceThresholds,
-    history: Arc<RwLock<Vec<(DateTime<Utc>, SystemMetrics)>>>,
-    process_metrics: Arc<RwLock<HashMap<u32, ProcessMetrics>>>,
-    last_collection: Arc<RwLock<Instant>>,
+    system:              Arc<RwLock<System>>,
+    thresholds:          PerformanceThresholds,
+    history:             Arc<RwLock<Vec<(DateTime<Utc>, SystemMetrics)>>>,
+    process_metrics:     Arc<RwLock<HashMap<u32, ProcessMetrics>>>,
+    last_collection:     Arc<RwLock<Instant>>,
     collection_interval: Duration,
 }
 
@@ -78,9 +79,9 @@ impl PerformanceMonitor {
     /// Create a new performance monitor with default thresholds
     pub fn new() -> Self {
         let thresholds = PerformanceThresholds {
-            high_cpu_threshold: 80.0,
-            high_memory_threshold: 85.0,
-            low_disk_space_threshold: 10.0,
+            high_cpu_threshold:        80.0,
+            high_memory_threshold:     85.0,
+            low_disk_space_threshold:  10.0,
             network_anomaly_threshold: 1000.0, // 1GB/s spike threshold
         };
 
@@ -119,8 +120,7 @@ impl PerformanceMonitor {
         let uptime = system.uptime();
 
         // CPU metrics
-        let cpu = system.cpus().iter().map(|cpu| cpu.cpu_usage()).sum::<f64>()
-            / system.cpus().len() as f64;
+        let cpu = system.cpus().iter().map(|cpu| cpu.cpu_usage()).sum::<f64>() / system.cpus().len() as f64;
         let cpus = system.cpus();
 
         // Memory metrics
@@ -158,24 +158,21 @@ impl PerformanceMonitor {
     }
 
     /// Get process-specific metrics
-    pub async fn collect_process_metrics(
-        &self,
-        pid: u32,
-    ) -> Result<Option<ProcessMetrics>, String> {
+    pub async fn collect_process_metrics(&self, pid: u32) -> Result<Option<ProcessMetrics>, String> {
         let system = self.system.read().await;
 
         if let Some(process) = system.process(pid) {
             let metrics = ProcessMetrics {
-                pid: process.pid().as_u32(),
-                name: process.name().to_string(),
-                cpu_usage_percent: process.cpu_usage(),
-                memory_used_mb: process.memory() as f64 / 1024.0 / 1024.0,
-                disk_read_mb: process.disk_usage().read_bytes as f64 / 1024.0 / 1024.0,
-                disk_write_mb: process.disk_usage().written_bytes as f64 / 1024.0 / 1024.0,
-                virtual_memory_mb: process.virtual_memory() as f64 / 1024.0 / 1024.0,
+                pid:                process.pid().as_u32(),
+                name:               process.name().to_string(),
+                cpu_usage_percent:  process.cpu_usage(),
+                memory_used_mb:     process.memory() as f64 / 1024.0 / 1024.0,
+                disk_read_mb:       process.disk_usage().read_bytes as f64 / 1024.0 / 1024.0,
+                disk_write_mb:      process.disk_usage().written_bytes as f64 / 1024.0 / 1024.0,
+                virtual_memory_mb:  process.virtual_memory() as f64 / 1024.0 / 1024.0,
                 resident_memory_mb: process.memory() as f64 / 1024.0 / 1024.0,
-                thread_count: process.thread_count(),
-                uptime_seconds: process.run_time(),
+                thread_count:       process.thread_count(),
+                uptime_seconds:     process.run_time(),
             };
             Ok(Some(metrics))
         } else {
@@ -259,24 +256,23 @@ impl PerformanceMonitor {
         for (pid, process) in system.processes() {
             let pid_u32 = pid.as_u32();
             let metrics = ProcessMetrics {
-                pid: pid_u32,
-                name: process.name().to_string(),
-                cpu_usage_percent: process.cpu_usage(),
-                memory_used_mb: process.memory() as f64 / 1024.0 / 1024.0,
-                disk_read_mb: process.disk_usage().read_bytes as f64 / 1024.0 / 1024.0,
-                disk_write_mb: process.disk_usage().written_bytes as f64 / 1024.0 / 1024.0,
-                virtual_memory_mb: process.virtual_memory() as f64 / 1024.0 / 1024.0,
+                pid:                pid_u32,
+                name:               process.name().to_string(),
+                cpu_usage_percent:  process.cpu_usage(),
+                memory_used_mb:     process.memory() as f64 / 1024.0 / 1024.0,
+                disk_read_mb:       process.disk_usage().read_bytes as f64 / 1024.0 / 1024.0,
+                disk_write_mb:      process.disk_usage().written_bytes as f64 / 1024.0 / 1024.0,
+                virtual_memory_mb:  process.virtual_memory() as f64 / 1024.0 / 1024.0,
                 resident_memory_mb: process.memory() as f64 / 1024.0 / 1024.0,
-                thread_count: process.thread_count(),
-                uptime_seconds: process.run_time(),
+                thread_count:       process.thread_count(),
+                uptime_seconds:     process.run_time(),
             };
 
             process_metrics.insert(pid_u32, metrics);
         }
 
         // Clean up old metrics for processes that no longer exist
-        let existing_pids: std::collections::HashSet<u32> =
-            system.processes().keys().map(|p| p.as_u32()).collect();
+        let existing_pids: std::collections::HashSet<u32> = system.processes().keys().map(|p| p.as_u32()).collect();
         process_metrics.retain(|pid, _| existing_pids.contains(pid));
 
         Ok(())
@@ -299,11 +295,11 @@ impl Default for PerformanceMonitor {
 impl Clone for PerformanceMonitor {
     fn clone(&self) -> Self {
         Self {
-            system: Arc::clone(&self.system),
-            thresholds: self.thresholds.clone(),
-            history: Arc::clone(&self.history),
-            process_metrics: Arc::clone(&self.process_metrics),
-            last_collection: Arc::clone(&self.last_collection),
+            system:              Arc::clone(&self.system),
+            thresholds:          self.thresholds.clone(),
+            history:             Arc::clone(&self.history),
+            process_metrics:     Arc::clone(&self.process_metrics),
+            last_collection:     Arc::clone(&self.last_collection),
             collection_interval: self.collection_interval,
         }
     }
@@ -333,9 +329,9 @@ mod tests {
     #[tokio::test]
     async fn test_thresholds() {
         let thresholds = PerformanceThresholds {
-            high_cpu_threshold: 10.0,
-            high_memory_threshold: 10.0,
-            low_disk_space_threshold: 50.0,
+            high_cpu_threshold:        10.0,
+            high_memory_threshold:     10.0,
+            low_disk_space_threshold:  50.0,
             network_anomaly_threshold: 100.0,
         };
 

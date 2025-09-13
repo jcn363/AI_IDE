@@ -1,7 +1,8 @@
 //! Integration tests for the LSP client
 
-use rust_ai_ide_lsp::client::{LSPClient, LSPClientConfig};
 use std::path::PathBuf;
+
+use rust_ai_ide_lsp::client::{LSPClient, LSPClientConfig};
 use tempfile::tempdir;
 use test_log::test;
 use tokio::time::{sleep, Duration};

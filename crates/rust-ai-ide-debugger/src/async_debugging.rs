@@ -1,20 +1,22 @@
-use super::mi_protocol::*;
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
+
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
+use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, Mutex, RwLock};
 use tokio::task::spawn_blocking;
 use tokio::time::{timeout, Duration};
 
+use super::mi_protocol::*;
+
 /// Async debugger for debugging async Rust code with proper task tracking
 pub struct AsyncDebugger {
-    pub(crate) debug_session: Arc<AsyncDebugSession>,
-    pub(crate) task_tracker: Arc<TaskTracker>,
-    pub(crate) async_inspector: Arc<AsyncInspector>,
-    pub(crate) future_analyzer: Arc<FutureAnalyzer>,
+    pub(crate) debug_session:     Arc<AsyncDebugSession>,
+    pub(crate) task_tracker:      Arc<TaskTracker>,
+    pub(crate) async_inspector:   Arc<AsyncInspector>,
+    pub(crate) future_analyzer:   Arc<FutureAnalyzer>,
     pub(crate) deadlock_detector: Arc<DeadlockDetector>,
-    pub(crate) async_state: Arc<Mutex<AsyncDebugState>>,
+    pub(crate) async_state:       Arc<Mutex<AsyncDebugState>>,
 }
 
 impl AsyncDebugger {
@@ -79,10 +81,7 @@ impl AsyncDebugger {
         self.async_inspector.get_sync_points().await
     }
 
-    pub async fn trace_future_lifecycle(
-        &self,
-        future_id: u64,
-    ) -> Result<FutureLifecycle, IDEError> {
+    pub async fn trace_future_lifecycle(&self, future_id: u64) -> Result<FutureLifecycle, IDEError> {
         self.future_analyzer.trace_lifecycle(future_id).await
     }
 
@@ -90,9 +89,9 @@ impl AsyncDebugger {
         // Analyze thread safety of current async operations
         // This would involve examining how tasks access shared state
         Ok(ThreadSafetyAnalysis {
-            thread_safe_operations: vec![],
+            thread_safe_operations:    vec![],
             potential_race_conditions: vec![],
-            shared_state_access: vec![],
+            shared_state_access:       vec![],
         })
     }
 }
@@ -138,12 +137,12 @@ impl TaskTracker {
         *counter += 1;
 
         let task_info = TaskInfo {
-            id: task_id,
-            name: name.to_string(),
-            status: TaskStatus::Pending,
+            id:             task_id,
+            name:           name.to_string(),
+            status:         TaskStatus::Pending,
             spawn_location: spawn_location.to_string(),
-            spawned_at: std::time::SystemTime::now(),
-            completed_at: None,
+            spawned_at:     std::time::SystemTime::now(),
+            completed_at:   None,
         };
 
         let mut active_tasks = self.active_tasks.write().await;
@@ -161,11 +160,7 @@ impl TaskTracker {
         Ok(task_id)
     }
 
-    pub async fn update_task_status(
-        &self,
-        task_id: u64,
-        status: TaskStatus,
-    ) -> Result<(), IDEError> {
+    pub async fn update_task_status(&self, task_id: u64, status: TaskStatus) -> Result<(), IDEError> {
         let mut active_tasks = self.active_tasks.write().await;
 
         if let Some(task) = active_tasks.get_mut(&task_id) {
@@ -222,14 +217,14 @@ impl TaskTracker {
 
 /// Async inspector for examining future and task states
 pub struct AsyncInspector {
-    pub(crate) futures: Arc<RwLock<HashMap<u64, FutureInfo>>>,
+    pub(crate) futures:     Arc<RwLock<HashMap<u64, FutureInfo>>>,
     pub(crate) sync_points: Arc<RwLock<Vec<SyncPoint>>>,
 }
 
 impl AsyncInspector {
     pub fn new() -> Self {
         Self {
-            futures: Arc::new(RwLock::new(HashMap::new())),
+            futures:     Arc::new(RwLock::new(HashMap::new())),
             sync_points: Arc::new(RwLock::new(vec![])),
         }
     }
@@ -257,9 +252,9 @@ impl AsyncInspector {
         let future_id = fastrand::u64(..); // In practice, use a proper counter
 
         let future_info = FutureInfo {
-            id: future_id,
+            id:         future_id,
             expression: expression.to_string(),
-            state: FutureStateEnum::Pending,
+            state:      FutureStateEnum::Pending,
             created_at: std::time::SystemTime::now(),
         };
 
@@ -269,11 +264,7 @@ impl AsyncInspector {
         Ok(future_id)
     }
 
-    pub async fn update_future_state(
-        &self,
-        future_id: u64,
-        state: FutureStateEnum,
-    ) -> Result<(), IDEError> {
+    pub async fn update_future_state(&self, future_id: u64, state: FutureStateEnum) -> Result<(), IDEError> {
         let mut futures = self.futures.write().await;
 
         futures
@@ -296,11 +287,7 @@ impl AsyncInspector {
         Ok(sync_points.clone())
     }
 
-    pub async fn add_sync_point(
-        &self,
-        location: &str,
-        sync_type: SyncPointType,
-    ) -> Result<(), IDEError> {
+    pub async fn add_sync_point(&self, location: &str, sync_type: SyncPointType) -> Result<(), IDEError> {
         let sync_point = SyncPoint {
             location: location.to_string(),
             sync_type,
@@ -313,18 +300,15 @@ impl AsyncInspector {
         Ok(())
     }
 
-    pub async fn analyze_channel_capacity(
-        &self,
-        channel_id: &str,
-    ) -> Result<ChannelAnalysis, IDEError> {
+    pub async fn analyze_channel_capacity(&self, channel_id: &str) -> Result<ChannelAnalysis, IDEError> {
         // Analyze tokio channel usage
         // In practice, this would hook into tokio's metrics
         Ok(ChannelAnalysis {
-            channel_id: channel_id.to_string(),
-            current_capacity: 10,
-            used_capacity: 5,
+            channel_id:        channel_id.to_string(),
+            current_capacity:  10,
+            used_capacity:     5,
             pending_receivers: 2,
-            pending_senders: 3,
+            pending_senders:   3,
         })
     }
 }
@@ -345,10 +329,10 @@ impl FutureAnalyzer {
         let chains = self.future_chains.read().await;
 
         let mut analysis = FutureChainAnalysis {
-            total_chains: chains.len(),
-            longest_chain: 0,
+            total_chains:         chains.len(),
+            longest_chain:        0,
             average_chain_length: 0.0,
-            potential_issues: vec![],
+            potential_issues:     vec![],
         };
 
         if chains.is_empty() {
@@ -389,11 +373,7 @@ impl FutureAnalyzer {
         })
     }
 
-    pub async fn register_future_chain(
-        &self,
-        name: &str,
-        futures: Vec<String>,
-    ) -> Result<(), IDEError> {
+    pub async fn register_future_chain(&self, name: &str, futures: Vec<String>) -> Result<(), IDEError> {
         let chain = FutureChain {
             name: name.to_string(),
             futures,
@@ -409,16 +389,16 @@ impl FutureAnalyzer {
 
 /// Deadlock detector for identifying potential deadlocks in async code
 pub struct DeadlockDetector {
-    pub(crate) dependencies: Arc<RwLock<HashMap<u64, HashSet<u64>>>>,
-    pub(crate) task_ownership: Arc<RwLock<HashMap<String, u64>>>,
+    pub(crate) dependencies:     Arc<RwLock<HashMap<u64, HashSet<u64>>>>,
+    pub(crate) task_ownership:   Arc<RwLock<HashMap<String, u64>>>,
     pub(crate) detection_active: Arc<Mutex<bool>>,
 }
 
 impl DeadlockDetector {
     pub fn new() -> Self {
         Self {
-            dependencies: Arc::new(RwLock::new(HashMap::new())),
-            task_ownership: Arc::new(RwLock::new(HashMap::new())),
+            dependencies:     Arc::new(RwLock::new(HashMap::new())),
+            task_ownership:   Arc::new(RwLock::new(HashMap::new())),
             detection_active: Arc::new(Mutex::new(false)),
         }
     }
@@ -446,11 +426,7 @@ impl DeadlockDetector {
         Ok(())
     }
 
-    pub async fn record_wait_for_acquire(
-        &self,
-        waiting_task: u64,
-        acquiring_task: u64,
-    ) -> Result<(), IDEError> {
+    pub async fn record_wait_for_acquire(&self, waiting_task: u64, acquiring_task: u64) -> Result<(), IDEError> {
         let mut dependencies = self.dependencies.write().await;
         dependencies
             .entry(waiting_task)
@@ -465,11 +441,7 @@ impl DeadlockDetector {
         Ok(())
     }
 
-    pub async fn record_mutex_guard_release(
-        &self,
-        _task: u64,
-        resource: &str,
-    ) -> Result<(), IDEError> {
+    pub async fn record_mutex_guard_release(&self, _task: u64, resource: &str) -> Result<(), IDEError> {
         let mut task_ownership = self.task_ownership.write().await;
         task_ownership.remove(resource);
         Ok(())
@@ -480,9 +452,7 @@ impl DeadlockDetector {
         Self::detect_deadlock_cycles(&dependencies).await
     }
 
-    async fn detect_deadlock_cycles(
-        dependencies: &HashMap<u64, HashSet<u64>>,
-    ) -> Vec<PotentialDeadlock> {
+    async fn detect_deadlock_cycles(dependencies: &HashMap<u64, HashSet<u64>>) -> Vec<PotentialDeadlock> {
         let mut deadlocks = Vec::new();
 
         // Simple cycle detection (could be improved with more sophisticated algorithms)
@@ -491,9 +461,9 @@ impl DeadlockDetector {
                 if let Some(reverse_deps) = dependencies.get(dep) {
                     if reverse_deps.contains(task) {
                         deadlocks.push(PotentialDeadlock {
-                            tasks: vec![*task, *dep],
+                            tasks:       vec![*task, *dep],
                             description: format!("Deadlock between tasks {} and {}", task, dep),
-                            severity: DeadlockSeverity::High,
+                            severity:    DeadlockSeverity::High,
                         });
                     }
                 }
@@ -508,12 +478,12 @@ impl DeadlockDetector {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskInfo {
-    pub id: u64,
-    pub name: String,
-    pub status: TaskStatus,
+    pub id:             u64,
+    pub name:           String,
+    pub status:         TaskStatus,
     pub spawn_location: String,
-    pub spawned_at: std::time::SystemTime,
-    pub completed_at: Option<std::time::SystemTime>,
+    pub spawned_at:     std::time::SystemTime,
+    pub completed_at:   Option<std::time::SystemTime>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -527,8 +497,8 @@ pub enum TaskStatus {
 
 #[derive(Debug, Clone)]
 pub struct TaskHistoryEntry {
-    pub task_id: u64,
-    pub event: TaskEvent,
+    pub task_id:   u64,
+    pub event:     TaskEvent,
     pub timestamp: std::time::SystemTime,
 }
 
@@ -559,9 +529,9 @@ pub enum FutureStateEnum {
 
 #[derive(Debug, Clone)]
 pub struct FutureInfo {
-    pub id: u64,
+    pub id:         u64,
     pub expression: String,
-    pub state: FutureStateEnum,
+    pub state:      FutureStateEnum,
     pub created_at: std::time::SystemTime,
 }
 
@@ -575,56 +545,56 @@ pub enum SyncPointType {
 
 #[derive(Debug, Clone)]
 pub struct SyncPoint {
-    pub location: String,
+    pub location:  String,
     pub sync_type: SyncPointType,
     pub timestamp: std::time::SystemTime,
 }
 
 #[derive(Debug, Clone)]
 pub struct ChannelAnalysis {
-    pub channel_id: String,
-    pub current_capacity: usize,
-    pub used_capacity: usize,
+    pub channel_id:        String,
+    pub current_capacity:  usize,
+    pub used_capacity:     usize,
     pub pending_receivers: usize,
-    pub pending_senders: usize,
+    pub pending_senders:   usize,
 }
 
 #[derive(Debug, Clone)]
 pub struct FutureChain {
-    pub name: String,
-    pub futures: Vec<String>,
+    pub name:       String,
+    pub futures:    Vec<String>,
     pub created_at: std::time::SystemTime,
 }
 
 #[derive(Debug, Clone)]
 pub struct FutureChainAnalysis {
-    pub total_chains: usize,
-    pub longest_chain: usize,
+    pub total_chains:         usize,
+    pub longest_chain:        usize,
     pub average_chain_length: f64,
-    pub potential_issues: Vec<String>,
+    pub potential_issues:     Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct FutureLifecycle {
-    pub future_id: u64,
-    pub created_at: std::time::SystemTime,
-    pub first_poll: Option<std::time::SystemTime>,
+    pub future_id:    u64,
+    pub created_at:   std::time::SystemTime,
+    pub first_poll:   Option<std::time::SystemTime>,
     pub completed_at: Option<std::time::SystemTime>,
-    pub events: Vec<FutureEvent>,
+    pub events:       Vec<FutureEvent>,
 }
 
 #[derive(Debug, Clone)]
 pub struct FutureEvent {
-    pub event_type: String,
-    pub timestamp: std::time::SystemTime,
+    pub event_type:  String,
+    pub timestamp:   std::time::SystemTime,
     pub description: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct PotentialDeadlock {
-    pub tasks: Vec<u64>,
+    pub tasks:       Vec<u64>,
     pub description: String,
-    pub severity: DeadlockSeverity,
+    pub severity:    DeadlockSeverity,
 }
 
 #[derive(Debug, Clone)]
@@ -636,9 +606,9 @@ pub enum DeadlockSeverity {
 
 #[derive(Debug, Clone)]
 pub struct ThreadSafetyAnalysis {
-    pub thread_safe_operations: Vec<String>,
+    pub thread_safe_operations:    Vec<String>,
     pub potential_race_conditions: Vec<String>,
-    pub shared_state_access: Vec<String>,
+    pub shared_state_access:       Vec<String>,
 }
 
 #[derive(Debug, Clone)]

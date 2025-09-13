@@ -37,9 +37,7 @@ impl RefactoringOperationFactory {
             RefactoringType::IntroduceParameter => Ok(Box::new(IntroduceParameterOperation)),
             RefactoringType::ReplaceConstructor => Ok(Box::new(ReplaceConstructorOperation)),
             RefactoringType::ReplaceConditionals => Ok(Box::new(ReplaceConditionalsOperation)),
-            RefactoringType::ConvertMethodToFunction => {
-                Ok(Box::new(ConvertMethodToFunctionOperation))
-            }
+            RefactoringType::ConvertMethodToFunction => Ok(Box::new(ConvertMethodToFunctionOperation)),
             RefactoringType::SplitClass => Ok(Box::new(SplitClassOperation)),
             RefactoringType::MergeClasses => Ok(Box::new(MergeClassesOperation)),
             RefactoringType::ChangeSignature => Ok(Box::new(ChangeSignatureOperation)),
@@ -49,17 +47,11 @@ impl RefactoringOperationFactory {
             RefactoringType::LocalizeVariable => Ok(Box::new(LocalizeVariableOperation)),
             RefactoringType::AddMissingImports => Ok(Box::new(AddMissingImportsOperation)),
             RefactoringType::SortImports => Ok(Box::new(SortImportsOperation)),
-            RefactoringType::GenerateGettersSetters => {
-                Ok(Box::new(GenerateGettersSettersOperation))
-            }
+            RefactoringType::GenerateGettersSetters => Ok(Box::new(GenerateGettersSettersOperation)),
             RefactoringType::ExtractClass => Ok(Box::new(ExtractClassOperation {})),
-            RefactoringType::BatchInterfaceExtraction => {
-                Ok(Box::new(BatchInterfaceExtractionOperation {}))
-            }
-            RefactoringType::BatchPatternConversion => {
-                Ok(Box::new(BatchPatternConversionOperation {}))
-            } // InterfaceExtraction removed - use ExtractInterface instead
-              // AsyncAwaitPatternConversion removed - use ConvertToAsync instead
+            RefactoringType::BatchInterfaceExtraction => Ok(Box::new(BatchInterfaceExtractionOperation {})),
+            RefactoringType::BatchPatternConversion => Ok(Box::new(BatchPatternConversionOperation {})), /* InterfaceExtraction removed - use ExtractInterface instead
+                                                                                                          * AsyncAwaitPatternConversion removed - use ConvertToAsync instead */
         }
     }
 

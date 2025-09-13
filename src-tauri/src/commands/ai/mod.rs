@@ -8,21 +8,23 @@ pub mod analysis;
 pub mod learning;
 pub mod services;
 
-use crate::commands::ai::services::AIServiceState;
-use crate::utils;
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
+use std::sync::Arc;
 
 // Import delegations to rust-ai-ide-commands-ai for better implementations
 use rust_ai_ide_commands_ai::{analysis::AnalysisService, models::ModelManager};
+
+use crate::commands::ai::services::AIServiceState;
+use crate::utils;
 
 // Type aliases for state management bridge
 /// Bridge state that holds both the original AIServiceState (Mutex) and new RwLock-based services
 #[derive(Default)]
 pub struct AIStateBridge {
     /// Original Mutex-based AI service state (for compatibility)
-    pub original_state: AIServiceState,
+    pub original_state:   AIServiceState,
     /// Commands-ai ModelManager (RwLock-based)
-    pub model_manager: Option<Arc<ModelManager>>,
+    pub model_manager:    Option<Arc<ModelManager>>,
     /// Commands-ai AnalysisService (RwLock-based)
     pub analysis_service: Option<Arc<AnalysisService>>,
 }
@@ -30,8 +32,8 @@ pub struct AIStateBridge {
 impl AIStateBridge {
     pub async fn new() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let mut bridge = Self {
-            original_state: Default::default(),
-            model_manager: None,
+            original_state:   Default::default(),
+            model_manager:    None,
             analysis_service: None,
         };
 
@@ -95,8 +97,8 @@ pub type AIBridgeState = Arc<tokio::sync::Mutex<AIStateBridge>>;
 // ai_code_completion defined in modules/ai/commands/mod.rs
 
 // AI command functions are defined in submodules:
-// - ai_generate_code, ai_doc_assist, ai_refactor_code, ai_explain_code, ai_context_help
-//   are defined in modules/ai/commands/mod.rs
+// - ai_generate_code, ai_doc_assist, ai_refactor_code, ai_explain_code, ai_context_help are defined
+//   in modules/ai/commands/mod.rs
 // - Additional commands are imported from analysis, diagnostics, etc.
 
 // Re-export commands from submodules for use in main lib.rs
@@ -111,28 +113,20 @@ pub type AIBridgeState = Arc<tokio::sync::Mutex<AIStateBridge>>;
 // pub use ai_context_help;
 
 // AI service management commands
-pub use services::{
-    download_model, get_ai_config, get_loaded_models, get_model_status, get_resource_status,
-    initialize_ai_service, load_model, unload_model, update_ai_config, validate_model_config,
-};
-
-// Fine-tuning commands
-pub use services::finetune::{
-    cancel_finetune_job, get_finetune_progress, list_finetune_jobs, prepare_dataset,
-    start_finetune_job,
-};
-
+// Diagnostics commands
+pub use analysis::diagnostics::{explain_error_code, get_compiler_diagnostics, resolve_errors_with_ai};
 // Code analysis commands
 pub use analysis::{analyze_file, apply_ai_suggestion, get_performance_suggestions};
-
-// Diagnostics commands
-pub use analysis::diagnostics::{
-    explain_error_code, get_compiler_diagnostics, resolve_errors_with_ai,
-};
-
 // Learning system commands
 pub use learning::{
-    analyze_learning_patterns, apply_learned_pattern, get_learned_patterns,
-    get_learning_statistics, get_learning_system_health, record_successful_fix,
-    update_learning_preferences,
+    analyze_learning_patterns, apply_learned_pattern, get_learned_patterns, get_learning_statistics,
+    get_learning_system_health, record_successful_fix, update_learning_preferences,
+};
+// Fine-tuning commands
+pub use services::finetune::{
+    cancel_finetune_job, get_finetune_progress, list_finetune_jobs, prepare_dataset, start_finetune_job,
+};
+pub use services::{
+    download_model, get_ai_config, get_loaded_models, get_model_status, get_resource_status, initialize_ai_service,
+    load_model, unload_model, update_ai_config, validate_model_config,
 };

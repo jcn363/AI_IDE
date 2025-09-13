@@ -1,9 +1,10 @@
 //! Performance benchmarks for lazy loading infrastructure
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use rust_ai_ide_lazy_loading::*;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use rust_ai_ide_lazy_loading::*;
 use tokio::runtime::Runtime;
 
 /// Benchmark lazy loading performance
@@ -22,7 +23,12 @@ fn bench_lazy_loading_performance(c: &mut Criterion) {
                     Ok(Arc::new(42) as Arc<dyn std::any::Any + Send + Sync>)
                 });
 
-                black_box(loader.register_component(Box::new(component)).await.unwrap());
+                black_box(
+                    loader
+                        .register_component(Box::new(component))
+                        .await
+                        .unwrap(),
+                );
             });
         });
     });
@@ -39,10 +45,16 @@ fn bench_lazy_loading_performance(c: &mut Criterion) {
                     Ok(Arc::new(vec![1, 2, 3, 4, 5]) as Arc<dyn std::any::Any + Send + Sync>)
                 });
 
-                loader.register_component(Box::new(component)).await.unwrap();
+                loader
+                    .register_component(Box::new(component))
+                    .await
+                    .unwrap();
 
                 let start = Instant::now();
-                let _result = loader.get_component::<Vec<i32>>("bench_load_component").await.unwrap();
+                let _result = loader
+                    .get_component::<Vec<i32>>("bench_load_component")
+                    .await
+                    .unwrap();
                 let duration = start.elapsed();
 
                 black_box(duration);
@@ -64,16 +76,19 @@ fn bench_lazy_loading_performance(c: &mut Criterion) {
                 for i in 0..10 {
                     let loader_clone = loader.clone();
                     let task = tokio::spawn(async move {
-                        let component = SimpleLazyComponent::new(
-                            &format!("concurrent_component_{}", i),
-                            || async {
-                                tokio::time::sleep(Duration::from_millis(2)).await;
-                                Ok(Arc::new(i) as Arc<dyn std::any::Any + Send + Sync>)
-                            }
-                        );
+                        let component = SimpleLazyComponent::new(&format!("concurrent_component_{}", i), || async {
+                            tokio::time::sleep(Duration::from_millis(2)).await;
+                            Ok(Arc::new(i) as Arc<dyn std::any::Any + Send + Sync>)
+                        });
 
-                        loader_clone.register_component(Box::new(component)).await.unwrap();
-                        loader_clone.get_component::<i32>(&format!("concurrent_component_{}", i)).await.unwrap()
+                        loader_clone
+                            .register_component(Box::new(component))
+                            .await
+                            .unwrap();
+                        loader_clone
+                            .get_component::<i32>(&format!("concurrent_component_{}", i))
+                            .await
+                            .unwrap()
                     });
                     tasks.push(task);
                 }
@@ -129,16 +144,18 @@ fn bench_lazy_loading_performance(c: &mut Criterion) {
                 let monitor = PerformanceMonitor::global().unwrap();
 
                 // Record various metrics
-                monitor.record_component_load("test_component", Duration::from_millis(10)).await;
+                monitor
+                    .record_component_load("test_component", Duration::from_millis(10))
+                    .await;
                 monitor.record_memory_usage(1024, Some("test_pool")).await;
 
                 let pool_stats = crate::memory_pool::PoolStats {
-                    analysis_pool_size: 10,
+                    analysis_pool_size:    10,
                     analysis_pool_created: 10,
-                    model_pool_size: 5,
-                    model_pool_created: 5,
-                    total_memory_usage: 2048,
-                    memory_limit: 1024 * 1024,
+                    model_pool_size:       5,
+                    model_pool_created:    5,
+                    total_memory_usage:    2048,
+                    memory_limit:          1024 * 1024,
                 };
 
                 monitor.record_pool_stats(pool_stats).await;
@@ -180,19 +197,22 @@ fn bench_startup_time_improvements(c: &mut Criterion) {
 
                 // Register multiple components
                 for i in 0..20 {
-                    let component = SimpleLazyComponent::new(
-                        &format!("demand_component_{}", i),
-                        || async {
-                            tokio::time::sleep(Duration::from_millis(1)).await;
-                            Ok(Arc::new(i) as Arc<dyn std::any::Any + Send + Sync>)
-                        }
-                    );
-                    loader.register_component(Box::new(component)).await.unwrap();
+                    let component = SimpleLazyComponent::new(&format!("demand_component_{}", i), || async {
+                        tokio::time::sleep(Duration::from_millis(1)).await;
+                        Ok(Arc::new(i) as Arc<dyn std::any::Any + Send + Sync>)
+                    });
+                    loader
+                        .register_component(Box::new(component))
+                        .await
+                        .unwrap();
                 }
 
                 // Only load first component (on-demand)
                 let start = Instant::now();
-                let _result = loader.get_component::<i32>("demand_component_0").await.unwrap();
+                let _result = loader
+                    .get_component::<i32>("demand_component_0")
+                    .await
+                    .unwrap();
                 let load_time = start.elapsed();
 
                 black_box(load_time);

@@ -1,13 +1,15 @@
 //! Debugger execution control and backend management
 
+use std::process::Stdio;
+
+use log::{debug, error, info};
+use serde_json::Value;
+use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::process::{Child, Command};
+
 use super::DebuggerBackendTrait;
 use crate::debugger::types::{DebuggerConfig, DebuggerEvent, StackFrame, VariableInfo};
 use crate::debugger::DebuggerError;
-use log::{debug, error, info};
-use serde_json::Value;
-use std::process::Stdio;
-use tokio::io::{AsyncBufReadExt, BufReader};
-use tokio::process::{Child, Command};
 
 /// Supported debugger backends
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -26,13 +28,13 @@ impl Default for DebuggerBackendType {
 /// Debugger backend implementation
 pub struct DebuggerBackend {
     /// The debugger process
-    process: Option<Child>,
+    process:        Option<Child>,
     /// Debugger type (GDB/LLDB)
-    backend_type: DebuggerBackendType,
+    backend_type:   DebuggerBackendType,
     /// Debugger configuration
-    config: Option<DebuggerConfig>,
+    config:         Option<DebuggerConfig>,
     /// Event sender for debugger events
-    event_sender: Option<tokio::sync::mpsc::UnboundedSender<DebuggerEvent>>,
+    event_sender:   Option<tokio::sync::mpsc::UnboundedSender<DebuggerEvent>>,
     /// Output buffer for debugger output
     _output_buffer: String,
 }
@@ -99,10 +101,7 @@ impl DebuggerBackendTrait for DebuggerBackend {
         Ok(Vec::new())
     }
 
-    async fn get_variables(
-        &self,
-        _frame_id: Option<u32>,
-    ) -> Result<Vec<VariableInfo>, DebuggerError> {
+    async fn get_variables(&self, _frame_id: Option<u32>) -> Result<Vec<VariableInfo>, DebuggerError> {
         // TODO: Implementation depends on the specific debugger backend
         // This is a placeholder implementation
         Ok(Vec::new())
@@ -206,10 +205,7 @@ impl DebuggerBackend {
     }
 
     /// Start monitoring debugger output
-    async fn start_output_monitoring(
-        &mut self,
-        stdout: Option<tokio::process::ChildStdout>,
-    ) -> DebuggerResult<()> {
+    async fn start_output_monitoring(&mut self, stdout: Option<tokio::process::ChildStdout>) -> DebuggerResult<()> {
         let stdout = stdout.ok_or("No stdout handle available")?;
         let event_sender = self.event_sender.clone();
 
@@ -238,7 +234,7 @@ impl DebuggerBackend {
             // Parse stop reason and location
             Some(DebuggerEvent::StateChanged(
                 crate::debugger::types::DebuggerState::Paused {
-                    reason: "Breakpoint hit".to_string(),
+                    reason:   "Breakpoint hit".to_string(),
                     location: None, // Would parse this from the output
                 },
             ))
@@ -314,8 +310,7 @@ impl DebuggerBackend {
         // Parse the MI output into a structured format
         // This is a simplified version - in a real implementation, you'd want
         // TODO: to properly parse the MI2 output format
-        serde_json::from_str(&response)
-            .map_err(|e| format!("Failed to parse debugger output: {}", e))
+        serde_json::from_str(&response).map_err(|e| format!("Failed to parse debugger output: {}", e))
     }
 
     /// Set a breakpoint at the specified location

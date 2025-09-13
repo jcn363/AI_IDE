@@ -3,11 +3,13 @@
 //! This module contains helper functions for parsing diagnostic information,
 //! extracting error explanations, generating fixes, and related utility functions.
 
+use std::collections::HashMap;
+
+use anyhow::{anyhow, Result};
+use uuid;
+
 use crate::commands::utils::*;
 use crate::modules::shared::diagnostics::*;
-use anyhow::{anyhow, Result};
-use std::collections::HashMap;
-use uuid;
 
 /// Run cargo check on a workspace
 async fn run_cargo_check(workspace_path: &str) -> Result<String> {
@@ -16,10 +18,7 @@ async fn run_cargo_check(workspace_path: &str) -> Result<String> {
 }
 
 /// Parse a compiler diagnostic from JSON
-async fn parse_compiler_diagnostic(
-    message: &serde_json::Value,
-    workspace_path: &str,
-) -> Option<CompilerDiagnostic> {
+async fn parse_compiler_diagnostic(message: &serde_json::Value, workspace_path: &str) -> Option<CompilerDiagnostic> {
     // Use centralized parsing function
     parse_compiler_diagnostic(message, workspace_path).await
 }
@@ -43,12 +42,7 @@ async fn get_cached_error_explanation(
     ttl_seconds: u64,
 ) -> Result<ErrorCodeExplanation> {
     // Use centralized function
-    crate::diagnostics::error_handling::get_cached_error_explanation(
-        error_code,
-        explanation_cache,
-        ttl_seconds,
-    )
-    .await
+    crate::diagnostics::error_handling::get_cached_error_explanation(error_code, explanation_cache, ttl_seconds).await
 }
 
 /// Get error code explanation from external source
@@ -77,9 +71,9 @@ pub fn parse_rustc_explanation(text: &str) -> (String, String, Vec<ErrorExample>
                 // End of example
                 examples.push(ErrorExample {
                     description: example_description.clone(),
-                    code: current_example.clone(),
+                    code:        current_example.clone(),
                     explanation: "Example code".to_string(),
-                    fix: None,
+                    fix:         None,
                 });
                 current_example.clear();
                 example_description.clear();
@@ -169,35 +163,33 @@ pub fn extract_suggested_solutions(text: &str) -> Vec<String> {
 }
 
 /// Generate suggested fixes from compiler diagnostic spans
-pub async fn generate_suggested_fixes(
-    diagnostic: &CompilerDiagnostic,
-) -> Result<Vec<FixSuggestion>> {
+pub async fn generate_suggested_fixes(diagnostic: &CompilerDiagnostic) -> Result<Vec<FixSuggestion>> {
     let mut fixes = Vec::new();
 
     // Extract suggestions from compiler spans
     for span in &diagnostic.spans {
         if let Some(replacement) = &span.suggested_replacement {
             let fix = FixSuggestion {
-                id: uuid::Uuid::new_v4().to_string(),
-                title: "Apply compiler suggestion".to_string(),
-                description: span
+                id:               uuid::Uuid::new_v4().to_string(),
+                title:            "Apply compiler suggestion".to_string(),
+                description:      span
                     .label
                     .clone()
                     .unwrap_or_else(|| "Compiler suggested fix".to_string()),
-                fix_type: FixType::QuickFix,
-                changes: vec![CodeChange {
-                    file_path: span.file_name.clone(),
-                    range: (
+                fix_type:         FixType::QuickFix,
+                changes:          vec![CodeChange {
+                    file_path:   span.file_name.clone(),
+                    range:       (
                         span.line_start,
                         span.column_start,
                         span.line_end,
                         span.column_end,
                     ),
-                    old_text: String::new(), // Would need to extract from source
-                    new_text: replacement.clone(),
+                    old_text:    String::new(), // Would need to extract from source
+                    new_text:    replacement.clone(),
                     change_type: CompilerChangeType::Replace,
                 }],
-                confidence: if span
+                confidence:       if span
                     .suggestion_applicability
                     .as_ref()
                     .map_or(false, |a| a == "machine-applicable")
@@ -207,8 +199,8 @@ pub async fn generate_suggested_fixes(
                     0.7
                 },
                 estimated_effort: EstimatedEffort::Trivial,
-                benefits: vec!["Fixes compiler error".to_string()],
-                risks: vec![],
+                benefits:         vec!["Fixes compiler error".to_string()],
+                risks:            vec![],
             };
             fixes.push(fix);
         }

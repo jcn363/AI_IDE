@@ -7,13 +7,10 @@
 //! - Command handler registration
 //! - Background task startup
 
-use super::{LifecycleEvent, LifecyclePhase};
-use crate::command_templates::spawn_background_task;
-use crate::commands;
-use crate::modules::ai::services::common::{
-    AIProvider, AIServiceRegistry, PooledServiceConfig, WrappedAIService, GLOBAL_AI_REGISTRY,
-};
-use crate::utils;
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::Duration;
+
 use anyhow::Result;
 use chrono;
 use rust_ai_ide_ai_inference::ModelSize;
@@ -21,10 +18,14 @@ use rust_ai_ide_common::validation::validate_secure_path;
 use rust_ai_ide_errors::{IDEError, IDEResult};
 use rust_ai_ide_lsp::{LSPClient, LSPClientConfig, MultiLanguageLSP};
 use rust_ai_ide_security::audit_logger;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::Duration;
 use tokio::sync::{Mutex, RwLock};
+
+use super::{LifecycleEvent, LifecyclePhase};
+use crate::command_templates::spawn_background_task;
+use crate::modules::ai::services::common::{
+    AIProvider, AIServiceRegistry, PooledServiceConfig, WrappedAIService, GLOBAL_AI_REGISTRY,
+};
+use crate::{commands, utils};
 
 pub struct StartupPhase {
     event_listeners: Vec<Box<dyn Fn(LifecycleEvent) + Send + Sync>>,
@@ -37,11 +38,7 @@ impl StartupPhase {
         }
     }
 
-    pub async fn execute(
-        &self,
-        app: &tauri::App,
-        phase_state: Arc<Mutex<LifecyclePhase>>,
-    ) -> Result<()> {
+    pub async fn execute(&self, app: &tauri::App, phase_state: Arc<Mutex<LifecyclePhase>>) -> Result<()> {
         log::info!("Starting application startup phase");
 
         // Update phase state
@@ -188,37 +185,22 @@ impl StartupPhase {
             // OpenAI service
             ("openai", AIProvider::OpenAI),
             // Local CodeLlama models
-            (
-                "codellama_small",
-                AIProvider::CodeLlamaRust {
-                    model_size: ModelSize::Small,
-                },
-            ),
-            (
-                "codellama_medium",
-                AIProvider::CodeLlamaRust {
-                    model_size: ModelSize::Medium,
-                },
-            ),
-            (
-                "codellama_large",
-                AIProvider::CodeLlamaRust {
-                    model_size: ModelSize::Large,
-                },
-            ),
+            ("codellama_small", AIProvider::CodeLlamaRust {
+                model_size: ModelSize::Small,
+            }),
+            ("codellama_medium", AIProvider::CodeLlamaRust {
+                model_size: ModelSize::Medium,
+            }),
+            ("codellama_large", AIProvider::CodeLlamaRust {
+                model_size: ModelSize::Large,
+            }),
             // Local StarCoder models
-            (
-                "starcoder_small",
-                AIProvider::StarCoderRust {
-                    model_size: ModelSize::Small,
-                },
-            ),
-            (
-                "starcoder_medium",
-                AIProvider::StarCoderRust {
-                    model_size: ModelSize::Medium,
-                },
-            ),
+            ("starcoder_small", AIProvider::StarCoderRust {
+                model_size: ModelSize::Small,
+            }),
+            ("starcoder_medium", AIProvider::StarCoderRust {
+                model_size: ModelSize::Medium,
+            }),
         ];
 
         let mut registered_services = Vec::new();
@@ -266,15 +248,13 @@ impl StartupPhase {
             // For production providers, also set up pooled services
             if matches!(
                 provider,
-                AIProvider::OpenAI
-                    | AIProvider::CodeLlamaRust { .. }
-                    | AIProvider::StarCoderRust { .. }
+                AIProvider::OpenAI | AIProvider::CodeLlamaRust { .. } | AIProvider::StarCoderRust { .. }
             ) {
                 let pool_config = PooledServiceConfig {
-                    provider: provider.clone(),
-                    max_connections: 10,
+                    provider:           provider.clone(),
+                    max_connections:    10,
                     connection_timeout: Duration::from_secs(30),
-                    idle_timeout: Duration::from_secs(300),
+                    idle_timeout:       Duration::from_secs(300),
                 };
 
                 let mut initial_services = Vec::new();
@@ -377,7 +357,8 @@ impl StartupPhase {
                 }
             }
             AIProvider::OpenAI | AIProvider::Anthropic => {
-                // API keys are handled securely in the provider, validation done during initialization
+                // API keys are handled securely in the provider, validation done during
+                // initialization
             }
             AIProvider::CodeLlamaRust { .. } | AIProvider::StarCoderRust { .. } => {
                 // Local models, path validation not needed as they're managed internally
@@ -393,17 +374,15 @@ impl StartupPhase {
     }
 
     /// Create and initialize a WrappedAIService with proper background task handling
-    async fn create_and_initialize_service(
-        &self,
-        provider: &AIProvider,
-    ) -> IDEResult<WrappedAIService> {
+    async fn create_and_initialize_service(&self, provider: &AIProvider) -> IDEResult<WrappedAIService> {
         let core_service = crate::modules::ai::services::common::AIService::new();
         let wrapped_service = WrappedAIService::new(Arc::new(core_service), provider.clone());
 
         // Initialize the service in background
-        wrapped_service.initialize().await.map_err(|e| {
-            IDEError::AIService(format!("Failed to initialize AI service: {:?}", e))
-        })?;
+        wrapped_service
+            .initialize()
+            .await
+            .map_err(|e| IDEError::AIService(format!("Failed to initialize AI service: {:?}", e)))?;
 
         Ok(wrapped_service)
     }
@@ -430,8 +409,8 @@ impl StartupPhase {
             match LSPClient::new(config).await {
                 Ok(mut client) => {
                     // Initialize the LSP client with workspace
-                    let workspace_path = std::env::current_dir()
-                        .map_err(|e| format!("Failed to get current directory: {}", e))?;
+                    let workspace_path =
+                        std::env::current_dir().map_err(|e| format!("Failed to get current directory: {}", e))?;
 
                     if let Err(e) = client.initialize(workspace_path).await {
                         log::warn!("Failed to initialize LSP client for {}: {:?}", language, e);
@@ -509,8 +488,7 @@ impl StartupPhase {
         let mut multi_lsp = MultiLanguageLSP::new();
 
         // Get the current workspace path
-        let workspace_path =
-            std::env::current_dir().map_err(|e| format!("Failed to get workspace path: {}", e))?;
+        let workspace_path = std::env::current_dir().map_err(|e| format!("Failed to get workspace path: {}", e))?;
 
         // Initialize with workspace
         multi_lsp
@@ -610,14 +588,11 @@ impl StartupPhase {
         let mut errors = Vec::new();
 
         // Initialize cache cleanup task
-        let diagnostic_cache_state =
-            app.state::<crate::modules::shared::diagnostics::DiagnosticCacheState>();
-        let explanation_cache_state =
-            app.state::<crate::modules::shared::diagnostics::ExplanationCacheState>();
+        let diagnostic_cache_state = app.state::<crate::modules::shared::diagnostics::DiagnosticCacheState>();
+        let explanation_cache_state = app.state::<crate::modules::shared::diagnostics::ExplanationCacheState>();
 
         let cache_cleanup_result =
-            utils::initialize_cache_cleanup_task(diagnostic_cache_state, explanation_cache_state)
-                .await;
+            utils::initialize_cache_cleanup_task(diagnostic_cache_state, explanation_cache_state).await;
 
         match cache_cleanup_result {
             Ok(_) => {

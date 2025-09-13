@@ -11,17 +11,17 @@ use uuid::Uuid;
 
 /// Consciousness-native programming language compiler
 pub struct ConsciousnessProgrammingSystem {
-    pub paradigm_processor: ParadigmProcessor,
+    pub paradigm_processor:     ParadigmProcessor,
     pub consciousness_compiler: ConsciousnessCompiler,
-    pub reality_mapper: RealityMapper,
+    pub reality_mapper:         RealityMapper,
 }
 
 impl ConsciousnessProgrammingSystem {
     pub fn new() -> Self {
         Self {
-            paradigm_processor: ParadigmProcessor::new(),
+            paradigm_processor:     ParadigmProcessor::new(),
             consciousness_compiler: ConsciousnessCompiler::new(),
-            reality_mapper: RealityMapper::new(),
+            reality_mapper:         RealityMapper::new(),
         }
     }
 
@@ -52,14 +52,11 @@ impl ParadigmProcessor {
         }
     }
 
-    pub fn parse_consciousness_constructs(
-        &self,
-        code: &str,
-    ) -> Result<ConsciousnessAST, ConsciousnessParadigmError> {
+    pub fn parse_consciousness_constructs(&self, code: &str) -> Result<ConsciousnessAST, ConsciousnessParadigmError> {
         // Parse consciousness programming constructs like 'awareness', 'intention', 'reality'
         Ok(ConsciousnessAST {
             constructs: vec![ConsciousnessConstruct::Awareness {
-                scope: code.len(),
+                scope:               code.len(),
                 consciousness_level: 0.9,
             }],
         })
@@ -78,9 +75,9 @@ impl ConsciousnessCompiler {
         _ast: ConsciousnessAST,
     ) -> Result<CompiledConsciousnessProgram, ConsciousnessParadigmError> {
         Ok(CompiledConsciousnessProgram {
-            reality_bytecode: vec![],
+            reality_bytecode:    vec![],
             consciousness_level: 0.95,
-            execution_paradigm: "consciousness-native".to_string(),
+            execution_paradigm:  "consciousness-native".to_string(),
         })
     }
 }
@@ -108,24 +105,24 @@ pub struct ConsciousnessAST {
 #[derive(Clone, Debug)]
 pub enum ConsciousnessConstruct {
     Awareness {
-        scope: usize,
+        scope:               usize,
         consciousness_level: f32,
     },
     Intention {
-        purpose: String,
+        purpose:   String,
         intensity: f32,
     },
     Reality {
         dimensions: Vec<String>,
-        coherence: f32,
+        coherence:  f32,
     },
 }
 
 #[derive(Clone, Debug)]
 pub struct CompiledConsciousnessProgram {
-    pub reality_bytecode: Vec<u8>,
+    pub reality_bytecode:    Vec<u8>,
     pub consciousness_level: f32,
-    pub execution_paradigm: String,
+    pub execution_paradigm:  String,
 }
 
 #[derive(thiserror::Error, Debug)]

@@ -1,7 +1,8 @@
 // Removed unused imports: IDEResult, IDEError (not used in this file)
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
+
+use serde::{Deserialize, Serialize};
 
 /// Types of metrics that can be collected
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
@@ -22,13 +23,13 @@ pub enum MetricType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricValue {
     /// Metric name
-    pub name: String,
+    pub name:      String,
     /// Metric value
-    pub value: MetricData,
+    pub value:     MetricData,
     /// Timestamp when measured
     pub timestamp: chrono::DateTime<chrono::Utc>,
     /// Additional tags/metadata
-    pub tags: HashMap<String, String>,
+    pub tags:      HashMap<String, String>,
 }
 
 /// Data types for metric values
@@ -51,11 +52,11 @@ pub enum MetricData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricSeries {
     /// Metric name
-    pub name: String,
+    pub name:        String,
     /// Type of metric
     pub metric_type: MetricType,
     /// Series of values over time
-    pub values: Vec<MetricValue>,
+    pub values:      Vec<MetricValue>,
     /// Aggregation method
     pub aggregation: Option<AggregationMethod>,
 }
@@ -79,13 +80,13 @@ pub enum AggregationMethod {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricThreshold {
     /// Metric name
-    pub name: String,
+    pub name:      String,
     /// Threshold value
     pub threshold: f64,
     /// Comparison operator
-    pub operator: ThresholdOperator,
+    pub operator:  ThresholdOperator,
     /// Severity level for violations
-    pub severity: ThresholdSeverity,
+    pub severity:  ThresholdSeverity,
 }
 
 /// Operators for threshold comparisons
@@ -120,20 +121,20 @@ pub enum ThresholdSeverity {
 #[derive(Debug)]
 pub struct PerformanceTimer {
     /// Timer name
-    name: String,
+    name:  String,
     /// Start time
     start: Instant,
     /// Additional tags
-    tags: HashMap<String, String>,
+    tags:  HashMap<String, String>,
 }
 
 impl PerformanceTimer {
     /// Create a new performance timer
     pub fn new(name: impl Into<String>) -> Self {
         Self {
-            name: name.into(),
+            name:  name.into(),
             start: Instant::now(),
-            tags: HashMap::new(),
+            tags:  HashMap::new(),
         }
     }
 
@@ -148,10 +149,10 @@ impl PerformanceTimer {
         let duration = self.start.elapsed();
 
         MetricValue {
-            name: self.name,
-            value: MetricData::Duration(duration.as_millis() as u64),
+            name:      self.name,
+            value:     MetricData::Duration(duration.as_millis() as u64),
             timestamp: chrono::Utc::now(),
-            tags: self.tags,
+            tags:      self.tags,
         }
     }
 
@@ -164,7 +165,7 @@ impl PerformanceTimer {
 /// Metric collector for aggregating measurements
 pub struct MetricCollector {
     /// Collected metrics
-    pub(crate) metrics: std::sync::Arc<std::sync::Mutex<Vec<MetricValue>>>,
+    pub(crate) metrics:    std::sync::Arc<std::sync::Mutex<Vec<MetricValue>>>,
     /// Configured thresholds
     pub(crate) thresholds: Vec<MetricThreshold>,
 }
@@ -179,7 +180,7 @@ impl MetricCollector {
     /// Create a new metric collector
     pub fn new() -> Self {
         Self {
-            metrics: std::sync::Arc::new(std::sync::Mutex::new(Vec::new())),
+            metrics:    std::sync::Arc::new(std::sync::Mutex::new(Vec::new())),
             thresholds: Vec::new(),
         }
     }
@@ -230,18 +231,16 @@ impl MetricCollector {
                     let violated = match threshold.operator {
                         ThresholdOperator::GreaterThan => value > threshold.threshold,
                         ThresholdOperator::LessThan => value < threshold.threshold,
-                        ThresholdOperator::Equal => {
-                            (value - threshold.threshold).abs() < f64::EPSILON
-                        }
+                        ThresholdOperator::Equal => (value - threshold.threshold).abs() < f64::EPSILON,
                         ThresholdOperator::GreaterEqual => value >= threshold.threshold,
                         ThresholdOperator::LessEqual => value <= threshold.threshold,
                     };
 
                     if violated {
                         violations.push(ThresholdViolation {
-                            threshold: threshold.clone(),
+                            threshold:    threshold.clone(),
                             actual_value: value,
-                            metric: metric.clone(),
+                            metric:       metric.clone(),
                         });
                     }
                 }
@@ -261,11 +260,11 @@ impl MetricCollector {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThresholdViolation {
     /// The threshold that was violated
-    pub threshold: MetricThreshold,
+    pub threshold:    MetricThreshold,
     /// The actual measured value
     pub actual_value: f64,
     /// The metric that violated the threshold
-    pub metric: MetricValue,
+    pub metric:       MetricValue,
 }
 
 /// Get or create the global metric collector

@@ -2,8 +2,9 @@
 //! Provides Tauri commands and React-friendly data structures
 //! for real-time memory monitoring and analysis visualization.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 /// Memory visualization data for the React dashboard
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,10 +40,10 @@ pub struct MemoryVisualizationData {
 /// System memory information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemMemoryInfo {
-    pub total_memory_gb: f64,
+    pub total_memory_gb:     f64,
     pub available_memory_gb: f64,
-    pub used_memory_gb: f64,
-    pub memory_pressure: String, // "low", "medium", "high", "critical"
+    pub used_memory_gb:      f64,
+    pub memory_pressure:     String, // "low", "medium", "high", "critical"
 }
 
 /// Memory alert level
@@ -72,76 +73,76 @@ pub struct MemoryDashboardConfig {
 /// Memory threshold configurations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryThresholds {
-    pub warning_threshold: f64,  // percentage
+    pub warning_threshold:  f64, // percentage
     pub critical_threshold: f64, // percentage
-    pub leak_alert_count: u32,   // number of suspected leaks
+    pub leak_alert_count:   u32, // number of suspected leaks
 }
 
 /// Auto-optimization settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutoOptimizationSettings {
-    pub enable_auto_apply: bool,
-    pub aggressive_mode: bool,
+    pub enable_auto_apply:           bool,
+    pub aggressive_mode:             bool,
     pub optimization_period_minutes: u32,
 }
 
 /// Memory dashboard state
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryDashboardState {
-    pub config: MemoryDashboardConfig,
-    pub current_data: MemoryVisualizationData,
-    pub alerts: Vec<MemoryAlert>,
-    pub history: Vec<MemoryHistoryPoint>,
+    pub config:                MemoryDashboardConfig,
+    pub current_data:          MemoryVisualizationData,
+    pub alerts:                Vec<MemoryAlert>,
+    pub history:               Vec<MemoryHistoryPoint>,
     pub optimizations_applied: Vec<OptimizationEvent>,
 }
 
 /// Memory alert information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryAlert {
-    pub id: String,
-    pub level: MemoryAlertLevel,
-    pub message: String,
+    pub id:        String,
+    pub level:     MemoryAlertLevel,
+    pub message:   String,
     pub timestamp: String,
-    pub resolved: bool,
+    pub resolved:  bool,
 }
 
 /// Memory history data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryHistoryPoint {
-    pub timestamp: String,
+    pub timestamp:       String,
     pub memory_usage_mb: f64,
-    pub leak_count: u32,
+    pub leak_count:      u32,
 }
 
 /// Optimization application event
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OptimizationEvent {
-    pub id: String,
-    pub optimization_type: String,
-    pub applied_at: String,
+    pub id:                    String,
+    pub optimization_type:     String,
+    pub applied_at:            String,
     pub memory_improvement_mb: f64,
-    pub success: bool,
+    pub success:               bool,
 }
 
 /// Memory dashboard implementation
 pub struct MemoryDashboard {
     config: MemoryDashboardConfig,
-    state: tokio::sync::RwLock<MemoryDashboardState>,
+    state:  tokio::sync::RwLock<MemoryDashboardState>,
 }
 
 impl Default for MemoryDashboardConfig {
     fn default() -> Self {
         Self {
-            enable_real_time: true,
+            enable_real_time:        true,
             update_interval_seconds: 30,
-            memory_thresholds: MemoryThresholds {
-                warning_threshold: 75.0,
+            memory_thresholds:       MemoryThresholds {
+                warning_threshold:  75.0,
                 critical_threshold: 90.0,
-                leak_alert_count: 5,
+                leak_alert_count:   5,
             },
-            auto_optimization: AutoOptimizationSettings {
-                enable_auto_apply: false,
-                aggressive_mode: false,
+            auto_optimization:       AutoOptimizationSettings {
+                enable_auto_apply:           false,
+                aggressive_mode:             false,
                 optimization_period_minutes: 60,
             },
         }
@@ -151,19 +152,19 @@ impl Default for MemoryDashboardConfig {
 impl Default for MemoryVisualizationData {
     fn default() -> Self {
         Self {
-            current_usage_mb: 0.0,
-            usage_trend: Vec::new(),
-            usage_percentage: 0.0,
-            leak_indicators: 0,
+            current_usage_mb:     0.0,
+            usage_trend:          Vec::new(),
+            usage_percentage:     0.0,
+            leak_indicators:      0,
             active_optimizations: Vec::new(),
-            suggestions_count: 0,
-            pool_utilization: HashMap::new(),
-            last_updated: chrono::Utc::now().to_rfc3339(),
-            system_memory: SystemMemoryInfo {
-                total_memory_gb: 0.0,
+            suggestions_count:    0,
+            pool_utilization:     HashMap::new(),
+            last_updated:         chrono::Utc::now().to_rfc3339(),
+            system_memory:        SystemMemoryInfo {
+                total_memory_gb:     0.0,
                 available_memory_gb: 0.0,
-                used_memory_gb: 0.0,
-                memory_pressure: "unknown".to_string(),
+                used_memory_gb:      0.0,
+                memory_pressure:     "unknown".to_string(),
             },
         }
     }
@@ -174,10 +175,10 @@ impl MemoryDashboard {
     pub fn new(config: Option<MemoryDashboardConfig>) -> Self {
         let config = config.unwrap_or_default();
         let state = MemoryDashboardState {
-            config: config.clone(),
-            current_data: MemoryVisualizationData::default(),
-            alerts: Vec::new(),
-            history: Vec::new(),
+            config:                config.clone(),
+            current_data:          MemoryVisualizationData::default(),
+            alerts:                Vec::new(),
+            history:               Vec::new(),
             optimizations_applied: Vec::new(),
         };
 
@@ -188,16 +189,13 @@ impl MemoryDashboard {
     }
 
     /// Update dashboard with new memory data
-    pub async fn update_data(
-        &self,
-        new_data: MemoryVisualizationData,
-    ) -> crate::MemoryOptimizationResult<()> {
+    pub async fn update_data(&self, new_data: MemoryVisualizationData) -> crate::MemoryOptimizationResult<()> {
         let mut state = self.state.write().await;
         state.current_data = new_data;
         state.history.push(MemoryHistoryPoint {
-            timestamp: new_data.last_updated.clone(),
+            timestamp:       new_data.last_updated.clone(),
             memory_usage_mb: new_data.current_usage_mb,
-            leak_count: new_data.leak_indicators,
+            leak_count:      new_data.leak_indicators,
         });
 
         // Keep only last 100 history points
@@ -256,20 +254,20 @@ impl MemoryDashboard {
         // Memory usage alerts
         if data.usage_percentage >= self.config.memory_thresholds.critical_threshold {
             let alert = MemoryAlert {
-                id: uuid::Uuid::new_v4().to_string(),
-                level: MemoryAlertLevel::Critical,
-                message: format!("Critical memory usage: {:.1}%", data.usage_percentage),
+                id:        uuid::Uuid::new_v4().to_string(),
+                level:     MemoryAlertLevel::Critical,
+                message:   format!("Critical memory usage: {:.1}%", data.usage_percentage),
                 timestamp: chrono::Utc::now().to_rfc3339(),
-                resolved: false,
+                resolved:  false,
             };
             state.alerts.push(alert);
         } else if data.usage_percentage >= self.config.memory_thresholds.warning_threshold {
             let alert = MemoryAlert {
-                id: uuid::Uuid::new_v4().to_string(),
-                level: MemoryAlertLevel::Warning,
-                message: format!("High memory usage: {:.1}%", data.usage_percentage),
+                id:        uuid::Uuid::new_v4().to_string(),
+                level:     MemoryAlertLevel::Warning,
+                message:   format!("High memory usage: {:.1}%", data.usage_percentage),
                 timestamp: chrono::Utc::now().to_rfc3339(),
-                resolved: false,
+                resolved:  false,
             };
             state.alerts.push(alert);
         }
@@ -277,11 +275,11 @@ impl MemoryDashboard {
         // Leak alerts
         if data.leak_indicators >= self.config.memory_thresholds.leak_alert_count {
             let alert = MemoryAlert {
-                id: uuid::Uuid::new_v4().to_string(),
-                level: MemoryAlertLevel::Warning,
-                message: format!("Potential memory leaks detected: {}", data.leak_indicators),
+                id:        uuid::Uuid::new_v4().to_string(),
+                level:     MemoryAlertLevel::Warning,
+                message:   format!("Potential memory leaks detected: {}", data.leak_indicators),
                 timestamp: chrono::Utc::now().to_rfc3339(),
-                resolved: false,
+                resolved:  false,
             };
             state.alerts.push(alert);
         }

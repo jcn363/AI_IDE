@@ -1,26 +1,28 @@
 //! Main DSL code generation engine
 
+use std::collections::HashMap;
+
+use async_trait::async_trait;
+use rust_ai_ide_cache::{Cache, InMemoryCache};
+use rust_ai_ide_common::ProgrammingLanguage;
+
 use crate::ast::Template;
 use crate::error::{DslError, DslResult};
 use crate::parser::DslDocumentParser;
 use crate::plugins::PluginManager;
 use crate::template::{ExecutableTemplate, TemplateRegistry};
 use crate::types::*;
-use async_trait::async_trait;
-use rust_ai_ide_cache::{Cache, InMemoryCache};
-use rust_ai_ide_common::ProgrammingLanguage;
-use std::collections::HashMap;
 
 /// Main DSL generation engine
 pub struct DslCodeGenerator {
     /// Template registry for managing loaded templates
     template_registry: TemplateRegistry,
     /// Plugin manager for extensibility
-    plugin_manager: PluginManager,
+    plugin_manager:    PluginManager,
     /// Global cache for performance optimization
-    cache: Option<std::sync::Arc<dyn Cache<String, serde_json::Value>>>,
+    cache:             Option<std::sync::Arc<dyn Cache<String, serde_json::Value>>>,
     /// Generation configuration
-    config: GenerationConfig,
+    config:            GenerationConfig,
 }
 
 impl DslCodeGenerator {
@@ -28,11 +30,11 @@ impl DslCodeGenerator {
     pub fn new() -> Self {
         Self {
             template_registry: TemplateRegistry::new(),
-            plugin_manager: PluginManager::new(),
-            cache: Some(std::sync::Arc::new(InMemoryCache::new(
+            plugin_manager:    PluginManager::new(),
+            cache:             Some(std::sync::Arc::new(InMemoryCache::new(
                 &rust_ai_ide_cache::CacheConfig::default(),
             ))),
-            config: GenerationConfig::default(),
+            config:            GenerationConfig::default(),
         }
     }
 
@@ -73,9 +75,10 @@ impl DslCodeGenerator {
         params: HashMap<String, serde_json::Value>,
         language: ProgrammingLanguage,
     ) -> DslResult<GeneratedCode> {
-        let template = self.template_registry.get(template_name).ok_or_else(|| {
-            DslError::template(template_name.to_string(), "Template not found".to_string())
-        })?;
+        let template = self
+            .template_registry
+            .get(template_name)
+            .ok_or_else(|| DslError::template(template_name.to_string(), "Template not found".to_string()))?;
 
         let context = self.create_generation_context(language.clone());
 
@@ -117,17 +120,18 @@ impl DslCodeGenerator {
 
     /// Get template information
     pub async fn template_info(&self, name: &str) -> DslResult<TemplateInfo> {
-        let template = self.template_registry.get(name).ok_or_else(|| {
-            DslError::template(name.to_string(), "Template not found".to_string())
-        })?;
+        let template = self
+            .template_registry
+            .get(name)
+            .ok_or_else(|| DslError::template(name.to_string(), "Template not found".to_string()))?;
 
         Ok(TemplateInfo {
-            name: template.name().to_string(),
-            description: template.description().map(|s| s.to_string()),
+            name:                template.name().to_string(),
+            description:         template.description().map(|s| s.to_string()),
             supported_languages: template.supported_languages(),
-            parameters: template.parameters().to_vec(),
-            patterns: Vec::new(), // Will be populated when AST is enhanced
-            version: Some("0.1.0".to_string()),
+            parameters:          template.parameters().to_vec(),
+            patterns:            Vec::new(), // Will be populated when AST is enhanced
+            version:             Some("0.1.0".to_string()),
         })
     }
 
@@ -149,8 +153,8 @@ impl DslCodeGenerator {
         let template_names = self.list_templates();
         let template_name = template_names.first().ok_or_else(|| DslError::Execution {
             template: "DSL".to_string(),
-            message: "No templates found in DSL".to_string(),
-            context: None,
+            message:  "No templates found in DSL".to_string(),
+            context:  None,
         })?;
 
         self.execute_template(template_name, params, language).await
@@ -232,9 +236,9 @@ impl Default for DslCodeGenerator {
 /// Generation statistics
 #[derive(Debug, Clone)]
 pub struct DslStats {
-    pub template_count: usize,
-    pub plugin_count: usize,
-    pub cache_entries: u32,
+    pub template_count:  usize,
+    pub plugin_count:    usize,
+    pub cache_entries:   u32,
     pub cache_hit_ratio: f32,
 }
 
@@ -256,9 +260,10 @@ impl DslEngine for DslCodeGenerator {
         params: HashMap<String, serde_json::Value>,
         context: &GenerationContext,
     ) -> DslResult<GeneratedCode> {
-        let template = self.template_registry.get(template_name).ok_or_else(|| {
-            DslError::template(template_name.to_string(), "Template not found".to_string())
-        })?;
+        let template = self
+            .template_registry
+            .get(template_name)
+            .ok_or_else(|| DslError::template(template_name.to_string(), "Template not found".to_string()))?;
 
         template.execute(&params, context).await
     }
@@ -274,8 +279,9 @@ impl DslEngine for DslCodeGenerator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_basic_template_execution() {

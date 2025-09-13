@@ -2,12 +2,7 @@
 
 /// Lightweight constructor for Requirement
 impl super::types::Requirement {
-    pub fn new(
-        id: impl Into<String>,
-        description: impl Into<String>,
-        priority: u8,
-        related_to: Vec<String>,
-    ) -> Self {
+    pub fn new(id: impl Into<String>, description: impl Into<String>, priority: u8, related_to: Vec<String>) -> Self {
         Self {
             id: id.into(),
             description: description.into(),
@@ -38,12 +33,7 @@ use super::types::{Entity, EntityType, Field, FunctionSpec, Parameter};
 
 /// Lightweight constructor for Field
 impl Field {
-    pub fn new(
-        name: impl Into<String>,
-        field_type: impl Into<String>,
-        is_optional: bool,
-        docs: Vec<String>,
-    ) -> Self {
+    pub fn new(name: impl Into<String>, field_type: impl Into<String>, is_optional: bool, docs: Vec<String>) -> Self {
         Self {
             name: name.into(),
             field_type: field_type.into(),
@@ -55,12 +45,7 @@ impl Field {
 
 /// Lightweight constructor for Parameter
 impl Parameter {
-    pub fn new(
-        name: impl Into<String>,
-        param_type: impl Into<String>,
-        is_mut: bool,
-        is_ref: bool,
-    ) -> Self {
+    pub fn new(name: impl Into<String>, param_type: impl Into<String>, is_mut: bool, is_ref: bool) -> Self {
         Self {
             name: name.into(),
             param_type: param_type.into(),
@@ -115,7 +100,8 @@ mod tests {
     use super::*;
     use crate::spec_generation::validation::CodeValidator;
 
-    /// Creates a simple test specification for testing (moved inside mod tests for test-only compilation)
+    /// Creates a simple test specification for testing (moved inside mod tests for test-only
+    /// compilation)
     fn create_test_specification() -> ParsedSpecification {
         ParsedSpecification {
             requirements: vec![Requirement::new(
@@ -124,13 +110,13 @@ mod tests {
                 1,
                 vec![],
             )],
-            patterns: vec![ArchitecturalPattern::new(
+            patterns:     vec![ArchitecturalPattern::new(
                 "Layered",
                 1.0f32,
                 "Standard layered architecture pattern",
                 vec![],
             )],
-            entities: vec![Entity::new(
+            entities:     vec![Entity::new(
                 "User",
                 EntityType::Struct,
                 vec![
@@ -145,7 +131,7 @@ mod tests {
                 vec!["Represents a user in the system".to_string()],
                 vec!["REQ-001".to_string()],
             )],
-            functions: vec![FunctionSpec::new(
+            functions:    vec![FunctionSpec::new(
                 "create_user",
                 "Result<User, String>",
                 vec![Parameter::new("name", "String", false, false)],
@@ -183,9 +169,9 @@ mod tests {
     fn test_invalid_specification() {
         let invalid_spec = ParsedSpecification {
             requirements: vec![], // No requirements
-            patterns: vec![],
-            entities: vec![],
-            functions: vec![],
+            patterns:     vec![],
+            entities:     vec![],
+            functions:    vec![],
         };
         let validator = CodeValidator::new();
         let validation = validator.validate_specification(&invalid_spec);

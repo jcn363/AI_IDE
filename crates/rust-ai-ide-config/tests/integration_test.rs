@@ -1,22 +1,23 @@
 //! Integration tests for the unified configuration system
 
+use std::sync::Arc;
+
 use rust_ai_ide_config::config::ManagerConfig;
 use rust_ai_ide_config::*;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tempfile::TempDir;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 struct TestAppConfig {
     app_name: String,
-    version: String,
+    version:  String,
     features: Vec<String>,
     settings: TestSettings,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 struct TestSettings {
-    debug: bool,
+    debug:           bool,
     max_connections: u32,
 }
 
@@ -38,10 +39,10 @@ impl Config for TestAppConfig {
     fn default_config() -> Self {
         Self {
             app_name: "Integration Test".to_string(),
-            version: "1.0.0".to_string(),
+            version:  "1.0.0".to_string(),
             features: vec!["logging".to_string(), "metrics".to_string()],
             settings: TestSettings {
-                debug: false,
+                debug:           false,
                 max_connections: 100,
             },
         }

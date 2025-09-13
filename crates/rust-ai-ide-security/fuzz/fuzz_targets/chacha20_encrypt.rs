@@ -42,7 +42,10 @@ fuzz_target!(|data: &[u8]| {
 
             // Test decryption with wrong AAD (should fail)
             let wrong_aad = b"wrong_aad";
-            if crypto_ops.decrypt(&ciphertext, &key_bytes, &nonce, Some(wrong_aad)).is_ok() {
+            if crypto_ops
+                .decrypt(&ciphertext, &key_bytes, &nonce, Some(wrong_aad))
+                .is_ok()
+            {
                 panic!("Decryption succeeded with wrong AAD - authentication bypass!");
             }
         }

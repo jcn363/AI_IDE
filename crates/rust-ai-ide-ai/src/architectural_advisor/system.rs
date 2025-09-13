@@ -21,12 +21,12 @@
 //!
 //! The system integrates several AI/ML capabilities:
 //!
-//! - **Pattern Detection**: Uses machine learning models to identify architectural patterns
-//!   with confidence scoring rather than binary classification
-//! - **Quality Prediction**: Combines traditional metrics with predictive analytics
-//!   for technical debt and maintainability forecasting
-//! - **Decision Support**: Provides evidence-based architectural recommendations
-//!   with quantified impact and effort assessments
+//! - **Pattern Detection**: Uses machine learning models to identify architectural patterns with
+//!   confidence scoring rather than binary classification
+//! - **Quality Prediction**: Combines traditional metrics with predictive analytics for technical
+//!   debt and maintainability forecasting
+//! - **Decision Support**: Provides evidence-based architectural recommendations with quantified
+//!   impact and effort assessments
 //! - **Risk Modeling**: Uses probabilistic methods to assess implementation risks
 //!
 //! ## System Architecture
@@ -82,8 +82,13 @@
 //! }
 //! ```
 
-use super::{analysis::*, patterns::*, recommendations::*, types::*, validation::*};
 use async_trait::async_trait;
+
+use super::analysis::*;
+use super::patterns::*;
+use super::recommendations::*;
+use super::types::*;
+use super::validation::*;
 
 /// Main intelligent architectural advisor implementation with integrated AI/ML capabilities
 ///
@@ -186,7 +191,8 @@ impl ArchitecturalAdvisor for IntelligentArchitecturalAdvisor {
     ///
     /// # Parallel Processing Strategy
     ///
-    /// For optimal performance, the analysis pipeline prioritizes computationally expensive operations:
+    /// For optimal performance, the analysis pipeline prioritizes computationally expensive
+    /// operations:
     /// - Pattern detection algorithms run concurrently with quality assessment
     /// - Dependency analysis and coupling calculations are parallelized
     /// - Results are synthesized in a final aggregation phase
@@ -205,10 +211,7 @@ impl ArchitecturalAdvisor for IntelligentArchitecturalAdvisor {
     /// - Adaptive analysis depth based on project size
     /// - Intelligent caching of intermediate results
     /// - Memory-efficient processing of large codebases
-    async fn analyze_patterns(
-        &self,
-        context: ArchitecturalContext,
-    ) -> AdvisorResult<PatternAnalysis> {
+    async fn analyze_patterns(&self, context: ArchitecturalContext) -> AdvisorResult<PatternAnalysis> {
         // AI/ML Pipeline Phase 1: Context validation and preprocessing
         // Ensure analysis quality through comprehensive input validation
         let validation_issues = self.validator.validate_context(&context).await?;
@@ -253,8 +256,7 @@ impl ArchitecturalAdvisor for IntelligentArchitecturalAdvisor {
 
         // AI/ML Pipeline Phase 6: Socio-technical relationship analysis
         // Evaluate module coupling/cohesion and architectural fitness functions
-        let (coupling_analysis, cohesion_analysis) =
-            self.analyze_relationships(&codebase_analysis).await?;
+        let (coupling_analysis, cohesion_analysis) = self.analyze_relationships(&codebase_analysis).await?;
 
         // Final synthesis and aggregation phase
         // Combine all analysis dimensions into comprehensive architectural assessment
@@ -333,10 +335,7 @@ impl ArchitecturalAdvisor for IntelligentArchitecturalAdvisor {
     /// - **Dependency Validation**: Verifies prerequisite relationships
     /// - **Resource Constraint Analysis**: Considers implementation capacity
     /// - **Risk-Return Optimization**: Balances potential benefits against costs
-    async fn get_recommendations(
-        &self,
-        analysis: &PatternAnalysis,
-    ) -> AdvisorResult<ArchitecturalGuidance> {
+    async fn get_recommendations(&self, analysis: &PatternAnalysis) -> AdvisorResult<ArchitecturalGuidance> {
         // AI/ML Recommendation Pipeline Phase 1: Multi-dimensional quality synthesis
         // Aggregate all analysis dimensions into comprehensive architectural health assessment
         let quality_assessment = self.assess_quality(analysis).await?;
@@ -395,75 +394,66 @@ impl ArchitecturalAdvisor for IntelligentArchitecturalAdvisor {
         })
     }
 
-    async fn suggest_improvements(
-        &self,
-        context: ArchitecturalContext,
-    ) -> AdvisorResult<Vec<ArchitecturalSuggestion>> {
+    async fn suggest_improvements(&self, context: ArchitecturalContext) -> AdvisorResult<Vec<ArchitecturalSuggestion>> {
         let analysis = self.analyze_patterns(context).await?;
         let guidance = self.get_recommendations(&analysis).await?;
         Ok(guidance.secondary_suggestions)
     }
 
-    async fn evaluate_decisions(
-        &self,
-        decisions: Vec<DecisionOption>,
-    ) -> AdvisorResult<DecisionAnalysis> {
+    async fn evaluate_decisions(&self, decisions: Vec<DecisionOption>) -> AdvisorResult<DecisionAnalysis> {
         let recommendations = self
             .decision_engine
             .evaluate_decision(&decisions[0], &KnowledgeBase::new())
             .await?;
 
         Ok(DecisionAnalysis {
-            decision: decisions.into_iter().next().unwrap(),
+            decision:       decisions.into_iter().next().unwrap(),
             recommendation: DecisionRecommendation {
-                recommended_option: "Default".to_string(),
-                confidence: 0.8,
-                rationale: vec!["Based on pattern analysis".to_string()],
+                recommended_option:      "Default".to_string(),
+                confidence:              0.8,
+                rationale:               vec!["Based on pattern analysis".to_string()],
                 alternatives_considered: vec![],
             },
-            analysis: recommendations,
-            trade_offs: vec![],
-            risks: vec![],
-            assumptions: vec![],
+            analysis:       recommendations,
+            trade_offs:     vec![],
+            risks:          vec![],
+            assumptions:    vec![],
         })
     }
 
-    async fn generate_documentation(
-        &self,
-        analysis: &PatternAnalysis,
-    ) -> AdvisorResult<ArchitecturalDocument> {
+    async fn generate_documentation(&self, analysis: &PatternAnalysis) -> AdvisorResult<ArchitecturalDocument> {
         Ok(ArchitecturalDocument {
-            overview: ArchitecturalOverview {
+            overview:           ArchitecturalOverview {
                 description: "Generated architectural documentation".to_string(),
-                purpose: "Document current architecture".to_string(),
-                scope: "Complete system documentation".to_string(),
+                purpose:     "Document current architecture".to_string(),
+                scope:       "Complete system documentation".to_string(),
                 assumptions: vec![],
                 constraints: vec![],
-                goals: vec![],
+                goals:       vec![],
             },
-            components: vec![],
-            patterns: vec![],
-            interfaces: vec![],
-            decisions: vec![],
+            components:         vec![],
+            patterns:           vec![],
+            interfaces:         vec![],
+            decisions:          vec![],
             quality_attributes: QualityAttributesDocument {
                 attributes: vec![],
-                scenarios: vec![],
-                metrics: vec![],
+                scenarios:  vec![],
+                metrics:    vec![],
             },
-            deployment: DeploymentDocument {
+            deployment:         DeploymentDocument {
                 environments: vec![],
-                topologies: vec![],
+                topologies:   vec![],
                 requirements: DeploymentRequirements {
                     hardware: vec![],
                     software: vec![],
-                    network: vec![],
+                    network:  vec![],
                     security: vec![],
                 },
-                procedures: DeploymentProcedures {
+                procedures:   DeploymentProcedures {
                     preparation: vec![],
-                    deployment: vec![],
-                    rollback: vec![],
-                    monitoring: vec![],
+                    deployment:  vec![],
+                    rollback:    vec![],
+                    monitoring:  vec![],
                 },
             },
         })
@@ -474,40 +464,37 @@ impl IntelligentArchitecturalAdvisor {
     /// Create a new architectural advisor
     pub fn new() -> Self {
         Self {
-            pattern_detector: PatternDetector::new(),
-            metrics_analyzer: MetricsAnalyzer::new(),
-            decision_engine: DecisionEngine::new(),
+            pattern_detector:         PatternDetector::new(),
+            metrics_analyzer:         MetricsAnalyzer::new(),
+            decision_engine:          DecisionEngine::new(),
             recommendation_generator: RecommendationGenerator::new(),
-            validator: ArchitecturalValidator::new(),
+            validator:                ArchitecturalValidator::new(),
         }
     }
 
     /// Analyze codebase structure
-    async fn analyze_codebase(
-        &self,
-        _context: &ArchitecturalContext,
-    ) -> AdvisorResult<CodebaseAnalysis> {
+    async fn analyze_codebase(&self, _context: &ArchitecturalContext) -> AdvisorResult<CodebaseAnalysis> {
         Ok(CodebaseAnalysis {
             directory_structure: DirectoryStructure {
-                total_files: 100,
-                directories: vec!["src".to_string()],
-                file_types: [("rs".to_string(), 50)].into_iter().collect(),
+                total_files:           100,
+                directories:           vec!["src".to_string()],
+                file_types:            [("rs".to_string(), 50)].into_iter().collect(),
                 organization_patterns: vec![],
-                issues: vec![],
+                issues:                vec![],
             },
             module_organization: ModuleOrganization {
-                modules: vec![],
-                module_hierarchy: std::collections::HashMap::new(),
-                public_interfaces: vec![],
+                modules:               vec![],
+                module_hierarchy:      std::collections::HashMap::new(),
+                public_interfaces:     vec![],
                 internal_dependencies: std::collections::HashMap::new(),
                 circular_dependencies: vec![],
             },
-            dependencies: DependencyAnalysis {
+            dependencies:        DependencyAnalysis {
                 internal_dependencies: std::collections::HashMap::new(),
                 external_dependencies: vec![],
-                dependency_depth: std::collections::HashMap::new(),
-                shared_dependencies: vec![],
-                unused_dependencies: vec![],
+                dependency_depth:      std::collections::HashMap::new(),
+                shared_dependencies:   vec![],
+                unused_dependencies:   vec![],
             },
         })
     }
@@ -519,14 +506,14 @@ impl IntelligentArchitecturalAdvisor {
     ) -> AdvisorResult<(CouplingAnalysis, CohesionAnalysis)> {
         Ok((
             CouplingAnalysis {
-                afferent_coupling: std::collections::HashMap::new(),
-                efferent_coupling: std::collections::HashMap::new(),
-                instability: std::collections::HashMap::new(),
-                abstractness: std::collections::HashMap::new(),
+                afferent_coupling:  std::collections::HashMap::new(),
+                efferent_coupling:  std::collections::HashMap::new(),
+                instability:        std::collections::HashMap::new(),
+                abstractness:       std::collections::HashMap::new(),
                 distance_from_main: std::collections::HashMap::new(),
             },
             CohesionAnalysis {
-                lack_of_cohesion: std::collections::HashMap::new(),
+                lack_of_cohesion:    std::collections::HashMap::new(),
                 functional_cohesion: std::collections::HashMap::new(),
             },
         ))
@@ -535,17 +522,17 @@ impl IntelligentArchitecturalAdvisor {
     /// Assess quality metrics
     async fn assess_quality(&self, analysis: &PatternAnalysis) -> AdvisorResult<QualityAssessment> {
         Ok(QualityAssessment {
-            overall_score: 0.75,
+            overall_score:         0.75,
             maintainability_score: analysis.quality_metrics.maintainability_index / 171.0,
-            complexity_score: match analysis.complexity_assessment.overall_complexity {
+            complexity_score:      match analysis.complexity_assessment.overall_complexity {
                 ComplexityLevel::Low => 0.9,
                 ComplexityLevel::Moderate => 0.7,
                 ComplexityLevel::High => 0.5,
                 ComplexityLevel::VeryHigh => 0.3,
             },
-            coupling_score: 0.8,
-            cohesion_score: 0.6,
-            grading_scale: "0.0-1.0".to_string(),
+            coupling_score:        0.8,
+            cohesion_score:        0.6,
+            grading_scale:         "0.0-1.0".to_string(),
         })
     }
 }
@@ -598,13 +585,13 @@ mod tests {
         let advisor = create_architectural_advisor();
 
         let context = ArchitecturalContext {
-            codebase_path: "test/src".to_string(),
-            project_type: ProjectType::Application,
+            codebase_path:        "test/src".to_string(),
+            project_type:         ProjectType::Application,
             current_architecture: None,
-            constraints: vec![],
-            goals: vec![],
-            team_size: Some(5),
-            expected_lifecycle: Some("2 years".to_string()),
+            constraints:          vec![],
+            goals:                vec![],
+            team_size:            Some(5),
+            expected_lifecycle:   Some("2 years".to_string()),
         };
 
         let analysis = advisor.analyze_patterns(context).await.unwrap();
@@ -619,30 +606,30 @@ mod tests {
         let advisor = create_architectural_advisor();
 
         let analysis = PatternAnalysis {
-            detected_patterns: vec![],
-            anti_patterns: vec![],
-            quality_metrics: QualityMetrics {
+            detected_patterns:     vec![],
+            anti_patterns:         vec![],
+            quality_metrics:       QualityMetrics {
                 maintainability_index: 85.0,
                 cyclomatic_complexity: 15.0,
-                halstead_complexity: 25.0,
-                lines_of_code: 1000,
-                technical_debt_ratio: 0.1,
-                test_coverage: Some(0.8),
+                halstead_complexity:   25.0,
+                lines_of_code:         1000,
+                technical_debt_ratio:  0.1,
+                test_coverage:         Some(0.8),
             },
             complexity_assessment: ComplexityAssessment {
                 overall_complexity: ComplexityLevel::Moderate,
                 hotspot_complexity: vec![],
-                complexity_trends: vec![],
+                complexity_trends:  vec![],
             },
-            coupling_analysis: CouplingAnalysis {
-                afferent_coupling: std::collections::HashMap::new(),
-                efferent_coupling: std::collections::HashMap::new(),
-                instability: std::collections::HashMap::new(),
-                abstractness: std::collections::HashMap::new(),
+            coupling_analysis:     CouplingAnalysis {
+                afferent_coupling:  std::collections::HashMap::new(),
+                efferent_coupling:  std::collections::HashMap::new(),
+                instability:        std::collections::HashMap::new(),
+                abstractness:       std::collections::HashMap::new(),
                 distance_from_main: std::collections::HashMap::new(),
             },
-            cohesion_analysis: CohesionAnalysis {
-                lack_of_cohesion: std::collections::HashMap::new(),
+            cohesion_analysis:     CohesionAnalysis {
+                lack_of_cohesion:    std::collections::HashMap::new(),
                 functional_cohesion: std::collections::HashMap::new(),
             },
         };

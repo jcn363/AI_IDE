@@ -60,8 +60,8 @@ pub mod cache {
     /// Generic cache entry with TTL
     #[derive(Debug, Clone)]
     pub struct CacheEntry<T> {
-        pub value: T,
-        pub timestamp: u64,
+        pub value:       T,
+        pub timestamp:   u64,
         pub ttl_seconds: u64,
     }
 
@@ -136,7 +136,7 @@ macro_rules! standard_command {
     };
 
     // Command with single parameter
-    ($name:ident, $operation:expr, $param:ident: $param_type:ty, $handler:block) => {
+    ($name:ident, $operation:expr, $param:ident : $param_type:ty, $handler:block) => {
         #[tauri::command]
         pub async fn $name($param: $param_type) -> CommandResult<String> {
             async_command!($operation, $handler)

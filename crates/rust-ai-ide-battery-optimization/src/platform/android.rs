@@ -3,8 +3,10 @@
 //! Uses Android's BatteryManager API through JNI to monitor battery state
 //! on Android devices. Requires proper JNI setup and Android permissions.
 
-use crate::{battery_monitor::PlatformBatteryMonitor, BatteryState};
 use chrono::{DateTime, Utc};
+
+use crate::battery_monitor::PlatformBatteryMonitor;
+use crate::BatteryState;
 
 pub struct AndroidBatteryMonitor {
     initialized: bool,
@@ -26,33 +28,31 @@ impl AndroidBatteryMonitor {
 
         // This is a placeholder for actual JNI implementation
         // Real implementation would look something like:
-        /*
-        use jni::JNIEnv;
-        use jni::objects::JObject;
-
-        let battery_manager = env.call_method(
-            context,
-            "getSystemService",
-            "(Ljava/lang/String;)Ljava/lang/Object;",
-            &[env.new_string("batterymanager").unwrap().into()],
-        )?;
-
-        let level = env.call_method(
-            battery_manager,
-            "getIntProperty",
-            "(I)I",
-            &[BATTERY_PROPERTY_CAPACITY.into()],
-        )?.i()?;
-        */
+        // use jni::JNIEnv;
+        // use jni::objects::JObject;
+        //
+        // let battery_manager = env.call_method(
+        // context,
+        // "getSystemService",
+        // "(Ljava/lang/String;)Ljava/lang/Object;",
+        // &[env.new_string("batterymanager").unwrap().into()],
+        // )?;
+        //
+        // let level = env.call_method(
+        // battery_manager,
+        // "getIntProperty",
+        // "(I)I",
+        // &[BATTERY_PROPERTY_CAPACITY.into()],
+        // )?.i()?;
 
         // Placeholder implementation for development
         Ok(BatteryState {
-            level: 0.85,             // 85% battery
-            voltage: Some(4.05),     // Typical Android voltage
-            temperature: Some(32.0), // Celsius
-            is_charging: true,
-            health_percentage: Some(0.95),     // 95% health
-            time_remaining_minutes: Some(240), // 4 hours remaining
+            level:                  0.85,       // 85% battery
+            voltage:                Some(4.05), // Typical Android voltage
+            temperature:            Some(32.0), // Celsius
+            is_charging:            true,
+            health_percentage:      Some(0.95), // 95% health
+            time_remaining_minutes: Some(240),  // 4 hours remaining
         })
     }
 
@@ -122,11 +122,11 @@ impl AndroidBatteryMonitor {
     async fn get_cached_battery_state() -> anyhow::Result<BatteryState> {
         // Return a slightly modified cached state
         Ok(BatteryState {
-            level: 0.84,
-            voltage: Some(4.04),
-            temperature: Some(32.5),
-            is_charging: true,
-            health_percentage: Some(0.95),
+            level:                  0.84,
+            voltage:                Some(4.04),
+            temperature:            Some(32.5),
+            is_charging:            true,
+            health_percentage:      Some(0.95),
             time_remaining_minutes: Some(235),
         })
     }

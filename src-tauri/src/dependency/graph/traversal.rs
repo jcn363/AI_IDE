@@ -1,9 +1,11 @@
 //! Graph traversal algorithms for dependency graphs
 
-use super::{DependencyEdge, DependencyGraph, DependencyNode};
+use std::collections::{HashMap, HashSet};
+
 use petgraph::visit::{Dfs, EdgeRef};
 use petgraph::Direction;
-use std::collections::{HashMap, HashSet};
+
+use super::{DependencyEdge, DependencyGraph, DependencyNode};
 
 /// Traverse the dependency graph in depth-first order
 pub fn depth_first_traverse<'a>(
@@ -106,12 +108,12 @@ pub fn find_all_paths<'a>(
     }
 
     static DEFAULT_EDGE: DependencyEdge = DependencyEdge {
-        dep_type: crate::dependency::models::DependencyType::Normal,
-        version_req: String::new(),
-        optional: false,
+        dep_type:              crate::dependency::models::DependencyType::Normal,
+        version_req:           String::new(),
+        optional:              false,
         uses_default_features: true,
-        features: Vec::new(),
-        target: None,
+        features:              Vec::new(),
+        target:                None,
     };
 
     if let Some(start_node) = graph.graph().node_weight(from_idx) {
@@ -151,9 +153,7 @@ pub fn find_all_dependencies<'a>(
                 let has_matching_edge = graph
                     .graph()
                     .edges_directed(node_idx, Direction::Incoming)
-                    .any(|edge| {
-                        include_types.is_empty() || include_types.contains(&edge.weight().dep_type)
-                    });
+                    .any(|edge| include_types.is_empty() || include_types.contains(&edge.weight().dep_type));
 
                 if has_matching_edge {
                     result.insert(node.name.clone(), node);

@@ -3,10 +3,11 @@
 //! This module provides Prometheus-compatible metrics collection and exposure
 //! for the Rust AI IDE performance monitoring system.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 use crate::{PerformanceMetrics, UnifiedPerformanceCollector};
@@ -33,26 +34,26 @@ pub enum MetricValue {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Bucket {
     pub upper_bound: f64,
-    pub count: u64,
+    pub count:       u64,
 }
 
 /// Summary data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SummaryData {
-    pub sum: f64,
-    pub count: u64,
+    pub sum:       f64,
+    pub count:     u64,
     pub quantiles: HashMap<String, f64>,
 }
 
 /// Prometheus-compatible metric
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PrometheusMetric {
-    pub name: String,
-    pub help: String,
+    pub name:        String,
+    pub help:        String,
     pub metric_type: MetricType,
-    pub value: MetricValue,
-    pub labels: HashMap<String, String>,
-    pub timestamp: Option<u64>,
+    pub value:       MetricValue,
+    pub labels:      HashMap<String, String>,
+    pub timestamp:   Option<u64>,
 }
 
 impl PrometheusMetric {
@@ -66,8 +67,8 @@ impl PrometheusMetric {
                 MetricType::Gauge => MetricValue::Gauge(0.0),
                 MetricType::Histogram => MetricValue::Histogram(Vec::new()),
                 MetricType::Summary => MetricValue::Summary(SummaryData {
-                    sum: 0.0,
-                    count: 0,
+                    sum:       0.0,
+                    count:     0,
                     quantiles: HashMap::new(),
                 }),
             },
@@ -121,7 +122,7 @@ impl PrometheusMetric {
             MetricValue::Gauge(value) => {
                 output.push_str(&format!("{}{} {}\n", self.name, labels_str, value));
             }
-            MetricValue::Histogram(buckets) => {
+            MetricValue::Histogram(buckets) =>
                 for bucket in buckets {
                     let mut bucket_labels = self.labels.clone();
                     bucket_labels.insert("le".to_string(), bucket.upper_bound.to_string());
@@ -134,8 +135,7 @@ impl PrometheusMetric {
                         "{}_bucket{} {}\n",
                         self.name, bucket_labels_str, bucket.count
                     ));
-                }
-            }
+                },
             MetricValue::Summary(summary) => {
                 output.push_str(&format!(
                     "{}_sum{} {}\n",
@@ -268,7 +268,7 @@ impl std::error::Error for MetricsError {}
 
 /// Performance metrics exporter for Prometheus
 pub struct PrometheusExporter {
-    registry: MetricsRegistry,
+    registry:  MetricsRegistry,
     collector: Arc<UnifiedPerformanceCollector>,
 }
 

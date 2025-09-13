@@ -1,12 +1,14 @@
-use crate::types::*;
-use crate::RefactoringOperation;
-use async_trait::async_trait;
 use std::fs;
 use std::path::Path;
 
+use async_trait::async_trait;
 // AST manipulation imports
 use prettyplease;
-use syn::{visit_mut::VisitMut, Ident};
+use syn::visit_mut::VisitMut;
+use syn::Ident;
+
+use crate::types::*;
+use crate::RefactoringOperation;
 
 /// Check if a file is supported by AST-based operations (Rust files)
 fn is_ast_supported(file_path: &str) -> bool {
@@ -17,8 +19,8 @@ fn is_ast_supported(file_path: &str) -> bool {
 
 /// AST visitor to rename identifiers in code
 struct IdentifierRenamer {
-    old_name: String,
-    new_name: String,
+    old_name:     String,
+    new_name:     String,
     rename_count: usize,
 }
 
@@ -37,9 +39,9 @@ impl VisitMut for IdentifierRenamer {
         if i.to_string() == self.old_name {
             // Only rename if this isn't a keyword or built-in identifier
             if ![
-                "fn", "let", "const", "mut", "if", "else", "while", "for", "loop", "match",
-                "return", "break", "continue", "struct", "enum", "trait", "impl", "pub", "use",
-                "mod", "type", "where", "as", "crate", "super", "self", "Self", "true", "false",
+                "fn", "let", "const", "mut", "if", "else", "while", "for", "loop", "match", "return", "break",
+                "continue", "struct", "enum", "trait", "impl", "pub", "use", "mod", "type", "where", "as", "crate",
+                "super", "self", "Self", "true", "false",
             ]
             .contains(&self.old_name.as_str())
             {
@@ -100,29 +102,29 @@ impl RefactoringOperation for RenameOperation {
 
         // Calculate the change range (full file for now, could be optimized to find specific ranges)
         let change = CodeChange {
-            file_path: context.file_path.clone(),
-            range: CodeRange {
-                start_line: 1,
+            file_path:   context.file_path.clone(),
+            range:       CodeRange {
+                start_line:      1,
                 start_character: 0,
-                end_line: content.lines().count() as usize,
-                end_character: content.lines().last().map_or(0, |line| line.len()),
+                end_line:        content.lines().count() as usize,
+                end_character:   content.lines().last().map_or(0, |line| line.len()),
             },
-            old_text: content,
-            new_text: modified_content,
+            old_text:    content,
+            new_text:    modified_content,
             change_type: ChangeType::Replacement,
         };
 
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![change],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![change],
             error_message: None,
-            warnings: if renamer.rename_count == 0 {
+            warnings:      if renamer.rename_count == 0 {
                 vec!["No occurrences of the symbol were found to rename".to_string()]
             } else {
                 vec![]
             },
-            new_content: Some(prettyplease::unparse(&syntax_tree)),
+            new_content:   Some(prettyplease::unparse(&syntax_tree)),
         })
     }
 
@@ -131,14 +133,14 @@ impl RefactoringOperation for RenameOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: true,
+            is_safe:          true,
             confidence_score: 0.9,
             potential_impact: RefactoringImpact::Low,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![context.symbol_name.clone().unwrap_or_default()],
             breaking_changes: vec![],
-            suggestions: vec!["Rename appears safe to execute".to_string()],
-            warnings: vec![],
+            suggestions:      vec!["Rename appears safe to execute".to_string()],
+            warnings:         vec![],
         })
     }
 

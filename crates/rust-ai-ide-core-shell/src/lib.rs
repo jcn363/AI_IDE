@@ -6,9 +6,10 @@
 //! This crate provides synchronous and asynchronous command execution utilities,
 //! with specialized support for development tools like Cargo and Git.
 
-use rust_ai_ide_core_fundamentals::error::{IDEError, IDEResult};
 use std::process::{Command, Stdio};
 use std::time::Duration;
+
+use rust_ai_ide_core_fundamentals::error::{IDEError, IDEResult};
 
 /// Execute a command synchronously and return results
 pub fn execute_command(cmd: &str, args: &[&str]) -> IDEResult<CommandResult> {
@@ -20,11 +21,11 @@ pub fn execute_command(cmd: &str, args: &[&str]) -> IDEResult<CommandResult> {
         .map_err(|e| IDEError::FileSystem(format!("Failed to execute command '{}': {}", cmd, e)))?;
 
     Ok(CommandResult {
-        success: output.status.success(),
-        stdout: String::from_utf8_lossy(&output.stdout).to_string(),
-        stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+        success:   output.status.success(),
+        stdout:    String::from_utf8_lossy(&output.stdout).to_string(),
+        stderr:    String::from_utf8_lossy(&output.stderr).to_string(),
         exit_code: output.status.code(),
-        duration: None, // Synchronous execution doesn't time by default
+        duration:  None, // Synchronous execution doesn't time by default
     })
 }
 
@@ -32,15 +33,15 @@ pub fn execute_command(cmd: &str, args: &[&str]) -> IDEResult<CommandResult> {
 #[derive(Debug, Clone)]
 pub struct CommandResult {
     /// Whether the command succeeded (exit code 0)
-    pub success: bool,
+    pub success:   bool,
     /// Standard output as a string
-    pub stdout: String,
+    pub stdout:    String,
     /// Standard error as a string
-    pub stderr: String,
+    pub stderr:    String,
     /// Exit code, if available
     pub exit_code: Option<i32>,
     /// Duration of execution, if timed
-    pub duration: Option<Duration>,
+    pub duration:  Option<Duration>,
 }
 
 impl CommandResult {
@@ -52,9 +53,10 @@ impl CommandResult {
 
 /// Specialized cargo command utilities
 pub mod cargo {
-    use super::{execute_command, execute_with_timeout, CommandResult, IDEResult};
     use std::path::Path;
     use std::time::Duration;
+
+    use super::{execute_command, execute_with_timeout, CommandResult, IDEResult};
 
     /// Execute cargo build in specified directory
     pub fn build(_project_path: &Path, release: bool) -> IDEResult<CommandResult> {
@@ -124,10 +126,11 @@ pub mod cargo {
 
 /// Specialized git command utilities
 pub mod git {
-    use super::{execute_command, CommandResult, IDEResult};
     // std::path::Path is used in function signatures
     // but marked with a warning - keeping for API consistency
     use std::path::Path;
+
+    use super::{execute_command, CommandResult, IDEResult};
 
     /// Execute git status
     pub fn status(_repo_path: &Path, short_format: bool) -> IDEResult<CommandResult> {
@@ -184,11 +187,7 @@ pub mod git {
     }
 
     /// Execute git blame
-    pub fn blame(
-        _repo_path: &Path,
-        file_path: &str,
-        line_numbers: bool,
-    ) -> IDEResult<CommandResult> {
+    pub fn blame(_repo_path: &Path, file_path: &str, line_numbers: bool) -> IDEResult<CommandResult> {
         let args = if line_numbers {
             vec!["blame", "--line-porcelain", file_path]
         } else {
@@ -246,11 +245,7 @@ pub fn execute_safe_command(cmd: &str, args: Vec<String>) -> IDEResult<CommandRe
 }
 
 /// Execute command with timeout (async)
-pub fn execute_with_timeout(
-    cmd: &str,
-    args: &[&str],
-    timeout: Duration,
-) -> IDEResult<CommandResult> {
+pub fn execute_with_timeout(cmd: &str, args: &[&str], timeout: Duration) -> IDEResult<CommandResult> {
     use tokio::process::Command;
     use tokio::time::timeout as tokio_timeout;
 
@@ -264,20 +259,18 @@ pub fn execute_with_timeout(
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
             .spawn()
-            .map_err(|e| {
-                IDEError::FileSystem(format!("Failed to spawn process '{}': {}", cmd, e))
-            })?;
+            .map_err(|e| IDEError::FileSystem(format!("Failed to spawn process '{}': {}", cmd, e)))?;
 
         match tokio_timeout(timeout, child.wait_with_output()).await {
             Ok(output_result) => {
                 match output_result {
                     Ok(output) => {
                         Ok(CommandResult {
-                            success: output.status.success(),
-                            stdout: String::from_utf8_lossy(&output.stdout).to_string(),
-                            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+                            success:   output.status.success(),
+                            stdout:    String::from_utf8_lossy(&output.stdout).to_string(),
+                            stderr:    String::from_utf8_lossy(&output.stderr).to_string(),
                             exit_code: output.status.code(),
-                            duration: Some(timeout), // Not exact but better than None
+                            duration:  Some(timeout), // Not exact but better than None
                         })
                     }
                     Err(e) => Err(IDEError::FileSystem(format!(

@@ -4,46 +4,47 @@
 //! This module provides a unified configuration system for AI services,
 //! model loading, and inference settings across the entire Rust AI IDE workspace.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use rust_ai_ide_common::config::Config;
+use serde::{Deserialize, Serialize};
+
 use super::ai::{AIProvider, AnalysisConfig, ModelConfig};
 use super::error::{IDEError, IDEResult};
-use rust_ai_ide_common::config::Config;
 
 /// Main application configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
     /// Core IDE configuration
-    pub core: CoreConfig,
+    pub core:        CoreConfig,
     /// AI systems configuration
-    pub ai: AIConfig,
+    pub ai:          AIConfig,
     /// Analysis configuration
-    pub analysis: AnalysisConfig,
+    pub analysis:    AnalysisConfig,
     /// Performance configuration
     pub performance: PerformanceConfig,
     /// Caching configuration
-    pub cache: CacheConfig,
+    pub cache:       CacheConfig,
     /// Networking configuration
-    pub network: NetworkConfig,
+    pub network:     NetworkConfig,
     /// Logging configuration
-    pub logging: LoggingConfig,
+    pub logging:     LoggingConfig,
     /// Additional custom configurations
-    pub custom: HashMap<String, serde_json::Value>,
+    pub custom:      HashMap<String, serde_json::Value>,
 }
 
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
-            core: CoreConfig::default(),
-            ai: AIConfig::default(),
-            analysis: AnalysisConfig::default(),
+            core:        CoreConfig::default(),
+            ai:          AIConfig::default(),
+            analysis:    AnalysisConfig::default(),
             performance: PerformanceConfig::default(),
-            cache: CacheConfig::default(),
-            network: NetworkConfig::default(),
-            logging: LoggingConfig::default(),
-            custom: HashMap::new(),
+            cache:       CacheConfig::default(),
+            network:     NetworkConfig::default(),
+            logging:     LoggingConfig::default(),
+            custom:      HashMap::new(),
         }
     }
 }
@@ -84,11 +85,9 @@ impl AppConfig {
             .map_err(|e| IDEError::from(e))?;
 
         match extension.as_ref().map(|s| s.as_str()) {
-            Some("yaml") | Some("yml") => {
-                serde_yaml::from_str(&contents).map_err(|e| IDEError::Parse {
-                    message: format!("YAML parsing error: {}", e),
-                })
-            }
+            Some("yaml") | Some("yml") => serde_yaml::from_str(&contents).map_err(|e| IDEError::Parse {
+                message: format!("YAML parsing error: {}", e),
+            }),
             Some("toml") => toml::from_str(&contents).map_err(|e| IDEError::Parse {
                 message: format!("TOML parsing error: {}", e),
             }),
@@ -119,11 +118,9 @@ impl AppConfig {
             ConfigFormat::Toml => toml::to_string(self).map_err(|e| IDEError::Generic {
                 message: format!("TOML serialization error: {}", e),
             })?,
-            ConfigFormat::Json => {
-                serde_json::to_string_pretty(self).map_err(|e| IDEError::Generic {
-                    message: format!("JSON serialization error: {}", e),
-                })?
-            }
+            ConfigFormat::Json => serde_json::to_string_pretty(self).map_err(|e| IDEError::Generic {
+                message: format!("JSON serialization error: {}", e),
+            })?,
         };
 
         // Create directory if it doesn't exist
@@ -182,43 +179,43 @@ pub enum ConfigFormat {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CoreConfig {
     /// Application name
-    pub app_name: String,
+    pub app_name:         String,
     /// Application version
-    pub app_version: String,
+    pub app_version:      String,
     /// Data directory
-    pub data_directory: PathBuf,
+    pub data_directory:   PathBuf,
     /// Config directory
     pub config_directory: PathBuf,
     /// Cache directory
-    pub cache_directory: PathBuf,
+    pub cache_directory:  PathBuf,
     /// Log directory
-    pub log_directory: PathBuf,
+    pub log_directory:    PathBuf,
     /// Editor theme
-    pub theme: String,
+    pub theme:            String,
     /// Font preferences
-    pub fonts: FontConfig,
+    pub fonts:            FontConfig,
     /// Editor settings
-    pub editor: EditorConfig,
+    pub editor:           EditorConfig,
 }
 
 impl Default for CoreConfig {
     fn default() -> Self {
         Self {
-            app_name: "Rust AI IDE".to_string(),
-            app_version: env!("CARGO_PKG_VERSION").to_string(),
-            data_directory: dirs::data_local_dir()
+            app_name:         "Rust AI IDE".to_string(),
+            app_version:      env!("CARGO_PKG_VERSION").to_string(),
+            data_directory:   dirs::data_local_dir()
                 .unwrap_or_else(|| PathBuf::from("./data"))
                 .join("rust-ai-ide"),
             config_directory: dirs::config_dir()
                 .unwrap_or_else(|| PathBuf::from("./config"))
                 .join("rust-ai-ide"),
-            cache_directory: dirs::cache_dir()
+            cache_directory:  dirs::cache_dir()
                 .unwrap_or_else(|| PathBuf::from("./cache"))
                 .join("rust-ai-ide"),
-            log_directory: dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("./logs")),
-            theme: "dark".to_string(),
-            fonts: FontConfig::default(),
-            editor: EditorConfig::default(),
+            log_directory:    dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("./logs")),
+            theme:            "dark".to_string(),
+            fonts:            FontConfig::default(),
+            editor:           EditorConfig::default(),
         }
     }
 }
@@ -227,13 +224,13 @@ impl Default for CoreConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FontConfig {
     /// Editor font family
-    pub editor_font_family: String,
+    pub editor_font_family:    String,
     /// Editor font size
-    pub editor_font_size: f32,
+    pub editor_font_size:      f32,
     /// UI font family
-    pub ui_font_family: String,
+    pub ui_font_family:        String,
     /// UI font size
-    pub ui_font_size: f32,
+    pub ui_font_size:          f32,
     /// Monospace font family
     pub monospace_font_family: String,
 }
@@ -241,10 +238,10 @@ pub struct FontConfig {
 impl Default for FontConfig {
     fn default() -> Self {
         Self {
-            editor_font_family: "JetBrains Mono".to_string(),
-            editor_font_size: 14.0,
-            ui_font_family: "System".to_string(),
-            ui_font_size: 13.0,
+            editor_font_family:    "JetBrains Mono".to_string(),
+            editor_font_size:      14.0,
+            ui_font_family:        "System".to_string(),
+            ui_font_size:          13.0,
             monospace_font_family: "JetBrains Mono".to_string(),
         }
     }
@@ -254,19 +251,19 @@ impl Default for FontConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EditorConfig {
     /// Tab size
-    pub tab_size: u32,
+    pub tab_size:               u32,
     /// Insert spaces instead of tabs
-    pub insert_spaces: bool,
+    pub insert_spaces:          bool,
     /// Word wrap
-    pub word_wrap: bool,
+    pub word_wrap:              bool,
     /// Minimap enabled
-    pub minimap: bool,
+    pub minimap:                bool,
     /// Line numbers
-    pub line_numbers: bool,
+    pub line_numbers:           bool,
     /// Automatic save delay (seconds)
-    pub auto_save_delay: Option<u32>,
+    pub auto_save_delay:        Option<u32>,
     /// Bracket matching
-    pub bracket_matching: bool,
+    pub bracket_matching:       bool,
     /// Highlight current line
     pub highlight_current_line: bool,
 }
@@ -274,13 +271,13 @@ pub struct EditorConfig {
 impl Default for EditorConfig {
     fn default() -> Self {
         Self {
-            tab_size: 4,
-            insert_spaces: true,
-            word_wrap: true,
-            minimap: true,
-            line_numbers: true,
-            auto_save_delay: Some(60),
-            bracket_matching: true,
+            tab_size:               4,
+            insert_spaces:          true,
+            word_wrap:              true,
+            minimap:                true,
+            line_numbers:           true,
+            auto_save_delay:        Some(60),
+            bracket_matching:       true,
             highlight_current_line: true,
         }
     }
@@ -292,17 +289,17 @@ pub struct AIConfig {
     /// Default AI provider
     pub default_provider: AIProvider,
     /// Available providers
-    pub providers: Vec<AIProvider>,
+    pub providers:        Vec<AIProvider>,
     /// Active models
-    pub active_models: Vec<ModelConfig>,
+    pub active_models:    Vec<ModelConfig>,
     /// API endpoints for remote providers
-    pub endpoints: HashMap<AIProvider, String>,
+    pub endpoints:        HashMap<AIProvider, String>,
     /// API keys (encrypted or environment-based)
-    pub api_keys: HashMap<String, String>,
+    pub api_keys:         HashMap<String, String>,
     /// Model management settings
     pub model_management: ModelManagementConfig,
     /// Inference settings
-    pub inference: InferenceConfig,
+    pub inference:        InferenceConfig,
 }
 
 impl Default for AIConfig {
@@ -356,25 +353,25 @@ impl AIConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelManagementConfig {
     /// Maximum memory usage for models (MB)
-    pub max_memory_mb: u64,
+    pub max_memory_mb:         u64,
     /// Maximum number of concurrent models
     pub max_concurrent_models: usize,
     /// Model unloading policy
-    pub unloading_policy: UnloadingPolicy,
+    pub unloading_policy:      UnloadingPolicy,
     /// Enable model caching
-    pub enable_caching: bool,
+    pub enable_caching:        bool,
     /// Cache directory
-    pub cache_directory: Option<PathBuf>,
+    pub cache_directory:       Option<PathBuf>,
 }
 
 impl Default for ModelManagementConfig {
     fn default() -> Self {
         Self {
-            max_memory_mb: 2048,
+            max_memory_mb:         2048,
             max_concurrent_models: 3,
-            unloading_policy: UnloadingPolicy::LeastRecentlyUsed,
-            enable_caching: true,
-            cache_directory: Some(PathBuf::from("./model-cache")),
+            unloading_policy:      UnloadingPolicy::LeastRecentlyUsed,
+            enable_caching:        true,
+            cache_directory:       Some(PathBuf::from("./model-cache")),
         }
     }
 }
@@ -396,31 +393,31 @@ pub enum UnloadingPolicy {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InferenceConfig {
     /// Default temperature
-    pub default_temperature: f32,
+    pub default_temperature:     f32,
     /// Default max tokens
-    pub default_max_tokens: u32,
+    pub default_max_tokens:      u32,
     /// Default top-p
-    pub default_top_p: f32,
+    pub default_top_p:           f32,
     /// Default top-k
-    pub default_top_k: u32,
+    pub default_top_k:           u32,
     /// Request timeout (seconds)
     pub request_timeout_seconds: u32,
     /// Retry configuration
-    pub retry: RetryConfig,
+    pub retry:                   RetryConfig,
     /// Rate limiting
-    pub rate_limiting: RateLimitConfig,
+    pub rate_limiting:           RateLimitConfig,
 }
 
 impl Default for InferenceConfig {
     fn default() -> Self {
         Self {
-            default_temperature: 0.7,
-            default_max_tokens: 2048,
-            default_top_p: 0.9,
-            default_top_k: 40,
+            default_temperature:     0.7,
+            default_max_tokens:      2048,
+            default_top_p:           0.9,
+            default_top_k:           40,
             request_timeout_seconds: 300,
-            retry: RetryConfig::default(),
-            rate_limiting: RateLimitConfig::default(),
+            retry:                   RetryConfig::default(),
+            rate_limiting:           RateLimitConfig::default(),
         }
     }
 }
@@ -429,11 +426,11 @@ impl Default for InferenceConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RetryConfig {
     /// Maximum attempts
-    pub max_attempts: u32,
+    pub max_attempts:       u32,
     /// Base delay between retries (milliseconds)
-    pub base_delay_ms: u64,
+    pub base_delay_ms:      u64,
     /// Maximum delay between retries (milliseconds)
-    pub max_delay_ms: u64,
+    pub max_delay_ms:       u64,
     /// Exponential backoff multiplier
     pub backoff_multiplier: f32,
 }
@@ -441,9 +438,9 @@ pub struct RetryConfig {
 impl Default for RetryConfig {
     fn default() -> Self {
         Self {
-            max_attempts: 3,
-            base_delay_ms: 1000,
-            max_delay_ms: 30000,
+            max_attempts:       3,
+            base_delay_ms:      1000,
+            max_delay_ms:       30000,
             backoff_multiplier: 2.0,
         }
     }
@@ -455,17 +452,17 @@ pub struct RateLimitConfig {
     /// Requests per minute
     pub requests_per_minute: u32,
     /// Burst limit
-    pub burst_limit: u32,
+    pub burst_limit:         u32,
     /// Backoff time on rate limit hit (milliseconds)
-    pub backoff_ms: u64,
+    pub backoff_ms:          u64,
 }
 
 impl Default for RateLimitConfig {
     fn default() -> Self {
         Self {
             requests_per_minute: 60,
-            burst_limit: 10,
-            backoff_ms: 60000,
+            burst_limit:         10,
+            backoff_ms:          60000,
         }
     }
 }
@@ -476,23 +473,23 @@ pub struct PerformanceConfig {
     /// Maximum threads for analysis
     pub max_analysis_threads: usize,
     /// Maximum memory usage (MB)
-    pub max_memory_mb: u64,
+    pub max_memory_mb:        u64,
     /// Concurrency limit for AI operations
     pub ai_concurrency_limit: usize,
     /// IO thread pool size
-    pub io_thread_pool_size: usize,
+    pub io_thread_pool_size:  usize,
     /// Cache sizes
-    pub cache_sizes: CacheSizesConfig,
+    pub cache_sizes:          CacheSizesConfig,
 }
 
 impl Default for PerformanceConfig {
     fn default() -> Self {
         Self {
             max_analysis_threads: num_cpus::get(),
-            max_memory_mb: 4096,
+            max_memory_mb:        4096,
             ai_concurrency_limit: 4,
-            io_thread_pool_size: num_cpus::get(),
-            cache_sizes: CacheSizesConfig::default(),
+            io_thread_pool_size:  num_cpus::get(),
+            cache_sizes:          CacheSizesConfig::default(),
         }
     }
 }
@@ -521,20 +518,20 @@ pub struct CacheSizesConfig {
     /// Analysis result cache size (entries)
     pub analysis_cache_size: usize,
     /// Model cache size (entries)
-    pub model_cache_size: usize,
+    pub model_cache_size:    usize,
     /// LSP cache size (entries)
-    pub lsp_cache_size: usize,
+    pub lsp_cache_size:      usize,
     /// File cache size (MB)
-    pub file_cache_size_mb: usize,
+    pub file_cache_size_mb:  usize,
 }
 
 impl Default for CacheSizesConfig {
     fn default() -> Self {
         Self {
             analysis_cache_size: 1000,
-            model_cache_size: 100,
-            lsp_cache_size: 500,
-            file_cache_size_mb: 500,
+            model_cache_size:    100,
+            lsp_cache_size:      500,
+            file_cache_size_mb:  500,
         }
     }
 }
@@ -543,9 +540,9 @@ impl Default for CacheSizesConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CacheConfig {
     /// Enable caching
-    pub enabled: bool,
+    pub enabled:     bool,
     /// Cache directory
-    pub directory: PathBuf,
+    pub directory:   PathBuf,
     /// Maximum cache size (MB)
     pub max_size_mb: u64,
     /// Cache compression
@@ -561,8 +558,8 @@ impl Default for CacheConfig {
             .join("rust-ai-ide");
 
         Self {
-            enabled: true,
-            directory: dir,
+            enabled:     true,
+            directory:   dir,
             max_size_mb: 1024,
             compression: CompressionConfig::default(),
             ttl_seconds: 3600, // 1 hour
@@ -586,9 +583,9 @@ impl CacheConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompressionConfig {
     /// Enable compression
-    pub enabled: bool,
+    pub enabled:        bool,
     /// Compression algorithm
-    pub algorithm: CompressionAlgorithm,
+    pub algorithm:      CompressionAlgorithm,
     /// Minimum size to compress (bytes)
     pub min_size_bytes: usize,
 }
@@ -596,8 +593,8 @@ pub struct CompressionConfig {
 impl Default for CompressionConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            algorithm: CompressionAlgorithm::Gzip,
+            enabled:        true,
+            algorithm:      CompressionAlgorithm::Gzip,
             min_size_bytes: 1024,
         }
     }
@@ -615,25 +612,25 @@ pub enum CompressionAlgorithm {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NetworkConfig {
     /// HTTP client timeout (seconds)
-    pub timeout_seconds: u64,
+    pub timeout_seconds:      u64,
     /// Maximum response size (MB)
     pub max_response_size_mb: u64,
     /// SSL/TLS configuration
-    pub tls: TlsConfig,
+    pub tls:                  TlsConfig,
     /// Proxy configuration
-    pub proxy: Option<ProxyConfig>,
+    pub proxy:                Option<ProxyConfig>,
     /// Connection pool settings
-    pub connection_pool: ConnectionPoolConfig,
+    pub connection_pool:      ConnectionPoolConfig,
 }
 
 impl Default for NetworkConfig {
     fn default() -> Self {
         Self {
-            timeout_seconds: 30,
+            timeout_seconds:      30,
             max_response_size_mb: 100,
-            tls: TlsConfig::default(),
-            proxy: None,
-            connection_pool: ConnectionPoolConfig::default(),
+            tls:                  TlsConfig::default(),
+            proxy:                None,
+            connection_pool:      ConnectionPoolConfig::default(),
         }
     }
 }
@@ -654,22 +651,22 @@ impl NetworkConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TlsConfig {
     /// Enable SSL/TLS verification
-    pub verify_ssl: bool,
+    pub verify_ssl:       bool,
     /// Certificate file path
-    pub ca_cert_file: Option<PathBuf>,
+    pub ca_cert_file:     Option<PathBuf>,
     /// Client certificate file path
     pub client_cert_file: Option<PathBuf>,
     /// Client key file path
-    pub client_key_file: Option<PathBuf>,
+    pub client_key_file:  Option<PathBuf>,
 }
 
 impl Default for TlsConfig {
     fn default() -> Self {
         Self {
-            verify_ssl: true,
-            ca_cert_file: None,
+            verify_ssl:       true,
+            ca_cert_file:     None,
             client_cert_file: None,
-            client_key_file: None,
+            client_key_file:  None,
         }
     }
 }
@@ -678,7 +675,7 @@ impl Default for TlsConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProxyConfig {
     /// Proxy URL
-    pub url: String,
+    pub url:      String,
     /// Proxy username
     pub username: Option<String>,
     /// Proxy password
@@ -691,17 +688,17 @@ pub struct ConnectionPoolConfig {
     /// Maximum connections per host
     pub max_connections_per_host: usize,
     /// Maximum idle connections
-    pub max_idle_connections: usize,
+    pub max_idle_connections:     usize,
     /// Connection timeout (seconds)
-    pub connect_timeout_seconds: u64,
+    pub connect_timeout_seconds:  u64,
 }
 
 impl Default for ConnectionPoolConfig {
     fn default() -> Self {
         Self {
             max_connections_per_host: 10,
-            max_idle_connections: 5,
-            connect_timeout_seconds: 10,
+            max_idle_connections:     5,
+            connect_timeout_seconds:  10,
         }
     }
 }
@@ -710,28 +707,28 @@ impl Default for ConnectionPoolConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LoggingConfig {
     /// Minimum log level
-    pub level: LogLevel,
+    pub level:                LogLevel,
     /// Log format
-    pub format: LogFormat,
+    pub format:               LogFormat,
     /// Output destinations
-    pub outputs: Vec<LogOutput>,
+    pub outputs:              Vec<LogOutput>,
     /// Maximum log file size (MB)
     pub max_log_file_size_mb: u64,
     /// Maximum number of log files to keep
-    pub max_log_files: usize,
+    pub max_log_files:        usize,
     /// Enable log compression
-    pub compress_logs: bool,
+    pub compress_logs:        bool,
 }
 
 impl Default for LoggingConfig {
     fn default() -> Self {
         Self {
-            level: LogLevel::Info,
-            format: LogFormat::Json,
-            outputs: vec![LogOutput::Stdout],
+            level:                LogLevel::Info,
+            format:               LogFormat::Json,
+            outputs:              vec![LogOutput::Stdout],
             max_log_file_size_mb: 100,
-            max_log_files: 10,
-            compress_logs: true,
+            max_log_files:        10,
+            compress_logs:        true,
         }
     }
 }

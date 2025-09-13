@@ -1,11 +1,10 @@
 //! Tests for the logging functionality in rust-ai-ide-common
 
-use rust_ai_ide_common::{
-    default_logger::{global_logger, init_default_logger, DefaultLogger},
-    logging::{LogContext, LogLevel},
-    Loggable, LoggableError, UnifiedLogger,
-};
 use std::sync::Once;
+
+use rust_ai_ide_common::default_logger::{global_logger, init_default_logger, DefaultLogger};
+use rust_ai_ide_common::logging::{LogContext, LogLevel};
+use rust_ai_ide_common::{Loggable, LoggableError, UnifiedLogger};
 
 static INIT: Once = Once::new();
 
@@ -31,8 +30,7 @@ async fn test_basic_logging() {
     logger.log_warn("This is a warning message").await;
 
     // Test error logging
-    let error =
-        LoggableError::new("Test error occurred").with_context("test_case", "test_basic_logging");
+    let error = LoggableError::new("Test error occurred").with_context("test_case", "test_basic_logging");
     logger.log_error("An error occurred", Some(&error)).await;
 
     // Log with custom context
@@ -73,14 +71,13 @@ async fn test_loggable_trait() {
     // Create a test struct that implements Loggable
     #[derive(Debug)]
     struct TestComponent {
-        name: String,
+        name:   String,
         logger: Box<dyn Loggable>,
     }
 
     impl TestComponent {
         fn new(name: &str) -> Self {
-            let logger = global_logger()
-                .with_context(LogContext::new("TestComponent").with_metadata("name", name));
+            let logger = global_logger().with_context(LogContext::new("TestComponent").with_metadata("name", name));
 
             Self {
                 name: name.to_string(),

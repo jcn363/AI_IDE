@@ -3,63 +3,63 @@
 //! This module consolidates all testing-related utilities from across the codebase
 //! including performance testing, integration testing, and test command execution.
 
-use crate::handlers::validation::validate_secure_path;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
+
 use tokio::process::Command as AsyncCommand;
 use tokio::sync::Mutex;
+
+use crate::handlers::validation::validate_secure_path;
 
 /// Test environment state for managing test execution
 #[derive(Debug, Clone)]
 pub struct TestEnvironment {
     pub workspace_path: PathBuf,
-    pub temp_dirs: Vec<PathBuf>,
-    pub test_projects: HashMap<String, PathBuf>,
+    pub temp_dirs:      Vec<PathBuf>,
+    pub test_projects:  HashMap<String, PathBuf>,
 }
 
 /// Command execution result
 #[derive(Debug, Clone)]
 pub struct CommandResult {
-    pub success: bool,
-    pub stdout: String,
-    pub stderr: String,
-    pub exit_code: Option<i32>,
+    pub success:     bool,
+    pub stdout:      String,
+    pub stderr:      String,
+    pub exit_code:   Option<i32>,
     pub duration_ms: u64,
 }
 
 /// Performance metrics for test commands
 #[derive(Debug, Clone)]
 pub struct PerformanceMetrics {
-    pub total_time_ms: f64,
-    pub cpu_time_ms: f64,
-    pub memory_peak_kb: u64,
+    pub total_time_ms:         f64,
+    pub cpu_time_ms:           f64,
+    pub memory_peak_kb:        u64,
     pub operations_per_second: f64,
 }
 
 /// Test configuration
 #[derive(Debug, Clone)]
 pub struct TestConfig {
-    pub enable_coverage: bool,
+    pub enable_coverage:    bool,
     pub enable_incremental: bool,
-    pub enable_parallel: bool,
-    pub timeout_seconds: u64,
-    pub working_directory: PathBuf,
+    pub enable_parallel:    bool,
+    pub timeout_seconds:    u64,
+    pub working_directory:  PathBuf,
 }
 
 /// Consolidated test utilities module
 pub mod utils {
-    use super::*;
-    use sha2::{Digest, Sha256};
     use std::time::Instant;
 
+    use sha2::{Digest, Sha256};
+
+    use super::*;
+
     /// Run a command synchronously with performance tracking
-    pub fn run_command_blocking(
-        cmd: &str,
-        args: &[&str],
-        cwd: &Path,
-    ) -> anyhow::Result<CommandResult> {
+    pub fn run_command_blocking(cmd: &str, args: &[&str], cwd: &Path) -> anyhow::Result<CommandResult> {
         println!("Running: {} {}", cmd, args.join(" "));
         let start = Instant::now();
 
@@ -80,11 +80,7 @@ pub mod utils {
     }
 
     /// Run a command asynchronously
-    pub async fn run_command_async(
-        cmd: &str,
-        args: &[&str],
-        cwd: &Path,
-    ) -> anyhow::Result<CommandResult> {
+    pub async fn run_command_async(cmd: &str, args: &[&str], cwd: &Path) -> anyhow::Result<CommandResult> {
         println!("Running async: {} {}", cmd, args.join(" "));
         let start = Instant::now();
 
@@ -142,9 +138,7 @@ pub mod utils {
         }
 
         let src_dir = project_path.join("src");
-        if !src_dir.exists()
-            || !src_dir.join("lib.rs").exists() && !src_dir.join("main.rs").exists()
-        {
+        if !src_dir.exists() || !src_dir.join("lib.rs").exists() && !src_dir.join("main.rs").exists() {
             anyhow::bail!(
                 "src/lib.rs or src/main.rs not found in: {}",
                 project_path.display()
@@ -208,8 +202,9 @@ mod tests {
 
 /// Performance testing utilities
 pub mod performance {
-    use super::*;
     use std::time::{Duration, Instant};
+
+    use super::*;
 
     /// Run a synchronous performance test workload
     pub fn run_sync_performance_workload(iterations: u32) -> (u64, Duration) {
@@ -319,25 +314,23 @@ Recommendations:
 
 /// Integration testing utilities
 pub mod integration {
-    use super::*;
     use serde::{Deserialize, Serialize};
+
+    use super::*;
 
     /// Test fixture for integration tests
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct TestFixture {
-        pub name: String,
-        pub description: Option<String>,
-        pub setup_commands: Vec<String>,
-        pub test_commands: Vec<String>,
+        pub name:             String,
+        pub description:      Option<String>,
+        pub setup_commands:   Vec<String>,
+        pub test_commands:    Vec<String>,
         pub cleanup_commands: Vec<String>,
-        pub expected_files: Vec<String>,
+        pub expected_files:   Vec<String>,
     }
 
     /// Run integration test with fixture
-    pub async fn run_integration_test(
-        fixture: &TestFixture,
-        workspace_path: &Path,
-    ) -> anyhow::Result<TestResult> {
+    pub async fn run_integration_test(fixture: &TestFixture, workspace_path: &Path) -> anyhow::Result<TestResult> {
         let mut results = HashMap::new();
 
         // Setup phase
@@ -399,9 +392,9 @@ pub mod integration {
     /// Test result from integration test
     #[derive(Debug)]
     pub struct TestResult {
-        pub fixture_name: String,
-        pub success: bool,
-        pub results: HashMap<String, CommandResult>,
+        pub fixture_name:       String,
+        pub success:            bool,
+        pub results:            HashMap<String, CommandResult>,
         pub cleanup_successful: bool,
     }
 }
@@ -440,9 +433,9 @@ pub mod coverage {
     /// Available coverage tools
     #[derive(Debug, Clone)]
     pub struct CoverageTools {
-        pub has_llvm_cov: bool,
+        pub has_llvm_cov:  bool,
         pub has_tarpaulin: bool,
-        pub has_grcov: bool,
+        pub has_grcov:     bool,
     }
 
     impl CoverageTools {
@@ -464,27 +457,17 @@ pub mod coverage {
     }
 
     /// Run coverage analysis
-    pub async fn run_coverage(
-        project_path: &Path,
-        config: &TestConfig,
-    ) -> anyhow::Result<CoverageResult> {
+    pub async fn run_coverage(project_path: &Path, config: &TestConfig) -> anyhow::Result<CoverageResult> {
         let tools = check_coverage_availability();
 
         if !tools.any_available() {
-            anyhow::bail!(
-                "No coverage tools available. Install cargo-llvm-cov, cargo-tarpaulin, or grcov"
-            );
+            anyhow::bail!("No coverage tools available. Install cargo-llvm-cov, cargo-tarpaulin, or grcov");
         }
 
         let tool = tools.best_available().unwrap();
         let output = match tool {
-            "llvm-cov" => {
-                utils::run_command_async("cargo", &["llvm-cov", "--json"], project_path).await?
-            }
-            "tarpaulin" => {
-                utils::run_command_async("cargo", &["tarpaulin", "--out", "Stdout"], project_path)
-                    .await?
-            }
+            "llvm-cov" => utils::run_command_async("cargo", &["llvm-cov", "--json"], project_path).await?,
+            "tarpaulin" => utils::run_command_async("cargo", &["tarpaulin", "--out", "Stdout"], project_path).await?,
             "grcov" => {
                 // grcov requires additional setup, assume JSON output
                 utils::run_command_async("grcov", &[".", "--json"], project_path).await?
@@ -494,9 +477,9 @@ pub mod coverage {
 
         Ok(CoverageResult {
             success: output.success,
-            tool: tool.to_string(),
-            output: output.stdout,
-            stderr: output.stderr,
+            tool:    tool.to_string(),
+            output:  output.stdout,
+            stderr:  output.stderr,
         })
     }
 
@@ -504,38 +487,35 @@ pub mod coverage {
     #[derive(Debug)]
     pub struct CoverageResult {
         pub success: bool,
-        pub tool: String,
-        pub output: String,
-        pub stderr: String,
+        pub tool:    String,
+        pub output:  String,
+        pub stderr:  String,
     }
 }
 
 /// Test environment manager for creating and managing test environments
 pub struct TestEnvironmentManager {
     base_temp_dir: PathBuf,
-    environments: HashMap<String, Arc<Mutex<TestEnvironment>>>,
+    environments:  HashMap<String, Arc<Mutex<TestEnvironment>>>,
 }
 
 impl TestEnvironmentManager {
     pub fn new() -> Self {
         Self {
             base_temp_dir: std::env::temp_dir().join("rust_ai_ide_tests"),
-            environments: HashMap::new(),
+            environments:  HashMap::new(),
         }
     }
 
     /// Create a new test environment
-    pub async fn create_environment(
-        &mut self,
-        name: &str,
-    ) -> anyhow::Result<Arc<Mutex<TestEnvironment>>> {
+    pub async fn create_environment(&mut self, name: &str) -> anyhow::Result<Arc<Mutex<TestEnvironment>>> {
         let env_path = self.base_temp_dir.join(name);
         std::fs::create_dir_all(&env_path)?;
 
         let env = TestEnvironment {
             workspace_path: env_path,
-            temp_dirs: Vec::new(),
-            test_projects: HashMap::new(),
+            temp_dirs:      Vec::new(),
+            test_projects:  HashMap::new(),
         };
 
         let env = Arc::new(Mutex::new(env));
@@ -592,9 +572,11 @@ impl Default for TestEnvironmentManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::sync::Arc;
+
     use tokio::sync::Mutex;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_command_execution() {

@@ -4,16 +4,18 @@
 //! for plugins, handling version compatibility, cyclic dependencies, and
 //! automatic conflict resolution.
 
-use crate::interfaces::EnhancedPluginMetadata;
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+
 use petgraph::algo::toposort;
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::EdgeRef;
 use petgraph::Direction;
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
 use tokio::sync::RwLock;
+
+use crate::interfaces::EnhancedPluginMetadata;
 
 /// Dependency resolution result
 #[derive(Debug, Clone)]
@@ -33,23 +35,23 @@ pub enum ResolutionResult {
 pub enum DependencyConflict {
     /// Version incompatibility between required versions
     VersionIncompatibility {
-        plugin_id: String,
-        required_by: Vec<String>,
+        plugin_id:            String,
+        required_by:          Vec<String>,
         conflicting_versions: HashSet<String>,
     },
     /// Direct conflict (plugin A conflicts with plugin B)
     DirectConflict {
         plugin_a: String,
         plugin_b: String,
-        reason: String,
+        reason:   String,
     },
     /// Cyclic dependency chain
     CyclicDependency(Vec<String>),
     /// Missing required dependency
     MissingDependency {
         requiring_plugin: String,
-        required_plugin: String,
-        version_req: VersionReq,
+        required_plugin:  String,
+        version_req:      VersionReq,
     },
 }
 
@@ -57,7 +59,7 @@ pub enum DependencyConflict {
 #[derive(Debug)]
 pub struct DependencyGraph {
     /// Graph representation of plugin dependencies
-    graph: DiGraph<String, DependencyEdge>,
+    graph:          DiGraph<String, DependencyEdge>,
     /// Node index to plugin ID mapping
     node_to_plugin: HashMap<NodeIndex, String>,
     /// Plugin ID to node index mapping
@@ -72,9 +74,9 @@ pub struct DependencyEdge {
     /// Version requirement
     pub version_req: VersionReq,
     /// Whether this dependency is optional
-    pub optional: bool,
+    pub optional:    bool,
     /// Dependency type
-    pub dep_type: DependencyType,
+    pub dep_type:    DependencyType,
 }
 
 /// Types of dependencies
@@ -91,9 +93,9 @@ pub enum DependencyType {
 /// Plugin dependency resolver
 pub struct DependencyResolver {
     /// Available plugins and their metadata
-    available_plugins: Arc<RwLock<HashMap<String, EnhancedPluginMetadata>>>,
+    available_plugins:    Arc<RwLock<HashMap<String, EnhancedPluginMetadata>>>,
     /// Resolved dependency cache
-    resolution_cache: Arc<RwLock<HashMap<String, ResolutionResult>>>,
+    resolution_cache:     Arc<RwLock<HashMap<String, ResolutionResult>>>,
     /// Current resolution depth (prevent deep recursion)
     max_resolution_depth: usize,
 }
@@ -102,8 +104,8 @@ impl DependencyResolver {
     /// Create a new dependency resolver
     pub fn new() -> Self {
         Self {
-            available_plugins: Arc::new(RwLock::new(HashMap::new())),
-            resolution_cache: Arc::new(RwLock::new(HashMap::new())),
+            available_plugins:    Arc::new(RwLock::new(HashMap::new())),
+            resolution_cache:     Arc::new(RwLock::new(HashMap::new())),
             max_resolution_depth: 50, // Reasonable depth limit
         }
     }
@@ -219,7 +221,7 @@ impl DependencyResolver {
                         conflicts.push(DependencyConflict::DirectConflict {
                             plugin_a: plugin_a_id.clone(),
                             plugin_b: plugin_b_id.clone(),
-                            reason: "Direct conflict declared in plugin metadata".to_string(),
+                            reason:   "Direct conflict declared in plugin metadata".to_string(),
                         });
                         continue;
                     }
@@ -230,7 +232,7 @@ impl DependencyResolver {
                             conflicts.push(DependencyConflict::DirectConflict {
                                 plugin_a: plugin_b_id.clone(),
                                 plugin_b: plugin_a_id.clone(),
-                                reason: "Reverse conflict declared in plugin metadata".to_string(),
+                                reason:   "Reverse conflict declared in plugin metadata".to_string(),
                             });
                         }
                     }
@@ -242,10 +244,7 @@ impl DependencyResolver {
     }
 
     /// Suggest dependency resolution strategies for conflicts
-    pub async fn suggest_resolutions(
-        &self,
-        conflicts: &[DependencyConflict],
-    ) -> HashMap<String, Vec<String>> {
+    pub async fn suggest_resolutions(&self, conflicts: &[DependencyConflict]) -> HashMap<String, Vec<String>> {
         let mut suggestions = HashMap::new();
         let available = self.available_plugins.read().await;
 
@@ -280,24 +279,18 @@ impl DependencyResolver {
                 DependencyConflict::DirectConflict {
                     plugin_a, plugin_b, ..
                 } => {
-                    suggestions.insert(
-                        format!("{}-{}", plugin_a, plugin_b),
-                        vec![
-                            format!("Remove {} and use alternative functionality", plugin_a),
-                            format!("Remove {} and use alternative functionality", plugin_b),
-                            "Check for compatibility updates".to_string(),
-                        ],
-                    );
+                    suggestions.insert(format!("{}-{}", plugin_a, plugin_b), vec![
+                        format!("Remove {} and use alternative functionality", plugin_a),
+                        format!("Remove {} and use alternative functionality", plugin_b),
+                        "Check for compatibility updates".to_string(),
+                    ]);
                 }
                 DependencyConflict::CyclicDependency(chain) => {
-                    suggestions.insert(
-                        "cyclic-dependency".to_string(),
-                        vec![
-                            format!("Break cyclic dependency chain: {}", chain.join(" -> ")),
-                            "Refactor plugins to break circular references".to_string(),
-                            "Use optional dependencies where possible".to_string(),
-                        ],
-                    );
+                    suggestions.insert("cyclic-dependency".to_string(), vec![
+                        format!("Break cyclic dependency chain: {}", chain.join(" -> ")),
+                        "Refactor plugins to break circular references".to_string(),
+                        "Use optional dependencies where possible".to_string(),
+                    ]);
                 }
                 DependencyConflict::MissingDependency {
                     requiring_plugin,
@@ -337,8 +330,8 @@ impl DependencyResolver {
     ) -> Result<Vec<String>, Vec<DependencyConflict>> {
         if current_depth >= self.max_resolution_depth {
             return Err(vec![DependencyConflict::VersionIncompatibility {
-                plugin_id: plugin.core.id.to_string(),
-                required_by: Vec::new(),
+                plugin_id:            plugin.core.id.to_string(),
+                required_by:          Vec::new(),
                 conflicting_versions: HashSet::new(),
             }]);
         }
@@ -367,8 +360,8 @@ impl DependencyResolver {
             let Some(dep_plugin) = available.get(dep_id) else {
                 conflicts.push(DependencyConflict::MissingDependency {
                     requiring_plugin: plugin.core.id.to_string(),
-                    required_plugin: dep_id.clone(),
-                    version_req: dependency.version_req.clone(),
+                    required_plugin:  dep_id.clone(),
+                    version_req:      dependency.version_req.clone(),
                 });
                 continue;
             };
@@ -379,8 +372,8 @@ impl DependencyResolver {
                 .matches(&dep_plugin.versioning.version)
             {
                 conflicts.push(DependencyConflict::VersionIncompatibility {
-                    plugin_id: dep_id.clone(),
-                    required_by: vec![plugin.core.id.to_string()],
+                    plugin_id:            dep_id.clone(),
+                    required_by:          vec![plugin.core.id.to_string()],
                     conflicting_versions: HashSet::from([
                         dependency.version_req.to_string(),
                         dep_plugin.versioning.version.to_string(),
@@ -441,7 +434,7 @@ impl DependencyGraph {
     /// Create a new empty dependency graph
     pub fn new() -> Self {
         Self {
-            graph: DiGraph::new(),
+            graph:          DiGraph::new(),
             node_to_plugin: HashMap::new(),
             plugin_to_node: HashMap::new(),
             metadata_cache: HashMap::new(),
@@ -561,8 +554,8 @@ impl<'de> Deserialize<'de> for DependencyGraph {
     {
         #[derive(Deserialize)]
         struct DependencyGraphRaw {
-            nodes: Vec<String>,
-            edges: Vec<(usize, usize, DependencyEdge)>,
+            nodes:          Vec<String>,
+            edges:          Vec<(usize, usize, DependencyEdge)>,
             node_to_plugin: HashMap<usize, String>,
             plugin_to_node: HashMap<String, String>,
             metadata_cache: HashMap<String, EnhancedPluginMetadata>,
@@ -570,8 +563,7 @@ impl<'de> Deserialize<'de> for DependencyGraph {
 
         let raw = DependencyGraphRaw::deserialize(deserializer)?;
         let mut graph = DiGraph::new();
-        let node_indices_vec: Vec<NodeIndex> =
-            raw.nodes.into_iter().map(|n| graph.add_node(n)).collect();
+        let node_indices_vec: Vec<NodeIndex> = raw.nodes.into_iter().map(|n| graph.add_node(n)).collect();
 
         for (source, target, weight) in raw.edges {
             if source >= node_indices_vec.len() || target >= node_indices_vec.len() {
@@ -608,8 +600,9 @@ impl<'de> Deserialize<'de> for DependencyGraph {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use semver::Version;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_dependency_resolution() {
@@ -629,10 +622,10 @@ mod tests {
             Version::parse("1.0.0").unwrap(),
         )
         .dependency(PluginDependency {
-            plugin_id: "base-plugin".to_string(),
-            version_req: VersionReq::parse("^1.0.0").unwrap(),
-            optional: false,
-            description: None,
+            plugin_id:           "base-plugin".to_string(),
+            version_req:         VersionReq::parse("^1.0.0").unwrap(),
+            optional:            false,
+            description:         None,
             conflict_resolution: ConflictResolution::Auto,
         })
         .build();
@@ -663,10 +656,10 @@ mod tests {
             Version::parse("1.0.0").unwrap(),
         )
         .dependency(PluginDependency {
-            plugin_id: "missing-plugin".to_string(),
-            version_req: VersionReq::parse("*").unwrap(),
-            optional: false,
-            description: None,
+            plugin_id:           "missing-plugin".to_string(),
+            version_req:         VersionReq::parse("*").unwrap(),
+            optional:            false,
+            description:         None,
             conflict_resolution: ConflictResolution::Auto,
         })
         .build();

@@ -113,21 +113,19 @@ pub type Result<T> = std::result::Result<T, SpecGenError>;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ValidationIssue {
     /// The severity of the issue
-    pub severity: ValidationSeverity,
+    pub severity:   ValidationSeverity,
     /// Human-readable message describing the issue
-    pub message: String,
+    pub message:    String,
     /// Optional location information (file:line:column:)
-    pub location: Option<String>,
+    pub location:   Option<String>,
     /// Optional suggestion for fixing the issue
     pub suggestion: Option<String>,
     /// Category of the validation issue
-    pub category: ValidationCategory,
+    pub category:   ValidationCategory,
 }
 
 /// Severity levels for validation issues
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 pub enum Severity {
     /// Information
     Info,

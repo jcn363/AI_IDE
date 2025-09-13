@@ -1,10 +1,11 @@
+use async_trait::async_trait;
+
 use crate::types::{EventHandlerResponse, Provider, WebhookPayload};
 use crate::WebhookProvider;
-use async_trait::async_trait;
 
 /// Default webhook handler
 pub struct DefaultWebhookHandler {
-    secret: String,
+    secret:   String,
     provider: Provider,
 }
 
@@ -40,10 +41,7 @@ impl WebhookProvider for DefaultWebhookHandler {
         }
     }
 
-    async fn process_payload(
-        &self,
-        payload: WebhookPayload,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn process_payload(&self, payload: WebhookPayload) -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("Processing webhook for provider: {}", payload.event);
 
         // Basic payload logging for now
@@ -67,10 +65,7 @@ impl WebhookProvider for DefaultWebhookHandler {
 }
 
 impl DefaultWebhookHandler {
-    async fn handle_github_webhook(
-        &self,
-        payload: WebhookPayload,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn handle_github_webhook(&self, payload: WebhookPayload) -> Result<(), Box<dyn std::error::Error>> {
         // Handle GitHub-specific webhook events like push, pull_request, etc.
         if let Some(event_type) = payload.payload.get("action") {
             tracing::info!("GitHub webhook event: {}", event_type);
@@ -84,10 +79,7 @@ impl DefaultWebhookHandler {
         Ok(())
     }
 
-    async fn handle_gitlab_webhook(
-        &self,
-        payload: WebhookPayload,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn handle_gitlab_webhook(&self, payload: WebhookPayload) -> Result<(), Box<dyn std::error::Error>> {
         // Handle GitLab-specific webhook events
         if let Some(event_type) = payload.payload.get("event_type") {
             tracing::info!("GitLab webhook event: {}", event_type);
@@ -96,10 +88,7 @@ impl DefaultWebhookHandler {
         Ok(())
     }
 
-    async fn handle_discord_webhook(
-        &self,
-        payload: WebhookPayload,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn handle_discord_webhook(&self, payload: WebhookPayload) -> Result<(), Box<dyn std::error::Error>> {
         // Handle Discord interactions and messages
         if let Some(event_type) = payload.payload.get("type") {
             tracing::info!("Discord webhook event: {}", event_type);
@@ -108,10 +97,7 @@ impl DefaultWebhookHandler {
         Ok(())
     }
 
-    async fn handle_slack_webhook(
-        &self,
-        payload: WebhookPayload,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn handle_slack_webhook(&self, payload: WebhookPayload) -> Result<(), Box<dyn std::error::Error>> {
         // Handle Slack events like messages, commands, button interactions
         if let Some(event_type) = payload.payload.get("type") {
             tracing::info!("Slack webhook event: {}", event_type);
@@ -120,10 +106,7 @@ impl DefaultWebhookHandler {
         Ok(())
     }
 
-    async fn handle_test_webhook(
-        &self,
-        payload: WebhookPayload,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn handle_test_webhook(&self, payload: WebhookPayload) -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("Test webhook processed: {:?}", payload.payload);
         Ok(())
     }
@@ -149,17 +132,10 @@ impl WebhookHandlerFactory {
         Box::new(DefaultWebhookHandler::new(secret, Provider::Slack))
     }
 
-    pub fn create_custom_handler(
-        secret: String,
-        name: String,
-        signature_header: String,
-    ) -> Box<dyn WebhookProvider> {
-        Box::new(DefaultWebhookHandler::new(
-            secret,
-            Provider::Custom {
-                name,
-                signature_header,
-            },
-        ))
+    pub fn create_custom_handler(secret: String, name: String, signature_header: String) -> Box<dyn WebhookProvider> {
+        Box::new(DefaultWebhookHandler::new(secret, Provider::Custom {
+            name,
+            signature_header,
+        }))
     }
 }

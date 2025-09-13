@@ -9,8 +9,9 @@ pub mod cleanup;
 pub mod runtime;
 pub mod startup;
 
-use anyhow::Result;
 use std::sync::Arc;
+
+use anyhow::Result;
 use tokio::sync::Mutex;
 
 /// Lifecycle phase tracking
@@ -40,35 +41,35 @@ impl std::fmt::Display for LifecyclePhase {
 /// Lifecycle event for observability
 #[derive(Debug, Clone)]
 pub struct LifecycleEvent {
-    pub phase: LifecyclePhase,
-    pub message: String,
+    pub phase:     LifecyclePhase,
+    pub message:   String,
     pub timestamp: std::time::SystemTime,
-    pub success: bool,
-    pub metadata: serde_json::Value,
+    pub success:   bool,
+    pub metadata:  serde_json::Value,
 }
 
 impl Default for LifecycleEvent {
     fn default() -> Self {
         Self {
-            phase: LifecyclePhase::Initializing,
-            message: String::new(),
+            phase:     LifecyclePhase::Initializing,
+            message:   String::new(),
             timestamp: std::time::SystemTime::now(),
-            success: true,
-            metadata: serde_json::Value::Null,
+            success:   true,
+            metadata:  serde_json::Value::Null,
         }
     }
 }
 
 /// Lifecycle manager that orchestrates the application lifecycle
 pub struct LifecycleManager {
-    current_phase: Arc<Mutex<LifecyclePhase>>,
+    current_phase:   Arc<Mutex<LifecyclePhase>>,
     event_listeners: Arc<Mutex<Vec<Box<dyn Fn(LifecycleEvent) + Send + Sync>>>>,
 }
 
 impl LifecycleManager {
     pub fn new() -> Self {
         Self {
-            current_phase: Arc::new(Mutex::new(LifecyclePhase::Initializing)),
+            current_phase:   Arc::new(Mutex::new(LifecyclePhase::Initializing)),
             event_listeners: Arc::new(Mutex::new(Vec::new())),
         }
     }
@@ -126,8 +127,7 @@ impl LifecycleManager {
         self.update_phase(LifecyclePhase::Running).await;
 
         // Runtime phase (runs concurrently)
-        let runtime_handle =
-            tokio::spawn(async move { runtime.run(Arc::clone(&self.current_phase)).await });
+        let runtime_handle = tokio::spawn(async move { runtime.run(Arc::clone(&self.current_phase)).await });
 
         // Wait for shutdown signal
         self.wait_for_shutdown().await;

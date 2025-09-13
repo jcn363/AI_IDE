@@ -3,9 +3,10 @@
 //! This plugin generates GraphQL schemas from Rust types, enabling
 //! seamless API definitions for GraphQL services.
 
+use async_trait::async_trait;
+
 use crate::plugins::*;
 use crate::{serde_json, ParsedType, TransformationContext};
-use async_trait::async_trait;
 
 /// GraphQL generator plugin
 #[derive(Debug)]
@@ -76,18 +77,18 @@ impl GeneratorPluginTrait for GraphQLGeneratorPlugin {
             target_platform: platform.to_string(),
             source_types: types.to_vec(),
             metadata: crate::generation::GenerationMetadata {
-                generated_at: chrono::Utc::now().to_rfc3339(),
+                generated_at:      chrono::Utc::now().to_rfc3339(),
                 generator_version: env!("CARGO_PKG_VERSION").to_string(),
-                config_snapshot: config.clone(),
-                stats: crate::generation::GenerationStats {
-                    types_processed: types.len(),
-                    types_generated: types.len(),
-                    bytes_generated: content.len(),
+                config_snapshot:   config.clone(),
+                stats:             crate::generation::GenerationStats {
+                    types_processed:    types.len(),
+                    types_generated:    types.len(),
+                    bytes_generated:    content.len(),
                     generation_time_ms: 0,
-                    warnings_count: 0,
-                    errors_count: 0,
+                    warnings_count:     0,
+                    errors_count:       0,
                 },
-                status: crate::generation::GenerationStatus::Success,
+                status:            crate::generation::GenerationStatus::Success,
             },
             dependencies: vec![],
         })
@@ -99,25 +100,20 @@ impl GeneratorPluginTrait for GraphQLGeneratorPlugin {
 
     fn metadata(&self) -> PluginMetadata {
         PluginMetadata {
-            name: "graphql-generator".to_string(),
-            version: "1.0.0".to_string(),
-            author: "Rust AI IDE Team".to_string(),
-            description: "Generates GraphQL schemas from Rust types".to_string(),
-            homepage: Some("https://github.com/rust-ai-ide/rust-ai-ide".to_string()),
-            platforms: vec!["graphql".to_string()],
-            license: Some("MIT OR Apache-2.0".to_string()),
+            name:         "graphql-generator".to_string(),
+            version:      "1.0.0".to_string(),
+            author:       "Rust AI IDE Team".to_string(),
+            description:  "Generates GraphQL schemas from Rust types".to_string(),
+            homepage:     Some("https://github.com/rust-ai-ide/rust-ai-ide".to_string()),
+            platforms:    vec!["graphql".to_string()],
+            license:      Some("MIT OR Apache-2.0".to_string()),
             dependencies: vec![],
         }
     }
 }
 
 impl GraphQLGeneratorPlugin {
-    fn generate_basic_schema(
-        &self,
-        content: &mut String,
-        types: &[ParsedType],
-        with_mutations: bool,
-    ) {
+    fn generate_basic_schema(&self, content: &mut String, types: &[ParsedType], with_mutations: bool) {
         // Generate schema header
         content.push_str("schema {\n");
         content.push_str("  query: Query\n");

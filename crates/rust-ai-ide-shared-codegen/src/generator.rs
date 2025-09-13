@@ -1,27 +1,28 @@
 //! Code generation interfaces and unified context
 //! This module provides shared abstractions for AI-powered code generation
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 /// Unified context for code generation across all ai-codegen modules
 #[derive(Debug, Clone)]
 pub struct CodeGenerationContext {
-    pub project_context: ProjectContext,
-    pub language: TargetLanguage,
-    pub target_scope: GenerationScope,
+    pub project_context:      ProjectContext,
+    pub language:             TargetLanguage,
+    pub target_scope:         GenerationScope,
     pub quality_requirements: QualityRequirements,
-    pub user_preferences: UserPreferences,
+    pub user_preferences:     UserPreferences,
 }
 
 /// Builder pattern for CodeGenerationContext
 #[derive(Debug, Clone, Default)]
 pub struct CodeGenerationContextBuilder {
-    project_context: Option<ProjectContext>,
-    language: Option<TargetLanguage>,
-    target_scope: Option<GenerationScope>,
+    project_context:      Option<ProjectContext>,
+    language:             Option<TargetLanguage>,
+    target_scope:         Option<GenerationScope>,
     quality_requirements: Option<QualityRequirements>,
-    user_preferences: Option<UserPreferences>,
+    user_preferences:     Option<UserPreferences>,
 }
 
 impl CodeGenerationContextBuilder {
@@ -56,11 +57,11 @@ impl CodeGenerationContextBuilder {
 
     pub fn build(self) -> CodeGenerationContext {
         CodeGenerationContext {
-            project_context: self.project_context.unwrap_or_default(),
-            language: self.language.unwrap_or(TargetLanguage::Rust),
-            target_scope: self.target_scope.unwrap_or(GenerationScope::Function),
+            project_context:      self.project_context.unwrap_or_default(),
+            language:             self.language.unwrap_or(TargetLanguage::Rust),
+            target_scope:         self.target_scope.unwrap_or(GenerationScope::Function),
             quality_requirements: self.quality_requirements.unwrap_or_default(),
-            user_preferences: self.user_preferences.unwrap_or_default(),
+            user_preferences:     self.user_preferences.unwrap_or_default(),
         }
     }
 }
@@ -103,9 +104,9 @@ impl CodeGenerationContext {
 #[derive(Debug, Clone, Default)]
 pub struct ProjectContext {
     pub project_structure: HashMap<String, String>,
-    pub dependencies: Vec<Dependency>,
+    pub dependencies:      Vec<Dependency>,
     pub existing_patterns: Vec<CodePattern>,
-    pub coding_standards: CodingStandards,
+    pub coding_standards:  CodingStandards,
 }
 
 impl ProjectContext {
@@ -113,9 +114,9 @@ impl ProjectContext {
     pub fn minimal() -> Self {
         Self {
             project_structure: HashMap::new(),
-            dependencies: vec![],
+            dependencies:      vec![],
             existing_patterns: vec![],
-            coding_standards: CodingStandards::default(),
+            coding_standards:  CodingStandards::default(),
         }
     }
 
@@ -123,9 +124,9 @@ impl ProjectContext {
     pub fn with_default_structure() -> Self {
         Self {
             project_structure: Self::default_project_structure(),
-            dependencies: vec![],
+            dependencies:      vec![],
             existing_patterns: vec![],
-            coding_standards: CodingStandards::default(),
+            coding_standards:  CodingStandards::default(),
         }
     }
 
@@ -214,22 +215,22 @@ pub enum GenerationScope {
 /// Quality requirements for generated code
 #[derive(Debug, Clone)]
 pub struct QualityRequirements {
-    pub min_complexity_score: f32,
-    pub require_documentation: bool,
-    pub require_error_handling: bool,
-    pub require_tests: bool,
-    pub code_style: String,
+    pub min_complexity_score:     f32,
+    pub require_documentation:    bool,
+    pub require_error_handling:   bool,
+    pub require_tests:            bool,
+    pub code_style:               String,
     pub performance_requirements: Option<PerformanceReqs>,
 }
 
 impl Default for QualityRequirements {
     fn default() -> Self {
         Self {
-            min_complexity_score: 0.7,
-            require_documentation: true,
-            require_error_handling: true,
-            require_tests: false,
-            code_style: "standard".to_string(),
+            min_complexity_score:     0.7,
+            require_documentation:    true,
+            require_error_handling:   true,
+            require_tests:            false,
+            code_style:               "standard".to_string(),
             performance_requirements: None,
         }
     }
@@ -239,11 +240,11 @@ impl QualityRequirements {
     /// Quality requirements for production code
     pub fn production() -> Self {
         Self {
-            min_complexity_score: 0.85,
-            require_documentation: true,
-            require_error_handling: true,
-            require_tests: true,
-            code_style: "strict".to_string(),
+            min_complexity_score:     0.85,
+            require_documentation:    true,
+            require_error_handling:   true,
+            require_tests:            true,
+            code_style:               "strict".to_string(),
             performance_requirements: Some(PerformanceReqs::default()),
         }
     }
@@ -251,11 +252,11 @@ impl QualityRequirements {
     /// Relaxed requirements for demo/prototyping
     pub fn demo() -> Self {
         Self {
-            min_complexity_score: 0.5,
-            require_documentation: false,
-            require_error_handling: false,
-            require_tests: false,
-            code_style: "relaxed".to_string(),
+            min_complexity_score:     0.5,
+            require_documentation:    false,
+            require_error_handling:   false,
+            require_tests:            false,
+            code_style:               "relaxed".to_string(),
             performance_requirements: None,
         }
     }
@@ -265,18 +266,18 @@ impl QualityRequirements {
 #[derive(Debug, Clone)]
 pub struct UserPreferences {
     pub naming_convention: String,
-    pub max_line_length: usize,
-    pub indentation: String,
-    pub comment_style: String,
+    pub max_line_length:   usize,
+    pub indentation:       String,
+    pub comment_style:     String,
 }
 
 impl Default for UserPreferences {
     fn default() -> Self {
         Self {
             naming_convention: "snake_case".to_string(),
-            max_line_length: 80,
-            indentation: "    ".to_string(),
-            comment_style: "//".to_string(),
+            max_line_length:   80,
+            indentation:       "    ".to_string(),
+            comment_style:     "//".to_string(),
         }
     }
 }
@@ -291,9 +292,9 @@ impl UserPreferences {
     pub fn python() -> Self {
         Self {
             naming_convention: "snake_case".to_string(),
-            max_line_length: 88,
-            indentation: "    ".to_string(),
-            comment_style: "#".to_string(),
+            max_line_length:   88,
+            indentation:       "    ".to_string(),
+            comment_style:     "#".to_string(),
         }
     }
 
@@ -301,9 +302,9 @@ impl UserPreferences {
     pub fn typescript() -> Self {
         Self {
             naming_convention: "camelCase".to_string(),
-            max_line_length: 100,
-            indentation: "  ".to_string(),
-            comment_style: "//".to_string(),
+            max_line_length:   100,
+            indentation:       "  ".to_string(),
+            comment_style:     "//".to_string(),
         }
     }
 }
@@ -311,13 +312,13 @@ impl UserPreferences {
 /// Generated code quality assessment
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct GenerationQuality {
-    pub readability_score: f32,
+    pub readability_score:     f32,
     pub maintainability_score: f32,
-    pub performance_score: f32,
-    pub security_score: f32,
-    pub compliance_score: f32,
-    pub overall_score: f32,
-    pub issues: Vec<QualityIssue>,
+    pub performance_score:     f32,
+    pub security_score:        f32,
+    pub compliance_score:      f32,
+    pub overall_score:         f32,
+    pub issues:                Vec<QualityIssue>,
 }
 
 impl GenerationQuality {
@@ -337,13 +338,13 @@ impl GenerationQuality {
     /// Create a sample quality assessment for demos
     pub fn sample_success() -> Self {
         Self {
-            readability_score: 0.85,
+            readability_score:     0.85,
             maintainability_score: 0.82,
-            performance_score: 0.78,
-            security_score: 0.92,
-            compliance_score: 0.88,
-            overall_score: 0.85,
-            issues: vec![],
+            performance_score:     0.78,
+            security_score:        0.92,
+            compliance_score:      0.88,
+            overall_score:         0.85,
+            issues:                vec![],
         }
     }
 
@@ -361,9 +362,9 @@ impl GenerationQuality {
 /// Quality issues found during validation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityIssue {
-    pub category: String,
-    pub severity: String,
-    pub message: String,
+    pub category:   String,
+    pub severity:   String,
+    pub message:    String,
     pub suggestion: Option<String>,
 }
 
@@ -371,38 +372,38 @@ pub struct QualityIssue {
 
 #[derive(Debug, Clone)]
 pub struct Dependency {
-    pub name: String,
-    pub version: String,
+    pub name:     String,
+    pub version:  String,
     pub features: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct CodePattern {
-    pub pattern_type: String,
-    pub example: String,
+    pub pattern_type:  String,
+    pub example:       String,
     pub usage_context: String,
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct CodingStandards {
-    pub formatting_rules: Vec<String>,
-    pub naming_rules: Vec<String>,
+    pub formatting_rules:    Vec<String>,
+    pub naming_rules:        Vec<String>,
     pub documentation_rules: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct PerformanceReqs {
     pub max_execution_time: std::time::Duration,
-    pub memory_limit: u64,
-    pub thread_safety: bool,
+    pub memory_limit:       u64,
+    pub thread_safety:      bool,
 }
 
 impl Default for PerformanceReqs {
     fn default() -> Self {
         Self {
             max_execution_time: std::time::Duration::from_millis(100),
-            memory_limit: 1024 * 1024 * 1024, // 1GB
-            thread_safety: true,
+            memory_limit:       1024 * 1024 * 1024, // 1GB
+            thread_safety:      true,
         }
     }
 }

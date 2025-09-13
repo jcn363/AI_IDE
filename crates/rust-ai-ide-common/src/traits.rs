@@ -2,11 +2,10 @@
 
 use std::fmt;
 
-// Plugin types needed for trait definitions
-use crate::types::{
-    PluginCapability, PluginContext, PluginMessage, PluginMessageType, PluginMetadata,
-};
 use chrono;
+
+// Plugin types needed for trait definitions
+use crate::types::{PluginCapability, PluginContext, PluginMessage, PluginMessageType, PluginMetadata};
 
 /// Trait for types that can provide configuration
 
@@ -69,10 +68,11 @@ pub trait CodeGenerator: Send + Sync {
     async fn validate_code(&self, code: &str) -> crate::errors::IdeResult<()>;
 }
 
-use crate::logging::LogContext;
-use crate::unified_logger::UnifiedLogger;
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use crate::logging::LogContext;
+use crate::unified_logger::UnifiedLogger;
 
 /// Trait for logging and telemetry
 #[async_trait::async_trait]
@@ -81,11 +81,7 @@ pub trait Loggable: std::fmt::Debug + Send + Sync {
     fn logger(&self) -> &UnifiedLogger;
 
     /// Log a message at the specified level
-    async fn log(
-        &self,
-        level: crate::logging::LogLevel,
-        message: &str,
-    ) -> Result<(), crate::logging::LoggingError> {
+    async fn log(&self, level: crate::logging::LogLevel, message: &str) -> Result<(), crate::logging::LoggingError> {
         self.logger().log(level, message).await
     }
 
@@ -212,12 +208,12 @@ pub trait Plugin: Send + Sync {
     ) -> crate::errors::IdeResult<PluginMessage> {
         // Default implementation does nothing and returns empty response
         Ok(PluginMessage {
-            id: message.id.clone(),
+            id:           message.id.clone(),
             message_type: PluginMessageType::Response,
-            from_plugin: self.metadata().id.clone(),
-            to_plugin: Some(message.from_plugin.clone()),
-            payload: serde_json::Value::Null,
-            timestamp: chrono::Utc::now(),
+            from_plugin:  self.metadata().id.clone(),
+            to_plugin:    Some(message.from_plugin.clone()),
+            payload:      serde_json::Value::Null,
+            timestamp:    chrono::Utc::now(),
         })
     }
 }

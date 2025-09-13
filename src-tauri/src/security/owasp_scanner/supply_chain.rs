@@ -3,15 +3,17 @@
 //! Comprehensive supply chain analysis integrating with existing dependency
 //! vulnerability scanners, license compliance, and SBOM generation.
 
-use crate::dependency::models::{DependencyGraph, LicenseInfo};
-use crate::license::compliance_checker::LicenseComplianceChecker;
-use crate::rustsec_integration::RustsecScanner;
+use std::collections::{HashMap, HashSet};
+use std::path::Path;
+
 use chrono::prelude::*;
 use moka::future::Cache;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use std::path::Path;
 use tokio::sync::RwLock;
+
+use crate::dependency::models::{DependencyGraph, LicenseInfo};
+use crate::license::compliance_checker::LicenseComplianceChecker;
+use crate::rustsec_integration::RustsecScanner;
 
 // Supply chain analysis types and enums
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,24 +28,24 @@ pub enum SupplyChainRiskLevel {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SupplyChainVulnerability {
-    pub dependency_name: String,
-    pub version: String,
-    pub vulnerability_id: String,
-    pub severity: SupplyChainRiskLevel,
-    pub cve_id: Option<String>,
-    pub cvss_score: Option<f32>,
-    pub published_date: DateTime<Utc>,
-    pub last_modified: DateTime<Utc>,
-    pub description: String,
-    pub fix_available: bool,
+    pub dependency_name:       String,
+    pub version:               String,
+    pub vulnerability_id:      String,
+    pub severity:              SupplyChainRiskLevel,
+    pub cve_id:                Option<String>,
+    pub cvss_score:            Option<f32>,
+    pub published_date:        DateTime<Utc>,
+    pub last_modified:         DateTime<Utc>,
+    pub description:           String,
+    pub fix_available:         bool,
     pub remediation_available: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaliciousPackageIndicator {
-    pub dependency_name: String,
-    pub risk_factors: Vec<MaliciousIndicator>,
-    pub confidence_score: f32,
+    pub dependency_name:   String,
+    pub risk_factors:      Vec<MaliciousIndicator>,
+    pub confidence_score:  f32,
     pub detection_methods: Vec<String>,
 }
 
@@ -72,39 +74,39 @@ pub struct DependencyAnalysis {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SoftwareBillOfMaterials {
     pub dependencies: Vec<SBOMDependency>,
-    pub licenses: HashMap<String, String>, // dependency -> license_hash
-    pub checksums: HashMap<String, String>, // dependency -> sha256
-    pub provenance: HashMap<String, ProvenanceData>,
+    pub licenses:     HashMap<String, String>, // dependency -> license_hash
+    pub checksums:    HashMap<String, String>, // dependency -> sha256
+    pub provenance:   HashMap<String, ProvenanceData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SBOMDependency {
-    pub name: String,
-    pub version: String,
-    pub registry: String,
-    pub hashes: HashMap<String, String>, // algorithm -> hash
-    pub licenses: Vec<String>,
-    pub authors: Vec<String>,
-    pub repository: Option<String>,
+    pub name:        String,
+    pub version:     String,
+    pub registry:    String,
+    pub hashes:      HashMap<String, String>, // algorithm -> hash
+    pub licenses:    Vec<String>,
+    pub authors:     Vec<String>,
+    pub repository:  Option<String>,
     pub description: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProvenanceData {
-    pub creator: String,
-    pub created: DateTime<Utc>,
-    pub verified: bool,
+    pub creator:    String,
+    pub created:    DateTime<Utc>,
+    pub verified:   bool,
     pub build_info: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LicenseComplianceIssue {
-    pub dependency_name: String,
-    pub problematic_license: String,
-    pub compliance_category: LicenseComplianceCategory,
-    pub risk_level: SupplyChainRiskLevel,
+    pub dependency_name:        String,
+    pub problematic_license:    String,
+    pub compliance_category:    LicenseComplianceCategory,
+    pub risk_level:             SupplyChainRiskLevel,
     pub justification_required: bool,
-    pub remediation_steps: Vec<String>,
+    pub remediation_steps:      Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -117,12 +119,12 @@ pub enum LicenseComplianceCategory {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SupplyChainRecommendation {
-    pub priority: u32, // 1-5, 5 being highest
-    pub category: RecommendationCategory,
-    pub title: String,
-    pub description: String,
+    pub priority:         u32, // 1-5, 5 being highest
+    pub category:         RecommendationCategory,
+    pub title:            String,
+    pub description:      String,
     pub estimated_effort: EffortLevel,
-    pub impact_score: f32, // 0.0-10.0
+    pub impact_score:     f32, // 0.0-10.0
     pub dependency_names: Vec<String>,
 }
 
@@ -146,10 +148,10 @@ pub enum EffortLevel {
 
 // Main supply chain scanner implementation
 pub struct SupplyChainScanner {
-    rustsec_scanner: RwLock<RustsecScanner>,
-    license_checker: LicenseComplianceChecker,
+    rustsec_scanner:     RwLock<RustsecScanner>,
+    license_checker:     LicenseComplianceChecker,
     vulnerability_cache: Cache<String, Vec<SupplyChainVulnerability>>,
-    reputation_cache: Cache<String, Option<MaliciousPackageIndicator>>,
+    reputation_cache:    Cache<String, Option<MaliciousPackageIndicator>>,
 }
 
 impl SupplyChainScanner {
@@ -194,17 +196,12 @@ impl SupplyChainScanner {
         )?;
 
         // Calculate security metrics
-        let dependency_chain_risk_score =
-            self.calculate_dependency_risk_score(&vulnerabilities, &malicious_packages);
-        let supply_chain_health_score = self.calculate_supply_chain_health_score(
-            &vulnerabilities,
-            &malicious_packages,
-            &license_issues,
-        );
+        let dependency_chain_risk_score = self.calculate_dependency_risk_score(&vulnerabilities, &malicious_packages);
+        let supply_chain_health_score =
+            self.calculate_supply_chain_health_score(&vulnerabilities, &malicious_packages, &license_issues);
 
         // Generate recommendations
-        let recommendations =
-            self.generate_recommendations(&vulnerabilities, &malicious_packages, &license_issues);
+        let recommendations = self.generate_recommendations(&vulnerabilities, &malicious_packages, &license_issues);
 
         Ok(DependencyAnalysis {
             vulnerabilities,
@@ -237,16 +234,16 @@ impl SupplyChainScanner {
             if let Ok(reports) = scanner.scan_lockfile(&lockfile_path) {
                 for report in reports {
                     vulnerabilities.push(SupplyChainVulnerability {
-                        dependency_name: report.package,
-                        version: report.version,
-                        vulnerability_id: report.advisory_id,
-                        cve_id: None, // Could be extracted from advisory
-                        cvss_score: report.cvss,
-                        severity: self.map_rustsec_severity(&report.severity),
-                        published_date: Utc::now(), // Placeholder - should come from advisory
-                        last_modified: Utc::now(),  // Placeholder
-                        description: report.description,
-                        fix_available: self.check_fix_available(&report),
+                        dependency_name:       report.package,
+                        version:               report.version,
+                        vulnerability_id:      report.advisory_id,
+                        cve_id:                None, // Could be extracted from advisory
+                        cvss_score:            report.cvss,
+                        severity:              self.map_rustsec_severity(&report.severity),
+                        published_date:        Utc::now(), // Placeholder - should come from advisory
+                        last_modified:         Utc::now(), // Placeholder
+                        description:           report.description,
+                        fix_available:         self.check_fix_available(&report),
                         remediation_available: None,
                     });
                 }
@@ -300,10 +297,7 @@ impl SupplyChainScanner {
     }
 
     /// Generate Software Bill of Materials
-    async fn generate_sbom(
-        &self,
-        manifest_path: &Path,
-    ) -> Result<SoftwareBillOfMaterials, Box<dyn std::error::Error>> {
+    async fn generate_sbom(&self, manifest_path: &Path) -> Result<SoftwareBillOfMaterials, Box<dyn std::error::Error>> {
         use std::process::Command;
 
         // Use cargo tree to get dependency information
@@ -333,26 +327,23 @@ impl SupplyChainScanner {
             if line.starts_with("  ") && !line.trim().is_empty() {
                 if let Some((name, version)) = Self::parse_dependency_line(line) {
                     dependencies.push(SBOMDependency {
-                        name: name.clone(),
-                        version: version.clone(),
-                        registry: "crates.io".to_string(),
-                        hashes: HashMap::new(), // Would populate with actual checksums
-                        licenses: vec!["MIT OR Apache-2.0".to_string()], // Placeholder
-                        authors: vec![],
-                        repository: None,
+                        name:        name.clone(),
+                        version:     version.clone(),
+                        registry:    "crates.io".to_string(),
+                        hashes:      HashMap::new(), // Would populate with actual checksums
+                        licenses:    vec!["MIT OR Apache-2.0".to_string()], // Placeholder
+                        authors:     vec![],
+                        repository:  None,
                         description: String::new(),
                     });
 
                     checksums.insert(name.clone(), "placeholder_checksum".to_string());
-                    provenance.insert(
-                        name,
-                        ProvenanceData {
-                            creator: "unknown".to_string(),
-                            created: Utc::now(),
-                            verified: false,
-                            build_info: None,
-                        },
-                    );
+                    provenance.insert(name, ProvenanceData {
+                        creator:    "unknown".to_string(),
+                        created:    Utc::now(),
+                        verified:   false,
+                        build_info: None,
+                    });
                 }
             }
         }
@@ -387,10 +378,7 @@ impl SupplyChainScanner {
         }
     }
 
-    fn check_fix_available(
-        &self,
-        report: &crate::rustsec_integration::VulnerabilityReport,
-    ) -> bool {
+    fn check_fix_available(&self, report: &crate::rustsec_integration::VulnerabilityReport) -> bool {
         !report.patched_versions.is_empty()
     }
 
@@ -449,8 +437,7 @@ impl SupplyChainScanner {
             .count();
 
         // Calculate health score as inverse of weighted issues
-        let weighted_issues =
-            critical_count as f32 * 3.0 + total_issues as f32 + banned_license_count as f32 * 5.0;
+        let weighted_issues = critical_count as f32 * 3.0 + total_issues as f32 + banned_license_count as f32 * 5.0;
 
         (10.0 - weighted_issues.min(10.0)).max(0.0)
     }
@@ -467,20 +454,20 @@ impl SupplyChainScanner {
         for vuln in vulnerabilities {
             if vuln.fix_available {
                 recommendations.push(SupplyChainRecommendation {
-                    priority: match vuln.severity {
+                    priority:         match vuln.severity {
                         SupplyChainRiskLevel::Critical => 5,
                         SupplyChainRiskLevel::High => 4,
                         SupplyChainRiskLevel::Medium => 3,
                         _ => 2,
                     },
-                    category: RecommendationCategory::SecurityUpdate,
-                    title: format!(
+                    category:         RecommendationCategory::SecurityUpdate,
+                    title:            format!(
                         "Update {} to address {}",
                         vuln.dependency_name, vuln.vulnerability_id
                     ),
-                    description: vuln.description.clone(),
+                    description:      vuln.description.clone(),
                     estimated_effort: EffortLevel::Low,
-                    impact_score: match vuln.severity {
+                    impact_score:     match vuln.severity {
                         SupplyChainRiskLevel::Critical => 9.0,
                         SupplyChainRiskLevel::High => 7.0,
                         SupplyChainRiskLevel::Medium => 5.0,
@@ -495,15 +482,15 @@ impl SupplyChainScanner {
         // Generate license compliance recommendations
         for issue in license_issues {
             recommendations.push(SupplyChainRecommendation {
-                priority: match issue.risk_level {
+                priority:         match issue.risk_level {
                     SupplyChainRiskLevel::Critical => 5,
                     SupplyChainRiskLevel::High => 4,
                     SupplyChainRiskLevel::Medium => 3,
                     _ => 2,
                 },
-                category: RecommendationCategory::LicenseChange,
-                title: format!("Address license compliance for {}", issue.dependency_name),
-                description: format!(
+                category:         RecommendationCategory::LicenseChange,
+                title:            format!("Address license compliance for {}", issue.dependency_name),
+                description:      format!(
                     "{} license may have compliance issues",
                     issue.problematic_license
                 ),
@@ -511,14 +498,13 @@ impl SupplyChainScanner {
                     LicenseComplianceCategory::BannedLicense => EffortLevel::High,
                     _ => EffortLevel::Medium,
                 },
-                impact_score: 8.0, // License issues are serious
+                impact_score:     8.0, // License issues are serious
                 dependency_names: vec![issue.dependency_name.clone()],
             });
         }
 
         // Sort by priority and impact
-        recommendations
-            .sort_by(|a, b| (b.priority, b.impact_score).cmp(&(a.priority, a.impact_score)));
+        recommendations.sort_by(|a, b| (b.priority, b.impact_score).cmp(&(a.priority, a.impact_score)));
 
         recommendations
     }

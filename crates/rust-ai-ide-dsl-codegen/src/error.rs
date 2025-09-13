@@ -1,7 +1,8 @@
 //! DSL-specific error types and result aliases
 
-use rust_ai_ide_common::IdeError;
 use std::fmt;
+
+use rust_ai_ide_common::IdeError;
 
 /// Result type alias for DSL operations
 pub type DslResult<T> = Result<T, DslError>;
@@ -12,23 +13,23 @@ pub enum DslError {
     /// Parsing errors (syntax, grammar violations)
     Parse {
         message: String,
-        line: usize,
-        column: usize,
+        line:    usize,
+        column:  usize,
         context: String,
     },
 
     /// Template validation failures
     Validation {
         template: String,
-        message: String,
-        field: Option<String>,
+        message:  String,
+        field:    Option<String>,
     },
 
     /// Template execution/runtime errors
     Execution {
         template: String,
-        message: String,
-        context: Option<String>,
+        message:  String,
+        context:  Option<String>,
     },
 
     /// Template not found or loading errors
@@ -150,12 +151,7 @@ impl From<DslError> for IdeError {
 
 impl DslError {
     /// Create a new parse error
-    pub fn parse(
-        message: impl Into<String>,
-        line: usize,
-        column: usize,
-        context: impl Into<String>,
-    ) -> Self {
+    pub fn parse(message: impl Into<String>, line: usize, column: usize, context: impl Into<String>) -> Self {
         DslError::Parse {
             message: message.into(),
             line,
@@ -168,8 +164,8 @@ impl DslError {
     pub fn validation(template: impl Into<String>, message: impl Into<String>) -> Self {
         DslError::Validation {
             template: template.into(),
-            message: message.into(),
-            field: None,
+            message:  message.into(),
+            field:    None,
         }
     }
 
@@ -181,8 +177,8 @@ impl DslError {
     ) -> Self {
         DslError::Validation {
             template: template.into(),
-            message: message.into(),
-            field: Some(field.into()),
+            message:  message.into(),
+            field:    Some(field.into()),
         }
     }
 
@@ -190,15 +186,15 @@ impl DslError {
     pub fn execution(template: impl Into<String>, message: impl Into<String>) -> Self {
         DslError::Execution {
             template: template.into(),
-            message: message.into(),
-            context: None,
+            message:  message.into(),
+            context:  None,
         }
     }
 
     /// Create a new template error
     pub fn template(name: impl Into<String>, message: impl Into<String>) -> Self {
         DslError::Template {
-            name: name.into(),
+            name:    name.into(),
             message: message.into(),
         }
     }
@@ -206,7 +202,7 @@ impl DslError {
     /// Create a new plugin error
     pub fn plugin(name: impl Into<String>, message: impl Into<String>) -> Self {
         DslError::Plugin {
-            name: name.into(),
+            name:    name.into(),
             message: message.into(),
         }
     }

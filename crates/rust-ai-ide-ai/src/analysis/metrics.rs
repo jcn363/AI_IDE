@@ -1,10 +1,10 @@
 //! Code metrics calculation and analysis
 
-use anyhow::Result;
-use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
 
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use syn::visit::Visit;
 use syn::{visit, Expr, File, Item, ItemFn, ItemImpl, ItemMod, ItemStruct, ItemTrait, Stmt};
 
@@ -55,21 +55,21 @@ pub struct CodeMetrics {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HalsteadMetrics {
     /// Program vocabulary
-    pub vocabulary: f64,
+    pub vocabulary:        f64,
     /// Program length
-    pub length: f64,
+    pub length:            f64,
     /// Calculated program length
     pub calculated_length: f64,
     /// Volume
-    pub volume: f64,
+    pub volume:            f64,
     /// Difficulty
-    pub difficulty: f64,
+    pub difficulty:        f64,
     /// Effort
-    pub effort: f64,
+    pub effort:            f64,
     /// Time required to program (seconds)
-    pub time: f64,
+    pub time:              f64,
     /// Number of delivered bugs
-    pub bugs: f64,
+    pub bugs:              f64,
 }
 
 impl Default for CodeMetrics {
@@ -101,14 +101,14 @@ impl Default for CodeMetrics {
 impl Default for HalsteadMetrics {
     fn default() -> Self {
         Self {
-            vocabulary: 0.0,
-            length: 0.0,
+            vocabulary:        0.0,
+            length:            0.0,
             calculated_length: 0.0,
-            volume: 0.0,
-            difficulty: 0.0,
-            effort: 0.0,
-            time: 0.0,
-            bugs: 0.0,
+            volume:            0.0,
+            difficulty:        0.0,
+            effort:            0.0,
+            time:              0.0,
+            bugs:              0.0,
         }
     }
 }
@@ -150,8 +150,7 @@ pub fn calculate_metrics(syntax_tree: &File, source: &str) -> CodeMetrics {
     } else {
         1.0
     };
-    metrics.max_cyclomatic_complexity =
-        visitor.cyclomatic_complexity.into_iter().max().unwrap_or(1);
+    metrics.max_cyclomatic_complexity = visitor.cyclomatic_complexity.into_iter().max().unwrap_or(1);
 
     // Calculate Halstead metrics
     let (volume, difficulty, effort) = calculate_halstead_metrics(syntax_tree);
@@ -179,33 +178,33 @@ pub fn calculate_metrics(syntax_tree: &File, source: &str) -> CodeMetrics {
 
 /// Visitor for collecting metrics from the AST
 struct MetricsVisitor {
-    function_count: usize,
-    struct_count: usize,
-    trait_count: usize,
-    impl_count: usize,
-    module_count: usize,
-    test_function_count: usize,
-    unsafe_block_count: usize,
-    public_item_count: usize,
-    private_item_count: usize,
+    function_count:        usize,
+    struct_count:          usize,
+    trait_count:           usize,
+    impl_count:            usize,
+    module_count:          usize,
+    test_function_count:   usize,
+    unsafe_block_count:    usize,
+    public_item_count:     usize,
+    private_item_count:    usize,
     cyclomatic_complexity: Vec<usize>,
-    in_unsafe_block: bool,
+    in_unsafe_block:       bool,
 }
 
 impl MetricsVisitor {
     fn new() -> Self {
         Self {
-            function_count: 0,
-            struct_count: 0,
-            trait_count: 0,
-            impl_count: 0,
-            module_count: 0,
-            test_function_count: 0,
-            unsafe_block_count: 0,
-            public_item_count: 0,
-            private_item_count: 0,
+            function_count:        0,
+            struct_count:          0,
+            trait_count:           0,
+            impl_count:            0,
+            module_count:          0,
+            test_function_count:   0,
+            unsafe_block_count:    0,
+            public_item_count:     0,
+            private_item_count:    0,
             cyclomatic_complexity: Vec::new(),
-            in_unsafe_block: false,
+            in_unsafe_block:       false,
         }
     }
 
@@ -339,23 +338,16 @@ fn calculate_halstead_metrics(syntax_tree: &syn::File) -> (f64, f64, f64) {
         }
     }
 
-    let volume =
-        (operators + operands) as f64 * (unique_operators.len() + unique_operands.len()) as f64;
-    let difficulty =
-        (unique_operators.len() as f64 / 2.0) * (operands as f64 / unique_operands.len() as f64);
+    let volume = (operators + operands) as f64 * (unique_operators.len() + unique_operands.len()) as f64;
+    let difficulty = (unique_operators.len() as f64 / 2.0) * (operands as f64 / unique_operands.len() as f64);
     let effort = difficulty * volume;
 
     (volume, difficulty, effort)
 }
 
 /// Calculate maintainability index
-fn calculate_maintainability_index(
-    lines_of_code: usize,
-    average_cyclomatic_complexity: f64,
-    volume: f64,
-) -> f64 {
-    let mut index =
-        171.0 - 5.2 * (average_cyclomatic_complexity).ln() - 0.23 * lines_of_code as f64;
+fn calculate_maintainability_index(lines_of_code: usize, average_cyclomatic_complexity: f64, volume: f64) -> f64 {
+    let mut index = 171.0 - 5.2 * (average_cyclomatic_complexity).ln() - 0.23 * lines_of_code as f64;
     index += 16.2 * (lines_of_code as f64 / (lines_of_code + volume)) * 100.0;
     index.max(0.0).min(100.0)
 }
@@ -384,8 +376,9 @@ fn calculate_cyclomatic_complexity(node: &syn::ItemFn) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn test_calculate_metrics() {

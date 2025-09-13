@@ -48,9 +48,7 @@ pub mod traits {
         }
 
         fn is_workspace_root(&self) -> bool {
-            self.join("Cargo.toml").exists()
-                && self.join("src").exists()
-                && self.join("src/lib.rs").exists()
+            self.join("Cargo.toml").exists() && self.join("src").exists() && self.join("src/lib.rs").exists()
         }
 
         fn find_ancestor_with(&self, file_name: &str) -> Option<std::path::PathBuf> {
@@ -132,8 +130,8 @@ pub mod constants {
 
     /// File extensions for source code
     pub const SOURCE_EXTENSIONS: &[&str] = &[
-        "rs", "js", "ts", "py", "java", "cpp", "c", "hpp", "h", "cs", "php", "rb", "go", "swift",
-        "kt", "scala", "clj", "hs", "ml", "fs", "ex",
+        "rs", "js", "ts", "py", "java", "cpp", "c", "hpp", "h", "cs", "php", "rb", "go", "swift", "kt", "scala", "clj",
+        "hs", "ml", "fs", "ex",
     ];
 
     /// Temporary directory prefix
@@ -144,14 +142,12 @@ pub mod constants {
 }
 
 // Re-export commonly used items for convenience
-pub use error::{AIResult, AnalysisResult, IDEError, IDEResult};
-pub use utils::{
-    async_utils, config_merge, conversion, id_utils, log_utils, macros, path_utils, perf_utils,
-    sanitization, system_info, validation,
-};
-
-// Re-export traits
-pub use traits::*;
-
 // Re-export constants
 pub use constants::*;
+pub use error::{AIResult, AnalysisResult, IDEError, IDEResult};
+// Re-export traits
+pub use traits::*;
+pub use utils::{
+    async_utils, config_merge, conversion, id_utils, log_utils, macros, path_utils, perf_utils, sanitization,
+    system_info, validation,
+};

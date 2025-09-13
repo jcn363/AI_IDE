@@ -5,8 +5,9 @@
 //! patterns and use the project's standard error handling.
 //! Additionally provides declarative validation macros for easy integration.
 
-use crate::errors::{IdeError, IdeResult};
 use std::path::Path;
+
+use crate::errors::{IdeError, IdeResult};
 
 // ==================== SECURITY VALIDATION MACROS ====================
 
@@ -27,15 +28,13 @@ macro_rules! validate_string_alt {
         use crate::validation::*;
         if $required && $input.is_empty() {
             return Err(IdeError::Validation {
-                field: $field.to_string(),
+                field:  $field.to_string(),
                 reason: format!("{}: Required input cannot be empty", $field),
             });
         }
-        validate_string_input_extended($input, $max_len, $allow_special).map_err(|_| {
-            IdeError::Validation {
-                field: $field.to_string(),
-                reason: format!("{}: Validation failed for input '{}'", $field, $input),
-            }
+        validate_string_input_extended($input, $max_len, $allow_special).map_err(|_| IdeError::Validation {
+            field:  $field.to_string(),
+            reason: format!("{}: Validation failed for input '{}'", $field, $input),
         })?;
         Ok(())
     }};
@@ -45,8 +44,9 @@ macro_rules! validate_string_alt {
 #[macro_export]
 macro_rules! validate_file_path_alt {
     ($path:expr, $operation:expr) => {{
-        use crate::validation::*;
         use std::path::Path;
+
+        use crate::validation::*;
 
         validate_file_exists($path, $operation)?;
         validate_file_size_path($path, 50 * 1024 * 1024, $operation)?; // 50MB limit
@@ -72,23 +72,20 @@ macro_rules! validate_tauri_command_args {
 #[macro_export]
 macro_rules! sanitize_and_validate {
     ($input:expr => $field:ident) => {{
-        let processed = crate::sanitize_string_for_processing(
-            $input,
-            &[
-                "<script>",
-                "</script>",
-                "javascript:",
-                "onload=",
-                "onerror=",
-            ],
-        );
+        let processed = crate::sanitize_string_for_processing($input, &[
+            "<script>",
+            "</script>",
+            "javascript:",
+            "onload=",
+            "onerror=",
+        ]);
         match processed {
             Ok(sanitized) => {
                 crate::validate_string_input(&sanitized, 1000)?;
                 Ok(sanitized)
             }
             Err(e) => Err(IdeError::Validation {
-                field: stringify!($field).to_string(),
+                field:  stringify!($field).to_string(),
                 reason: format!("Validation failed: {}", e),
             }),
         }
@@ -96,10 +93,7 @@ macro_rules! sanitize_and_validate {
 }
 
 /// Trait for types that need Tauri command validation
-pub trait TauriCommandValidation:
-    ValidateFields + std::fmt::Debug + serde::de::DeserializeOwned
-{
-}
+pub trait TauriCommandValidation: ValidateFields + std::fmt::Debug + serde::de::DeserializeOwned {}
 
 /// Trait for field-level validation in structs
 pub trait ValidateFields {
@@ -146,7 +140,7 @@ pub fn sanitize_string_for_processing(input: &str, blocklist: &[&str]) -> IdeRes
     for blocked in blocklist {
         if input.contains(blocked) {
             return Err(IdeError::Validation {
-                field: "input".to_string(),
+                field:  "input".to_string(),
                 reason: format!("Input contains blocked content: {}", blocked),
             });
         }
@@ -166,7 +160,7 @@ pub fn sanitize_file_path(path: &str) -> IdeResult<String> {
         Ok(canonical.to_string_lossy().to_string())
     } else {
         Err(IdeError::Validation {
-            field: "path".to_string(),
+            field:  "path".to_string(),
             reason: "Path cannot be canonicalized".to_string(),
         })
     }
@@ -178,14 +172,14 @@ pub fn sanitize_file_path(path: &str) -> IdeResult<String> {
 pub fn validate_string_input(input: &str, max_length: usize) -> IdeResult<()> {
     if input.is_empty() {
         return Err(IdeError::Validation {
-            field: "input".to_string(),
+            field:  "input".to_string(),
             reason: "Input cannot be empty".to_string(),
         });
     }
 
     if input.len() > max_length {
         return Err(IdeError::Validation {
-            field: "input".to_string(),
+            field:  "input".to_string(),
             reason: format!("Input exceeds maximum length of {} characters", max_length),
         });
     }
@@ -194,17 +188,13 @@ pub fn validate_string_input(input: &str, max_length: usize) -> IdeResult<()> {
 }
 
 /// Extended string input validation with special character control
-pub fn validate_string_input_extended(
-    input: &str,
-    max_length: usize,
-    allow_special: bool,
-) -> IdeResult<()> {
+pub fn validate_string_input_extended(input: &str, max_length: usize, allow_special: bool) -> IdeResult<()> {
     validate_string_input(input, max_length)?;
 
     if !allow_special {
         if input.contains(";") || input.contains("(") || input.contains(")") {
             return Err(IdeError::Validation {
-                field: "input".to_string(),
+                field:  "input".to_string(),
                 reason: "Special characters are forbidden in input".to_string(),
             });
         }
@@ -217,7 +207,7 @@ pub fn validate_string_input_extended(
 pub fn validate_file_exists<P: AsRef<Path>>(path: P, operation: &str) -> IdeResult<()> {
     if !path.as_ref().exists() {
         return Err(IdeError::Validation {
-            field: "file_path".to_string(),
+            field:  "file_path".to_string(),
             reason: format!(
                 "{}: File does not exist: {}",
                 operation,
@@ -230,16 +220,12 @@ pub fn validate_file_exists<P: AsRef<Path>>(path: P, operation: &str) -> IdeResu
 }
 
 /// Validate file size from path
-pub fn validate_file_size_path<P: AsRef<Path>>(
-    path: P,
-    max_size: u64,
-    operation: &str,
-) -> IdeResult<()> {
+pub fn validate_file_size_path<P: AsRef<Path>>(path: P, max_size: u64, operation: &str) -> IdeResult<()> {
     match std::fs::metadata(path.as_ref()) {
-        Ok(metadata) => {
+        Ok(metadata) =>
             if metadata.len() > max_size {
                 return Err(IdeError::Validation {
-                    field: "file".to_string(),
+                    field:  "file".to_string(),
                     reason: format!(
                         "{}: File size {} bytes exceeds maximum allowed size {} bytes",
                         operation,
@@ -247,11 +233,10 @@ pub fn validate_file_size_path<P: AsRef<Path>>(
                         max_size
                     ),
                 });
-            }
-        }
+            },
         Err(e) => {
             return Err(IdeError::Validation {
-                field: "file".to_string(),
+                field:  "file".to_string(),
                 reason: format!("{}: Cannot check file size: {}", operation, e),
             });
         }
@@ -260,14 +245,10 @@ pub fn validate_file_size_path<P: AsRef<Path>>(
 }
 
 /// Validate file size from content
-pub fn validate_file_size_content(
-    content: &[u8],
-    max_size: usize,
-    operation: &str,
-) -> IdeResult<()> {
+pub fn validate_file_size_content(content: &[u8], max_size: usize, operation: &str) -> IdeResult<()> {
     if content.len() > max_size {
         return Err(IdeError::Validation {
-            field: "file".to_string(),
+            field:  "file".to_string(),
             reason: format!(
                 "{}: Content size {} bytes exceeds maximum allowed size {} bytes",
                 operation,
@@ -290,7 +271,7 @@ pub fn validate_path_not_excluded<P: AsRef<Path>>(
         let excluded_pattern = excluded.trim_end_matches('/').trim_start_matches('/');
         if path_str.contains(excluded_pattern) {
             return Err(IdeError::Validation {
-                field: "path".to_string(),
+                field:  "path".to_string(),
                 reason: format!("{}: Path {} is in excluded paths list", operation, path_str),
             });
         }
@@ -302,14 +283,14 @@ pub fn validate_path_not_excluded<P: AsRef<Path>>(
 pub fn validate_dependency_format(dep: &str) -> IdeResult<()> {
     if dep.is_empty() {
         return Err(IdeError::Validation {
-            field: "dependency".to_string(),
+            field:  "dependency".to_string(),
             reason: "Dependency name cannot be empty".to_string(),
         });
     }
 
     if dep.len() > 256 {
         return Err(IdeError::Validation {
-            field: "dependency".to_string(),
+            field:  "dependency".to_string(),
             reason: "Dependency name is too long".to_string(),
         });
     }
@@ -320,7 +301,7 @@ pub fn validate_dependency_format(dep: &str) -> IdeResult<()> {
         .all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.')
     {
         return Err(IdeError::Validation {
-            field: "dependency".to_string(),
+            field:  "dependency".to_string(),
             reason: "Invalid dependency name format".to_string(),
         });
     }
@@ -334,7 +315,7 @@ pub fn validate_directory_exists<P: AsRef<Path>>(path: P, operation: &str) -> Id
 
     if !path_obj.exists() {
         return Err(IdeError::Validation {
-            field: "directory_path".to_string(),
+            field:  "directory_path".to_string(),
             reason: format!(
                 "{}: Directory does not exist: {}",
                 operation,
@@ -345,7 +326,7 @@ pub fn validate_directory_exists<P: AsRef<Path>>(path: P, operation: &str) -> Id
 
     if !path_obj.is_dir() {
         return Err(IdeError::Validation {
-            field: "directory_path".to_string(),
+            field:  "directory_path".to_string(),
             reason: format!(
                 "{}: Path exists but is not a directory: {}",
                 operation,
@@ -358,11 +339,7 @@ pub fn validate_directory_exists<P: AsRef<Path>>(path: P, operation: &str) -> Id
 }
 
 /// Validate file size with operation name (compatibility wrapper for existing API)
-pub fn validate_file_size_with_operation(
-    path: &str,
-    max_size_kb: usize,
-    operation: &str,
-) -> IdeResult<()> {
+pub fn validate_file_size_with_operation(path: &str, max_size_kb: usize, operation: &str) -> IdeResult<()> {
     let max_size = max_size_kb * 1024; // Convert KB to bytes
     validate_file_size_path(path, max_size as u64, operation)
 }
@@ -372,8 +349,8 @@ pub fn validate_file_size_with_operation(
 /// A validated string that guarantees certain properties
 #[derive(Debug, Clone)]
 pub struct ValidatedString {
-    value: String,
-    max_length: usize,
+    value:           String,
+    max_length:      usize,
     allowed_special: bool,
 }
 
@@ -409,7 +386,7 @@ impl ValidatedFilePath {
         // Basic path validation
         if !path_obj.exists() {
             return Err(IdeError::Validation {
-                field: "file_path".to_string(),
+                field:  "file_path".to_string(),
                 reason: format!("{}: File does not exist: {}", operation, path),
             });
         }
@@ -426,7 +403,7 @@ impl ValidatedFilePath {
                         let part_str = part.to_string_lossy();
                         if part_str.contains("..") {
                             return Err(IdeError::Validation {
-                                field: "file_path".to_string(),
+                                field:  "file_path".to_string(),
                                 reason: format!("{}: Path traversal detected: {}", operation, path),
                             });
                         }
@@ -458,10 +435,9 @@ pub struct SanitizedQuery {
 impl SanitizedQuery {
     pub fn new(raw_query: &str) -> IdeResult<Self> {
         // Remove known dangerous characters/patterns
-        let clean = sanitize_string_for_processing(
-            raw_query,
-            &["DROP ", "DELETE ", "UPDATE ", "--", "/*", "*/"],
-        )?;
+        let clean = sanitize_string_for_processing(raw_query, &[
+            "DROP ", "DELETE ", "UPDATE ", "--", "/*", "*/",
+        ])?;
 
         // Basic length check
         validate_string_input(&clean, 500)?;
@@ -476,9 +452,11 @@ impl SanitizedQuery {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::io::Write;
+
     use tempfile::NamedTempFile;
+
+    use super::*;
 
     #[test]
     fn test_validate_string_input_basic() {
@@ -489,9 +467,7 @@ mod tests {
         assert!(validate_string_input("", 10).is_err());
 
         // Too long input
-        assert!(
-            validate_string_input("this is a very long string that exceeds the limit", 10).is_err()
-        );
+        assert!(validate_string_input("this is a very long string that exceeds the limit", 10).is_err());
     }
 
     #[test]
@@ -514,10 +490,10 @@ mod tests {
     #[test]
     fn test_sanitize_string_for_processing() {
         // Basic sanitization
-        let result = sanitize_string_for_processing(
-            "hello<script>alert('xss')</script>world",
-            &["<script>", "</script>"],
-        );
+        let result = sanitize_string_for_processing("hello<script>alert('xss')</script>world", &[
+            "<script>",
+            "</script>",
+        ]);
         assert!(result.is_err()); // Should block script tags
 
         // Valid input
@@ -574,16 +550,10 @@ mod tests {
     #[test]
     fn test_validate_path_not_excluded() {
         // Valid path
-        assert!(
-            validate_path_not_excluded("/home/user/file.txt", &["/tmp".to_string()], "test")
-                .is_ok()
-        );
+        assert!(validate_path_not_excluded("/home/user/file.txt", &["/tmp".to_string()], "test").is_ok());
 
         // Excluded path
-        assert!(
-            validate_path_not_excluded("/tmp/cache/file.txt", &["/tmp".to_string()], "test")
-                .is_err()
-        );
+        assert!(validate_path_not_excluded("/tmp/cache/file.txt", &["/tmp".to_string()], "test").is_err());
     }
 
     #[test]
@@ -718,8 +688,7 @@ mod tests {
         assert_eq!(result.unwrap(), "hello world");
 
         // Input with blocked content
-        let result =
-            sanitize_and_validate!("hello <script>alert('xss')</script> world" => test_field);
+        let result = sanitize_and_validate!("hello <script>alert('xss')</script> world" => test_field);
         assert!(result.is_err());
 
         // Input with null bytes
@@ -766,7 +735,8 @@ mod tests {
         let traversal_str = traversal_attempt.to_str().unwrap();
 
         // The current implementation may or may not catch this depending on if the path exists
-        // and how canonicalize works. In a real security context, this would need more robust checking.
+        // and how canonicalize works. In a real security context, this would need more robust
+        // checking.
     }
 
     #[test]

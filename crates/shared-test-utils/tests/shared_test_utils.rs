@@ -1,7 +1,8 @@
-use serde_json;
-use shared_test_utils::*;
 use std::collections::HashMap;
 use std::path::Path;
+
+use serde_json;
+use shared_test_utils::*;
 
 #[cfg(test)]
 mod basic_tests {
@@ -29,8 +30,9 @@ mod basic_tests {
 
 #[cfg(test)]
 mod filesystem_tests {
-    use super::*;
     use shared_test_utils::filesystem::TestScenario;
+
+    use super::*;
 
     #[test]
     fn test_workspace_basic_project() {
@@ -81,9 +83,7 @@ mod validation_tests {
         let test_file = Path::new("test.txt");
         workspace.create_file(test_file, "test").unwrap();
 
-        assert!(
-            ValidationUtils::validate_path_security(&workspace.path().join("test.txt")).is_ok()
-        );
+        assert!(ValidationUtils::validate_path_security(&workspace.path().join("test.txt")).is_ok());
         assert!(ValidationUtils::validate_path_security(Path::new("nonexistent")).is_err());
     }
 
@@ -101,8 +101,9 @@ mod validation_tests {
 
 #[cfg(test)]
 mod fixtures_tests {
-    use super::*;
     use shared_test_utils::fixtures::FixturePresets;
+
+    use super::*;
 
     #[test]
     fn test_fixture_builder() {
@@ -144,8 +145,9 @@ mod fixtures_tests {
 
 #[cfg(test)]
 mod command_tests {
-    use super::*;
     use shared_test_utils::command_tests::{CommandTestBuilder, MockCommand};
+
+    use super::*;
 
     #[test]
     fn test_mock_command() {
@@ -196,10 +198,9 @@ mod command_tests {
 
 #[cfg(test)]
 mod integration_tests {
+    use shared_test_utils::integration::{IntegrationContext, IntegrationPresets, IntegrationTestRunner};
+
     use super::*;
-    use shared_test_utils::integration::{
-        IntegrationContext, IntegrationPresets, IntegrationTestRunner,
-    };
 
     #[test]
     fn test_integration_runner_setup() {
@@ -233,10 +234,7 @@ isolated_tests = {}
 enable_logging = {}
 timeout_seconds = {}
 "#,
-                    config.cleanup_on_exit,
-                    config.isolated_tests,
-                    config.enable_logging,
-                    config.timeout_seconds
+                    config.cleanup_on_exit, config.isolated_tests, config.enable_logging, config.timeout_seconds
                 ),
             )
             .unwrap();
@@ -270,8 +268,9 @@ timeout_seconds = {}
 
 #[cfg(test)]
 mod async_tests {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_async_timeout() {
@@ -308,9 +307,10 @@ mod async_tests {
 
 #[cfg(test)]
 mod macro_tests {
-    use super::*;
     use shared_test_utils::error::TestResult;
     use shared_test_utils::fixtures::FixturePresets;
+
+    use super::*;
 
     #[test]
     fn test_setup_test_workspace_macro() {

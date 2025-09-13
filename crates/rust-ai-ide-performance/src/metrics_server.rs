@@ -3,9 +3,10 @@
 //! This module provides an HTTP server that exposes performance metrics
 //! in Prometheus-compatible format for scraping.
 
-use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::sync::Arc;
+
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use warp::Filter;
 
@@ -16,32 +17,32 @@ use crate::UnifiedPerformanceCollector;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricsServerConfig {
     /// Server address to bind to
-    pub address: String,
+    pub address:             String,
     /// Server port
-    pub port: u16,
+    pub port:                u16,
     /// Path for metrics endpoint (default: /metrics)
-    pub metrics_path: String,
+    pub metrics_path:        String,
     /// Enable health check endpoint
     pub enable_health_check: bool,
     /// Health check path (default: /health)
-    pub health_check_path: String,
+    pub health_check_path:   String,
 }
 
 impl Default for MetricsServerConfig {
     fn default() -> Self {
         Self {
-            address: "127.0.0.1".to_string(),
-            port: 9090,
-            metrics_path: "/metrics".to_string(),
+            address:             "127.0.0.1".to_string(),
+            port:                9090,
+            metrics_path:        "/metrics".to_string(),
             enable_health_check: true,
-            health_check_path: "/health".to_string(),
+            health_check_path:   "/health".to_string(),
         }
     }
 }
 
 /// Metrics HTTP server
 pub struct MetricsServer {
-    config: MetricsServerConfig,
+    config:   MetricsServerConfig,
     exporter: Arc<PrometheusExporter>,
 }
 
@@ -95,9 +96,7 @@ impl MetricsServer {
         Ok(())
     }
 
-    async fn handle_metrics(
-        exporter: Arc<PrometheusExporter>,
-    ) -> Result<impl warp::Reply, warp::Rejection> {
+    async fn handle_metrics(exporter: Arc<PrometheusExporter>) -> Result<impl warp::Reply, warp::Rejection> {
         match exporter.collect_and_export().await {
             Ok(metrics) => Ok(warp::reply::with_header(
                 metrics,
@@ -114,9 +113,7 @@ impl MetricsServer {
         }
     }
 
-    async fn handle_health(
-        exporter: Arc<PrometheusExporter>,
-    ) -> Result<impl warp::Reply, warp::Rejection> {
+    async fn handle_health(exporter: Arc<PrometheusExporter>) -> Result<impl warp::Reply, warp::Rejection> {
         // Simple health check - just verify we can access the exporter
         let registry = exporter.get_registry();
         let metrics_count = registry.export_all().await.lines().count();
@@ -204,9 +201,10 @@ impl Default for MetricsServerBuilder {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use super::*;
     use crate::{CollectorBuilder, SystemMetricsProvider};
-    use std::sync::Arc;
 
     #[tokio::test]
     async fn test_metrics_server_builder() {

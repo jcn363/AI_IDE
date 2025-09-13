@@ -1,12 +1,14 @@
-use super::*;
-use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
+
+use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
+
+use super::*;
 
 /// Builder for constructing a dependency graph from Cargo metadata
 #[derive(Debug)]
 pub struct DependencyGraphBuilder {
-    metadata: Metadata,
+    metadata:     Metadata,
     root_package: String,
 }
 
@@ -83,23 +85,21 @@ impl DependencyGraphBuilder {
                     .dependencies
                     .iter()
                     .find(|d| d.name == dep_pkg.name.to_string())
-                    .ok_or_else(|| {
-                        anyhow::anyhow!("Dependency info not found: {}", dep_pkg.name)
-                    })?;
+                    .ok_or_else(|| anyhow::anyhow!("Dependency info not found: {}", dep_pkg.name))?;
 
                 let edge = DependencyEdge {
-                    dep_type: if dep_info.kind == DependencyKind::Development {
+                    dep_type:              if dep_info.kind == DependencyKind::Development {
                         DependencyType::Dev
                     } else if dep_info.kind == DependencyKind::Build {
                         DependencyType::Build
                     } else {
                         DependencyType::Normal
                     },
-                    version_req: dep_info.req.to_string(),
-                    optional: dep_info.optional,
+                    version_req:           dep_info.req.to_string(),
+                    optional:              dep_info.optional,
                     uses_default_features: dep_info.uses_default_features,
-                    features: dep_info.features.clone(),
-                    target: dep_info.target.clone().map(|t| t.to_string()),
+                    features:              dep_info.features.clone(),
+                    target:                dep_info.target.clone().map(|t| t.to_string()),
                 };
 
                 graph.add_edge(source_idx, target_idx, edge);

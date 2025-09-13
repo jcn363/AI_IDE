@@ -3,10 +3,11 @@
 //! This module provides comprehensive memory monitoring, leak detection,
 //! and memory optimization features with cross-platform support.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
 /// Memory leak detector with smart scheduling
@@ -15,34 +16,34 @@ pub struct MemoryLeakDetector {
     /// Memory statistics history
     allocation_history: HashMap<String, Vec<AllocationInfo>>,
     /// Thresholds for leak detection
-    thresholds: LeakDetectionThresholds,
+    thresholds:         LeakDetectionThresholds,
     /// Analysis interval
-    analysis_interval: Duration,
+    analysis_interval:  Duration,
     /// Last analysis time
-    last_analysis: Instant,
+    last_analysis:      Instant,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AllocationInfo {
-    pub timestamp: std::time::SystemTime,
-    pub size_bytes: usize,
+    pub timestamp:        std::time::SystemTime,
+    pub size_bytes:       usize,
     pub allocation_count: usize,
-    pub location: String,
+    pub location:         String,
 }
 
 #[derive(Debug, Clone)]
 pub struct LeakDetectionThresholds {
     pub suspicious_growth_rate: f64,
-    pub minimum_samples: usize,
-    pub analysis_window_secs: u64,
+    pub minimum_samples:        usize,
+    pub analysis_window_secs:   u64,
 }
 
 impl Default for LeakDetectionThresholds {
     fn default() -> Self {
         Self {
             suspicious_growth_rate: 0.05, // 5% growth per analysis window
-            minimum_samples: 10,
-            analysis_window_secs: 300, // 5 minutes
+            minimum_samples:        10,
+            analysis_window_secs:   300, // 5 minutes
         }
     }
 }
@@ -50,13 +51,13 @@ impl Default for LeakDetectionThresholds {
 /// Leak analysis result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LeakAnalysisResult {
-    pub category: String,
-    pub severity: LeakSeverity,
-    pub growth_rate: f64,
-    pub total_bytes_leaked: usize,
+    pub category:             String,
+    pub severity:             LeakSeverity,
+    pub growth_rate:          f64,
+    pub total_bytes_leaked:   usize,
     pub detection_confidence: f64,
-    pub recommended_action: String,
-    pub evidence: Vec<String>,
+    pub recommended_action:   String,
+    pub evidence:             Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -71,16 +72,16 @@ pub enum LeakSeverity {
 #[derive(Debug)]
 pub struct MemoryOptimizer {
     /// Current optimization state
-    state: Arc<Mutex<OptimizationState>>,
+    state:         Arc<Mutex<OptimizationState>>,
     /// Auto-optimization enabled
     auto_optimize: bool,
 }
 
 #[derive(Debug, Clone)]
 struct OptimizationState {
-    last_cleanup: Instant,
-    total_memory_freed: usize,
-    optimizations_applied: Vec<Optimization>,
+    last_cleanup:            Instant,
+    total_memory_freed:      usize,
+    optimizations_applied:   Vec<Optimization>,
     current_memory_pressure: MemoryPressure,
 }
 
@@ -94,11 +95,11 @@ pub enum MemoryPressure {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Optimization {
-    pub timestamp: std::time::SystemTime,
-    pub action: String,
+    pub timestamp:          std::time::SystemTime,
+    pub action:             String,
     pub memory_freed_bytes: usize,
-    pub success: bool,
-    pub category: OptimizationCategory,
+    pub success:            bool,
+    pub category:           OptimizationCategory,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -114,9 +115,9 @@ pub enum OptimizationCategory {
 #[derive(Debug)]
 pub struct VirtualMemoryManager {
     /// Maximum in-memory size before swapping to disk
-    max_in_memory_bytes: usize,
+    max_in_memory_bytes:   usize,
     /// Current memory usage tracking
-    memory_usage: Arc<Mutex<HashMap<String, usize>>>,
+    memory_usage:          Arc<Mutex<HashMap<String, usize>>>,
     /// Disk cache for swapped data
     disk_cache_size_bytes: usize,
 }
@@ -126,9 +127,9 @@ impl MemoryLeakDetector {
     pub fn new() -> Self {
         Self {
             allocation_history: HashMap::new(),
-            thresholds: Default::default(),
-            analysis_interval: Duration::from_secs(60),
-            last_analysis: Instant::now(),
+            thresholds:         Default::default(),
+            analysis_interval:  Duration::from_secs(60),
+            last_analysis:      Instant::now(),
         }
     }
 
@@ -286,10 +287,22 @@ impl MemoryLeakDetector {
     /// Suggest appropriate action based on severity
     fn suggest_action(&self, severity: &LeakSeverity, category: &str) -> String {
         match severity {
-            LeakSeverity::Critical => format!("Immediate action required: Investigate {} memory leaks - may indicate resource exhaustion", category),
-            LeakSeverity::High => format!("High priority: Review {} allocation patterns and consider memory cleanup", category),
-            LeakSeverity::Medium => format!("Monitor {} memory usage - implement alloc/free tracking", category),
-            LeakSeverity::Low => format!("Profile {} allocations to prevent future growth issues", category),
+            LeakSeverity::Critical => format!(
+                "Immediate action required: Investigate {} memory leaks - may indicate resource exhaustion",
+                category
+            ),
+            LeakSeverity::High => format!(
+                "High priority: Review {} allocation patterns and consider memory cleanup",
+                category
+            ),
+            LeakSeverity::Medium => format!(
+                "Monitor {} memory usage - implement alloc/free tracking",
+                category
+            ),
+            LeakSeverity::Low => format!(
+                "Profile {} allocations to prevent future growth issues",
+                category
+            ),
         }
     }
 }
@@ -299,9 +312,9 @@ impl MemoryOptimizer {
     pub fn new(auto_optimize: bool) -> Self {
         Self {
             state: Arc::new(Mutex::new(OptimizationState {
-                last_cleanup: Instant::now(),
-                total_memory_freed: 0,
-                optimizations_applied: Vec::new(),
+                last_cleanup:            Instant::now(),
+                total_memory_freed:      0,
+                optimizations_applied:   Vec::new(),
                 current_memory_pressure: MemoryPressure::Low,
             })),
             auto_optimize,
@@ -314,19 +327,19 @@ impl MemoryOptimizer {
 
         // Simulate various optimizations
         optimizations.push(Optimization {
-            timestamp: std::time::SystemTime::now(),
-            action: "Cache cleanup".to_string(),
+            timestamp:          std::time::SystemTime::now(),
+            action:             "Cache cleanup".to_string(),
             memory_freed_bytes: 1024 * 1024, // 1MB
-            success: true,
-            category: OptimizationCategory::CacheCleanup,
+            success:            true,
+            category:           OptimizationCategory::CacheCleanup,
         });
 
         optimizations.push(Optimization {
-            timestamp: std::time::SystemTime::now(),
-            action: "Object pool defragmentation".to_string(),
+            timestamp:          std::time::SystemTime::now(),
+            action:             "Object pool defragmentation".to_string(),
             memory_freed_bytes: 512 * 1024, // 512KB
-            success: true,
-            category: OptimizationCategory::ObjectPooling,
+            success:            true,
+            category:           OptimizationCategory::ObjectPooling,
         });
 
         // Update state

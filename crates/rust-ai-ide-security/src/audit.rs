@@ -10,11 +10,12 @@
 //! - **Multiple Backends**: Database, file, and remote logging support
 //! - **Data Retention**: Configurable retention policies and automatic cleanup
 
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
 use tokio::sync::{mpsc, RwLock};
 use tracing::{error, info, warn};
 
@@ -83,43 +84,38 @@ pub enum AuditEventSeverity {
 /// Comprehensive audit event
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditEvent {
-    pub id: String,
-    pub timestamp: DateTime<Utc>,
-    pub event_type: AuditEventType,
-    pub severity: AuditEventSeverity,
-    pub user_id: Option<String>,
-    pub session_id: Option<String>,
-    pub ip_address: String,
-    pub user_agent: String,
-    pub resource_type: String,
-    pub resource_id: String,
-    pub action: String,
-    pub success: bool,
-    pub error_message: Option<String>,
-    pub metadata: HashMap<String, String>,
+    pub id:               String,
+    pub timestamp:        DateTime<Utc>,
+    pub event_type:       AuditEventType,
+    pub severity:         AuditEventSeverity,
+    pub user_id:          Option<String>,
+    pub session_id:       Option<String>,
+    pub ip_address:       String,
+    pub user_agent:       String,
+    pub resource_type:    String,
+    pub resource_id:      String,
+    pub action:           String,
+    pub success:          bool,
+    pub error_message:    Option<String>,
+    pub metadata:         HashMap<String, String>,
     pub data_sensitivity: Option<String>,
     pub compliance_flags: HashSet<String>,
-    pub geolocation: Option<String>,
+    pub geolocation:      Option<String>,
 }
 
 /// Audit event context for easy creation
 #[derive(Debug, Clone)]
 pub struct AuditEventContext {
-    pub event_type: AuditEventType,
-    pub severity: AuditEventSeverity,
+    pub event_type:    AuditEventType,
+    pub severity:      AuditEventSeverity,
     pub resource_type: String,
-    pub resource_id: String,
-    pub action: String,
-    pub metadata: HashMap<String, String>,
+    pub resource_id:   String,
+    pub action:        String,
+    pub metadata:      HashMap<String, String>,
 }
 
 impl AuditEventContext {
-    pub fn new(
-        event_type: AuditEventType,
-        resource_type: &str,
-        resource_id: &str,
-        action: &str,
-    ) -> Self {
+    pub fn new(event_type: AuditEventType, resource_type: &str, resource_id: &str, action: &str) -> Self {
         Self {
             event_type,
             severity: AuditEventSeverity::Medium, // Default
@@ -153,39 +149,39 @@ pub trait AuditStorageBackend: Send + Sync {
 /// Audit query for event retrieval
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditQuery {
-    pub user_id: Option<String>,
-    pub event_type: Option<AuditEventType>,
-    pub start_time: Option<DateTime<Utc>>,
-    pub end_time: Option<DateTime<Utc>>,
-    pub severity: Option<AuditEventSeverity>,
+    pub user_id:       Option<String>,
+    pub event_type:    Option<AuditEventType>,
+    pub start_time:    Option<DateTime<Utc>>,
+    pub end_time:      Option<DateTime<Utc>>,
+    pub severity:      Option<AuditEventSeverity>,
     pub resource_type: Option<String>,
-    pub resource_id: Option<String>,
-    pub ip_address: Option<String>,
-    pub limit: usize,
-    pub offset: usize,
+    pub resource_id:   Option<String>,
+    pub ip_address:    Option<String>,
+    pub limit:         usize,
+    pub offset:        usize,
 }
 
 /// Real-time alert notification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditAlert {
-    pub alert_id: String,
-    pub timestamp: DateTime<Utc>,
-    pub alert_type: String,
-    pub severity: AuditEventSeverity,
-    pub description: String,
-    pub affected_users: Vec<String>,
-    pub affected_resources: Vec<String>,
+    pub alert_id:            String,
+    pub timestamp:           DateTime<Utc>,
+    pub alert_type:          String,
+    pub severity:            AuditEventSeverity,
+    pub description:         String,
+    pub affected_users:      Vec<String>,
+    pub affected_resources:  Vec<String>,
     pub recommended_actions: Vec<String>,
 }
 
 /// Alert rule for triggering notifications
 #[derive(Debug, Clone)]
 pub struct AlertRule {
-    pub rule_id: String,
-    pub name: String,
-    pub condition: AlertCondition,
-    pub severity: AuditEventSeverity,
-    pub threshold: AlertThreshold,
+    pub rule_id:             String,
+    pub name:                String,
+    pub condition:           AlertCondition,
+    pub severity:            AuditEventSeverity,
+    pub threshold:           AlertThreshold,
     pub time_window_seconds: u64,
 }
 
@@ -203,82 +199,82 @@ pub enum AlertCondition {
 /// Alert threshold configuration
 #[derive(Debug, Clone)]
 pub struct AlertThreshold {
-    pub count: u32,
-    pub percentage: Option<f64>,
+    pub count:            u32,
+    pub percentage:       Option<f64>,
     pub custom_condition: Option<HashMap<String, String>>,
 }
 
 /// Compliance monitoring rule
 #[derive(Debug, Clone)]
 pub struct ComplianceRule {
-    pub rule_id: String,
-    pub name: String,
-    pub compliance_type: String, // "GDPR", "CCPA", etc.
-    pub description: String,
-    pub monitoring_query: AuditQuery,
-    pub required_actions: Vec<String>,
+    pub rule_id:              String,
+    pub name:                 String,
+    pub compliance_type:      String, // "GDPR", "CCPA", etc.
+    pub description:          String,
+    pub monitoring_query:     AuditQuery,
+    pub required_actions:     Vec<String>,
     pub escalation_threshold: u32,
 }
 
 /// GDPR compliance monitoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GDPRCompliance {
-    pub data_processing_consent: bool,
-    pub retention_period_days: u32,
-    pub data_minimization_applied: bool,
-    pub anonymization_method: Option<String>,
+    pub data_processing_consent:        bool,
+    pub retention_period_days:          u32,
+    pub data_minimization_applied:      bool,
+    pub anonymization_method:           Option<String>,
     pub subject_access_rights_provided: bool,
-    pub data_portability_supported: bool,
-    pub automated_decision_making: bool,
-    pub legal_basis: String,
-    pub data_processor_agreed: bool,
+    pub data_portability_supported:     bool,
+    pub automated_decision_making:      bool,
+    pub legal_basis:                    String,
+    pub data_processor_agreed:          bool,
 }
 
 /// CCPA compliance monitoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CCPACompliance {
     pub business_or_service_provider: bool,
-    pub notice_provided: bool,
-    pub opt_out_enabled: bool,
-    pub data_sales_control: bool,
-    pub sensitive_data_handling: bool,
-    pub privacy_policy_published: bool,
-    pub cookie_consent_obtained: bool,
-    pub data_deletion_supported: bool,
+    pub notice_provided:              bool,
+    pub opt_out_enabled:              bool,
+    pub data_sales_control:           bool,
+    pub sensitive_data_handling:      bool,
+    pub privacy_policy_published:     bool,
+    pub cookie_consent_obtained:      bool,
+    pub data_deletion_supported:      bool,
 }
 
 /// Main audit logger implementation
 pub struct AuditLogger {
-    config: AuditConfig,
-    storage_backend: Arc<dyn AuditStorageBackend>,
-    alert_rules: RwLock<Vec<AlertRule>>,
+    config:           AuditConfig,
+    storage_backend:  Arc<dyn AuditStorageBackend>,
+    alert_rules:      RwLock<Vec<AlertRule>>,
     compliance_rules: RwLock<Vec<ComplianceRule>>,
-    alert_sender: mpsc::Sender<AuditAlert>,
-    alert_receiver: RwLock<Option<mpsc::Receiver<AuditAlert>>>,
-    stats: RwLock<AuditStats>,
-    retained_events: u32,
+    alert_sender:     mpsc::Sender<AuditAlert>,
+    alert_receiver:   RwLock<Option<mpsc::Receiver<AuditAlert>>>,
+    stats:            RwLock<AuditStats>,
+    retained_events:  u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditStats {
-    pub total_events: u64,
-    pub events_today: u64,
-    pub alert_count: u64,
-    pub compliance_violations: u64,
-    pub storage_size_mb: f64,
-    pub retention_days_actual: u32,
+    pub total_events:           u64,
+    pub events_today:           u64,
+    pub alert_count:            u64,
+    pub compliance_violations:  u64,
+    pub storage_size_mb:        f64,
+    pub retention_days_actual:  u32,
     pub last_cleanup_timestamp: Option<DateTime<Utc>>,
 }
 
 impl Default for AuditStats {
     fn default() -> Self {
         Self {
-            total_events: 0,
-            events_today: 0,
-            alert_count: 0,
-            compliance_violations: 0,
-            storage_size_mb: 0.0,
-            retention_days_actual: 0,
+            total_events:           0,
+            events_today:           0,
+            alert_count:            0,
+            compliance_violations:  0,
+            storage_size_mb:        0.0,
+            retention_days_actual:  0,
             last_cleanup_timestamp: None,
         }
     }
@@ -461,8 +457,9 @@ impl AuditLogger {
     }
 
     fn operation_to_event_context(&self, context: &OperationContext) -> AuditEventContext {
-        use crate::OperationType::*;
         use AuditEventType::*;
+
+        use crate::OperationType::*;
 
         let (event_type, severity) = match context.operation_type {
             AIInference => (AIModelInference, AuditEventSeverity::Medium),
@@ -494,16 +491,16 @@ impl AuditLogger {
         for rule in &rules {
             if self.rule_matches_event(rule, event).await {
                 let alert = AuditAlert {
-                    alert_id: uuid::Uuid::new_v4().to_string(),
-                    timestamp: Utc::now(),
-                    alert_type: rule.name.clone(),
-                    severity: rule.severity.clone(),
-                    description: format!(
+                    alert_id:            uuid::Uuid::new_v4().to_string(),
+                    timestamp:           Utc::now(),
+                    alert_type:          rule.name.clone(),
+                    severity:            rule.severity.clone(),
+                    description:         format!(
                         "Alert rule '{}' triggered for event: {}",
                         rule.rule_id, event.id
                     ),
-                    affected_users: event.user_id.iter().cloned().collect(),
-                    affected_resources: vec![event.resource_id.clone()],
+                    affected_users:      event.user_id.iter().cloned().collect(),
+                    affected_resources:  vec![event.resource_id.clone()],
                     recommended_actions: vec![
                         "Review audit logs".to_string(),
                         "Notify security team".to_string(),
@@ -550,37 +547,37 @@ impl AuditLogger {
     async fn register_default_alert_rules(&self) -> SecurityResult<()> {
         let rules = vec![
             AlertRule {
-                rule_id: "failed-auth-threshold".to_string(),
-                name: "Multiple Failed Authentications".to_string(),
-                condition: AlertCondition::FailedAuthentications(5),
-                severity: AuditEventSeverity::High,
-                threshold: AlertThreshold {
-                    count: 5,
-                    percentage: None,
+                rule_id:             "failed-auth-threshold".to_string(),
+                name:                "Multiple Failed Authentications".to_string(),
+                condition:           AlertCondition::FailedAuthentications(5),
+                severity:            AuditEventSeverity::High,
+                threshold:           AlertThreshold {
+                    count:            5,
+                    percentage:       None,
                     custom_condition: None,
                 },
                 time_window_seconds: 3600,
             },
             AlertRule {
-                rule_id: "admin-action".to_string(),
-                name: "Administrative Operation".to_string(),
-                condition: AlertCondition::EventType(AuditEventType::UserManagement),
-                severity: AuditEventSeverity::High,
-                threshold: AlertThreshold {
-                    count: 1,
-                    percentage: None,
+                rule_id:             "admin-action".to_string(),
+                name:                "Administrative Operation".to_string(),
+                condition:           AlertCondition::EventType(AuditEventType::UserManagement),
+                severity:            AuditEventSeverity::High,
+                threshold:           AlertThreshold {
+                    count:            1,
+                    percentage:       None,
                     custom_condition: None,
                 },
                 time_window_seconds: 0,
             },
             AlertRule {
-                rule_id: "data-export".to_string(),
-                name: "Sensitive Data Export".to_string(),
-                condition: AlertCondition::EventType(AuditEventType::DataExported),
-                severity: AuditEventSeverity::High,
-                threshold: AlertThreshold {
-                    count: 1,
-                    percentage: None,
+                rule_id:             "data-export".to_string(),
+                name:                "Sensitive Data Export".to_string(),
+                condition:           AlertCondition::EventType(AuditEventType::DataExported),
+                severity:            AuditEventSeverity::High,
+                threshold:           AlertThreshold {
+                    count:            1,
+                    percentage:       None,
                     custom_condition: None,
                 },
                 time_window_seconds: 0,
@@ -594,17 +591,15 @@ impl AuditLogger {
 
     async fn register_compliance_rules(&self) -> SecurityResult<()> {
         let rules = vec![ComplianceRule {
-            rule_id: "gdpr-data-access".to_string(),
-            name: "GDPR Data Access Monitoring".to_string(),
-            compliance_type: "GDPR".to_string(),
-            description: "Monitor access to personal data".to_string(),
-            monitoring_query: AuditQuery {
-                compliance_flags: Some(
-                    vec!["GDPR-personal-data".to_string()].into_iter().collect(),
-                ),
+            rule_id:              "gdpr-data-access".to_string(),
+            name:                 "GDPR Data Access Monitoring".to_string(),
+            compliance_type:      "GDPR".to_string(),
+            description:          "Monitor access to personal data".to_string(),
+            monitoring_query:     AuditQuery {
+                compliance_flags: Some(vec!["GDPR-personal-data".to_string()].into_iter().collect()),
                 ..Default::default()
             },
-            required_actions: vec![
+            required_actions:     vec![
                 "Verify data access consent".to_string(),
                 "Log data processing activities".to_string(),
                 "Implement data minimization".to_string(),
@@ -619,9 +614,8 @@ impl AuditLogger {
 
     async fn rule_matches_event(&self, rule: &AlertRule, event: &AuditEvent) -> bool {
         match &rule.condition {
-            AlertCondition::EventType(expected_type) => {
-                std::mem::discriminant(expected_type) == std::mem::discriminant(&event.event_type)
-            }
+            AlertCondition::EventType(expected_type) =>
+                std::mem::discriminant(expected_type) == std::mem::discriminant(&event.event_type),
             AlertCondition::SeverityAbove(expected_severity) => {
                 matches!(
                     (event.severity, expected_severity),
@@ -631,10 +625,8 @@ impl AuditLogger {
                     ) | (AuditEventSeverity::Critical, AuditEventSeverity::High)
                 )
             }
-            AlertCondition::FailedAuthentications(threshold) => {
-                matches!(&event.event_type, AuditEventType::AuthenticationFailure)
-                    && rule.threshold.count >= *threshold
-            }
+            AlertCondition::FailedAuthentications(threshold) =>
+                matches!(&event.event_type, AuditEventType::AuthenticationFailure) && rule.threshold.count >= *threshold,
             _ => false, // Implement other conditions as needed
         }
     }
@@ -752,17 +744,17 @@ impl InMemoryAuditStorage {
 impl Default for AuditQuery {
     fn default() -> Self {
         Self {
-            user_id: None,
-            event_type: None,
-            start_time: None,
-            end_time: None,
-            severity: None,
-            resource_type: None,
-            resource_id: None,
-            ip_address: None,
+            user_id:          None,
+            event_type:       None,
+            start_time:       None,
+            end_time:         None,
+            severity:         None,
+            resource_type:    None,
+            resource_id:      None,
+            ip_address:       None,
             compliance_flags: None,
-            limit: 100,
-            offset: 0,
+            limit:            100,
+            offset:           0,
         }
     }
 }
@@ -788,26 +780,26 @@ pub mod compliance {
     impl ComplianceEngine {
         pub async fn new(compliance_config: crate::ComplianceConfig) -> SecurityResult<Self> {
             let gdpr_compliance = GDPRCompliance {
-                data_processing_consent: true,
-                retention_period_days: compliance_config.data_retention_years * 365,
-                data_minimization_applied: compliance_config.anonymization_enabled,
-                anonymization_method: Some("pseudonymization".to_string()),
+                data_processing_consent:        true,
+                retention_period_days:          compliance_config.data_retention_years * 365,
+                data_minimization_applied:      compliance_config.anonymization_enabled,
+                anonymization_method:           Some("pseudonymization".to_string()),
                 subject_access_rights_provided: true,
-                data_portability_supported: true,
-                automated_decision_making: false,
-                legal_basis: "contract".to_string(),
-                data_processor_agreed: true,
+                data_portability_supported:     true,
+                automated_decision_making:      false,
+                legal_basis:                    "contract".to_string(),
+                data_processor_agreed:          true,
             };
 
             let ccpa_compliance = crate::CCPACompliance {
                 business_or_service_provider: true,
-                notice_provided: true,
-                opt_out_enabled: true,
-                data_sales_control: false,
-                sensitive_data_handling: true,
-                privacy_policy_published: true,
-                cookie_consent_obtained: true,
-                data_deletion_supported: true,
+                notice_provided:              true,
+                opt_out_enabled:              true,
+                data_sales_control:           false,
+                sensitive_data_handling:      true,
+                privacy_policy_published:     true,
+                cookie_consent_obtained:      true,
+                data_deletion_supported:      true,
             };
 
             Ok(Self {
@@ -816,10 +808,7 @@ pub mod compliance {
             })
         }
 
-        pub async fn validate_operation_compliance(
-            &self,
-            context: &OperationContext,
-        ) -> SecurityResult<()> {
+        pub async fn validate_operation_compliance(&self, context: &OperationContext) -> SecurityResult<()> {
             // Validate GDPR compliance
             if !self.is_gdpr_compliant(context) {
                 warn!(
@@ -852,8 +841,7 @@ pub mod compliance {
                 | crate::SensitivityLevel::Restricted
                 | crate::SensitivityLevel::Confidential => {
                     // Require explicit user consent for sensitive data processing
-                    context.user_context.mfa_verified
-                        && self.gdpr_compliance.data_processing_consent
+                    context.user_context.mfa_verified && self.gdpr_compliance.data_processing_consent
                 }
                 _ => true,
             }
@@ -888,45 +876,46 @@ pub mod compliance {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test as async_test;
+
+    use super::*;
 
     #[async_test]
     async fn test_audit_event_creation() {
         let config = AuditConfig {
-            enabled: true,
-            log_level: "info".to_string(),
-            retention_days: 365,
-            export_format: "json".to_string(),
+            enabled:              true,
+            log_level:            "info".to_string(),
+            retention_days:       365,
+            export_format:        "json".to_string(),
             real_time_monitoring: true,
         };
 
         let auditor = AuditLogger::new(config).await.unwrap();
 
         let context = OperationContext {
-            user_context: crate::UserContext {
-                user_id: "test_user".to_string(),
-                username: "testuser".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec!["read".to_string()],
-                session_id: Some("session123".to_string()),
+            user_context:     crate::UserContext {
+                user_id:      "test_user".to_string(),
+                username:     "testuser".to_string(),
+                roles:        vec!["user".to_string()],
+                permissions:  vec!["read".to_string()],
+                session_id:   Some("session123".to_string()),
                 mfa_verified: true,
             },
-            network_context: crate::NetworkContext {
-                ip_address: "127.0.0.1".to_string(),
-                user_agent: "TestAgent/1.0".to_string(),
+            network_context:  crate::NetworkContext {
+                ip_address:        "127.0.0.1".to_string(),
+                user_agent:        "TestAgent/1.0".to_string(),
                 certificate_valid: true,
-                tls_version: "TLSv1.3".to_string(),
-                geolocation: None,
+                tls_version:       "TLSv1.3".to_string(),
+                geolocation:       None,
             },
             resource_context: crate::ResourceContext {
-                resource_type: "ai_model".to_string(),
-                resource_id: "test_model".to_string(),
-                action: "inference".to_string(),
+                resource_type:     "ai_model".to_string(),
+                resource_id:       "test_model".to_string(),
+                action:            "inference".to_string(),
                 sensitivity_level: crate::SensitivityLevel::Internal,
             },
-            timestamp: chrono::Utc::now(),
-            operation_type: crate::OperationType::AIInference,
+            timestamp:        chrono::Utc::now(),
+            operation_type:   crate::OperationType::AIInference,
         };
 
         let event_ctx = AuditEventContext::new(
@@ -955,29 +944,29 @@ mod tests {
 
         // Log some events
         let context = OperationContext {
-            user_context: crate::UserContext {
-                user_id: "test_user".to_string(),
-                username: "testuser".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec!["read".to_string()],
-                session_id: Some("session123".to_string()),
+            user_context:     crate::UserContext {
+                user_id:      "test_user".to_string(),
+                username:     "testuser".to_string(),
+                roles:        vec!["user".to_string()],
+                permissions:  vec!["read".to_string()],
+                session_id:   Some("session123".to_string()),
                 mfa_verified: true,
             },
-            network_context: crate::NetworkContext {
-                ip_address: "127.0.0.1".to_string(),
-                user_agent: "TestAgent/1.0".to_string(),
+            network_context:  crate::NetworkContext {
+                ip_address:        "127.0.0.1".to_string(),
+                user_agent:        "TestAgent/1.0".to_string(),
                 certificate_valid: true,
-                tls_version: "TLSv1.3".to_string(),
-                geolocation: None,
+                tls_version:       "TLSv1.3".to_string(),
+                geolocation:       None,
             },
             resource_context: crate::ResourceContext {
-                resource_type: "ai_model".to_string(),
-                resource_id: "test_model".to_string(),
-                action: "inference".to_string(),
+                resource_type:     "ai_model".to_string(),
+                resource_id:       "test_model".to_string(),
+                action:            "inference".to_string(),
                 sensitivity_level: crate::SensitivityLevel::Internal,
             },
-            timestamp: chrono::Utc::now(),
-            operation_type: crate::OperationType::AIInference,
+            timestamp:        chrono::Utc::now(),
+            operation_type:   crate::OperationType::AIInference,
         };
 
         let event_ctx = AuditEventContext::new(
@@ -1011,13 +1000,13 @@ mod tests {
 
         // Add a test alert rule that triggers on any AI inference
         let alert_rule = AlertRule {
-            rule_id: "test-alert".to_string(),
-            name: "Test Alert".to_string(),
-            condition: AlertCondition::EventType(AuditEventType::AIModelInference),
-            severity: AuditEventSeverity::Low,
-            threshold: AlertThreshold {
-                count: 1,
-                percentage: None,
+            rule_id:             "test-alert".to_string(),
+            name:                "Test Alert".to_string(),
+            condition:           AlertCondition::EventType(AuditEventType::AIModelInference),
+            severity:            AuditEventSeverity::Low,
+            threshold:           AlertThreshold {
+                count:            1,
+                percentage:       None,
                 custom_condition: None,
             },
             time_window_seconds: 0,
@@ -1027,29 +1016,29 @@ mod tests {
 
         // Create an event that should trigger the alert
         let context = OperationContext {
-            user_context: crate::UserContext {
-                user_id: "test_user".to_string(),
-                username: "testuser".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec!["read".to_string()],
-                session_id: Some("session123".to_string()),
+            user_context:     crate::UserContext {
+                user_id:      "test_user".to_string(),
+                username:     "testuser".to_string(),
+                roles:        vec!["user".to_string()],
+                permissions:  vec!["read".to_string()],
+                session_id:   Some("session123".to_string()),
                 mfa_verified: true,
             },
-            network_context: crate::NetworkContext {
-                ip_address: "127.0.0.1".to_string(),
-                user_agent: "TestAgent/1.0".to_string(),
+            network_context:  crate::NetworkContext {
+                ip_address:        "127.0.0.1".to_string(),
+                user_agent:        "TestAgent/1.0".to_string(),
                 certificate_valid: true,
-                tls_version: "TLSv1.3".to_string(),
-                geolocation: None,
+                tls_version:       "TLSv1.3".to_string(),
+                geolocation:       None,
             },
             resource_context: crate::ResourceContext {
-                resource_type: "ai_model".to_string(),
-                resource_id: "test_model".to_string(),
-                action: "inference".to_string(),
+                resource_type:     "ai_model".to_string(),
+                resource_id:       "test_model".to_string(),
+                action:            "inference".to_string(),
                 sensitivity_level: crate::SensitivityLevel::Internal,
             },
-            timestamp: chrono::Utc::now(),
-            operation_type: crate::OperationType::AIInference,
+            timestamp:        chrono::Utc::now(),
+            operation_type:   crate::OperationType::AIInference,
         };
 
         let event_ctx = AuditEventContext::new(
@@ -1077,29 +1066,29 @@ mod tests {
         let auditor = AuditLogger::new(config).await.unwrap();
 
         let context = OperationContext {
-            user_context: crate::UserContext {
-                user_id: "error_test_user".to_string(),
-                username: "errortest".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec!["read".to_string()],
-                session_id: Some("session456".to_string()),
+            user_context:     crate::UserContext {
+                user_id:      "error_test_user".to_string(),
+                username:     "errortest".to_string(),
+                roles:        vec!["user".to_string()],
+                permissions:  vec!["read".to_string()],
+                session_id:   Some("session456".to_string()),
                 mfa_verified: false,
             },
-            network_context: crate::NetworkContext {
-                ip_address: "192.168.1.100".to_string(),
-                user_agent: "ErrorTestAgent/1.0".to_string(),
+            network_context:  crate::NetworkContext {
+                ip_address:        "192.168.1.100".to_string(),
+                user_agent:        "ErrorTestAgent/1.0".to_string(),
                 certificate_valid: false,
-                tls_version: "TLSv1.2".to_string(),
-                geolocation: Some("Unknown".to_string()),
+                tls_version:       "TLSv1.2".to_string(),
+                geolocation:       Some("Unknown".to_string()),
             },
             resource_context: crate::ResourceContext {
-                resource_type: "sensitive_data".to_string(),
-                resource_id: "confidential_report".to_string(),
-                action: "unauthorized_access".to_string(),
+                resource_type:     "sensitive_data".to_string(),
+                resource_id:       "confidential_report".to_string(),
+                action:            "unauthorized_access".to_string(),
                 sensitivity_level: crate::SensitivityLevel::HighlySensitive,
             },
-            timestamp: chrono::Utc::now(),
-            operation_type: crate::OperationType::DataExport,
+            timestamp:        chrono::Utc::now(),
+            operation_type:   crate::OperationType::DataExport,
         };
 
         let event_ctx = AuditEventContext::new(
@@ -1168,33 +1157,38 @@ mod tests {
 
         for (user_id, event_type, severity, resource_type) in events_data {
             let context = OperationContext {
-                user_context: crate::UserContext {
-                    user_id: user_id.to_string(),
-                    username: format!("{}_name", user_id),
-                    roles: vec!["user".to_string()],
-                    permissions: vec!["read".to_string()],
-                    session_id: Some(format!("session_{}", user_id)),
+                user_context:     crate::UserContext {
+                    user_id:      user_id.to_string(),
+                    username:     format!("{}_name", user_id),
+                    roles:        vec!["user".to_string()],
+                    permissions:  vec!["read".to_string()],
+                    session_id:   Some(format!("session_{}", user_id)),
                     mfa_verified: true,
                 },
-                network_context: crate::NetworkContext {
-                    ip_address: "127.0.0.1".to_string(),
-                    user_agent: "TestAgent/1.0".to_string(),
+                network_context:  crate::NetworkContext {
+                    ip_address:        "127.0.0.1".to_string(),
+                    user_agent:        "TestAgent/1.0".to_string(),
                     certificate_valid: true,
-                    tls_version: "TLSv1.3".to_string(),
-                    geolocation: None,
+                    tls_version:       "TLSv1.3".to_string(),
+                    geolocation:       None,
                 },
                 resource_context: crate::ResourceContext {
-                    resource_type: resource_type.to_string(),
-                    resource_id: format!("resource_{}", user_id),
-                    action: "access".to_string(),
+                    resource_type:     resource_type.to_string(),
+                    resource_id:       format!("resource_{}", user_id),
+                    action:            "access".to_string(),
                     sensitivity_level: crate::SensitivityLevel::Internal,
                 },
-                timestamp: chrono::Utc::now(),
-                operation_type: crate::OperationType::FileAccess,
+                timestamp:        chrono::Utc::now(),
+                operation_type:   crate::OperationType::FileAccess,
             };
 
-            let event_ctx = AuditEventContext::new(event_type, resource_type, &format!("resource_{}", user_id), "access")
-                .with_severity(severity);
+            let event_ctx = AuditEventContext::new(
+                event_type,
+                resource_type,
+                &format!("resource_{}", user_id),
+                "access",
+            )
+            .with_severity(severity);
 
             auditor
                 .log_event(&context, event_ctx, true, None)
@@ -1240,37 +1234,32 @@ mod tests {
 
         // Log some events
         let context = OperationContext {
-            user_context: crate::UserContext {
-                user_id: "cleanup_test".to_string(),
-                username: "cleanuptest".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec!["read".to_string()],
-                session_id: Some("session_cleanup".to_string()),
+            user_context:     crate::UserContext {
+                user_id:      "cleanup_test".to_string(),
+                username:     "cleanuptest".to_string(),
+                roles:        vec!["user".to_string()],
+                permissions:  vec!["read".to_string()],
+                session_id:   Some("session_cleanup".to_string()),
                 mfa_verified: true,
             },
-            network_context: crate::NetworkContext {
-                ip_address: "127.0.0.1".to_string(),
-                user_agent: "CleanupAgent/1.0".to_string(),
+            network_context:  crate::NetworkContext {
+                ip_address:        "127.0.0.1".to_string(),
+                user_agent:        "CleanupAgent/1.0".to_string(),
                 certificate_valid: true,
-                tls_version: "TLSv1.3".to_string(),
-                geolocation: None,
+                tls_version:       "TLSv1.3".to_string(),
+                geolocation:       None,
             },
             resource_context: crate::ResourceContext {
-                resource_type: "test".to_string(),
-                resource_id: "cleanup_test".to_string(),
-                action: "test".to_string(),
+                resource_type:     "test".to_string(),
+                resource_id:       "cleanup_test".to_string(),
+                action:            "test".to_string(),
                 sensitivity_level: crate::SensitivityLevel::Public,
             },
-            timestamp: chrono::Utc::now(),
-            operation_type: crate::OperationType::FileAccess,
+            timestamp:        chrono::Utc::now(),
+            operation_type:   crate::OperationType::FileAccess,
         };
 
-        let event_ctx = AuditEventContext::new(
-            AuditEventType::DataAccessed,
-            "test",
-            "cleanup_test",
-            "test",
-        );
+        let event_ctx = AuditEventContext::new(AuditEventType::DataAccessed, "test", "cleanup_test", "test");
 
         for _ in 0..5 {
             auditor
@@ -1299,29 +1288,29 @@ mod tests {
 
         // Test with highly sensitive data
         let sensitive_context = OperationContext {
-            user_context: crate::UserContext {
-                user_id: "compliance_test".to_string(),
-                username: "compliancetest".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec!["read".to_string()],
-                session_id: Some("session_compliance".to_string()),
+            user_context:     crate::UserContext {
+                user_id:      "compliance_test".to_string(),
+                username:     "compliancetest".to_string(),
+                roles:        vec!["user".to_string()],
+                permissions:  vec!["read".to_string()],
+                session_id:   Some("session_compliance".to_string()),
                 mfa_verified: true,
             },
-            network_context: crate::NetworkContext {
-                ip_address: "127.0.0.1".to_string(),
-                user_agent: "ComplianceAgent/1.0".to_string(),
+            network_context:  crate::NetworkContext {
+                ip_address:        "127.0.0.1".to_string(),
+                user_agent:        "ComplianceAgent/1.0".to_string(),
                 certificate_valid: true,
-                tls_version: "TLSv1.3".to_string(),
-                geolocation: Some("EU".to_string()),
+                tls_version:       "TLSv1.3".to_string(),
+                geolocation:       Some("EU".to_string()),
             },
             resource_context: crate::ResourceContext {
-                resource_type: "personal_data".to_string(),
-                resource_id: "user_profiles".to_string(),
-                action: "access".to_string(),
+                resource_type:     "personal_data".to_string(),
+                resource_id:       "user_profiles".to_string(),
+                action:            "access".to_string(),
                 sensitivity_level: crate::SensitivityLevel::HighlySensitive,
             },
-            timestamp: chrono::Utc::now(),
-            operation_type: crate::OperationType::DataAccess,
+            timestamp:        chrono::Utc::now(),
+            operation_type:   crate::OperationType::DataAccess,
         };
 
         let event_ctx = AuditEventContext::new(
@@ -1357,33 +1346,36 @@ mod tests {
         let storage = InMemoryAuditStorage::new();
 
         let event = AuditEvent {
-            id: "test-event-123".to_string(),
-            timestamp: Utc::now(),
-            event_type: AuditEventType::DataAccessed,
-            severity: AuditEventSeverity::Medium,
-            user_id: Some("test_user".to_string()),
-            session_id: Some("session123".to_string()),
-            ip_address: "192.168.1.1".to_string(),
-            user_agent: "TestAgent/1.0".to_string(),
-            resource_type: "file".to_string(),
-            resource_id: "document.pdf".to_string(),
-            action: "read".to_string(),
-            success: true,
-            error_message: None,
-            metadata: [("access_type".to_string(), "direct".to_string())].into(),
+            id:               "test-event-123".to_string(),
+            timestamp:        Utc::now(),
+            event_type:       AuditEventType::DataAccessed,
+            severity:         AuditEventSeverity::Medium,
+            user_id:          Some("test_user".to_string()),
+            session_id:       Some("session123".to_string()),
+            ip_address:       "192.168.1.1".to_string(),
+            user_agent:       "TestAgent/1.0".to_string(),
+            resource_type:    "file".to_string(),
+            resource_id:      "document.pdf".to_string(),
+            action:           "read".to_string(),
+            success:          true,
+            error_message:    None,
+            metadata:         [("access_type".to_string(), "direct".to_string())].into(),
             data_sensitivity: Some("internal".to_string()),
             compliance_flags: ["GDPR".to_string()].into(),
-            geolocation: Some("US".to_string()),
+            geolocation:      Some("US".to_string()),
         };
 
         // Store event
         storage.store_event(&event).await.unwrap();
 
         // Retrieve event
-        let retrieved = storage.query_events(&AuditQuery {
-            limit: 10,
-            ..Default::default()
-        }).await.unwrap();
+        let retrieved = storage
+            .query_events(&AuditQuery {
+                limit: 10,
+                ..Default::default()
+            })
+            .await
+            .unwrap();
 
         assert_eq!(retrieved.len(), 1);
         assert_eq!(retrieved[0].id, event.id);
@@ -1402,10 +1394,13 @@ mod tests {
         assert_eq!(cleaned, 1); // Should clean up the old event
 
         // Verify old event is gone
-        let remaining = storage.query_events(&AuditQuery {
-            limit: 10,
-            ..Default::default()
-        }).await.unwrap();
+        let remaining = storage
+            .query_events(&AuditQuery {
+                limit: 10,
+                ..Default::default()
+            })
+            .await
+            .unwrap();
 
         assert_eq!(remaining.len(), 1);
         assert_eq!(remaining[0].id, event.id); // Only recent event remains
@@ -1418,13 +1413,13 @@ mod tests {
 
         // Add alert rule for failed authentications
         let alert_rule = AlertRule {
-            rule_id: "failed-auth-rule".to_string(),
-            name: "Failed Authentication Alert".to_string(),
-            condition: AlertCondition::FailedAuthentications(3),
-            severity: AuditEventSeverity::High,
-            threshold: AlertThreshold {
-                count: 3,
-                percentage: None,
+            rule_id:             "failed-auth-rule".to_string(),
+            name:                "Failed Authentication Alert".to_string(),
+            condition:           AlertCondition::FailedAuthentications(3),
+            severity:            AuditEventSeverity::High,
+            threshold:           AlertThreshold {
+                count:            3,
+                percentage:       None,
                 custom_condition: None,
             },
             time_window_seconds: 300, // 5 minutes
@@ -1434,29 +1429,29 @@ mod tests {
 
         // Log failed authentication events
         let context = OperationContext {
-            user_context: crate::UserContext {
-                user_id: "suspicious_user".to_string(),
-                username: "suspicious".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec!["read".to_string()],
-                session_id: Some("session_suspicious".to_string()),
+            user_context:     crate::UserContext {
+                user_id:      "suspicious_user".to_string(),
+                username:     "suspicious".to_string(),
+                roles:        vec!["user".to_string()],
+                permissions:  vec!["read".to_string()],
+                session_id:   Some("session_suspicious".to_string()),
                 mfa_verified: false,
             },
-            network_context: crate::NetworkContext {
-                ip_address: "10.0.0.1".to_string(),
-                user_agent: "SuspiciousAgent/1.0".to_string(),
+            network_context:  crate::NetworkContext {
+                ip_address:        "10.0.0.1".to_string(),
+                user_agent:        "SuspiciousAgent/1.0".to_string(),
                 certificate_valid: false,
-                tls_version: "TLSv1.2".to_string(),
-                geolocation: None,
+                tls_version:       "TLSv1.2".to_string(),
+                geolocation:       None,
             },
             resource_context: crate::ResourceContext {
-                resource_type: "auth".to_string(),
-                resource_id: "login".to_string(),
-                action: "login".to_string(),
+                resource_type:     "auth".to_string(),
+                resource_id:       "login".to_string(),
+                action:            "login".to_string(),
                 sensitivity_level: crate::SensitivityLevel::Public,
             },
-            timestamp: chrono::Utc::now(),
-            operation_type: crate::OperationType::AIInference,
+            timestamp:        chrono::Utc::now(),
+            operation_type:   crate::OperationType::AIInference,
         };
 
         // Log multiple failed authentications
@@ -1470,7 +1465,12 @@ mod tests {
             .with_metadata("attempt", &i.to_string());
 
             auditor
-                .log_event(&context, event_ctx, false, Some("Invalid credentials".to_string()))
+                .log_event(
+                    &context,
+                    event_ctx,
+                    false,
+                    Some("Invalid credentials".to_string()),
+                )
                 .await
                 .unwrap();
         }
@@ -1487,29 +1487,29 @@ mod tests {
         let auditor = AuditLogger::new(config).await.unwrap();
 
         let context = OperationContext {
-            user_context: crate::UserContext {
-                user_id: "metadata_test".to_string(),
-                username: "metadatatest".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec!["read".to_string()],
-                session_id: Some("session_metadata".to_string()),
+            user_context:     crate::UserContext {
+                user_id:      "metadata_test".to_string(),
+                username:     "metadatatest".to_string(),
+                roles:        vec!["user".to_string()],
+                permissions:  vec!["read".to_string()],
+                session_id:   Some("session_metadata".to_string()),
                 mfa_verified: true,
             },
-            network_context: crate::NetworkContext {
-                ip_address: "127.0.0.1".to_string(),
-                user_agent: "MetadataAgent/1.0".to_string(),
+            network_context:  crate::NetworkContext {
+                ip_address:        "127.0.0.1".to_string(),
+                user_agent:        "MetadataAgent/1.0".to_string(),
                 certificate_valid: true,
-                tls_version: "TLSv1.3".to_string(),
-                geolocation: Some("US-CA".to_string()),
+                tls_version:       "TLSv1.3".to_string(),
+                geolocation:       Some("US-CA".to_string()),
             },
             resource_context: crate::ResourceContext {
-                resource_type: "ai_model".to_string(),
-                resource_id: "llama-2-7b".to_string(),
-                action: "inference".to_string(),
+                resource_type:     "ai_model".to_string(),
+                resource_id:       "llama-2-7b".to_string(),
+                action:            "inference".to_string(),
                 sensitivity_level: crate::SensitivityLevel::Internal,
             },
-            timestamp: chrono::Utc::now(),
-            operation_type: crate::OperationType::AIInference,
+            timestamp:        chrono::Utc::now(),
+            operation_type:   crate::OperationType::AIInference,
         };
 
         let event_ctx = AuditEventContext::new(
@@ -1541,7 +1541,10 @@ mod tests {
         let event = &events[0];
         assert_eq!(event.metadata.get("model_version"), Some(&"7b".to_string()));
         assert_eq!(event.metadata.get("tokens_used"), Some(&"150".to_string()));
-        assert_eq!(event.metadata.get("response_time_ms"), Some(&"250".to_string()));
+        assert_eq!(
+            event.metadata.get("response_time_ms"),
+            Some(&"250".to_string())
+        );
         assert_eq!(event.metadata.get("temperature"), Some(&"0.7".to_string()));
         assert_eq!(event.geolocation, Some("US-CA".to_string()));
     }
@@ -1552,40 +1555,35 @@ mod tests {
         let auditor = AuditLogger::new(config).await.unwrap();
 
         let context = OperationContext {
-            user_context: crate::UserContext {
-                user_id: "pagination_test".to_string(),
-                username: "paginationtest".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec!["read".to_string()],
-                session_id: Some("session_pagination".to_string()),
+            user_context:     crate::UserContext {
+                user_id:      "pagination_test".to_string(),
+                username:     "paginationtest".to_string(),
+                roles:        vec!["user".to_string()],
+                permissions:  vec!["read".to_string()],
+                session_id:   Some("session_pagination".to_string()),
                 mfa_verified: true,
             },
-            network_context: crate::NetworkContext {
-                ip_address: "127.0.0.1".to_string(),
-                user_agent: "PaginationAgent/1.0".to_string(),
+            network_context:  crate::NetworkContext {
+                ip_address:        "127.0.0.1".to_string(),
+                user_agent:        "PaginationAgent/1.0".to_string(),
                 certificate_valid: true,
-                tls_version: "TLSv1.3".to_string(),
-                geolocation: None,
+                tls_version:       "TLSv1.3".to_string(),
+                geolocation:       None,
             },
             resource_context: crate::ResourceContext {
-                resource_type: "test".to_string(),
-                resource_id: "pagination".to_string(),
-                action: "test".to_string(),
+                resource_type:     "test".to_string(),
+                resource_id:       "pagination".to_string(),
+                action:            "test".to_string(),
                 sensitivity_level: crate::SensitivityLevel::Public,
             },
-            timestamp: chrono::Utc::now(),
-            operation_type: crate::OperationType::FileAccess,
+            timestamp:        chrono::Utc::now(),
+            operation_type:   crate::OperationType::FileAccess,
         };
 
         // Log many events
         for i in 0..25 {
-            let event_ctx = AuditEventContext::new(
-                AuditEventType::DataAccessed,
-                "test",
-                "pagination",
-                "test",
-            )
-            .with_metadata("sequence", &i.to_string());
+            let event_ctx = AuditEventContext::new(AuditEventType::DataAccessed, "test", "pagination", "test")
+                .with_metadata("sequence", &i.to_string());
 
             auditor
                 .log_event(&context, event_ctx, true, None)
@@ -1647,41 +1645,54 @@ mod tests {
 
         // Log some events
         let context = OperationContext {
-            user_context: crate::UserContext {
-                user_id: "health_test".to_string(),
-                username: "healthtest".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec!["read".to_string()],
-                session_id: Some("session_health".to_string()),
+            user_context:     crate::UserContext {
+                user_id:      "health_test".to_string(),
+                username:     "healthtest".to_string(),
+                roles:        vec!["user".to_string()],
+                permissions:  vec!["read".to_string()],
+                session_id:   Some("session_health".to_string()),
                 mfa_verified: true,
             },
-            network_context: crate::NetworkContext {
-                ip_address: "127.0.0.1".to_string(),
-                user_agent: "HealthAgent/1.0".to_string(),
+            network_context:  crate::NetworkContext {
+                ip_address:        "127.0.0.1".to_string(),
+                user_agent:        "HealthAgent/1.0".to_string(),
                 certificate_valid: true,
-                tls_version: "TLSv1.3".to_string(),
-                geolocation: None,
+                tls_version:       "TLSv1.3".to_string(),
+                geolocation:       None,
             },
             resource_context: crate::ResourceContext {
-                resource_type: "health_check".to_string(),
-                resource_id: "health_test".to_string(),
-                action: "check".to_string(),
+                resource_type:     "health_check".to_string(),
+                resource_id:       "health_test".to_string(),
+                action:            "check".to_string(),
                 sensitivity_level: crate::SensitivityLevel::Public,
             },
-            timestamp: chrono::Utc::now(),
-            operation_type: crate::OperationType::FileAccess,
+            timestamp:        chrono::Utc::now(),
+            operation_type:   crate::OperationType::FileAccess,
         };
 
         for i in 0..5 {
             let event_ctx = AuditEventContext::new(
-                if i % 2 == 0 { AuditEventType::DataAccessed } else { AuditEventType::AuthenticationLogin },
+                if i % 2 == 0 {
+                    AuditEventType::DataAccessed
+                } else {
+                    AuditEventType::AuthenticationLogin
+                },
                 "health_check",
                 "health_test",
                 "check",
             );
 
             auditor
-                .log_event(&context, event_ctx, i < 4, if i >= 4 { Some("Test error".to_string()) } else { None })
+                .log_event(
+                    &context,
+                    event_ctx,
+                    i < 4,
+                    if i >= 4 {
+                        Some("Test error".to_string())
+                    } else {
+                        None
+                    },
+                )
                 .await
                 .unwrap();
         }
@@ -1709,29 +1720,29 @@ mod tests {
             let auditor_clone = auditor_arc.clone();
             let handle = tokio::spawn(async move {
                 let context = OperationContext {
-                    user_context: crate::UserContext {
-                        user_id: format!("concurrent_user_{}", i),
-                        username: format!("concurrent{}", i),
-                        roles: vec!["user".to_string()],
-                        permissions: vec!["read".to_string()],
-                        session_id: Some(format!("session_{}", i)),
+                    user_context:     crate::UserContext {
+                        user_id:      format!("concurrent_user_{}", i),
+                        username:     format!("concurrent{}", i),
+                        roles:        vec!["user".to_string()],
+                        permissions:  vec!["read".to_string()],
+                        session_id:   Some(format!("session_{}", i)),
                         mfa_verified: true,
                     },
-                    network_context: crate::NetworkContext {
-                        ip_address: "127.0.0.1".to_string(),
-                        user_agent: "ConcurrentAgent/1.0".to_string(),
+                    network_context:  crate::NetworkContext {
+                        ip_address:        "127.0.0.1".to_string(),
+                        user_agent:        "ConcurrentAgent/1.0".to_string(),
                         certificate_valid: true,
-                        tls_version: "TLSv1.3".to_string(),
-                        geolocation: None,
+                        tls_version:       "TLSv1.3".to_string(),
+                        geolocation:       None,
                     },
                     resource_context: crate::ResourceContext {
-                        resource_type: "test".to_string(),
-                        resource_id: format!("resource_{}", i),
-                        action: "concurrent_test".to_string(),
+                        resource_type:     "test".to_string(),
+                        resource_id:       format!("resource_{}", i),
+                        action:            "concurrent_test".to_string(),
                         sensitivity_level: crate::SensitivityLevel::Public,
                     },
-                    timestamp: chrono::Utc::now(),
-                    operation_type: crate::OperationType::FileAccess,
+                    timestamp:        chrono::Utc::now(),
+                    operation_type:   crate::OperationType::FileAccess,
                 };
 
                 let event_ctx = AuditEventContext::new(
@@ -1778,33 +1789,34 @@ mod tests {
 
         // Log events that should trigger compliance rules
         let context = OperationContext {
-            user_context: crate::UserContext {
-                user_id: "compliance_rule_test".to_string(),
-                username: "complianceruletest".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec!["read".to_string()],
-                session_id: Some("session_compliance_rule".to_string()),
+            user_context:     crate::UserContext {
+                user_id:      "compliance_rule_test".to_string(),
+                username:     "complianceruletest".to_string(),
+                roles:        vec!["user".to_string()],
+                permissions:  vec!["read".to_string()],
+                session_id:   Some("session_compliance_rule".to_string()),
                 mfa_verified: true,
             },
-            network_context: crate::NetworkContext {
-                ip_address: "127.0.0.1".to_string(),
-                user_agent: "ComplianceRuleAgent/1.0".to_string(),
+            network_context:  crate::NetworkContext {
+                ip_address:        "127.0.0.1".to_string(),
+                user_agent:        "ComplianceRuleAgent/1.0".to_string(),
                 certificate_valid: true,
-                tls_version: "TLSv1.3".to_string(),
-                geolocation: None,
+                tls_version:       "TLSv1.3".to_string(),
+                geolocation:       None,
             },
             resource_context: crate::ResourceContext {
-                resource_type: "personal_data".to_string(),
-                resource_id: "gdpr_test_data".to_string(),
-                action: "access".to_string(),
+                resource_type:     "personal_data".to_string(),
+                resource_id:       "gdpr_test_data".to_string(),
+                action:            "access".to_string(),
                 sensitivity_level: crate::SensitivityLevel::Confidential,
             },
-            timestamp: chrono::Utc::now(),
-            operation_type: crate::OperationType::DataAccess,
+            timestamp:        chrono::Utc::now(),
+            operation_type:   crate::OperationType::DataAccess,
         };
 
         // Log many personal data access events to trigger compliance threshold
-        for i in 0..1500 { // Exceed the default threshold of 1000
+        for i in 0..1500 {
+            // Exceed the default threshold of 1000
             let event_ctx = AuditEventContext::new(
                 AuditEventType::DataAccessed,
                 "personal_data",

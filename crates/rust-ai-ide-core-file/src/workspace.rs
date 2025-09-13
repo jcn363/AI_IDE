@@ -1,7 +1,9 @@
-use super::IDEResult;
-use rust_ai_ide_core_fundamentals::error::IDEError;
 use std::path::Path;
 use std::sync::Arc;
+
+use rust_ai_ide_core_fundamentals::error::IDEError;
+
+use super::IDEResult;
 
 /// Core workspace manager adapted for file operations - wraps shared services implementation
 pub struct CoreWorkspaceManager {
@@ -10,7 +12,7 @@ pub struct CoreWorkspaceManager {
 
 #[derive(Debug, Clone)]
 pub struct WorkspaceInfo {
-    pub root_path: std::path::PathBuf,
+    pub root_path:    std::path::PathBuf,
     pub capabilities: WorkspaceCapabilities,
 }
 
@@ -23,9 +25,7 @@ impl Default for CoreWorkspaceManager {
 impl CoreWorkspaceManager {
     pub fn new() -> Self {
         Self {
-            inner_manager: Arc::new(
-                rust_ai_ide_shared_services::workspace::WorkspaceManager::new(),
-            ),
+            inner_manager: Arc::new(rust_ai_ide_shared_services::workspace::WorkspaceManager::new()),
         }
     }
 
@@ -58,15 +58,12 @@ impl CoreWorkspaceManager {
     }
 
     /// Analyze workspace capabilities
-    pub fn analyze_workspace_capabilities<P: AsRef<Path>>(
-        &self,
-        path: P,
-    ) -> IDEResult<WorkspaceCapabilities> {
+    pub fn analyze_workspace_capabilities<P: AsRef<Path>>(&self, path: P) -> IDEResult<WorkspaceCapabilities> {
         let path = path.as_ref();
 
         let mut capabilities = WorkspaceCapabilities {
-            rust_support: false,
-            cargo_support: false,
+            rust_support:     false,
+            cargo_support:    false,
             analysis_support: false,
         };
 
@@ -111,8 +108,7 @@ impl CoreWorkspaceManager {
         let configs = self.inner_manager.list_workspaces().await;
         let mut infos = Vec::new();
         for config in configs {
-            if let Some(capabilities) = self.analyze_workspace_capabilities(&config.root_path).ok()
-            {
+            if let Some(capabilities) = self.analyze_workspace_capabilities(&config.root_path).ok() {
                 infos.push(WorkspaceInfo {
                     root_path: config.root_path,
                     capabilities,
@@ -126,15 +122,16 @@ impl CoreWorkspaceManager {
 /// Workspace capabilities information
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct WorkspaceCapabilities {
-    pub rust_support: bool,
-    pub cargo_support: bool,
+    pub rust_support:     bool,
+    pub cargo_support:    bool,
     pub analysis_support: bool,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::tempdir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_workspace_manager_basic() {

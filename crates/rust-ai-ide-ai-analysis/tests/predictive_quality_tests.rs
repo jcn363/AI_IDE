@@ -3,14 +3,16 @@
 //! Comprehensive test suite for Phase 3 Predictive Quality Intelligence.
 //! Includes accuracy validation, performance benchmarking, and integration testing.
 
-use rust_ai_ide_ai_analysis::analysis::predictive::*;
 use std::collections::HashMap;
+
+use rust_ai_ide_ai_analysis::analysis::predictive::*;
 
 /// Test vulnerability prediction accuracy
 #[cfg(test)]
 mod vulnerability_prediction_tests {
-    use super::*;
     use std::sync::Arc;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_vulnerability_prediction_basic() {
@@ -48,11 +50,7 @@ mod vulnerability_prediction_tests {
         let vuln_type = VulnerabilityType::Injection;
         let historical_data = create_test_historical_data();
 
-        let prediction = predictor.predict_specific_vulnerability(
-            &code_features,
-            &vuln_type,
-            Some(&historical_data),
-        );
+        let prediction = predictor.predict_specific_vulnerability(&code_features, &vuln_type, Some(&historical_data));
 
         assert!(prediction.is_some());
         let pred = prediction.unwrap();
@@ -70,11 +68,7 @@ mod vulnerability_prediction_tests {
         let vuln_type = VulnerabilityType::MemorySafety;
         let historical_data = create_test_historical_data();
 
-        let prediction = predictor.predict_specific_vulnerability(
-            &code_features,
-            &vuln_type,
-            Some(&historical_data),
-        );
+        let prediction = predictor.predict_specific_vulnerability(&code_features, &vuln_type, Some(&historical_data));
 
         assert!(prediction.is_some());
         let pred = prediction.unwrap();
@@ -92,11 +86,7 @@ mod vulnerability_prediction_tests {
         let vuln_type = VulnerabilityType::CryptographicIsssues;
         let historical_data = create_test_historical_data();
 
-        let prediction = predictor.predict_specific_vulnerability(
-            &code_features,
-            &vuln_type,
-            Some(&historical_data),
-        );
+        let prediction = predictor.predict_specific_vulnerability(&code_features, &vuln_type, Some(&historical_data));
 
         // Should either return None or a prediction with low confidence
         if let Some(pred) = prediction {
@@ -132,16 +122,16 @@ mod performance_forecasting_tests {
         let forecaster = PerformanceForecaster::new();
 
         let mut pattern = CpuBoundPattern {
-            complexity: 30,
-            nesting_depth: 5,
-            description: "Complex CPU operation".to_string(),
-            locations: vec![CodeLocation {
-                file_path: "src/main.rs".to_string(),
+            complexity:        30,
+            nesting_depth:     5,
+            description:       "Complex CPU operation".to_string(),
+            locations:         vec![CodeLocation {
+                file_path:   "src/main.rs".to_string(),
                 line_number: 42,
-                column: 10,
-                range: None,
+                column:      10,
+                range:       None,
             }],
-            time_to_impact: TimeToImpact::WithinWeeks,
+            time_to_impact:    TimeToImpact::WithinWeeks,
             scaling_threshold: ScaleThreshold::Users100,
         };
 
@@ -179,11 +169,11 @@ mod performance_forecasting_tests {
         let forecaster = PerformanceForecaster::new();
 
         let pattern = CpuBoundPattern {
-            complexity: 50, // High complexity
-            nesting_depth: 3,
-            description: "High complexity operation".to_string(),
-            locations: vec![],
-            time_to_impact: TimeToImpact::WithinWeeks,
+            complexity:        50, // High complexity
+            nesting_depth:     3,
+            description:       "High complexity operation".to_string(),
+            locations:         vec![],
+            time_to_impact:    TimeToImpact::WithinWeeks,
             scaling_threshold: ScaleThreshold::Users100,
         };
 
@@ -196,11 +186,11 @@ mod performance_forecasting_tests {
         let forecaster = PerformanceForecaster::new();
 
         let pattern = CpuBoundPattern {
-            complexity: 25,
-            nesting_depth: 4,
-            description: "Moderately complex pattern".to_string(),
-            locations: vec![],
-            time_to_impact: TimeToImpact::WithinWeeks,
+            complexity:        25,
+            nesting_depth:     4,
+            description:       "Moderately complex pattern".to_string(),
+            locations:         vec![],
+            time_to_impact:    TimeToImpact::WithinWeeks,
             scaling_threshold: ScaleThreshold::Users100,
         };
 
@@ -208,8 +198,7 @@ mod performance_forecasting_tests {
 
         assert!(!recommendations.is_empty());
         assert!(
-            recommendations
-                .contains(&"Consider parallel processing for complex algorithms".to_string())
+            recommendations.contains(&"Consider parallel processing for complex algorithms".to_string())
                 || recommendations.contains(&"Refactor deeply nested code structures".to_string())
         );
     }
@@ -227,11 +216,11 @@ mod health_scoring_tests {
 
         // Mock code metrics
         let metrics = CodeMetrics {
-            total_loc: 1000,
-            avg_cyclomatic: 3.0,
+            total_loc:         1000,
+            avg_cyclomatic:    3.0,
             avg_function_size: 15.0,
-            test_functions: 20,
-            public_functions: 25,
+            test_functions:    20,
+            public_functions:  25,
         };
 
         let mi = calculate_maintainability_index(&metrics);
@@ -244,10 +233,10 @@ mod health_scoring_tests {
         let scorer = HealthScorer::new();
 
         let indicators = TechnicalDebtIndicators {
-            duplication_ratio: 0.1,
-            outdated_deps_count: 2,
-            outdated_deps_ratio: 0.2,
-            test_coverage: 0.75,
+            duplication_ratio:     0.1,
+            outdated_deps_count:   2,
+            outdated_deps_ratio:   0.2,
+            test_coverage:         0.75,
             deprecated_apis_count: 1,
         };
 
@@ -262,11 +251,11 @@ mod health_scoring_tests {
 
         // Test high maintainability
         let high_mi_metrics = CodeMetrics {
-            total_loc: 500,
-            avg_cyclomatic: 2.0,
+            total_loc:         500,
+            avg_cyclomatic:    2.0,
             avg_function_size: 10,
-            test_functions: 30,
-            public_functions: 20,
+            test_functions:    30,
+            public_functions:  20,
         };
 
         let mi = calculate_maintainability_index(&high_mi_metrics);
@@ -274,10 +263,10 @@ mod health_scoring_tests {
 
         // Test technical debt calculation
         let high_debt_indicators = TechnicalDebtIndicators {
-            duplication_ratio: 0.25,
-            outdated_deps_count: 5,
-            outdated_deps_ratio: 0.4,
-            test_coverage: 0.5,
+            duplication_ratio:     0.25,
+            outdated_deps_count:   5,
+            outdated_deps_ratio:   0.4,
+            test_coverage:         0.5,
             deprecated_apis_count: 3,
         };
 
@@ -297,14 +286,14 @@ mod recommendation_engine_tests {
         let engine = RecommendationEngine::new();
 
         let vulnerability = PredictedVulnerability {
-            vulnerability_type: VulnerabilityType::Injection,
-            confidence: 0.9,
-            risk_score: 0.8,
-            description: "SQL injection vulnerability detected".to_string(),
-            locations: vec![],
+            vulnerability_type:     VulnerabilityType::Injection,
+            confidence:             0.9,
+            risk_score:             0.8,
+            description:            "SQL injection vulnerability detected".to_string(),
+            locations:              vec![],
             mitigation_suggestions: vec!["Use prepared statements".to_string()],
-            predicted_timeline: PredictedTimeline::WithinMonth,
-            impacted_files: vec![],
+            predicted_timeline:     PredictedTimeline::WithinMonth,
+            impacted_files:         vec![],
         };
 
         let recommendations = engine
@@ -322,24 +311,24 @@ mod recommendation_engine_tests {
         let engine = RecommendationEngine::new();
 
         let bottleneck = PerformanceBottleneckForecast {
-            bottleneck_type: BottleneckType::Memory,
-            severity: BottleneckSeverity::High,
-            confidence: 0.8,
-            predicted_impact: ImpactEstimate {
-                user_experience: 0.7,
+            bottleneck_type:             BottleneckType::Memory,
+            severity:                    BottleneckSeverity::High,
+            confidence:                  0.8,
+            predicted_impact:            ImpactEstimate {
+                user_experience:         0.7,
                 performance_degradation: 0.6,
-                business_impact: 0.5,
-                scale_threshold: ScaleThreshold::Users100,
+                business_impact:         0.5,
+                scale_threshold:         ScaleThreshold::Users100,
             },
-            description: "Memory bottleneck detected".to_string(),
-            locations: vec![],
-            scaling_recommendations: vec!["Implement object pooling".to_string()],
+            description:                 "Memory bottleneck detected".to_string(),
+            locations:                   vec![],
+            scaling_recommendations:     vec!["Implement object pooling".to_string()],
             estimated_mitigation_effort: EffortEstimate {
-                hours: 16,
+                hours:      16,
                 difficulty: EffortDifficulty::Medium,
-                team_size: 1,
+                team_size:  1,
             },
-            predicted_time_to_impact: TimeToImpact::WithinWeeks,
+            predicted_time_to_impact:    TimeToImpact::WithinWeeks,
         };
 
         let recommendations = engine
@@ -358,14 +347,14 @@ mod recommendation_engine_tests {
         let config = PredictiveConfig::default();
 
         let mock_vulnerabilities = vec![PredictedVulnerability {
-            vulnerability_type: VulnerabilityType::Injection,
-            confidence: 0.9,
-            risk_score: 0.8,
-            description: "Critical vulnerability".to_string(),
-            locations: vec![],
+            vulnerability_type:     VulnerabilityType::Injection,
+            confidence:             0.9,
+            risk_score:             0.8,
+            description:            "Critical vulnerability".to_string(),
+            locations:              vec![],
             mitigation_suggestions: vec![],
-            predicted_timeline: PredictedTimeline::Immediate,
-            impacted_files: vec![],
+            predicted_timeline:     PredictedTimeline::Immediate,
+            impacted_files:         vec![],
         }];
 
         let recommendations = engine
@@ -375,10 +364,7 @@ mod recommendation_engine_tests {
 
         let recs = recommendations.unwrap();
         if !recs.is_empty() {
-            assert!(
-                recs[0].priority == MaintenancePriority::Critical
-                    || recs[0].priority == MaintenancePriority::High
-            );
+            assert!(recs[0].priority == MaintenancePriority::Critical || recs[0].priority == MaintenancePriority::High);
         }
     }
 }
@@ -386,9 +372,10 @@ mod recommendation_engine_tests {
 /// Test metrics and trend analysis
 #[cfg(test)]
 mod metrics_analysis_tests {
+    use chrono::Duration;
+
     use super::metrics::*;
     use super::*;
-    use chrono::Duration;
 
     #[tokio::test]
     async fn test_trend_analysis_basic() {
@@ -398,12 +385,12 @@ mod metrics_analysis_tests {
 
         // Add some trend data
         historical_data.reports.push(AnalysisReport {
-            timestamp: chrono::Utc::now() - Duration::days(30),
+            timestamp:             chrono::Utc::now() - Duration::days(30),
             vulnerabilities_found: 2,
         });
 
         historical_data.reports.push(AnalysisReport {
-            timestamp: chrono::Utc::now() - Duration::days(15),
+            timestamp:             chrono::Utc::now() - Duration::days(15),
             vulnerabilities_found: 1,
         });
 
@@ -419,28 +406,28 @@ mod metrics_analysis_tests {
         let comparator = BenchmarkComparator::new();
 
         let metrics = CurrentMetrics {
-            timestamp: chrono::Utc::now(),
-            code_metrics: CodeMetrics {
-                lines_of_code: 2000,
-                function_count: 50,
-                struct_count: 20,
+            timestamp:               chrono::Utc::now(),
+            code_metrics:            CodeMetrics {
+                lines_of_code:         2000,
+                function_count:        50,
+                struct_count:          20,
                 cyclomatic_complexity: 3.5,
             },
-            security_metrics: SecurityMetrics {
+            security_metrics:        SecurityMetrics {
                 vulnerability_count: 1,
-                security_score: 0.85,
-                overall_score: 0.88,
+                security_score:      0.85,
+                overall_score:       0.88,
             },
-            performance_metrics: PerformanceMetrics::default(),
+            performance_metrics:     PerformanceMetrics::default(),
             maintainability_metrics: MaintainabilityMetrics {
-                maintainability_index: 0.75,
-                technical_debt_ratio: 0.15,
+                maintainability_index:  0.75,
+                technical_debt_ratio:   0.15,
                 code_duplication_ratio: 0.08,
-                overall_score: 0.78,
+                overall_score:          0.78,
             },
-            test_coverage_metrics: TestCoverageMetrics::default(),
-            documentation_metrics: DocumentationMetrics::default(),
-            architecture_metrics: ArchitectureMetrics::default(),
+            test_coverage_metrics:   TestCoverageMetrics::default(),
+            documentation_metrics:   DocumentationMetrics::default(),
+            architecture_metrics:    ArchitectureMetrics::default(),
             business_impact_metrics: BusinessImpactMetrics::default(),
         };
 
@@ -496,11 +483,11 @@ mod integration_tests {
         // Test vulnerability prediction disabled
         let config = PredictiveConfig {
             enable_vulnerability_prediction: false,
-            enable_performance_forecasting: true,
-            enable_health_scoring: true,
-            enable_recommendations: true,
-            confidence_threshold: 0.8,
-            historical_window_days: 30,
+            enable_performance_forecasting:  true,
+            enable_health_scoring:           true,
+            enable_recommendations:          true,
+            confidence_threshold:            0.8,
+            historical_window_days:          30,
         };
 
         let engine = PredictiveQualityEngine::new(config);
@@ -510,40 +497,39 @@ mod integration_tests {
         let report = result.unwrap();
 
         // Should still have predictions but focused areas
-        assert!(
-            report.confidence == config.confidence_threshold || report.vulnerabilities.is_empty()
-        ); // Can be empty if prediction is disabled
+        assert!(report.confidence == config.confidence_threshold || report.vulnerabilities.is_empty());
+        // Can be empty if prediction is disabled
     }
 }
 
 /// Helper functions for test data creation
 fn create_test_historical_data() -> HistoricalData {
     let mut data = HistoricalData {
-        reports: vec![
+        reports:         vec![
             AnalysisReport {
-                timestamp: chrono::Utc::now() - chrono::Duration::days(60),
+                timestamp:             chrono::Utc::now() - chrono::Duration::days(60),
                 vulnerabilities_found: 3,
             },
             AnalysisReport {
-                timestamp: chrono::Utc::now() - chrono::days(30),
+                timestamp:             chrono::Utc::now() - chrono::days(30),
                 vulnerabilities_found: 2,
             },
             AnalysisReport {
-                timestamp: chrono::Utc::now() - chrono::days(7),
+                timestamp:             chrono::Utc::now() - chrono::days(7),
                 vulnerabilities_found: 1,
             },
         ],
-        commit_history: vec![CommitData {
-            timestamp: chrono::Utc::now() - chrono::days(1),
+        commit_history:  vec![CommitData {
+            timestamp:     chrono::Utc::now() - chrono::days(1),
             files_changed: vec!["src/main.rs".to_string()],
-            lines_added: 50,
+            lines_added:   50,
             lines_deleted: 10,
         }],
         metrics_history: vec![MetricsSnapshot {
-            timestamp: chrono::Utc::now() - chrono::days(30),
+            timestamp:                 chrono::Utc::now() - chrono::days(30),
             avg_cyclomatic_complexity: 3.2,
-            maintainability_index: 75.0,
-            total_loc: 1500,
+            maintainability_index:     75.0,
+            total_loc:                 1500,
         }],
     };
 
@@ -557,8 +543,9 @@ fn create_test_historical_data() -> HistoricalData {
 /// Test utilities and performance benchmarks
 #[cfg(test)]
 mod test_utilities {
-    use super::*;
     use std::time::Instant;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_prediction_performance() {

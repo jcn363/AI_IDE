@@ -1,8 +1,10 @@
-use crate::analysis::types::*;
-use crate::error_handling::AnalysisResult;
 use std::collections::{HashMap, HashSet};
+
 use syn::visit::Visit;
 use syn::*;
+
+use crate::analysis::types::*;
+use crate::error_handling::AnalysisResult;
 
 /// Architecture analyzer for design pattern detection and recommendations
 pub struct ArchitectureAnalyzer {
@@ -11,11 +13,11 @@ pub struct ArchitectureAnalyzer {
 
 #[derive(Clone, Debug)]
 pub struct DesignPattern {
-    pub name: String,
-    pub category: PatternCategory,
-    pub description: String,
-    pub benefits: Vec<String>,
-    pub indicators: Vec<String>,
+    pub name:            String,
+    pub category:        PatternCategory,
+    pub description:     String,
+    pub benefits:        Vec<String>,
+    pub indicators:      Vec<String>,
     pub detection_rules: Vec<DetectionRule>,
 }
 
@@ -31,8 +33,8 @@ pub enum PatternCategory {
 
 #[derive(Clone, Debug)]
 pub struct DetectionRule {
-    pub rule_type: RuleType,
-    pub patterns: Vec<String>,
+    pub rule_type:  RuleType,
+    pub patterns:   Vec<String>,
     pub confidence: f64,
 }
 
@@ -59,23 +61,22 @@ impl ArchitectureAnalyzer {
     fn load_standard_patterns(&mut self) {
         // Builder Pattern
         let builder_pattern = DesignPattern {
-            name: "Builder".to_string(),
-            category: PatternCategory::Creational,
-            description: "Separate construction of complex objects from their representation"
-                .to_string(),
-            benefits: vec![
+            name:            "Builder".to_string(),
+            category:        PatternCategory::Creational,
+            description:     "Separate construction of complex objects from their representation".to_string(),
+            benefits:        vec![
                 "Flexible object construction".to_string(),
                 "Step-by-step object creation".to_string(),
                 "Immutable objects".to_string(),
             ],
-            indicators: vec![
+            indicators:      vec![
                 "build()".to_string(),
                 "with_* methods".to_string(),
                 "separate builder struct".to_string(),
             ],
             detection_rules: vec![DetectionRule {
-                rule_type: RuleType::FunctionPattern("build".to_string()),
-                patterns: vec!["\\bbuild\\(".to_string()],
+                rule_type:  RuleType::FunctionPattern("build".to_string()),
+                patterns:   vec!["\\bbuild\\(".to_string()],
                 confidence: 0.8,
             }],
         };
@@ -83,23 +84,22 @@ impl ArchitectureAnalyzer {
 
         // Strategy Pattern
         let strategy_pattern = DesignPattern {
-            name: "Strategy".to_string(),
-            category: PatternCategory::Behavioral,
-            description: "Define family of algorithms, encapsulate each, make them interchangeable"
-                .to_string(),
-            benefits: vec![
+            name:            "Strategy".to_string(),
+            category:        PatternCategory::Behavioral,
+            description:     "Define family of algorithms, encapsulate each, make them interchangeable".to_string(),
+            benefits:        vec![
                 "Runtime algorithm selection".to_string(),
                 "Open-closed principle".to_string(),
                 "Client isolation from implementation".to_string(),
             ],
-            indicators: vec![
+            indicators:      vec![
                 "Trait with algorithm methods".to_string(),
                 "Enum or Struct implementing the trait".to_string(),
                 "Runtime algorithm selection".to_string(),
             ],
             detection_rules: vec![DetectionRule {
-                rule_type: RuleType::TraitsPattern("dynamic algorithm".to_string()),
-                patterns: vec!["Box<dyn".to_string(), "&dyn".to_string()],
+                rule_type:  RuleType::TraitsPattern("dynamic algorithm".to_string()),
+                patterns:   vec!["Box<dyn".to_string(), "&dyn".to_string()],
                 confidence: 0.7,
             }],
         };
@@ -108,22 +108,22 @@ impl ArchitectureAnalyzer {
 
         // Command Pattern
         let command_pattern = DesignPattern {
-            name: "Command".to_string(),
-            category: PatternCategory::Behavioral,
-            description: "Encapsulate request as object, paramaterize clients".to_string(),
-            benefits: vec![
+            name:            "Command".to_string(),
+            category:        PatternCategory::Behavioral,
+            description:     "Encapsulate request as object, paramaterize clients".to_string(),
+            benefits:        vec![
                 "Queue operations".to_string(),
                 "Undo operations".to_string(),
                 "Decouple sender from receiver".to_string(),
             ],
-            indicators: vec![
+            indicators:      vec![
                 "execute".to_string(),
                 "undo".to_string(),
                 "command queue".to_string(),
             ],
             detection_rules: vec![DetectionRule {
-                rule_type: RuleType::FunctionPattern("execute".to_string()),
-                patterns: vec!["execute\\(".to_string()],
+                rule_type:  RuleType::FunctionPattern("execute".to_string()),
+                patterns:   vec!["execute\\(".to_string()],
                 confidence: 0.6,
             }],
         };
@@ -131,23 +131,22 @@ impl ArchitectureAnalyzer {
 
         // Factory Pattern
         let factory_pattern = DesignPattern {
-            name: "Factory".to_string(),
-            category: PatternCategory::Creational,
-            description: "Provide interface for object creation, defer instantiation to subclasses"
-                .to_string(),
-            benefits: vec![
+            name:            "Factory".to_string(),
+            category:        PatternCategory::Creational,
+            description:     "Provide interface for object creation, defer instantiation to subclasses".to_string(),
+            benefits:        vec![
                 "Flexibility in object creation".to_string(),
                 "Hide object creation complexity".to_string(),
                 "Centralized creation logic".to_string(),
             ],
-            indicators: vec![
+            indicators:      vec![
                 "create_".to_string(),
                 "factory methods".to_string(),
                 "static constructor".to_string(),
             ],
             detection_rules: vec![DetectionRule {
-                rule_type: RuleType::FunctionPattern("create".to_string()),
-                patterns: vec!["create_\\w+\\(".to_string()],
+                rule_type:  RuleType::FunctionPattern("create".to_string()),
+                patterns:   vec!["create_\\w+\\(".to_string()],
                 confidence: 0.7,
             }],
         };
@@ -155,22 +154,22 @@ impl ArchitectureAnalyzer {
 
         // Observer Pattern
         let observer_pattern = DesignPattern {
-            name: "Observer".to_string(),
-            category: PatternCategory::Behavioral,
-            description: "Define one-to-many dependency between objects".to_string(),
-            benefits: vec![
+            name:            "Observer".to_string(),
+            category:        PatternCategory::Behavioral,
+            description:     "Define one-to-many dependency between objects".to_string(),
+            benefits:        vec![
                 "Loose coupling".to_string(),
                 "Event-driven architecture".to_string(),
                 "Dynamic subscription".to_string(),
             ],
-            indicators: vec![
+            indicators:      vec![
                 "subscribe".to_string(),
                 "notify".to_string(),
                 "observer trait".to_string(),
             ],
             detection_rules: vec![DetectionRule {
-                rule_type: RuleType::FunctionPattern("notify".to_string()),
-                patterns: vec!["notify\\(".to_string(), "subscribe\\(".to_string()],
+                rule_type:  RuleType::FunctionPattern("notify".to_string()),
+                patterns:   vec!["notify\\(".to_string(), "subscribe\\(".to_string()],
                 confidence: 0.8,
             }],
         };
@@ -179,23 +178,23 @@ impl ArchitectureAnalyzer {
 
         // Repository Pattern (Enterprise)
         let repository_pattern = DesignPattern {
-            name: "Repository".to_string(),
-            category: PatternCategory::Enterprise,
-            description: "Mediate between domain/business models and data access".to_string(),
-            benefits: vec![
+            name:            "Repository".to_string(),
+            category:        PatternCategory::Enterprise,
+            description:     "Mediate between domain/business models and data access".to_string(),
+            benefits:        vec![
                 "Data access abstraction".to_string(),
                 "Testable data operations".to_string(),
                 "Centralized data logic".to_string(),
             ],
-            indicators: vec![
+            indicators:      vec![
                 "repository trait".to_string(),
                 "find_by".to_string(),
                 "save".to_string(),
                 "repository pattern".to_string(),
             ],
             detection_rules: vec![DetectionRule {
-                rule_type: RuleType::TraitsPattern("repository".to_string()),
-                patterns: vec!["Repository".to_string()],
+                rule_type:  RuleType::TraitsPattern("repository".to_string()),
+                patterns:   vec!["Repository".to_string()],
                 confidence: 0.9,
             }],
         };
@@ -279,7 +278,7 @@ impl ArchitectureAnalyzer {
         Ok(CouplingAnalysis {
             inter_module_references: visitor.inter_module_refs,
             intra_module_references: visitor.intra_module_refs,
-            external_dependencies: visitor.external_deps.len(),
+            external_dependencies:   visitor.external_deps.len(),
         })
     }
 
@@ -289,7 +288,7 @@ impl ArchitectureAnalyzer {
         visitor.visit_file(ast);
         Ok(CohesionAnalysis {
             module_functions: visitor.module_functions,
-            function_calls: visitor.function_calls,
+            function_calls:   visitor.function_calls,
         })
     }
 
@@ -302,18 +301,17 @@ impl ArchitectureAnalyzer {
 
         if coupling.external_dependencies > 10 {
             suggestions.push(ArchitectureSuggestion {
-                pattern: "Dependency Injection Container".to_string(),
-                confidence: 0.8,
-                location: Location {
-                    file: "AST".to_string(),
-                    line: 1,
+                pattern:              "Dependency Injection Container".to_string(),
+                confidence:           0.8,
+                location:             Location {
+                    file:   "AST".to_string(),
+                    line:   1,
                     column: 0,
                     offset: 0,
                 },
-                description:
-                    "High external dependencies suggest DI container for better decoupling"
-                        .to_string(),
-                benefits: vec![
+                description:          "High external dependencies suggest DI container for better decoupling"
+                    .to_string(),
+                benefits:             vec![
                     "Better testability".to_string(),
                     "Reduced coupling".to_string(),
                     "Cleaner architecture".to_string(),
@@ -328,17 +326,16 @@ impl ArchitectureAnalyzer {
 
         if coupling.inter_module_references > coupling.intra_module_references * 2 {
             suggestions.push(ArchitectureSuggestion {
-                pattern: "Microservices".to_string(),
-                confidence: 0.7,
-                location: Location {
-                    file: "AST".to_string(),
-                    line: 1,
+                pattern:              "Microservices".to_string(),
+                confidence:           0.7,
+                location:             Location {
+                    file:   "AST".to_string(),
+                    line:   1,
                     column: 0,
                     offset: 0,
                 },
-                description: "High inter-module coupling suggests microservices architecture"
-                    .to_string(),
-                benefits: vec![
+                description:          "High inter-module coupling suggests microservices architecture".to_string(),
+                benefits:             vec![
                     "Independent deployments".to_string(),
                     "Technology independence".to_string(),
                     "Scalability".to_string(),
@@ -368,16 +365,20 @@ impl ArchitectureAnalyzer {
 
             if *total_calls < 2 && functions.len() > 5 {
                 suggestions.push(ArchitectureSuggestion {
-                    pattern: "Extract Module".to_string(),
-                    confidence: 0.6,
-                    location: Location {
-                        file: format!("{}.rs", module_name),
-                        line: 1,
+                    pattern:              "Extract Module".to_string(),
+                    confidence:           0.6,
+                    location:             Location {
+                        file:   format!("{}.rs", module_name),
+                        line:   1,
                         column: 0,
                         offset: 0,
                     },
-                    description: format!("Module '{}' has many functions but low internal cohesion. Consider extracting into smaller modules", module_name),
-                    benefits: vec![
+                    description:          format!(
+                        "Module '{}' has many functions but low internal cohesion. Consider extracting into smaller \
+                         modules",
+                        module_name
+                    ),
+                    benefits:             vec![
                         "Better organization".to_string(),
                         "Improved maintainability".to_string(),
                         "Clearer responsibilities".to_string(),
@@ -396,10 +397,7 @@ impl ArchitectureAnalyzer {
     }
 
     /// Generate suggestions based on detected patterns with enhanced ranking
-    fn generate_pattern_suggestions(
-        &self,
-        detected_patterns: &HashMap<String, f64>,
-    ) -> Vec<ArchitectureSuggestion> {
+    fn generate_pattern_suggestions(&self, detected_patterns: &HashMap<String, f64>) -> Vec<ArchitectureSuggestion> {
         let mut suggestions = Vec::new();
 
         for (pattern_name, confidence) in detected_patterns {
@@ -418,36 +416,54 @@ impl ArchitectureAnalyzer {
 
                     let (description, implementation_steps) = if *confidence > 0.9 {
                         // Very strong detection
-                        (format!("Strong detection of '{}' pattern usage. Consider documenting or ensuring proper implementation.", pattern.name),
-                         vec![
-                            "Document the pattern usage".to_string(),
-                            "Ensure pattern invariant compliance".to_string(),
-                            "Review for proper implementation".to_string(),
-                        ])
+                        (
+                            format!(
+                                "Strong detection of '{}' pattern usage. Consider documenting or ensuring proper \
+                                 implementation.",
+                                pattern.name
+                            ),
+                            vec![
+                                "Document the pattern usage".to_string(),
+                                "Ensure pattern invariant compliance".to_string(),
+                                "Review for proper implementation".to_string(),
+                            ],
+                        )
                     } else if *confidence > 0.75 {
                         // Moderate to strong detection
-                        (format!("Detected '{}' pattern usage with good confidence. May benefit from pattern refinement.", pattern.name),
-                         vec![
-                            "Review pattern implementation".to_string(),
-                            "Consider pattern consistency".to_string(),
-                            "Document pattern usage if not already".to_string(),
-                        ])
+                        (
+                            format!(
+                                "Detected '{}' pattern usage with good confidence. May benefit from pattern \
+                                 refinement.",
+                                pattern.name
+                            ),
+                            vec![
+                                "Review pattern implementation".to_string(),
+                                "Consider pattern consistency".to_string(),
+                                "Document pattern usage if not already".to_string(),
+                            ],
+                        )
                     } else {
                         // Moderate detection
-                        (format!("Possible '{}' pattern usage detected. Consider refactoring if architecturally beneficial.", pattern.name),
-                         vec![
-                            "Evaluate current architecture".to_string(),
-                            "Consider refactoring to full pattern implementation".to_string(),
-                            "Assess architectural impact".to_string(),
-                        ])
+                        (
+                            format!(
+                                "Possible '{}' pattern usage detected. Consider refactoring if architecturally \
+                                 beneficial.",
+                                pattern.name
+                            ),
+                            vec![
+                                "Evaluate current architecture".to_string(),
+                                "Consider refactoring to full pattern implementation".to_string(),
+                                "Assess architectural impact".to_string(),
+                            ],
+                        )
                     };
 
                     suggestions.push(ArchitectureSuggestion {
                         pattern: pattern.name.clone(),
                         confidence: adjusted_confidence,
                         location: Location {
-                            file: "AST".to_string(),
-                            line: 1,
+                            file:   "AST".to_string(),
+                            line:   1,
                             column: 0,
                             offset: 0,
                         },
@@ -485,19 +501,19 @@ impl ArchitectureAnalyzer {
 pub struct CouplingAnalysis {
     pub inter_module_references: usize,
     pub intra_module_references: usize,
-    pub external_dependencies: usize,
+    pub external_dependencies:   usize,
 }
 
 #[derive(Clone, Debug)]
 pub struct CohesionAnalysis {
     pub module_functions: HashMap<String, Vec<String>>,
-    pub function_calls: HashMap<String, usize>,
+    pub function_calls:   HashMap<String, usize>,
 }
 
 /// Visitor for pattern detection in AST
 struct PatternDetectionVisitor {
     patterns: HashMap<String, DesignPattern>,
-    matches: HashSet<(String, RuleType)>,
+    matches:  HashSet<(String, RuleType)>,
 }
 
 impl PatternDetectionVisitor {
@@ -517,12 +533,11 @@ impl<'ast> Visit<'ast> for PatternDetectionVisitor {
         for (pattern_name, pattern) in &self.patterns {
             for rule in &pattern.detection_rules {
                 match &rule.rule_type {
-                    RuleType::FunctionPattern(pattern) => {
+                    RuleType::FunctionPattern(pattern) =>
                         if fn_name.contains(pattern) {
                             self.matches
                                 .insert((pattern_name.clone(), rule.rule_type.clone()));
-                        }
-                    }
+                        },
                     _ => {}
                 }
             }
@@ -556,7 +571,7 @@ impl<'ast> Visit<'ast> for PatternDetectionVisitor {
 struct CouplingAnalysisVisitor {
     inter_module_refs: usize,
     intra_module_refs: usize,
-    external_deps: HashSet<String>,
+    external_deps:     HashSet<String>,
 }
 
 impl CouplingAnalysisVisitor {
@@ -564,7 +579,7 @@ impl CouplingAnalysisVisitor {
         Self {
             inter_module_refs: 0,
             intra_module_refs: 0,
-            external_deps: HashSet::new(),
+            external_deps:     HashSet::new(),
         }
     }
 }
@@ -580,16 +595,16 @@ impl<'ast> Visit<'ast> for CouplingAnalysisVisitor {
 /// Visitor for cohesion analysis
 struct CohesionAnalysisVisitor {
     module_functions: HashMap<String, Vec<String>>,
-    function_calls: HashMap<String, usize>,
-    current_module: String,
+    function_calls:   HashMap<String, usize>,
+    current_module:   String,
 }
 
 impl CohesionAnalysisVisitor {
     fn new() -> Self {
         Self {
             module_functions: HashMap::new(),
-            function_calls: HashMap::new(),
-            current_module: "main".to_string(), // Default module
+            function_calls:   HashMap::new(),
+            current_module:   "main".to_string(), // Default module
         }
     }
 }

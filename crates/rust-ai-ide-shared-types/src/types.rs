@@ -1,18 +1,19 @@
+use std::collections::HashMap;
+
 /// Shared Types Module for Rust AI IDE
 ///
 /// This module contains the core shared types that need to be converted to TypeScript
 /// for cross-platform type safety between Rust backend and TypeScript frontend.
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Application configuration for the Rust AI IDE
 /// This type will be converted to TypeScript for frontend configuration management
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
     /// Core IDE configuration
-    pub core: CoreConfig,
+    pub core:        CoreConfig,
     /// AI systems configuration
-    pub ai: AIConfig,
+    pub ai:          AIConfig,
     /// Performance configuration
     pub performance: PerformanceConfig,
 }
@@ -21,15 +22,15 @@ pub struct AppConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CoreConfig {
     /// Application name
-    pub app_name: String,
+    pub app_name:    String,
     /// Application version
     pub app_version: String,
     /// Editor theme
-    pub theme: String,
+    pub theme:       String,
     /// Font preferences
-    pub fonts: FontConfig,
+    pub fonts:       FontConfig,
     /// Editor settings
-    pub editor: EditorConfig,
+    pub editor:      EditorConfig,
 }
 
 /// Font configuration for the IDE
@@ -38,30 +39,30 @@ pub struct FontConfig {
     /// Editor font family
     pub editor_font_family: String,
     /// Editor font size
-    pub editor_font_size: f32,
+    pub editor_font_size:   f32,
     /// UI font family
-    pub ui_font_family: String,
+    pub ui_font_family:     String,
     /// UI font size
-    pub ui_font_size: f32,
+    pub ui_font_size:       f32,
 }
 
 /// Editor configuration settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EditorConfig {
     /// Tab size
-    pub tab_size: u32,
+    pub tab_size:               u32,
     /// Insert spaces instead of tabs
-    pub insert_spaces: bool,
+    pub insert_spaces:          bool,
     /// Word wrap enabled
-    pub word_wrap: bool,
+    pub word_wrap:              bool,
     /// Minimap enabled
-    pub minimap: bool,
+    pub minimap:                bool,
     /// Line numbers enabled
-    pub line_numbers: bool,
+    pub line_numbers:           bool,
     /// Automatic save delay in seconds
-    pub auto_save_delay: Option<u32>,
+    pub auto_save_delay:        Option<u32>,
     /// Bracket matching enabled
-    pub bracket_matching: bool,
+    pub bracket_matching:       bool,
     /// Highlight current line
     pub highlight_current_line: bool,
 }
@@ -72,7 +73,7 @@ pub struct AIConfig {
     /// Default AI provider
     pub default_provider: AIProvider,
     /// API endpoints
-    pub endpoints: HashMap<String, String>,
+    pub endpoints:        HashMap<String, String>,
 }
 
 /// AI provider types
@@ -94,20 +95,20 @@ pub struct PerformanceConfig {
     /// Maximum analysis threads
     pub max_analysis_threads: usize,
     /// Maximum memory usage in MB
-    pub max_memory_mb: u64,
+    pub max_memory_mb:        u64,
     /// AI concurrency limit
     pub ai_concurrency_limit: usize,
     /// IO thread pool size
-    pub io_thread_pool_size: usize,
+    pub io_thread_pool_size:  usize,
 }
 
 /// User information structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
     /// Unique user ID
-    pub id: u32,
+    pub id:    u32,
     /// User's full name
-    pub name: String,
+    pub name:  String,
     /// User's email address
     pub email: Option<String>,
 }
@@ -127,7 +128,7 @@ pub enum Theme {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserPreferences {
     /// UI theme
-    pub theme: Theme,
+    pub theme:    Theme,
     /// Application settings
     pub settings: UserSettings,
 }
@@ -138,18 +139,18 @@ pub struct UserSettings {
     /// Enable notifications
     pub notifications: bool,
     /// Enable auto-save
-    pub auto_save: bool,
+    pub auto_save:     bool,
 }
 
 /// API response wrapper
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApiResponse<T> {
     /// Response status
-    pub status: Status,
+    pub status:    Status,
     /// Response data
-    pub data: Option<T>,
+    pub data:      Option<T>,
     /// Response message
-    pub message: Option<String>,
+    pub message:   Option<String>,
     /// Timestamp
     pub timestamp: String,
 }
@@ -171,11 +172,11 @@ pub enum Status {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Project {
     /// Project ID
-    pub id: String,
+    pub id:       String,
     /// Project name
-    pub name: String,
+    pub name:     String,
     /// Project path
-    pub path: String,
+    pub path:     String,
     /// Project settings
     pub settings: ProjectSettings,
 }
@@ -184,18 +185,18 @@ pub struct Project {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectSettings {
     /// Default file encoding
-    pub encoding: String,
+    pub encoding:     String,
     /// Default line endings
     pub line_endings: String,
     /// Project language
-    pub language: Option<String>,
+    pub language:     Option<String>,
 }
 
 /// Generic error response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorResponse {
     /// Error code
-    pub code: String,
+    pub code:    String,
     /// Error message
     pub message: String,
     /// Error details
@@ -208,29 +209,29 @@ pub struct ErrorResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParsedType {
     /// Type name
-    pub name: String,
+    pub name:             String,
     /// Type kind
-    pub kind: TypeKind,
+    pub kind:             TypeKind,
     /// Additional metadata
-    pub metadata: Option<TypeMetadata>,
+    pub metadata:         Option<TypeMetadata>,
     /// Documentation
-    pub documentation: Option<String>,
+    pub documentation:    Option<String>,
     /// Visibility
-    pub visibility: Visibility,
+    pub visibility:       Visibility,
     /// Generics
-    pub generics: Vec<String>,
+    pub generics:         Vec<String>,
     /// Struct fields
-    pub fields: Vec<Field>,
+    pub fields:           Vec<Field>,
     /// Enum variants
-    pub variants: Vec<Variant>,
+    pub variants:         Vec<Variant>,
     /// Associated items
     pub associated_items: Vec<String>,
     /// Attributes
-    pub attributes: Vec<String>,
+    pub attributes:       Vec<String>,
     /// Source location
-    pub source_location: SourceLocation,
+    pub source_location:  SourceLocation,
     /// Dependencies
-    pub dependencies: Vec<String>,
+    pub dependencies:     Vec<String>,
 }
 
 /// Type kind classification
@@ -250,7 +251,7 @@ pub enum TypeKind {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct TypeMetadata {
     /// Documentation
-    pub docs: Option<String>,
+    pub docs:       Option<String>,
     /// Visibility
     pub visibility: Option<Visibility>,
     /// Attributes
@@ -274,13 +275,13 @@ pub enum Visibility {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SourceLocation {
     /// File path (alias for compatibility)
-    pub file: String,
+    pub file:        String,
     /// File path
-    pub file_path: String,
+    pub file_path:   String,
     /// Line number
-    pub line: u32,
+    pub line:        u32,
     /// Column number
-    pub column: u32,
+    pub column:      u32,
     /// Module path
     pub module_path: Vec<String>,
 }
@@ -289,24 +290,24 @@ pub struct SourceLocation {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Variant {
     /// Variant name
-    pub name: String,
+    pub name:          String,
     /// Variant fields
-    pub fields: Vec<VariantField>,
+    pub fields:        Vec<VariantField>,
     /// Documentation
     pub documentation: Option<String>,
     /// Discriminant
-    pub discriminant: Option<String>,
+    pub discriminant:  Option<String>,
     /// Attributes
-    pub attributes: Vec<String>,
+    pub attributes:    Vec<String>,
 }
 
 /// Variant field
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VariantField {
     /// Field name
-    pub name: Option<String>,
+    pub name:       Option<String>,
     /// Field type
-    pub ty: String,
+    pub ty:         String,
     /// Field type (alias)
     pub field_type: String,
 }
@@ -315,19 +316,19 @@ pub struct VariantField {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Field {
     /// Field name
-    pub name: String,
+    pub name:          String,
     /// Field type
-    pub ty: String,
+    pub ty:            String,
     /// Field type (alias)
-    pub field_type: String,
+    pub field_type:    String,
     /// Visibility
-    pub visibility: Visibility,
+    pub visibility:    Visibility,
     /// Documentation
     pub documentation: Option<String>,
     /// Is mutable
-    pub is_mutable: bool,
+    pub is_mutable:    bool,
     /// Attributes
-    pub attributes: Vec<String>,
+    pub attributes:    Vec<String>,
 }
 
 // Code generation types
@@ -336,17 +337,17 @@ pub struct Field {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenerationStats {
     /// Types processed
-    pub types_processed: usize,
+    pub types_processed:    usize,
     /// Types generated
-    pub types_generated: usize,
+    pub types_generated:    usize,
     /// Bytes generated
-    pub bytes_generated: usize,
+    pub bytes_generated:    usize,
     /// Generation time in milliseconds
     pub generation_time_ms: u64,
     /// Number of warnings
-    pub warnings_count: u32,
+    pub warnings_count:     u32,
     /// Number of errors
-    pub errors_count: u32,
+    pub errors_count:       u32,
 }
 
 /// Code generation status
@@ -366,15 +367,15 @@ pub enum GenerationStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenerationMetadata {
     /// Time the generation was performed
-    pub generated_at: String,
+    pub generated_at:      String,
     /// Version of the generator
     pub generator_version: String,
     /// Configuration snapshot
-    pub config_snapshot: serde_json::Value,
+    pub config_snapshot:   serde_json::Value,
     /// Generation statistics
-    pub stats: GenerationStats,
+    pub stats:             GenerationStats,
     /// Generation status
-    pub status: GenerationStatus,
+    pub status:            GenerationStatus,
 }
 
 /// Transformation context for code generation
@@ -385,7 +386,7 @@ pub struct TransformationContext {
     /// Target platform
     pub target_platform: String,
     /// Configuration options
-    pub config: HashMap<String, serde_json::Value>,
+    pub config:          HashMap<String, serde_json::Value>,
 }
 
 impl Default for TransformationContext {
@@ -393,7 +394,7 @@ impl Default for TransformationContext {
         Self {
             source_platform: "rust".to_string(),
             target_platform: "typescript".to_string(),
-            config: HashMap::new(),
+            config:          HashMap::new(),
         }
     }
 }
@@ -402,13 +403,13 @@ impl Default for TransformationContext {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GeneratedCode {
     /// Generated content
-    pub content: String,
+    pub content:         String,
     /// Target platform
     pub target_platform: String,
     /// Source types used
-    pub source_types: Vec<ParsedType>,
+    pub source_types:    Vec<ParsedType>,
     /// Generation metadata
-    pub metadata: GenerationMetadata,
+    pub metadata:        GenerationMetadata,
     /// Dependencies
-    pub dependencies: Vec<String>,
+    pub dependencies:    Vec<String>,
 }

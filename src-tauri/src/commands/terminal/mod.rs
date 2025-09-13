@@ -7,70 +7,70 @@
 //! - Auto-completion for files and directories
 //! - Enhanced shell features and bookmarks
 
-use crate::command_templates::*;
-use lazy_static::lazy_static;
-use rusqlite::{params, Connection};
-use rust_ai_ide_core::security::{audit_action, audit_logger};
-use rust_ai_ide_core::validation::validate_secure_path;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::process::Stdio;
 use std::sync::Arc;
+
+use lazy_static::lazy_static;
+use rusqlite::{params, Connection};
+use rust_ai_ide_common::validation::{validate_file_exists, validate_path_not_excluded};
+use rust_ai_ide_core::security::{audit_action, audit_logger};
+use rust_ai_ide_core::validation::validate_secure_path;
+use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::sync::Mutex;
 
-use rust_ai_ide_common::validation::{validate_file_exists, validate_path_not_excluded};
-
+use crate::command_templates::*;
 // Re-export TerminalEvent from shared types
 pub use crate::modules::shared::types::TerminalEvent;
 
 /// Command history entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommandHistoryEntry {
-    pub id: String,
-    pub command: String,
+    pub id:                String,
+    pub command:           String,
     pub working_directory: String,
-    pub timestamp: u64,
-    pub success: bool,
-    pub output_length: Option<i32>,
+    pub timestamp:         u64,
+    pub success:           bool,
+    pub output_length:     Option<i32>,
 }
 
 /// Auto-completion suggestion
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompletionSuggestion {
-    pub value: String,
-    pub category: String,
-    pub score: f32,
+    pub value:       String,
+    pub category:    String,
+    pub score:       f32,
     pub description: Option<String>,
 }
 
 /// Command suggestion from AI
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AICommandSuggestion {
-    pub command: String,
-    pub explanation: String,
+    pub command:          String,
+    pub explanation:      String,
     pub confidence_score: f32,
-    pub category: String,
+    pub category:         String,
 }
 
 /// Terminal bookmark/favorite
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TerminalBookmark {
-    pub id: String,
-    pub name: String,
-    pub command: String,
+    pub id:          String,
+    pub name:        String,
+    pub command:     String,
     pub description: Option<String>,
-    pub created_at: u64,
+    pub created_at:  u64,
 }
 
 /// Terminal enhancement service
 #[derive(Debug)]
 pub struct TerminalEnhancementService {
     command_history: Arc<Mutex<Vec<CommandHistoryEntry>>>,
-    bookmarks: Arc<Mutex<Vec<TerminalBookmark>>>,
-    db_path: std::path::PathBuf,
+    bookmarks:       Arc<Mutex<Vec<TerminalBookmark>>>,
+    db_path:         std::path::PathBuf,
 }
 
 impl TerminalEnhancementService {
@@ -86,8 +86,7 @@ impl TerminalEnhancementService {
     }
 
     pub async fn initialize_database(&self) -> Result<(), String> {
-        let conn = Connection::open(&self.db_path)
-            .map_err(|e| format!("Failed to open database: {}", e))?;
+        let conn = Connection::open(&self.db_path).map_err(|e| format!("Failed to open database: {}", e))?;
 
         // Create tables if they don't exist
         conn.execute(
@@ -131,7 +130,8 @@ impl TerminalEnhancementService {
                     entry.success,
                     entry.output_length
                 ],
-            ).map_err(|e| format!("Failed to insert history entry: {}", e))?;
+            )
+            .map_err(|e| format!("Failed to insert history entry: {}", e))?;
         }
 
         let mut history = self.command_history.lock().await;
@@ -141,16 +141,21 @@ impl TerminalEnhancementService {
 
     pub async fn get_command_history(&self, limit: usize) -> Vec<CommandHistoryEntry> {
         if let Ok(conn) = Connection::open(&self.db_path) {
-            let mut stmt = conn.prepare("SELECT id, command, working_directory, timestamp, success, output_length FROM command_history ORDER BY timestamp DESC LIMIT ?").unwrap();
+            let mut stmt = conn
+                .prepare(
+                    "SELECT id, command, working_directory, timestamp, success, output_length FROM command_history \
+                     ORDER BY timestamp DESC LIMIT ?",
+                )
+                .unwrap();
             let entries_iter = stmt
                 .query_map([limit as i64], |row| {
                     Ok(CommandHistoryEntry {
-                        id: row.get(0)?,
-                        command: row.get(1)?,
+                        id:                row.get(0)?,
+                        command:           row.get(1)?,
                         working_directory: row.get(2)?,
-                        timestamp: row.get(3)?,
-                        success: row.get(4)?,
-                        output_length: row.get(5)?,
+                        timestamp:         row.get(3)?,
+                        success:           row.get(4)?,
+                        output_length:     row.get(5)?,
                     })
                 })
                 .unwrap();
@@ -162,33 +167,25 @@ impl TerminalEnhancementService {
         }
     }
 
-    pub async fn get_ai_suggestions(
-        &self,
-        partial_command: &str,
-        context: &str,
-    ) -> Vec<AICommandSuggestion> {
+    pub async fn get_ai_suggestions(&self, partial_command: &str, context: &str) -> Vec<AICommandSuggestion> {
         // This would integrate with AI service for command suggestions
         vec![
             AICommandSuggestion {
-                command: format!("cd {}", self.suggest_directory(partial_command).await),
-                explanation: "Navigate to a directory inferred from your input".to_string(),
+                command:          format!("cd {}", self.suggest_directory(partial_command).await),
+                explanation:      "Navigate to a directory inferred from your input".to_string(),
                 confidence_score: 0.8,
-                category: "navigation".to_string(),
+                category:         "navigation".to_string(),
             },
             AICommandSuggestion {
-                command: format!("git {}", partial_command),
-                explanation: "Complete Git command".to_string(),
+                command:          format!("git {}", partial_command),
+                explanation:      "Complete Git command".to_string(),
                 confidence_score: 0.7,
-                category: "version_control".to_string(),
+                category:         "version_control".to_string(),
             },
         ]
     }
 
-    pub async fn get_auto_completion(
-        &self,
-        partial: &str,
-        working_dir: &str,
-    ) -> Vec<CompletionSuggestion> {
+    pub async fn get_auto_completion(&self, partial: &str, working_dir: &str) -> Vec<CompletionSuggestion> {
         let mut suggestions = Vec::new();
 
         // File and directory completion
@@ -199,9 +196,9 @@ impl TerminalEnhancementService {
                         let is_dir = entry.file_type().map_or(false, |t| t.is_dir());
                         let category = if is_dir { "directory" } else { "file" };
                         suggestions.push(CompletionSuggestion {
-                            value: if is_dir { format!("{}/", name) } else { name },
-                            category: category.to_string(),
-                            score: 1.0,
+                            value:       if is_dir { format!("{}/", name) } else { name },
+                            category:    category.to_string(),
+                            score:       1.0,
                             description: None,
                         });
                     }
@@ -214,9 +211,9 @@ impl TerminalEnhancementService {
         for entry in history.iter().rev().take(10) {
             if entry.command.starts_with(partial) {
                 suggestions.push(CompletionSuggestion {
-                    value: entry.command.clone(),
-                    category: "history".to_string(),
-                    score: 0.9,
+                    value:       entry.command.clone(),
+                    category:    "history".to_string(),
+                    score:       0.9,
                     description: Some(format!("Executed at {}", entry.timestamp)),
                 });
                 break; // Only add one history suggestion
@@ -260,15 +257,17 @@ impl TerminalEnhancementService {
 
     pub async fn get_bookmarks(&self) -> Vec<TerminalBookmark> {
         if let Ok(conn) = Connection::open(&self.db_path) {
-            let mut stmt = conn.prepare("SELECT id, name, command, description, created_at FROM bookmarks ORDER BY created_at DESC").unwrap();
+            let mut stmt = conn
+                .prepare("SELECT id, name, command, description, created_at FROM bookmarks ORDER BY created_at DESC")
+                .unwrap();
             let bookmarks_iter = stmt
                 .query_map([], |row| {
                     Ok(TerminalBookmark {
-                        id: row.get(0)?,
-                        name: row.get(1)?,
-                        command: row.get(2)?,
+                        id:          row.get(0)?,
+                        name:        row.get(1)?,
+                        command:     row.get(2)?,
                         description: row.get(3)?,
-                        created_at: row.get(4)?,
+                        created_at:  row.get(4)?,
                     })
                 })
                 .unwrap();
@@ -461,9 +460,9 @@ pub async fn terminal_execute_stream(
             let mut lines_read = 0;
             while let Ok(Some(line)) = reader.try_next().await {
                 let event_payload = TerminalEvent {
-                    id: event_id_clone.clone(),
+                    id:          event_id_clone.clone(),
                     stream_type: "stdout".to_string(),
-                    line: line.clone(),
+                    line:        line.clone(),
                 };
                 if let Err(e) = app.emit_all(&term_event_clone, event_payload) {
                     log::warn!("Failed to emit stdout line: {}", e);
@@ -489,9 +488,9 @@ pub async fn terminal_execute_stream(
             let mut lines_read = 0;
             while let Ok(Some(line)) = reader.try_next().await {
                 let event_payload = TerminalEvent {
-                    id: event_id_clone.clone(),
+                    id:          event_id_clone.clone(),
                     stream_type: "stderr".to_string(),
-                    line: line.clone(),
+                    line:        line.clone(),
                 };
                 if let Err(e) = app.emit_all(&term_event_clone, event_payload) {
                     log::warn!("Failed to emit stderr line: {}", e);

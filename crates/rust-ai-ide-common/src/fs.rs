@@ -8,10 +8,12 @@
 //! - Temporary files and atomic operations
 //! - File watching
 
-use crate::errors::IdeError;
 use std::path::{Path, PathBuf};
+
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
+
+use crate::errors::IdeError;
 
 /// ===== FILE EXISTENCE AND BASIC CHECKS =====
 
@@ -61,14 +63,11 @@ pub async fn read_file_to_bytes<P: AsRef<Path>>(path: P) -> Result<Vec<u8>, IdeE
 }
 
 /// Read file with size limit to prevent memory exhaustion
-pub async fn read_file_with_limit<P: AsRef<Path>>(
-    path: P,
-    max_size: u64,
-) -> Result<Vec<u8>, IdeError> {
+pub async fn read_file_with_limit<P: AsRef<Path>>(path: P, max_size: u64) -> Result<Vec<u8>, IdeError> {
     let metadata = get_metadata(&path).await?;
     if metadata.len() > max_size {
         return Err(IdeError::Validation {
-            field: "file_size".to_string(),
+            field:  "file_size".to_string(),
             reason: format!("File size {} exceeds limit {}", metadata.len(), max_size),
         });
     }
@@ -223,10 +222,7 @@ pub async fn read_dir<P: AsRef<Path>>(path: P) -> Result<Vec<PathBuf>, IdeError>
 }
 
 /// Read directory entries as filtered vec
-pub async fn read_dir_filtered<P: AsRef<Path>, F>(
-    path: P,
-    filter: F,
-) -> Result<Vec<PathBuf>, IdeError>
+pub async fn read_dir_filtered<P: AsRef<Path>, F>(path: P, filter: F) -> Result<Vec<PathBuf>, IdeError>
 where
     F: Fn(&tokio::fs::DirEntry) -> bool,
 {
@@ -294,7 +290,8 @@ pub async fn ensure_parent_dirs<P: AsRef<Path>>(path: P) -> Result<(), IdeError>
     Ok(())
 }
 
-/// Ensure directory exists, creating it if necessary (async version of path_utils::ensure_directory)
+/// Ensure directory exists, creating it if necessary (async version of
+/// path_utils::ensure_directory)
 pub async fn ensure_directory<P: AsRef<Path>>(path: P) -> Result<(), IdeError> {
     let path = path.as_ref();
     if !path.exists() {
@@ -303,7 +300,7 @@ pub async fn ensure_directory<P: AsRef<Path>>(path: P) -> Result<(), IdeError> {
         })?;
     } else if !path.is_dir() {
         return Err(IdeError::Validation {
-            field: "path".to_string(),
+            field:  "path".to_string(),
             reason: format!("Path exists and is a file, not a directory: {:?}", path),
         });
     }
@@ -347,9 +344,7 @@ pub fn relative_path_from<P: AsRef<Path>, Q: AsRef<Path>>(base: P, target: Q) ->
     let mut target_components: Vec<_> = target.components().collect();
 
     // Remove common prefix
-    while let (Some(base_comp), Some(target_comp)) =
-        (base_components.first(), target_components.first())
-    {
+    while let (Some(base_comp), Some(target_comp)) = (base_components.first(), target_components.first()) {
         if base_comp == target_comp {
             base_components.remove(0);
             target_components.remove(0);
@@ -426,10 +421,7 @@ pub fn safe_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
 /// ===== ATOMIC OPERATIONS =====
 
 /// Atomic file update pattern
-pub async fn update_file_atomically<P: AsRef<Path>, F, Fut, T>(
-    path: P,
-    updater: F,
-) -> Result<T, IdeError>
+pub async fn update_file_atomically<P: AsRef<Path>, F, Fut, T>(path: P, updater: F) -> Result<T, IdeError>
 where
     F: FnOnce(String) -> Fut,
     Fut: std::future::Future<Output = (String, T)>,
@@ -444,10 +436,7 @@ where
 /// ===== UTILITY FUNCTIONS =====
 
 /// List files recursively with max depth
-pub async fn list_files_recursive<P: AsRef<Path>>(
-    path: P,
-    max_depth: Option<usize>,
-) -> Result<Vec<PathBuf>, IdeError> {
+pub async fn list_files_recursive<P: AsRef<Path>>(path: P, max_depth: Option<usize>) -> Result<Vec<PathBuf>, IdeError> {
     let mut results = Vec::new();
     let mut stack = vec![(path.as_ref().to_path_buf(), 0)];
 
@@ -497,15 +486,15 @@ pub async fn watch_file_changes<P: AsRef<Path>, F>(path: P, callback: F) -> Resu
 where
     F: Fn(&notify::Event),
 {
-    use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
     use std::sync::mpsc::channel;
+
+    use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
 
     let (tx, rx) = channel();
 
-    let mut watcher =
-        RecommendedWatcher::new(tx, Config::default()).map_err(|e| IdeError::Generic {
-            message: format!("Watcher error: {:?}", e),
-        })?;
+    let mut watcher = RecommendedWatcher::new(tx, Config::default()).map_err(|e| IdeError::Generic {
+        message: format!("Watcher error: {:?}", e),
+    })?;
 
     watcher
         .watch(path.as_ref(), RecursiveMode::Recursive)
@@ -527,8 +516,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::tempdir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_basic_file_operations() {

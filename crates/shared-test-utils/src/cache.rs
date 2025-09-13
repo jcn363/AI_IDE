@@ -3,18 +3,19 @@
 //! Provides mock cache implementations, cache testing patterns,
 //! and utilities for testing cache-related functionality.
 
-use crate::error::TestError;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
+use crate::error::TestError;
+
 /// Mock cache entry with timestamp information
 #[derive(Debug, Clone)]
 pub struct MockCacheEntry<V> {
-    pub value: V,
-    pub created_at: Instant,
+    pub value:       V,
+    pub created_at:  Instant,
     pub accessed_at: Instant,
-    pub ttl: Option<Duration>,
+    pub ttl:         Option<Duration>,
 }
 
 impl<V> MockCacheEntry<V> {
@@ -49,8 +50,8 @@ impl<V> MockCacheEntry<V> {
 /// Mock cache implementation for testing
 #[derive(Debug, Clone)]
 pub struct MockCache<K, V> {
-    data: Arc<Mutex<HashMap<K, MockCacheEntry<V>>>>,
-    max_size: Option<usize>,
+    data:            Arc<Mutex<HashMap<K, MockCacheEntry<V>>>>,
+    max_size:        Option<usize>,
     eviction_policy: EvictionPolicy,
 }
 
@@ -68,8 +69,8 @@ where
 {
     pub fn new() -> Self {
         Self {
-            data: Arc::new(Mutex::new(HashMap::new())),
-            max_size: None,
+            data:            Arc::new(Mutex::new(HashMap::new())),
+            max_size:        None,
             eviction_policy: EvictionPolicy::Lru,
         }
     }
@@ -199,8 +200,8 @@ where
 
 /// Cache test fixture with predefined data and scenarios
 pub struct CacheFixture<K, V> {
-    cache: MockCache<K, V>,
-    initial_data: HashMap<K, V>,
+    cache:          MockCache<K, V>,
+    initial_data:   HashMap<K, V>,
     expected_calls: Arc<Mutex<Vec<CacheCall<K, V>>>>,
 }
 
@@ -219,8 +220,8 @@ where
 {
     pub fn new() -> Self {
         Self {
-            cache: MockCache::new(),
-            initial_data: HashMap::new(),
+            cache:          MockCache::new(),
+            initial_data:   HashMap::new(),
             expected_calls: Arc::new(Mutex::new(Vec::new())),
         }
     }
@@ -325,7 +326,7 @@ impl CacheFixtures {
 
 /// Cache performance test utilities
 pub struct CachePerformanceTester<K, V> {
-    cache: MockCache<K, V>,
+    cache:      MockCache<K, V>,
     operations: Vec<CacheOperation<K, V>>,
 }
 
@@ -381,8 +382,7 @@ where
 
         CacheBenchmarkResult {
             total_time: elapsed,
-            operations_per_second: (total_gets + total_puts + total_removes) as f64
-                / elapsed.as_secs_f64(),
+            operations_per_second: (total_gets + total_puts + total_removes) as f64 / elapsed.as_secs_f64(),
             total_gets,
             total_puts,
             total_removes,
@@ -392,11 +392,11 @@ where
 
 #[derive(Debug)]
 pub struct CacheBenchmarkResult {
-    pub total_time: Duration,
+    pub total_time:            Duration,
     pub operations_per_second: f64,
-    pub total_gets: usize,
-    pub total_puts: usize,
-    pub total_removes: usize,
+    pub total_gets:            usize,
+    pub total_puts:            usize,
+    pub total_removes:         usize,
 }
 
 /// Multi-level cache test fixture for testing cache hierarchies
@@ -448,8 +448,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::thread;
+
+    use super::*;
 
     #[test]
     fn test_mock_cache_basic_operations() {

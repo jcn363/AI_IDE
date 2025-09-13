@@ -3,11 +3,12 @@
 //! This module provides the main ConfigurationManager and trait definitions
 //! for working with configurations across the Rust AI IDE ecosystem.
 
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
+
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 
 use crate::audit::AuditTrail;
 use crate::cache::ConfigCache;
@@ -21,9 +22,7 @@ use crate::validation::ValidationEngine;
 /// This trait defines the interface that all configuration structures must implement
 /// to work with the unified configuration system.
 #[async_trait]
-pub trait Config:
-    Send + Sync + Clone + serde::Serialize + serde::de::DeserializeOwned + 'static
-{
+pub trait Config: Send + Sync + Clone + serde::Serialize + serde::de::DeserializeOwned + 'static {
     /// File prefix for configuration files (e.g., "rust-ai-ide")
     const FILE_PREFIX: &'static str;
 
@@ -61,11 +60,11 @@ pub enum ConfigSourceType {
 /// Higher values take precedence over lower values
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ConfigSourcePriority {
-    Default = 0,
-    File = 10,
+    Default     = 0,
+    File        = 10,
     Environment = 20,
-    Database = 30,
-    Override = 100,
+    Database    = 30,
+    Override    = 100,
 }
 
 /// Unified Configuration Manager
@@ -78,52 +77,52 @@ pub enum ConfigSourcePriority {
 /// - Intelligent caching
 pub struct ConfigurationManager {
     /// Configuration sources by priority
-    sources: HashMap<ConfigSourcePriority, Vec<Arc<dyn ConfigSource>>>,
+    sources:            HashMap<ConfigSourcePriority, Vec<Arc<dyn ConfigSource>>>,
     /// Security validator
     security_validator: Arc<SecurityValidator>,
     /// Audit trail recorder
-    audit_trail: Arc<AuditTrail>,
+    audit_trail:        Arc<AuditTrail>,
     /// Configuration cache
-    cache: Arc<ConfigCache>,
+    cache:              Arc<ConfigCache>,
     /// Hot reload manager
-    hot_reload: Arc<HotReloadManager>,
+    hot_reload:         Arc<HotReloadManager>,
     /// Validation engine
-    validator: Arc<ValidationEngine>,
+    validator:          Arc<ValidationEngine>,
     /// Manager configuration
-    config: ManagerConfig,
+    config:             ManagerConfig,
 }
 
 /// Configuration manager settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ManagerConfig {
     /// Enable audit logging
-    pub enable_audit: bool,
+    pub enable_audit:       bool,
     /// Enable hot reloading
-    pub enable_hot_reload: bool,
+    pub enable_hot_reload:  bool,
     /// Enable caching
-    pub enable_cache: bool,
+    pub enable_cache:       bool,
     /// Security validation level
-    pub security_level: SecurityLevel,
+    pub security_level:     SecurityLevel,
     /// Configuration directories to scan
     pub config_directories: Vec<PathBuf>,
     /// Environment variable prefix
-    pub env_prefix: String,
+    pub env_prefix:         String,
 }
 
 impl Default for ManagerConfig {
     fn default() -> Self {
         Self {
-            enable_audit: true,
-            enable_hot_reload: true,
-            enable_cache: true,
-            security_level: SecurityLevel::High,
+            enable_audit:       true,
+            enable_hot_reload:  true,
+            enable_cache:       true,
+            security_level:     SecurityLevel::High,
             config_directories: vec![
                 PathBuf::from("./config"),
                 dirs::config_dir()
                     .unwrap_or_else(|| PathBuf::from("./config"))
                     .join("rust-ai-ide"),
             ],
-            env_prefix: "RUST_AI_IDE".to_string(),
+            env_prefix:         "RUST_AI_IDE".to_string(),
         }
     }
 }
@@ -144,13 +143,13 @@ pub enum SecurityLevel {
 impl Default for ConfigurationManager {
     fn default() -> Self {
         Self {
-            sources: HashMap::new(),
+            sources:            HashMap::new(),
             security_validator: Arc::new(crate::SecurityValidator::new(SecurityLevel::High)),
-            audit_trail: Arc::new(crate::AuditTrail::disabled()),
-            cache: Arc::new(crate::ConfigCache::disabled()),
-            hot_reload: Arc::new(crate::HotReloadManager::disabled()),
-            validator: Arc::new(crate::ValidationEngine::new()),
-            config: ManagerConfig::default(),
+            audit_trail:        Arc::new(crate::AuditTrail::disabled()),
+            cache:              Arc::new(crate::ConfigCache::disabled()),
+            hot_reload:         Arc::new(crate::HotReloadManager::disabled()),
+            validator:          Arc::new(crate::ValidationEngine::new()),
+            config:             ManagerConfig::default(),
         }
     }
 }
@@ -187,11 +186,7 @@ impl ConfigurationManager {
     }
 
     /// Add a configuration source
-    pub fn add_source<T: ConfigSource + 'static>(
-        &mut self,
-        priority: ConfigSourcePriority,
-        source: T,
-    ) {
+    pub fn add_source<T: ConfigSource + 'static>(&mut self, priority: ConfigSourcePriority, source: T) {
         self.sources
             .entry(priority)
             .or_insert_with(Vec::new)
@@ -349,10 +344,7 @@ impl ConfigurationManager {
     }
 
     /// Simple JSON merge (override wins)
-    fn json_merge(
-        base: serde_json::Value,
-        override_: serde_json::Value,
-    ) -> serde_json::Result<serde_json::Value> {
+    fn json_merge(base: serde_json::Value, override_: serde_json::Value) -> serde_json::Result<serde_json::Value> {
         match (base, override_) {
             (serde_json::Value::Object(mut base_obj), serde_json::Value::Object(override_obj)) => {
                 for (key, value) in override_obj {
@@ -372,7 +364,7 @@ mod tests {
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     struct TestConfig {
-        value: String,
+        value:  String,
         number: i32,
     }
 
@@ -390,7 +382,7 @@ mod tests {
 
         fn default_config() -> Self {
             Self {
-                value: "default".to_string(),
+                value:  "default".to_string(),
                 number: 42,
             }
         }

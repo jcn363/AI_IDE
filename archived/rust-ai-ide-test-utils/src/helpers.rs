@@ -3,9 +3,9 @@
 /// Test environment configuration
 #[derive(Debug, Clone)]
 pub struct TestConfig {
-    pub verbose: bool,
-    pub cleanup: bool,
-    pub timeout: std::time::Duration,
+    pub verbose:        bool,
+    pub cleanup:        bool,
+    pub timeout:        std::time::Duration,
     pub workspace_root: Option<std::path::PathBuf>,
 }
 
@@ -21,10 +21,7 @@ pub fn create_temp_dir(name: &str) -> std::io::Result<std::path::PathBuf> {
 
 /// Create a sample Rust file for testing
 #[cfg(feature = "filesystem")]
-pub fn create_sample_rust_file(
-    dir: &std::path::Path,
-    name: &str,
-) -> std::io::Result<std::path::PathBuf> {
+pub fn create_sample_rust_file(dir: &std::path::Path, name: &str) -> std::io::Result<std::path::PathBuf> {
     use std::fs;
     use std::path::PathBuf;
 
@@ -69,10 +66,7 @@ mod tests {{
 
 /// Create a sample Cargo.toml for testing
 #[cfg(feature = "filesystem")]
-pub fn create_sample_cargo_toml(
-    dir: &std::path::Path,
-    name: &str,
-) -> std::io::Result<std::path::PathBuf> {
+pub fn create_sample_cargo_toml(dir: &std::path::Path, name: &str) -> std::io::Result<std::path::PathBuf> {
     use std::fs;
     use std::path::PathBuf;
 

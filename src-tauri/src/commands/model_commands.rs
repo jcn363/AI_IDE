@@ -3,31 +3,31 @@
 //! This module provides Tauri commands for managing AI models, fine-tuning jobs,
 //! and related operations for the Rust AI IDE.
 
-use crate::commands::ai::services::{AIAnalysisConfig, AIServiceState};
-use crate::state::AppState;
-use rust_ai_ide_ai::finetune;
-use rust_ai_ide_ai::inference;
-use rust_ai_ide_ai::model_loader;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
+
+use rust_ai_ide_ai::{finetune, inference, model_loader};
+use serde::{Deserialize, Serialize};
 use tauri::State;
 use tokio::sync::Mutex;
+
+use crate::commands::ai::services::{AIAnalysisConfig, AIServiceState};
+use crate::state::AppState;
 
 /// Model information returned to frontend
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModelInfo {
-    pub id: String,
-    pub model_type: ModelType,
-    pub model_size: ModelSize,
-    pub model_path: Option<PathBuf>,
-    pub quantization: Option<Quantization>,
-    pub lora_adapters: Vec<String>,
-    pub status: ModelStatus,
-    pub memory_usage_mb: Option<u64>,
-    pub is_loaded: bool,
+    pub id:                   String,
+    pub model_type:           ModelType,
+    pub model_size:           ModelSize,
+    pub model_path:           Option<PathBuf>,
+    pub quantization:         Option<Quantization>,
+    pub lora_adapters:        Vec<String>,
+    pub status:               ModelStatus,
+    pub memory_usage_mb:      Option<u64>,
+    pub is_loaded:            bool,
     pub supports_fine_tuning: bool,
 }
 
@@ -76,19 +76,19 @@ pub enum ModelStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FineTuneJobInfo {
-    pub job_id: String,
-    pub name: String,
-    pub description: Option<String>,
-    pub base_model: String,
-    pub model_type: ModelType,
-    pub status: TrainingStatus,
-    pub progress: TrainingProgress,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-    pub updated_at: chrono::DateTime<chrono::Utc>,
-    pub output_path: Option<PathBuf>,
-    pub metrics: Option<TrainingMetrics>,
+    pub job_id:        String,
+    pub name:          String,
+    pub description:   Option<String>,
+    pub base_model:    String,
+    pub model_type:    ModelType,
+    pub status:        TrainingStatus,
+    pub progress:      TrainingProgress,
+    pub created_at:    chrono::DateTime<chrono::Utc>,
+    pub updated_at:    chrono::DateTime<chrono::Utc>,
+    pub output_path:   Option<PathBuf>,
+    pub metrics:       Option<TrainingMetrics>,
     pub error_message: Option<String>,
-    pub config: TrainingConfigInfo,
+    pub config:        TrainingConfigInfo,
 }
 
 /// Training status (frontend version)
@@ -110,66 +110,66 @@ pub enum TrainingStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TrainingProgress {
-    pub epoch: usize,
-    pub total_epochs: usize,
-    pub step: usize,
-    pub total_steps: usize,
-    pub loss: Option<f32>,
-    pub learning_rate: Option<f32>,
+    pub epoch:                    usize,
+    pub total_epochs:             usize,
+    pub step:                     usize,
+    pub total_steps:              usize,
+    pub loss:                     Option<f32>,
+    pub learning_rate:            Option<f32>,
     pub estimated_time_remaining: Option<f64>, // in seconds
-    pub memory_usage_mb: Option<u64>,
-    pub gpu_utilization: Option<f32>,
+    pub memory_usage_mb:          Option<u64>,
+    pub gpu_utilization:          Option<f32>,
 }
 
 /// Training metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TrainingMetrics {
-    pub final_loss: f32,
+    pub final_loss:            f32,
     pub training_time_seconds: u64,
-    pub peak_memory_usage_mb: u64,
-    pub samples_per_second: f32,
-    pub validation_loss: Option<f32>,
-    pub perplexity: Option<f32>,
-    pub bleu_score: Option<f32>,
-    pub code_bleu_score: Option<f32>,
+    pub peak_memory_usage_mb:  u64,
+    pub samples_per_second:    f32,
+    pub validation_loss:       Option<f32>,
+    pub perplexity:            Option<f32>,
+    pub bleu_score:            Option<f32>,
+    pub code_bleu_score:       Option<f32>,
 }
 
 /// Training configuration info
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TrainingConfigInfo {
-    pub learning_rate: f32,
-    pub batch_size: usize,
-    pub max_epochs: usize,
-    pub lora_rank: Option<usize>,
+    pub learning_rate:   f32,
+    pub batch_size:      usize,
+    pub max_epochs:      usize,
+    pub lora_rank:       Option<usize>,
     pub mixed_precision: bool,
-    pub max_seq_length: usize,
-    pub dataset_size: Option<usize>,
+    pub max_seq_length:  usize,
+    pub dataset_size:    Option<usize>,
 }
 
 /// Model download request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModelDownloadRequest {
-    pub model_type: ModelType,
-    pub model_size: ModelSize,
-    pub model_version: Option<String>,
+    pub model_type:       ModelType,
+    pub model_size:       ModelSize,
+    pub model_version:    Option<String>,
     pub destination_path: Option<PathBuf>,
-    pub force_download: bool,
+    pub force_download:   bool,
 }
 
 /// Model loading request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModelLoadingRequest {
-    pub model_path: PathBuf,
-    pub model_type: ModelType,
-    pub model_size: ModelSize,
-    pub quantization: Option<Quantization>,
+    pub model_path:    PathBuf,
+    pub model_type:    ModelType,
+    pub model_size:    ModelSize,
+    pub quantization:  Option<Quantization>,
     pub lora_adapters: Vec<String>,
-    pub device: DeviceType,
-    pub endpoint: Option<String>,
+    pub device:        DeviceType,
+    pub endpoint:      Option<String>,
 }
 
 /// Device types for model loading
@@ -185,12 +185,12 @@ pub enum DeviceType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FineTuningRequest {
-    pub job_name: String,
-    pub description: Option<String>,
-    pub base_model: String,
-    pub dataset_path: PathBuf,
-    pub config: TrainingConfigInfo,
-    pub output_path: Option<PathBuf>,
+    pub job_name:          String,
+    pub description:       Option<String>,
+    pub base_model:        String,
+    pub dataset_path:      PathBuf,
+    pub config:            TrainingConfigInfo,
+    pub output_path:       Option<PathBuf>,
     pub enable_monitoring: bool,
 }
 
@@ -199,9 +199,9 @@ pub struct FineTuningRequest {
 #[serde(rename_all = "camelCase")]
 pub struct DatasetPreparationRequest {
     pub source_paths: Vec<PathBuf>,
-    pub output_path: PathBuf,
-    pub task_type: TaskType,
-    pub filters: DatasetFilters,
+    pub output_path:  PathBuf,
+    pub task_type:    TaskType,
+    pub filters:      DatasetFilters,
 }
 
 /// Task types for dataset preparation
@@ -218,35 +218,35 @@ pub enum TaskType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DatasetFilters {
-    pub min_file_size: usize,
-    pub max_file_size: usize,
+    pub min_file_size:      usize,
+    pub max_file_size:      usize,
     pub allowed_extensions: Vec<String>,
-    pub quality_threshold: f32,
-    pub include_tests: bool,
-    pub max_samples: Option<usize>,
+    pub quality_threshold:  f32,
+    pub include_tests:      bool,
+    pub max_samples:        Option<usize>,
 }
 
 /// Resource usage information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ResourceStatus {
-    pub memory_usage_gb: f64,
-    pub memory_limit_gb: f64,
-    pub gpu_usage_percent: f32,
+    pub memory_usage_gb:     f64,
+    pub memory_limit_gb:     f64,
+    pub gpu_usage_percent:   f32,
     pub gpu_memory_usage_gb: f64,
     pub gpu_memory_limit_gb: f64,
-    pub active_jobs: usize,
-    pub available_models: usize,
-    pub system_load: f32,
+    pub active_jobs:         usize,
+    pub available_models:    usize,
+    pub system_load:         f32,
 }
 
 /// Global state for model management
 #[derive(Debug)]
 pub struct ModelManagementState {
     pub available_models: Arc<Mutex<HashMap<String, ModelInfo>>>,
-    pub fine_tune_jobs: Arc<Mutex<HashMap<String, FineTuneJobInfo>>>,
-    pub orchestrator: Option<Arc<Mutex<finetune::TrainingOrchestrator>>>,
-    pub model_loader: Option<Arc<Mutex<model_loader::ModelLoader>>>,
+    pub fine_tune_jobs:   Arc<Mutex<HashMap<String, FineTuneJobInfo>>>,
+    pub orchestrator:     Option<Arc<Mutex<finetune::TrainingOrchestrator>>>,
+    pub model_loader:     Option<Arc<Mutex<model_loader::ModelLoader>>>,
     pub inference_engine: Option<Arc<Mutex<dyn inference::InferenceEngine + Send + Sync>>>,
 }
 
@@ -254,45 +254,44 @@ pub struct ModelManagementState {
 #[tauri::command]
 pub async fn list_available_models(_state: State<'_, AppState>) -> Result<Vec<ModelInfo>, String> {
     // Get models from model registry
-    let registry = finetune::create_orchestrator()
-        .map_err(|e| format!("Failed to create orchestrator: {}", e))?;
+    let registry = finetune::create_orchestrator().map_err(|e| format!("Failed to create orchestrator: {}", e))?;
 
     // Convert to ModelInfo format
     let models = vec![
         ModelInfo {
-            id: "codellama-7b".to_string(),
-            model_type: ModelType::CodeLlama,
-            model_size: ModelSize::Medium,
-            model_path: None,
-            quantization: Some(Quantization::Int4),
-            lora_adapters: vec![],
-            status: ModelStatus::Available,
-            memory_usage_mb: Some(7168),
-            is_loaded: false,
+            id:                   "codellama-7b".to_string(),
+            model_type:           ModelType::CodeLlama,
+            model_size:           ModelSize::Medium,
+            model_path:           None,
+            quantization:         Some(Quantization::Int4),
+            lora_adapters:        vec![],
+            status:               ModelStatus::Available,
+            memory_usage_mb:      Some(7168),
+            is_loaded:            false,
             supports_fine_tuning: true,
         },
         ModelInfo {
-            id: "codellama-13b".to_string(),
-            model_type: ModelType::CodeLlama,
-            model_size: ModelSize::Large,
-            model_path: None,
-            quantization: Some(Quantization::Int8),
-            lora_adapters: vec![],
-            status: ModelStatus::Available,
-            memory_usage_mb: Some(14000),
-            is_loaded: false,
+            id:                   "codellama-13b".to_string(),
+            model_type:           ModelType::CodeLlama,
+            model_size:           ModelSize::Large,
+            model_path:           None,
+            quantization:         Some(Quantization::Int8),
+            lora_adapters:        vec![],
+            status:               ModelStatus::Available,
+            memory_usage_mb:      Some(14000),
+            is_loaded:            false,
             supports_fine_tuning: true,
         },
         ModelInfo {
-            id: "starcoder-7b".to_string(),
-            model_type: ModelType::StarCoder,
-            model_size: ModelSize::Medium,
-            model_path: None,
-            quantization: Some(Quantization::Int4),
-            lora_adapters: vec![],
-            status: ModelStatus::Available,
-            memory_usage_mb: Some(7738),
-            is_loaded: false,
+            id:                   "starcoder-7b".to_string(),
+            model_type:           ModelType::StarCoder,
+            model_size:           ModelSize::Medium,
+            model_path:           None,
+            quantization:         Some(Quantization::Int4),
+            lora_adapters:        vec![],
+            status:               ModelStatus::Available,
+            memory_usage_mb:      Some(7738),
+            is_loaded:            false,
             supports_fine_tuning: true,
         },
     ];
@@ -315,9 +314,7 @@ pub async fn list_downloaded_models(_state: State<'_, AppState>) -> Result<Vec<M
 
     let mut models = Vec::new();
 
-    for entry in std::fs::read_dir(&models_dir)
-        .map_err(|e| format!("Failed to read models directory: {}", e))?
-    {
+    for entry in std::fs::read_dir(&models_dir).map_err(|e| format!("Failed to read models directory: {}", e))? {
         let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
         let path = entry.path();
 
@@ -354,10 +351,7 @@ pub async fn get_loaded_models(_state: State<'_, AppState>) -> Result<Vec<ModelI
 
 /// Load a model
 #[tauri::command]
-pub async fn load_model(
-    _state: State<'_, AppState>,
-    request: ModelLoadingRequest,
-) -> Result<ModelInfo, String> {
+pub async fn load_model(_state: State<'_, AppState>, request: ModelLoadingRequest) -> Result<ModelInfo, String> {
     log::info!("Loading model from {:?}", request.model_path);
 
     // Validate request parameters
@@ -370,36 +364,36 @@ pub async fn load_model(
 
     // Create model config
     let config = model_loader::ModelLoadConfig {
-        quantization: request.quantization.map(|q| match q {
+        quantization:    request.quantization.map(|q| match q {
             Quantization::None => rust_ai_ide_ai::Quantization::None,
             Quantization::Int8 => rust_ai_ide_ai::Quantization::Int8,
             Quantization::Int4 => rust_ai_ide_ai::Quantization::Int4,
             Quantization::GPTQ => rust_ai_ide_ai::Quantization::GPTQ,
         }),
-        lora_adapters: request.lora_adapters,
+        lora_adapters:   request.lora_adapters,
         memory_limit_mb: None,
-        device: match request.device {
+        device:          match request.device {
             DeviceType::Cpu => model_loader::ModelDevice::Cpu,
             DeviceType::Cuda => model_loader::ModelDevice::Gpu,
             DeviceType::Auto => model_loader::ModelDevice::Auto,
         },
-        lazy_loading: true,
-        enable_cache: true,
+        lazy_loading:    true,
+        enable_cache:    true,
     };
 
     // Placeholder: In real implementation, this would load the actual model
     // For now, return success
 
     Ok(ModelInfo {
-        id: format!("{}_{:?}", request.model_path.display(), request.model_size),
-        model_type: request.model_type,
-        model_size: request.model_size,
-        model_path: Some(request.model_path),
-        quantization: request.quantization,
-        lora_adapters: request.lora_adapters,
-        status: ModelStatus::Loaded,
-        memory_usage_mb: Some(4096),
-        is_loaded: true,
+        id:                   format!("{}_{:?}", request.model_path.display(), request.model_size),
+        model_type:           request.model_type,
+        model_size:           request.model_size,
+        model_path:           Some(request.model_path),
+        quantization:         request.quantization,
+        lora_adapters:        request.lora_adapters,
+        status:               ModelStatus::Loaded,
+        memory_usage_mb:      Some(4096),
+        is_loaded:            true,
         supports_fine_tuning: true,
     })
 }
@@ -415,31 +409,25 @@ pub async fn unload_model(_state: State<'_, AppState>, model_id: String) -> Resu
 
 /// Get model status
 #[tauri::command]
-pub async fn get_model_status(
-    _state: State<'_, AppState>,
-    model_id: String,
-) -> Result<ModelInfo, String> {
+pub async fn get_model_status(_state: State<'_, AppState>, model_id: String) -> Result<ModelInfo, String> {
     // Placeholder implementation
     Ok(ModelInfo {
-        id: model_id,
-        model_type: ModelType::CodeLlama,
-        model_size: ModelSize::Medium,
-        model_path: None,
-        quantization: Some(Quantization::Int4),
-        lora_adapters: vec![],
-        status: ModelStatus::Loaded,
-        memory_usage_mb: Some(4096),
-        is_loaded: true,
+        id:                   model_id,
+        model_type:           ModelType::CodeLlama,
+        model_size:           ModelSize::Medium,
+        model_path:           None,
+        quantization:         Some(Quantization::Int4),
+        lora_adapters:        vec![],
+        status:               ModelStatus::Loaded,
+        memory_usage_mb:      Some(4096),
+        is_loaded:            true,
         supports_fine_tuning: true,
     })
 }
 
 /// Start fine-tuning job
 #[tauri::command]
-pub async fn start_finetune_job(
-    _state: State<'_, AppState>,
-    request: FineTuningRequest,
-) -> Result<String, String> {
+pub async fn start_finetune_job(_state: State<'_, AppState>, request: FineTuningRequest) -> Result<String, String> {
     log::info!("Starting fine-tuning job: {}", request.job_name);
 
     // Validate dataset path
@@ -454,35 +442,35 @@ pub async fn start_finetune_job(
     let job_id = format!("ft_{}", uuid::Uuid::new_v4());
 
     let config = finetune::TrainingConfig {
-        learning_rate: request.config.learning_rate,
-        batch_size: request.config.batch_size,
-        max_epochs: request.config.max_epochs,
-        warmup_ratio: 0.1,
-        weight_decay: 0.01,
-        max_grad_norm: 1.0,
-        save_steps: 500,
-        eval_steps: 500,
-        logging_steps: 100,
+        learning_rate:               request.config.learning_rate,
+        batch_size:                  request.config.batch_size,
+        max_epochs:                  request.config.max_epochs,
+        warmup_ratio:                0.1,
+        weight_decay:                0.01,
+        max_grad_norm:               1.0,
+        save_steps:                  500,
+        eval_steps:                  500,
+        logging_steps:               100,
         gradient_accumulation_steps: 4,
-        max_seq_length: request.config.max_seq_length,
-        lora_rank: request.config.lora_rank,
-        lora_alpha: request.config.lora_rank.map(|r| r as f32 * 2.0),
-        lora_dropout: Some(0.1),
-        quantization_config: None,
-        dataloader_num_workers: 4,
-        dataloader_pin_memory: true,
-        mixed_precision: if request.config.mixed_precision {
+        max_seq_length:              request.config.max_seq_length,
+        lora_rank:                   request.config.lora_rank,
+        lora_alpha:                  request.config.lora_rank.map(|r| r as f32 * 2.0),
+        lora_dropout:                Some(0.1),
+        quantization_config:         None,
+        dataloader_num_workers:      4,
+        dataloader_pin_memory:       true,
+        mixed_precision:             if request.config.mixed_precision {
             Some(finetune::MixedPrecision::Fp16)
         } else {
             None
         },
-        gradient_checkpointing: true,
-        early_stopping_patience: Some(3),
-        label_smoothing: None,
-        distributed_config: None,
-        model_specific_config: None,
-        evaluation_config: None,
-        training_hooks: vec![],
+        gradient_checkpointing:      true,
+        early_stopping_patience:     Some(3),
+        label_smoothing:             None,
+        distributed_config:          None,
+        model_specific_config:       None,
+        evaluation_config:           None,
+        training_hooks:              vec![],
     };
 
     let job = finetune::FineTuneJob {
@@ -499,15 +487,15 @@ pub async fn start_finetune_job(
         config,
         status: finetune::TrainingStatus::Created,
         progress: finetune::TrainingProgress {
-            epoch: 0,
-            total_epochs: request.config.max_epochs,
-            step: 0,
-            total_steps: 1000, // Placeholder
-            loss: None,
-            learning_rate: Some(request.config.learning_rate),
+            epoch:                    0,
+            total_epochs:             request.config.max_epochs,
+            step:                     0,
+            total_steps:              1000, // Placeholder
+            loss:                     None,
+            learning_rate:            Some(request.config.learning_rate),
             estimated_time_remaining: Some(3600.0),
-            memory_usage_mb: Some(4096),
-            gpu_utilization: Some(0.0),
+            memory_usage_mb:          Some(4096),
+            gpu_utilization:          Some(0.0),
         },
         created_at: chrono::Utc::now(),
         updated_at: chrono::Utc::now(),
@@ -524,52 +512,46 @@ pub async fn start_finetune_job(
 
 /// Get fine-tuning job status
 #[tauri::command]
-pub async fn get_finetune_progress(
-    _state: State<'_, AppState>,
-    job_id: String,
-) -> Result<FineTuneJobInfo, String> {
+pub async fn get_finetune_progress(_state: State<'_, AppState>, job_id: String) -> Result<FineTuneJobInfo, String> {
     // Placeholder implementation
     Ok(FineTuneJobInfo {
-        job_id: job_id.clone(),
-        name: "Sample Training Job".to_string(),
-        description: Some("A sample fine-tuning job".to_string()),
-        base_model: "codellama-7b".to_string(),
-        model_type: ModelType::CodeLlama,
-        status: TrainingStatus::Training,
-        progress: TrainingProgress {
-            epoch: 1,
-            total_epochs: 3,
-            step: 250,
-            total_steps: 1000,
-            loss: Some(1.8),
-            learning_rate: Some(5e-5),
+        job_id:        job_id.clone(),
+        name:          "Sample Training Job".to_string(),
+        description:   Some("A sample fine-tuning job".to_string()),
+        base_model:    "codellama-7b".to_string(),
+        model_type:    ModelType::CodeLlama,
+        status:        TrainingStatus::Training,
+        progress:      TrainingProgress {
+            epoch:                    1,
+            total_epochs:             3,
+            step:                     250,
+            total_steps:              1000,
+            loss:                     Some(1.8),
+            learning_rate:            Some(5e-5),
             estimated_time_remaining: Some(2700.0),
-            memory_usage_mb: Some(6144),
-            gpu_utilization: Some(75.0),
+            memory_usage_mb:          Some(6144),
+            gpu_utilization:          Some(75.0),
         },
-        created_at: chrono::Utc::now() - chrono::Duration::hours(2),
-        updated_at: chrono::Utc::now(),
-        output_path: None,
-        metrics: None,
+        created_at:    chrono::Utc::now() - chrono::Duration::hours(2),
+        updated_at:    chrono::Utc::now(),
+        output_path:   None,
+        metrics:       None,
         error_message: None,
-        config: TrainingConfigInfo {
-            learning_rate: 5e-5,
-            batch_size: 8,
-            max_epochs: 3,
-            lora_rank: Some(8),
+        config:        TrainingConfigInfo {
+            learning_rate:   5e-5,
+            batch_size:      8,
+            max_epochs:      3,
+            lora_rank:       Some(8),
             mixed_precision: true,
-            max_seq_length: 2048,
-            dataset_size: Some(10000),
+            max_seq_length:  2048,
+            dataset_size:    Some(10000),
         },
     })
 }
 
 /// Cancel fine-tuning job
 #[tauri::command]
-pub async fn cancel_finetune_job(
-    _state: State<'_, AppState>,
-    job_id: String,
-) -> Result<(), String> {
+pub async fn cancel_finetune_job(_state: State<'_, AppState>, job_id: String) -> Result<(), String> {
     log::info!("Cancelling fine-tuning job: {}", job_id);
 
     // Placeholder: In real implementation, this would stop the actual training
@@ -578,50 +560,48 @@ pub async fn cancel_finetune_job(
 
 /// List fine-tuning jobs
 #[tauri::command]
-pub async fn list_finetune_jobs(
-    _state: State<'_, AppState>,
-) -> Result<Vec<FineTuneJobInfo>, String> {
+pub async fn list_finetune_jobs(_state: State<'_, AppState>) -> Result<Vec<FineTuneJobInfo>, String> {
     // Placeholder implementation
     Ok(vec![FineTuneJobInfo {
-        job_id: "ft_sample_1".to_string(),
-        name: "Sample Training Job".to_string(),
-        description: Some("A sample fine-tuning job".to_string()),
-        base_model: "codellama-7b".to_string(),
-        model_type: ModelType::CodeLlama,
-        status: TrainingStatus::Completed,
-        progress: TrainingProgress {
-            epoch: 3,
-            total_epochs: 3,
-            step: 1000,
-            total_steps: 1000,
-            loss: Some(0.8),
-            learning_rate: Some(1e-5),
+        job_id:        "ft_sample_1".to_string(),
+        name:          "Sample Training Job".to_string(),
+        description:   Some("A sample fine-tuning job".to_string()),
+        base_model:    "codellama-7b".to_string(),
+        model_type:    ModelType::CodeLlama,
+        status:        TrainingStatus::Completed,
+        progress:      TrainingProgress {
+            epoch:                    3,
+            total_epochs:             3,
+            step:                     1000,
+            total_steps:              1000,
+            loss:                     Some(0.8),
+            learning_rate:            Some(1e-5),
             estimated_time_remaining: Some(0.0),
-            memory_usage_mb: Some(6144),
-            gpu_utilization: Some(0.0),
+            memory_usage_mb:          Some(6144),
+            gpu_utilization:          Some(0.0),
         },
-        created_at: chrono::Utc::now() - chrono::Duration::hours(4),
-        updated_at: chrono::Utc::now() - chrono::Duration::hours(1),
-        output_path: Some(PathBuf::from("/models/codellama-finetuned")),
-        metrics: Some(TrainingMetrics {
-            final_loss: 0.8,
+        created_at:    chrono::Utc::now() - chrono::Duration::hours(4),
+        updated_at:    chrono::Utc::now() - chrono::Duration::hours(1),
+        output_path:   Some(PathBuf::from("/models/codellama-finetuned")),
+        metrics:       Some(TrainingMetrics {
+            final_loss:            0.8,
             training_time_seconds: 10800,
-            peak_memory_usage_mb: 7168,
-            samples_per_second: 100.0,
-            validation_loss: Some(0.9),
-            perplexity: Some(12.0),
-            bleu_score: Some(0.8),
-            code_bleu_score: Some(0.75),
+            peak_memory_usage_mb:  7168,
+            samples_per_second:    100.0,
+            validation_loss:       Some(0.9),
+            perplexity:            Some(12.0),
+            bleu_score:            Some(0.8),
+            code_bleu_score:       Some(0.75),
         }),
         error_message: None,
-        config: TrainingConfigInfo {
-            learning_rate: 5e-5,
-            batch_size: 8,
-            max_epochs: 3,
-            lora_rank: Some(8),
+        config:        TrainingConfigInfo {
+            learning_rate:   5e-5,
+            batch_size:      8,
+            max_epochs:      3,
+            lora_rank:       Some(8),
             mixed_precision: true,
-            max_seq_length: 2048,
-            dataset_size: Some(10000),
+            max_seq_length:  2048,
+            dataset_size:    Some(10000),
         },
     }])
 }
@@ -644,8 +624,7 @@ pub async fn prepare_dataset(
     // Validate output path
     if let Some(parent) = request.output_path.parent() {
         if !parent.exists() {
-            std::fs::create_dir_all(parent)
-                .map_err(|e| format!("Failed to create output directory: {}", e))?;
+            std::fs::create_dir_all(parent).map_err(|e| format!("Failed to create output directory: {}", e))?;
         }
     }
 
@@ -661,14 +640,14 @@ pub async fn prepare_dataset(
 pub async fn get_resource_status(_state: State<'_, AppState>) -> Result<ResourceStatus, String> {
     // Placeholder implementation
     Ok(ResourceStatus {
-        memory_usage_gb: 4.2,
-        memory_limit_gb: 16.0,
-        gpu_usage_percent: 45.0,
+        memory_usage_gb:     4.2,
+        memory_limit_gb:     16.0,
+        gpu_usage_percent:   45.0,
         gpu_memory_usage_gb: 3.6,
         gpu_memory_limit_gb: 8.0,
-        active_jobs: 1,
-        available_models: 3,
-        system_load: 0.7,
+        active_jobs:         1,
+        available_models:    3,
+        system_load:         0.7,
     })
 }
 
@@ -717,11 +696,10 @@ pub async fn validate_model_config(
 
     // Device-specific warnings
     match request.device {
-        DeviceType::Cpu => {
+        DeviceType::Cpu =>
             if estimated_memory > 4.0 {
                 warnings.push("CPU mode with high memory requirement may be slow".to_string());
-            }
-        }
+            },
         DeviceType::Cuda => {
             warnings.push("CUDA mode requires compatible NVIDIA GPU".to_string());
         }
@@ -735,10 +713,7 @@ pub async fn validate_model_config(
 
 /// Download model from Hugging Face or other sources
 #[tauri::command]
-pub async fn download_model(
-    _state: State<'_, AppState>,
-    request: ModelDownloadRequest,
-) -> Result<String, String> {
+pub async fn download_model(_state: State<'_, AppState>, request: ModelDownloadRequest) -> Result<String, String> {
     log::info!(
         "Downloading model: {:?} {:?}",
         request.model_type,
@@ -789,8 +764,7 @@ fn parse_model_name(model_name: &str) -> (ModelType, ModelSize) {
 
     let model_size = if lower_name.contains("large") || lower_name.contains("13b") {
         ModelSize::Large
-    } else if lower_name.contains("small") || lower_name.contains("1b") || lower_name.contains("3b")
-    {
+    } else if lower_name.contains("small") || lower_name.contains("1b") || lower_name.contains("3b") {
         ModelSize::Small
     } else {
         ModelSize::Medium

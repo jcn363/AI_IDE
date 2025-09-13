@@ -1,7 +1,7 @@
 //! GPU Acceleration module for performance-critical operations
 //!
-//! This module provides GPU-accelerated compute kernels for operations that benefit from parallelization,
-//! particularly suited for large codebases and compute-intensive tasks.
+//! This module provides GPU-accelerated compute kernels for operations that benefit from
+//! parallelization, particularly suited for large codebases and compute-intensive tasks.
 //!
 //! Key features:
 //! - GPU kernel compilation and execution
@@ -10,43 +10,43 @@
 //! - Memory management for GPU operations
 //! - Performance monitoring and profiling
 
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use async_trait::async_trait;
+use rust_ai_ide_shared_types::{IDEResult, RustAIError};
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use tracing::{error, info, warn};
-
-use rust_ai_ide_shared_types::{IDEResult, RustAIError};
 
 /// GPU device information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GPUDeviceInfo {
-    pub device_id: String,
-    pub device_name: String,
-    pub memory_gb: u64,
+    pub device_id:           String,
+    pub device_name:         String,
+    pub memory_gb:           u64,
     pub available_memory_gb: f64,
-    pub compute_capability: String,
-    pub driver_version: String,
-    pub cuda_cores: Option<u32>,
+    pub compute_capability:  String,
+    pub driver_version:      String,
+    pub cuda_cores:          Option<u32>,
 }
 
 /// GPU kernel configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GPUKernelConfig {
-    pub kernel_name: String,
-    pub grid_dim: [u32; 3],
-    pub block_dim: [u32; 3],
-    pub shared_memory_bytes: usize,
-    pub registers_per_thread: u32,
+    pub kernel_name:           String,
+    pub grid_dim:              [u32; 3],
+    pub block_dim:             [u32; 3],
+    pub shared_memory_bytes:   usize,
+    pub registers_per_thread:  u32,
     pub max_threads_per_group: u32,
 }
 
 /// Queue for GPU operations
 #[derive(Debug)]
 pub struct GPUComputeQueue {
-    pub max_operations: usize,
-    pub operations: Vec<GPUOperation>,
+    pub max_operations:     usize,
+    pub operations:         Vec<GPUOperation>,
     pub device_memory_used: u64,
 }
 
@@ -112,11 +112,7 @@ pub trait GPUComputeBackend: Send + Sync + 'static {
     async fn get_available_devices(&self) -> IDEResult<Vec<GPUDeviceInfo>>;
 
     /// Allocate GPU memory
-    async fn allocate_memory(
-        &self,
-        size_bytes: usize,
-        device: &GPUDeviceInfo,
-    ) -> IDEResult<GPUBuffer>;
+    async fn allocate_memory(&self, size_bytes: usize, device: &GPUDeviceInfo) -> IDEResult<GPUBuffer>;
 
     /// Copy data to GPU
     async fn copy_to_gpu(&self, buffer: &GPUBuffer, data: &[u8]) -> IDEResult<()>;
@@ -142,10 +138,10 @@ pub trait GPUComputeBackend: Send + Sync + 'static {
 /// GPU buffer abstraction
 #[derive(Debug)]
 pub struct GPUBuffer {
-    pub id: String,
+    pub id:         String,
     pub size_bytes: usize,
-    pub device_id: String,
-    pub address: *mut u8, // Device pointer
+    pub device_id:  String,
+    pub address:    *mut u8, // Device pointer
 }
 
 unsafe impl Send for GPUBuffer {}
@@ -165,61 +161,61 @@ pub enum GPUKernelArg {
 #[derive(Debug, Clone)]
 pub struct GPUExecutionResult {
     pub execution_time_ms: u64,
-    pub kernel_launches: usize,
-    pub memory_transfers: usize,
-    pub success: bool,
-    pub error_message: Option<String>,
+    pub kernel_launches:   usize,
+    pub memory_transfers:  usize,
+    pub success:           bool,
+    pub error_message:     Option<String>,
 }
 
 /// Unified GPU acceleration manager
 pub struct GPUAccelerationManager {
-    backends: HashMap<String, Box<dyn GPUComputeBackend>>,
-    active_devices: HashMap<String, GPUDeviceInfo>,
-    operation_queues: HashMap<String, GPUComputeQueue>,
+    backends:            HashMap<String, Box<dyn GPUComputeBackend>>,
+    active_devices:      HashMap<String, GPUDeviceInfo>,
+    operation_queues:    HashMap<String, GPUComputeQueue>,
     performance_monitor: GPUPerformanceMonitor,
-    config: GPUConfig,
+    config:              GPUConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GPUConfig {
     pub enable_gpu_acceleration: bool,
-    pub prefer_gpu: bool,
-    pub memory_threshold_gb: f64,
-    pub operation_Timeout_ms: u64,
-    pub max_queued_operations: usize,
-    pub fallback_to_cpu: bool,
+    pub prefer_gpu:              bool,
+    pub memory_threshold_gb:     f64,
+    pub operation_Timeout_ms:    u64,
+    pub max_queued_operations:   usize,
+    pub fallback_to_cpu:         bool,
 }
 
 impl Default for GPUConfig {
     fn default() -> Self {
         Self {
             enable_gpu_acceleration: true,
-            prefer_gpu: true,
-            memory_threshold_gb: 1.0,
-            operation_Timeout_ms: 30000,
-            max_queued_operations: 100,
-            fallback_to_cpu: true,
+            prefer_gpu:              true,
+            memory_threshold_gb:     1.0,
+            operation_Timeout_ms:    30000,
+            max_queued_operations:   100,
+            fallback_to_cpu:         true,
         }
     }
 }
 
 /// Performance monitor for GPU operations
 pub struct GPUPerformanceMonitor {
-    operations_completed: u64,
-    operations_failed: u64,
+    operations_completed:    u64,
+    operations_failed:       u64,
     total_execution_time_ms: u64,
-    peak_memory_usage_gb: f64,
-    device_utilization: HashMap<String, f64>,
+    peak_memory_usage_gb:    f64,
+    device_utilization:      HashMap<String, f64>,
 }
 
 impl GPUPerformanceMonitor {
     pub fn new() -> Self {
         Self {
-            operations_completed: 0,
-            operations_failed: 0,
+            operations_completed:    0,
+            operations_failed:       0,
             total_execution_time_ms: 0,
-            peak_memory_usage_gb: 0.0,
-            device_utilization: HashMap::new(),
+            peak_memory_usage_gb:    0.0,
+            device_utilization:      HashMap::new(),
         }
     }
 
@@ -234,21 +230,20 @@ impl GPUPerformanceMonitor {
 
     pub fn get_stats(&self) -> GPUStats {
         GPUStats {
-            operations_completed: self.operations_completed,
-            operations_failed: self.operations_failed,
+            operations_completed:      self.operations_completed,
+            operations_failed:         self.operations_failed,
             average_execution_time_ms: if self.operations_completed > 0 {
                 self.total_execution_time_ms as f64 / self.operations_completed as f64
             } else {
                 0.0
             },
-            failure_rate: if self.operations_completed + self.operations_failed > 0 {
-                self.operations_failed as f64
-                    / (self.operations_completed + self.operations_failed) as f64
+            failure_rate:              if self.operations_completed + self.operations_failed > 0 {
+                self.operations_failed as f64 / (self.operations_completed + self.operations_failed) as f64
             } else {
                 0.0
             },
-            peak_memory_usage_gb: self.peak_memory_usage_gb,
-            device_utilization: self.device_utilization.clone(),
+            peak_memory_usage_gb:      self.peak_memory_usage_gb,
+            device_utilization:        self.device_utilization.clone(),
         }
     }
 }
@@ -256,12 +251,12 @@ impl GPUPerformanceMonitor {
 /// GPU performance statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GPUStats {
-    pub operations_completed: u64,
-    pub operations_failed: u64,
+    pub operations_completed:      u64,
+    pub operations_failed:         u64,
     pub average_execution_time_ms: f64,
-    pub failure_rate: f64,
-    pub peak_memory_usage_gb: f64,
-    pub device_utilization: HashMap<String, f64>,
+    pub failure_rate:              f64,
+    pub peak_memory_usage_gb:      f64,
+    pub device_utilization:        HashMap<String, f64>,
 }
 
 /// Specialized kernels for IDE operations
@@ -274,29 +269,26 @@ pub mod kernels {
         let blocks = (input_size as u32 + threads_per_block - 1) / threads_per_block;
 
         GPUKernelConfig {
-            kernel_name: "vector_similarity".to_string(),
-            grid_dim: [blocks, 1, 1],
-            block_dim: [threads_per_block, 1, 1],
-            shared_memory_bytes: threads_per_block as usize * 4, // float per thread
-            registers_per_thread: 32,
+            kernel_name:           "vector_similarity".to_string(),
+            grid_dim:              [blocks, 1, 1],
+            block_dim:             [threads_per_block, 1, 1],
+            shared_memory_bytes:   threads_per_block as usize * 4, // float per thread
+            registers_per_thread:  32,
             max_threads_per_group: threads_per_block,
         }
     }
 
     /// Pattern matching kernel for code analysis
-    pub fn create_pattern_matching_kernel(
-        text_length: usize,
-        patterns_count: usize,
-    ) -> GPUKernelConfig {
+    pub fn create_pattern_matching_kernel(text_length: usize, patterns_count: usize) -> GPUKernelConfig {
         let threads_per_block = 512;
         let blocks = (text_length as u32 + threads_per_block - 1) / threads_per_block;
 
         GPUKernelConfig {
-            kernel_name: "pattern_matching".to_string(),
-            grid_dim: [blocks, patterns_count as u32, 1],
-            block_dim: [threads_per_block, 1, 1],
-            shared_memory_bytes: patterns_count * 256, // Pattern buffers
-            registers_per_thread: 64,
+            kernel_name:           "pattern_matching".to_string(),
+            grid_dim:              [blocks, patterns_count as u32, 1],
+            block_dim:             [threads_per_block, 1, 1],
+            shared_memory_bytes:   patterns_count * 256, // Pattern buffers
+            registers_per_thread:  64,
             max_threads_per_group: threads_per_block,
         }
     }
@@ -307,11 +299,11 @@ pub mod kernels {
         let blocks = (data_size as u32 + threads_per_block - 1) / threads_per_block;
 
         GPUKernelConfig {
-            kernel_name: "compute_hash".to_string(),
-            grid_dim: [blocks, 1, 1],
-            block_dim: [threads_per_block, 1, 1],
-            shared_memory_bytes: threads_per_block as usize * 32,
-            registers_per_thread: 40,
+            kernel_name:           "compute_hash".to_string(),
+            grid_dim:              [blocks, 1, 1],
+            block_dim:             [threads_per_block, 1, 1],
+            shared_memory_bytes:   threads_per_block as usize * 32,
+            registers_per_thread:  40,
             max_threads_per_group: threads_per_block,
         }
     }
@@ -329,11 +321,7 @@ impl GPUAccelerationManager {
     }
 
     /// Add a GPU compute backend
-    pub async fn add_backend(
-        &mut self,
-        name: String,
-        backend: Box<dyn GPUComputeBackend>,
-    ) -> IDEResult<()> {
+    pub async fn add_backend(&mut self, name: String, backend: Box<dyn GPUComputeBackend>) -> IDEResult<()> {
         self.backends.insert(name, backend);
         Ok(())
     }
@@ -436,10 +424,10 @@ impl GPUAccelerationManager {
 
                             let failed_result = GPUExecutionResult {
                                 execution_time_ms: 0,
-                                kernel_launches: 0,
-                                memory_transfers: 0,
-                                success: false,
-                                error_message: Some(e.to_string()),
+                                kernel_launches:   0,
+                                memory_transfers:  0,
+                                success:           false,
+                                error_message:     Some(e.to_string()),
                             };
 
                             self.performance_monitor.record_operation(&failed_result);

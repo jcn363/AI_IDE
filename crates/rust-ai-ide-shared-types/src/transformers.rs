@@ -4,9 +4,10 @@
 //! Rust types to various target platforms. These transformations can be
 //! extended and customized through the plugin system.
 
+use std::collections::HashMap;
+
 use crate::errors::TypeGenerationError;
 use crate::types::{ParsedType, TransformationContext};
-use std::collections::HashMap;
 
 /// Main type transformer with built-in transformation logic
 #[derive(Debug)]
@@ -102,9 +103,9 @@ impl TypeTransformer {
         // Fallback: return the type as-is with a warning
         Ok(TransformationResult {
             transformed_type: rust_type.to_string(),
-            metadata: HashMap::new(),
-            success: false,
-            warnings: vec![format!(
+            metadata:         HashMap::new(),
+            success:          false,
+            warnings:         vec![format!(
                 "No transformation rule found for type '{}'",
                 rust_type
             )],
@@ -128,18 +129,18 @@ impl TypeTransformer {
         for field in &parsed_type.fields {
             let result = self.transform_type(&field.ty, &context)?;
             transformed_fields.push(TransformedField {
-                name: field.name.clone(),
-                original_type: field.ty.clone(),
+                name:             field.name.clone(),
+                original_type:    field.ty.clone(),
                 transformed_type: result.transformed_type,
-                warnings: result.warnings,
+                warnings:         result.warnings,
             });
         }
 
         Ok(TransformedType {
             original_name: parsed_type.name.clone(),
-            name: parsed_type.name.clone(), // Could be modified by transformations
-            fields: transformed_fields,
-            kind: parsed_type.kind.clone(),
+            name:          parsed_type.name.clone(), // Could be modified by transformations
+            fields:        transformed_fields,
+            kind:          parsed_type.kind.clone(),
             documentation: parsed_type.documentation.clone(),
         })
     }
@@ -180,9 +181,7 @@ impl TypeTransformer {
         context: &TransformationContext,
     ) -> Result<bool, TypeGenerationError> {
         // Check platform match
-        if rule.source_platform != context.source_platform
-            || rule.target_platform != context.target_platform
-        {
+        if rule.source_platform != context.source_platform || rule.target_platform != context.target_platform {
             return Ok(false);
         }
 
@@ -296,16 +295,13 @@ impl TypeTransformer {
             let key = pattern.to_string();
             let parts: Vec<&str> = pattern.split(':').collect();
             if parts.len() == 3 {
-                rules.insert(
-                    key,
-                    TransformationRule {
-                        source_platform: parts[0].to_string(),
-                        target_platform: parts[1].to_string(),
-                        type_pattern: parts[2].to_string(),
-                        transformation: transformation.to_string(),
-                        priority: 0,
-                    },
-                );
+                rules.insert(key, TransformationRule {
+                    source_platform: parts[0].to_string(),
+                    target_platform: parts[1].to_string(),
+                    type_pattern:    parts[2].to_string(),
+                    transformation:  transformation.to_string(),
+                    priority:        0,
+                });
             }
         }
     }
@@ -401,40 +397,40 @@ mod tests {
     fn test_parsed_type_transformation() {
         let transformer = TypeTransformer::new();
         let parsed_type = ParsedType {
-            name: "TestStruct".to_string(),
-            kind: TypeKind::Struct,
-            documentation: None,
-            visibility: crate::types::Visibility::Public,
-            generics: vec![],
-            fields: vec![
+            name:             "TestStruct".to_string(),
+            kind:             TypeKind::Struct,
+            documentation:    None,
+            visibility:       crate::types::Visibility::Public,
+            generics:         vec![],
+            fields:           vec![
                 crate::types::Field {
-                    name: "name".to_string(),
-                    ty: "String".to_string(),
+                    name:          "name".to_string(),
+                    ty:            "String".to_string(),
                     documentation: None,
-                    visibility: crate::types::Visibility::Public,
-                    is_mutable: false,
-                    attributes: vec![],
+                    visibility:    crate::types::Visibility::Public,
+                    is_mutable:    false,
+                    attributes:    vec![],
                 },
                 crate::types::Field {
-                    name: "count".to_string(),
-                    ty: "i32".to_string(),
+                    name:          "count".to_string(),
+                    ty:            "i32".to_string(),
                     documentation: None,
-                    visibility: crate::types::Visibility::Public,
-                    is_mutable: false,
-                    attributes: vec![],
+                    visibility:    crate::types::Visibility::Public,
+                    is_mutable:    false,
+                    attributes:    vec![],
                 },
             ],
-            variants: vec![],
+            variants:         vec![],
             associated_items: vec![],
-            attributes: vec![],
-            source_location: crate::types::SourceLocation {
-                file: "test.rs".to_string(),
-                line: 1,
-                column: 1,
+            attributes:       vec![],
+            source_location:  crate::types::SourceLocation {
+                file:        "test.rs".to_string(),
+                line:        1,
+                column:      1,
                 module_path: vec![],
             },
-            dependencies: vec![],
-            metadata: crate::types::TypeMetadata::default(),
+            dependencies:     vec![],
+            metadata:         crate::types::TypeMetadata::default(),
         };
 
         let transformed = transformer
@@ -451,9 +447,9 @@ mod tests {
         let custom_rule = TransformationRule {
             source_platform: "rust".to_string(),
             target_platform: "typescript".to_string(),
-            type_pattern: "CustomType".to_string(),
-            transformation: "string".to_string(),
-            priority: 10,
+            type_pattern:    "CustomType".to_string(),
+            transformation:  "string".to_string(),
+            priority:        10,
         };
 
         transformer.add_custom_rule(custom_rule);

@@ -17,11 +17,11 @@
 //! ## Usage Example
 //!
 //! ```rust,no_run
-//! use rust_ai_ide_config::{ConfigurationManager, Config, SecurityValidator};
+//! use rust_ai_ide_config::{Config, ConfigurationManager, SecurityValidator};
 //!
 //! #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 //! struct MyAppConfig {
-//!     api_key: String,
+//!     api_key:         String,
 //!     max_connections: usize,
 //! }
 //!
@@ -39,7 +39,7 @@
 //!
 //!     fn default_config() -> Self {
 //!         Self {
-//!             api_key: "default_key".to_string(),
+//!             api_key:         "default_key".to_string(),
 //!             max_connections: 10,
 //!         }
 //!     }

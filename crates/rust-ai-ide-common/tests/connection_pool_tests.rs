@@ -5,8 +5,9 @@
 
 #[cfg(test)]
 mod tests {
-    use rust_ai_ide_common::ConnectionPool;
     use std::time::{Duration, Instant};
+
+    use rust_ai_ide_common::ConnectionPool;
     use tokio::time::timeout;
 
     #[tokio::test]

@@ -1,18 +1,19 @@
+use std::collections::{HashMap, VecDeque};
+use std::sync::Arc;
+
 use chrono::{DateTime, Utc};
 use ndarray::Array2;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
 /// Represents raw EEG data from neural interface
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EEGData {
-    pub timestamp: DateTime<Utc>,
-    pub channels: Vec<f32>, // EEG channel data
+    pub timestamp:     DateTime<Utc>,
+    pub channels:      Vec<f32>, // EEG channel data
     pub sampling_rate: u32,
-    pub session_id: Uuid,
+    pub session_id:    Uuid,
     pub quality_score: f32,
 }
 
@@ -31,14 +32,14 @@ impl EEGData {
 /// Thought pattern extracted from EEG signals
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ThoughtPattern {
-    pub id: Uuid,
-    pub eeg_data: Vec<EEGData>,
-    pub frequency_bands: HashMap<String, f32>, // delta, theta, alpha, beta, gamma
-    pub emotional_valence: f32,
-    pub cognitive_load: f32,
-    pub complexity_score: f64,
+    pub id:                 Uuid,
+    pub eeg_data:           Vec<EEGData>,
+    pub frequency_bands:    HashMap<String, f32>, // delta, theta, alpha, beta, gamma
+    pub emotional_valence:  f32,
+    pub cognitive_load:     f32,
+    pub complexity_score:   f64,
     pub semantic_embedding: Vec<f32>,
-    pub confidence_level: f32,
+    pub confidence_level:   f32,
 }
 
 impl ThoughtPattern {
@@ -118,11 +119,7 @@ impl ThoughtPattern {
             let variance = data
                 .channels
                 .iter()
-                .map(|v| {
-                    (*v as f64
-                        - data.channels.iter().sum::<f32>() as f64 / data.channels.len() as f64)
-                        .powi(2)
-                })
+                .map(|v| (*v as f64 - data.channels.iter().sum::<f32>() as f64 / data.channels.len() as f64).powi(2))
                 .sum::<f64>()
                 / data.channels.len() as f64;
             total_complexity += variance.sqrt();
@@ -148,29 +145,29 @@ pub struct CompiledProgram {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum CodeConstruct {
     VariableDeclaration {
-        name: String,
+        name:      String,
         data_type: String,
-        value: Option<String>,
+        value:     Option<String>,
     },
     FunctionDefinition {
-        name: String,
-        parameters: Vec<(String, String)>, // name -> type
+        name:        String,
+        parameters:  Vec<(String, String)>, // name -> type
         return_type: String,
-        body: Vec<CodeConstruct>,
+        body:        Vec<CodeConstruct>,
     },
     ClassDefinition {
-        name: String,
+        name:       String,
         properties: Vec<(String, String)>, // name -> type
-        methods: Vec<CodeConstruct>,
+        methods:    Vec<CodeConstruct>,
     },
     ControlFlow {
-        condition: String,
+        condition:   String,
         then_branch: Vec<CodeConstruct>,
         else_branch: Option<Vec<CodeConstruct>>,
     },
     Loop {
         condition: String,
-        body: Vec<CodeConstruct>,
+        body:      Vec<CodeConstruct>,
     },
 }
 
@@ -217,28 +214,25 @@ impl CodeConstruct {
 
 /// Main neuro-compiler for thought-to-code conversion
 pub struct NeuroCompiler {
-    pub eeg_processor: Arc<RwLock<EEGProcessor>>,
+    pub eeg_processor:      Arc<RwLock<EEGProcessor>>,
     pub pattern_recognizer: Arc<RwLock<PatternRecognizer>>,
-    pub code_generator: Arc<RwLock<CodeGenerator>>,
-    pub quantum_verifier: Arc<RwLock<QuantumVerifier>>,
-    pub session_manager: Arc<RwLock<SessionManager>>,
+    pub code_generator:     Arc<RwLock<CodeGenerator>>,
+    pub quantum_verifier:   Arc<RwLock<QuantumVerifier>>,
+    pub session_manager:    Arc<RwLock<SessionManager>>,
 }
 
 impl NeuroCompiler {
     pub async fn new() -> Self {
         Self {
-            eeg_processor: Arc::new(RwLock::new(EEGProcessor::new())),
+            eeg_processor:      Arc::new(RwLock::new(EEGProcessor::new())),
             pattern_recognizer: Arc::new(RwLock::new(PatternRecognizer::new())),
-            code_generator: Arc::new(RwLock::new(CodeGenerator::new())),
-            quantum_verifier: Arc::new(RwLock::new(QuantumVerifier::new())),
-            session_manager: Arc::new(RwLock::new(SessionManager::new())),
+            code_generator:     Arc::new(RwLock::new(CodeGenerator::new())),
+            quantum_verifier:   Arc::new(RwLock::new(QuantumVerifier::new())),
+            session_manager:    Arc::new(RwLock::new(SessionManager::new())),
         }
     }
 
-    pub async fn compile_thought_to_code(
-        &self,
-        eeg_stream: &[EEGData],
-    ) -> Result<CompiledProgram, NeuroError> {
+    pub async fn compile_thought_to_code(&self, eeg_stream: &[EEGData]) -> Result<CompiledProgram, NeuroError> {
         // Step 1: Process EEG data
         let processor = self.eeg_processor.read().await;
         let processed_data = processor.filter_artifacts(eeg_stream).await?;
@@ -296,23 +290,20 @@ impl NeuroCompiler {
 /// EEG signal processor with artifact removal
 pub struct EEGProcessor {
     pub filter_coefficients: Vec<f32>,
-    pub running_buffer: VecDeque<EEGData>,
-    pub sampling_rate: u32,
+    pub running_buffer:      VecDeque<EEGData>,
+    pub sampling_rate:       u32,
 }
 
 impl EEGProcessor {
     pub fn new() -> Self {
         Self {
             filter_coefficients: vec![1.0, -1.9, 0.9025], // Notch filter for 50Hz
-            running_buffer: VecDeque::new(),
-            sampling_rate: 1000,
+            running_buffer:      VecDeque::new(),
+            sampling_rate:       1000,
         }
     }
 
-    pub async fn filter_artifacts(
-        &self,
-        eeg_stream: &[EEGData],
-    ) -> Result<Vec<EEGData>, NeuroError> {
+    pub async fn filter_artifacts(&self, eeg_stream: &[EEGData]) -> Result<Vec<EEGData>, NeuroError> {
         let mut filtered = Vec::new();
 
         for data in eeg_stream {
@@ -349,22 +340,19 @@ impl EEGProcessor {
 
 /// Pattern recognizer using ML models
 pub struct PatternRecognizer {
-    pub ml_model: MLModel,
+    pub ml_model:          MLModel,
     pub pattern_templates: HashMap<String, Vec<f32>>,
 }
 
 impl PatternRecognizer {
     pub fn new() -> Self {
         Self {
-            ml_model: MLModel::new(),
+            ml_model:          MLModel::new(),
             pattern_templates: HashMap::new(),
         }
     }
 
-    pub async fn identify_pattern(
-        &self,
-        eeg_data: &[EEGData],
-    ) -> Result<ThoughtPattern, NeuroError> {
+    pub async fn identify_pattern(&self, eeg_data: &[EEGData]) -> Result<ThoughtPattern, NeuroError> {
         if eeg_data.is_empty() {
             return Err(NeuroError::InsufficientData);
         }
@@ -377,10 +365,7 @@ impl PatternRecognizer {
         Ok(pattern)
     }
 
-    pub async fn train_on_user_data(
-        &mut self,
-        training_data: &[ThoughtPattern],
-    ) -> Result<(), NeuroError> {
+    pub async fn train_on_user_data(&mut self, training_data: &[ThoughtPattern]) -> Result<(), NeuroError> {
         // Implement online learning for user-specific thought patterns
         for pattern in training_data {
             self.pattern_templates.insert(
@@ -413,62 +398,52 @@ impl MLModel {
 
 /// Code generator that translates thoughts to constructs
 pub struct CodeGenerator {
-    pub language_templates: HashMap<String, String>,
+    pub language_templates:  HashMap<String, String>,
     pub construct_templates: HashMap<String, String>,
 }
 
 impl CodeGenerator {
     pub fn new() -> Self {
         Self {
-            language_templates: HashMap::new(),
+            language_templates:  HashMap::new(),
             construct_templates: HashMap::new(),
         }
     }
 
-    pub async fn translate_pattern(
-        &self,
-        pattern: &ThoughtPattern,
-    ) -> Result<Vec<CodeConstruct>, NeuroError> {
+    pub async fn translate_pattern(&self, pattern: &ThoughtPattern) -> Result<Vec<CodeConstruct>, NeuroError> {
         let mut constructs = Vec::new();
 
         // Generate basic constructs based on pattern complexity
         if pattern.complexity_score > 5.0 {
             // Complex function
             constructs.push(CodeConstruct::FunctionDefinition {
-                name: "generated_function".to_string(),
-                parameters: vec![("input".to_string(), "i32".to_string())],
+                name:        "generated_function".to_string(),
+                parameters:  vec![("input".to_string(), "i32".to_string())],
                 return_type: "i32".to_string(),
-                body: vec![CodeConstruct::VariableDeclaration {
-                    name: "result".to_string(),
+                body:        vec![CodeConstruct::VariableDeclaration {
+                    name:      "result".to_string(),
                     data_type: "i32".to_string(),
-                    value: Some("0".to_string()),
+                    value:     Some("0".to_string()),
                 }],
             });
         } else {
             // Simple variable
             constructs.push(CodeConstruct::VariableDeclaration {
-                name: "generated_variable".to_string(),
+                name:      "generated_variable".to_string(),
                 data_type: "i32".to_string(),
-                value: Some("42".to_string()),
+                value:     Some("42".to_string()),
             });
         }
 
         Ok(constructs)
     }
 
-    pub async fn build_syntax_tree(
-        &self,
-        _constructs: &[CodeConstruct],
-    ) -> Result<String, NeuroError> {
+    pub async fn build_syntax_tree(&self, _constructs: &[CodeConstruct]) -> Result<String, NeuroError> {
         // Generate simplified AST string representation
         Ok("fn main() { println!(\"Hello, Thought!\"); }".to_string())
     }
 
-    pub async fn generate_code_file(
-        &self,
-        constructs: &[CodeConstruct],
-        filename: &str,
-    ) -> Result<String, NeuroError> {
+    pub async fn generate_code_file(&self, constructs: &[CodeConstruct], filename: &str) -> Result<String, NeuroError> {
         let mut code_lines = Vec::new();
         code_lines.push("// Generated by Thought Compiler".to_string());
         code_lines.push("// Timestamp: ".to_string() + &Utc::now().to_string());
@@ -499,10 +474,7 @@ impl QuantumVerifier {
         }
     }
 
-    pub async fn verify_constructs(
-        &self,
-        constructs: &[CodeConstruct],
-    ) -> Result<String, NeuroError> {
+    pub async fn verify_constructs(&self, constructs: &[CodeConstruct]) -> Result<String, NeuroError> {
         // Generate quantum hash for verification
         let mut hash_input = String::new();
         for construct in constructs {
@@ -533,31 +505,25 @@ impl QuantumCircuit {
 
 /// Session manager for neuro-compilation
 pub struct SessionManager {
-    pub compilations: Vec<CompiledProgram>,
+    pub compilations:      Vec<CompiledProgram>,
     pub active_session_id: Option<Uuid>,
 }
 
 impl SessionManager {
     pub fn new() -> Self {
         Self {
-            compilations: Vec::new(),
+            compilations:      Vec::new(),
             active_session_id: None,
         }
     }
 
-    pub async fn record_compilation(
-        &mut self,
-        program: &CompiledProgram,
-    ) -> Result<(), NeuroError> {
+    pub async fn record_compilation(&mut self, program: &CompiledProgram) -> Result<(), NeuroError> {
         self.compilations.push(program.clone());
         log::debug!("Recorded compilation session: {}", program.id);
         Ok(())
     }
 
-    pub async fn get_recent_compilations(
-        &self,
-        limit: usize,
-    ) -> Result<Vec<CompiledProgram>, NeuroError> {
+    pub async fn get_recent_compilations(&self, limit: usize) -> Result<Vec<CompiledProgram>, NeuroError> {
         let start_index = if self.compilations.len() > limit {
             self.compilations.len() - limit
         } else {
@@ -618,9 +584,9 @@ mod tests {
     #[tokio::test]
     async fn test_code_construct_generation() {
         let construct = CodeConstruct::VariableDeclaration {
-            name: "test_var".to_string(),
+            name:      "test_var".to_string(),
             data_type: "i32".to_string(),
-            value: Some("42".to_string()),
+            value:     Some("42".to_string()),
         };
         let code = construct.to_code_string();
         assert!(code.contains("i32 test_var = 42;"));

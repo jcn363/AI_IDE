@@ -4,15 +4,16 @@
 //! Uses ML models trained on code patterns, historical performance data, and
 //! scaling characteristics to forecast potential performance issues.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 use crate::analysis::types::Range;
 
 /// Performance bottleneck forecasting engine
 #[derive(Debug)]
 pub struct PerformanceForecaster {
-    models: PerformanceModels,
+    models:                PerformanceModels,
     historical_thresholds: PerformanceThresholds,
 }
 
@@ -20,7 +21,7 @@ impl PerformanceForecaster {
     /// Create a new performance forecaster
     pub fn new() -> Self {
         Self {
-            models: PerformanceModels::default(),
+            models:                PerformanceModels::default(),
             historical_thresholds: PerformanceThresholds::default(),
         }
     }
@@ -169,15 +170,10 @@ impl PerformanceForecaster {
                     severity,
                     confidence,
                     predicted_impact: self.predict_concurrency_impact(&pattern),
-                    description: format!(
-                        "Predicted concurrency bottleneck: {}",
-                        pattern.description
-                    ),
+                    description: format!("Predicted concurrency bottleneck: {}", pattern.description),
                     locations: pattern.locations.clone(),
-                    scaling_recommendations: self
-                        .generate_concurrency_scaling_recommendations(pattern),
-                    estimated_mitigation_effort: self
-                        .estimate_concurrency_mitigation_effort(&pattern),
+                    scaling_recommendations: self.generate_concurrency_scaling_recommendations(pattern),
+                    estimated_mitigation_effort: self.estimate_concurrency_mitigation_effort(&pattern),
                     predicted_time_to_impact: pattern.time_to_impact,
                 });
             }
@@ -193,10 +189,8 @@ impl PerformanceForecaster {
         data: &HistoricalData,
     ) {
         for forecast in forecasts.iter_mut() {
-            let historical_adjustment =
-                analyze_historical_performance_trends(&forecast.bottleneck_type, data);
-            forecast.confidence =
-                (forecast.confidence * 0.8 + historical_adjustment * 0.2).min(1.0);
+            let historical_adjustment = analyze_historical_performance_trends(&forecast.bottleneck_type, data);
+            forecast.confidence = (forecast.confidence * 0.8 + historical_adjustment * 0.2).min(1.0);
         }
     }
 
@@ -337,8 +331,7 @@ impl PerformanceForecaster {
         let mut recommendations = Vec::new();
 
         if pattern.allocation_frequency > 100 {
-            recommendations
-                .push("Implement object pooling for frequently allocated objects".to_string());
+            recommendations.push("Implement object pooling for frequently allocated objects".to_string());
         }
 
         if pattern.memory_sharing_coefficient < 0.3 {
@@ -368,10 +361,7 @@ impl PerformanceForecaster {
         recommendations
     }
 
-    fn generate_concurrency_scaling_recommendations(
-        &self,
-        pattern: &ConcurrencyPattern,
-    ) -> Vec<String> {
+    fn generate_concurrency_scaling_recommendations(&self, pattern: &ConcurrencyPattern) -> Vec<String> {
         let mut recommendations = Vec::new();
 
         if pattern.lock_contentions > 10 {
@@ -394,13 +384,13 @@ impl PerformanceForecaster {
         let nesting_hours = pattern.nesting_depth as f32 * 2.0;
 
         EffortEstimate {
-            hours: (complexity_hours + nesting_hours) as u32,
+            hours:      (complexity_hours + nesting_hours) as u32,
             difficulty: if pattern.complexity > 40 {
                 EffortDifficulty::High
             } else {
                 EffortDifficulty::Medium
             },
-            team_size: if pattern.complexity > 50 { 2 } else { 1 },
+            team_size:  if pattern.complexity > 50 { 2 } else { 1 },
         }
     }
 
@@ -409,9 +399,9 @@ impl PerformanceForecaster {
         let sharing_hours = (1.0 - pattern.memory_sharing_coefficient) * 5.0;
 
         EffortEstimate {
-            hours: (allocation_hours + sharing_hours) as u32,
+            hours:      (allocation_hours + sharing_hours) as u32,
             difficulty: EffortDifficulty::Medium,
-            team_size: 1,
+            team_size:  1,
         }
     }
 
@@ -420,26 +410,23 @@ impl PerformanceForecaster {
         let blocking_penalty = if pattern.is_blocking { 3.0 } else { 0.0 };
 
         EffortEstimate {
-            hours: (operation_hours + blocking_penalty) as u32,
+            hours:      (operation_hours + blocking_penalty) as u32,
             difficulty: if pattern.is_blocking {
                 EffortDifficulty::Medium
             } else {
                 EffortDifficulty::Low
             },
-            team_size: 1,
+            team_size:  1,
         }
     }
 
-    fn estimate_concurrency_mitigation_effort(
-        &self,
-        pattern: &ConcurrencyPattern,
-    ) -> EffortEstimate {
+    fn estimate_concurrency_mitigation_effort(&self, pattern: &ConcurrencyPattern) -> EffortEstimate {
         let contention_hours = pattern.lock_contentions as f32 * 0.5;
 
         EffortEstimate {
-            hours: contention_hours as u32,
+            hours:      contention_hours as u32,
             difficulty: EffortDifficulty::High,
-            team_size: if pattern.lock_contentions > 20 { 2 } else { 1 },
+            team_size:  if pattern.lock_contentions > 20 { 2 } else { 1 },
         }
     }
 }
@@ -447,18 +434,18 @@ impl PerformanceForecaster {
 /// Machine learning models for performance prediction
 #[derive(Debug)]
 struct PerformanceModels {
-    cpu_model: CpuPredictionModel,
-    memory_model: MemoryPredictionModel,
-    io_model: IoPredictionModel,
+    cpu_model:         CpuPredictionModel,
+    memory_model:      MemoryPredictionModel,
+    io_model:          IoPredictionModel,
     concurrency_model: ConcurrencyPredictionModel,
 }
 
 impl Default for PerformanceModels {
     fn default() -> Self {
         Self {
-            cpu_model: CpuPredictionModel::default(),
-            memory_model: MemoryPredictionModel::default(),
-            io_model: IoPredictionModel::default(),
+            cpu_model:         CpuPredictionModel::default(),
+            memory_model:      MemoryPredictionModel::default(),
+            io_model:          IoPredictionModel::default(),
             concurrency_model: ConcurrencyPredictionModel::default(),
         }
     }
@@ -487,80 +474,80 @@ struct ConcurrencyPredictionModel {
 /// Performance thresholds learned from historical data
 #[derive(Debug, Default)]
 struct PerformanceThresholds {
-    cpu_usage_threshold: f32,
-    memory_usage_threshold: f32,
-    io_operations_threshold: u64,
+    cpu_usage_threshold:       f32,
+    memory_usage_threshold:    f32,
+    io_operations_threshold:   u64,
     lock_contention_threshold: u32,
 }
 
 /// Pattern analysis results
 #[derive(Debug)]
 struct CpuBoundPattern {
-    complexity: u32,
-    nesting_depth: u32,
-    description: String,
-    locations: Vec<CodeLocation>,
-    time_to_impact: TimeToImpact,
+    complexity:        u32,
+    nesting_depth:     u32,
+    description:       String,
+    locations:         Vec<CodeLocation>,
+    time_to_impact:    TimeToImpact,
     scaling_threshold: ScaleThreshold,
 }
 
 #[derive(Debug)]
 struct MemoryPattern {
-    allocation_frequency: u32,
+    allocation_frequency:       u32,
     memory_sharing_coefficient: f32,
-    description: String,
-    locations: Vec<CodeLocation>,
-    time_to_impact: TimeToImpact,
-    scale_threshold: ScaleThreshold,
+    description:                String,
+    locations:                  Vec<CodeLocation>,
+    time_to_impact:             TimeToImpact,
+    scale_threshold:            ScaleThreshold,
 }
 
 #[derive(Debug)]
 struct IoPattern {
     operations_count: u64,
-    is_blocking: bool,
-    description: String,
-    locations: Vec<CodeLocation>,
-    time_to_impact: TimeToImpact,
-    scale_threshold: ScaleThreshold,
+    is_blocking:      bool,
+    description:      String,
+    locations:        Vec<CodeLocation>,
+    time_to_impact:   TimeToImpact,
+    scale_threshold:  ScaleThreshold,
 }
 
 #[derive(Debug)]
 struct ConcurrencyPattern {
-    lock_contentions: u32,
+    lock_contentions:    u32,
     parallelism_streams: u32,
-    description: String,
-    locations: Vec<CodeLocation>,
-    time_to_impact: TimeToImpact,
-    scale_threshold: ScaleThreshold,
+    description:         String,
+    locations:           Vec<CodeLocation>,
+    time_to_impact:      TimeToImpact,
+    scale_threshold:     ScaleThreshold,
 }
 
 /// Core data structures
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceBottleneckForecast {
-    pub bottleneck_type: BottleneckType,
-    pub severity: BottleneckSeverity,
-    pub confidence: f32,
-    pub predicted_impact: ImpactEstimate,
-    pub description: String,
-    pub locations: Vec<CodeLocation>,
-    pub scaling_recommendations: Vec<String>,
+    pub bottleneck_type:             BottleneckType,
+    pub severity:                    BottleneckSeverity,
+    pub confidence:                  f32,
+    pub predicted_impact:            ImpactEstimate,
+    pub description:                 String,
+    pub locations:                   Vec<CodeLocation>,
+    pub scaling_recommendations:     Vec<String>,
     pub estimated_mitigation_effort: EffortEstimate,
-    pub predicted_time_to_impact: TimeToImpact,
+    pub predicted_time_to_impact:    TimeToImpact,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImpactEstimate {
-    pub user_experience: f32,
+    pub user_experience:         f32,
     pub performance_degradation: f32,
-    pub business_impact: f32,
-    pub scale_threshold: ScaleThreshold,
+    pub business_impact:         f32,
+    pub scale_threshold:         ScaleThreshold,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EffortEstimate {
-    pub hours: u32,
+    pub hours:      u32,
     pub difficulty: EffortDifficulty,
-    pub team_size: u32,
+    pub team_size:  u32,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -606,10 +593,10 @@ pub enum ScaleThreshold {
 /// Code location for performance patterns
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeLocation {
-    pub file_path: String,
+    pub file_path:   String,
     pub line_number: u32,
-    pub column: u32,
-    pub range: Option<Range>,
+    pub column:      u32,
+    pub range:       Option<Range>,
 }
 
 // Pattern analysis functions (implementations would analyze actual codebase)
@@ -633,14 +620,10 @@ fn analyze_concurrency_patterns(_project_path: &str) -> Vec<ConcurrencyPattern> 
     Vec::new()
 }
 
-fn analyze_historical_performance_trends(
-    _bottleneck_type: &BottleneckType,
-    _data: &HistoricalData,
-) -> f32 {
+fn analyze_historical_performance_trends(_bottleneck_type: &BottleneckType, _data: &HistoricalData) -> f32 {
     // Implementation would analyze historical performance data
     0.5
 }
 
 // Re-export for public use
-pub use super::HistoricalData;
-pub use super::PredictiveError;
+pub use super::{HistoricalData, PredictiveError};

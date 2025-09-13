@@ -4,12 +4,6 @@
 //! resolving errors with AI assistance, and explaining error codes.
 
 // Import centralized diagnostic types
-use crate::diagnostics::{
-    ChangeType, CodeChange, CompilerDiagnostic, CompilerDiagnosticsRequest,
-    CompilerDiagnosticsResult, CompilerErrorCode, CompilerSpan, DocumentationLink,
-    ErrorCodeExplanation, ErrorExample, EstimatedEffort, FixSuggestion, FixType, SpanText,
-};
-
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
@@ -17,21 +11,26 @@ use std::sync::Arc;
 use anyhow::Result;
 use rust_ai_ide_core::shell_utils::{cargo, rustc};
 use rust_ai_ide_lsp::error_resolution::FixType;
+use rust_ai_ide_lsp::AIService;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use tauri::State;
 use uuid::Uuid;
 
 use crate::command_templates::*;
-use rust_ai_ide_lsp::AIService;
+use crate::diagnostics::{
+    ChangeType, CodeChange, CompilerDiagnostic, CompilerDiagnosticsRequest, CompilerDiagnosticsResult,
+    CompilerErrorCode, CompilerSpan, DocumentationLink, ErrorCodeExplanation, ErrorExample, EstimatedEffort,
+    FixSuggestion, FixType, SpanText,
+};
 
 /// Error resolution request
 #[derive(Debug, Deserialize)]
 pub struct ErrorResolutionRequest {
-    pub file_path: String,
-    pub content: String,
-    pub errors: Vec<String>,
-    pub cursor_position: Option<(u32, u32)>,
+    pub file_path:            String,
+    pub content:              String,
+    pub errors:               Vec<String>,
+    pub cursor_position:      Option<(u32, u32)>,
     pub use_learned_patterns: bool,
 }
 
@@ -50,8 +49,7 @@ pub async fn get_compiler_diagnostics(
 
     // Run cargo check using unified utility
     let workspace_path_buf = Path::new(&request.workspace_path);
-    let result = cargo::check(workspace_path_buf)
-        .map_err(|e| format!("Failed to run cargo check: {}", e))?;
+    let result = cargo::check(workspace_path_buf).map_err(|e| format!("Failed to run cargo check: {}", e))?;
 
     if !result.success {
         return Err(format!("Cargo check failed: {}", result.stderr).into());
@@ -110,18 +108,17 @@ pub async fn resolve_errors_with_ai(
         .ok_or("AI service not initialized")?;
 
     pub use rust_ai_ide_lsp::learning::types::AnalysisPreferences;
+    use rust_ai_ide_lsp::learning::types::AnalysisPreferences;
     use rust_ai_ide_lsp::AIContext;
 
-    use rust_ai_ide_lsp::learning::types::AnalysisPreferences;
-
     let context = AIContext {
-        current_code: request.content,
-        file_name: Some(request.file_path.clone()),
-        cursor_position: request.cursor_position,
-        selection: None,
-        project_context: HashMap::new(),
-        dependencies: Vec::new(),
-        workspace_structure: HashMap::new(),
+        current_code:         request.content,
+        file_name:            Some(request.file_path.clone()),
+        cursor_position:      request.cursor_position,
+        selection:            None,
+        project_context:      HashMap::new(),
+        dependencies:         Vec::new(),
+        workspace_structure:  HashMap::new(),
         analysis_preferences: AnalysisPreferences::default(),
     };
 
@@ -138,18 +135,15 @@ pub async fn resolve_errors_with_ai(
                     // Convert learned pattern to fix suggestion
                     use rust_ai_ide_lsp::LearnedPattern;
                     let learned_fix = FixSuggestion {
-                        id: format!("learned_{}", pattern.id),
-                        title: format!("Learned fix: {}", pattern.successful_fix.title),
-                        description: format!(
-                            "Based on {} successful applications",
-                            pattern.success_count
-                        ),
-                        fix_type: pattern.successful_fix.fix_type,
-                        changes: pattern.successful_fix.changes,
-                        confidence: pattern.confidence,
+                        id:               format!("learned_{}", pattern.id),
+                        title:            format!("Learned fix: {}", pattern.successful_fix.title),
+                        description:      format!("Based on {} successful applications", pattern.success_count),
+                        fix_type:         pattern.successful_fix.fix_type,
+                        changes:          pattern.successful_fix.changes,
+                        confidence:       pattern.confidence,
                         estimated_effort: pattern.successful_fix.estimated_effort,
-                        benefits: pattern.successful_fix.benefits,
-                        risks: pattern.successful_fix.risks,
+                        benefits:         pattern.successful_fix.benefits,
+                        risks:            pattern.successful_fix.risks,
                     };
                     fixes.push(learned_fix);
                 }
@@ -177,7 +171,7 @@ pub fn parse_compiler_diagnostic(message: &serde_json::Value) -> Option<Compiler
 
     let code = if let Some(code_obj) = message.get("code") {
         Some(CompilerErrorCode {
-            code: code_obj.get("code")?.as_str()?.to_string(),
+            code:        code_obj.get("code")?.as_str()?.to_string(),
             explanation: code_obj
                 .get("explanation")
                 .and_then(|e| e.as_str())
@@ -193,8 +187,7 @@ pub fn parse_compiler_diagnostic(message: &serde_json::Value) -> Option<Compiler
         Vec::new()
     };
 
-    let children = if let Some(children_array) = message.get("children").and_then(|c| c.as_array())
-    {
+    let children = if let Some(children_array) = message.get("children").and_then(|c| c.as_array()) {
         children_array
             .iter()
             .filter_map(parse_compiler_diagnostic)
@@ -290,8 +283,8 @@ pub fn parse_span_text(text: &serde_json::Value) -> Option<SpanText> {
 /// Get error code explanation from rustc
 pub async fn get_error_code_explanation(error_code: &str) -> Result<ErrorCodeExplanation> {
     // Run rustc --explain using unified utility
-    let result = rustc::explain_error(error_code)
-        .map_err(|e| anyhow::anyhow!("Failed to run rustc --explain: {}", e))?;
+    let result =
+        rustc::explain_error(error_code).map_err(|e| anyhow::anyhow!("Failed to run rustc --explain: {}", e))?;
 
     if !result.success {
         return Err(anyhow::anyhow!("Rustc explain failed: {}", result.stderr));
@@ -307,13 +300,13 @@ pub async fn get_error_code_explanation(error_code: &str) -> Result<ErrorCodeExp
     // Generate documentation links
     let documentation_links = vec![
         DocumentationLink {
-            title: format!("Rust Error Index - {}", error_code),
-            url: format!("https://doc.rust-lang.org/error-index.html#{}", error_code),
+            title:       format!("Rust Error Index - {}", error_code),
+            url:         format!("https://doc.rust-lang.org/error-index.html#{}", error_code),
             description: "Official Rust documentation for this error".to_string(),
         },
         DocumentationLink {
-            title: "Rust Book".to_string(),
-            url: "https://doc.rust-lang.org/book/".to_string(),
+            title:       "Rust Book".to_string(),
+            url:         "https://doc.rust-lang.org/book/".to_string(),
             description: "The Rust Programming Language book".to_string(),
         },
     ];
@@ -328,35 +321,33 @@ pub async fn get_error_code_explanation(error_code: &str) -> Result<ErrorCodeExp
 }
 
 /// Generate suggested fixes from compiler diagnostic
-pub async fn generate_suggested_fixes(
-    diagnostic: &CompilerDiagnostic,
-) -> Result<Vec<FixSuggestion>> {
+pub async fn generate_suggested_fixes(diagnostic: &CompilerDiagnostic) -> Result<Vec<FixSuggestion>> {
     let mut fixes = Vec::new();
 
     // Extract suggestions from compiler spans
     for span in &diagnostic.spans {
         if let Some(replacement) = &span.suggested_replacement {
             let fix = FixSuggestion {
-                id: uuid::Uuid::new_v4().to_string(),
-                title: format!("Apply compiler suggestion"),
-                description: span
+                id:               uuid::Uuid::new_v4().to_string(),
+                title:            format!("Apply compiler suggestion"),
+                description:      span
                     .label
                     .clone()
                     .unwrap_or_else(|| "Compiler suggested fix".to_string()),
-                fix_type: rust_ai_ide_lsp::error_resolution::FixType::QuickFix,
-                changes: vec![CodeChange {
-                    file_path: span.file_name.clone(),
-                    range: (
+                fix_type:         rust_ai_ide_lsp::error_resolution::FixType::QuickFix,
+                changes:          vec![CodeChange {
+                    file_path:   span.file_name.clone(),
+                    range:       (
                         span.line_start,
                         span.column_start,
                         span.line_end,
                         span.column_end,
                     ),
-                    old_text: String::new(), // Would need to extract from source
-                    new_text: replacement.clone(),
+                    old_text:    String::new(), // Would need to extract from source
+                    new_text:    replacement.clone(),
                     change_type: crate::diagnostics::ChangeType::Replace,
                 }],
-                confidence: if span
+                confidence:       if span
                     .suggestion_applicability
                     .as_ref()
                     .map_or(false, |a| a == "machine-applicable")
@@ -366,8 +357,8 @@ pub async fn generate_suggested_fixes(
                     0.7
                 },
                 estimated_effort: "Low".to_string(),
-                benefits: vec!["Fixes compiler error".to_string()],
-                risks: vec![],
+                benefits:         vec!["Fixes compiler error".to_string()],
+                risks:            vec![],
             };
             fixes.push(fix);
         }

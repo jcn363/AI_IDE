@@ -1,6 +1,8 @@
-use crate::{AiRequest, AiResponse, IDEResult};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::{AiRequest, AiResponse, IDEResult};
 
 /// Types of analysis that can be performed
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,13 +39,13 @@ impl AnalysisType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisConfig {
     /// Type of analysis
-    pub analysis_type: AnalysisType,
+    pub analysis_type:   AnalysisType,
     /// Analysis parameters
-    pub parameters: HashMap<String, serde_json::Value>,
+    pub parameters:      HashMap<String, serde_json::Value>,
     /// Maximum time to spend on analysis
     pub timeout_seconds: Option<u64>,
     /// Importance level of issues to report
-    pub min_severity: Severity,
+    pub min_severity:    Severity,
 }
 
 /// Severity levels for analysis results
@@ -75,30 +77,30 @@ impl Severity {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisIssue {
     /// Issue identifier
-    pub id: String,
+    pub id:          String,
     /// Issue title
-    pub title: String,
+    pub title:       String,
     /// Issue description
     pub description: String,
     /// Severity level
-    pub severity: Severity,
+    pub severity:    Severity,
     /// Location in code
-    pub location: Option<CodeLocation>,
+    pub location:    Option<CodeLocation>,
     /// Suggested fix
-    pub suggestion: Option<String>,
+    pub suggestion:  Option<String>,
     /// Additional metadata
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata:    HashMap<String, serde_json::Value>,
 }
 
 /// Location in source code
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeLocation {
     /// File path
-    pub file: String,
+    pub file:    String,
     /// Line number (1-based)
-    pub line: Option<u32>,
+    pub line:    Option<u32>,
     /// Column number (1-based)
-    pub column: Option<u32>,
+    pub column:  Option<u32>,
     /// Code snippet
     pub snippet: Option<String>,
 }
@@ -107,15 +109,15 @@ pub struct CodeLocation {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AnalysisResult {
     /// Analysis configuration
-    pub config: AnalysisConfig,
+    pub config:           AnalysisConfig,
     /// List of issues found
-    pub issues: Vec<AnalysisIssue>,
+    pub issues:           Vec<AnalysisIssue>,
     /// Summary of analysis
-    pub summary: Option<String>,
+    pub summary:          Option<String>,
     /// Analysis duration in seconds
     pub duration_seconds: f64,
     /// Metadata about the analysis process
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata:         HashMap<String, serde_json::Value>,
 }
 
 /// Analysis service for performing AI-powered code analysis
@@ -131,11 +133,7 @@ impl AnalysisService {
     }
 
     /// Perform analysis on code
-    pub async fn analyze_code(
-        &self,
-        code: &str,
-        config: AnalysisConfig,
-    ) -> IDEResult<AnalysisResult> {
+    pub async fn analyze_code(&self, code: &str, config: AnalysisConfig) -> IDEResult<AnalysisResult> {
         let mut issues = Vec::new();
         let start_time = std::time::Instant::now();
 
@@ -144,10 +142,10 @@ impl AnalysisService {
         let ai_config = config_to_ai_config(&config);
 
         let request = AiRequest {
-            session_id: uuid::Uuid::new_v4(),
-            input: crate::AiInput::Text { prompt },
+            session_id:   uuid::Uuid::new_v4(),
+            input:        crate::AiInput::Text { prompt },
             model_config: ai_config,
-            context: None,
+            context:      None,
         };
 
         let response = self.ai_service.process_request(request).await?;
@@ -180,10 +178,7 @@ impl AnalysisService {
     }
 
     /// Parse AI response into analysis result
-    fn parse_analysis_response(
-        &self,
-        _response: &AiResponse,
-    ) -> IDEResult<(Vec<AnalysisIssue>, String)> {
+    fn parse_analysis_response(&self, _response: &AiResponse) -> IDEResult<(Vec<AnalysisIssue>, String)> {
         // For now, return empty result. In practice, this would parse the AI response.
         Ok((Vec::new(), "Analysis completed successfully".to_string()))
     }
@@ -199,9 +194,9 @@ pub trait AiServiceTrait: Send + Sync {
 /// Convert analysis config to AI model config
 fn config_to_ai_config(_config: &AnalysisConfig) -> crate::AiModelConfig {
     crate::AiModelConfig {
-        model_name: "gpt-4".to_string(), // Default model
+        model_name:  "gpt-4".to_string(), // Default model
         temperature: 0.7,
-        max_tokens: Some(1000),
-        parameters: HashMap::new(),
+        max_tokens:  Some(1000),
+        parameters:  HashMap::new(),
     }
 }

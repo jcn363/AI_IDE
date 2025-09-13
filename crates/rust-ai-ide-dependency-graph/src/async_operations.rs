@@ -1,8 +1,9 @@
 //! Async operations for dependency graph processing
 
-use futures::stream::{self, StreamExt};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use futures::stream::{self, StreamExt};
 use tokio::sync::{mpsc, RwLock, Semaphore};
 use tokio::task;
 
@@ -14,26 +15,26 @@ use crate::resolver::*;
 #[derive(Debug, Clone)]
 pub struct AsyncOperationConfig {
     pub max_concurrent_operations: usize,
-    pub operation_timeout_secs: u64,
-    pub batch_size: usize,
+    pub operation_timeout_secs:    u64,
+    pub batch_size:                usize,
 }
 
 impl Default for AsyncOperationConfig {
     fn default() -> Self {
         Self {
             max_concurrent_operations: 5,
-            operation_timeout_secs: 30,
-            batch_size: 10,
+            operation_timeout_secs:    30,
+            batch_size:                10,
         }
     }
 }
 
 /// Async graph processor for handling concurrent dependency operations
 pub struct AsyncGraphProcessor {
-    graph: Arc<RwLock<DependencyGraph>>,
-    resolver: Arc<DependencyResolver>,
-    cache: Arc<GraphCache>,
-    config: AsyncOperationConfig,
+    graph:     Arc<RwLock<DependencyGraph>>,
+    resolver:  Arc<DependencyResolver>,
+    cache:     Arc<GraphCache>,
+    config:    AsyncOperationConfig,
     semaphore: Arc<Semaphore>,
 }
 
@@ -72,7 +73,7 @@ pub enum OperationResult {
         resolved_versions: HashMap<String, String>,
     },
     Validation {
-        is_valid: bool,
+        is_valid:  bool,
         conflicts: Vec<String>,
     },
     Analysis {
@@ -89,18 +90,14 @@ pub enum OperationResult {
 /// Async operation result wrapper
 #[derive(Debug, Clone)]
 pub struct AsyncResult {
-    pub operation_id: String,
-    pub result: Result<OperationResult, DependencyError>,
+    pub operation_id:      String,
+    pub result:            Result<OperationResult, DependencyError>,
     pub execution_time_ms: u64,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:         chrono::DateTime<chrono::Utc>,
 }
 
 impl AsyncGraphProcessor {
-    pub fn new(
-        graph: Arc<RwLock<DependencyGraph>>,
-        resolver: Arc<DependencyResolver>,
-        cache: Arc<GraphCache>,
-    ) -> Self {
+    pub fn new(graph: Arc<RwLock<DependencyGraph>>, resolver: Arc<DependencyResolver>, cache: Arc<GraphCache>) -> Self {
         Self::with_config(graph, resolver, cache, AsyncOperationConfig::default())
     }
 
@@ -120,35 +117,23 @@ impl AsyncGraphProcessor {
     }
 
     /// Execute a single async operation
-    pub async fn execute_operation(
-        &self,
-        operation: AsyncOperation,
-    ) -> DependencyResult<OperationResult> {
-        let _permit =
-            self.semaphore
-                .acquire()
-                .await
-                .map_err(|e| DependencyError::ResolutionError {
-                    package: "semaphore".to_string(),
-                    reason: format!("Failed to acquire semaphore: {}", e),
-                })?;
+    pub async fn execute_operation(&self, operation: AsyncOperation) -> DependencyResult<OperationResult> {
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
+            .map_err(|e| DependencyError::ResolutionError {
+                package: "semaphore".to_string(),
+                reason:  format!("Failed to acquire semaphore: {}", e),
+            })?;
 
         match operation {
-            AsyncOperation::ResolveDependencies { package_name } => {
-                self.resolve_dependencies(package_name).await
-            }
-            AsyncOperation::UpdatePackageVersions { package_versions } => {
-                self.update_package_versions(package_versions).await
-            }
-            AsyncOperation::ValidateConflicts { check_workspace } => {
-                self.validate_conflicts(check_workspace).await
-            }
-            AsyncOperation::AnalyzeDependencies { analysis_type } => {
-                self.analyze_dependencies(analysis_type).await
-            }
-            AsyncOperation::UpdateCache { invalidate_all } => {
-                self.update_cache(invalidate_all).await
-            }
+            AsyncOperation::ResolveDependencies { package_name } => self.resolve_dependencies(package_name).await,
+            AsyncOperation::UpdatePackageVersions { package_versions } =>
+                self.update_package_versions(package_versions).await,
+            AsyncOperation::ValidateConflicts { check_workspace } => self.validate_conflicts(check_workspace).await,
+            AsyncOperation::AnalyzeDependencies { analysis_type } => self.analyze_dependencies(analysis_type).await,
+            AsyncOperation::UpdateCache { invalidate_all } => self.update_cache(invalidate_all).await,
         }
     }
 
@@ -166,18 +151,17 @@ impl AsyncGraphProcessor {
         );
 
         // Process operations in parallel using futures streams
-        let results: Vec<Result<(String, OperationResult), DependencyError>> =
-            stream::iter(operations)
-                .map(|(id, op)| {
-                    let processor = &self;
-                    async move {
-                        let result = processor.execute_operation(op).await;
-                        result.map(|res| (id, res))
-                    }
-                })
-                .buffer_unordered(self.config.max_concurrent_operations)
-                .collect()
-                .await;
+        let results: Vec<Result<(String, OperationResult), DependencyError>> = stream::iter(operations)
+            .map(|(id, op)| {
+                let processor = &self;
+                async move {
+                    let result = processor.execute_operation(op).await;
+                    result.map(|res| (id, res))
+                }
+            })
+            .buffer_unordered(self.config.max_concurrent_operations)
+            .collect()
+            .await;
 
         let execution_time = start_time.elapsed().as_millis() as u64;
 
@@ -189,18 +173,18 @@ impl AsyncGraphProcessor {
             match result {
                 Ok((id, operation_result)) => {
                     successful.push(AsyncResult {
-                        operation_id: id,
-                        result: Ok(operation_result),
+                        operation_id:      id,
+                        result:            Ok(operation_result),
                         execution_time_ms: execution_time,
-                        timestamp: chrono::Utc::now(),
+                        timestamp:         chrono::Utc::now(),
                     });
                 }
                 Err(e) => {
                     failed.push(AsyncResult {
-                        operation_id: format!("failed-{}", chrono::Utc::now().timestamp()),
-                        result: Err(e),
+                        operation_id:      format!("failed-{}", chrono::Utc::now().timestamp()),
+                        result:            Err(e),
                         execution_time_ms: execution_time,
-                        timestamp: chrono::Utc::now(),
+                        timestamp:         chrono::Utc::now(),
                     });
                 }
             }
@@ -217,11 +201,7 @@ impl AsyncGraphProcessor {
     }
 
     /// Stream processing for large dependency sets
-    pub async fn process_stream<T, F, Fut>(
-        &self,
-        items: Vec<T>,
-        processor: F,
-    ) -> DependencyResult<Vec<AsyncResult>>
+    pub async fn process_stream<T, F, Fut>(&self, items: Vec<T>, processor: F) -> DependencyResult<Vec<AsyncResult>>
     where
         F: Fn(T) -> Fut + Clone + Send + Sync + 'static,
         Fut: std::future::Future<Output = DependencyResult<OperationResult>> + Send,
@@ -251,14 +231,11 @@ impl AsyncGraphProcessor {
     }
 
     // Operation implementations
-    async fn resolve_dependencies(
-        &self,
-        package_name: String,
-    ) -> DependencyResult<OperationResult> {
+    async fn resolve_dependencies(&self, package_name: String) -> DependencyResult<OperationResult> {
         let cache_key = DependencyResolutionKey {
-            root_package: package_name.clone(),
+            root_package:        package_name.clone(),
             resolution_strategy: format!("{:?}", self.resolver.strategy),
-            constraints: HashMap::new(),
+            constraints:         HashMap::new(),
         };
 
         // Check cache first
@@ -318,10 +295,7 @@ impl AsyncGraphProcessor {
         })
     }
 
-    async fn analyze_dependencies(
-        &self,
-        analysis_type: AnalysisType,
-    ) -> DependencyResult<OperationResult> {
+    async fn analyze_dependencies(&self, analysis_type: AnalysisType) -> DependencyResult<OperationResult> {
         let graph = self.graph.read().await;
         let stats = graph.get_statistics();
 
@@ -347,7 +321,7 @@ impl AsyncGraphProcessor {
             AnalysisType::Licensing => {
                 analysis_results.insert(
                     "license_compliance".to_string(),
-                    serde_json::json!({"compliant": true, "licenses_checked": stats.total_packages})
+                    serde_json::json!({"compliant": true, "licenses_checked": stats.total_packages}),
                 );
             }
             AnalysisType::Comprehensive => {
@@ -390,9 +364,9 @@ impl AsyncGraphProcessor {
 
 /// Actor-based async processor for handling multiple concurrent operations
 pub struct AsyncProcessorActor {
-    processor: Arc<AsyncGraphProcessor>,
+    processor:    Arc<AsyncGraphProcessor>,
     operation_tx: mpsc::Sender<(String, AsyncOperation)>,
-    result_rx: mpsc::Receiver<AsyncResult>,
+    result_rx:    mpsc::Receiver<AsyncResult>,
 }
 
 impl AsyncProcessorActor {
@@ -433,17 +407,13 @@ impl AsyncProcessorActor {
     }
 
     /// Submit an operation for async processing
-    pub async fn submit_operation(
-        &self,
-        operation_id: String,
-        operation: AsyncOperation,
-    ) -> DependencyResult<()> {
+    pub async fn submit_operation(&self, operation_id: String, operation: AsyncOperation) -> DependencyResult<()> {
         self.operation_tx
             .send((operation_id, operation))
             .await
             .map_err(|e| DependencyError::ResolutionError {
                 package: "actor".to_string(),
-                reason: format!("Failed to submit operation: {}", e),
+                reason:  format!("Failed to submit operation: {}", e),
             })
     }
 
@@ -460,8 +430,8 @@ impl AsyncProcessorActor {
 
 /// Batch operation queue for managing large-scale dependency processing
 pub struct BatchOperationQueue {
-    queue: Arc<RwLock<Vec<(String, AsyncOperation)>>>,
-    processor: Arc<AsyncProcessorActor>,
+    queue:      Arc<RwLock<Vec<(String, AsyncOperation)>>>,
+    processor:  Arc<AsyncProcessorActor>,
     batch_size: usize,
 }
 
@@ -475,11 +445,7 @@ impl BatchOperationQueue {
     }
 
     /// Add operation to queue
-    pub async fn enqueue(
-        &self,
-        operation_id: String,
-        operation: AsyncOperation,
-    ) -> DependencyResult<()> {
+    pub async fn enqueue(&self, operation_id: String, operation: AsyncOperation) -> DependencyResult<()> {
         let mut queue = self.queue.write().await;
         queue.push((operation_id, operation));
 

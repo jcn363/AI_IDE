@@ -1,19 +1,16 @@
 //! Cargo check analyzer implementation
 
-use crate::{
-    analyzers::{Analyzer, AnalyzerConfig},
-    config::Config,
-    errors::{MonitoringError, Result},
-    parse::{cargo_check_workspace, CargoJsonParser},
-    types::{
-        AnalysisPerformance, AnalysisResult, Category, Finding, Severity, SystemInfo,
-        WorkspaceTarget,
-    },
-};
+use std::path::Path;
+
 use async_trait::async_trait;
 use chrono::Utc;
-use std::path::Path;
 use sysinfo::System;
+
+use crate::analyzers::{Analyzer, AnalyzerConfig};
+use crate::config::Config;
+use crate::errors::{MonitoringError, Result};
+use crate::parse::{cargo_check_workspace, CargoJsonParser};
+use crate::types::{AnalysisPerformance, AnalysisResult, Category, Finding, Severity, SystemInfo, WorkspaceTarget};
 
 /// Analyzer for cargo check output
 pub struct CargoCheckAnalyzer {
@@ -28,7 +25,7 @@ impl CargoCheckAnalyzer {
     /// Create a new cargo check analyzer
     pub fn new() -> Self {
         Self {
-            config: Config::default(),
+            config:      Config::default(),
             system_info: None,
         }
     }
@@ -47,12 +44,12 @@ impl CargoCheckAnalyzer {
             let system = System::new_all();
 
             self.system_info = Some(SystemInfo {
-                os: std::env::consts::OS.to_string(),
-                arch: std::env::consts::ARCH.to_string(),
-                rust_version: self.get_rust_version()?,
-                cargo_version: self.get_cargo_version()?,
-                cpu_count: num_cpus::get(),
-                total_memory_mb: (system.total_memory() / 1024 / 1024) as usize,
+                os:                  std::env::consts::OS.to_string(),
+                arch:                std::env::consts::ARCH.to_string(),
+                rust_version:        self.get_rust_version()?,
+                cargo_version:       self.get_cargo_version()?,
+                cpu_count:           num_cpus::get(),
+                total_memory_mb:     (system.total_memory() / 1024 / 1024) as usize,
                 available_memory_mb: (system.available_memory() / 1024 / 1024) as usize,
             });
         }
@@ -149,16 +146,13 @@ impl CargoCheckAnalyzer {
     }
 
     /// Get workspace targets to analyze
-    async fn discover_workspace_targets(
-        &self,
-        workspace_root: &Path,
-    ) -> Result<Vec<WorkspaceTarget>> {
+    async fn discover_workspace_targets(&self, workspace_root: &Path) -> Result<Vec<WorkspaceTarget>> {
         // Simple implementation - in practice, this would parse Cargo.toml files
         // For now, just return a basic target for the workspace root
         let target = WorkspaceTarget {
-            name: "workspace".to_string(),
-            path: workspace_root.to_path_buf(),
-            kind: "lib".to_string(),
+            name:    "workspace".to_string(),
+            path:    workspace_root.to_path_buf(),
+            kind:    "lib".to_string(),
             enabled: true,
         };
 
@@ -233,7 +227,7 @@ impl Analyzer for CargoCheckAnalyzer {
 impl Clone for CargoCheckAnalyzer {
     fn clone(&self) -> Self {
         Self {
-            config: self.config.clone(),
+            config:      self.config.clone(),
             system_info: self.system_info.clone(),
         }
     }
@@ -247,8 +241,9 @@ impl Default for CargoCheckAnalyzer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::path::PathBuf;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_analyzer_creation() {

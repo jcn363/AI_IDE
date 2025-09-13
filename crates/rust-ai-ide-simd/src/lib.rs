@@ -34,15 +34,15 @@ pub use operations::*;
 /// SIMD processor for managing vectorized computation operations
 pub struct SIMDProcessor {
     /// SIMD capability information for the current platform
-    capabilities: SIMDCapabilities,
+    capabilities:        SIMDCapabilities,
     /// Vector operation dispatcher optimized for current capabilities
-    vector_dispatcher: VectorDispatcher,
+    vector_dispatcher:   VectorDispatcher,
     /// Memory management for SIMD-aligned allocations
-    memory_manager: SIMDAllocator,
+    memory_manager:      SIMDAllocator,
     /// Performance monitoring for SIMD operations
     performance_monitor: SIMDPerformanceMonitor,
     /// Fallback strategies for unsupported operations
-    fallback_manager: SIMDFallbackManager,
+    fallback_manager:    SIMDFallbackManager,
 }
 
 impl SIMDProcessor {
@@ -51,11 +51,11 @@ impl SIMDProcessor {
         let capabilities = detect_simd_capabilities()?;
 
         Ok(Self {
-            capabilities: capabilities.clone(),
-            vector_dispatcher: VectorDispatcher::new(),
-            memory_manager: SIMDAllocator::new(),
+            capabilities:        capabilities.clone(),
+            vector_dispatcher:   VectorDispatcher::new(),
+            memory_manager:      SIMDAllocator::new(),
             performance_monitor: SIMDPerformanceMonitor::new(),
-            fallback_manager: SIMDFallbackManager::new(capabilities),
+            fallback_manager:    SIMDFallbackManager::new(capabilities),
         })
     }
 
@@ -155,24 +155,14 @@ impl SIMDProcessor {
 
 // SIMD operation implementations
 impl SIMDProcessor {
-    fn vectorized_f32x8_operations<F>(
-        &mut self,
-        lhs: &[f32],
-        rhs: &[f32],
-        operation: F,
-    ) -> Result<Vec<f32>, SIMDError>
+    fn vectorized_f32x8_operations<F>(&mut self, lhs: &[f32], rhs: &[f32], operation: F) -> Result<Vec<f32>, SIMDError>
     where
         F: Fn(f32, f32) -> f32,
     {
         self.vector_dispatcher.dispatch_f32x8(lhs, rhs, &operation)
     }
 
-    fn vectorized_f32x4_operations<F>(
-        &mut self,
-        lhs: &[f32],
-        rhs: &[f32],
-        operation: F,
-    ) -> Result<Vec<f32>, SIMDError>
+    fn vectorized_f32x4_operations<F>(&mut self, lhs: &[f32], rhs: &[f32], operation: F) -> Result<Vec<f32>, SIMDError>
     where
         F: Fn(f32, f32) -> f32,
     {
@@ -214,9 +204,9 @@ impl SIMDProcessor {
 
 /// SIMD vector wrapper for safe SIMD memory management
 pub struct SIMDVector<T> {
-    ptr: NonNull<T>,
-    len: usize,
-    capacity: usize,
+    ptr:       NonNull<T>,
+    len:       usize,
+    capacity:  usize,
     alignment: usize,
 }
 
@@ -248,8 +238,7 @@ unsafe impl<T> Sync for SIMDVector<T> {}
 impl<T> Drop for SIMDVector<T> {
     fn drop(&mut self) {
         if self.capacity > 0 {
-            let layout =
-                Layout::from_size_align(self.capacity * size_of::<T>(), self.alignment).unwrap();
+            let layout = Layout::from_size_align(self.capacity * size_of::<T>(), self.alignment).unwrap();
             unsafe {
                 dealloc(self.ptr.cast().as_ptr(), layout);
             }
@@ -286,20 +275,20 @@ pub fn is_simd_available() -> bool {
 /// Configuration for SIMD operations
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct SIMDConfig {
-    pub enable_simd: bool,
-    pub enable_monitoring: bool,
-    pub enable_fallback: bool,
-    pub vector_alignment: usize,
+    pub enable_simd:        bool,
+    pub enable_monitoring:  bool,
+    pub enable_fallback:    bool,
+    pub vector_alignment:   usize,
     pub cache_simd_results: bool,
 }
 
 impl Default for SIMDConfig {
     fn default() -> Self {
         Self {
-            enable_simd: true,
-            enable_monitoring: true,
-            enable_fallback: true,
-            vector_alignment: 32, // AVX/AVX2 alignment
+            enable_simd:        true,
+            enable_monitoring:  true,
+            enable_fallback:    true,
+            vector_alignment:   32, // AVX/AVX2 alignment
             cache_simd_results: true,
         }
     }

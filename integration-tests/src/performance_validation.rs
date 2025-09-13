@@ -7,12 +7,13 @@
 //! - Cross-platform performance validation
 //! - Real-time monitoring and analytics
 
-use chrono::{DateTime, Utc};
-use rust_ai_ide_errors::IdeResult;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
+
+use chrono::{DateTime, Utc};
+use rust_ai_ide_errors::IdeResult;
+use serde::{Deserialize, Serialize};
 
 /// Performance metric types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -30,50 +31,50 @@ pub enum MetricType {
 /// Comprehensive performance report
 #[derive(Debug, Default, Serialize)]
 pub struct PerformanceReport {
-    pub timestamp: DateTime<Utc>,
-    pub test_name: String,
-    pub duration: Duration,
-    pub metrics: HashMap<String, PerformanceMetric>,
-    pub benchmarks: Vec<BenchmarkResult>,
+    pub timestamp:          DateTime<Utc>,
+    pub test_name:          String,
+    pub duration:           Duration,
+    pub metrics:            HashMap<String, PerformanceMetric>,
+    pub benchmarks:         Vec<BenchmarkResult>,
     pub optimization_score: f32,
-    pub recommendations: Vec<String>,
+    pub recommendations:    Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceMetric {
-    pub name: String,
-    pub value: f64,
-    pub unit: String,
-    pub metric_type: MetricType,
-    pub description: String,
+    pub name:         String,
+    pub value:        f64,
+    pub unit:         String,
+    pub metric_type:  MetricType,
+    pub description:  String,
     pub target_range: Option<(f64, f64)>,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BenchmarkResult {
     pub benchmark_name: String,
-    pub iterations: usize,
+    pub iterations:     usize,
     pub total_duration: Duration,
-    pub avg_latency: Duration,
-    pub p95_latency: Duration,
-    pub p99_latency: Duration,
-    pub throughput: f64,
-    pub memory_delta: i64,
+    pub avg_latency:    Duration,
+    pub p95_latency:    Duration,
+    pub p99_latency:    Duration,
+    pub throughput:     f64,
+    pub memory_delta:   i64,
 }
 
 /// Advanced performance testing framework
 pub struct PerformanceValidator {
     metrics_collector: MetricsCollector,
-    benchmark_runner: BenchmarkRunner,
-    memory_profiler: MemoryProfiler,
+    benchmark_runner:  BenchmarkRunner,
+    memory_profiler:   MemoryProfiler,
 }
 
 impl PerformanceValidator {
     pub fn new() -> Self {
         Self {
             metrics_collector: MetricsCollector::new(),
-            benchmark_runner: BenchmarkRunner::new(),
-            memory_profiler: MemoryProfiler::new(),
+            benchmark_runner:  BenchmarkRunner::new(),
+            memory_profiler:   MemoryProfiler::new(),
         }
     }
 }
@@ -81,14 +82,14 @@ impl PerformanceValidator {
 #[derive(Debug)]
 struct MetricsCollector {
     current_metrics: HashMap<String, PerformanceMetric>,
-    metric_history: Vec<(DateTime<Utc>, HashMap<String, PerformanceMetric>)>,
+    metric_history:  Vec<(DateTime<Utc>, HashMap<String, PerformanceMetric>)>,
 }
 
 impl MetricsCollector {
     fn new() -> Self {
         Self {
             current_metrics: HashMap::new(),
-            metric_history: Vec::new(),
+            metric_history:  Vec::new(),
         }
     }
 
@@ -143,34 +144,32 @@ impl PerformanceValidator {
         self.run_simd_vector_operations().await?;
         let duration = start.elapsed();
 
-        report.metrics.insert(
-            "simd_vector_ops_time".to_string(),
-            PerformanceMetric {
-                name: "SIMD Vector Operations Time".to_string(),
-                value: duration.as_millis() as f64,
-                unit: "ms".to_string(),
-                metric_type: MetricType::Latency,
-                description: "Time to process SIMD vector operations".to_string(),
+        report
+            .metrics
+            .insert("simd_vector_ops_time".to_string(), PerformanceMetric {
+                name:         "SIMD Vector Operations Time".to_string(),
+                value:        duration.as_millis() as f64,
+                unit:         "ms".to_string(),
+                metric_type:  MetricType::Latency,
+                description:  "Time to process SIMD vector operations".to_string(),
                 target_range: Some((0.0, 100.0)), // Target under 100ms
-            },
-        );
+            });
 
         // Test SIMD matrix multiplication
         let start = Instant::now();
         self.run_simd_matrix_multiplication().await?;
         let duration = start.elapsed();
 
-        report.metrics.insert(
-            "simd_matrix_mult_time".to_string(),
-            PerformanceMetric {
-                name: "SIMD Matrix Multiplication Time".to_string(),
-                value: duration.as_millis() as f64,
-                unit: "ms".to_string(),
-                metric_type: MetricType::Latency,
-                description: "Time for SIMD-accelerated matrix multiplication".to_string(),
+        report
+            .metrics
+            .insert("simd_matrix_mult_time".to_string(), PerformanceMetric {
+                name:         "SIMD Matrix Multiplication Time".to_string(),
+                value:        duration.as_millis() as f64,
+                unit:         "ms".to_string(),
+                metric_type:  MetricType::Latency,
+                description:  "Time for SIMD-accelerated matrix multiplication".to_string(),
                 target_range: Some((0.0, 200.0)), // Target under 200ms
-            },
-        );
+            });
 
         report.duration = report.timestamp.elapsed().unwrap();
 
@@ -200,11 +199,11 @@ impl PerformanceValidator {
             report.metrics.insert(
                 "parallel_compilation_speedup".to_string(),
                 PerformanceMetric {
-                    name: "Parallel Compilation Speedup".to_string(),
-                    value: speedup,
-                    unit: "x".to_string(),
-                    metric_type: MetricType::Throughput,
-                    description: "Speed improvement from parallel compilation".to_string(),
+                    name:         "Parallel Compilation Speedup".to_string(),
+                    value:        speedup,
+                    unit:         "x".to_string(),
+                    metric_type:  MetricType::Throughput,
+                    description:  "Speed improvement from parallel compilation".to_string(),
                     target_range: Some((1.5, 4.0)), // Target 1.5x to 4x speedup
                 },
             );
@@ -228,17 +227,16 @@ impl PerformanceValidator {
         // Test memory leak detection
         let leak_audit = self.run_memory_leak_audit().await;
 
-        report.metrics.insert(
-            "memory_leaks_detected".to_string(),
-            PerformanceMetric {
-                name: "Memory Leaks Detected".to_string(),
-                value: leak_audit.unwrap_or(0) as f64,
-                unit: "count".to_string(),
-                metric_type: MetricType::MemoryUsage,
-                description: "Number of detected memory leaks".to_string(),
+        report
+            .metrics
+            .insert("memory_leaks_detected".to_string(), PerformanceMetric {
+                name:         "Memory Leaks Detected".to_string(),
+                value:        leak_audit.unwrap_or(0) as f64,
+                unit:         "count".to_string(),
+                metric_type:  MetricType::MemoryUsage,
+                description:  "Number of detected memory leaks".to_string(),
                 target_range: Some((0.0, 0.0)), // Target zero leaks
-            },
-        );
+            });
 
         // Test memory fragmentation
         let fragmentation_score = self.measure_memory_fragmentation().await;
@@ -246,11 +244,11 @@ impl PerformanceValidator {
         report.metrics.insert(
             "memory_fragmentation_score".to_string(),
             PerformanceMetric {
-                name: "Memory Fragmentation Score".to_string(),
-                value: fragmentation_score,
-                unit: "%".to_string(),
-                metric_type: MetricType::MemoryUsage,
-                description: "Memory fragmentation percentage".to_string(),
+                name:         "Memory Fragmentation Score".to_string(),
+                value:        fragmentation_score,
+                unit:         "%".to_string(),
+                metric_type:  MetricType::MemoryUsage,
+                description:  "Memory fragmentation percentage".to_string(),
                 target_range: Some((0.0, 15.0)), // Target under 15% fragmentation
             },
         );
@@ -286,11 +284,11 @@ impl PerformanceValidator {
         report.metrics.insert(
             "cross_platform_performance_ratio".to_string(),
             PerformanceMetric {
-                name: "Cross-Platform Performance Ratio".to_string(),
-                value: performance_ratio,
-                unit: "ratio".to_string(),
-                metric_type: MetricType::Throughput,
-                description: "Native vs WASM performance comparison".to_string(),
+                name:         "Cross-Platform Performance Ratio".to_string(),
+                value:        performance_ratio,
+                unit:         "ratio".to_string(),
+                metric_type:  MetricType::Throughput,
+                description:  "Native vs WASM performance comparison".to_string(),
                 target_range: Some((0.5, 5.0)), // Acceptable performance range
             },
         );
@@ -461,11 +459,11 @@ mod tests {
 
         // Add metric
         collector.record_metric(PerformanceMetric {
-            name: metric_name.to_string(),
-            value: 42.0,
-            unit: "ms".to_string(),
-            metric_type: MetricType::Latency,
-            description: "Test metric".to_string(),
+            name:         metric_name.to_string(),
+            value:        42.0,
+            unit:         "ms".to_string(),
+            metric_type:  MetricType::Latency,
+            description:  "Test metric".to_string(),
             target_range: None,
         });
 

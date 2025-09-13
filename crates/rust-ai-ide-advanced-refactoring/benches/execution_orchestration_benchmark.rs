@@ -1,6 +1,7 @@
+use std::time::Duration;
+
 use criterion::{criterion_group, criterion_main, Criterion};
 use rust_ai_ide_advanced_refactoring::*;
-use std::time::Duration;
 
 fn execution_orchestration_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("execution_orchestration");

@@ -1,14 +1,15 @@
 #[cfg(test)]
 mod tests {
+    use std::fs;
+    use std::io::Write;
+
     use async_trait::async_trait;
     use rust_ai_ide_ai_refactoring::class_struct_operations::{
-        EncapsulateFieldOperation, ExtractClassOperation, ExtractInterfaceOperation,
-        GenerateGettersSettersOperation, MergeClassesOperation, SplitClassOperation,
+        EncapsulateFieldOperation, ExtractClassOperation, ExtractInterfaceOperation, GenerateGettersSettersOperation,
+        MergeClassesOperation, SplitClassOperation,
     };
     use rust_ai_ide_ai_refactoring::types::*;
     use rust_ai_ide_ai_refactoring::RefactoringOperation;
-    use std::fs;
-    use std::io::Write;
     use tempfile::NamedTempFile;
 
     // Helper function to create temporary Rust file with test content
@@ -38,12 +39,12 @@ mod tests {
 
         // Applicable for structs
         let context = RefactoringContext {
-            file_path: "test.rs".to_string(),
-            cursor_line: 1,
+            file_path:        "test.rs".to_string(),
+            cursor_line:      1,
             cursor_character: 0,
-            selection: None,
-            symbol_name: Some("MyStruct".to_string()),
-            symbol_kind: Some(SymbolKind::Struct),
+            selection:        None,
+            symbol_name:      Some("MyStruct".to_string()),
+            symbol_kind:      Some(SymbolKind::Struct),
         };
         assert!(operation.is_applicable(&context, None).await.unwrap());
 
@@ -98,12 +99,12 @@ impl CalculatorService {
         };
 
         let options = RefactoringOptions {
-            create_backup: true,
-            generate_tests: false,
+            create_backup:            true,
+            generate_tests:           false,
             apply_to_all_occurrences: false,
-            preserve_references: true,
-            ignore_safe_operations: false,
-            extra_options: Some(serde_json::json!({
+            preserve_references:      true,
+            ignore_safe_operations:   false,
+            extra_options:            Some(serde_json::json!({
                 "interfaceName": "CalculatorInterface"
             })),
         };
@@ -167,12 +168,12 @@ impl SimpleService {
         let operation = ExtractInterfaceOperation;
 
         let context = RefactoringContext {
-            file_path: "test.rs".to_string(),
-            cursor_line: 1,
+            file_path:        "test.rs".to_string(),
+            cursor_line:      1,
             cursor_character: 0,
-            selection: None,
-            symbol_name: Some("TestStruct".to_string()),
-            symbol_kind: Some(SymbolKind::Struct),
+            selection:        None,
+            symbol_name:      Some("TestStruct".to_string()),
+            symbol_kind:      Some(SymbolKind::Struct),
         };
 
         let analysis = operation.analyze(&context).await.unwrap();
@@ -199,12 +200,12 @@ impl SimpleService {
 
         // Applicable for structs with name
         let context = RefactoringContext {
-            file_path: "test.rs".to_string(),
-            cursor_line: 1,
+            file_path:        "test.rs".to_string(),
+            cursor_line:      1,
             cursor_character: 0,
-            selection: None,
-            symbol_name: Some("LargeStruct".to_string()),
-            symbol_kind: Some(SymbolKind::Struct),
+            selection:        None,
+            symbol_name:      Some("LargeStruct".to_string()),
+            symbol_kind:      Some(SymbolKind::Struct),
         };
         assert!(operation.is_applicable(&context, None).await.unwrap());
 

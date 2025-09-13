@@ -11,25 +11,21 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Result;
+use rust_ai_ide_lsp::{
+    AIContext, AIService, AnalysisPreferences, CodeAnalysisResult, RefactoringSuggestion, SecurityIssue,
+};
 use serde::{Deserialize, Serialize};
 use tauri::State;
 use tokio::fs;
 use tokio::time::timeout;
 use walkdir::WalkDir;
 
-use crate::security::vulnerability_scanner::{VulnerabilityReport, VulnerabilityScanner};
-use crate::utils::sanitize_tauri_input;
-use crate::utils::SanitizeType;
-use rust_ai_ide_lsp::{
-    AIContext, AIService, AnalysisPreferences, CodeAnalysisResult, RefactoringSuggestion,
-    SecurityIssue,
-};
-
 // Import diagnostic types from shared module
 use crate::modules::shared::diagnostics::*;
-
 // Import validation helpers from shared module
 use crate::modules::shared::validation::*;
+use crate::security::vulnerability_scanner::{VulnerabilityReport, VulnerabilityScanner};
+use crate::utils::{sanitize_tauri_input, SanitizeType};
 
 /// Combined analysis result containing all analysis types
 #[derive(Debug, Serialize)]
@@ -121,43 +117,43 @@ pub struct AnalysisSummary {
 #[derive(Debug, Deserialize)]
 pub struct FileAnalysisRequest {
     pub file_path: String,
-    pub content: String,
-    pub config: Option<crate::commands::ai::services::AIAnalysisConfig>,
+    pub content:   String,
+    pub config:    Option<crate::commands::ai::services::AIAnalysisConfig>,
 }
 
 /// Workspace analysis request
 #[derive(Debug, Deserialize)]
 pub struct WorkspaceAnalysisRequest {
-    pub workspace_path: String,
-    pub config: Option<crate::commands::ai::services::AIAnalysisConfig>,
-    pub include_dependencies: bool,
+    pub workspace_path:        String,
+    pub config:                Option<crate::commands::ai::services::AIAnalysisConfig>,
+    pub include_dependencies:  bool,
     pub include_security_scan: bool,
 }
 
 /// Performance suggestions request
 #[derive(Debug, Deserialize)]
 pub struct PerformanceSuggestionsRequest {
-    pub file_path: Option<String>,
+    pub file_path:      Option<String>,
     pub workspace_path: Option<String>,
-    pub config: Option<crate::commands::ai::services::AIAnalysisConfig>,
+    pub config:         Option<crate::commands::ai::services::AIAnalysisConfig>,
 }
 
 /// Code quality check request
 #[derive(Debug, Deserialize)]
 pub struct CodeQualityCheckRequest {
-    pub target_path: String,
-    pub run_clippy: bool,
-    pub run_rustfmt: bool,
+    pub target_path:     String,
+    pub run_clippy:      bool,
+    pub run_rustfmt:     bool,
     pub run_ai_analysis: bool,
-    pub config: Option<crate::commands::ai::services::AIAnalysisConfig>,
+    pub config:          Option<crate::commands::ai::services::AIAnalysisConfig>,
 }
 
 /// Apply suggestion request
 #[derive(Debug, Deserialize)]
 pub struct ApplySuggestionRequest {
-    pub suggestion_id: String,
-    pub changes: Vec<CodeChange>,
-    pub create_backup: bool,
+    pub suggestion_id:       String,
+    pub changes:             Vec<CodeChange>,
+    pub create_backup:       bool,
     pub record_for_learning: Option<bool>,
 }
 
@@ -218,34 +214,34 @@ pub async fn analyze_file(
         if let Ok(mut bridge_guard) = bridge.lock().await {
             if let Ok(analysis_svc) = bridge_guard.analysis_service().await {
                 let file_request = rust_ai_ide_commands_ai::analysis::FileAnalysisRequest {
-                    file_path: request.file_path.clone(),
+                    file_path:            request.file_path.clone(),
                     analyze_dependencies: true,
-                    analyze_complexity: true,
-                    include_performance: false,
+                    analyze_complexity:   true,
+                    include_performance:  false,
                 };
 
                 match analysis_svc.analyze_file(file_request).await {
                     Ok(result) => {
                         // Convert commands-ai result to existing form
                         return Ok(CodeAnalysisResult {
-                            issues: result
+                            issues:             result
                                 .issues
                                 .into_iter()
                                 .map(|issue| {
                                     rust_ai_ide_lsp::AnalysisIssue {
-                                        severity: issue.severity,
-                                        line: issue.line,
-                                        message: issue.message,
-                                        category: issue.category,
+                                        severity:   issue.severity,
+                                        line:       issue.line,
+                                        message:    issue.message,
+                                        category:   issue.category,
                                         suggestion: None, // Would need mapping
                                     }
                                 })
                                 .collect(),
-                            suggestions: result.suggestions,
-                            metrics: result.metrics,
-                            performance_hints: result.performance_insights,
+                            suggestions:        result.suggestions,
+                            metrics:            result.metrics,
+                            performance_hints:  result.performance_insights,
                             code_quality_score: None,
-                            timestamp: chrono::Utc::now(),
+                            timestamp:          chrono::Utc::now(),
                         });
                     }
                     Err(e) => {
@@ -261,13 +257,13 @@ pub async fn analyze_file(
         // Fallback to original implementation
         acquire_service_and_execute!(ai_service, AIServiceState, {
             let context = AIContext {
-                current_code: request.content,
-                file_name: Some(request.file_path.clone()),
-                cursor_position: None,
-                selection: None,
-                project_context: HashMap::new(),
-                dependencies: Vec::new(),
-                workspace_structure: HashMap::new(),
+                current_code:         request.content,
+                file_name:            Some(request.file_path.clone()),
+                cursor_position:      None,
+                selection:            None,
+                project_context:      HashMap::new(),
+                dependencies:         Vec::new(),
+                workspace_structure:  HashMap::new(),
                 analysis_preferences: config.analysis_preferences,
             };
 
@@ -291,18 +287,20 @@ pub async fn analyze_workspace(
         if let Ok(analysis_svc) = bridge_guard.analysis_service().await {
             let workspace_request = rust_ai_ide_commands_ai::analysis::WorkspaceAnalysisRequest {
                 include_dependencies: true,
-                analysis_depth: 2,
-                exclude_patterns: vec!["target/*".to_string(), "node_modules/*".to_string()],
+                analysis_depth:       2,
+                exclude_patterns:     vec!["target/*".to_string(), "node_modules/*".to_string()],
             };
 
             match analysis_svc.analyze_workspace(workspace_request).await {
                 Ok(result) => {
-                    return serde_json::to_value(&result).map_err(|e| {
-                        format!("Failed to serialize workspace analysis result: {}", e)
-                    });
+                    return serde_json::to_value(&result)
+                        .map_err(|e| format!("Failed to serialize workspace analysis result: {}", e));
                 }
                 Err(e) => {
-                    log::warn!("Failed to analyze workspace via commands-ai, falling back to placeholder: {}", e);
+                    log::warn!(
+                        "Failed to analyze workspace via commands-ai, falling back to placeholder: {}",
+                        e
+                    );
                 }
             }
         }
@@ -333,7 +331,7 @@ pub async fn get_code_quality(
     if let Ok(mut bridge_guard) = bridge.lock().await {
         if let Ok(analysis_svc) = bridge_guard.analysis_service().await {
             let quality_request = rust_ai_ide_commands_ai::analysis::CodeQualityRequest {
-                target_files: vec![],
+                target_files:    vec![],
                 quality_metrics: vec!["coverage".to_string(), "complexity".to_string()],
             };
 
@@ -343,7 +341,10 @@ pub async fn get_code_quality(
                         .map_err(|e| format!("Failed to serialize code quality result: {}", e));
                 }
                 Err(e) => {
-                    log::warn!("Failed to assess code quality via commands-ai, falling back to placeholder: {}", e);
+                    log::warn!(
+                        "Failed to assess code quality via commands-ai, falling back to placeholder: {}",
+                        e
+                    );
                 }
             }
         }
@@ -413,13 +414,13 @@ pub async fn get_performance_suggestions(
     analysis_prefs.enable_code_smells = true; // Code smells can affect performance
 
     let context = AIContext {
-        current_code: content,
-        file_name: Some(file_path),
-        cursor_position: None,
-        selection: None,
-        project_context: HashMap::new(),
-        dependencies: Vec::new(),
-        workspace_structure: HashMap::new(),
+        current_code:         content,
+        file_name:            Some(file_path),
+        cursor_position:      None,
+        selection:            None,
+        project_context:      HashMap::new(),
+        dependencies:         Vec::new(),
+        workspace_structure:  HashMap::new(),
         analysis_preferences: analysis_prefs,
     };
 
@@ -502,54 +503,54 @@ pub async fn apply_ai_suggestion(request: ApplySuggestionRequest) -> Result<Stri
 
 #[derive(Debug, Serialize)]
 pub struct ClippyResult {
-    pub warnings: Vec<ClippyWarning>,
-    pub errors: Vec<ClippyError>,
+    pub warnings:    Vec<ClippyWarning>,
+    pub errors:      Vec<ClippyError>,
     pub suggestions: Vec<ClippySuggestion>,
-    pub exit_code: i32,
+    pub exit_code:   i32,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ClippyWarning {
-    pub message: String,
+    pub message:   String,
     pub file_path: String,
-    pub line: u32,
-    pub column: u32,
+    pub line:      u32,
+    pub column:    u32,
     pub lint_name: String,
-    pub severity: String,
+    pub severity:  String,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ClippyError {
-    pub message: String,
+    pub message:   String,
     pub file_path: String,
-    pub line: u32,
-    pub column: u32,
+    pub line:      u32,
+    pub column:    u32,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ClippySuggestion {
-    pub message: String,
-    pub file_path: String,
-    pub line: u32,
-    pub column: u32,
-    pub suggestion: String,
+    pub message:       String,
+    pub file_path:     String,
+    pub line:          u32,
+    pub column:        u32,
+    pub suggestion:    String,
     pub applicability: String,
 }
 
 #[derive(Debug, Serialize)]
 pub struct RustfmtResult {
     pub formatted_files: Vec<String>,
-    pub errors: Vec<String>,
-    pub exit_code: i32,
+    pub errors:          Vec<String>,
+    pub exit_code:       i32,
 }
 
 #[derive(Debug, Serialize)]
 pub struct PerformanceMetrics {
-    pub compilation_time_ms: u64,
-    pub binary_size_bytes: u64,
-    pub dependency_count: u32,
-    pub lines_of_code: u32,
-    pub cyclomatic_complexity: u32,
+    pub compilation_time_ms:      u64,
+    pub binary_size_bytes:        u64,
+    pub dependency_count:         u32,
+    pub lines_of_code:            u32,
+    pub cyclomatic_complexity:    u32,
     pub memory_usage_estimate_mb: f32,
 }
 
@@ -558,54 +559,54 @@ pub type FixSuggestion = rust_ai_ide_lsp::FixSuggestion;
 #[derive(Debug, Serialize)]
 pub struct CodeReviewResult {
     pub overall_assessment: OverallAssessment,
-    pub summary: ReviewSummary,
-    pub file_reviews: Vec<FileReview>,
-    pub suggestions: Vec<String>,
-    pub review_comments: Vec<ReviewComment>,
-    pub metadata: ReviewMetadata,
+    pub summary:            ReviewSummary,
+    pub file_reviews:       Vec<FileReview>,
+    pub suggestions:        Vec<String>,
+    pub review_comments:    Vec<ReviewComment>,
+    pub metadata:           ReviewMetadata,
 }
 
 #[derive(Debug, Serialize)]
 pub struct OverallAssessment {
-    pub score: f32,
-    pub grade: String,
-    pub summary: String,
-    pub key_strengths: Vec<String>,
+    pub score:           f32,
+    pub grade:           String,
+    pub summary:         String,
+    pub key_strengths:   Vec<String>,
     pub critical_issues: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ReviewSummary {
-    pub total_comments: usize,
+    pub total_comments:     usize,
     pub severity_breakdown: HashMap<String, usize>,
     pub category_breakdown: HashMap<String, usize>,
-    pub estimated_effort: String,
+    pub estimated_effort:   String,
 }
 
 #[derive(Debug, Serialize)]
 pub struct FileReview {
-    pub file_path: String,
+    pub file_path:     String,
     pub quality_score: f32,
-    pub comments: Vec<ReviewComment>,
+    pub comments:      Vec<ReviewComment>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ReviewComment {
-    pub id: String,
-    pub file_path: String,
-    pub line: Option<usize>,
-    pub severity: String,
-    pub message: String,
+    pub id:         String,
+    pub file_path:  String,
+    pub line:       Option<usize>,
+    pub severity:   String,
+    pub message:    String,
     pub suggestion: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ReviewMetadata {
-    pub review_id: String,
-    pub reviewer: String,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub review_id:   String,
+    pub reviewer:    String,
+    pub timestamp:   chrono::DateTime<chrono::Utc>,
     pub duration_ms: u64,
-    pub file_count: usize,
+    pub file_count:  usize,
 }
 
 /// Placeholder command config type
@@ -639,6 +640,4 @@ macro_rules! format_command_error {
     };
 }
 
-pub(crate) use acquire_service_and_execute;
-pub(crate) use execute_command;
-pub(crate) use format_command_error;
+pub(crate) use {acquire_service_and_execute, execute_command, format_command_error};

@@ -1,37 +1,38 @@
 // Memory analysis module
 
-use chrono;
 use std::alloc::Layout;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use chrono;
+
 #[derive(Debug, Clone)]
 pub struct AllocationInfo {
-    pub size: usize,
+    pub size:      usize,
     pub alignment: usize,
-    pub ptr: *mut u8,
+    pub ptr:       *mut u8,
     pub backtrace: Option<String>, // Simplified backtrace
 }
 
 pub struct MemoryAnalyzer {
-    allocations: HashMap<usize, AllocationInfo>,
-    total_allocated: AtomicU64,
-    total_freed: AtomicU64,
-    peak_memory: AtomicU64,
-    current_memory: AtomicU64,
-    allocation_count: AtomicU64,
+    allocations:        HashMap<usize, AllocationInfo>,
+    total_allocated:    AtomicU64,
+    total_freed:        AtomicU64,
+    peak_memory:        AtomicU64,
+    current_memory:     AtomicU64,
+    allocation_count:   AtomicU64,
     deallocation_count: AtomicU64,
 }
 
 impl MemoryAnalyzer {
     pub fn new() -> Self {
         Self {
-            allocations: HashMap::new(),
-            total_allocated: AtomicU64::new(0),
-            total_freed: AtomicU64::new(0),
-            peak_memory: AtomicU64::new(0),
-            current_memory: AtomicU64::new(0),
-            allocation_count: AtomicU64::new(0),
+            allocations:        HashMap::new(),
+            total_allocated:    AtomicU64::new(0),
+            total_freed:        AtomicU64::new(0),
+            peak_memory:        AtomicU64::new(0),
+            current_memory:     AtomicU64::new(0),
+            allocation_count:   AtomicU64::new(0),
             deallocation_count: AtomicU64::new(0),
         }
     }
@@ -40,15 +41,12 @@ impl MemoryAnalyzer {
         let size = layout.size();
         let allocation_id = ptr as usize;
 
-        self.allocations.insert(
-            allocation_id,
-            AllocationInfo {
-                size,
-                alignment: layout.align(),
-                ptr,
-                backtrace: None, // Would capture actual backtrace in full implementation
-            },
-        );
+        self.allocations.insert(allocation_id, AllocationInfo {
+            size,
+            alignment: layout.align(),
+            ptr,
+            backtrace: None, // Would capture actual backtrace in full implementation
+        });
 
         self.total_allocated
             .fetch_add(size as u64, Ordering::Relaxed);
@@ -78,11 +76,11 @@ impl MemoryAnalyzer {
 
     pub fn get_memory_stats(&self) -> MemoryStats {
         MemoryStats {
-            total_allocated: self.total_allocated.load(Ordering::Relaxed),
-            total_freed: self.total_freed.load(Ordering::Relaxed),
-            current_memory: self.current_memory.load(Ordering::Relaxed),
-            peak_memory: self.peak_memory.load(Ordering::Relaxed),
-            allocation_count: self.allocation_count.load(Ordering::Relaxed),
+            total_allocated:    self.total_allocated.load(Ordering::Relaxed),
+            total_freed:        self.total_freed.load(Ordering::Relaxed),
+            current_memory:     self.current_memory.load(Ordering::Relaxed),
+            peak_memory:        self.peak_memory.load(Ordering::Relaxed),
+            allocation_count:   self.allocation_count.load(Ordering::Relaxed),
             deallocation_count: self.deallocation_count.load(Ordering::Relaxed),
             active_allocations: self.allocations.len() as u64,
         }
@@ -105,11 +103,11 @@ impl MemoryAnalyzer {
 
 #[derive(Debug, Clone)]
 pub struct MemoryStats {
-    pub total_allocated: u64,
-    pub total_freed: u64,
-    pub current_memory: u64,
-    pub peak_memory: u64,
-    pub allocation_count: u64,
+    pub total_allocated:    u64,
+    pub total_freed:        u64,
+    pub current_memory:     u64,
+    pub peak_memory:        u64,
+    pub allocation_count:   u64,
     pub deallocation_count: u64,
     pub active_allocations: u64,
 }
@@ -117,14 +115,14 @@ pub struct MemoryStats {
 // Heap analysis utilities
 pub struct HeapAnalyzer {
     sample_count: usize,
-    samples: Vec<MemoryStats>,
+    samples:      Vec<MemoryStats>,
 }
 
 impl HeapAnalyzer {
     pub fn new() -> Self {
         Self {
             sample_count: 0,
-            samples: Vec::new(),
+            samples:      Vec::new(),
         }
     }
 
@@ -140,11 +138,11 @@ impl HeapAnalyzer {
 
         let len = self.samples.len() as f64;
         let mut avg = MemoryStats {
-            total_allocated: 0,
-            total_freed: 0,
-            current_memory: 0,
-            peak_memory: 0,
-            allocation_count: 0,
+            total_allocated:    0,
+            total_freed:        0,
+            current_memory:     0,
+            peak_memory:        0,
+            allocation_count:   0,
             deallocation_count: 0,
             active_allocations: 0,
         };
@@ -193,27 +191,27 @@ impl HeapAnalyzer {
 /// This structure provides automated detection and fixing of memory leaks with intelligent analysis
 /// and recovery mechanisms.
 pub struct EnhancedLeakDetector {
-    lifetime_tracking: HashMap<usize, AllocationLifetime>,
-    leak_candidates: Vec<LeakCandidate>,
-    auto_fix_enabled: bool,
+    lifetime_tracking:    HashMap<usize, AllocationLifetime>,
+    leak_candidates:      Vec<LeakCandidate>,
+    auto_fix_enabled:     bool,
     warning_threshold_mb: u64,
 }
 
 #[derive(Debug, Clone)]
 pub struct AllocationLifetime {
     pub allocation_info: AllocationInfo,
-    pub first_seen: chrono::DateTime<chrono::Utc>,
-    pub last_accessed: chrono::DateTime<chrono::Utc>,
-    pub access_count: u64,
-    pub risk_score: f64, // 0.0 to 1.0 (higher = more likely to be a leak)
+    pub first_seen:      chrono::DateTime<chrono::Utc>,
+    pub last_accessed:   chrono::DateTime<chrono::Utc>,
+    pub access_count:    u64,
+    pub risk_score:      f64, // 0.0 to 1.0 (higher = more likely to be a leak)
 }
 
 #[derive(Debug, Clone)]
 pub struct LeakCandidate {
-    pub allocation_id: usize,
-    pub risk_score: f64,
+    pub allocation_id:   usize,
+    pub risk_score:      f64,
     pub recommendations: Vec<String>,
-    pub suggestion: AutomaticFixSuggestion,
+    pub suggestion:      AutomaticFixSuggestion,
 }
 
 #[derive(Debug, Clone)]
@@ -244,10 +242,10 @@ impl EnhancedLeakDetector {
         let now = chrono::Utc::now();
         let lifetime = AllocationLifetime {
             allocation_info: info,
-            first_seen: now,
-            last_accessed: now,
-            access_count: 1,
-            risk_score: Self::calculate_initial_risk(&info),
+            first_seen:      now,
+            last_accessed:   now,
+            access_count:    1,
+            risk_score:      Self::calculate_initial_risk(&info),
         };
 
         self.lifetime_tracking.insert(allocation_id, lifetime);
@@ -406,11 +404,7 @@ impl EnhancedLeakDetector {
     }
 
     /// Suggest appropriate automatic fix action
-    fn suggest_automatic_fix(
-        &self,
-        risk_score: f64,
-        lifetime: &AllocationLifetime,
-    ) -> AutomaticFixSuggestion {
+    fn suggest_automatic_fix(&self, risk_score: f64, lifetime: &AllocationLifetime) -> AutomaticFixSuggestion {
         let time_since_access_hours = (chrono::Utc::now() - lifetime.last_accessed).num_hours();
 
         if risk_score > 0.9 && time_since_access_hours > 24 {
@@ -431,8 +425,8 @@ impl EnhancedLeakDetector {
     /// Get current leak statistics
     pub fn get_leak_stats(&self) -> LeakStatistics {
         LeakStatistics {
-            total_tracked: self.lifetime_tracking.len(),
-            high_risk_candidates: self
+            total_tracked:          self.lifetime_tracking.len(),
+            high_risk_candidates:   self
                 .leak_candidates
                 .iter()
                 .filter(|c| c.risk_score > 0.8)
@@ -442,23 +436,23 @@ impl EnhancedLeakDetector {
                 .iter()
                 .filter(|c| c.risk_score > 0.6 && c.risk_score <= 0.8)
                 .count(),
-            low_risk_candidates: self
+            low_risk_candidates:    self
                 .leak_candidates
                 .iter()
                 .filter(|c| c.risk_score <= 0.6)
                 .count(),
-            auto_fix_enabled: self.auto_fix_enabled,
+            auto_fix_enabled:       self.auto_fix_enabled,
         }
     }
 }
 
 #[derive(Debug)]
 pub struct LeakStatistics {
-    pub total_tracked: usize,
-    pub high_risk_candidates: usize,
+    pub total_tracked:          usize,
+    pub high_risk_candidates:   usize,
     pub medium_risk_candidates: usize,
-    pub low_risk_candidates: usize,
-    pub auto_fix_enabled: bool,
+    pub low_risk_candidates:    usize,
+    pub auto_fix_enabled:       bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]

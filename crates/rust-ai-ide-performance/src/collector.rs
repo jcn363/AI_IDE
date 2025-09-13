@@ -3,9 +3,11 @@
 //! This module provides the unified performance metrics collector that aggregates
 //! performance data from all crates and components in the Rust AI IDE system.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
+
+use rust_ai_ide_shared_types::PerformanceMetrics;
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tokio::time::{self, Duration};
 
@@ -15,31 +17,30 @@ use crate::metrics::{MetricsError, MetricsRegistry, PrometheusExporter};
 use crate::metrics_server::{MetricsServer, MetricsServerBuilder, MetricsServerConfig};
 use crate::monitoring::SystemMonitor;
 use crate::regression::RegressionDetector;
-use rust_ai_ide_shared_types::PerformanceMetrics;
 
 /// Configuration for the performance collector
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollectorConfig {
     /// Collection interval in seconds
-    pub collection_interval_secs: u64,
+    pub collection_interval_secs:    u64,
     /// Maximum number of metrics to keep in memory
-    pub max_history_size: usize,
+    pub max_history_size:            usize,
     /// Enable regression detection
     pub enable_regression_detection: bool,
     /// Regression alerting threshold
-    pub regression_threshold: f64,
+    pub regression_threshold:        f64,
     /// Number of data points for baseline calculation
-    pub baseline_window_size: usize,
+    pub baseline_window_size:        usize,
 }
 
 impl Default for CollectorConfig {
     fn default() -> Self {
         Self {
-            collection_interval_secs: 30, // 30 seconds default
-            max_history_size: 1000,
+            collection_interval_secs:    30, // 30 seconds default
+            max_history_size:            1000,
             enable_regression_detection: true,
-            regression_threshold: 0.1, // 10% performance degradation
-            baseline_window_size: 10,
+            regression_threshold:        0.1, // 10% performance degradation
+            baseline_window_size:        10,
         }
     }
 }
@@ -47,22 +48,22 @@ impl Default for CollectorConfig {
 /// Unified Performance Collector
 pub struct UnifiedPerformanceCollector {
     /// Configuration
-    config: CollectorConfig,
+    config:              CollectorConfig,
     /// Historical metrics data
-    metrics_history: Arc<RwLock<Vec<PerformanceMetrics>>>,
+    metrics_history:     Arc<RwLock<Vec<PerformanceMetrics>>>,
     /// Registered collectors from different crates
-    crate_collectors: Arc<RwLock<HashMap<String, Box<dyn MetricsProvider>>>>,
+    crate_collectors:    Arc<RwLock<HashMap<String, Box<dyn MetricsProvider>>>>,
     /// Regression detector
     regression_detector: Option<RegressionDetector>,
     /// Alert manager
-    alert_manager: Option<AlertManager>,
+    alert_manager:       Option<AlertManager>,
     /// Prometheus exporter
     prometheus_exporter: Option<Arc<PrometheusExporter>>,
     /// Performance instrumentor
-    instrumentor: Option<Arc<PerformanceInstrumentor>>,
+    instrumentor:        Option<Arc<PerformanceInstrumentor>>,
     /// Channel for receiving metrics from external sources
-    metrics_receiver: mpsc::Receiver<PerformanceMetrics>,
-    metrics_sender: mpsc::Sender<PerformanceMetrics>,
+    metrics_receiver:    mpsc::Receiver<PerformanceMetrics>,
+    metrics_sender:      mpsc::Sender<PerformanceMetrics>,
 }
 
 /// Trait for providing metrics from different sources
@@ -79,22 +80,22 @@ pub trait MetricsProvider: Send + Sync {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PerformanceAlert {
     RegressionDetected {
-        metric_name: String,
-        baseline_value: f64,
-        current_value: f64,
+        metric_name:         String,
+        baseline_value:      f64,
+        current_value:       f64,
         degradation_percent: f64,
-        timestamp: chrono::DateTime<chrono::Utc>,
+        timestamp:           chrono::DateTime<chrono::Utc>,
     },
     ThresholdExceeded {
-        metric_name: String,
+        metric_name:   String,
         current_value: f64,
-        threshold: f64,
-        timestamp: chrono::DateTime<chrono::Utc>,
+        threshold:     f64,
+        timestamp:     chrono::DateTime<chrono::Utc>,
     },
     AnomalyDetected {
         description: String,
-        severity: AlertSeverity,
-        timestamp: chrono::DateTime<chrono::Utc>,
+        severity:    AlertSeverity,
+        timestamp:   chrono::DateTime<chrono::Utc>,
     },
 }
 
@@ -133,7 +134,7 @@ impl std::error::Error for CollectionError {}
 
 /// Builder for creating a Performance Collector
 pub struct CollectorBuilder {
-    config: CollectorConfig,
+    config:    CollectorConfig,
     providers: HashMap<String, Box<dyn MetricsProvider>>,
 }
 
@@ -141,7 +142,7 @@ impl CollectorBuilder {
     /// Create a new collector builder with default configuration
     pub fn new() -> Self {
         Self {
-            config: CollectorConfig::default(),
+            config:    CollectorConfig::default(),
             providers: HashMap::new(),
         }
     }
@@ -210,8 +211,7 @@ impl UnifiedPerformanceCollector {
                 // Collect from registered providers - clone the providers to avoid lifetime issues
                 {
                     let collectors = crate_collectors.read().unwrap();
-                    let providers_refs: Vec<&Box<dyn MetricsProvider>> =
-                        collectors.values().collect();
+                    let providers_refs: Vec<&Box<dyn MetricsProvider>> = collectors.values().collect();
 
                     for provider in providers_refs {
                         match provider.collect_metrics().await {
@@ -219,11 +219,7 @@ impl UnifiedPerformanceCollector {
                                 aggregated_metrics.merge(&metrics);
                             }
                             Err(e) => {
-                                eprintln!(
-                                    "Failed to collect metrics from {}: {}",
-                                    provider.name(),
-                                    e
-                                );
+                                eprintln!("Failed to collect metrics from {}: {}", provider.name(), e);
                             }
                         }
                     }
@@ -247,10 +243,7 @@ impl UnifiedPerformanceCollector {
     }
 
     /// Register a new metrics provider at runtime
-    pub fn register_provider(
-        &self,
-        provider: Box<dyn MetricsProvider>,
-    ) -> Result<(), anyhow::Error> {
+    pub fn register_provider(&self, provider: Box<dyn MetricsProvider>) -> Result<(), anyhow::Error> {
         let mut collectors = self.crate_collectors.write().unwrap();
         collectors.insert(provider.name().to_string(), provider);
         Ok(())

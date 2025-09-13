@@ -1,16 +1,17 @@
 //! Debugger state management
 
-use crate::debugger::types::{DebuggerEvent, DebuggerState, StackFrame, VariableInfo};
 use std::collections::HashMap;
+
+use crate::debugger::types::{DebuggerEvent, DebuggerState, StackFrame, VariableInfo};
 
 /// Manages the debugger's state
 pub struct StateManager {
     /// Current debugger state
-    state: DebuggerState,
+    state:         DebuggerState,
     /// Current call stack
-    call_stack: Vec<StackFrame>,
+    call_stack:    Vec<StackFrame>,
     /// Current variables in scope
-    variables: HashMap<String, VariableInfo>,
+    variables:     HashMap<String, VariableInfo>,
     /// Current frame index in the call stack
     current_frame: Option<usize>,
 }
@@ -19,9 +20,9 @@ impl StateManager {
     /// Create a new StateManager
     pub fn new() -> Self {
         Self {
-            state: DebuggerState::Disconnected,
-            call_stack: Vec::new(),
-            variables: HashMap::new(),
+            state:         DebuggerState::Disconnected,
+            call_stack:    Vec::new(),
+            variables:     HashMap::new(),
             current_frame: None,
         }
     }

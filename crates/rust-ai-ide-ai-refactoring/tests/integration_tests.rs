@@ -3,11 +3,11 @@
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use tempfile::tempdir;
 
 use rust_ai_ide_ai_refactoring::operations::*;
 use rust_ai_ide_ai_refactoring::types::*;
 use rust_ai_ide_ai_refactoring::RefactoringOperationFactory;
+use tempfile::tempdir;
 
 #[cfg(test)]
 mod tests {
@@ -24,33 +24,33 @@ mod tests {
     /// Helper function to create basic refactoring context
     fn create_context(file_path: &str, symbol_name: &str) -> RefactoringContext {
         RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some(symbol_name.to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 1,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some(symbol_name.to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      1,
             cursor_character: 1,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         }
     }
 
     /// Helper function to create basic refactoring options
     fn create_options() -> RefactoringOptions {
         RefactoringOptions {
-            dry_run: false,
-            preview_changes: false,
-            backup_original: true,
-            generate_tests: true,
-            preserve_references: true,
+            dry_run:                  false,
+            preview_changes:          false,
+            backup_original:          true,
+            generate_tests:           true,
+            preserve_references:      true,
             apply_to_all_occurrences: false,
-            extra_options: Some(serde_json::json!({})),
-            timeout_seconds: 30,
-            max_memory_mb: 512,
-            allow_partial: false,
-            validate_after: true,
-            rollback_on_failure: true,
+            extra_options:            Some(serde_json::json!({})),
+            timeout_seconds:          30,
+            max_memory_mb:            512,
+            allow_partial:            false,
+            validate_after:           true,
+            rollback_on_failure:      true,
         }
     }
 
@@ -82,15 +82,15 @@ fn main() {
         let file_path = temp_dir.path().join("calculator.rs").to_str().unwrap();
 
         let context = RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some("add".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 7,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some("add".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      7,
             cursor_character: 5,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let options = create_options();
@@ -145,15 +145,15 @@ impl DataProcessor {
         let file_path = temp_dir.path().join("processor.rs").to_str().unwrap();
 
         let context = RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some("DataProcessor".to_string()),
-            symbol_kind: Some(SymbolKind::Struct),
-            cursor_line: 1,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some("DataProcessor".to_string()),
+            symbol_kind:      Some(SymbolKind::Struct),
+            cursor_line:      1,
             cursor_character: 1,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let mut options = create_options();
@@ -176,9 +176,7 @@ impl DataProcessor {
                 assert!(modified_content.contains("fn get_count"));
                 assert!(modified_content.contains("fn sort_data"));
 
-                println!(
-                    "✓ Extract interface operation successfully created trait and implementation"
-                );
+                println!("✓ Extract interface operation successfully created trait and implementation");
             }
             Err(e) => panic!("Extract interface operation failed: {}", e),
         }
@@ -214,15 +212,15 @@ impl AsyncService {
         let file_path = temp_dir.path().join("async_service.rs").to_str().unwrap();
 
         let context = RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some("sync_process".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 12,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some("sync_process".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      12,
             cursor_character: 5,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let options = create_options();
@@ -350,15 +348,15 @@ impl FileManager {
         let file_path = temp_dir.path().join("large_service.rs").to_str().unwrap();
 
         let context = RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some("LargeService".to_string()),
-            symbol_kind: Some(SymbolKind::Struct),
-            cursor_line: 1,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some("LargeService".to_string()),
+            symbol_kind:      Some(SymbolKind::Struct),
+            cursor_line:      1,
             cursor_character: 1,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let options = create_options();
@@ -422,25 +420,24 @@ pub fn process_numbers(numbers: Vec<i32>) -> Vec<i32> {
             .unwrap();
 
         let context = RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some("process_numbers".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 1,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some("process_numbers".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      1,
             cursor_character: 1,
-            selection: Some(CodeRange {
-                start_line: 1,
+            selection:        Some(CodeRange {
+                start_line:      1,
                 start_character: 0,
-                end_line: 15,
-                end_character: 0,
+                end_line:        15,
+                end_character:   0,
             }),
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let mut options = create_options();
-        options.extra_options =
-            Some(serde_json::json!({"sourcePattern": "loop", "targetPattern": "iterator"}));
+        options.extra_options = Some(serde_json::json!({"sourcePattern": "loop", "targetPattern": "iterator"}));
 
         let operation = PatternConversionOperation;
 
@@ -459,7 +456,10 @@ pub fn process_numbers(numbers: Vec<i32>) -> Vec<i32> {
             }
             Err(e) => {
                 // Pattern conversion is experimental and may not always succeed
-                println!("Pattern conversion operation noted limitation (expected for complex patterns): {}", e);
+                println!(
+                    "Pattern conversion operation noted limitation (expected for complex patterns): {}",
+                    e
+                );
             }
         }
     }
@@ -503,18 +503,18 @@ pub fn use_functions() {
         // Create batch operation
         let operations = vec![BatchRefactoringOperation {
             operation_type: RefactoringType::Rename,
-            context: RefactoringContext {
-                file_path: file1_path.to_str().unwrap().to_string(),
-                symbol_name: Some("helper_function".to_string()),
-                symbol_kind: Some(SymbolKind::Function),
-                cursor_line: 1,
+            context:        RefactoringContext {
+                file_path:        file1_path.to_str().unwrap().to_string(),
+                symbol_name:      Some("helper_function".to_string()),
+                symbol_kind:      Some(SymbolKind::Function),
+                cursor_line:      1,
                 cursor_character: 5,
-                selection: None,
-                context_lines: vec![],
-                language: ProgrammingLanguage::Rust,
-                project_root: temp_dir.path().to_str().unwrap().to_string(),
+                selection:        None,
+                context_lines:    vec![],
+                language:         ProgrammingLanguage::Rust,
+                project_root:     temp_dir.path().to_str().unwrap().to_string(),
             },
-            options: RefactoringOptions {
+            options:        RefactoringOptions {
                 extra_options: Some(serde_json::json!({"newName": "double_value"})),
                 ..create_options()
             },
@@ -570,15 +570,15 @@ impl BankAccount {
         let file_path = temp_dir.path().join("bank_account.rs").to_str().unwrap();
 
         let context = RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some("withdraw".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 6,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some("withdraw".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      6,
             cursor_character: 5,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let safety_validator = SafetyValidator::new();
@@ -625,20 +625,20 @@ pub fn complex_processing(data: Vec<i32>) -> Vec<String> {
         let file_path = temp_dir.path().join("complex_logic.rs").to_str().unwrap();
 
         let context = RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some("complex_processing".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 1,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some("complex_processing".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      1,
             cursor_character: 1,
-            selection: Some(CodeRange {
-                start_line: 7,
+            selection:        Some(CodeRange {
+                start_line:      7,
                 start_character: 9,
-                end_line: 15,
-                end_character: 9,
+                end_line:        15,
+                end_character:   9,
             }),
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let mut options = create_options();
@@ -677,27 +677,27 @@ pub fn complex_processing(data: Vec<i32>) -> Vec<String> {
 
         // Test applicability with different contexts
         let struct_context = RefactoringContext {
-            file_path: "/test/file.rs".to_string(),
-            symbol_name: Some("TestStruct".to_string()),
-            symbol_kind: Some(SymbolKind::Struct),
-            cursor_line: 1,
+            file_path:        "/test/file.rs".to_string(),
+            symbol_name:      Some("TestStruct".to_string()),
+            symbol_kind:      Some(SymbolKind::Struct),
+            cursor_line:      1,
             cursor_character: 1,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/test".to_string(),
         };
 
         let function_context = RefactoringContext {
-            file_path: "/test/file.rs".to_string(),
-            symbol_name: Some("test_function".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 1,
+            file_path:        "/test/file.rs".to_string(),
+            symbol_name:      Some("test_function".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      1,
             cursor_character: 1,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/test".to_string(),
         };
 
         let options = create_options();
@@ -785,20 +785,20 @@ impl Calculator {
 
         // Step 1: Extract the internal calculation logic
         let extract_context = RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some("calculate_internal".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 18,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some("calculate_internal".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      18,
             cursor_character: 5,
-            selection: Some(CodeRange {
-                start_line: 18,
+            selection:        Some(CodeRange {
+                start_line:      18,
                 start_character: 5,
-                end_line: 20,
-                end_character: 30,
+                end_line:        20,
+                end_character:   30,
             }),
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let factory = RefactoringOperationFactory;
@@ -820,15 +820,15 @@ impl Calculator {
 
         // Step 2: Rename the extracted function
         let rename_context = RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some("compute_value".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 18,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some("compute_value".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      18,
             cursor_character: 5,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let rename_op = factory.create_operation(&RefactoringType::Rename).unwrap();
@@ -843,15 +843,15 @@ impl Calculator {
 
         // Step 3: Change signature of the renamed function
         let signature_context = RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some("calculate_value".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 18,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some("calculate_value".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      18,
             cursor_character: 5,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let signature_op = factory
@@ -882,9 +882,7 @@ impl Calculator {
         // Verify that calls to the function were updated
         assert!(final_content.contains("calculate_value("));
 
-        println!(
-            "✓ Cross-module workflow (extract → rename → change signature) completed successfully"
-        );
+        println!("✓ Cross-module workflow (extract → rename → change signature) completed successfully");
         println!("✓ AST consistency maintained across sequential operations");
     }
 
@@ -930,15 +928,15 @@ impl DataProcessor {
 
         // Test operation using core traits
         let context = RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some("DataProcessor".to_string()),
-            symbol_kind: Some(SymbolKind::Struct),
-            cursor_line: 1,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some("DataProcessor".to_string()),
+            symbol_kind:      Some(SymbolKind::Struct),
+            cursor_line:      1,
             cursor_character: 1,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let factory = RefactoringOperationFactory;
@@ -956,7 +954,7 @@ impl DataProcessor {
             .is_applicable(&context, Some(&options))
             .await
         {
-            Ok(applicable) => {
+            Ok(applicable) =>
                 if applicable {
                     let result = extract_interface_op
                         .execute(&context, &options)
@@ -966,8 +964,7 @@ impl DataProcessor {
                     println!("✓ Module interaction test: AST utils, core traits, and operations work together");
                 } else {
                     println!("✓ Module interaction test: Operation correctly determined as not applicable");
-                }
-            }
+                },
             Err(e) => println!("✓ Module interaction test: Error handling works - {}", e),
         }
     }
@@ -978,15 +975,15 @@ impl DataProcessor {
 
         // Test invalid file path
         let invalid_context = RefactoringContext {
-            file_path: "/nonexistent/path/file.rs".to_string(),
-            symbol_name: Some("test".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 1,
+            file_path:        "/nonexistent/path/file.rs".to_string(),
+            symbol_name:      Some("test".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      1,
             cursor_character: 1,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let options = create_options();
@@ -1009,15 +1006,15 @@ impl DataProcessor {
             Ok(op) => {
                 // Test with invalid context (missing symbol)
                 let invalid_symbol_context = RefactoringContext {
-                    file_path: "/test/file.rs".to_string(),
-                    symbol_name: None, // Invalid: no symbol name
-                    symbol_kind: Some(SymbolKind::Function),
-                    cursor_line: 1,
+                    file_path:        "/test/file.rs".to_string(),
+                    symbol_name:      None, // Invalid: no symbol name
+                    symbol_kind:      Some(SymbolKind::Function),
+                    cursor_line:      1,
                     cursor_character: 1,
-                    selection: None,
-                    context_lines: vec![],
-                    language: ProgrammingLanguage::Rust,
-                    project_root: "/tmp/test".to_string(),
+                    selection:        None,
+                    context_lines:    vec![],
+                    language:         ProgrammingLanguage::Rust,
+                    project_root:     "/tmp/test".to_string(),
                 };
 
                 match op.execute(&invalid_symbol_context, &options).await {
@@ -1050,15 +1047,15 @@ pub fn caller() {
         let success_file_path = temp_dir.path().join("success_test.rs").to_str().unwrap();
 
         let success_context = RefactoringContext {
-            file_path: success_file_path.to_string(),
-            symbol_name: Some("old_function_name".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 1,
+            file_path:        success_file_path.to_string(),
+            symbol_name:      Some("old_function_name".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      1,
             cursor_character: 5,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let mut success_options = create_options();
@@ -1078,15 +1075,15 @@ pub fn caller() {
 
         // Failure scenario: Attempt to rename non-existent symbol
         let failure_context = RefactoringContext {
-            file_path: success_file_path.to_string(),
-            symbol_name: Some("nonexistent_symbol".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 1,
+            file_path:        success_file_path.to_string(),
+            symbol_name:      Some("nonexistent_symbol".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      1,
             cursor_character: 1,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         match rename_op.execute(&failure_context, &success_options).await {
@@ -1140,28 +1137,27 @@ impl ComplexProcessor {
 
         // First operation: Extract method
         let extract_context = RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some("add_and_double".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 10,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some("add_and_double".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      10,
             cursor_character: 5,
-            selection: Some(CodeRange {
-                start_line: 12,
+            selection:        Some(CodeRange {
+                start_line:      12,
                 start_character: 9,
-                end_line: 13,
-                end_character: 20,
+                end_line:        13,
+                end_character:   20,
             }),
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let extract_op = factory
             .create_operation(&RefactoringType::ExtractFunction)
             .unwrap();
         let mut extract_options = options.clone();
-        extract_options.extra_options =
-            Some(serde_json::json!({"newFunctionName": "double_value"}));
+        extract_options.extra_options = Some(serde_json::json!({"newFunctionName": "double_value"}));
 
         let _extract_result = extract_op
             .execute(&extract_context, &extract_options)
@@ -1170,15 +1166,15 @@ impl ComplexProcessor {
 
         // Second operation: Rename variable in extracted function
         let rename_context = RefactoringContext {
-            file_path: file_path.to_string(),
-            symbol_name: Some("double_value".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
-            cursor_line: 10,
+            file_path:        file_path.to_string(),
+            symbol_name:      Some("double_value".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
+            cursor_line:      10,
             cursor_character: 5,
-            selection: None,
-            context_lines: vec![],
-            language: ProgrammingLanguage::Rust,
-            project_root: "/tmp/test".to_string(),
+            selection:        None,
+            context_lines:    vec![],
+            language:         ProgrammingLanguage::Rust,
+            project_root:     "/tmp/test".to_string(),
         };
 
         let rename_op = factory.create_operation(&RefactoringType::Rename).unwrap();

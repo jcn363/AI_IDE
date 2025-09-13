@@ -1,6 +1,7 @@
+use std::time::Duration;
+
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rust_ai_ide_cache::{Cache, CacheConfig, InMemoryCache};
-use std::time::Duration;
 use tokio::runtime::Builder as RuntimeBuilder;
 
 fn cache_operations_benchmark(c: &mut Criterion) {

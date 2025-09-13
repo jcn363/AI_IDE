@@ -1,8 +1,10 @@
+use std::sync::Arc;
+
+use async_trait::async_trait;
+
 use crate::ai_suggester::AnalysisContext;
 use crate::error::{AnalysisError, AnalysisResult};
 use crate::types::RefactoringSuggestion;
-use async_trait::async_trait;
-use std::sync::Arc;
 
 /// Safety filter for refactoring suggestions
 pub struct SafetyFilter;

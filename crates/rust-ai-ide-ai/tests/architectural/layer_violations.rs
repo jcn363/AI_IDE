@@ -1,7 +1,8 @@
 //! Tests for layer violation detection
 
 use super::*;
-use crate::analysis::{architectural::LayerViolationDetector, AnalysisType, Severity};
+use crate::analysis::architectural::LayerViolationDetector;
+use crate::analysis::{AnalysisType, Severity};
 
 #[test]
 fn test_proper_layer_architecture() {

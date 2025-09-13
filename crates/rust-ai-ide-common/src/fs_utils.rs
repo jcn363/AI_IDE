@@ -1,7 +1,9 @@
-use crate::errors::IdeError;
-///! Filesystem abstraction utilities for consistent async file operations
+/// ! Filesystem abstraction utilities for consistent async file operations
 use std::path::{Path, PathBuf};
+
 use tokio::fs;
+
+use crate::errors::IdeError;
 
 /// Asynchronous file existence check
 pub async fn file_exists<P: AsRef<Path>>(path: P) -> bool {
@@ -66,10 +68,7 @@ pub async fn copy_file<P: AsRef<Path>, Q: AsRef<Path>>(from: P, to: Q) -> Result
 }
 
 /// Read directory entries as filtered vec
-pub async fn read_dir_filtered<P: AsRef<Path>, F>(
-    path: P,
-    filter: F,
-) -> Result<Vec<PathBuf>, IdeError>
+pub async fn read_dir_filtered<P: AsRef<Path>, F>(path: P, filter: F) -> Result<Vec<PathBuf>, IdeError>
 where
     F: Fn(&tokio::fs::DirEntry) -> bool,
 {
@@ -128,10 +127,7 @@ pub async fn remove_dir_all<P: AsRef<Path>>(path: P) -> Result<(), IdeError> {
 }
 
 /// Atomic file update pattern
-pub async fn update_file_atomically<P: AsRef<Path>, F, Fut, T>(
-    path: P,
-    updater: F,
-) -> Result<T, IdeError>
+pub async fn update_file_atomically<P: AsRef<Path>, F, Fut, T>(path: P, updater: F) -> Result<T, IdeError>
 where
     F: FnOnce(String) -> Fut,
     Fut: std::future::Future<Output = (String, T)>,
@@ -144,10 +140,7 @@ where
 }
 
 /// List files recursively with max depth
-pub async fn list_files_recursive<P: AsRef<Path>>(
-    path: P,
-    max_depth: Option<usize>,
-) -> Result<Vec<PathBuf>, IdeError> {
+pub async fn list_files_recursive<P: AsRef<Path>>(path: P, max_depth: Option<usize>) -> Result<Vec<PathBuf>, IdeError> {
     let mut results = Vec::new();
     let mut stack = vec![(path.as_ref().to_path_buf(), 0)];
 
@@ -176,15 +169,15 @@ pub async fn watch_file_changes<P: AsRef<Path>, F>(path: P, callback: F) -> Resu
 where
     F: Fn(&notify::Event),
 {
-    use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
     use std::sync::mpsc::channel;
+
+    use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
 
     let (tx, rx) = channel();
 
-    let mut watcher =
-        RecommendedWatcher::new(tx, Config::default()).map_err(|e| IdeError::Generic {
-            message: format!("Watcher error: {:?}", e),
-        })?;
+    let mut watcher = RecommendedWatcher::new(tx, Config::default()).map_err(|e| IdeError::Generic {
+        message: format!("Watcher error: {:?}", e),
+    })?;
 
     watcher
         .watch(path.as_ref(), RecursiveMode::Recursive)

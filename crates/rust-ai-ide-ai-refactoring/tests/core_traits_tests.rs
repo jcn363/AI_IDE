@@ -1,16 +1,17 @@
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use async_trait::async_trait;
     use rust_ai_ide_ai_refactoring::core_traits::RefactoringOperation;
     use rust_ai_ide_ai_refactoring::types::*;
-    use std::collections::HashMap;
 
     // Mock implementation for testing
     struct MockRefactoringOperation {
-        pub mock_name: String,
-        pub mock_description: String,
-        pub mock_refactoring_type: RefactoringType,
-        pub should_be_applicable: bool,
+        pub mock_name:              String,
+        pub mock_description:       String,
+        pub mock_refactoring_type:  RefactoringType,
+        pub should_be_applicable:   bool,
         pub execute_should_succeed: bool,
         pub analyze_should_succeed: bool,
     }
@@ -25,10 +26,10 @@ mod tests {
             analyze_success: bool,
         ) -> Self {
             MockRefactoringOperation {
-                mock_name: name,
-                mock_description: description,
-                mock_refactoring_type: refactoring_type,
-                should_be_applicable: applicable,
+                mock_name:              name,
+                mock_description:       description,
+                mock_refactoring_type:  refactoring_type,
+                should_be_applicable:   applicable,
                 execute_should_succeed: execute_success,
                 analyze_should_succeed: analyze_success,
             }
@@ -44,12 +45,12 @@ mod tests {
         ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
             if self.execute_should_succeed {
                 Ok(RefactoringResult {
-                    id: Some("test-id".to_string()),
-                    success: true,
-                    changes: vec![],
+                    id:            Some("test-id".to_string()),
+                    success:       true,
+                    changes:       vec![],
                     error_message: None,
-                    warnings: vec![],
-                    new_content: Some("mock content".to_string()),
+                    warnings:      vec![],
+                    new_content:   Some("mock content".to_string()),
                 })
             } else {
                 Err(Box::new(std::io::Error::new(
@@ -65,14 +66,14 @@ mod tests {
         ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
             if self.analyze_should_succeed {
                 Ok(RefactoringAnalysis {
-                    is_safe: true,
+                    is_safe:          true,
                     confidence_score: 0.9,
                     potential_impact: RefactoringImpact::Low,
-                    affected_files: vec!["test.rs".to_string()],
+                    affected_files:   vec!["test.rs".to_string()],
                     affected_symbols: vec!["test_symbol".to_string()],
                     breaking_changes: vec![],
-                    suggestions: vec![],
-                    warnings: vec![],
+                    suggestions:      vec![],
+                    warnings:         vec![],
                 })
             } else {
                 Err(Box::new(std::io::Error::new(
@@ -158,12 +159,12 @@ mod tests {
 
         let context = RefactoringContext::default();
         let options = RefactoringOptions {
-            create_backup: true,
-            generate_tests: false,
+            create_backup:            true,
+            generate_tests:           false,
             apply_to_all_occurrences: false,
-            preserve_references: true,
-            ignore_safe_operations: false,
-            extra_options: None,
+            preserve_references:      true,
+            ignore_safe_operations:   false,
+            extra_options:            None,
         };
 
         let result = operation.execute(&context, &options).await.unwrap();
@@ -300,12 +301,12 @@ mod tests {
         extra_options.insert("experimental".to_string(), serde_json::json!(true));
 
         let options = RefactoringOptions {
-            create_backup: false,
-            generate_tests: false,
+            create_backup:            false,
+            generate_tests:           false,
             apply_to_all_occurrences: false,
-            preserve_references: false,
-            ignore_safe_operations: false,
-            extra_options: Some(extra_options),
+            preserve_references:      false,
+            ignore_safe_operations:   false,
+            extra_options:            Some(extra_options),
         };
 
         assert!(operation.is_experimental_enabled(&options));
@@ -341,12 +342,12 @@ mod tests {
         extra_options.insert("experimental".to_string(), serde_json::json!("not_boolean"));
 
         let options = RefactoringOptions {
-            create_backup: false,
-            generate_tests: false,
+            create_backup:            false,
+            generate_tests:           false,
             apply_to_all_occurrences: false,
-            preserve_references: false,
-            ignore_safe_operations: false,
-            extra_options: Some(extra_options),
+            preserve_references:      false,
+            ignore_safe_operations:   false,
+            extra_options:            Some(extra_options),
         };
 
         assert!(!operation.is_experimental_enabled(&options));
@@ -364,12 +365,12 @@ mod tests {
         );
 
         let options = RefactoringOptions {
-            create_backup: false,
-            generate_tests: false,
+            create_backup:            false,
+            generate_tests:           false,
             apply_to_all_occurrences: false,
-            preserve_references: false,
-            ignore_safe_operations: false,
-            extra_options: None,
+            preserve_references:      false,
+            ignore_safe_operations:   false,
+            extra_options:            None,
         };
 
         assert!(!operation.is_experimental_enabled(&options));

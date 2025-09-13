@@ -3,9 +3,11 @@
 //! Provides flexible configuration management with presets, validation,
 //! and seamless integration with the unified configuration system.
 
-use crate::errors::TypeGenerationError;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::errors::TypeGenerationError;
 
 /// Main generation configuration containing all settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -75,16 +77,16 @@ pub struct TypeScriptConfig {
 impl Default for TypeScriptConfig {
     fn default() -> Self {
         Self {
-            output_dir: "generated/types".to_string(),
-            naming_convention: NamingConvention::default(),
-            type_mappings: default_type_mappings(),
-            generate_index: true,
-            generate_docs: true,
+            output_dir:           "generated/types".to_string(),
+            naming_convention:    NamingConvention::default(),
+            type_mappings:        default_type_mappings(),
+            generate_index:       true,
+            generate_docs:        true,
             generate_type_guards: false,
-            strict_null_checks: true,
-            target_version: TypeScriptVersion::default(),
-            module_system: ModuleSystem::default(),
-            type_overrides: HashMap::new(),
+            strict_null_checks:   true,
+            target_version:       TypeScriptVersion::default(),
+            module_system:        ModuleSystem::default(),
+            type_overrides:       HashMap::new(),
         }
     }
 }
@@ -190,11 +192,11 @@ pub struct PluginConfig {
 impl Default for PluginConfig {
     fn default() -> Self {
         Self {
-            enabled: false,
-            plugin_dirs: vec!["plugins".to_string()],
+            enabled:         false,
+            plugin_dirs:     vec!["plugins".to_string()],
             enabled_plugins: vec![],
-            plugin_configs: HashMap::new(),
-            allow_unsafe: false,
+            plugin_configs:  HashMap::new(),
+            allow_unsafe:    false,
         }
     }
 }
@@ -231,8 +233,8 @@ pub struct CacheConfig {
 impl Default for CacheConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            cache_dir: ".shared-types-cache".to_string(),
+            enabled:     true,
+            cache_dir:   ".shared-types-cache".to_string(),
             ttl_seconds: 3600, // 1 hour
             max_size_mb: 100,
         }
@@ -262,11 +264,11 @@ pub struct GeneralConfig {
 impl Default for GeneralConfig {
     fn default() -> Self {
         Self {
-            verbose: false,
-            dry_run: false,
+            verbose:             false,
+            dry_run:             false,
             parallel_processing: true,
-            max_parallel_jobs: num_cpus::get(),
-            continue_on_errors: false,
+            max_parallel_jobs:   num_cpus::get(),
+            continue_on_errors:  false,
         }
     }
 }
@@ -366,8 +368,9 @@ impl GenerationConfig {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::NamedTempFile;
+
+    use super::*;
 
     #[test]
     fn test_default_config() {

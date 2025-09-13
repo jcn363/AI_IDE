@@ -3,14 +3,13 @@
 //! This module contains handlers for project build, run, and test operations.
 
 // Import validation from unified rust-ai-ide-core and rust-ai-ide-common
-use rust_ai_ide_common::validation::validate_file_extension;
-use rust_ai_ide_core::shell_utils::{execute_command, CommandResult};
-use rust_ai_ide_core::validation::{
-    validate_file_size, validate_rust_project, validate_secure_path,
-};
-use rust_ai_ide_core::{ContextualError, IDEError};
 use std::fs;
 use std::path::Path;
+
+use rust_ai_ide_common::validation::validate_file_extension;
+use rust_ai_ide_core::shell_utils::{execute_command, CommandResult};
+use rust_ai_ide_core::validation::{validate_file_size, validate_rust_project, validate_secure_path};
+use rust_ai_ide_core::{ContextualError, IDEError};
 
 #[tauri::command]
 pub async fn build_project(project_path: String) -> Result<String, String> {
@@ -57,14 +56,14 @@ pub async fn build_project(project_path: String) -> Result<String, String> {
 #[tauri::command]
 pub async fn run_project(project_path: String) -> Result<String, String> {
     use std::process::Stdio;
+
     use tokio::process::Command as TokioCommand;
 
     log::info!("Running project at: {}", project_path);
 
     // Validate project path using unified rust-ai-ide-core validation
     let project_path_buf = Path::new(&project_path);
-    let validation_result = rust_ai_ide_core::validation::validate_rust_project(project_path_buf)
-        .map_err(|e| {
+    let validation_result = rust_ai_ide_core::validation::validate_rust_project(project_path_buf).map_err(|e| {
         ContextualError::new(
             IDEError::ValidationError(format!("Project validation failed: {}", e)),
             format!("Invalid project path for run: {}", project_path),
@@ -152,14 +151,14 @@ pub async fn run_project(project_path: String) -> Result<String, String> {
 #[tauri::command]
 pub async fn test_project(project_path: String) -> Result<String, String> {
     use std::process::Stdio;
+
     use tokio::process::Command;
 
     log::info!("Running tests for project at: {}", project_path);
 
     // Validate project path using unified rust-ai-ide-core validation
     let project_path_buf = Path::new(&project_path);
-    let validation_result = rust_ai_ide_core::validation::validate_rust_project(project_path_buf)
-        .map_err(|e| {
+    let validation_result = rust_ai_ide_core::validation::validate_rust_project(project_path_buf).map_err(|e| {
         ContextualError::new(
             IDEError::ValidationError(format!("Project validation failed: {}", e)),
             format!("Invalid project path for test: {}", project_path),
@@ -220,8 +219,7 @@ pub async fn test_project(project_path: String) -> Result<String, String> {
 pub async fn doc_generate(project_path: String) -> Result<String, String> {
     // Validate project path using unified rust-ai-ide-core validation
     let project_path_buf = Path::new(&project_path);
-    let validation_result = rust_ai_ide_core::validation::validate_rust_project(project_path_buf)
-        .map_err(|e| {
+    let validation_result = rust_ai_ide_core::validation::validate_rust_project(project_path_buf).map_err(|e| {
         ContextualError::new(
             IDEError::ValidationError(format!("Project validation failed: {}", e)),
             format!("Invalid project path for doc generation: {}", project_path),

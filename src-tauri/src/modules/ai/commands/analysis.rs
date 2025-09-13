@@ -47,17 +47,23 @@ pub async fn ai_explain_code(
     };
 
     let ctx = rust_ai_ide_lsp::AIContext {
-        current_code: code,
-        file_name: None,
+        current_code:    code,
+        file_name:       None,
         cursor_position: None,
-        selection: Some(sel.clone()),
+        selection:       Some(sel.clone()),
         project_context: Default::default(),
     };
 
     let task = if sel.is_empty() {
-        "Explain the provided Rust code in detail. Include purpose, structure, key components, and any notable patterns or implementation details.".to_string()
+        "Explain the provided Rust code in detail. Include purpose, structure, key components, and any notable \
+         patterns or implementation details."
+            .to_string()
     } else {
-        format!("Explain this selected Rust code: {}\n\nFocus on what this code snippet does, how it works, and its significance within the context.", sel)
+        format!(
+            "Explain this selected Rust code: {}\n\nFocus on what this code snippet does, how it works, and its \
+             significance within the context.",
+            sel
+        )
     };
 
     log::debug!("AI explanation task: {}", task);
@@ -101,7 +107,7 @@ pub async fn ai_doc_assist(
     let ai_service = utils::get_or_create_ai_service(&ai_service_state).await?;
 
     let ctx = rust_ai_ide_lsp::AIContext {
-        current_code: match code_context {
+        current_code:    match code_context {
             Some(code) if !code.is_empty() => code,
             Some(code) => {
                 log::warn!("Empty code_context provided for documentation");
@@ -112,9 +118,9 @@ pub async fn ai_doc_assist(
                 String::new()
             }
         },
-        file_name: None,
+        file_name:       None,
         cursor_position: None,
-        selection: None,
+        selection:       None,
         project_context: Default::default(),
     };
 
@@ -179,14 +185,18 @@ pub async fn ai_refactor_code(
     let ai_service = utils::get_or_create_ai_service(&ai_service_state).await?;
 
     let ctx = rust_ai_ide_lsp::AIContext {
-        current_code: code,
-        file_name: None,
+        current_code:    code,
+        file_name:       None,
         cursor_position: None,
-        selection: None,
+        selection:       None,
         project_context: Default::default(),
     };
 
-    let task = format!("Refactor the following Rust code according to this instruction: {}\n\nRespond with the fully refactored code only. Ensure the code is syntactically correct and follows Rust best practices.", instruction);
+    let task = format!(
+        "Refactor the following Rust code according to this instruction: {}\n\nRespond with the fully refactored code \
+         only. Ensure the code is syntactically correct and follows Rust best practices.",
+        instruction
+    );
 
     log::debug!("AI refactoring task: {}", task);
 
@@ -248,7 +258,11 @@ pub async fn ai_context_help(
         project_context: Default::default(),
     };
 
-    let task = format!("Question: {}\n\nProvide helpful, context-aware guidance for Rust development. Include practical examples where relevant and consider best practices.", question);
+    let task = format!(
+        "Question: {}\n\nProvide helpful, context-aware guidance for Rust development. Include practical examples \
+         where relevant and consider best practices.",
+        question
+    );
 
     log::debug!("AI help task: {}", task);
 

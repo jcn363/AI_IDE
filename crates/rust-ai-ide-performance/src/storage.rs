@@ -3,29 +3,30 @@
 //! This module provides various storage backends for performance metrics
 //! with historical tracking and trend analysis capabilities.
 
-use chrono::{DateTime, Duration as ChronoDuration, Timelike, Utc};
-use rust_ai_ide_shared_types::PerformanceMetrics;
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter, Write};
 use std::path::Path;
 use std::sync::{Arc, RwLock};
+
+use chrono::{DateTime, Duration as ChronoDuration, Timelike, Utc};
+use rust_ai_ide_shared_types::PerformanceMetrics;
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
 /// Storage configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StorageConfig {
     /// Storage backend type
-    pub backend: StorageBackend,
+    pub backend:                   StorageBackend,
     /// Maximum number of metrics to keep in memory
-    pub max_in_memory_metrics: usize,
+    pub max_in_memory_metrics:     usize,
     /// Retain metrics for this many days
-    pub retention_days: i64,
+    pub retention_days:            i64,
     /// Data directory for file-based storage
-    pub data_directory: String,
+    pub data_directory:            String,
     /// Enable automatic compaction
-    pub auto_compaction: bool,
+    pub auto_compaction:           bool,
     /// Compaction interval in hours
     pub compaction_interval_hours: i64,
 }
@@ -33,11 +34,11 @@ pub struct StorageConfig {
 impl Default for StorageConfig {
     fn default() -> Self {
         Self {
-            backend: StorageBackend::InMemory,
-            max_in_memory_metrics: 10_000,
-            retention_days: 30,
-            data_directory: "performance_data".to_string(),
-            auto_compaction: true,
+            backend:                   StorageBackend::InMemory,
+            max_in_memory_metrics:     10_000,
+            retention_days:            30,
+            data_directory:            "performance_data".to_string(),
+            auto_compaction:           true,
             compaction_interval_hours: 24,
         }
     }
@@ -58,7 +59,7 @@ pub enum StorageBackend {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricsSnapshot {
     /// Snapshots by time bucket (hourly)
-    pub snapshots: HashMap<i64, AggregatedMetrics>,
+    pub snapshots:    HashMap<i64, AggregatedMetrics>,
     /// Last update timestamp
     pub last_updated: DateTime<Utc>,
 }
@@ -69,32 +70,32 @@ pub struct AggregatedMetrics {
     /// Number of samples in this bucket
     pub sample_count: u64,
     /// Average metrics
-    pub averages: PerformanceMetrics,
+    pub averages:     PerformanceMetrics,
     /// Min values
-    pub mins: PerformanceMetrics,
+    pub mins:         PerformanceMetrics,
     /// Max values
-    pub maxs: PerformanceMetrics,
+    pub maxs:         PerformanceMetrics,
     /// Standard deviations
-    pub stds: MetricStdDevs,
+    pub stds:         MetricStdDevs,
     /// Percentiles (P50, P90, P95, P99)
-    pub percentiles: MetricPercentiles,
+    pub percentiles:  MetricPercentiles,
 }
 
 /// Standard deviations for key metrics
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct MetricStdDevs {
     pub cpu_usage_percent: f64,
-    pub memory_bytes: f64,
-    pub response_time_ns: f64,
+    pub memory_bytes:      f64,
+    pub response_time_ns:  f64,
 }
 
 /// Percentiles for key metrics
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct MetricPercentiles {
     /// CPU usage percentiles
-    pub cpu_percentiles: PercentileValues,
+    pub cpu_percentiles:           PercentileValues,
     /// Memory usage percentiles
-    pub memory_percentiles: PercentileValues,
+    pub memory_percentiles:        PercentileValues,
     /// Response time percentiles
     pub response_time_percentiles: PercentileValues,
 }
@@ -112,15 +113,15 @@ pub struct PercentileValues {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrendAnalysis {
     /// Metric name
-    pub metric_name: String,
+    pub metric_name:       String,
     /// Trend direction (positive for increasing, negative for decreasing)
     pub trend_coefficient: f64,
     /// Trend confidence (0.0 to 1.0)
-    pub confidence: f64,
+    pub confidence:        f64,
     /// Trend description
-    pub description: String,
+    pub description:       String,
     /// Prediction for next timeframe
-    pub next_prediction: f64,
+    pub next_prediction:   f64,
 }
 
 /// Performance metrics storage trait
@@ -143,8 +144,7 @@ pub trait MetricsStorage: Send + Sync {
     ) -> Result<Vec<(DateTime<Utc>, AggregatedMetrics)>, StorageError>;
 
     /// Get trend analysis
-    async fn get_trends(&self, metric_name: &str, days: i64)
-        -> Result<TrendAnalysis, StorageError>;
+    async fn get_trends(&self, metric_name: &str, days: i64) -> Result<TrendAnalysis, StorageError>;
 
     /// Cleanup old data based on retention policy
     async fn cleanup(&self) -> Result<(), StorageError>;
@@ -189,9 +189,9 @@ impl std::error::Error for StorageError {}
 /// In-memory metrics storage
 pub struct InMemoryStorage {
     /// Storage buffer
-    buffer: Arc<RwLock<VecDeque<PerformanceMetrics>>>,
+    buffer:    Arc<RwLock<VecDeque<PerformanceMetrics>>>,
     /// Maximum buffer size
-    max_size: usize,
+    max_size:  usize,
     /// Current snapshots (hourly)
     snapshots: Arc<RwLock<HashMap<i64, AggregatedMetrics>>>,
 }
@@ -260,11 +260,7 @@ impl MetricsStorage for InMemoryStorage {
         Ok(result)
     }
 
-    async fn get_trends(
-        &self,
-        metric_name: &str,
-        days: i64,
-    ) -> Result<TrendAnalysis, StorageError> {
+    async fn get_trends(&self, metric_name: &str, days: i64) -> Result<TrendAnalysis, StorageError> {
         let buffer = self.buffer.read().unwrap();
         let cutoff = Utc::now() - ChronoDuration::days(days);
 
@@ -330,8 +326,7 @@ impl MetricsStorage for InMemoryStorage {
         match format {
             ExportFormat::Json => {
                 let buffer = self.buffer.read().unwrap();
-                serde_json::to_vec(&*buffer)
-                    .map_err(|e| StorageError::SerializationError(e.to_string()))
+                serde_json::to_vec(&*buffer).map_err(|e| StorageError::SerializationError(e.to_string()))
             }
             ExportFormat::Csv => {
                 // TODO: Implement CSV export
@@ -544,7 +539,7 @@ impl InMemoryStorage {
 
 /// File-based metrics storage
 pub struct FileStorage {
-    config: StorageConfig,
+    config:    StorageConfig,
     in_memory: InMemoryStorage,
 }
 
@@ -570,8 +565,8 @@ impl FileStorage {
             self.config.data_directory, metrics.timestamp
         );
 
-        let data = serde_json::to_string_pretty(metrics)
-            .map_err(|e| StorageError::SerializationError(e.to_string()))?;
+        let data =
+            serde_json::to_string_pretty(metrics).map_err(|e| StorageError::SerializationError(e.to_string()))?;
 
         tokio::fs::write(&filename, data)
             .await
@@ -628,11 +623,7 @@ impl MetricsStorage for FileStorage {
         self.in_memory.get_aggregated_metrics(bucket_hours).await
     }
 
-    async fn get_trends(
-        &self,
-        metric_name: &str,
-        days: i64,
-    ) -> Result<TrendAnalysis, StorageError> {
+    async fn get_trends(&self, metric_name: &str, days: i64) -> Result<TrendAnalysis, StorageError> {
         self.in_memory.get_trends(metric_name, days).await
     }
 
@@ -680,9 +671,7 @@ impl StorageFactory {
     /// Create storage backend from config
     pub fn create(config: StorageConfig) -> Box<dyn MetricsStorage> {
         match config.backend {
-            StorageBackend::InMemory => {
-                Box::new(InMemoryStorage::new(config.max_in_memory_metrics))
-            }
+            StorageBackend::InMemory => Box::new(InMemoryStorage::new(config.max_in_memory_metrics)),
             StorageBackend::File => Box::new(FileStorage::new(config)),
             StorageBackend::Database => {
                 // For now, fall back to in-memory with database placeholder

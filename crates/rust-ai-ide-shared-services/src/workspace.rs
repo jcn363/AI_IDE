@@ -1,11 +1,12 @@
 //! Unified workspace management interfaces and implementations
 
-use async_trait::async_trait;
-use rust_ai_ide_common::caching::{Cache, MemoryCache};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
+
+use async_trait::async_trait;
+use rust_ai_ide_common::caching::{Cache, MemoryCache};
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 /// Configuration for a workspace
@@ -15,9 +16,9 @@ pub struct WorkspaceConfig {
     /// The root path of the workspace
     pub root_path: PathBuf,
     /// Whether to watch for file changes
-    pub watch: bool,
+    pub watch:     bool,
     /// Additional settings specific to this workspace
-    pub settings: HashMap<String, serde_json::Value>,
+    pub settings:  HashMap<String, serde_json::Value>,
 }
 
 impl WorkspaceConfig {
@@ -25,16 +26,13 @@ impl WorkspaceConfig {
     pub fn new<P: AsRef<Path>>(root_path: P) -> Self {
         Self {
             root_path: root_path.as_ref().to_path_buf(),
-            watch: true,
-            settings: HashMap::new(),
+            watch:     true,
+            settings:  HashMap::new(),
         }
     }
 
     /// Get a setting value
-    pub fn get_setting<T: serde::de::DeserializeOwned>(
-        &self,
-        key: &str,
-    ) -> Result<Option<T>, serde_json::Error> {
+    pub fn get_setting<T: serde::de::DeserializeOwned>(&self, key: &str) -> Result<Option<T>, serde_json::Error> {
         self.settings
             .get(key)
             .map(|v| serde_json::from_value(v.clone()))
@@ -42,11 +40,7 @@ impl WorkspaceConfig {
     }
 
     /// Set a setting value
-    pub fn set_setting<T: Serialize>(
-        &mut self,
-        key: impl Into<String>,
-        value: T,
-    ) -> Result<(), serde_json::Error> {
+    pub fn set_setting<T: Serialize>(&mut self, key: impl Into<String>, value: T) -> Result<(), serde_json::Error> {
         let value = serde_json::to_value(value)?;
         self.settings.insert(key.into(), value);
         Ok(())
@@ -78,21 +72,21 @@ pub trait WorkspaceManagerTrait: Send + Sync {
 /// File metadata cache entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileMetadata {
-    pub size: u64,
+    pub size:     u64,
     pub modified: SystemTime,
-    pub is_dir: bool,
+    pub is_dir:   bool,
 }
 
 /// Caches for workspace metadata and configurations
 pub struct WorkspaceCaches {
     pub file_metadata: MemoryCache<String, FileMetadata>,
-    pub config_cache: MemoryCache<PathBuf, WorkspaceConfig>,
+    pub config_cache:  MemoryCache<PathBuf, WorkspaceConfig>,
 }
 
 /// Manages multiple workspaces in a thread-safe manner
 pub struct WorkspaceManager {
     workspaces: RwLock<HashMap<PathBuf, WorkspaceConfig>>,
-    caches: WorkspaceCaches,
+    caches:     WorkspaceCaches,
 }
 
 impl Default for WorkspaceManager {
@@ -106,9 +100,9 @@ impl WorkspaceManager {
     pub fn new() -> Self {
         Self {
             workspaces: RwLock::new(HashMap::new()),
-            caches: WorkspaceCaches {
+            caches:     WorkspaceCaches {
                 file_metadata: MemoryCache::with_capacity(1000),
-                config_cache: MemoryCache::with_capacity(100),
+                config_cache:  MemoryCache::with_capacity(100),
             },
         }
     }
@@ -197,10 +191,7 @@ impl WorkspaceManager {
     }
 
     /// Get file metadata with caching
-    pub async fn get_file_metadata<P: AsRef<Path>>(
-        &self,
-        path: P,
-    ) -> anyhow::Result<Option<FileMetadata>> {
+    pub async fn get_file_metadata<P: AsRef<Path>>(&self, path: P) -> anyhow::Result<Option<FileMetadata>> {
         let path_str = path
             .as_ref()
             .to_str()
@@ -215,9 +206,9 @@ impl WorkspaceManager {
         // Fetch from filesystem
         if let Ok(metadata) = tokio::fs::metadata(&path.as_ref()).await {
             let file_metadata = FileMetadata {
-                size: metadata.len(),
+                size:     metadata.len(),
                 modified: metadata.modified().unwrap_or_else(|_| SystemTime::now()),
-                is_dir: metadata.is_dir(),
+                is_dir:   metadata.is_dir(),
             };
 
             // Cache with 60 second TTL
@@ -317,8 +308,9 @@ impl WorkspaceManagerTrait for WorkspaceManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::tempdir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_workspace_config() {

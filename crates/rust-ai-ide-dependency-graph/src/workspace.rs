@@ -1,9 +1,10 @@
 //! Workspace-aware dependency management
 
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 use crate::error::*;
@@ -13,30 +14,30 @@ use crate::resolver::*;
 /// Workspace configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkspaceConfig {
-    pub root_path: PathBuf,
-    pub member_patterns: Vec<String>,
-    pub exclude_patterns: Vec<String>,
+    pub root_path:         PathBuf,
+    pub member_patterns:   Vec<String>,
+    pub exclude_patterns:  Vec<String>,
     pub package_json_path: Option<PathBuf>,
-    pub cargo_toml_path: Option<PathBuf>,
-    pub lockfile_paths: Vec<PathBuf>,
-    pub override_paths: HashMap<String, PathBuf>,
+    pub cargo_toml_path:   Option<PathBuf>,
+    pub lockfile_paths:    Vec<PathBuf>,
+    pub override_paths:    HashMap<String, PathBuf>,
 }
 
 impl Default for WorkspaceConfig {
     fn default() -> Self {
         Self {
-            root_path: PathBuf::from("."),
-            member_patterns: vec!["*".to_string()],
-            exclude_patterns: vec!["vendor".to_string(), "target".to_string()],
+            root_path:         PathBuf::from("."),
+            member_patterns:   vec!["*".to_string()],
+            exclude_patterns:  vec!["vendor".to_string(), "target".to_string()],
             package_json_path: Some(PathBuf::from("package.json")),
-            cargo_toml_path: Some(PathBuf::from("Cargo.toml")),
-            lockfile_paths: vec![
+            cargo_toml_path:   Some(PathBuf::from("Cargo.toml")),
+            lockfile_paths:    vec![
                 PathBuf::from("Cargo.lock"),
                 PathBuf::from("package-lock.json"),
                 PathBuf::from("yarn.lock"),
                 PathBuf::from("pnpm-lock.yaml"),
             ],
-            override_paths: HashMap::new(),
+            override_paths:    HashMap::new(),
         }
     }
 }
@@ -44,13 +45,13 @@ impl Default for WorkspaceConfig {
 /// Workspace member information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkspaceMember {
-    pub name: String,
-    pub path: PathBuf,
+    pub name:          String,
+    pub path:          PathBuf,
     pub manifest_path: PathBuf,
     pub manifest_type: ManifestType,
-    pub dependencies: Vec<String>,
-    pub dependents: Vec<String>,
-    pub status: PublicationStatus,
+    pub dependencies:  Vec<String>,
+    pub dependents:    Vec<String>,
+    pub status:        PublicationStatus,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,8 +73,8 @@ pub enum PublicationStatus {
 
 /// Workspace dependency resolver with awareness of member relationships
 pub struct WorkspaceResolver {
-    config: WorkspaceConfig,
-    members: HashMap<String, WorkspaceMember>,
+    config:           WorkspaceConfig,
+    members:          HashMap<String, WorkspaceMember>,
     dependency_graph: Arc<RwLock<DependencyGraph>>,
 }
 
@@ -116,13 +117,13 @@ impl WorkspaceResolver {
 
         // Placeholder: Add dummy workspace members
         let dummy_member = WorkspaceMember {
-            name: "rust-ai-ide-dependency-graph".to_string(),
-            path: PathBuf::from("crates/rust-ai-ide-dependency-graph"),
+            name:          "rust-ai-ide-dependency-graph".to_string(),
+            path:          PathBuf::from("crates/rust-ai-ide-dependency-graph"),
             manifest_path: PathBuf::from("crates/rust-ai-ide-dependency-graph/Cargo.toml"),
             manifest_type: ManifestType::Cargo,
-            dependencies: vec!["petgraph".to_string(), "semver".to_string()],
-            dependents: Vec::new(),
-            status: PublicationStatus::Unpublished,
+            dependencies:  vec!["petgraph".to_string(), "semver".to_string()],
+            dependents:    Vec::new(),
+            status:        PublicationStatus::Unpublished,
         };
 
         self.members.insert(dummy_member.name.clone(), dummy_member);
@@ -135,9 +136,7 @@ impl WorkspaceResolver {
     }
 
     /// Resolve workspace-internal dependencies
-    pub async fn resolve_workspace_dependencies(
-        &self,
-    ) -> DependencyResult<WorkspaceResolutionResult> {
+    pub async fn resolve_workspace_dependencies(&self) -> DependencyResult<WorkspaceResolutionResult> {
         let mut internal_deps = HashMap::new();
         let mut external_deps = HashMap::new();
         let mut version_conflicts = Vec::new();
@@ -202,20 +201,20 @@ impl WorkspaceResolver {
 
                 if packages_using.len() > 1 {
                     conflicts.push(VersionConflict {
-                        package_name: dep,
-                        constraints: packages_using
+                        package_name:         dep,
+                        constraints:          packages_using
                             .iter()
                             .enumerate()
                             .map(|(i, pkg)| {
                                 PackageConstraint {
                                     source_package: pkg.clone(),
-                                    version_req: "*".to_string(), // Placeholder
-                                    depth: i,
+                                    version_req:    "*".to_string(), // Placeholder
+                                    depth:          i,
                                 }
                             })
                             .collect(),
                         suggested_resolution: None,
-                        conflict_level: ConflictLevel::Warning,
+                        conflict_level:       ConflictLevel::Warning,
                     });
                 }
             }
@@ -224,10 +223,7 @@ impl WorkspaceResolver {
         Ok(conflicts)
     }
 
-    async fn generate_resolution_suggestions(
-        &self,
-        conflicts: &[VersionConflict],
-    ) -> DependencyResult<Vec<String>> {
+    async fn generate_resolution_suggestions(&self, conflicts: &[VersionConflict]) -> DependencyResult<Vec<String>> {
         let mut suggestions = Vec::new();
 
         for conflict in conflicts {
@@ -248,22 +244,22 @@ impl WorkspaceResolver {
         for (name, member) in &self.members {
             if !graph.node_indices.contains_key(name) {
                 let node = DependencyNode {
-                    name: name.clone(),
-                    version: None, // Would be populated from manifest
-                    description: None,
-                    repository: None,
-                    license: None,
-                    authors: Vec::new(),
-                    keywords: Vec::new(),
-                    categories: Vec::new(),
-                    homepage: None,
-                    documentation: None,
-                    readme: None,
+                    name:                name.clone(),
+                    version:             None, // Would be populated from manifest
+                    description:         None,
+                    repository:          None,
+                    license:             None,
+                    authors:             Vec::new(),
+                    keywords:            Vec::new(),
+                    categories:          Vec::new(),
+                    homepage:            None,
+                    documentation:       None,
+                    readme:              None,
                     is_workspace_member: true,
-                    source_url: None,
-                    checksum: None,
-                    yanked: false,
-                    created_at: None,
+                    source_url:          None,
+                    checksum:            None,
+                    yanked:              false,
+                    created_at:          None,
                 };
 
                 graph.add_package(node)?;
@@ -336,20 +332,20 @@ impl WorkspaceResolver {
 /// Workspace resolution result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkspaceResolutionResult {
-    pub internal_dependencies: HashMap<String, Vec<String>>,
-    pub external_dependencies: HashMap<String, Vec<String>>,
-    pub version_conflicts: Vec<VersionConflict>,
+    pub internal_dependencies:  HashMap<String, Vec<String>>,
+    pub external_dependencies:  HashMap<String, Vec<String>>,
+    pub version_conflicts:      Vec<VersionConflict>,
     pub resolution_suggestions: Vec<String>,
 }
 
 /// Workspace statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkspaceStats {
-    pub total_members: usize,
-    pub published_members: usize,
+    pub total_members:       usize,
+    pub published_members:   usize,
     pub unpublished_members: usize,
-    pub manifest_types: usize,
-    pub workspace_root: PathBuf,
+    pub manifest_types:      usize,
+    pub workspace_root:      PathBuf,
 }
 
 impl WorkspaceResolutionResult {
@@ -372,8 +368,8 @@ impl WorkspaceResolutionResult {
 
 /// Integrated workspace-aware dependency manager
 pub struct WorkspaceAwareManager {
-    resolver: WorkspaceResolver,
-    graph: Arc<RwLock<DependencyGraph>>,
+    resolver:            WorkspaceResolver,
+    graph:               Arc<RwLock<DependencyGraph>>,
     resolution_strategy: ResolutionStrategy,
 }
 
@@ -387,9 +383,7 @@ impl WorkspaceAwareManager {
     }
 
     /// Perform workspace-aware dependency resolution
-    pub async fn resolve_workspace_dependencies(
-        &self,
-    ) -> DependencyResult<WorkspaceResolutionResult> {
+    pub async fn resolve_workspace_dependencies(&self) -> DependencyResult<WorkspaceResolutionResult> {
         self.resolver.resolve_workspace_dependencies().await
     }
 
@@ -445,9 +439,9 @@ impl WorkspaceAwareManager {
         }
 
         Ok(GraphIntegrityReport {
-            missing_workspace_members: missing_members,
+            missing_workspace_members:   missing_members,
             incorrect_workspace_marking: extra_nodes,
-            is_integrity_maintained: missing_members.is_empty() && extra_nodes.is_empty(),
+            is_integrity_maintained:     missing_members.is_empty() && extra_nodes.is_empty(),
         })
     }
 }
@@ -464,9 +458,9 @@ pub struct WorkspaceAnalysis {
 /// Graph integrity report
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphIntegrityReport {
-    pub missing_workspace_members: Vec<String>,
+    pub missing_workspace_members:   Vec<String>,
     pub incorrect_workspace_marking: Vec<String>,
-    pub is_integrity_maintained: bool,
+    pub is_integrity_maintained:     bool,
 }
 
 impl WorkspaceAnalysis {

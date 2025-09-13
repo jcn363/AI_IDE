@@ -1,7 +1,8 @@
 //! Plugin trait definitions for the Rust AI IDE plugin system.
 
-use crate::interfaces::{PluginCapabilities, PluginContext, PluginMetadata};
 use async_trait::async_trait;
+
+use crate::interfaces::{PluginCapabilities, PluginContext, PluginMetadata};
 
 /// Core trait that all plugins must implement.
 /// This defines the lifecycle and interaction methods for plugins.

@@ -1,15 +1,16 @@
 //! Core types for the analysis system
 
-use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
 
 /// Location information for code elements
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CodeLocation {
     /// File path
-    pub file_path: String,
+    pub file_path:   String,
     /// Range in the file
-    pub range: Range,
+    pub range:       Range,
     /// Optional module path
     pub module_path: Option<String>,
 }
@@ -20,11 +21,11 @@ pub struct Range {
     /// Starting line (1-based)
     pub start_line: u32,
     /// Starting column (1-based)
-    pub start_col: u32,
+    pub start_col:  u32,
     /// Ending line (1-based)
-    pub end_line: u32,
+    pub end_line:   u32,
     /// Ending column (1-based)
-    pub end_col: u32,
+    pub end_col:    u32,
 }
 
 /// Severity levels for analysis findings
@@ -82,78 +83,78 @@ impl fmt::Display for AnalysisCategory {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisFinding {
     /// The type of the finding
-    pub kind: String,
+    pub kind:       String,
     /// Description of the finding
-    pub message: String,
+    pub message:    String,
     /// The actual finding data as a JSON string
-    pub data: String,
+    pub data:       String,
     /// Severity level
-    pub severity: Severity,
+    pub severity:   Severity,
     /// Category of the finding
-    pub category: AnalysisCategory,
+    pub category:   AnalysisCategory,
     /// Location in the source code
-    pub location: String,
+    pub location:   String,
     /// Code range where the finding was detected
-    pub range: Range,
+    pub range:      Range,
     /// Optional suggestion for fixing the issue
     pub suggestion: Option<String>,
     /// Confidence level (0.0 to 1.0)
     pub confidence: f32,
     /// Unique identifier for the rule that generated this finding
-    pub rule_id: String,
+    pub rule_id:    String,
 }
 
 /// Alternative analysis finding type (for backward compatibility)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisFindingOld {
     /// Description of the finding
-    pub message: String,
+    pub message:    String,
     /// Severity level
-    pub severity: Severity,
+    pub severity:   Severity,
     /// Category of the finding
-    pub category: AnalysisCategory,
+    pub category:   AnalysisCategory,
     /// Location in the code
-    pub range: Range,
+    pub range:      Range,
     /// Suggested fix (if any)
     pub suggestion: Option<String>,
     /// Confidence level (0.0 - 1.0)
     pub confidence: f32,
     /// Unique identifier for the rule that triggered this finding
-    pub rule_id: String,
+    pub rule_id:    String,
 }
 
 /// Analysis preferences that control analyzer behavior
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisPreferences {
     /// Enable architectural analysis
-    pub enable_architecture: bool,
+    pub enable_architecture:  bool,
     /// Enable security analysis
-    pub enable_security: bool,
+    pub enable_security:      bool,
     /// Enable performance analysis
-    pub enable_performance: bool,
+    pub enable_performance:   bool,
     /// Enable metrics calculation
-    pub enable_code_style: bool,
+    pub enable_code_style:    bool,
     /// Enable code smell analysis
-    pub enable_code_smells: bool,
+    pub enable_code_smells:   bool,
     /// Whether to use incremental analysis
     pub incremental_analysis: bool,
     /// Minimum confidence threshold for findings (0.0 to 1.0)
-    pub min_confidence: f32,
+    pub min_confidence:       f32,
     /// Whether to include suggestions in findings
-    pub include_suggestions: bool,
+    pub include_suggestions:  bool,
 }
 
 impl Default for AnalysisPreferences {
     fn default() -> Self {
         Self {
-            enable_architecture: true,
-            enable_security: true,
-            enable_performance: true,
-            enable_code_style: true,
-            enable_code_smells: true,
+            enable_architecture:  true,
+            enable_security:      true,
+            enable_performance:   true,
+            enable_code_style:    true,
+            enable_code_smells:   true,
             incremental_analysis: true,
-            min_confidence: 0.7,
-            include_suggestions: true,
+            min_confidence:       0.7,
+            include_suggestions:  true,
         }
     }
 }
@@ -163,28 +164,28 @@ impl Default for AnalysisPreferences {
 pub struct AnalysisConfig {
     /// Whether caching is enabled
     #[serde(default = "default_true")]
-    pub cache_enabled: bool,
+    pub cache_enabled:        bool,
     /// Time-to-live for cached results in seconds (None = no expiration)
     #[serde(default)]
-    pub cache_ttl_seconds: Option<u64>,
+    pub cache_ttl_seconds:    Option<u64>,
     /// Whether to enable incremental analysis
     #[serde(default = "default_true")]
     pub incremental_analysis: bool,
     /// Maximum number of files to analyze in parallel
     #[serde(default = "default_max_parallel_files")]
-    pub max_parallel_files: usize,
+    pub max_parallel_files:   usize,
     /// File patterns to include in analysis
     #[serde(default = "default_include_patterns")]
-    pub include_patterns: Vec<String>,
+    pub include_patterns:     Vec<String>,
     /// Version of the analysis configuration (bump this to invalidate all caches)
     #[serde(default = "default_version")]
-    pub version: u32,
+    pub version:              u32,
     /// Minimum confidence threshold for findings (0.0 - 1.0)
     #[serde(default = "default_min_confidence")]
-    pub min_confidence: f32,
+    pub min_confidence:       f32,
     /// Custom analysis rules
     #[serde(default)]
-    pub custom_rules: std::collections::HashMap<String, serde_json::Value>,
+    pub custom_rules:         std::collections::HashMap<String, serde_json::Value>,
 }
 
 fn default_true() -> bool {
@@ -206,14 +207,14 @@ fn default_min_confidence() -> f32 {
 impl Default for AnalysisConfig {
     fn default() -> Self {
         Self {
-            cache_enabled: true,
-            cache_ttl_seconds: Some(3600 * 24 * 7), // 1 week
-            version: 1,
-            min_confidence: 0.7,
+            cache_enabled:        true,
+            cache_ttl_seconds:    Some(3600 * 24 * 7), // 1 week
+            version:              1,
+            min_confidence:       0.7,
             incremental_analysis: true,
-            max_parallel_files: num_cpus::get(),
-            include_patterns: vec![r"\.rs$".to_string()],
-            custom_rules: std::collections::HashMap::new(),
+            max_parallel_files:   num_cpus::get(),
+            include_patterns:     vec![r"\.rs$".to_string()],
+            custom_rules:         std::collections::HashMap::new(),
         }
     }
 }

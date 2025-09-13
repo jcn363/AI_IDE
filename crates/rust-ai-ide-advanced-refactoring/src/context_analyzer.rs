@@ -1,18 +1,20 @@
-use crate::ai_suggester::AnalysisContext;
-use crate::error::{AnalysisError, AnalysisResult};
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use rust_ai_ide_lsp::LSPService;
-use std::sync::Arc;
+
+use crate::ai_suggester::AnalysisContext;
+use crate::error::{AnalysisError, AnalysisResult};
 
 /// Context analysis result
 #[derive(Debug, Clone)]
 pub struct ContextAnalysis {
     pub analysis_type: ContextAnalysisType,
-    pub confidence: f64,
-    pub start_line: usize,
-    pub end_line: usize,
-    pub description: String,
-    pub suggestions: Vec<String>,
+    pub confidence:    f64,
+    pub start_line:    usize,
+    pub end_line:      usize,
+    pub description:   String,
+    pub suggestions:   Vec<String>,
 }
 
 /// Types of context analysis

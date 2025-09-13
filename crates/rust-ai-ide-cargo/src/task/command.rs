@@ -1,12 +1,14 @@
 //! Command execution functionality for Cargo tasks
 
-use super::{CargoTask, TaskResult};
-use crate::task::SystemTime;
+use std::process::Stdio;
+
 use anyhow::Result;
 use log::{debug, error};
-use std::process::Stdio;
 use thiserror::Error;
 use tokio::process::Command;
+
+use super::{CargoTask, TaskResult};
+use crate::task::SystemTime;
 
 /// Error type for command execution
 #[derive(Debug, Error, Clone)]
@@ -46,7 +48,7 @@ pub enum CommandStatus {
 
 /// Handles execution of Cargo commands
 pub struct CommandExecutor {
-    task: CargoTask,
+    task:   CargoTask,
     status: CommandStatus,
     result: Option<CommandResult>,
 }
@@ -146,8 +148,9 @@ impl CommandExecutor {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::tempdir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_command_execution() {

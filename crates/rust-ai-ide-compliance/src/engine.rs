@@ -3,53 +3,52 @@
 //! The central compliance engine that orchestrates all compliance verification,
 //! policy enforcement, audit trails, and regulatory reporting for GDPR and HIPAA.
 
-use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use async_trait::async_trait;
 use tokio::sync::{Mutex, RwLock};
 
 use crate::audit::AuditTrailManager;
 use crate::core::{
-    AuditEntry, AuditSeverity, ComplianceConfig, ComplianceError, ComplianceFramework,
-    ComplianceResult, ComplianceStatus, PolicyConfig,
+    AuditEntry, AuditSeverity, ComplianceConfig, ComplianceError, ComplianceFramework, ComplianceResult,
+    ComplianceStatus, PolicyConfig,
 };
 use crate::data_management::{ConsentManager, DataAnonymizationService};
-use crate::policy::PolicyEnforcementEngine;
-use crate::risk::RiskAssessmentEngine;
-
 #[cfg(feature = "gdpr")]
 use crate::gdpr::GdprProcessor;
-
 #[cfg(feature = "hipaa")]
 use crate::hipaa::HipaaProcessor;
+use crate::policy::PolicyEnforcementEngine;
+use crate::risk::RiskAssessmentEngine;
 
 /// Central compliance engine that manages all compliance operations
 #[derive(Debug)]
 pub struct ComplianceEngine {
     /// Engine configuration
-    config: Arc<RwLock<ComplianceConfig>>,
+    config:           Arc<RwLock<ComplianceConfig>>,
     /// GDPR processor (if enabled)
     #[cfg(feature = "gdpr")]
-    gdpr_processor: Arc<Mutex<Option<GdprProcessor>>>,
+    gdpr_processor:   Arc<Mutex<Option<GdprProcessor>>>,
     /// HIPAA processor (if enabled)
     #[cfg(feature = "hipaa")]
-    hipaa_processor: Arc<Mutex<Option<HipaaProcessor>>>,
+    hipaa_processor:  Arc<Mutex<Option<HipaaProcessor>>>,
     /// Audit trail manager
-    audit_manager: Arc<Mutex<AuditTrailManager>>,
+    audit_manager:    Arc<Mutex<AuditTrailManager>>,
     /// Policy enforcement engine
-    policy_engine: Arc<Mutex<PolicyEnforcementEngine>>,
+    policy_engine:    Arc<Mutex<PolicyEnforcementEngine>>,
     /// Risk assessment engine
-    risk_engine: Arc<Mutex<RiskAssessmentEngine>>,
+    risk_engine:      Arc<Mutex<RiskAssessmentEngine>>,
     /// Data anonymization service
-    data_anonymizer: Arc<Mutex<DataAnonymizationService>>,
+    data_anonymizer:  Arc<Mutex<DataAnonymizationService>>,
     /// Consent manager
-    consent_manager: Arc<Mutex<ConsentManager>>,
+    consent_manager:  Arc<Mutex<ConsentManager>>,
     /// Engine initialization status
-    initialized: Arc<RwLock<bool>>,
+    initialized:      Arc<RwLock<bool>>,
     /// Background task handles
     background_tasks: Arc<Mutex<Vec<tokio::task::JoinHandle<()>>>>,
     /// Performance metrics
-    metrics: Arc<Mutex<ComplianceMetrics>>,
+    metrics:          Arc<Mutex<ComplianceMetrics>>,
 }
 
 impl ComplianceEngine {
@@ -170,11 +169,11 @@ impl ComplianceEngine {
         self.ensure_initialized().await?;
 
         let mut result = DataProcessingResult {
-            status: ComplianceStatus::Unknown,
+            status:             ComplianceStatus::Unknown,
             frameworks_checked: Vec::new(),
-            violations: Vec::new(),
-            recommendations: Vec::new(),
-            audit_entries: Vec::new(),
+            violations:         Vec::new(),
+            recommendations:    Vec::new(),
+            audit_entries:      Vec::new(),
         };
 
         // GDPR processing
@@ -210,10 +209,7 @@ impl ComplianceEngine {
     }
 
     /// Check compliance status for a specific framework
-    pub async fn check_compliance_status(
-        &self,
-        framework: &ComplianceFramework,
-    ) -> ComplianceResult<ComplianceStatus> {
+    pub async fn check_compliance_status(&self, framework: &ComplianceFramework) -> ComplianceResult<ComplianceStatus> {
         self.ensure_initialized().await?;
 
         match framework {
@@ -244,10 +240,7 @@ impl ComplianceEngine {
     }
 
     /// Generate compliance report
-    pub async fn generate_report(
-        &self,
-        framework: &ComplianceFramework,
-    ) -> ComplianceResult<ComplianceReport> {
+    pub async fn generate_report(&self, framework: &ComplianceFramework) -> ComplianceResult<ComplianceReport> {
         self.ensure_initialized().await?;
 
         let mut report = ComplianceReport::new(framework);
@@ -255,21 +248,17 @@ impl ComplianceEngine {
         // Collect data from relevant processors
         match framework {
             ComplianceFramework::Gdpr =>
-            {
                 #[cfg(feature = "gdpr")]
                 if let Some(gdpr) = &*self.gdpr_processor.lock().await {
                     let gdpr_data = gdpr.generate_report().await?;
                     report.add_section("gdpr_compliance".to_string(), gdpr_data);
-                }
-            }
+                },
             ComplianceFramework::Hipaa =>
-            {
                 #[cfg(feature = "hipaa")]
                 if let Some(hipaa) = &*self.hipaa_processor.lock().await {
                     let hipaa_data = hipaa.generate_report().await?;
                     report.add_section("hipaa_compliance".to_string(), hipaa_data);
-                }
-            }
+                },
             _ => {}
         }
 
@@ -293,24 +282,20 @@ impl ComplianceEngine {
     }
 
     /// Handle data breach notification
-    pub async fn handle_data_breach(
-        &self,
-        breach: &DataBreachNotification,
-    ) -> ComplianceResult<()> {
+    pub async fn handle_data_breach(&self, breach: &DataBreachNotification) -> ComplianceResult<()> {
         self.ensure_initialized().await?;
 
         log::error!("Data breach detected: {}", breach.details);
 
         // Create audit entry for breach
-        let audit_entry =
-            AuditEntry::new(AuditSeverity::Critical, "breach", "data_breach_detected")
-                .with_resource(&breach.affected_resource)
-                .with_details(&breach.details)
-                .with_metadata("breach_type".to_string(), breach.breach_type.clone())
-                .with_metadata(
-                    "affected_records".to_string(),
-                    breach.affected_records.to_string(),
-                );
+        let audit_entry = AuditEntry::new(AuditSeverity::Critical, "breach", "data_breach_detected")
+            .with_resource(&breach.affected_resource)
+            .with_details(&breach.details)
+            .with_metadata("breach_type".to_string(), breach.breach_type.clone())
+            .with_metadata(
+                "affected_records".to_string(),
+                breach.affected_records.to_string(),
+            );
 
         self.audit_manager
             .lock()
@@ -471,10 +456,7 @@ impl ComplianceEngine {
         Ok(())
     }
 
-    async fn send_breach_notifications(
-        &self,
-        breach: &DataBreachNotification,
-    ) -> ComplianceResult<()> {
+    async fn send_breach_notifications(&self, breach: &DataBreachNotification) -> ComplianceResult<()> {
         // Implementation for sending breach notifications to authorities and affected parties
         log::warn!("Sending breach notifications for: {}", breach.details);
         Ok(())
@@ -490,23 +472,23 @@ impl ComplianceEngine {
 /// Data processing context for compliance evaluation
 #[derive(Debug, Clone)]
 pub struct DataProcessingContext {
-    pub resource_id: String,
-    pub user_id: Option<String>,
+    pub resource_id:    String,
+    pub user_id:        Option<String>,
     pub operation_type: String,
-    pub location: String,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
-    pub metadata: HashMap<String, String>,
+    pub location:       String,
+    pub timestamp:      chrono::DateTime<chrono::Utc>,
+    pub metadata:       HashMap<String, String>,
 }
 
 impl Default for DataProcessingContext {
     fn default() -> Self {
         Self {
-            resource_id: "unknown".to_string(),
-            user_id: None,
+            resource_id:    "unknown".to_string(),
+            user_id:        None,
             operation_type: "unknown".to_string(),
-            location: "unknown".to_string(),
-            timestamp: chrono::Utc::now(),
-            metadata: HashMap::new(),
+            location:       "unknown".to_string(),
+            timestamp:      chrono::Utc::now(),
+            metadata:       HashMap::new(),
         }
     }
 }
@@ -514,19 +496,15 @@ impl Default for DataProcessingContext {
 /// Data processing result with compliance information
 #[derive(Debug, Clone)]
 pub struct DataProcessingResult {
-    pub status: ComplianceStatus,
+    pub status:             ComplianceStatus,
     pub frameworks_checked: Vec<ComplianceFramework>,
-    pub violations: Vec<ComplianceViolation>,
-    pub recommendations: Vec<String>,
-    pub audit_entries: Vec<AuditEntry>,
+    pub violations:         Vec<ComplianceViolation>,
+    pub recommendations:    Vec<String>,
+    pub audit_entries:      Vec<AuditEntry>,
 }
 
 impl DataProcessingResult {
-    pub fn merge_framework_result(
-        &mut self,
-        result: FrameworkProcessingResult,
-        framework: ComplianceFramework,
-    ) {
+    pub fn merge_framework_result(&mut self, result: FrameworkProcessingResult, framework: ComplianceFramework) {
         self.frameworks_checked.push(framework);
         self.violations.extend(result.violations);
         self.recommendations.extend(result.recommendations);
@@ -541,48 +519,48 @@ impl DataProcessingResult {
 /// Framework-specific processing result
 #[derive(Debug, Clone)]
 pub struct FrameworkProcessingResult {
-    pub status: ComplianceStatus,
-    pub violations: Vec<ComplianceViolation>,
+    pub status:          ComplianceStatus,
+    pub violations:      Vec<ComplianceViolation>,
     pub recommendations: Vec<String>,
 }
 
 /// Compliance violation information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceViolation {
-    pub framework: ComplianceFramework,
-    pub severity: AuditSeverity,
+    pub framework:      ComplianceFramework,
+    pub severity:       AuditSeverity,
     pub violation_type: String,
-    pub description: String,
-    pub remediation: Option<String>,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub description:    String,
+    pub remediation:    Option<String>,
+    pub timestamp:      chrono::DateTime<chrono::Utc>,
 }
 
 /// Data breach notification structure
 #[derive(Debug, Clone)]
 pub struct DataBreachNotification {
-    pub breach_id: String,
-    pub breach_type: String,
-    pub affected_resource: String,
-    pub affected_records: usize,
-    pub details: String,
+    pub breach_id:           String,
+    pub breach_type:         String,
+    pub affected_resource:   String,
+    pub affected_records:    usize,
+    pub details:             String,
     pub detection_timestamp: chrono::DateTime<chrono::Utc>,
-    pub severity: AuditSeverity,
+    pub severity:            AuditSeverity,
 }
 
 /// Compliance report structure
 #[derive(Debug, Clone)]
 pub struct ComplianceReport {
     pub framework: ComplianceFramework,
-    pub metadata: ReportMetadata,
-    pub sections: HashMap<String, serde_json::Value>,
+    pub metadata:  ReportMetadata,
+    pub sections:  HashMap<String, serde_json::Value>,
 }
 
 impl ComplianceReport {
     pub fn new(framework: &ComplianceFramework) -> Self {
         Self {
             framework: framework.clone(),
-            metadata: ReportMetadata::new(),
-            sections: HashMap::new(),
+            metadata:  ReportMetadata::new(),
+            sections:  HashMap::new(),
         }
     }
 
@@ -594,11 +572,11 @@ impl ComplianceReport {
 /// Report metadata
 #[derive(Debug, Clone)]
 pub struct ReportMetadata {
-    pub generated_at: chrono::DateTime<chrono::Utc>,
-    pub version: String,
+    pub generated_at:  chrono::DateTime<chrono::Utc>,
+    pub version:       String,
     pub total_entries: usize,
-    pub period_start: Option<chrono::DateTime<chrono::Utc>>,
-    pub period_end: Option<chrono::DateTime<chrono::Utc>>,
+    pub period_start:  Option<chrono::DateTime<chrono::Utc>>,
+    pub period_end:    Option<chrono::DateTime<chrono::Utc>>,
 }
 
 impl Default for ReportMetadata {
@@ -610,11 +588,11 @@ impl Default for ReportMetadata {
 impl ReportMetadata {
     pub fn new() -> Self {
         Self {
-            generated_at: chrono::Utc::now(),
-            version: env!("CARGO_PKG_VERSION").to_string(),
+            generated_at:  chrono::Utc::now(),
+            version:       env!("CARGO_PKG_VERSION").to_string(),
             total_entries: 0,
-            period_start: None,
-            period_end: None,
+            period_start:  None,
+            period_end:    None,
         }
     }
 }
@@ -622,15 +600,15 @@ impl ReportMetadata {
 /// Compliance metrics for monitoring
 #[derive(Debug, Clone, Default)]
 pub struct ComplianceMetrics {
-    pub total_processings: u64,
-    pub compliant_processings: u64,
+    pub total_processings:             u64,
+    pub compliant_processings:         u64,
     pub partial_compliant_processings: u64,
-    pub non_compliant_processings: u64,
-    pub violations_detected: u64,
-    pub breach_notifications: u64,
-    pub reports_generated: u64,
-    pub average_processing_time_ms: f64,
-    pub last_updated: chrono::DateTime<chrono::Utc>,
+    pub non_compliant_processings:     u64,
+    pub violations_detected:           u64,
+    pub breach_notifications:          u64,
+    pub reports_generated:             u64,
+    pub average_processing_time_ms:    f64,
+    pub last_updated:                  chrono::DateTime<chrono::Utc>,
 }
 
 impl ComplianceMetrics {
@@ -691,10 +669,7 @@ pub trait ComplianceProcessor: Send + Sync {
     async fn generate_report(&self) -> ComplianceResult<serde_json::Value>;
 
     /// Handle breach notifications
-    async fn handle_breach_notification(
-        &self,
-        breach: &DataBreachNotification,
-    ) -> ComplianceResult<()>;
+    async fn handle_breach_notification(&self, breach: &DataBreachNotification) -> ComplianceResult<()>;
 
     /// Shutdown processor
     async fn shutdown(&self) -> ComplianceResult<()>;

@@ -3,8 +3,9 @@
 //! Implements Conflict-Free Replicated Data Types for distributed text editing,
 //! operational transforms for efficient synchronization, and intelligent merge policies.
 
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
@@ -15,23 +16,23 @@ pub struct RealTimeEditingService {
 
 /// Represents a document's collaborative state
 pub struct DocumentState {
-    pub id: String,
-    pub crdt: TextCRDT,
-    pub operations_log: Vec<Operation>,
-    pub participants: std::collections::HashSet<String>,
+    pub id:                  String,
+    pub crdt:                TextCRDT,
+    pub operations_log:      Vec<Operation>,
+    pub participants:        std::collections::HashSet<String>,
     pub last_sync_timestamp: std::time::SystemTime,
 }
 
 /// CRDT implementation for collaborative text editing
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct TextCRDT {
-    pub sites: Vec<SiteState>,
+    pub sites:     Vec<SiteState>,
     pub tombstone: Vec<Option<char>>, // Deletion tracking
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct SiteState {
-    pub site_id: u32,
+    pub site_id:    u32,
     pub operations: Vec<CRDTOperation>,
 }
 
@@ -39,15 +40,15 @@ pub struct SiteState {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum CRDTOperation {
     Insert {
-        pos: usize,
-        char: char,
+        pos:           usize,
+        char:          char,
         lamport_clock: u64,
-        site_id: u32,
+        site_id:       u32,
     },
     Delete {
-        pos: usize,
+        pos:           usize,
         lamport_clock: u64,
-        site_id: u32,
+        site_id:       u32,
     },
 }
 
@@ -57,26 +58,26 @@ pub enum Operation {
     InsertOp(InsertOperation),
     DeleteOp(DeleteOperation),
     TransformOp {
-        operation: Box<Operation>,
+        operation:              Box<Operation>,
         transformed_operations: Vec<Operation>,
     },
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct InsertOperation {
-    pub id: Uuid,
-    pub position: usize,
-    pub content: String,
-    pub site_id: u32,
+    pub id:        Uuid,
+    pub position:  usize,
+    pub content:   String,
+    pub site_id:   u32,
     pub timestamp: u64,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct DeleteOperation {
-    pub id: Uuid,
-    pub position: usize,
-    pub length: usize,
-    pub site_id: u32,
+    pub id:        Uuid,
+    pub position:  usize,
+    pub length:    usize,
+    pub site_id:   u32,
     pub timestamp: u64,
 }
 
@@ -150,12 +151,10 @@ impl RealTimeEditingService {
             .ok_or_else(|| format!("Document {} not found", document_id))?;
 
         // Resolve conflicts using the merge policy
-        let resolved_operation =
-            self.resolve_conflicts(&operation, &merge_policy, &doc_state.operations_log)?;
+        let resolved_operation = self.resolve_conflicts(&operation, &merge_policy, &doc_state.operations_log)?;
 
         // Transform the operation against concurrent operations
-        let transformed_operation =
-            self.transform_operation(resolved_operation, &doc_state.operations_log)?;
+        let transformed_operation = self.transform_operation(resolved_operation, &doc_state.operations_log)?;
 
         // Apply the transformed operation
         self.apply_operation_to_document(&mut doc_state.crdt, &transformed_operation)?;
@@ -179,10 +178,8 @@ impl RealTimeEditingService {
             .ok_or_else(|| format!("Document {} not found", document_id))?;
 
         for operation in operations {
-            let resolved_operation =
-                self.resolve_conflicts(&operation, &merge_policy, &doc_state.operations_log)?;
-            let transformed_operation =
-                self.transform_operation(resolved_operation, &doc_state.operations_log)?;
+            let resolved_operation = self.resolve_conflicts(&operation, &merge_policy, &doc_state.operations_log)?;
+            let transformed_operation = self.transform_operation(resolved_operation, &doc_state.operations_log)?;
 
             self.apply_operation_to_document(&mut doc_state.crdt, &transformed_operation)?;
             doc_state.operations_log.push(transformed_operation);
@@ -256,10 +253,10 @@ impl RealTimeEditingService {
                 // Apply insert operation to CRDT
                 crdt.apply_crdt_operation(
                     CRDTOperation::Insert {
-                        pos: insert_op.position,
-                        char: insert_op.content.chars().next().unwrap_or(' '),
+                        pos:           insert_op.position,
+                        char:          insert_op.content.chars().next().unwrap_or(' '),
                         lamport_clock: insert_op.timestamp,
-                        site_id: insert_op.site_id,
+                        site_id:       insert_op.site_id,
                     },
                     insert_op.site_id,
                 )?;
@@ -268,9 +265,9 @@ impl RealTimeEditingService {
                 // Apply delete operation
                 crdt.apply_crdt_operation(
                     CRDTOperation::Delete {
-                        pos: delete_op.position,
+                        pos:           delete_op.position,
                         lamport_clock: delete_op.timestamp,
-                        site_id: delete_op.site_id,
+                        site_id:       delete_op.site_id,
                     },
                     delete_op.site_id,
                 )?;
@@ -283,10 +280,7 @@ impl RealTimeEditingService {
     }
 
     /// Get the current document content from CRDT state
-    pub async fn get_document_content(
-        &self,
-        document_id: &str,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn get_document_content(&self, document_id: &str) -> Result<String, Box<dyn std::error::Error>> {
         let documents = self.documents.read().await;
         let doc_state = documents
             .get(document_id)
@@ -299,7 +293,7 @@ impl RealTimeEditingService {
 impl TextCRDT {
     pub fn new() -> Self {
         Self {
-            sites: Vec::new(),
+            sites:     Vec::new(),
             tombstone: Vec::new(),
         }
     }
@@ -332,11 +326,10 @@ impl TextCRDT {
                 }
                 self.tombstone.insert(pos, Some(char));
             }
-            CRDTOperation::Delete { pos, .. } => {
+            CRDTOperation::Delete { pos, .. } =>
                 if pos < self.tombstone.len() {
                     self.tombstone[pos] = None;
-                }
-            }
+                },
         }
 
         Ok(())

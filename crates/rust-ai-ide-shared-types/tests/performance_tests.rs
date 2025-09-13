@@ -3,8 +3,9 @@
 //! This module contains performance-focused tests that validate
 //! the efficiency and scalability of the type generation system.
 
-use rust_ai_ide_shared_types::*;
 use std::time::{Duration, Instant};
+
+use rust_ai_ide_shared_types::*;
 
 /// Performance benchmarks for type parsing
 #[tokio::test]

@@ -4,6 +4,7 @@
 //! processing, visualization rendering, alert management, and performance caching.
 
 use std::sync::Arc;
+
 use tokio::spawn;
 use tokio::sync::{mpsc, Mutex, RwLock};
 use tokio::time::{interval, Duration};
@@ -278,13 +279,13 @@ pub struct DataSeries {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RenderPriority {
     /// Low priority render
-    Low = 0,
+    Low      = 0,
 
     /// Normal priority render
-    Normal = 1,
+    Normal   = 1,
 
     /// High priority render
-    High = 2,
+    High     = 2,
 
     /// Critical priority render
     Critical = 3,
@@ -294,13 +295,13 @@ pub enum RenderPriority {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AlertLevel {
     /// Info level alert
-    Info = 0,
+    Info      = 0,
 
     /// Warning level alert
-    Warning = 1,
+    Warning   = 1,
 
     /// Critical level alert
-    Critical = 2,
+    Critical  = 2,
 
     /// Emergency level alert
     Emergency = 3,
@@ -367,15 +368,15 @@ impl DashboardEngine {
             cached_config,
             update_sender: Arc::new(Mutex::new(None)),
             state: Arc::new(Mutex::new(EngineState {
-                running: false,
+                running:            false,
                 last_metric_update: None,
                 processing_latency: None,
-                active_sessions: 0,
-                metrics: EngineMetrics {
-                    processed_batches: 0,
-                    failed_processing: 0,
+                active_sessions:    0,
+                metrics:            EngineMetrics {
+                    processed_batches:  0,
+                    failed_processing:  0,
                     avg_update_latency: None,
-                    memory_usage: 0.0,
+                    memory_usage:       0.0,
                 },
             })),
             tasks: Arc::new(Mutex::new(Vec::new())),
@@ -387,9 +388,7 @@ impl DashboardEngine {
         let mut state = self.state.lock().await;
         if state.running {
             return Err(DashboardError::Engine(
-                crate::errors::EngineError::InitializationFailed(
-                    "Engine already running".to_string(),
-                ),
+                crate::errors::EngineError::InitializationFailed("Engine already running".to_string()),
             ));
         }
 
@@ -555,9 +554,9 @@ impl MetricProcessor {
         Ok(Self {
             aggregator,
             performance_metrics: ProcessingMetrics {
-                avg_processing_time: 0.0,
+                avg_processing_time:     0.0,
                 total_metrics_processed: 0,
-                processing_efficiency: 1.0,
+                processing_efficiency:   1.0,
             },
             active_pipelines: 0,
         })
@@ -568,21 +567,18 @@ impl VisualizationRenderer {
     /// Initialize visualization renderer
     pub async fn new(config: Arc<Mutex<DashboardConfiguration>>) -> DashboardResult<Self> {
         Ok(Self {
-            active_renderers: Vec::new(),
-            render_queue: std::collections::VecDeque::new(),
+            active_renderers:    Vec::new(),
+            render_queue:        std::collections::VecDeque::new(),
             performance_tracker: RenderingPerformance {
                 avg_render_time: 0.0,
-                total_renders: 0,
-                failed_renders: 0,
+                total_renders:   0,
+                failed_renders:  0,
             },
         })
     }
 
     /// Process metric updates for visualization
-    pub async fn process_metric_updates(
-        &mut self,
-        _metrics: Vec<MetricValue>,
-    ) -> DashboardResult<()> {
+    pub async fn process_metric_updates(&mut self, _metrics: Vec<MetricValue>) -> DashboardResult<()> {
         // Implementation for processing metric updates
         Ok(())
     }
@@ -615,8 +611,8 @@ impl DashboardCache {
 
         let cache_config = CacheConfig {
             max_entries: 10000,
-            ttl: Duration::from_secs(3600),
-            tti: Duration::from_secs(1800),
+            ttl:         Duration::from_secs(3600),
+            tti:         Duration::from_secs(1800),
         };
 
         let data_cache = moka::future::Cache::builder()
@@ -644,7 +640,7 @@ impl MetricAggregator {
     pub async fn new(window_size_seconds: u64) -> DashboardResult<Self> {
         Ok(Self {
             aggregated_data: std::collections::HashMap::new(),
-            window_size: Duration::from_secs(window_size_seconds),
+            window_size:     Duration::from_secs(window_size_seconds),
         })
     }
 
@@ -663,9 +659,9 @@ mod tests {
     async fn test_engine_initialization() {
         let config = Arc::new(RwLock::new(DashboardConfiguration::default()));
         let state = Arc::new(RwLock::new(DashboardState {
-            is_active: true,
-            last_update: chrono::Utc::now(),
-            current_config: DashboardConfiguration::default(),
+            is_active:           true,
+            last_update:         chrono::Utc::now(),
+            current_config:      DashboardConfiguration::default(),
             performance_metrics: Default::default(),
         }));
 

@@ -1,25 +1,27 @@
-use crate::{StartupProfiler, StartupReport};
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
+use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, RwLock};
+
+use crate::{StartupProfiler, StartupReport};
 
 /// Configuration for profiling adapter
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProfilingConfiguration {
-    pub cold_startup_target: Duration,
-    pub warm_startup_target: Duration,
-    pub profiling_enabled: bool,
+    pub cold_startup_target:        Duration,
+    pub warm_startup_target:        Duration,
+    pub profiling_enabled:          bool,
     pub measurements_history_limit: usize,
 }
 
 impl Default for ProfilingConfiguration {
     fn default() -> Self {
         Self {
-            cold_startup_target: Duration::from_millis(400),
-            warm_startup_target: Duration::from_millis(80),
-            profiling_enabled: true,
+            cold_startup_target:        Duration::from_millis(400),
+            warm_startup_target:        Duration::from_millis(80),
+            profiling_enabled:          true,
             measurements_history_limit: 100,
         }
     }
@@ -28,17 +30,17 @@ impl Default for ProfilingConfiguration {
 /// Startup measurement storage
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StartupMeasurement {
-    pub timestamp: u64,
+    pub timestamp:       u64,
     pub is_cold_startup: bool,
-    pub total_duration: Duration,
+    pub total_duration:  Duration,
     pub phase_durations: std::collections::HashMap<String, Duration>,
-    pub metadata: std::collections::HashMap<String, String>,
+    pub metadata:        std::collections::HashMap<String, String>,
 }
 
 /// Profiling adapter for startup time measurement and monitoring
 pub struct ProfilingAdapter {
-    profiler: Arc<StartupProfiler>,
-    config: Arc<RwLock<ProfilingConfiguration>>,
+    profiler:     Arc<StartupProfiler>,
+    config:       Arc<RwLock<ProfilingConfiguration>>,
     measurements: Arc<Mutex<Vec<StartupMeasurement>>>,
 }
 
@@ -131,11 +133,7 @@ impl ProfilingAdapter {
         Ok(report)
     }
 
-    pub async fn measure_phase<F, Fut>(
-        &self,
-        phase_name: &str,
-        future: F,
-    ) -> Result<F::Output, F::Error>
+    pub async fn measure_phase<F, Fut>(&self, phase_name: &str, future: F) -> Result<F::Output, F::Error>
     where
         F: Future<Output: Result<T, E>>,
         Fut: Future<Output = Result<T, E>>,
@@ -146,11 +144,7 @@ impl ProfilingAdapter {
         result
     }
 
-    pub async fn measure_blocking<F, T>(
-        &self,
-        phase_name: &str,
-        blocking_fn: F,
-    ) -> Result<T, IDEError>
+    pub async fn measure_blocking<F, T>(&self, phase_name: &str, blocking_fn: F) -> Result<T, IDEError>
     where
         F: FnOnce() -> Result<T, IDEError> + Send + 'static,
         T: Send + 'static,
@@ -198,20 +192,17 @@ impl ProfilingAdapter {
         };
 
         Ok(StartupStats {
-            target_cold_startup: config.cold_startup_target,
-            target_warm_startup: config.warm_startup_target,
-            average_cold_startup: avg_cold_startup,
-            average_warm_startup: avg_warm_startup,
+            target_cold_startup:       config.cold_startup_target,
+            target_warm_startup:       config.warm_startup_target,
+            average_cold_startup:      avg_cold_startup,
+            average_warm_startup:      avg_warm_startup,
             recent_measurements_count: recent_measurements.len(),
-            cold_startup_target_met: avg_cold_startup <= config.cold_startup_target,
-            warm_startup_target_met: avg_warm_startup <= config.warm_startup_target,
+            cold_startup_target_met:   avg_cold_startup <= config.cold_startup_target,
+            warm_startup_target_met:   avg_warm_startup <= config.warm_startup_target,
         })
     }
 
-    pub async fn update_configuration(
-        &self,
-        new_config: ProfilingConfiguration,
-    ) -> Result<(), IDEError> {
+    pub async fn update_configuration(&self, new_config: ProfilingConfiguration) -> Result<(), IDEError> {
         let mut config = self.config.write().await;
         *config = new_config;
         Ok(())
@@ -234,13 +225,13 @@ impl ProfilingAdapter {
 /// Statistics for startup performance tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StartupStats {
-    pub target_cold_startup: Duration,
-    pub target_warm_startup: Duration,
-    pub average_cold_startup: Duration,
-    pub average_warm_startup: Duration,
+    pub target_cold_startup:       Duration,
+    pub target_warm_startup:       Duration,
+    pub average_cold_startup:      Duration,
+    pub average_warm_startup:      Duration,
     pub recent_measurements_count: usize,
-    pub cold_startup_target_met: bool,
-    pub warm_startup_target_met: bool,
+    pub cold_startup_target_met:   bool,
+    pub warm_startup_target_met:   bool,
 }
 
 impl StartupStats {
@@ -250,7 +241,8 @@ impl StartupStats {
 
     pub fn get_performance_summary(&self) -> String {
         format!(
-            "Startup Performance: Cold: {}ms (target: {}ms, met: {}), Warm: {}ms (target: {}ms, met: {}), Measurements: {}",
+            "Startup Performance: Cold: {}ms (target: {}ms, met: {}), Warm: {}ms (target: {}ms, met: {}), \
+             Measurements: {}",
             self.average_cold_startup.as_millis(),
             self.target_cold_startup.as_millis(),
             self.cold_startup_target_met,
@@ -264,8 +256,9 @@ impl StartupStats {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_profiling_adapter_startup_measurement() {
@@ -274,9 +267,9 @@ mod tests {
 
         // Test configuration
         let config = ProfilingConfiguration {
-            cold_startup_target: Duration::from_millis(400),
-            warm_startup_target: Duration::from_millis(80),
-            profiling_enabled: true,
+            cold_startup_target:        Duration::from_millis(400),
+            warm_startup_target:        Duration::from_millis(80),
+            profiling_enabled:          true,
             measurements_history_limit: 10,
         };
 

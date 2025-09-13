@@ -10,26 +10,25 @@
 //! Integrated with crossbeam for lock-free operations, Tokio for async management,
 //! and unified error handling via rust_ai_ide_errors.
 
-pub use rust_ai_ide_errors::{IDEResult, RustAIError};
-
 // Re-exports for convenience
 pub use futures::Future;
+pub use rust_ai_ide_errors::{IDEResult, RustAIError};
 
 // Re-export zero-copy modules
 pub mod zero_copy;
-pub use zero_copy::*;
+use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use crossbeam::deque::{Injector, Stealer, Worker};
 use parking_lot::{Mutex, RwLock};
 use rayon::ThreadPool;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, VecDeque};
-use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, oneshot, Semaphore};
 use tokio::task::{spawn_blocking, JoinHandle};
 use tracing::{debug, info, warn};
 use uuid::Uuid;
+pub use zero_copy::*;
 
 /// Unique task identifier
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -50,9 +49,9 @@ impl Default for TaskId {
 /// Priority levels for tasks
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Priority {
-    Low = 0,
-    Normal = 1,
-    High = 2,
+    Low      = 0,
+    Normal   = 1,
+    High     = 2,
     Critical = 3,
 }
 
@@ -69,11 +68,11 @@ pub enum TaskState {
 /// Generic task representation
 #[derive(Debug)]
 pub struct Task<T: Send + 'static> {
-    pub id: TaskId,
-    pub priority: Priority,
-    pub data: T,
-    pub state: Arc<Mutex<TaskState>>,
-    pub created_at: std::time::Instant,
+    pub id:           TaskId,
+    pub priority:     Priority,
+    pub data:         T,
+    pub state:        Arc<Mutex<TaskState>>,
+    pub created_at:   std::time::Instant,
     pub dependencies: Vec<TaskId>,
 }
 
@@ -86,50 +85,50 @@ pub type TaskFuture<T> = std::pin::Pin<Box<dyn Future<Output = TaskResult<T>> + 
 /// Worker thread representation
 #[derive(Debug)]
 pub struct WorkerHandle {
-    pub id: usize,
+    pub id:           usize,
     pub active_tasks: Arc<Mutex<usize>>,
-    pub throughput: Arc<Mutex<f64>>,
+    pub throughput:   Arc<Mutex<f64>>,
 }
 
 /// Configuration for the scheduler
 #[derive(Debug, Clone)]
 pub struct SchedulerConfig {
-    pub max_workers: usize,
-    pub worker_queue_size: usize,
-    pub load_balance_interval: std::time::Duration,
+    pub max_workers:              usize,
+    pub worker_queue_size:        usize,
+    pub load_balance_interval:    std::time::Duration,
     pub adaptive_scaling_enabled: bool,
-    pub min_workers: usize,
-    pub max_throughput_samples: usize,
+    pub min_workers:              usize,
+    pub max_throughput_samples:   usize,
 }
 
 impl Default for SchedulerConfig {
     fn default() -> Self {
         Self {
-            max_workers: num_cpus::get(),
-            worker_queue_size: 1024,
-            load_balance_interval: std::time::Duration::from_millis(100),
+            max_workers:              num_cpus::get(),
+            worker_queue_size:        1024,
+            load_balance_interval:    std::time::Duration::from_millis(100),
             adaptive_scaling_enabled: true,
-            min_workers: 1,
-            max_throughput_samples: 10,
+            min_workers:              1,
+            max_throughput_samples:   10,
         }
     }
 }
 
 /// Work-stealing scheduler with dynamic load balancing
 pub struct WorkStealingScheduler {
-    config: SchedulerConfig,
-    thread_pool: Arc<ThreadPool>,
-    injector: Arc<Injector<TaskId>>,
-    stealers: Vec<Stealer<TaskId>>,
-    task_registry: Arc<RwLock<HashMap<TaskId, Box<dyn TaskHandle>>>>,
-    resource_manager: Arc<ResourcePoolManager>,
-    concurrency_control: Arc<AdaptiveConcurrencyControl>,
-    running: Arc<Mutex<bool>>,
+    config:                 SchedulerConfig,
+    thread_pool:            Arc<ThreadPool>,
+    injector:               Arc<Injector<TaskId>>,
+    stealers:               Vec<Stealer<TaskId>>,
+    task_registry:          Arc<RwLock<HashMap<TaskId, Box<dyn TaskHandle>>>>,
+    resource_manager:       Arc<ResourcePoolManager>,
+    concurrency_control:    Arc<AdaptiveConcurrencyControl>,
+    running:                Arc<Mutex<bool>>,
     // Zero-copy enhancements
-    mmap_manager: Option<Arc<MmapManager>>,
-    zero_copy_pool: Option<Arc<ZeroCopyResourcePool>>,
+    mmap_manager:           Option<Arc<MmapManager>>,
+    zero_copy_pool:         Option<Arc<ZeroCopyResourcePool>>,
     mmap_cleanup_scheduler: Arc<Mutex<BTreeMap<std::time::Instant, VecDeque<String>>>>,
-    zero_copy_task_cache: Arc<Mutex<HashMap<TaskId, Vec<String>>>>,
+    zero_copy_task_cache:   Arc<Mutex<HashMap<TaskId, Vec<String>>>>,
 }
 
 impl WorkStealingScheduler {
@@ -353,13 +352,9 @@ impl WorkStealingScheduler {
     }
 
     /// Clean up expired memory-mapped files
-    pub async fn cleanup_expired_mmaps(
-        &self,
-        current_time: std::time::Instant,
-    ) -> IDEResult<usize> {
+    pub async fn cleanup_expired_mmaps(&self, current_time: std::time::Instant) -> IDEResult<usize> {
         let mut scheduler = self.mmap_cleanup_scheduler.lock();
-        let expired_keys: Vec<std::time::Instant> =
-            scheduler.range(..=current_time).map(|(k, _)| *k).collect();
+        let expired_keys: Vec<std::time::Instant> = scheduler.range(..=current_time).map(|(k, _)| *k).collect();
 
         let mut cleaned_count = 0;
         for key in expired_keys {
@@ -378,10 +373,7 @@ impl WorkStealingScheduler {
         Ok(cleaned_count)
     }
 
-    pub async fn submit_task<T: Send + 'static>(
-        &self,
-        task: Box<dyn TaskHandle>,
-    ) -> IDEResult<TaskId> {
+    pub async fn submit_task<T: Send + 'static>(&self, task: Box<dyn TaskHandle>) -> IDEResult<TaskId> {
         let task_id = TaskId::new();
 
         {
@@ -422,18 +414,18 @@ pub struct TaskPartitioner {
 
 #[derive(Debug, Clone)]
 pub struct PartitionConfig {
-    pub max_task_size: usize,
-    pub min_task_size: usize,
-    pub balance_load: bool,
+    pub max_task_size:     usize,
+    pub min_task_size:     usize,
+    pub balance_load:      bool,
     pub use_data_locality: bool,
 }
 
 impl Default for PartitionConfig {
     fn default() -> Self {
         Self {
-            max_task_size: 1000,
-            min_task_size: 10,
-            balance_load: true,
+            max_task_size:     1000,
+            min_task_size:     10,
+            balance_load:      true,
             use_data_locality: true,
         }
     }
@@ -499,16 +491,16 @@ impl TaskPartitioner {
 /// Resource requirements definition
 #[derive(Debug, Clone, Default)]
 pub struct ResourceRequirements {
-    pub cpu_cores: usize,
-    pub memory_mb: usize,
-    pub gpu_memory_mb: usize,
+    pub cpu_cores:         usize,
+    pub memory_mb:         usize,
+    pub gpu_memory_mb:     usize,
     pub network_bandwidth: usize,
 }
 
 /// Resource pool manager for CPU/GPU coordination
 pub struct ResourcePoolManager {
-    cpu_pool: Arc<Semaphore>,
-    gpu_pool: Arc<RwLock<HashMap<String, Semaphore>>>,
+    cpu_pool:     Arc<Semaphore>,
+    gpu_pool:     Arc<RwLock<HashMap<String, Semaphore>>>,
     memory_limit: Arc<Mutex<usize>>,
     network_pool: Arc<Semaphore>,
 }
@@ -516,17 +508,14 @@ pub struct ResourcePoolManager {
 impl ResourcePoolManager {
     pub fn new(total_cpu_cores: usize, memory_mb: usize, network_connections: usize) -> Self {
         Self {
-            cpu_pool: Arc::new(Semaphore::new(total_cpu_cores)),
-            gpu_pool: Arc::new(RwLock::new(HashMap::new())),
+            cpu_pool:     Arc::new(Semaphore::new(total_cpu_cores)),
+            gpu_pool:     Arc::new(RwLock::new(HashMap::new())),
             memory_limit: Arc::new(Mutex::new(memory_mb)),
             network_pool: Arc::new(Semaphore::new(network_connections)),
         }
     }
 
-    pub async fn acquire_resources(
-        &self,
-        requirements: &ResourceRequirements,
-    ) -> IDEResult<ResourceHandle> {
+    pub async fn acquire_resources(&self, requirements: &ResourceRequirements) -> IDEResult<ResourceHandle> {
         // Acquire CPU cores
         let cpu_permits = self
             .cpu_pool
@@ -547,9 +536,11 @@ impl ResourcePoolManager {
         let gpu_permits = if requirements.gpu_memory_mb > 0 {
             let gpu_lock = self.gpu_pool.read();
             if let Some(gpu) = gpu_lock.get("default") {
-                Some(gpu.acquire().await.map_err(|_| {
-                    RustAIError::Concurrency("Failed to acquire GPU resources".into())
-                })?)
+                Some(
+                    gpu.acquire()
+                        .await
+                        .map_err(|_| RustAIError::Concurrency("Failed to acquire GPU resources".into()))?,
+                )
             } else {
                 None
             }
@@ -559,9 +550,12 @@ impl ResourcePoolManager {
 
         // Acquire network if needed
         let network_permits = if requirements.network_bandwidth > 0 {
-            Some(self.network_pool.acquire().await.map_err(|_| {
-                RustAIError::Concurrency("Failed to acquire network resources".into())
-            })?)
+            Some(
+                self.network_pool
+                    .acquire()
+                    .await
+                    .map_err(|_| RustAIError::Concurrency("Failed to acquire network resources".into()))?,
+            )
         } else {
             None
         };
@@ -590,8 +584,8 @@ impl ResourcePoolManager {
 impl Clone for ResourcePoolManager {
     fn clone(&self) -> Self {
         Self {
-            cpu_pool: self.cpu_pool.clone(),
-            gpu_pool: self.gpu_pool.clone(),
+            cpu_pool:     self.cpu_pool.clone(),
+            gpu_pool:     self.gpu_pool.clone(),
             memory_limit: self.memory_limit.clone(),
             network_pool: self.network_pool.clone(),
         }
@@ -600,17 +594,17 @@ impl Clone for ResourcePoolManager {
 
 /// Resource handle for automatic cleanup
 pub struct ResourceHandle {
-    cpu_permits: tokio::sync::SemaphorePermit,
-    gpu_permits: Option<tokio::sync::SemaphorePermit>,
-    memory_used: usize,
+    cpu_permits:     tokio::sync::SemaphorePermit,
+    gpu_permits:     Option<tokio::sync::SemaphorePermit>,
+    memory_used:     usize,
     network_permits: Option<tokio::sync::SemaphorePermit>,
-    manager: ResourcePoolManager,
+    manager:         ResourcePoolManager,
 }
 
 /// Distributed task queue with work-stealing algorithms
 pub struct DistributedTaskQueue {
-    local_queues: Arc<Vec<Mutex<VecDeque<TaskId>>>>,
-    global_queue: Arc<Injector<TaskId>>,
+    local_queues:  Arc<Vec<Mutex<VecDeque<TaskId>>>>,
+    global_queue:  Arc<Injector<TaskId>>,
     task_registry: Arc<RwLock<HashMap<TaskId, Box<dyn TaskHandle>>>>,
     load_balancer: Arc<LoadBalancer>,
 }
@@ -710,11 +704,11 @@ impl LoadBalancer {
 
 /// Adaptive concurrency control for dynamic thread scaling
 pub struct AdaptiveConcurrencyControl {
-    config: SchedulerConfig,
+    config:             SchedulerConfig,
     current_throughput: Arc<Mutex<Vec<f64>>>,
-    target_throughput: f64,
-    last_adjustment: Arc<Mutex<std::time::Instant>>,
-    semaphore: Arc<Semaphore>,
+    target_throughput:  f64,
+    last_adjustment:    Arc<Mutex<std::time::Instant>>,
+    semaphore:          Arc<Semaphore>,
 }
 
 impl AdaptiveConcurrencyControl {
@@ -729,10 +723,11 @@ impl AdaptiveConcurrencyControl {
     }
 
     pub async fn acquire_slot(&self) -> IDEResult<ConcurrencySlot> {
-        let permit =
-            self.semaphore.acquire().await.map_err(|_| {
-                RustAIError::Concurrency("Failed to acquire concurrency slot".into())
-            })?;
+        let permit = self
+            .semaphore
+            .acquire()
+            .await
+            .map_err(|_| RustAIError::Concurrency("Failed to acquire concurrency slot".into()))?;
 
         Ok(ConcurrencySlot { _permit: permit })
     }
@@ -837,11 +832,7 @@ pub mod utils {
     }
 
     /// Batch processing with controlled concurrency
-    pub async fn batch_process<T, F, Fut>(
-        items: Vec<T>,
-        batch_size: usize,
-        processor: F,
-    ) -> IDEResult<Vec<Fut::Output>>
+    pub async fn batch_process<T, F, Fut>(items: Vec<T>, batch_size: usize, processor: F) -> IDEResult<Vec<Fut::Output>>
     where
         T: Send + 'static,
         F: Fn(Vec<T>) -> Fut + Send + Sync + 'static,
@@ -900,9 +891,9 @@ mod tests {
         let manager = ResourcePoolManager::new(2, 1024, 1);
 
         let requirements = ResourceRequirements {
-            cpu_cores: 1,
-            memory_mb: 256,
-            gpu_memory_mb: 0,
+            cpu_cores:         1,
+            memory_mb:         256,
+            gpu_memory_mb:     0,
             network_bandwidth: 0,
         };
 
@@ -924,9 +915,7 @@ mod tests {
 }
 
 /// Helper function to convert ResourceRequirements to mmap resource mappings
-fn resources_as_mmap_resources(
-    req: &ResourceRequirements,
-) -> Option<Vec<(std::path::PathBuf, usize)>> {
+fn resources_as_mmap_resources(req: &ResourceRequirements) -> Option<Vec<(std::path::PathBuf, usize)>> {
     // For demonstration, assume memory_mb corresponds to mmap file sizes with temp paths
     if req.memory_mb > 0 {
         let temp_path = std::env::temp_dir().join(format!("mmap_{}", req.memory_mb));

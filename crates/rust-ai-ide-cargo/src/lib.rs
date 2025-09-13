@@ -28,22 +28,21 @@ pub mod utils;
 pub mod workspace;
 
 // Re-exports for easier access to commonly used items
-pub use dependency::{DependencyInfo, DependencyKind, DependencyManager, VersionAlignment};
-pub use models::{BuildResult, CargoDepVersion, CargoProject, TestResult};
-pub use performance::{
-    generate_flamegraph, BuildMetrics, BuildMetricsCollector, CachedBuildResult, CargoBuildCache,
-    CrateMetrics, OptimizationSuggestion, PerformanceAnalyzer, PerformanceMetrics,
-};
-pub use refactor::{find_references, get_dependency_graph, rename_symbol, workspace_replace};
-pub use task::{
-    CargoTask, CommandExecutor, CommandHistory, CommandStatus, ExecutionStrategy, TaskChain,
-    TaskMonitor, TaskStatus,
-};
-pub use workspace::CargoManager;
-
-// Re-export common types for convenience
-pub use anyhow::Result;
 pub use std::collections::HashMap;
 pub use std::fs;
 pub use std::path::{Path, PathBuf};
 pub use std::process::Command;
+
+// Re-export common types for convenience
+pub use anyhow::Result;
+pub use dependency::{DependencyInfo, DependencyKind, DependencyManager, VersionAlignment};
+pub use models::{BuildResult, CargoDepVersion, CargoProject, TestResult};
+pub use performance::{
+    generate_flamegraph, BuildMetrics, BuildMetricsCollector, CachedBuildResult, CargoBuildCache, CrateMetrics,
+    OptimizationSuggestion, PerformanceAnalyzer, PerformanceMetrics,
+};
+pub use refactor::{find_references, get_dependency_graph, rename_symbol, workspace_replace};
+pub use task::{
+    CargoTask, CommandExecutor, CommandHistory, CommandStatus, ExecutionStrategy, TaskChain, TaskMonitor, TaskStatus,
+};
+pub use workspace::CargoManager;

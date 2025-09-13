@@ -4,8 +4,9 @@ pub use super::dummy_cache_impl::{DummyCache, DummyCacheEntry};
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     #[test]
     fn test_dummy_cache() {

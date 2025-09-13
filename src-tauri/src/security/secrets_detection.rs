@@ -1,8 +1,9 @@
-use regex::{Regex, RegexSet};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::sync::OnceLock;
+
+use regex::{Regex, RegexSet};
 
 // Lazy static for regex patterns to avoid recompilation
 static SECRET_PATTERNS: OnceLock<RegexSet> = OnceLock::new();
@@ -73,12 +74,12 @@ fn calculate_entropy(s: &str) -> f64 {
 /// Struct to represent a detected potential secret
 #[derive(Debug, Clone)]
 pub struct SecretFinding {
-    pub file_path: String,
-    pub line_number: usize,
-    pub line_content: String,
-    pub secret_type: String,
+    pub file_path:     String,
+    pub line_number:   usize,
+    pub line_content:  String,
+    pub secret_type:   String,
     pub entropy_score: f64,
-    pub confidence: String,
+    pub confidence:    String,
 }
 
 /// Scan a single file for potential secrets
@@ -125,12 +126,12 @@ pub fn scan_file_for_secrets(file_path: &Path) -> Result<Vec<SecretFinding>, std
                     };
 
                     findings.push(SecretFinding {
-                        file_path: file_path.to_string_lossy().to_string(),
-                        line_number: line_num + 1,
-                        line_content: line.to_string(),
-                        secret_type: secret_type.to_string(),
+                        file_path:     file_path.to_string_lossy().to_string(),
+                        line_number:   line_num + 1,
+                        line_content:  line.to_string(),
+                        secret_type:   secret_type.to_string(),
                         entropy_score: entropy,
-                        confidence: confidence.to_string(),
+                        confidence:    confidence.to_string(),
                     });
                 }
             }
@@ -142,12 +143,12 @@ pub fn scan_file_for_secrets(file_path: &Path) -> Result<Vec<SecretFinding>, std
                 let entropy = calculate_entropy(word);
                 if entropy > 4.5 {
                     findings.push(SecretFinding {
-                        file_path: file_path.to_string_lossy().to_string(),
-                        line_number: line_num + 1,
-                        line_content: line.to_string(),
-                        secret_type: "High Entropy String".to_string(),
+                        file_path:     file_path.to_string_lossy().to_string(),
+                        line_number:   line_num + 1,
+                        line_content:  line.to_string(),
+                        secret_type:   "High Entropy String".to_string(),
                         entropy_score: entropy,
-                        confidence: "medium".to_string(),
+                        confidence:    "medium".to_string(),
                     });
                 }
             }
@@ -158,10 +159,7 @@ pub fn scan_file_for_secrets(file_path: &Path) -> Result<Vec<SecretFinding>, std
 }
 
 /// Scan a directory recursively for potential secrets, with path validation
-pub fn scan_directory_for_secrets(
-    dir_path: &Path,
-    max_file_size: u64,
-) -> Result<Vec<SecretFinding>, std::io::Error> {
+pub fn scan_directory_for_secrets(dir_path: &Path, max_file_size: u64) -> Result<Vec<SecretFinding>, std::io::Error> {
     let mut all_findings = Vec::new();
 
     fn scan_recursive(
@@ -270,9 +268,11 @@ pub fn integrate_with_security_manager(findings: Vec<SecretFinding>) -> Result<(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::io::Write;
+
     use tempfile::NamedTempFile;
+
+    use super::*;
 
     #[test]
     fn test_calculate_entropy() {

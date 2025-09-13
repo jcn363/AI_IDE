@@ -1,7 +1,8 @@
-use rust_ai_ide_debugger::debugger::breakpoints::{BreakpointInfo, BreakpointManager};
-use rust_ai_ide_debugger::debugger::error::DebuggerResult;
 use std::fs::File;
 use std::path::PathBuf;
+
+use rust_ai_ide_debugger::debugger::breakpoints::{BreakpointInfo, BreakpointManager};
+use rust_ai_ide_debugger::debugger::error::DebuggerResult;
 use tempfile::tempdir;
 
 fn create_test_file() -> (tempfile::TempDir, PathBuf) {

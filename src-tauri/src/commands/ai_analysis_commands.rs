@@ -10,27 +10,22 @@
 // Re-export all AI commands from the organized submodules
 
 // Service management commands
-pub use crate::commands::ai::services::finetune::*;
-pub use crate::commands::ai::services::*;
-
-// Analysis commands
-pub use crate::commands::ai::analysis::*;
-
 // Diagnostics commands
 pub use crate::commands::ai::analysis::diagnostics::*;
-
+// Analysis commands
+pub use crate::commands::ai::analysis::*;
 // Learning commands
 pub use crate::commands::ai::learning::*;
-
+pub use crate::commands::ai::services::finetune::*;
+pub use crate::commands::ai::services::*;
 // Core types that may be needed by frontend
 pub use crate::commands::ai::services::{
     AIAnalysisConfig, AIServiceState, CompilerIntegrationConfig, LearningPreferences,
 };
-
 // Legacy exports for backward compatibility
 pub use crate::commands::ai::{
-    ai_code_completion, ai_context_help, ai_doc_assist, ai_explain_code, ai_generate_code,
-    ai_refactor_code, send_ai_message,
+    ai_code_completion, ai_context_help, ai_doc_assist, ai_explain_code, ai_generate_code, ai_refactor_code,
+    send_ai_message,
 };
 
 // Core command structure for workspace analysis (placeholder implementation)

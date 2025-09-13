@@ -1,6 +1,7 @@
 //! AI Integration Bridge for Spatial AI Assistance
 
 use std::sync::Arc;
+
 use tokio::sync::Mutex;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

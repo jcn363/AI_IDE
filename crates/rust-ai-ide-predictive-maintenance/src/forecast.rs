@@ -1,6 +1,7 @@
 //! Forecasting engine for ML-driven predictions
 
-use crate::{errors::*, types::*};
+use crate::errors::*;
+use crate::types::*;
 
 #[derive(Debug)]
 pub struct ForecastEngine {

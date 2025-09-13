@@ -3,13 +3,16 @@
 //! This module provides comprehensive plugin validation including cryptographic
 //! signature verification, metadata validation, and security checks.
 
-use crate::interfaces::PluginError;
-use base64::{engine::general_purpose, Engine as _};
-use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 use std::path::Path;
+
+use base64::engine::general_purpose;
+use base64::Engine as _;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use tokio::fs;
+
+use crate::interfaces::PluginError;
 
 /// Cryptographic signature verification result
 #[derive(Debug, Clone)]
@@ -23,20 +26,20 @@ pub enum SignatureStatus {
 /// Plugin validation result
 #[derive(Debug, Clone)]
 pub struct ValidationResult {
-    pub is_valid: bool,
+    pub is_valid:         bool,
     pub signature_status: SignatureStatus,
-    pub errors: Vec<String>,
-    pub warnings: Vec<String>,
-    pub metadata_issues: Vec<String>,
+    pub errors:           Vec<String>,
+    pub warnings:         Vec<String>,
+    pub metadata_issues:  Vec<String>,
 }
 
 /// Plugin security and capability assessment
 #[derive(Debug, Clone)]
 pub struct SecurityAssessment {
-    pub risk_level: RiskLevel,
-    pub requires_permissions: HashSet<String>,
+    pub risk_level:                RiskLevel,
+    pub requires_permissions:      HashSet<String>,
     pub potential_vulnerabilities: Vec<String>,
-    pub recommendations: Vec<String>,
+    pub recommendations:           Vec<String>,
 }
 
 /// Risk levels for plugins
@@ -52,15 +55,15 @@ pub enum RiskLevel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginSignature {
     /// Plugin ID that was signed
-    pub plugin_id: String,
+    pub plugin_id:         String,
     /// Base64-encoded signature
-    pub signature: String,
+    pub signature:         String,
     /// Signing algorithm used
-    pub algorithm: String,
+    pub algorithm:         String,
     /// Certificate chain (base64 encoded)
     pub certificate_chain: Vec<String>,
     /// Timestamp of signing
-    pub timestamp: String,
+    pub timestamp:         String,
 }
 
 /// Plugin validator configuration
@@ -69,23 +72,23 @@ pub struct ValidatorConfig {
     /// Require cryptographic signatures
     pub require_signatures: bool,
     /// Trusted certificate authorities
-    pub trusted_cas: HashSet<String>,
+    pub trusted_cas:        HashSet<String>,
     /// Allow unsigned plugins in development mode
     pub allow_unsigned_dev: bool,
     /// Maximum allowed risk level
-    pub max_risk_level: RiskLevel,
+    pub max_risk_level:     RiskLevel,
     /// Required security checks
-    pub required_checks: HashSet<String>,
+    pub required_checks:    HashSet<String>,
 }
 
 impl Default for ValidatorConfig {
     fn default() -> Self {
         Self {
             require_signatures: false, // Development permissive
-            trusted_cas: HashSet::new(),
+            trusted_cas:        HashSet::new(),
             allow_unsigned_dev: true,
-            max_risk_level: RiskLevel::High,
-            required_checks: HashSet::from([
+            max_risk_level:     RiskLevel::High,
+            required_checks:    HashSet::from([
                 "signature".to_string(),
                 "metadata".to_string(),
                 "capabilities".to_string(),
@@ -115,10 +118,7 @@ impl PluginValidator {
     }
 
     /// Validate a plugin from its configuration file
-    pub async fn validate_plugin_file(
-        &self,
-        config_path: &Path,
-    ) -> Result<ValidationResult, PluginError> {
+    pub async fn validate_plugin_file(&self, config_path: &Path) -> Result<ValidationResult, PluginError> {
         let content = fs::read_to_string(config_path).await?;
         let plugin_config: serde_json::Value = serde_json::from_str(&content)?;
 
@@ -133,11 +133,11 @@ impl PluginValidator {
         config_path: &Path,
     ) -> Result<ValidationResult, PluginError> {
         let mut result = ValidationResult {
-            is_valid: true,
+            is_valid:         true,
             signature_status: SignatureStatus::Missing,
-            errors: Vec::new(),
-            warnings: Vec::new(),
-            metadata_issues: Vec::new(),
+            errors:           Vec::new(),
+            warnings:         Vec::new(),
+            metadata_issues:  Vec::new(),
         };
 
         // Validate metadata structure
@@ -279,10 +279,7 @@ impl PluginValidator {
             }
 
             if has_network && has_file_system {
-                errors.push(
-                    "Plugin requires both network and file system access - high security risk"
-                        .to_string(),
-                );
+                errors.push("Plugin requires both network and file system access - high security risk".to_string());
             }
         }
 
@@ -294,10 +291,7 @@ impl PluginValidator {
     }
 
     /// Assess plugin security risks
-    fn assess_security(
-        &self,
-        config: &serde_json::Value,
-    ) -> Result<SecurityAssessment, PluginError> {
+    fn assess_security(&self, config: &serde_json::Value) -> Result<SecurityAssessment, PluginError> {
         let mut risk_level = RiskLevel::Low;
         let mut permissions = HashSet::new();
         let mut vulnerabilities = Vec::new();
@@ -355,10 +349,7 @@ impl PluginValidator {
     }
 
     /// Verify cryptographic signature of plugin
-    pub async fn verify_signature(
-        &self,
-        config_path: &Path,
-    ) -> Result<SignatureStatus, PluginError> {
+    pub async fn verify_signature(&self, config_path: &Path) -> Result<SignatureStatus, PluginError> {
         // Read plugin content
         let content = fs::read(config_path).await?;
 
@@ -409,10 +400,11 @@ impl PluginValidator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
     use tempfile::TempDir;
     use tokio::fs::write;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_basic_validation() {

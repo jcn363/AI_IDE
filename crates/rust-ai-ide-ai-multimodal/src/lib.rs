@@ -35,10 +35,10 @@ pub use vision::VisionProcessor;
 /// managing the interactions between different processing components
 /// and providing unified access to multi-modal capabilities.
 pub struct MultiModalAiService {
-    vision_processor: std::sync::Arc<vision::VisionProcessor>,
-    audio_processor: std::sync::Arc<audio::AudioProcessor>,
+    vision_processor:    std::sync::Arc<vision::VisionProcessor>,
+    audio_processor:     std::sync::Arc<audio::AudioProcessor>,
     multimodal_analyzer: std::sync::Arc<multimodal::MultiModalAnalyzer>,
-    metrics_collector: std::sync::Arc<metrics::MetricsCollector>,
+    metrics_collector:   std::sync::Arc<metrics::MetricsCollector>,
 }
 
 impl MultiModalAiService {
@@ -120,8 +120,9 @@ impl MultiModalAiService {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use types::ModalityType;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_multimodal_service_creation() {

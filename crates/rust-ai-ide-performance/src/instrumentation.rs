@@ -4,10 +4,11 @@
 //! including automatic timing, memory tracking, and integration with
 //! Prometheus metrics collection.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 use crate::metrics::{MetricType, MetricValue, MetricsRegistry, PrometheusMetric};
@@ -16,13 +17,13 @@ use crate::metrics::{MetricType, MetricValue, MetricsRegistry, PrometheusMetric}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstrumentationConfig {
     /// Enable automatic function timing
-    pub enable_auto_timing: bool,
+    pub enable_auto_timing:     bool,
     /// Enable memory tracking
     pub enable_memory_tracking: bool,
     /// Enable async operation tracking
-    pub enable_async_tracking: bool,
+    pub enable_async_tracking:  bool,
     /// Sampling rate (1.0 = 100% sampling)
-    pub sampling_rate: f64,
+    pub sampling_rate:          f64,
     /// Maximum number of tracked operations
     pub max_tracked_operations: usize,
 }
@@ -30,10 +31,10 @@ pub struct InstrumentationConfig {
 impl Default for InstrumentationConfig {
     fn default() -> Self {
         Self {
-            enable_auto_timing: true,
+            enable_auto_timing:     true,
             enable_memory_tracking: true,
-            enable_async_tracking: true,
-            sampling_rate: 1.0,
+            enable_async_tracking:  true,
+            sampling_rate:          1.0,
             max_tracked_operations: 10000,
         }
     }
@@ -43,19 +44,19 @@ impl Default for InstrumentationConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstrumentationData {
     pub operation_name: String,
-    pub start_time: Instant,
-    pub duration: Option<Duration>,
-    pub memory_used: Option<u64>,
-    pub cpu_cycles: Option<u64>,
-    pub tags: HashMap<String, String>,
+    pub start_time:     Instant,
+    pub duration:       Option<Duration>,
+    pub memory_used:    Option<u64>,
+    pub cpu_cycles:     Option<u64>,
+    pub tags:           HashMap<String, String>,
 }
 
 /// Performance profiler with custom instrumentation
 pub struct PerformanceInstrumentor {
-    config: InstrumentationConfig,
-    active_operations: Arc<RwLock<HashMap<String, InstrumentationData>>>,
+    config:               InstrumentationConfig,
+    active_operations:    Arc<RwLock<HashMap<String, InstrumentationData>>>,
     completed_operations: Arc<RwLock<Vec<InstrumentationData>>>,
-    metrics_registry: Option<Arc<MetricsRegistry>>,
+    metrics_registry:     Option<Arc<MetricsRegistry>>,
 }
 
 impl PerformanceInstrumentor {
@@ -74,10 +75,7 @@ impl PerformanceInstrumentor {
     }
 
     /// Start tracking an operation
-    pub async fn start_operation(
-        &self,
-        operation_name: &str,
-    ) -> Result<String, InstrumentationError> {
+    pub async fn start_operation(&self, operation_name: &str) -> Result<String, InstrumentationError> {
         if !self.should_sample() {
             return Err(InstrumentationError::SamplingSkipped);
         }
@@ -93,15 +91,15 @@ impl PerformanceInstrumentor {
 
         let data = InstrumentationData {
             operation_name: operation_name.to_string(),
-            start_time: Instant::now(),
-            duration: None,
-            memory_used: if self.config.enable_memory_tracking {
+            start_time:     Instant::now(),
+            duration:       None,
+            memory_used:    if self.config.enable_memory_tracking {
                 Some(self.get_current_memory_usage())
             } else {
                 None
             },
-            cpu_cycles: None, // Would need platform-specific implementation
-            tags: HashMap::new(),
+            cpu_cycles:     None, // Would need platform-specific implementation
+            tags:           HashMap::new(),
         };
 
         let mut operations = self.active_operations.write().await;
@@ -111,10 +109,7 @@ impl PerformanceInstrumentor {
     }
 
     /// End tracking an operation
-    pub async fn end_operation(
-        &self,
-        operation_id: &str,
-    ) -> Result<InstrumentationData, InstrumentationError> {
+    pub async fn end_operation(&self, operation_id: &str) -> Result<InstrumentationData, InstrumentationError> {
         let mut operations = self.active_operations.write().await;
 
         if let Some(mut data) = operations.remove(operation_id) {
@@ -122,8 +117,7 @@ impl PerformanceInstrumentor {
 
             if self.config.enable_memory_tracking {
                 if let Some(start_memory) = data.memory_used {
-                    data.memory_used =
-                        Some(self.get_current_memory_usage().saturating_sub(start_memory));
+                    data.memory_used = Some(self.get_current_memory_usage().saturating_sub(start_memory));
                 }
             }
 
@@ -211,10 +205,7 @@ impl PerformanceInstrumentor {
     }
 
     /// Get operation statistics
-    pub async fn get_operation_stats(
-        &self,
-        operation_name: &str,
-    ) -> HashMap<String, serde_json::Value> {
+    pub async fn get_operation_stats(&self, operation_name: &str) -> HashMap<String, serde_json::Value> {
         let completed = self.completed_operations.read().await;
 
         let operations: Vec<&InstrumentationData> = completed

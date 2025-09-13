@@ -1,14 +1,11 @@
 //! Tests for incremental analysis functionality
 
-use rust_ai_ide_ai::{
-    analysis::{
-        architectural::CircularDependencyAnalyzer,
-        incremental::{IncrementalAnalysis, IncrementalAnalysisState},
-        AnalysisRegistry, AnalysisResult, AnalysisType, Severity,
-    },
-    test_helpers::*,
-};
 use std::collections::HashMap;
+
+use rust_ai_ide_ai::analysis::architectural::CircularDependencyAnalyzer;
+use rust_ai_ide_ai::analysis::incremental::{IncrementalAnalysis, IncrementalAnalysisState};
+use rust_ai_ide_ai::analysis::{AnalysisRegistry, AnalysisResult, AnalysisType, Severity};
+use rust_ai_ide_ai::test_helpers::*;
 
 /// Test that unchanged files are not re-analyzed
 #[test]
@@ -98,8 +95,7 @@ fn test_analysis_state_serialization() {
 
     // Serialize and deserialize
     let serialized = serde_json::to_string(&state).expect("Serialization failed");
-    let deserialized: IncrementalAnalysisState =
-        serde_json::from_str(&serialized).expect("Deserialization failed");
+    let deserialized: IncrementalAnalysisState = serde_json::from_str(&serialized).expect("Deserialization failed");
 
     // Verify the state was preserved
     assert_eq!(deserialized.get_file_hash("file1.rs"), Some(12345));
@@ -231,10 +227,7 @@ fn test_error_handling() {
 }
 
 /// Helper function to analyze multiple files with the incremental analyzer
-fn analyze_files(
-    incremental: &mut IncrementalAnalysis,
-    files: &[(&str, &str)],
-) -> HashMap<String, AnalysisResult> {
+fn analyze_files(incremental: &mut IncrementalAnalysis, files: &[(&str, &str)]) -> HashMap<String, AnalysisResult> {
     let mut results = HashMap::new();
 
     for (path, content) in files {

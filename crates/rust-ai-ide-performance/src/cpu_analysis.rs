@@ -1,37 +1,38 @@
 // CPU analysis module
 
-use super::process_parallel;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
+use super::process_parallel;
+
 #[derive(Debug, Clone)]
 pub struct CpuCoreMetrics {
-    pub core_id: usize,
-    pub usage_percent: f64,
-    pub frequency_mhz: u64,
+    pub core_id:             usize,
+    pub usage_percent:       f64,
+    pub frequency_mhz:       u64,
     pub temperature_celsius: f64,
 }
 
 #[derive(Debug, Clone)]
 pub struct CpuMetrics {
     pub overall_usage_percent: f64,
-    pub cores: Vec<CpuCoreMetrics>,
-    pub load_average: (f64, f64, f64), // 1min, 5min, 15min
-    pub context_switches: u64,
-    pub interrupts: u64,
-    pub processes_created: u64,
+    pub cores:                 Vec<CpuCoreMetrics>,
+    pub load_average:          (f64, f64, f64), // 1min, 5min, 15min
+    pub context_switches:      u64,
+    pub interrupts:            u64,
+    pub processes_created:     u64,
 }
 
 pub struct CpuAnalyzer {
     previous_metrics: Option<CpuMetrics>,
-    _core_history: Vec<CpuCoreMetrics>,
+    _core_history:    Vec<CpuCoreMetrics>,
 }
 
 impl CpuAnalyzer {
     pub fn new() -> Self {
         Self {
             previous_metrics: None,
-            _core_history: Vec::new(),
+            _core_history:    Vec::new(),
         }
     }
 
@@ -39,16 +40,15 @@ impl CpuAnalyzer {
         // Stub implementation - would collect actual system metrics in full implementation
         let cores = (0..num_cpus::get())
             .map(|i| CpuCoreMetrics {
-                core_id: i,
-                usage_percent: 0.0,
-                frequency_mhz: 3000,
+                core_id:             i,
+                usage_percent:       0.0,
+                frequency_mhz:       3000,
                 temperature_celsius: 60.0,
             })
             .collect::<Vec<_>>();
 
         let current_metrics = CpuMetrics {
-            overall_usage_percent: cores.iter().map(|c| c.usage_percent).sum::<f64>()
-                / cores.len() as f64,
+            overall_usage_percent: cores.iter().map(|c| c.usage_percent).sum::<f64>() / cores.len() as f64,
             cores,
             load_average: (1.0, 1.2, 1.1),
             context_switches: 0,
@@ -89,14 +89,14 @@ impl CpuAnalyzer {
 // Thread profiler for analyzing thread performance
 #[derive(Debug)]
 pub struct ThreadProfiler {
-    thread_metrics: HashMap<String, Vec<Duration>>,
+    thread_metrics:     HashMap<String, Vec<Duration>>,
     thread_start_times: HashMap<String, Instant>,
 }
 
 impl ThreadProfiler {
     pub fn new() -> Self {
         Self {
-            thread_metrics: HashMap::new(),
+            thread_metrics:     HashMap::new(),
             thread_start_times: HashMap::new(),
         }
     }
@@ -123,11 +123,11 @@ impl ThreadProfiler {
         self.thread_metrics.get(thread_name).map(|durations| {
             if durations.is_empty() {
                 return ThreadStats {
-                    name: thread_name.to_string(),
-                    total_cpu_time: Duration::new(0, 0),
-                    avg_cpu_time: Duration::new(0, 0),
-                    max_cpu_time: Duration::new(0, 0),
-                    min_cpu_time: Duration::new(0, 0),
+                    name:            thread_name.to_string(),
+                    total_cpu_time:  Duration::new(0, 0),
+                    avg_cpu_time:    Duration::new(0, 0),
+                    max_cpu_time:    Duration::new(0, 0),
+                    min_cpu_time:    Duration::new(0, 0),
                     execution_count: 0,
                 };
             }
@@ -164,11 +164,11 @@ impl ThreadProfiler {
 
 #[derive(Debug, Clone)]
 pub struct ThreadStats {
-    pub name: String,
-    pub total_cpu_time: Duration,
-    pub avg_cpu_time: Duration,
-    pub max_cpu_time: Duration,
-    pub min_cpu_time: Duration,
+    pub name:            String,
+    pub total_cpu_time:  Duration,
+    pub avg_cpu_time:    Duration,
+    pub max_cpu_time:    Duration,
+    pub min_cpu_time:    Duration,
     pub execution_count: u64,
 }
 
@@ -186,11 +186,7 @@ where
 }
 
 // Parallel computation optimization helper
-pub fn optimize_parallel_computation<T, F, R>(
-    items: Vec<T>,
-    compute_fn: F,
-    max_threads: Option<usize>,
-) -> Vec<R>
+pub fn optimize_parallel_computation<T, F, R>(items: Vec<T>, compute_fn: F, max_threads: Option<usize>) -> Vec<R>
 where
     T: Send + Sync,
     F: Fn(&T) -> R + Sync + Send,
@@ -202,8 +198,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::thread;
+
+    use super::*;
 
     #[test]
     fn test_cpu_analyzer() {

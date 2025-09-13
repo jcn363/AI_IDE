@@ -61,21 +61,21 @@ pub use test_runner::*;
 /// Integration test result types
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct IntegrationTestResult {
-    pub test_name: String,
-    pub success: bool,
+    pub test_name:   String,
+    pub success:     bool,
     pub duration_ms: u64,
-    pub errors: Vec<String>,
-    pub metrics: std::collections::HashMap<String, String>,
+    pub errors:      Vec<String>,
+    pub metrics:     std::collections::HashMap<String, String>,
 }
 
 impl IntegrationTestResult {
     pub fn new(test_name: &str) -> Self {
         Self {
-            test_name: test_name.to_string(),
-            success: false,
+            test_name:   test_name.to_string(),
+            success:     false,
             duration_ms: 0,
-            errors: Vec::new(),
-            metrics: std::collections::HashMap::new(),
+            errors:      Vec::new(),
+            metrics:     std::collections::HashMap::new(),
         }
     }
 
@@ -87,23 +87,23 @@ impl IntegrationTestResult {
 /// Global test configuration for integration suite
 #[derive(Debug, Clone)]
 pub struct GlobalTestConfig {
-    pub enable_full_integration: bool,
+    pub enable_full_integration:       bool,
     pub enable_performance_benchmarks: bool,
-    pub enable_cross_crate_tests: bool,
-    pub timeout_seconds: u64,
-    pub parallel_execution: bool,
-    pub report_detailed_metrics: bool,
+    pub enable_cross_crate_tests:      bool,
+    pub timeout_seconds:               u64,
+    pub parallel_execution:            bool,
+    pub report_detailed_metrics:       bool,
 }
 
 impl Default for GlobalTestConfig {
     fn default() -> Self {
         Self {
-            enable_full_integration: true,
+            enable_full_integration:       true,
             enable_performance_benchmarks: true,
-            enable_cross_crate_tests: true,
-            timeout_seconds: 300,
-            parallel_execution: false,
-            report_detailed_metrics: true,
+            enable_cross_crate_tests:      true,
+            timeout_seconds:               300,
+            parallel_execution:            false,
+            report_detailed_metrics:       true,
         }
     }
 }

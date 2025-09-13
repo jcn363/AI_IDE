@@ -1,10 +1,12 @@
-use crate::spec_generation::types::{
-    CodeFile, Entity, EntityType, FunctionSpec, GeneratedCode, ParsedSpecification, ResourceFile,
-};
+use std::collections::HashMap;
+
 use anyhow::{Context, Result};
 use handlebars::Handlebars;
 use serde_json::json;
-use std::collections::HashMap;
+
+use crate::spec_generation::types::{
+    CodeFile, Entity, EntityType, FunctionSpec, GeneratedCode, ParsedSpecification, ResourceFile,
+};
 
 /// Generator for converting specifications into code
 pub struct CodeGenerator {
@@ -134,11 +136,7 @@ pub trait {{name}} {
     }
 
     /// Generate test files
-    fn generate_tests(
-        &self,
-        entities: &[Entity],
-        functions: &[FunctionSpec],
-    ) -> Result<Vec<CodeFile>> {
+    fn generate_tests(&self, entities: &[Entity], functions: &[FunctionSpec]) -> Result<Vec<CodeFile>> {
         let mut test_files = Vec::new();
 
         // Generate unit tests for each function
@@ -155,7 +153,7 @@ pub trait {{name}} {
             );
 
             test_files.push(CodeFile {
-                path: format!("tests/{}_test.rs", func.name),
+                path:    format!("tests/{}_test.rs", func.name),
                 content: test_content,
                 is_test: true,
             });
@@ -181,7 +179,7 @@ pub trait {{name}} {
             );
 
             test_files.push(CodeFile {
-                path: format!("tests/{}_test.rs", entity.name.to_lowercase()),
+                path:    format!("tests/{}_test.rs", entity.name.to_lowercase()),
                 content: test_content,
                 is_test: true,
             });
@@ -222,7 +220,7 @@ description = "Code generated from specification"
         );
 
         ResourceFile {
-            path: "Cargo.toml".to_string(),
+            path:    "Cargo.toml".to_string(),
             content: toml_content,
         }
     }
@@ -315,29 +313,29 @@ mod tests {
     async fn test_generate_entity() {
         let generator = CodeGenerator::new();
         let entity = Entity {
-            name: "User".to_string(),
-            entity_type: EntityType::Struct,
-            fields: vec![
+            name:         "User".to_string(),
+            entity_type:  EntityType::Struct,
+            fields:       vec![
                 Field {
-                    name: "id".to_string(),
-                    field_type: "String".to_string(),
+                    name:        "id".to_string(),
+                    field_type:  "String".to_string(),
                     is_optional: false,
-                    docs: vec!["Unique identifier for the user".to_string()],
+                    docs:        vec!["Unique identifier for the user".to_string()],
                 },
                 Field {
-                    name: "name".to_string(),
-                    field_type: "String".to_string(),
+                    name:        "name".to_string(),
+                    field_type:  "String".to_string(),
                     is_optional: false,
-                    docs: vec!["User's full name".to_string()],
+                    docs:        vec!["User's full name".to_string()],
                 },
                 Field {
-                    name: "email".to_string(),
-                    field_type: "String".to_string(),
+                    name:        "email".to_string(),
+                    field_type:  "String".to_string(),
                     is_optional: true,
-                    docs: vec!["User's email address".to_string()],
+                    docs:        vec!["User's email address".to_string()],
                 },
             ],
-            docs: vec![
+            docs:         vec![
                 "Represents a user in the system".to_string(),
                 "This struct stores basic user information".to_string(),
             ],
@@ -358,44 +356,44 @@ mod tests {
         let generator = CodeGenerator::new();
         let spec = ParsedSpecification {
             requirements: vec![Requirement {
-                id: "REQ-001".to_string(),
+                id:          "REQ-001".to_string(),
                 description: "The system must store user information".to_string(),
-                priority: 1,
-                related_to: vec!["User".to_string()],
+                priority:    1,
+                related_to:  vec!["User".to_string()],
             }],
-            patterns: vec![],
-            entities: vec![Entity {
-                name: "User".to_string(),
-                entity_type: EntityType::Struct,
-                fields: vec![Field {
-                    name: "id".to_string(),
-                    field_type: "String".to_string(),
+            patterns:     vec![],
+            entities:     vec![Entity {
+                name:         "User".to_string(),
+                entity_type:  EntityType::Struct,
+                fields:       vec![Field {
+                    name:        "id".to_string(),
+                    field_type:  "String".to_string(),
                     is_optional: false,
-                    docs: vec!["Unique identifier for the user".to_string()],
+                    docs:        vec!["Unique identifier for the user".to_string()],
                 }],
-                docs: vec!["Represents a user in the system".to_string()],
+                docs:         vec!["Represents a user in the system".to_string()],
                 requirements: vec!["REQ-001".to_string()],
             }],
-            functions: vec![FunctionSpec {
-                name: "create_user".to_string(),
-                return_type: "Result<User, String>".to_string(),
-                parameters: vec![
+            functions:    vec![FunctionSpec {
+                name:         "create_user".to_string(),
+                return_type:  "Result<User, String>".to_string(),
+                parameters:   vec![
                     Parameter {
-                        name: "name".to_string(),
+                        name:       "name".to_string(),
                         param_type: "String".to_string(),
-                        is_mut: false,
-                        is_ref: false,
+                        is_mut:     false,
+                        is_ref:     false,
                     },
                     Parameter {
-                        name: "email".to_string(),
+                        name:       "email".to_string(),
                         param_type: "String".to_string(),
-                        is_mut: false,
-                        is_ref: false,
+                        is_mut:     false,
+                        is_ref:     false,
                     },
                 ],
-                docs: vec!["Creates a new user with the given name and email".to_string()],
+                docs:         vec!["Creates a new user with the given name and email".to_string()],
                 requirements: vec!["REQ-001".to_string()],
-                error_types: vec!["String".to_string()],
+                error_types:  vec!["String".to_string()],
             }],
         };
 

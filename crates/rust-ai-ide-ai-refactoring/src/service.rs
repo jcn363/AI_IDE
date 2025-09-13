@@ -11,10 +11,17 @@ use crate::SuggestionEngine;
 // Define RefactoringSuggestion locally since it's not in suggestions.rs yet
 #[derive(Debug, Clone)]
 pub struct RefactoringSuggestion {
-    pub operation_type: String,
+    pub operation_type:   String,
     pub confidence_score: f64,
-    pub description: String,
+    pub description:      String,
 }
+
+use std::collections::HashMap;
+use std::sync::Arc;
+
+#[cfg(feature = "lsp")]
+use lsp_types::{Position, Range, TextDocumentIdentifier, TextEdit, Uri, WorkspaceEdit};
+use tokio::sync::Mutex;
 
 use crate::confidence::{ConfidenceScorer, ScoringStrategy};
 use crate::enhanced_backup::EnhancedBackupManager;
@@ -24,13 +31,6 @@ use crate::safety::SafetyAnalyzer;
 use crate::suggestions::SuggestionContext;
 use crate::utils::RefactoringUtils;
 
-#[cfg(feature = "lsp")]
-use lsp_types::{Position, Range, TextDocumentIdentifier, TextEdit, Uri, WorkspaceEdit};
-
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-
 /// Core AI-powered refactoring service
 ///
 /// This is the main integration point that coordinates all refactoring operations,
@@ -38,23 +38,23 @@ use tokio::sync::Mutex;
 /// spectrum of AI-enhanced refactoring capabilities.
 pub struct RefactoringService {
     /// Factory for creating refactoring operations
-    operation_factory: RefactoringOperationFactory,
+    operation_factory:  RefactoringOperationFactory,
     /// Analysis engine for impact assessment
-    analysis_engine: RefactoringAnalysisEngine,
+    analysis_engine:    RefactoringAnalysisEngine,
     /// Suggestion engine for AI-powered recommendations
-    suggestion_engine: Arc<Mutex<dyn SuggestionEngine>>,
+    suggestion_engine:  Arc<Mutex<dyn SuggestionEngine>>,
     /// Confidence scoring system
-    confidence_scorer: ConfidenceScorer,
+    confidence_scorer:  ConfidenceScorer,
     /// Progress tracking
-    progress_tracker: ProgressTracker,
+    progress_tracker:   ProgressTracker,
     /// Safety analyzer
-    safety_analyzer: SafetyAnalyzer,
+    safety_analyzer:    SafetyAnalyzer,
     /// Logging system
-    logger: RefactoringLogger,
+    logger:             RefactoringLogger,
     /// Backup manager
-    backup_manager: EnhancedBackupManager,
+    backup_manager:     EnhancedBackupManager,
     /// Cache for operation results
-    operation_cache: HashMap<String, (RefactoringResult, std::time::Instant)>,
+    operation_cache:    HashMap<String, (RefactoringResult, std::time::Instant)>,
     /// Security validator
     security_validator: SecurityValidator,
 }
@@ -88,24 +88,21 @@ impl RefactoringService {
     /// Create a new instance of the refactoring service
     pub fn new() -> Self {
         Self {
-            operation_factory: RefactoringOperationFactory,
-            analysis_engine: RefactoringAnalysisEngine::new(),
-            suggestion_engine: Arc::new(Mutex::new(crate::suggestions::AISuggestionEngine::new())),
-            confidence_scorer: ConfidenceScorer::new(ScoringStrategy::default()),
-            progress_tracker: ProgressTracker::new(),
-            safety_analyzer: SafetyAnalyzer::new(),
-            logger: RefactoringLogger::new(),
-            backup_manager: EnhancedBackupManager::new(),
-            operation_cache: HashMap::new(),
+            operation_factory:  RefactoringOperationFactory,
+            analysis_engine:    RefactoringAnalysisEngine::new(),
+            suggestion_engine:  Arc::new(Mutex::new(crate::suggestions::AISuggestionEngine::new())),
+            confidence_scorer:  ConfidenceScorer::new(ScoringStrategy::default()),
+            progress_tracker:   ProgressTracker::new(),
+            safety_analyzer:    SafetyAnalyzer::new(),
+            logger:             RefactoringLogger::new(),
+            backup_manager:     EnhancedBackupManager::new(),
+            operation_cache:    HashMap::new(),
             security_validator: SecurityValidator::new(),
         }
     }
 
     /// Execute a refactoring operation
-    pub async fn execute_operation(
-        &self,
-        request: &RefactoringRequest,
-    ) -> Result<RefactoringOperationResult, String> {
+    pub async fn execute_operation(&self, request: &RefactoringRequest) -> Result<RefactoringOperationResult, String> {
         // Security validation
         self.security_validator.validate_request(request)?;
 
@@ -148,12 +145,11 @@ impl RefactoringService {
         // Parse operation type
         let operation_type = match RefactoringType::try_from(request.operation_type.as_str()) {
             Ok(op_type) => op_type,
-            Err(_) => {
+            Err(_) =>
                 return Err(format!(
                     "Unknown operation type: {}",
                     request.operation_type
-                ))
-            }
+                )),
         };
 
         // Create the operation instance
@@ -187,18 +183,15 @@ impl RefactoringService {
     }
 
     /// Get refactoring suggestions for a context
-    pub async fn get_suggestions(
-        &self,
-        request: &RefactoringRequest,
-    ) -> Result<Vec<RefactoringSuggestion>, String> {
+    pub async fn get_suggestions(&self, request: &RefactoringRequest) -> Result<Vec<RefactoringSuggestion>, String> {
         // Security validation
         self.security_validator.validate_request(request)?;
 
         let context = convert_request_to_context(request);
         let suggestion_context = SuggestionContext {
-            file_path: context.file_path,
-            symbol_name: context.symbol_name,
-            symbol_kind: context.symbol_kind,
+            file_path:       context.file_path,
+            symbol_name:     context.symbol_name,
+            symbol_kind:     context.symbol_kind,
             project_context: HashMap::new(), // Can be enhanced
         };
 
@@ -225,8 +218,7 @@ impl RefactoringService {
         }
 
         // Sort by confidence
-        scored_suggestions
-            .sort_by(|a, b| b.confidence_score.partial_cmp(&a.confidence_score).unwrap());
+        scored_suggestions.sort_by(|a, b| b.confidence_score.partial_cmp(&a.confidence_score).unwrap());
 
         Ok(scored_suggestions)
     }
@@ -271,10 +263,7 @@ impl RefactoringService {
     }
 
     /// Get available refactoring operations for a context
-    pub async fn get_available_operations(
-        &self,
-        context: &RefactoringContext,
-    ) -> Result<Vec<RefactoringType>, String> {
+    pub async fn get_available_operations(&self, context: &RefactoringContext) -> Result<Vec<RefactoringType>, String> {
         let mut available_ops = Vec::new();
 
         for op_type in RefactoringOperationFactory::available_refactorings() {
@@ -289,26 +278,20 @@ impl RefactoringService {
     }
 
     /// Get operation metadata
-    pub fn get_operation_metadata(
-        &self,
-        operation_type: &RefactoringType,
-    ) -> Option<RefactoringOperationMetadata> {
+    pub fn get_operation_metadata(&self, operation_type: &RefactoringType) -> Option<RefactoringOperationMetadata> {
         match self.operation_factory.create_operation(operation_type) {
             Ok(operation) => Some(RefactoringOperationMetadata {
-                name: operation.name().to_string(),
-                description: operation.description().to_string(),
+                name:           operation.name().to_string(),
+                description:    operation.description().to_string(),
                 operation_type: operation.refactoring_type(),
-                experimental: false, // Can be enhanced
+                experimental:   false, // Can be enhanced
             }),
             Err(_) => None,
         }
     }
 
     /// Batch execute multiple operations
-    pub async fn batch_execute(
-        &self,
-        operations: Vec<RefactoringRequest>,
-    ) -> Result<BatchRefactoringResult, String> {
+    pub async fn batch_execute(&self, operations: Vec<RefactoringRequest>) -> Result<BatchRefactoringResult, String> {
         let mut results = Vec::new();
         let mut errors = Vec::new();
 
@@ -334,26 +317,24 @@ impl RefactoringService {
 /// Convert LSP request to refactoring context
 fn convert_request_to_context(request: &RefactoringRequest) -> RefactoringContext {
     RefactoringContext {
-        file_path: request.file_path.clone(),
-        cursor_line: 0, // Can be enhanced from LSP position
+        file_path:        request.file_path.clone(),
+        cursor_line:      0, // Can be enhanced from LSP position
         cursor_character: 0,
-        selection: None,   // Can be enhanced
-        symbol_name: None, // Can be extracted from options
-        symbol_kind: None,
+        selection:        None, // Can be enhanced
+        symbol_name:      None, // Can be extracted from options
+        symbol_kind:      None,
     }
 }
 
 /// Convert hashmap to refactoring options
-fn convert_options_to_refactoring_options(
-    options: &HashMap<String, serde_json::Value>,
-) -> RefactoringOptions {
+fn convert_options_to_refactoring_options(options: &HashMap<String, serde_json::Value>) -> RefactoringOptions {
     RefactoringOptions {
-        create_backup: true,
-        generate_tests: true,
+        create_backup:            true,
+        generate_tests:           true,
         apply_to_all_occurrences: false,
-        preserve_references: true,
-        ignore_safe_operations: false,
-        extra_options: Some(options.clone()),
+        preserve_references:      true,
+        ignore_safe_operations:   false,
+        extra_options:            Some(options.clone()),
     }
 }
 
@@ -361,25 +342,25 @@ fn convert_options_to_refactoring_options(
 #[derive(Debug, Clone)]
 pub struct BatchRefactoringResult {
     pub successful_operations: usize,
-    pub failed_operations: usize,
-    pub results: Vec<RefactoringOperationResult>,
-    pub errors: Vec<String>,
+    pub failed_operations:     usize,
+    pub results:               Vec<RefactoringOperationResult>,
+    pub errors:                Vec<String>,
 }
 
 /// Metadata about a refactoring operation
 #[derive(Debug, Clone)]
 pub struct RefactoringOperationMetadata {
-    pub name: String,
-    pub description: String,
+    pub name:           String,
+    pub description:    String,
     pub operation_type: RefactoringType,
-    pub experimental: bool,
+    pub experimental:   bool,
 }
 
 /// Validation result for refactoring operations
 #[derive(Debug, Clone)]
 pub struct RefactoringValidationResult {
-    pub valid: bool,
-    pub errors: Vec<String>,
-    pub warnings: Vec<String>,
+    pub valid:       bool,
+    pub errors:      Vec<String>,
+    pub warnings:    Vec<String>,
     pub suggestions: Vec<String>,
 }

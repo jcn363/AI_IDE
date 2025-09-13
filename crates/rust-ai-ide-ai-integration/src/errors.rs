@@ -4,6 +4,7 @@
 //! integration layer, following the project's error handling guidelines.
 
 use std::fmt;
+
 use thiserror::Error;
 
 /// Main error type for AI service integration operations

@@ -2,16 +2,18 @@
 //!
 //! This module handles offline model management and graceful degradation.
 
-use crate::types::{ModelId, ModelMetrics, OfflineStatus};
-use crate::{OrchestrationError, Result};
 use std::collections::HashMap;
 use std::sync::Arc;
+
 use tokio::sync::RwLock;
+
+use crate::types::{ModelId, ModelMetrics, OfflineStatus};
+use crate::{OrchestrationError, Result};
 
 /// Network status detector
 #[derive(Debug)]
 pub struct NetworkStatusDetector {
-    is_online: Arc<RwLock<bool>>,
+    is_online:  Arc<RwLock<bool>>,
     last_check: Arc<RwLock<std::time::Instant>>,
 }
 
@@ -35,7 +37,7 @@ impl NetworkStatusDetector {
 #[derive(Debug)]
 pub struct ModelCacheManager {
     cache_state: Arc<RwLock<HashMap<ModelId, OfflineStatus>>>,
-    cache_dir: std::path::PathBuf,
+    cache_dir:   std::path::PathBuf,
 }
 
 impl ModelCacheManager {
@@ -80,31 +82,31 @@ impl GracefulDegrader {
 /// Main Model Fallback Manager
 #[derive(Debug)]
 pub struct ModelFallbackManager {
-    pub offline_detector: Arc<NetworkStatusDetector>,
+    pub offline_detector:    Arc<NetworkStatusDetector>,
     pub local_cache_manager: Arc<ModelCacheManager>,
-    pub versioning_engine: Arc<ModelVersioningEngine>,
-    pub sync_manager: Arc<OfflineSyncManager>,
-    pub gracefull_degrader: Arc<GracefulDegrader>,
+    pub versioning_engine:   Arc<ModelVersioningEngine>,
+    pub sync_manager:        Arc<OfflineSyncManager>,
+    pub gracefull_degrader:  Arc<GracefulDegrader>,
 }
 
 impl ModelFallbackManager {
     pub fn new() -> Self {
         Self {
-            offline_detector: Arc::new(NetworkStatusDetector {
-                is_online: Arc::new(RwLock::new(true)),
+            offline_detector:    Arc::new(NetworkStatusDetector {
+                is_online:  Arc::new(RwLock::new(true)),
                 last_check: Arc::new(RwLock::new(std::time::Instant::now())),
             }),
             local_cache_manager: Arc::new(ModelCacheManager {
                 cache_state: Arc::new(RwLock::new(HashMap::new())),
-                cache_dir: std::path::PathBuf::from("./model_cache"),
+                cache_dir:   std::path::PathBuf::from("./model_cache"),
             }),
-            versioning_engine: Arc::new(ModelVersioningEngine {
+            versioning_engine:   Arc::new(ModelVersioningEngine {
                 version_history: Arc::new(RwLock::new(HashMap::new())),
             }),
-            sync_manager: Arc::new(OfflineSyncManager {
+            sync_manager:        Arc::new(OfflineSyncManager {
                 pending_syncs: Arc::new(RwLock::new(HashMap::new())),
             }),
-            gracefull_degrader: Arc::new(GracefulDegrader {
+            gracefull_degrader:  Arc::new(GracefulDegrader {
                 degradation_priority: Vec::new(),
             }),
         }

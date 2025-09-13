@@ -1,57 +1,54 @@
-use crate::command_templates::validate_commands;
+use std::sync::Arc;
+
 use rust_ai_ide_common::validation::validate_secure_path;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 
+use crate::command_templates::validate_commands;
 // Import existing structures for compatibility
 use crate::infra::IDEState;
 
-/**
- * Production-Ready Debugging Commands
- *
- * This module provides comprehensive Tauri command bridge for:
- * - GDB/LLDB MI Protocol integration
- * - Async Rust debugging capabilities
- * - Modern React/TypeScript debugging interface
- * - Proper error handling with custom IDEError types
- */
+/// Production-Ready Debugging Commands
+///
+/// This module provides comprehensive Tauri command bridge for:
+/// - GDB/LLDB MI Protocol integration
+/// - Async Rust debugging capabilities
+/// - Modern React/TypeScript debugging interface
+/// - Proper error handling with custom IDEError types
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TaskInfo {
-    pub id: u64,
-    pub name: String,
-    pub status: String,
+    pub id:             u64,
+    pub name:           String,
+    pub status:         String,
     pub spawn_location: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FutureInfo {
-    pub id: u64,
+    pub id:         u64,
     pub expression: String,
-    pub state: String,
+    pub state:      String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DeadlockInfo {
-    pub tasks: Vec<u64>,
+    pub tasks:       Vec<u64>,
     pub description: String,
-    pub severity: String,
+    pub severity:    String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelAnalysis {
-    pub channel_id: String,
-    pub current_capacity: usize,
-    pub used_capacity: usize,
+    pub channel_id:        String,
+    pub current_capacity:  usize,
+    pub used_capacity:     usize,
     pub pending_receivers: usize,
-    pub pending_senders: usize,
+    pub pending_senders:   usize,
 }
 
-/**
- * Initialize debug session with production-ready configuration
- */
+/// Initialize debug session with production-ready configuration
 #[tauri::command]
 pub async fn debugger_start_session(
     executable_path: String,
@@ -80,15 +77,15 @@ pub async fn debugger_get_active_tasks(
     // Placeholder implementation - would return actual async tasks
     Ok(vec![
         TaskInfo {
-            id: 1,
-            name: "main_task".to_string(),
-            status: "running".to_string(),
+            id:             1,
+            name:           "main_task".to_string(),
+            status:         "running".to_string(),
             spawn_location: "main.rs:5".to_string(),
         },
         TaskInfo {
-            id: 2,
-            name: "async_worker".to_string(),
-            status: "pending".to_string(),
+            id:             2,
+            name:           "async_worker".to_string(),
+            status:         "pending".to_string(),
             spawn_location: "worker.rs:12".to_string(),
         },
     ])
@@ -100,9 +97,9 @@ pub async fn debugger_get_futures_and_streams(
 ) -> Result<Vec<FutureInfo>, String> {
     // Placeholder implementation
     Ok(vec![FutureInfo {
-        id: 1,
+        id:         1,
         expression: "async { ... }".to_string(),
-        state: "pending".to_string(),
+        state:      "pending".to_string(),
     }])
 }
 
@@ -164,9 +161,7 @@ pub fn get_debugging_commands() -> std::collections::HashMap<&'static str, tauri
     commands
 }
 
-/**
- * Get task stack trace for async debugging
- */
+/// Get task stack trace for async debugging
 tauri_command_template! {
     pub async fn debugger_get_task_stack_trace(
         task_id: u64,
@@ -195,9 +190,7 @@ tauri_command_template! {
     }
 }
 
-/**
- * Inspect future state with async debugging
- */
+/// Inspect future state with async debugging
 tauri_command_template! {
     pub async fn debugger_inspect_future_state(
         future_id: u64,
@@ -220,9 +213,7 @@ tauri_command_template! {
     }
 }
 
-/**
- * Step into async operations with tokio awareness
- */
+/// Step into async operations with tokio awareness
 tauri_command_template! {
     pub async fn debugger_step_into_async_operation(
         state: tauri::State<'_, Arc<Mutex<IDEState>>>,
@@ -243,9 +234,7 @@ tauri_command_template! {
     }
 }
 
-/**
- * Step over async operations
- */
+/// Step over async operations
 tauri_command_template! {
     pub async fn debugger_step_over_async_operation(
         state: tauri::State<'_, Arc<Mutex<IDEState>>>,
@@ -266,9 +255,7 @@ tauri_command_template! {
     }
 }
 
-/**
- * Get async synchronization points analysis
- */
+/// Get async synchronization points analysis
 tauri_command_template! {
     pub async fn debugger_get_async_synchronization_points(
         state: tauri::State<'_, Arc<Mutex<IDEState>>>,
@@ -289,9 +276,7 @@ tauri_command_template! {
     }
 }
 
-/**
- * Get thread safety analysis for async operations
- */
+/// Get thread safety analysis for async operations
 tauri_command_template! {
     pub async fn debugger_get_async_thread_safety_analysis(
         state: tauri::State<'_, Arc<Mutex<IDEState>>>,
@@ -314,9 +299,7 @@ tauri_command_template! {
     }
 }
 
-/**
- * Analyze future promise chains
- */
+/// Analyze future promise chains
 tauri_command_template! {
     pub async fn debugger_analyze_promise_chain(
         state: tauri::State<'_, Arc<Mutex<IDEState>>>,
@@ -340,9 +323,7 @@ tauri_command_template! {
     }
 }
 
-/**
- * Analyze channel capacity and usage
- */
+/// Analyze channel capacity and usage
 tauri_command_template! {
     pub async fn debugger_analyze_channel_capacity(
         channel_id: String,
@@ -368,9 +349,7 @@ tauri_command_template! {
     }
 }
 
-/**
- * Production-ready deadlock detection
- */
+/// Production-ready deadlock detection
 tauri_command_template! {
     pub async fn debugger_detect_deadlocks(
         state: tauri::State<'_, Arc<Mutex<IDEState>>>,
@@ -396,9 +375,7 @@ tauri_command_template! {
     }
 }
 
-/**
- * Get futures and streams information
- */
+/// Get futures and streams information
 tauri_command_template! {
     pub async fn debugger_get_futures_and_streams(
         state: tauri::State<'_, Arc<Mutex<IDEState>>>,
@@ -419,9 +396,7 @@ tauri_command_template! {
     }
 }
 
-/**
- * End debug session cleanly with proper cleanup
- */
+/// End debug session cleanly with proper cleanup
 tauri_command_template! {
     pub async fn debugger_end_session(
         state: tauri::State<'_, Arc<Mutex<IDEState>>>,
@@ -446,9 +421,7 @@ tauri_command_template! {
     }
 }
 
-/**
- * Legacy compatibility commands for existing debugger integration
- */
+/// Legacy compatibility commands for existing debugger integration
 tauri_command_template! {
     pub async fn debugger_get_state(
         state: tauri::State<'_, Arc<Mutex<IDEState>>>,

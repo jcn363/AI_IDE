@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 use std::process::Stdio;
 use std::sync::Arc;
+
 use tokio::process::{Child, Command};
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
@@ -10,8 +11,8 @@ use tokio::time::{self, timeout, Duration};
 
 use crate::error::{ErrorAggregator, SupervisorError, SupervisorErrorUtils, SupervisorResult};
 use crate::types::{
-    HealthCheckResult, RestartPolicy, ServiceConfig, ServiceId, ServiceInfo, ServiceMetrics,
-    ServiceState, SharedSupervisorState, SupervisorState,
+    HealthCheckResult, RestartPolicy, ServiceConfig, ServiceId, ServiceInfo, ServiceMetrics, ServiceState,
+    SharedSupervisorState, SupervisorState,
 };
 
 /// Main Service Supervisor type
@@ -28,15 +29,15 @@ impl Supervisor {
             config,
             services: HashMap::new(),
             stats: crate::types::SupervisorStats {
-                total_services: 0,
-                running_services: 0,
-                restarting_services: 0,
-                failed_services: 0,
-                total_restarts: 0,
+                total_services:          0,
+                running_services:        0,
+                restarting_services:     0,
+                failed_services:         0,
+                total_restarts:          0,
                 total_successful_checks: 0,
-                total_failed_checks: 0,
-                uptime: Some(std::time::Duration::new(0, 0)),
-                last_checkpoint: None,
+                total_failed_checks:     0,
+                uptime:                  Some(std::time::Duration::new(0, 0)),
+                last_checkpoint:         None,
             },
             recovery_tasks: HashMap::new(),
         }));
@@ -56,12 +57,12 @@ impl Supervisor {
         }
 
         let service_info = ServiceInfo {
-            config: config.clone(),
-            state: ServiceState::Stopped,
-            process_handler: None,
+            config:            config.clone(),
+            state:             ServiceState::Stopped,
+            process_handler:   None,
             last_health_check: None,
-            metrics: ServiceMetrics::default(),
-            monitor_task: None,
+            metrics:           ServiceMetrics::default(),
+            monitor_task:      None,
         };
 
         state.services.insert(config.id.clone(), service_info);
@@ -146,10 +147,7 @@ impl Supervisor {
     }
 
     /// Get service health status
-    pub async fn get_service_health(
-        &self,
-        service_id: &ServiceId,
-    ) -> SupervisorResult<HealthCheckResult> {
+    pub async fn get_service_health(&self, service_id: &ServiceId) -> SupervisorResult<HealthCheckResult> {
         let state = self.state.lock().await;
 
         let service = state
@@ -243,18 +241,15 @@ impl Supervisor {
                 // Check if process is running
                 if let Some(ref mut process) = &mut service.process_handler {
                     match timeout(Duration::from_millis(100), process.wait()).await {
-                        Ok(Ok(exit_status)) => {
+                        Ok(Ok(exit_status)) =>
                             if exit_status.success() {
                                 service.state = ServiceState::Running;
                             } else {
-                                service.state = ServiceState::Failed(format!(
-                                    "Exit code: {}",
-                                    exit_status.code().unwrap_or(-1)
-                                ));
+                                service.state =
+                                    ServiceState::Failed(format!("Exit code: {}", exit_status.code().unwrap_or(-1)));
                                 self.handle_service_failure(&service_id, shared_state)
                                     .await?;
-                            }
-                        }
+                            },
                         Ok(Err(e)) => {
                             log::warn!("Process wait failed for {}: {:?}", service_id, e);
                         }
@@ -279,10 +274,7 @@ impl Supervisor {
     }
 
     /// Perform health check on a service
-    async fn perform_health_check(
-        &self,
-        service_config: &ServiceConfig,
-    ) -> SupervisorResult<HealthCheckResult> {
+    async fn perform_health_check(&self, service_config: &ServiceConfig) -> SupervisorResult<HealthCheckResult> {
         let start_time = std::time::Instant::now();
 
         // Simple health check: try to execute the command with --health-check flag
@@ -337,8 +329,7 @@ impl Supervisor {
 
         match &service.config.restart_policy {
             RestartPolicy::Never => {
-                service.state =
-                    ServiceState::Failed("Service failure - restart disabled".to_string());
+                service.state = ServiceState::Failed("Service failure - restart disabled".to_string());
             }
             RestartPolicy::Always => {
                 service.state = ServiceState::Restarting;
@@ -353,10 +344,9 @@ impl Supervisor {
                 base_delay,
                 max_delay,
                 max_attempts,
-            } => {
+            } =>
                 if service.metrics.restart_count >= *max_attempts as u32 {
-                    service.state =
-                        ServiceState::Failed("Maximum restart attempts exceeded".to_string());
+                    service.state = ServiceState::Failed("Maximum restart attempts exceeded".to_string());
                 } else {
                     service.state = ServiceState::Restarting;
                     let delay = std::cmp::min(
@@ -375,15 +365,13 @@ impl Supervisor {
                             log::error!("Failed to restart service {}: {:?}", service_id_clone, e);
                         }
                     });
-                }
-            }
+                },
             RestartPolicy::FixedDelay {
                 delay,
                 max_attempts,
-            } => {
+            } =>
                 if service.metrics.restart_count >= *max_attempts as u32 {
-                    service.state =
-                        ServiceState::Failed("Maximum restart attempts exceeded".to_string());
+                    service.state = ServiceState::Failed("Maximum restart attempts exceeded".to_string());
                 } else {
                     service.state = ServiceState::Restarting;
                     let service_id_clone = service_id.clone();
@@ -397,8 +385,7 @@ impl Supervisor {
                             log::error!("Failed to restart service {}: {:?}", service_id_clone, e);
                         }
                     });
-                }
-            }
+                },
         }
 
         Ok(())
@@ -457,19 +444,15 @@ impl Supervisor {
             command.env(key, value);
         }
 
-        let child = command.spawn().map_err(|e| {
-            SupervisorError::process_error(format!("Failed to spawn process: {:?}", e))
-        })?;
+        let child = command
+            .spawn()
+            .map_err(|e| SupervisorError::process_error(format!("Failed to spawn process: {:?}", e)))?;
 
         Ok(child)
     }
 
     /// Terminate a process gracefully with timeout
-    async fn terminate_process_gracefully(
-        &self,
-        process: &mut Child,
-        timeout: Duration,
-    ) -> SupervisorResult<()> {
+    async fn terminate_process_gracefully(&self, process: &mut Child, timeout: Duration) -> SupervisorResult<()> {
         // First, try to send SIGTERM and wait for graceful shutdown
         if let Some(pid) = process.id() {
             // Note: tokio::process doesn't have direct signal sending, so we use std::process::Command
@@ -529,8 +512,9 @@ pub fn init() -> SupervisorResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test;
+
+    use super::*;
 
     #[test]
     async fn test_supervisor_creation() {
@@ -538,16 +522,16 @@ mod tests {
         assert!(!supervisor.is_ready().await);
 
         let config = ServiceConfig {
-            id: "test_service".to_string(),
-            name: "Test Service".to_string(),
-            command: "echo".to_string(),
-            args: vec!["test".to_string()],
-            working_dir: None,
-            environment: HashMap::new(),
+            id:                   "test_service".to_string(),
+            name:                 "Test Service".to_string(),
+            command:              "echo".to_string(),
+            args:                 vec!["test".to_string()],
+            working_dir:          None,
+            environment:          HashMap::new(),
             health_check_timeout: Duration::from_secs(10),
-            restart_policy: RestartPolicy::Never,
-            shutdown_timeout: Duration::from_secs(5),
-            critical: false,
+            restart_policy:       RestartPolicy::Never,
+            shutdown_timeout:     Duration::from_secs(5),
+            critical:             false,
         };
 
         supervisor
@@ -562,16 +546,16 @@ mod tests {
         let supervisor = Supervisor::new().expect("Failed to create supervisor");
 
         let config = ServiceConfig {
-            id: "test_service".to_string(),
-            name: "Test Service".to_string(),
-            command: "echo".to_string(),
-            args: vec!["hello".to_string()],
-            working_dir: None,
-            environment: HashMap::new(),
+            id:                   "test_service".to_string(),
+            name:                 "Test Service".to_string(),
+            command:              "echo".to_string(),
+            args:                 vec!["hello".to_string()],
+            working_dir:          None,
+            environment:          HashMap::new(),
             health_check_timeout: Duration::from_secs(30),
-            restart_policy: RestartPolicy::Always,
-            shutdown_timeout: Duration::from_secs(10),
-            critical: true,
+            restart_policy:       RestartPolicy::Always,
+            shutdown_timeout:     Duration::from_secs(10),
+            critical:             true,
         };
 
         // Test successful registration
@@ -582,16 +566,16 @@ mod tests {
 
         // Test duplicate registration
         let duplicate_config = ServiceConfig {
-            id: "test_service".to_string(),
-            name: "Test Service 2".to_string(),
-            command: "echo".to_string(),
-            args: vec!["world".to_string()],
-            working_dir: None,
-            environment: HashMap::new(),
+            id:                   "test_service".to_string(),
+            name:                 "Test Service 2".to_string(),
+            command:              "echo".to_string(),
+            args:                 vec!["world".to_string()],
+            working_dir:          None,
+            environment:          HashMap::new(),
             health_check_timeout: Duration::from_secs(30),
-            restart_policy: RestartPolicy::Never,
-            shutdown_timeout: Duration::from_secs(10),
-            critical: false,
+            restart_policy:       RestartPolicy::Never,
+            shutdown_timeout:     Duration::from_secs(10),
+            critical:             false,
         };
 
         let result = supervisor.register_service(duplicate_config).await;
@@ -603,16 +587,16 @@ mod tests {
         let supervisor = Supervisor::new().expect("Failed to create supervisor");
 
         let config = ServiceConfig {
-            id: "echo_service".to_string(),
-            name: "Echo Service".to_string(),
-            command: "echo".to_string(),
-            args: vec!["running".to_string()],
-            working_dir: None,
-            environment: HashMap::new(),
+            id:                   "echo_service".to_string(),
+            name:                 "Echo Service".to_string(),
+            command:              "echo".to_string(),
+            args:                 vec!["running".to_string()],
+            working_dir:          None,
+            environment:          HashMap::new(),
             health_check_timeout: Duration::from_secs(5),
-            restart_policy: RestartPolicy::Never,
-            shutdown_timeout: Duration::from_secs(1),
-            critical: false,
+            restart_policy:       RestartPolicy::Never,
+            shutdown_timeout:     Duration::from_secs(1),
+            critical:             false,
         };
 
         supervisor

@@ -19,33 +19,33 @@
 
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
-use once_cell::sync::OnceCell;
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 
+use async_trait::async_trait;
+use once_cell::sync::OnceCell;
+use serde::{Deserialize, Serialize};
+use tokio::sync::{Mutex, RwLock};
+
+pub mod error;
 pub mod lazy_loader;
 pub mod memory_pool;
 pub mod performance_monitor;
-pub mod error;
 
+pub use error::*;
 pub use lazy_loader::*;
 pub use memory_pool::*;
-pub use performance_monitor::*;
-pub use error::*;
-
 // Re-export commonly used types
 pub use once_cell::sync::Lazy;
+pub use performance_monitor::*;
 
 /// Configuration for lazy loading behavior
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LazyLoadingConfig {
     /// Maximum number of concurrent lazy loads
-    pub max_concurrent_loads: usize,
+    pub max_concurrent_loads:          usize,
     /// Timeout for lazy loading operations (in seconds)
-    pub load_timeout_seconds: u64,
+    pub load_timeout_seconds:          u64,
     /// Memory pool size limits
-    pub memory_pool_limits: MemoryPoolLimits,
+    pub memory_pool_limits:            MemoryPoolLimits,
     /// Whether to enable performance monitoring
     pub enable_performance_monitoring: bool,
 }
@@ -53,9 +53,9 @@ pub struct LazyLoadingConfig {
 impl Default for LazyLoadingConfig {
     fn default() -> Self {
         Self {
-            max_concurrent_loads: 10,
-            load_timeout_seconds: 30,
-            memory_pool_limits: MemoryPoolLimits::default(),
+            max_concurrent_loads:          10,
+            load_timeout_seconds:          30,
+            memory_pool_limits:            MemoryPoolLimits::default(),
             enable_performance_monitoring: true,
         }
     }
@@ -67,17 +67,17 @@ pub struct MemoryPoolLimits {
     /// Maximum size for analysis result pool (in items)
     pub analysis_result_pool_max: usize,
     /// Maximum size for model state pool (in items)
-    pub model_state_pool_max: usize,
+    pub model_state_pool_max:     usize,
     /// Maximum memory usage for pools (in bytes)
-    pub max_memory_usage: usize,
+    pub max_memory_usage:         usize,
 }
 
 impl Default for MemoryPoolLimits {
     fn default() -> Self {
         Self {
             analysis_result_pool_max: 1000,
-            model_state_pool_max: 50,
-            max_memory_usage: 100 * 1024 * 1024, // 100MB
+            model_state_pool_max:     50,
+            max_memory_usage:         100 * 1024 * 1024, // 100MB
         }
     }
 }
@@ -119,9 +119,7 @@ pub async fn init_lazy_loading() -> Result<LazyRegistry, LazyLoadingError> {
 }
 
 /// Initialize the lazy loading system with custom configuration
-pub async fn init_lazy_loading_with_config(
-    config: LazyLoadingConfig,
-) -> Result<LazyRegistry, LazyLoadingError> {
+pub async fn init_lazy_loading_with_config(config: LazyLoadingConfig) -> Result<LazyRegistry, LazyLoadingError> {
     let registry = Arc::new(RwLock::new(HashMap::new()));
 
     // Initialize performance monitoring if enabled
@@ -162,12 +160,15 @@ macro_rules! pooled_object {
                 std::sync::Arc::new(tokio::sync::Mutex::new($crate::ObjectPool::new($max_size)))
             });
 
-        pub async fn acquire_pooled_object() -> Result<std::sync::Arc<tokio::sync::Mutex<$type>>, $crate::LazyLoadingError> {
+        pub async fn acquire_pooled_object(
+        ) -> Result<std::sync::Arc<tokio::sync::Mutex<$type>>, $crate::LazyLoadingError> {
             let pool = OBJECT_POOL.lock().await;
             pool.acquire().await
         }
 
-        pub async fn release_pooled_object(obj: std::sync::Arc<tokio::sync::Mutex<$type>>) -> Result<(), $crate::LazyLoadingError> {
+        pub async fn release_pooled_object(
+            obj: std::sync::Arc<tokio::sync::Mutex<$type>>,
+        ) -> Result<(), $crate::LazyLoadingError> {
             let pool = OBJECT_POOL.lock().await;
             pool.release(obj).await
         }

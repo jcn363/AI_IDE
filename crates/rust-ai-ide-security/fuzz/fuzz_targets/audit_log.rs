@@ -1,7 +1,8 @@
 #![no_main]
+use std::sync::Arc;
+
 use libfuzzer_sys::fuzz_target;
 use rust_ai_ide_config::audit::{AuditConfig, AuditTrail, HashAlgorithm};
-use std::sync::Arc;
 use tokio::runtime::Runtime;
 
 // Fuzz target for audit logging cryptographic operations
@@ -16,9 +17,9 @@ fuzz_target!(|data: &[u8]| {
     rt.block_on(async {
         // Create audit trail with encryption enabled
         let config = AuditConfig {
-            max_entries: 1000,
+            max_entries:        1000,
             encryption_enabled: true,
-            hash_algorithm: HashAlgorithm::Sha256,
+            hash_algorithm:     HashAlgorithm::Sha256,
         };
 
         match AuditTrail::new_with_config(config).await {
@@ -31,8 +32,10 @@ fuzz_target!(|data: &[u8]| {
                 let query = String::from_utf8_lossy(&data[2..]);
 
                 // Test audit event logging (this involves cryptographic operations)
-                let event_data = format!("Test audit event: {} from {} executing: {}",
-                    user_id, client_ip, query);
+                let event_data = format!(
+                    "Test audit event: {} from {} executing: {}",
+                    user_id, client_ip, query
+                );
 
                 // Log the event (this exercises encryption and hashing)
                 if let Ok(event_id) = trail.log_event("test_operation", &event_data).await {

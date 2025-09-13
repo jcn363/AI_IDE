@@ -60,7 +60,7 @@ fn test_evaluate_all() -> DebuggerResult<()> {
 
     // Evaluate in paused state
     let state = DebuggerState::Paused {
-        reason: "breakpoint".to_string(),
+        reason:   "breakpoint".to_string(),
         location: Some(("test.rs".to_string(), 10)),
     };
 

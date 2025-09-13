@@ -1,10 +1,11 @@
+use std::collections::HashMap;
+
 /// AI model interaction and messaging commands module
 ///
 /// This module handles direct AI model interactions, messaging,
 /// and model-specific operations through the LSP service interface.
 use crate::commands::ai::services::AIServiceState;
 use crate::utils;
-use std::collections::HashMap;
 
 /// Send a message to AI service for processing
 ///
@@ -81,10 +82,7 @@ pub async fn send_ai_message(
         .and_then(|v| v.as_str().map(|s| s.to_string()));
 
     // Extract project context
-    let project_context: HashMap<String, String> = match context
-        .get("project_context")
-        .and_then(|v| v.as_object())
-    {
+    let project_context: HashMap<String, String> = match context.get("project_context").and_then(|v| v.as_object()) {
         Some(obj) => {
             let ctx_result: HashMap<String, String> = obj
                 .iter()

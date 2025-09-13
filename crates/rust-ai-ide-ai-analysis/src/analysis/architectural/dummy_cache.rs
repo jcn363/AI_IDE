@@ -7,7 +7,7 @@ use std::sync::RwLock;
 /// Dummy cache entry that doesn't actually cache anything
 #[derive(Debug, Clone)]
 pub struct DummyCacheEntry<T> {
-    value: T,
+    value:       T,
     _expires_at: Option<std::time::Instant>,
 }
 

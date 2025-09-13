@@ -1,15 +1,14 @@
 //! Core dependency graph structures and algorithms
 
-use petgraph::visit::IntoEdgesDirected;
-use petgraph::{
-    graph::{EdgeIndex, NodeIndex},
-    stable_graph::StableGraph,
-    Directed,
-};
-use semver::{Version, VersionReq};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
+
+use petgraph::graph::{EdgeIndex, NodeIndex};
+use petgraph::stable_graph::StableGraph;
+use petgraph::visit::IntoEdgesDirected;
+use petgraph::Directed;
+use semver::{Version, VersionReq};
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 use crate::error::*;
@@ -27,55 +26,55 @@ pub enum DependencyType {
 /// Information about a specific dependency requirement
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyRequirement {
-    pub name: String,
-    pub version_req: String,
-    pub dep_type: DependencyType,
-    pub optional: bool,
-    pub features: Vec<String>,
+    pub name:             String,
+    pub version_req:      String,
+    pub dep_type:         DependencyType,
+    pub optional:         bool,
+    pub features:         Vec<String>,
     pub default_features: bool,
-    pub target: Option<String>,
+    pub target:           Option<String>,
 }
 
 /// Represents a node in the dependency graph
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyNode {
-    pub name: String,
-    pub version: Option<String>,
-    pub description: Option<String>,
-    pub repository: Option<String>,
-    pub license: Option<String>,
-    pub authors: Vec<String>,
-    pub keywords: Vec<String>,
-    pub categories: Vec<String>,
-    pub homepage: Option<String>,
-    pub documentation: Option<String>,
-    pub readme: Option<String>,
+    pub name:                String,
+    pub version:             Option<String>,
+    pub description:         Option<String>,
+    pub repository:          Option<String>,
+    pub license:             Option<String>,
+    pub authors:             Vec<String>,
+    pub keywords:            Vec<String>,
+    pub categories:          Vec<String>,
+    pub homepage:            Option<String>,
+    pub documentation:       Option<String>,
+    pub readme:              Option<String>,
     pub is_workspace_member: bool,
-    pub source_url: Option<String>,
-    pub checksum: Option<String>,
-    pub yanked: bool,
-    pub created_at: Option<String>,
+    pub source_url:          Option<String>,
+    pub checksum:            Option<String>,
+    pub yanked:              bool,
+    pub created_at:          Option<String>,
 }
 
 /// Edge representing a dependency relationship between packages
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyEdge {
-    pub dep_type: DependencyType,
-    pub source_name: String,
-    pub target_name: String,
+    pub dep_type:           DependencyType,
+    pub source_name:        String,
+    pub target_name:        String,
     pub version_constraint: Option<String>,
     pub features_requested: Vec<String>,
-    pub features_enabled: Vec<String>,
-    pub optional: bool,
-    pub req_depth: usize,
+    pub features_enabled:   Vec<String>,
+    pub optional:           bool,
+    pub req_depth:          usize,
 }
 
 /// Main dependency graph structure using petgraph for efficient graph operations
 #[derive(Debug, Clone)]
 pub struct DependencyGraph {
-    pub graph: StableGraph<DependencyNode, DependencyEdge, Directed>,
-    pub node_indices: HashMap<String, NodeIndex>,
-    pub root_package: Option<String>,
+    pub graph:             StableGraph<DependencyNode, DependencyEdge, Directed>,
+    pub node_indices:      HashMap<String, NodeIndex>,
+    pub root_package:      Option<String>,
     pub workspace_members: HashSet<String>,
 }
 
@@ -89,9 +88,9 @@ impl DependencyGraph {
     /// Create a new empty dependency graph
     pub fn new() -> Self {
         Self {
-            graph: StableGraph::new(),
-            node_indices: HashMap::new(),
-            root_package: None,
+            graph:             StableGraph::new(),
+            node_indices:      HashMap::new(),
+            root_package:      None,
             workspace_members: HashSet::new(),
         }
     }
@@ -129,12 +128,7 @@ impl DependencyGraph {
     }
 
     /// Add a dependency edge between packages
-    pub fn add_dependency(
-        &mut self,
-        source: &str,
-        target: &str,
-        edge: DependencyEdge,
-    ) -> DependencyResult<EdgeIndex> {
+    pub fn add_dependency(&mut self, source: &str, target: &str, edge: DependencyEdge) -> DependencyResult<EdgeIndex> {
         let source_idx = self
             .node_indices
             .get(source)
@@ -144,22 +138,22 @@ impl DependencyGraph {
         // Add target package if it doesn't exist
         if !self.node_indices.contains_key(target) {
             let dummy_node = DependencyNode {
-                name: target.to_string(),
-                version: None,
-                description: None,
-                repository: None,
-                license: None,
-                authors: Vec::new(),
-                keywords: Vec::new(),
-                categories: Vec::new(),
-                homepage: None,
-                documentation: None,
-                readme: None,
+                name:                target.to_string(),
+                version:             None,
+                description:         None,
+                repository:          None,
+                license:             None,
+                authors:             Vec::new(),
+                keywords:            Vec::new(),
+                categories:          Vec::new(),
+                homepage:            None,
+                documentation:       None,
+                readme:              None,
                 is_workspace_member: false,
-                source_url: None,
-                checksum: None,
-                yanked: false,
-                created_at: None,
+                source_url:          None,
+                checksum:            None,
+                yanked:              false,
+                created_at:          None,
             };
             let target_idx = self.graph.add_node(dummy_node);
             self.node_indices.insert(target.to_string(), target_idx);
@@ -182,10 +176,7 @@ impl DependencyGraph {
     }
 
     /// Get dependencies of a package
-    pub fn get_dependencies(
-        &self,
-        package_name: &str,
-    ) -> DependencyResult<Vec<(String, DependencyEdge)>> {
+    pub fn get_dependencies(&self, package_name: &str) -> DependencyResult<Vec<(String, DependencyEdge)>> {
         let node_idx = self
             .node_indices
             .get(package_name)
@@ -206,10 +197,7 @@ impl DependencyGraph {
     }
 
     /// Get dependants (reverse dependencies) of a package
-    pub fn get_dependants(
-        &self,
-        package_name: &str,
-    ) -> DependencyResult<Vec<(String, DependencyEdge)>> {
+    pub fn get_dependants(&self, package_name: &str) -> DependencyResult<Vec<(String, DependencyEdge)>> {
         let node_idx = self
             .node_indices
             .get(package_name)
@@ -258,7 +246,7 @@ impl DependencyGraph {
         } else {
             Err(DependencyError::ResolutionError {
                 package: package_name.to_string(),
-                reason: "No root package set".to_string(),
+                reason:  "No root package set".to_string(),
             })
         }
     }
@@ -305,7 +293,7 @@ impl DependencyGraph {
 
         Err(DependencyError::ResolutionError {
             package: to.to_string(),
-            reason: "No path found from source".to_string(),
+            reason:  "No path found from source".to_string(),
         })
     }
 
@@ -349,7 +337,7 @@ impl DependencyGraph {
         petgraph::algo::toposort(&self.graph, None)
             .map_err(|_| DependencyError::ResolutionError {
                 package: "graph".to_string(),
-                reason: "Cycle detected during topological sort".to_string(),
+                reason:  "Cycle detected during topological sort".to_string(),
             })
             .and_then(|nodes| {
                 Ok(nodes
@@ -444,10 +432,10 @@ impl DependencyGraph {
 /// Statistics about the dependency graph
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyGraphStats {
-    pub total_packages: usize,
+    pub total_packages:     usize,
     pub total_dependencies: usize,
-    pub workspace_members: usize,
-    pub has_cycles: bool,
+    pub workspace_members:  usize,
+    pub has_cycles:         bool,
 }
 
 /// Thread-safe dependency graph wrapper

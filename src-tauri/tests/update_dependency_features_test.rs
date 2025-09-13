@@ -1,7 +1,9 @@
-use crate::rust_ai_ide_cargo::cargo_set_dependency_features;
 use std::fs::{self, File};
 use std::io::Write;
+
 use tempfile::tempdir;
+
+use crate::rust_ai_ide_cargo::cargo_set_dependency_features;
 // Note: This test could also be migrated to use rust_ai_ide_common::test_utils.
 // For demonstration, we're showing that both approaches work side by side.
 
@@ -15,8 +17,10 @@ async fn test_update_dependency_features() {
     let mut file = File::create(&manifest_path).unwrap();
     writeln!(
         file,
-        "[package]\nname = \"test\"\nversion = \"0.1.0\"\n\n[dependencies]\nserde = {{ version = \"1.0\", features = [\"derive\"] }}"
-    ).unwrap();
+        "[package]\nname = \"test\"\nversion = \"0.1.0\"\n\n[dependencies]\nserde = {{ version = \"1.0\", features = \
+         [\"derive\"] }}"
+    )
+    .unwrap();
 
     // Test updating features
     cargo_set_dependency_features(
@@ -33,9 +37,9 @@ async fn test_update_dependency_features() {
 
     // Verify the changes
     let content = fs::read_to_string(&manifest_path).unwrap();
-    assert!(content.contains(
-        "serde = { version = \"1.0\", features = [\"derive\", \"rc\"], default-features = false }"
-    ));
+    assert!(
+        content.contains("serde = { version = \"1.0\", features = [\"derive\", \"rc\"], default-features = false }")
+    );
 
     // Clean up
     drop(file);

@@ -1,8 +1,9 @@
 //! Architecture pattern suggestions
 
+use std::collections::HashSet;
+
 use chrono::{DateTime, Utc};
 use rust_ai_ide_ai_analysis::ArchitectureSuggestion;
-use std::collections::HashSet;
 use uuid::Uuid;
 
 /// Analyzer for architecture patterns and suggestions
@@ -12,10 +13,10 @@ pub struct ArchitecturePatternAnalyzer {
 
 #[derive(Clone, Debug)]
 pub struct PatternTemplate {
-    pub name: String,
-    pub category: PatternCategory,
-    pub detector: PatternDetector,
-    pub suggestion: String,
+    pub name:                 String,
+    pub category:             PatternCategory,
+    pub detector:             PatternDetector,
+    pub suggestion:           String,
     pub confidence_threshold: f64,
 }
 
@@ -53,29 +54,25 @@ impl ArchitecturePatternAnalyzer {
     /// Load standard design patterns
     fn load_standard_patterns(&mut self) {
         // MVC Pattern
-        self.known_patterns.insert(
-            "MVC".to_string(),
-            PatternTemplate {
-                name: "Model-View-Controller".to_string(),
-                category: PatternCategory::Structural,
-                detector: PatternDetector::ModulePattern(vec![
+        self.known_patterns
+            .insert("MVC".to_string(), PatternTemplate {
+                name:                 "Model-View-Controller".to_string(),
+                category:             PatternCategory::Structural,
+                detector:             PatternDetector::ModulePattern(vec![
                     "model".to_string(),
                     "view".to_string(),
                     "controller".to_string(),
                 ]),
-                suggestion: "Consider more modern alternatives like MVVM or clean architecture"
-                    .to_string(),
+                suggestion:           "Consider more modern alternatives like MVVM or clean architecture".to_string(),
                 confidence_threshold: 0.8,
-            },
-        );
+            });
 
         // Repository Pattern
-        self.known_patterns.insert(
-            "Repository".to_string(),
-            PatternTemplate {
-                name: "Repository Pattern".to_string(),
-                category: PatternCategory::Behavioral,
-                detector: PatternDetector::Composite(vec![
+        self.known_patterns
+            .insert("Repository".to_string(), PatternTemplate {
+                name:                 "Repository Pattern".to_string(),
+                category:             PatternCategory::Behavioral,
+                detector:             PatternDetector::Composite(vec![
                     PatternDetector::TraitPattern(vec!["Repository".to_string()]),
                     PatternDetector::FunctionPattern(vec![
                         "find_by".to_string(),
@@ -83,75 +80,59 @@ impl ArchitecturePatternAnalyzer {
                         "delete".to_string(),
                     ]),
                 ]),
-                suggestion: "Excellent pattern for data access abstraction!".to_string(),
+                suggestion:           "Excellent pattern for data access abstraction!".to_string(),
                 confidence_threshold: 0.6,
-            },
-        );
+            });
 
         // Factory Pattern
-        self.known_patterns.insert(
-            "Factory".to_string(),
-            PatternTemplate {
-                name: "Factory Pattern".to_string(),
-                category: PatternCategory::Creational,
-                detector: PatternDetector::FunctionPattern(vec![
+        self.known_patterns
+            .insert("Factory".to_string(), PatternTemplate {
+                name:                 "Factory Pattern".to_string(),
+                category:             PatternCategory::Creational,
+                detector:             PatternDetector::FunctionPattern(vec![
                     "create_".to_string(),
                     "make_".to_string(),
                     "build_".to_string(),
                 ]),
-                suggestion: "Strong creational pattern usage detected".to_string(),
+                suggestion:           "Strong creational pattern usage detected".to_string(),
                 confidence_threshold: 0.7,
-            },
-        );
+            });
 
         // Strategy Pattern
-        self.known_patterns.insert(
-            "Strategy".to_string(),
-            PatternTemplate {
-                name: "Strategy Pattern".to_string(),
-                category: PatternCategory::Behavioral,
-                detector: PatternDetector::Composite(vec![
-                    PatternDetector::TraitPattern(vec![
-                        "Strategy".to_string(),
-                        "Algorithm".to_string(),
-                    ]),
+        self.known_patterns
+            .insert("Strategy".to_string(), PatternTemplate {
+                name:                 "Strategy Pattern".to_string(),
+                category:             PatternCategory::Behavioral,
+                detector:             PatternDetector::Composite(vec![
+                    PatternDetector::TraitPattern(vec!["Strategy".to_string(), "Algorithm".to_string()]),
                     PatternDetector::TypePattern(vec!["Box<dyn".to_string(), "Arc<".to_string()]),
                 ]),
-                suggestion: "Runtime algorithm selection pattern - ensure proper error handling"
-                    .to_string(),
+                suggestion:           "Runtime algorithm selection pattern - ensure proper error handling".to_string(),
                 confidence_threshold: 0.8,
-            },
-        );
+            });
 
         // Adapter Pattern
-        self.known_patterns.insert(
-            "Adapter".to_string(),
-            PatternTemplate {
-                name: "Adapter Pattern".to_string(),
-                category: PatternCategory::Structural,
-                detector: PatternDetector::TraitPattern(vec![
-                    "Adapter".to_string(),
-                    "Wrapper".to_string(),
-                ]),
-                suggestion: "Good for interface compatibility".to_string(),
+        self.known_patterns
+            .insert("Adapter".to_string(), PatternTemplate {
+                name:                 "Adapter Pattern".to_string(),
+                category:             PatternCategory::Structural,
+                detector:             PatternDetector::TraitPattern(vec!["Adapter".to_string(), "Wrapper".to_string()]),
+                suggestion:           "Good for interface compatibility".to_string(),
                 confidence_threshold: 0.6,
-            },
-        );
+            });
 
         // Monolithic Pattern (anti-pattern detection)
-        self.known_patterns.insert(
-            "Monolithic".to_string(),
-            PatternTemplate {
-                name: "Potential Monolithic Structure".to_string(),
-                category: PatternCategory::Structural,
-                detector: PatternDetector::ModulePattern(vec![
+        self.known_patterns
+            .insert("Monolithic".to_string(), PatternTemplate {
+                name:                 "Potential Monolithic Structure".to_string(),
+                category:             PatternCategory::Structural,
+                detector:             PatternDetector::ModulePattern(vec![
                     "huge_modules".to_string(),
                     "many_functions".to_string(),
                 ]),
-                suggestion: "Consider breaking down into smaller, focused modules".to_string(),
+                suggestion:           "Consider breaking down into smaller, focused modules".to_string(),
                 confidence_threshold: 0.5,
-            },
-        );
+            });
     }
 
     /// Analyze multiple files for patterns
@@ -193,8 +174,8 @@ impl ArchitecturePatternAnalyzer {
                     pattern: template.name.clone(),
                     confidence,
                     location: rust_ai_ide_ai_analysis::Location {
-                        file: file_path.to_string(),
-                        line: 1,
+                        file:   file_path.to_string(),
+                        line:   1,
                         column: 0,
                         offset: 0,
                     },
@@ -245,9 +226,7 @@ impl ArchitecturePatternAnalyzer {
                 let content_lines = content.lines().count();
                 let function_lines = content
                     .lines()
-                    .filter(|line| {
-                        line.trim().starts_with("fn ") | line.trim().starts_with("pub fn ")
-                    })
+                    .filter(|line| line.trim().starts_with("fn ") | line.trim().starts_with("pub fn "))
                     .count();
 
                 // High ratio of functions to lines suggests potential monolithic structure
@@ -274,22 +253,21 @@ impl ArchitecturePatternAnalyzer {
         patterns_found: &HashSet<ArchitectureSuggestion>,
     ) -> Vec<ArchitectureSuggestion> {
         let mut suggestions = Vec::new();
-        let pattern_names: HashSet<String> =
-            patterns_found.iter().map(|p| p.pattern.clone()).collect();
+        let pattern_names: HashSet<String> = patterns_found.iter().map(|p| p.pattern.clone()).collect();
 
         // Check for incompatible patterns
         if pattern_names.contains("MVC") && pattern_names.contains("Repository") {
             suggestions.push(ArchitectureSuggestion {
-                pattern: "Potential Architecture Mismatch".to_string(),
-                confidence: 0.8,
-                location: rust_ai_ide_ai_analysis::Location {
-                    file: "multiple_files".to_string(),
-                    line: 1,
+                pattern:              "Potential Architecture Mismatch".to_string(),
+                confidence:           0.8,
+                location:             rust_ai_ide_ai_analysis::Location {
+                    file:   "multiple_files".to_string(),
+                    line:   1,
                     column: 0,
                     offset: 0,
                 },
-                description: "MVC and Repository patterns detected together".to_string(),
-                benefits: vec![
+                description:          "MVC and Repository patterns detected together".to_string(),
+                benefits:             vec![
                     "Unified architecture".to_string(),
                     "Clear separation".to_string(),
                 ],
@@ -304,17 +282,16 @@ impl ArchitecturePatternAnalyzer {
         // Check for missing patterns
         if pattern_names.contains("Factory") && !pattern_names.contains("Strategy") {
             suggestions.push(ArchitectureSuggestion {
-                pattern: "Missing Strategy Pattern".to_string(),
-                confidence: 0.6,
-                location: rust_ai_ide_ai_analysis::Location {
-                    file: "multiple_files".to_string(),
-                    line: 1,
+                pattern:              "Missing Strategy Pattern".to_string(),
+                confidence:           0.6,
+                location:             rust_ai_ide_ai_analysis::Location {
+                    file:   "multiple_files".to_string(),
+                    line:   1,
                     column: 0,
                     offset: 0,
                 },
-                description: "Factory pattern without Strategy pattern may limit flexibility"
-                    .to_string(),
-                benefits: vec![
+                description:          "Factory pattern without Strategy pattern may limit flexibility".to_string(),
+                benefits:             vec![
                     "Replaced object creation".to_string(),
                     "Configuration flexibility".to_string(),
                 ],
@@ -329,17 +306,16 @@ impl ArchitecturePatternAnalyzer {
         // Suggest hexagonal architecture
         if pattern_names.contains("Repository") && pattern_names.contains("Adapter") {
             suggestions.push(ArchitectureSuggestion {
-                pattern: "Hexagonal Architecture Candidate".to_string(),
-                confidence: 0.7,
-                location: rust_ai_ide_ai_analysis::Location {
-                    file: "multiple_files".to_string(),
-                    line: 1,
+                pattern:              "Hexagonal Architecture Candidate".to_string(),
+                confidence:           0.7,
+                location:             rust_ai_ide_ai_analysis::Location {
+                    file:   "multiple_files".to_string(),
+                    line:   1,
                     column: 0,
                     offset: 0,
                 },
-                description: "Your patterns lend themselves well to hexagonal architecture"
-                    .to_string(),
-                benefits: vec![
+                description:          "Your patterns lend themselves well to hexagonal architecture".to_string(),
+                benefits:             vec![
                     "Technology independence".to_string(),
                     "Testability".to_string(),
                     "Business logic isolation".to_string(),

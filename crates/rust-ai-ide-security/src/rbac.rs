@@ -18,14 +18,16 @@
 //! # Usage
 //!
 //! ```rust,no_run
-//! use rust_ai_ide_security::rbac::{RoleBasedAccessControl, Role, Permission};
+//! use rust_ai_ide_security::rbac::{Permission, Role, RoleBasedAccessControl};
 //!
 //! // Create RBAC system
 //! let rbac = RoleBasedAccessControl::new().await?;
 //!
 //! // Check user permission
 //! let user_context = crate::UserContext::new("user123");
-//! let authorized = rbac.check_permission(&user_context, "ai.model.use", "code-llama-7b").await?;
+//! let authorized = rbac
+//!     .check_permission(&user_context, "ai.model.use", "code-llama-7b")
+//!     .await?;
 //!
 //! if authorized {
 //!     // Allow AI operation
@@ -36,11 +38,12 @@
 //! }
 //! ```
 
+use std::collections::{HashMap, HashSet, HashSet as CircularBuffer};
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, HashSet as CircularBuffer};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
@@ -89,10 +92,10 @@ pub enum Permission {
 
     // Custom permissions with resource constraints
     Custom {
-        action: String,
+        action:        String,
         resource_type: String,
-        resource_id: Option<String>,
-        conditions: HashMap<String, String>,
+        resource_id:   Option<String>,
+        conditions:    HashMap<String, String>,
     },
 }
 
@@ -132,13 +135,12 @@ impl std::fmt::Display for Permission {
                 resource_type,
                 resource_id,
                 ..
-            } => {
+            } =>
                 if let Some(id) = resource_id {
                     write!(f, "{}.{}.{}", action, resource_type, id)
                 } else {
                     write!(f, "{}.{}", action, resource_type)
-                }
-            }
+                },
         }
     }
 }
@@ -146,124 +148,124 @@ impl std::fmt::Display for Permission {
 /// Hierarchical role structure with inheritance
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Role {
-    pub id: String,
-    pub name: String,
-    pub description: Option<String>,
-    pub permissions: HashSet<Permission>,
-    pub parent_roles: Vec<String>, // Role IDs that this role inherits from
+    pub id:                    String,
+    pub name:                  String,
+    pub description:           Option<String>,
+    pub permissions:           HashSet<Permission>,
+    pub parent_roles:          Vec<String>, // Role IDs that this role inherits from
     pub effective_permissions: HashSet<Permission>, // Calculated from inheritance
-    pub tenant_id: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub is_active: bool,
+    pub tenant_id:             Option<String>,
+    pub created_at:            DateTime<Utc>,
+    pub updated_at:            DateTime<Utc>,
+    pub is_active:             bool,
 }
 
 /// Role assignment for users
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoleAssignment {
-    pub id: String,
-    pub user_id: String,
-    pub role_id: String,
-    pub tenant_id: Option<String>,
+    pub id:          String,
+    pub user_id:     String,
+    pub role_id:     String,
+    pub tenant_id:   Option<String>,
     pub assigned_by: String,
     pub assigned_at: DateTime<Utc>,
-    pub expires_at: Option<DateTime<Utc>>,
-    pub conditions: HashMap<String, String>, // Contextual restrictions
-    pub is_active: bool,
+    pub expires_at:  Option<DateTime<Utc>>,
+    pub conditions:  HashMap<String, String>, // Contextual restrictions
+    pub is_active:   bool,
 }
 
 /// Resource-level permissions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourcePermission {
     pub resource_type: String,
-    pub resource_id: Option<String>,
-    pub user_id: Option<String>,
-    pub role_ids: Vec<String>,
-    pub permissions: HashSet<Permission>,
-    pub conditions: HashMap<String, String>,
-    pub created_at: DateTime<Utc>,
+    pub resource_id:   Option<String>,
+    pub user_id:       Option<String>,
+    pub role_ids:      Vec<String>,
+    pub permissions:   HashSet<Permission>,
+    pub conditions:    HashMap<String, String>,
+    pub created_at:    DateTime<Utc>,
 }
 
 /// Permission cache entry for performance
 #[derive(Debug, Clone)]
 pub struct PermissionCacheEntry {
     pub permissions: HashSet<Permission>,
-    pub cached_at: DateTime<Utc>,
+    pub cached_at:   DateTime<Utc>,
     pub ttl_seconds: u64,
 }
 
 /// Time-based permissions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TemporalPermission {
-    pub permission: Permission,
-    pub start_time: Option<DateTime<Utc>>,
-    pub end_time: Option<DateTime<Utc>>,
-    pub days_of_week: Option<Vec<String>>, // ["Monday", "Tuesday", etc.]
-    pub time_of_day_start: Option<String>, // "09:00:00"
-    pub time_of_day_end: Option<String>,   // "18:00:00"
+    pub permission:        Permission,
+    pub start_time:        Option<DateTime<Utc>>,
+    pub end_time:          Option<DateTime<Utc>>,
+    pub days_of_week:      Option<Vec<String>>, // ["Monday", "Tuesday", etc.]
+    pub time_of_day_start: Option<String>,      // "09:00:00"
+    pub time_of_day_end:   Option<String>,      // "18:00:00"
 }
 
 /// RBAC policy evaluation context with Wave 3 enterprise extensions
 #[derive(Debug, Clone)]
 pub struct PolicyContext {
-    pub user_id: String,
-    pub roles: Vec<String>,
-    pub tenant_id: Option<String>,
-    pub resource_type: String,
-    pub resource_id: Option<String>,
-    pub action: String,
-    pub context_data: HashMap<String, String>,
-    pub timestamp: DateTime<Utc>,
+    pub user_id:           String,
+    pub roles:             Vec<String>,
+    pub tenant_id:         Option<String>,
+    pub resource_type:     String,
+    pub resource_id:       Option<String>,
+    pub action:            String,
+    pub context_data:      HashMap<String, String>,
+    pub timestamp:         DateTime<Utc>,
     // Wave 3 enterprise context
-    pub ip_address: Option<String>,
-    pub geolocation: Option<String>,
-    pub session_context: Option<SessionAttributes>,
+    pub ip_address:        Option<String>,
+    pub geolocation:       Option<String>,
+    pub session_context:   Option<SessionAttributes>,
     pub device_attributes: Option<DeviceAttributes>,
 }
 
 /// Session attributes for ABAC
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionAttributes {
-    pub session_id: String,
-    pub mfa_verified: bool,
-    pub risk_score: f64,
+    pub session_id:             String,
+    pub mfa_verified:           bool,
+    pub risk_score:             f64,
     pub authentication_factors: Vec<String>,
-    pub login_time: DateTime<Utc>,
-    pub last_activity: DateTime<Utc>,
+    pub login_time:             DateTime<Utc>,
+    pub last_activity:          DateTime<Utc>,
 }
 
 /// Device attributes for ABAC
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeviceAttributes {
-    pub device_id: String,
-    pub device_type: String,
-    pub os: String,
-    pub browser: Option<String>,
-    pub trust_score: f64,
+    pub device_id:    String,
+    pub device_type:  String,
+    pub os:           String,
+    pub browser:      Option<String>,
+    pub trust_score:  f64,
     pub geo_location: Option<String>,
 }
 
 /// Attribute-based policy for Wave 3 ABAC expansion
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttributeBasedPolicy {
-    pub policy_id: String,
-    pub name: String,
-    pub description: Option<String>,
-    pub subject_attributes: HashMap<String, AttributeCondition>,
+    pub policy_id:           String,
+    pub name:                String,
+    pub description:         Option<String>,
+    pub subject_attributes:  HashMap<String, AttributeCondition>,
     pub resource_attributes: HashMap<String, AttributeCondition>,
-    pub action: String,
-    pub effect: PolicyEffect,
-    pub conditions: Vec<PolicyCondition>,
-    pub priority: i32,
-    pub created_at: DateTime<Utc>,
+    pub action:              String,
+    pub effect:              PolicyEffect,
+    pub conditions:          Vec<PolicyCondition>,
+    pub priority:            i32,
+    pub created_at:          DateTime<Utc>,
 }
 
 /// Attribute condition for ABAC policies
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttributeCondition {
     pub attribute_name: String,
-    pub operator: ConditionOperator,
-    pub value: String,
+    pub operator:       ConditionOperator,
+    pub value:          String,
     pub case_sensitive: bool,
 }
 
@@ -271,11 +273,11 @@ pub struct AttributeCondition {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolicyCondition {
     pub condition_type: ConditionType,
-    pub parameter: String,
-    pub operator: ConditionOperator,
-    pub value: String,
-    pub logical_and: Option<Box<PolicyCondition>>,
-    pub logical_or: Option<Box<PolicyCondition>>,
+    pub parameter:      String,
+    pub operator:       ConditionOperator,
+    pub value:          String,
+    pub logical_and:    Option<Box<PolicyCondition>>,
+    pub logical_or:     Option<Box<PolicyCondition>>,
 }
 
 /// Condition operators
@@ -316,14 +318,14 @@ pub enum PolicyEffect {
 /// Geographic restriction for Wave 3
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GeographicRestriction {
-    pub restriction_id: String,
-    pub name: String,
-    pub allowed_countries: HashSet<String>,
-    pub blocked_countries: HashSet<String>,
-    pub allowed_regions: HashSet<String>,
-    pub risk_score_threshold: f64,
+    pub restriction_id:        String,
+    pub name:                  String,
+    pub allowed_countries:     HashSet<String>,
+    pub blocked_countries:     HashSet<String>,
+    pub allowed_regions:       HashSet<String>,
+    pub risk_score_threshold:  f64,
     pub require_mfa_countries: HashSet<String>,
-    pub enforcement: RestrictionEnforcement,
+    pub enforcement:           RestrictionEnforcement,
 }
 
 /// How to enforce geographic restrictions
@@ -338,25 +340,25 @@ pub enum RestrictionEnforcement {
 /// Compliance audit engine for Wave 3
 #[derive(Debug)]
 pub struct ComplianceAuditEngine {
-    audit_rules: RwLock<Vec<ComplianceAuditRule>>,
+    audit_rules:        RwLock<Vec<ComplianceAuditRule>>,
     compliance_reports: RwLock<HashMap<String, ComplianceReport>>,
-    audit_callback: Option<Arc<dyn AuditCallback>>,
+    audit_callback:     Option<Arc<dyn AuditCallback>>,
 }
 
 impl ComplianceAuditEngine {
     pub fn new() -> Self {
         Self {
-            audit_rules: RwLock::new(Vec::new()),
+            audit_rules:        RwLock::new(Vec::new()),
             compliance_reports: RwLock::new(HashMap::new()),
-            audit_callback: None,
+            audit_callback:     None,
         }
     }
 
     pub fn with_audit_callback(audit_callback: Arc<dyn AuditCallback>) -> Self {
         Self {
-            audit_rules: RwLock::new(Vec::new()),
+            audit_rules:        RwLock::new(Vec::new()),
             compliance_reports: RwLock::new(HashMap::new()),
-            audit_callback: Some(audit_callback),
+            audit_callback:     Some(audit_callback),
         }
     }
 
@@ -382,12 +384,12 @@ impl ComplianceAuditEngine {
 
         // In production, this would analyze historical audit data
         let findings = vec![ComplianceFinding {
-            finding_id: uuid::Uuid::new_v4().to_string(),
-            rule_id: "test_rule".to_string(),
-            severity: AuditEventSeverity::Medium,
-            description: "Test compliance finding".to_string(),
+            finding_id:        uuid::Uuid::new_v4().to_string(),
+            rule_id:           "test_rule".to_string(),
+            severity:          AuditEventSeverity::Medium,
+            description:       "Test compliance finding".to_string(),
             affected_entities: vec!["test_entity".to_string()],
-            status: FindingStatus::Resolved,
+            status:            FindingStatus::Resolved,
             remediation_steps: vec!["Fix the issue".to_string()],
         }];
 
@@ -439,14 +441,14 @@ pub enum GeographicResult {
 /// Compliance audit rule for automated compliance checking
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceAuditRule {
-    pub rule_id: String,
+    pub rule_id:              String,
     pub compliance_framework: ComplianceFramework,
-    pub rule_name: String,
-    pub description: String,
-    pub monitoring_query: AuditQuery,
-    pub severity: AuditEventSeverity,
-    pub remediation_actions: Vec<String>,
-    pub enabled: bool,
+    pub rule_name:            String,
+    pub description:          String,
+    pub monitoring_query:     AuditQuery,
+    pub severity:             AuditEventSeverity,
+    pub remediation_actions:  Vec<String>,
+    pub enabled:              bool,
 }
 
 /// Compliance frameworks supported
@@ -463,25 +465,25 @@ pub enum ComplianceFramework {
 /// Compliance report for Wave 3
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceReport {
-    pub report_id: String,
-    pub framework: ComplianceFramework,
-    pub generated_at: DateTime<Utc>,
-    pub period_start: DateTime<Utc>,
-    pub period_end: DateTime<Utc>,
-    pub findings: Vec<ComplianceFinding>,
+    pub report_id:                String,
+    pub framework:                ComplianceFramework,
+    pub generated_at:             DateTime<Utc>,
+    pub period_start:             DateTime<Utc>,
+    pub period_end:               DateTime<Utc>,
+    pub findings:                 Vec<ComplianceFinding>,
     pub overall_compliance_score: f64,
-    pub remediation_required: Vec<String>,
+    pub remediation_required:     Vec<String>,
 }
 
 /// Compliance finding
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceFinding {
-    pub finding_id: String,
-    pub rule_id: String,
-    pub severity: AuditEventSeverity,
-    pub description: String,
+    pub finding_id:        String,
+    pub rule_id:           String,
+    pub severity:          AuditEventSeverity,
+    pub description:       String,
     pub affected_entities: Vec<String>,
-    pub status: FindingStatus,
+    pub status:            FindingStatus,
     pub remediation_steps: Vec<String>,
 }
 
@@ -497,15 +499,15 @@ pub enum FindingStatus {
 /// Enterprise security policy for Wave 3
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnterpriseSecurityPolicy {
-    pub policy_id: String,
-    pub name: String,
+    pub policy_id:   String,
+    pub name:        String,
     pub description: String,
     pub policy_type: PolicyType,
-    pub rules: Vec<EnterpriseRule>,
+    pub rules:       Vec<EnterpriseRule>,
     pub enforcement: PolicyEnforcement,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub active: bool,
+    pub created_at:  DateTime<Utc>,
+    pub updated_at:  DateTime<Utc>,
+    pub active:      bool,
 }
 
 /// Enterprise policy types
@@ -521,24 +523,24 @@ pub enum PolicyType {
 /// Enterprise rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnterpriseRule {
-    pub rule_id: String,
+    pub rule_id:   String,
     pub condition: EnterpriseCondition,
-    pub action: EnterpriseAction,
+    pub action:    EnterpriseAction,
 }
 
 /// Enterprise condition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnterpriseCondition {
     pub attribute: String,
-    pub operator: ConditionOperator,
-    pub value: String,
+    pub operator:  ConditionOperator,
+    pub value:     String,
 }
 
 /// Enterprise action
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnterpriseAction {
     pub action_type: String,
-    pub parameters: HashMap<String, String>,
+    pub parameters:  HashMap<String, String>,
 }
 
 /// Policy enforcement level
@@ -552,18 +554,18 @@ pub enum PolicyEnforcement {
 impl PolicyContext {
     pub fn new(user: &UserContext, resource_type: &str, action: &str) -> Self {
         Self {
-            user_id: user.user_id.clone(),
-            roles: user.roles.clone(),
-            tenant_id: None, // Will be set from session context
-            resource_type: resource_type.to_string(),
-            resource_id: None,
-            action: action.to_string(),
-            context_data: HashMap::new(),
-            timestamp: Utc::now(),
+            user_id:           user.user_id.clone(),
+            roles:             user.roles.clone(),
+            tenant_id:         None, // Will be set from session context
+            resource_type:     resource_type.to_string(),
+            resource_id:       None,
+            action:            action.to_string(),
+            context_data:      HashMap::new(),
+            timestamp:         Utc::now(),
             // Wave 3 enterprise context defaults
-            ip_address: None,
-            geolocation: None,
-            session_context: None,
+            ip_address:        None,
+            geolocation:       None,
+            session_context:   None,
             device_attributes: None,
         }
     }
@@ -623,24 +625,19 @@ pub struct RoleBasedAccessControl {
 /// Audit callback for authorization events
 #[async_trait]
 pub trait AuditCallback: Send + Sync {
-    async fn log_authorization(
-        &self,
-        context: &PolicyContext,
-        allowed: bool,
-        reason: &str,
-    ) -> SecurityResult<()>;
+    async fn log_authorization(&self, context: &PolicyContext, allowed: bool, reason: &str) -> SecurityResult<()>;
 }
 
 /// Authorization result with explanation
 #[derive(Debug, Clone)]
 pub struct AuthorizationResult {
-    pub allowed: bool,
-    pub confidence_score: f64, // 0.0 to 1.0
-    pub applied_policies: Vec<String>,
-    pub denied_policies: Vec<String>,
-    pub conditions_met: Vec<String>,
+    pub allowed:           bool,
+    pub confidence_score:  f64, // 0.0 to 1.0
+    pub applied_policies:  Vec<String>,
+    pub denied_policies:   Vec<String>,
+    pub conditions_met:    Vec<String>,
     pub conditions_failed: Vec<String>,
-    pub reason: String,
+    pub reason:            String,
 }
 
 impl RoleBasedAccessControl {
@@ -706,11 +703,7 @@ impl RoleBasedAccessControl {
     }
 
     /// Check if user has permission for action
-    pub async fn check_permission(
-        &self,
-        user: &UserContext,
-        permission: Permission,
-    ) -> SecurityResult<bool> {
+    pub async fn check_permission(&self, user: &UserContext, permission: Permission) -> SecurityResult<bool> {
         let context = PolicyContext::new(user, "", &format!("{}", permission));
         let result = self
             .check_permission_with_context(&context, permission)
@@ -745,13 +738,13 @@ impl RoleBasedAccessControl {
         permission: Permission,
     ) -> SecurityResult<AuthorizationResult> {
         let mut result = AuthorizationResult {
-            allowed: false,
-            confidence_score: 0.0,
-            applied_policies: Vec::new(),
-            denied_policies: Vec::new(),
-            conditions_met: Vec::new(),
+            allowed:           false,
+            confidence_score:  0.0,
+            applied_policies:  Vec::new(),
+            denied_policies:   Vec::new(),
+            conditions_met:    Vec::new(),
             conditions_failed: Vec::new(),
-            reason: "Access denied".to_string(),
+            reason:            "Access denied".to_string(),
         };
 
         // Step 1: Check permission cache first
@@ -932,10 +925,7 @@ impl RoleBasedAccessControl {
     }
 
     /// Add resource permission
-    pub async fn add_resource_permission(
-        &self,
-        permission: ResourcePermission,
-    ) -> SecurityResult<()> {
+    pub async fn add_resource_permission(&self, permission: ResourcePermission) -> SecurityResult<()> {
         let key = permission
             .resource_id
             .as_ref()
@@ -965,10 +955,7 @@ impl RoleBasedAccessControl {
     }
 
     /// Add temporal permission
-    pub async fn add_temporal_permission(
-        &self,
-        permission: TemporalPermission,
-    ) -> SecurityResult<()> {
+    pub async fn add_temporal_permission(&self, permission: TemporalPermission) -> SecurityResult<()> {
         let mut temporal = self.temporal_permissions.write().await;
         temporal.push(permission);
         Ok(())
@@ -982,30 +969,21 @@ impl RoleBasedAccessControl {
     }
 
     /// Add geographic restriction (Wave 3)
-    pub async fn add_geographic_restriction(
-        &self,
-        restriction: GeographicRestriction,
-    ) -> SecurityResult<()> {
+    pub async fn add_geographic_restriction(&self, restriction: GeographicRestriction) -> SecurityResult<()> {
         let mut restrictions = self.geographic_restrictions.write().await;
         restrictions.insert(restriction.restriction_id.clone(), restriction);
         Ok(())
     }
 
     /// Add enterprise security policy (Wave 3)
-    pub async fn add_enterprise_policy(
-        &self,
-        policy: EnterpriseSecurityPolicy,
-    ) -> SecurityResult<()> {
+    pub async fn add_enterprise_policy(&self, policy: EnterpriseSecurityPolicy) -> SecurityResult<()> {
         let mut policies = self.enterprise_security_policies.write().await;
         policies.push(policy);
         Ok(())
     }
 
     /// Check management interface with ABAC policies (Wave 3)
-    pub async fn check_abac_policies(
-        &self,
-        context: &PolicyContext,
-    ) -> SecurityResult<Vec<String>> {
+    pub async fn check_abac_policies(&self, context: &PolicyContext) -> SecurityResult<Vec<String>> {
         let policies = self.abac_policies.read().await;
         let mut matched_policies = Vec::new();
 
@@ -1041,10 +1019,7 @@ impl RoleBasedAccessControl {
     }
 
     /// Check geographic restrictions (Wave 3)
-    pub async fn check_geographic_restrictions(
-        &self,
-        context: &PolicyContext,
-    ) -> SecurityResult<GeographicResult> {
+    pub async fn check_geographic_restrictions(&self, context: &PolicyContext) -> SecurityResult<GeographicResult> {
         let restrictions = self.geographic_restrictions.read().await;
 
         for restriction in restrictions.values() {
@@ -1064,9 +1039,7 @@ impl RoleBasedAccessControl {
                 }
 
                 // Check allowed countries for restricted policies
-                if !restriction.allowed_countries.is_empty()
-                    && !restriction.allowed_countries.contains(country)
-                {
+                if !restriction.allowed_countries.is_empty() && !restriction.allowed_countries.contains(country) {
                     return Ok(GeographicResult::Blocked {
                         reason: format!("Country '{}' not in allowed list", country),
                     });
@@ -1090,11 +1063,7 @@ impl RoleBasedAccessControl {
     }
 
     // Private method for ABAC policy evaluation
-    async fn evaluate_abac_policy(
-        &self,
-        policy: &AttributeBasedPolicy,
-        context: &PolicyContext,
-    ) -> bool {
+    async fn evaluate_abac_policy(&self, policy: &AttributeBasedPolicy, context: &PolicyContext) -> bool {
         // Check subject attributes
         for condition in policy.subject_attributes.values() {
             match condition.attribute_name.as_str() {
@@ -1103,11 +1072,10 @@ impl RoleBasedAccessControl {
                         let risk_score = session.risk_score;
                         let threshold: f64 = condition.value.parse().unwrap_or(0.0);
                         match condition.operator {
-                            ConditionOperator::GreaterThan => {
+                            ConditionOperator::GreaterThan =>
                                 if risk_score <= threshold {
                                     return false;
-                                }
-                            }
+                                },
                             _ => return false, // Other operators not implemented in example
                         }
                     } else {
@@ -1160,32 +1128,26 @@ impl RoleBasedAccessControl {
     async fn initialize_enterprise_policies(&self) -> SecurityResult<()> {
         // Initialize ABAC policies (Wave 3)
         let abac_policies = vec![AttributeBasedPolicy {
-            policy_id: "abac_high_risk_users".to_string(),
-            name: "High Risk User Operations".to_string(),
-            description: Some("Enhanced controls for high-risk user operations".to_string()),
-            subject_attributes: HashMap::from([(
-                "risk_score".to_string(),
-                AttributeCondition {
-                    attribute_name: "risk_score".to_string(),
-                    operator: ConditionOperator::GreaterThan,
-                    value: "0.7".to_string(),
-                    case_sensitive: false,
-                },
-            )]),
-            resource_attributes: HashMap::from([(
-                "sensitivity_level".to_string(),
-                AttributeCondition {
-                    attribute_name: "sensitivity_level".to_string(),
-                    operator: ConditionOperator::In,
-                    value: "confidential,restricted".to_string(),
-                    case_sensitive: false,
-                },
-            )]),
-            action: "require_mfa".to_string(),
-            effect: PolicyEffect::Allow,
-            conditions: vec![],
-            priority: 100,
-            created_at: Utc::now(),
+            policy_id:           "abac_high_risk_users".to_string(),
+            name:                "High Risk User Operations".to_string(),
+            description:         Some("Enhanced controls for high-risk user operations".to_string()),
+            subject_attributes:  HashMap::from([("risk_score".to_string(), AttributeCondition {
+                attribute_name: "risk_score".to_string(),
+                operator:       ConditionOperator::GreaterThan,
+                value:          "0.7".to_string(),
+                case_sensitive: false,
+            })]),
+            resource_attributes: HashMap::from([("sensitivity_level".to_string(), AttributeCondition {
+                attribute_name: "sensitivity_level".to_string(),
+                operator:       ConditionOperator::In,
+                value:          "confidential,restricted".to_string(),
+                case_sensitive: false,
+            })]),
+            action:              "require_mfa".to_string(),
+            effect:              PolicyEffect::Allow,
+            conditions:          vec![],
+            priority:            100,
+            created_at:          Utc::now(),
         }];
 
         for policy in abac_policies {
@@ -1195,20 +1157,20 @@ impl RoleBasedAccessControl {
 
         // Initialize geographic restrictions (Wave 3)
         let geographic_restrictions = vec![GeographicRestriction {
-            restriction_id: "geo_high_risk_countries".to_string(),
-            name: "High Risk Country Restrictions".to_string(),
-            allowed_countries: ["US", "CA", "GB", "DE", "FR", "JP", "AU"]
+            restriction_id:        "geo_high_risk_countries".to_string(),
+            name:                  "High Risk Country Restrictions".to_string(),
+            allowed_countries:     ["US", "CA", "GB", "DE", "FR", "JP", "AU"]
                 .iter()
                 .map(|s| s.to_string())
                 .collect(),
-            blocked_countries: HashSet::new(),
-            allowed_regions: HashSet::new(),
-            risk_score_threshold: 0.8,
+            blocked_countries:     HashSet::new(),
+            allowed_regions:       HashSet::new(),
+            risk_score_threshold:  0.8,
             require_mfa_countries: ["CN", "RU", "KP", "IR", "CU"]
                 .iter()
                 .map(|s| s.to_string())
                 .collect(),
-            enforcement: RestrictionEnforcement::RequireMFA,
+            enforcement:           RestrictionEnforcement::RequireMFA,
         }];
 
         for restriction in geographic_restrictions {
@@ -1218,26 +1180,26 @@ impl RoleBasedAccessControl {
 
         // Initialize enterprise security policies (Wave 3)
         let enterprise_policies = vec![EnterpriseSecurityPolicy {
-            policy_id: "enterprise_access_control".to_string(),
-            name: "Enterprise Access Control".to_string(),
+            policy_id:   "enterprise_access_control".to_string(),
+            name:        "Enterprise Access Control".to_string(),
             description: "Comprehensive enterprise access control policies".to_string(),
             policy_type: PolicyType::AccessControl,
-            rules: vec![EnterpriseRule {
-                rule_id: "rule_sensitive_data_mfa".to_string(),
+            rules:       vec![EnterpriseRule {
+                rule_id:   "rule_sensitive_data_mfa".to_string(),
                 condition: EnterpriseCondition {
                     attribute: "resource_sensitivity".to_string(),
-                    operator: ConditionOperator::Equals,
-                    value: "highly_sensitive".to_string(),
+                    operator:  ConditionOperator::Equals,
+                    value:     "highly_sensitive".to_string(),
                 },
-                action: EnterpriseAction {
+                action:    EnterpriseAction {
                     action_type: "require_mfa".to_string(),
-                    parameters: HashMap::new(),
+                    parameters:  HashMap::new(),
                 },
             }],
             enforcement: PolicyEnforcement::Hard,
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-            active: true,
+            created_at:  Utc::now(),
+            updated_at:  Utc::now(),
+            active:      true,
         }];
 
         for policy in enterprise_policies {
@@ -1319,9 +1281,7 @@ impl RoleBasedAccessControl {
         if let Some(user_assignments) = assignments.get(user_id) {
             user_assignments
                 .iter()
-                .filter(|a| {
-                    a.is_active && (a.expires_at.is_none() || a.expires_at.unwrap() > Utc::now())
-                })
+                .filter(|a| a.is_active && (a.expires_at.is_none() || a.expires_at.unwrap() > Utc::now()))
                 .map(|a| a.role_id.clone())
                 .collect()
         } else {
@@ -1334,10 +1294,7 @@ impl RoleBasedAccessControl {
         permissions.get(resource_id).cloned().unwrap_or_default()
     }
 
-    async fn get_active_temporal_permissions(
-        &self,
-        timestamp: DateTime<Utc>,
-    ) -> HashSet<Permission> {
+    async fn get_active_temporal_permissions(&self, timestamp: DateTime<Utc>) -> HashSet<Permission> {
         let temporal = self.temporal_permissions.read().await;
         let mut active_perms = HashSet::new();
 
@@ -1350,11 +1307,7 @@ impl RoleBasedAccessControl {
         active_perms
     }
 
-    fn is_temporal_permission_active(
-        &self,
-        permission: &TemporalPermission,
-        timestamp: DateTime<Utc>,
-    ) -> bool {
+    fn is_temporal_permission_active(&self, permission: &TemporalPermission, timestamp: DateTime<Utc>) -> bool {
         // Check time bounds
         if let Some(start) = permission.start_time {
             if timestamp < start {
@@ -1427,7 +1380,7 @@ impl RoleBasedAccessControl {
         let cache_key = format!("{}:{}", context.user_id, context.timestamp.timestamp());
         let entry = PermissionCacheEntry {
             permissions: permissions.clone(),
-            cached_at: Utc::now(),
+            cached_at:   Utc::now(),
             ttl_seconds: self.cache_ttl_seconds,
         };
 
@@ -1448,11 +1401,7 @@ impl RoleBasedAccessControl {
         }
     }
 
-    async fn evaluate_permission_conditions(
-        &self,
-        permission: &Permission,
-        context: &PolicyContext,
-    ) -> bool {
+    async fn evaluate_permission_conditions(&self, permission: &Permission, context: &PolicyContext) -> bool {
         // Evaluate any conditions associated with the permission
         // This is a simplified implementation
 
@@ -1477,33 +1426,24 @@ impl RoleBasedAccessControl {
         true // All conditions met (or no specific conditions)
     }
 
-    fn check_time_window_restrictions(
-        &self,
-        _permission: &Permission,
-        _timestamp: DateTime<Utc>,
-    ) -> bool {
+    fn check_time_window_restrictions(&self, _permission: &Permission, _timestamp: DateTime<Utc>) -> bool {
         // Implementation for time window checks
         // This would integrate with temporal permissions
         true
     }
 
-    fn parse_action_string(
-        &self,
-        action: &str,
-        resource_id: Option<&str>,
-    ) -> SecurityResult<Permission> {
+    fn parse_action_string(&self, action: &str, resource_id: Option<&str>) -> SecurityResult<Permission> {
         match action {
             "ai.model.create" => Ok(Permission::CreateModel),
             "ai.model.read" => Ok(Permission::ReadModel),
             "ai.model.update" => Ok(Permission::UpdateModel),
             "ai.model.delete" => Ok(Permission::DeleteModel),
-            "ai.model.use" => {
+            "ai.model.use" =>
                 if let Some(id) = resource_id {
                     Ok(Permission::UseModel(id.to_string()))
                 } else {
                     Ok(Permission::UseModel("*".to_string()))
-                }
-            }
+                },
             "ai.model.train" => Ok(Permission::TrainModel),
             "ai.model.deploy" => Ok(Permission::DeployModel),
             "code.analyze" => Ok(Permission::AnalyzeCode),
@@ -1531,10 +1471,10 @@ impl RoleBasedAccessControl {
                 // Support for custom permissions
                 if let Some((action_part, resource_type)) = action.split_once('.') {
                     Ok(Permission::Custom {
-                        action: action_part.to_string(),
+                        action:        action_part.to_string(),
                         resource_type: resource_type.to_string(),
-                        resource_id: resource_id.map(|s| s.to_string()),
-                        conditions: HashMap::new(),
+                        resource_id:   resource_id.map(|s| s.to_string()),
+                        conditions:    HashMap::new(),
                     })
                 } else {
                     Err(SecurityError::ConfigurationError {
@@ -1557,8 +1497,9 @@ impl PermissionCacheEntry {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test as async_test;
+
+    use super::*;
 
     #[async_test]
     async fn test_rbac_creation() {
@@ -1585,19 +1526,21 @@ mod tests {
 
         // Verify user has permission
         let user = UserContext {
-            user_id: "test_user".to_string(),
-            username: "testuser".to_string(),
-            roles: vec!["tester".to_string()], // This would normally be resolved by RBAC
-            permissions: vec![],
-            session_id: Some("session123".to_string()),
+            user_id:      "test_user".to_string(),
+            username:     "testuser".to_string(),
+            roles:        vec!["tester".to_string()], // This would normally be resolved by RBAC
+            permissions:  vec![],
+            session_id:   Some("session123".to_string()),
             mfa_verified: true,
         };
 
-        // Since user doesn't have role lookup configured in test, we'll test permission checking differently
+        // Since user doesn't have role lookup configured in test, we'll test permission checking
+        // differently
         let effective_permissions = rbac.get_user_permissions("test_user").await.unwrap();
 
         // Should have user default permissions initially
-        assert!(!effective_permissions.contains(&Permission::AnalyzeCode)); // No role assignment logic in test
+        assert!(!effective_permissions.contains(&Permission::AnalyzeCode)); // No role assignment
+                                                                            // logic in test
     }
 
     #[async_test]
@@ -1609,10 +1552,10 @@ mod tests {
         assert_eq!(format!("{}", perm2), "code.analyze");
 
         let custom_perm = Permission::Custom {
-            action: "custom".to_string(),
+            action:        "custom".to_string(),
             resource_type: "resource".to_string(),
-            resource_id: Some("id123".to_string()),
-            conditions: HashMap::new(),
+            resource_id:   Some("id123".to_string()),
+            conditions:    HashMap::new(),
         };
         assert_eq!(format!("{}", custom_perm), "custom.resource.id123");
     }
@@ -1623,12 +1566,12 @@ mod tests {
 
         // Add a temporal permission valid only during business hours
         let temporal_perm = TemporalPermission {
-            permission: Permission::AnalyzeCode,
-            start_time: None,
-            end_time: None,
-            days_of_week: Some(vec!["Monday".to_string(), "Tuesday".to_string()]),
+            permission:        Permission::AnalyzeCode,
+            start_time:        None,
+            end_time:          None,
+            days_of_week:      Some(vec!["Monday".to_string(), "Tuesday".to_string()]),
             time_of_day_start: Some("09:00:00".to_string()),
-            time_of_day_end: Some("18:00:00".to_string()),
+            time_of_day_end:   Some("18:00:00".to_string()),
         };
 
         rbac.add_temporal_permission(temporal_perm).await.unwrap();
@@ -1676,11 +1619,11 @@ mod tests {
     #[async_test]
     async fn test_policy_context_creation() {
         let user = UserContext {
-            user_id: "user123".to_string(),
-            username: "testuser".to_string(),
-            roles: vec!["developer".to_string()],
-            permissions: vec!["read".to_string()],
-            session_id: Some("session123".to_string()),
+            user_id:      "user123".to_string(),
+            username:     "testuser".to_string(),
+            roles:        vec!["developer".to_string()],
+            permissions:  vec!["read".to_string()],
+            session_id:   Some("session123".to_string()),
             mfa_verified: true,
         };
 
@@ -1739,29 +1682,35 @@ mod tests {
 
         // Create user with no roles
         let user_no_roles = UserContext {
-            user_id: "noroles_user".to_string(),
-            username: "noroles".to_string(),
-            roles: vec![],
-            permissions: vec![],
-            session_id: None,
+            user_id:      "noroles_user".to_string(),
+            username:     "noroles".to_string(),
+            roles:        vec![],
+            permissions:  vec![],
+            session_id:   None,
             mfa_verified: false,
         };
 
         // User without roles should only have default user permissions
-        let has_admin_perm = rbac.check_permission(&user_no_roles, Permission::Admin).await.unwrap();
+        let has_admin_perm = rbac
+            .check_permission(&user_no_roles, Permission::Admin)
+            .await
+            .unwrap();
         assert!(!has_admin_perm);
 
         // Admin user should have all permissions
         let admin_user = UserContext {
-            user_id: "admin".to_string(),
-            username: "admin".to_string(),
-            roles: vec!["admin".to_string()],
-            permissions: vec![],
-            session_id: Some("admin_session".to_string()),
+            user_id:      "admin".to_string(),
+            username:     "admin".to_string(),
+            roles:        vec!["admin".to_string()],
+            permissions:  vec![],
+            session_id:   Some("admin_session".to_string()),
             mfa_verified: true,
         };
 
-        let has_admin_perm = rbac.check_permission(&admin_user, Permission::Admin).await.unwrap();
+        let has_admin_perm = rbac
+            .check_permission(&admin_user, Permission::Admin)
+            .await
+            .unwrap();
         assert!(has_admin_perm);
     }
 
@@ -1784,28 +1733,34 @@ mod tests {
         // Add resource-level permission
         let resource_perm = ResourcePermission {
             resource_type: "ai.model".to_string(),
-            resource_id: Some("claude-3".to_string()),
-            user_id: None,
-            role_ids: vec![model_role_id.clone()],
-            permissions: [Permission::UseModel("claude-3".to_string())].into(),
-            conditions: HashMap::new(),
-            created_at: Utc::now(),
+            resource_id:   Some("claude-3".to_string()),
+            user_id:       None,
+            role_ids:      vec![model_role_id.clone()],
+            permissions:   [Permission::UseModel("claude-3".to_string())].into(),
+            conditions:    HashMap::new(),
+            created_at:    Utc::now(),
         };
 
         rbac.add_resource_permission(resource_perm).await.unwrap();
 
         // Test permission for specific model
         let user = UserContext {
-            user_id: "model_user".to_string(),
-            username: "modeluser".to_string(),
-            roles: vec!["model_user".to_string()],
-            permissions: vec![],
-            session_id: Some("session123".to_string()),
+            user_id:      "model_user".to_string(),
+            username:     "modeluser".to_string(),
+            roles:        vec!["model_user".to_string()],
+            permissions:  vec![],
+            session_id:   Some("session123".to_string()),
             mfa_verified: true,
         };
 
-        let has_gpt4_perm = rbac.check_permission_action(&user, "ai.model.use", Some("gpt-4")).await.unwrap();
-        let has_claude_perm = rbac.check_permission_action(&user, "ai.model.use", Some("claude-3")).await.unwrap();
+        let has_gpt4_perm = rbac
+            .check_permission_action(&user, "ai.model.use", Some("gpt-4"))
+            .await
+            .unwrap();
+        let has_claude_perm = rbac
+            .check_permission_action(&user, "ai.model.use", Some("claude-3"))
+            .await
+            .unwrap();
 
         assert!(has_gpt4_perm); // From role permission
         assert!(has_claude_perm); // From resource permission
@@ -1817,12 +1772,12 @@ mod tests {
 
         // Add temporal permission for business hours only
         let temporal_perm = TemporalPermission {
-            permission: Permission::AnalyzeCode,
-            start_time: Some(Utc::now() - chrono::Duration::hours(2)), // Started 2 hours ago
-            end_time: Some(Utc::now() + chrono::Duration::hours(2)),   // Ends in 2 hours
-            days_of_week: None,
+            permission:        Permission::AnalyzeCode,
+            start_time:        Some(Utc::now() - chrono::Duration::hours(2)), // Started 2 hours ago
+            end_time:          Some(Utc::now() + chrono::Duration::hours(2)), // Ends in 2 hours
+            days_of_week:      None,
             time_of_day_start: Some("09:00:00".to_string()),
-            time_of_day_end: Some("17:00:00".to_string()),
+            time_of_day_end:   Some("17:00:00".to_string()),
         };
 
         rbac.add_temporal_permission(temporal_perm).await.unwrap();
@@ -1839,24 +1794,21 @@ mod tests {
 
         // Add ABAC policy for high-risk users
         let abac_policy = AttributeBasedPolicy {
-            policy_id: "high_risk_policy".to_string(),
-            name: "High Risk User Policy".to_string(),
-            description: Some("Additional controls for high-risk users".to_string()),
-            subject_attributes: HashMap::from([(
-                "risk_score".to_string(),
-                AttributeCondition {
-                    attribute_name: "risk_score".to_string(),
-                    operator: ConditionOperator::GreaterThan,
-                    value: "0.8".to_string(),
-                    case_sensitive: false,
-                },
-            )]),
+            policy_id:           "high_risk_policy".to_string(),
+            name:                "High Risk User Policy".to_string(),
+            description:         Some("Additional controls for high-risk users".to_string()),
+            subject_attributes:  HashMap::from([("risk_score".to_string(), AttributeCondition {
+                attribute_name: "risk_score".to_string(),
+                operator:       ConditionOperator::GreaterThan,
+                value:          "0.8".to_string(),
+                case_sensitive: false,
+            })]),
             resource_attributes: HashMap::new(),
-            action: "access_sensitive_data".to_string(),
-            effect: PolicyEffect::Deny,
-            conditions: vec![],
-            priority: 100,
-            created_at: Utc::now(),
+            action:              "access_sensitive_data".to_string(),
+            effect:              PolicyEffect::Deny,
+            conditions:          vec![],
+            priority:            100,
+            created_at:          Utc::now(),
         };
 
         rbac.add_abac_policy(abac_policy).await.unwrap();
@@ -1864,25 +1816,26 @@ mod tests {
         // Test ABAC policy evaluation
         let context = PolicyContext::new(
             &UserContext {
-                user_id: "high_risk_user".to_string(),
-                username: "highrisk".to_string(),
-                roles: vec![],
-                permissions: vec![],
-                session_id: Some("session123".to_string()),
+                user_id:      "high_risk_user".to_string(),
+                username:     "highrisk".to_string(),
+                roles:        vec![],
+                permissions:  vec![],
+                session_id:   Some("session123".to_string()),
                 mfa_verified: false,
             },
             "sensitive_data",
             "access_sensitive_data",
-        ).with_context("risk_score", "0.9");
+        )
+        .with_context("risk_score", "0.9");
 
         // Add session context with high risk score
         let session_attrs = SessionAttributes {
-            session_id: "session123".to_string(),
-            mfa_verified: false,
-            risk_score: 0.9,
+            session_id:             "session123".to_string(),
+            mfa_verified:           false,
+            risk_score:             0.9,
             authentication_factors: vec!["password".to_string()],
-            login_time: Utc::now(),
-            last_activity: Utc::now(),
+            login_time:             Utc::now(),
+            last_activity:          Utc::now(),
         };
         let context = context.with_session_attributes(session_attrs);
 
@@ -1897,31 +1850,34 @@ mod tests {
 
         // Add geographic restriction
         let geo_restriction = GeographicRestriction {
-            restriction_id: "high_risk_countries".to_string(),
-            name: "High Risk Countries".to_string(),
-            allowed_countries: ["US", "CA", "GB"].iter().map(|s| s.to_string()).collect(),
-            blocked_countries: ["KP", "IR"].iter().map(|s| s.to_string()).collect(),
-            allowed_regions: vec![],
-            risk_score_threshold: 0.8,
+            restriction_id:        "high_risk_countries".to_string(),
+            name:                  "High Risk Countries".to_string(),
+            allowed_countries:     ["US", "CA", "GB"].iter().map(|s| s.to_string()).collect(),
+            blocked_countries:     ["KP", "IR"].iter().map(|s| s.to_string()).collect(),
+            allowed_regions:       vec![],
+            risk_score_threshold:  0.8,
             require_mfa_countries: ["CN", "RU"].iter().map(|s| s.to_string()).collect(),
-            enforcement: RestrictionEnforcement::RequireMFA,
+            enforcement:           RestrictionEnforcement::RequireMFA,
         };
 
-        rbac.add_geographic_restriction(geo_restriction).await.unwrap();
+        rbac.add_geographic_restriction(geo_restriction)
+            .await
+            .unwrap();
 
         // Test geographic restriction check
         let context = PolicyContext::new(
             &UserContext {
-                user_id: "geo_user".to_string(),
-                username: "geouser".to_string(),
-                roles: vec![],
-                permissions: vec![],
-                session_id: Some("session123".to_string()),
+                user_id:      "geo_user".to_string(),
+                username:     "geouser".to_string(),
+                roles:        vec![],
+                permissions:  vec![],
+                session_id:   Some("session123".to_string()),
                 mfa_verified: false,
             },
             "any",
             "any",
-        ).with_geolocation("CN");
+        )
+        .with_geolocation("CN");
 
         let geo_result = rbac.check_geographic_restrictions(&context).await.unwrap();
 
@@ -1943,7 +1899,13 @@ mod tests {
             let handle = tokio::spawn(async move {
                 let perms: HashSet<Permission> = [Permission::ReadProject].into();
                 let role_id = rbac_ref
-                    .create_role(&format!("concurrent_role_{}", i), "Concurrent role", perms, vec![], None)
+                    .create_role(
+                        &format!("concurrent_role_{}", i),
+                        "Concurrent role",
+                        perms,
+                        vec![],
+                        None,
+                    )
                     .await
                     .unwrap();
                 role_id
@@ -1963,30 +1925,43 @@ mod tests {
 
     #[async_test]
     async fn test_permission_cache_behavior() {
-        let rbac = RoleBasedAccessControl::with_config(300, None).await.unwrap(); // 5 minute TTL
+        let rbac = RoleBasedAccessControl::with_config(300, None)
+            .await
+            .unwrap(); // 5 minute TTL
 
         // Create role and assign to user
         let perms: HashSet<Permission> = [Permission::AnalyzeCode].into();
-        let role_id = rbac.create_role("cache_test", "Cache test role", perms, vec![], None).await.unwrap();
-        rbac.assign_role("cache_user", &role_id, "admin", None, None).await.unwrap();
+        let role_id = rbac
+            .create_role("cache_test", "Cache test role", perms, vec![], None)
+            .await
+            .unwrap();
+        rbac.assign_role("cache_user", &role_id, "admin", None, None)
+            .await
+            .unwrap();
 
         let user = UserContext {
-            user_id: "cache_user".to_string(),
-            username: "cacheuser".to_string(),
-            roles: vec!["cache_test".to_string()],
-            permissions: vec![],
-            session_id: Some("session123".to_string()),
+            user_id:      "cache_user".to_string(),
+            username:     "cacheuser".to_string(),
+            roles:        vec!["cache_test".to_string()],
+            permissions:  vec![],
+            session_id:   Some("session123".to_string()),
             mfa_verified: true,
         };
 
         // First permission check should cache
         let context = PolicyContext::new(&user, "code", "analyze");
-        let result1 = rbac.check_permission_with_context(&context, Permission::AnalyzeCode).await.unwrap();
+        let result1 = rbac
+            .check_permission_with_context(&context, Permission::AnalyzeCode)
+            .await
+            .unwrap();
         assert!(result1.allowed);
 
         // Second check should use cache (in real implementation)
         // Note: Current implementation has simplified caching
-        let result2 = rbac.check_permission_with_context(&context, Permission::AnalyzeCode).await.unwrap();
+        let result2 = rbac
+            .check_permission_with_context(&context, Permission::AnalyzeCode)
+            .await
+            .unwrap();
         assert!(result2.allowed);
     }
 
@@ -1996,11 +1971,16 @@ mod tests {
 
         // Create role
         let perms: HashSet<Permission> = [Permission::DeployModel].into();
-        let role_id = rbac.create_role("temp_role", "Temporary role", perms, vec![], None).await.unwrap();
+        let role_id = rbac
+            .create_role("temp_role", "Temporary role", perms, vec![], None)
+            .await
+            .unwrap();
 
         // Assign role with expiration in the past
         let expired_time = Utc::now() - chrono::Duration::hours(1);
-        rbac.assign_role("temp_user", &role_id, "admin", Some(expired_time), None).await.unwrap();
+        rbac.assign_role("temp_user", &role_id, "admin", Some(expired_time), None)
+            .await
+            .unwrap();
 
         // User should not have the permission due to expired role
         let user_perms = rbac.get_user_permissions("temp_user").await.unwrap();
@@ -2013,26 +1993,26 @@ mod tests {
 
         // Add enterprise security policy
         let enterprise_policy = EnterpriseSecurityPolicy {
-            policy_id: "enterprise_policy".to_string(),
-            name: "Enterprise Security".to_string(),
+            policy_id:   "enterprise_policy".to_string(),
+            name:        "Enterprise Security".to_string(),
             description: "Enterprise-wide security policies".to_string(),
             policy_type: PolicyType::AccessControl,
-            rules: vec![EnterpriseRule {
-                rule_id: "mfa_for_sensitive".to_string(),
+            rules:       vec![EnterpriseRule {
+                rule_id:   "mfa_for_sensitive".to_string(),
                 condition: EnterpriseCondition {
                     attribute: "resource_sensitivity".to_string(),
-                    operator: ConditionOperator::Equals,
-                    value: "highly_sensitive".to_string(),
+                    operator:  ConditionOperator::Equals,
+                    value:     "highly_sensitive".to_string(),
                 },
-                action: EnterpriseAction {
+                action:    EnterpriseAction {
                     action_type: "require_mfa".to_string(),
-                    parameters: HashMap::new(),
+                    parameters:  HashMap::new(),
                 },
             }],
             enforcement: PolicyEnforcement::Hard,
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-            active: true,
+            created_at:  Utc::now(),
+            updated_at:  Utc::now(),
+            active:      true,
         };
 
         rbac.add_enterprise_policy(enterprise_policy).await.unwrap();
@@ -2049,7 +2029,10 @@ mod tests {
         let end = Utc::now();
 
         // Generate compliance report
-        let report_id = rbac.generate_compliance_report(ComplianceFramework::GDPR, start, end).await.unwrap();
+        let report_id = rbac
+            .generate_compliance_report(ComplianceFramework::GDPR, start, end)
+            .await
+            .unwrap();
         assert!(!report_id.is_empty());
 
         // In this implementation, compliance reports are generated with mock data
@@ -2061,19 +2044,28 @@ mod tests {
 
         // Create role and assign to user
         let perms: HashSet<Permission> = [Permission::DeleteProject].into();
-        let role_id = rbac.create_role("revoke_test", "Revoke test role", perms, vec![], None).await.unwrap();
-        rbac.assign_role("revoke_user", &role_id, "admin", None, None).await.unwrap();
+        let role_id = rbac
+            .create_role("revoke_test", "Revoke test role", perms, vec![], None)
+            .await
+            .unwrap();
+        rbac.assign_role("revoke_user", &role_id, "admin", None, None)
+            .await
+            .unwrap();
 
         // Verify user has permission
         let user_perms_before = rbac.get_user_permissions("revoke_user").await.unwrap();
-        assert!(user_perms_before.iter().any(|p| matches!(p, Permission::DeleteProject)));
+        assert!(user_perms_before
+            .iter()
+            .any(|p| matches!(p, Permission::DeleteProject)));
 
         // Revoke role
         rbac.revoke_role("revoke_user", &role_id).await.unwrap();
 
         // Verify user no longer has permission
         let user_perms_after = rbac.get_user_permissions("revoke_user").await.unwrap();
-        assert!(!user_perms_after.iter().any(|p| matches!(p, Permission::DeleteProject)));
+        assert!(!user_perms_after
+            .iter()
+            .any(|p| matches!(p, Permission::DeleteProject)));
     }
 
     #[async_test]
@@ -2083,7 +2075,12 @@ mod tests {
         // Test various custom permission formats
         let custom_perm = rbac.parse_action_string("custom.action", None).unwrap();
         match custom_perm {
-            Permission::Custom { action, resource_type, resource_id, .. } => {
+            Permission::Custom {
+                action,
+                resource_type,
+                resource_id,
+                ..
+            } => {
                 assert_eq!(action, "custom");
                 assert_eq!(resource_type, "action");
                 assert!(resource_id.is_none());
@@ -2091,9 +2088,16 @@ mod tests {
             _ => panic!("Expected Custom permission"),
         }
 
-        let custom_with_id = rbac.parse_action_string("custom.resource.item123", None).unwrap();
+        let custom_with_id = rbac
+            .parse_action_string("custom.resource.item123", None)
+            .unwrap();
         match custom_with_id {
-            Permission::Custom { action, resource_type, resource_id, .. } => {
+            Permission::Custom {
+                action,
+                resource_type,
+                resource_id,
+                ..
+            } => {
                 assert_eq!(action, "custom");
                 assert_eq!(resource_type, "resource");
                 assert_eq!(resource_id, Some("item123".to_string()));
@@ -2108,19 +2112,19 @@ mod tests {
 
         // Test business hours condition
         let custom_perm = Permission::Custom {
-            action: "test".to_string(),
+            action:        "test".to_string(),
             resource_type: "resource".to_string(),
-            resource_id: None,
-            conditions: [("business_hours_only".to_string(), "true".to_string())].into(),
+            resource_id:   None,
+            conditions:    [("business_hours_only".to_string(), "true".to_string())].into(),
         };
 
         let context = PolicyContext::new(
             &UserContext {
-                user_id: "test_user".to_string(),
-                username: "testuser".to_string(),
-                roles: vec![],
-                permissions: vec![],
-                session_id: Some("session123".to_string()),
+                user_id:      "test_user".to_string(),
+                username:     "testuser".to_string(),
+                roles:        vec![],
+                permissions:  vec![],
+                session_id:   Some("session123".to_string()),
                 mfa_verified: true,
             },
             "resource",
@@ -2129,7 +2133,9 @@ mod tests {
 
         // During business hours (9-17), condition should pass
         let current_hour = Utc::now().hour();
-        let condition_met = rbac.evaluate_permission_conditions(&custom_perm, &context).await;
+        let condition_met = rbac
+            .evaluate_permission_conditions(&custom_perm, &context)
+            .await;
         // Note: Current implementation has simplified condition evaluation
         assert!(condition_met); // In this test, conditions are simplified
     }
@@ -2170,19 +2176,24 @@ mod tests {
         }
 
         let audit_callback = Arc::new(TestAuditCallback::new());
-        let rbac = RoleBasedAccessControl::with_config(300, Some(audit_callback.clone())).await.unwrap();
+        let rbac = RoleBasedAccessControl::with_config(300, Some(audit_callback.clone()))
+            .await
+            .unwrap();
 
         let user = UserContext {
-            user_id: "audit_test_user".to_string(),
-            username: "audittest".to_string(),
-            roles: vec![],
-            permissions: vec![],
-            session_id: Some("session123".to_string()),
+            user_id:      "audit_test_user".to_string(),
+            username:     "audittest".to_string(),
+            roles:        vec![],
+            permissions:  vec![],
+            session_id:   Some("session123".to_string()),
             mfa_verified: true,
         };
 
         // Trigger an authorization check
-        let _ = rbac.check_permission(&user, Permission::Admin).await.unwrap();
+        let _ = rbac
+            .check_permission(&user, Permission::Admin)
+            .await
+            .unwrap();
 
         // Verify audit event was logged
         let events = audit_callback.get_events();
@@ -2211,13 +2222,30 @@ mod tests {
         let mut role_ids = vec![];
         for i in 0..50 {
             let perms: HashSet<Permission> = [Permission::ReadProject].into();
-            let role_id = rbac.create_role(&format!("load_test_role_{}", i), "Load test role", perms, vec![], None).await.unwrap();
+            let role_id = rbac
+                .create_role(
+                    &format!("load_test_role_{}", i),
+                    "Load test role",
+                    perms,
+                    vec![],
+                    None,
+                )
+                .await
+                .unwrap();
             role_ids.push(role_id);
         }
 
         // Assign roles to users
         for (i, role_id) in role_ids.iter().enumerate() {
-            rbac.assign_role(&format!("load_test_user_{}", i), role_id, "admin", None, None).await.unwrap();
+            rbac.assign_role(
+                &format!("load_test_user_{}", i),
+                role_id,
+                "admin",
+                None,
+                None,
+            )
+            .await
+            .unwrap();
         }
 
         // Check health status

@@ -14,15 +14,11 @@ use tracing::{debug, error, info, instrument, warn};
 
 use crate::cache::{AnalysisCache, CacheKey, CacheResult};
 use crate::events::{EventProcessor, FileChangeEvent, RealTimeEvent};
-use crate::filesystem::{
-    DefaultFileEventProcessor, FileEventProcessor, FileSystemWatcher, WatcherResult,
-};
-use crate::pipeline::{
-    AnalysisStatistics, AnalysisTask, MultiThreadedAnalysisPipeline, PipelineResult,
-};
+use crate::filesystem::{DefaultFileEventProcessor, FileEventProcessor, FileSystemWatcher, WatcherResult};
+use crate::pipeline::{AnalysisStatistics, AnalysisTask, MultiThreadedAnalysisPipeline, PipelineResult};
 use crate::types::{
-    AnalysisEngineConfig, AnalysisResult, AnalysisTrigger, AnalysisType, FileSystemEventData,
-    FileSystemEventType, FileWatchConfig, TaskPriority, TriggerSource,
+    AnalysisEngineConfig, AnalysisResult, AnalysisTrigger, AnalysisType, FileSystemEventData, FileSystemEventType,
+    FileWatchConfig, TaskPriority, TriggerSource,
 };
 
 /// Errors that can occur in the real-time analysis engine
@@ -61,38 +57,38 @@ enum ComponentState {
 #[derive(Debug, Clone)]
 pub struct ComponentStatus {
     /// Component name
-    pub name: String,
+    pub name:           String,
     /// Current state
-    pub state: ComponentState,
+    pub state:          ComponentState,
     /// Initialization timestamp
     pub initialized_at: Option<Instant>,
     /// Health status
-    pub healthy: bool,
+    pub healthy:        bool,
     /// Last error message
-    pub last_error: Option<String>,
+    pub last_error:     Option<String>,
     /// Component metrics
-    pub metrics: HashMap<String, serde_json::Value>,
+    pub metrics:        HashMap<String, serde_json::Value>,
 }
 
 /// Performance metrics for the real-time analysis engine
 #[derive(Debug, Clone)]
 pub struct EnginePerformanceMetrics {
     /// Total analysis requests processed
-    pub total_requests: u64,
+    pub total_requests:        u64,
     /// Current active analyses
-    pub active_analyses: usize,
+    pub active_analyses:       usize,
     /// Average analysis response time
-    pub avg_response_time: Duration,
+    pub avg_response_time:     Duration,
     /// Cache hit rate
-    pub cache_hit_rate: f32,
+    pub cache_hit_rate:        f32,
     /// File system events processed
     pub file_events_processed: u64,
     /// Pipeline queue length
     pub pipeline_queue_length: usize,
     /// Resource utilization (0.0-1.0)
-    pub resource_utilization: f32,
+    pub resource_utilization:  f32,
     /// Error rate
-    pub error_rate: f32,
+    pub error_rate:            f32,
 }
 
 /// Real-time code analysis engine - the main orchestrator for Phase 3.1
@@ -159,26 +155,19 @@ impl RealTimeCodeAnalysisEngine {
         info!("Initializing analysis pipeline");
         let analysis_pipeline = MultiThreadedAnalysisPipeline::new(config.pipeline_config.clone())
             .await
-            .map_err(|e| {
-                EngineError::InitializationFailed(format!("Pipeline initialization failed: {}", e))
-            })?;
+            .map_err(|e| EngineError::InitializationFailed(format!("Pipeline initialization failed: {}", e)))?;
 
         // 2. Initialize analysis cache
         info!("Initializing analysis cache");
         let analysis_cache = AnalysisCache::new(config.cache_config.clone())
             .await
-            .map_err(|e| {
-                EngineError::InitializationFailed(format!("Cache initialization failed: {}", e))
-            })?;
+            .map_err(|e| EngineError::InitializationFailed(format!("Cache initialization failed: {}", e)))?;
 
         // 3. Initialize event processor
         info!("Initializing event processor");
-        let event_processor = EventProcessor::new().await.map_err(|e| {
-            EngineError::InitializationFailed(format!(
-                "Event processor initialization failed: {}",
-                e
-            ))
-        })?;
+        let event_processor = EventProcessor::new()
+            .await
+            .map_err(|e| EngineError::InitializationFailed(format!("Event processor initialization failed: {}", e)))?;
 
         // 4. Initialize file watcher (can be created lazily on first analysis)
         let file_watcher: Arc<RwLock<Option<FileSystemWatcher>>> = Arc::new(RwLock::new(None));
@@ -201,8 +190,8 @@ impl RealTimeCodeAnalysisEngine {
         };
 
         let engine = Self {
-            inner: Arc::new(inner),
-            config: config.clone(),
+            inner:              Arc::new(inner),
+            config:             config.clone(),
             cancellation_token: CancellationToken::new(),
         };
 
@@ -225,11 +214,7 @@ impl RealTimeCodeAnalysisEngine {
 
     /// Perform real-time analysis on file changes
     #[instrument(skip(self, file_path), err)]
-    pub async fn analyze_file_realtime(
-        &self,
-        file_path: PathBuf,
-        priority: TaskPriority,
-    ) -> EngineResult<String> {
+    pub async fn analyze_file_realtime(&self, file_path: PathBuf, priority: TaskPriority) -> EngineResult<String> {
         let start_time = Instant::now();
         let task_id = format!(
             "realtime_{}_{}",
@@ -324,11 +309,7 @@ impl RealTimeCodeAnalysisEngine {
 
     /// Perform bulk analysis on multiple files
     #[instrument(skip(self, files), err)]
-    pub async fn analyze_files_bulk(
-        &self,
-        files: Vec<PathBuf>,
-        priority: TaskPriority,
-    ) -> EngineResult<Vec<String>> {
+    pub async fn analyze_files_bulk(&self, files: Vec<PathBuf>, priority: TaskPriority) -> EngineResult<Vec<String>> {
         info!("Starting bulk analysis for {} files", files.len());
 
         let mut task_ids = Vec::new();
@@ -393,9 +374,7 @@ impl RealTimeCodeAnalysisEngine {
             let watcher_config = FileWatchConfig::default(); // Use default or make configurable
             let watcher = FileSystemWatcher::new(watcher_config.clone())
                 .await
-                .map_err(|e| {
-                    EngineError::InitializationFailed(format!("Watcher creation failed: {}", e))
-                })?;
+                .map_err(|e| EngineError::InitializationFailed(format!("Watcher creation failed: {}", e)))?;
 
             // Create and register file event processor
             let trigger_callback = {
@@ -414,9 +393,10 @@ impl RealTimeCodeAnalysisEngine {
             watcher.add_processor(processor).await;
 
             // Start watching
-            watcher.start_watching().await.map_err(|e| {
-                EngineError::InitializationFailed(format!("Watcher startup failed: {}", e))
-            })?;
+            watcher
+                .start_watching()
+                .await
+                .map_err(|e| EngineError::InitializationFailed(format!("Watcher startup failed: {}", e)))?;
 
             *watcher_lock = Some(watcher);
 
@@ -434,10 +414,7 @@ impl RealTimeCodeAnalysisEngine {
     }
 
     /// Get analysis results for a specific task
-    pub async fn get_analysis_results(
-        &self,
-        task_ids: &[String],
-    ) -> HashMap<String, Option<AnalysisResult>> {
+    pub async fn get_analysis_results(&self, task_ids: &[String]) -> HashMap<String, Option<AnalysisResult>> {
         self.inner
             .analysis_pipeline
             .get_task_results(task_ids)
@@ -455,15 +432,14 @@ impl RealTimeCodeAnalysisEngine {
         let metrics = self.inner.metrics.read().await;
 
         EnginePerformanceMetrics {
-            total_requests: metrics.total_requests,
-            active_analyses: pipeline_stats.running_tasks,
-            avg_response_time: pipeline_stats.avg_processing_time,
-            cache_hit_rate: cache_stats.hit_rate / 100.0, // Convert to 0.0-1.0 range
+            total_requests:        metrics.total_requests,
+            active_analyses:       pipeline_stats.running_tasks,
+            avg_response_time:     pipeline_stats.avg_processing_time,
+            cache_hit_rate:        cache_stats.hit_rate / 100.0, // Convert to 0.0-1.0 range
             file_events_processed: metrics.file_events_processed,
             pipeline_queue_length: pipeline_stats.queue_length,
-            resource_utilization: (pipeline_stats.active_workers as f32)
-                / (self.config.max_concurrent_tasks as f32),
-            error_rate: if metrics.total_requests > 0 {
+            resource_utilization:  (pipeline_stats.active_workers as f32) / (self.config.max_concurrent_tasks as f32),
+            error_rate:            if metrics.total_requests > 0 {
                 (pipeline_stats.failed_tasks as f32) / (metrics.total_requests as f32)
             } else {
                 0.0
@@ -545,9 +521,7 @@ impl RealTimeCodeAnalysisEngine {
                 }
             }
 
-            TriggerSource::UserInteraction
-            | TriggerSource::BackgroundProcess
-            | TriggerSource::AiInsight => {
+            TriggerSource::UserInteraction | TriggerSource::BackgroundProcess | TriggerSource::AiInsight => {
                 // Handle other trigger types (can be extended with specific logic)
                 debug!("Processing trigger from source: {:?}", trigger.source);
             }
@@ -586,9 +560,7 @@ impl RealTimeCodeAnalysisEngine {
             .event_processor
             .register_subscriber(engine_subscriber)
             .await
-            .map_err(|e| {
-                EngineError::InitializationFailed(format!("Subscriber registration failed: {}", e))
-            })?;
+            .map_err(|e| EngineError::InitializationFailed(format!("Subscriber registration failed: {}", e)))?;
 
         Ok(())
     }
@@ -686,15 +658,11 @@ impl RealTimeCodeAnalysisEngine {
     }
 
     /// Publish cache hit event
-    async fn publish_cache_hit_event(
-        &self,
-        task_id: &str,
-        file_path: &PathBuf,
-    ) -> EngineResult<()> {
+    async fn publish_cache_hit_event(&self, task_id: &str, file_path: &PathBuf) -> EngineResult<()> {
         let event = RealTimeEvent::CacheEvent(crate::events::CacheEvent {
-            operation: "get".to_string(),
-            key: format!("{}:{:?}", file_path.display(), AnalysisType::Syntax),
-            is_hit: true,
+            operation:      "get".to_string(),
+            key:            format!("{}:{:?}", file_path.display(), AnalysisType::Syntax),
+            is_hit:         true,
             access_time_ms: 0, // Cache should provide this
         });
 
@@ -708,22 +676,18 @@ impl RealTimeCodeAnalysisEngine {
     }
 
     /// Publish analysis started event
-    async fn publish_analysis_started_event(
-        &self,
-        task_id: &str,
-        file_path: &PathBuf,
-    ) -> EngineResult<()> {
+    async fn publish_analysis_started_event(&self, task_id: &str, file_path: &PathBuf) -> EngineResult<()> {
         let event = RealTimeEvent::AnalysisComplete(crate::events::AnalysisCompleteEvent {
-            task_id: task_id.to_string(),
-            file_path: file_path.display().to_string(),
-            analysis_type: "real-time".to_string(),
-            findings_count: 0,
-            duration_ms: 0,
-            success: true,
-            error_message: None,
+            task_id:             task_id.to_string(),
+            file_path:           file_path.display().to_string(),
+            analysis_type:       "real-time".to_string(),
+            findings_count:      0,
+            duration_ms:         0,
+            success:             true,
+            error_message:       None,
             performance_metrics: crate::events::PerformanceMetricsData {
-                cpu_time_ns: 0,
-                memory_usage: 0,
+                cpu_time_ns:   0,
+                memory_usage:  0,
                 io_operations: 0,
             },
         });
@@ -738,17 +702,13 @@ impl RealTimeCodeAnalysisEngine {
     }
 
     /// Publish bulk analysis event
-    async fn publish_bulk_analysis_event(
-        &self,
-        batch_id: &str,
-        task_ids: &[String],
-    ) -> EngineResult<()> {
+    async fn publish_bulk_analysis_event(&self, batch_id: &str, task_ids: &[String]) -> EngineResult<()> {
         let event = RealTimeEvent::PerformanceEvent(crate::events::PerformanceEvent {
             metric_name: "bulk_analysis_started".to_string(),
-            value: task_ids.len() as f64,
-            unit: "tasks".to_string(),
-            timestamp: chrono::Utc::now().timestamp(),
-            component: "analysis_engine".to_string(),
+            value:       task_ids.len() as f64,
+            unit:        "tasks".to_string(),
+            timestamp:   chrono::Utc::now().timestamp(),
+            component:   "analysis_engine".to_string(),
         });
 
         self.inner
@@ -761,12 +721,7 @@ impl RealTimeCodeAnalysisEngine {
     }
 
     /// Update metrics after analysis completion
-    async fn update_metrics_after_analysis(
-        &self,
-        start_time: Instant,
-        cache_hit: bool,
-        success: bool,
-    ) {
+    async fn update_metrics_after_analysis(&self, start_time: Instant, cache_hit: bool, success: bool) {
         let mut metrics = self.inner.metrics.write().await;
         metrics.total_requests += 1;
 
@@ -840,23 +795,25 @@ impl crate::events::EventSubscriber for EngineEventSubscriber {
 impl Default for EnginePerformanceMetrics {
     fn default() -> Self {
         Self {
-            total_requests: 0,
-            active_analyses: 0,
-            avg_response_time: Duration::from_millis(0),
-            cache_hit_rate: 0.0,
+            total_requests:        0,
+            active_analyses:       0,
+            avg_response_time:     Duration::from_millis(0),
+            cache_hit_rate:        0.0,
             file_events_processed: 0,
             pipeline_queue_length: 0,
-            resource_utilization: 0.0,
-            error_rate: 0.0,
+            resource_utilization:  0.0,
+            error_rate:            0.0,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::path::PathBuf;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     fn create_test_config() -> AnalysisEngineConfig {
         AnalysisEngineConfig::default()

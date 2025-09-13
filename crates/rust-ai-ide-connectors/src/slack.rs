@@ -1,8 +1,9 @@
-use crate::types::{Channel, Message};
-use crate::ServiceConnector;
 use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+
+use crate::types::{Channel, Message};
+use crate::ServiceConnector;
 
 /// Slack API endpoints
 const SLACK_API_BASE: &str = "https://slack.com/api";
@@ -10,8 +11,8 @@ const SLACK_API_BASE: &str = "https://slack.com/api";
 /// Slack connector configuration
 #[derive(Debug, Clone)]
 pub struct SlackConnector {
-    client: Client,
-    token: String,
+    client:       Client,
+    token:        String,
     is_connected: std::sync::atomic::AtomicBool,
 }
 
@@ -45,11 +46,7 @@ impl ServiceConnector for SlackConnector {
         Ok(())
     }
 
-    async fn send_message(
-        &self,
-        channel: &str,
-        message: &str,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    async fn send_message(&self, channel: &str, message: &str) -> Result<String, Box<dyn std::error::Error>> {
         if !self.is_connected.load(std::sync::atomic::Ordering::Relaxed) {
             return Err("Not connected to Slack".into());
         }
@@ -138,8 +135,8 @@ impl SlackConnector {
         if let Some(channels_array) = json["channels"].as_array() {
             for channel in channels_array {
                 let channel = Channel {
-                    id: channel["id"].as_str().unwrap_or("").to_string(),
-                    name: channel["name"].as_str().unwrap_or("").to_string(),
+                    id:           channel["id"].as_str().unwrap_or("").to_string(),
+                    name:         channel["name"].as_str().unwrap_or("").to_string(),
                     channel_type: crate::types::ChannelType::Text, // Default for now
                 };
                 channels.push(channel);

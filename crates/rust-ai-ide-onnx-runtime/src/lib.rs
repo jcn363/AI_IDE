@@ -1,30 +1,29 @@
+use std::collections::HashMap;
+use std::path::Path;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use ndarray::{ArrayD, ArrayViewD, IxDynImpl};
-use parking_lot::Mutex;
-use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::Path, sync::Arc};
-use tokio::sync::RwLock;
-
 #[cfg(feature = "cpu")]
 use ort::CPUExecutionProvider;
-
 #[cfg(feature = "cuda")]
 use ort::CUDAExecutionProvider;
-
 #[cfg(feature = "tensorrt")]
 use ort::TensorRTExecutionProvider;
-
+use parking_lot::Mutex;
 use rust_ai_ide_cache::strategies::AdaptiveCache;
 use rust_ai_ide_common::validation::validate_secure_path;
 use rust_ai_ide_shared_types::{InferenceRequest, InferenceResult, ModelMetadata};
+use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
 
 /// Configuration for ONNX runtime
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ONNXConfig {
-    pub execution_provider: ExecutionProvider,
+    pub execution_provider:  ExecutionProvider,
     pub model_cache_size_mb: u64,
-    pub enable_profiling: bool,
-    pub thread_pool_size: usize,
+    pub enable_profiling:    bool,
+    pub thread_pool_size:    usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,10 +36,10 @@ pub enum ExecutionProvider {
 impl Default for ONNXConfig {
     fn default() -> Self {
         Self {
-            execution_provider: ExecutionProvider::CPU,
+            execution_provider:  ExecutionProvider::CPU,
             model_cache_size_mb: 512,
-            enable_profiling: false,
-            thread_pool_size: num_cpus::get(),
+            enable_profiling:    false,
+            thread_pool_size:    num_cpus::get(),
         }
     }
 }
@@ -48,26 +47,26 @@ impl Default for ONNXConfig {
 /// Model session with metadata
 #[derive(Clone)]
 pub struct ModelSession {
-    pub session: Arc<ort::Session>,
-    pub metadata: ModelMetadata,
-    pub input_names: Vec<String>,
+    pub session:      Arc<ort::Session>,
+    pub metadata:     ModelMetadata,
+    pub input_names:  Vec<String>,
     pub output_names: Vec<String>,
 }
 
 /// ONNX Runtime service with caching and A/B testing
 pub struct ONNXInferenceService {
-    config: ONNXConfig,
-    model_cache: Arc<Mutex<HashMap<String, ModelSession>>>,
+    config:         ONNXConfig,
+    model_cache:    Arc<Mutex<HashMap<String, ModelSession>>>,
     adaptive_cache: Arc<AdaptiveCache<ModelMetadata>>,
     ab_test_config: Arc<RwLock<HashMap<String, ABTestConfiguration>>>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ABTestConfiguration {
-    pub model_a: String,
-    pub model_b: String,
+    pub model_a:       String,
+    pub model_b:       String,
     pub traffic_split: f64, // 0.0 to 1.0 (percentage for model B)
-    pub enabled: bool,
+    pub enabled:       bool,
 }
 
 impl Default for ONNXInferenceService {
@@ -79,8 +78,8 @@ impl Default for ONNXInferenceService {
 impl ONNXInferenceService {
     pub fn new(config: ONNXConfig) -> Self {
         Self {
-            config: config.clone(),
-            model_cache: Arc::new(Mutex::new(HashMap::new())),
+            config:         config.clone(),
+            model_cache:    Arc::new(Mutex::new(HashMap::new())),
             adaptive_cache: Arc::new(AdaptiveCache::new(
                 config.model_cache_size_mb as usize * 1024 * 1024,
             )),
@@ -89,11 +88,7 @@ impl ONNXInferenceService {
     }
 
     /// Load model with validation and caching
-    pub async fn load_model(
-        &self,
-        model_path: &str,
-        model_id: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn load_model(&self, model_path: &str, model_id: &str) -> Result<(), Box<dyn std::error::Error>> {
         // Validate path for security
         validate_secure_path(model_path)?;
 
@@ -138,12 +133,12 @@ impl ONNXInferenceService {
             .collect();
 
         let metadata = ModelMetadata {
-            name: model_id.to_string(),
-            version: "1.0.0".to_string(),
-            input_shape: vec![], // Would be populated from actual model
+            name:         model_id.to_string(),
+            version:      "1.0.0".to_string(),
+            input_shape:  vec![], // Would be populated from actual model
             output_shape: vec![],
-            model_type: "onnx".to_string(),
-            created_at: chrono::Utc::now().timestamp() as u64,
+            model_type:   "onnx".to_string(),
+            created_at:   chrono::Utc::now().timestamp() as u64,
         };
 
         let model_session = ModelSession {
@@ -180,10 +175,10 @@ impl ONNXInferenceService {
         let output_data = self.process_outputs(outputs, &model.output_names)?;
 
         Ok(InferenceResult {
-            output: output_data,
+            output:            output_data,
             inference_time_ms: inference_time.as_millis() as u64,
-            model_used: model_id,
-            confidence_score: None, // Would be populated for classification tasks
+            model_used:        model_id,
+            confidence_score:  None, // Would be populated for classification tasks
         })
     }
 
@@ -218,10 +213,7 @@ impl ONNXInferenceService {
     }
 
     /// Get A/B test results and performance metrics
-    pub async fn get_ab_test_results(
-        &self,
-        test_name: &str,
-    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    pub async fn get_ab_test_results(&self, test_name: &str) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let config = {
             let ab_config = self.ab_test_config.read().await;
             ab_config
@@ -302,10 +294,8 @@ impl ONNXInferenceService {
                         .collect();
                     ndarray::ArrayD::from_shape_vec(IxDynImpl::from(vec![flat.len()]), flat)?
                 }
-                serde_json::Value::Number(num) => ndarray::ArrayD::from_elem(
-                    IxDynImpl::from(vec![1]),
-                    num.as_f64().unwrap_or(0.0) as f32,
-                ),
+                serde_json::Value::Number(num) =>
+                    ndarray::ArrayD::from_elem(IxDynImpl::from(vec![1]), num.as_f64().unwrap_or(0.0) as f32),
                 _ => return Err("Unsupported input type".into()),
             };
 
@@ -339,9 +329,7 @@ impl ONNXInferenceService {
 
             result.insert(
                 name.clone(),
-                serde_json::Value::Array(
-                    values.into_iter().map(serde_json::Value::Number).collect(),
-                ),
+                serde_json::Value::Array(values.into_iter().map(serde_json::Value::Number).collect()),
             );
         }
 
@@ -349,9 +337,7 @@ impl ONNXInferenceService {
     }
 
     /// Get performance metrics and profiling data
-    pub async fn get_performance_metrics(
-        &self,
-    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    pub async fn get_performance_metrics(&self) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let cache = self.model_cache.lock();
         let mut models_info = Vec::new();
 
@@ -400,10 +386,7 @@ impl ONNXInferenceService {
 /// Async trait for inference service
 #[async_trait]
 impl InferenceService for ONNXInferenceService {
-    async fn infer(
-        &self,
-        request: InferenceRequest,
-    ) -> Result<InferenceResult, Box<dyn std::error::Error>> {
+    async fn infer(&self, request: InferenceRequest) -> Result<InferenceResult, Box<dyn std::error::Error>> {
         self.run_inference(request).await
     }
 
@@ -418,10 +401,7 @@ impl InferenceService for ONNXInferenceService {
 /// Inference service trait for compatibility with existing systems
 #[async_trait]
 pub trait InferenceService: Send + Sync {
-    async fn infer(
-        &self,
-        request: InferenceRequest,
-    ) -> Result<InferenceResult, Box<dyn std::error::Error>>;
+    async fn infer(&self, request: InferenceRequest) -> Result<InferenceResult, Box<dyn std::error::Error>>;
     async fn batch_infer(
         &self,
         requests: Vec<InferenceRequest>,
@@ -443,10 +423,10 @@ mod tests {
     async fn test_ab_test_configuration() {
         let service = ONNXInferenceService::default();
         let config = ABTestConfiguration {
-            model_a: "gpt2-small".to_string(),
-            model_b: "distilgpt2".to_string(),
+            model_a:       "gpt2-small".to_string(),
+            model_b:       "distilgpt2".to_string(),
             traffic_split: 0.5,
-            enabled: true,
+            enabled:       true,
         };
 
         service.configure_ab_test("test1", config).await.unwrap();

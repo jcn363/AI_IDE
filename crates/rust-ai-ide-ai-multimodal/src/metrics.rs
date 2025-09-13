@@ -3,22 +3,23 @@
 //! This module provides metrics collection, performance monitoring, and analytics
 //! for the multi-modal AI processing system.
 
-use moka::future::Cache;
 use std::sync::Arc;
+
+use moka::future::Cache;
 use tokio::sync::Mutex;
 
 /// Metrics collector for multi-modal AI operations
 pub struct MetricsCollector {
     /// Request count metrics
-    request_count: Arc<Mutex<u64>>,
+    request_count:         Arc<Mutex<u64>>,
     /// Total processing time
     total_processing_time: Arc<Mutex<u64>>,
     /// Average confidence scores
-    confidence_scores: Arc<Mutex<Vec<f32>>>,
+    confidence_scores:     Arc<Mutex<Vec<f32>>>,
     /// Error count
-    error_count: Arc<Mutex<u64>>,
+    error_count:           Arc<Mutex<u64>>,
     /// Cache for result caching
-    result_cache: Cache<String, serde_json::Value>,
+    result_cache:          Cache<String, serde_json::Value>,
 }
 
 impl MetricsCollector {
@@ -104,11 +105,7 @@ impl MetricsCollector {
     /// Cache a result
     /// # Errors
     /// Returns an error if caching fails
-    pub async fn cache_result(
-        &self,
-        key: String,
-        value: serde_json::Value,
-    ) -> Result<(), MetricsError> {
+    pub async fn cache_result(&self, key: String, value: serde_json::Value) -> Result<(), MetricsError> {
         self.result_cache.insert(key, value).await;
         Ok(())
     }
@@ -116,10 +113,7 @@ impl MetricsCollector {
     /// Get cached result
     /// # Errors
     /// Returns an error if retrieval fails
-    pub async fn get_cached_result(
-        &self,
-        key: &str,
-    ) -> Result<Option<serde_json::Value>, MetricsError> {
+    pub async fn get_cached_result(&self, key: &str) -> Result<Option<serde_json::Value>, MetricsError> {
         Ok(self.result_cache.get(key).await)
     }
 
@@ -141,17 +135,17 @@ impl MetricsCollector {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ProcessingMetrics {
     /// Total number of requests processed
-    pub request_count: u64,
+    pub request_count:         u64,
     /// Total processing time across all requests
     pub total_processing_time: u64,
     /// Average confidence score
-    pub avg_confidence: f32,
+    pub avg_confidence:        f32,
     /// Number of errors
-    pub error_count: u64,
+    pub error_count:           u64,
     /// Average processing time per request
-    pub avg_processing_time: u64,
+    pub avg_processing_time:   u64,
     /// Cache hit rate
-    pub cache_hit_rate: f32,
+    pub cache_hit_rate:        f32,
 }
 
 /// Metrics collection error

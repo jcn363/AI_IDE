@@ -3,14 +3,14 @@
 //! with integration to existing SIMD and AI infrastructure.
 
 use std::sync::Arc;
-use sysinfo::{System, SystemExt};
-use tokio::sync::{Mutex, RwLock};
-use tokio::time::{self, Duration};
 
 #[cfg(feature = "ai_analysis")]
 use rust_ai_ide_ai_codegen::types::CodeAnalysis;
 #[cfg(feature = "simd_acceleration")]
 use rust_ai_ide_simd::monitoring::SIMDPerformanceMonitor;
+use sysinfo::{System, SystemExt};
+use tokio::sync::{Mutex, RwLock};
+use tokio::time::{self, Duration};
 
 use crate::core::MemoryOptimizationConfig;
 use crate::leak_detection::{LeakDetector, MemorySnapshot};
@@ -20,27 +20,27 @@ use crate::MemoryOptimizationResult;
 /// Memory usage statistics
 #[derive(Debug, Clone)]
 pub struct MemoryStatistics {
-    pub total_memory_mb: f64,
-    pub used_memory_mb: f64,
-    pub available_memory_mb: f64,
+    pub total_memory_mb:      f64,
+    pub used_memory_mb:       f64,
+    pub available_memory_mb:  f64,
     pub memory_usage_percent: f64,
-    pub virtual_memory_mb: f64,
-    pub swap_memory_mb: f64,
+    pub virtual_memory_mb:    f64,
+    pub swap_memory_mb:       f64,
 }
 
 /// Real-time memory monitoring system
 #[derive(Debug)]
 pub struct MemoryMonitor {
-    system: System,
-    last_snapshot: Option<MemoryStatistics>,
+    system:                  System,
+    last_snapshot:           Option<MemoryStatistics>,
     alert_threshold_percent: f64,
 }
 
 impl MemoryMonitor {
     pub fn new(threshold: f64) -> Self {
         Self {
-            system: System::new_all(),
-            last_snapshot: None,
+            system:                  System::new_all(),
+            last_snapshot:           None,
             alert_threshold_percent: threshold,
         }
     }
@@ -188,9 +188,7 @@ impl MemoryOptimizationManager {
     }
 
     /// Perform comprehensive memory scan and optimization
-    pub async fn perform_comprehensive_scan(
-        &self,
-    ) -> MemoryOptimizationResult<SComprehensiveScanResults> {
+    pub async fn perform_comprehensive_scan(&self) -> MemoryOptimizationResult<SComprehensiveScanResults> {
         tracing::info!("Performing comprehensive memory scan");
 
         // Collect current memory statistics
@@ -203,12 +201,11 @@ impl MemoryOptimizationManager {
         let mut leak_reports: Vec<crate::leak_detection::LeakReport> = Vec::new();
         if let Some(detector) = self.leak_detector.read().await.as_ref() {
             match detector.scan_for_leaks().await {
-                Ok(snapshots) => {
+                Ok(snapshots) =>
                     for snapshot in snapshots {
                         let report = detector.analyze_snapshot(&snapshot).await?;
                         leak_reports.push(report);
-                    }
-                }
+                    },
                 Err(e) => tracing::warn!("Leak detection failed: {}", e),
             }
         }
@@ -327,14 +324,14 @@ impl MemoryOptimizationManager {
 impl Clone for MemoryOptimizationManager {
     fn clone(&self) -> Self {
         Self {
-            config: self.config.clone(),
-            leak_detector: Arc::clone(&self.leak_detector),
+            config:              self.config.clone(),
+            leak_detector:       Arc::clone(&self.leak_detector),
             optimization_engine: Arc::clone(&self.optimization_engine),
-            memory_monitor: Arc::clone(&self.memory_monitor),
-            monitoring_task: Arc::clone(&self.monitoring_task),
+            memory_monitor:      Arc::clone(&self.memory_monitor),
+            monitoring_task:     Arc::clone(&self.monitoring_task),
 
             #[cfg(feature = "simd_acceleration")]
-            simd_monitor: Arc::clone(&self.simd_monitor),
+            simd_monitor:                                       Arc::clone(&self.simd_monitor),
         }
     }
 }
@@ -351,12 +348,12 @@ impl Drop for MemoryOptimizationManager {
 /// Results from comprehensive memory scan
 #[derive(Debug, Clone)]
 pub struct ComprehensiveScanResults {
-    pub memory_statistics: MemoryStatistics,
-    pub leak_reports: Vec<crate::leak_detection::LeakReport>,
+    pub memory_statistics:        MemoryStatistics,
+    pub leak_reports:             Vec<crate::leak_detection::LeakReport>,
     pub optimization_suggestions: Vec<OptimizationSuggestion>,
-    pub should_alert: bool,
-    pub performance_report: Option<String>, // SIMD performance report
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub should_alert:             bool,
+    pub performance_report:       Option<String>, // SIMD performance report
+    pub timestamp:                chrono::DateTime<chrono::Utc>,
 }
 
 #[cfg(test)]

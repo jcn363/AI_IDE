@@ -1,18 +1,19 @@
+use std::path::Path;
+
 use anyhow::{Context, Result};
 use rustsec::{Database, Error as RustsecError, ErrorKind};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VulnerabilityReport {
-    pub package: String,
-    pub version: String,
-    pub advisory_id: String,
-    pub title: String,
-    pub description: String,
-    pub severity: String,
-    pub cvss: Option<f32>,
-    pub patched_versions: Vec<String>,
+    pub package:             String,
+    pub version:             String,
+    pub advisory_id:         String,
+    pub title:               String,
+    pub description:         String,
+    pub severity:            String,
+    pub cvss:                Option<f32>,
+    pub patched_versions:    Vec<String>,
     pub unaffected_versions: Vec<String>,
 }
 
@@ -30,8 +31,7 @@ impl RustsecScanner {
 
     /// Scans a Cargo.lock file for vulnerabilities
     pub fn scan_lockfile(&self, lockfile_path: &Path) -> Result<Vec<VulnerabilityReport>> {
-        let lockfile =
-            rustsec::Lockfile::load(lockfile_path).context("Failed to load Cargo.lock")?;
+        let lockfile = rustsec::Lockfile::load(lockfile_path).context("Failed to load Cargo.lock")?;
 
         let mut reports = Vec::new();
 
@@ -40,12 +40,12 @@ impl RustsecScanner {
             let package = &vulnerability.package;
 
             reports.push(VulnerabilityReport {
-                package: package.name.to_string(),
-                version: package.version.to_string(),
-                advisory_id: advisory.id.to_string(),
-                title: advisory.title.clone(),
-                description: advisory.description.clone(),
-                severity: format!(
+                package:             package.name.to_string(),
+                version:             package.version.to_string(),
+                advisory_id:         advisory.id.to_string(),
+                title:               advisory.title.clone(),
+                description:         advisory.description.clone(),
+                severity:            format!(
                     "{:?}",
                     advisory
                         .cvss
@@ -53,8 +53,8 @@ impl RustsecScanner {
                         .map(|c| c.severity())
                         .unwrap_or(rustsec::Severity::Medium)
                 ),
-                cvss: advisory.cvss.as_ref().map(|c| c.score().to_f32().unwrap()),
-                patched_versions: vuln
+                cvss:                advisory.cvss.as_ref().map(|c| c.score().to_f32().unwrap()),
+                patched_versions:    vuln
                     .versions
                     .patched()
                     .iter()

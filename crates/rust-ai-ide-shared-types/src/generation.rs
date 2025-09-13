@@ -3,12 +3,14 @@
 //! This module provides the main generation interfaces and implementations
 //! for converting Rust types to various target platforms.
 
+use std::collections::HashMap;
+
+use async_trait::async_trait;
+
 use crate::config::{GenerationConfig, TypeScriptConfig};
 use crate::errors::TypeGenerationError;
 use crate::parsing::TypeParser;
 use crate::types::*;
-use async_trait::async_trait;
-use std::collections::HashMap;
 
 /// Main type generator that orchestrates code generation across platforms
 #[derive(Debug)]
@@ -101,9 +103,10 @@ impl TypeGenerator {
         };
 
         // Generate code using TypeScript generator (for now)
-        let generator = self.generators.get("typescript").ok_or_else(|| {
-            TypeGenerationError::AnalysisError("TypeScript generator not found".to_string())
-        })?;
+        let generator = self
+            .generators
+            .get("typescript")
+            .ok_or_else(|| TypeGenerationError::AnalysisError("TypeScript generator not found".to_string()))?;
 
         generator.generate(&filtered_types, &self.config).await
     }
@@ -251,7 +254,7 @@ impl TypeScriptGenerator {
     /// Create a new TypeScript generator
     pub fn new() -> Self {
         Self {
-            transformers: HashMap::new(),
+            transformers:   HashMap::new(),
             template_cache: HashMap::new(),
         }
     }
@@ -418,10 +421,10 @@ impl CodeGenerator for TypeScriptGenerator {
             target_platform: "typescript".to_string(),
             source_types: types.to_vec(),
             metadata: GenerationMetadata {
-                generated_at: chrono::Utc::now().to_rfc3339(),
+                generated_at:      chrono::Utc::now().to_rfc3339(),
                 generator_version: env!("CARGO_PKG_VERSION").to_string(),
-                config_snapshot: serde_json::to_value(config).unwrap_or_default(),
-                stats: GenerationStats {
+                config_snapshot:   serde_json::to_value(config).unwrap_or_default(),
+                stats:             GenerationStats {
                     types_processed: types.len() as usize,
                     types_generated: types.len() as usize,
                     bytes_generated,
@@ -429,7 +432,7 @@ impl CodeGenerator for TypeScriptGenerator {
                     warnings_count: 0,
                     errors_count: 0,
                 },
-                status: GenerationStatus::Success,
+                status:            GenerationStatus::Success,
             },
             dependencies,
         })

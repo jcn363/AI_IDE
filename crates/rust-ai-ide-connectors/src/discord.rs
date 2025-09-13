@@ -1,11 +1,12 @@
-use crate::types::{Channel, Message, ServiceEvent};
-use crate::ServiceConnector;
 use async_trait::async_trait;
 use futures_util::{SinkExt, StreamExt};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
+
+use crate::types::{Channel, Message, ServiceEvent};
+use crate::ServiceConnector;
 
 /// Discord API endpoints
 const DISCORD_API_BASE: &str = "https://discord.com/api/v10";
@@ -14,8 +15,8 @@ const GATEWAY_URL: &str = "wss://gateway.discord.gg/?v=10&encoding=json";
 /// Discord connector configuration
 #[derive(Debug, Clone)]
 pub struct DiscordConnector {
-    client: Client,
-    token: String,
+    client:       Client,
+    token:        String,
     is_connected: std::sync::atomic::AtomicBool,
     event_sender: Option<mpsc::UnboundedSender<ServiceEvent>>,
 }
@@ -56,11 +57,7 @@ impl ServiceConnector for DiscordConnector {
         Ok(())
     }
 
-    async fn send_message(
-        &self,
-        channel: &str,
-        message: &str,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    async fn send_message(&self, channel: &str, message: &str) -> Result<String, Box<dyn std::error::Error>> {
         if !self.is_connected.load(std::sync::atomic::Ordering::Relaxed) {
             return Err("Not connected to Discord".into());
         }
@@ -134,10 +131,7 @@ impl DiscordConnector {
     }
 
     /// Get channels for a guild
-    pub async fn get_guild_channels(
-        &self,
-        guild_id: &str,
-    ) -> Result<Vec<Channel>, Box<dyn std::error::Error>> {
+    pub async fn get_guild_channels(&self, guild_id: &str) -> Result<Vec<Channel>, Box<dyn std::error::Error>> {
         let response = self
             .client
             .get(&format!(
@@ -200,11 +194,10 @@ impl DiscordConnector {
         // Listen for messages
         while let Some(message) = ws_stream.next().await {
             match message {
-                Ok(msg) => {
+                Ok(msg) =>
                     if let Err(e) = self.handle_gateway_message(msg).await {
                         tracing::error!("Error handling gateway message: {}", e);
-                    }
-                }
+                    },
                 Err(e) => {
                     tracing::error!("WebSocket error: {}", e);
                     break;
@@ -236,8 +229,7 @@ impl DiscordConnector {
                                     if event_type == "MESSAGE_CREATE" {
                                         if let Some(d) = json["d"].as_object() {
                                             if let Ok(message) = self.parse_discord_message(d) {
-                                                let _ = event_sender
-                                                    .send(ServiceEvent::MessageReceived(message));
+                                                let _ = event_sender.send(ServiceEvent::MessageReceived(message));
                                             }
                                         }
                                     }

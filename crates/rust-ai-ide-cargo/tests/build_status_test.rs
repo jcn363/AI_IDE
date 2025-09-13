@@ -1,5 +1,4 @@
-use rust_ai_ide_cargo::build::BuildStatus;
-use rust_ai_ide_cargo::build::{BuildError, ErrorLevel};
+use rust_ai_ide_cargo::build::{BuildError, BuildStatus, ErrorLevel};
 use rust_ai_ide_cargo::models::BuildMetrics;
 
 #[test]
@@ -10,10 +9,10 @@ fn test_build_status_display() {
     // Test Building
     assert_eq!(
         BuildStatus::Building {
-            progress: 0.5,
+            progress:       0.5,
             current_target: Some("my_crate".to_string()),
-            jobs_running: 1,
-            jobs_total: 2,
+            jobs_running:   1,
+            jobs_total:     2,
         }
         .to_string(),
         "Compiling my_crate (50% - 1/2)"
@@ -23,7 +22,7 @@ fn test_build_status_display() {
     assert_eq!(
         BuildStatus::Success {
             duration: 5000.0,
-            metrics: BuildMetrics {
+            metrics:  BuildMetrics {
                 warning_count: 0,
                 ..Default::default()
             },
@@ -36,7 +35,7 @@ fn test_build_status_display() {
     assert_eq!(
         BuildStatus::Success {
             duration: 5000.0,
-            metrics: BuildMetrics {
+            metrics:  BuildMetrics {
                 warning_count: 2,
                 ..Default::default()
             },
@@ -48,32 +47,32 @@ fn test_build_status_display() {
     // Test Failed
     assert_eq!(
         BuildStatus::Failed {
-            error: "Build failed".to_string(),
-            duration: 10000.0,
+            error:         "Build failed".to_string(),
+            duration:      10000.0,
             error_details: vec![
                 BuildError {
                     message: "Warning 1".to_string(),
-                    file: None,
-                    line: None,
-                    column: None,
-                    code: None,
-                    level: ErrorLevel::Warning,
+                    file:    None,
+                    line:    None,
+                    column:  None,
+                    code:    None,
+                    level:   ErrorLevel::Warning,
                 },
                 BuildError {
                     message: "Warning 2".to_string(),
-                    file: None,
-                    line: None,
-                    column: None,
-                    code: None,
-                    level: ErrorLevel::Warning,
+                    file:    None,
+                    line:    None,
+                    column:  None,
+                    code:    None,
+                    level:   ErrorLevel::Warning,
                 },
                 BuildError {
                     message: "Error message".to_string(),
-                    file: None,
-                    line: None,
-                    column: None,
-                    code: None,
-                    level: ErrorLevel::Error,
+                    file:    None,
+                    line:    None,
+                    column:  None,
+                    code:    None,
+                    level:   ErrorLevel::Error,
                 },
             ],
         }
@@ -89,16 +88,16 @@ fn test_build_status_display() {
 fn test_build_status_checks() {
     // Test Building variant
     let building = BuildStatus::Building {
-        progress: 0.5,
+        progress:       0.5,
         current_target: Some("my_crate".to_string()),
-        jobs_running: 1,
-        jobs_total: 2,
+        jobs_running:   1,
+        jobs_total:     2,
     };
 
     // Test Success variant
     let success = BuildStatus::Success {
         duration: 5000.0,
-        metrics: BuildMetrics {
+        metrics:  BuildMetrics {
             warning_count: 0,
             ..Default::default()
         },
@@ -106,32 +105,32 @@ fn test_build_status_checks() {
 
     // Test Failed variant
     let failed = BuildStatus::Failed {
-        error: "Build failed".to_string(),
-        duration: 10000.0,
+        error:         "Build failed".to_string(),
+        duration:      10000.0,
         error_details: vec![
             BuildError {
                 message: "Warning 1".to_string(),
-                file: None,
-                line: None,
-                column: None,
-                code: None,
-                level: ErrorLevel::Warning,
+                file:    None,
+                line:    None,
+                column:  None,
+                code:    None,
+                level:   ErrorLevel::Warning,
             },
             BuildError {
                 message: "Warning 2".to_string(),
-                file: None,
-                line: None,
-                column: None,
-                code: None,
-                level: ErrorLevel::Warning,
+                file:    None,
+                line:    None,
+                column:  None,
+                code:    None,
+                level:   ErrorLevel::Warning,
             },
             BuildError {
                 message: "Error message".to_string(),
-                file: None,
-                line: None,
-                column: None,
-                code: None,
-                level: ErrorLevel::Error,
+                file:    None,
+                line:    None,
+                column:  None,
+                code:    None,
+                level:   ErrorLevel::Error,
             },
         ],
     };

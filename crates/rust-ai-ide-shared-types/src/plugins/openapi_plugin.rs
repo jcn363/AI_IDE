@@ -3,9 +3,10 @@
 //! This plugin generates OpenAPI 3.0 specifications from Rust types,
 //! enabling automatic REST API documentation.
 
+use async_trait::async_trait;
+
 use crate::plugins::*;
 use crate::{serde_json, ParsedType, TransformationContext};
-use async_trait::async_trait;
 
 /// OpenAPI generator plugin
 #[derive(Debug)]
@@ -94,26 +95,25 @@ impl GeneratorPluginTrait for OpenAPIGeneratorPlugin {
             self.add_example_paths(&mut spec, types);
         }
 
-        let content = serde_json::to_string_pretty(&spec)
-            .map_err(|e| PluginError::ExecutionError(e.to_string()))?;
+        let content = serde_json::to_string_pretty(&spec).map_err(|e| PluginError::ExecutionError(e.to_string()))?;
 
         Ok(GeneratedCode {
             content,
             target_platform: platform.to_string(),
             source_types: types.to_vec(),
             metadata: crate::generation::GenerationMetadata {
-                generated_at: chrono::Utc::now().to_rfc3339(),
+                generated_at:      chrono::Utc::now().to_rfc3339(),
                 generator_version: env!("CARGO_PKG_VERSION").to_string(),
-                config_snapshot: config.clone(),
-                stats: crate::generation::GenerationStats {
-                    types_processed: types.len(),
-                    types_generated: types.len(),
-                    bytes_generated: content.len(),
+                config_snapshot:   config.clone(),
+                stats:             crate::generation::GenerationStats {
+                    types_processed:    types.len(),
+                    types_generated:    types.len(),
+                    bytes_generated:    content.len(),
                     generation_time_ms: 0,
-                    warnings_count: 0,
-                    errors_count: 0,
+                    warnings_count:     0,
+                    errors_count:       0,
                 },
-                status: crate::generation::GenerationStatus::Success,
+                status:            crate::generation::GenerationStatus::Success,
             },
             dependencies: vec![],
         })
@@ -125,13 +125,13 @@ impl GeneratorPluginTrait for OpenAPIGeneratorPlugin {
 
     fn metadata(&self) -> PluginMetadata {
         PluginMetadata {
-            name: "openapi-generator".to_string(),
-            version: "1.0.0".to_string(),
-            author: "Rust AI IDE Team".to_string(),
-            description: "Generates OpenAPI specifications from Rust types".to_string(),
-            homepage: Some("https://github.com/rust-ai-ide/rust-ai-ide".to_string()),
-            platforms: vec!["openapi".to_string(), "swagger".to_string()],
-            license: Some("MIT OR Apache-2.0".to_string()),
+            name:         "openapi-generator".to_string(),
+            version:      "1.0.0".to_string(),
+            author:       "Rust AI IDE Team".to_string(),
+            description:  "Generates OpenAPI specifications from Rust types".to_string(),
+            homepage:     Some("https://github.com/rust-ai-ide/rust-ai-ide".to_string()),
+            platforms:    vec!["openapi".to_string(), "swagger".to_string()],
+            license:      Some("MIT OR Apache-2.0".to_string()),
             dependencies: vec![],
         }
     }

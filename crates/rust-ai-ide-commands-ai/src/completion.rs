@@ -1,29 +1,28 @@
-/*!
-# AI Code Completion Module
+//! # AI Code Completion Module
+//!
+//! This module provides AI-powered code completion and refactoring commands for the Rust AI IDE.
+//! It handles intelligent code completion, refactoring suggestions, and code transformation
+//! operations with integration to the AI service layer.
+//!
+//! ## Features
+//!
+//! - Intelligent code completion based on context
+//! - AI-assisted code refactoring with suggestions
+//! - Multi-language support through LSP integration
+//! - Async processing with proper error handling
+//!
+//! ## Integration Points
+//!
+//! This module integrates with:
+//! - AIService for AI/ML operations
+//! - LSP service for language-specific completions
+//! - File watching for context updates
+//! - EventBus for async communication
 
-This module provides AI-powered code completion and refactoring commands for the Rust AI IDE.
-It handles intelligent code completion, refactoring suggestions, and code transformation
-operations with integration to the AI service layer.
-
-## Features
-
-- Intelligent code completion based on context
-- AI-assisted code refactoring with suggestions
-- Multi-language support through LSP integration
-- Async processing with proper error handling
-
-## Integration Points
-
-This module integrates with:
-- AIService for AI/ML operations
-- LSP service for language-specific completions
-- File watching for context updates
-- EventBus for async communication
-*/
+use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 
 // Re-export common types
@@ -35,24 +34,24 @@ use super::services::{AIError, AIResult, AIService};
 /// Code completion request structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeCompletionRequest {
-    pub code: String,
-    pub language: String,
-    pub context: Option<String>,
+    pub code:            String,
+    pub language:        String,
+    pub context:         Option<String>,
     pub cursor_position: usize,
 }
 
 /// Refactoring request structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefactoringRequest {
-    pub code: String,
-    pub language: String,
+    pub code:             String,
+    pub language:         String,
     pub refactoring_type: String,
 }
 
 /// Code completion response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeCompletionResponse {
-    pub suggestions: Vec<String>,
+    pub suggestions:       Vec<String>,
     pub confidence_scores: Vec<f64>,
 }
 
@@ -60,7 +59,7 @@ pub struct CodeCompletionResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefactoringResponse {
     pub refactored_code: Vec<String>,
-    pub reasoning: String,
+    pub reasoning:       String,
 }
 
 /// Error types specific to completion operations
@@ -85,21 +84,21 @@ pub enum CompletionError {
 #[derive(serde::Serialize)]
 pub struct CompletionErrorWrapper {
     pub message: String,
-    pub code: String,
+    pub code:    String,
 }
 
 impl From<&CompletionError> for CompletionErrorWrapper {
     fn from(error: &CompletionError) -> Self {
         Self {
             message: error.to_string(),
-            code: "COMPLETION_ERROR".to_string(),
+            code:    "COMPLETION_ERROR".to_string(),
         }
     }
 }
 
 /// AI Code Completion Service
 pub struct CompletionService {
-    ai_service: Arc<RwLock<AIService>>,
+    ai_service:          Arc<RwLock<AIService>>,
     supported_languages: Vec<String>,
 }
 
@@ -125,10 +124,7 @@ impl CompletionService {
     }
 
     /// Perform code completion
-    pub async fn complete_code(
-        &self,
-        request: CodeCompletionRequest,
-    ) -> AIResult<CodeCompletionResponse> {
+    pub async fn complete_code(&self, request: CodeCompletionRequest) -> AIResult<CodeCompletionResponse> {
         // TODO: Implement actual AI completion logic
         // This is a placeholder implementation that will be replaced with real AI integration
 
@@ -155,10 +151,7 @@ impl CompletionService {
     }
 
     /// Perform code refactoring
-    pub async fn refactor_code(
-        &self,
-        request: RefactoringRequest,
-    ) -> AIResult<RefactoringResponse> {
+    pub async fn refactor_code(&self, request: RefactoringRequest) -> AIResult<RefactoringResponse> {
         // TODO: Implement actual AI refactoring logic
         // This is a placeholder implementation
 
@@ -178,8 +171,7 @@ impl CompletionService {
 
         Ok(RefactoringResponse {
             refactored_code,
-            reasoning: "AI-generated refactoring suggestion for improved code structure"
-                .to_string(),
+            reasoning: "AI-generated refactoring suggestion for improved code structure".to_string(),
         })
     }
 }
@@ -255,13 +247,15 @@ pub async fn ai_refactor_code(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::services::AIService;
+    use std::sync::Arc;
+
     use assert_matches::assert_matches;
     use proptest::prelude::*;
     use serde_test::{assert_tokens, Token};
-    use std::sync::Arc;
     use tokio::sync::RwLock;
+
+    use super::*;
+    use crate::services::AIService;
 
     // Mock AIService for testing (placeholder - in practice, use mockall)
     #[derive(Clone)]
@@ -290,9 +284,9 @@ mod tests {
         let completion_service = CompletionService::new(ai_service).await.unwrap();
 
         let request = CodeCompletionRequest {
-            code: "fn test() {".to_string(),
-            language: "rust".to_string(),
-            context: None,
+            code:            "fn test() {".to_string(),
+            language:        "rust".to_string(),
+            context:         None,
             cursor_position: 11,
         };
 
@@ -311,9 +305,9 @@ mod tests {
         let completion_service = CompletionService::new(ai_service).await.unwrap();
 
         let request = CodeCompletionRequest {
-            code: "const test =".to_string(),
-            language: "unsupported".to_string(),
-            context: Some("function context".to_string()),
+            code:            "const test =".to_string(),
+            language:        "unsupported".to_string(),
+            context:         Some("function context".to_string()),
             cursor_position: 13,
         };
 
@@ -349,8 +343,8 @@ mod tests {
         let completion_service = CompletionService::new(ai_service).await.unwrap();
 
         let request = RefactoringRequest {
-            code: "fn new_func() {}".to_string(),
-            language: "rust".to_string(),
+            code:             "fn new_func() {}".to_string(),
+            language:         "rust".to_string(),
             refactoring_type: "extract_function".to_string(),
         };
 
@@ -366,8 +360,8 @@ mod tests {
         let completion_service = CompletionService::new(ai_service).await.unwrap();
 
         let request = RefactoringRequest {
-            code: "function test() {}".to_string(),
-            language: "unsupported".to_string(),
+            code:             "function test() {}".to_string(),
+            language:         "unsupported".to_string(),
             refactoring_type: "rename".to_string(),
         };
 
@@ -381,9 +375,9 @@ mod tests {
     #[tokio::test]
     async fn test_code_completion_request_serialization() {
         let request = CodeCompletionRequest {
-            code: "fn test() {}".to_string(),
-            language: "rust".to_string(),
-            context: Some("module context".to_string()),
+            code:            "fn test() {}".to_string(),
+            language:        "rust".to_string(),
+            context:         Some("module context".to_string()),
             cursor_position: 10,
         };
 
@@ -399,7 +393,7 @@ mod tests {
     #[tokio::test]
     async fn test_code_completion_response_serialization() {
         let response = CodeCompletionResponse {
-            suggestions: vec!["suggestion1".to_string(), "suggestion2".to_string()],
+            suggestions:       vec!["suggestion1".to_string(), "suggestion2".to_string()],
             confidence_scores: vec![0.8, 0.9],
         };
 
@@ -412,14 +406,14 @@ mod tests {
     #[tokio::test]
     async fn test_refactoring_request_response_serialization() {
         let request = RefactoringRequest {
-            code: "old code".to_string(),
-            language: "rust".to_string(),
+            code:             "old code".to_string(),
+            language:         "rust".to_string(),
             refactoring_type: "extract".to_string(),
         };
 
         let response = RefactoringResponse {
             refactored_code: vec!["new code".to_string()],
-            reasoning: "refactored successfully".to_string(),
+            reasoning:       "refactored successfully".to_string(),
         };
 
         let json = serde_json::to_string(&response).unwrap();
@@ -434,9 +428,9 @@ mod tests {
         let completion_service = CompletionService::new(ai_service).await.unwrap();
 
         let request = CodeCompletionRequest {
-            code: "".to_string(),
-            language: "rust".to_string(),
-            context: None,
+            code:            "".to_string(),
+            language:        "rust".to_string(),
+            context:         None,
             cursor_position: 0,
         };
 
@@ -452,9 +446,9 @@ mod tests {
         let completion_service = CompletionService::new(ai_service).await.unwrap();
 
         let request = CodeCompletionRequest {
-            code: "fn test() {}".to_string(),
-            language: "rust".to_string(),
-            context: None,
+            code:            "fn test() {}".to_string(),
+            language:        "rust".to_string(),
+            context:         None,
             cursor_position: 1000, // Much larger than code length
         };
 

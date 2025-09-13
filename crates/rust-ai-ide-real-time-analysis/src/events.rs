@@ -12,8 +12,7 @@ use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, instrument, warn};
 
 use crate::types::{
-    AnalysisMetadata, AnalysisResult, AnalysisTrigger, PerformanceMetrics, TaskPriority,
-    TriggerSource,
+    AnalysisMetadata, AnalysisResult, AnalysisTrigger, PerformanceMetrics, TaskPriority, TriggerSource,
 };
 
 /// Event processing errors
@@ -65,19 +64,19 @@ pub enum RealTimeEvent {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct AnalysisCompleteEvent {
     /// Task ID
-    pub task_id: String,
+    pub task_id:             String,
     /// File path analyzed
-    pub file_path: String,
+    pub file_path:           String,
     /// Analysis type
-    pub analysis_type: String,
+    pub analysis_type:       String,
     /// Number of findings
-    pub findings_count: usize,
+    pub findings_count:      usize,
     /// Analysis duration (milliseconds)
-    pub duration_ms: u64,
+    pub duration_ms:         u64,
     /// Success status
-    pub success: bool,
+    pub success:             bool,
     /// Error message if failed
-    pub error_message: Option<String>,
+    pub error_message:       Option<String>,
     /// Performance metrics
     pub performance_metrics: PerformanceMetricsData,
 }
@@ -86,24 +85,24 @@ pub struct AnalysisCompleteEvent {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FileChangeEvent {
     /// Paths affected
-    pub paths: Vec<String>,
+    pub paths:       Vec<String>,
     /// Change type
     pub change_type: String,
     /// Timestamp
-    pub timestamp: i64,
+    pub timestamp:   i64,
     /// Priority for processing
-    pub priority: String,
+    pub priority:    String,
 }
 
 /// Cache event data
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CacheEvent {
     /// Cache operation type
-    pub operation: String,
+    pub operation:      String,
     /// Cache key
-    pub key: String,
+    pub key:            String,
     /// Hit or miss
-    pub is_hit: bool,
+    pub is_hit:         bool,
     /// Access time (milliseconds)
     pub access_time_ms: u64,
 }
@@ -114,30 +113,30 @@ pub struct PerformanceEvent {
     /// Metric name
     pub metric_name: String,
     /// Metric value
-    pub value: f64,
+    pub value:       f64,
     /// Unit
-    pub unit: String,
+    pub unit:        String,
     /// Timestamp
-    pub timestamp: i64,
+    pub timestamp:   i64,
     /// Component name
-    pub component: String,
+    pub component:   String,
 }
 
 /// LSP diagnostic event data
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LspDiagnosticEvent {
     /// URI of the document
-    pub uri: String,
+    pub uri:          String,
     /// Diagnostic severity
-    pub severity: String,
+    pub severity:     String,
     /// Diagnostic message
-    pub message: String,
+    pub message:      String,
     /// Diagnostic range
-    pub range: DiagnosticRange,
+    pub range:        DiagnosticRange,
     /// Diagnostic code
-    pub code: Option<String>,
+    pub code:         Option<String>,
     /// Source
-    pub source: String,
+    pub source:       String,
     /// Related information
     pub related_info: Vec<DiagnosticRelatedInfo>,
 }
@@ -145,30 +144,30 @@ pub struct LspDiagnosticEvent {
 /// LSP diagnostic range
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DiagnosticRange {
-    pub start_line: u32,
+    pub start_line:      u32,
     pub start_character: u32,
-    pub end_line: u32,
-    pub end_character: u32,
+    pub end_line:        u32,
+    pub end_character:   u32,
 }
 
 /// LSP diagnostic related information
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DiagnosticRelatedInfo {
     pub location: String,
-    pub message: String,
+    pub message:  String,
 }
 
 /// Dashboard update event data
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DashboardEvent {
     /// Dashboard component to update
-    pub component: String,
+    pub component:   String,
     /// Update type
     pub update_type: String,
     /// Update data
-    pub data: serde_json::Value,
+    pub data:        serde_json::Value,
     /// Priority
-    pub priority: String,
+    pub priority:    String,
 }
 
 /// Health monitoring event data
@@ -177,9 +176,9 @@ pub struct HealthEvent {
     /// Component name
     pub component: String,
     /// Health status
-    pub status: String,
+    pub status:    String,
     /// Health details
-    pub details: serde_json::Value,
+    pub details:   serde_json::Value,
     /// Timestamp
     pub timestamp: i64,
 }
@@ -187,8 +186,8 @@ pub struct HealthEvent {
 /// Simplified performance metrics for events
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct PerformanceMetricsData {
-    pub cpu_time_ns: u64,
-    pub memory_usage: u64,
+    pub cpu_time_ns:   u64,
+    pub memory_usage:  u64,
     pub io_operations: u64,
 }
 
@@ -216,22 +215,18 @@ struct RoutingRule {
     /// Event type pattern
     event_pattern: String,
     /// Subscriber name(s) to route to
-    subscribers: HashSet<String>,
+    subscribers:   HashSet<String>,
     /// Priority (higher = processed first)
-    priority: i32,
+    priority:      i32,
     /// Filtering conditions
-    conditions: HashMap<String, String>,
+    conditions:    HashMap<String, String>,
 }
 
 /// LSP service interface for diagnostics
 #[async_trait]
 pub trait LspService {
     /// Publish diagnostics to LSP
-    async fn publish_diagnostics(
-        &self,
-        uri: &str,
-        diagnostics: Vec<LspDiagnostic>,
-    ) -> EventResult<()>;
+    async fn publish_diagnostics(&self, uri: &str, diagnostics: Vec<LspDiagnostic>) -> EventResult<()>;
 
     /// Clear diagnostics for URI
     async fn clear_diagnostics(&self, uri: &str) -> EventResult<()>;
@@ -243,11 +238,11 @@ pub trait LspService {
 /// LSP diagnostic structure
 #[derive(Debug, Clone)]
 pub struct LspDiagnostic {
-    pub range: LspRange,
-    pub severity: Option<LspSeverity>,
-    pub code: Option<String>,
-    pub source: Option<String>,
-    pub message: String,
+    pub range:               LspRange,
+    pub severity:            Option<LspSeverity>,
+    pub code:                Option<String>,
+    pub source:              Option<String>,
+    pub message:             String,
     pub related_information: Vec<LspDiagnosticRelatedInformation>,
 }
 
@@ -255,51 +250,51 @@ pub struct LspDiagnostic {
 #[derive(Debug, Clone)]
 pub struct LspRange {
     pub start: LspPosition,
-    pub end: LspPosition,
+    pub end:   LspPosition,
 }
 
 /// LSP position structure
 #[derive(Debug, Clone)]
 pub struct LspPosition {
-    pub line: u32,
+    pub line:      u32,
     pub character: u32,
 }
 
 /// LSP severity levels
 #[derive(Debug, Clone, Copy)]
 pub enum LspSeverity {
-    Error = 1,
-    Warning = 2,
+    Error       = 1,
+    Warning     = 2,
     Information = 3,
-    Hint = 4,
+    Hint        = 4,
 }
 
 /// LSP diagnostic related information
 #[derive(Debug, Clone)]
 pub struct LspDiagnosticRelatedInformation {
     pub location: LspLocation,
-    pub message: String,
+    pub message:  String,
 }
 
 /// LSP location structure
 #[derive(Debug, Clone)]
 pub struct LspLocation {
-    pub uri: String,
+    pub uri:   String,
     pub range: LspRange,
 }
 
 /// LSP server capabilities
 #[derive(Debug, Clone)]
 pub struct LspCapabilities {
-    pub text_document_sync: Option<TextDocumentSyncKind>,
+    pub text_document_sync:  Option<TextDocumentSyncKind>,
     pub diagnostic_provider: bool,
 }
 
 /// LSP text document sync kind
 #[derive(Debug, Clone, Copy)]
 pub enum TextDocumentSyncKind {
-    None = 0,
-    Full = 1,
+    None        = 0,
+    Full        = 1,
     Incremental = 2,
 }
 
@@ -317,17 +312,17 @@ pub trait DashboardUpdater {
 #[derive(Debug, Clone)]
 pub struct DashboardUpdate {
     pub component_type: String,
-    pub component_id: String,
-    pub update_type: String,
-    pub data: serde_json::Value,
+    pub component_id:   String,
+    pub update_type:    String,
+    pub data:           serde_json::Value,
 }
 
 /// Dashboard notification structure
 #[derive(Debug, Clone)]
 pub struct DashboardNotification {
-    pub title: String,
-    pub message: String,
-    pub severity: String,
+    pub title:     String,
+    pub message:   String,
+    pub severity:  String,
     pub timestamp: i64,
 }
 
@@ -373,9 +368,9 @@ struct PerformanceMonitor {
     /// Event processing latencies
     processing_latencies: Arc<DashMap<String, Vec<u64>>>,
     /// Throughput counters
-    throughputs: Arc<DashMap<String, u64>>,
+    throughputs:          Arc<DashMap<String, u64>>,
     /// Error counters
-    errors: Arc<DashMap<String, u64>>,
+    errors:               Arc<DashMap<String, u64>>,
 }
 
 /// Health checking for event processing components
@@ -384,35 +379,35 @@ struct HealthChecker {
     /// Component health status
     component_health: Arc<DashMap<String, ComponentHealth>>,
     /// Health check interval
-    check_interval: Duration,
+    check_interval:   Duration,
 }
 
 /// Component health information
 #[derive(Debug, Clone)]
 struct ComponentHealth {
     /// Is component healthy
-    healthy: bool,
+    healthy:       bool,
     /// Last health check time
-    last_check: Instant,
+    last_check:    Instant,
     /// Health check error message
     error_message: Option<String>,
     /// Component metrics
-    metrics: HashMap<String, f64>,
+    metrics:       HashMap<String, f64>,
 }
 
 /// Event processing statistics
 #[derive(Debug, Clone)]
 pub struct EventStatistics {
     /// Total events processed
-    total_processed: u64,
+    total_processed:     u64,
     /// Events processed by type
-    by_type: HashMap<String, u64>,
+    by_type:             HashMap<String, u64>,
     /// Processing errors by type
-    errors_by_type: HashMap<String, u64>,
+    errors_by_type:      HashMap<String, u64>,
     /// Average processing latency by type
     avg_latency_by_type: HashMap<String, f64>,
     /// Events processed in last minute
-    events_per_minute: u64,
+    events_per_minute:   u64,
 }
 
 impl EventProcessor {
@@ -421,13 +416,13 @@ impl EventProcessor {
         let (event_tx, event_rx) = mpsc::unbounded_channel();
 
         let inner = EventProcessorInner {
-            subscribers: RwLock::new(HashMap::new()),
-            routing_rules: RwLock::new(Vec::new()),
-            lsp_service: Arc::new(RwLock::new(None)),
-            dashboard_updater: Arc::new(RwLock::new(None)),
+            subscribers:         RwLock::new(HashMap::new()),
+            routing_rules:       RwLock::new(Vec::new()),
+            lsp_service:         Arc::new(RwLock::new(None)),
+            dashboard_updater:   Arc::new(RwLock::new(None)),
             performance_monitor: Arc::new(PerformanceMonitor::new()),
-            health_checker: Arc::new(HealthChecker::new()),
-            statistics: Arc::new(RwLock::new(EventStatistics::default())),
+            health_checker:      Arc::new(HealthChecker::new()),
+            statistics:          Arc::new(RwLock::new(EventStatistics::default())),
         };
 
         let processor = Self {
@@ -447,10 +442,7 @@ impl EventProcessor {
 
     /// Register an event subscriber
     #[instrument(skip(self, subscriber), err)]
-    pub async fn register_subscriber(
-        &self,
-        subscriber: Box<dyn EventSubscriber + Send + Sync>,
-    ) -> EventResult<()> {
+    pub async fn register_subscriber(&self, subscriber: Box<dyn EventSubscriber + Send + Sync>) -> EventResult<()> {
         let name = subscriber.name().to_string();
         let event_types = subscriber.subscribed_events();
 
@@ -467,9 +459,9 @@ impl EventProcessor {
         for event_type in event_types {
             let rule = RoutingRule {
                 event_pattern: event_type.clone(),
-                subscribers: HashSet::from([name.clone()]),
-                priority: 0,
-                conditions: HashMap::new(),
+                subscribers:   HashSet::from([name.clone()]),
+                priority:      0,
+                conditions:    HashMap::new(),
             };
             routing_rules.push(rule);
         }
@@ -581,10 +573,7 @@ impl EventProcessor {
     }
 
     /// Process a single event
-    async fn process_single_event(
-        inner: &Arc<EventProcessorInner>,
-        event: RealTimeEvent,
-    ) -> EventResult<()> {
+    async fn process_single_event(inner: &Arc<EventProcessorInner>, event: RealTimeEvent) -> EventResult<()> {
         let start_time = Instant::now();
 
         // Update statistics
@@ -625,10 +614,7 @@ impl EventProcessor {
     }
 
     /// Route event to appropriate subscribers
-    async fn route_event_to_subscribers(
-        inner: &Arc<EventProcessorInner>,
-        event: &RealTimeEvent,
-    ) -> EventResult<()> {
+    async fn route_event_to_subscribers(inner: &Arc<EventProcessorInner>, event: &RealTimeEvent) -> EventResult<()> {
         let subscribers = inner.subscribers.read().await;
         let routing_rules = inner.routing_rules.read().await;
 
@@ -666,30 +652,27 @@ impl EventProcessor {
     }
 
     /// Handle LSP integration for events
-    async fn handle_lsp_integration(
-        inner: &Arc<EventProcessorInner>,
-        event: &RealTimeEvent,
-    ) -> EventResult<()> {
+    async fn handle_lsp_integration(inner: &Arc<EventProcessorInner>, event: &RealTimeEvent) -> EventResult<()> {
         if let Some(lsp_service) = inner.lsp_service.read().await.as_ref() {
             match event {
                 RealTimeEvent::AnalysisComplete(analysis_event) => {
                     if !analysis_event.success {
                         // Create LSP diagnostic for analysis failure
                         let diagnostic = LspDiagnostic {
-                            range: LspRange {
+                            range:               LspRange {
                                 start: LspPosition {
-                                    line: 0,
+                                    line:      0,
                                     character: 0,
                                 },
-                                end: LspPosition {
-                                    line: 0,
+                                end:   LspPosition {
+                                    line:      0,
                                     character: 0,
                                 },
                             },
-                            severity: Some(LspSeverity::Warning),
-                            code: Some("analysis_failed".to_string()),
-                            source: Some("rust-ai-ide".to_string()),
-                            message: analysis_event
+                            severity:            Some(LspSeverity::Warning),
+                            code:                Some("analysis_failed".to_string()),
+                            source:              Some("rust-ai-ide".to_string()),
+                            message:             analysis_event
                                 .error_message
                                 .clone()
                                 .unwrap_or("Analysis failed".to_string()),
@@ -697,53 +680,52 @@ impl EventProcessor {
                         };
 
                         lsp_service
-                            .publish_diagnostics(
-                                &format!("file:///{}", analysis_event.file_path),
-                                vec![diagnostic],
-                            )
+                            .publish_diagnostics(&format!("file:///{}", analysis_event.file_path), vec![
+                                diagnostic,
+                            ])
                             .await?;
                     }
                 }
 
                 RealTimeEvent::LspDiagnosticEvent(diagnostic_event) => {
                     let diagnostic = LspDiagnostic {
-                        range: LspRange {
+                        range:               LspRange {
                             start: LspPosition {
-                                line: diagnostic_event.range.start_line,
+                                line:      diagnostic_event.range.start_line,
                                 character: diagnostic_event.range.start_character,
                             },
-                            end: LspPosition {
-                                line: diagnostic_event.range.end_line,
+                            end:   LspPosition {
+                                line:      diagnostic_event.range.end_line,
                                 character: diagnostic_event.range.end_character,
                             },
                         },
-                        severity: match diagnostic_event.severity.as_str() {
+                        severity:            match diagnostic_event.severity.as_str() {
                             "error" => Some(LspSeverity::Error),
                             "warning" => Some(LspSeverity::Warning),
                             "info" => Some(LspSeverity::Information),
                             _ => Some(LspSeverity::Hint),
                         },
-                        code: diagnostic_event.code.clone(),
-                        source: Some(diagnostic_event.source.clone()),
-                        message: diagnostic_event.message.clone(),
+                        code:                diagnostic_event.code.clone(),
+                        source:              Some(diagnostic_event.source.clone()),
+                        message:             diagnostic_event.message.clone(),
                         related_information: diagnostic_event
                             .related_info
                             .iter()
                             .map(|info| LspDiagnosticRelatedInformation {
                                 location: LspLocation {
-                                    uri: info.location.clone(),
+                                    uri:   info.location.clone(),
                                     range: LspRange {
                                         start: LspPosition {
-                                            line: 0,
+                                            line:      0,
                                             character: 0,
                                         },
-                                        end: LspPosition {
-                                            line: 0,
+                                        end:   LspPosition {
+                                            line:      0,
                                             character: 0,
                                         },
                                     },
                                 },
-                                message: info.message.clone(),
+                                message:  info.message.clone(),
                             })
                             .collect(),
                     };
@@ -761,17 +743,14 @@ impl EventProcessor {
     }
 
     /// Handle dashboard integration for events
-    async fn handle_dashboard_integration(
-        inner: &Arc<EventProcessorInner>,
-        event: &RealTimeEvent,
-    ) -> EventResult<()> {
+    async fn handle_dashboard_integration(inner: &Arc<EventProcessorInner>, event: &RealTimeEvent) -> EventResult<()> {
         if let Some(dashboard_updater) = inner.dashboard_updater.read().await.as_ref() {
             let update = match event {
                 RealTimeEvent::AnalysisComplete(completion) => DashboardUpdate {
                     component_type: "analysis_progress".to_string(),
-                    component_id: completion.file_path.clone(),
-                    update_type: "completion".to_string(),
-                    data: serde_json::json!({
+                    component_id:   completion.file_path.clone(),
+                    update_type:    "completion".to_string(),
+                    data:           serde_json::json!({
                         "task_id": completion.task_id,
                         "success": completion.success,
                         "duration_ms": completion.duration_ms,
@@ -781,9 +760,9 @@ impl EventProcessor {
 
                 RealTimeEvent::PerformanceEvent(perf) => DashboardUpdate {
                     component_type: "performance_metrics".to_string(),
-                    component_id: perf.component.clone(),
-                    update_type: perf.metric_name.clone(),
-                    data: serde_json::json!({
+                    component_id:   perf.component.clone(),
+                    update_type:    perf.metric_name.clone(),
+                    data:           serde_json::json!({
                         "value": perf.value,
                         "unit": perf.unit,
                         "timestamp": perf.timestamp
@@ -792,9 +771,9 @@ impl EventProcessor {
 
                 RealTimeEvent::HealthEvent(health) => DashboardUpdate {
                     component_type: "system_health".to_string(),
-                    component_id: health.component.clone(),
-                    update_type: "status".to_string(),
-                    data: serde_json::json!({
+                    component_id:   health.component.clone(),
+                    update_type:    "status".to_string(),
+                    data:           serde_json::json!({
                         "status": health.status,
                         "details": health.details,
                         "timestamp": health.timestamp
@@ -868,8 +847,8 @@ impl PerformanceMonitor {
     fn new() -> Self {
         Self {
             processing_latencies: Arc::new(DashMap::new()),
-            throughputs: Arc::new(DashMap::new()),
-            errors: Arc::new(DashMap::new()),
+            throughputs:          Arc::new(DashMap::new()),
+            errors:               Arc::new(DashMap::new()),
         }
     }
 
@@ -903,7 +882,7 @@ impl HealthChecker {
     fn new() -> Self {
         Self {
             component_health: Arc::new(DashMap::new()),
-            check_interval: Duration::from_secs(30),
+            check_interval:   Duration::from_secs(30),
         }
     }
 
@@ -911,10 +890,10 @@ impl HealthChecker {
     async fn perform_health_checks(&self) -> EventResult<()> {
         // Check event processor health
         let processor_health = ComponentHealth {
-            healthy: true,
-            last_check: Instant::now(),
+            healthy:       true,
+            last_check:    Instant::now(),
             error_message: None,
-            metrics: HashMap::from([("uptime".to_string(), 1.0)]),
+            metrics:       HashMap::from([("uptime".to_string(), 1.0)]),
         };
 
         self.component_health
@@ -938,29 +917,30 @@ impl HealthChecker {
 impl Default for EventStatistics {
     fn default() -> Self {
         Self {
-            total_processed: 0,
-            by_type: HashMap::new(),
-            errors_by_type: HashMap::new(),
+            total_processed:     0,
+            by_type:             HashMap::new(),
+            errors_by_type:      HashMap::new(),
             avg_latency_by_type: HashMap::new(),
-            events_per_minute: 0,
+            events_per_minute:   0,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::time::timeout;
 
+    use super::*;
+
     struct TestSubscriber {
-        name: String,
+        name:            String,
         received_events: Arc<std::sync::Mutex<Vec<RealTimeEvent>>>,
     }
 
     impl TestSubscriber {
         fn new(name: &str) -> Self {
             Self {
-                name: name.to_string(),
+                name:            name.to_string(),
                 received_events: Arc::new(std::sync::Mutex::new(Vec::new())),
             }
         }
@@ -1015,16 +995,16 @@ mod tests {
 
         // Publish an analysis complete event
         let event = RealTimeEvent::AnalysisComplete(AnalysisCompleteEvent {
-            task_id: "test_task".to_string(),
-            file_path: "/test/file.rs".to_string(),
-            analysis_type: "Syntax".to_string(),
-            findings_count: 2,
-            duration_ms: 150,
-            success: true,
-            error_message: None,
+            task_id:             "test_task".to_string(),
+            file_path:           "/test/file.rs".to_string(),
+            analysis_type:       "Syntax".to_string(),
+            findings_count:      2,
+            duration_ms:         150,
+            success:             true,
+            error_message:       None,
             performance_metrics: PerformanceMetricsData {
-                cpu_time_ns: 150000000,
-                memory_usage: 1024,
+                cpu_time_ns:   150000000,
+                memory_usage:  1024,
                 io_operations: 5,
             },
         });
@@ -1045,10 +1025,10 @@ mod tests {
         let processor = EventProcessor::new().await.unwrap();
 
         let event = RealTimeEvent::FileChange(FileChangeEvent {
-            paths: vec!["/test/file.rs".to_string()],
+            paths:       vec!["/test/file.rs".to_string()],
             change_type: "modified".to_string(),
-            timestamp: 1234567890,
-            priority: "high".to_string(),
+            timestamp:   1234567890,
+            priority:    "high".to_string(),
         });
 
         let _ = processor.publish_event(event).await;

@@ -1,11 +1,13 @@
+use std::sync::Arc;
+
+use async_trait::async_trait;
+use rust_ai_ide_ai_inference::AiInferenceService;
+
 use crate::ai_suggester::AnalysisContext;
 use crate::context_analyzer::ContextAnalysis;
 use crate::error::{AnalysisError, AnalysisResult};
 use crate::pattern_recognizer::CodePattern;
 use crate::types::RefactoringSuggestion;
-use async_trait::async_trait;
-use rust_ai_ide_ai_inference::AiInferenceService;
-use std::sync::Arc;
 
 /// AI-powered suggestion generator
 pub struct SuggestionGenerator {

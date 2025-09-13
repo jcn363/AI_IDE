@@ -1,6 +1,7 @@
 //! Common error types used across the Rust AI IDE project
 
 use std::time::Duration;
+
 use thiserror::Error;
 
 /// Common error type for all Rust AI IDE operations
@@ -22,16 +23,19 @@ pub enum IdeError {
     LanguageServer { message: String },
 
     #[error("Analysis error: {message} (file: {file_path})")]
-    Analysis { message: String, file_path: String },
+    Analysis {
+        message:   String,
+        file_path: String,
+    },
 
     #[error("Serialization error: {message}")]
     Serialization { message: String },
 
     #[error("Timeout error: {message} (operation: {operation})")]
     Timeout {
-        message: String,
+        message:   String,
         operation: String,
-        duration: Duration,
+        duration:  Duration,
     },
 
     #[error("Networking error: {message}")]
@@ -41,7 +45,10 @@ pub enum IdeError {
     Model { message: String, provider: String },
 
     #[error("Cancellation error: {message} (operation: {operation})")]
-    Cancellation { message: String, operation: String },
+    Cancellation {
+        message:   String,
+        operation: String,
+    },
 
     #[error("Concurrent access error: {message}")]
     Concurrency { message: String },
@@ -57,9 +64,9 @@ pub enum IdeError {
 
     #[error("Async operation error: {message} (operation: {operation})")]
     AsyncOperation {
-        message: String,
+        message:   String,
         operation: String,
-        source: Box<IdeError>,
+        source:    Box<IdeError>,
     },
 
     #[error("Internal error: {message}")]
@@ -181,9 +188,9 @@ impl From<std::time::SystemTimeError> for IdeError {
 impl From<tokio::time::error::Elapsed> for IdeError {
     fn from(_err: tokio::time::error::Elapsed) -> Self {
         IdeError::Timeout {
-            message: "Operation timed out".to_string(),
+            message:   "Operation timed out".to_string(),
             operation: "unknown".to_string(),
-            duration: std::time::Duration::new(30, 0),
+            duration:  std::time::Duration::new(30, 0),
         }
     }
 }
@@ -224,10 +231,7 @@ pub fn safe_unwrap<T>(option: Option<T>, error_message: &str) -> IdeResult<T> {
 /// Error recovery utilities
 
 /// Attempts an operation with fallback behavior
-pub async fn with_fallback<T, E, F, Fut>(
-    primary: F,
-    fallback: Option<impl FnOnce() -> Fut>,
-) -> Result<T, E>
+pub async fn with_fallback<T, E, F, Fut>(primary: F, fallback: Option<impl FnOnce() -> Fut>) -> Result<T, E>
 where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = Result<T, E>>,
@@ -235,22 +239,17 @@ where
 {
     match primary().await {
         Ok(result) => Ok(result),
-        Err(err) => {
+        Err(err) =>
             if let Some(fallback_fn) = fallback {
                 fallback_fn().await
             } else {
                 Err(err)
-            }
-        }
+            },
     }
 }
 
 /// Retry an operation with exponential backoff
-pub async fn retry_with_backoff<T, F, Fut>(
-    operation: F,
-    max_attempts: usize,
-    base_delay_ms: u64,
-) -> IdeResult<T>
+pub async fn retry_with_backoff<T, F, Fut>(operation: F, max_attempts: usize, base_delay_ms: u64) -> IdeResult<T>
 where
     F: Fn() -> Fut,
     Fut: std::future::Future<Output = IdeResult<T>>,

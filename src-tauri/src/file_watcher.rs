@@ -1,18 +1,18 @@
+use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
+
 use anyhow::Context;
 use log::{debug, error, info};
 use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
-use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter};
-use tokio::sync::mpsc as tokio_mpsc;
-use tokio::sync::oneshot;
+use tokio::sync::{mpsc as tokio_mpsc, oneshot};
 use tokio::time::{self, Duration};
 
 pub struct FileWatcher {
-    _watcher: Arc<Mutex<RecommendedWatcher>>,
-    _stop_tx: tokio::sync::mpsc::Sender<()>,
+    _watcher:        Arc<Mutex<RecommendedWatcher>>,
+    _stop_tx:        tokio::sync::mpsc::Sender<()>,
     _stop_signal_tx: Arc<Mutex<Option<oneshot::Sender<()>>>>,
-    event_tx: Option<tokio_mpsc::UnboundedSender<Event>>,
+    event_tx:        Option<tokio_mpsc::UnboundedSender<Event>>,
 }
 
 impl FileWatcher {
@@ -110,10 +110,10 @@ impl FileWatcher {
         });
 
         let watcher = Self {
-            _watcher: watcher,
-            _stop_tx: stop_tx,
+            _watcher:        watcher,
+            _stop_tx:        stop_tx,
             _stop_signal_tx: stop_signal_tx,
-            event_tx: Some(event_tx),
+            event_tx:        Some(event_tx),
         };
 
         // Spawn initial event handler
@@ -151,9 +151,10 @@ impl Drop for FileWatcher {
 
 // Get file checksum
 pub fn get_file_checksum(path: &PathBuf) -> anyhow::Result<String> {
-    use sha2::{Digest, Sha256};
     use std::fs::File;
     use std::io::Read;
+
+    use sha2::{Digest, Sha256};
 
     let mut file = File::open(path)?;
     let mut buffer = Vec::new();

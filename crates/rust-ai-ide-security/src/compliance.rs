@@ -25,7 +25,7 @@
 //! # Usage
 //!
 //! ```rust,no_run
-//! use rust_ai_ide_security::compliance::{GDPRManager, ConsentManager};
+//! use rust_ai_ide_security::compliance::{ConsentManager, GDPRManager};
 //!
 //! // Handle GDPR data subject request
 //! let gdpr_manager = GDPRManager::new().await?;
@@ -34,23 +34,26 @@
 //!
 //! // Manage user consent
 //! let consent_manager = ConsentManager::new().await?;
-//! let granted = consent_manager.grant_consent(user_id, "ai_processing".to_string()).await?;
+//! let granted = consent_manager
+//!     .grant_consent(user_id, "ai_processing".to_string())
+//!     .await?;
 //!
 //! // Check CCPA compliance
 //! let ccpa_compliant = consent_manager.check_ccpa_compliance(user_id).await?;
 //! ```
 
-use async_trait::async_trait;
-use base64::{engine::general_purpose, Engine as _};
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+
+use async_trait::async_trait;
+use base64::engine::general_purpose;
+use base64::Engine as _;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 use crate::{
-    AuditEventSeverity, AuditEventType, CCPACompliance, GDPRCompliance, SecurityError,
-    SecurityResult, UserContext,
+    AuditEventSeverity, AuditEventType, CCPACompliance, GDPRCompliance, SecurityError, SecurityResult, UserContext,
 };
 
 /// GDPR data processing purposes
@@ -108,20 +111,20 @@ pub enum CCPARequestType {
 /// Data subject request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataSubjectRequest {
-    pub id: String,
-    pub request_type: RequestType,
-    pub user_id: String,
-    pub tenant_id: Option<String>,
-    pub submitted_at: DateTime<Utc>,
-    pub resolved_at: Option<DateTime<Utc>>,
-    pub status: RequestStatus,
-    pub description: String,
-    pub legal_basis: Option<String>,
-    pub requested_by_user: bool,
-    pub processed_by: Option<String>,
+    pub id:                 String,
+    pub request_type:       RequestType,
+    pub user_id:            String,
+    pub tenant_id:          Option<String>,
+    pub submitted_at:       DateTime<Utc>,
+    pub resolved_at:        Option<DateTime<Utc>>,
+    pub status:             RequestStatus,
+    pub description:        String,
+    pub legal_basis:        Option<String>,
+    pub requested_by_user:  bool,
+    pub processed_by:       Option<String>,
     pub verification_token: Option<String>,
-    pub response_data: Option<String>, // Encrypted for privacy
-    pub metadata: HashMap<String, String>,
+    pub response_data:      Option<String>, // Encrypted for privacy
+    pub metadata:           HashMap<String, String>,
 }
 
 /// Request status
@@ -144,19 +147,19 @@ pub enum RequestType {
 /// User consent record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConsentRecord {
-    pub id: String,
-    pub user_id: String,
+    pub id:              String,
+    pub user_id:         String,
     pub consent_purpose: String,
-    pub consent_given: bool,
-    pub consent_date: DateTime<Utc>,
+    pub consent_given:   bool,
+    pub consent_date:    DateTime<Utc>,
     pub consent_expires: Option<DateTime<Utc>>,
     pub consent_version: u32,
-    pub ip_address: String,
-    pub user_agent: String,
-    pub legal_basis: String,
-    pub consent_method: String,
-    pub source_system: String,
-    pub metadata: HashMap<String, String>,
+    pub ip_address:      String,
+    pub user_agent:      String,
+    pub legal_basis:     String,
+    pub consent_method:  String,
+    pub source_system:   String,
+    pub metadata:        HashMap<String, String>,
 }
 
 /// Data processing record (GDPR Article 30)
@@ -196,20 +199,20 @@ pub struct BreachRecord {
 /// Privacy impact assessment (PIA)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PrivacyImpactAssessment {
-    pub id: String,
-    pub project_name: String,
-    pub description: String,
-    pub department: String,
+    pub id:                  String,
+    pub project_name:        String,
+    pub description:         String,
+    pub department:          String,
     pub processing_purposes: Vec<GDPRProcessingPurpose>,
-    pub data_categories: Vec<String>,
-    pub data_subjects: Vec<String>,
-    pub risk_assessment: String,
+    pub data_categories:     Vec<String>,
+    pub data_subjects:       Vec<String>,
+    pub risk_assessment:     String,
     pub mitigating_measures: Vec<String>,
-    pub assessment_date: DateTime<Utc>,
-    pub review_date: DateTime<Utc>,
-    pub assesse_by: String,
-    pub approval_date: Option<DateTime<Utc>>,
-    pub risk_level: RiskLevel,
+    pub assessment_date:     DateTime<Utc>,
+    pub review_date:         DateTime<Utc>,
+    pub assesse_by:          String,
+    pub approval_date:       Option<DateTime<Utc>>,
+    pub risk_level:          RiskLevel,
 }
 
 /// Data anonymization method
@@ -227,20 +230,20 @@ pub enum AnonymizationMethod {
 
 /// GDPR compliance manager
 pub struct GDPRManager {
-    consent_records: RwLock<HashMap<String, Vec<ConsentRecord>>>,
-    processing_records: RwLock<Vec<DataProcessingRecord>>,
-    breach_records: RwLock<Vec<BreachRecord>>,
-    anonymization_methods: RwLock<HashMap<String, AnonymizationMethod>>,
-    compliance_audit_log: Arc<dyn AuditCallback>,
+    consent_records:              RwLock<HashMap<String, Vec<ConsentRecord>>>,
+    processing_records:           RwLock<Vec<DataProcessingRecord>>,
+    breach_records:               RwLock<Vec<BreachRecord>>,
+    anonymization_methods:        RwLock<HashMap<String, AnonymizationMethod>>,
+    compliance_audit_log:         Arc<dyn AuditCallback>,
     data_processor_audit_enabled: bool,
 }
 
 /// CCPA compliance manager
 pub struct CCPAComplianceManager {
     consent_optouts: RwLock<HashMap<String, HashSet<String>>>,
-    data_sales_log: RwLock<Vec<DataSaleRecord>>,
+    data_sales_log:  RwLock<Vec<DataSaleRecord>>,
     cookie_consents: RwLock<HashMap<String, CookieConsent>>,
-    ccpa_audit_log: Arc<dyn AuditCallback>,
+    ccpa_audit_log:  Arc<dyn AuditCallback>,
 }
 
 /// Consent manager interface
@@ -276,25 +279,25 @@ pub trait ConsentManager: Send + Sync {
 /// Data portability export
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataPortabilityExport {
-    pub user_id: String,
-    pub export_date: DateTime<Utc>,
+    pub user_id:         String,
+    pub export_date:     DateTime<Utc>,
     pub data_categories: Vec<String>,
-    pub format: String,
-    pub size_bytes: u64,
-    pub checksum: String,
+    pub format:          String,
+    pub size_bytes:      u64,
+    pub checksum:        String,
     pub compliance_info: ComplianceInfo,
 }
 
 /// Compliance information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceInfo {
-    pub gdpr_compliant: bool,
-    pub ccpa_compliant: bool,
-    pub hipaa_compliant: bool,
-    pub soc2_compliant: bool,
-    pub sox_compliant: bool,
-    pub anonymization_applied: bool,
-    pub export_allowed: bool,
+    pub gdpr_compliant:           bool,
+    pub ccpa_compliant:           bool,
+    pub hipaa_compliant:          bool,
+    pub soc2_compliant:           bool,
+    pub sox_compliant:            bool,
+    pub anonymization_applied:    bool,
+    pub export_allowed:           bool,
     pub retention_period_applied: bool,
 }
 
@@ -321,63 +324,63 @@ pub struct HIPAACompliance {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SOC2Compliance {
     pub trust_services_criteria: HashMap<String, f64>, // Security, Availability, etc.
-    pub control_objectives: HashSet<String>,
-    pub control_activities: Vec<SOC2ControlActivity>,
-    pub testing_procedures: Vec<TestingProcedure>,
-    pub findings: Vec<SOC2Finding>,
-    pub attestation_report: Option<String>,
-    pub audit_period_start: Option<DateTime<Utc>>,
-    pub audit_period_end: Option<DateTime<Utc>>,
-    pub overall_assurance: f64, // 0.0 to 1.0
+    pub control_objectives:      HashSet<String>,
+    pub control_activities:      Vec<SOC2ControlActivity>,
+    pub testing_procedures:      Vec<TestingProcedure>,
+    pub findings:                Vec<SOC2Finding>,
+    pub attestation_report:      Option<String>,
+    pub audit_period_start:      Option<DateTime<Utc>>,
+    pub audit_period_end:        Option<DateTime<Utc>>,
+    pub overall_assurance:       f64, // 0.0 to 1.0
 }
 
 /// SOX compliance monitoring (Wave 3)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SOXCompliance {
-    pub section_302_compliant: bool,
-    pub section_404_compliant: bool,
-    pub material_weaknesses: Vec<String>,
-    pub significant_deficiencies: Vec<String>,
-    pub internal_controls_effective: f64, // Effectiveness score
+    pub section_302_compliant:        bool,
+    pub section_404_compliant:        bool,
+    pub material_weaknesses:          Vec<String>,
+    pub significant_deficiencies:     Vec<String>,
+    pub internal_controls_effective:  f64, // Effectiveness score
     pub financial_reporting_accuracy: bool,
-    pub documentation_complete: bool,
-    pub audit_committee_oversight: bool,
-    pub ceo_cfo_certifications: bool,
-    pub compliance_certificate: Option<String>,
-    pub last_sox_assessment: Option<DateTime<Utc>>,
-    pub remediation_timeline: Option<DateTime<Utc>>,
+    pub documentation_complete:       bool,
+    pub audit_committee_oversight:    bool,
+    pub ceo_cfo_certifications:       bool,
+    pub compliance_certificate:       Option<String>,
+    pub last_sox_assessment:          Option<DateTime<Utc>>,
+    pub remediation_timeline:         Option<DateTime<Utc>>,
 }
 
 /// SOC 2 control activity
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SOC2ControlActivity {
-    pub control_id: String,
-    pub description: String,
-    pub evidence: Vec<String>,
+    pub control_id:   String,
+    pub description:  String,
+    pub evidence:     Vec<String>,
     pub test_results: TestResult,
-    pub last_tested: DateTime<Utc>,
+    pub last_tested:  DateTime<Utc>,
 }
 
 /// SOC 2 testing procedure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TestingProcedure {
-    pub procedure_id: String,
-    pub control_tested: String,
+    pub procedure_id:          String,
+    pub control_tested:        String,
     pub procedure_description: String,
-    pub frequency: String,
-    pub test_population: String,
-    pub acceptable_results: String,
+    pub frequency:             String,
+    pub test_population:       String,
+    pub acceptable_results:    String,
 }
 
 /// SOC 2 finding
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SOC2Finding {
-    pub finding_id: String,
-    pub control_id: String,
-    pub severity: RiskLevel,
-    pub description: String,
+    pub finding_id:       String,
+    pub control_id:       String,
+    pub severity:         RiskLevel,
+    pub description:      String,
     pub remediation_plan: Vec<String>,
-    pub due_date: DateTime<Utc>,
+    pub due_date:         DateTime<Utc>,
 }
 
 /// Test result for SOC 2 controls
@@ -392,23 +395,23 @@ pub enum TestResult {
 /// Data sale record for CCPA
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataSaleRecord {
-    pub id: String,
-    pub user_id: String,
-    pub data_category: String,
-    pub buyer: String,
-    pub sale_date: DateTime<Utc>,
-    pub price: Option<f64>,
+    pub id:               String,
+    pub user_id:          String,
+    pub data_category:    String,
+    pub buyer:            String,
+    pub sale_date:        DateTime<Utc>,
+    pub price:            Option<f64>,
     pub consent_obtained: bool,
 }
 
 /// Cookie consent tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CookieConsent {
-    pub user_id: String,
-    pub categories: HashSet<String>, // essential, analytics, marketing, etc.
-    pub granted_at: DateTime<Utc>,
-    pub expires_at: DateTime<Utc>,
-    pub ip_address: String,
+    pub user_id:        String,
+    pub categories:     HashSet<String>, // essential, analytics, marketing, etc.
+    pub granted_at:     DateTime<Utc>,
+    pub expires_at:     DateTime<Utc>,
+    pub ip_address:     String,
     pub consent_string: String,
 }
 
@@ -430,14 +433,14 @@ pub trait AuditCallback: Send + Sync {
 /// Compliance audit event
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceAuditEvent {
-    pub id: String,
-    pub event_type: ComplianceEventType,
-    pub timestamp: DateTime<Utc>,
-    pub user_id: Option<String>,
-    pub affected_data: Vec<String>,
-    pub legal_jurisdiction: String, // GDPR, CCPA, etc.
-    pub compliance_status: bool,
-    pub description: String,
+    pub id:                  String,
+    pub event_type:          ComplianceEventType,
+    pub timestamp:           DateTime<Utc>,
+    pub user_id:             Option<String>,
+    pub affected_data:       Vec<String>,
+    pub legal_jurisdiction:  String, // GDPR, CCPA, etc.
+    pub compliance_status:   bool,
+    pub description:         String,
     pub remediation_actions: Vec<String>,
 }
 
@@ -460,11 +463,7 @@ pub enum ComplianceEventType {
 #[async_trait]
 pub trait DataDeletionManager: Send + Sync {
     /// Delete user data for GDPR right to erasure
-    async fn delete_user_data(
-        &self,
-        user_id: &str,
-        reasons: Vec<String>,
-    ) -> SecurityResult<DeletionResult>;
+    async fn delete_user_data(&self, user_id: &str, reasons: Vec<String>) -> SecurityResult<DeletionResult>;
 
     /// Schedule data deletion
     async fn schedule_deletion(
@@ -484,22 +483,22 @@ pub trait DataDeletionManager: Send + Sync {
 /// Deletion result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeletionResult {
-    pub user_id: String,
-    pub deletion_date: DateTime<Utc>,
-    pub records_deleted: HashMap<String, u32>, // category -> count
-    pub tables_affected: Vec<String>,
-    pub data_anonymized: HashMap<String, u32>, // category -> count
+    pub user_id:               String,
+    pub deletion_date:         DateTime<Utc>,
+    pub records_deleted:       HashMap<String, u32>, // category -> count
+    pub tables_affected:       Vec<String>,
+    pub data_anonymized:       HashMap<String, u32>, // category -> count
     pub verification_checksum: String,
-    pub time_taken_seconds: f64,
+    pub time_taken_seconds:    f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeletionRequest {
-    pub id: String,
-    pub user_id: String,
+    pub id:             String,
+    pub user_id:        String,
     pub scheduled_date: DateTime<Utc>,
-    pub reasons: Vec<String>,
-    pub status: DeletionStatus,
+    pub reasons:        Vec<String>,
+    pub status:         DeletionStatus,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -546,20 +545,13 @@ impl GDPRManager {
     }
 
     /// Process a data subject request
-    pub async fn process_request(
-        &self,
-        request: DataSubjectRequest,
-    ) -> SecurityResult<DataSubjectResponse> {
+    pub async fn process_request(&self, request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
         match &request.request_type {
             RequestType::GDPR(gdpr_type) => match gdpr_type {
                 GDPRRequestType::RightToAccess => self.handle_access_request(request).await,
                 GDPRRequestType::RightToErasure => self.handle_erasure_request(request).await,
-                GDPRRequestType::RightToDataPortability => {
-                    self.handle_portability_request(request).await
-                }
-                GDPRRequestType::RightToRectification => {
-                    self.handle_rectification_request(request).await
-                }
+                GDPRRequestType::RightToDataPortability => self.handle_portability_request(request).await,
+                GDPRRequestType::RightToRectification => self.handle_rectification_request(request).await,
                 _ => Err(SecurityError::ComplianceViolation {
                     policy: "GDPR".to_string(),
                 }),
@@ -575,10 +567,7 @@ impl GDPRManager {
     }
 
     /// Create data processing record (Article 30 compliance)
-    pub async fn create_processing_record(
-        &self,
-        record: DataProcessingRecord,
-    ) -> SecurityResult<String> {
+    pub async fn create_processing_record(&self, record: DataProcessingRecord) -> SecurityResult<String> {
         let mut records = self.processing_records.write().await;
         let id = format!("processing_{}", uuid::Uuid::new_v4());
         records.push(DataProcessingRecord {
@@ -601,14 +590,14 @@ impl GDPRManager {
         // Log breach to audit
         if let Some(audit) = &self.compliance_audit_log {
             let audit_event = ComplianceAuditEvent {
-                id: id.clone(),
-                event_type: ComplianceEventType::BreachDetected,
-                timestamp: Utc::now(),
-                user_id: None,
-                affected_data: breach.data_categories_affected.clone(),
-                legal_jurisdiction: "GDPR".to_string(),
-                compliance_status: false,
-                description: format!("Data breach reported: {}", breach.likely_consequences),
+                id:                  id.clone(),
+                event_type:          ComplianceEventType::BreachDetected,
+                timestamp:           Utc::now(),
+                user_id:             None,
+                affected_data:       breach.data_categories_affected.clone(),
+                legal_jurisdiction:  "GDPR".to_string(),
+                compliance_status:   false,
+                description:         format!("Data breach reported: {}", breach.likely_consequences),
                 remediation_actions: breach.mitigating_actions.clone(),
             };
 
@@ -619,24 +608,21 @@ impl GDPRManager {
     }
 
     /// Perform privacy impact assessment
-    pub async fn create_privacy_assessment(
-        &self,
-        assessment: PrivacyImpactAssessment,
-    ) -> SecurityResult<String> {
+    pub async fn create_privacy_assessment(&self, assessment: PrivacyImpactAssessment) -> SecurityResult<String> {
         let id = format!("pia_{}", uuid::Uuid::new_v4());
         // In a real implementation, this would be stored
 
         // Log assessment to audit
         if let Some(audit) = &self.compliance_audit_log {
             let audit_event = ComplianceAuditEvent {
-                id: id.clone(),
-                event_type: ComplianceEventType::PrivacyImpactAssessment,
-                timestamp: Utc::now(),
-                user_id: None,
-                affected_data: assessment.data_categories.clone(),
-                legal_jurisdiction: "GDPR".to_string(),
-                compliance_status: assessment.risk_level == RiskLevel::Low,
-                description: format!("PIA completed for: {}", assessment.project_name),
+                id:                  id.clone(),
+                event_type:          ComplianceEventType::PrivacyImpactAssessment,
+                timestamp:           Utc::now(),
+                user_id:             None,
+                affected_data:       assessment.data_categories.clone(),
+                legal_jurisdiction:  "GDPR".to_string(),
+                compliance_status:   assessment.risk_level == RiskLevel::Low,
+                description:         format!("PIA completed for: {}", assessment.project_name),
                 remediation_actions: assessment.mitigating_measures.clone(),
             };
 
@@ -650,87 +636,69 @@ impl GDPRManager {
     pub async fn get_compliance_status(&self) -> GDPRCompliance {
         // In a real implementation, this would check active consents, processing records, etc.
         GDPRCompliance {
-            data_processing_consent: true,
-            retention_period_days: 2555, // 7 years
-            data_minimization_applied: true,
-            anonymization_method: Some("pseudonymization".to_string()),
+            data_processing_consent:        true,
+            retention_period_days:          2555, // 7 years
+            data_minimization_applied:      true,
+            anonymization_method:           Some("pseudonymization".to_string()),
             subject_access_rights_provided: true,
-            data_portability_supported: true,
-            automated_decision_making: false,
-            legal_basis: "contract".to_string(),
-            data_processor_agreed: true,
+            data_portability_supported:     true,
+            automated_decision_making:      false,
+            legal_basis:                    "contract".to_string(),
+            data_processor_agreed:          true,
         }
     }
 
     // Private methods for handling specific requests
-    async fn handle_access_request(
-        &self,
-        _request: DataSubjectRequest,
-    ) -> SecurityResult<DataSubjectResponse> {
+    async fn handle_access_request(&self, _request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
         Ok(DataSubjectResponse {
-            request_id: _request.id,
-            status: RequestStatus::Completed,
-            data_provided: Some("User data export would be provided here".to_string()),
+            request_id:      _request.id,
+            status:          RequestStatus::Completed,
+            data_provided:   Some("User data export would be provided here".to_string()),
             completion_date: Utc::now(),
         })
     }
 
-    async fn handle_erasure_request(
-        &self,
-        _request: DataSubjectRequest,
-    ) -> SecurityResult<DataSubjectResponse> {
+    async fn handle_erasure_request(&self, _request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
         Ok(DataSubjectResponse {
-            request_id: _request.id,
-            status: RequestStatus::Completed,
-            data_provided: Some("User data deletion completed".to_string()),
+            request_id:      _request.id,
+            status:          RequestStatus::Completed,
+            data_provided:   Some("User data deletion completed".to_string()),
             completion_date: Utc::now(),
         })
     }
 
-    async fn handle_portability_request(
-        &self,
-        _request: DataSubjectRequest,
-    ) -> SecurityResult<DataSubjectResponse> {
+    async fn handle_portability_request(&self, _request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
         Ok(DataSubjectResponse {
-            request_id: _request.id,
-            status: RequestStatus::Completed,
-            data_provided: Some("JSON data export".to_string()),
+            request_id:      _request.id,
+            status:          RequestStatus::Completed,
+            data_provided:   Some("JSON data export".to_string()),
             completion_date: Utc::now(),
         })
     }
 
-    async fn handle_rectification_request(
-        &self,
-        _request: DataSubjectRequest,
-    ) -> SecurityResult<DataSubjectResponse> {
+    async fn handle_rectification_request(&self, _request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
         Ok(DataSubjectResponse {
-            request_id: _request.id,
-            status: RequestStatus::Completed,
-            data_provided: Some("Data rectification completed".to_string()),
+            request_id:      _request.id,
+            status:          RequestStatus::Completed,
+            data_provided:   Some("Data rectification completed".to_string()),
             completion_date: Utc::now(),
         })
     }
 
-    async fn handle_access_request_ccpa(
-        &self,
-        _request: DataSubjectRequest,
-    ) -> SecurityResult<DataSubjectResponse> {
+    async fn handle_access_request_ccpa(&self, _request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
         Ok(DataSubjectResponse {
-            request_id: _request.id,
-            status: RequestStatus::Completed,
-            data_provided: Some("CCPA data access provided".to_string()),
+            request_id:      _request.id,
+            status:          RequestStatus::Completed,
+            data_provided:   Some("CCPA data access provided".to_string()),
             completion_date: Utc::now(),
         })
     }
 
-    async fn handle_erasure_request_ccpa(
-        &self,
-        _request: DataSubjectRequest,
-    ) -> SecurityResult<DataSubjectResponse> {
+    async fn handle_erasure_request_ccpa(&self, _request: DataSubjectRequest) -> SecurityResult<DataSubjectResponse> {
         Ok(DataSubjectResponse {
-            request_id: _request.id,
-            status: RequestStatus::Completed,
-            data_provided: Some("CCPA data deletion completed".to_string()),
+            request_id:      _request.id,
+            status:          RequestStatus::Completed,
+            data_provided:   Some("CCPA data deletion completed".to_string()),
             completion_date: Utc::now(),
         })
     }
@@ -739,9 +707,9 @@ impl GDPRManager {
 /// Response to data subject request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataSubjectResponse {
-    pub request_id: String,
-    pub status: RequestStatus,
-    pub data_provided: Option<String>,
+    pub request_id:      String,
+    pub status:          RequestStatus,
+    pub data_provided:   Option<String>,
     pub completion_date: DateTime<Utc>,
 }
 
@@ -750,18 +718,14 @@ impl CCPAComplianceManager {
     pub async fn new() -> SecurityResult<Self> {
         Ok(Self {
             consent_optouts: RwLock::new(HashMap::new()),
-            data_sales_log: RwLock::new(Vec::new()),
+            data_sales_log:  RwLock::new(Vec::new()),
             cookie_consents: RwLock::new(HashMap::new()),
-            ccpa_audit_log: Arc::new(NoOpAuditCallback),
+            ccpa_audit_log:  Arc::new(NoOpAuditCallback),
         })
     }
 
     /// Process CCPA opt-out request
-    pub async fn process_optout(
-        &self,
-        user_id: &str,
-        categories: Vec<String>,
-    ) -> SecurityResult<String> {
+    pub async fn process_optout(&self, user_id: &str, categories: Vec<String>) -> SecurityResult<String> {
         let mut optouts = self.consent_optouts.write().await;
         let user_optouts = optouts
             .entry(user_id.to_string())
@@ -774,14 +738,14 @@ impl CCPAComplianceManager {
         // Log to audit
         if let Some(audit) = &self.ccpa_audit_log {
             let audit_event = ComplianceAuditEvent {
-                id: format!("optout_{}", uuid::Uuid::new_v4()),
-                event_type: ComplianceEventType::ConsentWithdrawn,
-                timestamp: Utc::now(),
-                user_id: Some(user_id.to_string()),
-                affected_data: user_optouts.iter().cloned().collect(),
-                legal_jurisdiction: "CCPA".to_string(),
-                compliance_status: true,
-                description: format!("CCPA opt-out processed for user {}", user_id),
+                id:                  format!("optout_{}", uuid::Uuid::new_v4()),
+                event_type:          ComplianceEventType::ConsentWithdrawn,
+                timestamp:           Utc::now(),
+                user_id:             Some(user_id.to_string()),
+                affected_data:       user_optouts.iter().cloned().collect(),
+                legal_jurisdiction:  "CCPA".to_string(),
+                compliance_status:   true,
+                description:         format!("CCPA opt-out processed for user {}", user_id),
                 remediation_actions: vec!["Update data processing policies".to_string()],
             };
 
@@ -844,12 +808,12 @@ pub async fn create_ccpa_manager() -> SecurityResult<CCPAComplianceManager> {
 
 /// Enterprise compliance manager for multi-framework support (Wave 3)
 pub struct EnterpriseComplianceManager {
-    gdpr_manager: GDPRManager,
-    ccpa_manager: CCPAComplianceManager,
+    gdpr_manager:     GDPRManager,
+    ccpa_manager:     CCPAComplianceManager,
     hipaa_compliance: HIPAACompliance,
-    soc2_compliance: SOC2Compliance,
-    sox_compliance: SOXCompliance,
-    audit_callback: Arc<dyn AuditCallback>,
+    soc2_compliance:  SOC2Compliance,
+    sox_compliance:   SOXCompliance,
+    audit_callback:   Arc<dyn AuditCallback>,
 }
 
 impl EnterpriseComplianceManager {
@@ -960,7 +924,7 @@ impl EnterpriseComplianceManager {
 
         SOC2Compliance {
             trust_services_criteria: criteria,
-            control_objectives: vec![
+            control_objectives:      vec![
                 "System Security".to_string(),
                 "Data Processing".to_string(),
                 "Data Security".to_string(),
@@ -968,31 +932,31 @@ impl EnterpriseComplianceManager {
             ]
             .into_iter()
             .collect(),
-            control_activities: vec![], // Would be populated with actual controls
-            testing_procedures: vec![], // Would be populated with actual procedures
-            findings: vec![],           // Would be populated with actual findings
-            attestation_report: Some("SOC 2 Type II Report Available".to_string()),
-            audit_period_start: Some(Utc::now() - chrono::Duration::days(365)),
-            audit_period_end: Some(Utc::now()),
-            overall_assurance: 0.96,
+            control_activities:      vec![], // Would be populated with actual controls
+            testing_procedures:      vec![], // Would be populated with actual procedures
+            findings:                vec![], // Would be populated with actual findings
+            attestation_report:      Some("SOC 2 Type II Report Available".to_string()),
+            audit_period_start:      Some(Utc::now() - chrono::Duration::days(365)),
+            audit_period_end:        Some(Utc::now()),
+            overall_assurance:       0.96,
         }
     }
 
     /// Default SOX compliance structure
     fn default_sox_compliance() -> SOXCompliance {
         SOXCompliance {
-            section_302_compliant: true,
-            section_404_compliant: true,
-            material_weaknesses: vec![],
-            significant_deficiencies: vec![],
-            internal_controls_effective: 0.94,
+            section_302_compliant:        true,
+            section_404_compliant:        true,
+            material_weaknesses:          vec![],
+            significant_deficiencies:     vec![],
+            internal_controls_effective:  0.94,
             financial_reporting_accuracy: true,
-            documentation_complete: true,
-            audit_committee_oversight: true,
-            ceo_cfo_certifications: true,
-            compliance_certificate: Some("SOX 404 Audit Complete".to_string()),
-            last_sox_assessment: Some(Utc::now() - chrono::Duration::days(90)),
-            remediation_timeline: None,
+            documentation_complete:       true,
+            audit_committee_oversight:    true,
+            ceo_cfo_certifications:       true,
+            compliance_certificate:       Some("SOX 404 Audit Complete".to_string()),
+            last_sox_assessment:          Some(Utc::now() - chrono::Duration::days(90)),
+            remediation_timeline:         None,
         }
     }
 }
@@ -1021,16 +985,16 @@ pub async fn export_user_data(user_id: &str) -> SecurityResult<serde_json::Value
 /// Comprehensive compliance report for all frameworks (Wave 3)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComprehensiveComplianceReport {
-    pub report_id: String,
-    pub generated_at: DateTime<Utc>,
-    pub gdpr_compliance: GDPRCompliance,
-    pub hipaa_compliance_score: f64,
-    pub soc2_compliance_score: f64,
-    pub sox_compliance_score: f64,
+    pub report_id:                String,
+    pub generated_at:             DateTime<Utc>,
+    pub gdpr_compliance:          GDPRCompliance,
+    pub hipaa_compliance_score:   f64,
+    pub soc2_compliance_score:    f64,
+    pub sox_compliance_score:     f64,
     pub overall_compliance_score: f64,
-    pub framework_assessments: Vec<String>,
-    pub critical_findings: Vec<String>,
-    pub recommended_actions: Vec<String>,
+    pub framework_assessments:    Vec<String>,
+    pub critical_findings:        Vec<String>,
+    pub recommended_actions:      Vec<String>,
 }
 
 /// Create enterprise compliance manager
@@ -1045,9 +1009,7 @@ pub mod anonymization {
     use super::*;
 
     /// Anonymize sensitive data according to GDPR
-    pub fn anonymize_personal_data(
-        data: &HashMap<String, String>,
-    ) -> SecurityResult<serde_json::Value> {
+    pub fn anonymize_personal_data(data: &HashMap<String, String>) -> SecurityResult<serde_json::Value> {
         let mut anonymized = serde_json::Map::new();
 
         for (key, value) in data {
@@ -1077,8 +1039,9 @@ pub mod anonymization {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test as async_test;
+
+    use super::*;
 
     #[async_test]
     async fn test_gdpr_manager_creation() {
@@ -1098,20 +1061,20 @@ mod tests {
         let gdpr_manager = GDPRManager::new().await.unwrap();
 
         let request = DataSubjectRequest {
-            id: "request123".to_string(),
-            request_type: RequestType::GDPR(GDPRRequestType::RightToAccess),
-            user_id: "user123".to_string(),
-            tenant_id: None,
-            submitted_at: Utc::now(),
-            resolved_at: None,
-            status: RequestStatus::Pending,
-            description: "Access my data".to_string(),
-            legal_basis: None,
-            requested_by_user: true,
-            processed_by: None,
+            id:                 "request123".to_string(),
+            request_type:       RequestType::GDPR(GDPRRequestType::RightToAccess),
+            user_id:            "user123".to_string(),
+            tenant_id:          None,
+            submitted_at:       Utc::now(),
+            resolved_at:        None,
+            status:             RequestStatus::Pending,
+            description:        "Access my data".to_string(),
+            legal_basis:        None,
+            requested_by_user:  true,
+            processed_by:       None,
             verification_token: None,
-            response_data: None,
-            metadata: HashMap::new(),
+            response_data:      None,
+            metadata:           HashMap::new(),
         };
 
         let response = gdpr_manager.process_request(request).await.unwrap();
@@ -1149,11 +1112,11 @@ mod tests {
         let ccpa_manager = CCPAComplianceManager::new().await.unwrap();
 
         let consent = CookieConsent {
-            user_id: "test_user".to_string(),
-            categories: ["essential".to_string(), "analytics".to_string()].into(),
-            granted_at: Utc::now(),
-            expires_at: Utc::now() + chrono::Duration::days(365),
-            ip_address: "127.0.0.1".to_string(),
+            user_id:        "test_user".to_string(),
+            categories:     ["essential".to_string(), "analytics".to_string()].into(),
+            granted_at:     Utc::now(),
+            expires_at:     Utc::now() + chrono::Duration::days(365),
+            ip_address:     "127.0.0.1".to_string(),
             consent_string: "essential analytics".to_string(),
         };
 

@@ -1,6 +1,7 @@
+use async_trait::async_trait;
+
 use crate::types::*;
 use crate::RefactoringOperation;
-use async_trait::async_trait;
 
 /// Add Delegation operation - adds delegation to a class
 pub struct AddDelegationOperation;
@@ -16,12 +17,12 @@ impl RefactoringOperation for AddDelegationOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![],
             error_message: None,
-            warnings: vec!["Add delegation operation requires implementation".to_string()],
-            new_content: None,
+            warnings:      vec!["Add delegation operation requires implementation".to_string()],
+            new_content:   None,
         })
     }
 
@@ -30,14 +31,14 @@ impl RefactoringOperation for AddDelegationOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: false,
+            is_safe:          false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::Medium,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Delegation may change class behavior".to_string()],
-            suggestions: vec![],
-            warnings: vec!["Add delegation operation requires implementation".to_string()],
+            suggestions:      vec![],
+            warnings:         vec!["Add delegation operation requires implementation".to_string()],
         })
     }
 
@@ -70,12 +71,12 @@ impl RefactoringOperation for RemoveDelegationOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![],
             error_message: None,
-            warnings: vec!["Remove delegation operation requires implementation".to_string()],
-            new_content: None,
+            warnings:      vec!["Remove delegation operation requires implementation".to_string()],
+            new_content:   None,
         })
     }
 
@@ -84,14 +85,14 @@ impl RefactoringOperation for RemoveDelegationOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: false,
+            is_safe:          false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::Medium,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Removing delegation may break dependencies".to_string()],
-            suggestions: vec![],
-            warnings: vec!["Remove delegation operation requires implementation".to_string()],
+            suggestions:      vec![],
+            warnings:         vec!["Remove delegation operation requires implementation".to_string()],
         })
     }
 

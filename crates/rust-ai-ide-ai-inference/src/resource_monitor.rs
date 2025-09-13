@@ -2,11 +2,13 @@
 //!
 //! System resource monitoring functionality for the model loader.
 
-use crate::resource_types::{ModelSize, Quantization, BYTES_PER_GB};
 use std::sync::Arc;
+
 use sysinfo::System;
 use tokio::sync::RwLock;
 use tracing::debug;
+
+use crate::resource_types::{ModelSize, Quantization, BYTES_PER_GB};
 
 /// System resource monitor
 #[derive(Debug, Clone)]
@@ -54,10 +56,7 @@ impl SystemMonitor {
     }
 
     /// Calculate memory requirement for a model using centralized constants
-    pub fn estimate_memory_requirement(
-        model_size: ModelSize,
-        quantization: Option<Quantization>,
-    ) -> u64 {
+    pub fn estimate_memory_requirement(model_size: ModelSize, quantization: Option<Quantization>) -> u64 {
         let base_memory_mb = match model_size {
             ModelSize::Small => 500.0,       // 500MB
             ModelSize::Medium => 1000.0,     // 1GB
@@ -87,9 +86,9 @@ impl SystemMonitor {
         let percentage = self.get_memory_usage_percentage().await;
 
         ResourceSummary {
-            used_memory_bytes: used,
+            used_memory_bytes:  used,
             total_memory_bytes: total,
-            memory_percentage: percentage,
+            memory_percentage:  percentage,
         }
     }
 }
@@ -97,9 +96,9 @@ impl SystemMonitor {
 /// Summary of system resources
 #[derive(Debug, Clone)]
 pub struct ResourceSummary {
-    pub used_memory_bytes: u64,
+    pub used_memory_bytes:  u64,
     pub total_memory_bytes: u64,
-    pub memory_percentage: f64,
+    pub memory_percentage:  f64,
 }
 
 impl ResourceSummary {
@@ -153,9 +152,9 @@ mod tests {
     #[test]
     fn test_memory_pressure_levels() {
         let summary = ResourceSummary {
-            used_memory_bytes: 0,
+            used_memory_bytes:  0,
             total_memory_bytes: 1024 * 1024 * 1024, // 1GB
-            memory_percentage: 95.0,
+            memory_percentage:  95.0,
         };
 
         assert_eq!(summary.pressure_level(), MemoryPressure::Critical);
@@ -164,10 +163,8 @@ mod tests {
 
     #[test]
     fn test_memory_estimation() {
-        let small_fp32 =
-            SystemMonitor::estimate_memory_requirement(ModelSize::Small, Some(Quantization::FP32));
-        let small_int8 =
-            SystemMonitor::estimate_memory_requirement(ModelSize::Small, Some(Quantization::INT8));
+        let small_fp32 = SystemMonitor::estimate_memory_requirement(ModelSize::Small, Some(Quantization::FP32));
+        let small_int8 = SystemMonitor::estimate_memory_requirement(ModelSize::Small, Some(Quantization::INT8));
 
         assert_eq!(small_fp32, 1024 * 1024 * 500); // 500MB
         assert_eq!(small_int8, (1024 * 1024 * 500) / 4); // 125MB

@@ -7,12 +7,13 @@
 //! - Policy versioning and safe rollouts with rollback capability
 //! - Performance monitoring and metrics collection
 
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use moka::future::Cache;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tokio::sync::{mpsc, RwLock};
 use tracing::{error, info, warn};
 use uuid::Uuid;
@@ -22,47 +23,47 @@ use crate::{MonitoringError, Result, SecurityEvent};
 /// Core policy engine for real-time enforcement
 #[derive(Clone)]
 pub struct RealtimePolicyEnforcer {
-    policy_engine: Arc<PolicyEngine>,
-    decision_cache: Arc<Cache<String, PolicyDecision>>,
-    event_sender: mpsc::UnboundedSender<SecurityEvent>,
+    policy_engine:   Arc<PolicyEngine>,
+    decision_cache:  Arc<Cache<String, PolicyDecision>>,
+    event_sender:    mpsc::UnboundedSender<SecurityEvent>,
     violation_count: Arc<RwLock<u64>>,
 }
 
 #[derive(Clone)]
 pub struct PolicyEngine {
-    policies: Arc<RwLock<Vec<SecurityPolicy>>>,
-    compilers: Vec<Box<dyn PolicyCompiler + Send + Sync>>,
+    policies:        Arc<RwLock<Vec<SecurityPolicy>>>,
+    compilers:       Vec<Box<dyn PolicyCompiler + Send + Sync>>,
     decision_makers: Vec<Box<dyn DecisionMaker + Send + Sync>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityPolicy {
-    pub id: String,
-    pub version: String,
-    pub name: String,
+    pub id:          String,
+    pub version:     String,
+    pub name:        String,
     pub description: Option<String>,
-    pub rules: Vec<PolicyRule>,
-    pub scope: PolicyScope,
-    pub active: bool,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub rules:       Vec<PolicyRule>,
+    pub scope:       PolicyScope,
+    pub active:      bool,
+    pub created_at:  DateTime<Utc>,
+    pub updated_at:  DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolicyRule {
-    pub id: String,
-    pub name: String,
+    pub id:         String,
+    pub name:       String,
     pub conditions: Vec<PolicyCondition>,
-    pub effect: PolicyEffect,
-    pub priority: u32,
+    pub effect:     PolicyEffect,
+    pub priority:   u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolicyCondition {
-    pub field: String,
+    pub field:    String,
     pub operator: ConditionOperator,
-    pub value: serde_json::Value,
-    pub logic: ConditionLogic,
+    pub value:    serde_json::Value,
+    pub logic:    ConditionLogic,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -106,11 +107,11 @@ pub enum PolicyScope {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolicyDecision {
-    pub allow: bool,
+    pub allow:     bool,
     pub policy_id: String,
-    pub rule_id: String,
-    pub reason: String,
-    pub metadata: serde_json::Map<String, serde_json::Value>,
+    pub rule_id:   String,
+    pub reason:    String,
+    pub metadata:  serde_json::Map<String, serde_json::Value>,
     pub timestamp: DateTime<Utc>,
 }
 
@@ -118,31 +119,31 @@ pub struct PolicyDecision {
 pub struct DecisionPoints {
     pub access_controls: Vec<AccessControlPoint>,
     pub data_operations: Vec<DataOperationPoint>,
-    pub system_events: Vec<SystemEventPoint>,
+    pub system_events:   Vec<SystemEventPoint>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccessControlPoint {
     pub resource: String,
-    pub action: String,
-    pub subject: String,
-    pub context: serde_json::Map<String, serde_json::Value>,
+    pub action:   String,
+    pub subject:  String,
+    pub context:  serde_json::Map<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataOperationPoint {
     pub operation_type: String,
-    pub data_type: String,
-    pub sensitivity: String,
-    pub context: serde_json::Map<String, serde_json::Value>,
+    pub data_type:      String,
+    pub sensitivity:    String,
+    pub context:        serde_json::Map<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemEventPoint {
     pub event_type: String,
-    pub source: String,
-    pub severity: String,
-    pub payload: serde_json::Map<String, serde_json::Value>,
+    pub source:     String,
+    pub severity:   String,
+    pub payload:    serde_json::Map<String, serde_json::Value>,
 }
 
 #[async_trait]
@@ -158,21 +159,21 @@ pub trait DecisionMaker {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompiledPolicy {
     pub raw_rules: Vec<CompiledRule>,
-    pub metadata: serde_json::Map<String, serde_json::Value>,
+    pub metadata:  serde_json::Map<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompiledRule {
     pub conditions: Vec<Box<dyn Fn(&DecisionContext) -> bool + Send + Sync>>,
-    pub effect: PolicyEffect,
+    pub effect:     PolicyEffect,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DecisionContext {
-    pub subject: String,
-    pub action: String,
-    pub resource: String,
-    pub context: serde_json::Map<String, serde_json::Value>,
+    pub subject:   String,
+    pub action:    String,
+    pub resource:  String,
+    pub context:   serde_json::Map<String, serde_json::Value>,
     pub timestamp: DateTime<Utc>,
 }
 
@@ -197,10 +198,7 @@ impl RealtimePolicyEnforcer {
         })
     }
 
-    pub async fn enforce_access_control(
-        &self,
-        point: &AccessControlPoint,
-    ) -> Result<PolicyDecision> {
+    pub async fn enforce_access_control(&self, point: &AccessControlPoint) -> Result<PolicyDecision> {
         let cache_key = format!(
             "access:{}:{}:{}",
             point.subject, point.action, point.resource
@@ -213,10 +211,10 @@ impl RealtimePolicyEnforcer {
 
         // Evaluate policy
         let context = DecisionContext {
-            subject: point.subject.clone(),
-            action: point.action.clone(),
-            resource: point.resource.clone(),
-            context: point.context.clone(),
+            subject:   point.subject.clone(),
+            action:    point.action.clone(),
+            resource:  point.resource.clone(),
+            context:   point.context.clone(),
             timestamp: Utc::now(),
         };
 
@@ -233,17 +231,17 @@ impl RealtimePolicyEnforcer {
 
             // Send violation event
             let event = SecurityEvent {
-                id: Uuid::new_v4(),
-                timestamp: Utc::now(),
-                event_type: "policy_violation".to_string(),
-                severity: crate::EventSeverity::High,
-                source: "policy_engine".to_string(),
-                details: serde_json::json!({
+                id:             Uuid::new_v4(),
+                timestamp:      Utc::now(),
+                event_type:     "policy_violation".to_string(),
+                severity:       crate::EventSeverity::High,
+                source:         "policy_engine".to_string(),
+                details:        serde_json::json!({
                     "decision": &decision,
                     "context": &context
                 }),
-                actor: Some(point.subject.clone()),
-                resource: Some(point.resource.clone()),
+                actor:          Some(point.subject.clone()),
+                resource:       Some(point.resource.clone()),
                 correlation_id: None,
             };
 
@@ -258,10 +256,10 @@ impl RealtimePolicyEnforcer {
     pub async fn enforce_on_event(&self, event: &SecurityEvent) -> Result<()> {
         // Create decision context from event
         let context = DecisionContext {
-            subject: event.actor.clone().unwrap_or("unknown".to_string()),
-            action: event.event_type.clone(),
-            resource: event.resource.clone().unwrap_or("unknown".to_string()),
-            context: serde_json::json!({
+            subject:   event.actor.clone().unwrap_or("unknown".to_string()),
+            action:    event.event_type.clone(),
+            resource:  event.resource.clone().unwrap_or("unknown".to_string()),
+            context:   serde_json::json!({
                 "event_id": event.id,
                 "event_details": &event.details
             })
@@ -303,14 +301,14 @@ impl RealtimePolicyEnforcer {
         let cache_stats = self.decision_cache.stats();
 
         Ok(PolicyMetrics {
-            cache_hit_rate: if cache_stats.accesses > 0 {
+            cache_hit_rate:        if cache_stats.accesses > 0 {
                 cache_stats.hits as f64 / cache_stats.accesses as f64
             } else {
                 0.0
             },
-            cache_size: self.decision_cache.entry_count(),
+            cache_size:            self.decision_cache.entry_count(),
             average_decision_time: std::time::Duration::from_millis(2), // TODO: Track actual times
-            policy_violations: *self.violation_count.read().await,
+            policy_violations:     *self.violation_count.read().await,
         })
     }
 }
@@ -318,8 +316,8 @@ impl RealtimePolicyEnforcer {
 impl PolicyEngine {
     pub async fn new() -> Result<Self> {
         Ok(Self {
-            policies: Arc::new(RwLock::new(Vec::new())),
-            compilers: Vec::new(),
+            policies:        Arc::new(RwLock::new(Vec::new())),
+            compilers:       Vec::new(),
             decision_makers: Vec::new(),
         })
     }
@@ -341,16 +339,14 @@ impl PolicyEngine {
             for rule in &policy.rules {
                 if self.rule_matches_conditions(rule, context).await {
                     match rule.effect {
-                        PolicyEffect::Deny => {
+                        PolicyEffect::Deny =>
                             if highest_priority_deny.map_or(true, |h| rule.priority > h.priority) {
                                 highest_priority_deny = Some(rule);
-                            }
-                        }
-                        PolicyEffect::Allow => {
+                            },
+                        PolicyEffect::Allow =>
                             if highest_priority_allow.map_or(true, |h| rule.priority > h.priority) {
                                 highest_priority_allow = Some(rule);
-                            }
-                        }
+                            },
                         PolicyEffect::Audit | PolicyEffect::Alert => {
                             // These effects don't block but can trigger additional actions
                             self.handle_audit_alert(rule, context).await?;
@@ -363,46 +359,42 @@ impl PolicyEngine {
         // Deny takes precedence over allow
         if let Some(deny_rule) = highest_priority_deny {
             Ok(PolicyDecision {
-                allow: false,
+                allow:     false,
                 policy_id: match matched_policies.first().map(|p| p.id.as_str()) {
                     Some(id) => id.to_string(),
                     None => "".to_string(),
                 },
-                rule_id: deny_rule.id.clone(),
-                reason: deny_rule.name.clone(),
-                metadata: serde_json::Map::new(),
+                rule_id:   deny_rule.id.clone(),
+                reason:    deny_rule.name.clone(),
+                metadata:  serde_json::Map::new(),
                 timestamp: context.timestamp,
             })
         } else if let Some(allow_rule) = highest_priority_allow {
             Ok(PolicyDecision {
-                allow: true,
+                allow:     true,
                 policy_id: match matched_policies.first().map(|p| p.id.as_str()) {
                     Some(id) => id.to_string(),
                     None => "".to_string(),
                 },
-                rule_id: allow_rule.id.clone(),
-                reason: allow_rule.name.clone(),
-                metadata: serde_json::Map::new(),
+                rule_id:   allow_rule.id.clone(),
+                reason:    allow_rule.name.clone(),
+                metadata:  serde_json::Map::new(),
                 timestamp: context.timestamp,
             })
         } else {
             // Default deny
             Ok(PolicyDecision {
-                allow: false,
+                allow:     false,
                 policy_id: "".to_string(),
-                rule_id: "".to_string(),
-                reason: "No matching policy found (default deny)".to_string(),
-                metadata: serde_json::Map::new(),
+                rule_id:   "".to_string(),
+                reason:    "No matching policy found (default deny)".to_string(),
+                metadata:  serde_json::Map::new(),
                 timestamp: context.timestamp,
             })
         }
     }
 
-    async fn policy_matches_scope(
-        &self,
-        policy: &SecurityPolicy,
-        context: &DecisionContext,
-    ) -> bool {
+    async fn policy_matches_scope(&self, policy: &SecurityPolicy, context: &DecisionContext) -> bool {
         match &policy.scope {
             PolicyScope::Global => true,
             PolicyScope::User(user_id) => context.subject == *user_id,
@@ -440,11 +432,7 @@ impl PolicyEngine {
         true
     }
 
-    fn condition_matches_condition(
-        &self,
-        condition: &PolicyCondition,
-        context: &DecisionContext,
-    ) -> bool {
+    fn condition_matches_condition(&self, condition: &PolicyCondition, context: &DecisionContext) -> bool {
         let context_value = match condition.field.as_str() {
             "subject" => Some(&context.subject),
             "action" => Some(&context.action),
@@ -480,8 +468,7 @@ impl PolicyEngine {
             ConditionOperator::StartsWith => actual_value.starts_with(expected_str),
             ConditionOperator::EndsWith => actual_value.ends_with(expected_str),
             ConditionOperator::GreaterThan => {
-                if let (Ok(actual_num), Some(expected_num)) =
-                    (actual_value.parse::<f64>(), expected_value.as_number())
+                if let (Ok(actual_num), Some(expected_num)) = (actual_value.parse::<f64>(), expected_value.as_number())
                 {
                     actual_num > expected_num.as_f64().unwrap_or(0.0)
                 } else {
@@ -489,21 +476,19 @@ impl PolicyEngine {
                 }
             }
             ConditionOperator::LessThan => {
-                if let (Ok(actual_num), Some(expected_num)) =
-                    (actual_value.parse::<f64>(), expected_value.as_number())
+                if let (Ok(actual_num), Some(expected_num)) = (actual_value.parse::<f64>(), expected_value.as_number())
                 {
                     actual_num < expected_num.as_f64().unwrap_or(0.0)
                 } else {
                     actual_value < expected_str
                 }
             }
-            ConditionOperator::Regex => {
+            ConditionOperator::Regex =>
                 if let Ok(regex) = Regex::new(expected_str) {
                     regex.is_match(actual_value)
                 } else {
                     false
-                }
-            }
+                },
             ConditionOperator::IsEmpty => actual_value.is_empty(),
             ConditionOperator::IsNotEmpty => !actual_value.is_empty(),
         }
@@ -521,8 +506,8 @@ impl PolicyEngine {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolicyMetrics {
-    pub cache_hit_rate: f64,
-    pub cache_size: u64,
+    pub cache_hit_rate:        f64,
+    pub cache_size:            u64,
     pub average_decision_time: std::time::Duration,
-    pub policy_violations: u64,
+    pub policy_violations:     u64,
 }

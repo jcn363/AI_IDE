@@ -1,8 +1,8 @@
 //! # Application State Management Module
 //!
 //! This module implements the centralized state management system for the Rust AI IDE application.
-//! It coordinates multiple subsystems including AI services, debugging, file watching, LSP connections,
-//! and performance monitoring through a unified, thread-safe interface.
+//! It coordinates multiple subsystems including AI services, debugging, file watching, LSP
+//! connections, and performance monitoring through a unified, thread-safe interface.
 //!
 //! ## Architecture Overview
 //!
@@ -96,16 +96,16 @@
 //! - **Event Batching**: File changes are debounced to reduce noise
 //! - **Memory Management**: Large workspaces use virtual memory management
 
-use crate::file_watcher::FileWatcher;
-use crate::infra::{ConnectionPool, EventBus, RateLimiter};
-use rust_ai_ide_debugger::{
-    BreakpointInfo, Debugger, DebuggerConfig, DebuggerState, StackFrame, VariableInfo,
-};
-use rust_ai_ide_lsp::pool::LanguageServerPool as LspPool;
-use rust_ai_ide_observability::ObservabilityManager;
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use rust_ai_ide_debugger::{BreakpointInfo, Debugger, DebuggerConfig, DebuggerState, StackFrame, VariableInfo};
+use rust_ai_ide_lsp::pool::LanguageServerPool as LspPool;
+use rust_ai_ide_observability::ObservabilityManager;
 use tokio::sync::Mutex;
+
+use crate::file_watcher::FileWatcher;
+use crate::infra::{ConnectionPool, EventBus, RateLimiter};
 
 /// # Workspace Information Structure
 ///
@@ -157,9 +157,9 @@ pub struct Workspace {
 #[derive(Clone, Debug)]
 pub struct Project {
     /// Absolute path to the project directory
-    pub path: String,
+    pub path:           String,
     /// Human-readable name for the project
-    pub name: String,
+    pub name:           String,
     /// Optional path to the parent workspace root
     pub workspace_root: Option<String>,
 }
@@ -281,7 +281,7 @@ pub struct Project {
 pub struct AppState {
     // Original AI service fields
     /// Primary AI service for code analysis and generation
-    ai_service: Arc<Mutex<Option<rust_ai_ide_lsp::AIService>>>,
+    ai_service:        Arc<Mutex<Option<rust_ai_ide_lsp::AIService>>>,
     /// Progress tracking for long-running AI analysis operations
     analysis_progress: Arc<Mutex<std::collections::HashMap<String, f64>>>,
 
@@ -289,31 +289,29 @@ pub struct AppState {
     /// Current workspace context (project root and metadata)
     current_workspace: Arc<Mutex<Option<Workspace>>>,
     /// Map of currently open files (path -> File content)
-    open_files: Arc<Mutex<HashMap<String, rust_ai_ide_core::File>>>,
+    open_files:        Arc<Mutex<HashMap<String, rust_ai_ide_core::File>>>,
     /// Current project context within the workspace
-    current_project: Arc<Mutex<Option<Project>>>,
+    current_project:   Arc<Mutex<Option<Project>>>,
     /// Integrated debugger for code debugging and breakpoints
-    debugger: Arc<Mutex<Debugger>>,
+    debugger:          Arc<Mutex<Debugger>>,
     /// File system watcher for detecting changes (optional, lazy-loaded)
-    file_watcher: Arc<Mutex<Option<FileWatcher>>>,
+    file_watcher:      Arc<Mutex<Option<FileWatcher>>>,
 
     // Infrastructure components
     /// Event bus for inter-module pub-sub communication
-    event_bus: EventBus,
+    event_bus:    EventBus,
     /// Rate limiter for protecting against resource exhaustion
     rate_limiter: RateLimiter,
     /// Connection pool for LSP (Language Server Protocol) services
-    lsp_pool: LspPool,
+    lsp_pool:     LspPool,
 
     // Performance monitoring components
     /// System performance monitoring service
     performance_monitor: Arc<Mutex<Option<rust_ai_ide_performance_monitoring::PerformanceMonitor>>>,
     /// Memory optimization and monitoring service
-    memory_optimizer:
-        Arc<Mutex<Option<rust_ai_ide_performance_monitoring::memory::MemoryOptimizer>>>,
+    memory_optimizer:    Arc<Mutex<Option<rust_ai_ide_performance_monitoring::memory::MemoryOptimizer>>>,
     /// Battery and power management monitoring
-    battery_monitor:
-        Arc<Mutex<Option<rust_ai_ide_performance_monitoring::battery::BatteryMonitor>>>,
+    battery_monitor:     Arc<Mutex<Option<rust_ai_ide_performance_monitoring::battery::BatteryMonitor>>>,
 
     // Observability and monitoring
     /// Comprehensive observability manager for metrics, tracing, and health checks
@@ -323,19 +321,19 @@ pub struct AppState {
 impl AppState {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         Ok(Self {
-            ai_service: Arc::new(Mutex::new(None)),
-            analysis_progress: Arc::new(Mutex::new(std::collections::HashMap::new())),
-            current_workspace: Arc::new(Mutex::new(None)),
-            open_files: Arc::new(Mutex::new(HashMap::new())),
-            current_project: Arc::new(Mutex::new(None)),
-            debugger: Arc::new(Mutex::new(Debugger::new())),
-            file_watcher: Arc::new(Mutex::new(None)),
-            event_bus: EventBus::new(1000), // Buffer size for event bus
-            rate_limiter: RateLimiter::new(100, std::time::Duration::from_secs(60)), // 100 requests per minute
-            lsp_pool: LspPool::new(10), // Pool of 10 LSP connections
-            performance_monitor: Arc::new(Mutex::new(None)),
-            memory_optimizer: Arc::new(Mutex::new(None)),
-            battery_monitor: Arc::new(Mutex::new(None)),
+            ai_service:            Arc::new(Mutex::new(None)),
+            analysis_progress:     Arc::new(Mutex::new(std::collections::HashMap::new())),
+            current_workspace:     Arc::new(Mutex::new(None)),
+            open_files:            Arc::new(Mutex::new(HashMap::new())),
+            current_project:       Arc::new(Mutex::new(None)),
+            debugger:              Arc::new(Mutex::new(Debugger::new())),
+            file_watcher:          Arc::new(Mutex::new(None)),
+            event_bus:             EventBus::new(1000), // Buffer size for event bus
+            rate_limiter:          RateLimiter::new(100, std::time::Duration::from_secs(60)), // 100 requests per minute
+            lsp_pool:              LspPool::new(10),    // Pool of 10 LSP connections
+            performance_monitor:   Arc::new(Mutex::new(None)),
+            memory_optimizer:      Arc::new(Mutex::new(None)),
+            battery_monitor:       Arc::new(Mutex::new(None)),
             observability_manager: Arc::new(Mutex::new(None)),
         })
     }
@@ -415,42 +413,27 @@ impl AppState {
     }
 
     // Performance monitoring accessors
-    pub async fn set_performance_monitor(
-        &self,
-        monitor: rust_ai_ide_performance_monitoring::PerformanceMonitor,
-    ) {
+    pub async fn set_performance_monitor(&self, monitor: rust_ai_ide_performance_monitoring::PerformanceMonitor) {
         *self.performance_monitor.lock().await = Some(monitor);
     }
 
-    pub async fn get_performance_monitor(
-        &self,
-    ) -> Option<rust_ai_ide_performance_monitoring::PerformanceMonitor> {
+    pub async fn get_performance_monitor(&self) -> Option<rust_ai_ide_performance_monitoring::PerformanceMonitor> {
         self.performance_monitor.lock().await.clone()
     }
 
-    pub async fn set_memory_optimizer(
-        &self,
-        optimizer: rust_ai_ide_performance_monitoring::memory::MemoryOptimizer,
-    ) {
+    pub async fn set_memory_optimizer(&self, optimizer: rust_ai_ide_performance_monitoring::memory::MemoryOptimizer) {
         *self.memory_optimizer.lock().await = Some(optimizer);
     }
 
-    pub async fn get_memory_optimizer(
-        &self,
-    ) -> Option<rust_ai_ide_performance_monitoring::memory::MemoryOptimizer> {
+    pub async fn get_memory_optimizer(&self) -> Option<rust_ai_ide_performance_monitoring::memory::MemoryOptimizer> {
         self.memory_optimizer.lock().await.clone()
     }
 
-    pub async fn set_battery_monitor(
-        &self,
-        monitor: rust_ai_ide_performance_monitoring::battery::BatteryMonitor,
-    ) {
+    pub async fn set_battery_monitor(&self, monitor: rust_ai_ide_performance_monitoring::battery::BatteryMonitor) {
         *self.battery_monitor.lock().await = Some(monitor);
     }
 
-    pub async fn get_battery_monitor(
-        &self,
-    ) -> Option<rust_ai_ide_performance_monitoring::battery::BatteryMonitor> {
+    pub async fn get_battery_monitor(&self) -> Option<rust_ai_ide_performance_monitoring::battery::BatteryMonitor> {
         self.battery_monitor.lock().await.clone()
     }
 

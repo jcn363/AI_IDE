@@ -1,8 +1,9 @@
 //! Breakpoint management for the debugger
 
-use log::{debug, info};
 use std::collections::HashMap;
 use std::path::Path;
+
+use log::{debug, info};
 
 use crate::debugger::error::{DebuggerError, Result as DebuggerResult};
 use crate::debugger::types::BreakpointInfo;
@@ -12,7 +13,7 @@ pub struct BreakpointManager {
     /// Map of breakpoint IDs to breakpoint info
     breakpoints: HashMap<u32, BreakpointInfo>,
     /// Next available breakpoint ID
-    next_id: u32,
+    next_id:     u32,
 }
 
 impl BreakpointManager {
@@ -20,7 +21,7 @@ impl BreakpointManager {
     pub fn new() -> Self {
         Self {
             breakpoints: HashMap::new(),
-            next_id: 1,
+            next_id:     1,
         }
     }
 }
@@ -59,9 +60,10 @@ impl BreakpointManager {
         }
 
         // Normalize the file path
-        let file_path = file.as_ref().canonicalize().map_err(|_| {
-            DebuggerError::breakpoint_error(format!("File not found: {}", file.as_ref().display()))
-        })?;
+        let file_path = file
+            .as_ref()
+            .canonicalize()
+            .map_err(|_| DebuggerError::breakpoint_error(format!("File not found: {}", file.as_ref().display())))?;
 
         let id = self.next_id;
         self.next_id += 1;

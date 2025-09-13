@@ -38,6 +38,7 @@ pub mod ui_integration;
 pub mod visualization;
 
 use std::sync::Arc;
+
 use tokio::sync::{Mutex, RwLock};
 
 use crate::types::*;
@@ -162,9 +163,9 @@ impl QualityIntelligenceDashboard {
         // Initialize all components concurrently for better startup performance
         let performance_metrics = DashboardPerformanceMetrics {
             average_update_latency: 0.0,
-            active_sessions: 0,
-            memory_usage: 0,
-            error_rate: 0.0,
+            active_sessions:        0,
+            memory_usage:           0,
+            error_rate:             0.0,
         };
 
         let initial_state = DashboardState {
@@ -307,10 +308,7 @@ impl QualityIntelligenceDashboard {
     /// # Errors
     ///
     /// Returns an error if configuration update fails.
-    pub async fn update_configuration(
-        &self,
-        new_config: DashboardConfiguration,
-    ) -> DashboardResult<()> {
+    pub async fn update_configuration(&self, new_config: DashboardConfiguration) -> DashboardResult<()> {
         // Validate new configuration
         new_config.validate()?;
 
@@ -358,9 +356,7 @@ pub async fn initialize_default_dashboard() -> DashboardResult<QualityIntelligen
 }
 
 /// Convenience function to initialize dashboard with configuration
-pub async fn initialize_with_config(
-    config: DashboardConfiguration,
-) -> DashboardResult<QualityIntelligenceDashboard> {
+pub async fn initialize_with_config(config: DashboardConfiguration) -> DashboardResult<QualityIntelligenceDashboard> {
     QualityIntelligenceDashboard::with_config(config).await
 }
 

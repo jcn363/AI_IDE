@@ -8,27 +8,27 @@
 
 use std::collections::HashMap;
 
-/// Core types and data structures for multi-reality coordination
-pub mod types;
-/// MultiRealityCoordinator - Central coordination hub for AR/VR functionality
-pub mod coordinator;
+/// AI integration bridge for spatial AI assistance
+pub mod ai_integration_bridge;
 /// AR engine interface for Augmented Reality features
 pub mod ar_engine;
-/// VR engine interface for Virtual Reality features
-pub mod vr_engine;
 /// Collaboration manager for multi-user VR/AR sessions
 pub mod collaboration_manager;
+/// MultiRealityCoordinator - Central coordination hub for AR/VR functionality
+pub mod coordinator;
 /// Device orchestrator for cross-reality coordination
 pub mod device_orchestrator;
 /// Immersive UI controller for spatial interactions
 pub mod immersive_ui_controller;
-/// AI integration bridge for spatial AI assistance
-pub mod ai_integration_bridge;
+/// Core types and data structures for multi-reality coordination
+pub mod types;
+/// VR engine interface for Virtual Reality features
+pub mod vr_engine;
 
+pub use ar_engine::ArEngine;
 /// Re-exports of key types and functions for convenient access
 pub use coordinator::MultiRealityCoordinator;
-pub use types::{RealityMode, MultiRealityConfig, SpatialPosition, ImmeriveEvent};
-pub use ar_engine::ArEngine;
+pub use types::{ImmeriveEvent, MultiRealityConfig, RealityMode, SpatialPosition};
 pub use vr_engine::VrEngine;
 
 /// Main entry point for initializing multi-reality coordination
@@ -41,8 +41,8 @@ pub use vr_engine::VrEngine;
 /// * `config` - Configuration parameters for multi-reality systems
 ///
 /// # Returns
-/// * `Result<MultiRealityCoordinator, Box<dyn std::error::Error + Send + Sync>>` -
-///   Initialized coordinator or an error if initialization failed
+/// * `Result<MultiRealityCoordinator, Box<dyn std::error::Error + Send + Sync>>` - Initialized
+///   coordinator or an error if initialization failed
 ///
 /// # Example
 /// ```rust,no_run
@@ -64,9 +64,11 @@ pub async fn init_multi_reality_coordination(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::sync::Arc;
+
     use tokio::sync::Mutex;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_multi_reality_initialization() {
@@ -114,7 +116,10 @@ mod tests {
             // Test back to desktop mode
             let desktop_result = coordinator.switch_to_desktop_mode().await;
             match desktop_result {
-                Ok(_) => assert_eq!(coordinator.get_current_reality().await, RealityMode::Desktop),
+                Ok(_) => assert_eq!(
+                    coordinator.get_current_reality().await,
+                    RealityMode::Desktop
+                ),
                 Err(_) => {
                     // Placeholder - in real implementation this would work
                 }
@@ -129,14 +134,16 @@ mod tests {
 
         if let Ok(coordinator) = result {
             let position = SpatialPosition {
-                x: 1.0,
-                y: 2.0,
-                z: -1.0,
+                x:        1.0,
+                y:        2.0,
+                z:        -1.0,
                 rotation: Some(180.0),
             };
 
             // Test spatial positioning capabilities
-            let positioning_result = coordinator.update_spatial_position("test_object", position).await;
+            let positioning_result = coordinator
+                .update_spatial_position("test_object", position)
+                .await;
             match positioning_result {
                 Ok(_) => {
                     let retrieved = coordinator.get_spatial_position("test_object").await;

@@ -1,7 +1,8 @@
 //! Types and data structures for architectural analysis
 
-use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
 
 use crate::analysis::{CodeLocation, Severity};
 
@@ -45,19 +46,19 @@ impl fmt::Display for DependencyType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchitecturalFinding {
     /// Unique identifier for the finding
-    pub id: String,
+    pub id:         String,
     /// Human-readable message describing the finding
-    pub message: String,
+    pub message:    String,
     /// Severity level of the finding
-    pub severity: Severity,
+    pub severity:   Severity,
     /// Location in the source code where the finding was detected
-    pub location: CodeLocation,
+    pub location:   CodeLocation,
     /// Optional suggestion for fixing the issue
     pub suggestion: Option<String>,
     /// Confidence level of the finding (0.0 to 1.0)
     pub confidence: f32,
     /// Identifier for the rule that generated this finding
-    pub rule_id: String,
+    pub rule_id:    String,
 }
 
 /// Trait for analysis findings
@@ -112,7 +113,7 @@ impl Finding for ArchitecturalFinding {
 #[derive(Debug)]
 pub struct InterfaceSegregationViolation {
     /// Description of the violation
-    pub message: String,
+    pub message:  String,
     /// Location in the source code
     pub location: CodeLocation,
 }
@@ -121,9 +122,9 @@ pub struct InterfaceSegregationViolation {
 #[derive(Debug)]
 pub struct DependencyInversionViolation {
     /// Description of the violation
-    pub message: String,
+    pub message:       String,
     /// Location in the source code
-    pub location: CodeLocation,
+    pub location:      CodeLocation,
     /// The concrete type that should be behind an interface
     pub concrete_type: String,
 }

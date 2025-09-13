@@ -1,6 +1,7 @@
 //! Error types for the monitoring framework
 
 use std::fmt;
+
 use thiserror::Error;
 
 /// Result type alias for monitoring operations
@@ -17,15 +18,15 @@ pub enum MonitoringError {
     #[error("Command execution failed: {command} - {source}")]
     CommandExecution {
         command: String,
-        source: std::io::Error,
+        source:  std::io::Error,
     },
 
     /// Process execution errors with exit code
     #[error("Command '{command}' failed with exit code {exit_code}: {stderr}")]
     CommandFailed {
-        command: String,
+        command:   String,
         exit_code: i32,
-        stderr: String,
+        stderr:    String,
     },
 
     /// JSON parsing errors
@@ -108,11 +109,7 @@ impl MonitoringError {
     }
 
     /// Create a new command failure error
-    pub fn command_failed(
-        command: impl Into<String>,
-        exit_code: i32,
-        stderr: impl Into<String>,
-    ) -> Self {
+    pub fn command_failed(command: impl Into<String>, exit_code: i32, stderr: impl Into<String>) -> Self {
         Self::CommandFailed {
             command: command.into(),
             exit_code,
@@ -123,7 +120,7 @@ impl MonitoringError {
     /// Create a new path error
     pub fn path(path: impl Into<String>, message: impl Into<String>) -> Self {
         Self::Path {
-            path: path.into(),
+            path:    path.into(),
             message: message.into(),
         }
     }
@@ -160,10 +157,7 @@ impl MonitoringError {
     pub fn is_critical(&self) -> bool {
         matches!(
             self,
-            Self::Config { .. }
-                | Self::CommandExecution { .. }
-                | Self::Timeout { .. }
-                | Self::Validation { .. }
+            Self::Config { .. } | Self::CommandExecution { .. } | Self::Timeout { .. } | Self::Validation { .. }
         )
     }
 
@@ -171,10 +165,7 @@ impl MonitoringError {
     pub fn should_notify(&self) -> bool {
         matches!(
             self,
-            Self::CommandFailed { .. }
-                | Self::CargoParse { .. }
-                | Self::Analysis { .. }
-                | Self::Timeout { .. }
+            Self::CommandFailed { .. } | Self::CargoParse { .. } | Self::Analysis { .. } | Self::Timeout { .. }
         )
     }
 }

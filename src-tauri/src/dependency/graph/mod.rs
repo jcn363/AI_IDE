@@ -9,15 +9,15 @@ mod export;
 mod filter;
 pub mod traversal;
 
-use crate::dependency::{analysis::*, models::*, serialization::*};
 use anyhow::{anyhow, Result};
 use petgraph::graph::{DiGraph, NodeIndex};
 
-pub use self::{
-    builder::DependencyGraphBuilder,
-    edge::DependencyEdge,
-    export::{export_graph, ExportFormat},
-    filter::DependencyFilter,
-    traversal,
-};
+pub use self::builder::DependencyGraphBuilder;
+pub use self::edge::DependencyEdge;
+pub use self::export::{export_graph, ExportFormat};
+pub use self::filter::DependencyFilter;
+pub use self::traversal;
+use crate::dependency::analysis::*;
 pub use crate::dependency::models::DependencyGraph;
+use crate::dependency::models::*;
+use crate::dependency::serialization::*;

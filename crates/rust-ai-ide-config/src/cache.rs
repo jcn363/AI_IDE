@@ -3,19 +3,20 @@
 //! Provides intelligent caching with TTL, invalidation strategies,
 //! and integration with the unified cache system.
 
-use rust_ai_ide_cache::{Cache, CacheConfig, CacheStats, EvictionPolicy, InMemoryCache};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
+
+use rust_ai_ide_cache::{Cache, CacheConfig, CacheStats, EvictionPolicy, InMemoryCache};
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 /// Configuration-specific cache
 pub struct ConfigCache {
     /// Underlying unified cache
-    unified_cache: Arc<dyn Cache<String, serde_json::Value>>,
+    unified_cache:   Arc<dyn Cache<String, serde_json::Value>>,
     /// Cache configuration
-    config: CacheConfig,
+    config:          CacheConfig,
     /// Per-configuration metadata
     config_metadata: RwLock<HashMap<String, ConfigCacheMetadata>>,
 }
@@ -24,13 +25,13 @@ pub struct ConfigCache {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigCacheMetadata {
     /// Configuration name
-    name: String,
+    name:            String,
     /// Source file path (if applicable)
-    source_path: Option<String>,
+    source_path:     Option<String>,
     /// Last load time
-    last_load: chrono::DateTime<chrono::Utc>,
+    last_load:       chrono::DateTime<chrono::Utc>,
     /// Cache hit count
-    hit_count: u64,
+    hit_count:       u64,
     /// Validation hash
     validation_hash: String,
 }
@@ -81,10 +82,10 @@ impl ConfigCache {
         };
 
         Self {
-            unified_cache: Arc::new(InMemoryCache::<String, serde_json::Value>::new(
+            unified_cache:   Arc::new(InMemoryCache::<String, serde_json::Value>::new(
                 &disabled_config,
             )),
-            config: disabled_config,
+            config:          disabled_config,
             config_metadata: RwLock::new(HashMap::new()),
         }
     }
@@ -109,10 +110,7 @@ impl ConfigCache {
             }
 
             let config: C = serde_json::from_value(json_value).map_err(|e| {
-                crate::RustAIError::Serialization(format!(
-                    "Failed to deserialize cached config: {}",
-                    e
-                ))
+                crate::RustAIError::Serialization(format!("Failed to deserialize cached config: {}", e))
             })?;
 
             Ok(Some(config))
@@ -131,12 +129,8 @@ impl ConfigCache {
         }
 
         let cache_key = self.make_cache_key(name);
-        let json_value = serde_json::to_value(&config).map_err(|e| {
-            crate::RustAIError::Serialization(format!(
-                "Failed to serialize config for cache: {}",
-                e
-            ))
-        })?;
+        let json_value = serde_json::to_value(&config)
+            .map_err(|e| crate::RustAIError::Serialization(format!("Failed to serialize config for cache: {}", e)))?;
 
         let ttl = self.config.default_ttl;
         self.unified_cache
@@ -149,10 +143,10 @@ impl ConfigCache {
             let meta = metadata
                 .entry(name.to_string())
                 .or_insert_with(|| ConfigCacheMetadata {
-                    name: name.to_string(),
-                    source_path: None,
-                    last_load: chrono::Utc::now(),
-                    hit_count: 0,
+                    name:            name.to_string(),
+                    source_path:     None,
+                    last_load:       chrono::Utc::now(),
+                    hit_count:       0,
                     validation_hash: self.calculate_validation_hash(&config),
                 });
             meta.last_load = chrono::Utc::now();
@@ -217,12 +211,7 @@ impl ConfigCache {
     }
 
     /// Pre-warm cache with configuration
-    pub async fn prewarm<C>(
-        &self,
-        name: &str,
-        config: C,
-        source_path: Option<String>,
-    ) -> crate::IDEResult<()>
+    pub async fn prewarm<C>(&self, name: &str, config: C, source_path: Option<String>) -> crate::IDEResult<()>
     where
         C: serde::Serialize + crate::Config,
     {
@@ -259,11 +248,11 @@ impl ConfigCache {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigCacheStats {
     /// Unified cache statistics
-    pub unified_stats: CacheStats,
+    pub unified_stats:  CacheStats,
     /// Number of cached configurations with metadata
     pub metadata_count: usize,
     /// Cache configuration
-    pub cache_config: CacheConfig,
+    pub cache_config:   CacheConfig,
 }
 
 #[cfg(test)]
@@ -272,7 +261,7 @@ mod tests {
 
     #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
     struct TestConfig {
-        value: String,
+        value:  String,
         number: i32,
     }
 
@@ -286,7 +275,7 @@ mod tests {
 
         fn default_config() -> Self {
             Self {
-                value: "default".to_string(),
+                value:  "default".to_string(),
                 number: 42,
             }
         }
@@ -297,7 +286,7 @@ mod tests {
         let cache = ConfigCache::new().await.unwrap();
 
         let test_config = TestConfig {
-            value: "cached_value".to_string(),
+            value:  "cached_value".to_string(),
             number: 123,
         };
 
@@ -317,7 +306,7 @@ mod tests {
         let cache = ConfigCache::new().await.unwrap();
 
         let test_config = TestConfig {
-            value: "test".to_string(),
+            value:  "test".to_string(),
             number: 42,
         };
 
@@ -350,7 +339,7 @@ mod tests {
         let cache = ConfigCache::new().await.unwrap();
 
         let test_config = TestConfig {
-            value: "test".to_string(),
+            value:  "test".to_string(),
             number: 42,
         };
 

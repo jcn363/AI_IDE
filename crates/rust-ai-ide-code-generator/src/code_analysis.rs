@@ -8,25 +8,25 @@ pub trait CodeAnalyzer {
 }
 
 pub struct CodeAnalysisResult {
-    pub patterns: Patterns,
-    pub complexity: ComplexityMetrics,
+    pub patterns:     Patterns,
+    pub complexity:   ComplexityMetrics,
     pub dependencies: Vec<String>,
-    pub suggestions: Vec<String>,
+    pub suggestions:  Vec<String>,
 }
 
 pub struct Patterns {
-    pub sync_functions: usize,
+    pub sync_functions:  usize,
     pub async_functions: usize,
-    pub structs: usize,
-    pub traits: usize,
-    pub tests: usize,
+    pub structs:         usize,
+    pub traits:          usize,
+    pub tests:           usize,
 }
 
 pub struct ComplexityMetrics {
-    pub cyclomatic: f64,
-    pub nesting_depth: usize,
+    pub cyclomatic:         f64,
+    pub nesting_depth:      usize,
     pub lines_per_function: f64,
-    pub function_count: usize,
+    pub function_count:     usize,
 }
 
 pub struct CodeComplexityAnalyzer;
@@ -34,8 +34,7 @@ pub struct CodeComplexityAnalyzer;
 #[async_trait::async_trait]
 impl CodeAnalyzer for CodeComplexityAnalyzer {
     async fn analyze(&self, code: &str) -> Result<CodeAnalysisResult, CodeGenerationError> {
-        let ast =
-            syn::parse_file(code).map_err(|e| CodeGenerationError::ParseError(e.to_string()))?;
+        let ast = syn::parse_file(code).map_err(|e| CodeGenerationError::ParseError(e.to_string()))?;
 
         let patterns = self.analyze_patterns(&ast);
         let complexity = self.analyze_complexity(&ast);
@@ -56,11 +55,11 @@ impl CodeComplexityAnalyzer {
 
     fn analyze_patterns(&self, ast: &File) -> Patterns {
         let mut patterns = Patterns {
-            sync_functions: 0,
+            sync_functions:  0,
             async_functions: 0,
-            structs: 0,
-            traits: 0,
-            tests: 0,
+            structs:         0,
+            traits:          0,
+            tests:           0,
         };
 
         struct PatternVisitor<'a> {
@@ -102,14 +101,14 @@ impl CodeComplexityAnalyzer {
 
     fn analyze_complexity(&self, ast: &File) -> ComplexityMetrics {
         let mut metrics = ComplexityMetrics {
-            cyclomatic: 0.0,
-            nesting_depth: 0,
+            cyclomatic:         0.0,
+            nesting_depth:      0,
             lines_per_function: 0.0,
-            function_count: 0,
+            function_count:     0,
         };
 
         struct ComplexityVisitor<'a> {
-            metrics: &'a mut ComplexityMetrics,
+            metrics:       &'a mut ComplexityMetrics,
             current_depth: usize,
         }
 
@@ -137,17 +136,16 @@ impl CodeComplexityAnalyzer {
                 // Rough estimation of lines
                 let body_lines = quote::quote!(#node).to_string().lines().count() as f64;
                 if self.metrics.function_count > 0 {
-                    self.metrics.lines_per_function = (self.metrics.lines_per_function
-                        * (self.metrics.function_count - 1) as f64
-                        + body_lines)
-                        / self.metrics.function_count as f64;
+                    self.metrics.lines_per_function =
+                        (self.metrics.lines_per_function * (self.metrics.function_count - 1) as f64 + body_lines)
+                            / self.metrics.function_count as f64;
                 }
                 visit::visit_item_fn(self, node);
             }
         }
 
         let mut visitor = ComplexityVisitor {
-            metrics: &mut metrics,
+            metrics:       &mut metrics,
             current_depth: 0,
         };
         visitor.visit_file(ast);

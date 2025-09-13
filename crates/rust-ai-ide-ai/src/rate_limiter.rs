@@ -3,12 +3,13 @@
 //! This module provides rate limiting capabilities to protect external AI service APIs
 //! from being overwhelmed by too many requests.
 
+use std::num::NonZeroU32;
+use std::sync::Arc;
+
 use governor::clock::DefaultClock;
 use governor::state::direct::NotKeyed;
 use governor::state::InMemoryState;
 use governor::RateLimiter;
-use std::num::NonZeroU32;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 
 /// AI service rate limiter
@@ -56,27 +57,26 @@ impl AIRateLimiter {
         Self {
             text_generation_limiter: Arc::new(Mutex::new(RateLimiter::direct_with_clock(
                 governor::Quota::per_minute(
-                    NonZeroU32::new(text_generation_per_minute)
-                        .unwrap_or(NonZeroU32::new(1).unwrap()),
+                    NonZeroU32::new(text_generation_per_minute).unwrap_or(NonZeroU32::new(1).unwrap()),
                 )
                 .allow_burst(NonZeroU32::new((text_generation_per_minute / 4).max(1)).unwrap()),
                 clock.clone(),
             ))),
-            completion_limiter: Arc::new(Mutex::new(RateLimiter::direct_with_clock(
+            completion_limiter:      Arc::new(Mutex::new(RateLimiter::direct_with_clock(
                 governor::Quota::per_minute(
                     NonZeroU32::new(completion_per_minute).unwrap_or(NonZeroU32::new(1).unwrap()),
                 )
                 .allow_burst(NonZeroU32::new((completion_per_minute / 4).max(1)).unwrap()),
                 clock.clone(),
             ))),
-            analysis_limiter: Arc::new(Mutex::new(RateLimiter::direct_with_clock(
+            analysis_limiter:        Arc::new(Mutex::new(RateLimiter::direct_with_clock(
                 governor::Quota::per_minute(
                     NonZeroU32::new(analysis_per_minute).unwrap_or(NonZeroU32::new(1).unwrap()),
                 )
                 .allow_burst(NonZeroU32::new((analysis_per_minute / 4).max(1)).unwrap()),
                 clock.clone(),
             ))),
-            management_limiter: Arc::new(Mutex::new(RateLimiter::direct_with_clock(
+            management_limiter:      Arc::new(Mutex::new(RateLimiter::direct_with_clock(
                 governor::Quota::per_minute(
                     NonZeroU32::new(management_per_minute).unwrap_or(NonZeroU32::new(1).unwrap()),
                 )
@@ -131,10 +131,10 @@ impl AIRateLimiter {
 
         // TODO: Extract actual quota information when governor API is available
         RateLimitStats {
-            text_generation_requests_available: 50, // Placeholder
-            completion_requests_available: 100,     // Placeholder
-            analysis_requests_available: 25,        // Placeholder
-            management_requests_available: 8,       // Placeholder
+            text_generation_requests_available: 50,  // Placeholder
+            completion_requests_available:      100, // Placeholder
+            analysis_requests_available:        25,  // Placeholder
+            management_requests_available:      8,   // Placeholder
         }
     }
 
@@ -169,15 +169,16 @@ pub enum RateLimitError {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RateLimitStats {
     pub text_generation_requests_available: u32,
-    pub completion_requests_available: u32,
-    pub analysis_requests_available: u32,
-    pub management_requests_available: u32,
+    pub completion_requests_available:      u32,
+    pub analysis_requests_available:        u32,
+    pub management_requests_available:      u32,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::time::Duration;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_rate_limiter_creation() {

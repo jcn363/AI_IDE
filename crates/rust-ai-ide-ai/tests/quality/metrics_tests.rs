@@ -1,15 +1,11 @@
 //! Tests for code quality metrics analysis
 
-use rust_ai_ide_ai::{
-    analysis::{
-        metrics::{
-            CognitiveComplexityCalculator, CyclomaticComplexityCalculator, HalsteadMetrics,
-            MaintainabilityIndex, MetricsAnalyzer, MetricsCollector, SourceLinesOfCode,
-        },
-        AnalysisRegistry, AnalysisResult, AnalysisType, Severity,
-    },
-    test_helpers::*,
+use rust_ai_ide_ai::analysis::metrics::{
+    CognitiveComplexityCalculator, CyclomaticComplexityCalculator, HalsteadMetrics, MaintainabilityIndex,
+    MetricsAnalyzer, MetricsCollector, SourceLinesOfCode,
 };
+use rust_ai_ide_ai::analysis::{AnalysisRegistry, AnalysisResult, AnalysisType, Severity};
+use rust_ai_ide_ai::test_helpers::*;
 
 /// Test cyclomatic complexity calculation
 #[test]
@@ -112,7 +108,8 @@ fn test_cognitive_complexity() {
         .get_function_metrics("complex_function")
         .expect("Function metrics not found");
 
-    // Expected cognitive complexity: 1 (base) + 1 (if) + 2 (nested if) + 1 (match) + 3 (match arms) + 1 (for) + 2 (nested while) = 11
+    // Expected cognitive complexity: 1 (base) + 1 (if) + 2 (nested if) + 1 (match) + 3 (match arms) + 1
+    // (for) + 2 (nested while) = 11
     assert_eq!(
         metrics.cognitive_complexity, 11,
         "Incorrect cognitive complexity calculation"

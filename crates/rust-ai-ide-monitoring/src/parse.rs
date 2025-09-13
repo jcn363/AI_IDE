@@ -1,11 +1,11 @@
 //! JSON output parsing for cargo commands
 
-use crate::{
-    errors::{MonitoringError, Result},
-    types::{Finding, Severity},
-};
-use serde::{Deserialize, Serialize};
 use std::path::Path;
+
+use serde::{Deserialize, Serialize};
+
+use crate::errors::{MonitoringError, Result};
+use crate::types::{Finding, Severity};
 
 /// Raw message from cargo check --message-format=json
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -299,9 +299,8 @@ impl CargoJsonParser {
             return Ok(None);
         }
 
-        let raw_message: RawCargoMessage = serde_json::from_str(line).map_err(|e| {
-            MonitoringError::cargo_parse(format!("JSON parse error: {} (line: {})", e, line))
-        })?;
+        let raw_message: RawCargoMessage = serde_json::from_str(line)
+            .map_err(|e| MonitoringError::cargo_parse(format!("JSON parse error: {} (line: {})", e, line)))?;
 
         match raw_message.message {
             Some(message) => Ok(Some(message)),
@@ -310,11 +309,7 @@ impl CargoJsonParser {
     }
 
     /// Build results summary
-    fn build_summary(
-        &self,
-        diagnostics: &[CargoDiagnostic],
-        build_scripts: usize,
-    ) -> ResultsSummary {
+    fn build_summary(&self, diagnostics: &[CargoDiagnostic], build_scripts: usize) -> ResultsSummary {
         let mut summary = ResultsSummary {
             build_scripts,
             ..Default::default()

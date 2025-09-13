@@ -1,6 +1,7 @@
 //! Intelligent maintenance recommendation system
 
-use crate::{errors::*, types::*};
+use crate::errors::*;
+use crate::types::*;
 
 #[derive(Debug)]
 pub struct Recommendor {
@@ -19,9 +20,9 @@ impl Recommendor {
         _prioritized_tasks: &PrioritizedTaskList,
     ) -> MaintenanceResult<MaintenanceRecommendations> {
         Ok(MaintenanceRecommendations {
-            recommendations: vec![],
+            recommendations:           vec![],
             automated_implementations: vec![],
-            documentation_updates: vec![],
+            documentation_updates:     vec![],
         })
     }
 }

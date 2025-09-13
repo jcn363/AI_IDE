@@ -19,23 +19,23 @@ pub use analyzer::SecurityAnalyzer;
 pub use concurrency::ConcurrencySecurityAnalyzer;
 pub use cryptographic::CryptographicAnalyzer;
 pub use input_validation::InputValidationAnalyzer;
+use serde::{Deserialize, Serialize};
 
 use crate::analysis::CodeLocation;
-use serde::{Deserialize, Serialize};
 
 /// Represents a security issue found during analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityIssue {
     /// The type of security issue
-    pub issue_type: SecurityIssueType,
+    pub issue_type:  SecurityIssueType,
     /// Description of the issue
     pub description: String,
     /// Severity level of the issue
-    pub severity: Severity,
+    pub severity:    Severity,
     /// Confidence level in the detection (0.0 to 1.0)
-    pub confidence: f32,
+    pub confidence:  f32,
     /// Location in the source code where the issue was found
-    pub location: CodeLocation,
+    pub location:    CodeLocation,
     /// Suggested remediation for the issue
     pub remediation: String,
 }
@@ -108,11 +108,11 @@ mod tests {
     #[test]
     fn test_security_issue_creation() {
         let issue = SecurityIssue {
-            issue_type: SecurityIssueType::CommandInjection,
+            issue_type:  SecurityIssueType::CommandInjection,
             description: "Potential command injection detected".to_string(),
-            severity: Severity::High,
-            confidence: 0.9,
-            location: CodeLocation::new("src/main.rs", 42, 5, 42, 25),
+            severity:    Severity::High,
+            confidence:  0.9,
+            location:    CodeLocation::new("src/main.rs", 42, 5, 42, 25),
             remediation: "Use proper argument escaping or parameterized APIs".to_string(),
         };
 

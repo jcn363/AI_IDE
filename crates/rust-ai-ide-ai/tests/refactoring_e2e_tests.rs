@@ -1,8 +1,10 @@
+use std::fs;
+
+use tempfile::TempDir;
+
 use crate::refactoring::operations::*;
 use crate::refactoring::types::*;
 use crate::refactoring::utils::{BackupManager, RefactoringUtils};
-use std::fs;
-use tempfile::TempDir;
 
 /// End-to-end tests for refactoring operations
 /// Tests create temporary Rust files, execute operations, and verify compilation
@@ -108,26 +110,26 @@ edition = "2021"
 
         // Create extract function operation
         let context = RefactoringContext {
-            file_path: main_rs_path.clone(),
-            cursor_line: 16, // Line with `let result = x + y;`
+            file_path:        main_rs_path.clone(),
+            cursor_line:      16, // Line with `let result = x + y;`
             cursor_character: 8,
-            selection: Some(CodeRange {
-                start_line: 16,
+            selection:        Some(CodeRange {
+                start_line:      16,
                 start_character: 8,
-                end_line: 18,
-                end_character: 0,
+                end_line:        18,
+                end_character:   0,
             }),
-            symbol_name: Some("add".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
+            symbol_name:      Some("add".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
         };
 
         let options = RefactoringOptions {
-            create_backup: true,
-            generate_tests: true,
+            create_backup:            true,
+            generate_tests:           true,
             apply_to_all_occurrences: false,
-            preserve_references: true,
-            ignore_safe_operations: false,
-            extra_options: Some(std::collections::HashMap::new()),
+            preserve_references:      true,
+            ignore_safe_operations:   false,
+            extra_options:            Some(std::collections::HashMap::new()),
         };
 
         // Execute refactoring
@@ -174,12 +176,12 @@ edition = "2021"
 
         // Rename "old_function_name" to "new_function_name"
         let context = RefactoringContext {
-            file_path: main_rs_path.clone(),
-            cursor_line: 32, // Line with function call
+            file_path:        main_rs_path.clone(),
+            cursor_line:      32, // Line with function call
             cursor_character: 25,
-            selection: None,
-            symbol_name: Some("old_function_name".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
+            selection:        None,
+            symbol_name:      Some("old_function_name".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
         };
 
         let mut extra_options = std::collections::HashMap::new();
@@ -189,12 +191,12 @@ edition = "2021"
         );
 
         let options = RefactoringOptions {
-            create_backup: true,
-            generate_tests: true,
+            create_backup:            true,
+            generate_tests:           true,
             apply_to_all_occurrences: false,
-            preserve_references: true,
-            ignore_safe_operations: false,
-            extra_options: Some(extra_options),
+            preserve_references:      true,
+            ignore_safe_operations:   false,
+            extra_options:            Some(extra_options),
         };
 
         // Execute refactoring
@@ -245,12 +247,12 @@ edition = "2021"
 
         // Execute an operation and create backup
         let context = RefactoringContext {
-            file_path: main_rs_path.clone(),
-            cursor_line: 32,
+            file_path:        main_rs_path.clone(),
+            cursor_line:      32,
             cursor_character: 25,
-            selection: None,
-            symbol_name: Some("old_function_name".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
+            selection:        None,
+            symbol_name:      Some("old_function_name".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
         };
 
         let mut extra_options = std::collections::HashMap::new();
@@ -260,12 +262,12 @@ edition = "2021"
         );
 
         let options = RefactoringOptions {
-            create_backup: true,
-            generate_tests: false,
+            create_backup:            true,
+            generate_tests:           false,
             apply_to_all_occurrences: false,
-            preserve_references: true,
-            ignore_safe_operations: false,
-            extra_options: Some(extra_options),
+            preserve_references:      true,
+            ignore_safe_operations:   false,
+            extra_options:            Some(extra_options),
         };
 
         // Execute with backup
@@ -336,12 +338,12 @@ edition = "2021"
 
         // Operation 1: Rename function
         let rename_context = RefactoringContext {
-            file_path: main_rs_path.clone(),
-            cursor_line: 26,
+            file_path:        main_rs_path.clone(),
+            cursor_line:      26,
             cursor_character: 12,
-            selection: None,
-            symbol_name: Some("old_function_name".to_string()),
-            symbol_kind: Some(SymbolKind::Function),
+            selection:        None,
+            symbol_name:      Some("old_function_name".to_string()),
+            symbol_kind:      Some(SymbolKind::Function),
         };
 
         let mut extra_options = HashMap::new();
@@ -351,12 +353,12 @@ edition = "2021"
         );
 
         let rename_options = RefactoringOptions {
-            create_backup: true,
-            generate_tests: false,
+            create_backup:            true,
+            generate_tests:           false,
             apply_to_all_occurrences: false,
-            preserve_references: true,
-            ignore_safe_operations: false,
-            extra_options: Some(extra_options),
+            preserve_references:      true,
+            ignore_safe_operations:   false,
+            extra_options:            Some(extra_options),
         };
 
         let rename_result = RenameOperation
@@ -375,26 +377,26 @@ edition = "2021"
 
         // Operation 2: Extract variable
         let extract_context = RefactoringContext {
-            file_path: main_rs_path.clone(),
-            cursor_line: 38,
+            file_path:        main_rs_path.clone(),
+            cursor_line:      38,
             cursor_character: 19,
-            selection: Some(CodeRange {
-                start_line: 38,
+            selection:        Some(CodeRange {
+                start_line:      38,
                 start_character: 19,
-                end_line: 38,
-                end_character: 30,
+                end_line:        38,
+                end_character:   30,
             }),
-            symbol_name: Some("calc".to_string()),
-            symbol_kind: Some(SymbolKind::Variable),
+            symbol_name:      Some("calc".to_string()),
+            symbol_kind:      Some(SymbolKind::Variable),
         };
 
         let extract_options = RefactoringOptions {
-            create_backup: false,
-            generate_tests: false,
+            create_backup:            false,
+            generate_tests:           false,
             apply_to_all_occurrences: false,
-            preserve_references: true,
-            ignore_safe_operations: false,
-            extra_options: None,
+            preserve_references:      true,
+            ignore_safe_operations:   false,
+            extra_options:            None,
         };
 
         let extract_result = ExtractVariableOperation

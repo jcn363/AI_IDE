@@ -1,19 +1,20 @@
 //! Lazy loading infrastructure for components
 
+use std::any::Any;
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use async_trait::async_trait;
 use tokio::sync::{Mutex, RwLock, Semaphore};
 use tokio::time::{timeout, Duration};
-use async_trait::async_trait;
-use std::any::Any;
 
 use crate::{LazyComponent, LazyLoadingConfig, LazyLoadingError, LazyResult};
 
 /// Manager for lazy loading components
 pub struct LazyLoader {
-    registry: Arc<RwLock<HashMap<String, Box<dyn LazyComponent>>>>,
-    config: LazyLoadingConfig,
-    semaphore: Arc<Semaphore>,
+    registry:          Arc<RwLock<HashMap<String, Box<dyn LazyComponent>>>>,
+    config:            LazyLoadingConfig,
+    semaphore:         Arc<Semaphore>,
     loaded_components: Arc<RwLock<HashMap<String, Arc<dyn Any + Send + Sync>>>>,
 }
 
@@ -29,10 +30,7 @@ impl LazyLoader {
     }
 
     /// Register a lazy component
-    pub async fn register_component(
-        &self,
-        component: Box<dyn LazyComponent>,
-    ) -> LazyResult<()> {
+    pub async fn register_component(&self, component: Box<dyn LazyComponent>) -> LazyResult<()> {
         let name = component.name().to_string();
         let mut registry = self.registry.write().await;
 
@@ -48,10 +46,7 @@ impl LazyLoader {
     }
 
     /// Get a component, loading it if necessary
-    pub async fn get_component<T: 'static + Send + Sync>(
-        &self,
-        name: &str,
-    ) -> LazyResult<Arc<T>> {
+    pub async fn get_component<T: 'static + Send + Sync>(&self, name: &str) -> LazyResult<Arc<T>> {
         // Check if component is already loaded
         {
             let loaded = self.loaded_components.read().await;
@@ -78,9 +73,7 @@ impl LazyLoader {
         )
         .await
         .map_err(|_| LazyLoadingError::loading_timeout(name.to_string(), self.config.load_timeout_seconds))?
-        .map_err(|e| {
-            LazyLoadingError::initialization_failed(name.to_string(), e.to_string())
-        })?;
+        .map_err(|e| LazyLoadingError::initialization_failed(name.to_string(), e.to_string()))?;
 
         // Try to downcast to the requested type
         let typed_component = component.downcast::<T>().map_err(|_| {
@@ -172,7 +165,9 @@ impl LazyLoader {
             let name = name.to_string();
 
             let future = tokio::spawn(async move {
-                loader.get_component::<Box<dyn Any + Send + Sync>>(&name).await?;
+                loader
+                    .get_component::<Box<dyn Any + Send + Sync>>(&name)
+                    .await?;
                 Ok::<_, LazyLoadingError>(())
             });
 
@@ -181,9 +176,9 @@ impl LazyLoader {
 
         // Wait for all preload operations to complete
         for future in futures {
-            future.await.map_err(|e| {
-                LazyLoadingError::internal(format!("Preload task failed: {}", e))
-            })??;
+            future
+                .await
+                .map_err(|e| LazyLoadingError::internal(format!("Preload task failed: {}", e)))??;
         }
 
         Ok(())
@@ -193,9 +188,9 @@ impl LazyLoader {
 impl Clone for LazyLoader {
     fn clone(&self) -> Self {
         Self {
-            registry: self.registry.clone(),
-            config: self.config.clone(),
-            semaphore: self.semaphore.clone(),
+            registry:          self.registry.clone(),
+            config:            self.config.clone(),
+            semaphore:         self.semaphore.clone(),
             loaded_components: self.loaded_components.clone(),
         }
     }
@@ -221,9 +216,9 @@ where
     T: Send + Sync + 'static,
     F: Fn() -> LazyResult<T> + Send + Sync + 'static,
 {
-    name: String,
+    name:        String,
     initializer: F,
-    loaded: Mutex<Option<Arc<T>>>,
+    loaded:      Mutex<Option<Arc<T>>>,
 }
 
 impl<T, F> SimpleLazyComponent<T, F>
@@ -278,8 +273,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::sync::atomic::{AtomicUsize, Ordering};
+
+    use super::*;
 
     static COUNTER: AtomicUsize = AtomicUsize::new(0);
 
@@ -305,7 +301,10 @@ mod tests {
         let loader = LazyLoader::new(LazyLoadingConfig::default());
         let component = SimpleLazyComponent::new("test", create_test_component);
 
-        loader.register_component(Box::new(component)).await.unwrap();
+        loader
+            .register_component(Box::new(component))
+            .await
+            .unwrap();
 
         let components = loader.get_registered_components().await;
         assert!(components.contains(&"test".to_string()));
@@ -316,6 +315,9 @@ mod tests {
         let loader = LazyLoader::new(LazyLoadingConfig::default());
 
         let result = loader.get_component::<String>("nonexistent").await;
-        assert!(matches!(result, Err(LazyLoadingError::ComponentNotFound(_))));
+        assert!(matches!(
+            result,
+            Err(LazyLoadingError::ComponentNotFound(_))
+        ));
     }
 }

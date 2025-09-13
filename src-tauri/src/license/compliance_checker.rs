@@ -1,10 +1,11 @@
+use std::collections::HashSet;
+
 use cargo_metadata::Package;
 use spdx::{Expression, Licensee};
-use std::collections::HashSet;
 
 pub struct LicenseComplianceChecker {
     allowed_licenses: HashSet<&'static str>,
-    denied_licenses: HashSet<&'static str>,
+    denied_licenses:  HashSet<&'static str>,
 }
 
 impl Default for LicenseComplianceChecker {
@@ -22,7 +23,7 @@ impl Default for LicenseComplianceChecker {
 
         Self {
             allowed_licenses: allowed,
-            denied_licenses: denied,
+            denied_licenses:  denied,
         }
     }
 }

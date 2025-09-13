@@ -1,20 +1,22 @@
-use crate::plugin_runtime::PluginPermissions;
-use moka::future::Cache;
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
+
+use moka::future::Cache;
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
+use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, Mutex, RwLock};
+
+use crate::plugin_runtime::PluginPermissions;
 
 /// Plugin marketplace integration system
 pub struct MarketplaceIntegration {
-    client: Arc<MarketplaceClient>,
-    validator: Arc<PluginValidator>,
-    installer: Arc<PluginInstaller>,
+    client:         Arc<MarketplaceClient>,
+    validator:      Arc<PluginValidator>,
+    installer:      Arc<PluginInstaller>,
     update_manager: Arc<PluginUpdateManager>,
-    rating_system: Arc<PluginRatingSystem>,
-    async_state: Arc<Mutex<MarketplaceState>>,
+    rating_system:  Arc<PluginRatingSystem>,
+    async_state:    Arc<Mutex<MarketplaceState>>,
 }
 
 impl MarketplaceIntegration {
@@ -104,20 +106,15 @@ impl MarketplaceIntegration {
         self.update_manager.update_plugin(plugin_id).await
     }
 
-    pub async fn rate_plugin(
-        &self,
-        plugin_id: &str,
-        rating: f64,
-        review: &str,
-    ) -> Result<(), IDEError> {
+    pub async fn rate_plugin(&self, plugin_id: &str, rating: f64, review: &str) -> Result<(), IDEError> {
         let reviewer_id = "current_user"; // Would be actual user ID
 
         let review = PluginReview {
-            plugin_id: plugin_id.to_string(),
+            plugin_id:   plugin_id.to_string(),
             reviewer_id: reviewer_id.to_string(),
-            rating: rating.min(5.0).max(0.0),
-            review: review.to_string(),
-            timestamp: SystemTime::now(),
+            rating:      rating.min(5.0).max(0.0),
+            review:      review.to_string(),
+            timestamp:   SystemTime::now(),
         };
 
         self.rating_system.submit_review(review).await?;
@@ -167,9 +164,9 @@ impl MarketplaceIntegration {
             if let Ok(updates) = update_manager.check_for_updates().await {
                 for update in updates {
                     let notification = UpdateNotification {
-                        plugin_id: update.plugin_id,
+                        plugin_id:   update.plugin_id,
                         new_version: update.new_version,
-                        severity: UpdateSeverity::Normal,
+                        severity:    UpdateSeverity::Normal,
                         description: "Plugin update available".to_string(),
                     };
 
@@ -183,8 +180,8 @@ impl MarketplaceIntegration {
 /// Marketplace client for API communication
 pub struct MarketplaceClient {
     http_client: reqwest::Client,
-    base_url: String,
-    cache: Cache<String, MarketplaceResponse>,
+    base_url:    String,
+    cache:       Cache<String, MarketplaceResponse>,
 }
 
 impl MarketplaceClient {
@@ -233,9 +230,7 @@ impl MarketplaceClient {
             .query(&params)
             .send()
             .await
-            .map_err(|e| {
-                IDEError::new(IDEErrorKind::NetworkError, "Failed to fetch plugins").with_source(e)
-            })?
+            .map_err(|e| IDEError::new(IDEErrorKind::NetworkError, "Failed to fetch plugins").with_source(e))?
             .json::<MarketplaceResponse>()
             .await
             .map_err(|e| {
@@ -264,16 +259,10 @@ impl MarketplaceClient {
             .get(&format!("{}/api/plugins/{}", self.base_url, plugin_id))
             .send()
             .await
-            .map_err(|e| {
-                IDEError::new(IDEErrorKind::NetworkError, "Failed to fetch plugin info")
-                    .with_source(e)
-            })?
+            .map_err(|e| IDEError::new(IDEErrorKind::NetworkError, "Failed to fetch plugin info").with_source(e))?
             .json()
             .await
-            .map_err(|e| {
-                IDEError::new(IDEErrorKind::Deserialization, "Failed to parse plugin info")
-                    .with_source(e)
-            })?;
+            .map_err(|e| IDEError::new(IDEErrorKind::Deserialization, "Failed to parse plugin info").with_source(e))?;
 
         Ok(plugin_info)
     }
@@ -287,10 +276,7 @@ impl MarketplaceClient {
             ))
             .send()
             .await
-            .map_err(|e| {
-                IDEError::new(IDEErrorKind::NetworkError, "Failed to download plugin")
-                    .with_source(e)
-            })?;
+            .map_err(|e| IDEError::new(IDEErrorKind::NetworkError, "Failed to download plugin").with_source(e))?;
 
         if !response.status().is_success() {
             return Err(IDEError::new(
@@ -299,9 +285,10 @@ impl MarketplaceClient {
             ));
         }
 
-        let bytes = response.bytes().await.map_err(|e| {
-            IDEError::new(IDEErrorKind::NetworkError, "Failed to read plugin data").with_source(e)
-        })?;
+        let bytes = response
+            .bytes()
+            .await
+            .map_err(|e| IDEError::new(IDEErrorKind::NetworkError, "Failed to read plugin data").with_source(e))?;
 
         Ok(bytes.to_vec())
     }
@@ -309,14 +296,14 @@ impl MarketplaceClient {
 
 /// Plugin validator for security and compatibility scanning
 pub struct PluginValidator {
-    security_scanner: Arc<SecurityScanner>,
+    security_scanner:      Arc<SecurityScanner>,
     compatibility_checker: Arc<CompatibilityChecker>,
 }
 
 impl PluginValidator {
     pub fn new() -> Self {
         Self {
-            security_scanner: Arc::new(SecurityScanner::new()),
+            security_scanner:      Arc::new(SecurityScanner::new()),
             compatibility_checker: Arc::new(CompatibilityChecker::new()),
         }
     }
@@ -352,23 +339,19 @@ impl PluginValidator {
 
 /// Plugin installer for safe installation and dependency resolution
 pub struct PluginInstaller {
-    install_directory: String,
+    install_directory:   String,
     dependency_resolver: Arc<DependencyResolver>,
 }
 
 impl PluginInstaller {
     pub fn new() -> Self {
         Self {
-            install_directory: "./plugins".to_string(),
+            install_directory:   "./plugins".to_string(),
             dependency_resolver: Arc::new(DependencyResolver::new()),
         }
     }
 
-    pub async fn install_plugin(
-        &self,
-        plugin_data: &[u8],
-        plugin_info: &PluginInfo,
-    ) -> Result<String, IDEError> {
+    pub async fn install_plugin(&self, plugin_data: &[u8], plugin_info: &PluginInfo) -> Result<String, IDEError> {
         // Create plugin directory
         let plugin_dir = format!("{}/{}", self.install_directory, plugin_info.id);
         tokio::fs::create_dir_all(&plugin_dir).await.map_err(|e| {
@@ -383,10 +366,7 @@ impl PluginInstaller {
         let plugin_path = format!("{}/plugin.wasm", plugin_dir);
         tokio::fs::write(&plugin_path, plugin_data)
             .await
-            .map_err(|e| {
-                IDEError::new(IDEErrorKind::FileOperation, "Failed to write plugin file")
-                    .with_source(e)
-            })?;
+            .map_err(|e| IDEError::new(IDEErrorKind::FileOperation, "Failed to write plugin file").with_source(e))?;
 
         // Install dependencies if any
         if !plugin_info.dependencies.is_empty() {
@@ -415,14 +395,14 @@ impl PluginInstaller {
 /// Plugin update manager for automatic updates
 pub struct PluginUpdateManager {
     update_sender: mpsc::Sender<UpdateNotification>,
-    last_check: Arc<Mutex<SystemTime>>,
+    last_check:    Arc<Mutex<SystemTime>>,
 }
 
 impl PluginUpdateManager {
     pub fn new(sender: mpsc::Sender<UpdateNotification>) -> Self {
         Self {
             update_sender: sender,
-            last_check: Arc::new(Mutex::new(SystemTime::now())),
+            last_check:    Arc::new(Mutex::new(SystemTime::now())),
         }
     }
 
@@ -486,14 +466,14 @@ impl PluginRatingSystem {
 
 #[derive(Clone, Debug)]
 pub struct MarketplaceState {
-    pub installed_plugins: HashMap<String, PluginInfo>,
+    pub installed_plugins:  HashMap<String, PluginInfo>,
     pub installation_times: HashMap<String, SystemTime>,
 }
 
 impl Default for MarketplaceState {
     fn default() -> Self {
         Self {
-            installed_plugins: HashMap::new(),
+            installed_plugins:  HashMap::new(),
             installation_times: HashMap::new(),
         }
     }
@@ -501,51 +481,51 @@ impl Default for MarketplaceState {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PluginInfo {
-    pub id: String,
-    pub name: String,
-    pub version: String,
-    pub author: String,
-    pub description: String,
-    pub category: String,
-    pub tags: Vec<String>,
+    pub id:           String,
+    pub name:         String,
+    pub version:      String,
+    pub author:       String,
+    pub description:  String,
+    pub category:     String,
+    pub tags:         Vec<String>,
     pub dependencies: Vec<String>,
-    pub min_version: String,
-    pub homepage: Option<String>,
-    pub repository: Option<String>,
-    pub license: String,
+    pub min_version:  String,
+    pub homepage:     Option<String>,
+    pub repository:   Option<String>,
+    pub license:      String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PluginDetails {
-    pub info: PluginInfo,
-    pub reviews_count: usize,
+    pub info:           PluginInfo,
+    pub reviews_count:  usize,
     pub average_rating: f64,
     pub recent_reviews: Vec<PluginReview>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PluginReview {
-    pub plugin_id: String,
+    pub plugin_id:   String,
     pub reviewer_id: String,
-    pub rating: f64,
-    pub review: String,
-    pub timestamp: SystemTime,
+    pub rating:      f64,
+    pub review:      String,
+    pub timestamp:   SystemTime,
 }
 
 #[derive(Clone, Debug)]
 pub struct PluginUpdate {
-    pub plugin_id: String,
+    pub plugin_id:       String,
     pub current_version: String,
-    pub new_version: String,
-    pub release_notes: String,
-    pub download_url: String,
+    pub new_version:     String,
+    pub release_notes:   String,
+    pub download_url:    String,
 }
 
 #[derive(Clone, Debug)]
 pub struct UpdateNotification {
-    pub plugin_id: String,
+    pub plugin_id:   String,
     pub new_version: String,
-    pub severity: UpdateSeverity,
+    pub severity:    UpdateSeverity,
     pub description: String,
 }
 
@@ -559,10 +539,10 @@ pub enum UpdateSeverity {
 
 #[derive(Clone, Debug)]
 pub struct MarketplaceResponse {
-    pub plugins: Vec<PluginInfo>,
+    pub plugins:     Vec<PluginInfo>,
     pub total_count: u64,
-    pub categories: Vec<String>,
-    pub info: Option<PluginInfo>,
+    pub categories:  Vec<String>,
+    pub info:        Option<PluginInfo>,
 }
 
 #[derive(Clone, Debug)]
@@ -599,10 +579,7 @@ impl CompatibilityChecker {
     pub fn new() -> Self {
         Self
     }
-    pub async fn check_compatibility(
-        &self,
-        _plugin: &PluginInfo,
-    ) -> Result<CompatibilityResult, IDEError> {
+    pub async fn check_compatibility(&self, _plugin: &PluginInfo) -> Result<CompatibilityResult, IDEError> {
         Ok(CompatibilityResult::Compatible("Placeholder".to_string()))
     }
 }
@@ -620,10 +597,10 @@ impl DependencyResolver {
 impl Default for MarketplaceResponse {
     fn default() -> Self {
         Self {
-            plugins: vec![],
+            plugins:     vec![],
             total_count: 0,
-            categories: vec![],
-            info: None,
+            categories:  vec![],
+            info:        None,
         }
     }
 }

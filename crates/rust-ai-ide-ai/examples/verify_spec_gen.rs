@@ -1,9 +1,9 @@
 //! Example binary to verify the spec generation module
 
-use rust_ai_ide_ai::spec_generation::{
-    generator::CodeGenerator, parser::SpecificationParser, system::IntelligentSpecGenerator,
-    types::SpecificationRequest,
-};
+use rust_ai_ide_ai::spec_generation::generator::CodeGenerator;
+use rust_ai_ide_ai::spec_generation::parser::SpecificationParser;
+use rust_ai_ide_ai::spec_generation::system::IntelligentSpecGenerator;
+use rust_ai_ide_ai::spec_generation::types::SpecificationRequest;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -59,8 +59,8 @@ async fn main() -> anyhow::Result<()> {
     let system = IntelligentSpecGenerator::new();
     let request = SpecificationRequest {
         description: spec_text.to_string(),
-        language: "rust".to_string(),
-        context: None,
+        language:    "rust".to_string(),
+        context:     None,
     };
 
     let result = system

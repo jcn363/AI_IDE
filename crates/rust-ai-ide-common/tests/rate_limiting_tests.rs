@@ -21,7 +21,8 @@ mod tests {
         }
 
         // Additional requests should be blocked until the time window passes
-        // (This test is simplistic - in real scenarios, there would be more sophisticated rate limiting)
+        // (This test is simplistic - in real scenarios, there would be more sophisticated rate
+        // limiting)
     }
 
     #[tokio::test]

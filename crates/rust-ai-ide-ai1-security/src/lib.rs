@@ -3,15 +3,16 @@
 //! Comprehensive security scanning and vulnerability analysis system for codebases,
 //! providing intelligent threat detection, risk assessment, and remediation suggestions.
 
+use std::collections::{HashMap, HashSet};
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
 
 /// Security vulnerability scanner
 #[derive(Debug)]
 pub struct SecurityScanner {
-    rules: Vec<SecurityRule>,
-    cve_database: CVEDatabase,
+    rules:         Vec<SecurityRule>,
+    cve_database:  CVEDatabase,
     risk_assessor: RiskAssessmentEngine,
 }
 
@@ -25,17 +26,12 @@ impl SecurityScanner {
         }
     }
 
-    pub async fn scan_code(
-        &self,
-        code: &str,
-        language: &str,
-    ) -> Result<SecurityReport, SecurityError> {
+    pub async fn scan_code(&self, code: &str, language: &str) -> Result<SecurityReport, SecurityError> {
         let mut vulnerabilities = Vec::new();
 
         // Scan for each security rule
         for rule in &self.rules {
-            if rule.languages.contains(&language.to_string()) || rule.languages.contains(&"generic")
-            {
+            if rule.languages.contains(&language.to_string()) || rule.languages.contains(&"generic") {
                 let results = rule.scan_code(code)?;
                 vulnerabilities.extend(results);
             }
@@ -57,26 +53,26 @@ impl SecurityScanner {
     fn initialize_security_rules() -> Vec<SecurityRule> {
         vec![
             SecurityRule {
-                id: "SQL_INJECTION".to_string(),
-                name: "SQL Injection Vulnerability".to_string(),
-                severity: Severity::Critical,
-                cwe_id: Some(89),
-                description: "Potential SQL injection vulnerability detected".to_string(),
-                languages: vec!["rust".to_string(), "sql".to_string()],
-                patterns: vec![SecurityPattern::Regex(r#"SELECT.*\+.*\{t\}"#.to_string())],
+                id:              "SQL_INJECTION".to_string(),
+                name:            "SQL Injection Vulnerability".to_string(),
+                severity:        Severity::Critical,
+                cwe_id:          Some(89),
+                description:     "Potential SQL injection vulnerability detected".to_string(),
+                languages:       vec!["rust".to_string(), "sql".to_string()],
+                patterns:        vec![SecurityPattern::Regex(r#"SELECT.*\+.*\{t\}"#.to_string())],
                 recommendations: vec![
                     "Use prepared statements or parameterized queries".to_string(),
                     "Validate and sanitize all user inputs".to_string(),
                 ],
             },
             SecurityRule {
-                id: "XSS_VULNERABILITY".to_string(),
-                name: "Cross-Site Scripting (XSS)".to_string(),
-                severity: Severity::High,
-                cwe_id: Some(79),
-                description: "Potential XSS vulnerability in HTML content".to_string(),
-                languages: vec!["html".to_string(), "javascript".to_string()],
-                patterns: vec![SecurityPattern::Regex(r#"innerHTML\s*=.*\+.*"#.to_string())],
+                id:              "XSS_VULNERABILITY".to_string(),
+                name:            "Cross-Site Scripting (XSS)".to_string(),
+                severity:        Severity::High,
+                cwe_id:          Some(79),
+                description:     "Potential XSS vulnerability in HTML content".to_string(),
+                languages:       vec!["html".to_string(), "javascript".to_string()],
+                patterns:        vec![SecurityPattern::Regex(r#"innerHTML\s*=.*\+.*"#.to_string())],
                 recommendations: vec![
                     "Use textContent or innerText instead of innerHTML".to_string(),
                     "Sanitize HTML input using proper libraries".to_string(),
@@ -84,13 +80,13 @@ impl SecurityScanner {
                 ],
             },
             SecurityRule {
-                id: "BUFFER_OVERFLOW".to_string(),
-                name: "Buffer Overflow Risk".to_string(),
-                severity: Severity::High,
-                cwe_id: Some(120),
-                description: "Potential buffer overflow vulnerability".to_string(),
-                languages: vec!["c".to_string(), "cpp".to_string(), "rust".to_string()],
-                patterns: vec![SecurityPattern::Regex(
+                id:              "BUFFER_OVERFLOW".to_string(),
+                name:            "Buffer Overflow Risk".to_string(),
+                severity:        Severity::High,
+                cwe_id:          Some(120),
+                description:     "Potential buffer overflow vulnerability".to_string(),
+                languages:       vec!["c".to_string(), "cpp".to_string(), "rust".to_string()],
+                patterns:        vec![SecurityPattern::Regex(
                     r#"unsafe \{.*\[.*\].*=.*\}"#.to_string(),
                 )],
                 recommendations: vec![
@@ -100,13 +96,13 @@ impl SecurityScanner {
                 ],
             },
             SecurityRule {
-                id: "HARD_CODED_CREDENTIALS".to_string(),
-                name: "Hard-coded Credentials".to_string(),
-                severity: Severity::Critical,
-                cwe_id: Some(798),
-                description: "Hard-coded credentials detected".to_string(),
-                languages: vec!["generic".to_string()],
-                patterns: vec![
+                id:              "HARD_CODED_CREDENTIALS".to_string(),
+                name:            "Hard-coded Credentials".to_string(),
+                severity:        Severity::Critical,
+                cwe_id:          Some(798),
+                description:     "Hard-coded credentials detected".to_string(),
+                languages:       vec!["generic".to_string()],
+                patterns:        vec![
                     SecurityPattern::Regex(r#"password\s*=.*["'].*["']"#.to_string()),
                     SecurityPattern::Regex(r#"api_key\s*=.*["'].*["']"#.to_string()),
                 ],
@@ -117,13 +113,13 @@ impl SecurityScanner {
                 ],
             },
             SecurityRule {
-                id: "PATH_TRAVERSAL".to_string(),
-                name: "Path Traversal Vulnerability".to_string(),
-                severity: Severity::High,
-                cwe_id: Some(22),
-                description: "Potential path traversal vulnerability".to_string(),
-                languages: vec!["generic".to_string()],
-                patterns: vec![SecurityPattern::Regex(r#"(\.\./|\.\.\\)"#.to_string())],
+                id:              "PATH_TRAVERSAL".to_string(),
+                name:            "Path Traversal Vulnerability".to_string(),
+                severity:        Severity::High,
+                cwe_id:          Some(22),
+                description:     "Potential path traversal vulnerability".to_string(),
+                languages:       vec!["generic".to_string()],
+                patterns:        vec![SecurityPattern::Regex(r#"(\.\./|\.\.\\)"#.to_string())],
                 recommendations: vec![
                     "Validate and canonicalize all file paths".to_string(),
                     "Use whitelist approach for allowed paths".to_string(),
@@ -153,13 +149,13 @@ impl SecurityScanner {
 /// Security rule definition
 #[derive(Debug, Clone)]
 pub struct SecurityRule {
-    pub id: String,
-    pub name: String,
-    pub severity: Severity,
-    pub cwe_id: Option<u32>,
-    pub description: String,
-    pub languages: Vec<String>,
-    pub patterns: Vec<SecurityPattern>,
+    pub id:              String,
+    pub name:            String,
+    pub severity:        Severity,
+    pub cwe_id:          Option<u32>,
+    pub description:     String,
+    pub languages:       Vec<String>,
+    pub patterns:        Vec<SecurityPattern>,
     pub recommendations: Vec<String>,
 }
 
@@ -169,32 +165,31 @@ impl SecurityRule {
 
         for pattern in &self.patterns {
             match pattern {
-                SecurityPattern::Regex(pattern_str) => {
+                SecurityPattern::Regex(pattern_str) =>
                     if let Ok(regex) = Regex::new(pattern_str) {
                         for line_num in 1..=code.lines().count() {
                             if let Some(line) = code.lines().nth(line_num - 1) {
                                 if regex.is_match(line) {
                                     vulnerabilities.push(Vulnerability {
-                                        rule_id: self.id.clone(),
-                                        name: self.name.clone(),
-                                        severity: self.severity,
-                                        cwe_id: self.cwe_id,
-                                        location: CodeLocation {
-                                            file: "current".to_string(),
-                                            line: line_num,
+                                        rule_id:         self.id.clone(),
+                                        name:            self.name.clone(),
+                                        severity:        self.severity,
+                                        cwe_id:          self.cwe_id,
+                                        location:        CodeLocation {
+                                            file:   "current".to_string(),
+                                            line:   line_num,
                                             column: 0,
                                         },
-                                        description: self.description.clone(),
-                                        code_snippet: line.to_string(),
+                                        description:     self.description.clone(),
+                                        code_snippet:    line.to_string(),
                                         recommendations: self.recommendations.clone(),
-                                        cvss_score: None,
-                                        confidence: 0.9,
+                                        cvss_score:      None,
+                                        confidence:      0.9,
                                     });
                                 }
                             }
                         }
-                    }
-                }
+                    },
             }
         }
 
@@ -212,16 +207,16 @@ pub enum SecurityPattern {
 /// Vulnerability finding
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Vulnerability {
-    pub rule_id: String,
-    pub name: String,
-    pub severity: Severity,
-    pub cwe_id: Option<u32>,
-    pub location: CodeLocation,
-    pub description: String,
-    pub code_snippet: String,
+    pub rule_id:         String,
+    pub name:            String,
+    pub severity:        Severity,
+    pub cwe_id:          Option<u32>,
+    pub location:        CodeLocation,
+    pub description:     String,
+    pub code_snippet:    String,
     pub recommendations: Vec<String>,
-    pub cvss_score: Option<f64>,
-    pub confidence: f64,
+    pub cvss_score:      Option<f64>,
+    pub confidence:      f64,
 }
 
 /// Severity levels
@@ -237,18 +232,18 @@ pub enum Severity {
 /// Code location
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeLocation {
-    pub file: String,
-    pub line: usize,
+    pub file:   String,
+    pub line:   usize,
     pub column: usize,
 }
 
 /// Risk assessment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RiskAssessment {
-    pub overall_risk: RiskLevel,
-    pub risk_score: f64,
-    pub vulnerability_count: usize,
-    pub high_severity_count: usize,
+    pub overall_risk:            RiskLevel,
+    pub risk_score:              f64,
+    pub vulnerability_count:     usize,
+    pub high_severity_count:     usize,
     pub critical_severity_count: usize,
 }
 
@@ -276,8 +271,7 @@ impl RiskAssessmentEngine {
         let risk_score = if vulnerability_count == 0 {
             0.0
         } else {
-            (critical_severity_count * 10 + high_severity_count * 5 + vulnerability_count) as f64
-                * 2.0
+            (critical_severity_count * 10 + high_severity_count * 5 + vulnerability_count) as f64 * 2.0
         };
 
         let overall_risk = if risk_score > 80.0 {
@@ -318,8 +312,8 @@ pub struct SecurityReport {
     pub vulnerabilities: Vec<Vulnerability>,
     pub risk_assessment: RiskAssessment,
     pub recommendations: Vec<String>,
-    pub scanned_at: chrono::DateTime<chrono::Utc>,
-    pub total_lines: usize,
+    pub scanned_at:      chrono::DateTime<chrono::Utc>,
+    pub total_lines:     usize,
 }
 
 /// CVE database integration
@@ -344,10 +338,10 @@ impl CVEDatabase {
 /// CVE entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CVEEntry {
-    pub id: String,
-    pub severity: Severity,
-    pub cvss_score: f64,
-    pub description: String,
+    pub id:             String,
+    pub severity:       Severity,
+    pub cvss_score:     f64,
+    pub description:    String,
     pub published_date: chrono::DateTime<chrono::Utc>,
 }
 

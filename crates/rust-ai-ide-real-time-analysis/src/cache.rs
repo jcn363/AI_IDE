@@ -41,34 +41,34 @@ pub struct CacheStatistics {
     /// Total cache accesses
     pub total_accesses: u64,
     /// Cache hits
-    pub hits: u64,
+    pub hits:           u64,
     /// Cache misses
-    pub misses: u64,
+    pub misses:         u64,
     /// Hit rate percentage
-    pub hit_rate: f32,
+    pub hit_rate:       f32,
     /// Memory cache size
-    pub memory_size: u64,
+    pub memory_size:    u64,
     /// Disk cache size
-    pub disk_size: u64,
+    pub disk_size:      u64,
     /// Last eviction timestamp
-    pub last_eviction: Option<i64>,
+    pub last_eviction:  Option<i64>,
 }
 
 /// Cache key for analysis results
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub struct CacheKey {
     /// File path
-    pub file_path: PathBuf,
+    pub file_path:     PathBuf,
     /// Analysis type
     pub analysis_type: AnalysisType,
     /// File modification time
-    pub file_mtime: i64,
+    pub file_mtime:    i64,
     /// File size
-    pub file_size: u64,
+    pub file_size:     u64,
     /// File hash (for content verification)
-    pub file_hash: String,
+    pub file_hash:     String,
     /// Analysis configuration hash
-    pub config_hash: String,
+    pub config_hash:   String,
 }
 
 impl CacheKey {
@@ -166,17 +166,17 @@ impl CacheKey {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CachedResult {
     /// Analysis result data
-    pub result: AnalysisResult,
+    pub result:        AnalysisResult,
     /// Cache key (for validation)
-    pub key: CacheKey,
+    pub key:           CacheKey,
     /// Cached timestamp
-    pub cached_at: i64,
+    pub cached_at:     i64,
     /// Access count
-    pub access_count: u64,
+    pub access_count:  u64,
     /// Last accessed timestamp
     pub last_accessed: i64,
     /// Cache version for invalidation
-    pub version: u32,
+    pub version:       u32,
 }
 
 /// Multi-level analysis cache
@@ -185,30 +185,30 @@ pub struct AnalysisCache {
     /// Memory cache (fast access)
     memory_cache: Arc<MokaCache<String, CachedResult>>,
     /// Disk cache (persistent storage)
-    disk_cache: Arc<RwLock<Option<Db>>>,
+    disk_cache:   Arc<RwLock<Option<Db>>>,
     /// Cache manager for coordination
-    manager: Arc<CacheManager>,
+    manager:      Arc<CacheManager>,
     /// Cache statistics
-    statistics: Arc<CacheStatistics>,
+    statistics:   Arc<CacheStatistics>,
     /// Configuration
-    config: CacheConfig,
+    config:       CacheConfig,
 }
 
 /// Cache manager for multi-level coordination
 pub struct CacheManager {
     /// Dependency tracking
-    dependency_tracker: Arc<DependencyTracker>,
+    dependency_tracker:    Arc<DependencyTracker>,
     /// Invalidation listener
     invalidation_listener: Arc<RwLock<Option<Box<dyn Fn(Vec<CacheKey>) + Send + Sync>>>>,
     /// Cache version for invalidation
-    current_version: Arc<RwLock<u32>>,
+    current_version:       Arc<RwLock<u32>>,
 }
 
 /// Dependency tracking for cache invalidation
 #[derive(Debug)]
 pub struct DependencyTracker {
     /// File dependencies (reverse mapping)
-    file_dependencies: DashMap<PathBuf, HashSet<CacheKey>>,
+    file_dependencies:     DashMap<PathBuf, HashSet<CacheKey>>,
     /// Cache invalidation triggers
     invalidation_triggers: DashMap<String, Vec<CacheKey>>,
 }
@@ -428,10 +428,7 @@ impl AnalysisCache {
     }
 
     /// Set invalidation listener
-    pub async fn set_invalidation_listener(
-        &self,
-        listener: Box<dyn Fn(Vec<CacheKey>) + Send + Sync>,
-    ) {
+    pub async fn set_invalidation_listener(&self, listener: Box<dyn Fn(Vec<CacheKey>) + Send + Sync>) {
         *self.manager.invalidation_listener.write().await = Some(listener);
     }
 
@@ -452,9 +449,7 @@ impl AnalysisCache {
 
         // Update last eviction timestamp
         {
-            let mut stats = unsafe {
-                &mut *(&*self.statistics as *const CacheStatistics as *mut CacheStatistics)
-            };
+            let mut stats = unsafe { &mut *(&*self.statistics as *const CacheStatistics as *mut CacheStatistics) };
             stats.last_eviction = Some(chrono::Utc::now().timestamp());
         }
 
@@ -498,9 +493,9 @@ impl CacheManager {
     /// Create a new cache manager
     fn new() -> Self {
         Self {
-            dependency_tracker: Arc::new(DependencyTracker::new()),
+            dependency_tracker:    Arc::new(DependencyTracker::new()),
             invalidation_listener: Arc::new(RwLock::new(None)),
-            current_version: Arc::new(RwLock::new(1)),
+            current_version:       Arc::new(RwLock::new(1)),
         }
     }
 
@@ -532,7 +527,7 @@ impl DependencyTracker {
     /// Create a new dependency tracker
     fn new() -> Self {
         Self {
-            file_dependencies: DashMap::new(),
+            file_dependencies:     DashMap::new(),
             invalidation_triggers: DashMap::new(),
         }
     }
@@ -564,12 +559,12 @@ impl Default for CacheStatistics {
     fn default() -> Self {
         Self {
             total_accesses: 0,
-            hits: 0,
-            misses: 0,
-            hit_rate: 0.0,
-            memory_size: 0,
-            disk_size: 0,
-            last_eviction: None,
+            hits:           0,
+            misses:         0,
+            hit_rate:       0.0,
+            memory_size:    0,
+            disk_size:      0,
+            last_eviction:  None,
         }
     }
 }
@@ -589,18 +584,20 @@ impl CachedResult {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::sync::atomic::{AtomicUsize, Ordering};
+
     use tempfile::TempDir;
+
+    use super::*;
 
     fn create_test_cache_key() -> CacheKey {
         CacheKey {
-            file_path: PathBuf::from("test.rs"),
+            file_path:     PathBuf::from("test.rs"),
             analysis_type: AnalysisType::Syntax,
-            file_mtime: 1234567890,
-            file_size: 1024,
-            file_hash: "test_hash".to_string(),
-            config_hash: "config_hash".to_string(),
+            file_mtime:    1234567890,
+            file_size:     1024,
+            file_hash:     "test_hash".to_string(),
+            config_hash:   "config_hash".to_string(),
         }
     }
 
@@ -608,12 +605,12 @@ mod tests {
         use crate::types::{AnalysisMetadata, TaskPriority};
 
         let metadata = AnalysisMetadata {
-            task_id: "test-task".to_string(),
-            file_path: PathBuf::from("test.rs"),
+            task_id:       "test-task".to_string(),
+            file_path:     PathBuf::from("test.rs"),
             analysis_type: AnalysisType::Syntax,
-            priority: TaskPriority::Normal,
-            start_time: std::time::Instant::now(),
-            metadata: HashMap::new(),
+            priority:      TaskPriority::Normal,
+            start_time:    std::time::Instant::now(),
+            metadata:      HashMap::new(),
         };
 
         AnalysisResult {
@@ -647,9 +644,9 @@ mod tests {
     #[tokio::test]
     async fn test_memory_cache_operations() {
         let config = CacheConfig {
-            memory_cache_size: 1_000_000,
-            disk_cache_size: 0, // Disable disk cache
-            cache_ttl: Duration::from_secs(3600),
+            memory_cache_size:  1_000_000,
+            disk_cache_size:    0, // Disable disk cache
+            cache_ttl:          Duration::from_secs(3600),
             hit_time_threshold: Duration::from_millis(10),
         };
 
@@ -679,9 +676,9 @@ mod tests {
     #[tokio::test]
     async fn test_cache_invalidation() {
         let config = CacheConfig {
-            memory_cache_size: 1_000_000,
-            disk_cache_size: 0,
-            cache_ttl: Duration::from_secs(3600),
+            memory_cache_size:  1_000_000,
+            disk_cache_size:    0,
+            cache_ttl:          Duration::from_secs(3600),
             hit_time_threshold: Duration::from_millis(10),
         };
 
@@ -705,9 +702,9 @@ mod tests {
     #[tokio::test]
     async fn test_cache_statistics() {
         let config = CacheConfig {
-            memory_cache_size: 1_000_000,
-            disk_cache_size: 0,
-            cache_ttl: Duration::from_secs(3600),
+            memory_cache_size:  1_000_000,
+            disk_cache_size:    0,
+            cache_ttl:          Duration::from_secs(3600),
             hit_time_threshold: Duration::from_millis(10),
         };
 
@@ -716,12 +713,12 @@ mod tests {
         // Generate some cache activity
         for i in 0..10 {
             let key = CacheKey {
-                file_path: PathBuf::from(format!("test{}.rs", i)),
+                file_path:     PathBuf::from(format!("test{}.rs", i)),
                 analysis_type: AnalysisType::Syntax,
-                file_mtime: 1234567890 + i as i64,
-                file_size: 1024 + i as u64,
-                file_hash: format!("hash{}", i),
-                config_hash: "config".to_string(),
+                file_mtime:    1234567890 + i as i64,
+                file_size:     1024 + i as u64,
+                file_hash:     format!("hash{}", i),
+                config_hash:   "config".to_string(),
             };
 
             // Put and get to generate statistics
@@ -740,12 +737,12 @@ mod tests {
     #[test]
     fn test_cache_key_string_conversion() {
         let key = CacheKey {
-            file_path: PathBuf::from("/path/to/file.rs"),
+            file_path:     PathBuf::from("/path/to/file.rs"),
             analysis_type: AnalysisType::Syntax,
-            file_mtime: 1234567890,
-            file_size: 1024,
-            file_hash: "test_hash".to_string(),
-            config_hash: "config_hash".to_string(),
+            file_mtime:    1234567890,
+            file_size:     1024,
+            file_hash:     "test_hash".to_string(),
+            config_hash:   "config_hash".to_string(),
         };
 
         let string_key = key.to_string_key();

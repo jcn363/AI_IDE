@@ -57,18 +57,16 @@ pub mod risk;
 
 // Re-exports for easier access
 pub use core::*;
-pub use engine::*;
-
-// Conditional feature re-exports
-#[cfg(feature = "gdpr")]
-pub use gdpr::*;
-
-#[cfg(feature = "hipaa")]
-pub use hipaa::*;
 
 // Audit and reporting components
 pub use audit::*;
 pub use data_management::*;
+pub use engine::*;
+// Conditional feature re-exports
+#[cfg(feature = "gdpr")]
+pub use gdpr::*;
+#[cfg(feature = "hipaa")]
+pub use hipaa::*;
 pub use policy::*;
 pub use risk::*;
 

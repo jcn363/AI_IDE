@@ -3,16 +3,17 @@
 //! Provides comprehensive validation with detailed error reporting,
 //! constraint checking, and developer-friendly error messages.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 /// Validation result with detailed error information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationResult {
     /// Validation successful
-    pub success: bool,
+    pub success:  bool,
     /// Validation errors
-    pub errors: Vec<ValidationError>,
+    pub errors:   Vec<ValidationError>,
     /// Validation warnings
     pub warnings: Vec<ValidationWarning>,
     /// Validation metadata
@@ -23,8 +24,8 @@ impl ValidationResult {
     /// Create successful validation result
     pub fn success() -> Self {
         Self {
-            success: true,
-            errors: Vec::new(),
+            success:  true,
+            errors:   Vec::new(),
             warnings: Vec::new(),
             metadata: HashMap::new(),
         }
@@ -79,38 +80,38 @@ impl ValidationResult {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationError {
     /// Error code
-    pub code: String,
+    pub code:       String,
     /// Human-readable error message
-    pub message: String,
+    pub message:    String,
     /// Field that caused the error
-    pub field: Option<String>,
+    pub field:      Option<String>,
     /// Path to the field in nested structures
     pub field_path: Vec<String>,
     /// Expected value type/format
-    pub expected: Option<String>,
+    pub expected:   Option<String>,
     /// Actual value that was provided
-    pub actual: Option<String>,
+    pub actual:     Option<String>,
     /// Constraint that was violated
     pub constraint: Option<String>,
     /// Suggested fix
     pub suggestion: Option<String>,
     /// Severity level
-    pub severity: ValidationSeverity,
+    pub severity:   ValidationSeverity,
 }
 
 impl ValidationError {
     /// Create new validation error
     pub fn new(code: impl Into<String>, message: impl Into<String>) -> Self {
         Self {
-            code: code.into(),
-            message: message.into(),
-            field: None,
+            code:       code.into(),
+            message:    message.into(),
+            field:      None,
             field_path: Vec::new(),
-            expected: None,
-            actual: None,
+            expected:   None,
+            actual:     None,
             constraint: None,
             suggestion: None,
-            severity: ValidationSeverity::Error,
+            severity:   ValidationSeverity::Error,
         }
     }
 
@@ -161,11 +162,11 @@ impl ValidationError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationWarning {
     /// Warning code
-    pub code: String,
+    pub code:       String,
     /// Human-readable warning message
-    pub message: String,
+    pub message:    String,
     /// Field related to the warning
-    pub field: Option<String>,
+    pub field:      Option<String>,
     /// Suggested improvement
     pub suggestion: Option<String>,
 }
@@ -174,9 +175,9 @@ impl ValidationWarning {
     /// Create new validation warning
     pub fn new(code: impl Into<String>, message: impl Into<String>) -> Self {
         Self {
-            code: code.into(),
-            message: message.into(),
-            field: None,
+            code:       code.into(),
+            message:    message.into(),
+            field:      None,
             suggestion: None,
         }
     }
@@ -276,9 +277,8 @@ impl ValidationEngine {
         let mut result = ValidationResult::success();
 
         // Validate JSON structure
-        let json = serde_json::to_value(config).map_err(|e| {
-            crate::RustAIError::Serialization(format!("Invalid JSON structure: {}", e))
-        })?;
+        let json = serde_json::to_value(config)
+            .map_err(|e| crate::RustAIError::Serialization(format!("Invalid JSON structure: {}", e)))?;
 
         // Check for required fields (basic structure validation)
         if let serde_json::Value::Object(obj) = &json {
@@ -336,18 +336,18 @@ pub trait ValidationRule {
 /// Range validation rule for numeric fields
 pub struct RangeValidationRule {
     config_type: String,
-    field: String,
-    min: Option<f64>,
-    max: Option<f64>,
+    field:       String,
+    min:         Option<f64>,
+    max:         Option<f64>,
 }
 
 impl RangeValidationRule {
     pub fn new(config_type: impl Into<String>, field: impl Into<String>) -> Self {
         Self {
             config_type: config_type.into(),
-            field: field.into(),
-            min: None,
-            max: None,
+            field:       field.into(),
+            min:         None,
+            max:         None,
         }
     }
 
@@ -381,14 +381,14 @@ impl ValidationRule for RangeValidationRule {
 /// Required field validation rule
 pub struct RequiredFieldRule {
     config_type: String,
-    field: String,
+    field:       String,
 }
 
 impl RequiredFieldRule {
     pub fn new(config_type: impl Into<String>, field: impl Into<String>) -> Self {
         Self {
             config_type: config_type.into(),
-            field: field.into(),
+            field:       field.into(),
         }
     }
 }
@@ -416,7 +416,7 @@ mod tests {
     #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
     struct TestConfig {
         number: i32,
-        text: String,
+        text:   String,
     }
 
     impl crate::Config for TestConfig {
@@ -434,7 +434,7 @@ mod tests {
         fn default_config() -> Self {
             Self {
                 number: 42,
-                text: "default".to_string(),
+                text:   "default".to_string(),
             }
         }
     }
@@ -444,7 +444,7 @@ mod tests {
         let validator = ValidationEngine::new();
         let config = TestConfig {
             number: 10,
-            text: "valid".to_string(),
+            text:   "valid".to_string(),
         };
 
         let result = validator.validate(&config).unwrap();
@@ -457,7 +457,7 @@ mod tests {
         let validator = ValidationEngine::new();
         let config = TestConfig {
             number: -5,
-            text: "invalid".to_string(),
+            text:   "invalid".to_string(),
         };
 
         let result = validator.validate(&config).unwrap();

@@ -1,22 +1,24 @@
 #![feature(impl_trait_in_bindings)]
 
-use crate::IDEError;
-use candle_core::{DType, Device, Tensor};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use candle_core::{DType, Device, Tensor};
+use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, RwLock};
+
+use crate::IDEError;
 
 /// Context window manager for expanding token capacity (32K→128K)
 #[derive(Clone)]
 pub struct ContextWindowManager {
     /// Configuration for context window management
-    config: ContextWindowConfig,
+    config:       ContextWindowConfig,
     /// Active context sessions
-    sessions: Arc<Mutex<HashMap<String, ContextSession>>>,
+    sessions:     Arc<Mutex<HashMap<String, ContextSession>>>,
     /// Performance profiler for context operations
-    profiler: Arc<ContextWindowProfiler>,
+    profiler:     Arc<ContextWindowProfiler>,
     /// Memory-efficient token storage
     token_buffer: Arc<RwLock<RollingTokenBuffer>>,
 }
@@ -25,51 +27,51 @@ pub struct ContextWindowManager {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ContextWindowConfig {
     /// Maximum context window size in tokens
-    pub max_context_size: usize,
+    pub max_context_size:         usize,
     /// Base context window size (32K)
-    pub base_context_size: usize,
+    pub base_context_size:        usize,
     /// Extended context window size (128K)
-    pub extended_context_size: usize,
+    pub extended_context_size:    usize,
     /// Compression ratio for old tokens
-    pub compression_ratio: f32,
+    pub compression_ratio:        f32,
     /// Memory threshold for compression (percentage)
     pub memory_threshold_percent: f32,
     /// Enable dynamic context expansion
     pub enable_dynamic_expansion: bool,
     /// Sliding window configuration
-    pub sliding_window_config: SlidingWindowConfig,
+    pub sliding_window_config:    SlidingWindowConfig,
 }
 
 /// Sliding window configuration for efficient context management
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SlidingWindowConfig {
     /// Window size for recent tokens
-    pub recent_window_size: usize,
+    pub recent_window_size:     usize,
     /// Window size for compressed tokens
     pub compressed_window_size: usize,
     /// Step size for sliding window updates
-    pub step_size: usize,
+    pub step_size:              usize,
     /// Enable overlapping windows
-    pub enable_overlap: bool,
+    pub enable_overlap:         bool,
     /// Overlap size between windows
-    pub overlap_size: usize,
+    pub overlap_size:           usize,
 }
 
 impl Default for ContextWindowConfig {
     fn default() -> Self {
         Self {
-            max_context_size: 128 * 1024,      // 128K tokens
-            base_context_size: 32 * 1024,      // 32K tokens
-            extended_context_size: 128 * 1024, // 128K tokens
-            compression_ratio: 0.25,           // 4:1 compression
-            memory_threshold_percent: 75.0,    // Compress at 75% memory usage
+            max_context_size:         128 * 1024, // 128K tokens
+            base_context_size:        32 * 1024,  // 32K tokens
+            extended_context_size:    128 * 1024, // 128K tokens
+            compression_ratio:        0.25,       // 4:1 compression
+            memory_threshold_percent: 75.0,       // Compress at 75% memory usage
             enable_dynamic_expansion: true,
-            sliding_window_config: SlidingWindowConfig {
-                recent_window_size: 8192,      // 8K recent tokens
+            sliding_window_config:    SlidingWindowConfig {
+                recent_window_size:     8192,  // 8K recent tokens
                 compressed_window_size: 57344, // 56K compressed tokens
-                step_size: 1024,               // Update every 1K tokens
-                enable_overlap: true,
-                overlap_size: 512,
+                step_size:              1024,  // Update every 1K tokens
+                enable_overlap:         true,
+                overlap_size:           512,
             },
         }
     }
@@ -79,11 +81,11 @@ impl Default for ContextWindowConfig {
 #[derive(Clone)]
 struct ContextSession {
     /// Session identifier
-    session_id: String,
+    session_id:    String,
     /// Current context window state
-    window_state: WindowState,
+    window_state:  WindowState,
     /// Token statistics
-    stats: SessionStats,
+    stats:         SessionStats,
     /// Last activity timestamp
     last_activity: Instant,
 }
@@ -92,15 +94,15 @@ struct ContextSession {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WindowState {
     /// Current window size in tokens
-    pub current_size: usize,
+    pub current_size:        usize,
     /// Number of recent tokens
-    pub recent_tokens: usize,
+    pub recent_tokens:       usize,
     /// Number of compressed tokens
-    pub compressed_tokens: usize,
+    pub compressed_tokens:   usize,
     /// Memory usage in bytes
-    pub memory_usage: u64,
+    pub memory_usage:        u64,
     /// Compression factor applied
-    pub compression_factor: f32,
+    pub compression_factor:  f32,
     /// Performance metrics
     pub performance_metrics: WindowPerformanceMetrics,
 }
@@ -111,30 +113,30 @@ pub struct WindowPerformanceMetrics {
     /// Average token processing time (nanoseconds)
     pub avg_token_processing_ns: u64,
     /// Maximum memory usage during window operations
-    pub max_memory_usage_bytes: u64,
+    pub max_memory_usage_bytes:  u64,
     /// Compression/decompression throughput (tokens/second)
-    pub compression_throughput: f64,
+    pub compression_throughput:  f64,
     /// Cache hit ratio for context retrieval
-    pub cache_hit_ratio: f64,
+    pub cache_hit_ratio:         f64,
 }
 
 /// Session statistics
 #[derive(Clone, Debug, Default)]
 struct SessionStats {
     total_tokens_processed: u64,
-    total_compressions: u64,
-    total_expansions: u64,
-    avg_session_duration: Duration,
-    peak_memory_usage: u64,
+    total_compressions:     u64,
+    total_expansions:       u64,
+    avg_session_duration:   Duration,
+    peak_memory_usage:      u64,
 }
 
 /// Rolling token buffer for efficient memory management
 #[derive(Clone)]
 struct RollingTokenBuffer {
     /// Recent token window (high fidelity)
-    recent_tokens: VecDeque<TokenRecord>,
+    recent_tokens:       VecDeque<TokenRecord>,
     /// Compressed token window (memory efficient)
-    compressed_tokens: VecDeque<CompressedTokenChunk>,
+    compressed_tokens:   VecDeque<CompressedTokenChunk>,
     /// Maximum capacity for recent tokens
     max_recent_capacity: usize,
 }
@@ -142,9 +144,9 @@ struct RollingTokenBuffer {
 /// Individual token record
 #[derive(Clone, Debug)]
 struct TokenRecord {
-    token_id: u32,
-    position: usize,
-    timestamp: Instant,
+    token_id:        u32,
+    position:        usize,
+    timestamp:       Instant,
     attention_score: f32,
 }
 
@@ -152,15 +154,15 @@ struct TokenRecord {
 #[derive(Clone)]
 struct CompressedTokenChunk {
     /// Compressed token data
-    compressed_data: Vec<u8>,
+    compressed_data:       Vec<u8>,
     /// Original token count before compression
-    original_count: usize,
+    original_count:        usize,
     /// Compression factor applied
-    compression_factor: f32,
+    compression_factor:    f32,
     /// Timestamp of compression
     compression_timestamp: Instant,
     /// Quality score for selective retrieval
-    quality_score: f32,
+    quality_score:         f32,
 }
 
 impl ContextWindowManager {
@@ -168,10 +170,8 @@ impl ContextWindowManager {
     pub fn new(config: ContextWindowConfig) -> Self {
         let profiler = Arc::new(ContextWindowProfiler::new());
         let token_buffer = Arc::new(RwLock::new(RollingTokenBuffer {
-            recent_tokens: VecDeque::with_capacity(config.sliding_window_config.recent_window_size),
-            compressed_tokens: VecDeque::with_capacity(
-                config.sliding_window_config.compressed_window_size,
-            ),
+            recent_tokens:       VecDeque::with_capacity(config.sliding_window_config.recent_window_size),
+            compressed_tokens:   VecDeque::with_capacity(config.sliding_window_config.compressed_window_size),
             max_recent_capacity: config.sliding_window_config.recent_window_size,
         }));
 
@@ -186,9 +186,9 @@ impl ContextWindowManager {
     /// Create new context session
     pub async fn create_session(&self, session_id: &str) -> Result<String, IDEError> {
         let session = ContextSession {
-            session_id: session_id.to_string(),
-            window_state: WindowState::default(),
-            stats: SessionStats::default(),
+            session_id:    session_id.to_string(),
+            window_state:  WindowState::default(),
+            stats:         SessionStats::default(),
             last_activity: Instant::now(),
         };
 
@@ -212,9 +212,9 @@ impl ContextWindowManager {
 
         // Get or create session
         let mut sessions = self.sessions.lock().await;
-        let session = sessions.get_mut(session_id).ok_or_else(|| {
-            IDEError::InvalidArgument(format!("Session {} not found", session_id))
-        })?;
+        let session = sessions
+            .get_mut(session_id)
+            .ok_or_else(|| IDEError::InvalidArgument(format!("Session {} not found", session_id)))?;
 
         session.last_activity = Instant::now();
 
@@ -264,8 +264,7 @@ impl ContextWindowManager {
         // Calculate memory usage
         let memory_usage = self.calculate_memory_usage(&buffer).await;
         session.window_state.memory_usage = memory_usage;
-        session.window_state.current_size =
-            session.window_state.recent_tokens + session.window_state.compressed_tokens;
+        session.window_state.current_size = session.window_state.recent_tokens + session.window_state.compressed_tokens;
 
         Ok(WindowUpdateResult {
             window_size: session.window_state.current_size,
@@ -277,8 +276,7 @@ impl ContextWindowManager {
 
     /// Determine if token compression is needed
     async fn should_compress(&self, state: &WindowState, buffer: &RollingTokenBuffer) -> bool {
-        let memory_usage_percent =
-            (state.memory_usage as f32 / self.config.max_context_size as f32) * 100.0;
+        let memory_usage_percent = (state.memory_usage as f32 / self.config.max_context_size as f32) * 100.0;
         let recent_full = buffer.recent_tokens.len() >= buffer.max_recent_capacity;
 
         memory_usage_percent >= self.config.memory_threshold_percent || recent_full
@@ -321,8 +319,7 @@ impl ContextWindowManager {
         session.window_state.recent_tokens -= original_tokens;
         session.stats.total_compressions += 1;
         let estimated_original_bytes = original_tokens * std::mem::size_of::<TokenRecord>();
-        session.window_state.compression_factor =
-            (estimated_original_bytes as f32) / (compressed_bytes as f32);
+        session.window_state.compression_factor = (estimated_original_bytes as f32) / (compressed_bytes as f32);
 
         let compression_time = compression_start.elapsed();
         self.profiler
@@ -333,18 +330,14 @@ impl ContextWindowManager {
     }
 
     /// Compress a chunk of tokens
-    async fn compress_token_chunk(
-        &self,
-        tokens: &[TokenRecord],
-    ) -> Result<CompressedTokenChunk, IDEError> {
+    async fn compress_token_chunk(&self, tokens: &[TokenRecord]) -> Result<CompressedTokenChunk, IDEError> {
         // Simple run-length encoding for demonstration
         // In practice, this would use advanced compression algorithms
         let mut compressed_data = Vec::new();
         let mut i = 0;
 
         // Calculate quality score based on attention scores
-        let avg_attention =
-            tokens.iter().map(|t| t.attention_score).sum::<f32>() / tokens.len() as f32;
+        let avg_attention = tokens.iter().map(|t| t.attention_score).sum::<f32>() / tokens.len() as f32;
 
         while i < tokens.len() {
             let mut j = i;
@@ -378,9 +371,9 @@ impl ContextWindowManager {
         let start_time = Instant::now();
 
         let sessions = self.sessions.lock().await;
-        let session = sessions.get(session_id).ok_or_else(|| {
-            IDEError::InvalidArgument(format!("Session {} not found", session_id))
-        })?;
+        let session = sessions
+            .get(session_id)
+            .ok_or_else(|| IDEError::InvalidArgument(format!("Session {} not found", session_id)))?;
 
         let buffer = self.token_buffer.read().await;
 
@@ -454,10 +447,7 @@ impl ContextWindowManager {
     }
 
     /// Decompress a single token chunk
-    async fn decompress_token_chunk(
-        &self,
-        chunk: &CompressedTokenChunk,
-    ) -> Result<Vec<u32>, IDEError> {
+    async fn decompress_token_chunk(&self, chunk: &CompressedTokenChunk) -> Result<Vec<u32>, IDEError> {
         let mut decompressed = Vec::with_capacity(chunk.original_count);
         let mut data_iter = chunk.compressed_data.iter();
 
@@ -491,9 +481,9 @@ impl ContextWindowManager {
     /// Get session statistics
     pub async fn get_session_stats(&self, session_id: &str) -> Result<SessionStats, IDEError> {
         let sessions = self.sessions.lock().await;
-        let session = sessions.get(session_id).ok_or_else(|| {
-            IDEError::InvalidArgument(format!("Session {} not found", session_id))
-        })?;
+        let session = sessions
+            .get(session_id)
+            .ok_or_else(|| IDEError::InvalidArgument(format!("Session {} not found", session_id)))?;
 
         Ok(session.stats.clone())
     }
@@ -508,11 +498,11 @@ impl ContextWindowManager {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WindowUpdateResult {
     /// Current window size after update
-    pub window_size: usize,
+    pub window_size:           usize,
     /// Number of compressed tokens
-    pub compressed_count: usize,
+    pub compressed_count:      usize,
     /// Current memory usage
-    pub memory_usage: u64,
+    pub memory_usage:          u64,
     /// Whether compression was triggered
     pub compression_triggered: bool,
 }
@@ -525,12 +515,12 @@ pub struct ContextWindowProfiler {
 
 #[derive(Clone, Debug, Default)]
 pub struct ContextWindowPerformanceMetrics {
-    pub total_operations: u64,
-    pub avg_operation_time_ns: u64,
-    pub max_operation_time_ns: u64,
-    pub total_compression_time_ns: u64,
+    pub total_operations:            u64,
+    pub avg_operation_time_ns:       u64,
+    pub max_operation_time_ns:       u64,
+    pub total_compression_time_ns:   u64,
     pub total_decompression_time_ns: u64,
-    pub cache_miss_rate: f64,
+    pub cache_miss_rate:             f64,
 }
 
 impl ContextWindowProfiler {
@@ -548,8 +538,7 @@ impl ContextWindowProfiler {
 
         metrics.max_operation_time_ns = metrics.max_operation_time_ns.max(duration_ns);
         metrics.avg_operation_time_ns =
-            ((metrics.avg_operation_time_ns * (metrics.total_operations - 1)) + duration_ns)
-                / metrics.total_operations;
+            ((metrics.avg_operation_time_ns * (metrics.total_operations - 1)) + duration_ns) / metrics.total_operations;
 
         // Track compression vs decompression time
         match operation_type {
@@ -567,11 +556,11 @@ impl ContextWindowProfiler {
 impl Default for WindowState {
     fn default() -> Self {
         Self {
-            current_size: 0,
-            recent_tokens: 0,
-            compressed_tokens: 0,
-            memory_usage: 0,
-            compression_factor: 1.0,
+            current_size:        0,
+            recent_tokens:       0,
+            compressed_tokens:   0,
+            memory_usage:        0,
+            compression_factor:  1.0,
             performance_metrics: WindowPerformanceMetrics::default(),
         }
     }
@@ -585,8 +574,9 @@ impl Default for ContextWindowManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test;
+
+    use super::*;
 
     #[test]
     async fn test_context_window_creation() {

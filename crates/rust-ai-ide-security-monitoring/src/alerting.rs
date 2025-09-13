@@ -6,9 +6,10 @@
 //! - Alert escalation and de-duplication
 //! - Automated remediation actions
 
+use std::sync::Arc;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{error, info, warn};
 
@@ -16,28 +17,28 @@ use crate::{MonitoringError, Result};
 
 #[derive(Clone)]
 pub struct AlertingEngine {
-    rules: Arc<RwLock<Vec<AlertRule>>>,
-    active_alerts: Arc<RwLock<Vec<SecurityAlert>>>,
+    rules:               Arc<RwLock<Vec<AlertRule>>>,
+    active_alerts:       Arc<RwLock<Vec<SecurityAlert>>>,
     deduplication_cache: moka::future::Cache<String, DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertRule {
-    pub id: String,
-    pub name: String,
-    pub enabled: bool,
+    pub id:                 String,
+    pub name:               String,
+    pub enabled:            bool,
     pub severity_threshold: crate::EventSeverity,
-    pub conditions: Vec<AlertCondition>,
-    pub actions: Vec<AlertAction>,
-    pub cooldown_minutes: u32,
-    pub escalation_rules: Vec<EscalationRule>,
+    pub conditions:         Vec<AlertCondition>,
+    pub actions:            Vec<AlertAction>,
+    pub cooldown_minutes:   u32,
+    pub escalation_rules:   Vec<EscalationRule>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertCondition {
-    pub field: String,
+    pub field:    String,
     pub operator: ConditionOperator,
-    pub value: String,
+    pub value:    String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -60,23 +61,23 @@ pub enum AlertAction {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EscalationRule {
-    pub delay_minutes: u32,
-    pub severity_increase: bool,
+    pub delay_minutes:      u32,
+    pub severity_increase:  bool,
     pub additional_actions: Vec<AlertAction>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityAlert {
-    pub id: String,
-    pub rule_id: String,
-    pub title: String,
-    pub description: String,
-    pub severity: crate::EventSeverity,
-    pub status: AlertStatus,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub id:             String,
+    pub rule_id:        String,
+    pub title:          String,
+    pub description:    String,
+    pub severity:       crate::EventSeverity,
+    pub status:         AlertStatus,
+    pub created_at:     DateTime<Utc>,
+    pub updated_at:     DateTime<Utc>,
     pub related_events: Vec<uuid::Uuid>,
-    pub actions_taken: Vec<String>,
+    pub actions_taken:  Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,28 +91,22 @@ pub enum AlertStatus {
 impl AlertingEngine {
     pub async fn new() -> Self {
         Self {
-            rules: Arc::new(RwLock::new(Vec::new())),
-            active_alerts: Arc::new(RwLock::new(Vec::new())),
+            rules:               Arc::new(RwLock::new(Vec::new())),
+            active_alerts:       Arc::new(RwLock::new(Vec::new())),
             deduplication_cache: moka::future::Cache::builder()
                 .time_to_live(tokio::time::Duration::from_secs(300))
                 .build(),
         }
     }
 
-    pub async fn process_correlations(
-        &self,
-        correlations: &[correlation::CorrelationResult],
-    ) -> Result<()> {
+    pub async fn process_correlations(&self, correlations: &[correlation::CorrelationResult]) -> Result<()> {
         for correlation in correlations {
             self.evaluate_alert_rules(correlation).await?;
         }
         Ok(())
     }
 
-    async fn evaluate_alert_rules(
-        &self,
-        correlation: &correlation::CorrelationResult,
-    ) -> Result<()> {
+    async fn evaluate_alert_rules(&self, correlation: &correlation::CorrelationResult) -> Result<()> {
         let rules = self.rules.read().await.clone();
 
         for rule in rules {
@@ -130,20 +125,20 @@ impl AlertingEngine {
                 }
 
                 let alert = SecurityAlert {
-                    id: uuid::Uuid::new_v4().to_string(),
-                    rule_id: rule.id.clone(),
-                    title: format!("Security Event Correlation: {}", correlation.description),
-                    description: correlation.description.clone(),
-                    severity: correlation
+                    id:             uuid::Uuid::new_v4().to_string(),
+                    rule_id:        rule.id.clone(),
+                    title:          format!("Security Event Correlation: {}", correlation.description),
+                    description:    correlation.description.clone(),
+                    severity:       correlation
                         .events
                         .first()
                         .map(|e| e.severity.clone())
                         .unwrap_or(crate::EventSeverity::Medium),
-                    status: AlertStatus::Active,
-                    created_at: Utc::now(),
-                    updated_at: Utc::now(),
+                    status:         AlertStatus::Active,
+                    created_at:     Utc::now(),
+                    updated_at:     Utc::now(),
                     related_events: correlation.events.iter().map(|e| e.id).collect(),
-                    actions_taken: Vec::new(),
+                    actions_taken:  Vec::new(),
                 };
 
                 // Store alert

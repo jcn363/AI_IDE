@@ -1,11 +1,11 @@
 //! Reporting system for monitoring results
 
-use crate::{
-    errors::{MonitoringError, Result},
-    types::{AnalysisReport, Severity},
-};
-use serde::{Deserialize, Serialize};
 use std::path::Path;
+
+use serde::{Deserialize, Serialize};
+
+use crate::errors::{MonitoringError, Result};
+use crate::types::{AnalysisReport, Severity};
 
 /// Reporter trait for different output formats
 #[async_trait::async_trait]
@@ -226,7 +226,7 @@ impl MarkdownReporter {
 
 /// Console/Terminal reporter for immediate feedback
 pub struct ConsoleReporter {
-    format: ReportFormat,
+    format:  ReportFormat,
     verbose: bool,
 }
 

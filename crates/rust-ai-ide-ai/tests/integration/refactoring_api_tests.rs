@@ -6,10 +6,9 @@
 //! - Error handling and recovery
 //! - Serialization/deserialization
 
-use rust_ai_ide_ai::refactoring::{
-    CodeRange, RefactoringContext, RefactoringOptions, RefactoringType,
-};
 use std::collections::HashMap;
+
+use rust_ai_ide_ai::refactoring::{CodeRange, RefactoringContext, RefactoringOptions, RefactoringType};
 
 use crate::common::test_utils::*;
 
@@ -272,37 +271,37 @@ mod test_utils {
     use super::*;
 
     pub struct TestContext {
-        pub file_path: String,
-        pub line_number: usize,
-        pub column: usize,
+        pub file_path:     String,
+        pub line_number:   usize,
+        pub column:        usize,
         pub selected_text: Option<String>,
-        pub symbol_name: Option<String>,
+        pub symbol_name:   Option<String>,
     }
 
     pub struct TestAnalysisResult {
-        pub applicableRefactorings: Vec<String>,
-        pub confidenceScore: f64,
-        pub aiInsights: Option<String>,
-        pub lspAnalysis: Option<String>,
+        pub applicableRefactorings:  Vec<String>,
+        pub confidenceScore:         f64,
+        pub aiInsights:              Option<String>,
+        pub lspAnalysis:             Option<String>,
         pub analysisRecommendations: Vec<String>,
     }
 
     pub struct TestErrorResult {
-        pub error_code: String,
-        pub message: String,
+        pub error_code:  String,
+        pub message:     String,
         pub recoverable: bool,
-        pub details: String,
+        pub details:     String,
     }
 
     // Helper functions for creating test data
     pub fn create_test_context(file_path: &str, line: usize, col: usize) -> RefactoringContext {
         RefactoringContext {
-            file_path: file_path.to_string(),
-            cursor_line: line,
+            file_path:        file_path.to_string(),
+            cursor_line:      line,
             cursor_character: col,
-            selection: None,
-            symbol_name: None,
-            symbol_kind: None,
+            selection:        None,
+            symbol_name:      None,
+            symbol_kind:      None,
         }
     }
 

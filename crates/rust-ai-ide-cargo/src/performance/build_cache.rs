@@ -3,11 +3,12 @@
 //! This module provides caching for build results and dependencies to avoid
 //! redundant compilation when source files haven't changed.
 
+use std::path::Path;
+use std::time::{Duration, SystemTime};
+
 use rust_ai_ide_cache::{key_utils, Cache, CacheConfig, CacheStats, InMemoryCache};
 use rust_ai_ide_core::IDEResult;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
-use std::time::{Duration, SystemTime};
 
 use super::BuildMetrics;
 
@@ -15,21 +16,21 @@ use super::BuildMetrics;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CachedBuildResult {
     /// Build metrics
-    pub metrics: BuildMetrics,
+    pub metrics:      BuildMetrics,
     /// Hash of the project state when build was performed
     pub project_hash: String,
     /// Profile used for the build
-    pub profile: String,
+    pub profile:      String,
     /// Features used for the build
-    pub features: Vec<String>,
+    pub features:     Vec<String>,
     /// Timestamp when cached
-    pub cached_at: SystemTime,
+    pub cached_at:    SystemTime,
 }
 
 /// Build cache for Cargo operations
 pub struct CargoBuildCache {
     unified_cache: InMemoryCache<String, serde_json::Value>,
-    config: CacheConfig,
+    config:        CacheConfig,
 }
 
 impl std::fmt::Debug for CargoBuildCache {
@@ -44,7 +45,7 @@ impl CargoBuildCache {
     /// Create a new Cargo build cache with optimized settings
     pub fn new() -> Self {
         let config = CacheConfig {
-            max_entries: Some(2000), // Higher limit for build artifacts
+            max_entries: Some(2000),                      // Higher limit for build artifacts
             default_ttl: Some(Duration::from_secs(3600)), // 1 hour for build results
             ..Default::default()
         };

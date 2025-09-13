@@ -1,9 +1,10 @@
 //! Template validation and security checks
 
+use async_trait::async_trait;
+
 use crate::ast::{GenerateBlock, Template, ValidationRule};
 use crate::error::DslResult;
 use crate::types::GeneratedCode;
-use async_trait::async_trait;
 
 /// Template validation engine
 #[derive(Debug)]
@@ -83,9 +84,9 @@ impl TemplateValidator {
             match self.apply_validation_rule(code, rule).await {
                 Ok(result) => results.push(result),
                 Err(e) => results.push(ValidationResult {
-                    rule: rule.name.clone(),
+                    rule:     rule.name.clone(),
                     severity: ValidationSeverity::Error,
-                    message: format!("Validation failed: {}", e),
+                    message:  format!("Validation failed: {}", e),
                     location: None,
                 }),
             }
@@ -104,11 +105,7 @@ impl TemplateValidator {
         Ok(results)
     }
 
-    async fn validate_structure(
-        &self,
-        template: &Template,
-        results: &mut Vec<ValidationResult>,
-    ) -> DslResult<()> {
+    async fn validate_structure(&self, template: &Template, results: &mut Vec<ValidationResult>) -> DslResult<()> {
         if template.name.is_empty() {
             results.push(ValidationResult::error(
                 "structure",
@@ -186,16 +183,12 @@ impl TemplateValidator {
         Ok(())
     }
 
-    async fn apply_validation_rule(
-        &self,
-        code: &GeneratedCode,
-        rule: &ValidationRule,
-    ) -> DslResult<ValidationResult> {
+    async fn apply_validation_rule(&self, code: &GeneratedCode, rule: &ValidationRule) -> DslResult<ValidationResult> {
         // For Phase 2, we implement a simplified validation engine
         // In later phases, this could be expanded to use regex, AST analysis, etc.
 
         let result = match rule.name.as_str() {
-            "no_empty_functions" => {
+            "no_empty_functions" =>
                 if code.code.contains("fn ") && code.code.contains("{\n    \n}") {
                     ValidationResult::error(
                         rule.name.clone(),
@@ -204,8 +197,7 @@ impl TemplateValidator {
                     )
                 } else {
                     ValidationResult::success(rule.name.clone())
-                }
-            }
+                },
             "line_length_limit" => {
                 let max_length = 100;
                 let long_line = code.code.lines().find(|line| line.len() > max_length);
@@ -242,10 +234,7 @@ pub trait SecurityValidator: Send + Sync + std::fmt::Debug + 'static {
     async fn validate_template(&self, template: &Template) -> DslResult<Vec<ValidationResult>>;
 
     /// Validate generated code for security issues
-    async fn validate_generated_code(
-        &self,
-        code: &GeneratedCode,
-    ) -> DslResult<Vec<ValidationResult>>;
+    async fn validate_generated_code(&self, code: &GeneratedCode) -> DslResult<Vec<ValidationResult>>;
 }
 
 /// Language-specific validation interface
@@ -259,11 +248,11 @@ pub trait LanguageValidator: Send + Sync + std::fmt::Debug + 'static {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ValidationResult {
     /// Name of the validation rule
-    pub rule: String,
+    pub rule:     String,
     /// Severity of the validation result
     pub severity: ValidationSeverity,
     /// Human-readable validation message
-    pub message: String,
+    pub message:  String,
     /// Location where the issue was found (optional)
     pub location: Option<String>,
 }
@@ -285,19 +274,15 @@ impl ValidationResult {
     /// Create a success result
     pub fn success(rule: impl Into<String>) -> Self {
         Self {
-            rule: rule.into(),
+            rule:     rule.into(),
             severity: ValidationSeverity::Success,
-            message: "Validation passed".to_string(),
+            message:  "Validation passed".to_string(),
             location: None,
         }
     }
 
     /// Create an info result
-    pub fn info(
-        rule: impl Into<String>,
-        message: impl Into<String>,
-        location: Option<String>,
-    ) -> Self {
+    pub fn info(rule: impl Into<String>, message: impl Into<String>, location: Option<String>) -> Self {
         Self {
             rule: rule.into(),
             severity: ValidationSeverity::Info,
@@ -307,11 +292,7 @@ impl ValidationResult {
     }
 
     /// Create a warning result
-    pub fn warning(
-        rule: impl Into<String>,
-        message: impl Into<String>,
-        location: Option<String>,
-    ) -> Self {
+    pub fn warning(rule: impl Into<String>, message: impl Into<String>, location: Option<String>) -> Self {
         Self {
             rule: rule.into(),
             severity: ValidationSeverity::Warning,
@@ -321,11 +302,7 @@ impl ValidationResult {
     }
 
     /// Create an error result
-    pub fn error(
-        rule: impl Into<String>,
-        message: impl Into<String>,
-        location: Option<String>,
-    ) -> Self {
+    pub fn error(rule: impl Into<String>, message: impl Into<String>, location: Option<String>) -> Self {
         Self {
             rule: rule.into(),
             severity: ValidationSeverity::Error,
@@ -352,9 +329,10 @@ impl ValidationResult {
 
 #[cfg(test)]
 mod tests {
+    use rust_ai_ide_common::ProgrammingLanguage;
+
     use super::*;
     use crate::ast::Template;
-    use rust_ai_ide_common::ProgrammingLanguage;
 
     #[tokio::test]
     async fn test_basic_template_validation() {
@@ -376,8 +354,7 @@ mod tests {
         assert!(error.is_error());
         assert_eq!(error.message, "test message");
 
-        let warning =
-            ValidationResult::warning("test_rule", "test warning", Some("line 1".to_string()));
+        let warning = ValidationResult::warning("test_rule", "test warning", Some("line 1".to_string()));
         assert!(warning.is_warning());
         assert_eq!(warning.location, Some("line 1".to_string()));
     }

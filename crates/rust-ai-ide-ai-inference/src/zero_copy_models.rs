@@ -1,8 +1,9 @@
-use memmap2::{Mmap, MmapOptions};
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
+
+use memmap2::{Mmap, MmapOptions};
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
 use tokio::sync::{Mutex, Semaphore};
 use tokio::task::spawn_blocking;
 
@@ -17,18 +18,17 @@ pub trait ZeroCopyInference {
 
 /// Memory-mapped model wrapper for zero-copy AI model loading
 pub struct MmapModel {
-    pub(crate) mmap: Arc<Mmap>,
+    pub(crate) mmap:       Arc<Mmap>,
     pub(crate) model_path: String,
-    pub(crate) size: usize,
-    pub(crate) metadata: Arc<ModelMetadata>,
+    pub(crate) size:       usize,
+    pub(crate) metadata:   Arc<ModelMetadata>,
 }
 
 // Implement ZeroCopyBuffer indirectly through Mmap
 impl MmapModel {
     pub async fn load<P: AsRef<Path>>(path: P) -> Result<Self, IDEError> {
-        let file = std::fs::File::open(&path).map_err(|e| {
-            IDEError::new(IDEErrorKind::FileOperation, "Failed to open model file").with_source(e)
-        })?;
+        let file = std::fs::File::open(&path)
+            .map_err(|e| IDEError::new(IDEErrorKind::FileOperation, "Failed to open model file").with_source(e))?;
 
         let mmap = unsafe {
             MmapOptions::new().map(&file).map_err(|e| {
@@ -74,20 +74,20 @@ impl MmapModel {
 /// Model metadata extracted from memory-mapped data
 #[derive(Clone, Debug)]
 pub struct ModelMetadata {
-    pub model_type: String,
-    pub input_dims: Vec<usize>,
-    pub output_dims: Vec<usize>,
-    pub format_version: u32,
+    pub model_type:         String,
+    pub input_dims:         Vec<usize>,
+    pub output_dims:        Vec<usize>,
+    pub format_version:     u32,
     pub supports_zero_copy: bool,
 }
 
 impl Default for ModelMetadata {
     fn default() -> Self {
         Self {
-            model_type: "unknown".to_string(),
-            input_dims: vec![],
-            output_dims: vec![],
-            format_version: 1,
+            model_type:         "unknown".to_string(),
+            input_dims:         vec![],
+            output_dims:        vec![],
+            format_version:     1,
             supports_zero_copy: true,
         }
     }
@@ -95,9 +95,9 @@ impl Default for ModelMetadata {
 
 /// Zero-copy inference engine that operates directly on memory-mapped models
 pub struct ZeroCopyInferenceEngine {
-    pub(crate) model: Arc<MmapModel>,
+    pub(crate) model:     Arc<MmapModel>,
     pub(crate) semaphore: Arc<Semaphore>,
-    pub(crate) context: Arc<Mutex<InferenceContext>>,
+    pub(crate) context:   Arc<Mutex<InferenceContext>>,
 }
 
 impl ZeroCopyInferenceEngine {
@@ -122,21 +122,14 @@ impl ZeroCopyInferenceEngine {
         let input_clone = input.to_vec();
 
         // Spawn blocking task for inference to avoid blocking the async runtime
-        let result = spawn_blocking(move || {
-            Self::perform_zero_copy_inference_blocking(&model_clone, &input_clone)
-        })
-        .await
-        .map_err(|e| {
-            IDEError::new(IDEErrorKind::ConcurrencyError, "Inference task panicked").with_source(e)
-        })??;
+        let result = spawn_blocking(move || Self::perform_zero_copy_inference_blocking(&model_clone, &input_clone))
+            .await
+            .map_err(|e| IDEError::new(IDEErrorKind::ConcurrencyError, "Inference task panicked").with_source(e))??;
 
         Ok(result)
     }
 
-    fn perform_zero_copy_inference_blocking(
-        model: &Arc<MmapModel>,
-        input: &[u8],
-    ) -> Result<Vec<u8>, IDEError> {
+    fn perform_zero_copy_inference_blocking(model: &Arc<MmapModel>, input: &[u8]) -> Result<Vec<u8>, IDEError> {
         if !model.get_metadata().supports_zero_copy {
             return Err(IDEError::new(
                 IDEErrorKind::OperationUnsupported,
@@ -172,9 +165,9 @@ impl ZeroCopyInference for ZeroCopyInferenceEngine {
 
 /// Global manager for zero-copy model loading and caching
 pub struct ZeroCopyModelManager {
-    pub(crate) models: Arc<Mutex<HashMap<String, Arc<MmapModel>>>>,
-    pub(crate) engines: Arc<Mutex<HashMap<String, ZeroCopyInferenceEngine>>>,
-    pub(crate) max_memory: usize,
+    pub(crate) models:         Arc<Mutex<HashMap<String, Arc<MmapModel>>>>,
+    pub(crate) engines:        Arc<Mutex<HashMap<String, ZeroCopyInferenceEngine>>>,
+    pub(crate) max_memory:     usize,
     pub(crate) current_memory: Arc<Mutex<usize>>,
 }
 
@@ -188,11 +181,7 @@ impl ZeroCopyModelManager {
         }
     }
 
-    pub async fn load_model<P: AsRef<Path>>(
-        &self,
-        key: String,
-        path: P,
-    ) -> Result<String, IDEError> {
+    pub async fn load_model<P: AsRef<Path>>(&self, key: String, path: P) -> Result<String, IDEError> {
         let mut current_mem = self.current_memory.lock().await;
 
         // Check if model is already loaded
@@ -238,10 +227,7 @@ impl ZeroCopyModelManager {
         Ok(key)
     }
 
-    pub async fn get_inference_engine(
-        &self,
-        key: &str,
-    ) -> Result<&ZeroCopyInferenceEngine, IDEError> {
+    pub async fn get_inference_engine(&self, key: &str) -> Result<&ZeroCopyInferenceEngine, IDEError> {
         let engines = self.engines.lock().await;
         engines.get(key).ok_or_else(|| {
             IDEError::new(
@@ -312,9 +298,8 @@ fn perform_zero_copy_operations(model_data: &[u8], input: &[u8]) -> Result<Vec<u
     // In real implementation, this would use SIMD instructions and direct memory operations
     // to avoid heap allocations and copying
     unsafe {
-        let output_ptr = std::alloc::alloc(
-            std::alloc::Layout::from_size_align(output_len, std::mem::align_of::<u8>()).unwrap(),
-        );
+        let output_ptr =
+            std::alloc::alloc(std::alloc::Layout::from_size_align(output_len, std::mem::align_of::<u8>()).unwrap());
 
         if output_ptr.is_null() {
             return Err(IDEError::new(

@@ -1,4 +1,5 @@
 use std::fmt;
+
 use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
@@ -50,8 +51,8 @@ pub enum RefactoringError {
 
     #[error("Syntax error at line {line}, column {column}: {message}")]
     SyntaxError {
-        line: usize,
-        column: usize,
+        line:    usize,
+        column:  usize,
         message: String,
     },
 
@@ -199,10 +200,7 @@ pub fn is_recoverable_error(error: &RefactoringError) -> bool {
 }
 
 /// Attempt to recover from an error with a recovery strategy
-pub fn attempt_recovery<T, F>(
-    result: RefactoringResult<T>,
-    recovery_strategy: F,
-) -> RefactoringResult<T>
+pub fn attempt_recovery<T, F>(result: RefactoringResult<T>, recovery_strategy: F) -> RefactoringResult<T>
 where
     F: FnOnce(&RefactoringError) -> Option<RefactoringResult<T>>,
 {

@@ -1,40 +1,42 @@
 #![feature(impl_trait_in_bindings)]
 
-use crate::IDEError;
-use candle_core::{DType, Device, Tensor};
-use rust_ai_ide_security::validate_secure_path;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+
+use candle_core::{DType, Device, Tensor};
+use rust_ai_ide_security::validate_secure_path;
+use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
+
+use crate::IDEError;
 
 /// GGUF model optimization and deployment engine
 #[derive(Clone)]
 pub struct GGUFOptimizationEngine {
     /// Configuration for GGUF operations
-    config: GGUFConfig,
+    config:          GGUFConfig,
     /// Deployed model registry
     deployed_models: Arc<Mutex<HashMap<String, DeployedGGUFModel>>>,
     /// Performance profiler
-    profiler: Arc<GGUFPerformanceProfiler>,
+    profiler:        Arc<GGUFPerformanceProfiler>,
 }
 
 /// GGUF configuration
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GGUFConfig {
     /// Maximum model size to optimize
-    pub max_model_size_gb: f64,
+    pub max_model_size_gb:         f64,
     /// Preferred quantization level
-    pub preferred_quantization: String,
+    pub preferred_quantization:    String,
     /// Enable CUDA acceleration
-    pub enable_cuda: bool,
+    pub enable_cuda:               bool,
     /// Memory optimization level
     pub memory_optimization_level: MemoryOptimizationLevel,
     /// Thread pool size for parallel processing
-    pub thread_pool_size: usize,
+    pub thread_pool_size:          usize,
     /// Deployment timeout in seconds
-    pub deployment_timeout_secs: u64,
+    pub deployment_timeout_secs:   u64,
 }
 
 /// Memory optimization levels
@@ -52,34 +54,34 @@ pub enum MemoryOptimizationLevel {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DeployedGGUFModel {
     /// Model identifier
-    pub model_id: String,
+    pub model_id:                 String,
     /// Original model path
-    pub original_path: PathBuf,
+    pub original_path:            PathBuf,
     /// Optimized GGUF path
-    pub gguf_path: PathBuf,
+    pub gguf_path:                PathBuf,
     /// Quantization strategy used
-    pub quantization_strategy: String,
+    pub quantization_strategy:    String,
     /// Model size reduction (compression ratio)
-    pub compression_ratio: f32,
+    pub compression_ratio:        f32,
     /// Inference latency in milliseconds
     pub avg_inference_latency_ms: f64,
     /// Memory footprint in MB
-    pub memory_footprint_mb: f64,
+    pub memory_footprint_mb:      f64,
     /// Deployment timestamp
-    pub deployment_time: chrono::DateTime<chrono::Utc>,
+    pub deployment_time:          chrono::DateTime<chrono::Utc>,
     /// Performance metrics
-    pub performance_metrics: GGUFPerformanceMetrics,
+    pub performance_metrics:      GGUFPerformanceMetrics,
 }
 
 /// GGUF performance metrics
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GGUFPerformanceMetrics {
     /// Tokens per second throughput
-    pub tokens_per_sec: f64,
+    pub tokens_per_sec:             f64,
     /// Memory usage during inference
-    pub memory_usage_mb: f64,
+    pub memory_usage_mb:            f64,
     /// GPU utilization percentage (if applicable)
-    pub gpu_utilization_percent: Option<f64>,
+    pub gpu_utilization_percent:    Option<f64>,
     /// Quantization accuracy retention
     pub accuracy_retention_percent: f64,
     /// Context switching overhead
@@ -164,10 +166,7 @@ impl GGUFOptimizationEngine {
     }
 
     /// Analyze model structure for optimization
-    async fn analyze_model_structure(
-        &self,
-        model_path: &Path,
-    ) -> Result<ModelAnalysisInfo, IDEError> {
+    async fn analyze_model_structure(&self, model_path: &Path) -> Result<ModelAnalysisInfo, IDEError> {
         // Load model weights and analyze structure
         let tensors = candle_core::safetensors::load(model_path)?;
 
@@ -216,12 +215,11 @@ impl GGUFOptimizationEngine {
             "Q4_0" => self.optimize_for_q4_0(&tensors).await,
             "Q5_0" => self.optimize_for_q5_0(&tensors).await,
             "Q8_0" => self.optimize_for_q8_0(&tensors).await,
-            _ => {
+            _ =>
                 return Err(IDEError::InvalidArgument(format!(
                     "Unsupported quantization strategy: {}",
                     strategy
-                )))
-            }
+                ))),
         }?;
 
         for (name, compression_info) in compression_strategy {
@@ -235,10 +233,9 @@ impl GGUFOptimizationEngine {
             optimized_tensors,
             compression_ratio: avg_compression,
             metadata: GGUFMetadata {
-                quantization_strategy: strategy.to_string(),
-                original_parameter_count: model_info.total_parameters,
-                optimized_parameter_count: (model_info.total_parameters as f32 * avg_compression)
-                    as u64,
+                quantization_strategy:     strategy.to_string(),
+                original_parameter_count:  model_info.total_parameters,
+                optimized_parameter_count: (model_info.total_parameters as f32 * avg_compression) as u64,
             },
         })
     }
@@ -253,20 +250,16 @@ impl GGUFOptimizationEngine {
         for (name, tensor) in tensors {
             // Apply Q4_0 specific optimizations
             let quantized_tensor = self.apply_q4_0_optimization(tensor)?;
-            let original_size =
-                tensor.dims().iter().fold(1, |acc, &x| acc * x) * tensor.dtype().size_in_bytes();
-            let quantized_size = quantized_tensor.dims().iter().fold(1, |acc, &x| acc * x)
-                * quantized_tensor.dtype().size_in_bytes();
+            let original_size = tensor.dims().iter().fold(1, |acc, &x| acc * x) * tensor.dtype().size_in_bytes();
+            let quantized_size =
+                quantized_tensor.dims().iter().fold(1, |acc, &x| acc * x) * quantized_tensor.dtype().size_in_bytes();
             let compression_ratio = original_size as f32 / quantized_size as f32;
 
-            results.insert(
-                name.clone(),
-                CompressionInfo {
-                    tensor: quantized_tensor,
-                    compression_ratio,
-                    quantization_noise: 0.05, // Estimated noise for Q4_0
-                },
-            );
+            results.insert(name.clone(), CompressionInfo {
+                tensor: quantized_tensor,
+                compression_ratio,
+                quantization_noise: 0.05, // Estimated noise for Q4_0
+            });
         }
 
         Ok(results)
@@ -281,20 +274,16 @@ impl GGUFOptimizationEngine {
 
         for (name, tensor) in tensors {
             let quantized_tensor = self.apply_q5_0_optimization(tensor)?;
-            let original_size =
-                tensor.dims().iter().fold(1, |acc, &x| acc * x) * tensor.dtype().size_in_bytes();
-            let quantized_size = quantized_tensor.dims().iter().fold(1, |acc, &x| acc * x)
-                * quantized_tensor.dtype().size_in_bytes();
+            let original_size = tensor.dims().iter().fold(1, |acc, &x| acc * x) * tensor.dtype().size_in_bytes();
+            let quantized_size =
+                quantized_tensor.dims().iter().fold(1, |acc, &x| acc * x) * quantized_tensor.dtype().size_in_bytes();
             let compression_ratio = original_size as f32 / quantized_size as f32;
 
-            results.insert(
-                name.clone(),
-                CompressionInfo {
-                    tensor: quantized_tensor,
-                    compression_ratio,
-                    quantization_noise: 0.03, // Lower noise for Q5_0
-                },
-            );
+            results.insert(name.clone(), CompressionInfo {
+                tensor: quantized_tensor,
+                compression_ratio,
+                quantization_noise: 0.03, // Lower noise for Q5_0
+            });
         }
 
         Ok(results)
@@ -309,20 +298,16 @@ impl GGUFOptimizationEngine {
 
         for (name, tensor) in tensors {
             let quantized_tensor = self.apply_q8_0_optimization(tensor)?;
-            let original_size =
-                tensor.dims().iter().fold(1, |acc, &x| acc * x) * tensor.dtype().size_in_bytes();
-            let quantized_size = quantized_tensor.dims().iter().fold(1, |acc, &x| acc * x)
-                * quantized_tensor.dtype().size_in_bytes();
+            let original_size = tensor.dims().iter().fold(1, |acc, &x| acc * x) * tensor.dtype().size_in_bytes();
+            let quantized_size =
+                quantized_tensor.dims().iter().fold(1, |acc, &x| acc * x) * quantized_tensor.dtype().size_in_bytes();
             let compression_ratio = original_size as f32 / quantized_size as f32;
 
-            results.insert(
-                name.clone(),
-                CompressionInfo {
-                    tensor: quantized_tensor,
-                    compression_ratio,
-                    quantization_noise: 0.01, // Minimal noise for Q8_0
-                },
-            );
+            results.insert(name.clone(), CompressionInfo {
+                tensor: quantized_tensor,
+                compression_ratio,
+                quantization_noise: 0.01, // Minimal noise for Q8_0
+            });
         }
 
         Ok(results)
@@ -424,11 +409,7 @@ impl GGUFOptimizationEngine {
     }
 
     /// Write GGUF file format
-    async fn write_gguf_file(
-        &self,
-        path: &Path,
-        model: &OptimizedModelInfo,
-    ) -> Result<(), IDEError> {
+    async fn write_gguf_file(&self, path: &Path, model: &OptimizedModelInfo) -> Result<(), IDEError> {
         // This would implement GGUF binary format writing
         // For now, just create a placeholder file
         tokio::fs::write(path, b"GGUF_PLACEHOLDER")
@@ -469,10 +450,7 @@ impl GGUFOptimizationEngine {
     }
 
     /// Measure inference throughput
-    async fn measure_inference_throughput(
-        &self,
-        deployment: &DeploymentInfo,
-    ) -> Result<f64, IDEError> {
+    async fn measure_inference_throughput(&self, deployment: &DeploymentInfo) -> Result<f64, IDEError> {
         // This would run actual inference benchmarks
         // For now, return estimated throughput based on model size
         let base_throughput = match self.config.memory_optimization_level {
@@ -488,11 +466,7 @@ impl GGUFOptimizationEngine {
     }
 
     /// Determine optimal quantization strategy
-    fn determine_optimal_strategy(
-        &self,
-        tensor_types: &HashMap<String, i32>,
-        total_params: u64,
-    ) -> String {
+    fn determine_optimal_strategy(&self, tensor_types: &HashMap<String, i32>, total_params: u64) -> String {
         // Simple strategy selection based on model characteristics
         let has_fp16 = tensor_types.contains_key("F16");
 
@@ -528,9 +502,7 @@ impl GGUFOptimizationEngine {
             if model.gguf_path.exists() {
                 tokio::fs::remove_file(&model.gguf_path)
                     .await
-                    .map_err(|e| {
-                        IDEError::InvalidArgument(format!("Failed to remove GGUF file: {}", e))
-                    })?;
+                    .map_err(|e| IDEError::InvalidArgument(format!("Failed to remove GGUF file: {}", e)))?;
             }
             Ok(())
         } else {
@@ -545,46 +517,46 @@ impl GGUFOptimizationEngine {
 // Supporting data structures
 
 struct ModelAnalysisInfo {
-    total_parameters: u64,
+    total_parameters:         u64,
     tensor_type_distribution: HashMap<String, i32>,
-    memory_layout: Vec<(String, u64)>,
-    recommended_strategy: String,
+    memory_layout:            Vec<(String, u64)>,
+    recommended_strategy:     String,
 }
 
 struct OptimizedModelInfo {
     optimized_tensors: HashMap<String, Tensor>,
     compression_ratio: f32,
-    metadata: GGUFMetadata,
+    metadata:          GGUFMetadata,
 }
 
 struct GGUFMetadata {
-    quantization_strategy: String,
-    original_parameter_count: u64,
+    quantization_strategy:     String,
+    original_parameter_count:  u64,
     optimized_parameter_count: u64,
 }
 
 struct CompressionInfo {
-    tensor: Tensor,
-    compression_ratio: f32,
+    tensor:             Tensor,
+    compression_ratio:  f32,
     quantization_noise: f32,
 }
 
 struct DeploymentInfo {
-    gguf_path: PathBuf,
+    gguf_path:            PathBuf,
     deployment_timestamp: chrono::DateTime<chrono::Utc>,
-    model_size_mb: f64,
-    compression_ratio: f32,
+    model_size_mb:        f64,
+    compression_ratio:    f32,
 }
 
 impl Default for GGUFConfig {
     fn default() -> Self {
         Self {
-            max_model_size_gb: 10.0,
-            preferred_quantization: "Q4_0".to_string(),
-            enable_cuda: false,
+            max_model_size_gb:         10.0,
+            preferred_quantization:    "Q4_0".to_string(),
+            enable_cuda:               false,
             memory_optimization_level: MemoryOptimizationLevel::Balanced,
-            thread_pool_size: 4,
-            deployment_timeout_secs: 300,
+            thread_pool_size:          4,
+            deployment_timeout_secs:   300,
         }
     }
 }
@@ -604,8 +576,9 @@ impl GGUFPerformanceProfiler {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test;
+
+    use super::*;
 
     #[test]
     async fn test_gguf_engine_creation() {

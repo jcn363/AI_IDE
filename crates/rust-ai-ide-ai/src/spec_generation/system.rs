@@ -1,18 +1,16 @@
-use crate::spec_generation::{
-    generator::CodeGenerator,
-    parser::SpecificationParser,
-    types::{
-        ArchitecturalPattern, GeneratedCode, ParsedSpecification, RefinedCode,
-        SpecificationRequest, ValidationResult,
-    },
-    validation::CodeValidator,
-};
 use anyhow::Result;
 use async_trait::async_trait;
 
+use crate::spec_generation::generator::CodeGenerator;
+use crate::spec_generation::parser::SpecificationParser;
+use crate::spec_generation::types::{
+    ArchitecturalPattern, GeneratedCode, ParsedSpecification, RefinedCode, SpecificationRequest, ValidationResult,
+};
+use crate::spec_generation::validation::CodeValidator;
+
 /// Main system for specification-driven code generation
 pub struct IntelligentSpecGenerator {
-    parser: SpecificationParser,
+    parser:    SpecificationParser,
     generator: CodeGenerator,
     validator: CodeValidator,
 }
@@ -27,18 +25,14 @@ impl IntelligentSpecGenerator {
     /// Create a new IntelligentSpecGenerator with default components
     pub fn new() -> Self {
         Self {
-            parser: SpecificationParser::new(),
+            parser:    SpecificationParser::new(),
             generator: CodeGenerator::new(),
             validator: CodeValidator::new(),
         }
     }
 
     /// Create a new IntelligentSpecGenerator with custom components
-    pub fn with_components(
-        parser: SpecificationParser,
-        generator: CodeGenerator,
-        validator: CodeValidator,
-    ) -> Self {
+    pub fn with_components(parser: SpecificationParser, generator: CodeGenerator, validator: CodeValidator) -> Self {
         Self {
             parser,
             generator,
@@ -47,10 +41,7 @@ impl IntelligentSpecGenerator {
     }
 
     /// Generate code from a specification request
-    pub async fn generate_from_spec(
-        &self,
-        request: &SpecificationRequest,
-    ) -> Result<GeneratedCode> {
+    pub async fn generate_from_spec(&self, request: &SpecificationRequest) -> Result<GeneratedCode> {
         // Parse the specification
         let parsed_spec = self.parse_specification(&request.description).await?;
 
@@ -78,11 +69,7 @@ impl IntelligentSpecGenerator {
     }
 
     /// Validate generated code against the specification
-    pub fn validate_generation(
-        &self,
-        _code: &str,
-        spec: &ParsedSpecification,
-    ) -> Result<ValidationResult> {
+    pub fn validate_generation(&self, _code: &str, spec: &ParsedSpecification) -> Result<ValidationResult> {
         // In a real implementation, we would parse the code and compare it to the spec
         // For now, we'll just validate the spec itself
         Ok(self.validator.validate_specification(spec))
@@ -100,18 +87,14 @@ impl IntelligentSpecGenerator {
         let refined_code = format!("// Feedback: {}\n\n{}", feedback, code);
 
         Ok(RefinedCode {
-            code: refined_code,
-            changes: vec![],
+            code:        refined_code,
+            changes:     vec![],
             explanation: "Code has been updated based on feedback".to_string(),
         })
     }
 
     /// Validate all generated code files
-    fn validate_generated_code(
-        &self,
-        generated_code: &GeneratedCode,
-        _spec: &ParsedSpecification,
-    ) -> Result<()> {
+    fn validate_generated_code(&self, generated_code: &GeneratedCode, _spec: &ParsedSpecification) -> Result<()> {
         let mut all_issues = Vec::new();
         let mut all_valid = true;
 
@@ -137,10 +120,7 @@ impl IntelligentSpecGenerator {
     }
 
     /// Convert an architectural pattern to a specification request
-    async fn pattern_to_specification(
-        &self,
-        pattern: &ArchitecturalPattern,
-    ) -> Result<SpecificationRequest> {
+    async fn pattern_to_specification(&self, pattern: &ArchitecturalPattern) -> Result<SpecificationRequest> {
         // In a real implementation, we would have templates or rules for each pattern
         // For now, we'll just create a simple specification based on the pattern name
         let description = format!(
@@ -179,20 +159,11 @@ impl crate::spec_generation::types::SpecificationGenerator for IntelligentSpecGe
         self.generate_pattern(pattern).await
     }
 
-    async fn validate_generation(
-        &self,
-        code: &str,
-        spec: &ParsedSpecification,
-    ) -> Result<ValidationResult> {
+    async fn validate_generation(&self, code: &str, spec: &ParsedSpecification) -> Result<ValidationResult> {
         self.validate_generation(code, spec)
     }
 
-    async fn refine_generation(
-        &self,
-        code: &str,
-        spec: &ParsedSpecification,
-        feedback: &str,
-    ) -> Result<RefinedCode> {
+    async fn refine_generation(&self, code: &str, spec: &ParsedSpecification, feedback: &str) -> Result<RefinedCode> {
         self.refine_generation(code, spec, feedback).await
     }
 }
@@ -201,8 +172,8 @@ impl crate::spec_generation::types::SpecificationGenerator for IntelligentSpecGe
 mod tests {
     use super::*;
     use crate::spec_generation::types::{
-        CodeFile, Entity, EntityType, Field, FunctionSpec, Parameter, ParsedSpecification,
-        Requirement, SpecificationRequest,
+        CodeFile, Entity, EntityType, Field, FunctionSpec, Parameter, ParsedSpecification, Requirement,
+        SpecificationRequest,
     };
 
     #[tokio::test]
@@ -239,8 +210,8 @@ mod tests {
             }
             "#
             .to_string(),
-            language: "rust".to_string(),
-            context: None,
+            language:    "rust".to_string(),
+            context:     None,
         };
 
         let result = generator.generate_from_spec(&request).await;
@@ -287,31 +258,31 @@ mod tests {
         let generator = IntelligentSpecGenerator::new();
         let spec = ParsedSpecification {
             requirements: vec![Requirement {
-                id: "REQ-001".to_string(),
+                id:          "REQ-001".to_string(),
                 description: "The system must store user information".to_string(),
-                priority: 1,
-                related_to: vec!["User".to_string()],
+                priority:    1,
+                related_to:  vec!["User".to_string()],
             }],
-            patterns: vec![],
-            entities: vec![Entity {
-                name: "User".to_string(),
-                entity_type: EntityType::Struct,
-                fields: vec![Field {
-                    name: "id".to_string(),
-                    field_type: "String".to_string(),
+            patterns:     vec![],
+            entities:     vec![Entity {
+                name:         "User".to_string(),
+                entity_type:  EntityType::Struct,
+                fields:       vec![Field {
+                    name:        "id".to_string(),
+                    field_type:  "String".to_string(),
                     is_optional: false,
-                    docs: vec!["Unique identifier".to_string()],
+                    docs:        vec!["Unique identifier".to_string()],
                 }],
-                docs: vec!["A user in the system".to_string()],
+                docs:         vec!["A user in the system".to_string()],
                 requirements: vec!["REQ-001".to_string()],
             }],
-            functions: vec![FunctionSpec {
-                name: "create_user".to_string(),
-                return_type: "Result<User, String>".to_string(),
-                parameters: vec![],
-                docs: vec!["Creates a new user".to_string()],
+            functions:    vec![FunctionSpec {
+                name:         "create_user".to_string(),
+                return_type:  "Result<User, String>".to_string(),
+                parameters:   vec![],
+                docs:         vec!["Creates a new user".to_string()],
                 requirements: vec!["REQ-001".to_string()],
-                error_types: vec!["String".to_string()],
+                error_types:  vec!["String".to_string()],
             }],
         };
 

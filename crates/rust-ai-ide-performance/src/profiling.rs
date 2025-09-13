@@ -5,23 +5,23 @@ use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone)]
 pub struct ProfileResult {
-    pub name: String,
-    pub duration: Duration,
-    pub calls: u64,
+    pub name:         String,
+    pub duration:     Duration,
+    pub calls:        u64,
     pub avg_duration: Duration,
     pub max_duration: Duration,
     pub min_duration: Duration,
 }
 
 pub struct PerformanceProfiler {
-    profiles: HashMap<String, Vec<Duration>>,
+    profiles:        HashMap<String, Vec<Duration>>,
     active_profiles: HashMap<String, Instant>,
 }
 
 impl PerformanceProfiler {
     pub fn new() -> Self {
         Self {
-            profiles: HashMap::new(),
+            profiles:        HashMap::new(),
             active_profiles: HashMap::new(),
         }
     }
@@ -50,9 +50,9 @@ impl PerformanceProfiler {
             .map(|(name, durations)| {
                 if durations.is_empty() {
                     return ProfileResult {
-                        name: name.clone(),
-                        duration: Duration::new(0, 0),
-                        calls: 0,
+                        name:         name.clone(),
+                        duration:     Duration::new(0, 0),
+                        calls:        0,
                         avg_duration: Duration::new(0, 0),
                         max_duration: Duration::new(0, 0),
                         min_duration: Duration::new(0, 0),
@@ -90,7 +90,7 @@ impl PerformanceProfiler {
 // Scoped profiling helper
 pub struct ScopedProfiler<'a> {
     profiler: &'a mut PerformanceProfiler,
-    name: String,
+    name:     String,
 }
 
 impl<'a> ScopedProfiler<'a> {
@@ -111,19 +111,19 @@ impl<'a> Drop for ScopedProfiler<'a> {
 
 // Memory profiling utilities
 pub struct MemoryProfiler {
-    allocation_count: u64,
-    deallocation_count: u64,
+    allocation_count:     u64,
+    deallocation_count:   u64,
     current_memory_usage: u64,
-    peak_memory_usage: u64,
+    peak_memory_usage:    u64,
 }
 
 impl MemoryProfiler {
     pub fn new() -> Self {
         Self {
-            allocation_count: 0,
-            deallocation_count: 0,
+            allocation_count:     0,
+            deallocation_count:   0,
             current_memory_usage: 0,
-            peak_memory_usage: 0,
+            peak_memory_usage:    0,
         }
     }
 
@@ -142,26 +142,27 @@ impl MemoryProfiler {
 
     pub fn get_stats(&self) -> MemoryStats {
         MemoryStats {
-            allocation_count: self.allocation_count,
-            deallocation_count: self.deallocation_count,
+            allocation_count:     self.allocation_count,
+            deallocation_count:   self.deallocation_count,
             current_memory_usage: self.current_memory_usage,
-            peak_memory_usage: self.peak_memory_usage,
+            peak_memory_usage:    self.peak_memory_usage,
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct MemoryStats {
-    pub allocation_count: u64,
-    pub deallocation_count: u64,
+    pub allocation_count:     u64,
+    pub deallocation_count:   u64,
     pub current_memory_usage: u64,
-    pub peak_memory_usage: u64,
+    pub peak_memory_usage:    u64,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::thread::sleep;
+
+    use super::*;
 
     #[test]
     fn test_performance_profiler() {

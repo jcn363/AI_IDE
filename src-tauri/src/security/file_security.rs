@@ -3,15 +3,15 @@
 //! This module provides secure file operation wrappers that prevent common security issues
 //! such as path traversal, unauthorized access, and file system exploits.
 
-use crate::errors::{IDEError, IDEResult};
-use std::fs;
-use std::io;
 use std::path::{Path, PathBuf};
+use std::{fs, io};
+
+use crate::errors::{IDEError, IDEResult};
 
 /// Secure file operations with validation
 pub struct SecureFileOperations {
     allowed_base_paths: Vec<PathBuf>,
-    max_file_size: u64,
+    max_file_size:      u64,
     blocked_extensions: Vec<String>,
 }
 
@@ -23,7 +23,7 @@ impl Default for SecureFileOperations {
                 PathBuf::from("../"),                // Parent directory
                 PathBuf::from(std::env::temp_dir()), // System temp directory
             ],
-            max_file_size: 100 * 1024 * 1024, // 100MB
+            max_file_size:      100 * 1024 * 1024, // 100MB
             blocked_extensions: vec![
                 "exe".to_string(),
                 "bat".to_string(),
@@ -49,8 +49,7 @@ impl SecureFileOperations {
         self.validate_file_access(file_path, OperationType::Read)?;
 
         // Read the file content
-        std::fs::read_to_string(file_path)
-            .map_err(|e| IDEError::FileOperation(format!("Failed to read file: {}", e)))
+        std::fs::read_to_string(file_path).map_err(|e| IDEError::FileOperation(format!("Failed to read file: {}", e)))
     }
 
     /// Securely write to a file with validation
@@ -67,14 +66,12 @@ impl SecureFileOperations {
 
         // Create parent directories if they don't exist
         if let Some(parent) = Path::new(file_path).parent() {
-            fs::create_dir_all(parent).map_err(|e| {
-                IDEError::FileOperation(format!("Failed to create parent directories: {}", e))
-            })?;
+            fs::create_dir_all(parent)
+                .map_err(|e| IDEError::FileOperation(format!("Failed to create parent directories: {}", e)))?;
         }
 
         // Write the file
-        fs::write(file_path, content)
-            .map_err(|e| IDEError::FileOperation(format!("Failed to write file: {}", e)))
+        fs::write(file_path, content).map_err(|e| IDEError::FileOperation(format!("Failed to write file: {}", e)))
     }
 
     /// Securely check if a file exists
@@ -99,8 +96,7 @@ impl SecureFileOperations {
             ));
         }
 
-        fs::remove_file(file_path)
-            .map_err(|e| IDEError::FileOperation(format!("Failed to delete file: {}", e)))
+        fs::remove_file(file_path).map_err(|e| IDEError::FileOperation(format!("Failed to delete file: {}", e)))
     }
 
     /// Validate file path against security rules
@@ -126,9 +122,7 @@ impl SecureFileOperations {
                     if let Some(part_str) = part.to_str() {
                         // Block double dots (path traversal)
                         if part_str.contains("..") {
-                            return Err(IDEError::Validation(
-                                "Path traversal detected".to_string(),
-                            ));
+                            return Err(IDEError::Validation("Path traversal detected".to_string()));
                         }
                         // Block dangerous characters
                         for &ch in &['<', '>', '|', '"', '*', '?'] {
@@ -228,9 +222,11 @@ pub fn get_secure_file_ops() -> SecureFileOperations {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::NamedTempFile;
+
+    use super::*;
 
     #[test]
     fn test_path_traversal_detection() {

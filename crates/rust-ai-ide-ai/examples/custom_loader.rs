@@ -1,8 +1,8 @@
-use anyhow::{anyhow, Result};
-use async_trait::async_trait;
 use std::println;
 use std::sync::Arc;
 
+use anyhow::{anyhow, Result};
+use async_trait::async_trait;
 use rust_ai_ide_ai::model_loader::*;
 
 /// Custom model loader for demonstration purposes
@@ -39,9 +39,7 @@ impl ModelLoader for CustomModelLoader {
             || model_path.to_lowercase().contains("codellama")
         {
             ModelType::CodeLlama
-        } else if model_path.to_lowercase().contains("star_coder")
-            || model_path.to_lowercase().contains("starcoder")
-        {
+        } else if model_path.to_lowercase().contains("star_coder") || model_path.to_lowercase().contains("starcoder") {
             ModelType::StarCoder
         } else {
             return Err(anyhow!(

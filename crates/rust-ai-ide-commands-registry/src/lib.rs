@@ -1,45 +1,45 @@
-/*!
-# Command Registry for Rust AI IDE
+//! # Command Registry for Rust AI IDE
+//!
+//! Replaces the monolithic `invoke_handler!` macro with a modular, scalable command registration
+//! system.
+//!
+//! This crate provides a dynamic command registry that allows modular command crates
+//! to register their commands without tight coupling, enabling better maintainability and
+//! extensibility.
+//!
+//! ## Architecture
+//!
+//! The command registry enables:
+//! - **Dynamic command discovery**: Commands can be registered at runtime
+//! - **Modular command domains**: Each command type in its own crate
+//! - **Loose coupling**: Commands depend on interfaces, not implementations
+//! - **Registration-time validation**: Commands are validated when registered
+//! - **Scalable architecture**: Easy to add new command domains
+//!
+//! ## Usage
+//!
+//! ```rust
+//! use rust_ai_ide_commands_registry::CommandRegistry;
+//!
+//! let mut registry = CommandRegistry::new();
+//!
+//! Register AI commands
+//! registry.register_ai_commands();
+//!
+//! Register custom commands
+//! registry.register_custom_commands(ai_commands, analysis_commands, etc.);
+//!
+//! Build Tauri invoke handler (replaces monolithic macro)
+//! let invoke_handler = registry.build_invoke_handler();
+//! ```
 
-Replaces the monolithic `invoke_handler!` macro with a modular, scalable command registration system.
-
-This crate provides a dynamic command registry that allows modular command crates
-to register their commands without tight coupling, enabling better maintainability and extensibility.
-
-## Architecture
-
-The command registry enables:
-- **Dynamic command discovery**: Commands can be registered at runtime
-- **Modular command domains**: Each command type in its own crate
-- **Loose coupling**: Commands depend on interfaces, not implementations
-- **Registration-time validation**: Commands are validated when registered
-- **Scalable architecture**: Easy to add new command domains
-
-## Usage
-
-```rust
-use rust_ai_ide_commands_registry::CommandRegistry;
-
-let mut registry = CommandRegistry::new();
-
-// Register AI commands
-registry.register_ai_commands();
-
-// Register custom commands
-registry.register_custom_commands(ai_commands, analysis_commands, etc.);
-
-// Build Tauri invoke handler (replaces monolithic macro)
-let invoke_handler = registry.build_invoke_handler();
-```
-*/
-
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
 #[cfg(feature = "ai_commands")]
 use rust_ai_ide_commands_ai;
+use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
 
 /// Result type for command operations
 pub type CommandResult<T> = Result<T, CommandError>;
@@ -66,12 +66,12 @@ pub enum CommandError {
 /// Command metadata for discovery and documentation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommandMetadata {
-    pub name: String,
-    pub domain: CommandDomain,
+    pub name:        String,
+    pub domain:      CommandDomain,
     pub description: String,
-    pub parameters: Vec<String>,
+    pub parameters:  Vec<String>,
     pub return_type: String,
-    pub tags: Vec<String>,
+    pub tags:        Vec<String>,
 }
 
 /// Command domain categories
@@ -89,13 +89,12 @@ pub enum CommandDomain {
 }
 
 /// Type-erased command function
-pub type CommandFunction =
-    fn(tauri::Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>>;
+pub type CommandFunction = fn(tauri::Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>>;
 
 /// Dynamic command registry
 pub struct CommandRegistry {
     registry: HashMap<String, (CommandFunction, CommandMetadata)>,
-    domains: HashMap<CommandDomain, Vec<String>>,
+    domains:  HashMap<CommandDomain, Vec<String>>,
 }
 
 impl CommandRegistry {
@@ -103,7 +102,7 @@ impl CommandRegistry {
     pub fn new() -> Self {
         Self {
             registry: HashMap::new(),
-            domains: HashMap::new(),
+            domains:  HashMap::new(),
         }
     }
 
@@ -275,9 +274,7 @@ impl CommandHandler {
     }
 
     /// Build the invoke handler for Tauri
-    pub fn build_invoke_handler(
-        &self,
-    ) -> impl Fn(tauri::Invoke<tauri::Wry>) -> bool + Clone + Send + Sync + 'static {
+    pub fn build_invoke_handler(&self) -> impl Fn(tauri::Invoke<tauri::Wry>) -> bool + Clone + Send + Sync + 'static {
         let registry = Arc::clone(&self.registry);
 
         move |invoke| {
@@ -319,9 +316,7 @@ mod tests {
         let mut registry = CommandRegistry::new();
 
         // Mock command function
-        fn mock_command(
-            _invoke: tauri::Invoke<tauri::Wry>,
-        ) -> Option<Box<dyn std::any::Any + Send + Sync>> {
+        fn mock_command(_invoke: tauri::Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>> {
             None
         }
 
@@ -348,9 +343,7 @@ mod tests {
     fn test_duplicate_command_registration() {
         let mut registry = CommandRegistry::new();
 
-        fn mock_command(
-            _invoke: tauri::Invoke<tauri::Wry>,
-        ) -> Option<Box<dyn std::any::Any + Send + Sync>> {
+        fn mock_command(_invoke: tauri::Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>> {
             None
         }
 

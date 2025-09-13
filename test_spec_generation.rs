@@ -1,11 +1,10 @@
-use rust_ai_ide_ai::spec_generation::{
-    generator::CodeGenerator,
-    parser::SpecificationParser,
-    system::IntelligentSpecGenerator,
-    types::{ParsedSpecification, SpecificationRequest},
-    validation::CodeValidator,
-};
 use std::fmt;
+
+use rust_ai_ide_ai::spec_generation::generator::CodeGenerator;
+use rust_ai_ide_ai::spec_generation::parser::SpecificationParser;
+use rust_ai_ide_ai::spec_generation::system::IntelligentSpecGenerator;
+use rust_ai_ide_ai::spec_generation::types::{ParsedSpecification, SpecificationRequest};
+use rust_ai_ide_ai::spec_generation::validation::CodeValidator;
 
 const COUNTER_SPEC: &str = r#"
 // A simple counter component
@@ -106,9 +105,10 @@ async fn run_validator_test(spec: &ParsedSpecification) -> Result<f64, Verificat
 async fn run_generator_test(spec: &ParsedSpecification) -> Result<(), VerificationError> {
     println!("\n3. Testing Generator...");
     let generator = CodeGenerator::new();
-    let generated = generator.generate_code(spec).await.map_err(|e| {
-        VerificationError::GenerationError(format!("Failed to generate code: {}", e))
-    })?;
+    let generated = generator
+        .generate_code(spec)
+        .await
+        .map_err(|e| VerificationError::GenerationError(format!("Failed to generate code: {}", e)))?;
     println!(
         "✓ Generator test passed! Generated {} files and {} resources.",
         generated.files.len(),
@@ -132,13 +132,14 @@ async fn run_end_to_end_test(spec_text: &str) -> Result<(), VerificationError> {
     let system = IntelligentSpecGenerator::new();
     let request = SpecificationRequest {
         description: spec_text,
-        language: "rust".to_string(),
-        context: None,
+        language:    "rust".to_string(),
+        context:     None,
     };
 
-    let result = system.generate_from_spec(&request).await.map_err(|e| {
-        VerificationError::GenerationError(format!("Failed to generate from specification: {}", e))
-    })?;
+    let result = system
+        .generate_from_spec(&request)
+        .await
+        .map_err(|e| VerificationError::GenerationError(format!("Failed to generate from specification: {}", e)))?;
     println!("✓ End-to-End test passed! Generated output:");
 
     // Added assertion for result.files.len() > 0 as per comment

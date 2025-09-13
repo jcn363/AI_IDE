@@ -1,24 +1,26 @@
-use crate::analysis::{AnalysisFinding, AnalysisPreferences};
+use std::path::Path;
+
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use syn::File;
+
+use crate::analysis::{AnalysisFinding, AnalysisPreferences};
 
 /// Preferences that control analyzer behavior
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AnalysisPreferences {
     /// Whether to include security-related findings
-    pub security: bool,
+    pub security:       bool,
     /// Whether to include performance-related findings
-    pub performance: bool,
+    pub performance:    bool,
     /// Whether to include architectural findings
-    pub architectural: bool,
+    pub architectural:  bool,
     /// Whether to include code metrics
-    pub metrics: bool,
+    pub metrics:        bool,
     /// Minimum confidence level for findings (0.0 to 1.0)
     pub min_confidence: f32,
     /// Maximum number of findings to return (0 for unlimited)
-    pub max_findings: usize,
+    pub max_findings:   usize,
 }
 
 /// Trait for all analysis components to ensure consistent interface
@@ -67,11 +69,7 @@ pub trait AnalyzerExt: Analyzer {
     }
 
     /// Filter findings based on confidence level and other criteria
-    fn filter_findings(
-        &self,
-        findings: Vec<Self::Finding>,
-        preferences: &AnalysisPreferences,
-    ) -> Vec<Self::Finding>
+    fn filter_findings(&self, findings: Vec<Self::Finding>, preferences: &AnalysisPreferences) -> Vec<Self::Finding>
     where
         Self::Finding: HasConfidence,
     {
@@ -152,13 +150,13 @@ pub enum Severity {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeLocation {
     /// File path
-    pub file: String,
+    pub file:       String,
     /// Line number (1-based)
-    pub line: usize,
+    pub line:       usize,
     /// Column number (1-based)
-    pub column: usize,
+    pub column:     usize,
     /// End line number (1-based, inclusive)
-    pub end_line: Option<usize>,
+    pub end_line:   Option<usize>,
     /// End column number (1-based, exclusive)
     pub end_column: Option<usize>,
 }
@@ -189,9 +187,7 @@ impl CodeLocation {
         }
 
         if let Some(end_line) = self.end_line {
-            if line > end_line
-                || (line == end_line && column >= self.end_column.unwrap_or(usize::MAX))
-            {
+            if line > end_line || (line == end_line && column >= self.end_column.unwrap_or(usize::MAX)) {
                 return false;
             }
         }

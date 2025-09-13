@@ -3,15 +3,16 @@
 //! Provides automatic migration of configuration files between versions,
 //! backward compatibility handling, and upgrade path management.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
 
 /// Migration engine for configuration upgrades
 #[derive(Debug)]
 pub struct MigrationEngine {
     /// Registered migration plans
-    plans: HashMap<String, Vec<MigrationPlan>>,
+    plans:            HashMap<String, Vec<MigrationPlan>>,
     /// Current version mappings
     current_versions: HashMap<String, semver::Version>,
 }
@@ -19,31 +20,31 @@ pub struct MigrationEngine {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MigrationPlan {
     /// Configuration type this plan applies to
-    pub config_type: String,
+    pub config_type:  String,
     /// Source version
     pub from_version: semver::Version,
     /// Target version
-    pub to_version: semver::Version,
+    pub to_version:   semver::Version,
     /// Migration steps
-    pub steps: Vec<MigrationStep>,
+    pub steps:        Vec<MigrationStep>,
     /// Whether this migration is automatic (no user intervention)
-    pub automatic: bool,
+    pub automatic:    bool,
     /// Migration description
-    pub description: String,
+    pub description:  String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MigrationStep {
     /// Step type
-    pub step_type: MigrationStepType,
+    pub step_type:     MigrationStepType,
     /// Field path to migrate
-    pub field_path: String,
+    pub field_path:    String,
     /// Migration action
-    pub action: MigrationAction,
+    pub action:        MigrationAction,
     /// Default value if field is missing
     pub default_value: Option<serde_json::Value>,
     /// Migration condition
-    pub condition: Option<MigrationCondition>,
+    pub condition:     Option<MigrationCondition>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -94,9 +95,9 @@ pub struct MigrationCondition {
     /// Condition type
     pub condition_type: ConditionType,
     /// Field to check
-    pub field: String,
+    pub field:          String,
     /// Expected value
-    pub expected: serde_json::Value,
+    pub expected:       serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -117,30 +118,30 @@ pub enum ConditionType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MigrationResult {
     /// Migration successful
-    pub success: bool,
+    pub success:       bool,
     /// Configuration type migrated
-    pub config_type: String,
+    pub config_type:   String,
     /// Original version
-    pub from_version: Option<semver::Version>,
+    pub from_version:  Option<semver::Version>,
     /// Target version
-    pub to_version: semver::Version,
+    pub to_version:    semver::Version,
     /// Applied migration steps
     pub applied_steps: Vec<String>,
     /// Migration warnings
-    pub warnings: Vec<String>,
+    pub warnings:      Vec<String>,
     /// Migration errors
-    pub errors: Vec<String>,
+    pub errors:        Vec<String>,
     /// Backup path (if created)
-    pub backup_path: Option<PathBuf>,
+    pub backup_path:   Option<PathBuf>,
     /// Migration timestamp
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:     chrono::DateTime<chrono::Utc>,
 }
 
 impl MigrationEngine {
     /// Create new migration engine
     pub fn new() -> Self {
         Self {
-            plans: HashMap::new(),
+            plans:            HashMap::new(),
             current_versions: HashMap::new(),
         }
     }
@@ -220,10 +221,7 @@ impl MigrationEngine {
 
         // Serialize config to JSON for manipulation
         let mut json_config = serde_json::to_value(&config).map_err(|e| {
-            crate::RustAIError::Serialization(format!(
-                "Failed to serialize config for migration: {}",
-                e
-            ))
+            crate::RustAIError::Serialization(format!("Failed to serialize config for migration: {}", e))
         })?;
 
         // Apply migration steps
@@ -238,12 +236,8 @@ impl MigrationEngine {
         }
 
         // Deserialize migrated config
-        config = serde_json::from_value(json_config).map_err(|e| {
-            crate::RustAIError::Serialization(format!(
-                "Failed to deserialize migrated config: {}",
-                e
-            ))
-        })?;
+        config = serde_json::from_value(json_config)
+            .map_err(|e| crate::RustAIError::Serialization(format!("Failed to deserialize migrated config: {}", e)))?;
 
         // Update version tracking
         self.current_versions
@@ -254,11 +248,7 @@ impl MigrationEngine {
     }
 
     /// Apply single migration step
-    fn apply_migration_step(
-        &self,
-        config: &mut serde_json::Value,
-        step: &MigrationStep,
-    ) -> crate::IDEResult<String> {
+    fn apply_migration_step(&self, config: &mut serde_json::Value, step: &MigrationStep) -> crate::IDEResult<String> {
         // Check condition if present
         if let Some(condition) = &step.condition {
             if !self.evaluate_condition(config, condition)? {
@@ -270,23 +260,20 @@ impl MigrationEngine {
         }
 
         match step.step_type {
-            MigrationStepType::AddField => {
+            MigrationStepType::AddField =>
                 if let Some(default) = &step.default_value {
                     self.set_nested_value(config, &step.field_path, default.clone())?;
                     Ok(format!("Added field: {}", step.field_path))
                 } else {
                     Err(crate::RustAIError::Config(
-                        rust_ai_ide_errors::ConfigError::new(
-                            "AddField step requires default_value",
-                        ),
+                        rust_ai_ide_errors::ConfigError::new("AddField step requires default_value"),
                     ))
-                }
-            }
+                },
             MigrationStepType::RemoveField => {
                 self.remove_nested_value(config, &step.field_path)?;
                 Ok(format!("Removed field: {}", step.field_path))
             }
-            MigrationStepType::RenameField => {
+            MigrationStepType::RenameField =>
                 if let MigrationAction::RenameTo(new_name) = &step.action {
                     self.rename_nested_field(config, &step.field_path, new_name)?;
                     Ok(format!(
@@ -295,12 +282,9 @@ impl MigrationEngine {
                     ))
                 } else {
                     Err(crate::RustAIError::Config(
-                        rust_ai_ide_errors::ConfigError::new(
-                            "RenameField requires RenameTo action",
-                        ),
+                        rust_ai_ide_errors::ConfigError::new("RenameField requires RenameTo action"),
                     ))
-                }
-            }
+                },
             _ => Ok(format!(
                 "Applied step: {} to {}",
                 step.step_type, step.field_path
@@ -309,11 +293,7 @@ impl MigrationEngine {
     }
 
     /// Evaluate migration condition
-    fn evaluate_condition(
-        &self,
-        config: &serde_json::Value,
-        condition: &MigrationCondition,
-    ) -> crate::IDEResult<bool> {
+    fn evaluate_condition(&self, config: &serde_json::Value, condition: &MigrationCondition) -> crate::IDEResult<bool> {
         let field_value = self.get_nested_value(config, &condition.field);
 
         match condition.condition_type {
@@ -346,9 +326,8 @@ impl MigrationEngine {
         let backup_filename = format!("{}_{}.backup", C::FILE_PREFIX, timestamp);
         let backup_path = backup_dir.join(backup_filename);
 
-        let json = serde_json::to_string_pretty(config).map_err(|e| {
-            crate::RustAIError::Serialization(format!("Failed to serialize backup: {}", e))
-        })?;
+        let json = serde_json::to_string_pretty(config)
+            .map_err(|e| crate::RustAIError::Serialization(format!("Failed to serialize backup: {}", e)))?;
 
         tokio::fs::write(&backup_path, json).await.map_err(|e| {
             crate::RustAIError::Io(rust_ai_ide_errors::IoError::new(&format!(
@@ -362,11 +341,7 @@ impl MigrationEngine {
 
     // JSON manipulation helpers
 
-    fn get_nested_value<'a>(
-        &self,
-        config: &'a serde_json::Value,
-        path: &str,
-    ) -> Option<&'a serde_json::Value> {
+    fn get_nested_value<'a>(&self, config: &'a serde_json::Value, path: &str) -> Option<&'a serde_json::Value> {
         let parts: Vec<&str> = path.split('.').collect();
         let mut current = config;
 
@@ -412,10 +387,7 @@ impl MigrationEngine {
                     }
                     _ => {
                         return Err(crate::RustAIError::Config(
-                            rust_ai_ide_errors::ConfigError::new(&format!(
-                                "Cannot set nested value at path: {}",
-                                path
-                            )),
+                            rust_ai_ide_errors::ConfigError::new(&format!("Cannot set nested value at path: {}", path)),
                         ));
                     }
                 }
@@ -425,11 +397,7 @@ impl MigrationEngine {
         Ok(())
     }
 
-    fn remove_nested_value(
-        &self,
-        config: &mut serde_json::Value,
-        path: &str,
-    ) -> crate::IDEResult<()> {
+    fn remove_nested_value(&self, config: &mut serde_json::Value, path: &str) -> crate::IDEResult<()> {
         let parts: Vec<&str> = path.split('.').collect();
         let mut current = config;
 
@@ -445,17 +413,15 @@ impl MigrationEngine {
                 match current {
                     serde_json::Value::Object(obj) => {
                         current = obj.get_mut(*part).ok_or_else(|| {
-                            crate::RustAIError::Config(rust_ai_ide_errors::ConfigError::new(
-                                &format!("Path not found: {}", path),
-                            ))
+                            crate::RustAIError::Config(rust_ai_ide_errors::ConfigError::new(&format!(
+                                "Path not found: {}",
+                                path
+                            )))
                         })?;
                     }
                     _ => {
                         return Err(crate::RustAIError::Config(
-                            rust_ai_ide_errors::ConfigError::new(&format!(
-                                "Cannot navigate to path: {}",
-                                path
-                            )),
+                            rust_ai_ide_errors::ConfigError::new(&format!("Cannot navigate to path: {}", path)),
                         ));
                     }
                 }
@@ -526,18 +492,18 @@ mod tests {
     #[test]
     fn test_migration_plan_validation() {
         let plan = MigrationPlan {
-            config_type: "test".to_string(),
+            config_type:  "test".to_string(),
             from_version: semver::Version::new(1, 0, 0),
-            to_version: semver::Version::new(2, 0, 0),
-            steps: vec![MigrationStep {
-                step_type: MigrationStepType::AddField,
-                field_path: "new_field".to_string(),
-                action: MigrationAction::SetValue(serde_json::Value::String("default".to_string())),
+            to_version:   semver::Version::new(2, 0, 0),
+            steps:        vec![MigrationStep {
+                step_type:     MigrationStepType::AddField,
+                field_path:    "new_field".to_string(),
+                action:        MigrationAction::SetValue(serde_json::Value::String("default".to_string())),
                 default_value: Some(serde_json::Value::String("default".to_string())),
-                condition: None,
+                condition:     None,
             }],
-            automatic: true,
-            description: "Test migration".to_string(),
+            automatic:    true,
+            description:  "Test migration".to_string(),
         };
 
         assert!(MigrationUtils::validate_plan(&plan).is_ok());
@@ -561,12 +527,12 @@ mod tests {
     async fn test_migration_plan_registration() {
         let mut engine = MigrationEngine::new();
         let plan = MigrationPlan {
-            config_type: "test".to_string(),
+            config_type:  "test".to_string(),
             from_version: semver::Version::new(1, 0, 0),
-            to_version: semver::Version::new(2, 0, 0),
-            steps: vec![],
-            automatic: true,
-            description: "Test plan".to_string(),
+            to_version:   semver::Version::new(2, 0, 0),
+            steps:        vec![],
+            automatic:    true,
+            description:  "Test plan".to_string(),
         };
 
         engine.register_plan(plan.clone());

@@ -3,8 +3,9 @@
 //! Advanced semantic analysis for deep code understanding, cross-language support,
 //! and intelligent code transformations.
 
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+
+use serde::{Deserialize, Serialize};
 
 pub mod code_graph;
 pub mod cross_language;
@@ -20,20 +21,20 @@ pub use semantic_analyzer::{SemanticAnalyzer, SemanticContext};
 /// Configuration for semantic understanding
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SemanticConfig {
-    pub enable_deep_analysis: bool,
+    pub enable_deep_analysis:   bool,
     pub cross_language_support: bool,
-    pub graph_construction: bool,
-    pub inference_enabled: bool,
-    pub max_analysis_depth: u32,
+    pub graph_construction:     bool,
+    pub inference_enabled:      bool,
+    pub max_analysis_depth:     u32,
 }
 
 /// Main semantic understanding engine
 #[derive(Debug)]
 pub struct SemanticUnderstandingEngine {
-    config: SemanticConfig,
-    analyzer: SemanticAnalyzer,
+    config:         SemanticConfig,
+    analyzer:       SemanticAnalyzer,
     cross_language: Option<CrossLanguageRefactor>,
-    code_graph: Option<CodeGraph>,
+    code_graph:     Option<CodeGraph>,
 }
 
 impl SemanticUnderstandingEngine {
@@ -58,11 +59,7 @@ impl SemanticUnderstandingEngine {
     }
 
     /// Analyze code for deep semantic understanding
-    pub async fn analyze_code(
-        &self,
-        source_code: &str,
-        language: &str,
-    ) -> Result<SemanticAnalysis, SemanticError> {
+    pub async fn analyze_code(&self, source_code: &str, language: &str) -> Result<SemanticAnalysis, SemanticError> {
         // Perform basic semantic analysis
         let context = self.analyzer.analyze(source_code, language).await?;
 
@@ -100,7 +97,7 @@ impl SemanticUnderstandingEngine {
     pub async fn analyze_patterns(&self) -> Result<PatternAnalysis, SemanticError> {
         // Analyze coding patterns, architecture, etc.
         Ok(PatternAnalysis {
-            patterns: vec![],
+            patterns:      vec![],
             anti_patterns: vec![],
             quality_score: 0.85,
         })
@@ -110,25 +107,25 @@ impl SemanticUnderstandingEngine {
 /// Results of semantic analysis
 #[derive(Debug, Clone)]
 pub struct SemanticAnalysis {
-    pub context: SemanticContext,
+    pub context:          SemanticContext,
     pub confidence_score: f64,
-    pub analyzed_at: chrono::DateTime<chrono::Utc>,
+    pub analyzed_at:      chrono::DateTime<chrono::Utc>,
 }
 
 /// Semantic suggestions for code improvement
 #[derive(Debug, Clone)]
 pub struct SemanticSuggestion {
     pub suggestion_type: String,
-    pub location: code_graph::CodeLocation,
-    pub description: String,
-    pub confidence: f64,
-    pub suggested_code: Option<String>,
+    pub location:        code_graph::CodeLocation,
+    pub description:     String,
+    pub confidence:      f64,
+    pub suggested_code:  Option<String>,
 }
 
 /// Analysis of code patterns
 #[derive(Debug, Clone)]
 pub struct PatternAnalysis {
-    pub patterns: Vec<CodePattern>,
+    pub patterns:      Vec<CodePattern>,
     pub anti_patterns: Vec<AntiPattern>,
     pub quality_score: f64,
 }
@@ -136,19 +133,19 @@ pub struct PatternAnalysis {
 /// Detected code pattern
 #[derive(Debug, Clone)]
 pub struct CodePattern {
-    pub name: String,
-    pub description: String,
-    pub occurrences: Vec<code_graph::CodeLocation>,
+    pub name:           String,
+    pub description:    String,
+    pub occurrences:    Vec<code_graph::CodeLocation>,
     pub quality_impact: f32,
 }
 
 /// Detected anti-pattern
 #[derive(Debug, Clone)]
 pub struct AntiPattern {
-    pub name: String,
-    pub description: String,
-    pub occurrences: Vec<code_graph::CodeLocation>,
-    pub severity: String,
+    pub name:          String,
+    pub description:   String,
+    pub occurrences:   Vec<code_graph::CodeLocation>,
+    pub severity:      String,
     pub suggested_fix: String,
 }
 

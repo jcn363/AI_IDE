@@ -14,28 +14,28 @@ use crate::types::PerformanceMetrics;
 #[derive(Clone)]
 pub struct PerformanceMonitor {
     /// Analysis timing data
-    timings: Arc<DashMap<String, Vec<Duration>>>,
+    timings:        Arc<DashMap<String, Vec<Duration>>>,
     /// Resource usage tracking
     resource_usage: Arc<DashMap<String, PerformanceMetrics>>,
     /// Monitoring configuration
-    config: PerformanceConfig,
+    config:         PerformanceConfig,
     /// Statistical aggregators
-    stats: Arc<RwLock<PerformanceStats>>,
+    stats:          Arc<RwLock<PerformanceStats>>,
 }
 
 /// Configuration for performance monitoring
 #[derive(Debug, Clone)]
 pub struct PerformanceConfig {
     /// Enable detailed metrics collection
-    pub enable_detailed_metrics: bool,
+    pub enable_detailed_metrics:  bool,
     /// Performance measurement interval
-    pub measurement_interval: Duration,
+    pub measurement_interval:     Duration,
     /// Maximum samples to keep per metric
-    pub max_samples_per_metric: usize,
+    pub max_samples_per_metric:   usize,
     /// Enable outlier detection
     pub enable_outlier_detection: bool,
     /// Alert threshold for performance degradation
-    pub alert_threshold_ms: u64,
+    pub alert_threshold_ms:       u64,
 }
 
 /// Aggregated performance statistics
@@ -48,20 +48,20 @@ pub struct PerformanceStats {
     /// 95th percentile response times
     pub p95_response_times: HashMap<String, Duration>,
     /// Error rates per operation type
-    pub error_rates: HashMap<String, f32>,
+    pub error_rates:        HashMap<String, f32>,
     /// Resource utilization patterns
-    pub resource_patterns: HashMap<String, ResourcePattern>,
+    pub resource_patterns:  HashMap<String, ResourcePattern>,
 }
 
 /// Resource utilization pattern
 #[derive(Debug, Clone)]
 pub struct ResourcePattern {
     /// CPU usage pattern (percentage)
-    pub cpu_pattern: f32,
+    pub cpu_pattern:     f32,
     /// Memory usage pattern (bytes)
-    pub memory_pattern: u64,
+    pub memory_pattern:  u64,
     /// I/O operations pattern
-    pub io_pattern: u64,
+    pub io_pattern:      u64,
     /// Network requests pattern
     pub network_pattern: usize,
 }
@@ -72,35 +72,35 @@ pub struct MeasurementContext {
     /// Operation identifier
     pub operation_id: String,
     /// Start timestamp
-    pub start_time: Instant,
+    pub start_time:   Instant,
     /// Context metadata
-    pub metadata: HashMap<String, String>,
+    pub metadata:     HashMap<String, String>,
 }
 
 /// Performance analysis report
 #[derive(Debug, Clone)]
 pub struct PerformanceReport {
     /// Overall system performance score (0.0-1.0, higher is better)
-    pub overall_score: f32,
+    pub overall_score:          f32,
     /// Response time analysis
     pub response_time_analysis: ResponseTimeAnalysis,
     /// Resource utilization analysis
-    pub resource_analysis: ResourceUtilizationAnalysis,
+    pub resource_analysis:      ResourceUtilizationAnalysis,
     /// Recommendations for optimization
-    pub recommendations: Vec<String>,
+    pub recommendations:        Vec<String>,
     /// Performance alerts
-    pub alerts: Vec<String>,
+    pub alerts:                 Vec<String>,
 }
 
 /// Response time analysis
 #[derive(Debug, Clone)]
 pub struct ResponseTimeAnalysis {
     /// Average response time across all operations
-    pub avg_response_time: Duration,
+    pub avg_response_time:      Duration,
     /// Standard deviation of response times
-    pub response_time_std_dev: Duration,
+    pub response_time_std_dev:  Duration,
     /// Number of slow operations (>1s)
-    pub slow_operations_count: usize,
+    pub slow_operations_count:  usize,
     /// Operations with potential performance issues
     pub problematic_operations: Vec<String>,
 }
@@ -111,11 +111,11 @@ pub struct ResourceUtilizationAnalysis {
     /// Memory efficiency score
     pub memory_efficiency_score: f32,
     /// CPU efficiency score
-    pub cpu_efficiency_score: f32,
+    pub cpu_efficiency_score:    f32,
     /// Highest memory usage recorded
-    pub peak_memory_usage: u64,
+    pub peak_memory_usage:       u64,
     /// Average CPU time per operation
-    pub avg_cpu_time_ns: u64,
+    pub avg_cpu_time_ns:         u64,
 }
 
 impl PerformanceMonitor {
@@ -150,11 +150,7 @@ impl PerformanceMonitor {
     }
 
     /// Stop measurement and record metrics
-    pub async fn stop_measurement(
-        &self,
-        context: MeasurementContext,
-        metrics: Option<PerformanceMetrics>,
-    ) {
+    pub async fn stop_measurement(&self, context: MeasurementContext, metrics: Option<PerformanceMetrics>) {
         let duration = context.start_time.elapsed();
         let operation_id = context.operation_id.clone();
 
@@ -377,10 +373,8 @@ impl PerformanceMonitor {
 
         // Memory optimization recommendations
         if resource_analysis.memory_efficiency_score < 0.7 {
-            recommendations.push(
-                "Consider implementing memory-efficient data structures or streaming analysis"
-                    .to_string(),
-            );
+            recommendations
+                .push("Consider implementing memory-efficient data structures or streaming analysis".to_string());
         }
 
         // Response time recommendations
@@ -397,11 +391,7 @@ impl PerformanceMonitor {
     }
 
     /// Generate performance alerts
-    async fn generate_alerts(
-        &self,
-        stats: &PerformanceStats,
-        response_analysis: &ResponseTimeAnalysis,
-    ) -> Vec<String> {
+    async fn generate_alerts(&self, stats: &PerformanceStats, response_analysis: &ResponseTimeAnalysis) -> Vec<String> {
         let mut alerts = Vec::new();
 
         // Check for critical performance issues
@@ -431,18 +421,22 @@ impl PerformanceMonitor {
     pub async fn export_data(&self) -> serde_json::Value {
         let stats = self.stats.read().await;
 
-        let operation_metrics: HashMap<String, serde_json::Value> = self.timings
+        let operation_metrics: HashMap<String, serde_json::Value> = self
+            .timings
             .iter()
             .map(|entry| {
                 let (operation, timings) = entry.pair();
                 let timing_data: Vec<f64> = timings.iter().map(|d| d.as_millis() as f64).collect();
 
-                (operation.clone(), serde_json::json!({
-                    "count": timing_data.len(),
-                    "avg_ms": timing_data.iter().sum::<f64>() / timing_data.len() as f64,
-                    "min_ms": *timing_data.iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap_or(&0.0),
-                    "max_ms": *timing_data.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap_or(&0.0),
-                }))
+                (
+                    operation.clone(),
+                    serde_json::json!({
+                        "count": timing_data.len(),
+                        "avg_ms": timing_data.iter().sum::<f64>() / timing_data.len() as f64,
+                        "min_ms": *timing_data.iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap_or(&0.0),
+                        "max_ms": *timing_data.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap_or(&0.0),
+                    }),
+                )
             })
             .collect();
 
@@ -466,19 +460,20 @@ impl PerformanceMonitor {
 impl Default for PerformanceConfig {
     fn default() -> Self {
         Self {
-            enable_detailed_metrics: true,
-            measurement_interval: Duration::from_secs(5),
-            max_samples_per_metric: 1000,
+            enable_detailed_metrics:  true,
+            measurement_interval:     Duration::from_secs(5),
+            max_samples_per_metric:   1000,
             enable_outlier_detection: true,
-            alert_threshold_ms: 5000,
+            alert_threshold_ms:       5000,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::time::sleep;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_performance_monitor_creation() {

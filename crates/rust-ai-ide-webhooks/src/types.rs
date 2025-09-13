@@ -1,24 +1,25 @@
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 /// Webhook payload with headers and body
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebhookPayload {
-    pub id: String,
-    pub event: String,
-    pub payload: serde_json::Value,
-    pub headers: HashMap<String, String>,
+    pub id:        String,
+    pub event:     String,
+    pub payload:   serde_json::Value,
+    pub headers:   HashMap<String, String>,
     pub signature: Option<String>,
 }
 
 /// Webhook configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebhookConfig {
-    pub name: String,
-    pub url: String,
-    pub events: Vec<String>,
-    pub secret: Option<String>,
-    pub retries: u32,
+    pub name:            String,
+    pub url:             String,
+    pub events:          Vec<String>,
+    pub secret:          Option<String>,
+    pub retries:         u32,
     pub timeout_seconds: u32,
 }
 
@@ -35,7 +36,7 @@ pub enum IntegrationEvent {
 pub struct EventHandlerResponse {
     pub success: bool,
     pub message: String,
-    pub data: Option<serde_json::Value>,
+    pub data:    Option<serde_json::Value>,
 }
 
 /// Webhook delivery status
@@ -44,9 +45,9 @@ pub enum WebhookDeliveryStatus {
     Pending,
     Delivered,
     Failed {
-        reason: String,
+        reason:      String,
         retry_count: u32,
-        next_retry: Option<chrono::DateTime<chrono::Utc>>,
+        next_retry:  Option<chrono::DateTime<chrono::Utc>>,
     },
     TimedOut,
 }
@@ -67,40 +68,40 @@ impl WebhookDeliveryStatus {
 /// Webhook delivery record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebhookDelivery {
-    pub id: String,
-    pub webhook_id: String,
-    pub payload_id: String,
-    pub status: WebhookDeliveryStatus,
-    pub delivered_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub id:            String,
+    pub webhook_id:    String,
+    pub payload_id:    String,
+    pub status:        WebhookDeliveryStatus,
+    pub delivered_at:  Option<chrono::DateTime<chrono::Utc>>,
     pub response_code: Option<u16>,
     pub response_body: Option<String>,
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub created_at:    chrono::DateTime<chrono::Utc>,
 }
 
 /// API response wrapper
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct APIResponse<T> {
-    pub success: bool,
-    pub data: Option<T>,
-    pub error: Option<String>,
+    pub success:   bool,
+    pub data:      Option<T>,
+    pub error:     Option<String>,
     pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 
 impl<T> APIResponse<T> {
     pub fn success(data: T) -> Self {
         Self {
-            success: true,
-            data: Some(data),
-            error: None,
+            success:   true,
+            data:      Some(data),
+            error:     None,
             timestamp: chrono::Utc::now(),
         }
     }
 
     pub fn error(error: String) -> Self {
         Self {
-            success: false,
-            data: None,
-            error: Some(error),
+            success:   false,
+            data:      None,
+            error:     Some(error),
             timestamp: chrono::Utc::now(),
         }
     }
@@ -109,11 +110,11 @@ impl<T> APIResponse<T> {
 /// Webhook statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebhookStats {
-    pub total_deliveries: u64,
-    pub successful_deliveries: u64,
-    pub failed_deliveries: u64,
+    pub total_deliveries:         u64,
+    pub successful_deliveries:    u64,
+    pub failed_deliveries:        u64,
     pub average_response_time_ms: f64,
-    pub last_delivery: Option<chrono::DateTime<chrono::Utc>>,
+    pub last_delivery:            Option<chrono::DateTime<chrono::Utc>>,
 }
 
 /// Provider-specific webhook handler
@@ -125,7 +126,7 @@ pub enum Provider {
     Discord,
     Slack,
     Custom {
-        name: String,
+        name:             String,
         signature_header: String,
     },
 }

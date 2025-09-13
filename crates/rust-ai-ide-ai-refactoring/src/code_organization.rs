@@ -1,6 +1,7 @@
+use async_trait::async_trait;
+
 use crate::types::*;
 use crate::RefactoringOperation;
-use async_trait::async_trait;
 
 /// Add Missing Imports operation - adds missing import statements
 pub struct AddMissingImportsOperation;
@@ -16,12 +17,12 @@ impl RefactoringOperation for AddMissingImportsOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![],
             error_message: None,
-            warnings: vec!["Add missing imports operation requires implementation".to_string()],
-            new_content: None,
+            warnings:      vec!["Add missing imports operation requires implementation".to_string()],
+            new_content:   None,
         })
     }
 
@@ -30,14 +31,14 @@ impl RefactoringOperation for AddMissingImportsOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: true,
+            is_safe:          true,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::Low,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec![],
-            suggestions: vec![],
-            warnings: vec!["Add missing imports operation requires implementation".to_string()],
+            suggestions:      vec![],
+            warnings:         vec!["Add missing imports operation requires implementation".to_string()],
         })
     }
 
@@ -70,12 +71,12 @@ impl RefactoringOperation for SortImportsOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success: true,
-            changes: vec![],
+            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success:       true,
+            changes:       vec![],
             error_message: None,
-            warnings: vec!["Sort imports operation requires implementation".to_string()],
-            new_content: None,
+            warnings:      vec!["Sort imports operation requires implementation".to_string()],
+            new_content:   None,
         })
     }
 
@@ -84,14 +85,14 @@ impl RefactoringOperation for SortImportsOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe: true,
+            is_safe:          true,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::Low,
-            affected_files: vec![context.file_path.clone()],
+            affected_files:   vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec![],
-            suggestions: vec![],
-            warnings: vec!["Sort imports operation requires implementation".to_string()],
+            suggestions:      vec![],
+            warnings:         vec!["Sort imports operation requires implementation".to_string()],
         })
     }
 

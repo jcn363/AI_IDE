@@ -1,16 +1,14 @@
 use async_trait::async_trait;
-use rust_ai_ide_plugins::interfaces::{
-    Plugin, PluginCapabilities, PluginContext, PluginError, PluginMetadata,
-};
+use rust_ai_ide_plugins::interfaces::{Plugin, PluginCapabilities, PluginContext, PluginError, PluginMetadata};
 use rust_ai_ide_plugins::plugin::PluginResult;
 use semver::Version;
 use uuid::Uuid;
 
 // Hello World plugin implementation
 pub struct HelloWorldPlugin {
-    metadata: PluginMetadata,
+    metadata:     PluginMetadata,
     capabilities: PluginCapabilities,
-    is_loaded: bool,
+    is_loaded:    bool,
 }
 
 impl HelloWorldPlugin {

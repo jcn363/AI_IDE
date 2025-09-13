@@ -10,10 +10,11 @@ pub mod real_time_editing;
 pub mod session_management;
 pub mod team_management;
 
+use std::sync::Arc;
+
 pub use presence::*;
 use serde::{Deserialize, Serialize};
 pub use session_management::*;
-use std::sync::Arc;
 pub use team_management::*;
 use tokio::sync::RwLock;
 
@@ -25,24 +26,24 @@ pub struct CollaborationService {
 /// Global state for the collaboration system
 #[derive(Default)]
 pub struct CollaborationState {
-    pub sessions: Vec<CollaborationSession>,
+    pub sessions:             Vec<CollaborationSession>,
     pub active_editing_state: std::collections::HashMap<String, EditingDocument>,
 }
 
 /// Represents a single collaboration session
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CollaborationSession {
-    pub id: String,
-    pub participants: Vec<String>,
-    pub document_id: String,
+    pub id:            String,
+    pub participants:  Vec<String>,
+    pub document_id:   String,
     pub last_activity: std::time::SystemTime,
 }
 
 /// Represents a document being collaboratively edited
 #[derive(Clone, Serialize, Deserialize)]
 pub struct EditingDocument {
-    pub content: String,
-    pub crdt_state: CRDTState,
+    pub content:      String,
+    pub crdt_state:   CRDTState,
     pub participants: Vec<String>,
 }
 
@@ -60,21 +61,20 @@ impl CollaborationService {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut state = self.state.write().await;
         state.sessions.push(CollaborationSession {
-            id: session_id.clone(),
-            participants: Vec::new(),
-            document_id: document_id.clone(),
+            id:            session_id.clone(),
+            participants:  Vec::new(),
+            document_id:   document_id.clone(),
             last_activity: std::time::SystemTime::now(),
         });
 
         // Initialize empty document state
-        state.active_editing_state.insert(
-            document_id,
-            EditingDocument {
-                content: String::new(),
-                crdt_state: CRDTState::default(),
+        state
+            .active_editing_state
+            .insert(document_id, EditingDocument {
+                content:      String::new(),
+                crdt_state:   CRDTState::default(),
                 participants: Vec::new(),
-            },
-        );
+            });
 
         Ok(())
     }

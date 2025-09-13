@@ -16,7 +16,7 @@
 //! # Usage
 //!
 //! ```rust,no_run
-//! use rust_ai_ide_security::network::{NetworkSecurity, TLSConfig, SecurityHeaders};
+//! use rust_ai_ide_security::network::{NetworkSecurity, SecurityHeaders, TLSConfig};
 //!
 //! // Create network security manager
 //! let tls_config = TLSConfig {
@@ -30,18 +30,22 @@
 //! let network_security = NetworkSecurity::new(tls_config).await?;
 //!
 //! // Validate connection security
-//! let connection_valid = network_security.validate_connection(&connection_context).await?;
+//! let connection_valid = network_security
+//!     .validate_connection(&connection_context)
+//!     .await?;
 //!
 //! // Apply security headers
 //! let response = network_security.apply_security_headers(response).await?;
 //! ```
 
-use async_trait::async_trait;
-use base64::{engine::general_purpose, Engine as _};
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+
+use async_trait::async_trait;
+use base64::engine::general_purpose;
+use base64::Engine as _;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 use crate::{ComponentStatus, SecurityError, SecurityResult};
@@ -50,21 +54,21 @@ use crate::{ComponentStatus, SecurityError, SecurityResult};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TLSConfig {
     /// Path to server certificate
-    pub certificate_path: String,
+    pub certificate_path:        String,
     /// Path to private key
-    pub private_key_path: String,
+    pub private_key_path:        String,
     /// Enforce TLS 1.2 minimum (false = TLS 1.3 only)
-    pub enforce_tls12: bool,
+    pub enforce_tls12:           bool,
     /// Require client certificate authentication
-    pub client_cert_auth: bool,
+    pub client_cert_auth:        bool,
     /// Path to CA certificate for client verification
-    pub client_ca_path: Option<String>,
+    pub client_ca_path:          Option<String>,
     /// Certificate pinning enabled
-    pub certificate_pinning: bool,
+    pub certificate_pinning:     bool,
     /// Pinned certificate fingerprints
-    pub pinned_fingerprints: Vec<String>,
+    pub pinned_fingerprints:     Vec<String>,
     /// HSTS max age in seconds
-    pub hsts_max_age: u32,
+    pub hsts_max_age:            u32,
     /// HSTS include subdomains
     pub hsts_include_subdomains: bool,
     /// Session timeout for TLS sessions
@@ -75,32 +79,32 @@ pub struct TLSConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NetworkPolicy {
     /// Policy name
-    pub name: String,
+    pub name:              String,
     /// Policy description
-    pub description: String,
+    pub description:       String,
     /// Source IP ranges (CIDR notation)
-    pub source_ip_ranges: Vec<String>,
+    pub source_ip_ranges:  Vec<String>,
     /// Destination ports
-    pub allowed_ports: Vec<u16>,
+    pub allowed_ports:     Vec<u16>,
     /// Allowed protocols
     pub allowed_protocols: Vec<String>,
     /// Rate limiting configuration
-    pub rate_limit: RateLimitConfig,
+    pub rate_limit:        RateLimitConfig,
     /// Enable DDoS protection
-    pub ddos_protection: bool,
+    pub ddos_protection:   bool,
     /// Custom rules for advanced filtering
-    pub custom_rules: HashMap<String, String>,
+    pub custom_rules:      HashMap<String, String>,
 }
 
 /// Rate limiting configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RateLimitConfig {
     /// Requests per second limit
-    pub requests_per_second: u32,
+    pub requests_per_second:    u32,
     /// Burst limit
-    pub burst_limit: u32,
+    pub burst_limit:            u32,
     /// Window size in seconds
-    pub window_seconds: u32,
+    pub window_seconds:         u32,
     /// Block duration after limit exceeded
     pub block_duration_seconds: u32,
 }
@@ -108,15 +112,15 @@ pub struct RateLimitConfig {
 /// Traffic analysis result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrafficAnalysis {
-    pub source_ip: String,
-    pub destination_ip: String,
-    pub port: u16,
-    pub protocol: String,
-    pub packet_size: usize,
-    pub timestamp: DateTime<Utc>,
+    pub source_ip:        String,
+    pub destination_ip:   String,
+    pub port:             u16,
+    pub protocol:         String,
+    pub packet_size:      usize,
+    pub timestamp:        DateTime<Utc>,
     pub threats_detected: Vec<String>,
-    pub risk_score: f64,
-    pub traffic_pattern: TrafficPattern,
+    pub risk_score:       f64,
+    pub traffic_pattern:  TrafficPattern,
 }
 
 /// Traffic pattern analysis
@@ -132,52 +136,54 @@ pub enum TrafficPattern {
 /// Connection context for validation
 #[derive(Debug, Clone)]
 pub struct ConnectionContext {
-    pub client_ip: String,
-    pub server_ip: String,
-    pub client_port: u16,
-    pub server_port: u16,
-    pub protocol: String,
-    pub tls_version: Option<String>,
-    pub cipher_suite: Option<String>,
+    pub client_ip:          String,
+    pub server_ip:          String,
+    pub client_port:        u16,
+    pub server_port:        u16,
+    pub protocol:           String,
+    pub tls_version:        Option<String>,
+    pub cipher_suite:       Option<String>,
     pub client_certificate: Option<String>,
-    pub user_agent: Option<String>,
-    pub request_headers: HashMap<String, String>,
-    pub timestamp: DateTime<Utc>,
+    pub user_agent:         Option<String>,
+    pub request_headers:    HashMap<String, String>,
+    pub timestamp:          DateTime<Utc>,
 }
 
 /// Security headers to apply
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityHeaders {
-    pub content_security_policy: String,
-    pub x_frame_options: String,
-    pub x_content_type_options: String,
-    pub x_xss_protection: String,
+    pub content_security_policy:   String,
+    pub x_frame_options:           String,
+    pub x_content_type_options:    String,
+    pub x_xss_protection:          String,
     pub strict_transport_security: String,
-    pub referrer_policy: String,
-    pub permissions_policy: String,
+    pub referrer_policy:           String,
+    pub permissions_policy:        String,
 }
 
 /// DDoS protection configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DDoSProtection {
-    pub enabled: bool,
-    pub max_connections_per_ip: u32,
+    pub enabled:                 bool,
+    pub max_connections_per_ip:  u32,
     pub max_requests_per_minute: u32,
-    pub block_duration_seconds: u32,
-    pub whitelist_ips: HashSet<String>,
-    pub suspicious_patterns: Vec<String>,
+    pub block_duration_seconds:  u32,
+    pub whitelist_ips:           HashSet<String>,
+    pub suspicious_patterns:     Vec<String>,
 }
 
 impl Default for SecurityHeaders {
     fn default() -> Self {
         Self {
-            content_security_policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'".to_string(),
-            x_frame_options: "DENY".to_string(),
-            x_content_type_options: "nosniff".to_string(),
-            x_xss_protection: "1; mode=block".to_string(),
+            content_security_policy:   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' \
+                                        'unsafe-inline'"
+                .to_string(),
+            x_frame_options:           "DENY".to_string(),
+            x_content_type_options:    "nosniff".to_string(),
+            x_xss_protection:          "1; mode=block".to_string(),
             strict_transport_security: "max-age=31536000; includeSubDomains".to_string(),
-            referrer_policy: "strict-origin-when-cross-origin".to_string(),
-            permissions_policy: "camera=(), microphone=(), geolocation=()".to_string(),
+            referrer_policy:           "strict-origin-when-cross-origin".to_string(),
+            permissions_policy:        "camera=(), microphone=(), geolocation=()".to_string(),
         }
     }
 }
@@ -185,14 +191,14 @@ impl Default for SecurityHeaders {
 /// Certificate validation result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CertificateValidation {
-    pub is_valid: bool,
-    pub certificate_chain: Vec<String>,
-    pub expiration_date: DateTime<Utc>,
-    pub issuer: String,
-    pub subject: String,
+    pub is_valid:           bool,
+    pub certificate_chain:  Vec<String>,
+    pub expiration_date:    DateTime<Utc>,
+    pub issuer:             String,
+    pub subject:            String,
     pub fingerprint_sha256: String,
-    pub validation_errors: Vec<String>,
-    pub revocation_status: CRLStatus,
+    pub validation_errors:  Vec<String>,
+    pub revocation_status:  CRLStatus,
 }
 
 /// Certificate revocation list status
@@ -206,44 +212,44 @@ pub enum CRLStatus {
 
 /// Network security manager
 pub struct NetworkSecurity {
-    tls_config: TLSConfig,
-    network_policies: Arc<RwLock<Vec<NetworkPolicy>>>,
+    tls_config:         TLSConfig,
+    network_policies:   Arc<RwLock<Vec<NetworkPolicy>>>,
     active_connections: Arc<RwLock<HashMap<String, ConnectionContext>>>,
-    ddos_protection: Arc<RwLock<DDoSProtection>>,
-    traffic_log: Arc<RwLock<Vec<TrafficAnalysis>>>,
-    certificate_cache: Arc<RwLock<HashMap<String, CertificateValidation>>>,
-    security_headers: SecurityHeaders,
-    stats: Arc<RwLock<NetworkStats>>,
+    ddos_protection:    Arc<RwLock<DDoSProtection>>,
+    traffic_log:        Arc<RwLock<Vec<TrafficAnalysis>>>,
+    certificate_cache:  Arc<RwLock<HashMap<String, CertificateValidation>>>,
+    security_headers:   SecurityHeaders,
+    stats:              Arc<RwLock<NetworkStats>>,
 }
 
 /// Network security statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NetworkStats {
-    pub total_connections: u64,
-    pub active_connections: u64,
-    pub tls_connections: u64,
-    pub blocked_connections: u64,
-    pub rate_limited_requests: u64,
-    pub certificate_validations: u64,
+    pub total_connections:        u64,
+    pub active_connections:       u64,
+    pub tls_connections:          u64,
+    pub blocked_connections:      u64,
+    pub rate_limited_requests:    u64,
+    pub certificate_validations:  u64,
     pub security_headers_applied: u64,
-    pub ddos_attacks_detected: u64,
-    pub malicious_traffic: u64,
-    pub uptime_seconds: u64,
+    pub ddos_attacks_detected:    u64,
+    pub malicious_traffic:        u64,
+    pub uptime_seconds:           u64,
 }
 
 impl Default for NetworkStats {
     fn default() -> Self {
         Self {
-            total_connections: 0,
-            active_connections: 0,
-            tls_connections: 0,
-            blocked_connections: 0,
-            rate_limited_requests: 0,
-            certificate_validations: 0,
+            total_connections:        0,
+            active_connections:       0,
+            tls_connections:          0,
+            blocked_connections:      0,
+            rate_limited_requests:    0,
+            certificate_validations:  0,
             security_headers_applied: 0,
-            ddos_attacks_detected: 0,
-            malicious_traffic: 0,
-            uptime_seconds: 0,
+            ddos_attacks_detected:    0,
+            malicious_traffic:        0,
+            uptime_seconds:           0,
         }
     }
 }
@@ -252,12 +258,12 @@ impl NetworkSecurity {
     /// Create a new network security manager
     pub async fn new(tls_config: TLSConfig) -> SecurityResult<Self> {
         let ddos_protection = DDoSProtection {
-            enabled: true,
-            max_connections_per_ip: 100,
+            enabled:                 true,
+            max_connections_per_ip:  100,
             max_requests_per_minute: 1000,
-            block_duration_seconds: 300,
-            whitelist_ips: HashSet::new(),
-            suspicious_patterns: vec![
+            block_duration_seconds:  300,
+            whitelist_ips:           HashSet::new(),
+            suspicious_patterns:     vec![
                 "admin".to_string(),
                 "wp-admin".to_string(),
                 "phpmyadmin".to_string(),
@@ -278,15 +284,12 @@ impl NetworkSecurity {
     }
 
     /// Validate connection security
-    pub async fn validate_connection(
-        &self,
-        context: &ConnectionContext,
-    ) -> SecurityResult<ConnectionValidationResult> {
+    pub async fn validate_connection(&self, context: &ConnectionContext) -> SecurityResult<ConnectionValidationResult> {
         let mut result = ConnectionValidationResult {
-            is_valid: true,
-            warnings: Vec::new(),
-            blocking_reasons: Vec::new(),
-            risk_score: 0.0,
+            is_valid:          true,
+            warnings:          Vec::new(),
+            blocking_reasons:  Vec::new(),
+            risk_score:        0.0,
             security_measures: Vec::new(),
         };
 
@@ -476,10 +479,7 @@ impl NetworkSecurity {
         }
     }
 
-    async fn validate_certificate(
-        &self,
-        certificate_pem: &str,
-    ) -> SecurityResult<CertificateValidation> {
+    async fn validate_certificate(&self, certificate_pem: &str) -> SecurityResult<CertificateValidation> {
         // Check certificate cache first
         let mut cache = self.certificate_cache.write().await;
         if let Some(validation) = cache.get(certificate_pem) {
@@ -488,14 +488,14 @@ impl NetworkSecurity {
 
         // Parse certificate (simplified - in production use proper certificate parsing)
         let mut validation = CertificateValidation {
-            is_valid: false,
-            certificate_chain: vec![certificate_pem.to_string()],
-            expiration_date: Utc::now() + chrono::Duration::days(365),
-            issuer: "Unknown".to_string(),
-            subject: "Unknown".to_string(),
+            is_valid:           false,
+            certificate_chain:  vec![certificate_pem.to_string()],
+            expiration_date:    Utc::now() + chrono::Duration::days(365),
+            issuer:             "Unknown".to_string(),
+            subject:            "Unknown".to_string(),
             fingerprint_sha256: "unknown".to_string(),
-            validation_errors: Vec::new(),
-            revocation_status: CRLStatus::NotChecked,
+            validation_errors:  Vec::new(),
+            revocation_status:  CRLStatus::NotChecked,
         };
 
         // Basic validation checks
@@ -566,14 +566,11 @@ impl NetworkSecurity {
         Ok(())
     }
 
-    async fn check_ddos_protection(
-        &self,
-        context: &ConnectionContext,
-    ) -> SecurityResult<DDoSResult> {
+    async fn check_ddos_protection(&self, context: &ConnectionContext) -> SecurityResult<DDoSResult> {
         let ddos = self.ddos_protection.read().await;
         let mut result = DDoSResult {
             is_blocked: false,
-            reason: None,
+            reason:     None,
             risk_level: "low".to_string(),
         };
 
@@ -605,20 +602,17 @@ impl NetworkSecurity {
         Ok(result)
     }
 
-    async fn analyze_traffic(
-        &self,
-        context: &ConnectionContext,
-    ) -> SecurityResult<TrafficAnalysis> {
+    async fn analyze_traffic(&self, context: &ConnectionContext) -> SecurityResult<TrafficAnalysis> {
         let analysis = TrafficAnalysis {
-            source_ip: context.client_ip.clone(),
-            destination_ip: context.server_ip.clone(),
-            port: context.server_port,
-            protocol: context.protocol.clone(),
-            packet_size: 0, // Would be populated by actual network capture
-            timestamp: context.timestamp,
+            source_ip:        context.client_ip.clone(),
+            destination_ip:   context.server_ip.clone(),
+            port:             context.server_port,
+            protocol:         context.protocol.clone(),
+            packet_size:      0, // Would be populated by actual network capture
+            timestamp:        context.timestamp,
             threats_detected: Vec::new(),
-            risk_score: 0.0,
-            traffic_pattern: TrafficPattern::Normal,
+            risk_score:       0.0,
+            traffic_pattern:  TrafficPattern::Normal,
         };
 
         Ok(analysis)
@@ -643,10 +637,10 @@ impl NetworkSecurity {
 /// Connection validation result
 #[derive(Debug, Clone)]
 pub struct ConnectionValidationResult {
-    pub is_valid: bool,
-    pub warnings: Vec<String>,
-    pub blocking_reasons: Vec<String>,
-    pub risk_score: f64,
+    pub is_valid:          bool,
+    pub warnings:          Vec<String>,
+    pub blocking_reasons:  Vec<String>,
+    pub risk_score:        f64,
     pub security_measures: Vec<String>,
 }
 
@@ -654,21 +648,21 @@ pub struct ConnectionValidationResult {
 #[derive(Debug, Clone)]
 pub struct DDoSResult {
     pub is_blocked: bool,
-    pub reason: Option<String>,
+    pub reason:     Option<String>,
     pub risk_level: String,
 }
 
 impl Default for TLSConfig {
     fn default() -> Self {
         Self {
-            certificate_path: "certs/server.crt".to_string(),
-            private_key_path: "certs/server.key".to_string(),
-            enforce_tls12: false,
-            client_cert_auth: false,
-            client_ca_path: None,
-            certificate_pinning: true,
-            pinned_fingerprints: Vec::new(),
-            hsts_max_age: 31536000,
+            certificate_path:        "certs/server.crt".to_string(),
+            private_key_path:        "certs/server.key".to_string(),
+            enforce_tls12:           false,
+            client_cert_auth:        false,
+            client_ca_path:          None,
+            certificate_pinning:     true,
+            pinned_fingerprints:     Vec::new(),
+            hsts_max_age:            31536000,
             hsts_include_subdomains: true,
             session_timeout_seconds: 3600,
         }
@@ -704,8 +698,9 @@ pub fn create_development_network_security() -> TLSConfig {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test as async_test;
+
+    use super::*;
 
     #[async_test]
     async fn test_network_security_creation() {
@@ -757,17 +752,17 @@ mod tests {
         let network_security = NetworkSecurity::new(config).await.unwrap();
 
         let context = ConnectionContext {
-            client_ip: "192.168.1.100".to_string(),
-            server_ip: "10.0.0.1".to_string(),
-            client_port: 443,
-            server_port: 8080,
-            protocol: "HTTPS".to_string(),
-            tls_version: Some("TLSv1.3".to_string()),
-            cipher_suite: Some("TLS_AES_256_GCM_SHA384".to_string()),
+            client_ip:          "192.168.1.100".to_string(),
+            server_ip:          "10.0.0.1".to_string(),
+            client_port:        443,
+            server_port:        8080,
+            protocol:           "HTTPS".to_string(),
+            tls_version:        Some("TLSv1.3".to_string()),
+            cipher_suite:       Some("TLS_AES_256_GCM_SHA384".to_string()),
             client_certificate: None,
-            user_agent: Some("RustClient/1.0".to_string()),
-            request_headers: HashMap::new(),
-            timestamp: Utc::now(),
+            user_agent:         Some("RustClient/1.0".to_string()),
+            request_headers:    HashMap::new(),
+            timestamp:          Utc::now(),
         };
 
         let result = network_security

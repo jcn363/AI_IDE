@@ -9,22 +9,22 @@
 //! - Integration with garbage collection hints
 //! - Performance metrics and adaptive tuning
 
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
+
+use async_trait::async_trait;
+use rust_ai_ide_shared_types::{IDEResult, RustAIError};
+use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, RwLock};
 use tracing::{debug, info, warn};
-
-use rust_ai_ide_shared_types::{IDEResult, RustAIError};
 
 /// Memory allocation patterns and prediction data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryUsagePattern {
-    pub allocation_trend: AllocationTrend,
-    pub peak_usage_time: chrono::DateTime<chrono::Utc>,
-    pub average_usage_mb: f64,
-    pub volatility_factor: f64, // How predictable the usage is
+    pub allocation_trend:      AllocationTrend,
+    pub peak_usage_time:       chrono::DateTime<chrono::Utc>,
+    pub average_usage_mb:      f64,
+    pub volatility_factor:     f64, // How predictable the usage is
     pub prediction_confidence: f64,
 }
 
@@ -55,10 +55,10 @@ pub struct AllocationStrategy {
 #[derive(Debug)]
 pub struct PredictiveAllocationModel {
     historical_patterns: VecDeque<MemoryUsagePattern>,
-    current_trend: AllocationTrend,
+    current_trend:       AllocationTrend,
     prediction_accuracy: f64,
-    model_last_updated: chrono::DateTime<chrono::Utc>,
-    max_history_size: usize,
+    model_last_updated:  chrono::DateTime<chrono::Utc>,
+    max_history_size:    usize,
 }
 
 impl PredictiveAllocationModel {
@@ -101,8 +101,8 @@ impl PredictiveAllocationModel {
             // Not enough data for prediction
             return PredictedMemoryUsage {
                 predicted_usage_mb: 512.0, // Conservative default
-                confidence_level: 0.3,
-                recommendation: AllocationRecommendation::Conservative,
+                confidence_level:   0.3,
+                recommendation:     AllocationRecommendation::Conservative,
             };
         }
 
@@ -135,20 +135,16 @@ impl PredictiveAllocationModel {
         };
 
         MemoryUsagePattern {
-            allocation_trend: trend,
-            peak_usage_time: sample.timestamp,
-            average_usage_mb: sample.used_memory_mb as f64,
-            volatility_factor: self.calculate_volatility(sample),
+            allocation_trend:      trend,
+            peak_usage_time:       sample.timestamp,
+            average_usage_mb:      sample.used_memory_mb as f64,
+            volatility_factor:     self.calculate_volatility(sample),
             prediction_confidence: self.prediction_accuracy,
         }
     }
 
     /// Determine allocation trend from historical data
-    fn determine_trend(
-        &self,
-        previous: &MemoryUsagePattern,
-        current: &MemoryUsageSample,
-    ) -> AllocationTrend {
+    fn determine_trend(&self, previous: &MemoryUsagePattern, current: &MemoryUsageSample) -> AllocationTrend {
         let prev_avg = previous.average_usage_mb;
         let curr_avg = current.used_memory_mb as f64;
         let change_percentage = ((curr_avg - prev_avg) / prev_avg).abs();
@@ -305,20 +301,20 @@ impl PredictiveAllocationModel {
 /// Memory usage sample for monitoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryUsageSample {
-    pub total_memory_mb: u64,
-    pub used_memory_mb: u64,
-    pub free_memory_mb: u64,
-    pub available_memory_mb: u64,
+    pub total_memory_mb:      u64,
+    pub used_memory_mb:       u64,
+    pub free_memory_mb:       u64,
+    pub available_memory_mb:  u64,
     pub allocation_rate_kbps: f64,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:            chrono::DateTime<chrono::Utc>,
 }
 
 /// Prediction result for memory usage
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PredictedMemoryUsage {
     pub predicted_usage_mb: f64,
-    pub confidence_level: f64,
-    pub recommendation: AllocationRecommendation,
+    pub confidence_level:   f64,
+    pub recommendation:     AllocationRecommendation,
 }
 
 /// Allocation recommendations based on prediction
@@ -333,30 +329,30 @@ pub enum AllocationRecommendation {
 
 /// Adaptive memory manager
 pub struct AdaptiveMemoryManager {
-    model: Arc<RwLock<PredictiveAllocationModel>>,
-    current_strategy: Arc<RwLock<AllocationStrategy>>,
-    memory_monitor: MemoryMonitor,
+    model:                Arc<RwLock<PredictiveAllocationModel>>,
+    current_strategy:     Arc<RwLock<AllocationStrategy>>,
+    memory_monitor:       MemoryMonitor,
     allocation_decisions: Vec<AllocationDecision>,
-    config: AdaptiveConfig,
+    config:               AdaptiveConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdaptiveConfig {
     pub enable_predictive_allocation: bool,
-    pub monitoring_interval_seconds: u64,
-    pub prediction_horizon_minutes: u64,
-    pub adaptation_threshold: f64,
-    pub min_confidence_threshold: f64,
+    pub monitoring_interval_seconds:  u64,
+    pub prediction_horizon_minutes:   u64,
+    pub adaptation_threshold:         f64,
+    pub min_confidence_threshold:     f64,
 }
 
 impl Default for AdaptiveConfig {
     fn default() -> Self {
         Self {
             enable_predictive_allocation: true,
-            monitoring_interval_seconds: 30,
-            prediction_horizon_minutes: 5,
-            adaptation_threshold: 0.1, // 10% change threshold
-            min_confidence_threshold: 0.6,
+            monitoring_interval_seconds:  30,
+            prediction_horizon_minutes:   5,
+            adaptation_threshold:         0.1, // 10% change threshold
+            min_confidence_threshold:     0.6,
         }
     }
 }
@@ -413,10 +409,7 @@ impl AdaptiveMemoryManager {
     }
 
     /// Apply adaptive strategy based on current memory pressure
-    pub async fn adapt_to_memory_pressure(
-        &self,
-        current_usage: MemoryUsageSample,
-    ) -> IDEResult<()> {
+    pub async fn adapt_to_memory_pressure(&self, current_usage: MemoryUsageSample) -> IDEResult<()> {
         // Update prediction model
         let mut model = self.model.write().await;
         model.update(current_usage);
@@ -430,16 +423,13 @@ impl AdaptiveMemoryManager {
             AllocationRecommendation::ScaleUp => {
                 strategy.preallocation_chunks =
                     (strategy.preallocation_chunks as f64 * strategy.scaling_factor) as usize;
-                strategy.allocation_chunk_size_kb = (strategy.allocation_chunk_size_kb as f64
-                    * (1.0 + self.config.adaptation_threshold))
-                    as usize;
+                strategy.allocation_chunk_size_kb =
+                    (strategy.allocation_chunk_size_kb as f64 * (1.0 + self.config.adaptation_threshold)) as usize;
             }
             AllocationRecommendation::ScaleDown => {
-                strategy.preallocation_chunks =
-                    (strategy.preallocation_chunks as f64 * 0.8) as usize;
-                strategy.allocation_chunk_size_kb = (strategy.allocation_chunk_size_kb as f64
-                    * (1.0 - self.config.adaptation_threshold))
-                    as usize;
+                strategy.preallocation_chunks = (strategy.preallocation_chunks as f64 * 0.8) as usize;
+                strategy.allocation_chunk_size_kb =
+                    (strategy.allocation_chunk_size_kb as f64 * (1.0 - self.config.adaptation_threshold)) as usize;
             }
             AllocationRecommendation::Preallocate => {
                 strategy.preallocation_enabled = true;
@@ -483,7 +473,7 @@ impl AdaptiveMemoryManager {
 /// Memory pressure monitor
 pub struct MemoryMonitor {
     pressure_events: HashMap<String, Vec<MemoryPressureEvent>>,
-    thresholds: HashMap<PressureLevel, u64>,
+    thresholds:      HashMap<PressureLevel, u64>,
 }
 
 impl MemoryMonitor {
@@ -502,19 +492,13 @@ impl MemoryMonitor {
 
     /// Monitor memory pressure and return current level
     pub fn monitor_pressure(&self, sample: &MemoryUsageSample) -> PressureLevel {
-        let usage_percentage =
-            (sample.used_memory_mb as f64 / sample.total_memory_mb as f64) * 100.0;
+        let usage_percentage = (sample.used_memory_mb as f64 / sample.total_memory_mb as f64) * 100.0;
 
-        if usage_percentage >= *self.thresholds.get(&PressureLevel::Critical).unwrap_or(&98) as f64
-        {
+        if usage_percentage >= *self.thresholds.get(&PressureLevel::Critical).unwrap_or(&98) as f64 {
             PressureLevel::Critical
-        } else if usage_percentage
-            >= *self.thresholds.get(&PressureLevel::High).unwrap_or(&95) as f64
-        {
+        } else if usage_percentage >= *self.thresholds.get(&PressureLevel::High).unwrap_or(&95) as f64 {
             PressureLevel::High
-        } else if usage_percentage
-            >= *self.thresholds.get(&PressureLevel::Medium).unwrap_or(&85) as f64
-        {
+        } else if usage_percentage >= *self.thresholds.get(&PressureLevel::Medium).unwrap_or(&85) as f64 {
             PressureLevel::Medium
         } else {
             PressureLevel::Low
@@ -534,21 +518,21 @@ pub enum PressureLevel {
 /// Memory pressure event
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryPressureEvent {
-    pub level: PressureLevel,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
-    pub used_memory_mb: u64,
+    pub level:           PressureLevel,
+    pub timestamp:       chrono::DateTime<chrono::Utc>,
+    pub used_memory_mb:  u64,
     pub total_memory_mb: u64,
-    pub triggered_by: String,
+    pub triggered_by:    String,
 }
 
 /// Allocation decision record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AllocationDecision {
-    pub timestamp: chrono::DateTime<chrono::Utc>,
-    pub requested_size_kb: usize,
-    pub granted_size_kb: usize,
+    pub timestamp:           chrono::DateTime<chrono::Utc>,
+    pub requested_size_kb:   usize,
+    pub granted_size_kb:     usize,
     pub recommendation_used: AllocationRecommendation,
-    pub success: bool,
+    pub success:             bool,
 }
 
 #[cfg(test)]
@@ -561,12 +545,12 @@ mod tests {
 
         // Add some sample data
         let sample1 = MemoryUsageSample {
-            total_memory_mb: 8192,
-            used_memory_mb: 2048,
-            free_memory_mb: 6144,
-            available_memory_mb: 6144,
+            total_memory_mb:      8192,
+            used_memory_mb:       2048,
+            free_memory_mb:       6144,
+            available_memory_mb:  6144,
             allocation_rate_kbps: 100.0,
-            timestamp: chrono::Utc::now(),
+            timestamp:            chrono::Utc::now(),
         };
 
         model.update(sample1);
@@ -581,24 +565,24 @@ mod tests {
         let monitor = MemoryMonitor::new();
 
         let high_pressure = MemoryUsageSample {
-            total_memory_mb: 8192,
-            used_memory_mb: 7864, // ~96% usage
-            free_memory_mb: 328,
-            available_memory_mb: 328,
+            total_memory_mb:      8192,
+            used_memory_mb:       7864, // ~96% usage
+            free_memory_mb:       328,
+            available_memory_mb:  328,
             allocation_rate_kbps: 500.0,
-            timestamp: chrono::Utc::now(),
+            timestamp:            chrono::Utc::now(),
         };
 
         let pressure_level = monitor.monitor_pressure(&high_pressure);
         assert_eq!(pressure_level, PressureLevel::High);
 
         let critical_pressure = MemoryUsageSample {
-            total_memory_mb: 8192,
-            used_memory_mb: 8011, // ~98% usage
-            free_memory_mb: 181,
-            available_memory_mb: 181,
+            total_memory_mb:      8192,
+            used_memory_mb:       8011, // ~98% usage
+            free_memory_mb:       181,
+            available_memory_mb:  181,
             allocation_rate_kbps: 1000.0,
-            timestamp: chrono::Utc::now(),
+            timestamp:            chrono::Utc::now(),
         };
 
         let critical_level = monitor.monitor_pressure(&critical_pressure);
@@ -611,12 +595,12 @@ mod tests {
         let manager = AdaptiveMemoryManager::new(config);
 
         let current_usage = MemoryUsageSample {
-            total_memory_mb: 8192,
-            used_memory_mb: 4096,
-            free_memory_mb: 4096,
-            available_memory_mb: 4096,
+            total_memory_mb:      8192,
+            used_memory_mb:       4096,
+            free_memory_mb:       4096,
+            available_memory_mb:  4096,
             allocation_rate_kbps: 200.0,
-            timestamp: chrono::Utc::now(),
+            timestamp:            chrono::Utc::now(),
         };
 
         // Test adaptation

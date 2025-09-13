@@ -1,7 +1,8 @@
 //! Error types for the predictive maintenance system
 
-use rust_ai_ide_errors::IDEError;
 use std::fmt;
+
+use rust_ai_ide_errors::IDEError;
 
 /// Result type for maintenance operations
 pub type MaintenanceResult<T> = Result<T, MaintenanceError>;

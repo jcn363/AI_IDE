@@ -1,24 +1,26 @@
-use crate::types::{CloudAuth, CloudResource};
-use crate::CloudProvider;
+use std::collections::HashMap;
+
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use aws_config::{BehaviorVersion, Region};
 use aws_sdk_s3::{Client as S3Client, Config as S3Config, Error as S3Error};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
+use crate::types::{CloudAuth, CloudResource};
+use crate::CloudProvider;
 
 /// AWS-specific configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AwsConfig {
     pub access_key: String,
     pub secret_key: String,
-    pub region: String,
+    pub region:     String,
 }
 
 /// AWS client wrapper
 pub struct AwsClient {
     s3_client: S3Client,
-    config: AwsConfig,
+    config:    AwsConfig,
 }
 
 #[async_trait]

@@ -1,30 +1,32 @@
-use crate::analysis::types::*;
-use crate::error_handling::AnalysisResult;
-use regex::Regex;
 use std::collections::HashMap;
+
+use regex::Regex;
 use syn::visit::Visit;
 use syn::*;
 use uuid::Uuid;
 
+use crate::analysis::types::*;
+use crate::error_handling::AnalysisResult;
+
 /// Performance analyzer for detecting bottlenecks and optimization opportunities
 pub struct PerformanceAnalyzer {
     patterns: HashMap<String, PerformancePattern>,
-    metrics: PerformanceMetrics,
+    metrics:  PerformanceMetrics,
 }
 
 #[derive(Clone)]
 pub struct PerformancePattern {
-    pub pattern: Regex,
-    pub impact: PerformanceImpact,
+    pub pattern:     Regex,
+    pub impact:      PerformanceImpact,
     pub description: String,
-    pub suggestion: String,
+    pub suggestion:  String,
 }
 
 #[derive(Clone, Default, Debug)]
 pub struct PerformanceMetrics {
     pub allocations_analyzed: usize,
     pub expensive_operations: usize,
-    pub memory_operations: usize,
+    pub memory_operations:    usize,
     pub async_analysis_count: usize,
 }
 
@@ -33,7 +35,7 @@ impl PerformanceAnalyzer {
     pub fn new() -> Self {
         let mut analyzer = Self {
             patterns: HashMap::new(),
-            metrics: PerformanceMetrics::default(),
+            metrics:  PerformanceMetrics::default(),
         };
         analyzer.load_default_patterns();
         analyzer
@@ -42,83 +44,64 @@ impl PerformanceAnalyzer {
     /// Load default performance patterns to detect
     fn load_default_patterns(&mut self) {
         // Expensive string operations
-        self.add_pattern(
-            "string_concat_loop",
-            PerformancePattern {
-                pattern: Regex::new(
-                    r#"(?i)let\s+mut\s+\w+\s*=\s*.*\.to_string\(\);\s*for.*?\{[^\}]*\+\s*= .*?\}"#,
-                )
+        self.add_pattern("string_concat_loop", PerformancePattern {
+            pattern:     Regex::new(r#"(?i)let\s+mut\s+\w+\s*=\s*.*\.to_string\(\);\s*for.*?\{[^\}]*\+\s*= .*?\}"#)
                 .unwrap(),
-                impact: PerformanceImpact::High,
-                description: "Inefficient string concatenation in loops".to_string(),
-                suggestion: "Use String::with_capacity or collect into Vec and join".to_string(),
-            },
-        );
+            impact:      PerformanceImpact::High,
+            description: "Inefficient string concatenation in loops".to_string(),
+            suggestion:  "Use String::with_capacity or collect into Vec and join".to_string(),
+        });
 
         // Vector growth without preallocation
         self.add_pattern("vec_push_loop", PerformancePattern {
-            pattern: Regex::new(r#"(?i)let\s+mut\s+\w+\s*:\s*Vec<.*>\s*=.*vec!\[.*\];\s*for.*?\{[^\}]*\.push\(.*?\).*?\}"#).unwrap(),
-            impact: PerformanceImpact::Medium,
+            pattern:     Regex::new(
+                r#"(?i)let\s+mut\s+\w+\s*:\s*Vec<.*>\s*=.*vec!\[.*\];\s*for.*?\{[^\}]*\.push\(.*?\).*?\}"#,
+            )
+            .unwrap(),
+            impact:      PerformanceImpact::Medium,
             description: "Vector resizing during loops".to_string(),
-            suggestion: "Preallocate with Vec::with_capacity".to_string(),
+            suggestion:  "Preallocate with Vec::with_capacity".to_string(),
         });
 
         // HashMap operations in tight loops
-        self.add_pattern(
-            "hashmap_operation_loop",
-            PerformancePattern {
-                pattern: Regex::new(r#"(?i)for.*?\{[^\}]*\.insert\(.*?\).*?\}"#).unwrap(),
-                impact: PerformanceImpact::Medium,
-                description: "HashMap operations in loops may be inefficient".to_string(),
-                suggestion: "Consider alternative data structures or pre-computation".to_string(),
-            },
-        );
+        self.add_pattern("hashmap_operation_loop", PerformancePattern {
+            pattern:     Regex::new(r#"(?i)for.*?\{[^\}]*\.insert\(.*?\).*?\}"#).unwrap(),
+            impact:      PerformanceImpact::Medium,
+            description: "HashMap operations in loops may be inefficient".to_string(),
+            suggestion:  "Consider alternative data structures or pre-computation".to_string(),
+        });
 
         // Regex compilation in loops
-        self.add_pattern(
-            "regex_compile_loop",
-            PerformancePattern {
-                pattern: Regex::new(r#"(?i)Regex::new\(.*?\).*"#).unwrap(),
-                impact: PerformanceImpact::Medium,
-                description: "Regex compilation is expensive, avoid in loops".to_string(),
-                suggestion: "Pre-compile regex patterns outside loops".to_string(),
-            },
-        );
+        self.add_pattern("regex_compile_loop", PerformancePattern {
+            pattern:     Regex::new(r#"(?i)Regex::new\(.*?\).*"#).unwrap(),
+            impact:      PerformanceImpact::Medium,
+            description: "Regex compilation is expensive, avoid in loops".to_string(),
+            suggestion:  "Pre-compile regex patterns outside loops".to_string(),
+        });
 
         // Iterator cloning
-        self.add_pattern(
-            "iterator_clone",
-            PerformancePattern {
-                pattern: Regex::new(r#"(?i)\.cloned\(\)|\.clone\(\)\.iter\(\)"#).unwrap(),
-                impact: PerformanceImpact::Medium,
-                description: "Iterator cloning creates unnecessary allocations".to_string(),
-                suggestion: "Use &references where possible or restructure iterator chains"
-                    .to_string(),
-            },
-        );
+        self.add_pattern("iterator_clone", PerformancePattern {
+            pattern:     Regex::new(r#"(?i)\.cloned\(\)|\.clone\(\)\.iter\(\)"#).unwrap(),
+            impact:      PerformanceImpact::Medium,
+            description: "Iterator cloning creates unnecessary allocations".to_string(),
+            suggestion:  "Use &references where possible or restructure iterator chains".to_string(),
+        });
 
         // Box allocation for small types
-        self.add_pattern(
-            "box_small_type",
-            PerformancePattern {
-                pattern: Regex::new(r#"(?i)Box<.(u8|i8|u16|i16|u32|i32|char|bool|f32).>"#).unwrap(),
-                impact: PerformanceImpact::Low,
-                description: "Box allocation for small types".to_string(),
-                suggestion: "Consider inline storage for small types".to_string(),
-            },
-        );
+        self.add_pattern("box_small_type", PerformancePattern {
+            pattern:     Regex::new(r#"(?i)Box<.(u8|i8|u16|i16|u32|i32|char|bool|f32).>"#).unwrap(),
+            impact:      PerformanceImpact::Low,
+            description: "Box allocation for small types".to_string(),
+            suggestion:  "Consider inline storage for small types".to_string(),
+        });
 
         // Async spawn without consideration for overhead
-        self.add_pattern(
-            "async_spawn",
-            PerformancePattern {
-                pattern: Regex::new(r#"(?i)tokio::spawn\(.*async\s+move\s*\{.*\}"#).unwrap(),
-                impact: PerformanceImpact::Medium,
-                description: "Async task spawning may have overhead".to_string(),
-                suggestion: "Consider batching small tasks or using alternative async patterns"
-                    .to_string(),
-            },
-        );
+        self.add_pattern("async_spawn", PerformancePattern {
+            pattern:     Regex::new(r#"(?i)tokio::spawn\(.*async\s+move\s*\{.*\}"#).unwrap(),
+            impact:      PerformanceImpact::Medium,
+            description: "Async task spawning may have overhead".to_string(),
+            suggestion:  "Consider batching small tasks or using alternative async patterns".to_string(),
+        });
     }
 
     /// Add a custom performance pattern
@@ -136,20 +119,17 @@ impl PerformanceAnalyzer {
                     let captures = pattern.pattern.find_iter(line);
                     for capture in captures {
                         let hint = PerformanceHint {
-                            id: Uuid::new_v4(),
-                            title: pattern.description.clone(),
-                            description: format!(
-                                "Performance issue detected: {}",
-                                pattern.description
-                            ),
-                            impact: pattern.impact,
-                            location: Location {
-                                file: file_path.to_string(),
-                                line: line_no + 1,
+                            id:          Uuid::new_v4(),
+                            title:       pattern.description.clone(),
+                            description: format!("Performance issue detected: {}", pattern.description),
+                            impact:      pattern.impact,
+                            location:    Location {
+                                file:   file_path.to_string(),
+                                line:   line_no + 1,
                                 column: capture.start(),
                                 offset: capture.start(),
                             },
-                            suggestion: pattern.suggestion.clone(),
+                            suggestion:  pattern.suggestion.clone(),
                         };
                         hints.push(hint);
                     }
@@ -177,8 +157,8 @@ impl PerformanceAnalyzer {
     fn analyze_allocations(&self, ast: &File) -> Vec<PerformanceHint> {
         let mut hints = Vec::new();
         let mut visitor = AllocationVisitor {
-            hints: &mut hints,
-            file: "AST",
+            hints:   &mut hints,
+            file:    "AST",
             metrics: &self.metrics,
         };
         visitor.visit_file(ast);
@@ -190,7 +170,7 @@ impl PerformanceAnalyzer {
         let mut hints = Vec::new();
         let mut visitor = AsyncPatternVisitor {
             hints: &mut hints,
-            file: "AST",
+            file:  "AST",
         };
         visitor.visit_file(ast);
         hints
@@ -201,7 +181,7 @@ impl PerformanceAnalyzer {
         let mut hints = Vec::new();
         let mut visitor = LoopPerformanceVisitor {
             hints: &mut hints,
-            file: "AST",
+            file:  "AST",
         };
         visitor.visit_file(ast);
         hints
@@ -212,7 +192,7 @@ impl PerformanceAnalyzer {
         let mut hints = Vec::new();
         let mut visitor = DataStructureVisitor {
             hints: &mut hints,
-            file: "AST",
+            file:  "AST",
         };
         visitor.visit_file(ast);
         hints
@@ -226,8 +206,8 @@ impl PerformanceAnalyzer {
 
 /// Visits expressions looking for memory allocations
 struct AllocationVisitor<'a> {
-    hints: &'a mut Vec<PerformanceHint>,
-    file: &'a str,
+    hints:   &'a mut Vec<PerformanceHint>,
+    file:    &'a str,
     metrics: &'a PerformanceMetrics,
 }
 
@@ -241,17 +221,17 @@ impl<'a, 'ast> Visit<'ast> for AllocationVisitor<'a> {
                 metrics_copy.allocations_analyzed += 1;
 
                 let hint = PerformanceHint {
-                    id: Uuid::new_v4(),
-                    title: "Manual memory allocation detected".to_string(),
+                    id:          Uuid::new_v4(),
+                    title:       "Manual memory allocation detected".to_string(),
                     description: "Manual memory allocation may be inefficient".to_string(),
-                    impact: PerformanceImpact::Medium,
-                    location: Location {
-                        file: self.file.to_string(),
-                        line: 0, // AST nodes don't have reliable line info from span
+                    impact:      PerformanceImpact::Medium,
+                    location:    Location {
+                        file:   self.file.to_string(),
+                        line:   0, // AST nodes don't have reliable line info from span
                         column: 0,
                         offset: 0,
                     },
-                    suggestion: "Consider using RAII patterns or smart pointers".to_string(),
+                    suggestion:  "Consider using RAII patterns or smart pointers".to_string(),
                 };
                 self.hints.push(hint);
             }
@@ -263,24 +243,24 @@ impl<'a, 'ast> Visit<'ast> for AllocationVisitor<'a> {
 /// Visits async patterns
 struct AsyncPatternVisitor<'a> {
     hints: &'a mut Vec<PerformanceHint>,
-    file: &'a str,
+    file:  &'a str,
 }
 
 impl<'a, 'ast> Visit<'ast> for AsyncPatternVisitor<'a> {
     fn visit_expr_await(&mut self, node: &'ast ExprAwait) {
         // Check for nested await calls which can indicate async overhead
         let hint = PerformanceHint {
-            id: Uuid::new_v4(),
-            title: "Await call detected".to_string(),
+            id:          Uuid::new_v4(),
+            title:       "Await call detected".to_string(),
             description: "Consider async optimization patterns".to_string(),
-            impact: PerformanceImpact::Low,
-            location: Location {
-                file: self.file.to_string(),
-                line: 0, // AST nodes don't have reliable line info from span
+            impact:      PerformanceImpact::Low,
+            location:    Location {
+                file:   self.file.to_string(),
+                line:   0, // AST nodes don't have reliable line info from span
                 column: 0,
                 offset: 0,
             },
-            suggestion: "Review async call pattern for optimization opportunities".to_string(),
+            suggestion:  "Review async call pattern for optimization opportunities".to_string(),
         };
         self.hints.push(hint);
         syn::visit::visit_expr_await(self, node);
@@ -290,7 +270,7 @@ impl<'a, 'ast> Visit<'ast> for AsyncPatternVisitor<'a> {
 /// Visits loop constructs for performance analysis
 struct LoopPerformanceVisitor<'a> {
     hints: &'a mut Vec<PerformanceHint>,
-    file: &'a str,
+    file:  &'a str,
 }
 
 impl<'a, 'ast> Visit<'ast> for LoopPerformanceVisitor<'a> {
@@ -300,18 +280,17 @@ impl<'a, 'ast> Visit<'ast> for LoopPerformanceVisitor<'a> {
 
         if body.contains(".collect()") || body.contains(".clone()") {
             let hint = PerformanceHint {
-                id: Uuid::new_v4(),
-                title: "Potentially expensive loop operation".to_string(),
+                id:          Uuid::new_v4(),
+                title:       "Potentially expensive loop operation".to_string(),
                 description: "Collection or cloning operations in loop".to_string(),
-                impact: PerformanceImpact::Medium,
-                location: Location {
-                    file: self.file.to_string(),
-                    line: 0, // AST nodes don't have reliable line info from span
+                impact:      PerformanceImpact::Medium,
+                location:    Location {
+                    file:   self.file.to_string(),
+                    line:   0, // AST nodes don't have reliable line info from span
                     column: 0,
                     offset: 0,
                 },
-                suggestion: "Avoid allocations inside loops, preallocate or restructure"
-                    .to_string(),
+                suggestion:  "Avoid allocations inside loops, preallocate or restructure".to_string(),
             };
             self.hints.push(hint);
         }
@@ -322,7 +301,7 @@ impl<'a, 'ast> Visit<'ast> for LoopPerformanceVisitor<'a> {
 /// Visits data structure usage
 struct DataStructureVisitor<'a> {
     hints: &'a mut Vec<PerformanceHint>,
-    file: &'a str,
+    file:  &'a str,
 }
 
 impl<'a, 'ast> Visit<'ast> for DataStructureVisitor<'a> {
@@ -333,21 +312,20 @@ impl<'a, 'ast> Visit<'ast> for DataStructureVisitor<'a> {
             // Check for sequence operations that might be inefficient
             if func_name.contains("sort") || func_name.contains("reverse") {
                 let hint = PerformanceHint {
-                    id: Uuid::new_v4(),
-                    title: "Potentially expensive sequence operation".to_string(),
+                    id:          Uuid::new_v4(),
+                    title:       "Potentially expensive sequence operation".to_string(),
                     description: format!(
                         "Sequence operation '{}' may be costly for large collections",
                         func_name
                     ),
-                    impact: PerformanceImpact::Medium,
-                    location: Location {
-                        file: self.file.to_string(),
-                        line: 0, // AST nodes don't have reliable line info from span
+                    impact:      PerformanceImpact::Medium,
+                    location:    Location {
+                        file:   self.file.to_string(),
+                        line:   0, // AST nodes don't have reliable line info from span
                         column: 0,
                         offset: 0,
                     },
-                    suggestion: "Consider using more efficient data structures or algorithms"
-                        .to_string(),
+                    suggestion:  "Consider using more efficient data structures or algorithms".to_string(),
                 };
                 self.hints.push(hint);
             }

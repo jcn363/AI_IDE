@@ -38,8 +38,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let completer = CodeCompleter::new();
     let completion_context = rust_ai_ide_ai::code_generation::completion::CompletionContext {
-        current_line: "fn process_".to_string(),
-        cursor_position: 12,
+        current_line:     "fn process_".to_string(),
+        cursor_position:  12,
         surrounding_code: vec![
             "#[derive(Debug)]".to_string(),
             "struct Data {".to_string(),
@@ -49,8 +49,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "impl Data {",
         ],
         imported_modules: vec!["std::fmt".to_string()],
-        project_context: ProjectContext::with_default_structure(),
-        completion_type: rust_ai_ide_ai::code_generation::completion::CompletionType::Function,
+        project_context:  ProjectContext::with_default_structure(),
+        completion_type:  rust_ai_ide_ai::code_generation::completion::CompletionType::Function,
     };
 
     let completion_suggestions = completer
@@ -81,8 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     println!("===========================");
 
-    let function_context =
-        CodeGenerationContext::demo_context(TargetLanguage::Rust, GenerationScope::Function);
+    let function_context = CodeGenerationContext::demo_context(TargetLanguage::Rust, GenerationScope::Function);
 
     println!("   🔧 Generating function with context:");
     println!("      Language: {:?}", function_context.language);
@@ -112,8 +111,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   ⚙️ Generating comprehensive test suite...");
 
     let test_generator = TestGenerator::new();
-    let test_context =
-        CodeGenerationContext::demo_context(TargetLanguage::Rust, GenerationScope::Tests);
+    let test_context = CodeGenerationContext::demo_context(TargetLanguage::Rust, GenerationScope::Tests);
 
     match test_generator
         .generate_test_suite("fn calculate_total(items: &[i32]) -> i32", &test_context)
@@ -137,8 +135,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("      📋 Sample unit test:");
                 println!("         {}", test_suite.unit_tests[0].test_name);
                 println!("         First few lines of test code:");
-                let code_lines: Vec<&str> =
-                    test_suite.unit_tests[0].test_code.lines().take(3).collect();
+                let code_lines: Vec<&str> = test_suite.unit_tests[0].test_code.lines().take(3).collect();
                 for line in code_lines {
                     if !line.trim().is_empty() {
                         println!("           {}", line);

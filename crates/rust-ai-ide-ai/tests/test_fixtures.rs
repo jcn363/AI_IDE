@@ -36,15 +36,15 @@ pub fn create_test_user_spec_with_functions(
         requirements: vec![],
         patterns: vec![],
         entities: vec![rust_ai_ide_ai::spec_generation::types::Entity {
-            name: "User".to_string(),
-            entity_type: rust_ai_ide_ai::spec_generation::types::EntityType::Struct,
-            fields: vec![rust_ai_ide_ai::spec_generation::types::Field {
-                name: "id".to_string(),
-                field_type: "String".to_string(),
+            name:         "User".to_string(),
+            entity_type:  rust_ai_ide_ai::spec_generation::types::EntityType::Struct,
+            fields:       vec![rust_ai_ide_ai::spec_generation::types::Field {
+                name:        "id".to_string(),
+                field_type:  "String".to_string(),
                 is_optional: false,
-                docs: vec!["Unique identifier".to_string()],
+                docs:        vec!["Unique identifier".to_string()],
             }],
-            docs: vec!["A user in the system".to_string()],
+            docs:         vec!["A user in the system".to_string()],
             requirements: vec!["REQ-001".to_string()],
         }],
         functions,
@@ -53,14 +53,14 @@ pub fn create_test_user_spec_with_functions(
 
 /// TestSpecBuilder for fluent construction of ParsedSpecification and Entity instances
 pub struct TestSpecBuilder {
-    entities: Vec<rust_ai_ide_ai::spec_generation::types::Entity>,
+    entities:  Vec<rust_ai_ide_ai::spec_generation::types::Entity>,
     functions: Vec<rust_ai_ide_ai::spec_generation::types::FunctionSpec>,
 }
 
 impl TestSpecBuilder {
     pub fn new() -> Self {
         TestSpecBuilder {
-            entities: vec![],
+            entities:  vec![],
             functions: vec![],
         }
     }
@@ -70,10 +70,7 @@ impl TestSpecBuilder {
         self
     }
 
-    pub fn with_function(
-        mut self,
-        function: rust_ai_ide_ai::spec_generation::types::FunctionSpec,
-    ) -> Self {
+    pub fn with_function(mut self, function: rust_ai_ide_ai::spec_generation::types::FunctionSpec) -> Self {
         self.functions.push(function);
         self
     }
@@ -81,9 +78,9 @@ impl TestSpecBuilder {
     pub fn build(self) -> rust_ai_ide_ai::spec_generation::types::ParsedSpecification {
         rust_ai_ide_ai::spec_generation::types::ParsedSpecification {
             requirements: vec![],
-            patterns: vec![],
-            entities: self.entities,
-            functions: self.functions,
+            patterns:     vec![],
+            entities:     self.entities,
+            functions:    self.functions,
         }
     }
 }

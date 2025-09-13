@@ -1,13 +1,14 @@
 //! Database operations for the learning system
 
-use super::models::{LearnedPattern, LearningPreferences, PatternStatistics};
-use crate::types::{AIResult, AIServiceError, PrivacyMode};
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
+
 use chrono::{DateTime, Utc};
 use serde_json;
-use std::path::Path;
-use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
 use tokio::task;
+
+use super::models::{LearnedPattern, LearningPreferences, PatternStatistics};
+use crate::types::{AIResult, AIServiceError, PrivacyMode};
 
 /// Async database wrapper using rusqlite with spawn_blocking
 #[derive(Debug)]
@@ -42,11 +43,7 @@ impl AsyncDatabase {
     }
 
     /// Execute a SQL query with parameters
-    pub async fn execute<P: rusqlite::Params + Send + 'static>(
-        &self,
-        sql: &str,
-        params: P,
-    ) -> AIResult<usize> {
+    pub async fn execute<P: rusqlite::Params + Send + 'static>(&self, sql: &str, params: P) -> AIResult<usize> {
         let conn = Arc::clone(&self.conn);
         let sql = sql.to_string();
         task::spawn_blocking(move || {
@@ -127,15 +124,12 @@ impl AsyncDatabase {
 #[derive(Debug)]
 pub struct PreparedStatement {
     conn: Arc<Mutex<rusqlite::Connection>>,
-    sql: String,
+    sql:  String,
 }
 
 impl PreparedStatement {
     /// Execute the prepared statement with parameters
-    pub async fn execute<P: rusqlite::Params + Send + 'static>(
-        &mut self,
-        params: P,
-    ) -> AIResult<usize> {
+    pub async fn execute<P: rusqlite::Params + Send + 'static>(&mut self, params: P) -> AIResult<usize> {
         let conn = Arc::clone(&self.conn);
         let sql = self.sql.clone();
         task::spawn_blocking(move || {
@@ -294,10 +288,30 @@ impl LearningDatabase {
 
     /// Create performance indexes
     async fn create_indexes(&self) -> AIResult<()> {
-        self.db.execute("CREATE INDEX IF NOT EXISTS idx_patterns_error_code ON learned_patterns (error_code)", []).await?;
-        self.db.execute("CREATE INDEX IF NOT EXISTS idx_patterns_context_hash ON learned_patterns (context_hash)", []).await?;
-        self.db.execute("CREATE INDEX IF NOT EXISTS idx_patterns_confidence ON learned_patterns (confidence)", []).await?;
-        self.db.execute("CREATE INDEX IF NOT EXISTS idx_applications_pattern_id ON pattern_applications (pattern_id)", []).await?;
+        self.db
+            .execute(
+                "CREATE INDEX IF NOT EXISTS idx_patterns_error_code ON learned_patterns (error_code)",
+                [],
+            )
+            .await?;
+        self.db
+            .execute(
+                "CREATE INDEX IF NOT EXISTS idx_patterns_context_hash ON learned_patterns (context_hash)",
+                [],
+            )
+            .await?;
+        self.db
+            .execute(
+                "CREATE INDEX IF NOT EXISTS idx_patterns_confidence ON learned_patterns (confidence)",
+                [],
+            )
+            .await?;
+        self.db
+            .execute(
+                "CREATE INDEX IF NOT EXISTS idx_applications_pattern_id ON pattern_applications (pattern_id)",
+                [],
+            )
+            .await?;
         Ok(())
     }
 
@@ -309,8 +323,8 @@ impl LearningDatabase {
         let fix_template_json = serde_json::to_string(&pattern.fix_template)
             .map_err(|e| AIServiceError::SerializationError(e.to_string()))?;
 
-        let tags_json = serde_json::to_string(&pattern.tags)
-            .map_err(|e| AIServiceError::SerializationError(e.to_string()))?;
+        let tags_json =
+            serde_json::to_string(&pattern.tags).map_err(|e| AIServiceError::SerializationError(e.to_string()))?;
 
         self.db
             .execute(
@@ -370,11 +384,7 @@ impl LearningDatabase {
     }
 
     /// Get patterns by error type
-    pub async fn get_patterns_by_error_type(
-        &self,
-        error_code: &str,
-        max_count: u32,
-    ) -> AIResult<Vec<LearnedPattern>> {
+    pub async fn get_patterns_by_error_type(&self, error_code: &str, max_count: u32) -> AIResult<Vec<LearnedPattern>> {
         let patterns = self
             .db
             .query_map(
@@ -392,14 +402,10 @@ impl LearningDatabase {
     }
 
     /// Update pattern success statistics
-    pub async fn update_pattern_success(
-        &self,
-        pattern_id: &str,
-        was_successful: bool,
-        _user_id: &str,
-    ) -> AIResult<()> {
+    pub async fn update_pattern_success(&self, pattern_id: &str, was_successful: bool, _user_id: &str) -> AIResult<()> {
         let query = if was_successful {
-            "UPDATE learned_patterns SET success_count = success_count + 1, attempt_count = attempt_count + 1, updated_at = ? WHERE id = ?"
+            "UPDATE learned_patterns SET success_count = success_count + 1, attempt_count = attempt_count + 1, \
+             updated_at = ? WHERE id = ?"
         } else {
             "UPDATE learned_patterns SET attempt_count = attempt_count + 1, updated_at = ? WHERE id = ?"
         };
@@ -458,15 +464,21 @@ impl LearningDatabase {
             .await?
             .unwrap_or(0);
 
-        let recent_patterns: i64 = self.db.query_row("SELECT COUNT(*) as count FROM learned_patterns WHERE updated_at > datetime('now', '-30 days')", [], |row| {
-            row.get(0)
-        }).await?.unwrap_or(0);
+        let recent_patterns: i64 = self
+            .db
+            .query_row(
+                "SELECT COUNT(*) as count FROM learned_patterns WHERE updated_at > datetime('now', '-30 days')",
+                [],
+                |row| row.get(0),
+            )
+            .await?
+            .unwrap_or(0);
 
         Ok(PatternStatistics {
-            total_patterns: total_patterns as u32,
+            total_patterns:      total_patterns as u32,
             successful_patterns: successful_patterns as u32,
-            recent_patterns: recent_patterns as u32,
-            success_rate: if total_patterns > 0 {
+            recent_patterns:     recent_patterns as u32,
+            success_rate:        if total_patterns > 0 {
                 successful_patterns as f32 / total_patterns as f32
             } else {
                 0.0
@@ -493,8 +505,7 @@ impl LearningDatabase {
                     preferences.enable_learning = value.parse().unwrap_or(true);
                 }
                 "privacy_mode" => {
-                    preferences.privacy_mode =
-                        serde_json::from_str(&value).unwrap_or(PrivacyMode::OptIn);
+                    preferences.privacy_mode = serde_json::from_str(&value).unwrap_or(PrivacyMode::OptIn);
                 }
                 "confidence_threshold" => {
                     preferences.confidence_threshold = value.parse().unwrap_or(0.7);
@@ -599,8 +610,7 @@ impl LearningDatabase {
         use super::models::FixTemplate;
 
         let context_patterns_json: String = row.get("context_patterns")?;
-        let context_patterns: Vec<String> =
-            serde_json::from_str(&context_patterns_json).unwrap_or_default();
+        let context_patterns: Vec<String> = serde_json::from_str(&context_patterns_json).unwrap_or_default();
 
         let fix_template_json: String = row.get("fix_template")?;
         let fix_template: FixTemplate = serde_json::from_str(&fix_template_json).unwrap();
@@ -612,23 +622,11 @@ impl LearningDatabase {
         let updated_at: String = row.get("updated_at")?;
 
         let created_dt = DateTime::parse_from_rfc3339(&created_at)
-            .map_err(|e| {
-                rusqlite::Error::FromSqlConversionFailure(
-                    9,
-                    rusqlite::types::Type::Text,
-                    Box::new(e),
-                )
-            })?
+            .map_err(|e| rusqlite::Error::FromSqlConversionFailure(9, rusqlite::types::Type::Text, Box::new(e)))?
             .with_timezone(&Utc);
 
         let updated_dt = DateTime::parse_from_rfc3339(&updated_at)
-            .map_err(|e| {
-                rusqlite::Error::FromSqlConversionFailure(
-                    10,
-                    rusqlite::types::Type::Text,
-                    Box::new(e),
-                )
-            })?
+            .map_err(|e| rusqlite::Error::FromSqlConversionFailure(10, rusqlite::types::Type::Text, Box::new(e)))?
             .with_timezone(&Utc);
 
         Ok(LearnedPattern {

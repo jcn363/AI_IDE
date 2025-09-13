@@ -1,12 +1,14 @@
 //! Plugin system for extensible DSL templates
 
-use crate::ast::Template;
-use crate::error::{DslError, DslResult};
-use crate::types::*;
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use rust_ai_ide_common::ProgrammingLanguage;
 use serde_json;
-use std::collections::HashMap;
+
+use crate::ast::Template;
+use crate::error::{DslError, DslResult};
+use crate::types::*;
 
 /// Plugin manager for handling DSL plugins
 #[derive(Debug)]
@@ -66,11 +68,7 @@ impl PluginManager {
     }
 
     /// Create a template using available plugins
-    pub async fn create_template(
-        &self,
-        template_name: &str,
-        ast: &Template,
-    ) -> DslResult<Box<dyn DslTemplate>> {
+    pub async fn create_template(&self, template_name: &str, ast: &Template) -> DslResult<Box<dyn DslTemplate>> {
         // First try to find a plugin that supports this template
         for (_, plugin) in &self.plugins {
             if plugin
@@ -128,7 +126,7 @@ impl Default for PluginManager {
 /// Basic template plugin that creates executable templates
 #[derive(Debug)]
 pub struct BasicTemplatePlugin {
-    plugin_id: String,
+    plugin_id:           String,
     supported_templates: Vec<String>,
 }
 
@@ -136,7 +134,7 @@ impl BasicTemplatePlugin {
     /// Create a new basic template plugin
     pub fn new(plugin_id: impl Into<String>) -> Self {
         Self {
-            plugin_id: plugin_id.into(),
+            plugin_id:           plugin_id.into(),
             supported_templates: Vec::new(),
         }
     }
@@ -209,10 +207,10 @@ impl DslPlugin for BasicTemplatePlugin {
 /// Language-specific plugin base
 #[derive(Debug)]
 pub struct LanguageTemplatePlugin {
-    plugin_id: String,
-    language: ProgrammingLanguage,
+    plugin_id:           String,
+    language:            ProgrammingLanguage,
     supported_templates: Vec<String>,
-    plugin_name: String,
+    plugin_name:         String,
 }
 
 impl LanguageTemplatePlugin {
@@ -220,10 +218,10 @@ impl LanguageTemplatePlugin {
     pub fn new(plugin_id: impl Into<String>, language: ProgrammingLanguage) -> Self {
         let plugin_id_str = plugin_id.into();
         Self {
-            plugin_id: plugin_id_str.clone(),
-            language: language.clone(),
+            plugin_id:           plugin_id_str.clone(),
+            language:            language.clone(),
             supported_templates: Vec::new(),
-            plugin_name: format!("{} Template Plugin", language_name(&language)),
+            plugin_name:         format!("{} Template Plugin", language_name(&language)),
         }
     }
 

@@ -1,7 +1,8 @@
 //! Analysis engine for refactoring operations
 
-use crate::types::*;
 use async_trait::async_trait;
+
+use crate::types::*;
 
 /// Analysis engine for refactoring operations
 pub struct RefactoringAnalysisEngine;
@@ -23,10 +24,7 @@ pub trait RefactoringAnalyzer {
     ) -> Result<RefactoringAnalysis, String>;
 
     /// Get applicable refactorings sequentially
-    async fn get_applicable_refactorings(
-        &self,
-        _context: &RefactoringContext,
-    ) -> Result<Vec<RefactoringType>, String> {
+    async fn get_applicable_refactorings(&self, _context: &RefactoringContext) -> Result<Vec<RefactoringType>, String> {
         Ok(Vec::new())
     }
 }
@@ -43,14 +41,14 @@ impl RefactoringAnalysisEngine {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringAnalysis, String> {
         Ok(RefactoringAnalysis {
-            is_safe: true,
+            is_safe:          true,
             confidence_score: 0.8,
             potential_impact: RefactoringImpact::Low,
-            affected_files: vec![],
+            affected_files:   vec![],
             affected_symbols: vec![],
             breaking_changes: vec![],
-            suggestions: vec![],
-            warnings: vec![],
+            suggestions:      vec![],
+            warnings:         vec![],
         })
     }
 }

@@ -1,20 +1,22 @@
 //! Module for filtering dependency graphs
 
-use super::{DependencyGraph, DependencyType, NodeIndex};
-use petgraph::visit::EdgeRef;
 use std::collections::HashSet;
+
+use petgraph::visit::EdgeRef;
+
+use super::{DependencyGraph, DependencyType, NodeIndex};
 
 /// A filter for dependency graphs
 #[derive(Debug, Clone, Default)]
 pub struct DependencyFilter {
-    include_types: HashSet<DependencyType>,
-    exclude_types: HashSet<DependencyType>,
-    include_pattern: Option<String>,
-    exclude_pattern: Option<String>,
-    max_depth: Option<usize>,
-    direct_only: bool,
-    workspace_only: bool,
-    has_updates: Option<bool>,
+    include_types:       HashSet<DependencyType>,
+    exclude_types:       HashSet<DependencyType>,
+    include_pattern:     Option<String>,
+    exclude_pattern:     Option<String>,
+    max_depth:           Option<usize>,
+    direct_only:         bool,
+    workspace_only:      bool,
+    has_updates:         Option<bool>,
     has_vulnerabilities: Option<bool>,
 }
 

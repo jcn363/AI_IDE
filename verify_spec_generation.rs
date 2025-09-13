@@ -96,8 +96,8 @@ async fn test_system(test_spec: &Specification) -> Result<(), String> {
     let intelligent_generator = IntelligentSpecGenerator::new();
     let request = SpecificationRequest {
         description: SAMPLE_SPEC.to_string(),
-        language: LANG_RUST.to_string(),
-        context: None,
+        language:    LANG_RUST.to_string(),
+        context:     None,
     };
 
     let result = intelligent_generator

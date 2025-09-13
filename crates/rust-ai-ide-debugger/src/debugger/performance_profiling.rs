@@ -7,37 +7,36 @@
 //! - Performance metric collection and analysis
 //! - Interactive profiling controls
 
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
+
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::{HashMap, HashSet, VecDeque},
-    sync::{Arc, Mutex},
-    time::{Duration, Instant},
-};
 use tokio::sync::mpsc;
 
 /// Represents a function call with timing information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FunctionCall {
     /// Function name or identifier
-    pub name: String,
+    pub name:           String,
     /// Source location (file and line)
-    pub location: String,
+    pub location:       String,
     /// Start time of the function call
-    pub start_time: u64,
+    pub start_time:     u64,
     /// End time of the function call
-    pub end_time: Option<u64>,
+    pub end_time:       Option<u64>,
     /// Call stack depth
-    pub depth: usize,
+    pub depth:          usize,
     /// Thread ID where this call occurred
-    pub thread_id: Option<u32>,
+    pub thread_id:      Option<u32>,
     /// CPU time consumed by this function (excluding children)
-    pub self_cpu_time: u64,
+    pub self_cpu_time:  u64,
     /// Total CPU time consumed by this function and its children
     pub total_cpu_time: Option<u64>,
     /// Child function calls
-    pub children: Vec<Arc<FunctionCall>>,
+    pub children:       Vec<Arc<FunctionCall>>,
     /// Parent call (for navigation)
-    pub parent: Option<String>,
+    pub parent:         Option<String>,
 }
 
 /// CPU sampling data point
@@ -46,11 +45,11 @@ pub struct CpuSample {
     /// Timestamp of the sample
     pub timestamp: u64,
     /// Call stack at the time of sampling
-    pub stack: Vec<String>,
+    pub stack:     Vec<String>,
     /// Thread ID
     pub thread_id: u32,
     /// Sampling weight/count
-    pub count: usize,
+    pub count:     usize,
     /// CPU usage percentage at this point
     pub cpu_usage: f64,
 }
@@ -59,13 +58,13 @@ pub struct CpuSample {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BottleneckAnalysis {
     /// Identified bottlenecks in order of impact
-    pub bottlenecks: Vec<Bottleneck>,
+    pub bottlenecks:           Vec<Bottleneck>,
     /// Overall system throughput assessment
     pub throughput_assessment: ThroughputAssessment,
     /// Resource utilization analysis
-    pub resource_utilization: ResourceUtilization,
+    pub resource_utilization:  ResourceUtilization,
     /// Performance improvement recommendations
-    pub recommendations: Vec<String>,
+    pub recommendations:       Vec<String>,
 }
 
 /// A performance bottleneck with details
@@ -74,15 +73,15 @@ pub struct Bottleneck {
     /// Type of bottleneck
     pub bottleneck_type: BottleneckType,
     /// Description of the bottleneck
-    pub description: String,
+    pub description:     String,
     /// Location where bottleneck occurs (function, line, etc.)
-    pub location: String,
+    pub location:        String,
     /// Impact severity (0.0 - 1.0)
-    pub severity: f64,
+    pub severity:        f64,
     /// Time spent in this bottleneck
-    pub time_spent: Duration,
+    pub time_spent:      Duration,
     /// Suggestions for improvement
-    pub suggestions: Vec<String>,
+    pub suggestions:     Vec<String>,
 }
 
 /// Types of performance bottlenecks
@@ -106,13 +105,13 @@ pub enum BottleneckType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThroughputAssessment {
     /// Overall system performance rating (0.0 - 1.0, higher is better)
-    pub performance_rating: f64,
+    pub performance_rating:  f64,
     /// CPU utilization percentage
-    pub cpu_utilization: f64,
+    pub cpu_utilization:     f64,
     /// I/O utilization percentage
-    pub io_utilization: f64,
+    pub io_utilization:      f64,
     /// Memory pressure indicator
-    pub memory_pressure: f64,
+    pub memory_pressure:     f64,
     /// System bottleneck type
     pub dominant_bottleneck: Option<BottleneckType>,
 }
@@ -121,22 +120,22 @@ pub struct ThroughputAssessment {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceUtilization {
     /// CPU usage per core
-    pub cpu_per_core: Vec<f64>,
+    pub cpu_per_core:             Vec<f64>,
     /// Memory usage breakdown
-    pub memory_breakdown: MemoryUsageBreakdown,
+    pub memory_breakdown:         MemoryUsageBreakdown,
     /// I/O operations per second
     pub io_operations_per_second: HashMap<String, u64>,
     /// System calls frequency
-    pub system_calls_frequency: HashMap<String, u64>,
+    pub system_calls_frequency:   HashMap<String, u64>,
 }
 
 /// Memory usage breakdown
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryUsageBreakdown {
     /// Stack memory usage
-    pub stack_usage: u64,
+    pub stack_usage:  u64,
     /// Heap memory usage
-    pub heap_usage: u64,
+    pub heap_usage:   u64,
     /// Shared memory usage
     pub shared_usage: u64,
     /// Cached memory usage
@@ -147,13 +146,13 @@ pub struct MemoryUsageBreakdown {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FlameGraph {
     /// Root nodes of the flame graph
-    pub nodes: Vec<FlameNode>,
+    pub nodes:         Vec<FlameNode>,
     /// Total width of the flame graph representation
-    pub total_width: f64,
+    pub total_width:   f64,
     /// Total height of the flame graph representation
-    pub total_height: f64,
+    pub total_height:  f64,
     /// Maximum depth of the call stack
-    pub max_depth: usize,
+    pub max_depth:     usize,
     /// Total samples in the profile
     pub total_samples: usize,
 }
@@ -162,25 +161,25 @@ pub struct FlameGraph {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FlameNode {
     /// Function name
-    pub name: String,
+    pub name:       String,
     /// Call stack path to this function
     pub stack_path: String,
     /// Left position in the flame graph (0.0 to total_width)
-    pub left: f64,
+    pub left:       f64,
     /// Width of this node (represents self time)
-    pub width: f64,
+    pub width:      f64,
     /// Top position (represents stack depth)
-    pub top: f64,
+    pub top:        f64,
     /// Height of this node
-    pub height: f64,
+    pub height:     f64,
     /// Child nodes
-    pub children: Vec<FlameNode>,
+    pub children:   Vec<FlameNode>,
     /// Self time (excluding children) in microseconds
-    pub self_time: u64,
+    pub self_time:  u64,
     /// Total time (including children) in microseconds
     pub total_time: u64,
     /// Number of samples for this function
-    pub samples: usize,
+    pub samples:    usize,
 }
 
 /// Performance profiling event types
@@ -191,8 +190,8 @@ pub enum PerformanceProfileEvent {
     /// Function call completed
     FunctionCallEnd {
         function_name: String,
-        end_time: u64,
-        total_time: u64,
+        end_time:      u64,
+        total_time:    u64,
     },
     /// CPU sample captured
     CpuSample(CpuSample),
@@ -205,48 +204,48 @@ pub enum PerformanceProfileEvent {
     /// Profiling session completed
     ProfilingSessionCompleted {
         session_id: String,
-        end_time: u64,
-        summary: String,
+        end_time:   u64,
+        summary:    String,
     },
 }
 
 /// Advanced performance profiler
 pub struct PerformanceProfiler {
     /// Function call tree (root node)
-    call_tree: Option<Arc<FunctionCall>>,
+    call_tree:           Option<Arc<FunctionCall>>,
     /// CPU samples collected
-    cpu_samples: Vec<CpuSample>,
+    cpu_samples:         Vec<CpuSample>,
     /// Active function calls being tracked
-    active_calls: HashMap<String, Arc<FunctionCall>>,
+    active_calls:        HashMap<String, Arc<FunctionCall>>,
     /// Event sender for integration
-    event_sender: Option<mpsc::UnboundedSender<PerformanceProfileEvent>>,
+    event_sender:        Option<mpsc::UnboundedSender<PerformanceProfileEvent>>,
     /// Profiling session start time
-    profiling_start: Instant,
+    profiling_start:     Instant,
     /// Current profiling session ID
-    session_id: String,
+    session_id:          String,
     /// Flame graph data (built on demand)
-    flame_graph: Option<FlameGraph>,
+    flame_graph:         Option<FlameGraph>,
     /// Bottleneck analysis results
     bottleneck_analysis: Option<BottleneckAnalysis>,
     /// Function timing statistics
-    function_stats: HashMap<String, FunctionStats>,
+    function_stats:      HashMap<String, FunctionStats>,
 }
 
 /// Function timing statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FunctionStats {
     /// Total calls count
-    pub call_count: usize,
+    pub call_count:   usize,
     /// Total time spent in function
-    pub total_time: Duration,
+    pub total_time:   Duration,
     /// Average time per call
     pub average_time: Duration,
     /// Maximum time spent in a single call
-    pub max_time: Duration,
+    pub max_time:     Duration,
     /// Minimum time spent in a single call
-    pub min_time: Duration,
+    pub min_time:     Duration,
     /// Self time (excluding children)
-    pub self_time: Duration,
+    pub self_time:    Duration,
 }
 
 impl PerformanceProfiler {
@@ -274,10 +273,7 @@ impl PerformanceProfiler {
     }
 
     /// Send an event to the profiling system
-    fn send_event(
-        &self,
-        event: PerformanceProfileEvent,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    fn send_event(&self, event: PerformanceProfileEvent) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(sender) = &self.event_sender {
             sender.send(event)?;
         }
@@ -301,9 +297,7 @@ impl PerformanceProfiler {
     }
 
     /// Stop profiling session and perform analysis
-    pub fn stop_profiling(
-        &mut self,
-    ) -> Result<BottleneckAnalysis, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn stop_profiling(&mut self) -> Result<BottleneckAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         let end_time = self.profiling_start.elapsed().as_micros() as u64;
 
         // Generate flame graph
@@ -359,12 +353,12 @@ impl PerformanceProfiler {
             .function_stats
             .entry(function_name)
             .or_insert(FunctionStats {
-                call_count: 0,
-                total_time: Duration::new(0, 0),
+                call_count:   0,
+                total_time:   Duration::new(0, 0),
                 average_time: Duration::new(0, 0),
-                max_time: Duration::new(0, 0),
-                min_time: Duration::new(0, 0),
-                self_time: Duration::new(0, 0),
+                max_time:     Duration::new(0, 0),
+                min_time:     Duration::new(0, 0),
+                self_time:    Duration::new(0, 0),
             });
         stats.call_count += 1;
 
@@ -373,10 +367,7 @@ impl PerformanceProfiler {
     }
 
     /// Track function call end
-    pub fn end_function_call(
-        &mut self,
-        function_name: String,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn end_function_call(&mut self, function_name: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(call_arc) = self.active_calls.remove(&function_name) {
             let mut call = Arc::try_unwrap(call_arc).unwrap_or_else(|_| {
                 // If Arc has multiple references, create a new instance
@@ -546,17 +537,17 @@ impl PerformanceProfiler {
             return None;
         }
 
-        let avg_cpu_usage: f64 = self.cpu_samples.iter().map(|s| s.cpu_usage).sum::<f64>()
-            / self.cpu_samples.len() as f64;
+        let avg_cpu_usage: f64 =
+            self.cpu_samples.iter().map(|s| s.cpu_usage).sum::<f64>() / self.cpu_samples.len() as f64;
 
         if avg_cpu_usage > 85.0 {
             Some(Bottleneck {
                 bottleneck_type: BottleneckType::CpuBound,
-                description: format!("High CPU usage detected: {:.1}% average", avg_cpu_usage),
-                location: "system".to_string(),
-                severity: avg_cpu_usage / 100.0,
-                time_spent: Duration::from_millis(0), // Would be calculated from samples
-                suggestions: vec![
+                description:     format!("High CPU usage detected: {:.1}% average", avg_cpu_usage),
+                location:        "system".to_string(),
+                severity:        avg_cpu_usage / 100.0,
+                time_spent:      Duration::from_millis(0), // Would be calculated from samples
+                suggestions:     vec![
                     "Consider optimizing CPU-intensive functions".to_string(),
                     "Check for infinite loops or recursive calls".to_string(),
                     "Consider parallelizing work across multiple threads".to_string(),
@@ -580,11 +571,11 @@ impl PerformanceProfiler {
         if total_function_time.as_millis() as f64 > 1000.0 {
             Some(Bottleneck {
                 bottleneck_type: BottleneckType::Memory,
-                description: "High memory allocation frequency detected".to_string(),
-                location: "memory_manager".to_string(),
-                severity: 0.7, // Placeholder severity
-                time_spent: total_function_time,
-                suggestions: vec![
+                description:     "High memory allocation frequency detected".to_string(),
+                location:        "memory_manager".to_string(),
+                severity:        0.7, // Placeholder severity
+                time_spent:      total_function_time,
+                suggestions:     vec![
                     "Consider reducing memory allocations".to_string(),
                     "Use memory pools or object reuse".to_string(),
                     "Profile memory usage patterns".to_string(),
@@ -603,8 +594,8 @@ impl PerformanceProfiler {
 
     /// Assess system throughput
     fn assess_throughput(&self) -> ThroughputAssessment {
-        let cpu_usage = self.cpu_samples.iter().map(|s| s.cpu_usage).sum::<f64>()
-            / self.cpu_samples.len().max(1) as f64;
+        let cpu_usage =
+            self.cpu_samples.iter().map(|s| s.cpu_usage).sum::<f64>() / self.cpu_samples.len().max(1) as f64;
         let dominant_bottleneck = if cpu_usage > 85.0 {
             Some(BottleneckType::CpuBound)
         } else {
@@ -623,15 +614,15 @@ impl PerformanceProfiler {
     /// Analyze resource utilization
     fn analyze_resource_utilization(&self) -> ResourceUtilization {
         ResourceUtilization {
-            cpu_per_core: vec![0.0; 4], // Placeholder for CPU cores
-            memory_breakdown: MemoryUsageBreakdown {
-                stack_usage: 0,
-                heap_usage: 0,
+            cpu_per_core:             vec![0.0; 4], // Placeholder for CPU cores
+            memory_breakdown:         MemoryUsageBreakdown {
+                stack_usage:  0,
+                heap_usage:   0,
                 shared_usage: 0,
                 cached_usage: 0,
             },
             io_operations_per_second: HashMap::new(),
-            system_calls_frequency: HashMap::new(),
+            system_calls_frequency:   HashMap::new(),
         }
     }
 
@@ -674,10 +665,7 @@ impl PerformanceProfiler {
     }
 
     /// Import profiling data from JSON string
-    pub fn import_from_json(
-        &mut self,
-        json_data: &str,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn import_from_json(&mut self, json_data: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let _import_data: HashMap<String, String> = serde_json::from_str(json_data)?; // Would contain all profiling data
                                                                                       // Apply imported data to profiler state
         Ok(())

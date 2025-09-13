@@ -1,49 +1,48 @@
-/*!
-# Rust AI IDE Commands - AI/ML Module
-
-This crate provides modular AI/ML command implementations for the Rust AI IDE.
-It contains all AI-related Tauri commands grouped by functionality while maintaining
-loose coupling and high cohesion.
-
-## Architecture
-
-This module follows a modular command pattern:
-- Each command is self-contained with its own implementation
-- Commands are grouped by functional domain
-- Loose coupling between UI and business logic
-- State management through dependency injection
-
-## Command Categories
-
-### Core AI Commands
-- `ai_code_completion` - Intelligent code completion
-- `ai_refactor_code` - AI-assisted code refactoring
-- `ai_explain_code` - Code explanation and documentation
-- `ai_doc_assist` - Documentation generation
-
-### Analysis Commands
-- `analyze_file` - Individual file analysis
-- `analyze_workspace` - Full workspace analysis
-- `get_performance_suggestions` - Performance optimization suggestions
-- `run_code_quality_check` - Code quality assessment
-
-### Model Management
-- `list_available_models` - Available AI models
-- `list_downloaded_models` - Downloaded models
-- `load_model` / `unload_model` - Model lifecycle
-- `get_model_status` - Model health and status
-
-### Learning & Training
-- `start_finetune_job` - Start model training
-- `get_finetune_progress` - Training progress tracking
-- `cancel_finetune_job` - Stop training jobs
-- `get_resource_status` - Hardware resource monitoring
-*/
+//! # Rust AI IDE Commands - AI/ML Module
+//!
+//! This crate provides modular AI/ML command implementations for the Rust AI IDE.
+//! It contains all AI-related Tauri commands grouped by functionality while maintaining
+//! loose coupling and high cohesion.
+//!
+//! ## Architecture
+//!
+//! This module follows a modular command pattern:
+//! - Each command is self-contained with its own implementation
+//! - Commands are grouped by functional domain
+//! - Loose coupling between UI and business logic
+//! - State management through dependency injection
+//!
+//! ## Command Categories
+//!
+//! ### Core AI Commands
+//! - `ai_code_completion` - Intelligent code completion
+//! - `ai_refactor_code` - AI-assisted code refactoring
+//! - `ai_explain_code` - Code explanation and documentation
+//! - `ai_doc_assist` - Documentation generation
+//!
+//! ### Analysis Commands
+//! - `analyze_file` - Individual file analysis
+//! - `analyze_workspace` - Full workspace analysis
+//! - `get_performance_suggestions` - Performance optimization suggestions
+//! - `run_code_quality_check` - Code quality assessment
+//!
+//! ### Model Management
+//! - `list_available_models` - Available AI models
+//! - `list_downloaded_models` - Downloaded models
+//! - `load_model` / `unload_model` - Model lifecycle
+//! - `get_model_status` - Model health and status
+//!
+//! ### Learning & Training
+//! - `start_finetune_job` - Start model training
+//! - `get_finetune_progress` - Training progress tracking
+//! - `cancel_finetune_job` - Stop training jobs
+//! - `get_resource_status` - Hardware resource monitoring
 
 #![allow(unused)]
 
 use std::collections::HashMap;
 use std::sync::Arc;
+
 use tokio::sync::RwLock;
 
 pub mod analysis;

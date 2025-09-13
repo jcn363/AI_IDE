@@ -1,13 +1,15 @@
-use crate::error::TestError;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::error::TestError;
 
 /// Represents a mock Tauri command for testing
 #[derive(Debug)]
 pub struct MockCommand {
-    pub name: String,
+    pub name:    String,
     pub payload: serde_json::Value,
-    pub result: Result<serde_json::Value, serde_json::Error>,
+    pub result:  Result<serde_json::Value, serde_json::Error>,
 }
 
 impl MockCommand {
@@ -35,14 +37,14 @@ impl MockCommand {
 
 /// Runner for testing Tauri commands
 pub struct CommandTestRunner {
-    commands: HashMap<String, MockCommand>,
+    commands:        HashMap<String, MockCommand>,
     called_commands: Vec<String>,
 }
 
 impl CommandTestRunner {
     pub fn new() -> Self {
         CommandTestRunner {
-            commands: HashMap::new(),
+            commands:        HashMap::new(),
             called_commands: Vec::new(),
         }
     }
@@ -75,8 +77,7 @@ impl CommandTestRunner {
             .ok_or_else(|| TestError::Tauri(format!("Command '{}' not registered", name)))?;
 
         // Validate payload matches (simplified for testing)
-        let payload_value =
-            serde_json::to_value(payload).map_err(|e| TestError::Serialization(e.to_string()))?;
+        let payload_value = serde_json::to_value(payload).map_err(|e| TestError::Serialization(e.to_string()))?;
 
         let expected_payload = &command.payload;
         if *expected_payload != serde_json::Value::Null && expected_payload != &payload_value {
@@ -89,8 +90,7 @@ impl CommandTestRunner {
         }
 
         match &command.result {
-            Ok(result) => serde_json::from_value(result.clone())
-                .map_err(|e| TestError::Serialization(e.to_string())),
+            Ok(result) => serde_json::from_value(result.clone()).map_err(|e| TestError::Serialization(e.to_string())),
             Err(error) => Err(TestError::Tauri(error.to_string())),
         }
     }
@@ -143,21 +143,12 @@ impl CommandTestBuilder {
         self
     }
 
-    pub fn success_command<T: Serialize>(
-        self,
-        name: &str,
-        payload: T,
-        result: serde_json::Value,
-    ) -> Self {
-        self.with_command(
-            MockCommand::new(name, serde_json::to_value(payload).unwrap()).with_result(result),
-        )
+    pub fn success_command<T: Serialize>(self, name: &str, payload: T, result: serde_json::Value) -> Self {
+        self.with_command(MockCommand::new(name, serde_json::to_value(payload).unwrap()).with_result(result))
     }
 
     pub fn error_command<T: Serialize>(self, name: &str, payload: T, error: &str) -> Self {
-        self.with_command(
-            MockCommand::new(name, serde_json::to_value(payload).unwrap()).with_error(error),
-        )
+        self.with_command(MockCommand::new(name, serde_json::to_value(payload).unwrap()).with_error(error))
     }
 
     pub fn build_runner(self) -> CommandTestRunner {

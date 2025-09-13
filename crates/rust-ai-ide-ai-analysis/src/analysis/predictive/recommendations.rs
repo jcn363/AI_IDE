@@ -4,15 +4,16 @@
 //! suggestions, and maintenance planning based on code patterns, architectural
 //! analysis, and industry best practices.
 
+use serde::{Deserialize, Serialize};
+
 use super::health::HealthScore;
 use super::performance::PerformanceBottleneckForecast;
 use super::vulnerability::PredictedVulnerability;
-use serde::{Deserialize, Serialize};
 
 /// Maintenance recommendation engine
 #[derive(Debug)]
 pub struct RecommendationEngine {
-    knowledge_base: KnowledgeBase,
+    knowledge_base:  KnowledgeBase,
     pattern_matcher: PatternMatcher,
     priority_scorer: PriorityScorer,
 }
@@ -21,7 +22,7 @@ impl RecommendationEngine {
     /// Create a new recommendation engine
     pub fn new() -> Self {
         Self {
-            knowledge_base: KnowledgeBase::new(),
+            knowledge_base:  KnowledgeBase::new(),
             pattern_matcher: PatternMatcher::new(),
             priority_scorer: PriorityScorer::new(),
         }
@@ -76,23 +77,23 @@ impl RecommendationEngine {
         match vulnerability.vulnerability_type {
             super::vulnerability::VulnerabilityType::Injection => {
                 recommendations.push(MaintenanceRecommendation {
-                    id: generate_recommendation_id(),
-                    title: "Implement Input Validation".to_string(),
-                    description: "Add comprehensive input validation to prevent injection attacks".to_string(),
-                    priority: MaintenancePriority::Critical,
-                    effort: EffortEstimate::Medium,
-                    risk_mitigation: 0.8,
-                    category: RecommendationCategory::Security,
+                    id:                   generate_recommendation_id(),
+                    title:                "Implement Input Validation".to_string(),
+                    description:          "Add comprehensive input validation to prevent injection attacks".to_string(),
+                    priority:             MaintenancePriority::Critical,
+                    effort:               EffortEstimate::Medium,
+                    risk_mitigation:      0.8,
+                    category:             RecommendationCategory::Security,
                     applicable_locations: vulnerability.impacted_files.clone(),
-                    code_changes: vec![
-                        CodeChange {
-                            file_path: "validate.rs".to_string(),
-                            change_type: ChangeType::Add,
-                            content: "impl InputValidator {\n    pub fn validate_user_input(&self, input: &str) -> Result<(), ValidationError> {\n        // Implementation\n    }\n}".to_string(),
-                            line_number: None,
-                        }
-                    ],
-                    alternatives: vec![
+                    code_changes:         vec![CodeChange {
+                        file_path:   "validate.rs".to_string(),
+                        change_type: ChangeType::Add,
+                        content:     "impl InputValidator {\n    pub fn validate_user_input(&self, input: &str) -> \
+                                      Result<(), ValidationError> {\n        // Implementation\n    }\n}"
+                            .to_string(),
+                        line_number: None,
+                    }],
+                    alternatives:         vec![
                         "Use existing validation libraries".to_string(),
                         "Implement custom sanitization functions".to_string(),
                     ],
@@ -100,17 +101,16 @@ impl RecommendationEngine {
             }
             super::vulnerability::VulnerabilityType::MemorySafety => {
                 recommendations.push(MaintenanceRecommendation {
-                    id: generate_recommendation_id(),
-                    title: "Modernize to Memory-Safe Patterns".to_string(),
-                    description: "Replace unsafe memory operations with safe Rust abstractions"
-                        .to_string(),
-                    priority: MaintenancePriority::High,
-                    effort: EffortEstimate::High,
-                    risk_mitigation: 0.9,
-                    category: RecommendationCategory::Refactoring,
+                    id:                   generate_recommendation_id(),
+                    title:                "Modernize to Memory-Safe Patterns".to_string(),
+                    description:          "Replace unsafe memory operations with safe Rust abstractions".to_string(),
+                    priority:             MaintenancePriority::High,
+                    effort:               EffortEstimate::High,
+                    risk_mitigation:      0.9,
+                    category:             RecommendationCategory::Refactoring,
                     applicable_locations: vulnerability.impacted_files.clone(),
-                    code_changes: Vec::new(), // Would be populated with specific unsafe block locations
-                    alternatives: vec![
+                    code_changes:         Vec::new(), // Would be populated with specific unsafe block locations
+                    alternatives:         vec![
                         "Use smart pointers (Arc, Rc)".to_string(),
                         "Implement custom safe wrappers".to_string(),
                     ],
@@ -119,19 +119,19 @@ impl RecommendationEngine {
             _ => {
                 // Generic recommendation for other vulnerability types
                 recommendations.push(MaintenanceRecommendation {
-                    id: generate_recommendation_id(),
-                    title: format!(
+                    id:                   generate_recommendation_id(),
+                    title:                format!(
                         "Address {} Vulnerability",
                         vulnerability.vulnerability_type.description()
                     ),
-                    description: vulnerability.description.clone(),
-                    priority: MaintenancePriority::High,
-                    effort: EffortEstimate::Medium,
-                    risk_mitigation: vulnerability.risk_score,
-                    category: RecommendationCategory::Security,
+                    description:          vulnerability.description.clone(),
+                    priority:             MaintenancePriority::High,
+                    effort:               EffortEstimate::Medium,
+                    risk_mitigation:      vulnerability.risk_score,
+                    category:             RecommendationCategory::Security,
                     applicable_locations: vulnerability.impacted_files.clone(),
-                    code_changes: Vec::new(),
-                    alternatives: vulnerability.mitigation_suggestions.clone(),
+                    code_changes:         Vec::new(),
+                    alternatives:         vulnerability.mitigation_suggestions.clone(),
                 });
             }
         }
@@ -149,62 +149,60 @@ impl RecommendationEngine {
         match bottleneck.bottleneck_type {
             super::performance::BottleneckType::CPU => {
                 recommendations.push(MaintenanceRecommendation {
-                    id: generate_recommendation_id(),
-                    title: "Optimize CPU-Intensive Operations".to_string(),
-                    description: "Implement parallel processing and algorithm optimization"
-                        .to_string(),
-                    priority: MaintenancePriority::Medium,
-                    effort: EffortEstimate::High,
-                    risk_mitigation: 0.6,
-                    category: RecommendationCategory::Performance,
+                    id:                   generate_recommendation_id(),
+                    title:                "Optimize CPU-Intensive Operations".to_string(),
+                    description:          "Implement parallel processing and algorithm optimization".to_string(),
+                    priority:             MaintenancePriority::Medium,
+                    effort:               EffortEstimate::High,
+                    risk_mitigation:      0.6,
+                    category:             RecommendationCategory::Performance,
                     applicable_locations: bottleneck
                         .locations
                         .iter()
                         .map(|l| l.file_path.clone())
                         .collect(),
-                    code_changes: Vec::new(),
-                    alternatives: bottleneck.scaling_recommendations.clone(),
+                    code_changes:         Vec::new(),
+                    alternatives:         bottleneck.scaling_recommendations.clone(),
                 });
             }
             super::performance::BottleneckType::Memory => {
                 recommendations.push(MaintenanceRecommendation {
-                    id: generate_recommendation_id(),
-                    title: "Implement Memory Optimization".to_string(),
-                    description:
-                        "Reduce memory allocations and implement efficient data structures"
-                            .to_string(),
-                    priority: MaintenancePriority::Medium,
-                    effort: EffortEstimate::Medium,
-                    risk_mitigation: 0.7,
-                    category: RecommendationCategory::Memory,
+                    id:                   generate_recommendation_id(),
+                    title:                "Implement Memory Optimization".to_string(),
+                    description:          "Reduce memory allocations and implement efficient data structures"
+                        .to_string(),
+                    priority:             MaintenancePriority::Medium,
+                    effort:               EffortEstimate::Medium,
+                    risk_mitigation:      0.7,
+                    category:             RecommendationCategory::Memory,
                     applicable_locations: bottleneck
                         .locations
                         .iter()
                         .map(|l| l.file_path.clone())
                         .collect(),
-                    code_changes: Vec::new(),
-                    alternatives: bottleneck.scaling_recommendations.clone(),
+                    code_changes:         Vec::new(),
+                    alternatives:         bottleneck.scaling_recommendations.clone(),
                 });
             }
             _ => {
                 recommendations.push(MaintenanceRecommendation {
-                    id: generate_recommendation_id(),
-                    title: format!(
+                    id:                   generate_recommendation_id(),
+                    title:                format!(
                         "Address {} Bottleneck",
                         format!("{:?}", bottleneck.bottleneck_type)
                     ),
-                    description: bottleneck.description.clone(),
-                    priority: MaintenancePriority::Medium,
-                    effort: EffortEstimate::Medium,
-                    risk_mitigation: 0.5,
-                    category: RecommendationCategory::Performance,
+                    description:          bottleneck.description.clone(),
+                    priority:             MaintenancePriority::Medium,
+                    effort:               EffortEstimate::Medium,
+                    risk_mitigation:      0.5,
+                    category:             RecommendationCategory::Performance,
                     applicable_locations: bottleneck
                         .locations
                         .iter()
                         .map(|l| l.file_path.clone())
                         .collect(),
-                    code_changes: Vec::new(),
-                    alternatives: bottleneck.scaling_recommendations.clone(),
+                    code_changes:         Vec::new(),
+                    alternatives:         bottleneck.scaling_recommendations.clone(),
                 });
             }
         }
@@ -223,96 +221,90 @@ impl RecommendationEngine {
             super::health::HealthCategory::Maintainability => {
                 if health_score.score < 0.7 {
                     recommendations.push(MaintenanceRecommendation {
-                        id: generate_recommendation_id(),
-                        title: "Improve Code Maintainability".to_string(),
-                        description: "Refactor complex functions and improve code organization"
-                            .to_string(),
-                        priority: MaintenancePriority::Medium,
-                        effort: EffortEstimate::High,
-                        risk_mitigation: 0.8,
-                        category: RecommendationCategory::Refactoring,
+                        id:                   generate_recommendation_id(),
+                        title:                "Improve Code Maintainability".to_string(),
+                        description:          "Refactor complex functions and improve code organization".to_string(),
+                        priority:             MaintenancePriority::Medium,
+                        effort:               EffortEstimate::High,
+                        risk_mitigation:      0.8,
+                        category:             RecommendationCategory::Refactoring,
                         applicable_locations: Vec::new(), // Would be populated based on analysis
-                        code_changes: Vec::new(),
-                        alternatives: health_score.recommendations.clone(),
+                        code_changes:         Vec::new(),
+                        alternatives:         health_score.recommendations.clone(),
                     });
                 }
             }
-            super::health::HealthCategory::TechnicalDebt => {
+            super::health::HealthCategory::TechnicalDebt =>
                 if health_score.score < 0.6 {
                     recommendations.push(MaintenanceRecommendation {
-                        id: generate_recommendation_id(),
-                        title: "Reduce Technical Debt".to_string(),
-                        description: "Address code duplication and update dependencies".to_string(),
-                        priority: MaintenancePriority::Low,
-                        effort: EffortEstimate::High,
-                        risk_mitigation: 0.9,
-                        category: RecommendationCategory::Modernization,
+                        id:                   generate_recommendation_id(),
+                        title:                "Reduce Technical Debt".to_string(),
+                        description:          "Address code duplication and update dependencies".to_string(),
+                        priority:             MaintenancePriority::Low,
+                        effort:               EffortEstimate::High,
+                        risk_mitigation:      0.9,
+                        category:             RecommendationCategory::Modernization,
                         applicable_locations: Vec::new(),
-                        code_changes: Vec::new(),
-                        alternatives: health_score.recommendations.clone(),
+                        code_changes:         Vec::new(),
+                        alternatives:         health_score.recommendations.clone(),
                     });
-                }
-            }
-            _ => {
+                },
+            _ =>
                 if health_score.score < 0.7 {
                     recommendations.push(MaintenanceRecommendation {
-                        id: generate_recommendation_id(),
-                        title: format!("Improve {} Health", format!("{:?}", health_score.category)),
-                        description: format!(
+                        id:                   generate_recommendation_id(),
+                        title:                format!("Improve {} Health", format!("{:?}", health_score.category)),
+                        description:          format!(
                             "Address {} health concerns",
                             format!("{:?}", health_score.category).to_lowercase()
                         ),
-                        priority: MaintenancePriority::Medium,
-                        effort: EffortEstimate::Medium,
-                        risk_mitigation: 0.6,
-                        category: RecommendationCategory::Maintenance,
+                        priority:             MaintenancePriority::Medium,
+                        effort:               EffortEstimate::Medium,
+                        risk_mitigation:      0.6,
+                        category:             RecommendationCategory::Maintenance,
                         applicable_locations: Vec::new(),
-                        code_changes: Vec::new(),
-                        alternatives: health_score.recommendations.clone(),
+                        code_changes:         Vec::new(),
+                        alternatives:         health_score.recommendations.clone(),
                     });
-                }
-            }
+                },
         }
 
         Ok(recommendations)
     }
 
     /// Generate proactive improvement recommendations
-    async fn generate_proactive_recommendations(
-        &self,
-    ) -> Result<Vec<MaintenanceRecommendation>, PredictiveError> {
+    async fn generate_proactive_recommendations(&self) -> Result<Vec<MaintenanceRecommendation>, PredictiveError> {
         let mut recommendations = Vec::new();
 
         // Add modernization and best practices recommendations
         recommendations.push(MaintenanceRecommendation {
-            id: generate_recommendation_id(),
-            title: "Update Dependencies".to_string(),
-            description: "Update project dependencies to latest compatible versions".to_string(),
-            priority: MaintenancePriority::Low,
-            effort: EffortEstimate::Low,
-            risk_mitigation: 0.3,
-            category: RecommendationCategory::Modernization,
+            id:                   generate_recommendation_id(),
+            title:                "Update Dependencies".to_string(),
+            description:          "Update project dependencies to latest compatible versions".to_string(),
+            priority:             MaintenancePriority::Low,
+            effort:               EffortEstimate::Low,
+            risk_mitigation:      0.3,
+            category:             RecommendationCategory::Modernization,
             applicable_locations: vec!["Cargo.toml".to_string()],
-            code_changes: Vec::new(),
-            alternatives: vec![
+            code_changes:         Vec::new(),
+            alternatives:         vec![
                 "Use cargo-update for bulk updates".to_string(),
                 "Update critical security dependencies first".to_string(),
             ],
         });
 
         recommendations.push(MaintenanceRecommendation {
-            id: generate_recommendation_id(),
-            title: "Implement Comprehensive Error Handling".to_string(),
-            description:
-                "Replace generic error types with specific error types and proper error propagation"
-                    .to_string(),
-            priority: MaintenancePriority::Medium,
-            effort: EffortEstimate::High,
-            risk_mitigation: 0.7,
-            category: RecommendationCategory::Refactoring,
+            id:                   generate_recommendation_id(),
+            title:                "Implement Comprehensive Error Handling".to_string(),
+            description:          "Replace generic error types with specific error types and proper error propagation"
+                .to_string(),
+            priority:             MaintenancePriority::Medium,
+            effort:               EffortEstimate::High,
+            risk_mitigation:      0.7,
+            category:             RecommendationCategory::Refactoring,
             applicable_locations: Vec::new(),
-            code_changes: Vec::new(),
-            alternatives: vec![
+            code_changes:         Vec::new(),
+            alternatives:         vec![
                 "Use thiserror for error type definitions".to_string(),
                 "Implement custom error types with context".to_string(),
             ],
@@ -325,16 +317,16 @@ impl RecommendationEngine {
 /// Knowledge base for maintenance recommendations
 #[derive(Debug)]
 pub struct KnowledgeBase {
-    patterns: Vec<MaintenancePattern>,
-    best_practices: Vec<BestPractice>,
+    patterns:           Vec<MaintenancePattern>,
+    best_practices:     Vec<BestPractice>,
     industry_standards: Vec<IndustryStandard>,
 }
 
 impl KnowledgeBase {
     fn new() -> Self {
         Self {
-            patterns: Vec::new(),
-            best_practices: Vec::new(),
+            patterns:           Vec::new(),
+            best_practices:     Vec::new(),
             industry_standards: Vec::new(),
         }
     }
@@ -410,52 +402,52 @@ impl PriorityScorer {
 // Supporting data structures
 #[derive(Debug)]
 struct MaintenancePattern {
-    pattern_type: String,
-    triggers: Vec<String>,
+    pattern_type:    String,
+    triggers:        Vec<String>,
     recommendations: Vec<String>,
 }
 
 #[derive(Debug)]
 struct BestPractice {
-    category: String,
-    practice: String,
+    category:      String,
+    practice:      String,
     applicability: f32,
 }
 
 #[derive(Debug)]
 struct IndustryStandard {
-    standard: String,
-    version: String,
+    standard:        String,
+    version:         String,
     recommendations: Vec<String>,
 }
 
 #[derive(Debug)]
 struct CodePattern {
-    pattern: String,
-    confidence: f32,
+    pattern:                 String,
+    confidence:              f32,
     recommendation_template: String,
 }
 
 /// Core Recommendation Structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaintenanceRecommendation {
-    pub id: String,
-    pub title: String,
-    pub description: String,
-    pub priority: MaintenancePriority,
-    pub effort: EffortEstimate,
-    pub risk_mitigation: f32,
-    pub category: RecommendationCategory,
+    pub id:                   String,
+    pub title:                String,
+    pub description:          String,
+    pub priority:             MaintenancePriority,
+    pub effort:               EffortEstimate,
+    pub risk_mitigation:      f32,
+    pub category:             RecommendationCategory,
     pub applicable_locations: Vec<String>,
-    pub code_changes: Vec<CodeChange>,
-    pub alternatives: Vec<String>,
+    pub code_changes:         Vec<CodeChange>,
+    pub alternatives:         Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeChange {
-    pub file_path: String,
+    pub file_path:   String,
     pub change_type: ChangeType,
-    pub content: String,
+    pub content:     String,
     pub line_number: Option<u32>,
 }
 

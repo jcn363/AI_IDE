@@ -3,33 +3,34 @@
 //! This module handles the collection, processing, and formatting of training data
 //! specifically optimized for fine-tuning CodeLlama and StarCoder on Rust code.
 
-use anyhow::Result;
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
 /// Dataset builder for collecting and preparing training data
 #[derive(Debug)]
 pub struct DatasetBuilder {
-    source_paths: Vec<PathBuf>,
-    filters: DatasetFilters,
-    processors: Vec<Box<dyn DataProcessor + Send + Sync>>,
+    source_paths:  Vec<PathBuf>,
+    filters:       DatasetFilters,
+    processors:    Vec<Box<dyn DataProcessor + Send + Sync>>,
     output_format: OutputFormat,
 }
 
 /// Dataset filters for quality control
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DatasetFilters {
-    pub min_file_size: usize,
-    pub max_file_size: usize,
+    pub min_file_size:      usize,
+    pub max_file_size:      usize,
     pub allowed_extensions: HashSet<String>,
-    pub exclude_patterns: Vec<String>,
-    pub quality_threshold: f32,
-    pub min_complexity: u32,
-    pub max_complexity: u32,
-    pub max_nesting_depth: u32,
+    pub exclude_patterns:   Vec<String>,
+    pub quality_threshold:  f32,
+    pub min_complexity:     u32,
+    pub max_complexity:     u32,
+    pub max_nesting_depth:  u32,
 }
 
 /// Output format for training data
@@ -44,11 +45,11 @@ pub enum OutputFormat {
 /// Data sample for training
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingSample {
-    pub id: String,
-    pub input: String,
-    pub output: String,
+    pub id:        String,
+    pub input:     String,
+    pub output:    String,
     pub task_type: TaskType,
-    pub metadata: SampleMetadata,
+    pub metadata:  SampleMetadata,
 }
 
 /// Task types for different training objectives
@@ -66,12 +67,12 @@ pub enum TaskType {
 /// Metadata for training samples
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SampleMetadata {
-    pub source_file: PathBuf,
-    pub language: String,
-    pub complexity: u32,
-    pub quality_score: f32,
-    pub tags: Vec<String>,
-    pub dependencies: Vec<String>,
+    pub source_file:    PathBuf,
+    pub language:       String,
+    pub complexity:     u32,
+    pub quality_score:  f32,
+    pub tags:           Vec<String>,
+    pub dependencies:   Vec<String>,
     pub context_window: Option<usize>,
 }
 
@@ -95,16 +96,16 @@ pub trait DataProcessor: Send + Sync {
 #[derive(Debug)]
 pub struct CodeCompletionProcessor {
     min_completion_length: usize,
-    max_context_length: usize,
-    overlap_ratio: f32,
+    max_context_length:    usize,
+    overlap_ratio:         f32,
 }
 
 impl CodeCompletionProcessor {
     pub fn new(min_length: usize, max_context: usize, overlap: f32) -> Self {
         Self {
             min_completion_length: min_length,
-            max_context_length: max_context,
-            overlap_ratio: overlap,
+            max_context_length:    max_context,
+            overlap_ratio:         overlap,
         }
     }
 
@@ -114,10 +115,7 @@ impl CodeCompletionProcessor {
         let mut samples = Vec::new();
 
         for (line_idx, line) in lines.iter().enumerate() {
-            if line.trim().is_empty()
-                || line.trim().starts_with("//")
-                || line.trim().starts_with("/*")
-            {
+            if line.trim().is_empty() || line.trim().starts_with("//") || line.trim().starts_with("/*") {
                 continue;
             }
 
@@ -131,10 +129,7 @@ impl CodeCompletionProcessor {
                 let mut target_line = None;
                 for j in (line_idx + 1)..lines.len().min(line_idx + 10) {
                     let next_line = lines[j].trim();
-                    if !next_line.is_empty()
-                        && !next_line.starts_with("//")
-                        && !next_line.starts_with("/*")
-                    {
+                    if !next_line.is_empty() && !next_line.starts_with("//") && !next_line.starts_with("/*") {
                         target_line = Some((j, next_line));
                         break;
                     }
@@ -151,21 +146,21 @@ impl CodeCompletionProcessor {
 
                     if completion.len() >= self.min_completion_length {
                         samples.push(TrainingSample {
-                            id: format!("completion_{}_{}", file_name(file_path), line_idx),
-                            input: format!(
+                            id:        format!("completion_{}_{}", file_name(file_path), line_idx),
+                            input:     format!(
                                 "{}\n{}",
                                 context.trim(),
                                 target_content.split_whitespace().next().unwrap_or("")
                             ),
-                            output: completion.trim().to_string(),
+                            output:    completion.trim().to_string(),
                             task_type: TaskType::Completion,
-                            metadata: SampleMetadata {
-                                source_file: file_path.to_path_buf(),
-                                language: "rust".to_string(),
-                                complexity: calculate_lines_complexity(&[target_content]),
-                                quality_score: 0.8,
-                                tags: extract_rust_tags(target_content),
-                                dependencies: vec![], // Would extract actual dependencies
+                            metadata:  SampleMetadata {
+                                source_file:    file_path.to_path_buf(),
+                                language:       "rust".to_string(),
+                                complexity:     calculate_lines_complexity(&[target_content]),
+                                quality_score:  0.8,
+                                tags:           extract_rust_tags(target_content),
+                                dependencies:   vec![], // Would extract actual dependencies
                                 context_window: Some(self.max_context_length),
                             },
                         });
@@ -240,53 +235,55 @@ pub trait CompilerInterface: Send + Sync {
 /// Compiler diagnostic
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompilerDiagnostic {
-    pub message: String,
-    pub severity: String,
-    pub line: usize,
-    pub column: usize,
+    pub message:    String,
+    pub severity:   String,
+    pub line:       usize,
+    pub column:     usize,
     pub error_code: Option<String>,
 }
 
 /// Dataset statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DatasetStatistics {
-    pub total_samples: usize,
-    pub samples_by_type: HashMap<TaskType, usize>,
+    pub total_samples:         usize,
+    pub samples_by_type:       HashMap<TaskType, usize>,
     pub average_sample_length: usize,
     pub language_distribution: HashMap<String, usize>,
-    pub quality_distribution: HashMap<String, usize>,
-    pub file_coverage: f32,
+    pub quality_distribution:  HashMap<String, usize>,
+    pub file_coverage:         f32,
 }
 
 /// Dataset augmentation strategies
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AugmentationConfig {
-    pub variable_renaming: bool,
-    pub comment_removal: bool,
+    pub variable_renaming:   bool,
+    pub comment_removal:     bool,
     pub function_extraction: bool,
-    pub pattern_variations: bool,
-    pub noise_injection: f32,
+    pub pattern_variations:  bool,
+    pub noise_injection:     f32,
 }
 
 /// Rust-specific data processing
 pub mod rust_processing {
+    use syn::visit::Visit;
+    use syn::{File, Item};
+
     use super::*;
-    use syn::{visit::Visit, File, Item};
 
     /// Rust AST visitor for extracting semantic information
     pub struct RustCodeVisitor {
-        functions: Vec<String>,
-        structs: Vec<String>,
-        traits: Vec<String>,
+        functions:  Vec<String>,
+        structs:    Vec<String>,
+        traits:     Vec<String>,
         complexity: u32,
     }
 
     impl RustCodeVisitor {
         pub fn new() -> Self {
             Self {
-                functions: Vec::new(),
-                structs: Vec::new(),
-                traits: Vec::new(),
+                functions:  Vec::new(),
+                structs:    Vec::new(),
+                traits:     Vec::new(),
                 complexity: 0,
             }
         }
@@ -319,12 +316,12 @@ pub mod rust_processing {
         visitor.visit_file(&ast);
 
         Ok(SampleMetadata {
-            source_file: PathBuf::new(), // Would be filled by caller
-            language: "rust".to_string(),
-            complexity: visitor.complexity,
-            quality_score: calculate_rust_quality(content),
-            tags: visitor.functions,
-            dependencies: vec![], // Would extract actual dependencies
+            source_file:    PathBuf::new(), // Would be filled by caller
+            language:       "rust".to_string(),
+            complexity:     visitor.complexity,
+            quality_score:  calculate_rust_quality(content),
+            tags:           visitor.functions,
+            dependencies:   vec![], // Would extract actual dependencies
             context_window: None,
         })
     }
@@ -334,9 +331,9 @@ impl DatasetBuilder {
     /// Create a new dataset builder
     pub fn new() -> Self {
         Self {
-            source_paths: Vec::new(),
-            filters: DatasetFilters::default(),
-            processors: vec![
+            source_paths:  Vec::new(),
+            filters:       DatasetFilters::default(),
+            processors:    vec![
                 Box::new(CodeCompletionProcessor::new(10, 2048, 0.1)),
                 Box::new(ErrorCorrectionProcessor {
                     compiler_integration: None,
@@ -403,11 +400,7 @@ impl DatasetBuilder {
                                 processed_files += 1;
 
                                 if processed_files % 100 == 0 {
-                                    log::info!(
-                                        "Processed {}/{} files",
-                                        processed_files,
-                                        total_files
-                                    );
+                                    log::info!("Processed {}/{} files", processed_files, total_files);
                                 }
                             }
                         }
@@ -699,11 +692,11 @@ impl DatasetBuilder {
 /// Dataset validation result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DatasetValidation {
-    pub passed: bool,
-    pub issues: Vec<String>,
-    pub quality_score: f32,
+    pub passed:          bool,
+    pub issues:          Vec<String>,
+    pub quality_score:   f32,
     pub diversity_score: f32,
-    pub balance_score: f32,
+    pub balance_score:   f32,
     pub recommendations: Vec<String>,
 }
 
@@ -713,19 +706,19 @@ impl Default for DatasetFilters {
         extensions.insert("rs".to_string());
 
         Self {
-            min_file_size: 100,
-            max_file_size: 1_000_000, // 1MB
+            min_file_size:      100,
+            max_file_size:      1_000_000, // 1MB
             allowed_extensions: extensions,
-            exclude_patterns: vec![
+            exclude_patterns:   vec![
                 "target".to_string(),
                 ".git".to_string(),
                 "test".to_string(),
                 "bench".to_string(),
             ],
-            quality_threshold: 0.6,
-            min_complexity: 2,
-            max_complexity: 50,
-            max_nesting_depth: 5,
+            quality_threshold:  0.6,
+            min_complexity:     2,
+            max_complexity:     50,
+            max_nesting_depth:  5,
         }
     }
 }
@@ -754,10 +747,7 @@ fn extract_rust_tags(content: &str) -> Vec<String> {
                     tags.push(fn_name.to_string());
                 }
             }
-        } else if line.starts_with("struct ")
-            || line.starts_with("enum ")
-            || line.starts_with("trait ")
-        {
+        } else if line.starts_with("struct ") || line.starts_with("enum ") || line.starts_with("trait ") {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 2 {
                 let name = parts[1].split('<').next().unwrap_or(parts[1]);

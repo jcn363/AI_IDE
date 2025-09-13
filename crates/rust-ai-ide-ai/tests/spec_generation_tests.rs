@@ -1,10 +1,10 @@
-use rust_ai_ide_ai::spec_generation::{
-    generator::CodeGenerator,
-    parser::SpecificationParser,
-    system::IntelligentSpecGenerator,
-    types::{Entity, EntityType, Field, FunctionSpec, ParsedSpecification, SpecificationRequest},
-    validation::CodeValidator,
+use rust_ai_ide_ai::spec_generation::generator::CodeGenerator;
+use rust_ai_ide_ai::spec_generation::parser::SpecificationParser;
+use rust_ai_ide_ai::spec_generation::system::IntelligentSpecGenerator;
+use rust_ai_ide_ai::spec_generation::types::{
+    Entity, EntityType, Field, FunctionSpec, ParsedSpecification, SpecificationRequest,
 };
+use rust_ai_ide_ai::spec_generation::validation::CodeValidator;
 // Common constants to avoid duplication
 const LANG_RUST: &str = "rust";
 const FAILED_PARSE_MSG: &str = "Failed to parse specification";
@@ -81,16 +81,14 @@ async fn test_validator() {
 #[tokio::test]
 async fn test_end_to_end() {
     // Skip test if RUN_SPEC_INTEGRATION_TESTS is not set to true for determinism
-    if std::env::var("RUN_SPEC_INTEGRATION_TESTS").unwrap_or_else(|_| String::from("false"))
-        != "true"
-    {
+    if std::env::var("RUN_SPEC_INTEGRATION_TESTS").unwrap_or_else(|_| String::from("false")) != "true" {
         return;
     }
     let generator = IntelligentSpecGenerator::new();
     let request = SpecificationRequest {
         description: test_fixtures::USER_MANAGEMENT_SPEC.to_string(),
-        language: LANG_RUST.to_string(),
-        context: None,
+        language:    LANG_RUST.to_string(),
+        context:     None,
     };
 
     let e2e_generated = generator

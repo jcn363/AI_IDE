@@ -7,11 +7,15 @@
 //!
 //! ## Core Capabilities
 //!
-//! - **Multi-Dimensional Analysis**: Security, performance, maintainability, style, and architecture review
-//! - **ML-Enhanced Pattern Recognition**: Uses trained models to identify complex patterns and anti-patterns
-//! - **Confidence-Based Assessment**: Probabilistic evaluation rather than binary pass/fail decisions
+//! - **Multi-Dimensional Analysis**: Security, performance, maintainability, style, and
+//!   architecture review
+//! - **ML-Enhanced Pattern Recognition**: Uses trained models to identify complex patterns and
+//!   anti-patterns
+//! - **Confidence-Based Assessment**: Probabilistic evaluation rather than binary pass/fail
+//!   decisions
 //! - **Continuous Learning**: Adaptive system that improves through feedback and outcome tracking
-//! - **Contextual Recommendations**: Tailored suggestions based on project type, patterns, and history
+//! - **Contextual Recommendations**: Tailored suggestions based on project type, patterns, and
+//!   history
 //!
 //! ## Analysis Pipeline Architecture
 //!
@@ -101,11 +105,13 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
-use crate::inference::InferenceEngine;
-use crate::{AIAnalysisConfig, AIProvider};
+use std::collections::HashMap;
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
+use crate::inference::InferenceEngine;
+use crate::{AIAnalysisConfig, AIProvider};
 
 /// Intelligent automated code review system with ML-enhanced analysis capabilities
 ///
@@ -225,9 +231,9 @@ pub struct CodeReviewer {
 ///         ReviewChecker::CodeStyle,   // Maintain consistency
 ///     ],
 ///     severity_thresholds: SeverityThresholds {
-///         critical_threshold: 20.0, // Lower threshold for aggressive detection
-///         warning_threshold: 10.0,
-///         info_threshold: 3.0,
+///         critical_threshold:   20.0, // Lower threshold for aggressive detection
+///         warning_threshold:    10.0,
+///         info_threshold:       3.0,
 ///         suggestion_threshold: 1.0,
 ///     },
 ///     ..Default::default()
@@ -326,9 +332,9 @@ pub enum ReviewChecker {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SeverityThresholds {
-    pub critical_threshold: f32,
-    pub warning_threshold: f32,
-    pub info_threshold: f32,
+    pub critical_threshold:   f32,
+    pub warning_threshold:    f32,
+    pub info_threshold:       f32,
     pub suggestion_threshold: f32,
 }
 
@@ -350,10 +356,10 @@ pub enum ReviewType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CustomRule {
-    pub name: String,
-    pub pattern: String,
-    pub severity: SeverityLevel,
-    pub message: String,
+    pub name:       String,
+    pub pattern:    String,
+    pub severity:   SeverityLevel,
+    pub message:    String,
     pub suggestion: Option<String>,
 }
 
@@ -362,9 +368,9 @@ pub struct CustomRule {
 #[serde(rename_all = "camelCase")]
 pub struct IntegrationSettings {
     pub use_existing_analyzer: bool,
-    pub security_check_only: bool,
-    pub performance_profile: bool,
-    pub test_coverage_check: bool,
+    pub security_check_only:   bool,
+    pub performance_profile:   bool,
+    pub test_coverage_check:   bool,
 }
 
 /// Result of automated code review
@@ -372,22 +378,22 @@ pub struct IntegrationSettings {
 #[serde(rename_all = "camelCase")]
 pub struct CodeReviewResult {
     pub overall_assessment: OverallAssessment,
-    pub file_reviews: Vec<FileReview>,
-    pub summary: ReviewSummary,
-    pub recommendations: Vec<Recommendation>,
-    pub metadata: ReviewMetadata,
+    pub file_reviews:       Vec<FileReview>,
+    pub summary:            ReviewSummary,
+    pub recommendations:    Vec<Recommendation>,
+    pub metadata:           ReviewMetadata,
 }
 
 /// Overall assessment of the code changes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OverallAssessment {
-    pub score: f32,      // 0.0 to 1.0, higher is better
-    pub grade: Grade,    // Letter grade
-    pub confidence: f32, // 0.0 to 1.0
-    pub status: ReviewStatus,
-    pub blockers: u32,    // Number of critical issues
-    pub warnings: u32,    // Number of warnings
+    pub score:       f32,   // 0.0 to 1.0, higher is better
+    pub grade:       Grade, // Letter grade
+    pub confidence:  f32,   // 0.0 to 1.0
+    pub status:      ReviewStatus,
+    pub blockers:    u32, // Number of critical issues
+    pub warnings:    u32, // Number of warnings
     pub suggestions: u32, // Number of suggestions
 }
 
@@ -421,12 +427,12 @@ pub enum ReviewStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FileReview {
-    pub filename: String,
-    pub comments: Vec<ReviewComment>,
-    pub complexity_score: f32,
+    pub filename:              String,
+    pub comments:              Vec<ReviewComment>,
+    pub complexity_score:      f32,
     pub maintainability_index: f32,
-    pub lines_changed: u32,
-    pub patches_applied: Vec<String>,
+    pub lines_changed:         u32,
+    pub patches_applied:       Vec<String>,
 }
 
 /// Individual comment on a specific line/issue
@@ -434,14 +440,14 @@ pub struct FileReview {
 #[serde(rename_all = "camelCase")]
 pub struct ReviewComment {
     pub line_number: Option<u32>,
-    pub severity: SeverityLevel,
-    pub category: ReviewCategory,
-    pub message: String,
-    pub suggestion: Option<String>,
-    pub context: String,
-    pub rule: Option<String>, // Which rule triggered this comment
-    pub confidence: f32,
-    pub references: Vec<String>, // Links to docs, best practices, etc.
+    pub severity:    SeverityLevel,
+    pub category:    ReviewCategory,
+    pub message:     String,
+    pub suggestion:  Option<String>,
+    pub context:     String,
+    pub rule:        Option<String>, // Which rule triggered this comment
+    pub confidence:  f32,
+    pub references:  Vec<String>, // Links to docs, best practices, etc.
 }
 
 /// Severity levels for issues
@@ -473,11 +479,11 @@ pub enum ReviewCategory {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReviewSummary {
-    pub total_comments: u32,
-    pub critical_issues: u32,
-    pub major_issues: u32,
-    pub minor_issues: u32,
-    pub suggestions: u32,
+    pub total_comments:       u32,
+    pub critical_issues:      u32,
+    pub major_issues:         u32,
+    pub minor_issues:         u32,
+    pub suggestions:          u32,
     pub categories_breakdown: HashMap<ReviewCategory, u32>,
     pub most_frequent_issues: Vec<(String, u32)>,
 }
@@ -486,13 +492,13 @@ pub struct ReviewSummary {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Recommendation {
-    pub priority: Priority,
-    pub category: ReviewCategory,
-    pub title: String,
-    pub description: String,
+    pub priority:              Priority,
+    pub category:              ReviewCategory,
+    pub title:                 String,
+    pub description:           String,
     pub implementation_effort: Effort,
-    pub impact_score: f32,
-    pub applicable_files: Vec<String>,
+    pub impact_score:          f32,
+    pub applicable_files:      Vec<String>,
 }
 
 /// Priority levels for recommendations
@@ -520,30 +526,30 @@ pub enum Effort {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReviewMetadata {
-    pub review_id: String,
-    pub provider: AIProvider,
-    pub version: String,
-    pub timestamp: std::time::SystemTime,
+    pub review_id:          String,
+    pub provider:           AIProvider,
+    pub version:            String,
+    pub timestamp:          std::time::SystemTime,
     pub processing_time_ms: u64,
-    pub files_processed: usize,
-    pub total_lines: u32,
-    pub review_criteria: ReviewCriteria,
+    pub files_processed:    usize,
+    pub total_lines:        u32,
+    pub review_criteria:    ReviewCriteria,
 }
 
 /// Review criteria configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReviewCriteria {
-    pub min_confidence: f32,
-    pub max_complexity: f32,
+    pub min_confidence:      f32,
+    pub max_complexity:      f32,
     pub enforce_style_guide: bool,
-    pub check_security: bool,
-    pub check_performance: bool,
+    pub check_security:      bool,
+    pub check_performance:   bool,
 }
 
 /// Learning system for improving review quality
 pub struct ReviewLearningSystem {
-    pub past_reviews: Vec<PastReview>,
+    pub past_reviews:         Vec<PastReview>,
     pub improvements_tracked: HashMap<String, ImprovementData>,
 }
 
@@ -559,7 +565,7 @@ impl CodeReviewer {
             inference_engine,
             analysis_config,
             learning_system: ReviewLearningSystem {
-                past_reviews: vec![],
+                past_reviews:         vec![],
                 improvements_tracked: HashMap::new(),
             },
         }
@@ -692,14 +698,14 @@ impl CodeReviewer {
             if line.len() > 100 {
                 comments.push(ReviewComment {
                     line_number: Some(line_num as u32 + 1),
-                    severity: SeverityLevel::Warning,
-                    category: ReviewCategory::Style,
-                    message: "Line exceeds 100 characters".to_string(),
-                    suggestion: Some("Consider breaking this line into multiple lines".to_string()),
-                    context: line.to_string(),
-                    rule: Some("line-length".to_string()),
-                    confidence: 0.9,
-                    references: vec!["rustfmt style guide".to_string()],
+                    severity:    SeverityLevel::Warning,
+                    category:    ReviewCategory::Style,
+                    message:     "Line exceeds 100 characters".to_string(),
+                    suggestion:  Some("Consider breaking this line into multiple lines".to_string()),
+                    context:     line.to_string(),
+                    rule:        Some("line-length".to_string()),
+                    confidence:  0.9,
+                    references:  vec!["rustfmt style guide".to_string()],
                 });
             }
         }
@@ -717,17 +723,14 @@ impl CodeReviewer {
         if indentation_types.len() > 1 {
             comments.push(ReviewComment {
                 line_number: None,
-                severity: SeverityLevel::Info,
-                category: ReviewCategory::Style,
-                message: "Mixed indentation styles detected".to_string(),
-                suggestion: Some(
-                    "Use consistent indentation (preferably 4 spaces) throughout the file"
-                        .to_string(),
-                ),
-                context: "Mixed styles found".to_string(),
-                rule: Some("indentation-consistency".to_string()),
-                confidence: 0.8,
-                references: vec![],
+                severity:    SeverityLevel::Info,
+                category:    ReviewCategory::Style,
+                message:     "Mixed indentation styles detected".to_string(),
+                suggestion:  Some("Use consistent indentation (preferably 4 spaces) throughout the file".to_string()),
+                context:     "Mixed styles found".to_string(),
+                rule:        Some("indentation-consistency".to_string()),
+                confidence:  0.8,
+                references:  vec![],
             });
         }
 
@@ -735,14 +738,14 @@ impl CodeReviewer {
     }
 
     /// Check performance issues
-    async fn check_performance(
-        &self,
-        _change: &CodeChange,
-    ) -> Result<Vec<ReviewComment>, ReviewError> {
+    async fn check_performance(&self, _change: &CodeChange) -> Result<Vec<ReviewComment>, ReviewError> {
         let comments = Vec::new();
 
         // Using inference engine for deeper analysis
-        let _prompt = format!("Analyze this Rust code for performance issues:\n\n```rust\n{}\n```\n\nPerformance concerns:", _change.new_content);
+        let _prompt = format!(
+            "Analyze this Rust code for performance issues:\n\n```rust\n{}\n```\n\nPerformance concerns:",
+            _change.new_content
+        );
 
         // This would use the actual inference engine later
         // For now, return basic checks
@@ -768,17 +771,14 @@ impl CodeReviewer {
                     if line.contains(pattern) {
                         comments.push(ReviewComment {
                             line_number: Some(line_num as u32 + 1),
-                            severity: SeverityLevel::Warning,
-                            category: ReviewCategory::Security,
-                            message: format!("Security concern: {}", message),
-                            suggestion: Some(format!(
-                                "Consider using safe alternatives to {}",
-                                pattern
-                            )),
-                            context: line.to_string(),
-                            rule: Some("security-pattern".to_string()),
-                            confidence: 0.7,
-                            references: vec!["Rust security guidelines".to_string()],
+                            severity:    SeverityLevel::Warning,
+                            category:    ReviewCategory::Security,
+                            message:     format!("Security concern: {}", message),
+                            suggestion:  Some(format!("Consider using safe alternatives to {}", pattern)),
+                            context:     line.to_string(),
+                            rule:        Some("security-pattern".to_string()),
+                            confidence:  0.7,
+                            references:  vec!["Rust security guidelines".to_string()],
                         });
                     }
                 }
@@ -789,18 +789,12 @@ impl CodeReviewer {
     }
 
     /// Check architecture concerns
-    async fn check_architecture(
-        &self,
-        _change: &CodeChange,
-    ) -> Result<Vec<ReviewComment>, ReviewError> {
+    async fn check_architecture(&self, _change: &CodeChange) -> Result<Vec<ReviewComment>, ReviewError> {
         Ok(vec![]) // Placeholder implementation
     }
 
     /// Check documentation
-    async fn check_documentation(
-        &self,
-        change: &CodeChange,
-    ) -> Result<Vec<ReviewComment>, ReviewError> {
+    async fn check_documentation(&self, change: &CodeChange) -> Result<Vec<ReviewComment>, ReviewError> {
         let mut comments = Vec::new();
 
         // Check for functions without documentation
@@ -810,14 +804,17 @@ impl CodeReviewer {
         {
             comments.push(ReviewComment {
                 line_number: None,
-                severity: SeverityLevel::Info,
-                category: ReviewCategory::Documentation,
-                message: "Missing documentation for public functions".to_string(),
-                suggestion: Some("Add documentation comments for public functions explaining their purpose and parameters".to_string()),
-                context: "Public function without documentation".to_string(),
-                rule: Some("missing-docs".to_string()),
-                confidence: 0.6,
-                references: vec!["Rust documentation guidelines".to_string()],
+                severity:    SeverityLevel::Info,
+                category:    ReviewCategory::Documentation,
+                message:     "Missing documentation for public functions".to_string(),
+                suggestion:  Some(
+                    "Add documentation comments for public functions explaining their purpose and parameters"
+                        .to_string(),
+                ),
+                context:     "Public function without documentation".to_string(),
+                rule:        Some("missing-docs".to_string()),
+                confidence:  0.6,
+                references:  vec!["Rust documentation guidelines".to_string()],
             });
         }
 
@@ -830,26 +827,22 @@ impl CodeReviewer {
     }
 
     /// Check code complexity
-    async fn check_complexity(
-        &self,
-        change: &CodeChange,
-    ) -> Result<Vec<ReviewComment>, ReviewError> {
+    async fn check_complexity(&self, change: &CodeChange) -> Result<Vec<ReviewComment>, ReviewError> {
         let complexity_score = self.calculate_complexity(&change.new_content)?;
 
         if complexity_score > self.config.severity_thresholds.critical_threshold {
             Ok(vec![ReviewComment {
                 line_number: None,
-                severity: SeverityLevel::Warning,
-                category: ReviewCategory::CodeQuality,
-                message: format!("High complexity score: {:.1}", complexity_score),
-                suggestion: Some(
-                    "Consider breaking this code into smaller, more focused functions or classes"
-                        .to_string(),
+                severity:    SeverityLevel::Warning,
+                category:    ReviewCategory::CodeQuality,
+                message:     format!("High complexity score: {:.1}", complexity_score),
+                suggestion:  Some(
+                    "Consider breaking this code into smaller, more focused functions or classes".to_string(),
                 ),
-                context: "High cyclomatic complexity".to_string(),
-                rule: Some("complexity-threshold".to_string()),
-                confidence: 0.8,
-                references: vec!["Clean Code principles".to_string()],
+                context:     "High cyclomatic complexity".to_string(),
+                rule:        Some("complexity-threshold".to_string()),
+                confidence:  0.8,
+                references:  vec!["Clean Code principles".to_string()],
             }])
         } else {
             Ok(vec![])
@@ -857,25 +850,20 @@ impl CodeReviewer {
     }
 
     /// Check maintainability
-    async fn check_maintainability(
-        &self,
-        change: &CodeChange,
-    ) -> Result<Vec<ReviewComment>, ReviewError> {
+    async fn check_maintainability(&self, change: &CodeChange) -> Result<Vec<ReviewComment>, ReviewError> {
         let maintainability = self.calculate_maintainability(&change.new_content)?;
 
         if maintainability < 20.0 {
             Ok(vec![ReviewComment {
                 line_number: None,
-                severity: SeverityLevel::Warning,
-                category: ReviewCategory::Maintainability,
-                message: format!("Low maintainability index: {:.1}", maintainability),
-                suggestion: Some(
-                    "Improve code organization, add comments, and reduce complexity".to_string(),
-                ),
-                context: "Poor maintainability".to_string(),
-                rule: Some("maintainability-threshold".to_string()),
-                confidence: 0.7,
-                references: vec!["Maintainability Index guidelines".to_string()],
+                severity:    SeverityLevel::Warning,
+                category:    ReviewCategory::Maintainability,
+                message:     format!("Low maintainability index: {:.1}", maintainability),
+                suggestion:  Some("Improve code organization, add comments, and reduce complexity".to_string()),
+                context:     "Poor maintainability".to_string(),
+                rule:        Some("maintainability-threshold".to_string()),
+                confidence:  0.7,
+                references:  vec!["Maintainability Index guidelines".to_string()],
             }])
         } else {
             Ok(vec![])
@@ -883,10 +871,7 @@ impl CodeReviewer {
     }
 
     /// Check dependency issues
-    async fn check_dependencies(
-        &self,
-        _change: &CodeChange,
-    ) -> Result<Vec<ReviewComment>, ReviewError> {
+    async fn check_dependencies(&self, _change: &CodeChange) -> Result<Vec<ReviewComment>, ReviewError> {
         Ok(vec![]) // Placeholder implementation
     }
 
@@ -902,8 +887,10 @@ impl CodeReviewer {
     /// The algorithm assigns complexity points based on empirical research:
     /// - **Conditional statements (if/match)**: 1.5 points - Moderately complex decision points
     /// - **Loops (for/while)**: 2.0 points - High complexity due to state management and iteration
-    /// - **Pattern matching (match)**: 1.2 points - Moderate complexity with less cognitive load than if-chains
-    /// - **Function definitions (fn)**: 3.0 points - High complexity due to parameter handling and context switching
+    /// - **Pattern matching (match)**: 1.2 points - Moderate complexity with less cognitive load
+    ///   than if-chains
+    /// - **Function definitions (fn)**: 3.0 points - High complexity due to parameter handling and
+    ///   context switching
     ///
     /// # Algorithm Implementation
     ///
@@ -934,8 +921,7 @@ impl CodeReviewer {
     fn calculate_complexity(&self, code: &str) -> Result<f32, ReviewError> {
         // Count control flow statements that contribute to cognitive complexity
         let if_count = code.matches("if ").count() as f32;
-        let loop_count =
-            code.matches("for ").count() as f32 + code.matches("while ").count() as f32;
+        let loop_count = code.matches("for ").count() as f32 + code.matches("while ").count() as f32;
         let match_count = code.matches("match ").count() as f32;
         let fn_count = code.matches("fn ").count() as f32;
 
@@ -1005,7 +991,8 @@ impl CodeReviewer {
     ///
     /// ## Planned ML Enhancements
     /// - **Pattern-aware calculation**: ML models considering architectural patterns
-    /// - **Historical outcome integration**: Learned weights based on bug rates and maintenance costs
+    /// - **Historical outcome integration**: Learned weights based on bug rates and maintenance
+    ///   costs
     /// - **Team expertise calibration**: Adjusting for team experience and domain knowledge
     fn calculate_maintainability(&self, code: &str) -> Result<f32, ReviewError> {
         let lines_of_code = code.lines().count() as f32;
@@ -1031,10 +1018,7 @@ impl CodeReviewer {
     }
 
     /// Assess overall quality of all reviews
-    async fn assess_overall_quality(
-        &self,
-        file_reviews: &[FileReview],
-    ) -> Result<OverallAssessment, ReviewError> {
+    async fn assess_overall_quality(&self, file_reviews: &[FileReview]) -> Result<OverallAssessment, ReviewError> {
         let mut total_critical = 0;
         let mut total_warnings = 0;
         let mut total_suggestions = 0;
@@ -1055,8 +1039,7 @@ impl CodeReviewer {
         }
 
         let score = if total_comments > 0 {
-            1.0 - (total_critical as f32 * 0.4 + total_warnings as f32 * 0.2)
-                / total_comments as f32
+            1.0 - (total_critical as f32 * 0.4 + total_warnings as f32 * 0.2) / total_comments as f32
         } else {
             1.0
         };
@@ -1107,19 +1090,16 @@ impl CodeReviewer {
     }
 
     /// Generate recommendations
-    async fn generate_recommendations(
-        &self,
-        _file_reviews: &[FileReview],
-    ) -> Result<Vec<Recommendation>, ReviewError> {
+    async fn generate_recommendations(&self, _file_reviews: &[FileReview]) -> Result<Vec<Recommendation>, ReviewError> {
         // Placeholder implementation - would use inference engine
         Ok(vec![Recommendation {
-            priority: Priority::Medium,
-            category: ReviewCategory::CodeQuality,
-            title: "Consider adding more documentation".to_string(),
-            description: "Improve code documentation to enhance maintainability".to_string(),
+            priority:              Priority::Medium,
+            category:              ReviewCategory::CodeQuality,
+            title:                 "Consider adding more documentation".to_string(),
+            description:           "Improve code documentation to enhance maintainability".to_string(),
             implementation_effort: Effort::Small,
-            impact_score: 0.7,
-            applicable_files: vec![],
+            impact_score:          0.7,
+            applicable_files:      vec![],
         }])
     }
 
@@ -1160,17 +1140,17 @@ impl CodeReviewer {
     /// Extract criteria from config
     fn extract_criteria_from_config(&self) -> ReviewCriteria {
         ReviewCriteria {
-            min_confidence: 0.5,
-            max_complexity: self.config.severity_thresholds.critical_threshold,
+            min_confidence:      0.5,
+            max_complexity:      self.config.severity_thresholds.critical_threshold,
             enforce_style_guide: self
                 .config
                 .enabled_checkers
                 .contains(&ReviewChecker::CodeStyle),
-            check_security: self
+            check_security:      self
                 .config
                 .enabled_checkers
                 .contains(&ReviewChecker::Security),
-            check_performance: self
+            check_performance:   self
                 .config
                 .enabled_checkers
                 .contains(&ReviewChecker::Performance),
@@ -1187,11 +1167,11 @@ impl ReviewLearningSystem {
             .sum();
 
         let past_review = PastReview {
-            id: review_id.to_string(),
-            timestamp: std::time::SystemTime::now(),
-            issue_count: total_issues,
+            id:                 review_id.to_string(),
+            timestamp:          std::time::SystemTime::now(),
+            issue_count:        total_issues,
             average_confidence: 0.8, // Placeholder
-            categories: file_reviews
+            categories:         file_reviews
                 .iter()
                 .flat_map(|review| review.comments.iter().map(|c| c.category.clone()))
                 .collect::<std::collections::HashSet<_>>()
@@ -1210,23 +1190,23 @@ impl ReviewLearningSystem {
 
 #[derive(Debug, Clone)]
 pub struct PastReview {
-    pub id: String,
-    pub timestamp: std::time::SystemTime,
-    pub issue_count: usize,
+    pub id:                 String,
+    pub timestamp:          std::time::SystemTime,
+    pub issue_count:        usize,
     pub average_confidence: f32,
-    pub categories: Vec<ReviewCategory>,
+    pub categories:         Vec<ReviewCategory>,
 }
 
 /// Code change representation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeChange {
-    pub filename: String,
-    pub old_content: String,
-    pub new_content: String,
-    pub patches: Vec<String>,
+    pub filename:      String,
+    pub old_content:   String,
+    pub new_content:   String,
+    pub patches:       Vec<String>,
     pub lines_changed: u32,
-    pub change_type: ChangeType,
+    pub change_type:   ChangeType,
 }
 
 /// Types of changes in code
@@ -1243,16 +1223,16 @@ pub enum ChangeType {
 #[derive(Debug, Clone)]
 pub struct ReviewContext {
     pub pull_request_number: Option<u32>,
-    pub branch_name: String,
-    pub author: String,
-    pub description: Option<String>,
+    pub branch_name:         String,
+    pub author:              String,
+    pub description:         Option<String>,
 }
 
 /// Data for tracking improvements
 #[derive(Debug, Clone)]
 pub struct ImprovementData {
-    pub pattern: String,
-    pub occurrences: u32,
+    pub pattern:           String,
+    pub occurrences:       u32,
     pub improvement_trend: Vec<f32>,
 }
 
@@ -1274,28 +1254,28 @@ pub enum ReviewError {
 impl Default for CodeReviewConfig {
     fn default() -> Self {
         Self {
-            enabled_checkers: vec![
+            enabled_checkers:      vec![
                 ReviewChecker::CodeStyle,
                 ReviewChecker::Performance,
                 ReviewChecker::Security,
                 ReviewChecker::Architecture,
                 ReviewChecker::Documentation,
             ],
-            severity_thresholds: SeverityThresholds {
-                critical_threshold: 50.0,
-                warning_threshold: 30.0,
-                info_threshold: 15.0,
+            severity_thresholds:   SeverityThresholds {
+                critical_threshold:   50.0,
+                warning_threshold:    30.0,
+                info_threshold:       15.0,
                 suggestion_threshold: 5.0,
             },
             max_comments_per_file: 20,
-            max_files_to_review: 50,
-            review_templates: HashMap::new(),
-            custom_rules: vec![],
-            integration_settings: IntegrationSettings {
+            max_files_to_review:   50,
+            review_templates:      HashMap::new(),
+            custom_rules:          vec![],
+            integration_settings:  IntegrationSettings {
                 use_existing_analyzer: true,
-                security_check_only: false,
-                performance_profile: false,
-                test_coverage_check: false,
+                security_check_only:   false,
+                performance_profile:   false,
+                test_coverage_check:   false,
             },
         }
     }

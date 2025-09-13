@@ -1,6 +1,7 @@
+use std::time::Duration;
+
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use rust_ai_ide_perfdevel_tools::*;
-use std::time::Duration;
 
 fn lsp_server_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("lsp_server");

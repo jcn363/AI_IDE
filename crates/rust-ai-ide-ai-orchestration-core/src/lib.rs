@@ -31,21 +31,19 @@
 //! - Background task spawning for cleanup operations
 
 pub mod ai_orchestrator {
-    use async_trait::async_trait;
-    use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
     use std::sync::Arc;
+
+    use async_trait::async_trait;
+    use rust_ai_ide_cache::{InMemoryCache, LspCodeCompletion};
+    use rust_ai_ide_common::validation::{sanitize_string_for_processing, validate_string_input_extended};
+    use rust_ai_ide_errors::RustAIError;
+    use rust_ai_ide_performance::adaptive_memory::AdaptiveMemoryManager;
+    use serde::{Deserialize, Serialize};
     use tokio::sync::{mpsc, Mutex, RwLock};
     use tokio::time::{timeout, Duration};
     use tracing::{debug, error, info, warn};
     use uuid::Uuid;
-
-    use rust_ai_ide_cache::{InMemoryCache, LspCodeCompletion};
-    use rust_ai_ide_common::validation::{
-        sanitize_string_for_processing, validate_string_input_extended,
-    };
-    use rust_ai_ide_errors::RustAIError;
-    use rust_ai_ide_performance::adaptive_memory::AdaptiveMemoryManager;
 
     /// Types of AI services that can be orchestrated
     #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -88,25 +86,25 @@ pub mod ai_orchestrator {
     /// Configuration for orchestration layer
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct OrchestratorConfig {
-        pub max_concurrent_tasks: usize,
-        pub request_queue_size: usize,
-        pub model_cache_size_mb: usize,
+        pub max_concurrent_tasks:      usize,
+        pub request_queue_size:        usize,
+        pub model_cache_size_mb:       usize,
         pub performance_sample_window: Duration,
-        pub fallback_timeout_secs: u64,
+        pub fallback_timeout_secs:     u64,
         pub enable_request_coalescing: bool,
-        pub adaptive_memory_enabled: bool,
+        pub adaptive_memory_enabled:   bool,
     }
 
     impl Default for OrchestratorConfig {
         fn default() -> Self {
             Self {
-                max_concurrent_tasks: 10,
-                request_queue_size: 1000,
-                model_cache_size_mb: 512,
+                max_concurrent_tasks:      10,
+                request_queue_size:        1000,
+                model_cache_size_mb:       512,
                 performance_sample_window: Duration::from_secs(300), // 5 minutes
-                fallback_timeout_secs: 30,
+                fallback_timeout_secs:     30,
                 enable_request_coalescing: true,
-                adaptive_memory_enabled: true,
+                adaptive_memory_enabled:   true,
             }
         }
     }
@@ -114,26 +112,26 @@ pub mod ai_orchestrator {
     /// Request context for AI operations
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct AIRequestContext {
-        pub request_id: String,
-        pub service_type: AIServiceType,
-        pub user_id: Option<String>,
-        pub project_id: Option<String>,
-        pub file_path: Option<String>,
-        pub metadata: HashMap<String, serde_json::Value>,
-        pub timeout_override: Option<u64>,
+        pub request_id:        String,
+        pub service_type:      AIServiceType,
+        pub user_id:           Option<String>,
+        pub project_id:        Option<String>,
+        pub file_path:         Option<String>,
+        pub metadata:          HashMap<String, serde_json::Value>,
+        pub timeout_override:  Option<u64>,
         pub priority_override: Option<u8>,
     }
 
     impl Default for AIRequestContext {
         fn default() -> Self {
             Self {
-                request_id: Uuid::new_v4().to_string(),
-                service_type: AIServiceType::Completion,
-                user_id: None,
-                project_id: None,
-                file_path: None,
-                metadata: HashMap::new(),
-                timeout_override: None,
+                request_id:        Uuid::new_v4().to_string(),
+                service_type:      AIServiceType::Completion,
+                user_id:           None,
+                project_id:        None,
+                file_path:         None,
+                metadata:          HashMap::new(),
+                timeout_override:  None,
                 priority_override: None,
             }
         }
@@ -144,38 +142,38 @@ pub mod ai_orchestrator {
     pub struct AIServiceCapabilities {
         pub supported_service_types: Vec<AIServiceType>,
         pub max_concurrent_requests: usize,
-        pub average_latency_ms: f64,
-        pub throughput_rps: f64,
-        pub memory_usage_mb: f64,
-        pub gpu_available: bool,
-        pub last_health_check: chrono::DateTime<chrono::Utc>,
-        pub health_score: f64, // 0.0 to 1.0
+        pub average_latency_ms:      f64,
+        pub throughput_rps:          f64,
+        pub memory_usage_mb:         f64,
+        pub gpu_available:           bool,
+        pub last_health_check:       chrono::DateTime<chrono::Utc>,
+        pub health_score:            f64, // 0.0 to 1.0
     }
 
     /// Main orchestrator service
     #[derive(Debug)]
     pub struct AIOrchestrator {
-        config: Arc<OrchestratorConfig>,
-        services: Arc<RwLock<HashMap<String, AIServiceCapabilities>>>,
-        task_queue: Arc<Mutex<std::collections::VecDeque<AIRequestContext>>>,
-        model_cache: Arc<InMemoryCache<LspCodeCompletion>>,
-        adaptive_memory: Arc<AdaptiveMemoryManager>,
-        request_sender: mpsc::Sender<AIRequestContext>,
+        config:           Arc<OrchestratorConfig>,
+        services:         Arc<RwLock<HashMap<String, AIServiceCapabilities>>>,
+        task_queue:       Arc<Mutex<std::collections::VecDeque<AIRequestContext>>>,
+        model_cache:      Arc<InMemoryCache<LspCodeCompletion>>,
+        adaptive_memory:  Arc<AdaptiveMemoryManager>,
+        request_sender:   mpsc::Sender<AIRequestContext>,
         request_receiver: Arc<Mutex<mpsc::Receiver<AIRequestContext>>>,
-        metrics: Arc<RwLock<OrchestratorMetrics>>,
+        metrics:          Arc<RwLock<OrchestratorMetrics>>,
     }
 
     /// Metrics for monitoring orchestrator performance
     #[derive(Debug, Clone, Serialize, Deserialize, Default)]
     pub struct OrchestratorMetrics {
-        pub total_requests: usize,
+        pub total_requests:     usize,
         pub completed_requests: usize,
-        pub failed_requests: usize,
+        pub failed_requests:    usize,
         pub average_latency_ms: f64,
-        pub queue_length: usize,
-        pub active_services: usize,
+        pub queue_length:       usize,
+        pub active_services:    usize,
         pub request_rate_sigma: f64,
-        pub memory_usage_mb: f64,
+        pub memory_usage_mb:    f64,
     }
 
     /// Service provider trait for AI services
@@ -193,7 +191,7 @@ pub mod ai_orchestrator {
 
     /// Local AI service provider implementation
     pub struct LocalAIServiceProvider {
-        name: &'static str,
+        name:      &'static str,
         mock_mode: bool,
     }
 
@@ -213,12 +211,12 @@ pub mod ai_orchestrator {
                     AIServiceType::CodeGeneration,
                 ],
                 max_concurrent_requests: 5,
-                average_latency_ms: 150.0,
-                throughput_rps: 10.0,
-                memory_usage_mb: 256.0,
-                gpu_available: false,
-                last_health_check: chrono::Utc::now(),
-                health_score: 0.95,
+                average_latency_ms:      150.0,
+                throughput_rps:          10.0,
+                memory_usage_mb:         256.0,
+                gpu_available:           false,
+                last_health_check:       chrono::Utc::now(),
+                health_score:            0.95,
             })
         }
 
@@ -283,25 +281,21 @@ pub mod ai_orchestrator {
             let (sender, receiver) = mpsc::channel(config.request_queue_size);
 
             Ok(Self {
-                config: config.clone(),
-                services: Arc::new(RwLock::new(HashMap::new())),
-                task_queue: Arc::new(Mutex::new(std::collections::VecDeque::new())),
-                model_cache: Arc::new(InMemoryCache::new_with_capacity(1000)),
-                adaptive_memory: Arc::new(
-                    AdaptiveMemoryManager::new()
-                        .map_err(|e| RustAIError::InternalError(e.to_string()))?,
+                config:           config.clone(),
+                services:         Arc::new(RwLock::new(HashMap::new())),
+                task_queue:       Arc::new(Mutex::new(std::collections::VecDeque::new())),
+                model_cache:      Arc::new(InMemoryCache::new_with_capacity(1000)),
+                adaptive_memory:  Arc::new(
+                    AdaptiveMemoryManager::new().map_err(|e| RustAIError::InternalError(e.to_string()))?,
                 ),
-                request_sender: sender,
+                request_sender:   sender,
                 request_receiver: Arc::new(Mutex::new(receiver)),
-                metrics: Arc::new(RwLock::new(OrchestratorMetrics::default())),
+                metrics:          Arc::new(RwLock::new(OrchestratorMetrics::default())),
             })
         }
 
         /// Register an AI service provider
-        pub async fn register_service(
-            &self,
-            provider: Arc<dyn AIServiceProvider>,
-        ) -> Result<(), RustAIError> {
+        pub async fn register_service(&self, provider: Arc<dyn AIServiceProvider>) -> Result<(), RustAIError> {
             let capabilities = provider.get_capabilities().await?;
             let service_name = provider.service_name();
 
@@ -330,8 +324,7 @@ pub mod ai_orchestrator {
             self.validate_payload(&payload)?;
 
             // Sanitize payload for security
-            let sanitized_payload =
-                sanitize_string_for_processing(&payload.to_string(), &["<script>", "</script>"])?;
+            let sanitized_payload = sanitize_string_for_processing(&payload.to_string(), &["<script>", "</script>"])?;
 
             let sanitized_payload: serde_json::Value = serde_json::from_str(&sanitized_payload)
                 .map_err(|e| RustAIError::Validation(format!("Payload parsing failed: {}", e)))?;
@@ -359,9 +352,7 @@ pub mod ai_orchestrator {
         }
 
         /// Get registered services
-        pub async fn get_services(
-            &self,
-        ) -> Result<HashMap<String, AIServiceCapabilities>, RustAIError> {
+        pub async fn get_services(&self) -> Result<HashMap<String, AIServiceCapabilities>, RustAIError> {
             let services = self.services.read().await;
             Ok(services.clone())
         }
@@ -374,9 +365,7 @@ pub mod ai_orchestrator {
             let model_cache = self.model_cache.clone();
 
             tokio::spawn(async move {
-                if let Err(e) =
-                    Self::processing_loop(request_receiver, services, metrics, model_cache).await
-                {
+                if let Err(e) = Self::processing_loop(request_receiver, services, metrics, model_cache).await {
                     error!("Processing loop error: {}", e);
                 }
             });
@@ -408,13 +397,7 @@ pub mod ai_orchestrator {
                         match service_result {
                             Some((service_name, capabilities)) => {
                                 // Execute request
-                                match Self::execute_request_with_service(
-                                    service_name,
-                                    capabilities,
-                                    context,
-                                )
-                                .await
-                                {
+                                match Self::execute_request_with_service(service_name, capabilities, context).await {
                                     Ok(_) => {
                                         let mut metrics = metrics.write().await;
                                         metrics.completed_requests += 1;
@@ -517,10 +500,7 @@ pub mod ai_orchestrator {
         }
 
         /// Validate request context
-        async fn validate_request_context(
-            &self,
-            context: &AIRequestContext,
-        ) -> Result<(), RustAIError> {
+        async fn validate_request_context(&self, context: &AIRequestContext) -> Result<(), RustAIError> {
             // Validate request ID format
             validate_string_input_extended(&context.request_id, 64, false)?;
 
@@ -597,10 +577,7 @@ pub mod ai_orchestrator {
             language: String,
         ) -> Result<String, RustAIError>;
 
-        async fn get_request_status(
-            &self,
-            request_id: &str,
-        ) -> Result<serde_json::Value, RustAIError>;
+        async fn get_request_status(&self, request_id: &str) -> Result<serde_json::Value, RustAIError>;
 
         async fn cancel_request(&self, request_id: &str) -> Result<(), RustAIError>;
     }
@@ -637,10 +614,7 @@ pub mod ai_orchestrator {
             self.submit_request(context, payload).await
         }
 
-        async fn get_request_status(
-            &self,
-            _request_id: &str,
-        ) -> Result<serde_json::Value, RustAIError> {
+        async fn get_request_status(&self, _request_id: &str) -> Result<serde_json::Value, RustAIError> {
             // Placeholder implementation
             Ok(serde_json::json!({
                 "status": "processing",
@@ -660,8 +634,9 @@ pub use ai_orchestrator::*;
 /// Module initialization function for Tauri integration
 #[cfg(feature = "tauri")]
 pub mod tauri_integration {
-    use super::*;
     use tauri::State;
+
+    use super::*;
 
     type OrchestratorState = Arc<Mutex<Option<AIOrchestrator>>>;
 
@@ -674,7 +649,7 @@ pub mod tauri_integration {
 
         // Register sample services
         let local_provider = Arc::new(LocalAIServiceProvider {
-            name: "local-ai-service",
+            name:      "local-ai-service",
             mock_mode: true,
         });
         orchestrator.register_service(local_provider).await?;
@@ -719,9 +694,7 @@ pub mod tauri_integration {
 
     /// Health check command
     #[tauri::command]
-    pub async fn get_orchestrator_health(
-        state: State<'_, OrchestratorState>,
-    ) -> Result<serde_json::Value, String> {
+    pub async fn get_orchestrator_health(state: State<'_, OrchestratorState>) -> Result<serde_json::Value, String> {
         let state_guard = state.lock().await;
         let orchestrator = state_guard.as_ref().ok_or("Orchestrator not initialized")?;
 
@@ -749,7 +722,7 @@ mod tests {
         let orchestrator = AIOrchestrator::new(config).await.unwrap();
 
         let provider = Arc::new(LocalAIServiceProvider {
-            name: "test-service",
+            name:      "test-service",
             mock_mode: true,
         });
 
@@ -767,7 +740,7 @@ mod tests {
 
         // Register a service
         let provider = Arc::new(LocalAIServiceProvider {
-            name: "test-service",
+            name:      "test-service",
             mock_mode: true,
         });
         orchestrator.register_service(provider).await.unwrap();

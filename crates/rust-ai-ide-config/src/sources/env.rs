@@ -3,9 +3,10 @@
 //! Loads configuration from environment variables with the secure RUST_AI_IDE_ prefix
 //! and automatic type conversion with security validation.
 
-use async_trait::async_trait;
 use std::collections::HashMap;
 use std::env;
+
+use async_trait::async_trait;
 
 use super::ConfigSource;
 use crate::config::ConfigSourcePriority;
@@ -14,7 +15,7 @@ use crate::config::ConfigSourcePriority;
 #[derive(Debug, Clone)]
 pub struct EnvironmentSource {
     /// Environment variable prefix (defaults to "RUST_AI_IDE_")
-    prefix: String,
+    prefix:             String,
     /// Security validator
     security_validator: std::sync::Arc<crate::SecurityValidator>,
 }
@@ -23,7 +24,7 @@ impl EnvironmentSource {
     /// Create new environment source with default prefix
     pub fn new() -> Self {
         Self {
-            prefix: "RUST_AI_IDE_".to_string(),
+            prefix:             "RUST_AI_IDE_".to_string(),
             security_validator: std::sync::Arc::new(crate::SecurityValidator::new(
                 crate::config::SecurityLevel::High,
             )),

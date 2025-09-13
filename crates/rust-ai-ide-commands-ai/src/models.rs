@@ -1,33 +1,32 @@
-/*!
-# AI Models Management Module
+//! # AI Models Management Module
+//!
+//! This module provides AI model management commands for the Rust AI IDE.
+//! It handles model discovery, loading, unloading, and status monitoring with
+//! integration to the AI service layer and LSP service.
+//!
+//! ## Features
+//!
+//! - Available model discovery and listing
+//! - Model loading and unloading operations
+//! - Model status monitoring and health checks
+//! - Resource management for model instances
+//! - Async operations with proper concurrency handling
+//!
+//! ## Integration Points
+//!
+//! This module integrates with:
+//! - AIService for AI operations
+//! - LSP service for model requests (direct access forbidden)
+//! - Model versioning system
+//! - Resource monitoring and allocation
+//! - EventBus for async communication
+//! - Caching for model metadata
 
-This module provides AI model management commands for the Rust AI IDE.
-It handles model discovery, loading, unloading, and status monitoring with
-integration to the AI service layer and LSP service.
-
-## Features
-
-- Available model discovery and listing
-- Model loading and unloading operations
-- Model status monitoring and health checks
-- Resource management for model instances
-- Async operations with proper concurrency handling
-
-## Integration Points
-
-This module integrates with:
-- AIService for AI operations
-- LSP service for model requests (direct access forbidden)
-- Model versioning system
-- Resource monitoring and allocation
-- EventBus for async communication
-- Caching for model metadata
-*/
+use std::collections::{HashMap, VecDeque};
+use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::collections::{HashMap, VecDeque};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 
 // Re-export common types
@@ -38,14 +37,14 @@ use super::services::{AIError, AIResult, AIService};
 /// Model information structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelInfo {
-    pub id: String,
-    pub name: String,
-    pub version: String,
-    pub model_type: String, // "codegen", "analysis", "embedding", etc.
-    pub size_bytes: u64,
-    pub capabilities: Vec<String>,
+    pub id:                String,
+    pub name:              String,
+    pub version:           String,
+    pub model_type:        String, // "codegen", "analysis", "embedding", etc.
+    pub size_bytes:        u64,
+    pub capabilities:      Vec<String>,
     pub minimum_memory_mb: u64,
-    pub status: ModelStatus,
+    pub status:            ModelStatus,
 }
 
 /// Model status enumeration
@@ -61,43 +60,43 @@ pub enum ModelStatus {
 /// Model load request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LoadModelRequest {
-    pub model_id: String,
-    pub priority: i32,
+    pub model_id:     String,
+    pub priority:     i32,
     pub force_reload: bool,
 }
 
 /// Model unload request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UnloadModelRequest {
-    pub model_id: String,
+    pub model_id:          String,
     pub graceful_shutdown: bool,
 }
 
 /// Model resources information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelResources {
-    pub model_id: String,
-    pub memory_usage_mb: u64,
+    pub model_id:          String,
+    pub memory_usage_mb:   u64,
     pub gpu_usage_percent: Option<f64>,
-    pub load_time_ms: u64,
-    pub last_used: u64,
+    pub load_time_ms:      u64,
+    pub last_used:         u64,
 }
 
 /// Models list response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelsList {
     pub available_models: Vec<ModelInfo>,
-    pub loaded_models: Vec<String>,
+    pub loaded_models:    Vec<String>,
     pub system_resources: SystemResources,
 }
 
 /// System resources information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemResources {
-    pub total_memory_mb: u64,
+    pub total_memory_mb:     u64,
     pub available_memory_mb: u64,
-    pub gpu_available: bool,
-    pub gpu_memory_mb: Option<u64>,
+    pub gpu_available:       bool,
+    pub gpu_memory_mb:       Option<u64>,
 }
 
 /// Error types specific to model operations
@@ -128,34 +127,34 @@ pub enum ModelError {
 #[derive(serde::Serialize)]
 pub struct ModelErrorWrapper {
     pub message: String,
-    pub code: String,
+    pub code:    String,
 }
 
 impl From<&ModelError> for ModelErrorWrapper {
     fn from(error: &ModelError) -> Self {
         Self {
             message: error.to_string(),
-            code: "MODEL_ERROR".to_string(),
+            code:    "MODEL_ERROR".to_string(),
         }
     }
 }
 
 /// AI Model Manager
 pub struct ModelManager {
-    ai_service: Arc<RwLock<AIService>>,
+    ai_service:     Arc<RwLock<AIService>>,
     model_registry: Arc<RwLock<HashMap<String, ModelInfo>>>,
-    loaded_models: Arc<RwLock<HashMap<String, ModelResources>>>,
-    load_queue: Arc<RwLock<VecDeque<LoadModelRequest>>>,
+    loaded_models:  Arc<RwLock<HashMap<String, ModelResources>>>,
+    load_queue:     Arc<RwLock<VecDeque<LoadModelRequest>>>,
 }
 
 impl ModelManager {
     /// Create a new model manager
     pub async fn new() -> AIResult<Self> {
         let mut manager = Self {
-            ai_service: Arc::new(RwLock::new(AIService::new().await?)),
+            ai_service:     Arc::new(RwLock::new(AIService::new().await?)),
             model_registry: Arc::new(RwLock::new(HashMap::new())),
-            loaded_models: Arc::new(RwLock::new(HashMap::new())),
-            load_queue: Arc::new(RwLock::new(VecDeque::new())),
+            loaded_models:  Arc::new(RwLock::new(HashMap::new())),
+            load_queue:     Arc::new(RwLock::new(VecDeque::new())),
         };
 
         manager.initialize_models().await?;
@@ -169,32 +168,32 @@ impl ModelManager {
 
         let models = vec![
             ModelInfo {
-                id: "rust-codegen-1.0".to_string(),
-                name: "Rust Code Generation Model v1.0".to_string(),
-                version: "1.0.0".to_string(),
-                model_type: "codegen".to_string(),
-                size_bytes: 1024 * 1024 * 1024, // 1GB
-                capabilities: vec![
+                id:                "rust-codegen-1.0".to_string(),
+                name:              "Rust Code Generation Model v1.0".to_string(),
+                version:           "1.0.0".to_string(),
+                model_type:        "codegen".to_string(),
+                size_bytes:        1024 * 1024 * 1024, // 1GB
+                capabilities:      vec![
                     "code_completion".to_string(),
                     "function_generation".to_string(),
                     "test_generation".to_string(),
                 ],
                 minimum_memory_mb: 2048,
-                status: ModelStatus::Available,
+                status:            ModelStatus::Available,
             },
             ModelInfo {
-                id: "multi-analyzer-1.0".to_string(),
-                name: "Multi-Language Analysis Model v1.0".to_string(),
-                version: "1.0.0".to_string(),
-                model_type: "analysis".to_string(),
-                size_bytes: 512 * 1024 * 1024, // 512MB
-                capabilities: vec![
+                id:                "multi-analyzer-1.0".to_string(),
+                name:              "Multi-Language Analysis Model v1.0".to_string(),
+                version:           "1.0.0".to_string(),
+                model_type:        "analysis".to_string(),
+                size_bytes:        512 * 1024 * 1024, // 512MB
+                capabilities:      vec![
                     "code_analysis".to_string(),
                     "quality_assessment".to_string(),
                     "performance_analysis".to_string(),
                 ],
                 minimum_memory_mb: 1024,
-                status: ModelStatus::Available,
+                status:            ModelStatus::Available,
             },
         ];
 
@@ -217,10 +216,10 @@ impl ModelManager {
 
         // Placeholder system resources
         let system_resources = SystemResources {
-            total_memory_mb: 8192,
+            total_memory_mb:     8192,
             available_memory_mb: 6144,
-            gpu_available: false,
-            gpu_memory_mb: None,
+            gpu_available:       false,
+            gpu_memory_mb:       None,
         };
 
         Ok(ModelsList {
@@ -274,11 +273,11 @@ impl ModelManager {
 
             // Add to loaded models
             let resources = ModelResources {
-                model_id: request.model_id.clone(),
-                memory_usage_mb: model.minimum_memory_mb,
+                model_id:          request.model_id.clone(),
+                memory_usage_mb:   model.minimum_memory_mb,
                 gpu_usage_percent: None,
-                load_time_ms: 100,
-                last_used: std::time::SystemTime::now()
+                load_time_ms:      100,
+                last_used:         std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap()
                     .as_secs(),
@@ -451,8 +450,8 @@ mod tests {
         let manager = ModelManager::new().await.unwrap();
 
         let request = LoadModelRequest {
-            model_id: "rust-codegen-1.0".to_string(),
-            priority: 1,
+            model_id:     "rust-codegen-1.0".to_string(),
+            priority:     1,
             force_reload: false,
         };
 
@@ -469,8 +468,8 @@ mod tests {
         let manager = ModelManager::new().await.unwrap();
 
         let request = LoadModelRequest {
-            model_id: "non-existent-model".to_string(),
-            priority: 1,
+            model_id:     "non-existent-model".to_string(),
+            priority:     1,
             force_reload: false,
         };
 

@@ -3,16 +3,16 @@
 //! This module provides a unified logging interface that implements the `UnifiedLogger` trait
 //! and integrates with the rest of the application's logging infrastructure.
 
-use crate::logging::{
-    LogContext, LogLevel, LoggingError, LoggingManager, UnifiedLogger as UnifiedLoggerTrait,
-};
-use async_trait::async_trait;
 use std::sync::Arc;
+
+use async_trait::async_trait;
+
+use crate::logging::{LogContext, LogLevel, LoggingError, LoggingManager, UnifiedLogger as UnifiedLoggerTrait};
 
 /// Main implementation of the UnifiedLogger trait
 #[derive(Clone, Debug)]
 pub struct UnifiedLogger {
-    inner: Arc<LoggingManager>,
+    inner:   Arc<LoggingManager>,
     context: LogContext,
 }
 
@@ -20,7 +20,7 @@ impl UnifiedLogger {
     /// Create a new instance of the unified logger
     pub fn new(component: &str) -> Self {
         Self {
-            inner: Arc::new(LoggingManager::new()),
+            inner:   Arc::new(LoggingManager::new()),
             context: LogContext {
                 component: component.to_string(),
                 ..Default::default()
@@ -124,11 +124,10 @@ impl UnifiedLoggerTrait for UnifiedLogger {
     ) -> Result<(), LoggingError> {
         match context {
             Some(ctx) => self.inner.log(level, message, Some(&ctx.clone())).await,
-            None => {
+            None =>
                 self.inner
                     .log(level, message, Some(&self.context.clone()))
-                    .await
-            }
+                    .await,
         }
     }
 
@@ -161,12 +160,12 @@ impl UnifiedLoggerTrait for UnifiedLogger {
 pub trait LoggableError: std::error::Error {
     fn to_log_context(&self) -> LogContext {
         LogContext {
-            operation: "error".to_string(),
-            user_id: None,
+            operation:  "error".to_string(),
+            user_id:    None,
             session_id: None,
             request_id: None,
-            component: "error".to_string(),
-            metadata: [
+            component:  "error".to_string(),
+            metadata:   [
                 ("error_type".to_string(), self.to_string().into()),
                 ("source".to_string(), format!("{:?}", self.source()).into()),
             ]
@@ -214,9 +213,10 @@ macro_rules! log_with_ctx {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_unified_logger() {

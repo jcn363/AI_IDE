@@ -1,10 +1,10 @@
-use crate::types::*;
 use std::path::Path;
+
+use crate::types::*;
 
 /// Utility functions for refactoring operations
 pub struct RefactoringUtils;
 ///// Range indexing normalization utilities
-///
 /// The frontend uses 1-based line indices (like most editors) while the backend
 /// uses 0-based indices (like most programming languages). Character positions
 /// are always 0-based. These utilities provide consistent conversion.
@@ -14,20 +14,20 @@ impl RangeNormalizer {
     /// Convert frontend range (1-based lines, 0-based chars) to backend format (0-based)
     pub fn frontend_to_backend(range: &CodeRange) -> CodeRange {
         CodeRange {
-            start_line: (range.start_line as isize).saturating_sub(1) as usize,
+            start_line:      (range.start_line as isize).saturating_sub(1) as usize,
             start_character: range.start_character, // Already 0-based
-            end_line: (range.end_line as isize).saturating_sub(1) as usize,
-            end_character: range.end_character, // Already 0-based
+            end_line:        (range.end_line as isize).saturating_sub(1) as usize,
+            end_character:   range.end_character, // Already 0-based
         }
     }
 
     /// Convert backend range (0-based) to frontend format (1-based lines, 0-based chars)
     pub fn backend_to_frontend(range: &CodeRange) -> CodeRange {
         CodeRange {
-            start_line: range.start_line + 1,
+            start_line:      range.start_line + 1,
             start_character: range.start_character, // Already 0-based
-            end_line: range.end_line + 1,
-            end_character: range.end_character, // Already 0-based
+            end_line:        range.end_line + 1,
+            end_character:   range.end_character, // Already 0-based
         }
     }
 
@@ -74,10 +74,10 @@ impl RangeNormalizer {
             };
 
             return CodeRange {
-                start_line: range.start_line,
+                start_line:      range.start_line,
                 start_character: range.start_character,
-                end_line: clamped_end_line,
-                end_character: clamped_end_char,
+                end_line:        clamped_end_line,
+                end_character:   clamped_end_char,
             };
         }
 
@@ -152,9 +152,7 @@ impl RefactoringUtils {
             ),
             "typescript" | "javascript" => matches!(
                 refactoring_type,
-                RefactoringType::Rename
-                    | RefactoringType::ExtractFunction
-                    | RefactoringType::ExtractVariable
+                RefactoringType::Rename | RefactoringType::ExtractFunction | RefactoringType::ExtractVariable
             ),
             "python" => matches!(
                 refactoring_type,
@@ -162,9 +160,7 @@ impl RefactoringUtils {
             ),
             "java" => matches!(
                 refactoring_type,
-                RefactoringType::Rename
-                    | RefactoringType::ExtractFunction
-                    | RefactoringType::ExtractVariable
+                RefactoringType::Rename | RefactoringType::ExtractFunction | RefactoringType::ExtractVariable
             ),
             "cpp" | "c" => matches!(refactoring_type, RefactoringType::Rename),
             _ => false, // Unknown language - default to unsupported
@@ -208,7 +204,7 @@ impl RefactoringUtils {
             let new_line = new_lines.get(i);
 
             match (old_line, new_line) {
-                (Some(old), Some(new)) => {
+                (Some(old), Some(new)) =>
                     if old != new {
                         diff.push(DiffLine {
                             line_number: i + 1,
@@ -216,8 +212,7 @@ impl RefactoringUtils {
                             old_content: Some(old.to_string()),
                             new_content: Some(new.to_string()),
                         });
-                    }
-                }
+                    },
                 (Some(old), None) => {
                     diff.push(DiffLine {
                         line_number: i + 1,
@@ -242,10 +237,7 @@ impl RefactoringUtils {
     }
 
     /// Apply changes to string content with proper range normalization
-    pub fn apply_changes_to_content(
-        original_content: &str,
-        changes: &[CodeChange],
-    ) -> Result<String, String> {
+    pub fn apply_changes_to_content(original_content: &str, changes: &[CodeChange]) -> Result<String, String> {
         let mut lines: Vec<String> = original_content.lines().map(|s| s.to_string()).collect();
         let mut offset = 0;
 
@@ -262,11 +254,8 @@ impl RefactoringUtils {
                 &normalized_range,
                 &format!("CodeChange for {}", change.file_path),
             )?;
-            let clamped_range = RangeNormalizer::clamp_to_file_bounds(
-                &normalized_range,
-                lines.len(),
-                &original_content,
-            );
+            let clamped_range =
+                RangeNormalizer::clamp_to_file_bounds(&normalized_range, lines.len(), &original_content);
 
             // Apply offset to handle previous changes
             let start_line = (clamped_range.start_line as isize + offset) as usize;
@@ -281,10 +270,8 @@ impl RefactoringUtils {
                 if end_line == start_line {
                     // Single line replacement - use UTF-8 safe byte offsets
                     let line = &lines[start_line];
-                    let start_byte =
-                        Self::char_to_byte_idx(line, change.range.start_character as usize);
-                    let end_byte =
-                        Self::char_to_byte_idx(line, change.range.end_character as usize);
+                    let start_byte = Self::char_to_byte_idx(line, change.range.start_character as usize);
+                    let end_byte = Self::char_to_byte_idx(line, change.range.end_character as usize);
                     let before = &line[..start_byte];
                     let after = &line[end_byte..];
                     lines[start_line] = format!("{}{}{}", before, change.new_text, after);
@@ -334,10 +321,8 @@ impl RefactoringUtils {
                 if end_line == start_line {
                     // Delete part of a line - use UTF-8 safe byte offsets
                     let line = &lines[start_line];
-                    let start_byte =
-                        Self::char_to_byte_idx(line, change.range.start_character as usize);
-                    let end_byte =
-                        Self::char_to_byte_idx(line, change.range.end_character as usize);
+                    let start_byte = Self::char_to_byte_idx(line, change.range.start_character as usize);
+                    let end_byte = Self::char_to_byte_idx(line, change.range.end_character as usize);
                     let before = &line[..start_byte];
                     let after = &line[end_byte..];
                     lines[start_line] = format!("{}{}", before, after);
@@ -346,10 +331,8 @@ impl RefactoringUtils {
                     let first_line = &lines[start_line];
                     let last_line = &lines[end_line];
 
-                    let first_part_byte =
-                        Self::char_to_byte_idx(first_line, change.range.start_character as usize);
-                    let last_part_byte =
-                        Self::char_to_byte_idx(last_line, change.range.end_character as usize);
+                    let first_part_byte = Self::char_to_byte_idx(first_line, change.range.start_character as usize);
+                    let last_part_byte = Self::char_to_byte_idx(last_line, change.range.end_character as usize);
 
                     let first_part = &first_line[..first_part_byte];
                     let last_part = &last_line[last_part_byte..];
@@ -380,15 +363,11 @@ impl RefactoringUtils {
     /// Validate refactoring options
     pub fn validate_refactoring_options(options: &RefactoringOptions) -> Result<(), String> {
         if options.generate_tests && !options.preserve_references {
-            return Err(
-                "Cannot generate tests while preserving references is disabled".to_string(),
-            );
+            return Err("Cannot generate tests while preserving references is disabled".to_string());
         }
 
         if options.apply_to_all_occurrences && options.ignore_safe_operations {
-            return Err(
-                "Applying to all occurrences conflicts with ignoring safe operations".to_string(),
-            );
+            return Err("Applying to all occurrences conflicts with ignoring safe operations".to_string());
         }
 
         Ok(())
@@ -421,39 +400,40 @@ impl BackupManager {
         context: &RefactoringContext,
         result: &RefactoringResult,
     ) -> Result<String, String> {
-        use serde::{Deserialize, Serialize};
         use std::time::{SystemTime, UNIX_EPOCH};
+
+        use serde::{Deserialize, Serialize};
 
         #[derive(Debug, Serialize, Deserialize)]
         struct BackupManifest {
             /// Unique backup identifier
-            backup_id: String,
+            backup_id:             String,
             /// Timestamp of backup creation
-            timestamp: String,
+            timestamp:             String,
             /// Original file path
-            original_file_path: String,
+            original_file_path:    String,
             /// Operation type that was executed
-            operation_type: String,
+            operation_type:        String,
             /// Hash of the original content before changes
             original_content_hash: String,
             /// Planned changes that were applied
-            planned_changes: Vec<ChangeSummary>,
+            planned_changes:       Vec<ChangeSummary>,
             /// Hash of the resulting content after changes
-            result_content_hash: String,
+            result_content_hash:   String,
             /// Whether the operation was successful
-            success: bool,
+            success:               bool,
             /// Context information for recreate capability
-            context_snapshot: ContextSnapshot,
+            context_snapshot:      ContextSnapshot,
         }
 
         #[derive(Debug, Serialize, Deserialize)]
         struct ChangeSummary {
             /// Unique change identifier
-            change_id: String,
+            change_id:        String,
             /// Type of change (Insertion, Replacement, Deletion)
-            change_type: String,
+            change_type:      String,
             /// Target range in the file
-            range: BackupCodeRange,
+            range:            BackupCodeRange,
             /// Hash of the old content (if any)
             old_content_hash: Option<String>,
             /// Hash of the new content (if any)
@@ -462,16 +442,16 @@ impl BackupManager {
 
         #[derive(Debug, Serialize, Deserialize)]
         struct BackupCodeRange {
-            start_line: usize,
+            start_line:      usize,
             start_character: usize,
-            end_line: usize,
-            end_character: usize,
+            end_line:        usize,
+            end_character:   usize,
         }
 
         #[derive(Debug, Serialize, Deserialize)]
         struct ContextSnapshot {
-            symbol_name: Option<String>,
-            symbol_kind: Option<String>,
+            symbol_name:     Option<String>,
+            symbol_kind:     Option<String>,
             cursor_position: Option<(usize, usize)>,
             selection_range: Option<BackupCodeRange>,
         }
@@ -495,10 +475,10 @@ impl BackupManager {
                     change_id,
                     change_type: format!("{:?}", change.change_type),
                     range: BackupCodeRange {
-                        start_line: change.range.start_line,
+                        start_line:      change.range.start_line,
                         start_character: change.range.start_character,
-                        end_line: change.range.end_line,
-                        end_character: change.range.end_character,
+                        end_line:        change.range.end_line,
+                        end_character:   change.range.end_character,
                     },
                     old_content_hash: if change.old_text.is_empty() {
                         None
@@ -520,17 +500,17 @@ impl BackupManager {
 
         // Create context snapshot
         let context_snapshot = ContextSnapshot {
-            symbol_name: context.symbol_name.clone(),
-            symbol_kind: context.symbol_kind.clone().map(|k| format!("{:?}", k)),
+            symbol_name:     context.symbol_name.clone(),
+            symbol_kind:     context.symbol_kind.clone().map(|k| format!("{:?}", k)),
             cursor_position: Some((
                 context.cursor_line as usize,
                 context.cursor_character as usize,
             )),
             selection_range: context.selection.clone().map(|sel| BackupCodeRange {
-                start_line: sel.start_line,
+                start_line:      sel.start_line,
                 start_character: sel.start_character,
-                end_line: sel.end_line,
-                end_character: sel.end_character,
+                end_line:        sel.end_line,
+                end_character:   sel.end_character,
             }),
         };
 
@@ -577,6 +557,7 @@ impl BackupManager {
         changes: &[CodeChange],
     ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
         use std::time::{SystemTime, UNIX_EPOCH};
+
         use tokio::fs;
 
         let timestamp = SystemTime::now()
@@ -620,6 +601,7 @@ impl BackupManager {
         max_age_days: u32,
     ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
         use std::time::SystemTime;
+
         use tokio::fs;
 
         if !Path::new(&self.backup_dir).exists() {
@@ -652,8 +634,7 @@ impl BackupManager {
     ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
         use tokio::fs;
 
-        let manifest_path =
-            Path::new(&self.backup_dir).join(format!("{}.manifest.json", backup_id));
+        let manifest_path = Path::new(&self.backup_dir).join(format!("{}.manifest.json", backup_id));
 
         fs::write(&manifest_path, manifest_json).await?;
         println!("Saved backup manifest to: {}", manifest_path.display());
@@ -711,17 +692,16 @@ impl BackupManager {
         // Parse manifest JSON
         #[derive(Debug, serde::Deserialize)]
         struct BackupManifest {
-            backup_id: String,
+            backup_id:          String,
             original_file_path: String,
-            planned_changes: Vec<serde::de::IgnoredAny>,
+            planned_changes:    Vec<serde::de::IgnoredAny>,
         }
 
-        let manifest: BackupManifest = serde_json::from_str(&manifest_content)
-            .map_err(|e| format!("Failed to parse backup manifest: {}", e))?;
+        let manifest: BackupManifest =
+            serde_json::from_str(&manifest_content).map_err(|e| format!("Failed to parse backup manifest: {}", e))?;
 
         // Find corresponding backup file
-        let backup_file =
-            Path::new(&self.backup_dir).join(format!("{}.backup", manifest.backup_id));
+        let backup_file = Path::new(&self.backup_dir).join(format!("{}.backup", manifest.backup_id));
 
         if !backup_file.exists() {
             return Err(format!("Backup file not found: {}", backup_file.display()).into());
@@ -744,6 +724,7 @@ impl BackupManager {
         &self,
     ) -> Result<Vec<(String, String)>, Box<dyn std::error::Error + Send + Sync>> {
         use std::time::SystemTime;
+
         use tokio::fs;
 
         let mut manifests = Vec::new();

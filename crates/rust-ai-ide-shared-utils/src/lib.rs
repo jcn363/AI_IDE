@@ -22,8 +22,9 @@ use std::path::Path;
 ///
 /// # Examples
 /// ```
-/// use rust_ai_ide_shared_utils::get_extension;
 /// use std::path::Path;
+///
+/// use rust_ai_ide_shared_utils::get_extension;
 ///
 /// let path = Path::new("file.rs");
 /// assert_eq!(get_extension(path), Some("rs"));
@@ -52,8 +53,9 @@ pub fn get_extension(path: &Path) -> Option<&str> {
 ///
 /// # Examples
 /// ```
-/// use rust_ai_ide_shared_utils::is_code_file;
 /// use std::path::Path;
+///
+/// use rust_ai_ide_shared_utils::is_code_file;
 ///
 /// let rust_file = Path::new("main.rs");
 /// assert!(is_code_file(rust_file));
@@ -166,7 +168,8 @@ pub fn relative_path(base: &Path, target: &Path) -> Option<String> {
 /// * `path` - Path to the file
 ///
 /// # Returns
-/// `Some(u64)` containing file size in bytes, or `None` if path is not a file or metadata cannot be read
+/// `Some(u64)` containing file size in bytes, or `None` if path is not a file or metadata cannot be
+/// read
 #[must_use]
 pub fn get_file_size(path: &Path) -> Option<u64> {
     path.metadata().ok()?.len().into()
@@ -190,8 +193,9 @@ pub fn is_readable(path: &Path) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::path::Path;
+
+    use super::*;
 
     #[test]
     fn test_get_extension() {

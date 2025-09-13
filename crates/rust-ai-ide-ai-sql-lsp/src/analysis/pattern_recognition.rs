@@ -6,28 +6,29 @@
 //! - Historical pattern analysis and trend detection
 //! - Similarity-based pattern matching
 
-use chrono::{DateTime, Duration, Utc};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use chrono::{DateTime, Duration, Utc};
 use tokio::sync::RwLock;
 
 use crate::{
-    AIEnhancedResult, ComplexityLevel, PatternEvolution, PatternRecognitionEngine, PatternTrend,
-    PerformanceMetric, QueryPatternAnalysis, QueryPatternType, SimilarPattern, TrendDirection,
+    AIEnhancedResult, ComplexityLevel, PatternEvolution, PatternRecognitionEngine, PatternTrend, PerformanceMetric,
+    QueryPatternAnalysis, QueryPatternType, SimilarPattern, TrendDirection,
 };
 
 /// Machine learning-powered pattern recognition engine
 pub struct MLPatternRecognitionEngine {
     /// Trained classifiers for different pattern types
-    classifiers: HashMap<String, Arc<QueryPatternClassifier>>,
+    classifiers:          HashMap<String, Arc<QueryPatternClassifier>>,
     /// Historical pattern database for similarity matching
-    pattern_database: Arc<RwLock<HashMap<String, QueryPatternRecord>>>,
+    pattern_database:     Arc<RwLock<HashMap<String, QueryPatternRecord>>>,
     /// ML models for complexity assessment
     complexity_assessors: HashMap<String, Arc<QueryComplexityAssessor>>,
     /// Trend analysis engine
-    trend_analyzer: Arc<RwLock<PatternTrendAnalyzer>>,
+    trend_analyzer:       Arc<RwLock<PatternTrendAnalyzer>>,
     /// Configuration settings
-    config: PatternRecognitionConfig,
+    config:               PatternRecognitionConfig,
 }
 
 /// Configuration for pattern recognition engine
@@ -38,11 +39,11 @@ pub struct PatternRecognitionConfig {
     /// Minimum similarity threshold for pattern matching
     pub min_similarity_threshold: f32,
     /// Maximum patterns to analyze for similarity
-    pub max_similarity_search: usize,
+    pub max_similarity_search:    usize,
     /// Enable real-time trend analysis
-    pub enable_trend_analysis: bool,
+    pub enable_trend_analysis:    bool,
     /// Historical data window for trend analysis
-    pub trend_window_days: i64,
+    pub trend_window_days:        i64,
     /// Model update frequency in milliseconds
     pub model_update_interval_ms: u64,
 }
@@ -50,89 +51,89 @@ pub struct PatternRecognitionConfig {
 /// Trained classifier for specific query pattern types
 pub struct QueryPatternClassifier {
     /// Classifier name
-    name: String,
+    name:              String,
     /// ML model for classification (placeholder for actual ML model)
-    model: Arc<RwLock<ClassificationModel>>,
+    model:             Arc<RwLock<ClassificationModel>>,
     /// Feature extractor for this pattern type
     feature_extractor: Arc<QueryFeatureExtractor>,
     /// Training data size
-    training_size: usize,
+    training_size:     usize,
     /// Model accuracy on validation set
-    accuracy_score: f32,
+    accuracy_score:    f32,
 }
 
 /// Machine learning model for pattern classification
 pub struct ClassificationModel {
     /// Model type (e.g., RandomForest, SVM, NeuralNetwork)
-    model_type: String,
+    model_type:          String,
     /// Model parameters
-    parameters: HashMap<String, f32>,
+    parameters:          HashMap<String, f32>,
     /// Training accuracy
-    training_accuracy: f32,
+    training_accuracy:   f32,
     /// Validation accuracy
     validation_accuracy: f32,
     /// Model creation timestamp
-    created_at: DateTime<Utc>,
+    created_at:          DateTime<Utc>,
 }
 
 /// Feature extractor for SQL query patterns
 pub struct QueryFeatureExtractor {
     /// Extractor name
-    name: String,
+    name:            String,
     /// Supported query types
     supported_types: Vec<String>,
     /// Feature configuration
-    feature_config: FeatureExtractionConfig,
+    feature_config:  FeatureExtractionConfig,
 }
 
 /// Feature extraction configuration
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FeatureExtractionConfig {
     /// Include AST structure features
-    pub include_ast_features: bool,
+    pub include_ast_features:      bool,
     /// Include token frequency features
-    pub include_token_features: bool,
+    pub include_token_features:    bool,
     /// Include semantic features
     pub include_semantic_features: bool,
     /// Include context features
-    pub include_context_features: bool,
+    pub include_context_features:  bool,
     /// Maximum feature vector length
-    pub max_feature_length: usize,
+    pub max_feature_length:        usize,
 }
 
 /// Historical record of query patterns for similarity matching
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct QueryPatternRecord {
     /// Unique pattern identifier
-    pub pattern_id: String,
+    pub pattern_id:          String,
     /// Pattern type classification
-    pub pattern_type: QueryPatternType,
+    pub pattern_type:        QueryPatternType,
     /// Original query text (anonymized for privacy)
-    pub query_hash: String,
+    pub query_hash:          String,
     /// Pattern features vector (for similarity comparison)
-    pub feature_vector: Vec<f32>,
+    pub feature_vector:      Vec<f32>,
     /// Usage frequency
-    pub usage_count: usize,
+    pub usage_count:         usize,
     /// Performance metrics aggregated
     pub performance_metrics: Vec<PerformanceMetric>,
     /// First seen timestamp
-    pub first_seen: DateTime<Utc>,
+    pub first_seen:          DateTime<Utc>,
     /// Last seen timestamp
-    pub last_seen: DateTime<Utc>,
+    pub last_seen:           DateTime<Utc>,
     /// Classification confidence
-    pub confidence_score: f32,
+    pub confidence_score:    f32,
     /// Complexity level
-    pub complexity_level: ComplexityLevel,
+    pub complexity_level:    ComplexityLevel,
 }
 
 /// Query complexity assessment model
 pub struct QueryComplexityAssessor {
     /// Assessor name
-    name: String,
+    name:                  String,
     /// ML model for complexity prediction
-    model: Arc<RwLock<RegressionModel>>,
+    model:                 Arc<RwLock<RegressionModel>>,
     /// Feature weights
-    feature_weights: HashMap<String, f32>,
+    feature_weights:       HashMap<String, f32>,
     /// Complexity thresholds
     complexity_thresholds: HashMap<ComplexityLevel, f32>,
 }
@@ -140,38 +141,38 @@ pub struct QueryComplexityAssessor {
 /// Regression model for numerical predictions
 pub struct RegressionModel {
     /// Model type
-    model_type: String,
+    model_type:   String,
     /// Model coefficients
     coefficients: Vec<f32>,
     /// Intercept/bias term
-    bias: f32,
+    bias:         f32,
     /// Model score (e.g., R²)
-    score: f32,
+    score:        f32,
     /// Cross-validation score
-    cv_score: f32,
+    cv_score:     f32,
 }
 
 /// Trend analysis engine for pattern evolution
 pub struct PatternTrendAnalyzer {
     /// Historical data points for trend calculation
-    trend_data: HashMap<String, Vec<TrendDataPoint>>,
+    trend_data:           HashMap<String, Vec<TrendDataPoint>>,
     /// Trend calculation window
     analysis_window_days: i64,
     /// Minimum data points required for trend analysis
-    min_data_points: usize,
+    min_data_points:      usize,
 }
 
 /// Data point for trend analysis
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct TrendDataPoint {
     /// Timestamp of the data point
-    pub timestamp: DateTime<Utc>,
+    pub timestamp:          DateTime<Utc>,
     /// Usage frequency at this timestamp
-    pub usage_count: f32,
+    pub usage_count:        f32,
     /// Average performance metric
     pub performance_metric: f32,
     /// Classification accuracy
-    pub accuracy_score: f32,
+    pub accuracy_score:     f32,
 }
 
 impl MLPatternRecognitionEngine {
@@ -189,11 +190,7 @@ impl MLPatternRecognitionEngine {
     }
 
     /// Analyze a query and recognize its patterns
-    pub async fn analyze_query(
-        &self,
-        query: &str,
-        query_hash: &str,
-    ) -> AIEnhancedResult<QueryPatternAnalysis> {
+    pub async fn analyze_query(&self, query: &str, query_hash: &str) -> AIEnhancedResult<QueryPatternAnalysis> {
         // Extract features from the query
         let feature_vector = self.extract_query_features(query).await?;
 
@@ -243,10 +240,7 @@ impl MLPatternRecognitionEngine {
     }
 
     /// Use ML classifier to determine query pattern type
-    async fn classify_query_pattern(
-        &self,
-        _feature_vector: &[f32],
-    ) -> AIEnhancedResult<(QueryPatternType, f32)> {
+    async fn classify_query_pattern(&self, _feature_vector: &[f32]) -> AIEnhancedResult<(QueryPatternType, f32)> {
         // TODO: Implement actual ML classification
         // This would use trained classifiers to predict pattern type
 
@@ -267,10 +261,7 @@ impl MLPatternRecognitionEngine {
     }
 
     /// Find similar patterns in historical database
-    async fn find_similar_patterns(
-        &self,
-        _feature_vector: &[f32],
-    ) -> AIEnhancedResult<Vec<SimilarPattern>> {
+    async fn find_similar_patterns(&self, _feature_vector: &[f32]) -> AIEnhancedResult<Vec<SimilarPattern>> {
         // TODO: Implement similarity matching
         // This would use vector similarity (cosine similarity, etc.) to find patterns
 
@@ -281,11 +272,11 @@ impl MLPatternRecognitionEngine {
             .values()
             .take(self.config.max_similarity_search.min(5))
             .map(|record| SimilarPattern {
-                pattern_id: record.pattern_id.clone(),
-                similarity_score: 0.75,
+                pattern_id:            record.pattern_id.clone(),
+                similarity_score:      0.75,
                 avg_execution_time_ms: 50,
-                success_rate: 0.95,
-                performance_metrics: vec![],
+                success_rate:          0.95,
+                performance_metrics:   vec![],
             })
             .collect();
 
@@ -293,31 +284,25 @@ impl MLPatternRecognitionEngine {
     }
 
     /// Analyze usage trends for specific pattern types
-    async fn analyze_pattern_trend(
-        &self,
-        _pattern_type: &QueryPatternType,
-    ) -> AIEnhancedResult<PatternTrend> {
+    async fn analyze_pattern_trend(&self, _pattern_type: &QueryPatternType) -> AIEnhancedResult<PatternTrend> {
         // TODO: Implement trend analysis using historical data
 
         Ok(PatternTrend {
-            trend_direction: TrendDirection::Increasing,
-            trend_strength: 0.65,
+            trend_direction:            TrendDirection::Increasing,
+            trend_strength:             0.65,
             performance_change_percent: 12.5,
-            ranking_change: 2,
-            predicted_evolution: PatternEvolution {
-                complexity_change: 0.1,
+            ranking_change:             2,
+            predicted_evolution:        PatternEvolution {
+                complexity_change:  0.1,
                 performance_change: -0.05,
-                usage_change: 0.25,
-                confidence: 0.8,
+                usage_change:       0.25,
+                confidence:         0.8,
             },
         })
     }
 
     /// Calculate frequency ranking among all patterns
-    async fn calculate_frequency_ranking(
-        &self,
-        _pattern_type: &QueryPatternType,
-    ) -> AIEnhancedResult<usize> {
+    async fn calculate_frequency_ranking(&self, _pattern_type: &QueryPatternType) -> AIEnhancedResult<usize> {
         // TODO: Implement ranking calculation based on usage statistics
 
         Ok(7) // Placeholder ranking
@@ -339,16 +324,16 @@ impl MLPatternRecognitionEngine {
                 record.last_seen = Utc::now();
             })
             .or_insert(QueryPatternRecord {
-                pattern_id: query_hash.to_string(),
-                pattern_type: QueryPatternType::SelectSimple,
-                query_hash: query_hash.to_string(),
-                feature_vector: vec![], // Would be populated with actual features
-                usage_count: 1,
+                pattern_id:          query_hash.to_string(),
+                pattern_type:        QueryPatternType::SelectSimple,
+                query_hash:          query_hash.to_string(),
+                feature_vector:      vec![], // Would be populated with actual features
+                usage_count:         1,
                 performance_metrics: vec![],
-                first_seen: Utc::now(),
-                last_seen: Utc::now(),
-                confidence_score: 0.85,
-                complexity_level: ComplexityLevel::Medium,
+                first_seen:          Utc::now(),
+                last_seen:           Utc::now(),
+                confidence_score:    0.85,
+                complexity_level:    ComplexityLevel::Medium,
             });
 
         Ok(())
@@ -401,10 +386,7 @@ impl PatternTrendAnalyzer {
     }
 
     /// Calculate trend for specific pattern
-    pub async fn calculate_trend(
-        &self,
-        pattern_id: &str,
-    ) -> AIEnhancedResult<Option<PatternTrend>> {
+    pub async fn calculate_trend(&self, pattern_id: &str) -> AIEnhancedResult<Option<PatternTrend>> {
         if let Some(data_points) = self.trend_data.get(pattern_id) {
             if data_points.len() < self.min_data_points {
                 return Ok(None);
@@ -424,15 +406,15 @@ impl PatternTrendAnalyzer {
         // Placeholder implementation
 
         PatternTrend {
-            trend_direction: TrendDirection::Increasing,
-            trend_strength: 0.7,
+            trend_direction:            TrendDirection::Increasing,
+            trend_strength:             0.7,
             performance_change_percent: 5.2,
-            ranking_change: 1,
-            predicted_evolution: PatternEvolution {
-                complexity_change: 0.05,
+            ranking_change:             1,
+            predicted_evolution:        PatternEvolution {
+                complexity_change:  0.05,
                 performance_change: -0.02,
-                usage_change: 0.15,
-                confidence: 0.75,
+                usage_change:       0.15,
+                confidence:         0.75,
             },
         }
     }
@@ -454,9 +436,9 @@ mod tests {
         let config = PatternRecognitionConfig {
             min_confidence_threshold: 0.8,
             min_similarity_threshold: 0.7,
-            max_similarity_search: 10,
-            enable_trend_analysis: true,
-            trend_window_days: 30,
+            max_similarity_search:    10,
+            enable_trend_analysis:    true,
+            trend_window_days:        30,
             model_update_interval_ms: 3600000,
         };
 
@@ -469,9 +451,9 @@ mod tests {
         let config = PatternRecognitionConfig {
             min_confidence_threshold: 0.75,
             min_similarity_threshold: 0.6,
-            max_similarity_search: 20,
-            enable_trend_analysis: true,
-            trend_window_days: 7,
+            max_similarity_search:    20,
+            enable_trend_analysis:    true,
+            trend_window_days:        7,
             model_update_interval_ms: 86400000,
         };
 
@@ -489,27 +471,21 @@ mod tests {
         let new_time = Utc::now();
 
         analyzer
-            .add_data_point(
-                "test_pattern",
-                TrendDataPoint {
-                    timestamp: old_time,
-                    usage_count: 1.0,
-                    performance_metric: 100.0,
-                    accuracy_score: 0.8,
-                },
-            )
+            .add_data_point("test_pattern", TrendDataPoint {
+                timestamp:          old_time,
+                usage_count:        1.0,
+                performance_metric: 100.0,
+                accuracy_score:     0.8,
+            })
             .await;
 
         analyzer
-            .add_data_point(
-                "test_pattern",
-                TrendDataPoint {
-                    timestamp: new_time,
-                    usage_count: 2.0,
-                    performance_metric: 95.0,
-                    accuracy_score: 0.85,
-                },
-            )
+            .add_data_point("test_pattern", TrendDataPoint {
+                timestamp:          new_time,
+                usage_count:        2.0,
+                performance_metric: 95.0,
+                accuracy_score:     0.85,
+            })
             .await;
 
         // The old data point should be cleaned up

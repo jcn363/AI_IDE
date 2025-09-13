@@ -1,15 +1,10 @@
 //! Tests for the analysis registry and its functionality
 
-use rust_ai_ide_ai::{
-    analysis::{
-        architectural::{
-            CircularDependencyAnalyzer, DependencyInversionAnalyzer, InterfaceSegregationAnalyzer,
-            LayerViolationDetector,
-        },
-        AnalysisRegistry, AnalysisResult, AnalysisType, Severity,
-    },
-    test_helpers::*,
+use rust_ai_ide_ai::analysis::architectural::{
+    CircularDependencyAnalyzer, DependencyInversionAnalyzer, InterfaceSegregationAnalyzer, LayerViolationDetector,
 };
+use rust_ai_ide_ai::analysis::{AnalysisRegistry, AnalysisResult, AnalysisType, Severity};
+use rust_ai_ide_ai::test_helpers::*;
 
 #[test]
 fn test_register_architectural_analyzers() {

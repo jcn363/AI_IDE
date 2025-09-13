@@ -3,40 +3,37 @@
 //! This module provides comprehensive benchmarking for the learning system
 //! to ensure performance requirements are met and regressions are caught.
 
-use rand::Rng;
 use std::hint::black_box;
 use std::path::Path;
 use std::time::{Duration, Instant};
-use tempfile::TempDir;
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use rand::Rng;
+use tempfile::TempDir;
 use tokio::runtime::Runtime;
 
-use super::{
-    database::LearningDatabase,
-    models::{
-        ChangeScope, ChangeTemplate, ChangeType, FixTemplate, LearnedPattern, LearningPreferences,
-        PatternSimilarity,
-    },
-    similarity::SimilarityCalculator,
-    system::LearningSystem,
-    types::{AIResult, PrivacyMode},
+use super::database::LearningDatabase;
+use super::models::{
+    ChangeScope, ChangeTemplate, ChangeType, FixTemplate, LearnedPattern, LearningPreferences, PatternSimilarity,
 };
+use super::similarity::SimilarityCalculator;
+use super::system::LearningSystem;
+use super::types::{AIResult, PrivacyMode};
 
 /// Configuration for benchmark datasets
 struct BenchmarkConfig {
-    small_dataset_size: usize,
-    medium_dataset_size: usize,
-    large_dataset_size: usize,
+    small_dataset_size:        usize,
+    medium_dataset_size:       usize,
+    large_dataset_size:        usize,
     similarity_search_queries: Vec<String>,
 }
 
 impl Default for BenchmarkConfig {
     fn default() -> Self {
         Self {
-            small_dataset_size: 100,
-            medium_dataset_size: 1_000,
-            large_dataset_size: 10_000,
+            small_dataset_size:        100,
+            medium_dataset_size:       1_000,
+            large_dataset_size:        10_000,
             similarity_search_queries: vec![
                 "borrow checker error mutable".to_string(),
                 "unused variable compilation".to_string(),
@@ -206,8 +203,7 @@ fn similarity_benchmarks(c: &mut Criterion) {
                 (context.to_string(), patterns)
             },
             |(context, patterns)| async move {
-                let similarity =
-                    SimilarityCalculator::calculate_structure_similarity(&context, &patterns);
+                let similarity = SimilarityCalculator::calculate_structure_similarity(&context, &patterns);
                 black_box(similarity);
             },
             criterion::BatchSize::SmallInput,
@@ -289,8 +285,7 @@ fn memory_benchmarks(c: &mut Criterion) {
             },
             |system| async move {
                 let pattern_count = 1000;
-                let test_patterns =
-                    generate_test_patterns(pattern_count, std::path::Path::new("."));
+                let test_patterns = generate_test_patterns(pattern_count, std::path::Path::new("."));
 
                 for (i, pattern) in test_patterns.into_iter().enumerate() {
                     system.store_pattern(&pattern).await.unwrap();
@@ -414,13 +409,13 @@ async fn setup_benchmark_system_with_data() -> (LearningSystem, TempDir) {
 
     // Configure for benchmarking
     let bench_prefs = LearningPreferences {
-        enable_learning: true,
-        privacy_mode: PrivacyMode::OptIn,
-        confidence_threshold: 0.5, // Lower threshold for benchmarks
-        max_patterns_per_type: 1000,
+        enable_learning:          true,
+        privacy_mode:             PrivacyMode::OptIn,
+        confidence_threshold:     0.5, // Lower threshold for benchmarks
+        max_patterns_per_type:    1000,
         enable_community_sharing: false,
-        use_community_patterns: false,
-        auto_apply_threshold: 0.8,
+        use_community_patterns:   false,
+        auto_apply_threshold:     0.8,
     };
 
     system
@@ -479,38 +474,38 @@ fn generate_test_pattern(index: usize, base_path: &std::path::Path) -> LearnedPa
     let context_template = contexts[index % contexts.len()];
 
     LearnedPattern {
-        id: format!("bench_pattern_{}", index),
-        description: format!("Benchmark pattern {}", index),
-        error_pattern: error_pattern.to_string(),
-        error_code: Some(format!("E0{:03}", (index % 1000))),
+        id:               format!("bench_pattern_{}", index),
+        description:      format!("Benchmark pattern {}", index),
+        error_pattern:    error_pattern.to_string(),
+        error_code:       Some(format!("E0{:03}", (index % 1000))),
         context_patterns: vec![
             format!("fn benchmark_{}() {{", index),
             format!("{}", error_pattern),
             format!("let var_{} = {};", index, index * 2),
         ],
-        fix_template: FixTemplate {
+        fix_template:     FixTemplate {
             description_template: format!("Fix for benchmark {}", index),
-            change_templates: vec![ChangeTemplate {
-                match_pattern: format!("let var_{} = {};", index, index * 2),
+            change_templates:     vec![ChangeTemplate {
+                match_pattern:       format!("let var_{} = {};", index, index * 2),
                 replacement_pattern: format!("let _var_{} = {};", index, index * 2),
-                change_type: ChangeType::Replace,
-                scope: ChangeScope::Local,
+                change_type:         ChangeType::Replace,
+                scope:               ChangeScope::Local,
             }],
-            variables: std::collections::HashMap::new(),
-            conditions: vec![],
-            warnings: vec![],
+            variables:            std::collections::HashMap::new(),
+            conditions:           vec![],
+            warnings:             vec![],
         },
-        confidence: 0.6 + (index % 40) as f32 / 100.0, // 0.6 - 1.0 range
-        success_count: (index % 20 + 1) as u32,
-        attempt_count: (index % 30 + 2) as u32,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-        context_hash: format!("bench_hash_{}", index),
-        tags: vec![
+        confidence:       0.6 + (index % 40) as f32 / 100.0, // 0.6 - 1.0 range
+        success_count:    (index % 20 + 1) as u32,
+        attempt_count:    (index % 30 + 2) as u32,
+        created_at:       Utc::now(),
+        updated_at:       Utc::now(),
+        context_hash:     format!("bench_hash_{}", index),
+        tags:             vec![
             error_pattern.split(' ').next().unwrap().to_string(),
             format!("group_{}", index / 10),
         ],
-        contributor_id: None,
+        contributor_id:   None,
     }
 }
 

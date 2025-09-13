@@ -1,28 +1,26 @@
 //! Tauri commands for plugin management
 
+use std::sync::Arc;
+
+use rust_ai_ide_common::validation::TauriInputSanitizer;
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
+use rust_ai_ide_plugins::marketplace_integration::MarketplaceIntegration;
+use rust_ai_ide_plugins::plugin_runtime::{PluginPermissions, PluginRuntime};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::time::Duration;
 
-use rust_ai_ide_common::{validation::TauriInputSanitizer, IDEError, IDEErrorKind};
-use rust_ai_ide_plugins::{
-    marketplace_integration::MarketplaceIntegration,
-    plugin_runtime::{PluginPermissions, PluginRuntime},
-};
-
 // Command template macros
 use crate::command_templates::{
-    acquire_service_and_execute, execute_with_retry, format_command_error, tauri_command_template,
-    CommandConfig,
+    acquire_service_and_execute, execute_with_retry, format_command_error, tauri_command_template, CommandConfig,
 };
 
 /// App state for plugin services
 #[derive(Clone)]
 pub struct AppState {
     pub plugin_runtime: Arc<Mutex<PluginRuntime>>,
-    pub marketplace: Arc<Mutex<MarketplaceIntegration>>,
+    pub marketplace:    Arc<Mutex<MarketplaceIntegration>>,
 }
 
 impl AppState {
@@ -45,8 +43,8 @@ pub struct ListPluginsPayload {
 /// Command payload for installing a plugin
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InstallPluginPayload {
-    pub plugin_id: String,
-    pub version: Option<String>,
+    pub plugin_id:  String,
+    pub version:    Option<String>,
     pub source_url: Option<String>,
 }
 
@@ -72,31 +70,31 @@ pub struct UninstallPluginPayload {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ExecutePluginCommandPayload {
     pub plugin_id: String,
-    pub command: String,
-    pub args: serde_json::Value,
+    pub command:   String,
+    pub args:      serde_json::Value,
 }
 
 /// Command payload for updating a plugin
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdatePluginPayload {
-    pub plugin_id: String,
+    pub plugin_id:   String,
     pub new_version: Option<String>,
 }
 
 /// Command payload for searching marketplace
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SearchMarketplacePayload {
-    pub query: String,
+    pub query:    String,
     pub category: Option<String>,
-    pub limit: Option<u32>,
+    pub limit:    Option<u32>,
 }
 
 /// Command payload for rating a plugin
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RatePluginPayload {
     pub plugin_id: String,
-    pub rating: f64,
-    pub review: String,
+    pub rating:    f64,
+    pub review:    String,
 }
 
 /// Response for plugin operations
@@ -104,14 +102,14 @@ pub struct RatePluginPayload {
 pub struct PluginOperationResponse {
     pub success: bool,
     pub message: String,
-    pub data: Option<serde_json::Value>,
+    pub data:    Option<serde_json::Value>,
 }
 
 // Command configuration
 const COMMAND_CONFIG: CommandConfig = CommandConfig {
-    enable_logging: true,
-    log_level: log::Level::Info,
-    enable_validation: true,
+    enable_logging:     true,
+    log_level:          log::Level::Info,
+    enable_validation:  true,
     async_timeout_secs: Some(30),
 };
 

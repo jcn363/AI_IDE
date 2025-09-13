@@ -3,11 +3,13 @@
 //! This module provides fine-tuning capabilities for AI models,
 //! including job management, progress tracking, and optimization.
 
-use crate::errors::IDEServiceError;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
+
+use crate::errors::IDEServiceError;
 
 /// Fine-tuning service
 pub struct FinetuneService {
@@ -17,20 +19,20 @@ pub struct FinetuneService {
 /// Fine-tuning job configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FinetuneConfig {
-    pub model_name: String,
-    pub dataset_path: String,
-    pub epochs: u32,
+    pub model_name:    String,
+    pub dataset_path:  String,
+    pub epochs:        u32,
     pub learning_rate: f32,
-    pub batch_size: u32,
+    pub batch_size:    u32,
 }
 
 /// Fine-tuning job status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FinetuneJob {
-    pub id: String,
-    pub status: JobStatus,
-    pub progress: f32,
-    pub config: FinetuneConfig,
+    pub id:         String,
+    pub status:     JobStatus,
+    pub progress:   f32,
+    pub config:     FinetuneConfig,
     pub created_at: u64,
     pub updated_at: u64,
 }
@@ -47,12 +49,12 @@ pub enum JobStatus {
 /// Fine-tuning progress information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FinetuneProgress {
-    pub job_id: String,
-    pub progress: f32,
+    pub job_id:        String,
+    pub progress:      f32,
     pub current_epoch: u32,
-    pub total_epochs: u32,
-    pub loss: Option<f32>,
-    pub accuracy: Option<f32>,
+    pub total_epochs:  u32,
+    pub loss:          Option<f32>,
+    pub accuracy:      Option<f32>,
 }
 
 impl FinetuneService {
@@ -109,7 +111,7 @@ impl FinetuneService {
             } else {
                 Err(IDEServiceError::InvalidOperation {
                     operation: "cancel_job".to_string(),
-                    reason: "Job is not cancellable".to_string(),
+                    reason:    "Job is not cancellable".to_string(),
                 })
             }
         } else {

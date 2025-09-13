@@ -3,25 +3,26 @@
 //! Provides real-time configuration reloading with atomic updates,
 //! grace period handling, and change notification delivery.
 
-use async_trait::async_trait;
-use notify::{RecommendedWatcher, RecursiveMode, Watcher};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Duration;
+
+use async_trait::async_trait;
+use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use serde::{Deserialize, Serialize};
 use tokio::sync::{broadcast, RwLock};
 
 /// Hot reload manager for configuration files
 #[derive(Debug)]
 pub struct HotReloadManager {
     /// File watcher
-    watcher: Option<RecommendedWatcher>,
+    watcher:         Option<RecommendedWatcher>,
     /// Currently watched files and their configs
-    watched_files: RwLock<HashMap<PathBuf, WatchedConfig>>,
+    watched_files:   RwLock<HashMap<PathBuf, WatchedConfig>>,
     /// Event sender for configuration changes
-    event_tx: broadcast::Sender<ReloadEvent>,
+    event_tx:        broadcast::Sender<ReloadEvent>,
     /// Configuration for hot reload behavior
-    config: HotReloadConfig,
+    config:          HotReloadConfig,
     /// Async runtime handle for file watching
     _watcher_handle: Option<tokio::task::JoinHandle<()>>,
 }
@@ -29,11 +30,11 @@ pub struct HotReloadManager {
 #[derive(Debug, Clone)]
 struct WatchedConfig {
     /// Configuration name
-    name: String,
+    name:                   String,
     /// Last modification time
-    last_modified: std::time::SystemTime,
+    last_modified:          std::time::SystemTime,
     /// File hash for change detection
-    file_hash: String,
+    file_hash:              String,
     /// Grace period remaining (for zero-downtime)
     grace_period_remaining: Duration,
 }
@@ -42,28 +43,28 @@ struct WatchedConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HotReloadConfig {
     /// Enable hot reloading
-    pub enabled: bool,
+    pub enabled:                bool,
     /// Debounce delay for file changes (milliseconds)
-    pub debounce_delay_ms: u64,
+    pub debounce_delay_ms:      u64,
     /// Grace period for zero-downtime updates (seconds)
-    pub grace_period_seconds: u64,
+    pub grace_period_seconds:   u64,
     /// Maximum number of concurrent reloads
     pub max_concurrent_reloads: usize,
     /// Watch directories recursively
-    pub recursive: bool,
+    pub recursive:              bool,
     /// Supported file extensions
-    pub file_extensions: Vec<String>,
+    pub file_extensions:        Vec<String>,
 }
 
 impl Default for HotReloadConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            debounce_delay_ms: 500,
-            grace_period_seconds: 30,
+            enabled:                true,
+            debounce_delay_ms:      500,
+            grace_period_seconds:   30,
             max_concurrent_reloads: 10,
-            recursive: true,
-            file_extensions: vec![
+            recursive:              true,
+            file_extensions:        vec![
                 "toml".to_string(),
                 "yaml".to_string(),
                 "yml".to_string(),
@@ -79,27 +80,30 @@ pub enum ReloadEvent {
     /// Configuration file changed
     ConfigChanged {
         config_name: String,
-        file_path: PathBuf,
+        file_path:   PathBuf,
         change_type: ChangeType,
     },
     /// Reload starting
     ReloadStarting {
-        config_name: String,
+        config_name:  String,
         grace_period: Duration,
     },
     /// Reload completed successfully
     ReloadCompleted {
         config_name: String,
         duration_ms: u64,
-        success: bool,
+        success:     bool,
     },
     /// Reload failed
-    ReloadFailed { config_name: String, error: String },
+    ReloadFailed {
+        config_name: String,
+        error:       String,
+    },
     /// Zero-downtime reload initiated
     ZeroDowntimeReload {
         config_name: String,
-        old_hash: String,
-        new_hash: String,
+        old_hash:    String,
+        new_hash:    String,
     },
 }
 
@@ -125,10 +129,10 @@ impl HotReloadManager {
     /// Create disabled hot reload manager
     pub fn disabled() -> Self {
         Self {
-            watcher: None,
-            watched_files: RwLock::new(HashMap::new()),
-            event_tx: broadcast::channel(100).0,
-            config: HotReloadConfig {
+            watcher:         None,
+            watched_files:   RwLock::new(HashMap::new()),
+            event_tx:        broadcast::channel(100).0,
+            config:          HotReloadConfig {
                 enabled: false,
                 ..Default::default()
             },
@@ -183,11 +187,7 @@ impl HotReloadManager {
     }
 
     /// Watch a configuration file
-    pub async fn watch_file(
-        &mut self,
-        config_name: &str,
-        file_path: PathBuf,
-    ) -> crate::IDEResult<()> {
+    pub async fn watch_file(&mut self, config_name: &str, file_path: PathBuf) -> crate::IDEResult<()> {
         if !self.config.enabled {
             return Ok(());
         }
@@ -224,15 +224,12 @@ impl HotReloadManager {
         // Add to watched files
         {
             let mut watched = self.watched_files.write().await;
-            watched.insert(
-                file_path.clone(),
-                WatchedConfig {
-                    name: config_name.to_string(),
-                    last_modified,
-                    file_hash,
-                    grace_period_remaining: Duration::from_secs(self.config.grace_period_seconds),
-                },
-            );
+            watched.insert(file_path.clone(), WatchedConfig {
+                name: config_name.to_string(),
+                last_modified,
+                file_hash,
+                grace_period_remaining: Duration::from_secs(self.config.grace_period_seconds),
+            });
         }
 
         // Start watching the file
@@ -301,14 +298,10 @@ impl HotReloadManager {
     }
 
     /// Initiate configuration reload with zero-downtime
-    async fn initiate_reload(
-        &self,
-        config_name: &str,
-        file_path: &PathBuf,
-    ) -> crate::IDEResult<()> {
+    async fn initiate_reload(&self, config_name: &str, file_path: &PathBuf) -> crate::IDEResult<()> {
         // Send reload starting event
         let reload_event = ReloadEvent::ReloadStarting {
-            config_name: config_name.to_string(),
+            config_name:  config_name.to_string(),
             grace_period: Duration::from_secs(self.config.grace_period_seconds),
         };
         let _ = self.event_tx.send(reload_event);
@@ -339,8 +332,7 @@ impl HotReloadManager {
                 let now = std::time::SystemTime::now();
                 config.last_modified = now;
                 config.file_hash = new_hash;
-                config.grace_period_remaining =
-                    Duration::from_secs(self.config.grace_period_seconds);
+                config.grace_period_remaining = Duration::from_secs(self.config.grace_period_seconds);
             }
         }
 
@@ -353,7 +345,7 @@ impl HotReloadManager {
             let completion_event = ReloadEvent::ReloadCompleted {
                 config_name: config_name_clone,
                 duration_ms: 100,
-                success: true,
+                success:     true,
             };
             let _ = event_tx_clone.send(completion_event);
         });
@@ -374,8 +366,8 @@ impl HotReloadManager {
     pub async fn stats(&self) -> HotReloadStats {
         let watched = self.watched_files.read().await;
         HotReloadStats {
-            enabled: self.config.enabled,
-            watched_files_count: watched.len(),
+            enabled:              self.config.enabled,
+            watched_files_count:  watched.len(),
             event_receiver_count: self.event_tx.receiver_count(),
         }
     }
@@ -405,9 +397,7 @@ impl HotReloadManager {
             },
             notify::Config::default(),
         )
-        .map_err(|e| {
-            crate::RustAIError::InternalError(format!("Failed to create file watcher: {}", e))
-        })?;
+        .map_err(|e| crate::RustAIError::InternalError(format!("Failed to create file watcher: {}", e)))?;
 
         Ok(watcher)
     }
@@ -428,8 +418,8 @@ impl HotReloadManager {
 /// Hot reload statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HotReloadStats {
-    pub enabled: bool,
-    pub watched_files_count: usize,
+    pub enabled:              bool,
+    pub watched_files_count:  usize,
     pub event_receiver_count: usize,
 }
 
@@ -445,8 +435,9 @@ pub trait ReloadHandler: Send + Sync + 'static {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_hot_reload_manager_creation() {

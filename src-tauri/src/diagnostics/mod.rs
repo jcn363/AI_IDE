@@ -5,67 +5,65 @@
 
 // Re-export types from rust_ai_ide_lsp
 pub use rust_ai_ide_lsp::error_resolution::FixSuggestion;
-pub use rust_ai_ide_lsp::ChangeType;
-pub use rust_ai_ide_lsp::CodeChange;
-pub use rust_ai_ide_lsp::CompilerDiagnostic;
+pub use rust_ai_ide_lsp::{ChangeType, CodeChange, CompilerDiagnostic};
 
 // Define missing types
 #[derive(Debug, serde::Deserialize)]
 pub struct CompilerDiagnosticsRequest {
-    pub workspace_path: String,
-    pub include_explanations: bool,
+    pub workspace_path:          String,
+    pub include_explanations:    bool,
     pub include_suggested_fixes: bool,
 }
 
 #[derive(Debug, serde::Serialize)]
 pub struct CompilerDiagnosticsResult {
-    pub diagnostics: Vec<CompilerDiagnostic>,
-    pub explanations: std::collections::HashMap<String, ErrorCodeExplanation>,
+    pub diagnostics:     Vec<CompilerDiagnostic>,
+    pub explanations:    std::collections::HashMap<String, ErrorCodeExplanation>,
     pub suggested_fixes: Vec<FixSuggestion>,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct CompilerErrorCode {
-    pub code: String,
+    pub code:        String,
     pub explanation: Option<String>,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct CompilerSpan {
-    pub file_name: String,
-    pub byte_start: u32,
-    pub byte_end: u32,
-    pub line_start: u32,
-    pub line_end: u32,
-    pub column_start: u32,
-    pub column_end: u32,
-    pub is_main_span: bool,
-    pub text: Vec<SpanText>,
-    pub label: Option<String>,
-    pub suggested_replacement: Option<String>,
+    pub file_name:                String,
+    pub byte_start:               u32,
+    pub byte_end:                 u32,
+    pub line_start:               u32,
+    pub line_end:                 u32,
+    pub column_start:             u32,
+    pub column_end:               u32,
+    pub is_main_span:             bool,
+    pub text:                     Vec<SpanText>,
+    pub label:                    Option<String>,
+    pub suggested_replacement:    Option<String>,
     pub suggestion_applicability: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct DocumentationLink {
-    pub title: String,
-    pub url: String,
+    pub title:       String,
+    pub url:         String,
     pub description: String,
 }
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct ErrorCodeExplanation {
-    pub error_code: String,
-    pub title: String,
-    pub explanation: String,
-    pub examples: Vec<ErrorExample>,
+    pub error_code:          String,
+    pub title:               String,
+    pub explanation:         String,
+    pub examples:            Vec<ErrorExample>,
     pub documentation_links: Vec<DocumentationLink>,
 }
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct ErrorExample {
-    pub title: String,
-    pub code: String,
+    pub title:       String,
+    pub code:        String,
     pub explanation: String,
 }
 
@@ -73,9 +71,9 @@ pub type EstimatedEffort = String;
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct SpanText {
-    pub text: String,
+    pub text:            String,
     pub highlight_start: u32,
-    pub highlight_end: u32,
+    pub highlight_end:   u32,
 }
 
 // Export FixType

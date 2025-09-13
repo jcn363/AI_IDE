@@ -1,9 +1,10 @@
 //! Utility functions for code analysis
 
-use anyhow::Result;
-use indicatif::{ProgressBar, ProgressStyle};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
+
+use anyhow::Result;
+use indicatif::{ProgressBar, ProgressStyle};
 use syn::visit::Visit;
 use syn::{File, Item, ItemFn, ItemImpl, ItemMod, ItemStruct, ItemTrait};
 
@@ -12,9 +13,7 @@ pub fn progress_bar(len: u64, msg: &str) -> ProgressBar {
     let pb = ProgressBar::new(len);
     pb.set_style(
         ProgressStyle::default_bar()
-            .template(
-                "{spinner:.green} {msg}: [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta})",
-            )
+            .template("{spinner:.green} {msg}: [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta})")
             .unwrap()
             .progress_chars("##-"),
     );
@@ -107,11 +106,7 @@ pub fn calculate_cyclomatic_complexity(func: &ItemFn) -> usize {
 }
 
 /// Get the maintainability index for a file
-pub fn calculate_maintainability_index(
-    lines_of_code: usize,
-    cyclomatic_complexity: f64,
-    halstead_volume: f64,
-) -> f64 {
+pub fn calculate_maintainability_index(lines_of_code: usize, cyclomatic_complexity: f64, halstead_volume: f64) -> f64 {
     let volume = halstead_volume.max(1.0);
     let loc = lines_of_code.max(1) as f64;
     let cm = cyclomatic_complexity.max(1.0);
@@ -124,10 +119,10 @@ pub fn calculate_maintainability_index(
 /// Get the Halstead metrics for a file
 pub fn calculate_halstead_metrics(ast: &File) -> (f64, f64, f64) {
     struct Metrics {
-        operators: std::collections::HashSet<String>,
-        operands: std::collections::HashSet<String>,
+        operators:      std::collections::HashSet<String>,
+        operands:       std::collections::HashSet<String>,
         operator_count: usize,
-        operand_count: usize,
+        operand_count:  usize,
     }
 
     impl<'ast> Visit<'ast> for Metrics {
@@ -158,12 +153,11 @@ pub fn calculate_halstead_metrics(ast: &File) -> (f64, f64, f64) {
 
             // Count operands (identifiers and literals)
             match node {
-                Expr::Path(expr_path) => {
+                Expr::Path(expr_path) =>
                     if let Some(ident) = expr_path.path.get_ident() {
                         self.operands.insert(ident.to_string());
                         self.operand_count += 1;
-                    }
-                }
+                    },
                 Expr::Lit(lit) => {
                     self.operands.insert(format!("{:?}", lit.lit));
                     self.operand_count += 1;
@@ -176,10 +170,10 @@ pub fn calculate_halstead_metrics(ast: &File) -> (f64, f64, f64) {
     }
 
     let mut metrics = Metrics {
-        operators: std::collections::HashSet::new(),
-        operands: std::collections::HashSet::new(),
+        operators:      std::collections::HashSet::new(),
+        operands:       std::collections::HashSet::new(),
         operator_count: 0,
-        operand_count: 0,
+        operand_count:  0,
     };
 
     metrics.visit_file(ast);
@@ -202,7 +196,7 @@ pub fn calculate_halstead_metrics(ast: &File) -> (f64, f64, f64) {
 /// Get the depth of inheritance for a type
 pub fn get_inheritance_depth(ast: &File) -> usize {
     struct InheritanceVisitor {
-        max_depth: usize,
+        max_depth:     usize,
         current_depth: usize,
     }
 
@@ -219,7 +213,7 @@ pub fn get_inheritance_depth(ast: &File) -> usize {
     }
 
     let mut visitor = InheritanceVisitor {
-        max_depth: 0,
+        max_depth:     0,
         current_depth: 0,
     };
 
@@ -233,11 +227,10 @@ pub fn count_dependencies(ast: &File) -> usize {
 
     for item in &ast.items {
         match item {
-            Item::Use(item_use) => {
+            Item::Use(item_use) =>
                 if let Some(ident) = item_use.path.get_ident() {
                     deps.insert(ident.to_string());
-                }
-            }
+                },
             Item::ExternCrate(item_extern) => {
                 deps.insert(item_extern.ident.to_string());
             }
@@ -250,8 +243,9 @@ pub fn count_dependencies(ast: &File) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     #[test]
     fn test_count_lines() {

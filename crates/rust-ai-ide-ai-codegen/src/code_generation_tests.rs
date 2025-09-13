@@ -1,6 +1,7 @@
+use std::collections::HashMap;
+
 use rust_ai_ide_ai_codegen::*;
 use rust_ai_ide_shared_codegen::generator::*;
-use std::collections::HashMap;
 
 #[cfg(test)]
 mod code_generation_tests {
@@ -24,12 +25,12 @@ mod code_generation_tests {
     async fn test_code_completion() {
         let completer = CodeCompleter::new();
         let context = rust_ai_ide_ai_codegen::completion::CompletionContext {
-            current_line: "let x = vec!".to_string(),
-            cursor_position: 11,
+            current_line:     "let x = vec!".to_string(),
+            cursor_position:  11,
             surrounding_code: vec!["let x = vec!".to_string()],
             imported_modules: vec![],
-            project_context: ProjectContext::minimal(),
-            completion_type: rust_ai_ide_ai_codegen::completion::CompletionType::Expression,
+            project_context:  ProjectContext::minimal(),
+            completion_type:  rust_ai_ide_ai_codegen::completion::CompletionType::Expression,
         };
 
         // Test completion suggestions
@@ -72,13 +73,13 @@ mod code_generation_tests {
     #[test]
     fn test_quality_assessment() {
         let quality = GenerationQuality {
-            readability_score: 0.8,
+            readability_score:     0.8,
             maintainability_score: 0.75,
-            performance_score: 0.7,
-            security_score: 0.9,
-            compliance_score: 0.8,
-            overall_score: 0.8,
-            issues: vec![],
+            performance_score:     0.7,
+            security_score:        0.9,
+            compliance_score:      0.8,
+            overall_score:         0.8,
+            issues:                vec![],
         };
 
         assert!(quality.overall_score >= 0.8);
@@ -130,8 +131,8 @@ mod code_generation_tests {
     #[test]
     fn test_code_patterns() {
         let pattern = CodePattern {
-            pattern_type: "function".to_string(),
-            example: "fn process_data(input: &str) -> String".to_string(),
+            pattern_type:  "function".to_string(),
+            example:       "fn process_data(input: &str) -> String".to_string(),
             usage_context: "Data processing function".to_string(),
         };
 

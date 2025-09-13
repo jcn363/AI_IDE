@@ -3,50 +3,49 @@
 //! Provides secure, tamper-evident logging of all configuration operations
 //! with encryption, hashing, and change tracking capabilities.
 
-use aes_gcm::{
-    aead::{Aead, KeyInit},
-    Aes256Gcm, Key, Nonce,
-};
+use std::collections::HashMap;
+
+use aes_gcm::aead::{Aead, KeyInit};
+use aes_gcm::{Aes256Gcm, Key, Nonce};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use tokio::sync::RwLock;
 
 /// Encrypted audit trail for configuration changes
 #[derive(Debug)]
 pub struct AuditTrail {
     /// Encrypted audit log entries
-    entries: RwLock<Vec<EncryptedEntry>>,
+    entries:        RwLock<Vec<EncryptedEntry>>,
     /// Encryption key (derived from system secrets)
     encryption_key: Key<Aes256Gcm>,
     /// Audit configuration
-    config: AuditConfig,
+    config:         AuditConfig,
     /// Hash of last entry for tamper detection
-    last_hash: RwLock<String>,
+    last_hash:      RwLock<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditConfig {
     /// Enable audit logging
-    pub enabled: bool,
+    pub enabled:            bool,
     /// Maximum number of audit entries to keep
-    pub max_entries: usize,
+    pub max_entries:        usize,
     /// Encryption enabled
     pub encryption_enabled: bool,
     /// Hash algorithm for tamper detection
-    pub hash_algorithm: HashAlgorithm,
+    pub hash_algorithm:     HashAlgorithm,
     /// Audit log retention period (days)
-    pub retention_days: u32,
+    pub retention_days:     u32,
 }
 
 impl Default for AuditConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            max_entries: 10000,
+            enabled:            true,
+            max_entries:        10000,
             encryption_enabled: true,
-            hash_algorithm: HashAlgorithm::Sha256,
-            retention_days: 90,
+            hash_algorithm:     HashAlgorithm::Sha256,
+            retention_days:     90,
         }
     }
 }
@@ -63,34 +62,34 @@ pub enum HashAlgorithm {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptedEntry {
     /// Encryption nonce
-    pub nonce: Vec<u8>,
+    pub nonce:          Vec<u8>,
     /// Encrypted audit data
     pub encrypted_data: Vec<u8>,
     /// Timestamp
-    pub timestamp: DateTime<Utc>,
+    pub timestamp:      DateTime<Utc>,
     /// Hash of this entry (for chain integrity)
-    pub entry_hash: String,
+    pub entry_hash:     String,
 }
 
 /// Clear-text audit event data (before encryption)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditEvent {
     /// Event type
-    pub event_type: AuditEventType,
+    pub event_type:       AuditEventType,
     /// Configuration name
-    pub config_name: String,
+    pub config_name:      String,
     /// Source of the change
-    pub source: String,
+    pub source:           String,
     /// User/system identifier
-    pub actor: String,
+    pub actor:            String,
     /// Timestamp of event
-    pub timestamp: DateTime<Utc>,
+    pub timestamp:        DateTime<Utc>,
     /// Change details
-    pub changes: Vec<ConfigChange>,
+    pub changes:          Vec<ConfigChange>,
     /// Security context
     pub security_context: SecurityContext,
     /// Event metadata
-    pub metadata: HashMap<String, String>,
+    pub metadata:         HashMap<String, String>,
 }
 
 /// Types of audit events
@@ -130,11 +129,11 @@ impl std::fmt::Display for AuditEventType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigChange {
     /// Field path that changed
-    pub field_path: String,
+    pub field_path:  String,
     /// Previous value (sanitized)
-    pub old_value: Option<String>,
+    pub old_value:   Option<String>,
     /// New value (sanitized)
-    pub new_value: Option<String>,
+    pub new_value:   Option<String>,
     /// Change type
     pub change_type: ChangeType,
 }
@@ -156,13 +155,13 @@ pub enum ChangeType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityContext {
     /// Authentication method
-    pub auth_method: String,
+    pub auth_method:  String,
     /// User roles/permissions
-    pub roles: Vec<String>,
+    pub roles:        Vec<String>,
     /// IP address (when applicable)
-    pub ip_address: Option<String>,
+    pub ip_address:   Option<String>,
     /// Session ID
-    pub session_id: Option<String>,
+    pub session_id:   Option<String>,
     /// Threat level assessment
     pub threat_level: Option<i32>,
 }
@@ -178,13 +177,11 @@ impl AuditTrail {
         // Generate encryption key from system entropy
         // In production, this would use a proper KMS or key derivation
         let mut key_bytes = [0u8; 32];
-        ring::rand::SecureRandom::fill(&ring::rand::SystemRandom::new(), &mut key_bytes).map_err(
-            |_| {
-                crate::RustAIError::Config(rust_ai_ide_errors::ConfigError::new(
-                    "Failed to generate encryption key",
-                ))
-            },
-        )?;
+        ring::rand::SecureRandom::fill(&ring::rand::SystemRandom::new(), &mut key_bytes).map_err(|_| {
+            crate::RustAIError::Config(rust_ai_ide_errors::ConfigError::new(
+                "Failed to generate encryption key",
+            ))
+        })?;
         let encryption_key = Key::<Aes256Gcm>::from_slice(&key_bytes);
 
         let trail = Self {
@@ -203,35 +200,30 @@ impl AuditTrail {
     /// Create disabled audit trail
     pub fn disabled() -> Self {
         Self {
-            entries: RwLock::new(Vec::new()),
+            entries:        RwLock::new(Vec::new()),
             encryption_key: *Key::<Aes256Gcm>::from_slice(&[0u8; 32]),
-            config: AuditConfig {
-                enabled: false,
-                max_entries: 0,
+            config:         AuditConfig {
+                enabled:            false,
+                max_entries:        0,
                 encryption_enabled: false,
-                hash_algorithm: HashAlgorithm::Sha256,
-                retention_days: 0,
+                hash_algorithm:     HashAlgorithm::Sha256,
+                retention_days:     0,
             },
-            last_hash: RwLock::new("disabled".to_string()),
+            last_hash:      RwLock::new("disabled".to_string()),
         }
     }
 
     /// Record a configuration load event
-    pub async fn record_load(
-        &self,
-        config_name: &str,
-        source_count: usize,
-        source: &str,
-    ) -> crate::IDEResult<()> {
+    pub async fn record_load(&self, config_name: &str, source_count: usize, source: &str) -> crate::IDEResult<()> {
         let event = AuditEvent {
-            event_type: AuditEventType::ConfigLoad,
-            config_name: config_name.to_string(),
-            source: source.to_string(),
-            actor: self.get_current_actor().await,
-            timestamp: Utc::now(),
-            changes: vec![],
+            event_type:       AuditEventType::ConfigLoad,
+            config_name:      config_name.to_string(),
+            source:           source.to_string(),
+            actor:            self.get_current_actor().await,
+            timestamp:        Utc::now(),
+            changes:          vec![],
             security_context: self.get_security_context().await,
-            metadata: {
+            metadata:         {
                 let mut meta = HashMap::new();
                 meta.insert("source_count".to_string(), source_count.to_string());
                 meta
@@ -244,14 +236,14 @@ impl AuditTrail {
     /// Record a configuration save event
     pub async fn record_save(&self, config_name: &str, source: &str) -> crate::IDEResult<()> {
         let event = AuditEvent {
-            event_type: AuditEventType::ConfigSave,
-            config_name: config_name.to_string(),
-            source: source.to_string(),
-            actor: self.get_current_actor().await,
-            timestamp: Utc::now(),
-            changes: vec![],
+            event_type:       AuditEventType::ConfigSave,
+            config_name:      config_name.to_string(),
+            source:           source.to_string(),
+            actor:            self.get_current_actor().await,
+            timestamp:        Utc::now(),
+            changes:          vec![],
             security_context: self.get_security_context().await,
-            metadata: HashMap::new(),
+            metadata:         HashMap::new(),
         };
 
         self.record_event(event).await
@@ -265,14 +257,14 @@ impl AuditTrail {
         message: &str,
     ) -> crate::IDEResult<()> {
         let event = AuditEvent {
-            event_type: AuditEventType::SecurityViolation,
-            config_name: "security".to_string(),
-            source: "security_validator".to_string(),
-            actor: self.get_current_actor().await,
-            timestamp: Utc::now(),
-            changes: vec![],
+            event_type:       AuditEventType::SecurityViolation,
+            config_name:      "security".to_string(),
+            source:           "security_validator".to_string(),
+            actor:            self.get_current_actor().await,
+            timestamp:        Utc::now(),
+            changes:          vec![],
             security_context: self.get_security_context().await,
-            metadata: {
+            metadata:         {
                 let mut meta = HashMap::new();
                 meta.insert("violation_type".to_string(), format!("{:?}", violation));
                 meta.insert("field".to_string(), field.to_string());
@@ -285,11 +277,7 @@ impl AuditTrail {
     }
 
     /// Record configuration changes
-    pub async fn record_changes(
-        &self,
-        config_name: &str,
-        changes: Vec<ConfigChange>,
-    ) -> crate::IDEResult<()> {
+    pub async fn record_changes(&self, config_name: &str, changes: Vec<ConfigChange>) -> crate::IDEResult<()> {
         let event = AuditEvent {
             event_type: AuditEventType::ConfigValidation,
             config_name: config_name.to_string(),
@@ -311,18 +299,16 @@ impl AuditTrail {
         }
 
         // Serialize event data
-        let event_data = serde_json::to_vec(&event).map_err(|e| {
-            crate::RustAIError::Serialization(format!("Failed to serialize audit event: {}", e))
-        })?;
+        let event_data = serde_json::to_vec(&event)
+            .map_err(|e| crate::RustAIError::Serialization(format!("Failed to serialize audit event: {}", e)))?;
 
         // Generate nonce
         let mut nonce_bytes = [0u8; 12];
-        ring::rand::SecureRandom::fill(&ring::rand::SystemRandom::new(), &mut nonce_bytes)
-            .map_err(|_| {
-                crate::RustAIError::Config(rust_ai_ide_errors::ConfigError::new(
-                    "Failed to generate nonce",
-                ))
-            })?;
+        ring::rand::SecureRandom::fill(&ring::rand::SystemRandom::new(), &mut nonce_bytes).map_err(|_| {
+            crate::RustAIError::Config(rust_ai_ide_errors::ConfigError::new(
+                "Failed to generate nonce",
+            ))
+        })?;
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         // Encrypt data
@@ -374,8 +360,7 @@ impl AuditTrail {
         let mut current_hash = "genesis".to_string();
 
         for entry in entries.iter() {
-            let computed_hash =
-                self.generate_entry_hash(&entry.encrypted_data, &entry.nonce, &current_hash);
+            let computed_hash = self.generate_entry_hash(&entry.encrypted_data, &entry.nonce, &current_hash);
 
             if computed_hash != entry.entry_hash {
                 tracing::error!(
@@ -397,18 +382,15 @@ impl AuditTrail {
         let integrity_ok = self.verify_integrity().await.unwrap_or(false);
 
         AuditStats {
-            total_entries: entries.len(),
-            oldest_entry: entries.first().map(|e| e.timestamp),
-            newest_entry: entries.last().map(|e| e.timestamp),
+            total_entries:      entries.len(),
+            oldest_entry:       entries.first().map(|e| e.timestamp),
+            newest_entry:       entries.last().map(|e| e.timestamp),
             integrity_verified: integrity_ok,
         }
     }
 
     /// Search audit events
-    pub async fn search_events(
-        &self,
-        filter: AuditSearchFilter,
-    ) -> crate::IDEResult<Vec<AuditEvent>> {
+    pub async fn search_events(&self, filter: AuditSearchFilter) -> crate::IDEResult<Vec<AuditEvent>> {
         let entries = self.entries.read().await;
         let mut results = Vec::new();
 
@@ -424,12 +406,8 @@ impl AuditTrail {
                     ))
                 })?;
 
-            let event: AuditEvent = serde_json::from_slice(&decrypted_data).map_err(|e| {
-                crate::RustAIError::Serialization(format!(
-                    "Failed to deserialize audit event: {}",
-                    e
-                ))
-            })?;
+            let event: AuditEvent = serde_json::from_slice(&decrypted_data)
+                .map_err(|e| crate::RustAIError::Serialization(format!("Failed to deserialize audit event: {}", e)))?;
 
             if filter.matches(&event) {
                 results.push(event);
@@ -455,20 +433,20 @@ impl AuditTrail {
 
     async fn record_genesis(&self) -> crate::IDEResult<()> {
         let genesis_event = AuditEvent {
-            event_type: AuditEventType::ConfigLoad,
-            config_name: "system".to_string(),
-            source: "genesis".to_string(),
-            actor: "system".to_string(),
-            timestamp: Utc::now(),
-            changes: vec![],
+            event_type:       AuditEventType::ConfigLoad,
+            config_name:      "system".to_string(),
+            source:           "genesis".to_string(),
+            actor:            "system".to_string(),
+            timestamp:        Utc::now(),
+            changes:          vec![],
             security_context: SecurityContext {
-                auth_method: "system".to_string(),
-                roles: vec!["system".to_string()],
-                ip_address: None,
-                session_id: None,
+                auth_method:  "system".to_string(),
+                roles:        vec!["system".to_string()],
+                ip_address:   None,
+                session_id:   None,
                 threat_level: None,
             },
-            metadata: {
+            metadata:         {
                 let mut meta = HashMap::new();
                 meta.insert("genesis".to_string(), "true".to_string());
                 meta
@@ -486,10 +464,10 @@ impl AuditTrail {
     async fn get_security_context(&self) -> SecurityContext {
         // In production, this would get actual security context
         SecurityContext {
-            auth_method: "system".to_string(),
-            roles: vec!["system".to_string()],
-            ip_address: None,
-            session_id: None,
+            auth_method:  "system".to_string(),
+            roles:        vec!["system".to_string()],
+            ip_address:   None,
+            session_id:   None,
             threat_level: None,
         }
     }
@@ -512,20 +490,20 @@ impl AuditTrail {
 #[derive(Debug, Clone)]
 pub struct AuditSearchFilter {
     pub config_name: Option<String>,
-    pub event_type: Option<AuditEventType>,
-    pub actor: Option<String>,
-    pub start_time: Option<DateTime<Utc>>,
-    pub end_time: Option<DateTime<Utc>>,
+    pub event_type:  Option<AuditEventType>,
+    pub actor:       Option<String>,
+    pub start_time:  Option<DateTime<Utc>>,
+    pub end_time:    Option<DateTime<Utc>>,
 }
 
 impl AuditSearchFilter {
     pub fn new() -> Self {
         Self {
             config_name: None,
-            event_type: None,
-            actor: None,
-            start_time: None,
-            end_time: None,
+            event_type:  None,
+            actor:       None,
+            start_time:  None,
+            end_time:    None,
         }
     }
 
@@ -577,9 +555,9 @@ impl AuditSearchFilter {
 /// Audit trail statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditStats {
-    pub total_entries: usize,
-    pub oldest_entry: Option<DateTime<Utc>>,
-    pub newest_entry: Option<DateTime<Utc>>,
+    pub total_entries:      usize,
+    pub oldest_entry:       Option<DateTime<Utc>>,
+    pub newest_entry:       Option<DateTime<Utc>>,
     pub integrity_verified: bool,
 }
 

@@ -1,4 +1,3 @@
-//!
 //! Configuration sources for different input types
 //!
 //! This module provides implementations for loading configuration from:
@@ -9,15 +8,13 @@
 pub mod env;
 pub mod file;
 
+use std::path::PathBuf;
+
+use async_trait::async_trait;
 pub use env::EnvironmentSource;
 pub use file::FileSource;
 
-use async_trait::async_trait;
-use std::path::PathBuf;
-
 /// Configuration source trait
-///
-///
 #[async_trait]
 pub trait ConfigSource: Send + Sync + std::fmt::Debug {
     /// Load configuration from this source as serde Value
@@ -106,15 +103,12 @@ impl SourceUtils {
         C: crate::Config,
     {
         match format {
-            ConfigFormat::Toml => toml::from_str(content).map_err(|e| {
-                crate::RustAIError::Serialization(format!("TOML parsing error: {}", e))
-            }),
-            ConfigFormat::Yaml => serde_yaml::from_str(content).map_err(|e| {
-                crate::RustAIError::Serialization(format!("YAML parsing error: {}", e))
-            }),
-            ConfigFormat::Json => serde_json::from_str(content).map_err(|e| {
-                crate::RustAIError::Serialization(format!("JSON parsing error: {}", e))
-            }),
+            ConfigFormat::Toml => toml::from_str(content)
+                .map_err(|e| crate::RustAIError::Serialization(format!("TOML parsing error: {}", e))),
+            ConfigFormat::Yaml => serde_yaml::from_str(content)
+                .map_err(|e| crate::RustAIError::Serialization(format!("YAML parsing error: {}", e))),
+            ConfigFormat::Json => serde_json::from_str(content)
+                .map_err(|e| crate::RustAIError::Serialization(format!("JSON parsing error: {}", e))),
         }
     }
 
@@ -124,15 +118,12 @@ impl SourceUtils {
         C: crate::Config,
     {
         match format {
-            ConfigFormat::Toml => toml::to_string(config).map_err(|e| {
-                crate::RustAIError::Serialization(format!("TOML serialization error: {}", e))
-            }),
-            ConfigFormat::Yaml => serde_yaml::to_string(config).map_err(|e| {
-                crate::RustAIError::Serialization(format!("YAML serialization error: {}", e))
-            }),
-            ConfigFormat::Json => serde_json::to_string_pretty(config).map_err(|e| {
-                crate::RustAIError::Serialization(format!("JSON serialization error: {}", e))
-            }),
+            ConfigFormat::Toml => toml::to_string(config)
+                .map_err(|e| crate::RustAIError::Serialization(format!("TOML serialization error: {}", e))),
+            ConfigFormat::Yaml => serde_yaml::to_string(config)
+                .map_err(|e| crate::RustAIError::Serialization(format!("YAML serialization error: {}", e))),
+            ConfigFormat::Json => serde_json::to_string_pretty(config)
+                .map_err(|e| crate::RustAIError::Serialization(format!("JSON serialization error: {}", e))),
         }
     }
 }

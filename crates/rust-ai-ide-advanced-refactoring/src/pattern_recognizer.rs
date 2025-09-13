@@ -1,18 +1,20 @@
-use crate::ai_suggester::AnalysisContext;
-use crate::error::{AnalysisError, AnalysisResult};
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use rust_ai_ide_ai_inference::AiInferenceService;
-use std::sync::Arc;
+
+use crate::ai_suggester::AnalysisContext;
+use crate::error::{AnalysisError, AnalysisResult};
 
 /// Pattern recognition data structure
 #[derive(Debug, Clone)]
 pub struct CodePattern {
     pub pattern_type: PatternType,
-    pub confidence: f64,
-    pub start_line: usize,
-    pub end_line: usize,
+    pub confidence:   f64,
+    pub start_line:   usize,
+    pub end_line:     usize,
     pub code_snippet: String,
-    pub suggestions: Vec<String>,
+    pub suggestions:  Vec<String>,
 }
 
 /// Types of patterns we can recognize

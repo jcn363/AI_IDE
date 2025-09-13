@@ -6,15 +6,16 @@
 //! - GPU Optimized: Prioritizes GPU-enabled workers for GPU-intensive tasks
 //! - Adaptive: Uses performance metrics to make intelligent decisions
 
-use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use async_trait::async_trait;
 use tokio::sync::RwLock;
 use tracing::info;
 
 use super::{
-    DistributedAIConfig, DistributedInferenceRequest, LoadBalancingStrategy, WorkerCapabilities,
-    WorkerNode, WorkerStatus,
+    DistributedAIConfig, DistributedInferenceRequest, LoadBalancingStrategy, WorkerCapabilities, WorkerNode,
+    WorkerStatus,
 };
 
 /// Trait for load balancing algorithms
@@ -188,11 +189,7 @@ impl GPUOptimizedBalancer {
         }
     }
 
-    fn calculate_gpu_score(
-        &self,
-        worker: &WorkerNode,
-        request: &DistributedInferenceRequest,
-    ) -> f64 {
+    fn calculate_gpu_score(&self, worker: &WorkerNode, request: &DistributedInferenceRequest) -> f64 {
         let base_score = if worker.capabilities.has_gpu {
             match self.is_gpu_intensive_request(request) {
                 true => 1.0,  // GPU-intensive: prefer GPU workers
@@ -300,16 +297,16 @@ impl LoadBalancer for GPUOptimizedBalancer {
 
 /// Adaptive load balancer that learns from performance metrics
 pub struct AdaptiveLoadBalancer {
-    config: DistributedAIConfig,
+    config:              DistributedAIConfig,
     performance_history: RwLock<HashMap<String, Vec<PerformanceRecord>>>,
-    last_used_strategy: RwLock<LoadBalancingStrategy>,
+    last_used_strategy:  RwLock<LoadBalancingStrategy>,
 }
 
 #[derive(Debug, Clone)]
 struct PerformanceRecord {
-    timestamp: std::time::Instant,
+    timestamp:  std::time::Instant,
     latency_ms: u64,
-    success: bool,
+    success:    bool,
 }
 
 impl AdaptiveLoadBalancer {
@@ -437,37 +434,37 @@ mod tests {
     fn create_test_workers() -> Vec<WorkerNode> {
         vec![
             WorkerNode {
-                id: "gpu-worker-1".to_string(),
-                address: "192.168.1.10".to_string(),
-                port: 8080,
-                capabilities: WorkerCapabilities {
-                    has_gpu: true,
-                    gpu_memory_gb: Some(16),
-                    gpu_type: Some("A100".to_string()),
-                    cpu_cores: 8,
-                    memory_gb: 32,
-                    supported_models: vec!["codellama".to_string(), "starcoder".to_string()],
+                id:                "gpu-worker-1".to_string(),
+                address:           "192.168.1.10".to_string(),
+                port:              8080,
+                capabilities:      WorkerCapabilities {
+                    has_gpu:                 true,
+                    gpu_memory_gb:           Some(16),
+                    gpu_type:                Some("A100".to_string()),
+                    cpu_cores:               8,
+                    memory_gb:               32,
+                    supported_models:        vec!["codellama".to_string(), "starcoder".to_string()],
                     max_concurrent_requests: 10,
                 },
-                status: WorkerStatus::Active,
-                last_heartbeat: chrono::Utc::now(),
+                status:            WorkerStatus::Active,
+                last_heartbeat:    chrono::Utc::now(),
                 model_assignments: Vec::new(),
             },
             WorkerNode {
-                id: "cpu-worker-1".to_string(),
-                address: "192.168.1.11".to_string(),
-                port: 8080,
-                capabilities: WorkerCapabilities {
-                    has_gpu: false,
-                    gpu_memory_gb: None,
-                    gpu_type: None,
-                    cpu_cores: 16,
-                    memory_gb: 64,
-                    supported_models: vec!["codellama".to_string()],
+                id:                "cpu-worker-1".to_string(),
+                address:           "192.168.1.11".to_string(),
+                port:              8080,
+                capabilities:      WorkerCapabilities {
+                    has_gpu:                 false,
+                    gpu_memory_gb:           None,
+                    gpu_type:                None,
+                    cpu_cores:               16,
+                    memory_gb:               64,
+                    supported_models:        vec!["codellama".to_string()],
                     max_concurrent_requests: 20,
                 },
-                status: WorkerStatus::Active,
-                last_heartbeat: chrono::Utc::now(),
+                status:            WorkerStatus::Active,
+                last_heartbeat:    chrono::Utc::now(),
                 model_assignments: Vec::new(),
             },
         ]
@@ -479,8 +476,8 @@ mod tests {
         let workers = create_test_workers();
 
         let request = DistributedInferenceRequest::TextGeneration {
-            prompts: vec!["test prompt".to_string()],
-            config: GenerationConfig::default(),
+            prompts:          vec!["test prompt".to_string()],
+            config:           GenerationConfig::default(),
             model_preference: None,
         };
 
@@ -499,8 +496,8 @@ mod tests {
         let workers = create_test_workers();
 
         let request = DistributedInferenceRequest::TextGeneration {
-            prompts: vec!["test prompt".to_string()],
-            config: GenerationConfig::default(),
+            prompts:          vec!["test prompt".to_string()],
+            config:           GenerationConfig::default(),
             model_preference: None,
         };
 
@@ -519,8 +516,8 @@ mod tests {
         let workers = create_test_workers();
 
         let request = DistributedInferenceRequest::TextGeneration {
-            prompts: vec!["test prompt".to_string()],
-            config: GenerationConfig::default(),
+            prompts:          vec!["test prompt".to_string()],
+            config:           GenerationConfig::default(),
             model_preference: None,
         };
 

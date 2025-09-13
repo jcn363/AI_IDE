@@ -4,48 +4,49 @@
 //! for the AI integration layer, enabling performance tracking and diagnostics.
 
 use std::sync::Arc;
+
 use tokio::sync::RwLock;
 
 /// Main metrics collector for AI integration
 pub struct MetricsCollector {
-    state: Arc<RwLock<MetricsState>>,
+    state:      Arc<RwLock<MetricsState>>,
     collectors: std::collections::HashMap<String, Arc<dyn MetricCollector>>,
 }
 
 /// Internal metrics state
 pub struct MetricsState {
     /// Global metrics configuration
-    config: MetricsConfig,
+    config:          MetricsConfig,
     /// Current metrics snapshot
     current_metrics: MetricsSnapshot,
     /// Historical metrics
     historical_data: Vec<HistoricalMetrics>,
     /// Active metric timers
-    active_timers: std::collections::HashMap<String, Timer>,
+    active_timers:   std::collections::HashMap<String, Timer>,
 }
 
 /// Metrics configuration
 #[derive(Debug, Clone)]
 pub struct MetricsConfig {
     /// Enable metrics collection
-    pub enabled: bool,
+    pub enabled:                  bool,
     /// Collection interval in seconds
     pub collection_interval_secs: u64,
     /// Metrics retention period in hours
-    pub retention_hours: u64,
+    pub retention_hours:          u64,
     /// Performance threshold warnings
-    pub performance_thresholds: PerformanceThresholds,
+    pub performance_thresholds:   PerformanceThresholds,
 }
 
 /// Performance threshold definitions
 #[derive(Debug, Clone)]
 pub struct PerformanceThresholds {
     /// Maximum acceptable response time in milliseconds
-    pub max_response_time_ms: u64,
+    pub max_response_time_ms:   u64,
     /// Minimum success rate (0.0-1.0)
-    pub min_success_rate: f64,
+    pub min_success_rate:       f64,
     /// Maximum error rate (0.0-1.0)
-    pub max_error_rate: f64,
+    pub max_error_rate:         f64,
     /// Memory usage warning threshold (bytes)
     pub memory_threshold_bytes: u64,
 }
@@ -54,28 +55,28 @@ pub struct PerformanceThresholds {
 #[derive(Debug, Clone)]
 pub struct MetricsSnapshot {
     /// Timestamp of this snapshot
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:        chrono::DateTime<chrono::Utc>,
     /// LSP bridge metrics
-    pub lsp_metrics: LspMetrics,
+    pub lsp_metrics:      LspMetrics,
     /// Frontend interface metrics
     pub frontend_metrics: FrontendMetrics,
     /// Router metrics
-    pub router_metrics: RouterMetrics,
+    pub router_metrics:   RouterMetrics,
     /// System resource metrics
-    pub system_metrics: SystemMetrics,
+    pub system_metrics:   SystemMetrics,
 }
 
 /// LSP-specific metrics
 #[derive(Debug, Clone)]
 pub struct LspMetrics {
     /// Total AI completion requests
-    pub completion_requests: u64,
+    pub completion_requests:      u64,
     /// Completion success rate
-    pub completion_success_rate: f64,
+    pub completion_success_rate:  f64,
     /// Average completion response time
-    pub avg_completion_time_ms: f64,
+    pub avg_completion_time_ms:   f64,
     /// Diagnostics enhancement requests
-    pub diagnostics_requests: u64,
+    pub diagnostics_requests:     u64,
     /// Diagnostics success rate
     pub diagnostics_success_rate: f64,
 }
@@ -84,35 +85,35 @@ pub struct LspMetrics {
 #[derive(Debug, Clone)]
 pub struct FrontendMetrics {
     /// Total frontend requests
-    pub request_count: u64,
+    pub request_count:          u64,
     /// Response delivery rate
     pub response_delivery_rate: f64,
     /// Average response time
-    pub avg_response_time_ms: f64,
+    pub avg_response_time_ms:   f64,
     /// User feedback count
-    pub feedback_count: u64,
+    pub feedback_count:         u64,
 }
 
 /// Router-specific metrics
 #[derive(Debug, Clone)]
 pub struct RouterMetrics {
     /// Total routing decisions
-    pub routing_decisions: u64,
+    pub routing_decisions:         u64,
     /// Routing success rate
-    pub routing_success_rate: f64,
+    pub routing_success_rate:      f64,
     /// Load balancing efficiency
     pub load_balancing_efficiency: f64,
     /// Cache hit rate
-    pub cache_hit_rate: f64,
+    pub cache_hit_rate:            f64,
 }
 
 /// System resource metrics
 #[derive(Debug, Clone)]
 pub struct SystemMetrics {
     /// CPU usage percentage
-    pub cpu_usage_percent: f64,
+    pub cpu_usage_percent:      f64,
     /// Memory usage bytes
-    pub memory_usage_bytes: u64,
+    pub memory_usage_bytes:     u64,
     /// Available memory bytes
     pub available_memory_bytes: u64,
     /// Network throughput bytes per second
@@ -125,9 +126,9 @@ pub struct HistoricalMetrics {
     /// Timestamp range
     pub timestamp_range: (chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>),
     /// Metrics summary
-    pub summary: MetricsSummary,
+    pub summary:         MetricsSummary,
     /// Trend indicators
-    pub trends: Vec<MetricTrend>,
+    pub trends:          Vec<MetricTrend>,
 }
 
 /// Metrics summary for historical analysis
@@ -136,24 +137,24 @@ pub struct MetricsSummary {
     /// Average response time over period
     pub avg_response_time_ms: f64,
     /// Average success rate over period
-    pub avg_success_rate: f64,
+    pub avg_success_rate:     f64,
     /// Total requests served
-    pub total_requests: u64,
+    pub total_requests:       u64,
     /// Error rate over period
-    pub error_rate: f64,
+    pub error_rate:           f64,
 }
 
 /// Metric trend indication
 #[derive(Debug, Clone)]
 pub struct MetricTrend {
     /// Metric name
-    pub metric_name: String,
+    pub metric_name:       String,
     /// Trend direction
-    pub direction: TrendDirection,
+    pub direction:         TrendDirection,
     /// Trend magnitude (percentage change)
     pub magnitude_percent: f64,
     /// Confidence in trend (0.0-1.0)
-    pub confidence: f64,
+    pub confidence:        f64,
 }
 
 /// Trend direction enumeration
@@ -170,9 +171,9 @@ pub enum TrendDirection {
 /// Performance timer for measuring operation duration
 pub struct Timer {
     /// Start timestamp
-    pub start_time: std::time::Instant,
+    pub start_time:  std::time::Instant,
     /// Timer labels
-    pub labels: std::collections::HashMap<String, String>,
+    pub labels:      std::collections::HashMap<String, String>,
     /// Associated metric name
     pub metric_name: String,
 }
@@ -211,48 +212,48 @@ impl MetricsCollector {
     #[must_use]
     pub fn new() -> Self {
         MetricsCollector {
-            state: Arc::new(RwLock::new(MetricsState {
-                config: MetricsConfig {
-                    enabled: true,
+            state:      Arc::new(RwLock::new(MetricsState {
+                config:          MetricsConfig {
+                    enabled:                  true,
                     collection_interval_secs: 60,
-                    retention_hours: 24,
-                    performance_thresholds: PerformanceThresholds {
-                        max_response_time_ms: 2000,
-                        min_success_rate: 0.95,
-                        max_error_rate: 0.05,
+                    retention_hours:          24,
+                    performance_thresholds:   PerformanceThresholds {
+                        max_response_time_ms:   2000,
+                        min_success_rate:       0.95,
+                        max_error_rate:         0.05,
                         memory_threshold_bytes: 512 * 1024 * 1024, // 512 MB
                     },
                 },
                 current_metrics: MetricsSnapshot {
-                    timestamp: chrono::Utc::now(),
-                    lsp_metrics: LspMetrics {
-                        completion_requests: 0,
-                        completion_success_rate: 0.0,
-                        avg_completion_time_ms: 0.0,
-                        diagnostics_requests: 0,
+                    timestamp:        chrono::Utc::now(),
+                    lsp_metrics:      LspMetrics {
+                        completion_requests:      0,
+                        completion_success_rate:  0.0,
+                        avg_completion_time_ms:   0.0,
+                        diagnostics_requests:     0,
                         diagnostics_success_rate: 0.0,
                     },
                     frontend_metrics: FrontendMetrics {
-                        request_count: 0,
+                        request_count:          0,
                         response_delivery_rate: 0.0,
-                        avg_response_time_ms: 0.0,
-                        feedback_count: 0,
+                        avg_response_time_ms:   0.0,
+                        feedback_count:         0,
                     },
-                    router_metrics: RouterMetrics {
-                        routing_decisions: 0,
-                        routing_success_rate: 0.0,
+                    router_metrics:   RouterMetrics {
+                        routing_decisions:         0,
+                        routing_success_rate:      0.0,
                         load_balancing_efficiency: 0.0,
-                        cache_hit_rate: 0.0,
+                        cache_hit_rate:            0.0,
                     },
-                    system_metrics: SystemMetrics {
-                        cpu_usage_percent: 0.0,
-                        memory_usage_bytes: 0,
+                    system_metrics:   SystemMetrics {
+                        cpu_usage_percent:      0.0,
+                        memory_usage_bytes:     0,
                         available_memory_bytes: 0,
                         network_throughput_bps: 0,
                     },
                 },
                 historical_data: Vec::new(),
-                active_timers: std::collections::HashMap::new(),
+                active_timers:   std::collections::HashMap::new(),
             })),
             collectors: std::collections::HashMap::new(),
         }
@@ -265,11 +266,7 @@ impl MetricsCollector {
     }
 
     /// Start a performance timer
-    pub fn start_timer(
-        &self,
-        name: &str,
-        labels: std::collections::HashMap<String, String>,
-    ) -> Timer {
+    pub fn start_timer(&self, name: &str, labels: std::collections::HashMap<String, String>) -> Timer {
         Timer {
             start_time: std::time::Instant::now(),
             labels,
@@ -325,29 +322,28 @@ impl MetricsCollector {
 
         if metrics.lsp_metrics.avg_completion_time_ms > thresholds.max_response_time_ms as f64 {
             alerts.push(PerformanceAlert {
-                alert_type: AlertType::HighResponseTime,
-                severity: AlertSeverity::Warning,
-                message: format!(
+                alert_type:         AlertType::HighResponseTime,
+                severity:           AlertSeverity::Warning,
+                message:            format!(
                     "LSP completion response time ({:.2}ms) exceeds threshold ({}.0ms)",
                     metrics.lsp_metrics.avg_completion_time_ms, thresholds.max_response_time_ms
                 ),
                 affected_component: "lsp_bridge".to_string(),
-                recommendation: "Consider optimizing AI model inference or using load balancing"
-                    .to_string(),
+                recommendation:     "Consider optimizing AI model inference or using load balancing".to_string(),
             });
         }
 
         if metrics.lsp_metrics.completion_success_rate < thresholds.min_success_rate {
             alerts.push(PerformanceAlert {
-                alert_type: AlertType::LowSuccessRate,
-                severity: AlertSeverity::Critical,
-                message: format!(
+                alert_type:         AlertType::LowSuccessRate,
+                severity:           AlertSeverity::Critical,
+                message:            format!(
                     "LSP completion success rate ({:.2}%) below threshold ({:.0}%)",
                     metrics.lsp_metrics.completion_success_rate * 100.0,
                     thresholds.min_success_rate * 100.0
                 ),
                 affected_component: "lsp_bridge".to_string(),
-                recommendation: "Investigate model availability and error handling".to_string(),
+                recommendation:     "Investigate model availability and error handling".to_string(),
             });
         }
 
@@ -389,15 +385,15 @@ impl Default for MetricsCollector {
 #[derive(Debug, Clone)]
 pub struct PerformanceAlert {
     /// Type of alert
-    pub alert_type: AlertType,
+    pub alert_type:         AlertType,
     /// Severity level
-    pub severity: AlertSeverity,
+    pub severity:           AlertSeverity,
     /// Alert message
-    pub message: String,
+    pub message:            String,
     /// Affected component
     pub affected_component: String,
     /// Recommended action
-    pub recommendation: String,
+    pub recommendation:     String,
 }
 
 /// Alert type enumeration

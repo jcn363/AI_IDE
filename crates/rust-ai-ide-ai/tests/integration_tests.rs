@@ -1,6 +1,7 @@
+use std::time::Duration;
+
 use rust_ai_ide_ai::model_loader::loaders::CodeLlamaLoader;
 use rust_ai_ide_ai::model_loader::*;
-use std::time::Duration;
 
 #[cfg(test)]
 mod integration_tests {
@@ -156,8 +157,7 @@ mod integration_tests {
         let monitor = SystemMonitor::new();
 
         // Test memory estimation function (static method)
-        let estimate =
-            SystemMonitor::estimate_memory_requirement(ModelSize::Large, Some(Quantization::FP16));
+        let estimate = SystemMonitor::estimate_memory_requirement(ModelSize::Large, Some(Quantization::FP16));
 
         // Should return reasonable memory estimate
         let estimate_gb = estimate as f64 / (1024.0 * 1024.0 * 1024.0);

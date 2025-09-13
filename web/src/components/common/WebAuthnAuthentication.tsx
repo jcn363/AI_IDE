@@ -7,7 +7,7 @@ import webauthnService, {
   webauthnApiCall,
   checkWebAuthnSupport,
   base64UrlToUint8Array,
-  uint8ArrayToBase64Url
+  uint8ArrayToBase64Url,
 } from '../../services/webauthnService';
 
 interface WebAuthnAuthenticationProps {
@@ -18,7 +18,14 @@ interface WebAuthnAuthenticationProps {
 }
 
 interface AuthenticationState {
-  step: 'idle' | 'checking-support' | 'starting' | 'authenticating' | 'verifying' | 'completed' | 'error';
+  step:
+    | 'idle'
+    | 'checking-support'
+    | 'starting'
+    | 'authenticating'
+    | 'verifying'
+    | 'completed'
+    | 'error';
   challenge?: WebAuthnChallengeResponse;
   authenticatedUser?: string;
   error?: string;
@@ -30,30 +37,30 @@ export const WebAuthnAuthentication: React.FC<WebAuthnAuthenticationProps> = ({
   userId,
   onSuccess,
   onError,
-  autoStart = false
+  autoStart = false,
 }) => {
   const [state, setState] = useState<AuthenticationState>({
     step: 'idle',
     supported: false,
-    credentials: []
+    credentials: [],
   });
 
   // Check WebAuthn support and load credentials on mount
   useEffect(() => {
     const initialize = async () => {
-      setState(prev => ({ ...prev, step: 'checking-support' }));
+      setState((prev) => ({ ...prev, step: 'checking-support' }));
 
       try {
         const [support, credentials] = await Promise.all([
           checkWebAuthnSupport(),
-          webauthnApiCall(() => webauthnService.listCredentials())
+          webauthnApiCall(() => webauthnService.listCredentials()),
         ]);
 
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           step: 'idle',
           supported: support.supported,
-          credentials
+          credentials,
         }));
 
         if (autoStart && support.supported && credentials.length > 0) {
@@ -61,12 +68,12 @@ export const WebAuthnAuthentication: React.FC<WebAuthnAuthenticationProps> = ({
         }
       } catch (error) {
         console.error('Failed to initialize WebAuthn:', error);
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           step: 'error',
           error: 'Failed to initialize WebAuthn',
           supported: false,
-          credentials: []
+          credentials: [],
         }));
       }
     };
@@ -77,37 +84,36 @@ export const WebAuthnAuthentication: React.FC<WebAuthnAuthenticationProps> = ({
   const startAuthentication = async () => {
     if (!state.supported) {
       const error = 'WebAuthn is not supported in this browser';
-      setState(prev => ({ ...prev, step: 'error', error }));
+      setState((prev) => ({ ...prev, step: 'error', error }));
       onError?.(error);
       return;
     }
 
     if (state.credentials.length === 0) {
       const error = 'No WebAuthn credentials found. Please register a credential first.';
-      setState(prev => ({ ...prev, step: 'error', error }));
+      setState((prev) => ({ ...prev, step: 'error', error }));
       onError?.(error);
       return;
     }
 
-    setState(prev => ({ ...prev, step: 'starting' }));
+    setState((prev) => ({ ...prev, step: 'starting' }));
 
     try {
-      const challenge = await webauthnApiCall(
-        () => webauthnService.startAuthentication({ user_id: userId })
+      const challenge = await webauthnApiCall(() =>
+        webauthnService.startAuthentication({ user_id: userId })
       );
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         step: 'authenticating',
-        challenge
+        challenge,
       }));
 
       // Start the browser WebAuthn authentication
       await performBrowserAuthentication(challenge);
-
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Authentication failed';
-      setState(prev => ({ ...prev, step: 'error', error: errorMsg }));
+      setState((prev) => ({ ...prev, step: 'error', error: errorMsg }));
       onError?.(errorMsg);
     }
   };
@@ -118,23 +124,23 @@ export const WebAuthnAuthentication: React.FC<WebAuthnAuthenticationProps> = ({
       const publicKeyCredentialRequestOptions = {
         challenge: base64UrlToUint8Array(challenge.challenge.publicKey.challenge),
         rpId: challenge.challenge.publicKey.rpId,
-        allowCredentials: challenge.challenge.publicKey.allowCredentials?.map(cred => ({
+        allowCredentials: challenge.challenge.publicKey.allowCredentials?.map((cred) => ({
           id: base64UrlToUint8Array(cred.id),
           type: cred.type,
-          transports: cred.transports
+          transports: cred.transports,
         })),
         timeout: challenge.challenge.publicKey.timeout,
-        userVerification: challenge.challenge.publicKey.userVerification
+        userVerification: challenge.challenge.publicKey.userVerification,
       };
 
-      setState(prev => ({ ...prev, step: 'authenticating' }));
+      setState((prev) => ({ ...prev, step: 'authenticating' }));
 
       // Get the credential
-      const credential = await navigator.credentials.get({
-        publicKey: publicKeyCredentialRequestOptions
-      }) as PublicKeyCredential;
+      const credential = (await navigator.credentials.get({
+        publicKey: publicKeyCredentialRequestOptions,
+      })) as PublicKeyCredential;
 
-      setState(prev => ({ ...prev, step: 'verifying' }));
+      setState((prev) => ({ ...prev, step: 'verifying' }));
 
       // Convert credential for backend
       const authenticationResponse = {
@@ -143,46 +149,54 @@ export const WebAuthnAuthentication: React.FC<WebAuthnAuthenticationProps> = ({
         type: credential.type,
         response: {
           clientDataJSON: uint8ArrayToBase64Url(new Uint8Array(credential.response.clientDataJSON)),
-          authenticatorData: uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAssertionResponse).authenticatorData)),
-          signature: uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAssertionResponse).signature)),
-          userHandle: (credential.response as AuthenticatorAssertionResponse).userHandle ?
-            uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAssertionResponse).userHandle!)) : null
-        }
+          authenticatorData: uint8ArrayToBase64Url(
+            new Uint8Array(
+              (credential.response as AuthenticatorAssertionResponse).authenticatorData
+            )
+          ),
+          signature: uint8ArrayToBase64Url(
+            new Uint8Array((credential.response as AuthenticatorAssertionResponse).signature)
+          ),
+          userHandle: (credential.response as AuthenticatorAssertionResponse).userHandle
+            ? uint8ArrayToBase64Url(
+                new Uint8Array((credential.response as AuthenticatorAssertionResponse).userHandle!)
+              )
+            : null,
+        },
       };
 
       // Finish authentication with backend
-      const result = await webauthnApiCall(
-        () => webauthnService.finishAuthentication({
+      const result = await webauthnApiCall(() =>
+        webauthnService.finishAuthentication({
           challenge_id: challenge.challenge_id,
-          authentication_response: authenticationResponse
+          authentication_response: authenticationResponse,
         })
       );
 
       if (result.success && result.authenticated && result.user_id) {
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           step: 'completed',
-          authenticatedUser: result.user_id
+          authenticatedUser: result.user_id,
         }));
         onSuccess?.(result.user_id);
       } else {
         throw new Error(result.error || 'Authentication verification failed');
       }
-
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Browser authentication failed';
-      setState(prev => ({ ...prev, step: 'error', error: errorMsg }));
+      setState((prev) => ({ ...prev, step: 'error', error: errorMsg }));
       onError?.(errorMsg);
     }
   };
 
   const resetAuthentication = () => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       step: 'idle',
       challenge: undefined,
       authenticatedUser: undefined,
-      error: undefined
+      error: undefined,
     }));
   };
 
@@ -208,7 +222,8 @@ export const WebAuthnAuthentication: React.FC<WebAuthnAuthenticationProps> = ({
 
             {!state.supported && (
               <div className="warning-message">
-                WebAuthn is not supported in this browser. Please use a modern browser with WebAuthn support.
+                WebAuthn is not supported in this browser. Please use a modern browser with WebAuthn
+                support.
               </div>
             )}
 
@@ -301,7 +316,9 @@ export const WebAuthnAuthentication: React.FC<WebAuthnAuthenticationProps> = ({
               <p>You have been successfully authenticated.</p>
               {state.authenticatedUser && (
                 <div className="user-info">
-                  <p><strong>User:</strong> {state.authenticatedUser}</p>
+                  <p>
+                    <strong>User:</strong> {state.authenticatedUser}
+                  </p>
                 </div>
               )}
             </div>
@@ -383,8 +400,12 @@ export const WebAuthnAuthentication: React.FC<WebAuthnAuthenticationProps> = ({
         }
 
         @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
         }
 
         .authenticator-instructions {
@@ -444,16 +465,19 @@ export const WebAuthnAuthentication: React.FC<WebAuthnAuthenticationProps> = ({
           color: #666;
         }
 
-        .credential-date, .credential-device {
+        .credential-date,
+        .credential-device {
           font-size: 12px;
           color: #888;
         }
 
-        .success-message, .error-message {
+        .success-message,
+        .error-message {
           padding: 20px;
         }
 
-        .success-icon, .error-icon {
+        .success-icon,
+        .error-icon {
           font-size: 48px;
           margin-bottom: 15px;
         }
@@ -466,12 +490,14 @@ export const WebAuthnAuthentication: React.FC<WebAuthnAuthenticationProps> = ({
           color: #dc3545;
         }
 
-        .success-message h3, .error-message h3 {
+        .success-message h3,
+        .error-message h3 {
           margin: 0 0 10px 0;
           color: #333;
         }
 
-        .success-message p, .error-message p {
+        .success-message p,
+        .error-message p {
           color: #666;
           margin-bottom: 15px;
         }
@@ -488,7 +514,8 @@ export const WebAuthnAuthentication: React.FC<WebAuthnAuthenticationProps> = ({
           font-size: 14px;
         }
 
-        .warning-message, .info-message {
+        .warning-message,
+        .info-message {
           padding: 12px;
           border-radius: 6px;
           margin-bottom: 20px;

@@ -10,11 +10,12 @@
 //! - **Predictive preloading**: Load anticipated data into cache before access
 //! - **Adaptive TTL**: Dynamically adjust cache expiration based on access patterns
 
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;
 use std::sync::Arc;
+
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
 
@@ -38,42 +39,42 @@ pub enum InvalidationStrategy {
 /// Advanced cache configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdvancedCacheConfig {
-    pub max_entries: usize,
-    pub invalidation_strategy: InvalidationStrategy,
-    pub enable_dependency_tracking: bool,
-    pub enable_predictive_preloading: bool,
+    pub max_entries:                     usize,
+    pub invalidation_strategy:           InvalidationStrategy,
+    pub enable_dependency_tracking:      bool,
+    pub enable_predictive_preloading:    bool,
     pub access_pattern_learning_enabled: bool,
-    pub max_dependency_depth: usize,
-    pub preload_batch_size: usize,
+    pub max_dependency_depth:            usize,
+    pub preload_batch_size:              usize,
 }
 
 /// Cache entry with dependency tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdvancedCacheEntry<V> {
-    pub value: V,
-    pub dependencies: HashSet<PathBuf>,
-    pub dependents: HashSet<PathBuf>,
+    pub value:          V,
+    pub dependencies:   HashSet<PathBuf>,
+    pub dependents:     HashSet<PathBuf>,
     pub access_pattern: VecDeque<chrono::DateTime<chrono::Utc>>,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-    pub last_accessed: chrono::DateTime<chrono::Utc>,
-    pub access_count: u64,
-    pub adaptive_ttl: Option<u64>,
+    pub created_at:     chrono::DateTime<chrono::Utc>,
+    pub last_accessed:  chrono::DateTime<chrono::Utc>,
+    pub access_count:   u64,
+    pub adaptive_ttl:   Option<u64>,
 }
 
 /// Dependency tracker for intelligent invalidation
 #[derive(Debug)]
 pub struct DependencyTracker {
-    dependency_graph: RwLock<HashMap<PathBuf, HashSet<PathBuf>>>,
+    dependency_graph:         RwLock<HashMap<PathBuf, HashSet<PathBuf>>>,
     reverse_dependency_graph: RwLock<HashMap<PathBuf, HashSet<PathBuf>>>,
-    access_patterns: RwLock<HashMap<PathBuf, VecDeque<chrono::DateTime<chrono::Utc>>>>,
+    access_patterns:          RwLock<HashMap<PathBuf, VecDeque<chrono::DateTime<chrono::Utc>>>>,
 }
 
 impl DependencyTracker {
     pub fn new() -> Self {
         Self {
-            dependency_graph: RwLock::new(HashMap::new()),
+            dependency_graph:         RwLock::new(HashMap::new()),
             reverse_dependency_graph: RwLock::new(HashMap::new()),
-            access_patterns: RwLock::new(HashMap::new()),
+            access_patterns:          RwLock::new(HashMap::new()),
         }
     }
 
@@ -129,14 +130,8 @@ impl DependencyTracker {
                 for dependent in direct_dependents {
                     if visited.insert(dependent.clone()) {
                         result.insert(dependent.clone());
-                        self.collect_dependents_recursive(
-                            dependent,
-                            result,
-                            visited,
-                            current_depth + 1,
-                            max_depth,
-                        )
-                        .await;
+                        self.collect_dependents_recursive(dependent, result, visited, current_depth + 1, max_depth)
+                            .await;
                     }
                 }
             }
@@ -179,14 +174,14 @@ impl DependencyTracker {
 /// Predictive preloading engine
 #[derive(Debug)]
 pub struct PredictivePreloader {
-    recent_accesses: RwLock<VecDeque<(PathBuf, chrono::DateTime<chrono::Utc>)>>,
+    recent_accesses:     RwLock<VecDeque<(PathBuf, chrono::DateTime<chrono::Utc>)>>,
     loading_predictions: RwLock<HashMap<PathBuf, f64>>,
 }
 
 impl PredictivePreloader {
     pub fn new() -> Self {
         Self {
-            recent_accesses: RwLock::new(VecDeque::new()),
+            recent_accesses:     RwLock::new(VecDeque::new()),
             loading_predictions: RwLock::new(HashMap::new()),
         }
     }
@@ -252,11 +247,8 @@ impl PredictivePreloader {
                 score += (count as f64) * 0.4;
 
                 // Recency score (more recent = higher score)
-                if let Some(last_timestamp) =
-                    timestamps.iter().max_by(|a, b| a.partial_cmp(b).unwrap())
-                {
-                    let hours_since_access =
-                        (current_time.timestamp() as f64 - last_timestamp) / 3600.0;
+                if let Some(last_timestamp) = timestamps.iter().max_by(|a, b| a.partial_cmp(b).unwrap()) {
+                    let hours_since_access = (current_time.timestamp() as f64 - last_timestamp) / 3600.0;
                     let recency_bonus = (24.0 / (1.0 + hours_since_access)).clamp(0.0, 1.0);
                     score += recency_bonus * 0.6;
                 }
@@ -336,9 +328,9 @@ impl AdaptiveTTLCalculator {
 #[derive(Debug)]
 pub struct HierarchicalCacheManager<K, V> {
     memory_cache: Option<Arc<dyn Cache<K, V>>>,
-    redis_cache: Option<Arc<dyn Cache<K, V>>>,
-    disk_cache: Option<Arc<dyn Cache<K, V>>>,
-    policy: HierarchicalCachePolicy,
+    redis_cache:  Option<Arc<dyn Cache<K, V>>>,
+    disk_cache:   Option<Arc<dyn Cache<K, V>>>,
+    policy:       HierarchicalCachePolicy,
 }
 
 #[derive(Debug, Clone)]
@@ -463,8 +455,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test as async_test;
+
+    use super::*;
 
     #[async_test]
     async fn test_dependency_tracking() {

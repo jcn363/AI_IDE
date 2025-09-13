@@ -1,8 +1,6 @@
 //! Integration tests for AI-powered code analysis
 
-use rust_ai_ide_ai_analysis::architectural::detectors::{
-    AIDetector, AnalysisContext, AnalysisRequest,
-};
+use rust_ai_ide_ai_analysis::architectural::detectors::{AIDetector, AnalysisContext, AnalysisRequest};
 use rust_ai_ide_ai_analysis::architectural::patterns::{
     AntiPattern, ArchitecturalPattern, Priority, SuggestionCategory,
 };
@@ -76,16 +74,16 @@ impl FileRepository {
 "#;
 
     let request = AnalysisRequest {
-        file_uri: "test://FileRepository.rs".to_string(),
+        file_uri:             "test://FileRepository.rs".to_string(),
         detect_anti_patterns: true,
-        detect_patterns: true,
+        detect_patterns:      true,
         generate_suggestions: true,
         performance_analysis: true,
-        parse_tree: None,
-        context: Some(AnalysisContext {
+        parse_tree:           None,
+        context:              Some(AnalysisContext {
             project_root: Some("/test".to_string()),
-            language: Some("rust".to_string()),
-            framework: None,
+            language:     Some("rust".to_string()),
+            framework:    None,
         }),
     };
 

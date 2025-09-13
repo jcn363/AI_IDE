@@ -1,13 +1,16 @@
 //! Model Health Monitor
 //!
-//! This module provides real-time health monitoring and diagnostics for the multi-model orchestration system.
+//! This module provides real-time health monitoring and diagnostics for the multi-model
+//! orchestration system.
+
+use std::collections::HashMap;
+use std::sync::Arc;
+
+use async_trait::async_trait;
+use tokio::sync::RwLock;
 
 use crate::types::{HealthEvent, ModelId, ModelMetrics, ModelStatus};
 use crate::{OrchestrationError, Result};
-use async_trait::async_trait;
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 
 /// Real-time health checker for models
 #[derive(Debug)]
@@ -18,10 +21,10 @@ pub struct ModelHealthMonitor {
 
 #[derive(Debug, Clone)]
 pub struct ModelHealthState {
-    pub status: ModelStatus,
-    pub last_healthy_check: std::time::Instant,
+    pub status:               ModelStatus,
+    pub last_healthy_check:   std::time::Instant,
     pub consecutive_failures: u32,
-    pub metrics: ModelMetrics,
+    pub metrics:              ModelMetrics,
 }
 
 impl ModelHealthMonitor {

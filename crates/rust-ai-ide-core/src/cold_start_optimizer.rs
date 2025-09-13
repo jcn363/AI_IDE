@@ -12,46 +12,46 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tokio::sync::{RwLock, Semaphore};
-use tokio::task::JoinHandle;
 
 // Logging macros
 use log::{debug, info, warn};
+use tokio::sync::{RwLock, Semaphore};
+use tokio::task::JoinHandle;
 
 /// Cold start optimizer for fast IDE startup
 pub struct ColdStartOptimizer {
-    pub config: ColdStartConfig,
+    pub config:               ColdStartConfig,
     pub initialization_order: Vec<Component>,
-    pub preload_cache: RwLock<HashMap<String, PreloadedData>>,
-    pub warmup_tasks: RwLock<Vec<JoinHandle<()>>>,
-    pub startup_time: std::sync::atomic::AtomicU64,
+    pub preload_cache:        RwLock<HashMap<String, PreloadedData>>,
+    pub warmup_tasks:         RwLock<Vec<JoinHandle<()>>>,
+    pub startup_time:         std::sync::atomic::AtomicU64,
 }
 
 #[derive(Debug, Clone)]
 pub struct ColdStartConfig {
-    pub target_startup_time_ms: u64,       // Target <500ms
-    pub target_warm_time_ms: u64,          // Target <100ms
-    pub enable_preloading: bool,           // Enable memory preloading
-    pub enable_parallel_init: bool,        // Enable parallel initialization
-    pub preload_concurrency_limit: usize,  // Max concurrent preload tasks
-    pub cache_warmup_queries: Vec<String>, // Queries to warm cache
-    pub memory_pinning_kb: usize,          // Amount of memory to pin (KB)
+    pub target_startup_time_ms:    u64,         // Target <500ms
+    pub target_warm_time_ms:       u64,         // Target <100ms
+    pub enable_preloading:         bool,        // Enable memory preloading
+    pub enable_parallel_init:      bool,        // Enable parallel initialization
+    pub preload_concurrency_limit: usize,       // Max concurrent preload tasks
+    pub cache_warmup_queries:      Vec<String>, // Queries to warm cache
+    pub memory_pinning_kb:         usize,       // Amount of memory to pin (KB)
 }
 
 impl Default for ColdStartConfig {
     fn default() -> Self {
         Self {
-            target_startup_time_ms: 500, // <500ms cold start target
-            target_warm_time_ms: 100,    // <100ms warm start target
-            enable_preloading: true,
-            enable_parallel_init: true,
+            target_startup_time_ms:    500, // <500ms cold start target
+            target_warm_time_ms:       100, // <100ms warm start target
+            enable_preloading:         true,
+            enable_parallel_init:      true,
             preload_concurrency_limit: 4,
-            cache_warmup_queries: vec![
+            cache_warmup_queries:      vec![
                 "cargo:check".to_string(),
                 "rust-analyzer:diagnostics".to_string(),
                 "completion:trigger".to_string(),
             ],
-            memory_pinning_kb: 1024, // 1MB memory pinning
+            memory_pinning_kb:         1024, // 1MB memory pinning
         }
     }
 }
@@ -70,33 +70,33 @@ pub enum Component {
 
 #[derive(Debug, Clone)]
 pub struct PreloadedData {
-    pub data: Vec<u8>,
+    pub data:      Vec<u8>,
     pub last_used: Instant,
-    pub priority: PreloadPriority,
+    pub priority:  PreloadPriority,
 }
 
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, Eq, PartialEq)]
 pub enum PreloadPriority {
-    Low = 0,
-    Medium = 1,
-    High = 2,
+    Low      = 0,
+    Medium   = 1,
+    High     = 2,
     Critical = 3,
 }
 
 /// Initialization state tracking
 pub struct InitializationState {
-    pub started_at: Instant,
+    pub started_at:           Instant,
     pub components_completed: HashMap<Component, Duration>,
-    pub parallel_tasks: Vec<JoinHandle<()>>,
+    pub parallel_tasks:       Vec<JoinHandle<()>>,
     pub remaining_components: Vec<Component>,
 }
 
 impl Default for InitializationState {
     fn default() -> Self {
         Self {
-            started_at: Instant::now(),
+            started_at:           Instant::now(),
             components_completed: HashMap::new(),
-            parallel_tasks: Vec::new(),
+            parallel_tasks:       Vec::new(),
             remaining_components: vec![
                 Component::CoreFoundation,
                 Component::FileSystem,
@@ -184,11 +184,11 @@ impl ColdStartOptimizer {
         );
 
         let result = ColdStartResult {
-            total_time_ms: startup_time_ms,
-            within_target: startup_time_ms < self.config.target_startup_time_ms,
+            total_time_ms:          startup_time_ms,
+            within_target:          startup_time_ms < self.config.target_startup_time_ms,
             initialized_components: init_state.components_completed.len(),
-            preload_cache_hits: 0, // Would be tracked in actual implementation
-            warmed_queries: self.config.cache_warmup_queries.len(),
+            preload_cache_hits:     0, // Would be tracked in actual implementation
+            warmed_queries:         self.config.cache_warmup_queries.len(),
         };
 
         Ok(result)
@@ -211,14 +211,11 @@ impl ColdStartOptimizer {
 
         // Store in preload cache
         let mut preload_cache = self.preload_cache.write().await;
-        preload_cache.insert(
-            "memory_preload".to_string(),
-            PreloadedData {
-                data: (*preload_arc).clone(),
-                last_used: Instant::now(),
-                priority: PreloadPriority::High,
-            },
-        );
+        preload_cache.insert("memory_preload".to_string(), PreloadedData {
+            data:      (*preload_arc).clone(),
+            last_used: Instant::now(),
+            priority:  PreloadPriority::High,
+        });
 
         debug!("Memory preloading completed");
         Ok(())
@@ -315,8 +312,7 @@ impl ColdStartOptimizer {
 
     /// Check if cold start is optimized
     pub fn is_optimized(&self) -> bool {
-        self.startup_time.load(std::sync::atomic::Ordering::Relaxed)
-            < self.config.target_startup_time_ms
+        self.startup_time.load(std::sync::atomic::Ordering::Relaxed) < self.config.target_startup_time_ms
     }
 
     /// Get current startup time
@@ -340,11 +336,11 @@ impl ColdStartOptimizer {
 
 #[derive(Debug, Clone)]
 pub struct ColdStartResult {
-    pub total_time_ms: u64,
-    pub within_target: bool,
+    pub total_time_ms:          u64,
+    pub within_target:          bool,
     pub initialized_components: usize,
-    pub preload_cache_hits: usize,
-    pub warmed_queries: usize,
+    pub preload_cache_hits:     usize,
+    pub warmed_queries:         usize,
 }
 
 /// Optimized analyzer creation function

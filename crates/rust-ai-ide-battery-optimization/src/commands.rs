@@ -2,18 +2,18 @@
 //!
 //! Provides Tauri command handlers for interacting with battery optimization features.
 
-use crate::{BatteryConfig, BatteryOptimizationService, BatteryState};
-use serde_json::json;
 use std::sync::Arc;
+
+use serde_json::json;
 use tokio::sync::RwLock;
+
+use crate::{BatteryConfig, BatteryOptimizationService, BatteryState};
 
 pub type BatteryServiceState = Arc<RwLock<BatteryOptimizationService>>;
 
 /// Get current battery state
 #[tauri::command]
-pub async fn get_battery_state(
-    state: tauri::State<'_, BatteryServiceState>,
-) -> Result<String, String> {
+pub async fn get_battery_state(state: tauri::State<'_, BatteryServiceState>) -> Result<String, String> {
     let service = state.read().await;
     match service.get_battery_state().await {
         Ok(state) => Ok(serde_json::to_string(&state).unwrap_or_default()),
@@ -23,9 +23,7 @@ pub async fn get_battery_state(
 
 /// Get battery optimization status
 #[tauri::command]
-pub async fn get_battery_status(
-    state: tauri::State<'_, BatteryServiceState>,
-) -> Result<String, String> {
+pub async fn get_battery_status(state: tauri::State<'_, BatteryServiceState>) -> Result<String, String> {
     // Return placeholder status for now
     let status = json!({
         "optimization_enabled": true,

@@ -1,8 +1,9 @@
 //! Configuration for memory optimization system
 //! Uses serde for serialization and integrates with workspace-wide config patterns.
 
-use serde::{Deserialize, Serialize};
 use std::time::Duration;
+
+use serde::{Deserialize, Serialize};
 
 /// Configuration for the memory optimization system
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,17 +45,17 @@ pub struct MemoryOptimizationConfig {
 impl Default for MemoryOptimizationConfig {
     fn default() -> Self {
         Self {
-            enable_leak_detection: true,
-            leak_scan_interval_seconds: 300, // 5 minutes
-            enable_auto_suggestions: true,
+            enable_leak_detection:          true,
+            leak_scan_interval_seconds:     300, // 5 minutes
+            enable_auto_suggestions:        true,
             memory_alert_threshold_percent: 85.0,
-            enable_ai_analysis: true,
-            enable_simd_acceleration: true,
-            suggestion_cache_size_mb: 100,
-            monitoring_interval_seconds: 60, // 1 minute
-            enable_cross_crate_analysis: true,
-            snapshot_retention_hours: 24,
-            max_memory_pool_mb: 512,
+            enable_ai_analysis:             true,
+            enable_simd_acceleration:       true,
+            suggestion_cache_size_mb:       100,
+            monitoring_interval_seconds:    60, // 1 minute
+            enable_cross_crate_analysis:    true,
+            snapshot_retention_hours:       24,
+            max_memory_pool_mb:             512,
         }
     }
 }
@@ -118,8 +119,7 @@ impl MemoryOptimizationConfig {
 
     /// Validate configuration parameters
     pub fn validate(&self) -> Result<(), String> {
-        if self.memory_alert_threshold_percent < 0.0 || self.memory_alert_threshold_percent > 100.0
-        {
+        if self.memory_alert_threshold_percent < 0.0 || self.memory_alert_threshold_percent > 100.0 {
             return Err("Memory alert threshold must be between 0 and 100".to_string());
         }
 

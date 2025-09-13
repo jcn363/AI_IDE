@@ -26,13 +26,14 @@ pub mod lsp_cache;
 pub mod storage;
 pub mod strategies;
 
-use async_trait::async_trait;
-use rust_ai_ide_errors::IDEResult;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::Arc;
 use std::time::Duration;
+
+use async_trait::async_trait;
+use rust_ai_ide_errors::IDEResult;
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 // Using chrono::DateTime<chrono::Utc> as Timestamp alias
@@ -89,23 +90,23 @@ impl From<String> for UserId {
 /// Collaboration configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollaborationConfig {
-    pub enable_session_sharing: bool,
-    pub enable_user_isolation: bool,
-    pub session_ttl: Option<Duration>,
-    pub max_users_per_session: Option<usize>,
+    pub enable_session_sharing:  bool,
+    pub enable_user_isolation:   bool,
+    pub session_ttl:             Option<Duration>,
+    pub max_users_per_session:   Option<usize>,
     pub enable_realtime_updates: bool,
-    pub shared_cache_prefix: Option<String>,
+    pub shared_cache_prefix:     Option<String>,
 }
 
 impl Default for CollaborationConfig {
     fn default() -> Self {
         Self {
-            enable_session_sharing: true,
-            enable_user_isolation: false,
-            session_ttl: Some(Duration::from_secs(3600)), // 1 hour
-            max_users_per_session: Some(10),
+            enable_session_sharing:  true,
+            enable_user_isolation:   false,
+            session_ttl:             Some(Duration::from_secs(3600)), // 1 hour
+            max_users_per_session:   Some(10),
             enable_realtime_updates: true,
-            shared_cache_prefix: Some("shared:".to_string()),
+            shared_cache_prefix:     Some("shared:".to_string()),
         }
     }
 }
@@ -113,24 +114,24 @@ impl Default for CollaborationConfig {
 /// Session metadata for collaborative caching
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionMetadata {
-    pub session_id: SessionId,
-    pub created_at: Timestamp,
-    pub last_activity: Timestamp,
-    pub user_count: usize,
+    pub session_id:     SessionId,
+    pub created_at:     Timestamp,
+    pub last_activity:  Timestamp,
+    pub user_count:     usize,
     pub shared_entries: usize,
-    pub owner_id: Option<UserId>,
+    pub owner_id:       Option<UserId>,
 }
 
 impl Default for SessionMetadata {
     fn default() -> Self {
         let now = chrono::Utc::now();
         Self {
-            session_id: SessionId::new(),
-            created_at: now,
-            last_activity: now,
-            user_count: 1,
+            session_id:     SessionId::new(),
+            created_at:     now,
+            last_activity:  now,
+            user_count:     1,
             shared_entries: 0,
-            owner_id: None,
+            owner_id:       None,
         }
     }
 }
@@ -138,13 +139,13 @@ impl Default for SessionMetadata {
 /// Unified cache entry with rich metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CacheEntry<V> {
-    pub value: V,
-    pub created_at: Timestamp,
+    pub value:         V,
+    pub created_at:    Timestamp,
     pub last_accessed: Timestamp,
-    pub expires_at: Option<Timestamp>,
-    pub access_count: u64,
-    pub ttl_seconds: Option<u64>,
-    pub metadata: HashMap<String, String>,
+    pub expires_at:    Option<Timestamp>,
+    pub access_count:  u64,
+    pub ttl_seconds:   Option<u64>,
+    pub metadata:      HashMap<String, String>,
 }
 
 impl<V> CacheEntry<V> {
@@ -307,22 +308,13 @@ where
     async fn leave_session(&self, session_id: &SessionId, user_id: UserId) -> IDEResult<()>;
 
     /// Get session metadata
-    async fn get_session_metadata(
-        &self,
-        session_id: &SessionId,
-    ) -> IDEResult<Option<SessionMetadata>>;
+    async fn get_session_metadata(&self, session_id: &SessionId) -> IDEResult<Option<SessionMetadata>>;
 
     /// Get a value from cache within a session context
     async fn get_session(&self, session_id: &SessionId, key: &K) -> IDEResult<Option<V>>;
 
     /// Insert a value into cache within a session context
-    async fn insert_session(
-        &self,
-        session_id: &SessionId,
-        key: K,
-        value: V,
-        ttl: Option<Duration>,
-    ) -> IDEResult<()>;
+    async fn insert_session(&self, session_id: &SessionId, key: K, value: V, ttl: Option<Duration>) -> IDEResult<()>;
 
     /// Remove a value from cache within a session context
     async fn remove_session(&self, session_id: &SessionId, key: &K) -> IDEResult<Option<V>>;
@@ -331,21 +323,10 @@ where
     async fn get_user(&self, user_id: &UserId, key: &K) -> IDEResult<Option<V>>;
 
     /// Insert a user-specific value into cache
-    async fn insert_user(
-        &self,
-        user_id: &UserId,
-        key: K,
-        value: V,
-        ttl: Option<Duration>,
-    ) -> IDEResult<()>;
+    async fn insert_user(&self, user_id: &UserId, key: K, value: V, ttl: Option<Duration>) -> IDEResult<()>;
 
     /// Share a cache entry across a session
-    async fn share_entry(
-        &self,
-        session_id: &SessionId,
-        key: &K,
-        from_user: &UserId,
-    ) -> IDEResult<()>;
+    async fn share_entry(&self, session_id: &SessionId, key: &K, from_user: &UserId) -> IDEResult<()>;
 
     /// Get shared entries for a session
     async fn get_shared_entries(&self, session_id: &SessionId) -> IDEResult<Vec<K>>;
@@ -360,29 +341,29 @@ where
 /// Cache performance metrics and statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CacheStats {
-    pub total_entries: usize,
-    pub total_hits: u64,
-    pub total_misses: u64,
-    pub total_evictions: u64,
-    pub total_sets: u64,
-    pub hit_ratio: f64,
+    pub total_entries:      usize,
+    pub total_hits:         u64,
+    pub total_misses:       u64,
+    pub total_evictions:    u64,
+    pub total_sets:         u64,
+    pub hit_ratio:          f64,
     pub memory_usage_bytes: Option<u64>,
-    pub uptime_seconds: u64,
-    pub created_at: Timestamp,
+    pub uptime_seconds:     u64,
+    pub created_at:         Timestamp,
 }
 
 impl Default for CacheStats {
     fn default() -> Self {
         Self {
-            total_entries: 0,
-            total_hits: 0,
-            total_misses: 0,
-            total_evictions: 0,
-            total_sets: 0,
-            hit_ratio: 0.0,
+            total_entries:      0,
+            total_hits:         0,
+            total_misses:       0,
+            total_evictions:    0,
+            total_sets:         0,
+            hit_ratio:          0.0,
             memory_usage_bytes: None,
-            uptime_seconds: 0,
-            created_at: chrono::Utc::now(),
+            uptime_seconds:     0,
+            created_at:         chrono::Utc::now(),
         }
     }
 }
@@ -420,40 +401,40 @@ impl CacheStats {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollaborativeCacheStats {
     /// Base cache stats
-    pub base_stats: CacheStats,
+    pub base_stats:               CacheStats,
     /// Total number of active sessions
-    pub active_sessions: usize,
+    pub active_sessions:          usize,
     /// Total number of users across all sessions
-    pub total_users: usize,
+    pub total_users:              usize,
     /// Total shared cache entries
-    pub shared_entries: usize,
+    pub shared_entries:           usize,
     /// Session creation rate (per minute)
-    pub session_creation_rate: f64,
+    pub session_creation_rate:    f64,
     /// Average users per session
-    pub avg_users_per_session: f64,
+    pub avg_users_per_session:    f64,
     /// Session hit ratio (cache hits within sessions)
-    pub session_hit_ratio: f64,
+    pub session_hit_ratio:        f64,
     /// User isolation hit ratio
     pub user_isolation_hit_ratio: f64,
     /// Real-time update operations
-    pub realtime_updates: u64,
+    pub realtime_updates:         u64,
     /// Created at timestamp
-    pub created_at: Timestamp,
+    pub created_at:               Timestamp,
 }
 
 impl Default for CollaborativeCacheStats {
     fn default() -> Self {
         Self {
-            base_stats: CacheStats::default(),
-            active_sessions: 0,
-            total_users: 0,
-            shared_entries: 0,
-            session_creation_rate: 0.0,
-            avg_users_per_session: 0.0,
-            session_hit_ratio: 0.0,
+            base_stats:               CacheStats::default(),
+            active_sessions:          0,
+            total_users:              0,
+            shared_entries:           0,
+            session_creation_rate:    0.0,
+            avg_users_per_session:    0.0,
+            session_hit_ratio:        0.0,
             user_isolation_hit_ratio: 0.0,
-            realtime_updates: 0,
-            created_at: chrono::Utc::now(),
+            realtime_updates:         0,
+            created_at:               chrono::Utc::now(),
         }
     }
 }
@@ -491,12 +472,12 @@ impl CollaborativeCacheStats {
 
 /// Cache manager for coordinating multiple caches with collaboration support
 pub struct CacheManager {
-    caches: HashMap<String, Box<dyn std::any::Any + Send + Sync>>,
-    config: CacheConfig,
+    caches:        HashMap<String, Box<dyn std::any::Any + Send + Sync>>,
+    config:        CacheConfig,
     collab_config: CollaborationConfig,
-    stats: RwLock<CacheStats>,
-    collab_stats: RwLock<CollaborativeCacheStats>,
-    sessions: RwLock<HashMap<SessionId, SessionMetadata>>,
+    stats:         RwLock<CacheStats>,
+    collab_stats:  RwLock<CollaborativeCacheStats>,
+    sessions:      RwLock<HashMap<SessionId, SessionMetadata>>,
     user_sessions: RwLock<HashMap<UserId, SessionId>>,
 }
 
@@ -561,12 +542,12 @@ impl CacheManager {
         let now = chrono::Utc::now();
 
         let metadata = SessionMetadata {
-            session_id: session_id.clone(),
-            created_at: now,
-            last_activity: now,
-            user_count: 1,
+            session_id:     session_id.clone(),
+            created_at:     now,
+            last_activity:  now,
+            user_count:     1,
             shared_entries: 0,
-            owner_id: Some(owner_id.clone()),
+            owner_id:       Some(owner_id.clone()),
         };
 
         let mut sessions = self.sessions.write().await;
@@ -669,8 +650,7 @@ impl CacheManager {
             for session_id in expired_sessions {
                 if let Some(metadata) = sessions.remove(&session_id) {
                     cleaned += metadata.user_count as usize;
-                    collab_stats.total_users =
-                        collab_stats.total_users.saturating_sub(metadata.user_count);
+                    collab_stats.total_users = collab_stats.total_users.saturating_sub(metadata.user_count);
                     collab_stats.active_sessions = collab_stats.active_sessions.saturating_sub(1);
 
                     // Remove user mappings for this session
@@ -887,10 +867,7 @@ pub trait LspCacheExt: Cache<String, serde_json::Value> + Send + Sync + 'static 
     }
 
     /// Retrieve LSP analysis result with validation
-    async fn lsp_retrieve_analysis(
-        &self,
-        file_key: &String,
-    ) -> IDEResult<Option<serde_json::Value>> {
+    async fn lsp_retrieve_analysis(&self, file_key: &String) -> IDEResult<Option<serde_json::Value>> {
         self.get(file_key).await
     }
 }
@@ -949,13 +926,7 @@ where
     V: Send + Sync + Clone + serde::Serialize + 'static,
 {
     /// Store a collaborative cache entry with session scope
-    async fn collab_store(
-        &self,
-        session_id: &SessionId,
-        key: K,
-        value: V,
-        ttl: Option<Duration>,
-    ) -> IDEResult<()> {
+    async fn collab_store(&self, session_id: &SessionId, key: K, value: V, ttl: Option<Duration>) -> IDEResult<()> {
         // Add session prefix to key for isolation
         let prefixed_key = format!(
             "session:{}:{}",
@@ -984,13 +955,7 @@ where
     }
 
     /// Store user-specific cache entry
-    async fn user_store(
-        &self,
-        user_id: &UserId,
-        key: K,
-        value: V,
-        ttl: Option<Duration>,
-    ) -> IDEResult<()> {
+    async fn user_store(&self, user_id: &UserId, key: K, value: V, ttl: Option<Duration>) -> IDEResult<()> {
         let prefixed_key = format!(
             "user:{}:{}",
             user_id.as_str(),
@@ -1015,12 +980,7 @@ where
     }
 
     /// Share cache entry across session users
-    async fn share_entry(
-        &self,
-        session_id: &SessionId,
-        key: &K,
-        shared_key: String,
-    ) -> IDEResult<()> {
+    async fn share_entry(&self, session_id: &SessionId, key: &K, shared_key: String) -> IDEResult<()> {
         if let Some(value) = self.get(key).await? {
             let shared_prefixed_key = format!("shared:{}:{}", session_id.as_string(), shared_key);
             let hashed_shared_key = sha256::digest(shared_prefixed_key);

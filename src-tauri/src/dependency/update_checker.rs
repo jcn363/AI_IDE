@@ -1,21 +1,20 @@
+use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
+
 use cargo_metadata::Package;
 use rust_ai_ide_core::shell_utils;
 use semver::Version;
 use serde::Serialize;
-use std::{
-    collections::{HashMap, HashSet},
-    path::PathBuf,
-};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DependencyInfo {
-    pub name: String,
+    pub name:            String,
     pub current_version: String,
-    pub latest_version: String,
-    pub update_type: String, // 'major', 'minor', 'patch'
-    pub changelog_url: Option<String>,
-    pub is_direct: bool,
-    pub used_in: Vec<String>, // Workspace members using this dependency
+    pub latest_version:  String,
+    pub update_type:     String, // 'major', 'minor', 'patch'
+    pub changelog_url:   Option<String>,
+    pub is_direct:       bool,
+    pub used_in:         Vec<String>, // Workspace members using this dependency
 }
 
 pub struct DependencyUpdateChecker {
@@ -52,8 +51,7 @@ impl DependencyUpdateChecker {
             ));
         }
 
-        serde_json::from_slice(&output.stdout)
-            .map_err(|e| format!("Failed to parse cargo metadata: {}", e))
+        serde_json::from_slice(&output.stdout).map_err(|e| format!("Failed to parse cargo metadata: {}", e))
     }
 
     fn get_outdated_dependencies(&self) -> Result<Vec<serde_json::Value>, String> {
@@ -99,13 +97,9 @@ impl DependencyUpdateChecker {
                     // Process dependencies
                     if let Some(deps) = package["dependencies"].as_array() {
                         for dep in deps {
-                            if let (Some(name), Some(version)) =
-                                (dep["name"].as_str(), dep["req"].as_str())
-                            {
+                            if let (Some(name), Some(version)) = (dep["name"].as_str(), dep["req"].as_str()) {
                                 let entry = deps_map.entry(name.to_string()).or_insert_with(|| {
-                                    let is_direct = members
-                                        .iter()
-                                        .any(|m| m.starts_with(&format!("{} ", name)));
+                                    let is_direct = members.iter().any(|m| m.starts_with(&format!("{} ", name)));
                                     (version.to_string(), is_direct, Vec::new())
                                 });
 
@@ -149,13 +143,13 @@ impl DependencyUpdateChecker {
                     };
 
                     updates.push(DependencyInfo {
-                        name: name.to_string(),
+                        name:            name.to_string(),
                         current_version: current_version.to_string(),
-                        latest_version: latest_version.to_string(),
-                        update_type: update_type.to_string(),
-                        changelog_url: self.get_changelog_url(name, project),
-                        is_direct: *is_direct,
-                        used_in: used_in.clone(),
+                        latest_version:  latest_version.to_string(),
+                        update_type:     update_type.to_string(),
+                        changelog_url:   self.get_changelog_url(name, project),
+                        is_direct:       *is_direct,
+                        used_in:         used_in.clone(),
                     });
                 }
             }

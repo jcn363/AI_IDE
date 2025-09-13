@@ -19,23 +19,25 @@ pub fn create_refactoring_generator() -> RefactoringGenerator {
     RefactoringGenerator::new()
 }
 
-use super::{CodeGenerationError, CodeGenerationInput, GeneratedFile};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use super::{CodeGenerationError, CodeGenerationInput, GeneratedFile};
 
 /// Refactoring suggestion with severity and impact analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefactoringSuggestion {
-    pub pattern_name: String,
-    pub description: String,
-    pub severity: RefactoringSeverity,
-    pub confidence: f64,
+    pub pattern_name:     String,
+    pub description:      String,
+    pub severity:         RefactoringSeverity,
+    pub confidence:       f64,
     pub estimated_effort: EffortLevel,
-    pub before_code: String,
-    pub after_code: String,
-    pub line_numbers: (usize, usize),
-    pub impacted_files: Vec<String>,
-    pub benefits: Vec<String>,
+    pub before_code:      String,
+    pub after_code:       String,
+    pub line_numbers:     (usize, usize),
+    pub impacted_files:   Vec<String>,
+    pub benefits:         Vec<String>,
 }
 
 /// Severity levels for refactoring suggestions
@@ -60,8 +62,8 @@ pub enum EffortLevel {
 
 /// Advanced refactoring generator with pattern recognition
 pub struct RefactoringGenerator {
-    code_analyzer: CodeAnalyzer,
-    pattern_recognizer: PatternRecognizer,
+    code_analyzer:         CodeAnalyzer,
+    pattern_recognizer:    PatternRecognizer,
     transformation_engine: TransformationEngine,
 }
 
@@ -69,8 +71,8 @@ impl RefactoringGenerator {
     /// Create a new refactoring generator
     pub fn new() -> Self {
         Self {
-            code_analyzer: CodeAnalyzer::new(),
-            pattern_recognizer: PatternRecognizer::new(),
+            code_analyzer:         CodeAnalyzer::new(),
+            pattern_recognizer:    PatternRecognizer::new(),
             transformation_engine: TransformationEngine::new(),
         }
     }
@@ -147,19 +149,19 @@ impl RefactoringGenerator {
 
                 for block in extractable_blocks {
                     suggestions.push(RefactoringSuggestion {
-                        pattern_name: "extract_method".to_string(),
-                        description: format!(
+                        pattern_name:     "extract_method".to_string(),
+                        description:      format!(
                             "Extract method '{}' from '{}'",
                             block.method_name, method.name
                         ),
-                        severity: RefactoringSeverity::Medium,
-                        confidence: 0.85,
+                        severity:         RefactoringSeverity::Medium,
+                        confidence:       0.85,
                         estimated_effort: EffortLevel::Small,
-                        before_code: block.original_code.clone(),
-                        after_code: block.extracted_method,
-                        line_numbers: block.line_range,
-                        impacted_files: vec![input.file_path.clone()],
-                        benefits: vec![
+                        before_code:      block.original_code.clone(),
+                        after_code:       block.extracted_method,
+                        line_numbers:     block.line_range,
+                        impacted_files:   vec![input.file_path.clone()],
+                        benefits:         vec![
                             "Reduces method complexity".to_string(),
                             "Improves readability".to_string(),
                             "Enables code reuse".to_string(),
@@ -189,8 +191,8 @@ impl RefactoringGenerator {
                     if group.len() >= 3 {
                         // At least 3 related fields
                         suggestions.push(RefactoringSuggestion {
-                            pattern_name: "extract_class".to_string(),
-                            description: format!(
+                            pattern_name:     "extract_class".to_string(),
+                            description:      format!(
                                 "Extract class for fields: {}",
                                 group
                                     .iter()
@@ -198,18 +200,18 @@ impl RefactoringGenerator {
                                     .collect::<Vec<_>>()
                                     .join(", ")
                             ),
-                            severity: RefactoringSeverity::High,
-                            confidence: 0.7,
+                            severity:         RefactoringSeverity::High,
+                            confidence:       0.7,
                             estimated_effort: EffortLevel::Medium,
-                            before_code: group
+                            before_code:      group
                                 .iter()
                                 .map(|f| format!("    pub {}: {},", f.name, f.type_name))
                                 .collect::<Vec<_>>()
                                 .join("\n"),
-                            after_code: self.generate_extracted_class_code(&group),
-                            line_numbers: struct_def.line_range,
-                            impacted_files: vec![input.file_path.clone()],
-                            benefits: vec![
+                            after_code:       self.generate_extracted_class_code(&group),
+                            line_numbers:     struct_def.line_range,
+                            impacted_files:   vec![input.file_path.clone()],
+                            benefits:         vec![
                                 "Improves cohesion".to_string(),
                                 "Reduces complexity".to_string(),
                                 "Better encapsulation".to_string(),
@@ -237,16 +239,16 @@ impl RefactoringGenerator {
         for op in expensive_operations {
             if op.call_count > 2 {
                 suggestions.push(RefactoringSuggestion {
-                    pattern_name: "cache_expensive_operation".to_string(),
-                    description: format!("Cache expensive operation: {}", op.operation_type),
-                    severity: RefactoringSeverity::High,
-                    confidence: 0.9,
+                    pattern_name:     "cache_expensive_operation".to_string(),
+                    description:      format!("Cache expensive operation: {}", op.operation_type),
+                    severity:         RefactoringSeverity::High,
+                    confidence:       0.9,
                     estimated_effort: EffortLevel::Small,
-                    before_code: op.original_code,
-                    after_code: self.generate_cached_operation(&op),
-                    line_numbers: op.line_range,
-                    impacted_files: vec![input.file_path.clone()],
-                    benefits: vec![
+                    before_code:      op.original_code,
+                    after_code:       self.generate_cached_operation(&op),
+                    line_numbers:     op.line_range,
+                    impacted_files:   vec![input.file_path.clone()],
+                    benefits:         vec![
                         format!("Reduces complexity from O({}) to O(1)", op.complexity),
                         "Improves response time".to_string(),
                         "Reduces resource usage".to_string(),
@@ -269,16 +271,16 @@ impl RefactoringGenerator {
         for method in &analysis.methods {
             if method.is_blocking && analysis.has_async_context {
                 suggestions.push(RefactoringSuggestion {
-                    pattern_name: "convert_to_async".to_string(),
-                    description: format!("Convert method '{}' to async", method.name),
-                    severity: RefactoringSeverity::Medium,
-                    confidence: 0.8,
+                    pattern_name:     "convert_to_async".to_string(),
+                    description:      format!("Convert method '{}' to async", method.name),
+                    severity:         RefactoringSeverity::Medium,
+                    confidence:       0.8,
                     estimated_effort: EffortLevel::Small,
-                    before_code: method.original_code.clone(),
-                    after_code: self.convert_method_to_async(&method),
-                    line_numbers: method.line_range,
-                    impacted_files: vec![input.file_path.clone()],
-                    benefits: vec![
+                    before_code:      method.original_code.clone(),
+                    after_code:       self.convert_method_to_async(&method),
+                    line_numbers:     method.line_range,
+                    impacted_files:   vec![input.file_path.clone()],
+                    benefits:         vec![
                         "Eliminates blocking operations".to_string(),
                         "Improves concurrency".to_string(),
                         "Better resource utilization".to_string(),
@@ -299,20 +301,18 @@ impl RefactoringGenerator {
         let mut suggestions = Vec::new();
 
         for conditional in &analysis.conditionals {
-            if conditional.condition_type == ConditionalType::TypeSwitch
-                && conditional.branch_count >= 3
-            {
+            if conditional.condition_type == ConditionalType::TypeSwitch && conditional.branch_count >= 3 {
                 suggestions.push(RefactoringSuggestion {
-                    pattern_name: "replace_conditional_with_polymorphism".to_string(),
-                    description: "Replace conditional with polymorphism pattern".to_string(),
-                    severity: RefactoringSeverity::High,
-                    confidence: 0.7,
+                    pattern_name:     "replace_conditional_with_polymorphism".to_string(),
+                    description:      "Replace conditional with polymorphism pattern".to_string(),
+                    severity:         RefactoringSeverity::High,
+                    confidence:       0.7,
                     estimated_effort: EffortLevel::Large,
-                    before_code: conditional.original_code.clone(),
-                    after_code: self.generate_polymorphic_code(&conditional),
-                    line_numbers: conditional.line_range,
-                    impacted_files: vec![input.file_path.clone()],
-                    benefits: vec![
+                    before_code:      conditional.original_code.clone(),
+                    after_code:       self.generate_polymorphic_code(&conditional),
+                    line_numbers:     conditional.line_range,
+                    impacted_files:   vec![input.file_path.clone()],
+                    benefits:         vec![
                         "Eliminates long if-else chains".to_string(),
                         "Improves extensibility".to_string(),
                         "Follows Open-Closed Principle".to_string(),
@@ -335,19 +335,19 @@ impl RefactoringGenerator {
         for null_check in &analysis.null_checks {
             if null_check.check_count > 3 && null_check.alternation_count >= 2 {
                 suggestions.push(RefactoringSuggestion {
-                    pattern_name: "introduce_null_object".to_string(),
-                    description: format!(
+                    pattern_name:     "introduce_null_object".to_string(),
+                    description:      format!(
                         "Introduce null object to replace {} null checks",
                         null_check.check_count
                     ),
-                    severity: RefactoringSeverity::Medium,
-                    confidence: 0.8,
+                    severity:         RefactoringSeverity::Medium,
+                    confidence:       0.8,
                     estimated_effort: EffortLevel::Medium,
-                    before_code: null_check.original_code.clone(),
-                    after_code: self.generate_null_object_pattern(&null_check),
-                    line_numbers: null_check.line_range,
-                    impacted_files: vec![input.file_path.clone()],
-                    benefits: vec![
+                    before_code:      null_check.original_code.clone(),
+                    after_code:       self.generate_null_object_pattern(&null_check),
+                    line_numbers:     null_check.line_range,
+                    impacted_files:   vec![input.file_path.clone()],
+                    benefits:         vec![
                         format!("Eliminates {} null checks", null_check.check_count),
                         "Improves readability".to_string(),
                         "Reduces cyclomatic complexity".to_string(),
@@ -373,19 +373,19 @@ impl RefactoringGenerator {
 
                 for point in extraction_points {
                     suggestions.push(RefactoringSuggestion {
-                        pattern_name: "extract_method_long_method".to_string(),
-                        description: format!(
+                        pattern_name:     "extract_method_long_method".to_string(),
+                        description:      format!(
                             "Extract method '{}' from long method '{}'",
                             point.method_name, method.name
                         ),
-                        severity: RefactoringSeverity::Medium,
-                        confidence: 0.75,
+                        severity:         RefactoringSeverity::Medium,
+                        confidence:       0.75,
                         estimated_effort: EffortLevel::Small,
-                        before_code: point.original_code,
-                        after_code: point.extracted_code,
-                        line_numbers: point.line_range,
-                        impacted_files: vec![input.file_path.clone()],
-                        benefits: vec![
+                        before_code:      point.original_code,
+                        after_code:       point.extracted_code,
+                        line_numbers:     point.line_range,
+                        impacted_files:   vec![input.file_path.clone()],
+                        benefits:         vec![
                             format!(
                                 "Reduces method from {} to ~{} lines",
                                 method.line_count,
@@ -413,19 +413,19 @@ impl RefactoringGenerator {
         for primitive_group in &analysis.primitive_groups {
             if primitive_group.usage_count >= 3 {
                 suggestions.push(RefactoringSuggestion {
-                    pattern_name: "replace_primitive_with_object".to_string(),
-                    description: format!(
+                    pattern_name:     "replace_primitive_with_object".to_string(),
+                    description:      format!(
                         "Replace primitive '{}' with value object",
                         primitive_group.primitive_type
                     ),
-                    severity: RefactoringSeverity::Low,
-                    confidence: 0.6,
+                    severity:         RefactoringSeverity::Low,
+                    confidence:       0.6,
                     estimated_effort: EffortLevel::Medium,
-                    before_code: primitive_group.original_code.clone(),
-                    after_code: self.generate_value_object(&primitive_group),
-                    line_numbers: primitive_group.line_range,
-                    impacted_files: vec![input.file_path.clone()],
-                    benefits: vec![
+                    before_code:      primitive_group.original_code.clone(),
+                    after_code:       self.generate_value_object(&primitive_group),
+                    line_numbers:     primitive_group.line_range,
+                    impacted_files:   vec![input.file_path.clone()],
+                    benefits:         vec![
                         "Encapsulates domain logic".to_string(),
                         "Improves type safety".to_string(),
                         string::from_utf8_lossy(&"Reduces primitive usage".as_bytes()).to_string(),
@@ -448,19 +448,19 @@ impl RefactoringGenerator {
         for clump in &analysis.data_clumps {
             if clump.parameter_count >= 4 {
                 suggestions.push(RefactoringSuggestion {
-                    pattern_name: "extract_data_clump".to_string(),
-                    description: format!(
+                    pattern_name:     "extract_data_clump".to_string(),
+                    description:      format!(
                         "Extract data clump with {} parameters into object",
                         clump.parameter_count
                     ),
-                    severity: RefactoringSeverity::Medium,
-                    confidence: 0.7,
+                    severity:         RefactoringSeverity::Medium,
+                    confidence:       0.7,
                     estimated_effort: EffortLevel::Medium,
-                    before_code: clump.original_code.clone(),
-                    after_code: self.generate_parameter_object(&clump),
-                    line_numbers: clump.line_range,
-                    impacted_files: vec![input.file_path.clone()],
-                    benefits: vec![
+                    before_code:      clump.original_code.clone(),
+                    after_code:       self.generate_parameter_object(&clump),
+                    line_numbers:     clump.line_range,
+                    impacted_files:   vec![input.file_path.clone()],
+                    benefits:         vec![
                         format!("Reduces {} parameters to 1", clump.parameter_count),
                         "Improves method readability".to_string(),
                         "Enables validation logic".to_string(),
@@ -483,19 +483,19 @@ impl RefactoringGenerator {
         for switch_stmt in &analysis.switch_statements {
             if switch_stmt.case_count >= 4 {
                 suggestions.push(RefactoringSuggestion {
-                    pattern_name: "replace_switch_with_strategy".to_string(),
-                    description: format!(
+                    pattern_name:     "replace_switch_with_strategy".to_string(),
+                    description:      format!(
                         "Replace switch statement with strategy pattern ({} cases)",
                         switch_stmt.case_count
                     ),
-                    severity: RefactoringSeverity::Medium,
-                    confidence: 0.8,
+                    severity:         RefactoringSeverity::Medium,
+                    confidence:       0.8,
                     estimated_effort: EffortLevel::Medium,
-                    before_code: switch_stmt.original_code.clone(),
-                    after_code: self.generate_strategy_pattern(&switch_stmt),
-                    line_numbers: switch_stmt.line_range,
-                    impacted_files: vec![input.file_path.clone()],
-                    benefits: vec![
+                    before_code:      switch_stmt.original_code.clone(),
+                    after_code:       self.generate_strategy_pattern(&switch_stmt),
+                    line_numbers:     switch_stmt.line_range,
+                    impacted_files:   vec![input.file_path.clone()],
+                    benefits:         vec![
                         "Eliminates long switch statement".to_string(),
                         "Enables runtime strategy selection".to_string(),
                         "Follows Strategy pattern".to_string(),
@@ -516,21 +516,18 @@ impl RefactoringGenerator {
         let mut suggestions = Vec::new();
 
         for loop_construct in &analysis.loops {
-            if loop_construct.loop_type == LoopType::IteratorBased
-                && loop_construct.has_transformation
-            {
+            if loop_construct.loop_type == LoopType::IteratorBased && loop_construct.has_transformation {
                 suggestions.push(RefactoringSuggestion {
-                    pattern_name: "replace_loop_with_map_filter".to_string(),
-                    description: "Replace imperative loop with functional map/filter operations"
-                        .to_string(),
-                    severity: RefactoringSeverity::Low,
-                    confidence: 0.9,
+                    pattern_name:     "replace_loop_with_map_filter".to_string(),
+                    description:      "Replace imperative loop with functional map/filter operations".to_string(),
+                    severity:         RefactoringSeverity::Low,
+                    confidence:       0.9,
                     estimated_effort: EffortLevel::Small,
-                    before_code: loop_construct.original_code.clone(),
-                    after_code: self.generate_functional_operations(&loop_construct),
-                    line_numbers: loop_construct.line_range,
-                    impacted_files: vec![input.file_path.clone()],
-                    benefits: vec![
+                    before_code:      loop_construct.original_code.clone(),
+                    after_code:       self.generate_functional_operations(&loop_construct),
+                    line_numbers:     loop_construct.line_range,
+                    impacted_files:   vec![input.file_path.clone()],
+                    benefits:         vec![
                         "More declarative code".to_string(),
                         "Potential performance improvements".to_string(),
                         "Improved readability".to_string(),
@@ -543,18 +540,12 @@ impl RefactoringGenerator {
     }
 
     // Helper methods for generating refactored code
-    fn find_extractable_blocks(
-        &self,
-        method_body: &str,
-    ) -> Result<Vec<ExtractableBlock>, CodeGenerationError> {
+    fn find_extractable_blocks(&self, method_body: &str) -> Result<Vec<ExtractableBlock>, CodeGenerationError> {
         // Implementation for finding cohesive code blocks
         Ok(Vec::new()) // Placeholder
     }
 
-    fn group_related_fields(
-        &self,
-        fields: &[FieldInfo],
-    ) -> Result<Vec<Vec<FieldInfo>>, CodeGenerationError> {
+    fn group_related_fields(&self, fields: &[FieldInfo]) -> Result<Vec<Vec<FieldInfo>>, CodeGenerationError> {
         // Implementation for grouping semantically related fields
         Ok(Vec::new()) // Placeholder
     }
@@ -587,10 +578,7 @@ impl RefactoringGenerator {
         String::new()
     }
 
-    fn identify_extraction_points(
-        &self,
-        method: &MethodInfo,
-    ) -> Result<Vec<ExtractionPoint>, CodeGenerationError> {
+    fn identify_extraction_points(&self, method: &MethodInfo) -> Result<Vec<ExtractionPoint>, CodeGenerationError> {
         // Implementation for identifying extraction points
         Ok(Vec::new())
     }
@@ -625,49 +613,49 @@ impl Default for RefactoringGenerator {
 // Supporting structs for analysis
 #[derive(Debug, Clone)]
 struct CodeAnalysis {
-    methods: Vec<MethodInfo>,
-    structs: Vec<StructInfo>,
-    conditionals: Vec<ConditionalInfo>,
-    null_checks: Vec<NullCheckInfo>,
-    primitive_groups: Vec<PrimitiveGroup>,
-    data_clumps: Vec<DataClump>,
+    methods:           Vec<MethodInfo>,
+    structs:           Vec<StructInfo>,
+    conditionals:      Vec<ConditionalInfo>,
+    null_checks:       Vec<NullCheckInfo>,
+    primitive_groups:  Vec<PrimitiveGroup>,
+    data_clumps:       Vec<DataClump>,
     switch_statements: Vec<SwitchStatement>,
-    loops: Vec<LoopConstruct>,
+    loops:             Vec<LoopConstruct>,
     has_async_context: bool,
 }
 
 #[derive(Debug, Clone)]
 struct MethodInfo {
-    name: String,
-    line_count: usize,
+    name:             String,
+    line_count:       usize,
     complexity_score: f64,
-    is_blocking: bool,
-    body: String,
-    line_range: (usize, usize),
-    original_code: String,
+    is_blocking:      bool,
+    body:             String,
+    line_range:       (usize, usize),
+    original_code:    String,
 }
 
 #[derive(Debug, Clone)]
 struct StructInfo {
-    name: String,
-    field_count: usize,
+    name:         String,
+    field_count:  usize,
     method_count: usize,
-    fields: Vec<FieldInfo>,
-    line_range: (usize, usize),
+    fields:       Vec<FieldInfo>,
+    line_range:   (usize, usize),
 }
 
 #[derive(Debug, Clone)]
 struct FieldInfo {
-    name: String,
+    name:      String,
     type_name: String,
 }
 
 #[derive(Debug, Clone)]
 struct ConditionalInfo {
     condition_type: ConditionalType,
-    branch_count: usize,
-    original_code: String,
-    line_range: (usize, usize),
+    branch_count:   usize,
+    original_code:  String,
+    line_range:     (usize, usize),
 }
 
 #[derive(Debug, Clone)]
@@ -681,48 +669,48 @@ enum ConditionalType {
 #[derive(Debug, Clone)]
 struct ExpensiveOperation {
     operation_type: String,
-    call_count: usize,
-    complexity: String,
-    original_code: String,
-    line_range: (usize, usize),
+    call_count:     usize,
+    complexity:     String,
+    original_code:  String,
+    line_range:     (usize, usize),
 }
 
 #[derive(Debug, Clone)]
 struct NullCheckInfo {
-    check_count: usize,
+    check_count:       usize,
     alternation_count: usize,
-    original_code: String,
-    line_range: (usize, usize),
+    original_code:     String,
+    line_range:        (usize, usize),
 }
 
 #[derive(Debug, Clone)]
 struct PrimitiveGroup {
     primitive_type: String,
-    usage_count: usize,
-    original_code: String,
-    line_range: (usize, usize),
+    usage_count:    usize,
+    original_code:  String,
+    line_range:     (usize, usize),
 }
 
 #[derive(Debug, Clone)]
 struct DataClump {
     parameter_count: usize,
-    original_code: String,
-    line_range: (usize, usize),
+    original_code:   String,
+    line_range:      (usize, usize),
 }
 
 #[derive(Debug, Clone)]
 struct SwitchStatement {
-    case_count: usize,
+    case_count:    usize,
     original_code: String,
-    line_range: (usize, usize),
+    line_range:    (usize, usize),
 }
 
 #[derive(Debug, Clone)]
 struct LoopConstruct {
-    loop_type: LoopType,
+    loop_type:          LoopType,
     has_transformation: bool,
-    original_code: String,
-    line_range: (usize, usize),
+    original_code:      String,
+    line_range:         (usize, usize),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -735,28 +723,28 @@ enum LoopType {
 
 #[derive(Debug, Clone)]
 struct ExtractableBlock {
-    method_name: String,
-    original_code: String,
+    method_name:      String,
+    original_code:    String,
     extracted_method: String,
-    line_range: (usize, usize),
+    line_range:       (usize, usize),
 }
 
 #[derive(Debug, Clone)]
 struct ExtractionPoint {
-    method_name: String,
-    line_count: usize,
-    original_code: String,
+    method_name:    String,
+    line_count:     usize,
+    original_code:  String,
     extracted_code: String,
-    line_range: (usize, usize),
+    line_range:     (usize, usize),
 }
 
 /// Input for refactoring analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefactoringInput {
-    pub content: String,
+    pub content:   String,
     pub file_path: String,
-    pub language: String,
-    pub context: HashMap<String, String>,
+    pub language:  String,
+    pub context:   HashMap<String, String>,
 }
 
 /// Code analyzer for understanding code structure
@@ -772,14 +760,14 @@ impl CodeAnalyzer {
     fn analyze_code(&self, content: &str) -> Result<CodeAnalysis, CodeGenerationError> {
         // Implementation for analyzing code
         Ok(CodeAnalysis {
-            methods: Vec::new(),
-            structs: Vec::new(),
-            conditionals: Vec::new(),
-            null_checks: Vec::new(),
-            primitive_groups: Vec::new(),
-            data_clumps: Vec::new(),
+            methods:           Vec::new(),
+            structs:           Vec::new(),
+            conditionals:      Vec::new(),
+            null_checks:       Vec::new(),
+            primitive_groups:  Vec::new(),
+            data_clumps:       Vec::new(),
             switch_statements: Vec::new(),
-            loops: Vec::new(),
+            loops:             Vec::new(),
             has_async_context: false,
         })
     }

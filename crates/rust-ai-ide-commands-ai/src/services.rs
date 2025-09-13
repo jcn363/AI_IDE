@@ -1,33 +1,32 @@
-/*!
-# AI Services Module
-
-Core AI service implementations for the Rust AI IDE. This module provides
-the foundation for AI command functionality with proper state management
-and service lifecycle handling.
-*/
+//! # AI Services Module
+//!
+//! Core AI service implementations for the Rust AI IDE. This module provides
+//! the foundation for AI command functionality with proper state management
+//! and service lifecycle handling.
 
 use std::sync::Arc;
+
 use tokio::sync::RwLock;
 
 /// Configuration for AI services
 #[derive(Debug, Clone)]
 pub struct AIConfig {
     pub max_models_loaded: usize,
-    pub cache_size: usize,
-    pub timeout_ms: u64,
+    pub cache_size:        usize,
+    pub timeout_ms:        u64,
 }
 
 /// Main AI Service that manages all AI operations
 pub struct AIService {
     config: AIConfig,
-    state: Arc<RwLock<AIServiceState>>,
+    state:  Arc<RwLock<AIServiceState>>,
 }
 
 #[derive(Debug, Default)]
 pub struct AIServiceState {
     pub is_initialized: bool,
-    pub loaded_models: usize,
-    pub active_jobs: usize,
+    pub loaded_models:  usize,
+    pub active_jobs:    usize,
 }
 
 impl AIService {
@@ -35,8 +34,8 @@ impl AIService {
     pub async fn new() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let config = AIConfig {
             max_models_loaded: 3,
-            cache_size: 1000,
-            timeout_ms: 30000, // 30 seconds
+            cache_size:        1000,
+            timeout_ms:        30000, // 30 seconds
         };
 
         let mut service = Self {

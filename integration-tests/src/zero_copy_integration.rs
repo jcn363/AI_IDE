@@ -1,11 +1,11 @@
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+
 use rust_ai_ide_ai_inference::{MmapModel, ZeroCopyInferenceEngine, ZeroCopyModelManager};
 use rust_ai_ide_common::{IDEError, IDEErrorKind};
 use rust_ai_ide_parallel_processing::{
-    MmapManager, WorkStealingScheduler, ZeroCopyOperation, ZeroCopyOperationType,
-    ZeroCopyResourcePool,
+    MmapManager, WorkStealingScheduler, ZeroCopyOperation, ZeroCopyOperationType, ZeroCopyResourcePool,
 };
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 use tokio::sync::{Mutex, Semaphore};
 
 /// Integration test suite for zero-copy operations across the pipeline
@@ -132,17 +132,17 @@ mod zero_copy_integration_tests {
                 // Perform batch zero-copy operations
                 let operations = vec![
                     ZeroCopyOperation {
-                        id: "read_op".to_string(),
-                        path: file_path.clone(),
-                        offset: 0,
-                        size: 256 * 1024,
+                        id:      "read_op".to_string(),
+                        path:    file_path.clone(),
+                        offset:  0,
+                        size:    256 * 1024,
                         op_type: ZeroCopyOperationType::Read,
                     },
                     ZeroCopyOperation {
-                        id: "transform_op".to_string(),
-                        path: file_path.clone(),
-                        offset: 256 * 1024,
-                        size: 256 * 1024,
+                        id:      "transform_op".to_string(),
+                        path:    file_path.clone(),
+                        offset:  256 * 1024,
+                        size:    256 * 1024,
                         op_type: ZeroCopyOperationType::Transform(Box::new(|data: &[u8]| {
                             data.iter().map(|&b| b.wrapping_add(1)).collect()
                         })),
@@ -416,11 +416,7 @@ mod zero_copy_integration_tests {
         Ok(())
     }
 
-    async fn create_test_data(
-        path: &std::path::Path,
-        size: usize,
-        fill_byte: u8,
-    ) -> std::io::Result<()> {
+    async fn create_test_data(path: &std::path::Path, size: usize, fill_byte: u8) -> std::io::Result<()> {
         use tokio::io::AsyncWriteExt;
 
         let mut file = tokio::fs::File::create(path).await?;

@@ -1,37 +1,40 @@
 //! # Automated Test Generation Module - Rust AI IDE AI Code Generation
 //!
-//! This module provides intelligent automated test generation capabilities for the AI code generation system.
-//! Enhanced to use unified types from rust-ai-ide-common and advanced AI analysis.
+//! This module provides intelligent automated test generation capabilities for the AI code
+//! generation system. Enhanced to use unified types from rust-ai-ide-common and advanced AI
+//! analysis.
 
-use crate::CodeGenerationError;
-use rust_ai_ide_common::types::*;
-use rust_ai_ide_shared_codegen::generator::*;
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use rust_ai_ide_common::types::*;
+use rust_ai_ide_shared_codegen::generator::*;
 use tokio::sync::Mutex;
+
+use crate::CodeGenerationError;
 // Add Tauri state for AI services access
 
 /// Advanced test generator implementation with AI-powered analysis
 #[derive(Debug)]
 pub struct TestGenerator {
-    pattern_database: HashMap<String, TestPattern>,
+    pattern_database:  HashMap<String, TestPattern>,
     coverage_analyzer: CoverageAnalyzer,
-    ai_suggestions: AISuggestionEngine,
-    ai_services: Option<Arc<Mutex<AIInferenceServices>>>,
+    ai_suggestions:    AISuggestionEngine,
+    ai_services:       Option<Arc<Mutex<AIInferenceServices>>>,
 }
 
 /// AI inference services for test generation
 #[derive(Debug, Clone)]
 pub struct AIInferenceServices {
     semantic_inference_available: bool,
-    pattern_analysis_available: bool,
+    pattern_analysis_available:   bool,
 }
 
 impl AIInferenceServices {
     pub fn new() -> Self {
         Self {
             semantic_inference_available: false,
-            pattern_analysis_available: false,
+            pattern_analysis_available:   false,
         }
     }
 
@@ -49,10 +52,10 @@ impl AIInferenceServices {
 /// Test generation pattern for different code constructs
 #[derive(Debug, Clone)]
 struct TestPattern {
-    pattern_type: PatternType,
-    template: String,
-    parameters: Vec<String>,
-    confidence: f32,
+    pattern_type:             PatternType,
+    template:                 String,
+    parameters:               Vec<String>,
+    confidence:               f32,
     applicability_conditions: Vec<String>,
 }
 
@@ -70,8 +73,8 @@ enum PatternType {
 /// Coverage analysis engine
 #[derive(Debug)]
 struct CoverageAnalyzer {
-    branch_coverage: HashMap<String, Vec<String>>,
-    edge_coverage: HashMap<String, Vec<(String, String)>>,
+    branch_coverage:    HashMap<String, Vec<String>>,
+    edge_coverage:      HashMap<String, Vec<(String, String)>>,
     condition_coverage: HashMap<String, Vec<String>>,
 }
 
@@ -84,39 +87,39 @@ struct AISuggestionEngine {
 
 #[derive(Debug, Clone)]
 struct PatternInfo {
-    usage_count: u32,
+    usage_count:  u32,
     success_rate: f32,
-    contexts: Vec<String>,
+    contexts:     Vec<String>,
 }
 
 impl TestGenerator {
     /// Create a new advanced test generator
     pub fn new() -> Self {
         Self {
-            pattern_database: Self::initialize_patterns(),
+            pattern_database:  Self::initialize_patterns(),
             coverage_analyzer: CoverageAnalyzer::new(),
-            ai_suggestions: AISuggestionEngine::new(),
-            ai_services: Some(Arc::new(Mutex::new(AIInferenceServices::new()))),
+            ai_suggestions:    AISuggestionEngine::new(),
+            ai_services:       Some(Arc::new(Mutex::new(AIInferenceServices::new()))),
         }
     }
 
     /// Create a new test generator with AI services
     pub fn with_ai_services(ai_services: Arc<Mutex<AIInferenceServices>>) -> Self {
         Self {
-            pattern_database: Self::initialize_patterns(),
+            pattern_database:  Self::initialize_patterns(),
             coverage_analyzer: CoverageAnalyzer::new(),
-            ai_suggestions: AISuggestionEngine::new(),
-            ai_services: Some(ai_services),
+            ai_suggestions:    AISuggestionEngine::new(),
+            ai_services:       Some(ai_services),
         }
     }
 
     /// Create a new test generator without AI services
     pub fn basic() -> Self {
         Self {
-            pattern_database: Self::initialize_patterns(),
+            pattern_database:  Self::initialize_patterns(),
             coverage_analyzer: CoverageAnalyzer::new(),
-            ai_suggestions: AISuggestionEngine::new(),
-            ai_services: None,
+            ai_suggestions:    AISuggestionEngine::new(),
+            ai_services:       None,
         }
     }
 
@@ -153,10 +156,7 @@ impl TestGenerator {
     }
 
     /// Perform pattern analysis for test generation strategies
-    pub async fn perform_pattern_analysis(
-        &self,
-        code: &str,
-    ) -> Result<PatternAnalysisResult, CodeGenerationError> {
+    pub async fn perform_pattern_analysis(&self, code: &str) -> Result<PatternAnalysisResult, CodeGenerationError> {
         if !self.is_ai_enabled().await {
             return Ok(PatternAnalysisResult::default());
         }
@@ -182,26 +182,23 @@ impl TestGenerator {
         // This would call the semantic_inference command
         // For now, return a basic result structure
         Ok(SemanticAnalysisResult {
-            entities: vec!["function".to_string(), "struct".to_string()],
-            relationships: vec![],
-            code_intent: "code_implementation".to_string(),
+            entities:         vec!["function".to_string(), "struct".to_string()],
+            relationships:    vec![],
+            code_intent:      "code_implementation".to_string(),
             complexity_score: 0.5,
             confidence_score: 0.7,
         })
     }
 
     /// Call pattern analysis service via Tauri commands
-    async fn call_pattern_analysis_service(
-        &self,
-        code: &str,
-    ) -> Result<PatternAnalysisResult, CodeGenerationError> {
+    async fn call_pattern_analysis_service(&self, code: &str) -> Result<PatternAnalysisResult, CodeGenerationError> {
         // This would call the pattern_analysis command
         // For now, return a basic result structure
         Ok(PatternAnalysisResult {
-            detected_patterns: vec!["function_call_pattern".to_string()],
-            code_smells: vec![],
+            detected_patterns:       vec!["function_call_pattern".to_string()],
+            code_smells:             vec![],
             refactoring_suggestions: vec![],
-            analysis_confidence: 0.8,
+            analysis_confidence:     0.8,
         })
     }
 
@@ -210,11 +207,9 @@ impl TestGenerator {
         let mut patterns = HashMap::new();
 
         // Function test patterns
-        patterns.insert(
-            "basic_function".to_string(),
-            TestPattern {
-                pattern_type: PatternType::FunctionTest,
-                template: r#"
+        patterns.insert("basic_function".to_string(), TestPattern {
+            pattern_type:             PatternType::FunctionTest,
+            template:                 r#"
 #[test]
 fn test_{function_name}() {{
   // Test basic functionality
@@ -228,24 +223,21 @@ fn test_{function_name}_edge_cases() {{
   let invalid_result = {function_name}({invalid_args});
   assert!(invalid_result.is_err());
 }}"#
-                .to_string(),
-                parameters: vec![
-                    "function_name".to_string(),
-                    "test_args".to_string(),
-                    "expected_value".to_string(),
-                    "invalid_args".to_string(),
-                ],
-                confidence: 0.8,
-                applicability_conditions: vec!["has_no_side_effects".to_string()],
-            },
-        );
+            .to_string(),
+            parameters:               vec![
+                "function_name".to_string(),
+                "test_args".to_string(),
+                "expected_value".to_string(),
+                "invalid_args".to_string(),
+            ],
+            confidence:               0.8,
+            applicability_conditions: vec!["has_no_side_effects".to_string()],
+        });
 
         // Async function test patterns
-        patterns.insert(
-            "async_function".to_string(),
-            TestPattern {
-                pattern_type: PatternType::AsyncTest,
-                template: r#"
+        patterns.insert("async_function".to_string(), TestPattern {
+            pattern_type:             PatternType::AsyncTest,
+            template:                 r#"
 #[tokio::test]
 async fn test_{function_name}_async() {{
   // Test async functionality
@@ -262,24 +254,21 @@ async fn test_{function_name}_timeout() {{
   ).await;
   assert!(timeout_result.is_err());
 }}"#
-                .to_string(),
-                parameters: vec![
-                    "function_name".to_string(),
-                    "test_args".to_string(),
-                    "expected_value".to_string(),
-                    "slow_args".to_string(),
-                ],
-                confidence: 0.85,
-                applicability_conditions: vec!["is_async".to_string()],
-            },
-        );
+            .to_string(),
+            parameters:               vec![
+                "function_name".to_string(),
+                "test_args".to_string(),
+                "expected_value".to_string(),
+                "slow_args".to_string(),
+            ],
+            confidence:               0.85,
+            applicability_conditions: vec!["is_async".to_string()],
+        });
 
         // Error handling patterns
-        patterns.insert(
-            "error_handling".to_string(),
-            TestPattern {
-                pattern_type: PatternType::ErrorHandlingTest,
-                template: r#"
+        patterns.insert("error_handling".to_string(), TestPattern {
+            pattern_type:             PatternType::ErrorHandlingTest,
+            template:                 r#"
 #[test]
 fn test_{function_name}_error_handling() {{
   // Test error scenarios
@@ -291,16 +280,15 @@ fn test_{function_name}_error_handling() {{
       assert!(matches!(err, {expected_error_type}));
   }}
 }}"#
-                .to_string(),
-                parameters: vec![
-                    "function_name".to_string(),
-                    "error_args".to_string(),
-                    "expected_error_type".to_string(),
-                ],
-                confidence: 0.9,
-                applicability_conditions: vec!["returns_result".to_string()],
-            },
-        );
+            .to_string(),
+            parameters:               vec![
+                "function_name".to_string(),
+                "error_args".to_string(),
+                "expected_error_type".to_string(),
+            ],
+            confidence:               0.9,
+            applicability_conditions: vec!["returns_result".to_string()],
+        });
 
         patterns
     }
@@ -405,8 +393,8 @@ fn test_{function_name}_error_handling() {{
             _ => {
                 // Generic refactoring test
                 tests.push(GeneratedTest {
-                    name: "refactoring_preservation_test".to_string(),
-                    code: format!(
+                    name:              "refactoring_preservation_test".to_string(),
+                    code:              format!(
                         "
 #[test]
 fn test_refactoring_preservation() {{
@@ -415,14 +403,14 @@ fn test_refactoring_preservation() {{
     todo!(\"Implement refactoring behavior test\");
 }}"
                     ),
-                    test_type: TestType::Unit,
-                    description: "Test that refactoring preserves existing behavior".to_string(),
-                    framework: "cargo-test".to_string(),
-                    language: ProgrammingLanguage::Rust,
+                    test_type:         TestType::Unit,
+                    description:       "Test that refactoring preserves existing behavior".to_string(),
+                    framework:         "cargo-test".to_string(),
+                    language:          ProgrammingLanguage::Rust,
                     expected_coverage: vec![],
-                    dependencies: vec![],
-                    tags: vec![],
-                    confidence_score: 0.5,
+                    dependencies:      vec![],
+                    tags:              vec![],
+                    confidence_score:  0.5,
                 });
             }
         }
@@ -445,11 +433,11 @@ fn test_refactoring_preservation() {{
             if trimmed.starts_with("pub fn ") || trimmed.starts_with("fn ") {
                 if let Some(func_name) = self.extract_function_name(trimmed) {
                     analysis.functions.push(FunctionInfo {
-                        name: func_name.clone(),
-                        signature: trimmed.to_string(),
-                        is_async: trimmed.contains("async"),
+                        name:        func_name.clone(),
+                        signature:   trimmed.to_string(),
+                        is_async:    trimmed.contains("async"),
                         return_type: self.extract_return_type(trimmed),
-                        parameters: self.extract_parameters(trimmed),
+                        parameters:  self.extract_parameters(trimmed),
                     });
                     if trimmed.contains("async") {
                         analysis.has_async_functions = true;
@@ -458,7 +446,7 @@ fn test_refactoring_preservation() {{
             } else if trimmed.starts_with("pub struct ") || trimmed.starts_with("struct ") {
                 if let Some(struct_name) = self.extract_struct_name(trimmed) {
                     analysis.structs.push(StructInfo {
-                        name: struct_name,
+                        name:   struct_name,
                         fields: vec![], // Would be populated with field analysis
                     });
                 }
@@ -497,10 +485,7 @@ fn test_refactoring_preservation() {{
     }
 
     /// Legacy method for backward compatibility
-    async fn analyze_code_structure(
-        &self,
-        code: &str,
-    ) -> Result<CodeAnalysis, CodeGenerationError> {
+    async fn analyze_code_structure(&self, code: &str) -> Result<CodeAnalysis, CodeGenerationError> {
         let semantic_result = SemanticAnalysisResult::default();
         let pattern_result = PatternAnalysisResult::default();
         self.analyze_code_structure_with_ai(code, &semantic_result, &pattern_result)
@@ -517,8 +502,8 @@ fn test_refactoring_preservation() {{
 
         // Basic functionality test
         let basic_test = GeneratedTest {
-            name: format!("test_{}_basic", function.name),
-            code: format!(
+            name:              format!("test_{}_basic", function.name),
+            code:              format!(
                 r#"
 #[test]
 fn test_{}_basic() {{
@@ -530,25 +515,25 @@ fn test_{}_basic() {{
                 function.name,
                 self.generate_test_args(&function.parameters)
             ),
-            test_type: TestType::Unit,
-            description: format!(
+            test_type:         TestType::Unit,
+            description:       format!(
                 "Test to verify function {} behaves correctly",
                 function.name
             ),
-            framework: "cargo-test".to_string(),
-            language: ProgrammingLanguage::Rust,
+            framework:         "cargo-test".to_string(),
+            language:          ProgrammingLanguage::Rust,
             expected_coverage: vec![],
-            dependencies: vec![],
-            tags: vec![],
-            confidence_score: 0.8,
+            dependencies:      vec![],
+            tags:              vec![],
+            confidence_score:  0.8,
         };
         tests.push(basic_test);
 
         // Edge cases test
         if function.return_type.contains("Result") || function.return_type.contains("Option") {
             let edge_test = GeneratedTest {
-                name: format!("test_{}_edge_cases", function.name),
-                code: format!(
+                name:              format!("test_{}_edge_cases", function.name),
+                code:              format!(
                     r#"
 #[test]
 fn test_{}_edge_cases() {{
@@ -560,14 +545,14 @@ fn test_{}_edge_cases() {{
                     function.name,
                     self.generate_invalid_args(&function.parameters)
                 ),
-                test_type: TestType::Unit,
-                description: format!("Test edge cases for function {}", function.name),
-                framework: "cargo-test".to_string(),
-                language: ProgrammingLanguage::Rust,
+                test_type:         TestType::Unit,
+                description:       format!("Test edge cases for function {}", function.name),
+                framework:         "cargo-test".to_string(),
+                language:          ProgrammingLanguage::Rust,
                 expected_coverage: vec![],
-                dependencies: vec![],
-                tags: vec![],
-                confidence_score: 0.7,
+                dependencies:      vec![],
+                tags:              vec![],
+                confidence_score:  0.7,
             };
             tests.push(edge_test);
         }
@@ -576,13 +561,10 @@ fn test_{}_edge_cases() {{
     }
 
     /// Generate struct tests
-    async fn generate_struct_tests(
-        &self,
-        struct_info: &StructInfo,
-    ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
+    async fn generate_struct_tests(&self, struct_info: &StructInfo) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         let test = GeneratedTest {
-            name: format!("test_{}_creation", struct_info.name),
-            code: format!(
+            name:              format!("test_{}_creation", struct_info.name),
+            code:              format!(
                 r#"
 #[test]
 fn test_{}_creation() {{
@@ -593,14 +575,14 @@ fn test_{}_creation() {{
 }}"#,
                 struct_info.name, struct_info.name
             ),
-            test_type: TestType::Unit,
-            description: format!("Test {} struct creation", struct_info.name),
-            framework: "cargo-test".to_string(),
-            language: ProgrammingLanguage::Rust,
+            test_type:         TestType::Unit,
+            description:       format!("Test {} struct creation", struct_info.name),
+            framework:         "cargo-test".to_string(),
+            language:          ProgrammingLanguage::Rust,
             expected_coverage: vec![],
-            dependencies: vec![],
-            tags: vec![],
-            confidence_score: 0.6,
+            dependencies:      vec![],
+            tags:              vec![],
+            confidence_score:  0.6,
         };
 
         Ok(vec![test])
@@ -615,8 +597,8 @@ fn test_{}_creation() {{
 
         if analysis.has_error_handling {
             let error_test = GeneratedTest {
-                name: "test_error_handling".to_string(),
-                code: r#"
+                name:              "test_error_handling".to_string(),
+                code:              r#"
 #[test]
 fn test_error_handling() {
     // Test various error conditions
@@ -625,14 +607,14 @@ fn test_error_handling() {
     // assert!(matches!(error, ExpectedErrorType));
 }"#
                 .to_string(),
-                test_type: TestType::Unit,
-                description: "Test error handling scenarios".to_string(),
-                framework: "cargo-test".to_string(),
-                language: ProgrammingLanguage::Rust,
+                test_type:         TestType::Unit,
+                description:       "Test error handling scenarios".to_string(),
+                framework:         "cargo-test".to_string(),
+                language:          ProgrammingLanguage::Rust,
                 expected_coverage: vec![],
-                dependencies: vec![],
-                tags: vec![],
-                confidence_score: 0.6,
+                dependencies:      vec![],
+                tags:              vec![],
+                confidence_score:  0.6,
             };
             tests.push(error_test);
         }
@@ -641,13 +623,10 @@ fn test_error_handling() {
     }
 
     /// Generate async-specific tests
-    async fn generate_async_tests(
-        &self,
-        analysis: &CodeAnalysis,
-    ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
+    async fn generate_async_tests(&self, analysis: &CodeAnalysis) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         let async_test = GeneratedTest {
-            name: "test_async_behavior".to_string(),
-            code: r#"
+            name:              "test_async_behavior".to_string(),
+            code:              r#"
 #[tokio::test]
 async fn test_async_behavior() {
     // Test async operations and concurrency
@@ -659,14 +638,14 @@ async fn test_async_behavior() {
     assert_eq!(result, "async_result");
 }"#
             .to_string(),
-            test_type: TestType::Unit,
-            description: "Test async behavior and concurrency".to_string(),
-            framework: "cargo-test".to_string(),
-            language: ProgrammingLanguage::Rust,
+            test_type:         TestType::Unit,
+            description:       "Test async behavior and concurrency".to_string(),
+            framework:         "cargo-test".to_string(),
+            language:          ProgrammingLanguage::Rust,
             expected_coverage: vec![],
-            dependencies: vec![],
-            tags: vec![],
-            confidence_score: 0.75,
+            dependencies:      vec![],
+            tags:              vec![],
+            confidence_score:  0.75,
         };
 
         Ok(vec![async_test])
@@ -759,16 +738,18 @@ async fn test_async_behavior() {
     ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         // Integration test generation logic
         Ok(vec![GeneratedTest {
-            name: "integration_test".to_string(),
-            code: "#[test]\nfn integration_test() {\n    // Integration test logic\n    todo!(\"Implement integration test\");\n}".to_string(),
-            test_type: TestType::Integration,
-            description: "Integration test for component interactions".to_string(),
-            framework: "cargo-test".to_string(),
-            language: ProgrammingLanguage::Rust,
+            name:              "integration_test".to_string(),
+            code:              "#[test]\nfn integration_test() {\n    // Integration test logic\n    \
+                                todo!(\"Implement integration test\");\n}"
+                .to_string(),
+            test_type:         TestType::Integration,
+            description:       "Integration test for component interactions".to_string(),
+            framework:         "cargo-test".to_string(),
+            language:          ProgrammingLanguage::Rust,
             expected_coverage: vec![],
-            dependencies: vec![],
-            tags: vec![],
-            confidence_score: 0.4,
+            dependencies:      vec![],
+            tags:              vec![],
+            confidence_score:  0.4,
         }])
     }
 
@@ -803,8 +784,8 @@ async fn test_async_behavior() {
         result: &RefactoringResult,
     ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         Ok(vec![GeneratedTest {
-            name: "test_function_extraction".to_string(),
-            code: format!(
+            name:              "test_function_extraction".to_string(),
+            code:              format!(
                 "
 #[test]
 fn test_function_extraction() {{
@@ -818,14 +799,14 @@ fn test_function_extraction() {{
                     .unwrap_or(&"extracted_function".to_string()),
                 "args"
             ),
-            test_type: TestType::Unit,
-            description: "Test the extracted function behavior".to_string(),
-            framework: "cargo-test".to_string(),
-            language: ProgrammingLanguage::Rust,
+            test_type:         TestType::Unit,
+            description:       "Test the extracted function behavior".to_string(),
+            framework:         "cargo-test".to_string(),
+            language:          ProgrammingLanguage::Rust,
             expected_coverage: vec![],
-            dependencies: vec![],
-            tags: vec![],
-            confidence_score: 0.7,
+            dependencies:      vec![],
+            tags:              vec![],
+            confidence_score:  0.7,
         }])
     }
 
@@ -857,21 +838,21 @@ fn test_function_extraction() {{
 /// Code analysis structure enhanced with AI insights
 #[derive(Debug, Clone)]
 struct CodeAnalysis {
-    functions: Vec<FunctionInfo>,
-    structs: Vec<StructInfo>,
+    functions:           Vec<FunctionInfo>,
+    structs:             Vec<StructInfo>,
     has_async_functions: bool,
-    has_error_handling: bool,
-    detected_patterns: Vec<String>,
+    has_error_handling:  bool,
+    detected_patterns:   Vec<String>,
 }
 
 impl CodeAnalysis {
     fn new() -> Self {
         Self {
-            functions: Vec::new(),
-            structs: Vec::new(),
+            functions:           Vec::new(),
+            structs:             Vec::new(),
             has_async_functions: false,
-            has_error_handling: false,
-            detected_patterns: Vec::new(),
+            has_error_handling:  false,
+            detected_patterns:   Vec::new(),
         }
     }
 }
@@ -879,26 +860,26 @@ impl CodeAnalysis {
 /// Function information
 #[derive(Debug, Clone)]
 struct FunctionInfo {
-    name: String,
-    signature: String,
-    is_async: bool,
+    name:        String,
+    signature:   String,
+    is_async:    bool,
     return_type: String,
-    parameters: Vec<(String, String)>,
+    parameters:  Vec<(String, String)>,
 }
 
 /// Struct information
 #[derive(Debug, Clone)]
 struct StructInfo {
-    name: String,
+    name:   String,
     fields: Vec<(String, String)>,
 }
 
 /// Result of semantic analysis for code understanding
 #[derive(Debug, Clone, Default)]
 pub struct SemanticAnalysisResult {
-    pub entities: Vec<String>,
-    pub relationships: Vec<serde_json::Value>,
-    pub code_intent: String,
+    pub entities:         Vec<String>,
+    pub relationships:    Vec<serde_json::Value>,
+    pub code_intent:      String,
     pub complexity_score: f32,
     pub confidence_score: f32,
 }
@@ -906,10 +887,10 @@ pub struct SemanticAnalysisResult {
 /// Result of pattern analysis for test generation strategies
 #[derive(Debug, Clone, Default)]
 pub struct PatternAnalysisResult {
-    pub detected_patterns: Vec<String>,
-    pub code_smells: Vec<String>,
+    pub detected_patterns:       Vec<String>,
+    pub code_smells:             Vec<String>,
     pub refactoring_suggestions: Vec<String>,
-    pub analysis_confidence: f32,
+    pub analysis_confidence:     f32,
 }
 
 impl Default for TestGenerator {
@@ -921,8 +902,8 @@ impl Default for TestGenerator {
 impl CoverageAnalyzer {
     fn new() -> Self {
         Self {
-            branch_coverage: HashMap::new(),
-            edge_coverage: HashMap::new(),
+            branch_coverage:    HashMap::new(),
+            edge_coverage:      HashMap::new(),
             condition_coverage: HashMap::new(),
         }
     }

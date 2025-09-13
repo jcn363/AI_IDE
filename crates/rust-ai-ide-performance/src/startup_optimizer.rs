@@ -1,13 +1,14 @@
-use crate::{DefaultSystemMonitor, Monitor, SystemMonitor};
-use moka::future::Cache;
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::future::Future;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tokio::sync::oneshot;
-use tokio::sync::{Mutex, RwLock, Semaphore};
+
+use moka::future::Cache;
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
+use tokio::sync::{oneshot, Mutex, RwLock, Semaphore};
 use tokio::task::spawn_blocking;
+
+use crate::{DefaultSystemMonitor, Monitor, SystemMonitor};
 
 /// Startup time targets (in milliseconds)
 const COLD_STARTUP_TARGET: u64 = 400;
@@ -15,18 +16,18 @@ const WARM_STARTUP_TARGET: u64 = 80;
 
 /// Startup profiler for measuring and analyzing initialization phases
 pub struct StartupProfiler {
-    pub(crate) measurements: Arc<Mutex<HashMap<String, Vec<Duration>>>>,
-    pub(crate) current_phase: Arc<Mutex<Option<String>>>,
-    pub(crate) start_times: Arc<Mutex<HashMap<String, Instant>>>,
+    pub(crate) measurements:       Arc<Mutex<HashMap<String, Vec<Duration>>>>,
+    pub(crate) current_phase:      Arc<Mutex<Option<String>>>,
+    pub(crate) start_times:        Arc<Mutex<HashMap<String, Instant>>>,
     pub(crate) total_measurements: Arc<Mutex<usize>>,
 }
 
 impl StartupProfiler {
     pub fn new() -> Self {
         Self {
-            measurements: Arc::new(Mutex::new(HashMap::new())),
-            current_phase: Arc::new(Mutex::new(None)),
-            start_times: Arc::new(Mutex::new(HashMap::new())),
+            measurements:       Arc::new(Mutex::new(HashMap::new())),
+            current_phase:      Arc::new(Mutex::new(None)),
+            start_times:        Arc::new(Mutex::new(HashMap::new())),
             total_measurements: Arc::new(Mutex::new(0)),
         }
     }
@@ -69,20 +70,16 @@ impl StartupProfiler {
         result
     }
 
-    pub async fn measure_blocking<T, F>(
-        &self,
-        phase_name: &str,
-        blocking_fn: F,
-    ) -> Result<T, IDEError>
+    pub async fn measure_blocking<T, F>(&self, phase_name: &str, blocking_fn: F) -> Result<T, IDEError>
     where
         F: FnOnce() -> Result<T, IDEError> + Send + 'static,
         T: Send + 'static,
     {
         self.start_phase(phase_name).await;
 
-        let result = spawn_blocking(move || blocking_fn()).await.map_err(|e| {
-            IDEError::new(IDEErrorKind::ConcurrencyError, "Blocking task panicked").with_source(e)
-        })??;
+        let result = spawn_blocking(move || blocking_fn())
+            .await
+            .map_err(|e| IDEError::new(IDEErrorKind::ConcurrencyError, "Blocking task panicked").with_source(e))??;
 
         self.end_phase(phase_name).await;
         Ok(result)
@@ -118,11 +115,11 @@ impl StartupProfiler {
         let total_time = phase_times.values().sum();
 
         StartupReport {
-            total_startup_time: total_time,
+            total_startup_time:  total_time,
             cold_startup_target: Duration::from_millis(COLD_STARTUP_TARGET),
             warm_startup_target: Duration::from_millis(WARM_STARTUP_TARGET),
             phase_average_times: phase_times,
-            target_achievement: if total_time <= Duration::from_millis(COLD_STARTUP_TARGET) {
+            target_achievement:  if total_time <= Duration::from_millis(COLD_STARTUP_TARGET) {
                 TargetAchievement::ColdTarget
             } else if total_time <= Duration::from_millis(WARM_STARTUP_TARGET) {
                 TargetAchievement::WarmTarget
@@ -153,24 +150,20 @@ impl StartupProfiler {
 /// Lazy loader for deferring non-critical component initialization
 pub struct LazyLoader {
     pub(crate) async_state: Arc<Mutex<HashMap<String, InitializationState>>>,
-    pub(crate) semaphore: Arc<Semaphore>,
-    pub(crate) queue: Arc<Mutex<VecDeque<InitializationRequest>>>,
+    pub(crate) semaphore:   Arc<Semaphore>,
+    pub(crate) queue:       Arc<Mutex<VecDeque<InitializationRequest>>>,
 }
 
 impl LazyLoader {
     pub fn new(max_concurrent_init: usize) -> Self {
         Self {
             async_state: Arc::new(Mutex::new(HashMap::new())),
-            semaphore: Arc::new(Semaphore::new(max_concurrent_init)),
-            queue: Arc::new(Mutex::new(VecDeque::new())),
+            semaphore:   Arc::new(Semaphore::new(max_concurrent_init)),
+            queue:       Arc::new(Mutex::new(VecDeque::new())),
         }
     }
 
-    pub async fn register_lazy_initialization<F, Fut, T>(
-        &self,
-        key: String,
-        initializer: F,
-    ) -> Result<(), IDEError>
+    pub async fn register_lazy_initialization<F, Fut, T>(&self, key: String, initializer: F) -> Result<(), IDEError>
     where
         F: FnOnce() -> Fut + Send + 'static,
         Fut: Future<Output = Result<T, IDEError>> + Send + 'static,
@@ -187,7 +180,7 @@ impl LazyLoader {
 
         let (tx, rx) = oneshot::channel();
         let request = InitializationRequest {
-            key: key.clone(),
+            key:         key.clone(),
             initializer: Box::pin(async move {
                 let initializer = initializer;
                 let result = initializer().await?;
@@ -205,10 +198,7 @@ impl LazyLoader {
         Ok(())
     }
 
-    pub async fn get_lazy_initialized<T: Clone + Send + 'static>(
-        &self,
-        key: &str,
-    ) -> Result<T, IDEError> {
+    pub async fn get_lazy_initialized<T: Clone + Send + 'static>(&self, key: &str) -> Result<T, IDEError> {
         let mut state = self.async_state.lock().await;
 
         let current_state = state
@@ -259,10 +249,7 @@ impl LazyLoader {
         Ok(())
     }
 
-    pub async fn preload_frequently_used(
-        &self,
-        frequently_used_keys: &[String],
-    ) -> Result<(), IDEError> {
+    pub async fn preload_frequently_used(&self, frequently_used_keys: &[String]) -> Result<(), IDEError> {
         for key in frequently_used_keys {
             let state = self.async_state.lock().await;
             if let Some(InitializationState::NotStarted) = state.get(key) {
@@ -301,11 +288,7 @@ impl StartupCache {
         }
     }
 
-    pub async fn cache_expensive_computation<T, F>(
-        &self,
-        key: String,
-        computation: F,
-    ) -> Result<T, IDEError>
+    pub async fn cache_expensive_computation<T, F>(&self, key: String, computation: F) -> Result<T, IDEError>
     where
         F: Future<Output = Result<T, IDEError>> + Send + 'static,
         T: serde::Serialize + serde::de::DeserializeOwned + Send + 'static,
@@ -348,16 +331,16 @@ impl StartupCache {
 
 /// Module preloader for predictive loading of frequently used components
 pub struct ModulePreloader {
-    pub(crate) patterns: Arc<RwLock<HashMap<String, Vec<String>>>>,
-    pub(crate) preload_queue: Arc<Mutex<VecDeque<String>>>,
+    pub(crate) patterns:        Arc<RwLock<HashMap<String, Vec<String>>>>,
+    pub(crate) preload_queue:   Arc<Mutex<VecDeque<String>>>,
     pub(crate) active_preloads: Arc<Mutex<HashSet<String>>>,
 }
 
 impl ModulePreloader {
     pub fn new() -> Self {
         Self {
-            patterns: Arc::new(RwLock::new(HashMap::new())),
-            preload_queue: Arc::new(Mutex::new(VecDeque::new())),
+            patterns:        Arc::new(RwLock::new(HashMap::new())),
+            preload_queue:   Arc::new(Mutex::new(VecDeque::new())),
             active_preloads: Arc::new(Mutex::new(HashSet::new())),
         }
     }
@@ -420,9 +403,9 @@ impl ModulePreloader {
 
 /// Startup validator for continuous performance monitoring
 pub struct StartupValidator {
-    pub(crate) profiler: Arc<StartupProfiler>,
+    pub(crate) profiler:             Arc<StartupProfiler>,
     pub(crate) validation_threshold: Duration,
-    pub(crate) violation_count: Arc<Mutex<u64>>,
+    pub(crate) violation_count:      Arc<Mutex<u64>>,
 }
 
 impl StartupValidator {
@@ -461,10 +444,7 @@ impl StartupValidator {
         }
     }
 
-    pub async fn validate_phase_performance(
-        &self,
-        phase_name: &str,
-    ) -> Option<PhaseValidationResult> {
+    pub async fn validate_phase_performance(&self, phase_name: &str) -> Option<PhaseValidationResult> {
         let average_time = self.profiler.get_phase_average(phase_name).await?;
         let phase_threshold = self.get_phase_threshold(phase_name);
 
@@ -495,11 +475,7 @@ impl StartupValidator {
         }
     }
 
-    fn generate_suggestions(
-        &self,
-        excess_time: Duration,
-        slowest_phases: Vec<(String, Duration)>,
-    ) -> Vec<String> {
+    fn generate_suggestions(&self, excess_time: Duration, slowest_phases: Vec<(String, Duration)>) -> Vec<String> {
         let mut suggestions = Vec::new();
 
         for (phase, time) in slowest_phases {
@@ -511,8 +487,7 @@ impl StartupValidator {
         }
 
         if excess_time > Duration::from_millis(200) {
-            suggestions
-                .push("Consider implementing lazy loading for non-critical components".to_string());
+            suggestions.push("Consider implementing lazy loading for non-critical components".to_string());
         }
 
         if excess_time > Duration::from_millis(300) {
@@ -527,10 +502,10 @@ impl StartupValidator {
         let report = self.profiler.get_startup_report().await;
 
         ViolationSummary {
-            total_violations: count,
-            current_performance: report.target_achievement.clone(),
+            total_violations:     count,
+            current_performance:  report.target_achievement.clone(),
             average_startup_time: report.total_startup_time,
-            recommended_actions: self.generate_recommendations(count).await,
+            recommended_actions:  self.generate_recommendations(count).await,
         }
     }
 
@@ -538,8 +513,7 @@ impl StartupValidator {
         let mut recommendations = Vec::new();
 
         if violation_count > 5 {
-            recommendations
-                .push("Implement startup profiling and optimization pipeline".to_string());
+            recommendations.push("Implement startup profiling and optimization pipeline".to_string());
         }
 
         if violation_count > 3 {
@@ -556,11 +530,11 @@ impl StartupValidator {
 
 #[derive(Clone, Debug)]
 pub struct StartupReport {
-    pub total_startup_time: Duration,
+    pub total_startup_time:  Duration,
     pub cold_startup_target: Duration,
     pub warm_startup_target: Duration,
     pub phase_average_times: HashMap<String, Duration>,
-    pub target_achievement: TargetAchievement,
+    pub target_achievement:  TargetAchievement,
 }
 
 #[derive(Clone, Debug)]
@@ -571,7 +545,7 @@ pub enum TargetAchievement {
 }
 
 pub struct InitializationRequest {
-    pub key: String,
+    pub key:         String,
     pub initializer: std::pin::Pin<Box<dyn Future<Output = Result<(), IDEError>> + Send>>,
 }
 
@@ -586,46 +560,46 @@ pub enum InitializationState {
 
 pub struct ValidationResult {
     pub is_within_threshold: bool,
-    pub total_startup_time: Duration,
-    pub threshold: Duration,
-    pub violations: Vec<PerformanceViolation>,
+    pub total_startup_time:  Duration,
+    pub threshold:           Duration,
+    pub violations:          Vec<PerformanceViolation>,
 }
 
 #[derive(Clone, Debug)]
 pub struct PerformanceViolation {
-    pub phase: String,
+    pub phase:       String,
     pub excess_time: Duration,
     pub actual_time: Duration,
-    pub threshold: Duration,
+    pub threshold:   Duration,
     pub suggestions: Vec<String>,
 }
 
 #[derive(Clone, Debug)]
 pub struct PhaseValidationResult {
-    pub phase_name: String,
-    pub average_time: Duration,
-    pub threshold: Duration,
-    pub is_violation: bool,
+    pub phase_name:      String,
+    pub average_time:    Duration,
+    pub threshold:       Duration,
+    pub is_violation:    bool,
     pub violation_count: u64,
 }
 
 #[derive(Clone, Debug)]
 pub struct ViolationSummary {
-    pub total_violations: u64,
-    pub current_performance: TargetAchievement,
+    pub total_violations:     u64,
+    pub current_performance:  TargetAchievement,
     pub average_startup_time: Duration,
-    pub recommended_actions: Vec<String>,
+    pub recommended_actions:  Vec<String>,
 }
 
 /// Integrated startup optimizer combining all performance optimization components
 pub struct IntegratedStartupOptimizer {
-    profiler: Arc<StartupProfiler>,
-    adapter: Arc<ProfilingAdapter>,
+    profiler:    Arc<StartupProfiler>,
+    adapter:     Arc<ProfilingAdapter>,
     lazy_loader: Arc<LazyLoader>,
-    cache: Arc<StartupCache>,
-    preloader: Arc<ModulePreloader>,
-    validator: Arc<StartupValidator>,
-    monitor: Arc<RwLock<SystemMonitor>>,
+    cache:       Arc<StartupCache>,
+    preloader:   Arc<ModulePreloader>,
+    validator:   Arc<StartupValidator>,
+    monitor:     Arc<RwLock<SystemMonitor>>,
 }
 
 impl IntegratedStartupOptimizer {
@@ -652,10 +626,7 @@ impl IntegratedStartupOptimizer {
         }
     }
 
-    pub async fn initialize_with_monitoring(
-        &self,
-        is_cold_startup: bool,
-    ) -> Result<StartupReport, IDEError> {
+    pub async fn initialize_with_monitoring(&self, is_cold_startup: bool) -> Result<StartupReport, IDEError> {
         // Start monitoring
         let monitor = self.monitor.write().await;
         // Start collecting system metrics during startup
@@ -751,11 +722,7 @@ impl IntegratedStartupOptimizer {
         Ok(())
     }
 
-    pub async fn cache_expensive_operation<T, F>(
-        &self,
-        key: String,
-        computation: F,
-    ) -> Result<T, IDEError>
+    pub async fn cache_expensive_operation<T, F>(&self, key: String, computation: F) -> Result<T, IDEError>
     where
         F: Future<Output = Result<T, IDEError>> + Send + 'static,
         T: serde::Serialize + serde::de::DeserializeOwned + Send + 'static,
@@ -798,11 +765,11 @@ impl IntegratedStartupOptimizer {
 
         // Return the latest startup report
         Ok(StartupReport {
-            total_startup_time: measurements.last().unwrap().total_duration,
+            total_startup_time:  measurements.last().unwrap().total_duration,
             cold_startup_target: Duration::from_millis(COLD_STARTUP_TARGET),
             warm_startup_target: Duration::from_millis(WARM_STARTUP_TARGET),
             phase_average_times: std::collections::HashMap::new(), // Would need to be populated
-            target_achievement: TargetAchievement::AboveTarget {
+            target_achievement:  TargetAchievement::AboveTarget {
                 excess: Duration::default(),
             },
         })

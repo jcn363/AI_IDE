@@ -1,40 +1,41 @@
 //! Core data structures for the learning system
 
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// A learned pattern from successful error resolutions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LearnedPattern {
     /// Unique identifier for the pattern
-    pub id: String,
+    pub id:               String,
     /// Human-readable description of the pattern
-    pub description: String,
+    pub description:      String,
     /// The original error message pattern
-    pub error_pattern: String,
+    pub error_pattern:    String,
     /// Error code if available (e.g., E0308)
-    pub error_code: Option<String>,
+    pub error_code:       Option<String>,
     /// Context patterns that help identify when this pattern applies
     pub context_patterns: Vec<String>,
     /// The successful fix that was applied
-    pub fix_template: FixTemplate,
+    pub fix_template:     FixTemplate,
     /// Confidence score based on success rate (0.0 to 1.0)
-    pub confidence: f32,
+    pub confidence:       f32,
     /// Number of times this pattern was successfully applied
-    pub success_count: u32,
+    pub success_count:    u32,
     /// Total number of times this pattern was attempted
-    pub attempt_count: u32,
+    pub attempt_count:    u32,
     /// When this pattern was first learned
-    pub created_at: DateTime<Utc>,
+    pub created_at:       DateTime<Utc>,
     /// When this pattern was last updated
-    pub updated_at: DateTime<Utc>,
+    pub updated_at:       DateTime<Utc>,
     /// Hash of the code context for similarity matching
-    pub context_hash: String,
+    pub context_hash:     String,
     /// Tags for categorizing patterns
-    pub tags: Vec<String>,
+    pub tags:             Vec<String>,
     /// User who contributed this pattern (anonymized if privacy mode is enabled)
-    pub contributor_id: Option<String>,
+    pub contributor_id:   Option<String>,
 }
 
 /// Template for applying a learned fix
@@ -43,26 +44,26 @@ pub struct FixTemplate {
     /// Template for the fix description
     pub description_template: String,
     /// Code change templates
-    pub change_templates: Vec<ChangeTemplate>,
+    pub change_templates:     Vec<ChangeTemplate>,
     /// Variables that can be substituted in the template
-    pub variables: HashMap<String, String>,
+    pub variables:            HashMap<String, String>,
     /// Conditions that must be met for this template to apply
-    pub conditions: Vec<TemplateCondition>,
+    pub conditions:           Vec<TemplateCondition>,
     /// Warnings to show when applying this template
-    pub warnings: Vec<String>,
+    pub warnings:             Vec<String>,
 }
 
 /// Template for a code change
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChangeTemplate {
     /// Pattern to match in the original code
-    pub match_pattern: String,
+    pub match_pattern:       String,
     /// Replacement pattern with variables
     pub replacement_pattern: String,
     /// Type of change
-    pub change_type: ChangeType,
+    pub change_type:         ChangeType,
     /// Scope of the change
-    pub scope: ChangeScope,
+    pub scope:               ChangeScope,
 }
 
 /// Type of code change in a template
@@ -99,9 +100,9 @@ pub struct TemplateCondition {
     /// Type of condition
     pub condition_type: ConditionType,
     /// Pattern to match
-    pub pattern: String,
+    pub pattern:        String,
     /// Whether the condition must be true or false
-    pub must_match: bool,
+    pub must_match:     bool,
 }
 
 /// Type of template condition
@@ -123,59 +124,59 @@ pub enum ConditionType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PatternSimilarity {
     /// Overall similarity score (0.0 to 1.0)
-    pub overall_score: f32,
+    pub overall_score:        f32,
     /// Error message similarity
-    pub error_similarity: f32,
+    pub error_similarity:     f32,
     /// Context similarity
-    pub context_similarity: f32,
+    pub context_similarity:   f32,
     /// Code structure similarity
     pub structure_similarity: f32,
     /// Matching learned pattern
-    pub pattern: LearnedPattern,
+    pub pattern:              LearnedPattern,
 }
 
 /// User preferences for the learning system
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LearningPreferences {
     /// Whether to enable learning from successful fixes
-    pub enable_learning: bool,
+    pub enable_learning:          bool,
     /// Privacy mode for data collection
-    pub privacy_mode: super::types::PrivacyMode,
+    pub privacy_mode:             super::types::PrivacyMode,
     /// Minimum confidence threshold for learned patterns
-    pub confidence_threshold: f32,
+    pub confidence_threshold:     f32,
     /// Maximum number of patterns to store per error type
-    pub max_patterns_per_type: u32,
+    pub max_patterns_per_type:    u32,
     /// Whether to share patterns with the community (anonymized)
     pub enable_community_sharing: bool,
     /// Whether to use patterns from the community
-    pub use_community_patterns: bool,
+    pub use_community_patterns:   bool,
     /// Auto-apply fixes with confidence above this threshold
-    pub auto_apply_threshold: f32,
+    pub auto_apply_threshold:     f32,
 }
 
 /// Statistics about learned patterns
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PatternStatistics {
     /// Total number of learned patterns
-    pub total_patterns: u32,
+    pub total_patterns:      u32,
     /// Number of patterns that have been successfully applied
     pub successful_patterns: u32,
     /// Number of patterns updated in the last 30 days
-    pub recent_patterns: u32,
+    pub recent_patterns:     u32,
     /// Overall success rate
-    pub success_rate: f32,
+    pub success_rate:        f32,
 }
 
 impl Default for LearningPreferences {
     fn default() -> Self {
         Self {
-            enable_learning: true,
-            privacy_mode: super::types::PrivacyMode::OptIn,
-            confidence_threshold: 0.7,
-            max_patterns_per_type: 100,
+            enable_learning:          true,
+            privacy_mode:             super::types::PrivacyMode::OptIn,
+            confidence_threshold:     0.7,
+            max_patterns_per_type:    100,
             enable_community_sharing: false,
-            use_community_patterns: true,
-            auto_apply_threshold: 0.9,
+            use_community_patterns:   true,
+            auto_apply_threshold:     0.9,
         }
     }
 }
@@ -198,10 +199,7 @@ impl LearnedPattern {
         let usage_factor = self.calculate_usage_factor();
 
         // Weighted combination of factors
-        (base_confidence * 0.4)
-            + (success_rate * 0.3)
-            + (recency_factor * 0.15)
-            + (usage_factor * 0.15)
+        (base_confidence * 0.4) + (success_rate * 0.3) + (recency_factor * 0.15) + (usage_factor * 0.15)
     }
 
     /// Calculate recency factor (more recent patterns get higher scores)

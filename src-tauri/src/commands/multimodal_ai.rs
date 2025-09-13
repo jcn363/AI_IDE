@@ -3,13 +3,13 @@
 //! This module provides Tauri command handlers for multi-modal AI operations
 //! including vision processing, audio analysis, and combined modality processing.
 
-use serde_json::json;
 use std::sync::Arc;
-use tauri::{AppHandle, State};
-use tokio::sync::Mutex;
 
 use rust_ai_ide_ai_multimodal::{AnalysisRequest, ModalityType, MultiModalAiService};
 use rust_ai_ide_common::validation::TauriInputSanitizer;
+use serde_json::json;
+use tauri::{AppHandle, State};
+use tokio::sync::Mutex;
 
 /// State for multi-modal AI service management
 #[derive(Default)]
@@ -35,9 +35,9 @@ impl MultiModalState {
     /// Get the multimodal service reference
     #[must_use]
     pub fn service(&self) -> Result<&Arc<MultiModalAiService>, tauri::Error> {
-        self.multimodal_service.as_ref().ok_or_else(|| {
-            tauri::Error::Anyhow(anyhow::anyhow!("Multimodal service not initialized"))
-        })
+        self.multimodal_service
+            .as_ref()
+            .ok_or_else(|| tauri::Error::Anyhow(anyhow::anyhow!("Multimodal service not initialized")))
     }
 }
 
@@ -225,7 +225,7 @@ pub async fn analyze_image(
         .as_capability_query(); // For basic analysis
 
     match service.process_request(analysis_request).await {
-        Ok(response) => {
+        Ok(response) =>
             if let Some(result) = response.modality_results.get(&ModalityType::Image) {
                 match &result.data {
                     rust_ai_ide_ai_multimodal::ModalityData::Image {
@@ -249,8 +249,7 @@ pub async fn analyze_image(
                 }
             } else {
                 Ok(json!({"error": "No image result found"}))
-            }
-        }
+            },
         Err(e) => Ok(json!({"error": format!("Image analysis failed: {}", e)})),
     }
 }
@@ -279,7 +278,7 @@ pub async fn recognize_voice_command(
     }
 
     match service.process_request(analysis_request).await {
-        Ok(response) => {
+        Ok(response) =>
             if let Some(result) = response.modality_results.get(&ModalityType::Audio) {
                 match &result.data {
                     rust_ai_ide_ai_multimodal::ModalityData::Audio {
@@ -299,8 +298,7 @@ pub async fn recognize_voice_command(
                 }
             } else {
                 Ok(json!({"error": "No audio result found"}))
-            }
-        }
+            },
         Err(e) => Ok(json!({"error": format!("Voice recognition failed: {}", e)})),
     }
 }

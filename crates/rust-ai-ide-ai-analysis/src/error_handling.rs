@@ -47,9 +47,7 @@ impl AnalysisError {
     pub fn is_recoverable(&self) -> bool {
         matches!(
             self,
-            AnalysisError::Timeout
-                | AnalysisError::IoError(_)
-                | AnalysisError::SerializationError(_)
+            AnalysisError::Timeout | AnalysisError::IoError(_) | AnalysisError::SerializationError(_)
         )
     }
 
@@ -80,7 +78,10 @@ pub enum RecoveryStrategy {
     /// Skip the problematic analysis and continue
     Skip,
     /// Retry the operation after a delay
-    Retry { max_attempts: usize, delay_ms: u64 },
+    Retry {
+        max_attempts: usize,
+        delay_ms:     u64,
+    },
     /// Fall back to a simpler analysis method
     Fallback,
     /// Stop all analysis on this file
@@ -117,8 +118,8 @@ impl Default for AnalysisConfig {
 pub struct ErrorContext {
     pub operation: String,
     pub file_path: Option<String>,
-    pub severity: crate::analysis::types::Severity,
-    pub config: AnalysisConfig,
+    pub severity:  crate::analysis::types::Severity,
+    pub config:    AnalysisConfig,
 }
 
 impl ErrorContext {
@@ -178,7 +179,7 @@ impl ErrorContext {
             RecoveryStrategy::Retry {
                 max_attempts,
                 delay_ms,
-            } => {
+            } =>
                 if error.is_recoverable() {
                     RecoveryStrategy::Retry {
                         max_attempts,
@@ -186,8 +187,7 @@ impl ErrorContext {
                     }
                 } else {
                     RecoveryStrategy::Skip
-                }
-            }
+                },
             RecoveryStrategy::Fallback => RecoveryStrategy::Fallback,
             RecoveryStrategy::Abort => RecoveryStrategy::Abort,
         }
@@ -197,13 +197,13 @@ impl ErrorContext {
 /// Error statistics for monitoring
 #[derive(Debug, Clone, Default)]
 pub struct ErrorStats {
-    pub parse_errors: u64,
-    pub security_errors: u64,
-    pub performance_errors: u64,
-    pub quality_errors: u64,
+    pub parse_errors:        u64,
+    pub security_errors:     u64,
+    pub performance_errors:  u64,
+    pub quality_errors:      u64,
     pub architecture_errors: u64,
-    pub recovered_errors: u64,
-    pub fatal_errors: u64,
+    pub recovered_errors:    u64,
+    pub fatal_errors:        u64,
 }
 
 impl ErrorStats {
@@ -257,8 +257,7 @@ mod tests {
         let parse_error = AnalysisError::ParseError("test".to_string());
         assert_eq!(parse_error.category(), "parsing");
 
-        let io_error =
-            AnalysisError::IoError(std::io::Error::new(std::io::ErrorKind::Other, "test"));
+        let io_error = AnalysisError::IoError(std::io::Error::new(std::io::ErrorKind::Other, "test"));
         assert_eq!(io_error.category(), "io");
     }
 

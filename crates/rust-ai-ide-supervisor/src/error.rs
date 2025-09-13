@@ -1,7 +1,8 @@
 //! Supervisor-specific error types and utilities
 
-use rusqlite::Error as RusqliteError;
 use std::fmt;
+
+use rusqlite::Error as RusqliteError;
 use thiserror::Error;
 use tokio::process::Command as TokioCommand;
 
@@ -12,7 +13,10 @@ pub enum SupervisorError {
     ProcessError { message: String },
 
     #[error("Service restart failed: {service_name} - {attempts} attempts")]
-    RestartFailed { service_name: String, attempts: u32 },
+    RestartFailed {
+        service_name: String,
+        attempts:     u32,
+    },
 
     #[error("State persistence error: {message}")]
     PersistenceError { message: String },
@@ -21,26 +25,38 @@ pub enum SupervisorError {
     MigrationError { message: String },
 
     #[error("IPC recovery failure: {channel_id} - {reason}")]
-    IpcRecoveryError { channel_id: String, reason: String },
+    IpcRecoveryError {
+        channel_id: String,
+        reason:     String,
+    },
 
     #[error("Health check timeout: {service_name} after {timeout}s")]
-    HealthCheckTimeout { service_name: String, timeout: u64 },
+    HealthCheckTimeout {
+        service_name: String,
+        timeout:      u64,
+    },
 
     #[error("Configuration validation failed: {field} - {reason}")]
     ValidationError { field: String, reason: String },
 
     #[error("Security validation failed: {operation} - {reason}")]
-    SecurityError { operation: String, reason: String },
+    SecurityError {
+        operation: String,
+        reason:    String,
+    },
 
     #[error("Resource limit exceeded: {resource} - current: {current}, limit: {limit}")]
     ResourceLimitExceeded {
         resource: String,
-        current: u64,
-        limit: u64,
+        current:  u64,
+        limit:    u64,
     },
 
     #[error("Initialization failure: {component} - {reason}")]
-    InitError { component: String, reason: String },
+    InitError {
+        component: String,
+        reason:    String,
+    },
 
     #[error("Checkpoint save failed: {id} - {reason}")]
     CheckpointError { id: String, reason: String },
@@ -80,7 +96,7 @@ impl SupervisorError {
     pub fn ipc_recovery_error(channel_id: &str, reason: &str) -> Self {
         Self::IpcRecoveryError {
             channel_id: channel_id.to_string(),
-            reason: reason.to_string(),
+            reason:     reason.to_string(),
         }
     }
 
@@ -95,7 +111,7 @@ impl SupervisorError {
     /// Create a validation error
     pub fn validation_error<S: Into<String>>(field: &str, reason: S) -> Self {
         Self::ValidationError {
-            field: field.to_string(),
+            field:  field.to_string(),
             reason: reason.into(),
         }
     }
@@ -104,7 +120,7 @@ impl SupervisorError {
     pub fn security_error<S: Into<String>>(operation: &str, reason: S) -> Self {
         Self::SecurityError {
             operation: operation.to_string(),
-            reason: reason.into(),
+            reason:    reason.into(),
         }
     }
 
@@ -121,14 +137,14 @@ impl SupervisorError {
     pub fn init_error<S: Into<String>>(component: &str, reason: S) -> Self {
         Self::InitError {
             component: component.to_string(),
-            reason: reason.into(),
+            reason:    reason.into(),
         }
     }
 
     /// Create a checkpoint error
     pub fn checkpoint_error<S: Into<String>>(id: &str, reason: S) -> Self {
         Self::CheckpointError {
-            id: id.to_string(),
+            id:     id.to_string(),
             reason: reason.into(),
         }
     }
@@ -225,9 +241,7 @@ impl SupervisorErrorUtils {
             SupervisorError::HealthCheckTimeout { .. } => true,
             SupervisorError::ProcessError { message } => {
                 // Check if it's a temporary process error
-                message.contains("timeout")
-                    || message.contains("connection")
-                    || message.contains("network")
+                message.contains("timeout") || message.contains("connection") || message.contains("network")
             }
             SupervisorError::IpcRecoveryError { .. } => true,
             _ => false,
@@ -243,12 +257,10 @@ impl SupervisorErrorUtils {
             SupervisorError::PersistenceError { message } => SupervisorError::PersistenceError {
                 message: format!("{}: {}", context, message),
             },
-            SupervisorError::IpcRecoveryError { channel_id, reason } => {
-                SupervisorError::IpcRecoveryError {
-                    channel_id,
-                    reason: format!("{}: {}", context, reason),
-                }
-            }
+            SupervisorError::IpcRecoveryError { channel_id, reason } => SupervisorError::IpcRecoveryError {
+                channel_id,
+                reason: format!("{}: {}", context, reason),
+            },
             _ => error,
         }
     }

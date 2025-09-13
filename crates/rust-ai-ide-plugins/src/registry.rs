@@ -1,8 +1,10 @@
 //! Plugin registration and management for the Rust AI IDE plugin system.
 
-use crate::interfaces::{Plugin, PluginError, PluginMetadata};
 use std::collections::HashMap;
+
 use tokio::sync::RwLock;
+
+use crate::interfaces::{Plugin, PluginError, PluginMetadata};
 
 /// The central registry for managing loaded plugins.
 /// This struct handles plugin registration, lookup, and provides access to plugin functionality.
@@ -57,9 +59,7 @@ impl PluginRegistry {
     }
 
     /// Gets a reference to a registered plugin by ID using a callback pattern.
-    #[deprecated(
-        note = "Use with_plugin instead to avoid lifetime issues. Removal planned in v2.0.0"
-    )]
+    #[deprecated(note = "Use with_plugin instead to avoid lifetime issues. Removal planned in v2.0.0")]
     pub async fn get_plugin(&self, plugin_id: &str) -> Option<Box<dyn Plugin>> {
         let plugins = self.plugins.read().await;
         let plugin_id_owned = plugin_id.to_string();

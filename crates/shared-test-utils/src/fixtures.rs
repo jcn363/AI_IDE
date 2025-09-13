@@ -1,14 +1,15 @@
-use crate::error::TestError;
-use crate::filesystem::TempWorkspace;
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+use crate::error::TestError;
+use crate::filesystem::TempWorkspace;
 
 /// Builder pattern for creating test fixtures
 #[derive(Clone, Debug, Default)]
 pub struct TestFixtureBuilder {
-    pub files: HashMap<PathBuf, String>,
+    pub files:       HashMap<PathBuf, String>,
     pub directories: Vec<PathBuf>,
-    pub metadata: HashMap<String, String>,
+    pub metadata:    HashMap<String, String>,
 }
 
 impl TestFixtureBuilder {
@@ -61,9 +62,9 @@ impl TestFixtureBuilder {
         }
 
         Ok(TestFixture {
-            files: self.files,
+            files:       self.files,
             directories: self.directories,
-            metadata: self.metadata,
+            metadata:    self.metadata,
         })
     }
 }
@@ -71,9 +72,9 @@ impl TestFixtureBuilder {
 /// A completed test fixture
 #[derive(Clone, Debug)]
 pub struct TestFixture {
-    pub files: HashMap<PathBuf, String>,
+    pub files:       HashMap<PathBuf, String>,
     pub directories: Vec<PathBuf>,
-    pub metadata: HashMap<String, String>,
+    pub metadata:    HashMap<String, String>,
 }
 
 impl TestFixture {
@@ -187,7 +188,8 @@ publish.workspace = true
     /// Multi-module Rust project
     pub fn multi_module() -> TestFixtureBuilder {
         TestFixtureBuilder::new()
-            .with_file("Cargo.toml",
+            .with_file(
+                "Cargo.toml",
                 r#"[package]
 name = "multi-module"
 version = "0.1.0"
@@ -318,23 +320,30 @@ impl Default for ContextFixtureFactory {
         Self::new()
     }
 }
-"#)
-            .with_file("src/lib.rs",
+"#,
+            )
+            .with_file(
+                "src/lib.rs",
                 r#"pub mod utils;
 pub mod math;
 
 pub use utils::*;
-"#)
-            .with_file("src/utils.rs",
+"#,
+            )
+            .with_file(
+                "src/utils.rs",
                 r#"pub fn helper() -> String {
     "helper".to_string()
 }
-"#)
-            .with_file("src/math.rs",
+"#,
+            )
+            .with_file(
+                "src/math.rs",
                 r#"pub fn add(a: i32, b: i32) -> i32 {
     a + b
 }
-"#)
+"#,
+            )
             .with_directory("src")
     }
 }

@@ -15,11 +15,13 @@
 //! # Usage
 //!
 //! ```rust,no_run
-//! use rust_ai_ide_security::sbom::{SbomGenerator, SbomFormat, SupplyChainMonitor};
+//! use rust_ai_ide_security::sbom::{SbomFormat, SbomGenerator, SupplyChainMonitor};
 //!
 //! // Generate SBOM
 //! let generator = SbomGenerator::new().await?;
-//! let sbom = generator.generate_sbom("Cargo.toml", SbomFormat::CycloneDX).await?;
+//! let sbom = generator
+//!     .generate_sbom("Cargo.toml", SbomFormat::CycloneDX)
+//!     .await?;
 //!
 //! // Validate SBOM integrity
 //! let validator = SbomValidator::new();
@@ -30,21 +32,19 @@
 //! let alerts = monitor.check_supply_chain_vulnerabilities(&sbom).await?;
 //! ```
 
+use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
-use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-use crate::{
-    AuditTrail, ComponentStatus, SecurityError, SecurityResult, VulnerabilityReport,
-    VulnerabilitySeverity,
-};
+use crate::{AuditTrail, ComponentStatus, SecurityError, SecurityResult, VulnerabilityReport, VulnerabilitySeverity};
 
 /// SBOM document formats
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -70,29 +70,29 @@ pub enum ComponentType {
 /// SBOM component metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SbomComponent {
-    pub component_id: String,
-    pub name: String,
-    pub version: String,
-    pub component_type: ComponentType,
-    pub publisher: Option<String>,
-    pub description: Option<String>,
-    pub licenses: Vec<String>,
-    pub download_url: Option<String>,
-    pub hashes: HashMap<String, String>, // Algorithm -> hash value
-    pub dependencies: Vec<String>,       // Component IDs
-    pub metadata: HashMap<String, Value>,
+    pub component_id:      String,
+    pub name:              String,
+    pub version:           String,
+    pub component_type:    ComponentType,
+    pub publisher:         Option<String>,
+    pub description:       Option<String>,
+    pub licenses:          Vec<String>,
+    pub download_url:      Option<String>,
+    pub hashes:            HashMap<String, String>, // Algorithm -> hash value
+    pub dependencies:      Vec<String>,             // Component IDs
+    pub metadata:          HashMap<String, Value>,
     pub supply_chain_info: SupplyChainInfo,
 }
 
 /// Supply chain tracking information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SupplyChainInfo {
-    pub author: String,
-    pub timestamp: DateTime<Utc>,
-    pub verification_status: SupplyChainVerificationStatus,
-    pub build_environment: HashMap<String, String>,
+    pub author:                String,
+    pub timestamp:             DateTime<Utc>,
+    pub verification_status:   SupplyChainVerificationStatus,
+    pub build_environment:     HashMap<String, String>,
     pub attestation_documents: Vec<String>, // URLs or file paths
-    pub change_logs: Vec<SupplyChainChange>,
+    pub change_logs:           Vec<SupplyChainChange>,
 }
 
 /// Supply chain verification status
@@ -108,14 +108,14 @@ pub enum SupplyChainVerificationStatus {
 /// Supply chain change record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SupplyChainChange {
-    pub change_id: String,
-    pub timestamp: DateTime<Utc>,
-    pub component_id: String,
-    pub change_type: SupplyChainChangeType,
+    pub change_id:      String,
+    pub timestamp:      DateTime<Utc>,
+    pub component_id:   String,
+    pub change_type:    SupplyChainChangeType,
     pub previous_value: Option<String>,
-    pub new_value: String,
-    pub evidence: String,
-    pub verified_by: Vec<String>,
+    pub new_value:      String,
+    pub evidence:       String,
+    pub verified_by:    Vec<String>,
 }
 
 /// Type of supply chain change
@@ -133,12 +133,12 @@ pub enum SupplyChainChangeType {
 /// SBOM document structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SbomDocument {
-    pub sbom_id: String,
-    pub format: SbomFormat,
-    pub spec_version: String,
-    pub creation_info: SbomCreationInfo,
-    pub components: Vec<SbomComponent>,
-    pub relationships: Vec<SbomRelationship>,
+    pub sbom_id:         String,
+    pub format:          SbomFormat,
+    pub spec_version:    String,
+    pub creation_info:   SbomCreationInfo,
+    pub components:      Vec<SbomComponent>,
+    pub relationships:   Vec<SbomRelationship>,
     pub vulnerabilities: Vec<SbomVulnerability>,
     pub compliance_info: HashMap<String, Value>, // Framework -> compliance data
 }
@@ -146,22 +146,22 @@ pub struct SbomDocument {
 /// SBOM creation metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SbomCreationInfo {
-    pub created: DateTime<Utc>,
-    pub authors: Vec<String>,
-    pub tools: Vec<String>,
-    pub project_name: String,
+    pub created:         DateTime<Utc>,
+    pub authors:         Vec<String>,
+    pub tools:           Vec<String>,
+    pub project_name:    String,
     pub project_version: String,
-    pub namespace: String,
+    pub namespace:       String,
 }
 
 /// SBOM component relationship
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SbomRelationship {
-    pub relationship_id: String,
+    pub relationship_id:     String,
     pub source_component_id: String,
     pub target_component_id: String,
-    pub relationship_type: RelationshipType,
-    pub metadata: HashMap<String, Value>,
+    pub relationship_type:   RelationshipType,
+    pub metadata:            HashMap<String, Value>,
 }
 
 /// Type of relationship between components
@@ -183,14 +183,14 @@ pub enum RelationshipType {
 /// SBOM vulnerability information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SbomVulnerability {
-    pub vulnerability_id: String,
-    pub component_id: String,
-    pub severity: VulnerabilitySeverity,
-    pub description: String,
+    pub vulnerability_id:  String,
+    pub component_id:      String,
+    pub severity:          VulnerabilitySeverity,
+    pub description:       String,
     pub affected_versions: Vec<String>,
-    pub cwe_id: Option<String>,
-    pub remediation: Option<String>,
-    pub last_updated: DateTime<Utc>,
+    pub cwe_id:            Option<String>,
+    pub remediation:       Option<String>,
+    pub last_updated:      DateTime<Utc>,
 }
 
 /// SBOM generator trait
@@ -205,11 +205,7 @@ pub trait SbomGenerator: Send + Sync {
     ) -> SecurityResult<SbomDocument>;
 
     /// Generate SBOM from Cargo.lock file
-    async fn generate_from_lockfile(
-        &self,
-        lockfile_path: &str,
-        format: SbomFormat,
-    ) -> SecurityResult<SbomDocument>;
+    async fn generate_from_lockfile(&self, lockfile_path: &str, format: SbomFormat) -> SecurityResult<SbomDocument>;
 
     /// Update existing SBOM with new component information
     async fn update_sbom(
@@ -219,34 +215,30 @@ pub trait SbomGenerator: Send + Sync {
     ) -> SecurityResult<()>;
 
     /// Generate SBOM for build environment
-    async fn generate_build_sbom(
-        &self,
-        build_info: BuildInfo,
-        format: SbomFormat,
-    ) -> SecurityResult<SbomDocument>;
+    async fn generate_build_sbom(&self, build_info: BuildInfo, format: SbomFormat) -> SecurityResult<SbomDocument>;
 }
 
 /// SBOM generation options
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SbomGenerationOptions {
     pub include_build_dependencies: bool,
-    pub include_dev_dependencies: bool,
-    pub include_test_dependencies: bool,
-    pub compress_hashes: bool,
-    pub include_metadata: bool,
-    pub generate_signatures: bool,
-    pub custom_metadata: HashMap<String, Value>,
+    pub include_dev_dependencies:   bool,
+    pub include_test_dependencies:  bool,
+    pub compress_hashes:            bool,
+    pub include_metadata:           bool,
+    pub generate_signatures:        bool,
+    pub custom_metadata:            HashMap<String, Value>,
 }
 
 /// Build information for SBOM generation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildInfo {
-    pub build_id: String,
-    pub build_timestamp: DateTime<Utc>,
-    pub builder: String,
+    pub build_id:          String,
+    pub build_timestamp:   DateTime<Utc>,
+    pub builder:           String,
     pub build_environment: HashMap<String, String>,
-    pub source_commit: String,
-    pub build_triggers: Vec<String>,
+    pub source_commit:     String,
+    pub build_triggers:    Vec<String>,
 }
 
 /// SBOM validator trait
@@ -259,10 +251,7 @@ pub trait SbomValidator: Send + Sync {
     async fn validate_component_hashes(&self, component: &SbomComponent) -> SecurityResult<bool>;
 
     /// Validate digital signatures
-    async fn validate_signatures(
-        &self,
-        sbom: &SbomDocument,
-    ) -> SecurityResult<SignatureValidationResult>;
+    async fn validate_signatures(&self, sbom: &SbomDocument) -> SecurityResult<SignatureValidationResult>;
 
     /// Detect SBOM tampering or corruption
     async fn detect_tampering(
@@ -275,18 +264,18 @@ pub trait SbomValidator: Send + Sync {
 /// SBOM validation result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationResult {
-    pub is_valid: bool,
+    pub is_valid:          bool,
     pub validation_errors: Vec<String>,
-    pub warnings: Vec<String>,
-    pub confidence_score: f64, // 0.0 to 1.0
-    pub validated_at: DateTime<Utc>,
+    pub warnings:          Vec<String>,
+    pub confidence_score:  f64, // 0.0 to 1.0
+    pub validated_at:      DateTime<Utc>,
 }
 
 /// Signature validation result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignatureValidationResult {
-    pub is_valid: bool,
-    pub signer_info: Vec<String>,
+    pub is_valid:          bool,
+    pub signer_info:       Vec<String>,
     pub validation_errors: Vec<String>,
 }
 
@@ -294,10 +283,7 @@ pub struct SignatureValidationResult {
 #[async_trait]
 pub trait SupplyChainMonitor: Send + Sync {
     /// Monitor supply chain for vulnerabilities
-    async fn check_supply_chain_vulnerabilities(
-        &self,
-        sbom: &SbomDocument,
-    ) -> SecurityResult<Vec<SupplyChainAlert>>;
+    async fn check_supply_chain_vulnerabilities(&self, sbom: &SbomDocument) -> SecurityResult<Vec<SupplyChainAlert>>;
 
     /// Monitor for supply chain changes
     async fn detect_supply_chain_changes(
@@ -307,10 +293,7 @@ pub trait SupplyChainMonitor: Send + Sync {
     ) -> SecurityResult<Vec<SupplyChainChange>>;
 
     /// Validate component authenticity
-    async fn validate_component_authenticity(
-        &self,
-        component: &SbomComponent,
-    ) -> SecurityResult<AuthenticityResult>;
+    async fn validate_component_authenticity(&self, component: &SbomComponent) -> SecurityResult<AuthenticityResult>;
 
     /// Generate compliance report for supply chain
     async fn generate_compliance_report(
@@ -323,14 +306,14 @@ pub trait SupplyChainMonitor: Send + Sync {
 /// Supply chain alert
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SupplyChainAlert {
-    pub alert_id: String,
-    pub component_id: String,
-    pub alert_type: SupplyChainAlertType,
-    pub severity: VulnerabilitySeverity,
-    pub description: String,
-    pub evidence: Vec<String>,
+    pub alert_id:          String,
+    pub component_id:      String,
+    pub alert_type:        SupplyChainAlertType,
+    pub severity:          VulnerabilitySeverity,
+    pub description:       String,
+    pub evidence:          Vec<String>,
     pub remediation_steps: Vec<String>,
-    pub detected_at: DateTime<Utc>,
+    pub detected_at:       DateTime<Utc>,
 }
 
 /// Types of supply chain alerts
@@ -347,21 +330,21 @@ pub enum SupplyChainAlertType {
 /// Component authenticity result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthenticityResult {
-    pub is_authentic: bool,
+    pub is_authentic:        bool,
     pub verification_method: String,
-    pub trust_score: f64,
-    pub trusted_sources: Vec<String>,
-    pub warnings: Vec<String>,
+    pub trust_score:         f64,
+    pub trusted_sources:     Vec<String>,
+    pub warnings:            Vec<String>,
 }
 
 /// Compliance report for supply chain
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceReport {
-    pub framework: String,
-    pub compliant: bool,
-    pub violations: Vec<String>,
+    pub framework:       String,
+    pub compliant:       bool,
+    pub violations:      Vec<String>,
     pub recommendations: Vec<String>,
-    pub evidence_links: Vec<String>,
+    pub evidence_links:  Vec<String>,
 }
 
 // Default implementation
@@ -369,8 +352,8 @@ pub struct ComplianceReport {
 /// Default SBOM generator implementation
 pub struct DefaultSbomGenerator {
     project_root: PathBuf,
-    cache: RwLock<HashMap<String, SbomDocument>>,
-    audit_trail: Arc<dyn AuditTrail>,
+    cache:        RwLock<HashMap<String, SbomDocument>>,
+    audit_trail:  Arc<dyn AuditTrail>,
 }
 
 impl DefaultSbomGenerator {
@@ -437,26 +420,26 @@ impl DefaultSbomGenerator {
 
         // Add application component
         let mut app_component = SbomComponent {
-            component_id: format!("component-{}", Uuid::new_v4()),
-            name: project_name.to_string(),
-            version: project_version.to_string(),
-            component_type: ComponentType::Application,
-            publisher: None,
-            description: project_info["package"]["description"]
+            component_id:      format!("component-{}", Uuid::new_v4()),
+            name:              project_name.to_string(),
+            version:           project_version.to_string(),
+            component_type:    ComponentType::Application,
+            publisher:         None,
+            description:       project_info["package"]["description"]
                 .as_str()
                 .map(|s| s.to_string()),
-            licenses: vec![],
-            download_url: None,
-            hashes: HashMap::new(),
-            dependencies: vec![],
-            metadata: HashMap::new(),
+            licenses:          vec![],
+            download_url:      None,
+            hashes:            HashMap::new(),
+            dependencies:      vec![],
+            metadata:          HashMap::new(),
             supply_chain_info: SupplyChainInfo {
-                author: "Rust AI IDE".to_string(),
-                timestamp: Utc::now(),
-                verification_status: SupplyChainVerificationStatus::Verified,
-                build_environment: HashMap::new(),
+                author:                "Rust AI IDE".to_string(),
+                timestamp:             Utc::now(),
+                verification_status:   SupplyChainVerificationStatus::Verified,
+                build_environment:     HashMap::new(),
                 attestation_documents: vec![],
-                change_logs: vec![],
+                change_logs:           vec![],
             },
         };
 
@@ -468,30 +451,27 @@ impl DefaultSbomGenerator {
                     let source = dep["source"].as_str().unwrap_or("crates.io");
 
                     let dep_component = SbomComponent {
-                        component_id: format!("component-{}", Uuid::new_v4()),
-                        name: name.to_string(),
-                        version: version.to_string(),
-                        component_type: ComponentType::Library,
-                        publisher: None,
-                        description: None,
-                        licenses: vec![],
-                        download_url: Some(format!(
-                            "https://crates.io/crates/{}/{}",
-                            name, version
-                        )),
-                        hashes: HashMap::from([(
+                        component_id:      format!("component-{}", Uuid::new_v4()),
+                        name:              name.to_string(),
+                        version:           version.to_string(),
+                        component_type:    ComponentType::Library,
+                        publisher:         None,
+                        description:       None,
+                        licenses:          vec![],
+                        download_url:      Some(format!("https://crates.io/crates/{}/{}", name, version)),
+                        hashes:            HashMap::from([(
                             "SHA-256".to_string(),
                             self.generate_component_hash(name, version, source),
                         )]),
-                        dependencies: vec![],
-                        metadata: HashMap::new(),
+                        dependencies:      vec![],
+                        metadata:          HashMap::new(),
                         supply_chain_info: SupplyChainInfo {
-                            author: "crates.io".to_string(),
-                            timestamp: Utc::now(),
-                            verification_status: SupplyChainVerificationStatus::Verified,
-                            build_environment: HashMap::new(),
+                            author:                "crates.io".to_string(),
+                            timestamp:             Utc::now(),
+                            verification_status:   SupplyChainVerificationStatus::Verified,
+                            build_environment:     HashMap::new(),
                             attestation_documents: vec![],
-                            change_logs: vec![],
+                            change_logs:           vec![],
                         },
                     };
 
@@ -510,12 +490,12 @@ impl DefaultSbomGenerator {
             format: SbomFormat::CycloneDX,
             spec_version: "1.4".to_string(),
             creation_info: SbomCreationInfo {
-                created: Utc::now(),
-                authors: vec!["Rust AI IDE Security Team".to_string()],
-                tools: vec!["cargo".to_string(), "rust-ai-ide-sbom".to_string()],
-                project_name: project_name.to_string(),
+                created:         Utc::now(),
+                authors:         vec!["Rust AI IDE Security Team".to_string()],
+                tools:           vec!["cargo".to_string(), "rust-ai-ide-sbom".to_string()],
+                project_name:    project_name.to_string(),
                 project_version: project_version.to_string(),
-                namespace: format!("rust-ai-ide/{}", project_name),
+                namespace:       format!("rust-ai-ide/{}", project_name),
             },
             components,
             relationships: vec![], // Would be populated with dependency relationships
@@ -539,9 +519,7 @@ impl SbomGenerator for DefaultSbomGenerator {
         let dependencies = self.parse_cargo_lock("Cargo.lock").await?;
 
         match format {
-            SbomFormat::CycloneDX => {
-                self.create_cyclonedx_sbom(&project_info, &dependencies, &options)
-            }
+            SbomFormat::CycloneDX => self.create_cyclonedx_sbom(&project_info, &dependencies, &options),
             SbomFormat::SPDX => {
                 // SPDX format implementation would go here
                 Err(SecurityError::ConfigurationError {
@@ -554,11 +532,7 @@ impl SbomGenerator for DefaultSbomGenerator {
         }
     }
 
-    async fn generate_from_lockfile(
-        &self,
-        lockfile_path: &str,
-        format: SbomFormat,
-    ) -> SecurityResult<SbomDocument> {
+    async fn generate_from_lockfile(&self, lockfile_path: &str, format: SbomFormat) -> SecurityResult<SbomDocument> {
         let dependencies = self.parse_cargo_lock(lockfile_path).await?;
         let project_info = json!({
             "package": {
@@ -570,18 +544,16 @@ impl SbomGenerator for DefaultSbomGenerator {
 
         let options = SbomGenerationOptions {
             include_build_dependencies: true,
-            include_dev_dependencies: true,
-            include_test_dependencies: false,
-            compress_hashes: false,
-            include_metadata: true,
-            generate_signatures: false,
-            custom_metadata: HashMap::new(),
+            include_dev_dependencies:   true,
+            include_test_dependencies:  false,
+            compress_hashes:            false,
+            include_metadata:           true,
+            generate_signatures:        false,
+            custom_metadata:            HashMap::new(),
         };
 
         match format {
-            SbomFormat::CycloneDX => {
-                self.create_cyclonedx_sbom(&project_info, &dependencies, &options)
-            }
+            SbomFormat::CycloneDX => self.create_cyclonedx_sbom(&project_info, &dependencies, &options),
             _ => Err(SecurityError::ConfigurationError {
                 config_error: format!("{:?} format not supported for lockfile generation", format),
             }),
@@ -636,26 +608,22 @@ impl SbomGenerator for DefaultSbomGenerator {
         Ok(())
     }
 
-    async fn generate_build_sbom(
-        &self,
-        build_info: BuildInfo,
-        _format: SbomFormat,
-    ) -> SecurityResult<SbomDocument> {
+    async fn generate_build_sbom(&self, build_info: BuildInfo, _format: SbomFormat) -> SecurityResult<SbomDocument> {
         let mut components = Vec::new();
 
         // Add build component
         let build_component = SbomComponent {
-            component_id: format!("build-{}", build_info.build_id),
-            name: format!("Build {}", build_info.build_id),
-            version: "1.0.0".to_string(),
-            component_type: ComponentType::Application,
-            publisher: Some(build_info.builder.clone()),
-            description: Some(format!("Rust AI IDE Build {}", build_info.build_id)),
-            licenses: vec!["MIT".to_string()],
-            download_url: None,
-            hashes: HashMap::new(),
-            dependencies: vec![],
-            metadata: HashMap::from([
+            component_id:      format!("build-{}", build_info.build_id),
+            name:              format!("Build {}", build_info.build_id),
+            version:           "1.0.0".to_string(),
+            component_type:    ComponentType::Application,
+            publisher:         Some(build_info.builder.clone()),
+            description:       Some(format!("Rust AI IDE Build {}", build_info.build_id)),
+            licenses:          vec!["MIT".to_string()],
+            download_url:      None,
+            hashes:            HashMap::new(),
+            dependencies:      vec![],
+            metadata:          HashMap::from([
                 ("build_commit".to_string(), json!(build_info.source_commit)),
                 (
                     "build_timestamp".to_string(),
@@ -667,12 +635,12 @@ impl SbomGenerator for DefaultSbomGenerator {
                 ),
             ]),
             supply_chain_info: SupplyChainInfo {
-                author: build_info.builder,
-                timestamp: build_info.build_timestamp,
-                verification_status: SupplyChainVerificationStatus::Verified,
-                build_environment: build_info.build_environment,
+                author:                build_info.builder,
+                timestamp:             build_info.build_timestamp,
+                verification_status:   SupplyChainVerificationStatus::Verified,
+                build_environment:     build_info.build_environment,
                 attestation_documents: vec![],
-                change_logs: vec![],
+                change_logs:           vec![],
             },
         };
 
@@ -683,12 +651,12 @@ impl SbomGenerator for DefaultSbomGenerator {
             format: SbomFormat::CycloneDX,
             spec_version: "1.4".to_string(),
             creation_info: SbomCreationInfo {
-                created: Utc::now(),
-                authors: vec!["Rust AI IDE Build System".to_string()],
-                tools: vec!["cargo".to_string()],
-                project_name: "rust-ai-ide".to_string(),
+                created:         Utc::now(),
+                authors:         vec!["Rust AI IDE Build System".to_string()],
+                tools:           vec!["cargo".to_string()],
+                project_name:    "rust-ai-ide".to_string(),
                 project_version: "1.0.0".to_string(),
-                namespace: "rust-ai-ide/build".to_string(),
+                namespace:       "rust-ai-ide/build".to_string(),
             },
             components,
             relationships: vec![],
@@ -726,11 +694,10 @@ impl SbomValidator for DefaultSbomValidator {
 
         // Check SBOM format and version
         match &sbom.format {
-            SbomFormat::CycloneDX => {
+            SbomFormat::CycloneDX =>
                 if sbom.spec_version.is_empty() {
                     validation_errors.push("CycloneDX SBOM missing spec version".to_string());
-                }
-            }
+                },
             _ => warnings.push(format!(
                 "SBOM format {:?} validation not fully implemented",
                 sbom.format
@@ -740,8 +707,7 @@ impl SbomValidator for DefaultSbomValidator {
         // Validate components
         for component in &sbom.components {
             if component.name.is_empty() {
-                validation_errors
-                    .push(format!("Component {} missing name", component.component_id));
+                validation_errors.push(format!("Component {} missing name", component.component_id));
             }
             if component.version.is_empty() {
                 validation_errors.push(format!(
@@ -777,16 +743,14 @@ impl SbomValidator for DefaultSbomValidator {
 
         for (algorithm, hash) in &component.hashes {
             match algorithm.as_str() {
-                "SHA-256" | "SHA-512" => {
+                "SHA-256" | "SHA-512" =>
                     if hash.len() != 64 && hash.len() != 128 {
                         is_valid = false;
-                    }
-                }
-                "MD5" => {
+                    },
+                "MD5" =>
                     if hash.len() != 32 {
                         is_valid = false;
-                    }
-                }
+                    },
                 _ => {
                     // Unknown algorithm, treat as warning
                 }
@@ -796,14 +760,11 @@ impl SbomValidator for DefaultSbomValidator {
         Ok(is_valid)
     }
 
-    async fn validate_signatures(
-        &self,
-        _sbom: &SbomDocument,
-    ) -> SecurityResult<SignatureValidationResult> {
+    async fn validate_signatures(&self, _sbom: &SbomDocument) -> SecurityResult<SignatureValidationResult> {
         // Basic signature validation - in production this would verify actual signatures
         Ok(SignatureValidationResult {
-            is_valid: true,
-            signer_info: vec!["Rust AI IDE Security Team".to_string()],
+            is_valid:          true,
+            signer_info:       vec!["Rust AI IDE Security Team".to_string()],
             validation_errors: vec![],
         })
     }
@@ -815,18 +776,18 @@ impl SbomValidator for DefaultSbomValidator {
     ) -> SecurityResult<VulnerabilityReport> {
         // Basic tampering detection
         Ok(VulnerabilityReport {
-            vulnerability_id: "tampering-check-001".to_string(),
-            component_id: "system".to_string(),
-            title: "SBOM Tampering Detection".to_string(),
-            description: "No tampering detected in SBOM".to_string(),
-            severity: VulnerabilitySeverity::Info,
-            cwe_id: None,
+            vulnerability_id:  "tampering-check-001".to_string(),
+            component_id:      "system".to_string(),
+            title:             "SBOM Tampering Detection".to_string(),
+            description:       "No tampering detected in SBOM".to_string(),
+            severity:          VulnerabilitySeverity::Info,
+            cwe_id:            None,
             affected_versions: vec![],
-            cvss_score: None,
-            published_date: Utc::now(),
-            last_modified: Utc::now(),
-            references: vec![],
-            remediation: None,
+            cvss_score:        None,
+            published_date:    Utc::now(),
+            last_modified:     Utc::now(),
+            references:        vec![],
+            remediation:       None,
         })
     }
 }
@@ -834,8 +795,8 @@ impl SbomValidator for DefaultSbomValidator {
 /// Default supply chain monitor implementation
 pub struct DefaultSupplyChainMonitor {
     vulnerability_feeds: Vec<String>,
-    trusted_sources: HashSet<String>,
-    alert_threshold: VulnerabilitySeverity,
+    trusted_sources:     HashSet<String>,
+    alert_threshold:     VulnerabilitySeverity,
 }
 
 impl DefaultSupplyChainMonitor {
@@ -845,36 +806,33 @@ impl DefaultSupplyChainMonitor {
                 "https://crates.io/api/v1/crates".to_string(),
                 "https://security-team.debian.org/security_tracker/active".to_string(),
             ],
-            trusted_sources: ["crates.io", "github.com", "gitlab.com"]
+            trusted_sources:     ["crates.io", "github.com", "gitlab.com"]
                 .into_iter()
                 .map(|s| s.to_string())
                 .collect(),
-            alert_threshold: VulnerabilitySeverity::Medium,
+            alert_threshold:     VulnerabilitySeverity::Medium,
         }
     }
 }
 
 #[async_trait]
 impl SupplyChainMonitor for DefaultSupplyChainMonitor {
-    async fn check_supply_chain_vulnerabilities(
-        &self,
-        sbom: &SbomDocument,
-    ) -> SecurityResult<Vec<SupplyChainAlert>> {
+    async fn check_supply_chain_vulnerabilities(&self, sbom: &SbomDocument) -> SecurityResult<Vec<SupplyChainAlert>> {
         let mut alerts = Vec::new();
 
         for component in &sbom.components {
             // Check for known vulnerable versions (simplified)
             if self.is_vulnerable_component(component) {
                 let alert = SupplyChainAlert {
-                    alert_id: format!("alert-{}", Uuid::new_v4()),
-                    component_id: component.component_id.clone(),
-                    alert_type: SupplyChainAlertType::Vulnerability,
-                    severity: VulnerabilitySeverity::High,
-                    description: format!(
+                    alert_id:          format!("alert-{}", Uuid::new_v4()),
+                    component_id:      component.component_id.clone(),
+                    alert_type:        SupplyChainAlertType::Vulnerability,
+                    severity:          VulnerabilitySeverity::High,
+                    description:       format!(
                         "Vulnerable component detected: {} v{}",
                         component.name, component.version
                     ),
-                    evidence: vec![format!(
+                    evidence:          vec![format!(
                         "Component {} matches known vulnerable pattern",
                         component.name
                     )],
@@ -883,7 +841,7 @@ impl SupplyChainMonitor for DefaultSupplyChainMonitor {
                         "Review component usage for security impact".to_string(),
                         "Apply compensating security controls".to_string(),
                     ],
-                    detected_at: Utc::now(),
+                    detected_at:       Utc::now(),
                 };
                 alerts.push(alert);
             }
@@ -907,14 +865,14 @@ impl SupplyChainMonitor for DefaultSupplyChainMonitor {
                 .any(|prev| prev.name == current_component.name)
             {
                 changes.push(SupplyChainChange {
-                    change_id: format!("change-{}", Uuid::new_v4()),
-                    timestamp: Utc::now(),
-                    component_id: current_component.component_id.clone(),
-                    change_type: SupplyChainChangeType::DependencyAdd,
+                    change_id:      format!("change-{}", Uuid::new_v4()),
+                    timestamp:      Utc::now(),
+                    component_id:   current_component.component_id.clone(),
+                    change_type:    SupplyChainChangeType::DependencyAdd,
                     previous_value: None,
-                    new_value: current_component.name.clone(),
-                    evidence: "Component not present in previous SBOM".to_string(),
-                    verified_by: vec!["Supply Chain Monitor".to_string()],
+                    new_value:      current_component.name.clone(),
+                    evidence:       "Component not present in previous SBOM".to_string(),
+                    verified_by:    vec!["Supply Chain Monitor".to_string()],
                 });
             }
         }
@@ -928,17 +886,17 @@ impl SupplyChainMonitor for DefaultSupplyChainMonitor {
             {
                 if previous_component.version != current_component.version {
                     changes.push(SupplyChainChange {
-                        change_id: format!("change-{}", Uuid::new_v4()),
-                        timestamp: Utc::now(),
-                        component_id: current_component.component_id.clone(),
-                        change_type: SupplyChainChangeType::VersionUpdate,
+                        change_id:      format!("change-{}", Uuid::new_v4()),
+                        timestamp:      Utc::now(),
+                        component_id:   current_component.component_id.clone(),
+                        change_type:    SupplyChainChangeType::VersionUpdate,
                         previous_value: Some(previous_component.version.clone()),
-                        new_value: current_component.version.clone(),
-                        evidence: format!(
+                        new_value:      current_component.version.clone(),
+                        evidence:       format!(
                             "Version changed from {} to {}",
                             previous_component.version, current_component.version
                         ),
-                        verified_by: vec!["Supply Chain Monitor".to_string()],
+                        verified_by:    vec!["Supply Chain Monitor".to_string()],
                     });
                 }
             }
@@ -947,10 +905,7 @@ impl SupplyChainMonitor for DefaultSupplyChainMonitor {
         Ok(changes)
     }
 
-    async fn validate_component_authenticity(
-        &self,
-        component: &SbomComponent,
-    ) -> SecurityResult<AuthenticityResult> {
+    async fn validate_component_authenticity(&self, component: &SbomComponent) -> SecurityResult<AuthenticityResult> {
         let mut is_authentic = true;
         let mut trust_score = 1.0;
         let mut warnings = Vec::new();
@@ -969,9 +924,7 @@ impl SupplyChainMonitor for DefaultSupplyChainMonitor {
         }
 
         // Check supply chain verification status
-        if component.supply_chain_info.verification_status
-            != SupplyChainVerificationStatus::Verified
-        {
+        if component.supply_chain_info.verification_status != SupplyChainVerificationStatus::Verified {
             trust_score *= 0.7;
             warnings.push("Component has unverified supply chain status".to_string());
         }
@@ -999,11 +952,12 @@ impl SupplyChainMonitor for DefaultSupplyChainMonitor {
                 for component in &sbom.components {
                     if component.component_type == ComponentType::Library {
                         if component.hashes.is_empty() {
-                            violations.push(format!("Component {} missing integrity hashes required for GDPR compliance", component.name));
+                            violations.push(format!(
+                                "Component {} missing integrity hashes required for GDPR compliance",
+                                component.name
+                            ));
                         }
-                        if component.supply_chain_info.verification_status
-                            != SupplyChainVerificationStatus::Verified
-                        {
+                        if component.supply_chain_info.verification_status != SupplyChainVerificationStatus::Verified {
                             violations.push(format!(
                                 "Component {} has unverified supply chain status",
                                 component.name
@@ -1017,18 +971,14 @@ impl SupplyChainMonitor for DefaultSupplyChainMonitor {
                 for component in &sbom.components {
                     if component.component_type == ComponentType::Library {
                         if !component.licenses.iter().any(|license| {
-                            license.contains("BSD")
-                                || license.contains("MIT")
-                                || license.contains("Apache")
+                            license.contains("BSD") || license.contains("MIT") || license.contains("Apache")
                         }) {
                             violations.push(format!(
                                 "Component {} has incompatible license for HIPAA compliance",
                                 component.name
                             ));
                         }
-                        if component.supply_chain_info.verification_status
-                            != SupplyChainVerificationStatus::Verified
-                        {
+                        if component.supply_chain_info.verification_status != SupplyChainVerificationStatus::Verified {
                             violations.push(format!(
                                 "Component {} requires verified supply chain for HIPAA compliance",
                                 component.name
@@ -1109,8 +1059,9 @@ impl AuditTrait for NoOpAuditTrail {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tokio::test as async_test;
+
+    use super::*;
 
     #[async_test]
     async fn test_sbom_generation_basic() {
@@ -1144,12 +1095,12 @@ mod tests {
 
         let options = SbomGenerationOptions {
             include_build_dependencies: true,
-            include_dev_dependencies: false,
-            include_test_dependencies: false,
-            compress_hashes: false,
-            include_metadata: true,
-            generate_signatures: false,
-            custom_metadata: HashMap::new(),
+            include_dev_dependencies:   false,
+            include_test_dependencies:  false,
+            compress_hashes:            false,
+            include_metadata:           true,
+            generate_signatures:        false,
+            custom_metadata:            HashMap::new(),
         };
 
         let result = generator
@@ -1167,39 +1118,39 @@ mod tests {
         let validator = create_default_sbom_validator();
 
         let mut sbom = SbomDocument {
-            sbom_id: "test-sbom".to_string(),
-            format: SbomFormat::CycloneDX,
-            spec_version: "1.4".to_string(),
-            creation_info: SbomCreationInfo {
-                created: Utc::now(),
-                authors: vec!["Test Author".to_string()],
-                tools: vec!["cargo".to_string()],
-                project_name: "test-project".to_string(),
+            sbom_id:         "test-sbom".to_string(),
+            format:          SbomFormat::CycloneDX,
+            spec_version:    "1.4".to_string(),
+            creation_info:   SbomCreationInfo {
+                created:         Utc::now(),
+                authors:         vec!["Test Author".to_string()],
+                tools:           vec!["cargo".to_string()],
+                project_name:    "test-project".to_string(),
                 project_version: "1.0.0".to_string(),
-                namespace: "test-namespace".to_string(),
+                namespace:       "test-namespace".to_string(),
             },
-            components: vec![SbomComponent {
-                component_id: "test-component".to_string(),
-                name: "test-comp".to_string(),
-                version: "1.0.0".to_string(),
-                component_type: ComponentType::Library,
-                publisher: None,
-                description: None,
-                licenses: vec![],
-                download_url: None,
-                hashes: HashMap::new(),
-                dependencies: vec![],
-                metadata: HashMap::new(),
+            components:      vec![SbomComponent {
+                component_id:      "test-component".to_string(),
+                name:              "test-comp".to_string(),
+                version:           "1.0.0".to_string(),
+                component_type:    ComponentType::Library,
+                publisher:         None,
+                description:       None,
+                licenses:          vec![],
+                download_url:      None,
+                hashes:            HashMap::new(),
+                dependencies:      vec![],
+                metadata:          HashMap::new(),
                 supply_chain_info: SupplyChainInfo {
-                    author: "Test Author".to_string(),
-                    timestamp: Utc::now(),
-                    verification_status: SupplyChainVerificationStatus::Verified,
-                    build_environment: HashMap::new(),
+                    author:                "Test Author".to_string(),
+                    timestamp:             Utc::now(),
+                    verification_status:   SupplyChainVerificationStatus::Verified,
+                    build_environment:     HashMap::new(),
                     attestation_documents: vec![],
-                    change_logs: vec![],
+                    change_logs:           vec![],
                 },
             }],
-            relationships: vec![],
+            relationships:   vec![],
             vulnerabilities: vec![],
             compliance_info: HashMap::new(),
         };
@@ -1214,39 +1165,39 @@ mod tests {
         let monitor = create_default_supply_chain_monitor();
 
         let sbom = SbomDocument {
-            sbom_id: "test-sbom".to_string(),
-            format: SbomFormat::CycloneDX,
-            spec_version: "1.4".to_string(),
-            creation_info: SbomCreationInfo {
-                created: Utc::now(),
-                authors: vec!["Test Author".to_string()],
-                tools: vec!["cargo".to_string()],
-                project_name: "test-project".to_string(),
+            sbom_id:         "test-sbom".to_string(),
+            format:          SbomFormat::CycloneDX,
+            spec_version:    "1.4".to_string(),
+            creation_info:   SbomCreationInfo {
+                created:         Utc::now(),
+                authors:         vec!["Test Author".to_string()],
+                tools:           vec!["cargo".to_string()],
+                project_name:    "test-project".to_string(),
                 project_version: "1.0.0".to_string(),
-                namespace: "test-namespace".to_string(),
+                namespace:       "test-namespace".to_string(),
             },
-            components: vec![SbomComponent {
-                component_id: "test-component".to_string(),
-                name: "test-comp".to_string(),
-                version: "1.0.0".to_string(),
-                component_type: ComponentType::Library,
-                publisher: None,
-                description: None,
-                licenses: vec![],
-                download_url: Some("https://trusted-source.com/package".to_string()),
-                hashes: HashMap::new(),
-                dependencies: vec![],
-                metadata: HashMap::new(),
+            components:      vec![SbomComponent {
+                component_id:      "test-component".to_string(),
+                name:              "test-comp".to_string(),
+                version:           "1.0.0".to_string(),
+                component_type:    ComponentType::Library,
+                publisher:         None,
+                description:       None,
+                licenses:          vec![],
+                download_url:      Some("https://trusted-source.com/package".to_string()),
+                hashes:            HashMap::new(),
+                dependencies:      vec![],
+                metadata:          HashMap::new(),
                 supply_chain_info: SupplyChainInfo {
-                    author: "Test Author".to_string(),
-                    timestamp: Utc::now(),
-                    verification_status: SupplyChainVerificationStatus::Verified,
-                    build_environment: HashMap::new(),
+                    author:                "Test Author".to_string(),
+                    timestamp:             Utc::now(),
+                    verification_status:   SupplyChainVerificationStatus::Verified,
+                    build_environment:     HashMap::new(),
                     attestation_documents: vec![],
-                    change_logs: vec![],
+                    change_logs:           vec![],
                 },
             }],
-            relationships: vec![],
+            relationships:   vec![],
             vulnerabilities: vec![],
             compliance_info: HashMap::new(),
         };

@@ -1,21 +1,23 @@
 //! Workspace-wide version alignment for dependencies
 
-use crate::dependency::DependencyManager;
+use std::collections::HashMap;
+
 use anyhow::{Context, Result};
 use semver::{Version, VersionReq};
-use std::collections::HashMap;
+
+use crate::dependency::DependencyManager;
 
 /// Represents version alignment information for a dependency
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct VersionAlignment {
     /// The name of the dependency
-    pub name: String,
+    pub name:             String,
     /// The current version requirements across the workspace
     pub current_versions: Vec<(String, String)>, // (version_req, source_crate)
     /// The aligned version that should be used
-    pub aligned_version: String,
+    pub aligned_version:  String,
     /// The crates that need to be updated
-    pub needs_update: Vec<String>,
+    pub needs_update:     Vec<String>,
 }
 
 impl DependencyManager {
@@ -118,10 +120,11 @@ impl DependencyManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use cargo_metadata::Dependency as CargoDependency;
-    use cargo_metadata::PackageId;
     use std::path::PathBuf;
+
+    use cargo_metadata::{Dependency as CargoDependency, PackageId};
+
+    use super::*;
 
     #[tokio::test]
     async fn test_find_compatible_version() {

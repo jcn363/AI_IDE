@@ -4,29 +4,30 @@
 //! Leverages large language models and NLP techniques to comprehend code intent,
 //! patterns, and meaning at a deep semantic level.
 
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::sync::Arc;
+
 use rust_ai_ide_ai3_quantum::{QuantumAIEngine, QuantumProcessor};
 #[cfg(feature = "rust-bert")]
 use rust_bert::pipelines::sentence_embeddings::SentenceEmbeddingsModel;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 
 /// Main NLP Code Understanding Engine
 #[derive(Debug)]
 pub struct NLPCoeUnderstandingEngine {
     /// Transformer-based code understanding model
-    transformer_model: Arc<RwLock<CodeTransformer>>,
+    transformer_model:         Arc<RwLock<CodeTransformer>>,
     /// Contextual understanding layers
-    context_layers: Vec<ContextLayer>,
+    context_layers:            Vec<ContextLayer>,
     /// Semantic relationship network
-    semantic_network: SemanticRelationshipNetwork,
+    semantic_network:          SemanticRelationshipNetwork,
     /// Code pattern embeddings
-    pattern_embeddings: Arc<Mutex<PatternEmbeddings>>,
+    pattern_embeddings:        Arc<Mutex<PatternEmbeddings>>,
     /// Intent recognition system
-    intent_recognition: IntentRecognitionEngine,
+    intent_recognition:        IntentRecognitionEngine,
     /// Code complexity assessment (quantum-enhanced)
-    complexity_assessor: NLComplhistogramAssessor,
+    complexity_assessor:       NLComplhistogramAssessor,
     /// Quantum-enhanced feature extraction
     quantum_feature_extractor: Arc<Mutex<QuantumCodeFeatures>>,
 }
@@ -35,12 +36,12 @@ impl NLPCoeUnderstandingEngine {
     /// Initialize the NLP code understanding system
     pub async fn new() -> Result<Self, NLPEError> {
         Ok(Self {
-            transformer_model: Arc::new(RwLock::new(CodeTransformer::new().await?)),
-            context_layers: Self::initialize_context_layers(),
-            semantic_network: SemanticRelationshipNetwork::new(),
-            pattern_embeddings: Arc::new(Mutex::new(PatternEmbeddings::new())),
-            intent_recognition: IntentRecognitionEngine::new(),
-            complexity_assessor: NLComplohistograAssessor::new(),
+            transformer_model:         Arc::new(RwLock::new(CodeTransformer::new().await?)),
+            context_layers:            Self::initialize_context_layers(),
+            semantic_network:          SemanticRelationshipNetwork::new(),
+            pattern_embeddings:        Arc::new(Mutex::new(PatternEmbeddings::new())),
+            intent_recognition:        IntentRecognitionEngine::new(),
+            complexity_assessor:       NLComplohistograAssessor::new(),
             quantum_feature_extractor: Arc::new(Mutex::new(QuantumCodeFeatures::new())),
         })
     }
@@ -55,11 +56,11 @@ impl NLPCoeUnderstandingEngine {
         // Create comprehensive analysis
         let mut analysis = NLPCodeAnalysis {
             semantic_understanding: HashMap::new(),
-            intent_confidence: HashMap::new(),
-            complexity_metrics: HashMap::new(),
-            pattern_recognition: vec![],
-            relationship_mapping: vec![],
-            quantum_enhanced: false,
+            intent_confidence:      HashMap::new(),
+            complexity_metrics:     HashMap::new(),
+            pattern_recognition:    vec![],
+            relationship_mapping:   vec![],
+            quantum_enhanced:       false,
         };
 
         // Perform transformer-based semantic analysis
@@ -162,15 +163,15 @@ impl NLPCoeUnderstandingEngine {
         for pattern in global_patterns.repeated_patterns {
             if pattern.frequency > 5 && pattern.compute_suggestion_score() > 0.7 {
                 opportunities.push(RefactoringOpportunity {
-                    pattern_name: format!("Extract {}", pattern.pattern_type),
-                    location: "Global".to_string(),
-                    confidence: pattern.compute_suggestion_score(),
-                    description: format!(
+                    pattern_name:     format!("Extract {}", pattern.pattern_type),
+                    location:         "Global".to_string(),
+                    confidence:       pattern.compute_suggestion_score(),
+                    description:      format!(
                         "Refactor {} patterns to reduce duplication",
                         pattern.pattern_type
                     ),
                     estimated_effort: (pattern.frequency as f32 * 0.5).round() as u32,
-                    impact_score: (pattern.frequency as f32 * 2.0).round() as u32,
+                    impact_score:     (pattern.frequency as f32 * 2.0).round() as u32,
                 });
             }
         }
@@ -226,9 +227,7 @@ impl NLPCoeUnderstandingEngine {
             .iter()
             .any(|p| p.confidence > 0.8)
         {
-            explanation.push_str(
-                "The code contains well-established patterns that could be considered for reuse. ",
-            );
+            explanation.push_str("The code contains well-established patterns that could be considered for reuse. ");
         }
 
         Ok(explanation)
@@ -256,11 +255,7 @@ impl NLPCoeUnderstandingEngine {
         Ok(semantic_understanding)
     }
 
-    async fn recognize_patterns(
-        &self,
-        code: &str,
-        analysis: &NLPCodeAnalysis,
-    ) -> Result<Vec<PatternMatch>, NLPEError> {
+    async fn recognize_patterns(&self, code: &str, analysis: &NLPCodeAnalysis) -> Result<Vec<PatternMatch>, NLPEError> {
         let pattern_embeddings = self.pattern_embeddings.lock().await;
         let mut matches = Vec::new();
 
@@ -269,9 +264,9 @@ impl NLPCoeUnderstandingEngine {
             let similarity = self.compute_semantic_similarity(code, pattern)?;
             if similarity > 0.75 {
                 matches.push(PatternMatch {
-                    pattern_name: pattern.name.clone(),
-                    confidence: similarity,
-                    locations: vec![], // Would need to compute actual locations
+                    pattern_name:     pattern.name.clone(),
+                    confidence:       similarity,
+                    locations:        vec![], // Would need to compute actual locations
                     similarity_score: similarity,
                 });
             }
@@ -291,14 +286,13 @@ impl NLPCoeUnderstandingEngine {
         for (concept1, understanding1) in &analysis.semantic_understanding {
             for (concept2, understanding2) in &analysis.semantic_understanding {
                 if concept1 != concept2 {
-                    let similarity =
-                        self.compute_concept_similarity(understanding1, understanding2)?;
+                    let similarity = self.compute_concept_similarity(understanding1, understanding2)?;
                     if similarity > 0.5 {
                         relationships.push(SemanticRelationship {
-                            from_concept: concept1.clone(),
-                            to_concept: concept2.clone(),
+                            from_concept:      concept1.clone(),
+                            to_concept:        concept2.clone(),
                             relationship_type: self.classify_relationship_type(similarity),
-                            confidence: similarity,
+                            confidence:        similarity,
                         });
                     }
                 }
@@ -344,20 +338,16 @@ impl NLPCoeUnderstandingEngine {
         false
     }
 
-    async fn parse_semantic_units(
-        &self,
-        code: &str,
-        _language: &str,
-    ) -> Result<Vec<SemanticUnit>, NLPEError> {
+    async fn parse_semantic_units(&self, code: &str, _language: &str) -> Result<Vec<SemanticUnit>, NLPEError> {
         let mut units = Vec::new();
 
         // Simple semantic unit parsing (would be much more sophisticated in real implementation)
         for line in code.lines() {
             if line.contains("fn ") || line.contains("struct ") {
                 units.push(SemanticUnit {
-                    name: line.to_string(),
-                    start_line: 0, // Would compute actual line numbers
-                    content: line.to_string(),
+                    name:          line.to_string(),
+                    start_line:    0, // Would compute actual line numbers
+                    content:       line.to_string(),
                     semantic_type: if line.contains("fn ") {
                         "function"
                     } else {
@@ -380,25 +370,19 @@ impl NLPCoeUnderstandingEngine {
             .collect()
     }
 
-    async fn analyze_historical_patterns(
-        &self,
-        _history: &[CodeChange],
-    ) -> Result<HistoricalPatterns, NLPEError> {
+    async fn analyze_historical_patterns(&self, _history: &[CodeChange]) -> Result<HistoricalPatterns, NLPEError> {
         Ok(HistoricalPatterns {
-            add_pattern: HashMap::new(),
+            add_pattern:    HashMap::new(),
             remove_pattern: HashMap::new(),
             modify_pattern: HashMap::new(),
         })
     }
 
-    async fn analyze_global_patterns(
-        &self,
-        _analyses: &[NLPCodeAnalysis],
-    ) -> Result<GlobalPatternAnalysis, NLPEError> {
+    async fn analyze_global_patterns(&self, _analyses: &[NLPCodeAnalysis]) -> Result<GlobalPatternAnalysis, NLPEError> {
         Ok(GlobalPatternAnalysis {
-            repeated_patterns: vec![],
+            repeated_patterns:      vec![],
             architectural_patterns: vec![],
-            quality_patterns: vec![],
+            quality_patterns:       vec![],
         })
     }
 
@@ -407,12 +391,12 @@ impl NLPCoeUnderstandingEngine {
         _global_patterns: &GlobalPatternAnalysis,
     ) -> Result<Vec<RefactoringOpportunity>, NLPEError> {
         Ok(vec![RefactoringOpportunity {
-            pattern_name: "Improve module organization".to_string(),
-            location: "Global".to_string(),
-            confidence: 0.85,
-            description: "Reorganize modules for better separation of concerns".to_string(),
+            pattern_name:     "Improve module organization".to_string(),
+            location:         "Global".to_string(),
+            confidence:       0.85,
+            description:      "Reorganize modules for better separation of concerns".to_string(),
             estimated_effort: 20,
-            impact_score: 50,
+            impact_score:     50,
         }])
     }
 
@@ -422,10 +406,10 @@ impl NLPCoeUnderstandingEngine {
     ) -> Result<Vec<NLPCodeSuggestion>, NLPEError> {
         Ok(vec![NLPCodeSuggestion {
             suggestion_type: "Code improvement".to_string(),
-            description: "Consider adding documentation".to_string(),
-            confidence: 0.75,
-            impact_level: "Minor".to_string(),
-            code_example: Some("/// Add documentation here".to_string()),
+            description:     "Consider adding documentation".to_string(),
+            confidence:      0.75,
+            impact_level:    "Minor".to_string(),
+            code_example:    Some("/// Add documentation here".to_string()),
         }])
     }
 
@@ -436,10 +420,10 @@ impl NLPCoeUnderstandingEngine {
     ) -> Result<Vec<NLPCodeSuggestion>, NLPEError> {
         Ok(vec![NLPCodeSuggestion {
             suggestion_type: "Best practice".to_string(),
-            description: "Consider adding error handling".to_string(),
-            confidence: 0.8,
-            impact_level: "Medium".to_string(),
-            code_example: Some(".map_err(|e| MyError::from(e))".to_string()),
+            description:     "Consider adding error handling".to_string(),
+            confidence:      0.8,
+            impact_level:    "Medium".to_string(),
+            code_example:    Some(".map_err(|e| MyError::from(e))".to_string()),
         }])
     }
 
@@ -449,12 +433,10 @@ impl NLPCoeUnderstandingEngine {
     ) -> Result<Vec<NLPCodeSuggestion>, NLPEError> {
         Ok(vec![NLPCodeSuggestion {
             suggestion_type: "Pattern application".to_string(),
-            description: "Consider using Result<_, MyCustomError>".to_string(),
-            confidence: 0.9,
-            impact_level: "High".to_string(),
-            code_example: Some(
-                "type Result<T> = std::result::Result<T, MyCustomError>;".to_string(),
-            ),
+            description:     "Consider using Result<_, MyCustomError>".to_string(),
+            confidence:      0.9,
+            impact_level:    "High".to_string(),
+            code_example:    Some("type Result<T> = std::result::Result<T, MyCustomError>;".to_string()),
         }])
     }
 
@@ -487,12 +469,11 @@ impl CodeTransformer {
         _context: &CodeContext,
     ) -> Result<SemanticUnderstanding, NLPEError> {
         Ok(SemanticUnderstanding {
-            semantic_meaning: "function_that_processes_input".to_string(),
-            confidence_score: 0.85,
-            context_relationships: vec![],
-            semantic_categories: vec!["computation".to_string(), "input_processing".to_string()],
-            natural_language_description:
-                "A function that takes some input and performs processing on it".to_string(),
+            semantic_meaning:             "function_that_processes_input".to_string(),
+            confidence_score:             0.85,
+            context_relationships:        vec![],
+            semantic_categories:          vec!["computation".to_string(), "input_processing".to_string()],
+            natural_language_description: "A function that takes some input and performs processing on it".to_string(),
         })
     }
 }
@@ -500,8 +481,8 @@ impl CodeTransformer {
 /// Supporting data structures
 #[derive(Debug, Clone)]
 pub struct ContextLayer {
-    pub layer_name: String,
-    pub context_type: String,
+    pub layer_name:      String,
+    pub context_type:    String,
     pub relevance_score: f64,
 }
 
@@ -533,8 +514,8 @@ impl PatternEmbeddings {
 
 #[derive(Debug, Clone)]
 pub struct PatternTemplate {
-    pub name: String,
-    pub template: String,
+    pub name:       String,
+    pub template:   String,
     pub embeddings: Vec<f64>,
 }
 
@@ -565,9 +546,9 @@ impl IntentRecognitionEngine {
         _code_change: &CodeChange,
     ) -> Result<DeveloperIntent, NLPEError> {
         Ok(DeveloperIntent {
-            primary_intent: "code_improvement".to_string(),
-            confidence_score: 0.8,
-            supporting_evidence: vec!["Consistent with previous improvements".to_string()],
+            primary_intent:            "code_improvement".to_string(),
+            confidence_score:          0.8,
+            supporting_evidence:       vec!["Consistent with previous improvements".to_string()],
             alternative_possibilities: vec!["bug_fix".to_string(), "new_feature".to_string()],
         })
     }
@@ -602,7 +583,7 @@ impl QuantumCodeFeatures {
 #[derive(Debug, Clone)]
 pub struct RepeatedPattern {
     pub pattern_type: String,
-    pub frequency: u32,
+    pub frequency:    u32,
 }
 
 impl RepeatedPattern {
@@ -614,130 +595,130 @@ impl RepeatedPattern {
 #[derive(Debug, Clone)]
 pub struct NLPCodeAnalysis {
     pub semantic_understanding: HashMap<String, SemanticUnderstanding>,
-    pub intent_confidence: HashMap<String, IntentConfidence>,
-    pub complexity_metrics: HashMap<String, ComplexityMetric>,
-    pub pattern_recognition: Vec<PatternMatch>,
-    pub relationship_mapping: Vec<SemanticRelationship>,
-    pub quantum_enhanced: bool,
+    pub intent_confidence:      HashMap<String, IntentConfidence>,
+    pub complexity_metrics:     HashMap<String, ComplexityMetric>,
+    pub pattern_recognition:    Vec<PatternMatch>,
+    pub relationship_mapping:   Vec<SemanticRelationship>,
+    pub quantum_enhanced:       bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct SemanticUnit {
-    pub name: String,
-    pub start_line: usize,
-    pub content: String,
+    pub name:          String,
+    pub start_line:    usize,
+    pub content:       String,
     pub semantic_type: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct SemanticUnderstanding {
-    pub semantic_meaning: String,
-    pub confidence_score: f64,
-    pub context_relationships: Vec<String>,
-    pub semantic_categories: Vec<String>,
+    pub semantic_meaning:             String,
+    pub confidence_score:             f64,
+    pub context_relationships:        Vec<String>,
+    pub semantic_categories:          Vec<String>,
     pub natural_language_description: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct IntentConfidence {
-    pub intent_description: String,
-    pub confidence: f64,
+    pub intent_description:  String,
+    pub confidence:          f64,
     pub supporting_evidence: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct PatternMatch {
-    pub pattern_name: String,
-    pub confidence: f64,
-    pub locations: Vec<String>,
+    pub pattern_name:     String,
+    pub confidence:       f64,
+    pub locations:        Vec<String>,
     pub similarity_score: f64,
 }
 
 #[derive(Debug, Clone)]
 pub struct SemanticRelationship {
-    pub from_concept: String,
-    pub to_concept: String,
+    pub from_concept:      String,
+    pub to_concept:        String,
     pub relationship_type: String,
-    pub confidence: f64,
+    pub confidence:        f64,
 }
 
 #[derive(Debug, Clone)]
 pub struct NLPCodeSuggestion {
     pub suggestion_type: String,
-    pub description: String,
-    pub confidence: f64,
-    pub impact_level: String,
-    pub code_example: Option<String>,
+    pub description:     String,
+    pub confidence:      f64,
+    pub impact_level:    String,
+    pub code_example:    Option<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct RefactoringOpportunity {
-    pub pattern_name: String,
-    pub location: String,
-    pub confidence: f64,
-    pub description: String,
+    pub pattern_name:     String,
+    pub location:         String,
+    pub confidence:       f64,
+    pub description:      String,
     pub estimated_effort: u32,
-    pub impact_score: u32,
+    pub impact_score:     u32,
 }
 
 #[derive(Debug, Clone)]
 pub struct DeveloperIntent {
-    pub primary_intent: String,
-    pub confidence_score: f64,
-    pub supporting_evidence: Vec<String>,
+    pub primary_intent:            String,
+    pub confidence_score:          f64,
+    pub supporting_evidence:       Vec<String>,
     pub alternative_possibilities: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct CodeContext {
-    pub project_type: String,
+    pub project_type:                String,
     pub domain_specific_terminology: Vec<String>,
-    pub framework_requirements: Vec<String>,
+    pub framework_requirements:      Vec<String>,
 }
 
 impl CodeContext {
     pub fn new() -> Self {
         Self {
-            project_type: "rust".to_string(),
+            project_type:                "rust".to_string(),
             domain_specific_terminology: vec![],
-            framework_requirements: vec![],
+            framework_requirements:      vec![],
         }
     }
 }
 
 #[derive(Debug)]
 pub struct DeveloperContext {
-    pub experience_level: String,
+    pub experience_level:   String,
     pub preferred_patterns: Vec<String>,
-    pub past_preferences: HashMap<String, f64>,
+    pub past_preferences:   HashMap<String, f64>,
 }
 
 #[derive(Debug)]
 pub struct CodeChange {
-    pub file_path: String,
-    pub old_content: String,
-    pub new_content: String,
+    pub file_path:     String,
+    pub old_content:   String,
+    pub new_content:   String,
     pub change_reason: String,
 }
 
 #[derive(Debug)]
 pub struct HistoricalPatterns {
-    pub add_pattern: HashMap<String, u32>,
+    pub add_pattern:    HashMap<String, u32>,
     pub remove_pattern: HashMap<String, u32>,
     pub modify_pattern: HashMap<String, u32>,
 }
 
 #[derive(Debug)]
 pub struct GlobalPatternAnalysis {
-    pub repeated_patterns: Vec<RepeatedPattern>,
+    pub repeated_patterns:      Vec<RepeatedPattern>,
     pub architectural_patterns: Vec<String>,
-    pub quality_patterns: Vec<String>,
+    pub quality_patterns:       Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct ComplexityMetric {
-    pub score: f64,
-    pub category: String,
+    pub score:       f64,
+    pub category:    String,
     pub explanation: String,
 }
 
@@ -764,23 +745,23 @@ impl CodeTransformer {
     async fn initialize_context_layers() -> Vec<ContextLayer> {
         vec![
             ContextLayer {
-                layer_name: "lexical".to_string(),
-                context_type: "code_tokens".to_string(),
+                layer_name:      "lexical".to_string(),
+                context_type:    "code_tokens".to_string(),
                 relevance_score: 0.9,
             },
             ContextLayer {
-                layer_name: "syntactic".to_string(),
-                context_type: "ast_structure".to_string(),
+                layer_name:      "syntactic".to_string(),
+                context_type:    "ast_structure".to_string(),
                 relevance_score: 0.8,
             },
             ContextLayer {
-                layer_name: "semantic".to_string(),
-                context_type: "meaning".to_string(),
+                layer_name:      "semantic".to_string(),
+                context_type:    "meaning".to_string(),
                 relevance_score: 0.85,
             },
             ContextLayer {
-                layer_name: "pragmatic".to_string(),
-                context_type: "intent".to_string(),
+                layer_name:      "pragmatic".to_string(),
+                context_type:    "intent".to_string(),
                 relevance_score: 0.75,
             },
         ]

@@ -11,9 +11,7 @@ pub mod updater;
 // Re-exports for easier access
 pub use analysis::*;
 pub use batch_updater::{BatchUpdateResult, BatchUpdater, DependencyUpdate, FailedUpdate};
-pub use graph::{
-    DependencyEdge, DependencyFilter, DependencyGraph, DependencyGraphBuilder, ExportFormat,
-};
+pub use graph::{DependencyEdge, DependencyFilter, DependencyGraph, DependencyGraphBuilder, ExportFormat};
 pub use license::{LicenseCompliance, LicenseComplianceChecker, LicensePolicy};
 pub use models::*;
 pub use security::{VulnerabilityReport, VulnerabilityScanner};

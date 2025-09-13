@@ -3,8 +3,9 @@
 //! This module contains end-to-end tests that validate the entire
 //! pipeline from Rust type parsing through generation and validation.
 
-use rust_ai_ide_shared_types::*;
 use std::collections::HashMap;
+
+use rust_ai_ide_shared_types::*;
 
 /// Test the complete type generation pipeline
 #[tokio::test]
@@ -362,17 +363,17 @@ async fn test_type_transformation_rules() {
     transformer.add_custom_rule(crate::transformers::TransformationRule {
         source_platform: "rust".to_string(),
         target_platform: "typescript".to_string(),
-        type_pattern: "CustomType".to_string(),
-        transformation: "string".to_string(),
-        priority: 10,
+        type_pattern:    "CustomType".to_string(),
+        transformation:  "string".to_string(),
+        priority:        10,
     });
 
     let context = TransformationContext {
         source_platform: "rust".to_string(),
         target_platform: "typescript".to_string(),
-        type_mappings: HashMap::new(),
-        rules: HashMap::new(),
-        options: HashMap::new(),
+        type_mappings:   HashMap::new(),
+        rules:           HashMap::new(),
+        options:         HashMap::new(),
     };
 
     let result = transformer
@@ -520,6 +521,7 @@ async fn test_concurrent_operations() {
 #[tokio::test]
 async fn test_configuration_file_operations() {
     use std::io::Write;
+
     use tempfile::NamedTempFile;
 
     let config = GenerationConfig::preset_production();

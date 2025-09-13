@@ -1,33 +1,32 @@
-use crate::types::{CloudAuth, CloudResource};
-use crate::CloudProvider;
+use std::collections::HashMap;
+
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use azure_identity::{DefaultAzureCredential, TokenCredentialOptions};
 use azure_storage::blob::{BlobServiceClient, ContainerService, CopyBlobOptions};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
+use crate::types::{CloudAuth, CloudResource};
+use crate::CloudProvider;
 
 /// Azure-specific configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AzureConfig {
     pub account_name: String,
-    pub account_key: String,
-    pub endpoint: Option<String>,
+    pub account_key:  String,
+    pub endpoint:     Option<String>,
 }
 
 /// Azure client wrapper
 pub struct AzureClient {
     blob_client: BlobServiceClient,
-    config: AzureConfig,
+    config:      AzureConfig,
 }
 
 impl AzureClient {
     /// Create a new Azure client
     pub async fn new(config: AzureConfig) -> Result<Self> {
-        let blob_client = BlobServiceClient::new_access_key(
-            config.account_name.clone(),
-            config.account_key.clone(),
-        );
+        let blob_client = BlobServiceClient::new_access_key(config.account_name.clone(), config.account_key.clone());
 
         Ok(Self {
             blob_client,
@@ -98,13 +97,13 @@ impl AzureClient {
 
         for container in containers.containers {
             let resource = CloudResource {
-                id: format!("azure://{}", container.name),
-                name: container.name,
+                id:            format!("azure://{}", container.name),
+                name:          container.name,
                 resource_type: "storage".to_string(),
-                region: "azure-global".to_string(), // Azure uses regions, but simplified here
-                status: "active".to_string(),
-                properties: HashMap::new(),
-                created_at: None, // Azure API might not provide creation time directly
+                region:        "azure-global".to_string(), // Azure uses regions, but simplified here
+                status:        "active".to_string(),
+                properties:    HashMap::new(),
+                created_at:    None, // Azure API might not provide creation time directly
             };
             resources.push(resource);
         }

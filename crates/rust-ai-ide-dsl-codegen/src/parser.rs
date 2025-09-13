@@ -1,9 +1,10 @@
 //! DSL Parser implementation using pest
 
-use crate::ast::*;
-use crate::error::{DslError, DslResult};
 use pest::Parser;
 use pest_derive::Parser;
+
+use crate::ast::*;
+use crate::error::{DslError, DslResult};
 
 /// Convert serde_json::Value to MetadataValue
 fn convert_json_value(value: serde_json::Value) -> MetadataValue {
@@ -11,9 +12,7 @@ fn convert_json_value(value: serde_json::Value) -> MetadataValue {
         serde_json::Value::String(s) => MetadataValue::String(s),
         serde_json::Value::Number(n) => MetadataValue::Number(n.as_f64().unwrap_or(0.0)),
         serde_json::Value::Bool(b) => MetadataValue::Boolean(b),
-        serde_json::Value::Array(arr) => {
-            MetadataValue::Array(arr.into_iter().map(convert_json_value).collect())
-        }
+        serde_json::Value::Array(arr) => MetadataValue::Array(arr.into_iter().map(convert_json_value).collect()),
         serde_json::Value::Object(obj) => {
             let mut map = std::collections::HashMap::new();
             for (k, v) in obj {
@@ -226,44 +225,38 @@ fn parse_template(pair: pest::iterators::Pair<Rule>) -> DslResult<Template> {
 }
 
 /// Parse individual template properties
-fn parse_template_property(
-    pair: pest::iterators::Pair<Rule>,
-    template: &mut Template,
-) -> DslResult<()> {
+fn parse_template_property(pair: pest::iterators::Pair<Rule>, template: &mut Template) -> DslResult<()> {
     match pair.as_rule() {
-        Rule::name_property => {
+        Rule::name_property =>
             for inner in pair.into_inner() {
                 if inner.as_rule() == Rule::quoted_string {
                     template.name = parse_quoted_string(inner)?;
                 }
-            }
-        }
-        Rule::description_property => {
+            },
+        Rule::description_property =>
             for inner in pair.into_inner() {
                 if inner.as_rule() == Rule::quoted_string {
                     template.description = Some(parse_quoted_string(inner)?);
                 }
-            }
-        }
+            },
         Rule::parameters_property => {
             template.parameters = parse_parameters(pair)?;
         }
         Rule::guards_property => {
             template.guards = vec![Guard {
                 condition: Expression::Literal(Literal::String("true".to_string())), // Simplified
-                location: None,
+                location:  None,
             }];
         }
         Rule::generate_property => {
-            template.generate.content.parts =
-                vec![ContentPart::Literal("template_generation".to_string())];
+            template.generate.content.parts = vec![ContentPart::Literal("template_generation".to_string())];
         }
         Rule::patterns_property => {
             template.patterns = vec!["default".to_string()];
         }
         Rule::metadata_property => {
             template.metadata.push(Metadata {
-                key: "default".to_string(),
+                key:   "default".to_string(),
                 value: MetadataValue::String("value".to_string()),
             });
         }
@@ -289,11 +282,11 @@ fn parse_parameters(pair: pest::iterators::Pair<Rule>) -> DslResult<Vec<Paramete
 /// Parse a single parameter - simplified
 fn parse_parameter(pair: pest::iterators::Pair<Rule>) -> DslResult<Parameter> {
     let mut param = Parameter {
-        name: String::new(),
-        param_type: ParameterType::String,
-        required: false,
+        name:          String::new(),
+        param_type:    ParameterType::String,
+        required:      false,
         default_value: None,
-        description: None,
+        description:   None,
     };
 
     for inner in pair.into_inner() {
@@ -331,7 +324,7 @@ fn parse_parameter(pair: pest::iterators::Pair<Rule>) -> DslResult<Parameter> {
 fn parse_guards(_pair: pest::iterators::Pair<Rule>) -> DslResult<Vec<Guard>> {
     Ok(vec![Guard {
         condition: Expression::Literal(Literal::Boolean(true)),
-        location: None,
+        location:  None,
     }])
 }
 
@@ -341,14 +334,12 @@ fn parse_generate_block(pair: pest::iterators::Pair<Rule>) -> DslResult<Generate
 
     for inner in pair.into_inner() {
         match inner.as_rule() {
-            Rule::generate_content => {
+            Rule::generate_content =>
                 for content_inner in inner.into_inner() {
                     if content_inner.as_rule() == Rule::quoted_string {
-                        block.content.parts =
-                            vec![ContentPart::Literal(parse_quoted_string(content_inner)?)];
+                        block.content.parts = vec![ContentPart::Literal(parse_quoted_string(content_inner)?)];
                     }
-                }
-            }
+                },
             _ => {}
         }
     }
@@ -439,7 +430,10 @@ fn parse_quoted_string(pair: pest::iterators::Pair<Rule>) -> DslResult<String> {
 
 /// Parse position information - simplified
 fn parse_position(_pair: &pest::iterators::Pair<Rule>) -> Option<Location> {
-    Some(Location { line: 1, column: 1 })
+    Some(Location {
+        line:   1,
+        column: 1,
+    })
 }
 
 #[cfg(test)]

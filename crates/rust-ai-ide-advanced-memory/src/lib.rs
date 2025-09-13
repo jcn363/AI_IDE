@@ -26,28 +26,28 @@ pub mod resource_monitoring;
 pub mod virtual_memory;
 
 // Re-export the main components for easy access
+use std::sync::Arc;
+
 pub use garbage_collection::GarbageCollectionCoordinator;
 pub use memory_leak_detection::MemoryLeakDetector;
 pub use memory_mapped_operations::MemoryMappedOperations;
 pub use resource_monitoring::ResourceMonitoringIntegration;
-pub use virtual_memory::VirtualMemoryInterface;
-
 use rust_ai_ide_errors::IDEError;
-use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
+pub use virtual_memory::VirtualMemoryInterface;
 
 /// Main Advanced Memory Manager orchestrating all memory management components
 pub struct AdvancedMemoryManager {
     /// Virtual memory interface for managing large memory spaces
-    pub virtual_memory_interface: Arc<VirtualMemoryInterface>,
+    pub virtual_memory_interface:       Arc<VirtualMemoryInterface>,
     /// Memory-mapped operations engine
-    pub memory_mapped_operations: Arc<MemoryMappedOperations>,
+    pub memory_mapped_operations:       Arc<MemoryMappedOperations>,
     /// Garbage collection coordinator
     pub garbage_collection_coordinator: Arc<GarbageCollectionCoordinator>,
     /// Memory leak detection system
-    pub memory_leak_detector: Arc<MemoryLeakDetector>,
+    pub memory_leak_detector:           Arc<MemoryLeakDetector>,
     /// Resource monitoring integration
-    pub resource_monitoring: Arc<ResourceMonitoringIntegration>,
+    pub resource_monitoring:            Arc<ResourceMonitoringIntegration>,
 }
 
 impl AdvancedMemoryManager {

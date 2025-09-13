@@ -1,8 +1,9 @@
 //! Test module for Cargo integration
 
-use rust_ai_ide_cargo::workspace::CargoManager;
 use std::fs::File;
 use std::io::Write;
+
+use rust_ai_ide_cargo::workspace::CargoManager;
 use tempfile::tempdir;
 
 #[cfg(test)]

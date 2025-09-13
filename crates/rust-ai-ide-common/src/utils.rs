@@ -1,9 +1,11 @@
 //! Utility functions and helpers
 
-use crate::errors::IdeError;
-use futures::stream::{self, StreamExt};
 use std::time::Duration;
+
+use futures::stream::{self, StreamExt};
 use tokio::time::{sleep, timeout};
+
+use crate::errors::IdeError;
 
 /// Utility functions for common operations
 pub fn safe_unwrap<T>(option: Option<T>) -> Result<T, IdeError> {

@@ -1,14 +1,16 @@
+use std::collections::HashMap;
+
+use syn::{visit, ItemUse, TypePath};
+
 use super::super::types::{ArchitecturalFinding, CodeLocation, Severity};
 use super::ArchitecturalVisitor;
-use std::collections::HashMap;
-use syn::{visit, ItemUse, TypePath};
 
 /// Visitor that checks for violations of architectural layer dependencies
 pub struct LayerDependencyVisitor<'a> {
-    analyzer: &'a ArchitecturalAnalyzer,
+    analyzer:      &'a ArchitecturalAnalyzer,
     current_layer: String,
-    allowed_deps: HashMap<String, Vec<String>>,
-    violations: Vec<ArchitecturalFinding>,
+    allowed_deps:  HashMap<String, Vec<String>>,
+    violations:    Vec<ArchitecturalFinding>,
 }
 
 impl<'a> LayerDependencyVisitor<'a> {
@@ -56,9 +58,7 @@ impl<'a> LayerDependencyVisitor<'a> {
         }
 
         // Check for external crates (not in our codebase)
-        if !path.starts_with("crate::")
-            && !path.starts_with(&format!("{}::", self.analyzer.crate_name))
-        {
+        if !path.starts_with("crate::") && !path.starts_with(&format!("{}::", self.analyzer.crate_name)) {
             return true;
         }
 
@@ -109,9 +109,7 @@ impl<'a> LayerDependencyVisitor<'a> {
             ),
             severity: Severity::Warning,
             location,
-            suggestion: Some(
-                "Consider refactoring to respect the architectural boundaries.".to_string(),
-            ),
+            suggestion: Some("Consider refactoring to respect the architectural boundaries.".to_string()),
             confidence: 0.9,
             rule_id: "ARCH_LAYER_VIOLATION".to_string(),
         });
@@ -127,10 +125,7 @@ impl<'a> LayerDependencyVisitor<'a> {
             ),
             severity: Severity::Info,
             location,
-            suggestion: Some(
-                "Add this path to the appropriate layer or update the layer configuration."
-                    .to_string(),
-            ),
+            suggestion: Some("Add this path to the appropriate layer or update the layer configuration.".to_string()),
             confidence: 0.7,
             rule_id: "ARCH_UNKNOWN_DEPENDENCY".to_string(),
         });
@@ -144,8 +139,8 @@ impl<'a> visit::Visit<'a> for LayerDependencyVisitor<'a> {
             let path_str = path_to_string(use_path);
             let location = CodeLocation {
                 file_path: String::new(), // Will be filled in by the analyzer
-                line: i.span().start().line as u32,
-                column: i.span().start().column as u32,
+                line:      i.span().start().line as u32,
+                column:    i.span().start().column as u32,
             };
             self.check_dependency("use statement", &path_str, location);
         }
@@ -159,8 +154,8 @@ impl<'a> visit::Visit<'a> for LayerDependencyVisitor<'a> {
         let path_str = path_to_string(&ty.path);
         let location = CodeLocation {
             file_path: String::new(), // Will be filled in by the analyzer
-            line: ty.span().start().line as u32,
-            column: ty.span().start().column as u32,
+            line:      ty.span().start().line as u32,
+            column:    ty.span().start().column as u32,
         };
         self.check_dependency("type reference", &path_str, location);
 
@@ -180,8 +175,9 @@ fn path_to_string(path: &syn::Path) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use syn::parse_quote;
+
+    use super::*;
 
     fn create_test_analyzer() -> ArchitecturalAnalyzer {
         let mut analyzer = ArchitecturalAnalyzer::new();
@@ -191,19 +187,20 @@ mod tests {
             .allowed_layer_dependencies
             .insert("domain".to_string(), vec!["core".to_string()]);
 
-        analyzer.allowed_layer_dependencies.insert(
-            "application".to_string(),
-            vec!["domain".to_string(), "core".to_string()],
-        );
+        analyzer
+            .allowed_layer_dependencies
+            .insert("application".to_string(), vec![
+                "domain".to_string(),
+                "core".to_string(),
+            ]);
 
-        analyzer.allowed_layer_dependencies.insert(
-            "infrastructure".to_string(),
-            vec![
+        analyzer
+            .allowed_layer_dependencies
+            .insert("infrastructure".to_string(), vec![
                 "application".to_string(),
                 "domain".to_string(),
                 "core".to_string(),
-            ],
-        );
+            ]);
 
         analyzer
     }

@@ -1,8 +1,9 @@
 //! Core type definitions for the supervisor system
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
@@ -44,16 +45,16 @@ pub enum RestartPolicy {
     /// Restart with exponential backoff
     ExponentialBackoff {
         /// Base delay before first retry
-        base_delay: std::time::Duration,
+        base_delay:   std::time::Duration,
         /// Maximum delay between retries
-        max_delay: std::time::Duration,
+        max_delay:    std::time::Duration,
         /// Maximum number of restart attempts
         max_attempts: usize,
     },
     /// Restart with fixed delay
     FixedDelay {
         /// Delay before restart
-        delay: std::time::Duration,
+        delay:        std::time::Duration,
         /// Maximum number of restart attempts
         max_attempts: usize,
     },
@@ -63,91 +64,91 @@ pub enum RestartPolicy {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceConfig {
     /// Unique service identifier
-    pub id: ServiceId,
+    pub id:                   ServiceId,
     /// Human-readable service name
-    pub name: String,
+    pub name:                 String,
     /// Command to execute for the service
-    pub command: String,
+    pub command:              String,
     /// Arguments for the command
-    pub args: Vec<String>,
+    pub args:                 Vec<String>,
     /// Working directory for the service
-    pub working_dir: Option<String>,
+    pub working_dir:          Option<String>,
     /// Environment variables for the service
-    pub environment: HashMap<String, String>,
+    pub environment:          HashMap<String, String>,
     /// Health check timeout duration
     pub health_check_timeout: std::time::Duration,
     /// Restart policy for this service
-    pub restart_policy: RestartPolicy,
+    pub restart_policy:       RestartPolicy,
     /// Maximum time to wait for graceful shutdown
-    pub shutdown_timeout: std::time::Duration,
+    pub shutdown_timeout:     std::time::Duration,
     /// Critical service flag - system can shut down if this fails
-    pub critical: bool,
+    pub critical:             bool,
 }
 
 /// Health check result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthCheckResult {
     /// Whether the service is healthy
-    pub healthy: bool,
+    pub healthy:       bool,
     /// Timestamp of the health check
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:     chrono::DateTime<chrono::Utc>,
     /// Health check duration
-    pub duration: std::time::Duration,
+    pub duration:      std::time::Duration,
     /// Optional error message if unhealthy
     pub error_message: Option<String>,
     /// Health score (0.0 to 1.0)
-    pub score: f64,
+    pub score:         f64,
 }
 
 /// Service monitoring metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceMetrics {
     /// Number of successful health checks
-    pub successful_checks: u64,
+    pub successful_checks:     u64,
     /// Number of failed health checks
-    pub failed_checks: u64,
+    pub failed_checks:         u64,
     /// Total number of restarts
-    pub restart_count: u32,
+    pub restart_count:         u32,
     /// Last successful health check timestamp
     pub last_successful_check: Option<chrono::DateTime<chrono::Utc>>,
     /// Last failed health check timestamp
-    pub last_failed_check: Option<chrono::DateTime<chrono::Utc>>,
+    pub last_failed_check:     Option<chrono::DateTime<chrono::Utc>>,
     /// Current uptime duration
-    pub uptime: Option<std::time::Duration>,
+    pub uptime:                Option<std::time::Duration>,
     /// Memory usage in bytes (if available)
-    pub memory_usage: Option<u64>,
+    pub memory_usage:          Option<u64>,
 }
 
 /// IPC Channel health information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChannelHealth {
     /// Channel identifier
-    pub id: ChannelId,
+    pub id:                     ChannelId,
     /// Whether the channel is currently healthy
-    pub healthy: bool,
+    pub healthy:                bool,
     /// Last successful message timestamp
-    pub last_message_time: Option<chrono::DateTime<chrono::Utc>>,
+    pub last_message_time:      Option<chrono::DateTime<chrono::Utc>>,
     /// Last failure timestamp
-    pub last_failure_time: Option<chrono::DateTime<chrono::Utc>>,
+    pub last_failure_time:      Option<chrono::DateTime<chrono::Utc>>,
     /// Number of buffered messages waiting to be sent
     pub buffered_message_count: usize,
     /// Number of reconnection attempts
-    pub reconnection_attempts: u32,
+    pub reconnection_attempts:  u32,
 }
 
 /// IPC message structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IpcMessage {
     /// Unique message identifier
-    pub id: Uuid,
+    pub id:           Uuid,
     /// Message type for routing
     pub message_type: String,
     /// Message payload
-    pub payload: serde_json::Value,
+    pub payload:      serde_json::Value,
     /// Timestamp when message was created
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:    chrono::DateTime<chrono::Utc>,
     /// Number of retry attempts
-    pub retry_count: u32,
+    pub retry_count:  u32,
 }
 
 /// Supervisor configuration
@@ -156,32 +157,32 @@ pub struct SupervisorConfig {
     /// Maximum number of concurrent services
     pub max_concurrent_services: usize,
     /// Global health check interval
-    pub health_check_interval: std::time::Duration,
+    pub health_check_interval:   std::time::Duration,
     /// Maximum time to wait for all services to shutdown
     pub global_shutdown_timeout: std::time::Duration,
     /// Database path for state persistence
-    pub database_path: String,
+    pub database_path:           String,
     /// Checkpoint directory path
-    pub checkpoint_dir: String,
+    pub checkpoint_dir:          String,
     /// Enable detailed logging
     pub enable_detailed_logging: bool,
     /// Enable automatic backups
-    pub enable_auto_backup: bool,
+    pub enable_auto_backup:      bool,
     /// Backup interval
-    pub backup_interval: std::time::Duration,
+    pub backup_interval:         std::time::Duration,
 }
 
 /// State snapshot for checkpoint recovery
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StateSnapshot {
     /// Unique snapshot identifier
-    pub id: CheckpointId,
+    pub id:                 CheckpointId,
     /// Timestamp when snapshot was created
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:          chrono::DateTime<chrono::Utc>,
     /// All service states at snapshot time
-    pub service_states: HashMap<ServiceId, ServiceSnapshot>,
+    pub service_states:     HashMap<ServiceId, ServiceSnapshot>,
     /// Active IPC channels
-    pub ipc_channels: Vec<ChannelHealth>,
+    pub ipc_channels:       Vec<ChannelHealth>,
     /// Pending operations queue
     pub pending_operations: Vec<PendingOperation>,
 }
@@ -190,57 +191,57 @@ pub struct StateSnapshot {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceSnapshot {
     /// Service identifier
-    pub service_id: ServiceId,
+    pub service_id:      ServiceId,
     /// Service state at snapshot time
-    pub state: ServiceState,
+    pub state:           ServiceState,
     /// Service metrics
-    pub metrics: ServiceMetrics,
+    pub metrics:         ServiceMetrics,
     /// Last start timestamp
     pub last_start_time: Option<chrono::DateTime<chrono::Utc>>,
     /// Process ID if running
-    pub process_id: Option<u32>,
+    pub process_id:      Option<u32>,
 }
 
 /// Pending operation that needs to be recovered
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PendingOperation {
     /// Operation identifier
-    pub id: Uuid,
+    pub id:             Uuid,
     /// Operation type
     pub operation_type: String,
     /// Service this operation is for
-    pub service_id: ServiceId,
+    pub service_id:     ServiceId,
     /// Operation parameters
-    pub parameters: serde_json::Value,
+    pub parameters:     serde_json::Value,
     /// Timestamp when operation was queued
-    pub queued_time: chrono::DateTime<chrono::Utc>,
+    pub queued_time:    chrono::DateTime<chrono::Utc>,
     /// Maximum retry attempts
-    pub max_retries: u32,
+    pub max_retries:    u32,
     /// Current retry count
-    pub retry_count: u32,
+    pub retry_count:    u32,
 }
 
 /// Supervisor statistics for monitoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SupervisorStats {
     /// Total number of services managed
-    pub total_services: usize,
+    pub total_services:          usize,
     /// Number of services currently running
-    pub running_services: usize,
+    pub running_services:        usize,
     /// Number of services currently restarting
-    pub restarting_services: usize,
+    pub restarting_services:     usize,
     /// Number of services in failed state
-    pub failed_services: usize,
+    pub failed_services:         usize,
     /// Total service restarts across all services
-    pub total_restarts: u64,
+    pub total_restarts:          u64,
     /// Total successful health checks
     pub total_successful_checks: u64,
     /// Total failed health checks
-    pub total_failed_checks: u64,
+    pub total_failed_checks:     u64,
     /// Supervisor uptime
-    pub uptime: std::time::Duration,
+    pub uptime:                  std::time::Duration,
     /// Last checkpoint timestamp
-    pub last_checkpoint: Option<chrono::DateTime<chrono::Utc>>,
+    pub last_checkpoint:         Option<chrono::DateTime<chrono::Utc>>,
 }
 
 /// Event types sent by the supervisor
@@ -249,29 +250,29 @@ pub enum SupervisorEvent {
     /// Service state changed
     ServiceStateChanged {
         service_id: ServiceId,
-        old_state: ServiceState,
-        new_state: ServiceState,
+        old_state:  ServiceState,
+        new_state:  ServiceState,
     },
     /// Service health check result
     HealthCheckCompleted {
         service_id: ServiceId,
-        result: HealthCheckResult,
+        result:     HealthCheckResult,
     },
     /// Service restarted
     ServiceRestarted {
         service_id: ServiceId,
-        reason: String,
+        reason:     String,
     },
     /// IPC channel state changed
     IpcChannelStateChanged {
         channel_id: ChannelId,
-        healthy: bool,
-        reason: Option<String>,
+        healthy:    bool,
+        reason:     Option<String>,
     },
     /// Checkpoint created or loaded
     CheckpointEvent {
         checkpoint_id: CheckpointId,
-        event_type: CheckpointEventType,
+        event_type:    CheckpointEventType,
     },
 }
 
@@ -289,23 +290,23 @@ pub type SharedSupervisorState = Arc<Mutex<SupervisorState>>;
 #[derive(Debug)]
 pub struct SupervisorState {
     /// Configuration
-    pub config: SupervisorConfig,
+    pub config:         SupervisorConfig,
     /// Service registry
-    pub services: HashMap<ServiceId, ServiceInfo>,
+    pub services:       HashMap<ServiceId, ServiceInfo>,
     /// Statistics
-    pub stats: SupervisorStats,
+    pub stats:          SupervisorStats,
     /// Running recovery operations
     pub recovery_tasks: HashMap<ServiceId, tokio::task::JoinHandle<()>>,
 }
 
 #[derive(Debug)]
 pub struct ServiceInfo {
-    pub config: ServiceConfig,
-    pub state: ServiceState,
-    pub process_handler: Option<tokio::process::Child>,
+    pub config:            ServiceConfig,
+    pub state:             ServiceState,
+    pub process_handler:   Option<tokio::process::Child>,
     pub last_health_check: Option<HealthCheckResult>,
-    pub metrics: ServiceMetrics,
-    pub monitor_task: Option<tokio::task::JoinHandle<()>>,
+    pub metrics:           ServiceMetrics,
+    pub monitor_task:      Option<tokio::task::JoinHandle<()>>,
 }
 
 // Implementation helpers
@@ -314,13 +315,13 @@ impl Default for SupervisorConfig {
     fn default() -> Self {
         Self {
             max_concurrent_services: 10,
-            health_check_interval: std::time::Duration::from_secs(5),
+            health_check_interval:   std::time::Duration::from_secs(5),
             global_shutdown_timeout: std::time::Duration::from_secs(30),
-            database_path: "supervisor.db".to_string(),
-            checkpoint_dir: "checkpoints".to_string(),
+            database_path:           "supervisor.db".to_string(),
+            checkpoint_dir:          "checkpoints".to_string(),
             enable_detailed_logging: false,
-            enable_auto_backup: true,
-            backup_interval: std::time::Duration::from_secs(3600), // 1 hour
+            enable_auto_backup:      true,
+            backup_interval:         std::time::Duration::from_secs(3600), // 1 hour
         }
     }
 }
@@ -337,10 +338,7 @@ impl ServiceState {
     pub fn is_transient(&self) -> bool {
         matches!(
             self,
-            ServiceState::Starting
-                | ServiceState::Restarting
-                | ServiceState::Stopping
-                | ServiceState::Recovering
+            ServiceState::Starting | ServiceState::Restarting | ServiceState::Stopping | ServiceState::Recovering
         )
     }
 }
@@ -348,13 +346,13 @@ impl ServiceState {
 impl Default for ServiceMetrics {
     fn default() -> Self {
         Self {
-            successful_checks: 0,
-            failed_checks: 0,
-            restart_count: 0,
+            successful_checks:     0,
+            failed_checks:         0,
+            restart_count:         0,
             last_successful_check: None,
-            last_failed_check: None,
-            uptime: None,
-            memory_usage: None,
+            last_failed_check:     None,
+            uptime:                None,
+            memory_usage:          None,
         }
     }
 }

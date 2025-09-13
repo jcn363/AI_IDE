@@ -1,6 +1,7 @@
 #![allow(missing_docs)]
 
-use std::collections::{hash_map::Entry, BinaryHeap, HashMap, HashSet, VecDeque};
+use std::collections::hash_map::Entry;
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -18,8 +19,8 @@ use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, instrument, warn};
 
 use crate::types::{
-    AnalysisMetadata, AnalysisResult, AnalysisTrigger, AnalysisType, PerformanceMetrics,
-    PipelineConfig, PriorityConfig, TaskPriority,
+    AnalysisMetadata, AnalysisResult, AnalysisTrigger, AnalysisType, PerformanceMetrics, PipelineConfig,
+    PriorityConfig, TaskPriority,
 };
 
 /// Errors that can occur in the analysis pipeline
@@ -51,31 +52,26 @@ type PipelineResult<T> = Result<T, PipelineError>;
 #[derive(Debug, Clone)]
 pub struct AnalysisTask {
     /// Unique task identifier
-    pub id: String,
+    pub id:            String,
     /// File path to analyze
-    pub file_path: PathBuf,
+    pub file_path:     PathBuf,
     /// Analysis type
     pub analysis_type: AnalysisType,
     /// Task priority
-    pub priority: TaskPriority,
+    pub priority:      TaskPriority,
     /// Dependencies (task IDs this task depends on)
-    pub dependencies: Vec<String>,
+    pub dependencies:  Vec<String>,
     /// Creation timestamp
-    pub created_at: Instant,
+    pub created_at:    Instant,
     /// Timeout duration
-    pub timeout: Duration,
+    pub timeout:       Duration,
     /// Task metadata
-    pub metadata: HashMap<String, String>,
+    pub metadata:      HashMap<String, String>,
 }
 
 impl AnalysisTask {
     /// Create a new analysis task
-    pub fn new(
-        id: String,
-        file_path: PathBuf,
-        analysis_type: AnalysisType,
-        priority: TaskPriority,
-    ) -> Self {
+    pub fn new(id: String, file_path: PathBuf, analysis_type: AnalysisType, priority: TaskPriority) -> Self {
         Self {
             id,
             file_path,
@@ -116,11 +112,11 @@ impl AnalysisTask {
 #[derive(Clone)]
 struct PipelineWorker {
     /// Worker identifier
-    id: usize,
+    id:             usize,
     /// Semaphore for coordinating work distribution
     work_semaphore: Arc<Semaphore>,
     /// Cancellation token
-    cancellation: CancellationToken,
+    cancellation:   CancellationToken,
 }
 
 /// Multi-threaded analysis pipeline with dependency resolution
@@ -169,11 +165,11 @@ struct PipelineInner {
 #[derive(Debug, Clone)]
 struct RunningTask {
     /// Task details
-    task: AnalysisTask,
+    task:       AnalysisTask,
     /// Start timestamp
     started_at: Instant,
     /// Worker ID processing this task
-    worker_id: usize,
+    worker_id:  usize,
 }
 
 /// Dependency resolver for task scheduling
@@ -244,17 +240,17 @@ impl MultiThreadedAnalysisPipeline {
         let (work_tx, work_rx) = mpsc::unbounded_channel();
 
         let inner = PipelineInner {
-            config: config.clone(),
-            task_queue: Mutex::new(BinaryHeap::new()),
-            running_tasks: DashMap::new(),
-            completed_tasks: DashMap::new(),
+            config:              config.clone(),
+            task_queue:          Mutex::new(BinaryHeap::new()),
+            running_tasks:       DashMap::new(),
+            completed_tasks:     DashMap::new(),
             dependency_resolver: DependencyResolver::new(),
-            resource_monitor: ResourceMonitor::new(config.analysis_thread_pool_size),
-            progress_tracker: Arc::new(ProgressTracker::new()),
-            workers: Vec::new(),
-            work_tx: RwLock::new(Some(work_tx)),
-            fallback_handler: FallbackHandler::new(),
-            cancellation: CancellationToken::new(),
+            resource_monitor:    ResourceMonitor::new(config.analysis_thread_pool_size),
+            progress_tracker:    Arc::new(ProgressTracker::new()),
+            workers:             Vec::new(),
+            work_tx:             RwLock::new(Some(work_tx)),
+            fallback_handler:    FallbackHandler::new(),
+            cancellation:        CancellationToken::new(),
         };
 
         let pipeline = Self {
@@ -372,13 +368,13 @@ impl MultiThreadedAnalysisPipeline {
         let avg_time = *progress.avg_processing_time.lock().await;
 
         PipelineStatistics {
-            total_processed: progress.total_processed.load(Ordering::Relaxed),
-            total_queued: progress.total_queued.load(Ordering::Relaxed),
-            failed_tasks: progress.failed_tasks.load(Ordering::Relaxed),
-            running_tasks: self.inner.running_tasks.len(),
+            total_processed:     progress.total_processed.load(Ordering::Relaxed),
+            total_queued:        progress.total_queued.load(Ordering::Relaxed),
+            failed_tasks:        progress.failed_tasks.load(Ordering::Relaxed),
+            running_tasks:       self.inner.running_tasks.len(),
             avg_processing_time: avg_time,
-            active_workers: self.get_active_workers(),
-            queue_length: self.inner.task_queue.lock().await.len(),
+            active_workers:      self.get_active_workers(),
+            queue_length:        self.inner.task_queue.lock().await.len(),
         }
     }
 
@@ -399,9 +395,9 @@ impl MultiThreadedAnalysisPipeline {
 
         for i in 0..worker_count {
             let worker = PipelineWorker {
-                id: i,
+                id:             i,
                 work_semaphore: Arc::new(Semaphore::new(1)),
-                cancellation: self.inner.cancellation.clone(),
+                cancellation:   self.inner.cancellation.clone(),
             };
 
             self.inner.workers.push(worker.clone());
@@ -501,16 +497,12 @@ impl PipelineWorker {
     }
 
     /// Process a single analysis task
-    async fn process_task(
-        &self,
-        inner: &Arc<PipelineInner>,
-        task: AnalysisTask,
-    ) -> PipelineResult<()> {
+    async fn process_task(&self, inner: &Arc<PipelineInner>, task: AnalysisTask) -> PipelineResult<()> {
         // Mark task as running
         let running_task = RunningTask {
-            task: task.clone(),
+            task:       task.clone(),
             started_at: Instant::now(),
-            worker_id: self.id,
+            worker_id:  self.id,
         };
 
         inner.running_tasks.insert(task.id.clone(), running_task);
@@ -552,11 +544,7 @@ impl PipelineWorker {
     }
 
     /// Wait for task dependencies to complete
-    async fn wait_for_dependencies(
-        &self,
-        inner: &Arc<PipelineInner>,
-        task: &AnalysisTask,
-    ) -> PipelineResult<()> {
+    async fn wait_for_dependencies(&self, inner: &Arc<PipelineInner>, task: &AnalysisTask) -> PipelineResult<()> {
         for dep_id in &task.dependencies {
             loop {
                 // Check if dependency is completed
@@ -603,9 +591,9 @@ impl PipelineWorker {
 
         // Create performance metrics
         let metrics = PerformanceMetrics {
-            cpu_time_ns: duration.as_nanos() as u64,
-            memory_usage: 1024 * 1024, // 1MB placeholder
-            io_operations: 10,
+            cpu_time_ns:      duration.as_nanos() as u64,
+            memory_usage:     1024 * 1024, // 1MB placeholder
+            io_operations:    10,
             network_requests: 0,
         };
 
@@ -699,7 +687,7 @@ impl DependencyResolver {
     fn new() -> Self {
         Self {
             dependency_graph: Arc::new(RwLock::new(Graph::new())),
-            reverse_deps: Arc::new(RwLock::new(HashMap::new())),
+            reverse_deps:     Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -715,10 +703,10 @@ impl ResourceMonitor {
     /// Create a new resource monitor
     fn new(max_workers: usize) -> Self {
         Self {
-            system_load: AtomicUsize::new(0),
+            system_load:      AtomicUsize::new(0),
             available_memory: AtomicUsize::new(1024 * 1024 * 1024), // 1GB placeholder
-            active_workers: AtomicUsize::new(max_workers),
-            check_interval: Duration::from_secs(5),
+            active_workers:   AtomicUsize::new(max_workers),
+            check_interval:   Duration::from_secs(5),
         }
     }
 }
@@ -727,9 +715,9 @@ impl ProgressTracker {
     /// Create a new progress tracker
     fn new() -> Self {
         Self {
-            total_processed: AtomicUsize::new(0),
-            total_queued: AtomicUsize::new(0),
-            failed_tasks: AtomicUsize::new(0),
+            total_processed:     AtomicUsize::new(0),
+            total_queued:        AtomicUsize::new(0),
+            failed_tasks:        AtomicUsize::new(0),
             avg_processing_time: Mutex::new(Duration::from_millis(100)),
         }
     }
@@ -756,16 +744,12 @@ impl FallbackHandler {
         Self {
             max_retries: 3,
             retry_delay: Duration::from_secs(1),
-            on_failure: None,
+            on_failure:  None,
         }
     }
 
     /// Handle a task failure with fallback mechanism
-    async fn handle_failure(
-        &self,
-        task: &AnalysisTask,
-        error: &PipelineError,
-    ) -> PipelineResult<()> {
+    async fn handle_failure(&self, task: &AnalysisTask, error: &PipelineError) -> PipelineResult<()> {
         warn!("Task {} failed: {}", task.id, error);
 
         // Simple exponential backoff retry logic (in a real implementation)
@@ -806,26 +790,28 @@ pub enum TaskStatus {
 #[derive(Debug, Clone)]
 pub struct PipelineStatistics {
     /// Total tasks processed
-    pub total_processed: usize,
+    pub total_processed:     usize,
     /// Total tasks queued
-    pub total_queued: usize,
+    pub total_queued:        usize,
     /// Failed tasks count
-    pub failed_tasks: usize,
+    pub failed_tasks:        usize,
     /// Currently running tasks
-    pub running_tasks: usize,
+    pub running_tasks:       usize,
     /// Average processing time
     pub avg_processing_time: Duration,
     /// Active workers
-    pub active_workers: usize,
+    pub active_workers:      usize,
     /// Current queue length
-    pub queue_length: usize,
+    pub queue_length:        usize,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::path::PathBuf;
+
     use tokio::fs;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_pipeline_creation() {

@@ -6,25 +6,26 @@
 //! - Model performance statistics
 //! - Distributed processing efficiency metrics
 
-use lazy_static::lazy_static;
-use prometheus::{register_counter, register_gauge, register_histogram, Encoder, TextEncoder};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use lazy_static::lazy_static;
+use prometheus::{register_counter, register_gauge, register_histogram, Encoder, TextEncoder};
 use tokio::sync::RwLock;
 use tracing::info;
 
 /// Distributed AI metrics collection
 pub struct DistributedMetrics {
-    total_requests: prometheus::Counter,
-    successful_requests: prometheus::Counter,
-    failed_requests: prometheus::Counter,
-    request_latency: prometheus::Histogram,
+    total_requests:           prometheus::Counter,
+    successful_requests:      prometheus::Counter,
+    failed_requests:          prometheus::Counter,
+    request_latency:          prometheus::Histogram,
     worker_load_distribution: prometheus::GaugeVec,
-    gpu_utilization: prometheus::GaugeVec,
-    model_inference_time: prometheus::HistogramVec,
-    cache_hit_ratio: prometheus::Gauge,
-    memory_usage: prometheus::GaugeVec,
-    current_active_workers: prometheus::Gauge,
+    gpu_utilization:          prometheus::GaugeVec,
+    model_inference_time:     prometheus::HistogramVec,
+    cache_hit_ratio:          prometheus::Gauge,
+    memory_usage:             prometheus::GaugeVec,
+    current_active_workers:   prometheus::Gauge,
 }
 
 impl DistributedMetrics {
@@ -82,11 +83,10 @@ impl DistributedMetrics {
         )
         .unwrap();
 
-        let memory_usage = register_gauge_vec!(
-            "distributed_ai_memory_usage_gb",
-            "Memory usage in GB",
-            &["worker_id", "memory_type"]
-        )
+        let memory_usage = register_gauge_vec!("distributed_ai_memory_usage_gb", "Memory usage in GB", &[
+            "worker_id",
+            "memory_type"
+        ])
         .unwrap();
 
         let current_active_workers = register_gauge!(
@@ -189,18 +189,18 @@ pub async fn export_prometheus_metrics() -> Result<String, Box<dyn std::error::E
 
 /// Metrics collector for periodic updates
 pub struct MetricsCollector {
-    metrics: Arc<DistributedMetrics>,
+    metrics:       Arc<DistributedMetrics>,
     worker_states: Arc<RwLock<HashMap<String, WorkerState>>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct WorkerState {
-    pub load_factor: f64,
+    pub load_factor:     f64,
     pub gpu_utilization: Option<f64>,
-    pub gpu_type: Option<String>,
+    pub gpu_type:        Option<String>,
     pub memory_usage_gb: f64,
     pub active_requests: u32,
-    pub last_update: std::time::Instant,
+    pub last_update:     std::time::Instant,
 }
 
 impl MetricsCollector {
@@ -305,27 +305,28 @@ impl std::fmt::Display for WorkerHealth {
 /// Metrics configuration
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct MetricsConfig {
-    pub enabled: bool,
-    pub prometheus_port: u16,
+    pub enabled:                  bool,
+    pub prometheus_port:          u16,
     pub metrics_interval_seconds: u64,
-    pub export_interval_seconds: u64,
+    pub export_interval_seconds:  u64,
 }
 
 impl Default for MetricsConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            prometheus_port: 9091,
+            enabled:                  true,
+            prometheus_port:          9091,
             metrics_interval_seconds: 30,
-            export_interval_seconds: 60,
+            export_interval_seconds:  60,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_metrics_initialization() {
@@ -346,12 +347,12 @@ mod tests {
         let collector = MetricsCollector::new(metrics);
 
         let worker_state = WorkerState {
-            load_factor: 0.6,
+            load_factor:     0.6,
             gpu_utilization: Some(0.8),
-            gpu_type: Some("A100".to_string()),
+            gpu_type:        Some("A100".to_string()),
             memory_usage_gb: 24.5,
             active_requests: 5,
-            last_update: std::time::Instant::now(),
+            last_update:     std::time::Instant::now(),
         };
 
         collector
@@ -370,12 +371,12 @@ mod tests {
 
         // Add healthy worker
         let healthy_state = WorkerState {
-            load_factor: 0.3,
+            load_factor:     0.3,
             gpu_utilization: Some(0.5),
-            gpu_type: Some("A100".to_string()),
+            gpu_type:        Some("A100".to_string()),
             memory_usage_gb: 16.0,
             active_requests: 2,
-            last_update: std::time::Instant::now(),
+            last_update:     std::time::Instant::now(),
         };
 
         collector
@@ -384,12 +385,12 @@ mod tests {
 
         // Add overloaded worker
         let overloaded_state = WorkerState {
-            load_factor: 0.97,
+            load_factor:     0.97,
             gpu_utilization: Some(0.95),
-            gpu_type: Some("A100".to_string()),
+            gpu_type:        Some("A100".to_string()),
             memory_usage_gb: 30.0,
             active_requests: 8,
-            last_update: std::time::Instant::now(),
+            last_update:     std::time::Instant::now(),
         };
 
         collector

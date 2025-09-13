@@ -7,18 +7,19 @@
 //! - Automated threat model generation from codebase analysis
 //! - Countermeasure optimization recommendations
 
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 #[derive(Clone)]
 pub struct ThreatModelingEngine {
-    system_modeler: Arc<SystemModeler>,
+    system_modeler:         Arc<SystemModeler>,
     attack_vector_analyzer: Arc<AttackVectorAnalyzer>,
-    risk_quantifier: Arc<RiskQuantifier>,
-    mitigation_planner: Arc<MitigationPlanner>,
+    risk_quantifier:        Arc<RiskQuantifier>,
+    mitigation_planner:     Arc<MitigationPlanner>,
 }
 
 #[derive(Clone)]
@@ -28,13 +29,13 @@ pub struct SystemModeler {
 
 #[derive(Clone)]
 pub struct AttackVectorAnalyzer {
-    stride_classifier: StrideClassifier,
+    stride_classifier:  StrideClassifier,
     vector_prioritizer: VectorPrioritizer,
 }
 
 #[derive(Clone)]
 pub struct RiskQuantifier {
-    dread_calculator: DreadCalculator,
+    dread_calculator:    DreadCalculator,
     confidence_analyzer: ConfidenceAnalyzer,
 }
 
@@ -45,23 +46,23 @@ pub struct MitigationPlanner {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThreatModel {
-    pub id: String,
-    pub name: String,
-    pub description: String,
-    pub assets: Vec<Asset>,
-    pub threats: Vec<Threat>,
-    pub attack_trees: Vec<AttackTree>,
+    pub id:               String,
+    pub name:             String,
+    pub description:      String,
+    pub assets:           Vec<Asset>,
+    pub threats:          Vec<Threat>,
+    pub attack_trees:     Vec<AttackTree>,
     pub risk_assessments: Vec<RiskAssessment>,
-    pub generated_at: DateTime<Utc>,
+    pub generated_at:     DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Asset {
-    pub id: String,
-    pub name: String,
-    pub value: AssetValue,
+    pub id:             String,
+    pub name:           String,
+    pub value:          AssetValue,
     pub classification: SecurityClassification,
-    pub data_flows: Vec<String>,
+    pub data_flows:     Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -82,13 +83,13 @@ pub enum SecurityClassification {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Threat {
-    pub id: String,
-    pub title: String,
-    pub description: String,
+    pub id:              String,
+    pub title:           String,
+    pub description:     String,
     pub stride_category: StrideCategory,
-    pub attack_vectors: Vec<AttackVector>,
-    pub likelihood: ThreatLikelihood,
-    pub impact: ThreatImpact,
+    pub attack_vectors:  Vec<AttackVector>,
+    pub likelihood:      ThreatLikelihood,
+    pub impact:          ThreatImpact,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -119,10 +120,10 @@ pub enum ThreatImpact {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttackVector {
-    pub id: String,
-    pub name: String,
-    pub complexity: AttackComplexity,
-    pub prerequisites: Vec<String>,
+    pub id:              String,
+    pub name:            String,
+    pub complexity:      AttackComplexity,
+    pub prerequisites:   Vec<String>,
     pub mitigation_cost: MitigationCost,
 }
 
@@ -142,14 +143,14 @@ pub enum MitigationCost {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttackTree {
-    pub root: AttackNode,
+    pub root:     AttackNode,
     pub metadata: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttackNode {
-    pub id: String,
-    pub label: String,
+    pub id:       String,
+    pub label:    String,
     pub operator: AttackOperator,
     pub children: Vec<AttackNode>,
 }
@@ -162,20 +163,20 @@ pub enum AttackOperator {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RiskAssessment {
-    pub threat_id: String,
-    pub dread_score: f64,
-    pub overall_risk: String,
+    pub threat_id:       String,
+    pub dread_score:     f64,
+    pub overall_risk:    String,
     pub recommendations: Vec<Recommendation>,
-    pub confidence: f64,
-    pub assessed_at: DateTime<Utc>,
+    pub confidence:      f64,
+    pub assessed_at:     DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Recommendation {
-    pub priority: u32,
-    pub description: String,
+    pub priority:            u32,
+    pub description:         String,
     pub implementation_cost: MitigationCost,
-    pub effectiveness: f64,
+    pub effectiveness:       f64,
 }
 
 #[derive(Debug, Clone)]
@@ -187,7 +188,7 @@ struct StrideClassifier {
 struct StridePattern {
     keywords: Vec<String>,
     category: StrideCategory,
-    weight: f64,
+    weight:   f64,
 }
 
 #[derive(Clone)]
@@ -199,15 +200,15 @@ struct VectorPrioritizer {
 struct ScoringWeights {
     complexity_weight: f64,
     likelihood_weight: f64,
-    impact_weight: f64,
+    impact_weight:     f64,
 }
 
 #[derive(Clone)]
 struct DreadCalculator {
-    damage_weight: f64,
+    damage_weight:          f64,
     reproducibility_weight: f64,
-    exploitability_weight: f64,
-    affected_users_weight: f64,
+    exploitability_weight:  f64,
+    affected_users_weight:  f64,
     discoverability_weight: f64,
 }
 
@@ -223,28 +224,28 @@ struct CountermeasureDatabase {
 
 #[derive(Clone, Serialize, Deserialize)]
 struct Countermeasure {
-    id: String,
-    name: String,
-    description: String,
+    id:                String,
+    name:              String,
+    description:       String,
     stride_categories: Vec<StrideCategory>,
-    cost: MitigationCost,
-    effectiveness: f64,
+    cost:              MitigationCost,
+    effectiveness:     f64,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 struct ArchitecturePattern {
-    name: String,
-    assets: Vec<String>,
+    name:    String,
+    assets:  Vec<String>,
     threats: Vec<String>,
 }
 
 impl ThreatModelingEngine {
     pub async fn new() -> Self {
         Self {
-            system_modeler: Arc::new(SystemModeler::new()),
+            system_modeler:         Arc::new(SystemModeler::new()),
             attack_vector_analyzer: Arc::new(AttackVectorAnalyzer::new().await),
-            risk_quantifier: Arc::new(RiskQuantifier::new()),
-            mitigation_planner: Arc::new(MitigationPlanner::new().await),
+            risk_quantifier:        Arc::new(RiskQuantifier::new()),
+            mitigation_planner:     Arc::new(MitigationPlanner::new().await),
         }
     }
 
@@ -272,8 +273,7 @@ impl ThreatModelingEngine {
         Ok(ThreatModel {
             id: uuid::Uuid::new_v4().to_string(),
             name: "Auto-Generated Threat Model".to_string(),
-            description: "Automatically generated threat model based on codebase analysis"
-                .to_string(),
+            description: "Automatically generated threat model based on codebase analysis".to_string(),
             assets,
             threats,
             attack_trees,
@@ -282,13 +282,10 @@ impl ThreatModelingEngine {
         })
     }
 
-    async fn build_attack_tree(
-        &self,
-        threat: &Threat,
-    ) -> Result<AttackTree, Box<dyn std::error::Error + Send + Sync>> {
+    async fn build_attack_tree(&self, threat: &Threat) -> Result<AttackTree, Box<dyn std::error::Error + Send + Sync>> {
         let root = AttackNode {
-            id: uuid::Uuid::new_v4().to_string(),
-            label: threat.title.clone(),
+            id:       uuid::Uuid::new_v4().to_string(),
+            label:    threat.title.clone(),
             operator: AttackOperator::And,
             children: Vec::new(), // Simplified - would build actual tree
         };
@@ -304,8 +301,8 @@ impl SystemModeler {
     pub fn new() -> Self {
         let architecture_patterns = vec![
             ArchitecturePattern {
-                name: "Web API".to_string(),
-                assets: vec!["API Endpoints", "Database", "Authentication"]
+                name:    "Web API".to_string(),
+                assets:  vec!["API Endpoints", "Database", "Authentication"]
                     .into_iter()
                     .map(String::from)
                     .collect(),
@@ -315,8 +312,8 @@ impl SystemModeler {
                     .collect(),
             },
             ArchitecturePattern {
-                name: "Desktop Application".to_string(),
-                assets: vec!["UI Components", "Local Storage", "IPC Channels"]
+                name:    "Desktop Application".to_string(),
+                assets:  vec!["UI Components", "Local Storage", "IPC Channels"]
                     .into_iter()
                     .map(String::from)
                     .collect(),
@@ -340,22 +337,22 @@ impl SystemModeler {
 
         // Identify key assets from codebase structure
         assets.push(Asset {
-            id: "user-data".to_string(),
-            name: "User Configuration Data".to_string(),
-            value: AssetValue::Critical,
+            id:             "user-data".to_string(),
+            name:           "User Configuration Data".to_string(),
+            value:          AssetValue::Critical,
             classification: SecurityClassification::Confidential,
-            data_flows: vec!["File System", "Network"]
+            data_flows:     vec!["File System", "Network"]
                 .into_iter()
                 .map(String::from)
                 .collect(),
         });
 
         assets.push(Asset {
-            id: "ai-models".to_string(),
-            name: "AI Models and Training Data".to_string(),
-            value: AssetValue::High,
+            id:             "ai-models".to_string(),
+            name:           "AI Models and Training Data".to_string(),
+            value:          AssetValue::High,
             classification: SecurityClassification::Restricted,
-            data_flows: vec!["Local Storage", "IPC"]
+            data_flows:     vec!["Local Storage", "IPC"]
                 .into_iter()
                 .map(String::from)
                 .collect(),
@@ -368,7 +365,7 @@ impl SystemModeler {
 impl AttackVectorAnalyzer {
     pub async fn new() -> Self {
         Self {
-            stride_classifier: StrideClassifier::new(),
+            stride_classifier:  StrideClassifier::new(),
             vector_prioritizer: VectorPrioritizer::new(),
         }
     }
@@ -407,7 +404,7 @@ impl StrideClassifier {
                     .map(String::from)
                     .collect(),
                 category: StrideCategory::Spoofing,
-                weight: 0.8,
+                weight:   0.8,
             },
             StridePattern {
                 keywords: vec!["encrypt", "security", "crypto"]
@@ -415,7 +412,7 @@ impl StrideClassifier {
                     .map(String::from)
                     .collect(),
                 category: StrideCategory::Tampering,
-                weight: 0.7,
+                weight:   0.7,
             },
             StridePattern {
                 keywords: vec!["logging", "audit", "events"]
@@ -423,7 +420,7 @@ impl StrideClassifier {
                     .map(String::from)
                     .collect(),
                 category: StrideCategory::Repudiation,
-                weight: 0.6,
+                weight:   0.6,
             },
         ];
 
@@ -439,23 +436,23 @@ impl StrideClassifier {
 
         for pattern in &self.patterns {
             threats.push(Threat {
-                id: uuid::Uuid::new_v4().to_string(),
-                title: format!(
+                id:              uuid::Uuid::new_v4().to_string(),
+                title:           format!(
                     "{} Threat against {}",
                     pattern.category.as_str(),
                     asset.name
                 ),
-                description: format!("Automated threat identification for {}", asset.name),
+                description:     format!("Automated threat identification for {}", asset.name),
                 stride_category: pattern.category.clone(),
-                attack_vectors: vec![AttackVector {
-                    id: uuid::Uuid::new_v4().to_string(),
-                    name: format!("Standard {} attack", pattern.category.as_str()),
-                    complexity: AttackComplexity::Medium,
-                    prerequisites: Vec::new(),
+                attack_vectors:  vec![AttackVector {
+                    id:              uuid::Uuid::new_v4().to_string(),
+                    name:            format!("Standard {} attack", pattern.category.as_str()),
+                    complexity:      AttackComplexity::Medium,
+                    prerequisites:   Vec::new(),
                     mitigation_cost: MitigationCost::Medium,
                 }],
-                likelihood: ThreatLikelihood::Medium,
-                impact: if asset.value == AssetValue::Critical {
+                likelihood:      ThreatLikelihood::Medium,
+                impact:          if asset.value == AssetValue::Critical {
                     ThreatImpact::Critical
                 } else {
                     ThreatImpact::High
@@ -487,7 +484,7 @@ impl VectorPrioritizer {
             scoring_weights: ScoringWeights {
                 complexity_weight: 0.3,
                 likelihood_weight: 0.4,
-                impact_weight: 0.3,
+                impact_weight:     0.3,
             },
         }
     }
@@ -543,7 +540,7 @@ impl Threat {
 impl RiskQuantifier {
     pub fn new() -> Self {
         Self {
-            dread_calculator: DreadCalculator::new(),
+            dread_calculator:    DreadCalculator::new(),
             confidence_analyzer: ConfidenceAnalyzer::new(),
         }
     }
@@ -585,13 +582,13 @@ impl RiskQuantifier {
         let mut recommendations = Vec::new();
 
         recommendations.push(Recommendation {
-            priority: if dread_score >= 6.0 { 1 } else { 2 },
-            description: format!(
+            priority:            if dread_score >= 6.0 { 1 } else { 2 },
+            description:         format!(
                 "Implement countermeasures for {} threat",
                 threat.stride_category.as_str()
             ),
             implementation_cost: MitigationCost::Medium,
-            effectiveness: 0.8,
+            effectiveness:       0.8,
         });
 
         Ok(recommendations)
@@ -601,10 +598,10 @@ impl RiskQuantifier {
 impl DreadCalculator {
     pub fn new() -> Self {
         Self {
-            damage_weight: 1.0,
+            damage_weight:          1.0,
             reproducibility_weight: 1.0,
-            exploitability_weight: 1.0,
-            affected_users_weight: 1.0,
+            exploitability_weight:  1.0,
+            affected_users_weight:  1.0,
             discoverability_weight: 1.0,
         }
     }
@@ -678,29 +675,27 @@ impl MitigationPlanner {
     pub async fn new() -> Self {
         let countermeasures = vec![
             Countermeasure {
-                id: "auth_validation".to_string(),
-                name: "Enhanced Authentication".to_string(),
-                description: "Implement strong multi-factor authentication".to_string(),
+                id:                "auth_validation".to_string(),
+                name:              "Enhanced Authentication".to_string(),
+                description:       "Implement strong multi-factor authentication".to_string(),
                 stride_categories: vec![StrideCategory::Spoofing, StrideCategory::Tampering],
-                cost: MitigationCost::Medium,
-                effectiveness: 0.9,
+                cost:              MitigationCost::Medium,
+                effectiveness:     0.9,
             },
             Countermeasure {
-                id: "input_validation".to_string(),
-                name: "Input Validation Framework".to_string(),
-                description: "Comprehensive input sanitization and validation".to_string(),
+                id:                "input_validation".to_string(),
+                name:              "Input Validation Framework".to_string(),
+                description:       "Comprehensive input sanitization and validation".to_string(),
                 stride_categories: vec![StrideCategory::Injection], // Injection is a custom addition
-                cost: MitigationCost::Low,
-                effectiveness: 0.8,
+                cost:              MitigationCost::Low,
+                effectiveness:     0.8,
             },
         ];
 
         // Add Injection as a custom category since STRIDE doesn't have it directly
 
         Self {
-            countermeasure_database: Arc::new(RwLock::new(CountermeasureDatabase {
-                countermeasures,
-            })),
+            countermeasure_database: Arc::new(RwLock::new(CountermeasureDatabase { countermeasures })),
         }
     }
 }

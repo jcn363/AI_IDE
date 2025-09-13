@@ -3,9 +3,10 @@
 //! This plugin generates Go struct definitions from Rust types,
 //! providing seamless interoperability between Go and Rust services.
 
+use async_trait::async_trait;
+
 use crate::plugins::*;
 use crate::{serde_json, Field, ParsedType, TransformationContext};
-use async_trait::async_trait;
 
 /// Go generator plugin
 #[derive(Debug)]
@@ -100,18 +101,18 @@ impl GeneratorPluginTrait for GoGeneratorPlugin {
             target_platform: platform.to_string(),
             source_types: types.to_vec(),
             metadata: crate::generation::GenerationMetadata {
-                generated_at: chrono::Utc::now().to_rfc3339(),
+                generated_at:      chrono::Utc::now().to_rfc3339(),
                 generator_version: env!("CARGO_PKG_VERSION").to_string(),
-                config_snapshot: config.clone(),
-                stats: crate::generation::GenerationStats {
-                    types_processed: types.len(),
-                    types_generated: types.len(),
-                    bytes_generated: content.len(),
+                config_snapshot:   config.clone(),
+                stats:             crate::generation::GenerationStats {
+                    types_processed:    types.len(),
+                    types_generated:    types.len(),
+                    bytes_generated:    content.len(),
                     generation_time_ms: 0,
-                    warnings_count: 0,
-                    errors_count: 0,
+                    warnings_count:     0,
+                    errors_count:       0,
                 },
-                status: crate::generation::GenerationStatus::Success,
+                status:            crate::generation::GenerationStatus::Success,
             },
             dependencies: vec!["encoding/json".to_string()],
         })
@@ -123,26 +124,20 @@ impl GeneratorPluginTrait for GoGeneratorPlugin {
 
     fn metadata(&self) -> PluginMetadata {
         PluginMetadata {
-            name: "go-generator".to_string(),
-            version: "1.0.0".to_string(),
-            author: "Rust AI IDE Team".to_string(),
-            description: "Generates Go struct definitions from Rust types".to_string(),
-            homepage: Some("https://github.com/rust-ai-ide/rust-ai-ide".to_string()),
-            platforms: vec!["go".to_string(), "golang".to_string()],
-            license: Some("MIT OR Apache-2.0".to_string()),
+            name:         "go-generator".to_string(),
+            version:      "1.0.0".to_string(),
+            author:       "Rust AI IDE Team".to_string(),
+            description:  "Generates Go struct definitions from Rust types".to_string(),
+            homepage:     Some("https://github.com/rust-ai-ide/rust-ai-ide".to_string()),
+            platforms:    vec!["go".to_string(), "golang".to_string()],
+            license:      Some("MIT OR Apache-2.0".to_string()),
             dependencies: vec![],
         }
     }
 }
 
 impl GoGeneratorPlugin {
-    fn generate_go_type(
-        &self,
-        content: &mut String,
-        rust_type: &ParsedType,
-        json_tags: bool,
-        bson_tags: bool,
-    ) {
+    fn generate_go_type(&self, content: &mut String, rust_type: &ParsedType, json_tags: bool, bson_tags: bool) {
         // Add documentation
         if let Some(ref docs) = rust_type.documentation {
             content.push_str(&format!("// {}\n", docs.replace("\n", "\n// ")));

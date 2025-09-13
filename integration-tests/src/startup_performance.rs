@@ -1,10 +1,11 @@
-use rust_ai_ide_common::{IDEError, IDEErrorKind};
-use rust_ai_ide_performance::{
-    LazyLoader, ModulePreloader, ProfilingAdapter, ProfilingConfiguration, StartupCache,
-    StartupProfiler, StartupReport, StartupStats, StartupValidator,
-};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use rust_ai_ide_common::{IDEError, IDEErrorKind};
+use rust_ai_ide_performance::{
+    LazyLoader, ModulePreloader, ProfilingAdapter, ProfilingConfiguration, StartupCache, StartupProfiler,
+    StartupReport, StartupStats, StartupValidator,
+};
 use tokio::time::sleep;
 
 /// Integration tests for startup performance optimization
@@ -23,8 +24,7 @@ async fn simulate_startup_phases(
     // Phase 1: Core initialization
     adapter
         .measure_phase("core_initialization", async {
-            simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 80 } else { 15 }))
-                .await;
+            simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 80 } else { 15 })).await;
             Ok::<_, IDEError>(())
         })
         .await?;
@@ -53,8 +53,7 @@ async fn simulate_startup_phases(
     // Phase 4: AI model preparation (lazy loaded)
     adapter
         .measure_phase("ai_model_preparation", async {
-            simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 70 } else { 12 }))
-                .await;
+            simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 70 } else { 12 })).await;
             Ok::<_, IDEError>(())
         })
         .await?;
@@ -62,8 +61,7 @@ async fn simulate_startup_phases(
     // Phase 5: UI initialization
     adapter
         .measure_phase("ui_initialization", async {
-            simulate_io_bound_work(Duration::from_millis(if is_cold_startup { 40 } else { 8 }))
-                .await;
+            simulate_io_bound_work(Duration::from_millis(if is_cold_startup { 40 } else { 8 })).await;
             Ok::<_, IDEError>(())
         })
         .await?;
@@ -97,10 +95,7 @@ async fn simulate_async_work(duration: Duration) {
 }
 
 /// Complete startup simulation with performance measurement
-async fn perform_startup_simulation(
-    is_cold_startup: bool,
-    enable_optimizations: bool,
-) -> Result<Duration, IDEError> {
+async fn perform_startup_simulation(is_cold_startup: bool, enable_optimizations: bool) -> Result<Duration, IDEError> {
     let profiler = Arc::new(StartupProfiler::new());
     let adapter = ProfilingAdapter::new(profiler.clone());
 
@@ -132,15 +127,11 @@ async fn perform_startup_simulation(
 }
 
 /// Simulate optimized startup with lazy loading and caching
-async fn simulate_optimized_startup(
-    adapter: &ProfilingAdapter,
-    is_cold_startup: bool,
-) -> Result<(), IDEError> {
+async fn simulate_optimized_startup(adapter: &ProfilingAdapter, is_cold_startup: bool) -> Result<(), IDEError> {
     // Phase 1: Core initialization (always loaded)
     adapter
         .measure_phase("core_initialization", async {
-            simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 60 } else { 12 }))
-                .await;
+            simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 60 } else { 12 })).await;
             Ok::<_, IDEError>(())
         })
         .await?;
@@ -148,8 +139,7 @@ async fn simulate_optimized_startup(
     // Phase 2: Critical plugins (always loaded)
     adapter
         .measure_phase("critical_plugins", async {
-            simulate_io_bound_work(Duration::from_millis(if is_cold_startup { 80 } else { 16 }))
-                .await;
+            simulate_io_bound_work(Duration::from_millis(if is_cold_startup { 80 } else { 16 })).await;
             Ok::<_, IDEError>(())
         })
         .await?;
@@ -165,8 +155,7 @@ async fn simulate_optimized_startup(
     // Phase 4: UI essentials
     adapter
         .measure_phase("ui_essentials", async {
-            simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 25 } else { 5 }))
-                .await;
+            simulate_cpu_bound_work(Duration::from_millis(if is_cold_startup { 25 } else { 5 })).await;
             Ok::<_, IDEError>(())
         })
         .await?;
@@ -393,8 +382,9 @@ fn calculate_variance(durations: &[Duration], mean: Duration) -> Duration {
 
 #[cfg(test)]
 mod benchmark_tests {
-    use super::*;
     use criterion::{criterion_group, criterion_main, Criterion};
+
+    use super::*;
 
     fn startup_performance_benchmark(c: &mut Criterion) {
         c.bench_function("cold_startup_optimized", |b| {
@@ -483,9 +473,8 @@ fn assert_warm_startup_target(duration: Duration) {
 }
 
 fn assert_optimization_effectiveness(baseline: Duration, optimized: Duration, startup_type: &str) {
-    let improvement_percent = ((baseline.as_millis() as f64 - optimized.as_millis() as f64)
-        / baseline.as_millis() as f64)
-        * 100.0;
+    let improvement_percent =
+        ((baseline.as_millis() as f64 - optimized.as_millis() as f64) / baseline.as_millis() as f64) * 100.0;
 
     match startup_type {
         "cold" => {

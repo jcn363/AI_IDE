@@ -3,8 +3,9 @@
 //! This example demonstrates the full capabilities of the shared types crate
 //! with all available plugins and advanced configuration options.
 
-use rust_ai_ide_shared_types::*;
 use std::collections::HashMap;
+
+use rust_ai_ide_shared_types::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

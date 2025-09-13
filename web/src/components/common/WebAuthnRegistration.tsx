@@ -7,7 +7,7 @@ import webauthnService, {
   webauthnApiCall,
   checkWebAuthnSupport,
   base64UrlToUint8Array,
-  uint8ArrayToBase64Url
+  uint8ArrayToBase64Url,
 } from '../../services/webauthnService';
 
 interface WebAuthnRegistrationProps {
@@ -19,7 +19,14 @@ interface WebAuthnRegistrationProps {
 }
 
 interface RegistrationState {
-  step: 'idle' | 'checking-support' | 'starting' | 'authenticating' | 'verifying' | 'completed' | 'error';
+  step:
+    | 'idle'
+    | 'checking-support'
+    | 'starting'
+    | 'authenticating'
+    | 'verifying'
+    | 'completed'
+    | 'error';
   challenge?: WebAuthnChallengeResponse;
   credential?: WebAuthnCredential;
   error?: string;
@@ -31,32 +38,32 @@ export const WebAuthnRegistration: React.FC<WebAuthnRegistrationProps> = ({
   userDisplayName,
   userName,
   onSuccess,
-  onError
+  onError,
 }) => {
   const [state, setState] = useState<RegistrationState>({
     step: 'idle',
-    supported: false
+    supported: false,
   });
 
   // Check WebAuthn support on mount
   useEffect(() => {
     const checkSupport = async () => {
-      setState(prev => ({ ...prev, step: 'checking-support' }));
+      setState((prev) => ({ ...prev, step: 'checking-support' }));
 
       try {
         const support = await checkWebAuthnSupport();
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           step: 'idle',
-          supported: support.supported
+          supported: support.supported,
         }));
       } catch (error) {
         console.error('Failed to check WebAuthn support:', error);
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           step: 'error',
           error: 'Failed to check WebAuthn support',
-          supported: false
+          supported: false,
         }));
       }
     };
@@ -67,33 +74,32 @@ export const WebAuthnRegistration: React.FC<WebAuthnRegistrationProps> = ({
   const startRegistration = async () => {
     if (!state.supported) {
       const error = 'WebAuthn is not supported in this browser';
-      setState(prev => ({ ...prev, step: 'error', error }));
+      setState((prev) => ({ ...prev, step: 'error', error }));
       onError?.(error);
       return;
     }
 
-    setState(prev => ({ ...prev, step: 'starting' }));
+    setState((prev) => ({ ...prev, step: 'starting' }));
 
     try {
-      const challenge = await webauthnApiCall(
-        () => webauthnService.startRegistration({
+      const challenge = await webauthnApiCall(() =>
+        webauthnService.startRegistration({
           user_display_name: userDisplayName,
-          user_name: userName
+          user_name: userName,
         })
       );
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         step: 'authenticating',
-        challenge
+        challenge,
       }));
 
       // Start the browser WebAuthn registration
       await performBrowserRegistration(challenge);
-
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Registration failed';
-      setState(prev => ({ ...prev, step: 'error', error: errorMsg }));
+      setState((prev) => ({ ...prev, step: 'error', error: errorMsg }));
       onError?.(errorMsg);
     }
   };
@@ -107,22 +113,22 @@ export const WebAuthnRegistration: React.FC<WebAuthnRegistrationProps> = ({
         user: {
           id: base64UrlToUint8Array(challenge.challenge.publicKey.user.id),
           name: challenge.challenge.publicKey.user.name,
-          displayName: challenge.challenge.publicKey.user.displayName
+          displayName: challenge.challenge.publicKey.user.displayName,
         },
         pubKeyCredParams: challenge.challenge.publicKey.pubKeyCredParams,
         authenticatorSelection: challenge.challenge.publicKey.authenticatorSelection,
         timeout: challenge.challenge.publicKey.timeout,
-        attestation: challenge.challenge.publicKey.attestation
+        attestation: challenge.challenge.publicKey.attestation,
       };
 
-      setState(prev => ({ ...prev, step: 'authenticating' }));
+      setState((prev) => ({ ...prev, step: 'authenticating' }));
 
       // Create the credential
-      const credential = await navigator.credentials.create({
-        publicKey: publicKeyCredentialCreationOptions
-      }) as PublicKeyCredential;
+      const credential = (await navigator.credentials.create({
+        publicKey: publicKeyCredentialCreationOptions,
+      })) as PublicKeyCredential;
 
-      setState(prev => ({ ...prev, step: 'verifying' }));
+      setState((prev) => ({ ...prev, step: 'verifying' }));
 
       // Convert credential for backend
       const registrationResponse = {
@@ -131,43 +137,46 @@ export const WebAuthnRegistration: React.FC<WebAuthnRegistrationProps> = ({
         type: credential.type,
         response: {
           clientDataJSON: uint8ArrayToBase64Url(new Uint8Array(credential.response.clientDataJSON)),
-          attestationObject: uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAttestationResponse).attestationObject))
-        }
+          attestationObject: uint8ArrayToBase64Url(
+            new Uint8Array(
+              (credential.response as AuthenticatorAttestationResponse).attestationObject
+            )
+          ),
+        },
       };
 
       // Finish registration with backend
-      const result = await webauthnApiCall(
-        () => webauthnService.finishRegistration({
+      const result = await webauthnApiCall(() =>
+        webauthnService.finishRegistration({
           challenge_id: challenge.challenge_id,
-          registration_response: registrationResponse
+          registration_response: registrationResponse,
         })
       );
 
       if (result.success && result.credential_id) {
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           step: 'completed',
-          credential: result as any // This would be properly typed
+          credential: result as any, // This would be properly typed
         }));
         onSuccess?.(result as any);
       } else {
         throw new Error(result.error || 'Registration verification failed');
       }
-
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Browser registration failed';
-      setState(prev => ({ ...prev, step: 'error', error: errorMsg }));
+      setState((prev) => ({ ...prev, step: 'error', error: errorMsg }));
       onError?.(errorMsg);
     }
   };
 
   const resetRegistration = () => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       step: 'idle',
       challenge: undefined,
       credential: undefined,
-      error: undefined
+      error: undefined,
     }));
   };
 
@@ -188,12 +197,15 @@ export const WebAuthnRegistration: React.FC<WebAuthnRegistrationProps> = ({
           <div className="webauthn-registration">
             <div className="registration-header">
               <h3>Register WebAuthn Credential</h3>
-              <p>Set up passwordless authentication using your device's biometric or security key.</p>
+              <p>
+                Set up passwordless authentication using your device's biometric or security key.
+              </p>
             </div>
 
             {!state.supported && (
               <div className="warning-message">
-                WebAuthn is not supported in this browser. Please use a modern browser with WebAuthn support.
+                WebAuthn is not supported in this browser. Please use a modern browser with WebAuthn
+                support.
               </div>
             )}
 
@@ -255,8 +267,13 @@ export const WebAuthnRegistration: React.FC<WebAuthnRegistrationProps> = ({
               <p>Your WebAuthn credential has been registered successfully.</p>
               {state.credential && (
                 <div className="credential-info">
-                  <p><strong>Credential ID:</strong> {state.credential.credential_id}</p>
-                  <p><strong>Created:</strong> {new Date(state.credential.created_at).toLocaleString()}</p>
+                  <p>
+                    <strong>Credential ID:</strong> {state.credential.credential_id}
+                  </p>
+                  <p>
+                    <strong>Created:</strong>{' '}
+                    {new Date(state.credential.created_at).toLocaleString()}
+                  </p>
                 </div>
               )}
             </div>
@@ -338,8 +355,12 @@ export const WebAuthnRegistration: React.FC<WebAuthnRegistrationProps> = ({
         }
 
         @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
         }
 
         .authenticator-instructions {
@@ -361,11 +382,13 @@ export const WebAuthnRegistration: React.FC<WebAuthnRegistrationProps> = ({
           font-size: 14px;
         }
 
-        .success-message, .error-message {
+        .success-message,
+        .error-message {
           padding: 20px;
         }
 
-        .success-icon, .error-icon {
+        .success-icon,
+        .error-icon {
           font-size: 48px;
           margin-bottom: 15px;
         }
@@ -378,12 +401,14 @@ export const WebAuthnRegistration: React.FC<WebAuthnRegistrationProps> = ({
           color: #dc3545;
         }
 
-        .success-message h3, .error-message h3 {
+        .success-message h3,
+        .error-message h3 {
           margin: 0 0 10px 0;
           color: #333;
         }
 
-        .success-message p, .error-message p {
+        .success-message p,
+        .error-message p {
           color: #666;
           margin-bottom: 15px;
         }

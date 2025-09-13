@@ -11,10 +11,11 @@
 //!
 //! Run with: cargo run --example advanced-error-analysis-demo
 
+use std::path::PathBuf;
+
 use chrono::Utc;
 use rust_ai_ide_ai::advanced_error_analysis::*;
 use rust_ai_ide_ai::{AIContext, AIProvider, ErrorContext};
-use std::path::PathBuf;
 
 /// Demonstration of Phase 2 Advanced AI Error Analysis capabilities
 #[tokio::main]
@@ -56,17 +57,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Demonstrate multi-level root cause analysis
-async fn demonstrate_root_cause_analysis(
-    analyzer: &AdvancedErrorAnalyzer,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn demonstrate_root_cause_analysis(analyzer: &AdvancedErrorAnalyzer) -> Result<(), Box<dyn std::error::Error>> {
     println!("🔍 Demo 1: Multi-Level Root Cause Analysis");
     println!("-----------------------------------------");
 
     // Create a complex borrow checker error scenario
     let error_context = ErrorContext {
-        message: "Cannot borrow `items` as mutable because it is also borrowed as immutable"
-            .to_string(),
-        error_code: Some("E0502".to_string()),
+        message:       "Cannot borrow `items` as mutable because it is also borrowed as immutable".to_string(),
+        error_code:    Some("E0502".to_string()),
         context_lines: vec![
             "fn process_items(items: &mut Vec<String>) {".to_string(),
             "    let first = &items[0]; // Immutable borrow".to_string(),
@@ -74,9 +72,9 @@ async fn demonstrate_root_cause_analysis(
             "    println!(\"First item: {}\", first);".to_string(),
             "}".to_string(),
         ],
-        file_path: Some("src/main.rs".to_string()),
-        line: Some(3),
-        column: Some(5),
+        file_path:     Some("src/main.rs".to_string()),
+        line:          Some(3),
+        column:        Some(5),
     };
 
     let project_context = AIContext {
@@ -139,31 +137,29 @@ async fn demonstrate_root_cause_analysis(
 }
 
 /// Demonstrate predictive error prevention
-async fn demonstrate_predictive_prevention(
-    analyzer: &AdvancedErrorAnalyzer,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn demonstrate_predictive_prevention(analyzer: &AdvancedErrorAnalyzer) -> Result<(), Box<dyn std::error::Error>> {
     println!("🔮 Demo 2: Predictive Error Prevention");
     println!("-------------------------------------");
 
     // Create a root cause for prediction
     let root_cause = RootCauseAnalysis {
-        analysis_id: "pred_demo".to_string(),
-        primary_level: ErrorLevel::Function,
-        cause_chain: vec![],
-        confidence: 0.9,
-        dependencies: vec![],
+        analysis_id:       "pred_demo".to_string(),
+        primary_level:     ErrorLevel::Function,
+        cause_chain:       vec![],
+        confidence:        0.9,
+        dependencies:      vec![],
         impact_assessment: ImpactAssessment {
-            scope: ImpactScope::ModuleLevel,
-            affected_files: vec![
+            scope:           ImpactScope::ModuleLevel,
+            affected_files:  vec![
                 "src/async_ops.rs".to_string(),
                 "src/data_processor.rs".to_string(),
             ],
-            risk_level: RiskLevel::High,
+            risk_level:      RiskLevel::High,
             level_breakdown: [(ErrorLevel::Function, 5)].iter().cloned().collect(),
-            urgency_score: 0.8,
+            urgency_score:   0.8,
             business_impact: "Data processing pipeline failure".to_string(),
         },
-        analyzed_at: Utc::now(),
+        analyzed_at:       Utc::now(),
     };
 
     println!("Analyzing predictive error patterns...");
@@ -194,50 +190,48 @@ async fn demonstrate_predictive_prevention(
 }
 
 /// Demonstrate automated solution generation
-async fn demonstrate_solution_generation(
-    analyzer: &AdvancedErrorAnalyzer,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn demonstrate_solution_generation(analyzer: &AdvancedErrorAnalyzer) -> Result<(), Box<dyn std::error::Error>> {
     println!("🔧 Demo 3: Automated Solution Generation");
     println!("---------------------------------------");
 
     // Create a root cause for solution generation
     let root_cause = RootCauseAnalysis {
-        analysis_id: "sol_demo".to_string(),
-        primary_level: ErrorLevel::Line,
-        cause_chain: vec![CauseLink {
-            level: ErrorLevel::Line,
-            category: "borrow_checker".to_string(),
-            message: "Mutable/immutable borrow conflict".to_string(),
+        analysis_id:       "sol_demo".to_string(),
+        primary_level:     ErrorLevel::Line,
+        cause_chain:       vec![CauseLink {
+            level:      ErrorLevel::Line,
+            category:   "borrow_checker".to_string(),
+            message:    "Mutable/immutable borrow conflict".to_string(),
             confidence: 0.95,
-            evidence: vec!["Borrow checker error E0502".to_string()],
-            location: Some(ErrorLocation {
-                file_path: "src/main.rs".to_string(),
-                line: 10,
-                column: 8,
+            evidence:   vec!["Borrow checker error E0502".to_string()],
+            location:   Some(ErrorLocation {
+                file_path:     "src/main.rs".to_string(),
+                line:          10,
+                column:        8,
                 function_name: Some("process_data".to_string()),
-                module_path: Some("utils".to_string()),
+                module_path:   Some("utils".to_string()),
             }),
         }],
-        confidence: 0.92,
-        dependencies: vec![],
+        confidence:        0.92,
+        dependencies:      vec![],
         impact_assessment: ImpactAssessment {
-            scope: ImpactScope::Local,
-            affected_files: vec!["src/main.rs".to_string()],
-            risk_level: RiskLevel::Low,
+            scope:           ImpactScope::Local,
+            affected_files:  vec!["src/main.rs".to_string()],
+            risk_level:      RiskLevel::Low,
             level_breakdown: [(ErrorLevel::Line, 1)].iter().cloned().collect(),
-            urgency_score: 0.4,
+            urgency_score:   0.4,
             business_impact: "Single function affected".to_string(),
         },
-        analyzed_at: Utc::now(),
+        analyzed_at:       Utc::now(),
     };
 
     let error_context = ErrorContext {
-        message: "Cannot borrow as mutable".to_string(),
-        error_code: Some("E0502".to_string()),
+        message:       "Cannot borrow as mutable".to_string(),
+        error_code:    Some("E0502".to_string()),
         context_lines: vec![],
-        file_path: Some("src/main.rs".to_string()),
-        line: Some(10),
-        column: Some(8),
+        file_path:     Some("src/main.rs".to_string()),
+        line:          Some(10),
+        column:        Some(8),
     };
 
     println!("Generating automated solutions...");
@@ -267,53 +261,51 @@ async fn demonstrate_solution_generation(
 }
 
 /// Demonstrate error clustering and impact analysis
-async fn demonstrate_clustering_impact(
-    analyzer: &AdvancedErrorAnalyzer,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn demonstrate_clustering_impact(analyzer: &AdvancedErrorAnalyzer) -> Result<(), Box<dyn std::error::Error>> {
     println!("📊 Demo 4: Error Clustering and Impact Analysis");
     println!("-----------------------------------------------");
 
     // Create multiple related errors for clustering
     let root_cause = RootCauseAnalysis {
-        analysis_id: "cluster_demo".to_string(),
-        primary_level: ErrorLevel::Module,
-        cause_chain: vec![CauseLink {
-            level: ErrorLevel::Module,
-            category: "memory_management".to_string(),
-            message: "Cluster of memory management issues".to_string(),
+        analysis_id:       "cluster_demo".to_string(),
+        primary_level:     ErrorLevel::Module,
+        cause_chain:       vec![CauseLink {
+            level:      ErrorLevel::Module,
+            category:   "memory_management".to_string(),
+            message:    "Cluster of memory management issues".to_string(),
             confidence: 0.88,
-            evidence: vec![
+            evidence:   vec![
                 "Multiple E0382 errors".to_string(),
                 "Memory ownership issues".to_string(),
             ],
-            location: None,
+            location:   None,
         }],
-        confidence: 0.85,
-        dependencies: vec![],
+        confidence:        0.85,
+        dependencies:      vec![],
         impact_assessment: ImpactAssessment {
-            scope: ImpactScope::ProjectLevel,
-            affected_files: vec![
+            scope:           ImpactScope::ProjectLevel,
+            affected_files:  vec![
                 "src/memory.rs".to_string(),
                 "src/allocator.rs".to_string(),
                 "src/cache.rs".to_string(),
                 "src/pool.rs".to_string(),
             ],
-            risk_level: RiskLevel::High,
+            risk_level:      RiskLevel::High,
             level_breakdown: [(ErrorLevel::Function, 8)].iter().cloned().collect(),
-            urgency_score: 0.9,
+            urgency_score:   0.9,
             business_impact: "Memory leaks causing performance degradation".to_string(),
         },
-        analyzed_at: Utc::now(),
+        analyzed_at:       Utc::now(),
     };
 
     // Mock predictions for impact analysis
     let predictions = vec![
         PredictionResult {
-            prediction_id: "pred_1".to_string(),
-            error_type: "memory_leak".to_string(),
-            likelihood: 0.85,
-            time_window_hours: 48,
-            contributing_factors: vec![
+            prediction_id:          "pred_1".to_string(),
+            error_type:             "memory_leak".to_string(),
+            likelihood:             0.85,
+            time_window_hours:      48,
+            contributing_factors:   vec![
                 "Improper Arc usage".to_string(),
                 "Missing Drop implementations".to_string(),
             ],
@@ -323,11 +315,11 @@ async fn demonstrate_clustering_impact(
             ],
         },
         PredictionResult {
-            prediction_id: "pred_2".to_string(),
-            error_type: "double_free".to_string(),
-            likelihood: 0.72,
-            time_window_hours: 24,
-            contributing_factors: vec!["Manual memory management".to_string()],
+            prediction_id:          "pred_2".to_string(),
+            error_type:             "double_free".to_string(),
+            likelihood:             0.72,
+            time_window_hours:      24,
+            contributing_factors:   vec!["Manual memory management".to_string()],
             preventive_suggestions: vec!["Switch to smart pointers".to_string()],
         },
     ];
@@ -364,36 +356,34 @@ async fn demonstrate_clustering_impact(
 }
 
 /// Demonstrate error evolution tracking
-async fn demonstrate_evolution_tracking(
-    analyzer: &AdvancedErrorAnalyzer,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn demonstrate_evolution_tracking(analyzer: &AdvancedErrorAnalyzer) -> Result<(), Box<dyn std::error::Error>> {
     println!("📈 Demo 5: Error Evolution Tracking");
     println!("-----------------------------------");
 
     let root_cause = RootCauseAnalysis {
-        analysis_id: "evo_demo".to_string(),
-        primary_level: ErrorLevel::Function,
-        cause_chain: vec![],
-        confidence: 0.85,
-        dependencies: vec![],
+        analysis_id:       "evo_demo".to_string(),
+        primary_level:     ErrorLevel::Function,
+        cause_chain:       vec![],
+        confidence:        0.85,
+        dependencies:      vec![],
         impact_assessment: ImpactAssessment {
-            scope: ImpactScope::ModuleLevel,
-            affected_files: vec!["src/async_ops.rs".to_string()],
-            risk_level: RiskLevel::Medium,
+            scope:           ImpactScope::ModuleLevel,
+            affected_files:  vec!["src/async_ops.rs".to_string()],
+            risk_level:      RiskLevel::Medium,
             level_breakdown: [(ErrorLevel::Function, 3)].iter().cloned().collect(),
-            urgency_score: 0.7,
+            urgency_score:   0.7,
             business_impact: "Async operation reliability".to_string(),
         },
-        analyzed_at: Utc::now(),
+        analyzed_at:       Utc::now(),
     };
 
     let error_context = ErrorContext {
-        message: "Evolution test error".to_string(),
-        error_code: None,
+        message:       "Evolution test error".to_string(),
+        error_code:    None,
         context_lines: vec![],
-        file_path: Some("src/async_ops.rs".to_string()),
-        line: Some(1),
-        column: Some(1),
+        file_path:     Some("src/async_ops.rs".to_string()),
+        line:          Some(1),
+        column:        Some(1),
     };
 
     println!("Tracking error evolution patterns...");
@@ -439,8 +429,8 @@ async fn demonstrate_comprehensive_analysis(
 
     // Create a comprehensive error scenario
     let error_context = ErrorContext {
-        message: "Complex async error with multiple dependencies".to_string(),
-        error_code: Some("E0308".to_string()),
+        message:       "Complex async error with multiple dependencies".to_string(),
+        error_code:    Some("E0308".to_string()),
         context_lines: vec![
             "async fn complex_operation(data: &Arc<Mutex<Vec<String>>>) -> Result<Vec<String>, Error> {".to_string(),
             "    let mut guard = data.lock().await;".to_string(),
@@ -449,9 +439,9 @@ async fn demonstrate_comprehensive_analysis(
             "    process_items_async(items).await".to_string(),
             "}".to_string(),
         ],
-        file_path: Some("src/complex_async.rs".to_string()),
-        line: Some(3),
-        column: Some(18),
+        file_path:     Some("src/complex_async.rs".to_string()),
+        line:          Some(3),
+        column:        Some(18),
     };
 
     let project_context = AIContext {
@@ -511,8 +501,7 @@ async fn demonstrate_comprehensive_analysis(
     // Calculate and display system intelligence metrics
     println!("\n📈 Intelligence Metrics:");
     let intelligence_score =
-        (comprehensive_result.confidence_score + comprehensive_result.impacts.urgency_score) / 2.0
-            * 100.0;
+        (comprehensive_result.confidence_score + comprehensive_result.impacts.urgency_score) / 2.0 * 100.0;
     println!("  System Intelligence Score: {:.1}%", intelligence_score);
 
     let solutions_coverage = comprehensive_result.solutions.len() as f32

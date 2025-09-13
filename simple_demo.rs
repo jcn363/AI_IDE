@@ -2,7 +2,8 @@
 //!
 //! This script demonstrates the shared-types crate without async complications.
 
-use std::{fs, path::Path};
+use std::fs;
+use std::path::Path;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🎭 SHARED TYPES CRATE - SIMPLE DEMO");
@@ -78,10 +79,7 @@ pub enum Status {
     Ok(())
 }
 
-fn demonstrate_typescript(
-    rust_code: &str,
-    demo_dir: &Path,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn demonstrate_typescript(rust_code: &str, demo_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🎯 TYPESCRIPT GENERATION");
     println!("========================");
 

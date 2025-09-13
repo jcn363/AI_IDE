@@ -1,18 +1,20 @@
 //! Tauri command integration for supervisor operations
 
 use std::sync::Arc;
+
+use rust_ai_ide_common::validation::TauriInputSanitizer;
 use tauri::{AppHandle, State};
 use tokio::sync::Mutex;
 
-use crate::{
-    error::SupervisorResult, ipc_recovery::IpcMonitor, service_supervisor::Supervisor,
-    state_persistence::StatePersistence, types::*,
-};
-use rust_ai_ide_common::validation::TauriInputSanitizer;
+use crate::error::SupervisorResult;
+use crate::ipc_recovery::IpcMonitor;
+use crate::service_supervisor::Supervisor;
+use crate::state_persistence::StatePersistence;
+use crate::types::*;
 
 /// Shared state for Tauri commands
 pub struct SupervisorState {
-    pub supervisor: Arc<Mutex<Option<Supervisor>>>,
+    pub supervisor:  Arc<Mutex<Option<Supervisor>>>,
     pub persistence: Arc<Mutex<Option<StatePersistence>>>,
     pub ipc_monitor: Arc<Mutex<Option<IpcMonitor>>>,
 }
@@ -23,8 +25,8 @@ pub async fn init_supervisor(
     state: State<'_, Arc<Mutex<SupervisorState>>>,
     config_path: String,
 ) -> Result<String, String> {
-    let config_path = TauriInputSanitizer::sanitize_path(&config_path)
-        .map_err(|e| format!("Path sanitization failed: {:?}", e))?;
+    let config_path =
+        TauriInputSanitizer::sanitize_path(&config_path).map_err(|e| format!("Path sanitization failed: {:?}", e))?;
 
     let mut guard = state.lock().await;
 
@@ -42,8 +44,7 @@ pub async fn init_supervisor(
     guard.ipc_monitor = Some(IpcMonitor::new());
 
     // Initialize supervisor (requires persistence to be available)
-    let supervisor =
-        Supervisor::new().map_err(|e| format!("Failed to create supervisor: {:?}", e))?;
+    let supervisor = Supervisor::new().map_err(|e| format!("Failed to create supervisor: {:?}", e))?;
     guard.supervisor = Some(supervisor);
 
     Ok(serde_json::json!({"status": "initialized"}).to_string())
@@ -66,33 +67,33 @@ pub async fn register_service(
         .ok_or("Supervisor not initialized")?;
 
     let service_config = ServiceConfig {
-        id: service_id,
-        name: service_name,
-        command: TauriInputSanitizer::sanitize_path(&command).map_err(|e| format!("{:?}", e))?,
-        args: args
+        id:                   service_id,
+        name:                 service_name,
+        command:              TauriInputSanitizer::sanitize_path(&command).map_err(|e| format!("{:?}", e))?,
+        args:                 args
             .into_iter()
             .map(|arg| TauriInputSanitizer::sanitize_string(&arg))
             .collect::<Result<_, _>>()
             .map_err(|e| format!("{:?}", e))?,
-        working_dir: None,
-        environment: std::env::vars().collect(),
+        working_dir:          None,
+        environment:          std::env::vars().collect(),
         health_check_timeout: std::time::Duration::from_secs(30),
-        restart_policy: match restart_policy.as_str() {
+        restart_policy:       match restart_policy.as_str() {
             "Never" => RestartPolicy::Never,
             "Always" => RestartPolicy::Always,
             "ExponentialBackoff" => RestartPolicy::ExponentialBackoff {
-                base_delay: std::time::Duration::from_secs(1),
-                max_delay: std::time::Duration::from_secs(60),
+                base_delay:   std::time::Duration::from_secs(1),
+                max_delay:    std::time::Duration::from_secs(60),
                 max_attempts: 5,
             },
             "FixedDelay" => RestartPolicy::FixedDelay {
-                delay: std::time::Duration::from_secs(5),
+                delay:        std::time::Duration::from_secs(5),
                 max_attempts: 3,
             },
             _ => RestartPolicy::Never,
         },
-        shutdown_timeout: std::time::Duration::from_secs(10),
-        critical: false,
+        shutdown_timeout:     std::time::Duration::from_secs(10),
+        critical:             false,
     };
 
     supervisor
@@ -105,9 +106,7 @@ pub async fn register_service(
 
 /// Start monitoring all services
 #[tauri::command]
-pub async fn start_supervisor_monitoring(
-    state: State<'_, Arc<Mutex<SupervisorState>>>,
-) -> Result<String, String> {
+pub async fn start_supervisor_monitoring(state: State<'_, Arc<Mutex<SupervisorState>>>) -> Result<String, String> {
     let mut guard = state.lock().await;
     let supervisor = guard
         .supervisor
@@ -131,9 +130,7 @@ pub async fn start_supervisor_monitoring(
 
 /// Get supervisor health status
 #[tauri::command]
-pub async fn get_supervisor_health(
-    state: State<'_, Arc<Mutex<SupervisorState>>>,
-) -> Result<String, String> {
+pub async fn get_supervisor_health(state: State<'_, Arc<Mutex<SupervisorState>>>) -> Result<String, String> {
     let guard = state.lock().await;
     let supervisor = guard
         .supervisor
@@ -150,9 +147,7 @@ pub async fn get_supervisor_health(
 
 /// Create a checkpoint
 #[tauri::command]
-pub async fn create_checkpoint(
-    state: State<'_, Arc<Mutex<SupervisorState>>>,
-) -> Result<String, String> {
+pub async fn create_checkpoint(state: State<'_, Arc<Mutex<SupervisorState>>>) -> Result<String, String> {
     let mut guard = state.lock().await;
     let persistence = guard
         .persistence
@@ -181,9 +176,7 @@ pub async fn create_checkpoint(
 
 /// Load latest checkpoint
 #[tauri::command]
-pub async fn load_checkpoint(
-    state: State<'_, Arc<Mutex<SupervisorState>>>,
-) -> Result<String, String> {
+pub async fn load_checkpoint(state: State<'_, Arc<Mutex<SupervisorState>>>) -> Result<String, String> {
     let mut guard = state.lock().await;
     let persistence = guard
         .persistence
@@ -200,9 +193,7 @@ pub async fn load_checkpoint(
 
 /// Get database statistics
 #[tauri::command]
-pub async fn get_database_stats(
-    state: State<'_, Arc<Mutex<SupervisorState>>>,
-) -> Result<String, String> {
+pub async fn get_database_stats(state: State<'_, Arc<Mutex<SupervisorState>>>) -> Result<String, String> {
     let guard = state.lock().await;
     let persistence = guard
         .persistence
@@ -219,9 +210,7 @@ pub async fn get_database_stats(
 
 /// Stop supervisor system
 #[tauri::command]
-pub async fn stop_supervisor(
-    state: State<'_, Arc<Mutex<SupervisorState>>>,
-) -> Result<String, String> {
+pub async fn stop_supervisor(state: State<'_, Arc<Mutex<SupervisorState>>>) -> Result<String, String> {
     let mut guard = state.lock().await;
 
     if let Some(supervisor) = &guard.supervisor {
@@ -238,13 +227,15 @@ pub async fn stop_supervisor(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::sync::Arc;
+
     use tokio::sync::Mutex;
+
+    use super::*;
 
     async fn create_test_state() -> Arc<Mutex<SupervisorState>> {
         Arc::new(Mutex::new(SupervisorState {
-            supervisor: Arc::new(Mutex::new(None)),
+            supervisor:  Arc::new(Mutex::new(None)),
             persistence: Arc::new(Mutex::new(None)),
             ipc_monitor: Arc::new(Mutex::new(None)),
         }))

@@ -6,11 +6,12 @@
 //! - Metadata management
 //! - Dependency management
 
-use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
+
+use once_cell::sync::Lazy;
 use tauri::Emitter;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command as TokioCommand;
@@ -47,11 +48,7 @@ impl CargoService {
     }
 
     /// Execute a Cargo command
-    pub fn execute_command(
-        command: &str,
-        args: &[&str],
-        directory: &Path,
-    ) -> Result<(String, String, i32), String> {
+    pub fn execute_command(command: &str, args: &[&str], directory: &Path) -> Result<(String, String, i32), String> {
         let output = Command::new("cargo")
             .arg(command)
             .args(args)
@@ -80,8 +77,8 @@ impl CargoService {
             ));
         }
 
-        let metadata: CargoMetadata = serde_json::from_slice(&output.stdout)
-            .map_err(|e| format!("Failed to parse cargo metadata: {}", e))?;
+        let metadata: CargoMetadata =
+            serde_json::from_slice(&output.stdout).map_err(|e| format!("Failed to parse cargo metadata: {}", e))?;
 
         Ok(metadata)
     }
@@ -275,10 +272,10 @@ impl CargoService {
         // For now, return a simple metrics structure
         // This could be extended to actually analyze build performance
         let metrics = PerformanceMetrics {
-            total_time: 100,
-            crates: HashMap::new(),
+            total_time:   100,
+            crates:       HashMap::new(),
             dependencies: HashMap::new(),
-            features: Vec::new(),
+            features:     Vec::new(),
         };
 
         Ok(metrics)
@@ -287,51 +284,51 @@ impl CargoService {
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct CargoPackage {
-    pub name: String,
-    pub version: String,
+    pub name:          String,
+    pub version:       String,
     pub manifest_path: String,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct CargoMetadata {
-    pub packages: Vec<CargoPackage>,
-    pub workspace_root: String,
+    pub packages:         Vec<CargoPackage>,
+    pub workspace_root:   String,
     pub target_directory: String,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct CargoDependency {
-    pub name: String,
-    pub req: String,
-    pub features: Vec<String>,
-    pub optional: bool,
+    pub name:             String,
+    pub req:              String,
+    pub features:         Vec<String>,
+    pub optional:         bool,
     pub default_features: bool,
-    pub target: Option<String>,
-    pub kind: String,
-    pub source: Option<String>,
+    pub target:           Option<String>,
+    pub kind:             String,
+    pub source:           Option<String>,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct CargoManifest {
-    pub package: CargoPackage,
+    pub package:      CargoPackage,
     pub dependencies: HashMap<String, serde_json::Value>,
-    pub features: Option<HashMap<String, Vec<String>>>,
+    pub features:     Option<HashMap<String, Vec<String>>>,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct PerformanceMetrics {
-    pub total_time: u64,
-    pub crates: HashMap<String, CrateMetrics>,
+    pub total_time:   u64,
+    pub crates:       HashMap<String, CrateMetrics>,
     pub dependencies: HashMap<String, u64>,
-    pub features: Vec<String>,
+    pub features:     Vec<String>,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct CrateMetrics {
-    pub build_time: u64,
-    pub codegen_time: Option<u64>,
+    pub build_time:    u64,
+    pub codegen_time:  Option<u64>,
     pub codegen_units: Option<u32>,
-    pub incremental: Option<bool>,
-    pub dependencies: Vec<String>,
-    pub features: Vec<String>,
+    pub incremental:   Option<bool>,
+    pub dependencies:  Vec<String>,
+    pub features:      Vec<String>,
 }

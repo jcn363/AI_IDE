@@ -2,7 +2,7 @@
 //! Tests performance improvements for confidence scoring, similarity search, and vector operations
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use rust_ai_ide_simd::ai_operations::{SIMDConfidenceScorer, SIMDEmbeddingSearch, SIMDAIInferenceOps, ActivationType};
+use rust_ai_ide_simd::ai_operations::{ActivationType, SIMDAIInferenceOps, SIMDConfidenceScorer, SIMDEmbeddingSearch};
 
 // Benchmark for confidence scoring operations
 fn bench_confidence_scoring(c: &mut Criterion) {
@@ -46,12 +46,8 @@ fn bench_cosine_similarity(c: &mut Criterion) {
 
     c.bench_function("cosine_similarity_search_simd", |b| {
         b.iter(|| {
-            let _result = SIMDEmbeddingSearch::cosine_similarity_search(
-                black_box(&query),
-                black_box(&embeddings),
-                128,
-                5,
-            );
+            let _result =
+                SIMDEmbeddingSearch::cosine_similarity_search(black_box(&query), black_box(&embeddings), 128, 5);
         });
     });
 }
@@ -66,12 +62,7 @@ fn bench_matrix_vector_mul(c: &mut Criterion) {
 
     c.bench_function("matrix_vector_mul_simd", |b| {
         b.iter(|| {
-            let _result = SIMDAIInferenceOps::matrix_vector_mul(
-                black_box(&matrix),
-                black_box(&vector),
-                rows,
-                cols,
-            );
+            let _result = SIMDAIInferenceOps::matrix_vector_mul(black_box(&matrix), black_box(&vector), rows, cols);
         });
     });
 }
@@ -84,37 +75,25 @@ fn bench_activation_functions(c: &mut Criterion) {
 
     group.bench_function("relu_simd", |b| {
         b.iter(|| {
-            let _result = SIMDAIInferenceOps::apply_activation(
-                black_box(&input),
-                ActivationType::ReLU,
-            );
+            let _result = SIMDAIInferenceOps::apply_activation(black_box(&input), ActivationType::ReLU);
         });
     });
 
     group.bench_function("sigmoid_simd", |b| {
         b.iter(|| {
-            let _result = SIMDAIInferenceOps::apply_activation(
-                black_box(&input),
-                ActivationType::Sigmoid,
-            );
+            let _result = SIMDAIInferenceOps::apply_activation(black_box(&input), ActivationType::Sigmoid);
         });
     });
 
     group.bench_function("tanh_simd", |b| {
         b.iter(|| {
-            let _result = SIMDAIInferenceOps::apply_activation(
-                black_box(&input),
-                ActivationType::Tanh,
-            );
+            let _result = SIMDAIInferenceOps::apply_activation(black_box(&input), ActivationType::Tanh);
         });
     });
 
     group.bench_function("leaky_relu_simd", |b| {
         b.iter(|| {
-            let _result = SIMDAIInferenceOps::apply_activation(
-                black_box(&input),
-                ActivationType::LeakyReLU,
-            );
+            let _result = SIMDAIInferenceOps::apply_activation(black_box(&input), ActivationType::LeakyReLU);
         });
     });
 
@@ -174,7 +153,8 @@ fn bench_performance_comparison(c: &mut Criterion) {
 
     group.bench_function("confidence_scoring_scalar_baseline", |b| {
         b.iter(|| {
-            let _result: Vec<f32> = predictions.iter()
+            let _result: Vec<f32> = predictions
+                .iter()
                 .zip(uncertainties.iter())
                 .zip(weights.iter())
                 .map(|((pred, uncert), weight)| {

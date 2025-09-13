@@ -1,6 +1,7 @@
+use syn::parse_quote;
+
 use super::*;
 use crate::analysis::{AnalysisPreferences, CodeLocation};
-use syn::parse_quote;
 
 fn create_test_ast() -> syn::File {
     parse_quote! {

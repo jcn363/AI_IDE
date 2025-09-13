@@ -5,15 +5,16 @@
 //! - License compatibility checking
 //! - Compliance policy enforcement
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LicensePolicy {
     pub allowed_licenses: Vec<String>,
-    pub denied_licenses: Vec<String>,
-    pub license_groups: HashMap<String, Vec<String>>,
-    pub strict_mode: bool,
+    pub denied_licenses:  Vec<String>,
+    pub license_groups:   HashMap<String, Vec<String>>,
+    pub strict_mode:      bool,
 }
 
 impl Default for LicensePolicy {
@@ -26,9 +27,9 @@ impl Default for LicensePolicy {
                 "BSD-2-Clause".to_string(),
                 "ISC".to_string(),
             ],
-            denied_licenses: Vec::new(),
-            license_groups: HashMap::new(),
-            strict_mode: false,
+            denied_licenses:  Vec::new(),
+            license_groups:   HashMap::new(),
+            strict_mode:      false,
         }
     }
 }
@@ -86,9 +87,7 @@ impl LicenseComplianceChecker {
     pub fn check_license(&self, license: &str) -> LicenseCompliance {
         // Simple license checking logic
         match license.to_lowercase().as_str() {
-            "mit" | "apache-2.0" | "bsd-3-clause" | "bsd-2-clause" | "isc" => {
-                LicenseCompliance::Compliant
-            }
+            "mit" | "apache-2.0" | "bsd-3-clause" | "bsd-2-clause" | "isc" => LicenseCompliance::Compliant,
             "gpl-2.0" | "gpl-3.0" | "lgpl-2.1" | "lgpl-3.0" => LicenseCompliance::NotInAllowList,
             "" | "none" | "unknown" => LicenseCompliance::UnknownLicense,
             _ => LicenseCompliance::Warning,

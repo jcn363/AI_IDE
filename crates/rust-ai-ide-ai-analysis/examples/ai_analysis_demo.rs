@@ -3,9 +3,7 @@
 //! This example demonstrates the AI analysis capabilities including pattern detection,
 //! anti-pattern analysis, and intelligent suggestion generation.
 
-use rust_ai_ide_ai_analysis::architectural::detectors::{
-    AIDetector, AnalysisContext, AnalysisRequest,
-};
+use rust_ai_ide_ai_analysis::architectural::detectors::{AIDetector, AnalysisContext, AnalysisRequest};
 use rust_ai_ide_ai_analysis::architectural::patterns::SuggestionCategory;
 
 #[tokio::main]
@@ -164,16 +162,16 @@ impl FileRepository {
 
     // Create analysis request
     let request = AnalysisRequest {
-        file_uri: "demo://FileRepository.rs".to_string(),
+        file_uri:             "demo://FileRepository.rs".to_string(),
         detect_anti_patterns: true,
-        detect_patterns: true,
+        detect_patterns:      true,
         generate_suggestions: true,
         performance_analysis: true,
-        parse_tree: None,
-        context: Some(AnalysisContext {
+        parse_tree:           None,
+        context:              Some(AnalysisContext {
             project_root: Some("/demo/project".to_string()),
-            language: Some("rust".to_string()),
-            framework: None,
+            language:     Some("rust".to_string()),
+            framework:    None,
         }),
     };
 

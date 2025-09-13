@@ -8,16 +8,18 @@
 //! - End-to-end integration workflows
 //! - Performance testing with large codebases
 
+use std::collections::HashMap;
+use std::path::PathBuf;
+
+use anyhow::Result;
+use tempfile::TempDir;
+use tokio::fs;
+
 use crate::analysis::*;
 use crate::code_generation::*;
 use crate::error_resolution::*;
 use crate::learning::*;
 use crate::*;
-use anyhow::Result;
-use std::collections::HashMap;
-use std::path::PathBuf;
-use tempfile::TempDir;
-use tokio::fs;
 
 /// Test fixtures and sample code for analysis
 mod fixtures {
@@ -296,30 +298,30 @@ mod test_helpers {
 
     pub fn create_test_context(code: &str) -> AIContext {
         AIContext {
-            current_code: code.to_string(),
-            file_name: Some("test.rs".to_string()),
-            cursor_position: Some((1, 1)),
-            selection: None,
-            project_context: HashMap::new(),
-            dependencies: vec![],
-            workspace_structure: HashMap::new(),
+            current_code:         code.to_string(),
+            file_name:            Some("test.rs".to_string()),
+            cursor_position:      Some((1, 1)),
+            selection:            None,
+            project_context:      HashMap::new(),
+            dependencies:         vec![],
+            workspace_structure:  HashMap::new(),
             analysis_preferences: AnalysisPreferences::default(),
         }
     }
 
     pub fn create_test_preferences() -> AnalysisPreferences {
         AnalysisPreferences {
-            enable_code_smells: true,
-            enable_security: true,
-            enable_performance: true,
-            enable_code_style: true,
-            enable_architecture: true,
-            enable_learning: true,
+            enable_code_smells:   true,
+            enable_security:      true,
+            enable_performance:   true,
+            enable_code_style:    true,
+            enable_architecture:  true,
+            enable_learning:      true,
             confidence_threshold: 0.5,
-            timeout_seconds: 30,
+            timeout_seconds:      30,
             include_explanations: true,
-            include_examples: true,
-            privacy_mode: PrivacyMode::OptIn,
+            include_examples:     true,
+            privacy_mode:         PrivacyMode::OptIn,
         }
     }
 
@@ -338,10 +340,7 @@ mod test_helpers {
         );
     }
 
-    pub fn count_findings_by_category(
-        findings: &[AnalysisFinding],
-        category: AnalysisCategory,
-    ) -> usize {
+    pub fn count_findings_by_category(findings: &[AnalysisFinding], category: AnalysisCategory) -> usize {
         findings.iter().filter(|f| f.category == category).count()
     }
 }
@@ -349,8 +348,9 @@ mod test_helpers {
 /// Tests for code smell detection
 #[cfg(test)]
 mod code_smell_tests {
-    use super::*;
     use test_helpers::*;
+
+    use super::*;
 
     #[test]
     fn test_long_method_detection() {
@@ -482,8 +482,9 @@ fn complex_function(x: i32) -> i32 {
 /// Tests for security analysis
 #[cfg(test)]
 mod security_tests {
-    use super::*;
     use test_helpers::*;
+
+    use super::*;
 
     #[test]
     fn test_hardcoded_password_detection() {

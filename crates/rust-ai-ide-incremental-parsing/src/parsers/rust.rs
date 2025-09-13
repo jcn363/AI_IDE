@@ -3,15 +3,15 @@
 //! This module implements `RustIncrementalParser` using tree-sitter-rust with advanced
 //! optimizations for macro expansion tracking, trait resolution, and lifetime analysis.
 
-use async_trait::async_trait;
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
+use async_trait::async_trait;
 use rust_ai_ide_common::validation::ValidatedFilePath;
 use rust_ai_ide_errors::{IDEResult, RustAIError};
 use rust_ai_ide_lsp::incremental::change_tracker::FileChange;
+use tokio::sync::RwLock;
 
 use crate::{ASTChange, ASTChangeType, ASTDiff, IncrementalParser, ParseTree, ParserConfig};
 
@@ -19,15 +19,15 @@ use crate::{ASTChange, ASTChangeType, ASTDiff, IncrementalParser, ParseTree, Par
 #[derive(Clone)]
 pub struct RustIncrementalParser {
     /// Tree-sitter parser wrapped in async locks for concurrent access
-    parser: Arc<RwLock<tree_sitter::Parser>>,
+    parser:        Arc<RwLock<tree_sitter::Parser>>,
     /// Parser configuration
-    config: ParserConfig,
+    config:        ParserConfig,
     /// Current parse tree for incremental updates
-    current_tree: Arc<RwLock<Option<ParseTree>>>,
+    current_tree:  Arc<RwLock<Option<ParseTree>>>,
     /// Source code cache for incremental parsing
-    source_cache: Arc<RwLock<String>>,
+    source_cache:  Arc<RwLock<String>>,
     /// Logical cache for optimization hints (macros, traits, items)
-    logic_cache: Arc<RwLock<HashMap<String, RustLogicInfo>>>,
+    logic_cache:   Arc<RwLock<HashMap<String, RustLogicInfo>>>,
     /// Rust-specific parsing optimizations
     optimizations: RustOptimizations,
 }
@@ -38,69 +38,69 @@ struct RustLogicInfo {
     /// Function definitions with signatures
     functions: Vec<FunctionInfo>,
     /// Struct definitions with fields
-    structs: Vec<StructInfo>,
+    structs:   Vec<StructInfo>,
     /// Trait definitions and implementations
-    traits: Vec<TraitInfo>,
+    traits:    Vec<TraitInfo>,
     /// Macro definitions
-    macros: Vec<MacroInfo>,
+    macros:    Vec<MacroInfo>,
     /// Imports and use statements
-    imports: Vec<ImportInfo>,
+    imports:   Vec<ImportInfo>,
 }
 
 /// Function definition information
 #[derive(Debug, Clone)]
 struct FunctionInfo {
-    name: String,
-    params: Vec<String>,
+    name:        String,
+    params:      Vec<String>,
     return_type: Option<String>,
-    visibility: Visibility,
-    is_async: bool,
-    body_range: tree_sitter::Range,
+    visibility:  Visibility,
+    is_async:    bool,
+    body_range:  tree_sitter::Range,
 }
 
 /// Struct definition information
 #[derive(Debug, Clone)]
 struct StructInfo {
-    name: String,
-    fields: Vec<FieldInfo>,
-    visibility: Visibility,
-    is_tuple: bool,
+    name:             String,
+    fields:           Vec<FieldInfo>,
+    visibility:       Visibility,
+    is_tuple:         bool,
     definition_range: tree_sitter::Range,
 }
 
 /// Trait definition information
 #[derive(Debug, Clone)]
 struct TraitInfo {
-    name: String,
-    methods: Vec<String>,
-    visibility: Visibility,
+    name:             String,
+    methods:          Vec<String>,
+    visibility:       Visibility,
     definition_range: tree_sitter::Range,
 }
 
 /// Macro definition information
 #[derive(Debug, Clone)]
 struct MacroInfo {
-    name: String,
-    is_proc_macro: bool,
-    parameters: Vec<String>,
+    name:             String,
+    is_proc_macro:    bool,
+    parameters:       Vec<String>,
     definition_range: tree_sitter::Range,
 }
 
 /// Import/use statement information
 #[derive(Debug, Clone)]
 struct ImportInfo {
-    path: String,
-    alias: Option<String>,
+    path:       String,
+    alias:      Option<String>,
     visibility: Visibility,
 }
 
 /// Field information for structs and tuples
 #[derive(Debug, Clone)]
 struct FieldInfo {
-    name: Option<String>, // None for tuple structs at index
+    name:       Option<String>, // None for tuple structs at index
     field_type: Option<String>,
     visibility: Visibility,
-    index: Option<usize>, // For tuple structs
+    index:      Option<usize>, // For tuple structs
 }
 
 /// Visibility specifier
@@ -117,15 +117,15 @@ pub enum Visibility {
 #[derive(Debug, Clone)]
 struct RustOptimizations {
     /// Enable macro expansion tracking
-    track_macros: bool,
+    track_macros:               bool,
     /// Enable trait resolution analysis
-    track_traits: bool,
+    track_traits:               bool,
     /// Enable lifetime analysis
-    track_lifetimes: bool,
+    track_lifetimes:            bool,
     /// Enable advanced AST caching
-    enable_caching: bool,
+    enable_caching:             bool,
     /// Maximum cache size per file
-    max_cache_size_per_file: usize,
+    max_cache_size_per_file:    usize,
     /// Enable parallel AST node processing
     enable_parallel_processing: bool,
 }
@@ -133,11 +133,11 @@ struct RustOptimizations {
 impl Default for RustOptimizations {
     fn default() -> Self {
         Self {
-            track_macros: true,
-            track_traits: true,
-            track_lifetimes: true,
-            enable_caching: true,
-            max_cache_size_per_file: 1024 * 1024, // 1MB
+            track_macros:               true,
+            track_traits:               true,
+            track_lifetimes:            true,
+            enable_caching:             true,
+            max_cache_size_per_file:    1024 * 1024, // 1MB
             enable_parallel_processing: true,
         }
     }
@@ -179,11 +179,7 @@ impl RustIncrementalParser {
     }
 
     /// Parse Rust code with tree-sitter and extract logical information
-    async fn parse_internal(
-        &mut self,
-        source: &str,
-        old_tree: Option<&tree_sitter::Tree>,
-    ) -> IDEResult<ParseTree> {
+    async fn parse_internal(&mut self, source: &str, old_tree: Option<&tree_sitter::Tree>) -> IDEResult<ParseTree> {
         // Validate input size
         let source_length = source.len();
         if source_length > self.config.max_incremental_size {
@@ -228,11 +224,7 @@ impl RustIncrementalParser {
     }
 
     /// Extract Rust logical constructs from AST
-    async fn extract_logic_info(
-        &self,
-        root_node: &tree_sitter::Node,
-        source: &str,
-    ) -> HashMap<String, RustLogicInfo> {
+    async fn extract_logic_info(&self, root_node: &tree_sitter::Node, source: &str) -> HashMap<String, RustLogicInfo> {
         let mut logic_info = HashMap::new();
 
         // Extract functions, structs, traits, macros, etc.
@@ -288,11 +280,7 @@ impl RustIncrementalParser {
     }
 
     /// Apply changes incrementally using tree-sitter
-    async fn apply_changes_incremental(
-        &self,
-        changes: &[FileChange],
-        old_source: &str,
-    ) -> IDEResult<Option<String>> {
+    async fn apply_changes_incremental(&self, changes: &[FileChange], old_source: &str) -> IDEResult<Option<String>> {
         for change in changes {
             match change.change_type {
                 rust_ai_ide_lsp::incremental::change_tracker::FileChangeType::Modified => {
@@ -339,42 +327,42 @@ impl RustIncrementalParser {
             // Compare node types and structure
             if old_node.kind() != new_node.kind() {
                 changes.push(ASTChange {
-                    change_type: ASTChangeType::Modified,
+                    change_type:    ASTChangeType::Modified,
                     start_position: old_node.start_position(),
-                    end_position: old_node.end_position(),
-                    old_text: Some(
+                    end_position:   old_node.end_position(),
+                    old_text:       Some(
                         old_node
                             .utf8_text(old_source.as_bytes())
                             .unwrap_or("")
                             .to_string(),
                     ),
-                    new_text: Some(
+                    new_text:       Some(
                         new_node
                             .utf8_text(new_source.as_bytes())
                             .unwrap_or("")
                             .to_string(),
                     ),
-                    node_type: old_node.kind().to_string(),
+                    node_type:      old_node.kind().to_string(),
                 });
             } else if old_node.has_changes() || new_node.has_changes() {
                 // Node content changed
                 changes.push(ASTChange {
-                    change_type: ASTChangeType::Modified,
+                    change_type:    ASTChangeType::Modified,
                     start_position: old_node.start_position(),
-                    end_position: old_node.end_position(),
-                    old_text: Some(
+                    end_position:   old_node.end_position(),
+                    old_text:       Some(
                         old_node
                             .utf8_text(old_source.as_bytes())
                             .unwrap_or("")
                             .to_string(),
                     ),
-                    new_text: Some(
+                    new_text:       Some(
                         new_node
                             .utf8_text(new_source.as_bytes())
                             .unwrap_or("")
                             .to_string(),
                     ),
-                    node_type: old_node.kind().to_string(),
+                    node_type:      old_node.kind().to_string(),
                 });
             }
 
@@ -393,17 +381,17 @@ impl RustIncrementalParser {
             for i in min_count..old_count {
                 if let Some(removed_node) = old_node.child(i) {
                     changes.push(ASTChange {
-                        change_type: ASTChangeType::Removed,
+                        change_type:    ASTChangeType::Removed,
                         start_position: removed_node.start_position(),
-                        end_position: removed_node.end_position(),
-                        old_text: Some(
+                        end_position:   removed_node.end_position(),
+                        old_text:       Some(
                             removed_node
                                 .utf8_text(old_source.as_bytes())
                                 .unwrap_or("")
                                 .to_string(),
                         ),
-                        new_text: None,
-                        node_type: removed_node.kind().to_string(),
+                        new_text:       None,
+                        node_type:      removed_node.kind().to_string(),
                     });
                     diff.removals += 1;
                 }
@@ -412,17 +400,17 @@ impl RustIncrementalParser {
             for i in min_count..new_count {
                 if let Some(added_node) = new_node.child(i) {
                     changes.push(ASTChange {
-                        change_type: ASTChangeType::Added,
+                        change_type:    ASTChangeType::Added,
                         start_position: added_node.start_position(),
-                        end_position: added_node.end_position(),
-                        old_text: None,
-                        new_text: Some(
+                        end_position:   added_node.end_position(),
+                        old_text:       None,
+                        new_text:       Some(
                             added_node
                                 .utf8_text(new_source.as_bytes())
                                 .unwrap_or("")
                                 .to_string(),
                         ),
-                        node_type: added_node.kind().to_string(),
+                        node_type:      added_node.kind().to_string(),
                     });
                     diff.additions += 1;
                 }
@@ -475,11 +463,7 @@ impl RustIncrementalParser {
 }
 
 // Extraction functions for Rust constructs
-fn extract_functions(
-    root_node: &tree_sitter::Node,
-    source: &str,
-    logic_info: &mut HashMap<String, RustLogicInfo>,
-) {
+fn extract_functions(root_node: &tree_sitter::Node, source: &str, logic_info: &mut HashMap<String, RustLogicInfo>) {
     for node in walk_tree(root_node, "function_item") {
         if let Ok(function) = extract_function_info(node, source) {
             let file_key = "current_file".to_string(); // In practice, this would be the file path
@@ -541,11 +525,7 @@ fn extract_function_info(node: tree_sitter::Node, source: &str) -> IDEResult<Fun
     })
 }
 
-fn extract_structs(
-    root_node: &tree_sitter::Node,
-    source: &str,
-    logic_info: &mut HashMap<String, RustLogicInfo>,
-) {
+fn extract_structs(root_node: &tree_sitter::Node, source: &str, logic_info: &mut HashMap<String, RustLogicInfo>) {
     for node in walk_tree(root_node, "struct_item") {
         if let Ok(struct_info) = extract_struct_info(node, source) {
             let file_key = "current_file".to_string(); // In practice, this would be the file path
@@ -571,9 +551,7 @@ fn extract_struct_info(node: tree_sitter::Node, source: &str) -> IDEResult<Struc
     let mut fields = Vec::new();
 
     // Check if it's a tuple struct vs named struct
-    let is_tuple = if let Some(field_declaration_list) =
-        node.child_by_field_name("field_declaration_list")
-    {
+    let is_tuple = if let Some(field_declaration_list) = node.child_by_field_name("field_declaration_list") {
         false // Named struct
     } else if let Some(field_declaration_list) = node.child_by_field_name("field_delimiter_list") {
         true // Tuple-like struct
@@ -609,11 +587,7 @@ fn extract_struct_info(node: tree_sitter::Node, source: &str) -> IDEResult<Struc
 }
 
 // Helper functions for extraction
-fn extract_field_info(
-    node: tree_sitter::Node,
-    source: &str,
-    is_tuple: bool,
-) -> IDEResult<FieldInfo> {
+fn extract_field_info(node: tree_sitter::Node, source: &str, is_tuple: bool) -> IDEResult<FieldInfo> {
     if is_tuple {
         return extract_field_info_with_index(node, source, 0);
     }
@@ -643,11 +617,7 @@ fn extract_field_info(
     })
 }
 
-fn extract_field_info_with_index(
-    node: tree_sitter::Node,
-    source: &str,
-    index: usize,
-) -> IDEResult<FieldInfo> {
+fn extract_field_info_with_index(node: tree_sitter::Node, source: &str, index: usize) -> IDEResult<FieldInfo> {
     let field_type = node
         .utf8_text(source.as_bytes())
         .map(|s| s.to_string())
@@ -661,29 +631,17 @@ fn extract_field_info_with_index(
     })
 }
 
-fn extract_traits(
-    _root_node: &tree_sitter::Node,
-    _source: &str,
-    _logic_info: &mut HashMap<String, RustLogicInfo>,
-) {
+fn extract_traits(_root_node: &tree_sitter::Node, _source: &str, _logic_info: &mut HashMap<String, RustLogicInfo>) {
     // Trait extraction implementation
     // This would analyze trait_item nodes to extract trait definitions
 }
 
-fn extract_macros(
-    _root_node: &tree_sitter::Node,
-    _source: &str,
-    _logic_info: &mut HashMap<String, RustLogicInfo>,
-) {
+fn extract_macros(_root_node: &tree_sitter::Node, _source: &str, _logic_info: &mut HashMap<String, RustLogicInfo>) {
     // Macro extraction implementation
     // This would analyze macro_definition nodes to extract macro definitions
 }
 
-fn extract_imports(
-    _root_node: &tree_sitter::Node,
-    _source: &str,
-    _logic_info: &mut HashMap<String, RustLogicInfo>,
-) {
+fn extract_imports(_root_node: &tree_sitter::Node, _source: &str, _logic_info: &mut HashMap<String, RustLogicInfo>) {
     // Import extraction implementation
     // This would analyze use_declaration nodes to extract import statements
 }
@@ -708,11 +666,7 @@ fn extract_visibility(node: &tree_sitter::Node, source: &str) -> Visibility {
 fn walk_tree(node: &tree_sitter::Node, node_kind: &str) -> Vec<tree_sitter::Node> {
     let mut nodes = Vec::new();
 
-    fn walk_recursive(
-        node: tree_sitter::Node,
-        node_kind: &str,
-        nodes: &mut Vec<tree_sitter::Node>,
-    ) {
+    fn walk_recursive(node: tree_sitter::Node, node_kind: &str, nodes: &mut Vec<tree_sitter::Node>) {
         if node.kind() == node_kind {
             nodes.push(node);
         }
@@ -740,9 +694,7 @@ impl IncrementalParser for RustIncrementalParser {
 
         // Apply incremental changes if available
         if let Some(changes) = changes {
-            if let Ok(Some(modified_source)) =
-                self.apply_changes_incremental(changes, old_source).await
-            {
+            if let Ok(Some(modified_source)) = self.apply_changes_incremental(changes, old_source).await {
                 return self.parse_internal(&modified_source, old_tree).await;
             }
         }
@@ -781,8 +733,7 @@ impl IncrementalParser for RustIncrementalParser {
 
     async fn parse_file(&mut self, file_path: &Path) -> IDEResult<ParseTree> {
         // Read and validate file
-        let validated_path =
-            ValidatedFilePath::new(&file_path.to_string_lossy(), "rust_parser_parse_file")?;
+        let validated_path = ValidatedFilePath::new(&file_path.to_string_lossy(), "rust_parser_parse_file")?;
 
         let content = tokio::fs::read_to_string(validated_path.as_path())
             .await
@@ -814,11 +765,11 @@ impl CloneBox for RustIncrementalParser {
 impl Default for RustOptimizations {
     fn default() -> Self {
         RustOptimizations {
-            track_macros: true,
-            track_traits: true,
-            track_lifetimes: true,
-            enable_caching: true,
-            max_cache_size_per_file: 1024 * 1024,
+            track_macros:               true,
+            track_traits:               true,
+            track_lifetimes:            true,
+            enable_caching:             true,
+            max_cache_size_per_file:    1024 * 1024,
             enable_parallel_processing: true,
         }
     }

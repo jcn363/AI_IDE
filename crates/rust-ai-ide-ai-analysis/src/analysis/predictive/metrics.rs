@@ -7,14 +7,15 @@
 //! - Predictive metrics forecasting
 //! - Comprehensive dashboards and reports
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 /// Comprehensive quality metrics analyzer
 #[derive(Debug)]
 pub struct QualityMetricsAnalyzer {
-    trend_analyzer: TrendAnalyzer,
-    benchmark_comparator: BenchmarkComparator,
+    trend_analyzer:        TrendAnalyzer,
+    benchmark_comparator:  BenchmarkComparator,
     predictive_forecaster: PredictiveForecaster,
 }
 
@@ -22,8 +23,8 @@ impl QualityMetricsAnalyzer {
     /// Create a new quality metrics analyzer
     pub fn new() -> Self {
         Self {
-            trend_analyzer: TrendAnalyzer::new(),
-            benchmark_comparator: BenchmarkComparator::new(),
+            trend_analyzer:        TrendAnalyzer::new(),
+            benchmark_comparator:  BenchmarkComparator::new(),
             predictive_forecaster: PredictiveForecaster::new(),
         }
     }
@@ -54,10 +55,7 @@ impl QualityMetricsAnalyzer {
     }
 
     /// Collect current metrics from the project
-    async fn collect_current_metrics(
-        &self,
-        project_path: &str,
-    ) -> Result<CurrentMetrics, PredictiveError> {
+    async fn collect_current_metrics(&self, project_path: &str) -> Result<CurrentMetrics, PredictiveError> {
         let mut metrics = CurrentMetrics::default();
 
         // Collect basic code metrics
@@ -77,14 +75,14 @@ impl QualityMetricsAnalyzer {
 /// Current metrics snapshot
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CurrentMetrics {
-    pub timestamp: chrono::DateTime<chrono::Utc>,
-    pub code_metrics: CodeMetrics,
-    pub security_metrics: SecurityMetrics,
-    pub performance_metrics: PerformanceMetrics,
+    pub timestamp:               chrono::DateTime<chrono::Utc>,
+    pub code_metrics:            CodeMetrics,
+    pub security_metrics:        SecurityMetrics,
+    pub performance_metrics:     PerformanceMetrics,
     pub maintainability_metrics: MaintainabilityMetrics,
-    pub test_coverage_metrics: TestCoverageMetrics,
-    pub documentation_metrics: DocumentationMetrics,
-    pub architecture_metrics: ArchitectureMetrics,
+    pub test_coverage_metrics:   TestCoverageMetrics,
+    pub documentation_metrics:   DocumentationMetrics,
+    pub architecture_metrics:    ArchitectureMetrics,
     pub business_impact_metrics: BusinessImpactMetrics,
 }
 
@@ -101,10 +99,7 @@ impl TrendAnalyzer {
         }
     }
 
-    fn analyze_trends(
-        &self,
-        historical_data: Option<&HistoricalData>,
-    ) -> Result<TrendAnalysis, PredictiveError> {
+    fn analyze_trends(&self, historical_data: Option<&HistoricalData>) -> Result<TrendAnalysis, PredictiveError> {
         if let Some(data) = historical_data {
             let trends = self.calculate_metric_trends(data)?;
             let predictions = self.predict_future_trends(&trends)?;
@@ -122,10 +117,7 @@ impl TrendAnalyzer {
         }
     }
 
-    fn calculate_metric_trends(
-        &self,
-        data: &HistoricalData,
-    ) -> Result<HashMap<String, MetricTrend>, PredictiveError> {
+    fn calculate_metric_trends(&self, data: &HistoricalData) -> Result<HashMap<String, MetricTrend>, PredictiveError> {
         let mut trends = HashMap::new();
 
         // Calculate trends for each metric category
@@ -198,8 +190,7 @@ impl TrendAnalyzer {
 
     fn calculate_performance_trend(&self, data: &HistoricalData) -> MetricTrend {
         let recent_reports = self.get_recent_reports(data);
-        let performance_scores: Vec<f32> =
-            recent_reports.iter().map(|r| r.performance_score).collect();
+        let performance_scores: Vec<f32> = recent_reports.iter().map(|r| r.performance_score).collect();
 
         self.calculate_trend(&performance_scores, "performance")
     }
@@ -214,11 +205,11 @@ impl TrendAnalyzer {
     fn calculate_trend(&self, values: &[f32], name: &str) -> MetricTrend {
         if values.len() < 2 {
             return MetricTrend {
-                metric_name: name.to_string(),
-                direction: TrendDirection::Stable,
-                slope: 0.0,
-                confidence: 0.0,
-                data_points: values.len(),
+                metric_name:    name.to_string(),
+                direction:      TrendDirection::Stable,
+                slope:          0.0,
+                confidence:     0.0,
+                data_points:    values.len(),
                 recent_average: values.iter().sum::<f32>() / values.len() as f32,
             };
         }
@@ -273,8 +264,7 @@ impl TrendAnalyzer {
 
         for (i, &y) in values.iter().enumerate() {
             let x = i as f32;
-            let predicted_y =
-                mean_y + self.calculate_linear_regression_slope(values) * (x - mean_y);
+            let predicted_y = mean_y + self.calculate_linear_regression_slope(values) * (x - mean_y);
             ss_res += (y - predicted_y).powi(2);
             ss_tot += (y - mean_y).powi(2);
         }
@@ -283,10 +273,7 @@ impl TrendAnalyzer {
         r_squared.max(0.0).min(1.0)
     }
 
-    fn predict_metric_future(
-        &self,
-        trend: &MetricTrend,
-    ) -> Result<FuturePrediction, PredictiveError> {
+    fn predict_metric_future(&self, trend: &MetricTrend) -> Result<FuturePrediction, PredictiveError> {
         let months_ahead = 3;
         let predicted_value = trend.recent_average + trend.slope * (months_ahead as f32 * 30.0);
         let confidence = trend.confidence * 0.8; // Slightly lower confidence for predictions
@@ -310,11 +297,11 @@ impl TrendAnalyzer {
             .iter()
             .filter(|r| r.timestamp > cutoff)
             .map(|r| MiniReport {
-                timestamp: r.timestamp,
+                timestamp:             r.timestamp,
                 maintainability_index: r.maintainability_index,
-                security_score: r.security_score,
-                performance_score: r.performance_score,
-                test_coverage: r.test_coverage,
+                security_score:        r.security_score,
+                performance_score:     r.performance_score,
+                test_coverage:         r.test_coverage,
             })
             .collect()
     }
@@ -329,41 +316,32 @@ pub struct BenchmarkComparator {
 impl BenchmarkComparator {
     fn new() -> Self {
         let mut standards = HashMap::new();
-        standards.insert(
-            "maintainability".to_string(),
-            IndustryBenchmark {
-                excellent_threshold: 0.85,
-                good_threshold: 0.7,
-                average_threshold: 0.55,
-                poor_threshold: 0.4,
-                percentile_25: 0.65,
-                percentile_75: 0.8,
-                percentile_90: 0.85,
-            },
-        );
+        standards.insert("maintainability".to_string(), IndustryBenchmark {
+            excellent_threshold: 0.85,
+            good_threshold:      0.7,
+            average_threshold:   0.55,
+            poor_threshold:      0.4,
+            percentile_25:       0.65,
+            percentile_75:       0.8,
+            percentile_90:       0.85,
+        });
 
-        standards.insert(
-            "security".to_string(),
-            IndustryBenchmark {
-                excellent_threshold: 0.9,
-                good_threshold: 0.75,
-                average_threshold: 0.6,
-                poor_threshold: 0.4,
-                percentile_25: 0.7,
-                percentile_75: 0.8,
-                percentile_90: 0.85,
-            },
-        );
+        standards.insert("security".to_string(), IndustryBenchmark {
+            excellent_threshold: 0.9,
+            good_threshold:      0.75,
+            average_threshold:   0.6,
+            poor_threshold:      0.4,
+            percentile_25:       0.7,
+            percentile_75:       0.8,
+            percentile_90:       0.85,
+        });
 
         Self {
             industry_standards: standards,
         }
     }
 
-    fn compare_with_benchmarks(
-        &self,
-        metrics: &CurrentMetrics,
-    ) -> Result<BenchmarkComparison, PredictiveError> {
+    fn compare_with_benchmarks(&self, metrics: &CurrentMetrics) -> Result<BenchmarkComparison, PredictiveError> {
         let maintainability_comparison = self.compare_metric_with_benchmark(
             metrics.maintainability_metrics.overall_score,
             "maintainability",
@@ -378,8 +356,8 @@ impl BenchmarkComparator {
 
         Ok(BenchmarkComparison {
             maintainability: maintainability_comparison,
-            security: security_comparison,
-            overall_rating: self.calculate_overall_rating(&maintainability_clone, &security_clone),
+            security:        security_comparison,
+            overall_rating:  self.calculate_overall_rating(&maintainability_clone, &security_clone),
         })
     }
 
@@ -388,9 +366,10 @@ impl BenchmarkComparator {
         value: f32,
         metric_name: &str,
     ) -> Result<MetricBenchmarkComparison, PredictiveError> {
-        let benchmark = self.industry_standards.get(metric_name).ok_or_else(|| {
-            PredictiveError::AnalysisFailed(format!("No benchmark available for {}", metric_name))
-        })?;
+        let benchmark = self
+            .industry_standards
+            .get(metric_name)
+            .ok_or_else(|| PredictiveError::AnalysisFailed(format!("No benchmark available for {}", metric_name)))?;
 
         let rating = if value >= benchmark.excellent_threshold {
             BenchmarkRating::Excellent
@@ -494,31 +473,31 @@ pub enum TrendDirection {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricTrend {
-    pub metric_name: String,
-    pub direction: TrendDirection,
-    pub slope: f32,
-    pub confidence: f32,
-    pub data_points: usize,
+    pub metric_name:    String,
+    pub direction:      TrendDirection,
+    pub slope:          f32,
+    pub confidence:     f32,
+    pub data_points:    usize,
     pub recent_average: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FuturePrediction {
-    pub predicted_value: f32,
-    pub timeline_months: u32,
-    pub confidence: f32,
+    pub predicted_value:                f32,
+    pub timeline_months:                u32,
+    pub confidence:                     f32,
     pub trend_continuation_probability: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndustryBenchmark {
     pub excellent_threshold: f32,
-    pub good_threshold: f32,
-    pub average_threshold: f32,
-    pub poor_threshold: f32,
-    pub percentile_25: f32,
-    pub percentile_75: f32,
-    pub percentile_90: f32,
+    pub good_threshold:      f32,
+    pub average_threshold:   f32,
+    pub poor_threshold:      f32,
+    pub percentile_25:       f32,
+    pub percentile_75:       f32,
+    pub percentile_90:       f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -541,35 +520,35 @@ pub enum OverallBenchmarkRating {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricBenchmarkComparison {
-    pub metric_name: String,
-    pub project_value: f32,
-    pub benchmark_rating: BenchmarkRating,
-    pub percentile: f32,
-    pub benchmark_average: f32,
+    pub metric_name:        String,
+    pub project_value:      f32,
+    pub benchmark_rating:   BenchmarkRating,
+    pub percentile:         f32,
+    pub benchmark_average:  f32,
     pub improvement_needed: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BenchmarkComparison {
     pub maintainability: MetricBenchmarkComparison,
-    pub security: MetricBenchmarkComparison,
-    pub overall_rating: OverallBenchmarkRating,
+    pub security:        MetricBenchmarkComparison,
+    pub overall_rating:  OverallBenchmarkRating,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrendAnalysis {
-    pub trends: HashMap<String, MetricTrend>,
-    pub predictions: HashMap<String, FuturePrediction>,
-    pub recommendations: Vec<String>,
+    pub trends:               HashMap<String, MetricTrend>,
+    pub predictions:          HashMap<String, FuturePrediction>,
+    pub recommendations:      Vec<String>,
     pub analysis_period_days: u32,
 }
 
 impl Default for TrendAnalysis {
     fn default() -> Self {
         Self {
-            trends: HashMap::new(),
-            predictions: HashMap::new(),
-            recommendations: Vec::new(),
+            trends:               HashMap::new(),
+            predictions:          HashMap::new(),
+            recommendations:      Vec::new(),
             analysis_period_days: 90,
         }
     }
@@ -577,28 +556,28 @@ impl Default for TrendAnalysis {
 
 #[derive(Debug, Clone)]
 struct MiniReport {
-    timestamp: chrono::DateTime<chrono::Utc>,
+    timestamp:             chrono::DateTime<chrono::Utc>,
     maintainability_index: f32,
-    security_score: f32,
-    performance_score: f32,
-    test_coverage: f32,
+    security_score:        f32,
+    performance_score:     f32,
+    test_coverage:         f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComprehensiveQualityReport {
-    pub current_metrics: CurrentMetrics,
-    pub trend_analysis: TrendAnalysis,
+    pub current_metrics:      CurrentMetrics,
+    pub trend_analysis:       TrendAnalysis,
     pub benchmark_comparison: BenchmarkComparison,
-    pub predictions: MetricForecasts,
-    pub generated_at: chrono::DateTime<chrono::Utc>,
-    pub confidence: f32,
+    pub predictions:          MetricForecasts,
+    pub generated_at:         chrono::DateTime<chrono::Utc>,
+    pub confidence:           f32,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MetricForecasts {
     pub maintainability_forecast: Option<FuturePrediction>,
-    pub security_forecast: Option<FuturePrediction>,
-    pub performance_forecast: Option<FuturePrediction>,
+    pub security_forecast:        Option<FuturePrediction>,
+    pub performance_forecast:     Option<FuturePrediction>,
 }
 
 // Metric collection functions (implementations would analyze actual codebases)
@@ -614,27 +593,19 @@ fn collect_performance_metrics(_project_path: &str) -> Result<PerformanceMetrics
     Ok(PerformanceMetrics::default())
 }
 
-fn collect_maintainability_metrics(
-    _project_path: &str,
-) -> Result<MaintainabilityMetrics, PredictiveError> {
+fn collect_maintainability_metrics(_project_path: &str) -> Result<MaintainabilityMetrics, PredictiveError> {
     Ok(MaintainabilityMetrics::default())
 }
 
-fn collect_test_coverage_metrics(
-    _project_path: &str,
-) -> Result<TestCoverageMetrics, PredictiveError> {
+fn collect_test_coverage_metrics(_project_path: &str) -> Result<TestCoverageMetrics, PredictiveError> {
     Ok(TestCoverageMetrics::default())
 }
 
-fn collect_documentation_metrics(
-    _project_path: &str,
-) -> Result<DocumentationMetrics, PredictiveError> {
+fn collect_documentation_metrics(_project_path: &str) -> Result<DocumentationMetrics, PredictiveError> {
     Ok(DocumentationMetrics::default())
 }
 
-fn collect_architecture_metrics(
-    _project_path: &str,
-) -> Result<ArchitectureMetrics, PredictiveError> {
+fn collect_architecture_metrics(_project_path: &str) -> Result<ArchitectureMetrics, PredictiveError> {
     Ok(ArchitectureMetrics::default())
 }
 
@@ -645,67 +616,66 @@ fn calculate_business_impact_metrics(_metrics: &CurrentMetrics) -> BusinessImpac
 // Metric data structures
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CodeMetrics {
-    pub lines_of_code: usize,
-    pub function_count: usize,
-    pub struct_count: usize,
+    pub lines_of_code:         usize,
+    pub function_count:        usize,
+    pub struct_count:          usize,
     pub cyclomatic_complexity: f32,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SecurityMetrics {
     pub vulnerability_count: u32,
-    pub security_score: f32,
-    pub overall_score: f32,
+    pub security_score:      f32,
+    pub overall_score:       f32,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PerformanceMetrics {
     pub average_response_time: f32,
-    pub throughput_score: f32,
-    pub memory_efficiency: f32,
-    pub overall_score: f32,
+    pub throughput_score:      f32,
+    pub memory_efficiency:     f32,
+    pub overall_score:         f32,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MaintainabilityMetrics {
-    pub maintainability_index: f32,
-    pub technical_debt_ratio: f32,
+    pub maintainability_index:  f32,
+    pub technical_debt_ratio:   f32,
     pub code_duplication_ratio: f32,
-    pub overall_score: f32,
+    pub overall_score:          f32,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct TestCoverageMetrics {
-    pub line_coverage: f32,
-    pub branch_coverage: f32,
+    pub line_coverage:      f32,
+    pub branch_coverage:    f32,
     pub test_to_code_ratio: f32,
-    pub overall_score: f32,
+    pub overall_score:      f32,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DocumentationMetrics {
-    pub api_documentation_ratio: f32,
-    pub inline_comments_ratio: f32,
+    pub api_documentation_ratio:    f32,
+    pub inline_comments_ratio:      f32,
     pub documentation_completeness: f32,
-    pub overall_score: f32,
+    pub overall_score:              f32,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ArchitectureMetrics {
-    pub coupling_score: f32,
-    pub cohesion_score: f32,
+    pub coupling_score:           f32,
+    pub cohesion_score:           f32,
     pub architectural_complexity: f32,
-    pub overall_score: f32,
+    pub overall_score:            f32,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BusinessImpactMetrics {
     pub development_velocity: f32,
-    pub bug_fix_time: f32,
+    pub bug_fix_time:         f32,
     pub deployment_frequency: f32,
-    pub overall_score: f32,
+    pub overall_score:        f32,
 }
 
 // Re-export for public use
-pub use super::HistoricalData;
-pub use super::PredictiveError;
+pub use super::{HistoricalData, PredictiveError};

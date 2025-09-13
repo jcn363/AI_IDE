@@ -1,20 +1,18 @@
 //! Diagnostic parsing functions
 
-use crate::diagnostics::*;
 use anyhow::Result;
 use serde_json::Value;
 
+use crate::diagnostics::*;
+
 /// Parse a compiler diagnostic from JSON message
-pub async fn parse_compiler_diagnostic(
-    message: &Value,
-    workspace_path: &str,
-) -> Option<CompilerDiagnostic> {
+pub async fn parse_compiler_diagnostic(message: &Value, workspace_path: &str) -> Option<CompilerDiagnostic> {
     let level = message.get("level")?.as_str()?.to_string();
     let msg = message.get("message")?.as_str()?.to_string();
 
     let code = if let Some(code_obj) = message.get("code") {
         Some(CompilerErrorCode {
-            code: code_obj.get("code")?.as_str()?.to_string(),
+            code:        code_obj.get("code")?.as_str()?.to_string(),
             explanation: code_obj
                 .get("explanation")
                 .and_then(|e| e.as_str())
@@ -30,13 +28,10 @@ pub async fn parse_compiler_diagnostic(
         Vec::new()
     };
 
-    let children = if let Some(children_array) = message.get("children").and_then(|c| c.as_array())
-    {
+    let children = if let Some(children_array) = message.get("children").and_then(|c| c.as_array()) {
         let mut children = Vec::new();
         for child in children_array {
-            if let Some(child_diagnostic) =
-                Box::pin(parse_compiler_diagnostic(child, workspace_path)).await
-            {
+            if let Some(child_diagnostic) = Box::pin(parse_compiler_diagnostic(child, workspace_path)).await {
                 children.push(child_diagnostic);
             }
         }
@@ -53,8 +48,8 @@ pub async fn parse_compiler_diagnostic(
     // Extract context information
     let context = extract_diagnostic_context(&spans, workspace_path).await;
 
-    // Note: Using only fields available in rust_ai_ide_lsp::CompilerDiagnostic (file_path, line, column)
-    // Other fields from full definition are omitted as LSP version is incomplete
+    // Note: Using only fields available in rust_ai_ide_lsp::CompilerDiagnostic (file_path, line,
+    // column) Other fields from full definition are omitted as LSP version is incomplete
     // Providing defaults for main diagnostic information
     Some(CompilerDiagnostic {
         level,
@@ -125,15 +120,12 @@ pub fn parse_span_text(text: &Value) -> Option<SpanText> {
 }
 
 /// Extract diagnostic context from spans
-pub async fn extract_diagnostic_context(
-    spans: &[CompilerSpan],
-    workspace_path: &str,
-) -> DiagnosticContext {
+pub async fn extract_diagnostic_context(spans: &[CompilerSpan], workspace_path: &str) -> DiagnosticContext {
     let mut context = DiagnosticContext {
-        file_path: String::new(),
-        function_name: None,
-        module_path: None,
-        surrounding_code: None,
+        file_path:           String::new(),
+        function_name:       None,
+        module_path:         None,
+        surrounding_code:    None,
         related_diagnostics: Vec::new(),
     };
 
@@ -199,32 +191,30 @@ pub fn extract_module_path(content: &str) -> Option<String> {
 }
 
 /// Generate suggested fixes from diagnostic
-pub async fn generate_suggested_fixes(
-    diagnostic: &CompilerDiagnostic,
-) -> Result<Vec<FixSuggestion>> {
+pub async fn generate_suggested_fixes(diagnostic: &CompilerDiagnostic) -> Result<Vec<FixSuggestion>> {
     let mut fixes = Vec::new();
 
     // Note: LSP CompilerDiagnostic doesn't have spans field, so we cannot access suggested_replacement
-    // Since we can't modify the LSP crate, we'll create a basic fix suggestion without span-specific info
-    // In a complete implementation, spans would be parsed separately if available
+    // Since we can't modify the LSP crate, we'll create a basic fix suggestion without span-specific
+    // info In a complete implementation, spans would be parsed separately if available
 
     // For now, create a basic suggestion when spans are not available in the incomplete LSP definition
     // Create a basic fix suggestion since spans are not available in incomplete LSP definition
     let fix = FixSuggestion {
-        id: uuid::Uuid::new_v4().to_string(),
-        title: "Basic compiler suggestion".to_string(),
-        description: diagnostic.message.clone(),
-        changes: vec![], // Empty changes since spans are not available
-        confidence: 0.5, // Medium confidence
-        explanation: format!(
+        id:                  uuid::Uuid::new_v4().to_string(),
+        title:               "Basic compiler suggestion".to_string(),
+        description:         diagnostic.message.clone(),
+        changes:             vec![], // Empty changes since spans are not available
+        confidence:          0.5,    // Medium confidence
+        explanation:         format!(
             "Basic suggestion for compiler error: {}",
             diagnostic.message
         ),
         documentation_links: vec![],
-        auto_applicable: false, // Cannot auto-apply without specific changes
-        impact: FixImpact::Local,
-        source_pattern: None,
-        warnings: vec![],
+        auto_applicable:     false, // Cannot auto-apply without specific changes
+        impact:              FixImpact::Local,
+        source_pattern:      None,
+        warnings:            vec![],
     };
     fixes.push(fix);
     // Since spans are unavailable, we don't process suggested_replacement here

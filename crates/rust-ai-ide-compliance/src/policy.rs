@@ -2,8 +2,9 @@
 //!
 //! Automated policy enforcement and management for compliance requirements.
 
-use crate::core::{ComplianceError, ComplianceResult, PolicyConfig, PolicyValidationMode};
 use serde::{Deserialize, Serialize};
+
+use crate::core::{ComplianceError, ComplianceResult, PolicyConfig, PolicyValidationMode};
 
 /// Policy enforcement engine
 #[derive(Debug)]
@@ -27,24 +28,17 @@ impl PolicyEnforcementEngine {
     }
 
     /// Enforce policies on given data
-    pub async fn enforce_policies(
-        &self,
-        data: &[u8],
-        context: &PolicyContext,
-    ) -> ComplianceResult<PolicyResult> {
+    pub async fn enforce_policies(&self, data: &[u8], context: &PolicyContext) -> ComplianceResult<PolicyResult> {
         // Placeholder implementation
         Ok(PolicyResult {
-            allowed: true,
-            violations: Vec::new(),
+            allowed:          true,
+            violations:       Vec::new(),
             applied_policies: Vec::new(),
         })
     }
 
     /// Update policy definitions
-    pub async fn update_policies(
-        &mut self,
-        policies: Vec<PolicyDefinition>,
-    ) -> ComplianceResult<()> {
+    pub async fn update_policies(&mut self, policies: Vec<PolicyDefinition>) -> ComplianceResult<()> {
         // Placeholder implementation
         Ok(())
     }
@@ -53,9 +47,9 @@ impl PolicyEnforcementEngine {
     pub async fn get_policy_status(&self) -> ComplianceResult<PolicyStatus> {
         // Placeholder implementation
         Ok(PolicyStatus {
-            active_policies: 0,
+            active_policies:      0,
             violations_this_hour: 0,
-            last_violation: None,
+            last_violation:       None,
         })
     }
 
@@ -69,46 +63,46 @@ impl PolicyEnforcementEngine {
 /// Policy definition structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolicyDefinition {
-    pub id: String,
-    pub name: String,
+    pub id:          String,
+    pub name:        String,
     pub description: String,
-    pub framework: String,
-    pub rules: Vec<PolicyRule>,
-    pub priority: PolicyPriority,
-    pub enabled: bool,
+    pub framework:   String,
+    pub rules:       Vec<PolicyRule>,
+    pub priority:    PolicyPriority,
+    pub enabled:     bool,
 }
 
 /// Policy rule structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolicyRule {
     pub condition: String,
-    pub action: PolicyAction,
-    pub severity: PolicySeverity,
+    pub action:    PolicyAction,
+    pub severity:  PolicySeverity,
 }
 
 /// Policy context for enforcement
 #[derive(Debug, Clone)]
 pub struct PolicyContext {
-    pub user_id: Option<String>,
+    pub user_id:   Option<String>,
     pub operation: String,
-    pub resource: String,
+    pub resource:  String,
     pub framework: String,
 }
 
 /// Policy enforcement result
 #[derive(Debug, Clone)]
 pub struct PolicyResult {
-    pub allowed: bool,
-    pub violations: Vec<PolicyViolation>,
+    pub allowed:          bool,
+    pub violations:       Vec<PolicyViolation>,
     pub applied_policies: Vec<String>,
 }
 
 /// Policy violation information
 #[derive(Debug, Clone)]
 pub struct PolicyViolation {
-    pub policy_id: String,
-    pub rule_id: String,
-    pub severity: PolicySeverity,
+    pub policy_id:   String,
+    pub rule_id:     String,
+    pub severity:    PolicySeverity,
     pub description: String,
 }
 
@@ -144,7 +138,7 @@ pub enum PolicySeverity {
 /// Policy status summary
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolicyStatus {
-    pub active_policies: usize,
+    pub active_policies:      usize,
     pub violations_this_hour: usize,
-    pub last_violation: Option<chrono::DateTime<chrono::Utc>>,
+    pub last_violation:       Option<chrono::DateTime<chrono::Utc>>,
 }

@@ -3,9 +3,10 @@
 //! Supports loading configuration from TOML, YAML, and JSON files
 //! with automatic format detection and security validation.
 
+use std::path::PathBuf;
+
 use async_trait::async_trait;
 use notify::Watcher;
-use std::path::PathBuf;
 use tokio::fs;
 
 use super::{ConfigSource, SourceUtils};
@@ -15,9 +16,9 @@ use crate::sources::ConfigFormat;
 #[derive(Debug, Clone)]
 pub struct FileSource {
     /// Configuration directories to search
-    directories: Vec<PathBuf>,
+    directories:        Vec<PathBuf>,
     /// File format (auto-detect if None)
-    format: Option<ConfigFormat>,
+    format:             Option<ConfigFormat>,
     /// Security validator reference
     security_validator: std::sync::Arc<crate::SecurityValidator>,
 }
@@ -26,13 +27,13 @@ impl FileSource {
     /// Create a new file source with default directories
     pub fn new() -> Self {
         Self {
-            directories: vec![
+            directories:        vec![
                 PathBuf::from("./config"),
                 dirs::config_dir()
                     .unwrap_or_else(|| PathBuf::from("./config"))
                     .join("rust-ai-ide"),
             ],
-            format: None,
+            format:             None,
             security_validator: std::sync::Arc::new(crate::SecurityValidator::new(
                 crate::config::SecurityLevel::High,
             )),
@@ -53,10 +54,7 @@ impl FileSource {
     }
 
     /// Set security validator
-    pub fn with_security_validator(
-        mut self,
-        validator: std::sync::Arc<crate::SecurityValidator>,
-    ) -> Self {
+    pub fn with_security_validator(mut self, validator: std::sync::Arc<crate::SecurityValidator>) -> Self {
         self.security_validator = validator;
         self
     }
@@ -137,27 +135,20 @@ impl ConfigSource for FileSource {
             )))
         })?;
 
-        let format = self.detect_format(&path).map_err(|e| {
-            crate::RustAIError::Serialization(format!("Format detection error: {}", e))
-        })?;
+        let format = self
+            .detect_format(&path)
+            .map_err(|e| crate::RustAIError::Serialization(format!("Format detection error: {}", e)))?;
 
         let value: serde_json::Value = match format {
-            ConfigFormat::Json => serde_json::from_str(&content).map_err(|e| {
-                crate::RustAIError::Serialization(format!("JSON parsing error: {}", e))
-            })?,
-            ConfigFormat::Yaml => serde_yaml::from_str(&content).map_err(|e| {
-                crate::RustAIError::Serialization(format!("YAML parsing error: {}", e))
-            })?,
+            ConfigFormat::Json => serde_json::from_str(&content)
+                .map_err(|e| crate::RustAIError::Serialization(format!("JSON parsing error: {}", e)))?,
+            ConfigFormat::Yaml => serde_yaml::from_str(&content)
+                .map_err(|e| crate::RustAIError::Serialization(format!("YAML parsing error: {}", e)))?,
             ConfigFormat::Toml => {
-                let toml_value: toml::Value = toml::from_str(&content).map_err(|e| {
-                    crate::RustAIError::Serialization(format!("TOML parsing error: {}", e))
-                })?;
-                serde_json::to_value(toml_value).map_err(|e| {
-                    crate::RustAIError::Serialization(format!(
-                        "TOML to JSON conversion error: {}",
-                        e
-                    ))
-                })?
+                let toml_value: toml::Value = toml::from_str(&content)
+                    .map_err(|e| crate::RustAIError::Serialization(format!("TOML parsing error: {}", e)))?;
+                serde_json::to_value(toml_value)
+                    .map_err(|e| crate::RustAIError::Serialization(format!("TOML to JSON conversion error: {}", e)))?
             }
         };
 
@@ -193,23 +184,15 @@ impl ConfigSource for FileSource {
 
         // Serialize and write
         let content = match format {
-            ConfigFormat::Json => serde_json::to_string_pretty(config).map_err(|e| {
-                crate::RustAIError::Serialization(format!("JSON serialization error: {}", e))
-            })?,
-            ConfigFormat::Yaml => serde_yaml::to_string(config).map_err(|e| {
-                crate::RustAIError::Serialization(format!("YAML serialization error: {}", e))
-            })?,
+            ConfigFormat::Json => serde_json::to_string_pretty(config)
+                .map_err(|e| crate::RustAIError::Serialization(format!("JSON serialization error: {}", e)))?,
+            ConfigFormat::Yaml => serde_yaml::to_string(config)
+                .map_err(|e| crate::RustAIError::Serialization(format!("YAML serialization error: {}", e)))?,
             ConfigFormat::Toml => {
-                let toml_value: toml::Value =
-                    serde_json::from_value(config.clone()).map_err(|e| {
-                        crate::RustAIError::Serialization(format!(
-                            "JSON to TOML conversion error: {}",
-                            e
-                        ))
-                    })?;
-                toml::to_string_pretty(&toml_value).map_err(|e| {
-                    crate::RustAIError::Serialization(format!("TOML serialization error: {}", e))
-                })?
+                let toml_value: toml::Value = serde_json::from_value(config.clone())
+                    .map_err(|e| crate::RustAIError::Serialization(format!("JSON to TOML conversion error: {}", e)))?;
+                toml::to_string_pretty(&toml_value)
+                    .map_err(|e| crate::RustAIError::Serialization(format!("TOML serialization error: {}", e)))?
             }
         };
 
@@ -241,7 +224,7 @@ impl ConfigSource for FileSource {
 // Configuration watching for hot reload
 #[derive(Debug)]
 pub struct ConfigWatcher {
-    watcher: notify::RecommendedWatcher,
+    watcher:       notify::RecommendedWatcher,
     watched_files: std::sync::Arc<std::sync::Mutex<std::collections::HashSet<PathBuf>>>,
 }
 
@@ -258,9 +241,7 @@ impl ConfigWatcher {
 
         Ok(Self {
             watcher,
-            watched_files: std::sync::Arc::new(std::sync::Mutex::new(
-                std::collections::HashSet::new(),
-            )),
+            watched_files: std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashSet::new())),
         })
     }
 
@@ -302,8 +283,9 @@ impl ConfigWatcher {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_file_source_creation() {

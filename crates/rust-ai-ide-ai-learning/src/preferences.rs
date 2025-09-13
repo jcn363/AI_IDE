@@ -58,9 +58,10 @@ impl PreferencesManager {
 
         match key {
             "enable_learning" => {
-                current_prefs.enable_learning = value.to_string().parse().map_err(|_| {
-                    AIServiceError::ValidationError("Invalid boolean value".to_string())
-                })?;
+                current_prefs.enable_learning = value
+                    .to_string()
+                    .parse()
+                    .map_err(|_| AIServiceError::ValidationError("Invalid boolean value".to_string()))?;
             }
             "privacy_mode" => {
                 // Would need to parse privacy mode from string
@@ -70,30 +71,34 @@ impl PreferencesManager {
                 ));
             }
             "confidence_threshold" => {
-                current_prefs.confidence_threshold = value.to_string().parse().map_err(|_| {
-                    AIServiceError::ValidationError("Invalid confidence threshold".to_string())
-                })?;
+                current_prefs.confidence_threshold = value
+                    .to_string()
+                    .parse()
+                    .map_err(|_| AIServiceError::ValidationError("Invalid confidence threshold".to_string()))?;
             }
             "max_patterns_per_type" => {
-                current_prefs.max_patterns_per_type = value.to_string().parse().map_err(|_| {
-                    AIServiceError::ValidationError("Invalid max patterns value".to_string())
-                })?;
+                current_prefs.max_patterns_per_type = value
+                    .to_string()
+                    .parse()
+                    .map_err(|_| AIServiceError::ValidationError("Invalid max patterns value".to_string()))?;
             }
             "enable_community_sharing" => {
-                current_prefs.enable_community_sharing =
-                    value.to_string().parse().map_err(|_| {
-                        AIServiceError::ValidationError("Invalid boolean value".to_string())
-                    })?;
+                current_prefs.enable_community_sharing = value
+                    .to_string()
+                    .parse()
+                    .map_err(|_| AIServiceError::ValidationError("Invalid boolean value".to_string()))?;
             }
             "use_community_patterns" => {
-                current_prefs.use_community_patterns = value.to_string().parse().map_err(|_| {
-                    AIServiceError::ValidationError("Invalid boolean value".to_string())
-                })?;
+                current_prefs.use_community_patterns = value
+                    .to_string()
+                    .parse()
+                    .map_err(|_| AIServiceError::ValidationError("Invalid boolean value".to_string()))?;
             }
             "auto_apply_threshold" => {
-                current_prefs.auto_apply_threshold = value.to_string().parse().map_err(|_| {
-                    AIServiceError::ValidationError("Invalid auto apply threshold".to_string())
-                })?;
+                current_prefs.auto_apply_threshold = value
+                    .to_string()
+                    .parse()
+                    .map_err(|_| AIServiceError::ValidationError("Invalid auto apply threshold".to_string()))?;
             }
             _ => {
                 return Err(AIServiceError::ValidationError(format!(
@@ -131,8 +136,7 @@ impl PreferencesManager {
         // Confidence threshold should be >= auto apply threshold
         if prefs.confidence_threshold < prefs.auto_apply_threshold {
             return Err(AIServiceError::ValidationError(
-                "Confidence threshold must be greater than or equal to auto apply threshold"
-                    .to_string(),
+                "Confidence threshold must be greater than or equal to auto apply threshold".to_string(),
             ));
         }
 
@@ -161,52 +165,52 @@ pub mod templates {
     /// Template for maximum learning (risk-tolerant users)
     pub fn maximum_learning() -> LearningPreferences {
         LearningPreferences {
-            enable_learning: true,
-            privacy_mode: PrivacyMode::OptIn,
-            confidence_threshold: 0.5,
-            max_patterns_per_type: 200,
+            enable_learning:          true,
+            privacy_mode:             PrivacyMode::OptIn,
+            confidence_threshold:     0.5,
+            max_patterns_per_type:    200,
             enable_community_sharing: true,
-            use_community_patterns: true,
-            auto_apply_threshold: 0.8,
+            use_community_patterns:   true,
+            auto_apply_threshold:     0.8,
         }
     }
 
     /// Template for balanced learning and privacy
     pub fn balanced() -> LearningPreferences {
         LearningPreferences {
-            enable_learning: true,
-            privacy_mode: PrivacyMode::Anonymous,
-            confidence_threshold: 0.7,
-            max_patterns_per_type: 100,
+            enable_learning:          true,
+            privacy_mode:             PrivacyMode::Anonymous,
+            confidence_threshold:     0.7,
+            max_patterns_per_type:    100,
             enable_community_sharing: false,
-            use_community_patterns: true,
-            auto_apply_threshold: 0.9,
+            use_community_patterns:   true,
+            auto_apply_threshold:     0.9,
         }
     }
 
     /// Template for privacy-first learning (conservative users)
     pub fn privacy_first() -> LearningPreferences {
         LearningPreferences {
-            enable_learning: true,
-            privacy_mode: PrivacyMode::OptOut,
-            confidence_threshold: 0.8,
-            max_patterns_per_type: 50,
+            enable_learning:          true,
+            privacy_mode:             PrivacyMode::OptOut,
+            confidence_threshold:     0.8,
+            max_patterns_per_type:    50,
             enable_community_sharing: false,
-            use_community_patterns: false,
-            auto_apply_threshold: 0.95,
+            use_community_patterns:   false,
+            auto_apply_threshold:     0.95,
         }
     }
 
     /// Template for development/testing (minimal restrictions)
     pub fn development() -> LearningPreferences {
         LearningPreferences {
-            enable_learning: true,
-            privacy_mode: PrivacyMode::OptIn,
-            confidence_threshold: 0.3,
-            max_patterns_per_type: 500,
+            enable_learning:          true,
+            privacy_mode:             PrivacyMode::OptIn,
+            confidence_threshold:     0.3,
+            max_patterns_per_type:    500,
             enable_community_sharing: false,
-            use_community_patterns: true,
-            auto_apply_threshold: 0.6,
+            use_community_patterns:   true,
+            auto_apply_threshold:     0.6,
         }
     }
 }
@@ -259,38 +263,30 @@ pub mod utils {
     pub fn get_privacy_recommendation(prefs: &LearningPreferences) -> &'static str {
         match prefs.privacy_mode {
             PrivacyMode::OptOut => "All learning data is kept private and local.",
-            PrivacyMode::Anonymous => {
-                "Learning data is anonymized before any sharing. Community patterns are available."
-            }
-            PrivacyMode::OptIn => {
+            PrivacyMode::Anonymous =>
+                "Learning data is anonymized before any sharing. Community patterns are available.",
+            PrivacyMode::OptIn =>
                 if prefs.enable_community_sharing {
-                    "Patterns may be anonymously shared with the community. Community patterns are used to improve suggestions."
+                    "Patterns may be anonymously shared with the community. Community patterns are used to improve \
+                     suggestions."
                 } else {
-                    "Community patterns are used but your patterns are not shared. This provides good balance between privacy and functionality."
-                }
-            }
+                    "Community patterns are used but your patterns are not shared. This provides good balance between \
+                     privacy and functionality."
+                },
         }
     }
 
     /// Validate preference transitions (ensure smooth upgrades)
-    pub fn validate_transition(
-        from: &LearningPreferences,
-        to: &LearningPreferences,
-    ) -> Result<(), String> {
+    pub fn validate_transition(from: &LearningPreferences, to: &LearningPreferences) -> Result<(), String> {
         // Ensure confidence threshold doesn't drop too drastically
         if from.confidence_threshold - to.confidence_threshold > 0.3 {
-            return Err(
-                "Confidence threshold changes are limited to avoid sudden behavior changes"
-                    .to_string(),
-            );
+            return Err("Confidence threshold changes are limited to avoid sudden behavior changes".to_string());
         }
 
         // Prevent certain privacy mode reversals
         match (&from.privacy_mode, &to.privacy_mode) {
             (PrivacyMode::OptOut, PrivacyMode::OptIn) => {
-                return Err(
-                    "Cannot directly switch from OptOut to OptIn mode for safety".to_string(),
-                );
+                return Err("Cannot directly switch from OptOut to OptIn mode for safety".to_string());
             }
             _ => {} // All other transitions are allowed
         }

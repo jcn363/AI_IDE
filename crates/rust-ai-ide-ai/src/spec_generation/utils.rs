@@ -1,13 +1,15 @@
 //! Utility functions for the specification generation system
 
-use anyhow;
 use std::path::Path;
+
+use anyhow;
 
 /// Sanitizes input strings to valid Rust identifiers by allowing only ASCII letters and digits.
 /// Leading digits are handled by prefixing an underscore.
 /// Reserved keywords receive a trailing underscore.
-/// Sanitizing identifiers ensures generated names are valid Rust identifiers to prevent compilation errors.
-/// Additionally, if the input is empty or contains only invalid characters, the function returns a valid fallback identifier such as an underscore.
+/// Sanitizing identifiers ensures generated names are valid Rust identifiers to prevent compilation
+/// errors. Additionally, if the input is empty or contains only invalid characters, the function
+/// returns a valid fallback identifier such as an underscore.
 ///
 /// # Examples
 /// ```

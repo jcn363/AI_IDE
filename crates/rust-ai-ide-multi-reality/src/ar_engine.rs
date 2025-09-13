@@ -14,11 +14,9 @@
 //! - Performance optimization for AR workloads
 
 use std::sync::Arc;
-use tokio::sync::Mutex;
-
 /// Augmented Reality Engine for Multi-Reality Coordination
-
 use std::sync::Arc;
+
 use tokio::sync::Mutex;
 
 use crate::types::*;
@@ -48,11 +46,11 @@ pub enum ArEngineState {
 #[derive(Debug)]
 pub struct ArEngine {
     /// Current engine state
-    state: Arc<Mutex<ArEngineState>>,
+    state:             Arc<Mutex<ArEngineState>>,
     /// Supported camera types
     supported_cameras: Vec<CameraType>,
     /// Current session configuration
-    session_config: Option<MultiRealityConfig>,
+    session_config:    Option<MultiRealityConfig>,
 }
 
 impl ArEngine {
@@ -62,9 +60,9 @@ impl ArEngine {
     /// * `Self` - New AR engine instance
     pub async fn new() -> Self {
         Self {
-            state: Arc::new(Mutex::new(ArEngineState::Uninitialized)),
+            state:             Arc::new(Mutex::new(ArEngineState::Uninitialized)),
             supported_cameras: vec![CameraType::RGB, CameraType::Depth],
-            session_config: None,
+            session_config:    None,
         }
     }
 
@@ -73,8 +71,8 @@ impl ArEngine {
     /// This method initializes and starts an AR session with the specified configuration.
     ///
     /// # Returns
-    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Success or error starting the session
+    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` - Success or error starting the
+    ///   session
     pub async fn start_ar_session(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut state = self.state.lock().await;
 
@@ -83,15 +81,9 @@ impl ArEngine {
                 *state = ArEngineState::Active;
                 Ok(())
             }
-            ArEngineState::Initializing => {
-                Err("AR engine still initializing".into())
-            }
-            ArEngineState::Active => {
-                Err("AR session already active".into())
-            }
-            ArEngineState::Error(_) => {
-                Err("AR engine in error state".into())
-            }
+            ArEngineState::Initializing => Err("AR engine still initializing".into()),
+            ArEngineState::Active => Err("AR session already active".into()),
+            ArEngineState::Error(_) => Err("AR engine in error state".into()),
             _ => {
                 // Placeholder implementation - in real system this would start AR session
                 *state = ArEngineState::Active;
@@ -105,8 +97,8 @@ impl ArEngine {
     /// This method stops the currently running AR session and returns to ready state.
     ///
     /// # Returns
-    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Success or error stopping the session
+    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` - Success or error stopping the
+    ///   session
     pub async fn stop_ar_session(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut state = self.state.lock().await;
 
@@ -119,9 +111,7 @@ impl ArEngine {
                 *state = ArEngineState::Ready;
                 Ok(())
             }
-            _ => {
-                Err("No active AR session to stop".into())
-            }
+            _ => Err("No active AR session to stop".into()),
         }
     }
 
@@ -130,8 +120,8 @@ impl ArEngine {
     /// This method suspends the AR session for power management or focus changes.
     ///
     /// # Returns
-    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Success or error suspending the session
+    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` - Success or error suspending the
+    ///   session
     pub async fn suspend_ar_session(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut state = self.state.lock().await;
 
@@ -141,9 +131,7 @@ impl ArEngine {
                 Ok(())
             }
             ArEngineState::Suspended => Ok(()), // Already suspended
-            _ => {
-                Err("No active AR session to suspend".into())
-            }
+            _ => Err("No active AR session to suspend".into()),
         }
     }
 
@@ -152,8 +140,8 @@ impl ArEngine {
     /// This method resumes an AR session that was previously suspended.
     ///
     /// # Returns
-    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Success or error resuming the session
+    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` - Success or error resuming the
+    ///   session
     pub async fn resume_ar_session(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut state = self.state.lock().await;
 
@@ -163,9 +151,7 @@ impl ArEngine {
                 Ok(())
             }
             ArEngineState::Active => Ok(()), // Already active
-            _ => {
-                Err("No suspended AR session to resume".into())
-            }
+            _ => Err("No suspended AR session to resume".into()),
         }
     }
 
@@ -183,8 +169,8 @@ impl ArEngine {
     /// detected objects with their positions.
     ///
     /// # Returns
-    /// * `Result<Vec<ArDetectedObject>, Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Detected objects or error
+    /// * `Result<Vec<ArDetectedObject>, Box<dyn std::error::Error + Send + Sync>>` - Detected
+    ///   objects or error
     pub async fn detect_objects(&self) -> Result<Vec<ArDetectedObject>, Box<dyn std::error::Error + Send + Sync>> {
         let state = self.state.lock().await;
 
@@ -193,15 +179,19 @@ impl ArEngine {
         }
 
         // Placeholder implementation - in real system this would perform actual object detection
-        Ok(vec![
-            ArDetectedObject {
-                id: "obj_1".to_string(),
-                object_type: "code_file".to_string(),
-                position: SpatialPosition { x: 0.5, y: 0.3, z: -1.0, rotation: None, scale: None },
-                confidence: 0.85,
-                properties: Default::default(),
-            }
-        ])
+        Ok(vec![ArDetectedObject {
+            id:          "obj_1".to_string(),
+            object_type: "code_file".to_string(),
+            position:    SpatialPosition {
+                x:        0.5,
+                y:        0.3,
+                z:        -1.0,
+                rotation: None,
+                scale:    None,
+            },
+            confidence:  0.85,
+            properties:  Default::default(),
+        }])
     }
 
     /// Add AR overlay
@@ -214,8 +204,8 @@ impl ArEngine {
     /// * `content` - Content of the overlay
     ///
     /// # Returns
-    /// * `Result<String, Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Overlay ID and success, or error
+    /// * `Result<String, Box<dyn std::error::Error + Send + Sync>>` - Overlay ID and success, or
+    ///   error
     pub async fn add_ar_overlay(
         &self,
         position: SpatialPosition,
@@ -243,8 +233,8 @@ impl ArEngine {
     /// * `position` - Position where the gesture occurred
     ///
     /// # Returns
-    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Success or error processing the gesture
+    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` - Success or error processing the
+    ///   gesture
     pub async fn process_ar_gesture(
         &self,
         gesture: GestureType,
@@ -265,15 +255,15 @@ impl ArEngine {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArDetectedObject {
     /// Unique object identifier
-    pub id: String,
+    pub id:          String,
     /// Type of detected object
     pub object_type: String,
     /// Position in AR space
-    pub position: SpatialPosition,
+    pub position:    SpatialPosition,
     /// Confidence score (0.0 to 1.0)
-    pub confidence: f32,
+    pub confidence:  f32,
     /// Additional object properties
-    pub properties: HashMap<String, String>,
+    pub properties:  HashMap<String, String>,
 }
 
 /// AR overlay types
@@ -296,13 +286,13 @@ pub enum ArOverlayType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArOverlayContent {
     /// Text content of overlay
-    pub text: Option<String>,
+    pub text:             Option<String>,
     /// Image data (base64 encoded)
-    pub image: Option<String>,
+    pub image:            Option<String>,
     /// 3D model reference
-    pub model_3d: Option<String>,
+    pub model_3d:         Option<String>,
     /// Interactive elements configuration
-    pub interactive: bool,
+    pub interactive:      bool,
     /// Display duration in seconds
     pub duration_seconds: Option<f32>,
 }
@@ -393,11 +383,11 @@ pub enum ArEngineState {
 #[derive(Debug)]
 pub struct ArEngine {
     /// Current engine state
-    state: Arc<Mutex<ArEngineState>>,
+    state:             Arc<Mutex<ArEngineState>>,
     /// Supported camera types
     supported_cameras: Vec<CameraType>,
     /// Current session configuration
-    session_config: Option<MultiRealityConfig>,
+    session_config:    Option<MultiRealityConfig>,
 }
 
 impl ArEngine {
@@ -407,9 +397,9 @@ impl ArEngine {
     /// * `Self` - New AR engine instance
     pub async fn new() -> Self {
         Self {
-            state: Arc::new(Mutex::new(ArEngineState::Uninitialized)),
+            state:             Arc::new(Mutex::new(ArEngineState::Uninitialized)),
             supported_cameras: vec![CameraType::RGB, CameraType::Depth],
-            session_config: None,
+            session_config:    None,
         }
     }
 
@@ -418,8 +408,8 @@ impl ArEngine {
     /// This method initializes and starts an AR session with the specified configuration.
     ///
     /// # Returns
-    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Success or error starting the session
+    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` - Success or error starting the
+    ///   session
     pub async fn start_ar_session(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut state = self.state.lock().await;
 
@@ -428,15 +418,9 @@ impl ArEngine {
                 *state = ArEngineState::Active;
                 Ok(())
             }
-            ArEngineState::Initializing => {
-                Err("AR engine still initializing".into())
-            }
-            ArEngineState::Active => {
-                Err("AR session already active".into())
-            }
-            ArEngineState::Error(_) => {
-                Err("AR engine in error state".into())
-            }
+            ArEngineState::Initializing => Err("AR engine still initializing".into()),
+            ArEngineState::Active => Err("AR session already active".into()),
+            ArEngineState::Error(_) => Err("AR engine in error state".into()),
             _ => {
                 // Placeholder implementation - in real system this would start AR session
                 *state = ArEngineState::Active;
@@ -450,8 +434,8 @@ impl ArEngine {
     /// This method stops the currently running AR session and returns to ready state.
     ///
     /// # Returns
-    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Success or error stopping the session
+    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` - Success or error stopping the
+    ///   session
     pub async fn stop_ar_session(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut state = self.state.lock().await;
 
@@ -464,9 +448,7 @@ impl ArEngine {
                 *state = ArEngineState::Ready;
                 Ok(())
             }
-            _ => {
-                Err("No active AR session to stop".into())
-            }
+            _ => Err("No active AR session to stop".into()),
         }
     }
 
@@ -475,8 +457,8 @@ impl ArEngine {
     /// This method suspends the AR session for power management or focus changes.
     ///
     /// # Returns
-    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Success or error suspending the session
+    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` - Success or error suspending the
+    ///   session
     pub async fn suspend_ar_session(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut state = self.state.lock().await;
 
@@ -486,9 +468,7 @@ impl ArEngine {
                 Ok(())
             }
             ArEngineState::Suspended => Ok(()), // Already suspended
-            _ => {
-                Err("No active AR session to suspend".into())
-            }
+            _ => Err("No active AR session to suspend".into()),
         }
     }
 
@@ -497,8 +477,8 @@ impl ArEngine {
     /// This method resumes an AR session that was previously suspended.
     ///
     /// # Returns
-    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Success or error resuming the session
+    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` - Success or error resuming the
+    ///   session
     pub async fn resume_ar_session(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut state = self.state.lock().await;
 
@@ -508,9 +488,7 @@ impl ArEngine {
                 Ok(())
             }
             ArEngineState::Active => Ok(()), // Already active
-            _ => {
-                Err("No suspended AR session to resume".into())
-            }
+            _ => Err("No suspended AR session to resume".into()),
         }
     }
 
@@ -528,8 +506,8 @@ impl ArEngine {
     /// detected objects with their positions.
     ///
     /// # Returns
-    /// * `Result<Vec<ArDetectedObject>, Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Detected objects or error
+    /// * `Result<Vec<ArDetectedObject>, Box<dyn std::error::Error + Send + Sync>>` - Detected
+    ///   objects or error
     pub async fn detect_objects(&self) -> Result<Vec<ArDetectedObject>, Box<dyn std::error::Error + Send + Sync>> {
         let state = self.state.lock().await;
 
@@ -538,15 +516,19 @@ impl ArEngine {
         }
 
         // Placeholder implementation - in real system this would perform actual object detection
-        Ok(vec![
-            ArDetectedObject {
-                id: "obj_1".to_string(),
-                object_type: "code_file".to_string(),
-                position: SpatialPosition { x: 0.5, y: 0.3, z: -1.0, rotation: None, scale: None },
-                confidence: 0.85,
-                properties: Default::default(),
-            }
-        ])
+        Ok(vec![ArDetectedObject {
+            id:          "obj_1".to_string(),
+            object_type: "code_file".to_string(),
+            position:    SpatialPosition {
+                x:        0.5,
+                y:        0.3,
+                z:        -1.0,
+                rotation: None,
+                scale:    None,
+            },
+            confidence:  0.85,
+            properties:  Default::default(),
+        }])
     }
 
     /// Add AR overlay
@@ -559,8 +541,8 @@ impl ArEngine {
     /// * `content` - Content of the overlay
     ///
     /// # Returns
-    /// * `Result<String, Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Overlay ID and success, or error
+    /// * `Result<String, Box<dyn std::error::Error + Send + Sync>>` - Overlay ID and success, or
+    ///   error
     pub async fn add_ar_overlay(
         &self,
         position: SpatialPosition,
@@ -588,8 +570,8 @@ impl ArEngine {
     /// * `position` - Position where the gesture occurred
     ///
     /// # Returns
-    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` -
-    ///   Success or error processing the gesture
+    /// * `Result<(), Box<dyn std::error::Error + Send + Sync>>` - Success or error processing the
+    ///   gesture
     pub async fn process_ar_gesture(
         &self,
         gesture: GestureType,
@@ -610,15 +592,15 @@ impl ArEngine {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArDetectedObject {
     /// Unique object identifier
-    pub id: String,
+    pub id:          String,
     /// Type of detected object
     pub object_type: String,
     /// Position in AR space
-    pub position: SpatialPosition,
+    pub position:    SpatialPosition,
     /// Confidence score (0.0 to 1.0)
-    pub confidence: f32,
+    pub confidence:  f32,
     /// Additional object properties
-    pub properties: HashMap<String, String>,
+    pub properties:  HashMap<String, String>,
 }
 
 /// AR overlay types
@@ -641,13 +623,13 @@ pub enum ArOverlayType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArOverlayContent {
     /// Text content of overlay
-    pub text: Option<String>,
+    pub text:             Option<String>,
     /// Image data (base64 encoded)
-    pub image: Option<String>,
+    pub image:            Option<String>,
     /// 3D model reference
-    pub model_3d: Option<String>,
+    pub model_3d:         Option<String>,
     /// Interactive elements configuration
-    pub interactive: bool,
+    pub interactive:      bool,
     /// Display duration in seconds
     pub duration_seconds: Option<f32>,
 }

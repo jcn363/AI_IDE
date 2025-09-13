@@ -1,11 +1,9 @@
 //! System orchestration module - stub implementation
 
-use crate::{
-    error::Result,
-    types::{
-        ArchitecturalPattern, GeneratedCode, ImprovementMetrics, ParsedSpecification, RefinedCode,
-        SpecificationGenerator, SpecificationRequest, ValidationResult,
-    },
+use crate::error::Result;
+use crate::types::{
+    ArchitecturalPattern, GeneratedCode, ImprovementMetrics, ParsedSpecification, RefinedCode, SpecificationGenerator,
+    SpecificationRequest, ValidationResult,
 };
 
 /// Main system orchestrator - placeholder implementation
@@ -20,10 +18,7 @@ impl IntelligentSpecGenerator {
         Ok(Self {})
     }
 
-    pub async fn generate_from_spec(
-        &self,
-        _request: &SpecificationRequest,
-    ) -> Result<GeneratedCode> {
+    pub async fn generate_from_spec(&self, _request: &SpecificationRequest) -> Result<GeneratedCode> {
         Err(crate::error::SpecGenError::GenerateError {
             message: "Not implemented".to_string(),
         })
@@ -56,17 +51,13 @@ impl SpecificationGenerator for IntelligentSpecGenerator {
         })
     }
 
-    async fn validate_generation(
-        &self,
-        _code: &str,
-        _spec: &ParsedSpecification,
-    ) -> Result<ValidationResult> {
+    async fn validate_generation(&self, _code: &str, _spec: &ParsedSpecification) -> Result<ValidationResult> {
         Ok(ValidationResult {
-            is_valid: true,
-            issues: vec![],
-            score: 1.0,
+            is_valid:           true,
+            issues:             vec![],
+            score:              1.0,
             issues_by_category: std::collections::HashMap::new(),
-            blocking_issues: vec![],
+            blocking_issues:    vec![],
         })
     }
 
@@ -76,30 +67,28 @@ impl SpecificationGenerator for IntelligentSpecGenerator {
         _spec: &ParsedSpecification,
         _feedback: &str,
     ) -> Result<RefinedCode> {
-        use crate::types::ChangeType;
-        use crate::types::CodeChange;
-        use crate::types::RefinedCode;
+        use crate::types::{ChangeType, CodeChange, RefinedCode};
 
         Ok(RefinedCode {
-            code: _code.to_string(),
-            changes: vec![CodeChange {
-                change_type: ChangeType::Modification,
-                location: "Not implemented".to_string(),
-                old_content: None,
-                new_content: Some("Not implemented".to_string()),
+            code:                _code.to_string(),
+            changes:             vec![CodeChange {
+                change_type:   ChangeType::Modification,
+                location:      "Not implemented".to_string(),
+                old_content:   None,
+                new_content:   Some("Not implemented".to_string()),
                 justification: "Placeholder implementation".to_string(),
-                impact: "None".to_string(),
+                impact:        "None".to_string(),
             }],
-            explanation: "Not implemented yet".to_string(),
+            explanation:         "Not implemented yet".to_string(),
             improvement_metrics: ImprovementMetrics {
-                quality_before: 0.5,
-                quality_after: 0.5,
+                quality_before:    0.5,
+                quality_after:     0.5,
                 complexity_before: 0.0,
-                complexity_after: 0.0,
-                issues_resolved: 0,
-                new_issues: 0,
+                complexity_after:  0.0,
+                issues_resolved:   0,
+                new_issues:        0,
             },
-            review_comments: vec![],
+            review_comments:     vec![],
         })
     }
 }

@@ -3,8 +3,9 @@
 //! Provides secure configuration management for all observability features,
 //! supporting environment variable injection and secrets management.
 
-use serde::{Deserialize, Serialize};
 use std::env;
+
+use serde::{Deserialize, Serialize};
 
 /// Main configuration structure for observability
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -31,10 +32,10 @@ pub struct ObservabilityConfig {
 impl Default for ObservabilityConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            tracing: TracingConfig::default(),
-            metrics: MetricsConfig::default(),
-            health: HealthConfig::default(),
+            enabled:  true,
+            tracing:  TracingConfig::default(),
+            metrics:  MetricsConfig::default(),
+            health:   HealthConfig::default(),
             alerting: AlertingConfig::default(),
             security: SecurityConfig::default(),
         }
@@ -50,9 +51,9 @@ impl ObservabilityConfig {
                 .parse()
                 .unwrap_or(true),
 
-            tracing: TracingConfig::from_env(),
-            metrics: MetricsConfig::from_env(),
-            health: HealthConfig::from_env(),
+            tracing:  TracingConfig::from_env(),
+            metrics:  MetricsConfig::from_env(),
+            health:   HealthConfig::from_env(),
             alerting: AlertingConfig::from_env(),
             security: SecurityConfig::from_env(),
         }
@@ -101,11 +102,11 @@ pub struct TracingConfig {
 impl Default for TracingConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            level: "INFO".to_string(),
-            otel_enabled: false,
-            otel_endpoint: None,
-            service_name: "rust-ai-ide".to_string(),
+            enabled:         true,
+            level:           "INFO".to_string(),
+            otel_enabled:    false,
+            otel_endpoint:   None,
+            service_name:    "rust-ai-ide".to_string(),
             service_version: env!("CARGO_PKG_VERSION").to_string(),
         }
     }
@@ -128,8 +129,7 @@ impl TracingConfig {
 
             otel_endpoint: env::var("RUST_AI_IDE_OTEL_ENDPOINT").ok(),
 
-            service_name: env::var("RUST_AI_IDE_SERVICE_NAME")
-                .unwrap_or_else(|_| "rust-ai-ide".to_string()),
+            service_name: env::var("RUST_AI_IDE_SERVICE_NAME").unwrap_or_else(|_| "rust-ai-ide".to_string()),
 
             service_version: env!("CARGO_PKG_VERSION").to_string(),
         }
@@ -164,12 +164,12 @@ pub struct MetricsConfig {
 impl Default for MetricsConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            prefix: "rust_ai_ide".to_string(),
-            prometheus_port: 9090,
-            retention_hours: 24,
-            system_metrics_enabled: true,
-            app_metrics_enabled: true,
+            enabled:                  true,
+            prefix:                   "rust_ai_ide".to_string(),
+            prometheus_port:          9090,
+            retention_hours:          24,
+            system_metrics_enabled:   true,
+            app_metrics_enabled:      true,
             collection_interval_secs: 10,
         }
     }
@@ -183,8 +183,7 @@ impl MetricsConfig {
                 .parse()
                 .unwrap_or(true),
 
-            prefix: env::var("RUST_AI_IDE_METRICS_PREFIX")
-                .unwrap_or_else(|_| "rust_ai_ide".to_string()),
+            prefix: env::var("RUST_AI_IDE_METRICS_PREFIX").unwrap_or_else(|_| "rust_ai_ide".to_string()),
 
             prometheus_port: env::var("RUST_AI_IDE_PROMETHEUS_PORT")
                 .unwrap_or_else(|_| "9090".to_string())
@@ -239,12 +238,12 @@ pub struct HealthConfig {
 impl Default for HealthConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            check_interval_secs: 30,
-            max_response_time_secs: 5,
+            enabled:                 true,
+            check_interval_secs:     30,
+            max_response_time_secs:  5,
             database_checks_enabled: true,
-            lsp_checks_enabled: true,
-            ai_checks_enabled: true,
+            lsp_checks_enabled:      true,
+            ai_checks_enabled:       true,
         }
     }
 }
@@ -310,11 +309,11 @@ pub struct AlertingConfig {
 impl Default for AlertingConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
-            max_alerts_per_hour: 100,
-            cpu_warning_threshold: 85.0,
+            enabled:                  true,
+            max_alerts_per_hour:      100,
+            cpu_warning_threshold:    85.0,
             memory_warning_threshold: 90.0,
-            disk_warning_threshold: 95.0,
+            disk_warning_threshold:   95.0,
             lsp_error_rate_threshold: 5.0,
         }
     }

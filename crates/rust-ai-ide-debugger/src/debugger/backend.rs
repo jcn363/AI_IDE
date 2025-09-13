@@ -1,8 +1,9 @@
 //! Debugger backend trait and implementations
 
+use async_trait::async_trait;
+
 use crate::debugger::types::{DebuggerConfig, DebuggerEvent, StackFrame, VariableInfo};
 use crate::debugger::DebuggerError;
-use async_trait::async_trait;
 
 /// Trait defining the interface for debugger backends
 #[async_trait]
@@ -41,17 +42,11 @@ pub trait DebuggerBackendTrait: Send + Sync {
     async fn get_stack_trace(&self) -> Result<Vec<StackFrame>, DebuggerError>;
 
     /// Get variables in the current scope
-    async fn get_variables(
-        &self,
-        frame_id: Option<u32>,
-    ) -> Result<Vec<VariableInfo>, DebuggerError>;
+    async fn get_variables(&self, frame_id: Option<u32>) -> Result<Vec<VariableInfo>, DebuggerError>;
 
     /// Evaluate an expression in the current context
-    async fn evaluate_expression(
-        &self,
-        expression: &str,
-        frame_id: Option<u32>,
-    ) -> Result<VariableInfo, DebuggerError>;
+    async fn evaluate_expression(&self, expression: &str, frame_id: Option<u32>)
+        -> Result<VariableInfo, DebuggerError>;
 
     /// Set the event sender for debugger events
     fn set_event_sender(&mut self, sender: tokio::sync::mpsc::UnboundedSender<DebuggerEvent>);

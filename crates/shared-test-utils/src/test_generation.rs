@@ -18,12 +18,10 @@ pub mod utils;
 // Re-exports for backward compatibility and consolidation
 pub use language_detector::*;
 pub use language_generator::*;
-pub use test_config::*;
-pub use unified_generator::*;
-pub use utils::*;
-
 // Additional exports for unified harness integration
 pub use test_config::TestGenerationContext;
-pub use unified_generator::{RefactoringContext, RefactoringResult};
+pub use test_config::*;
+pub use unified_generator::{RefactoringContext, RefactoringResult, *};
+pub use utils::*;
 
 // Legacy compatibility aliases for codegen crate - removed unused glob imports

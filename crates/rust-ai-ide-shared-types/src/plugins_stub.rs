@@ -3,9 +3,10 @@
 //! This module provides stub implementations for plugin functionality
 //! when the plugins feature is not enabled, preventing compilation errors.
 
+use async_trait::async_trait;
+
 use crate::errors::PluginError;
 use crate::types::{GeneratedCode, ParsedType, TransformationContext};
-use async_trait::async_trait;
 
 /// Stub implementation of plugin system when plugins are disabled
 #[derive(Debug)]

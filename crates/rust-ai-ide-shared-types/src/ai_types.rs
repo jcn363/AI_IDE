@@ -1,5 +1,6 @@
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 /// Request for AI inference operations
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -45,13 +46,13 @@ pub struct InferenceConfig {
 impl Default for InferenceConfig {
     fn default() -> Self {
         Self {
-            temperature: Some(0.7),
-            max_tokens: Some(100),
-            top_p: Some(1.0),
+            temperature:       Some(0.7),
+            max_tokens:        Some(100),
+            top_p:             Some(1.0),
             frequency_penalty: Some(0.0),
-            presence_penalty: Some(0.0),
-            stream: false,
-            custom_params: HashMap::new(),
+            presence_penalty:  Some(0.0),
+            stream:            false,
+            custom_params:     HashMap::new(),
         }
     }
 }
@@ -153,9 +154,9 @@ pub enum SearchAlgorithm {
 /// Filter predicates for vector search
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SearchFilter {
-    pub field: String,
+    pub field:    String,
     pub operator: FilterOperator,
-    pub value: serde_json::Value,
+    pub value:    serde_json::Value,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -171,9 +172,9 @@ impl Default for VectorSearchRequest {
     fn default() -> Self {
         Self {
             query_vector: vec![],
-            top_k: 10,
-            filters: None,
-            config: VectorSearchConfig::default(),
+            top_k:        10,
+            filters:      None,
+            config:       VectorSearchConfig::default(),
         }
     }
 }
@@ -181,10 +182,10 @@ impl Default for VectorSearchRequest {
 impl Default for VectorSearchConfig {
     fn default() -> Self {
         Self {
-            algorithm: SearchAlgorithm::Similarity,
+            algorithm:       SearchAlgorithm::Similarity,
             include_content: true,
-            min_similarity: Some(0.5),
-            collections: vec![],
+            min_similarity:  Some(0.5),
+            collections:     vec![],
         }
     }
 }
@@ -251,12 +252,12 @@ pub struct SearchRanking {
 impl Default for CodeSearchRequest {
     fn default() -> Self {
         Self {
-            query: String::new(),
-            languages: vec![],
-            file_patterns: vec![],
+            query:              String::new(),
+            languages:          vec![],
+            file_patterns:      vec![],
             max_snippet_length: 200,
-            include_docs: true,
-            ranking: SearchRanking::default(),
+            include_docs:       true,
+            ranking:            SearchRanking::default(),
         }
     }
 }
@@ -264,10 +265,10 @@ impl Default for CodeSearchRequest {
 impl Default for SearchRanking {
     fn default() -> Self {
         Self {
-            semantic_weight: 0.7,
+            semantic_weight:    0.7,
             exact_match_weight: 0.2,
-            proximity_weight: 0.05,
-            recency_factor: 0.05,
+            proximity_weight:   0.05,
+            recency_factor:     0.05,
         }
     }
 }
@@ -318,15 +319,15 @@ pub enum CodeResultType {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ContextLine {
-    pub line_number: u32,
-    pub content: String,
+    pub line_number:    u32,
+    pub content:        String,
     pub is_highlighted: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HighlightSpan {
-    pub start: usize,
-    pub end: usize,
+    pub start:      usize,
+    pub end:        usize,
     pub match_type: MatchType,
 }
 
@@ -380,17 +381,17 @@ pub struct ABTestResults {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TrafficStatistics {
-    pub total_requests: u64,
-    pub error_count: u64,
+    pub total_requests:       u64,
+    pub error_count:          u64,
     pub avg_response_time_ms: f64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PerformanceStatistics {
-    pub avg_inference_time_ms: f64,
-    pub avg_confidence: f32,
+    pub avg_inference_time_ms:  f64,
+    pub avg_confidence:         f32,
     pub total_tokens_processed: u64,
-    pub error_rate: f32,
+    pub error_rate:             f32,
 }
 
 /// Worker task status for distributed processing
@@ -513,25 +514,25 @@ pub struct PerformanceMetrics {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MemoryMetrics {
-    pub used_mb: u64,
-    pub total_mb: u64,
-    pub page_faults: u64,
-    pub cache_hits: u64,
+    pub used_mb:      u64,
+    pub total_mb:     u64,
+    pub page_faults:  u64,
+    pub cache_hits:   u64,
     pub cache_misses: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ModelPerformance {
-    pub inference_count: u64,
+    pub inference_count:       u64,
     pub avg_inference_time_ms: f64,
-    pub error_rate: f32,
-    pub last_used: u64,
+    pub error_rate:            f32,
+    pub last_used:             u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CacheMetrics {
     pub total_requests: u64,
-    pub hit_rate: f32,
-    pub size_mb: u64,
-    pub entries_count: u64,
+    pub hit_rate:       f32,
+    pub size_mb:        u64,
+    pub entries_count:  u64,
 }

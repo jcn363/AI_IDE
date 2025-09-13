@@ -7,7 +7,7 @@ use std::sync::RwLock;
 /// Manages incremental analysis of changed files
 #[derive(Debug)]
 pub struct IncrementalAnalyzer {
-    analyzed_files: RwLock<HashSet<PathBuf>>,
+    analyzed_files:     RwLock<HashSet<PathBuf>>,
     file_modifications: RwLock<HashSet<PathBuf>>,
 }
 
@@ -15,7 +15,7 @@ impl IncrementalAnalyzer {
     /// Create a new incremental analyzer
     pub fn new() -> Self {
         Self {
-            analyzed_files: RwLock::new(HashSet::new()),
+            analyzed_files:     RwLock::new(HashSet::new()),
             file_modifications: RwLock::new(HashSet::new()),
         }
     }
@@ -57,8 +57,7 @@ impl IncrementalAnalyzer {
 
     /// Check if a file has been modified since last analysis
     pub fn is_modified_since_last_analysis(&self, path: &Path) -> bool {
-        self.analyzed_files.read().unwrap().contains(path)
-            && self.file_modifications.read().unwrap().contains(path)
+        self.analyzed_files.read().unwrap().contains(path) && self.file_modifications.read().unwrap().contains(path)
     }
 }
 
@@ -71,8 +70,8 @@ impl Default for IncrementalAnalyzer {
 /// Track file changes for incremental analysis
 pub struct FileChangeTracker {
     modified_files: HashSet<PathBuf>,
-    new_files: HashSet<PathBuf>,
-    deleted_files: HashSet<PathBuf>,
+    new_files:      HashSet<PathBuf>,
+    deleted_files:  HashSet<PathBuf>,
 }
 
 impl FileChangeTracker {
@@ -80,8 +79,8 @@ impl FileChangeTracker {
     pub fn new() -> Self {
         Self {
             modified_files: HashSet::new(),
-            new_files: HashSet::new(),
-            deleted_files: HashSet::new(),
+            new_files:      HashSet::new(),
+            deleted_files:  HashSet::new(),
         }
     }
 

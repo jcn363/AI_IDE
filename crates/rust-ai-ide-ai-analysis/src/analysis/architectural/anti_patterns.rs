@@ -4,37 +4,39 @@
 //! including long methods, code duplication, large classes, and other
 //! maintainability issues.
 
-use crate::analysis::architectural::patterns::*;
-use crate::analysis::{AnalysisCategory, Severity};
+use std::collections::{HashMap, HashSet};
+
 use regex::Regex;
 use rust_ai_ide_common::{IdeError, IdeResult};
-use std::collections::{HashMap, HashSet};
+
+use crate::analysis::architectural::patterns::*;
+use crate::analysis::{AnalysisCategory, Severity};
 
 /// Anti-pattern detector with configurable thresholds
 pub struct AntiPatternDetector {
     /// Configuration for anti-pattern detection
-    config: AntiPatternConfig,
+    config:               AntiPatternConfig,
     /// Code duplication detector
     duplication_detector: DuplicationDetector,
     /// Method complexity analyzer
-    complexity_analyzer: ComplexityAnalyzer,
+    complexity_analyzer:  ComplexityAnalyzer,
 }
 
 /// Configuration for anti-pattern detection
 #[derive(Debug, Clone)]
 pub struct AntiPatternConfig {
     /// Maximum lines for a method
-    pub max_method_lines: usize,
+    pub max_method_lines:            usize,
     /// Maximum methods per class
-    pub max_methods_per_class: usize,
+    pub max_methods_per_class:       usize,
     /// Maximum fields per class
-    pub max_fields_per_class: usize,
+    pub max_fields_per_class:        usize,
     /// Minimum duplication similarity threshold
-    pub min_duplication_similarity: f32,
+    pub min_duplication_similarity:  f32,
     /// Maximum cyclomatic complexity
-    pub max_cyclomatic_complexity: u32,
+    pub max_cyclomatic_complexity:   u32,
     /// Maximum nesting depth
-    pub max_nesting_depth: u32,
+    pub max_nesting_depth:           u32,
     /// Maximum dependencies per module
     pub max_dependencies_per_module: usize,
 }
@@ -44,7 +46,7 @@ pub struct DuplicationDetector {
     /// Minimum length for code fragments to check for duplication
     min_fragment_lines: usize,
     /// Hash map of code hashes to locations
-    code_hashes: HashMap<u64, Vec<CodeLocation>>,
+    code_hashes:        HashMap<u64, Vec<CodeLocation>>,
 }
 
 /// Complexity analysis for methods and classes
@@ -60,9 +62,9 @@ impl AntiPatternDetector {
     /// Create a new anti-pattern detector with default configuration
     pub fn new() -> Self {
         Self {
-            config: AntiPatternConfig::default(),
+            config:               AntiPatternConfig::default(),
             duplication_detector: DuplicationDetector::new(),
-            complexity_analyzer: ComplexityAnalyzer::new(),
+            complexity_analyzer:  ComplexityAnalyzer::new(),
         }
     }
 
@@ -117,21 +119,21 @@ impl AntiPatternDetector {
                         .complexity_analyzer
                         .calculate_cyclomatic_complexity(method_content);
                     let location = CodeLocation {
-                        file_path: file_path.to_string(),
-                        start_line: range.start_point.row as u32 + 1,
-                        start_column: range.start_point.column as u32,
-                        end_line: range.end_point.row as u32 + 1,
-                        end_column: range.end_point.column as u32,
+                        file_path:     file_path.to_string(),
+                        start_line:    range.start_point.row as u32 + 1,
+                        start_column:  range.start_point.column as u32,
+                        end_line:      range.end_point.row as u32 + 1,
+                        end_column:    range.end_point.column as u32,
                         function_name: Some(method_name.clone()),
-                        class_name: None,
+                        class_name:    None,
                     };
 
                     let metrics = AntiPatternMetrics {
-                        violation_score: line_count as f32 / self.config.max_method_lines as f32,
-                        maintainability_impact: (cyclomatic_complexity as f32 / 10.0).min(1.0),
-                        testability_impact: (cyclomatic_complexity as f32 / 15.0).min(1.0),
-                        performance_impact: 0.0, // Long methods don't directly affect performance
-                        affected_lines: line_count,
+                        violation_score:         line_count as f32 / self.config.max_method_lines as f32,
+                        maintainability_impact:  (cyclomatic_complexity as f32 / 10.0).min(1.0),
+                        testability_impact:      (cyclomatic_complexity as f32 / 15.0).min(1.0),
+                        performance_impact:      0.0, // Long methods don't directly affect performance
+                        affected_lines:          line_count,
                         refactoring_effort_days: (cyclomatic_complexity as f32 / 5.0).ceil(),
                     };
 
@@ -188,23 +190,22 @@ impl AntiPatternDetector {
 
                 if is_large {
                     let location = CodeLocation {
-                        file_path: file_path.to_string(),
-                        start_line: range.start_point.row as u32 + 1,
-                        start_column: 0,
-                        end_line: range.end_point.row as u32 + 1,
-                        end_column: 0,
+                        file_path:     file_path.to_string(),
+                        start_line:    range.start_point.row as u32 + 1,
+                        start_column:  0,
+                        end_line:      range.end_point.row as u32 + 1,
+                        end_column:    0,
                         function_name: None,
-                        class_name: Some(class_name.clone()),
+                        class_name:    Some(class_name.clone()),
                     };
 
                     let metrics = AntiPatternMetrics {
-                        violation_score: (method_count as f32
-                            / self.config.max_methods_per_class as f32)
+                        violation_score:         (method_count as f32 / self.config.max_methods_per_class as f32)
                             .max(field_count as f32 / self.config.max_fields_per_class as f32),
-                        maintainability_impact: 1.0,
-                        testability_impact: 0.8,
-                        performance_impact: 0.2,
-                        affected_lines: line_count,
+                        maintainability_impact:  1.0,
+                        testability_impact:      0.8,
+                        performance_impact:      0.2,
+                        affected_lines:          line_count,
                         refactoring_effort_days: 5.0 + (method_count as f32 / 3.0),
                     };
 
@@ -219,8 +220,7 @@ impl AntiPatternDetector {
                                 class_name
                             ),
                             "Consider using composition instead of inheritance".to_string(),
-                            "Create smaller, focused classes with single responsibilities"
-                                .to_string(),
+                            "Create smaller, focused classes with single responsibilities".to_string(),
                         ],
                         context: self.build_context(content, range),
                         metrics,
@@ -235,11 +235,7 @@ impl AntiPatternDetector {
     }
 
     /// Detect code duplication
-    fn detect_code_duplication(
-        &self,
-        content: &str,
-        file_path: &str,
-    ) -> IdeResult<Vec<DetectedAntiPattern>> {
+    fn detect_code_duplication(&self, content: &str, file_path: &str) -> IdeResult<Vec<DetectedAntiPattern>> {
         let mut duplications = Vec::new();
 
         // Extract code fragments
@@ -251,21 +247,21 @@ impl AntiPatternDetector {
                     let similarity = self.calculate_similarity(fragment1, fragment2);
                     if similarity >= self.config.min_duplication_similarity {
                         let location = CodeLocation {
-                            file_path: file_path.to_string(),
-                            start_line: fragment1.range.start_line,
-                            start_column: 0,
-                            end_line: fragment1.range.end_line,
-                            end_column: 0,
+                            file_path:     file_path.to_string(),
+                            start_line:    fragment1.range.start_line,
+                            start_column:  0,
+                            end_line:      fragment1.range.end_line,
+                            end_column:    0,
                             function_name: None,
-                            class_name: None,
+                            class_name:    None,
                         };
 
                         let metrics = AntiPatternMetrics {
-                            violation_score: similarity,
-                            maintainability_impact: 1.0,
-                            testability_impact: 0.5,
-                            performance_impact: 0.1,
-                            affected_lines: fragment1.lines.len(),
+                            violation_score:         similarity,
+                            maintainability_impact:  1.0,
+                            testability_impact:      0.5,
+                            performance_impact:      0.1,
+                            affected_lines:          fragment1.lines.len(),
                             refactoring_effort_days: 2.0 + (similarity * 3.0),
                         };
 
@@ -285,21 +281,21 @@ impl AntiPatternDetector {
                                 "Apply the DRY (Don't Repeat Yourself) principle".to_string(),
                             ],
                             context: PatternContext {
-                                code_snippet: fragment1.content.clone(),
+                                code_snippet:        fragment1.content.clone(),
                                 surrounding_context: content.to_string(),
-                                structural_info: StructuralInfo {
-                                    lines_of_code: fragment1.lines.len(),
+                                structural_info:     StructuralInfo {
+                                    lines_of_code:         fragment1.lines.len(),
                                     cyclomatic_complexity: 1,
-                                    nesting_depth: 0,
-                                    method_count: 0,
-                                    field_count: 0,
-                                    dependency_count: 0,
+                                    nesting_depth:         0,
+                                    method_count:          0,
+                                    field_count:           0,
+                                    dependency_count:      0,
                                 },
-                                semantic_info: SemanticInfo {
-                                    symbols: Vec::new(),
-                                    references: Vec::new(),
+                                semantic_info:       SemanticInfo {
+                                    symbols:     Vec::new(),
+                                    references:  Vec::new(),
                                     definitions: Vec::new(),
-                                    usages: HashMap::new(),
+                                    usages:      HashMap::new(),
                                 },
                             },
                             metrics,
@@ -329,26 +325,25 @@ impl AntiPatternDetector {
             for (class_name, range) in class_ranges {
                 let method_count = self.count_methods_in_class(tree, range);
                 let field_count = self.count_fields_in_class(tree, range);
-                let responsibility_indicators =
-                    self.calculate_responsibility_indicators(tree, range);
+                let responsibility_indicators = self.calculate_responsibility_indicators(tree, range);
 
                 if responsibility_indicators > 10 || method_count > 20 {
                     let location = CodeLocation {
-                        file_path: file_path.to_string(),
-                        start_line: range.start_point.row as u32 + 1,
-                        start_column: 0,
-                        end_line: range.end_point.row as u32 + 1,
-                        end_column: 0,
+                        file_path:     file_path.to_string(),
+                        start_line:    range.start_point.row as u32 + 1,
+                        start_column:  0,
+                        end_line:      range.end_point.row as u32 + 1,
+                        end_column:    0,
                         function_name: None,
-                        class_name: Some(class_name.clone()),
+                        class_name:    Some(class_name.clone()),
                     };
 
                     let metrics = AntiPatternMetrics {
-                        violation_score: (responsibility_indicators as f32 / 10.0).max(1.0),
-                        maintainability_impact: 1.0,
-                        testability_impact: 0.9,
-                        performance_impact: 0.3,
-                        affected_lines: 0, // Would need to calculate
+                        violation_score:         (responsibility_indicators as f32 / 10.0).max(1.0),
+                        maintainability_impact:  1.0,
+                        testability_impact:      0.9,
+                        performance_impact:      0.3,
+                        affected_lines:          0, // Would need to calculate
                         refactoring_effort_days: 7.0 + (responsibility_indicators as f32 / 5.0),
                     };
 
@@ -392,22 +387,22 @@ impl AntiPatternDetector {
             if imports.len() > self.config.max_dependencies_per_module || method_calls.len() > 50 {
                 // Create a general tight coupling detection
                 let location = CodeLocation {
-                    file_path: file_path.to_string(),
-                    start_line: 1,
-                    start_column: 0,
-                    end_line: _content.lines().count() as u32,
-                    end_column: 0,
+                    file_path:     file_path.to_string(),
+                    start_line:    1,
+                    start_column:  0,
+                    end_line:      _content.lines().count() as u32,
+                    end_column:    0,
                     function_name: None,
-                    class_name: None,
+                    class_name:    None,
                 };
 
                 let metrics = AntiPatternMetrics {
-                    violation_score: (imports.len().max(method_calls.len()) as f32
+                    violation_score:         (imports.len().max(method_calls.len()) as f32
                         / self.config.max_dependencies_per_module.max(50) as f32),
-                    maintainability_impact: 0.8,
-                    testability_impact: 0.7,
-                    performance_impact: 0.4,
-                    affected_lines: _content.lines().count(),
+                    maintainability_impact:  0.8,
+                    testability_impact:      0.7,
+                    performance_impact:      0.4,
+                    affected_lines:          _content.lines().count(),
                     refactoring_effort_days: 4.0,
                 };
 
@@ -423,21 +418,21 @@ impl AntiPatternDetector {
                         "Apply interface segregation principle".to_string(),
                     ],
                     context: PatternContext {
-                        code_snippet: _content[..200.min(_content.len())].to_string(),
+                        code_snippet:        _content[..200.min(_content.len())].to_string(),
                         surrounding_context: _content.to_string(),
-                        structural_info: StructuralInfo {
-                            lines_of_code: _content.lines().count(),
+                        structural_info:     StructuralInfo {
+                            lines_of_code:         _content.lines().count(),
                             cyclomatic_complexity: 1,
-                            nesting_depth: 0,
-                            method_count: method_calls.len(),
-                            field_count: 0,
-                            dependency_count: imports.len(),
+                            nesting_depth:         0,
+                            method_count:          method_calls.len(),
+                            field_count:           0,
+                            dependency_count:      imports.len(),
                         },
-                        semantic_info: SemanticInfo {
-                            symbols: imports,
-                            references: method_calls.into_iter().map(|c| c.0).collect(),
+                        semantic_info:       SemanticInfo {
+                            symbols:     imports,
+                            references:  method_calls.into_iter().map(|c| c.0).collect(),
                             definitions: Vec::new(),
-                            usages: HashMap::new(),
+                            usages:      HashMap::new(),
                         },
                     },
                     metrics,
@@ -451,32 +446,27 @@ impl AntiPatternDetector {
     }
 
     /// Detect primitive obsession
-    fn detect_primitive_obsession(
-        &self,
-        content: &str,
-        file_path: &str,
-    ) -> IdeResult<Vec<DetectedAntiPattern>> {
-        let primitive_regex =
-            Regex::new(r"\b(fn\s+\w+\([^)]*\b(i32|u32|String|bool|f32|f64)\b").unwrap();
+    fn detect_primitive_obsession(&self, content: &str, file_path: &str) -> IdeResult<Vec<DetectedAntiPattern>> {
+        let primitive_regex = Regex::new(r"\b(fn\s+\w+\([^)]*\b(i32|u32|String|bool|f32|f64)\b").unwrap();
         let primitive_usage = primitive_regex.find_iter(content).count();
 
         if primitive_usage > 10 {
             let location = CodeLocation {
-                file_path: file_path.to_string(),
-                start_line: 1,
-                start_column: 0,
-                end_line: content.lines().count() as u32,
-                end_column: 0,
+                file_path:     file_path.to_string(),
+                start_line:    1,
+                start_column:  0,
+                end_line:      content.lines().count() as u32,
+                end_column:    0,
                 function_name: None,
-                class_name: None,
+                class_name:    None,
             };
 
             let metrics = AntiPatternMetrics {
-                violation_score: primitive_usage as f32 / 20.0,
-                maintainability_impact: 0.6,
-                testability_impact: 0.4,
-                performance_impact: 0.1,
-                affected_lines: content.lines().count(),
+                violation_score:         primitive_usage as f32 / 20.0,
+                maintainability_impact:  0.6,
+                testability_impact:      0.4,
+                performance_impact:      0.1,
+                affected_lines:          content.lines().count(),
                 refactoring_effort_days: 3.0,
             };
 
@@ -492,21 +482,21 @@ impl AntiPatternDetector {
                     "Add validation logic to custom types".to_string(),
                 ],
                 context: PatternContext {
-                    code_snippet: content[..300.min(content.len())].to_string(),
+                    code_snippet:        content[..300.min(content.len())].to_string(),
                     surrounding_context: content.to_string(),
-                    structural_info: StructuralInfo {
-                        lines_of_code: content.lines().count(),
+                    structural_info:     StructuralInfo {
+                        lines_of_code:         content.lines().count(),
                         cyclomatic_complexity: primitive_usage as u32,
-                        nesting_depth: 0,
-                        method_count: 1,
-                        field_count: primitive_usage,
-                        dependency_count: 0,
+                        nesting_depth:         0,
+                        method_count:          1,
+                        field_count:           primitive_usage,
+                        dependency_count:      0,
                     },
-                    semantic_info: SemanticInfo {
-                        symbols: Vec::new(),
-                        references: Vec::new(),
+                    semantic_info:       SemanticInfo {
+                        symbols:     Vec::new(),
+                        references:  Vec::new(),
                         definitions: Vec::new(),
-                        usages: HashMap::new(),
+                        usages:      HashMap::new(),
                     },
                 },
                 metrics,
@@ -556,12 +546,12 @@ impl AntiPatternDetector {
 
                 fragments.push(CodeFragment {
                     content: fragment_content,
-                    lines: fragment_lines,
-                    range: Range {
+                    lines:   fragment_lines,
+                    range:   Range {
                         start_line: (i + 1) as u32,
-                        start_col: 0,
-                        end_line: (i + j + 1) as u32,
-                        end_col: 0,
+                        start_col:  0,
+                        end_line:   (i + j + 1) as u32,
+                        end_col:    0,
                     },
                 });
             }
@@ -620,8 +610,7 @@ impl AntiPatternDetector {
                 } else {
                     1
                 };
-                matrix[i][j] = (matrix[i - 1][j] + 1)
-                    .min((matrix[i][j - 1] + 1).min(matrix[i - 1][j - 1] + cost));
+                matrix[i][j] = (matrix[i - 1][j] + 1).min((matrix[i][j - 1] + 1).min(matrix[i - 1][j - 1] + cost));
             }
         }
 
@@ -646,27 +635,15 @@ impl AntiPatternDetector {
         Ok(Vec::new())
     }
 
-    fn count_methods_in_class(
-        &self,
-        _tree: &TreeSitterParseTree,
-        _range: tree_sitter::Range,
-    ) -> usize {
+    fn count_methods_in_class(&self, _tree: &TreeSitterParseTree, _range: tree_sitter::Range) -> usize {
         0 // Placeholder
     }
 
-    fn count_fields_in_class(
-        &self,
-        _tree: &TreeSitterParseTree,
-        _range: tree_sitter::Range,
-    ) -> usize {
+    fn count_fields_in_class(&self, _tree: &TreeSitterParseTree, _range: tree_sitter::Range) -> usize {
         0 // Placeholder
     }
 
-    fn calculate_responsibility_indicators(
-        &self,
-        _tree: &TreeSitterParseTree,
-        _range: tree_sitter::Range,
-    ) -> usize {
+    fn calculate_responsibility_indicators(&self, _tree: &TreeSitterParseTree, _range: tree_sitter::Range) -> usize {
         5 // Placeholder
     }
 
@@ -674,41 +651,33 @@ impl AntiPatternDetector {
         Vec::new() // Placeholder
     }
 
-    fn extract_method_calls(
-        &self,
-        _tree: &TreeSitterParseTree,
-        _content: &str,
-    ) -> Vec<(String, usize)> {
+    fn extract_method_calls(&self, _tree: &TreeSitterParseTree, _content: &str) -> Vec<(String, usize)> {
         Vec::new() // Placeholder
     }
 
     fn build_context(&self, content: &str, range: tree_sitter::Range) -> PatternContext {
         PatternContext {
-            code_snippet: content[range.start_byte..range.end_byte].to_string(),
+            code_snippet:        content[range.start_byte..range.end_byte].to_string(),
             surrounding_context: content.to_string(),
-            structural_info: StructuralInfo {
-                lines_of_code: range.end_byte.saturating_sub(range.start_byte)
+            structural_info:     StructuralInfo {
+                lines_of_code:         range.end_byte.saturating_sub(range.start_byte)
                     / content.lines().next().unwrap_or("").len().max(1),
                 cyclomatic_complexity: 1,
-                nesting_depth: 0,
-                method_count: 1,
-                field_count: 0,
-                dependency_count: 0,
+                nesting_depth:         0,
+                method_count:          1,
+                field_count:           0,
+                dependency_count:      0,
             },
-            semantic_info: SemanticInfo {
-                symbols: Vec::new(),
-                references: Vec::new(),
+            semantic_info:       SemanticInfo {
+                symbols:     Vec::new(),
+                references:  Vec::new(),
                 definitions: Vec::new(),
-                usages: HashMap::new(),
+                usages:      HashMap::new(),
             },
         }
     }
 
-    fn regex_based_long_method_detection(
-        &self,
-        content: &str,
-        file_path: &str,
-    ) -> IdeResult<Vec<DetectedAntiPattern>> {
+    fn regex_based_long_method_detection(&self, content: &str, file_path: &str) -> IdeResult<Vec<DetectedAntiPattern>> {
         let mut anti_patterns = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -734,23 +703,22 @@ impl AntiPatternDetector {
                         {
                             // Found a long method
                             let location = CodeLocation {
-                                file_path: file_path.to_string(),
-                                start_line: current_function_start as u32 + 1,
-                                start_column: 0,
-                                end_line: i as u32 + 1,
-                                end_column: 0,
+                                file_path:     file_path.to_string(),
+                                start_line:    current_function_start as u32 + 1,
+                                start_column:  0,
+                                end_line:      i as u32 + 1,
+                                end_column:    0,
                                 function_name: None,
-                                class_name: None,
+                                class_name:    None,
                             };
 
                             let method_lines = i - current_function_start;
                             let metrics = AntiPatternMetrics {
-                                violation_score: method_lines as f32
-                                    / self.config.max_method_lines as f32,
-                                maintainability_impact: 0.8,
-                                testability_impact: 0.6,
-                                performance_impact: 0.0,
-                                affected_lines: method_lines,
+                                violation_score:         method_lines as f32 / self.config.max_method_lines as f32,
+                                maintainability_impact:  0.8,
+                                testability_impact:      0.6,
+                                performance_impact:      0.0,
+                                affected_lines:          method_lines,
                                 refactoring_effort_days: 3.0,
                             };
 
@@ -765,21 +733,21 @@ impl AntiPatternDetector {
                                     "Consider using early returns".to_string(),
                                 ],
                                 context: PatternContext {
-                                    code_snippet: "".to_string(),
+                                    code_snippet:        "".to_string(),
                                     surrounding_context: content.to_string(),
-                                    structural_info: StructuralInfo {
-                                        lines_of_code: method_lines,
+                                    structural_info:     StructuralInfo {
+                                        lines_of_code:         method_lines,
                                         cyclomatic_complexity: 1,
-                                        nesting_depth: 0,
-                                        method_count: 1,
-                                        field_count: 0,
-                                        dependency_count: 0,
+                                        nesting_depth:         0,
+                                        method_count:          1,
+                                        field_count:           0,
+                                        dependency_count:      0,
                                     },
-                                    semantic_info: SemanticInfo {
-                                        symbols: Vec::new(),
-                                        references: Vec::new(),
+                                    semantic_info:       SemanticInfo {
+                                        symbols:     Vec::new(),
+                                        references:  Vec::new(),
                                         definitions: Vec::new(),
-                                        usages: HashMap::new(),
+                                        usages:      HashMap::new(),
                                     },
                                 },
                                 metrics,
@@ -803,19 +771,19 @@ struct TreeSitterParseTree;
 #[derive(Debug)]
 struct CodeFragment {
     content: String,
-    lines: Vec<String>,
-    range: crate::analysis::Range,
+    lines:   Vec<String>,
+    range:   crate::analysis::Range,
 }
 
 impl Default for AntiPatternConfig {
     fn default() -> Self {
         Self {
-            max_method_lines: 50,
-            max_methods_per_class: 20,
-            max_fields_per_class: 15,
-            min_duplication_similarity: 0.8,
-            max_cyclomatic_complexity: 10,
-            max_nesting_depth: 4,
+            max_method_lines:            50,
+            max_methods_per_class:       20,
+            max_fields_per_class:        15,
+            min_duplication_similarity:  0.8,
+            max_cyclomatic_complexity:   10,
+            max_nesting_depth:           4,
             max_dependencies_per_module: 20,
         }
     }
@@ -825,7 +793,7 @@ impl DuplicationDetector {
     fn new() -> Self {
         Self {
             min_fragment_lines: 5,
-            code_hashes: HashMap::new(),
+            code_hashes:        HashMap::new(),
         }
     }
 }

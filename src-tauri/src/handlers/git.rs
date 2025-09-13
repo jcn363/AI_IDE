@@ -2,10 +2,11 @@
 //!
 //! This module contains handlers for Git-related Tauri commands.
 
+use std::path::Path;
+
 use rust_ai_ide_core::shell_utils::git;
 use rust_ai_ide_core::validation::validate_secure_path;
 use rust_ai_ide_core::{ContextualError, IDEError};
-use std::path::Path;
 
 /// Check if Git is available on the system
 #[tauri::command]
@@ -52,7 +53,7 @@ pub async fn git_init_repo(directory: String) -> Result<String, String> {
 
     // Use unified git init utility
     match git::init(path_buf) {
-        Ok(result) => {
+        Ok(result) =>
             if result.success {
                 Ok(result.stdout.trim().to_string())
             } else {
@@ -61,8 +62,7 @@ pub async fn git_init_repo(directory: String) -> Result<String, String> {
                     "Repository initialization failed".to_string(),
                 )
                 .into())
-            }
-        }
+            },
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git init: {}", e)),
             format!("Git init command failed in: {}", directory),
@@ -86,7 +86,7 @@ pub async fn git_status(directory: String) -> Result<String, String> {
 
     // Use unified git status utility
     match git::status(path_buf, true) {
-        Ok(result) => {
+        Ok(result) =>
             if result.success {
                 Ok(result.stdout.trim().to_string())
             } else {
@@ -94,8 +94,7 @@ pub async fn git_status(directory: String) -> Result<String, String> {
                     IDEError::GitError(format!("Git status failed: {}", result.stderr)),
                     "Git status check failed".to_string(),
                 ))
-            }
-        }
+            },
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git status: {}", e)),
             format!("Git status command failed in: {}", directory),
@@ -135,7 +134,7 @@ pub async fn git_add(directory: String, paths: Vec<String>) -> Result<(), String
         let path_refs: Vec<&str> = paths.iter().map(|s| s.as_str()).collect();
         git::add(path_buf, &path_refs)
     } {
-        Ok(result) => {
+        Ok(result) =>
             if result.success {
                 Ok(())
             } else {
@@ -143,8 +142,7 @@ pub async fn git_add(directory: String, paths: Vec<String>) -> Result<(), String
                     IDEError::GitError(format!("Git add failed: {}", result.stderr)),
                     "Git add operation failed".to_string(),
                 ))
-            }
-        }
+            },
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git add: {}", e)),
             format!("Git add command failed in: {}", directory),
@@ -181,7 +179,7 @@ pub async fn git_commit(
     // Note: Current unified git::commit utility doesn't support author config
     // For now, use a basic commit approach - could enhance the git module later
     match git::commit(path_buf, &message) {
-        Ok(result) => {
+        Ok(result) =>
             if result.success {
                 Ok(result.stdout.trim().to_string())
             } else {
@@ -189,8 +187,7 @@ pub async fn git_commit(
                     IDEError::GitError(format!("Git commit failed: {}", result.stderr)),
                     "Git commit operation failed".to_string(),
                 ))
-            }
-        }
+            },
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git commit: {}", e)),
             format!("Git commit command failed in: {}", directory),
@@ -214,7 +211,7 @@ pub async fn git_log(directory: String, limit: Option<u32>) -> Result<String, St
 
     // Use unified git log utility
     match git::log(path_buf, Some(limit_val)) {
-        Ok(result) => {
+        Ok(result) =>
             if result.success {
                 Ok(result.stdout.trim().to_string())
             } else {
@@ -222,8 +219,7 @@ pub async fn git_log(directory: String, limit: Option<u32>) -> Result<String, St
                     IDEError::GitError(format!("Git log failed: {}", result.stderr)),
                     "Git log operation failed".to_string(),
                 ))
-            }
-        }
+            },
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git log: {}", e)),
             format!("Git log command failed in: {}", directory),
@@ -233,11 +229,7 @@ pub async fn git_log(directory: String, limit: Option<u32>) -> Result<String, St
 
 /// Show Git diff
 #[tauri::command]
-pub async fn git_diff(
-    directory: String,
-    path: Option<String>,
-    revspec: Option<String>,
-) -> Result<String, String> {
+pub async fn git_diff(directory: String, path: Option<String>, revspec: Option<String>) -> Result<String, String> {
     // Validate path security
     validate_secure_path(&directory, true).map_err(|e| {
         ContextualError::new(
@@ -262,7 +254,7 @@ pub async fn git_diff(
     // Note: Current unified git::diff utility doesn't support revspec
     // Using staged=false and path option for basic diff
     match git::diff(path_buf, false, path_option) {
-        Ok(result) => {
+        Ok(result) =>
             if result.success {
                 let output = result.stdout.trim().to_string();
                 if output.is_empty() {
@@ -275,8 +267,7 @@ pub async fn git_diff(
                     IDEError::GitError(format!("Git diff failed: {}", result.stderr)),
                     "Git diff operation failed".to_string(),
                 ))
-            }
-        }
+            },
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git diff: {}", e)),
             format!("Git diff command failed in: {}", directory),
@@ -307,7 +298,7 @@ pub async fn git_blame(directory: String, path: String) -> Result<String, String
 
     // Use unified git blame utility (with line numbers enabled)
     match git::blame(path_buf, &path, true) {
-        Ok(result) => {
+        Ok(result) =>
             if result.success {
                 Ok(result.stdout.trim().to_string())
             } else {
@@ -315,8 +306,7 @@ pub async fn git_blame(directory: String, path: String) -> Result<String, String
                     IDEError::GitError(format!("Git blame failed: {}", result.stderr)),
                     "Git blame operation failed".to_string(),
                 ))
-            }
-        }
+            },
         Err(e) => Err(ContextualError::new(
             IDEError::CommandExecutionError(format!("Failed to execute git blame: {}", e)),
             format!(

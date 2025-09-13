@@ -3,14 +3,16 @@
 //! This module handles real-time diagnostic streaming, cache management,
 //! and subscription-based diagnostic updates.
 
+use std::time::{Duration, SystemTime};
+
+use tauri::State;
+use tokio::time;
+use uuid;
+
 use crate::commands::utils::cache::*;
 use crate::commands::utils::errors::*;
 use crate::commands::utils::*;
 use crate::modules::shared::diagnostics::*;
-use std::time::{Duration, SystemTime};
-use tauri::State;
-use tokio::time;
-use uuid;
 
 /// Subscribe to real-time diagnostic updates
 #[tauri::command]
@@ -22,11 +24,11 @@ pub async fn subscribe_to_diagnostics(
         let stream_id = uuid::Uuid::new_v4().to_string();
 
         let stream = DiagnosticStream {
-            id: stream_id.clone(),
+            id:             stream_id.clone(),
             workspace_path: request.workspace_path.clone(),
-            is_active: true,
-            last_update: SystemTime::now(),
-            subscribers: vec![request.subscriber_id],
+            is_active:      true,
+            last_update:    SystemTime::now(),
+            subscribers:    vec![request.subscriber_id],
         };
 
         {
@@ -133,11 +135,11 @@ pub async fn get_cache_statistics(
     let explanation_cache_guard = explanation_cache.read().await;
 
     let stats = CacheStatistics {
-        diagnostic_cache_size: diagnostic_cache_guard.len(),
-        diagnostic_cache_max_size: diagnostic_cache_guard.max_entries,
-        explanation_cache_size: explanation_cache_guard.len(),
-        explanation_cache_max_size: explanation_cache_guard.max_entries,
-        diagnostic_cache_hit_ratio: 0.0, // Would need to track hits/misses
+        diagnostic_cache_size:       diagnostic_cache_guard.len(),
+        diagnostic_cache_max_size:   diagnostic_cache_guard.max_entries,
+        explanation_cache_size:      explanation_cache_guard.len(),
+        explanation_cache_max_size:  explanation_cache_guard.max_entries,
+        diagnostic_cache_hit_ratio:  0.0, // Would need to track hits/misses
         explanation_cache_hit_ratio: 0.0, // Would need to track hits/misses
     };
 
@@ -147,10 +149,10 @@ pub async fn get_cache_statistics(
 /// Cache statistics structure
 #[derive(Debug, serde::Serialize)]
 pub struct CacheStatistics {
-    pub diagnostic_cache_size: usize,
-    pub diagnostic_cache_max_size: usize,
-    pub explanation_cache_size: usize,
-    pub explanation_cache_max_size: usize,
-    pub diagnostic_cache_hit_ratio: f32,
+    pub diagnostic_cache_size:       usize,
+    pub diagnostic_cache_max_size:   usize,
+    pub explanation_cache_size:      usize,
+    pub explanation_cache_max_size:  usize,
+    pub diagnostic_cache_hit_ratio:  f32,
     pub explanation_cache_hit_ratio: f32,
 }

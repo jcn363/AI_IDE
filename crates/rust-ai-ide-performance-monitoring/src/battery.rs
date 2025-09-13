@@ -8,28 +8,28 @@ use serde::{Deserialize, Serialize};
 /// Battery status information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BatteryStatus {
-    pub level: f32, // 0.0 to 1.0
-    pub is_charging: bool,
+    pub level:               f32, // 0.0 to 1.0
+    pub is_charging:         bool,
     pub time_remaining_secs: Option<u64>,
-    pub health_percentage: Option<f32>,
+    pub health_percentage:   Option<f32>,
     pub temperature_celsius: Option<f32>,
 }
 
 /// Low-power mode configuration
 #[derive(Debug, Clone)]
 pub struct LowPowerConfig {
-    pub enable_cpu_throttling: bool,
-    pub reduce_refresh_rate: bool,
-    pub disable_animations: bool,
+    pub enable_cpu_throttling:  bool,
+    pub reduce_refresh_rate:    bool,
+    pub disable_animations:     bool,
     pub limit_background_tasks: bool,
-    pub reduce_cache_sizes: bool,
-    pub battery_threshold: f32, // When to enable low-power mode (0.0-1.0)
+    pub reduce_cache_sizes:     bool,
+    pub battery_threshold:      f32, // When to enable low-power mode (0.0-1.0)
 }
 
 /// Battery monitor
 #[derive(Debug)]
 pub struct BatteryMonitor {
-    config: LowPowerConfig,
+    config:         LowPowerConfig,
     current_status: Option<BatteryStatus>,
 }
 
@@ -47,10 +47,10 @@ impl BatteryMonitor {
         // Placeholder implementation
         // Real implementation would use platform-specific APIs
         Some(BatteryStatus {
-            level: 0.75,
-            is_charging: true,
+            level:               0.75,
+            is_charging:         true,
             time_remaining_secs: Some(7200),
-            health_percentage: Some(95.0),
+            health_percentage:   Some(95.0),
             temperature_celsius: Some(32.0),
         })
     }

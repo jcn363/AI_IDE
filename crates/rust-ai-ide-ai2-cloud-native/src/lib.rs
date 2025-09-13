@@ -3,11 +3,12 @@
 //! Revolutionary multi-region, auto-scaling AI development platform that transforms
 //! the entire IDE ecosystem into a globally distributed, cloud-native application.
 
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::sync::Arc;
+
 use chrono::{DateTime, Utc};
 use petgraph::{Directed, Graph};
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
-use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 use uuid::Uuid;
 
@@ -15,27 +16,27 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct CloudNativePlatform {
     /// Global region manager
-    region_manager: Arc<RwLock<RegionManager>>,
+    region_manager:         Arc<RwLock<RegionManager>>,
     /// Auto-scaling orchestrator
-    auto_scaler: AutoScalingOrchestrator,
+    auto_scaler:            AutoScalingOrchestrator,
     /// Container orchestration system
     container_orchestrator: ContainerOrchestrator,
     /// Service mesh manager
-    service_mesh: ServiceMeshManager,
+    service_mesh:           ServiceMeshManager,
     /// Distributed state manager
-    state_manager: DistributedStateManager,
+    state_manager:          DistributedStateManager,
     /// Serverless adaptor
-    serverless_adaptor: ServerlessAdaptor,
+    serverless_adaptor:     ServerlessAdaptor,
     /// Edge computing coordinator
-    edge_coordinator: EdgeComputingCoordinator,
+    edge_coordinator:       EdgeComputingCoordinator,
     /// Global CDN integrator
-    cdn_integrator: CDNIntegrator,
+    cdn_integrator:         CDNIntegrator,
     /// Security fabric
-    security_fabric: SecurityFabric,
+    security_fabric:        SecurityFabric,
     /// Observability system
-    observability: ObservabilitySystem,
+    observability:          ObservabilitySystem,
     /// Cost optimizer
-    cost_optimizer: CostOptimizer,
+    cost_optimizer:         CostOptimizer,
 }
 
 impl CloudNativePlatform {
@@ -143,11 +144,11 @@ impl CloudNativePlatform {
             .await?;
 
         Ok(ScalingResult {
-            scaling_id: Uuid::new_v4(),
-            executed_at: Utc::now(),
-            regions_scaled: scaling_results.regions_affected.len(),
+            scaling_id:       Uuid::new_v4(),
+            executed_at:      Utc::now(),
+            regions_scaled:   scaling_results.regions_affected.len(),
             resource_changes: scaling_results.resource_deltas,
-            cost_impact: scaling_results.cost_impact,
+            cost_impact:      scaling_results.cost_impact,
         })
     }
 
@@ -225,17 +226,15 @@ impl CloudNativePlatform {
             .await?;
 
         Ok(EdgeSetup {
-            edge_points: edge_infrastructure.edge_points,
+            edge_points:            edge_infrastructure.edge_points,
             synchronization_config: edge_infrastructure.sync_config,
-            security_measures: edge_infrastructure.security_measures,
-            active_since: Utc::now(),
+            security_measures:      edge_infrastructure.security_measures,
+            active_since:           Utc::now(),
         })
     }
 
     /// Monitor global system performance
-    pub async fn monitor_global_performance(
-        &self,
-    ) -> Result<GlobalPerformanceReport, CloudNativeError> {
+    pub async fn monitor_global_performance(&self) -> Result<GlobalPerformanceReport, CloudNativeError> {
         // Gather metrics from all components
         let region_metrics = self.gather_region_metrics().await?;
         let network_metrics = self.observability.gather_network_metrics().await?;
@@ -317,10 +316,7 @@ impl CloudNativePlatform {
     }
 
     // Internal helper methods
-    async fn validate_deployment(
-        &self,
-        deployment: &ApplicationDeployment,
-    ) -> Result<(), CloudNativeError> {
+    async fn validate_deployment(&self, deployment: &ApplicationDeployment) -> Result<(), CloudNativeError> {
         if deployment.regions.is_empty() {
             return Err(CloudNativeError::InvalidDeployment(
                 "No regions specified".to_string(),
@@ -351,16 +347,13 @@ impl CloudNativePlatform {
                 // Deploy containerized application to region
                 // Configure local load balancing
                 // Set up health monitoring
-                (
-                    region.clone(),
-                    DeploymentInfo {
-                        region: region.clone(),
-                        status: DeploymentStatus::Active,
-                        deployed_at: Utc::now(),
-                        endpoints: vec![], // Would contain actual endpoints
-                        health_status: HealthStatus::Healthy,
-                    },
-                )
+                (region.clone(), DeploymentInfo {
+                    region:        region.clone(),
+                    status:        DeploymentStatus::Active,
+                    deployed_at:   Utc::now(),
+                    endpoints:     vec![], // Would contain actual endpoints
+                    health_status: HealthStatus::Healthy,
+                })
             });
 
             if let Ok(deployment_info) = region_deployment.await {
@@ -371,10 +364,7 @@ impl CloudNativePlatform {
         Ok(region_deployments)
     }
 
-    async fn validate_deployment_health(
-        &self,
-        region_deployments: &HashMap<String, DeploymentInfo>,
-    ) -> bool {
+    async fn validate_deployment_health(&self, region_deployments: &HashMap<String, DeploymentInfo>) -> bool {
         for deployment in region_deployments.values() {
             if deployment.health_status != HealthStatus::Healthy {
                 return false;
@@ -391,9 +381,9 @@ impl CloudNativePlatform {
         // Consider time of day, day of week, seasonal trends
         // Use machine learning for prediction
         Ok(DemandPrediction {
-            predicted_load: HashMap::new(),
+            predicted_load:   HashMap::new(),
             confidence_level: 0.85,
-            time_window: std::time::Duration::from_hours(24),
+            time_window:      std::time::Duration::from_hours(24),
         })
     }
 
@@ -404,7 +394,7 @@ impl CloudNativePlatform {
     ) -> Result<ScalingPlan, CloudNativeError> {
         Ok(ScalingPlan {
             regions_to_scale: vec![],
-            scaling_actions: vec![],
+            scaling_actions:  vec![],
             resource_changes: HashMap::new(),
         })
     }
@@ -415,9 +405,9 @@ impl CloudNativePlatform {
     ) -> Result<ScalingExecutionResult, CloudNativeError> {
         Ok(ScalingExecutionResult {
             regions_affected: vec![],
-            resource_deltas: HashMap::new(),
-            execution_time: std::time::Duration::from_secs(300),
-            cost_impact: 0.0,
+            resource_deltas:  HashMap::new(),
+            execution_time:   std::time::Duration::from_secs(300),
+            cost_impact:      0.0,
         })
     }
 
@@ -428,21 +418,21 @@ impl CloudNativePlatform {
     ) -> Result<DeploymentTarget, CloudNativeError> {
         // Select optimal cloud provider, region, and compute type
         Ok(DeploymentTarget {
-            provider: CloudProvider::AWS,
-            region: "us-east-1".to_string(),
-            compute_type: ComputeType::Lambda,
-            memory_mb: function.memory_mb,
+            provider:        CloudProvider::AWS,
+            region:          "us-east-1".to_string(),
+            compute_type:    ComputeType::Lambda,
+            memory_mb:       function.memory_mb,
             timeout_seconds: function.timeout_seconds,
         })
     }
 
     async fn gather_region_metrics(&self) -> Result<RegionMetrics, CloudNativeError> {
         Ok(RegionMetrics {
-            regions: vec![],
-            total_requests: 0,
+            regions:         vec![],
+            total_requests:  0,
             average_latency: 0.0,
-            error_rate: 0.0,
-            p95_latency: 0.0,
+            error_rate:      0.0,
+            p95_latency:     0.0,
         })
     }
 
@@ -452,10 +442,10 @@ impl CloudNativePlatform {
         network_metrics: &NetworkMetrics,
     ) -> Result<PerformanceAnalysis, CloudNativeError> {
         Ok(PerformanceAnalysis {
-            overall_health_score: 0.92,
-            bottleneck_regions: vec![],
+            overall_health_score:       0.92,
+            bottleneck_regions:         vec![],
             optimization_opportunities: vec![],
-            risk_factors: vec![],
+            risk_factors:               vec![],
         })
     }
 
@@ -498,22 +488,16 @@ impl CloudNativePlatform {
         })
     }
 
-    async fn validate_failover_success(
-        &self,
-        target_region: &str,
-    ) -> Result<SuccessValidation, CloudNativeError> {
+    async fn validate_failover_success(&self, target_region: &str) -> Result<SuccessValidation, CloudNativeError> {
         Ok(SuccessValidation {
-            services_healthy: true,
+            services_healthy:          true,
             data_consistency_verified: true,
-            performance_within_sla: true,
-            validation_completed_at: Utc::now(),
+            performance_within_sla:    true,
+            validation_completed_at:   Utc::now(),
         })
     }
 
-    async fn validate_resource_availability(
-        &self,
-        deployment: &ApplicationDeployment,
-    ) -> Result<(), CloudNativeError> {
+    async fn validate_resource_availability(&self, deployment: &ApplicationDeployment) -> Result<(), CloudNativeError> {
         // Check CPU, memory, storage availability across specified regions
         Ok(())
     }
@@ -524,39 +508,39 @@ impl CloudNativePlatform {
 /// Cloud-native configuration
 #[derive(Debug, Clone)]
 pub struct CloudNativeConfig {
-    pub region_config: RegionConfig,
-    pub container_config: ContainerConfig,
-    pub service_mesh_config: ServiceMeshConfig,
-    pub state_config: StateConfig,
-    pub serverless_config: ServerlessConfig,
-    pub edge_config: EdgeConfig,
-    pub cdn_config: CDNConfig,
-    pub security_config: SecurityConfig,
+    pub region_config:        RegionConfig,
+    pub container_config:     ContainerConfig,
+    pub service_mesh_config:  ServiceMeshConfig,
+    pub state_config:         StateConfig,
+    pub serverless_config:    ServerlessConfig,
+    pub edge_config:          EdgeConfig,
+    pub cdn_config:           CDNConfig,
+    pub security_config:      SecurityConfig,
     pub observability_config: ObservabilityConfig,
-    pub cost_config: CostConfig,
+    pub cost_config:          CostConfig,
 }
 
 /// Application deployment specification
 #[derive(Debug, Clone)]
 pub struct ApplicationDeployment {
-    pub name: String,
-    pub version: String,
-    pub regions: Vec<String>,
-    pub container_image: String,
+    pub name:                  String,
+    pub version:               String,
+    pub regions:               Vec<String>,
+    pub container_image:       String,
     pub environment_variables: HashMap<String, String>,
-    pub scaling_config: ScalingPolicy,
-    pub health_checks: Vec<HealthCheck>,
-    pub dependencies: Vec<String>,
+    pub scaling_config:        ScalingPolicy,
+    pub health_checks:         Vec<HealthCheck>,
+    pub dependencies:          Vec<String>,
 }
 
 /// Deployment result
 #[derive(Debug, Clone)]
 pub struct DeploymentResult {
-    pub deployment_id: Uuid,
-    pub regions: Vec<String>,
-    pub status: DeploymentStatus,
-    pub created_at: DateTime<Utc>,
-    pub resource_plan: ResourcePlan,
+    pub deployment_id:        Uuid,
+    pub regions:              Vec<String>,
+    pub status:               DeploymentStatus,
+    pub created_at:           DateTime<Utc>,
+    pub resource_plan:        ResourcePlan,
     pub health_checks_passed: bool,
 }
 
@@ -564,63 +548,63 @@ pub struct DeploymentResult {
 #[derive(Debug, Clone)]
 pub struct ScalingRequest {
     pub target_application: String,
-    pub scaling_type: ScalingType,
-    pub target_value: f64,
-    pub time_window: std::time::Duration,
+    pub scaling_type:       ScalingType,
+    pub target_value:       f64,
+    pub time_window:        std::time::Duration,
 }
 
 /// Scaling result
 #[derive(Debug, Clone)]
 pub struct ScalingResult {
-    pub scaling_id: Uuid,
-    pub executed_at: DateTime<Utc>,
-    pub regions_scaled: usize,
+    pub scaling_id:       Uuid,
+    pub executed_at:      DateTime<Utc>,
+    pub regions_scaled:   usize,
     pub resource_changes: HashMap<String, i64>,
-    pub cost_impact: f64,
+    pub cost_impact:      f64,
 }
 
 /// Serverless function specification
 #[derive(Debug, Clone)]
 pub struct ServerlessFunction {
-    pub id: String,
-    pub name: String,
-    pub runtime: String,
-    pub handler: String,
-    pub code: Vec<u8>,
-    pub memory_mb: u32,
-    pub timeout_seconds: u32,
-    pub triggers: Vec<String>,
+    pub id:                    String,
+    pub name:                  String,
+    pub runtime:               String,
+    pub handler:               String,
+    pub code:                  Vec<u8>,
+    pub memory_mb:             u32,
+    pub timeout_seconds:       u32,
+    pub triggers:              Vec<String>,
     pub environment_variables: HashMap<String, String>,
 }
 
 /// Function deployment result
 #[derive(Debug, Clone)]
 pub struct FunctionDeployment {
-    pub function_id: String,
-    pub deployment_strategy: FunctionDeploymentStrategy,
-    pub deployment_target: DeploymentTarget,
-    pub deployed_at: DateTime<Utc>,
-    pub edge_enabled: bool,
+    pub function_id:          String,
+    pub deployment_strategy:  FunctionDeploymentStrategy,
+    pub deployment_target:    DeploymentTarget,
+    pub deployed_at:          DateTime<Utc>,
+    pub edge_enabled:         bool,
     pub auto_scaling_enabled: bool,
-    pub cost_estimate: f64,
+    pub cost_estimate:        f64,
 }
 
 /// Edge computing configuration
 #[derive(Debug, Clone)]
 pub struct EdgeComputingConfig {
-    pub edge_points: Vec<String>,
-    pub compute_capacity: ComputeCapacity,
+    pub edge_points:          Vec<String>,
+    pub compute_capacity:     ComputeCapacity,
     pub data_synchronization: SynchronizationConfig,
-    pub caching_strategy: CachingStrategy,
+    pub caching_strategy:     CachingStrategy,
 }
 
 /// Edge setup result
 #[derive(Debug, Clone)]
 pub struct EdgeSetup {
-    pub edge_points: Vec<String>,
+    pub edge_points:            Vec<String>,
     pub synchronization_config: SynchronizationConfig,
-    pub security_measures: Vec<String>,
-    pub active_since: DateTime<Utc>,
+    pub security_measures:      Vec<String>,
+    pub active_since:           DateTime<Utc>,
 }
 
 /// Global performance report
@@ -642,21 +626,21 @@ pub struct GlobalPerformanceReport {
 #[derive(Debug, Clone)]
 pub struct FailoverRequest {
     pub affected_application: String,
-    pub source_region: String,
-    pub failover_type: FailoverType,
-    pub urgency_level: UrgencyLevel,
+    pub source_region:        String,
+    pub failover_type:        FailoverType,
+    pub urgency_level:        UrgencyLevel,
 }
 
 /// Failover result
 #[derive(Debug, Clone)]
 pub struct FailoverResult {
-    pub failover_id: Uuid,
-    pub source_region: String,
-    pub target_region: String,
-    pub execution_time: std::time::Duration,
+    pub failover_id:        Uuid,
+    pub source_region:      String,
+    pub target_region:      String,
+    pub execution_time:     std::time::Duration,
     pub success_validation: SuccessValidation,
     pub estimated_downtime: std::time::Duration,
-    pub cost_impact: f64,
+    pub cost_impact:        f64,
 }
 
 /// Deployment statuses
@@ -703,10 +687,10 @@ pub struct NetworkMetrics;
 pub struct PerformanceAnalysis;
 #[derive(Debug, Clone)]
 pub struct FailoverPlan {
-    pub source_region: String,
-    pub target_region: String,
+    pub source_region:                  String,
+    pub target_region:                  String,
     pub traffic_redirection_percentage: u32,
-    pub data_migration_strategy: DataMigrationStrategy,
+    pub data_migration_strategy:        DataMigrationStrategy,
 }
 #[derive(Debug, Clone)]
 pub struct SuccessValidation;
@@ -849,10 +833,7 @@ impl ServiceMeshManager {
     ) -> Result<(), CloudNativeError> {
         Ok(())
     }
-    pub async fn configure_emergency_mesh(
-        &self,
-        _failover_plan: &FailoverPlan,
-    ) -> Result<(), CloudNativeError> {
+    pub async fn configure_emergency_mesh(&self, _failover_plan: &FailoverPlan) -> Result<(), CloudNativeError> {
         Ok(())
     }
 }
@@ -869,10 +850,7 @@ impl DistributedStateManager {
     ) -> Result<(), CloudNativeError> {
         Ok(())
     }
-    pub async fn configure_edge_sync(
-        &self,
-        _edge_infrastructure: &EdgeInfrastructure,
-    ) -> Result<(), CloudNativeError> {
+    pub async fn configure_edge_sync(&self, _edge_infrastructure: &EdgeInfrastructure) -> Result<(), CloudNativeError> {
         Ok(())
     }
 }
@@ -933,10 +911,7 @@ impl CDNIntegrator {
     ) -> Result<(), CloudNativeError> {
         Ok(())
     }
-    pub async fn configure_edge_cdn(
-        &self,
-        _edge_infrastructure: &EdgeInfrastructure,
-    ) -> Result<(), CloudNativeError> {
+    pub async fn configure_edge_cdn(&self, _edge_infrastructure: &EdgeInfrastructure) -> Result<(), CloudNativeError> {
         Ok(())
     }
     pub async fn execute_failover_traffic_shift(
@@ -993,10 +968,7 @@ impl CostOptimizer {
     ) -> Result<ResourcePlan, CloudNativeError> {
         Ok(ResourcePlan)
     }
-    pub async fn analyze_cost_impact(
-        &self,
-        _scaling_results: &ScalingExecutionResult,
-    ) -> Result<(), CloudNativeError> {
+    pub async fn analyze_cost_impact(&self, _scaling_results: &ScalingExecutionResult) -> Result<(), CloudNativeError> {
         Ok(())
     }
     pub async fn estimate_function_cost(
@@ -1008,10 +980,7 @@ impl CostOptimizer {
     pub async fn gather_cost_metrics(&self) -> Result<CostMetrics, CloudNativeError> {
         Ok(CostMetrics::default())
     }
-    pub async fn calculate_failover_cost_impact(
-        &self,
-        _failover_plan: &FailoverPlan,
-    ) -> Result<f64, CloudNativeError> {
+    pub async fn calculate_failover_cost_impact(&self, _failover_plan: &FailoverPlan) -> Result<f64, CloudNativeError> {
         Ok(0.0)
     }
 }
@@ -1045,35 +1014,35 @@ pub enum CloudNativeError {
 impl Default for FunctionDeployment {
     fn default() -> Self {
         Self {
-            function_id: String::new(),
-            deployment_strategy: FunctionDeploymentStrategy,
-            deployment_target: DeploymentTarget {
-                provider: CloudProvider::AWS,
-                region: String::new(),
-                compute_type: ComputeType::Lambda,
-                memory_mb: 0,
+            function_id:          String::new(),
+            deployment_strategy:  FunctionDeploymentStrategy,
+            deployment_target:    DeploymentTarget {
+                provider:        CloudProvider::AWS,
+                region:          String::new(),
+                compute_type:    ComputeType::Lambda,
+                memory_mb:       0,
                 timeout_seconds: 0,
             },
-            deployed_at: Utc::now(),
-            edge_enabled: false,
+            deployed_at:          Utc::now(),
+            edge_enabled:         false,
             auto_scaling_enabled: true,
-            cost_estimate: 0.0,
+            cost_estimate:        0.0,
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct EdgeInfrastructure {
-    pub edge_points: Vec<String>,
-    pub sync_config: SynchronizationConfig,
+    pub edge_points:       Vec<String>,
+    pub sync_config:       SynchronizationConfig,
     pub security_measures: Vec<String>,
 }
 
 impl Default for EdgeInfrastructure {
     fn default() -> Self {
         Self {
-            edge_points: vec![],
-            sync_config: SynchronizationConfig,
+            edge_points:       vec![],
+            sync_config:       SynchronizationConfig,
             security_measures: vec![],
         }
     }

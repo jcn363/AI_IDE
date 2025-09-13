@@ -3,8 +3,9 @@
 //! This module provides the base trait and utilities for AST visitors used in
 //! security analysis of Rust code.
 
-use super::ai_security_analyzer::SecurityIssue;
 use syn::visit::Visit;
+
+use super::ai_security_analyzer::SecurityIssue;
 
 /// Base trait for security analysis visitors
 pub trait BaseVisitor<'ast>: Visit<'ast> {

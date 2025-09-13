@@ -3,21 +3,21 @@
 //! This module implements intelligent result aggregation and consensus determination
 //! across multiple AI models to improve accuracy and provide confidence scores.
 
-use crate::config::{validate_config, OrchestrationConfig};
-use crate::types::{
-    ConsensusResult, ModelContribution, ModelId, ModelTask, RequestContext, VotingMechanism,
-};
-use crate::{OrchestrationError, Result};
-use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use async_trait::async_trait;
 use tokio::sync::RwLock;
 use tokio::time::{Duration, Instant};
+
+use crate::config::{validate_config, OrchestrationConfig};
+use crate::types::{ConsensusResult, ModelContribution, ModelId, ModelTask, RequestContext, VotingMechanism};
+use crate::{OrchestrationError, Result};
 
 /// Result aggregator for combining outputs from multiple models
 #[derive(Debug)]
 pub struct ResultAggregator {
-    result_history: Arc<RwLock<HashMap<String, Vec<String>>>>,
+    result_history:   Arc<RwLock<HashMap<String, Vec<String>>>>,
     max_history_size: usize,
 }
 
@@ -90,9 +90,9 @@ impl ResultAggregator {
 /// Consensus calculator using various voting and scoring mechanisms
 #[derive(Debug)]
 pub struct ConsensusCalculator {
-    voting_mechanism: VotingMechanism,
+    voting_mechanism:    VotingMechanism,
     confidence_function: ConsensusConfidence,
-    result_cache: Arc<RwLock<HashMap<String, ConsensusResult>>>,
+    result_cache:        Arc<RwLock<HashMap<String, ConsensusResult>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -116,18 +116,15 @@ impl ConsensusCalculator {
         }
 
         let consensus_result = match self.voting_mechanism {
-            VotingMechanism::Majority => {
+            VotingMechanism::Majority =>
                 self.majority_voting_consensus(model_outputs, model_confidences)
-                    .await
-            }
-            VotingMechanism::Weighted => {
+                    .await,
+            VotingMechanism::Weighted =>
                 self.weighted_voting_consensus(model_outputs, model_confidences)
-                    .await
-            }
-            VotingMechanism::ConfidenceBased => {
+                    .await,
+            VotingMechanism::ConfidenceBased =>
                 self.confidence_based_consensus(model_outputs, model_confidences)
-                    .await
-            }
+                    .await,
         };
 
         // Cache result
@@ -155,10 +152,9 @@ impl ConsensusCalculator {
             let confidence = model_confidences.get(model_id).unwrap_or(&0.5);
             let trimmed = output.trim().to_string();
 
-            let (count, voters, total_confidence) =
-                vote_counts
-                    .entry(trimmed.clone())
-                    .or_insert((0, Vec::new(), 0.0));
+            let (count, voters, total_confidence) = vote_counts
+                .entry(trimmed.clone())
+                .or_insert((0, Vec::new(), 0.0));
 
             *count += 1;
             voters.push(*model_id);
@@ -184,15 +180,12 @@ impl ConsensusCalculator {
                 let confidence = model_confidences.get(&model_id).unwrap_or(&0.5);
                 let weight = confidence / total_confidence.max(1.0); // Normalize weights
 
-                (
+                (model_id, ModelContribution {
                     model_id,
-                    ModelContribution {
-                        model_id,
-                        result,
-                        confidence: *confidence,
-                        weight_in_consensus: weight,
-                    },
-                )
+                    result,
+                    confidence: *confidence,
+                    weight_in_consensus: weight,
+                })
             })
             .collect();
 
@@ -218,9 +211,10 @@ impl ConsensusCalculator {
             let confidence = model_confidences.get(model_id).unwrap_or(&0.5);
             let trimmed = output.trim().to_string();
 
-            let (total_weight, voters, total_confidence) = weight_scores
-                .entry(trimmed.clone())
-                .or_insert((0.0, Vec::new(), 0.0));
+            let (total_weight, voters, total_confidence) =
+                weight_scores
+                    .entry(trimmed.clone())
+                    .or_insert((0.0, Vec::new(), 0.0));
 
             *total_weight += confidence;
             voters.push(*model_id);
@@ -251,15 +245,12 @@ impl ConsensusCalculator {
                 let confidence = model_confidences.get(&model_id).unwrap_or(&0.5);
                 let weight = confidence / total_confidence.max(1.0);
 
-                (
+                (model_id, ModelContribution {
                     model_id,
-                    ModelContribution {
-                        model_id,
-                        result,
-                        confidence: *confidence,
-                        weight_in_consensus: weight,
-                    },
-                )
+                    result,
+                    confidence: *confidence,
+                    weight_in_consensus: weight,
+                })
             })
             .collect();
 
@@ -296,24 +287,21 @@ impl ConsensusCalculator {
                 let result = model_outputs.get(model_id).unwrap().clone();
                 let confidence = model_confidences.get(model_id).unwrap_or(&0.5);
 
-                (
-                    *model_id,
-                    ModelContribution {
-                        model_id: *model_id,
-                        result,
-                        confidence: *confidence,
-                        weight_in_consensus: if model_id == &primary_model { 1.0 } else { 0.0 },
-                    },
-                )
+                (*model_id, ModelContribution {
+                    model_id: *model_id,
+                    result,
+                    confidence: *confidence,
+                    weight_in_consensus: if model_id == &primary_model { 1.0 } else { 0.0 },
+                })
             })
             .collect();
 
         ConsensusResult {
-            final_result: best_output.clone(),
-            confidence_score: *best_confidence,
+            final_result:        best_output.clone(),
+            confidence_score:    *best_confidence,
             model_contributions: contributions,
-            disagreement_score: 0.5, // High disagreement when selecting single model
-            primary_model: *primary_model,
+            disagreement_score:  0.5, // High disagreement when selecting single model
+            primary_model:       *primary_model,
         }
     }
 }
@@ -321,7 +309,7 @@ impl ConsensusCalculator {
 /// Result validator for ensuring output quality and consistency
 #[derive(Debug)]
 pub struct ResultValidator {
-    validation_rules: Vec<ValidationRule>,
+    validation_rules:   Vec<ValidationRule>,
     quality_thresholds: QualityThresholds,
 }
 
@@ -336,8 +324,8 @@ pub enum ValidationRule {
 
 #[derive(Debug, Clone)]
 pub struct QualityThresholds {
-    pub min_confidence: f64,
-    pub max_disagreement: f64,
+    pub min_confidence:    f64,
+    pub max_disagreement:  f64,
     pub min_result_length: usize,
     pub max_result_length: usize,
 }
@@ -345,13 +333,13 @@ pub struct QualityThresholds {
 impl ResultValidator {
     pub fn new() -> Self {
         Self {
-            validation_rules: vec![
+            validation_rules:   vec![
                 ValidationRule::NoEmptyResults,
                 ValidationRule::MinLength(10),
             ],
             quality_thresholds: QualityThresholds {
-                min_confidence: 0.6,
-                max_disagreement: 0.4,
+                min_confidence:    0.6,
+                max_disagreement:  0.4,
                 min_result_length: 1,
                 max_result_length: 10000,
             },
@@ -377,31 +365,28 @@ impl ResultValidator {
         // Apply validation rules
         for rule in &self.validation_rules {
             match rule {
-                ValidationRule::NoEmptyResults => {
+                ValidationRule::NoEmptyResults =>
                     if consensus_result.final_result.trim().is_empty() {
                         return Err(OrchestrationError::ConsensusError(
                             "Empty result after consensus".to_string(),
                         ));
-                    }
-                }
-                ValidationRule::MinLength(min_len) => {
+                    },
+                ValidationRule::MinLength(min_len) =>
                     if consensus_result.final_result.len() < *min_len {
                         return Err(OrchestrationError::ConsensusError(format!(
                             "Result length {} below minimum {}",
                             consensus_result.final_result.len(),
                             min_len
                         )));
-                    }
-                }
-                ValidationRule::MaxLength(max_len) => {
+                    },
+                ValidationRule::MaxLength(max_len) =>
                     if consensus_result.final_result.len() > *max_len {
                         return Err(OrchestrationError::ConsensusError(format!(
                             "Result length {} above maximum {}",
                             consensus_result.final_result.len(),
                             max_len
                         )));
-                    }
-                }
+                    },
                 ValidationRule::ConsistentFormat => {
                     // Placeholder for more sophisticated format consistency checks
                     self.check_format_consistency(&consensus_result.final_result)?;
@@ -433,10 +418,8 @@ impl ResultValidator {
     fn check_language_consistency(&self, result: &str) -> Result<()> {
         // Placeholder - could use language detection libraries
         // For now, just check for basic syntax patterns
-        let has_code_patterns =
-            result.contains(';') || result.contains('{') || result.contains('}');
-        let has_text_patterns =
-            result.contains('.') || result.contains(' ') || result.contains('\n');
+        let has_code_patterns = result.contains(';') || result.contains('{') || result.contains('}');
+        let has_text_patterns = result.contains('.') || result.contains(' ') || result.contains('\n');
 
         if has_code_patterns && has_text_patterns {
             // Mixed content is okay for some tasks
@@ -448,9 +431,7 @@ impl ResultValidator {
     fn check_code_syntax(&self, result: &str) -> Result<()> {
         // Placeholder - would integrate with language-specific parsers
         // For now, check for obvious syntax errors in common formats
-        if result.contains("{{") && !result.contains("}}")
-            || result.contains("}}") && !result.contains("{{")
-        {
+        if result.contains("{{") && !result.contains("}}") || result.contains("}}") && !result.contains("{{") {
             return Err(OrchestrationError::ConsensusError(
                 "Mismatched template syntax".to_string(),
             ));
@@ -463,7 +444,7 @@ impl ResultValidator {
 #[derive(Debug)]
 pub struct ConfidenceScorer {
     historical_performances: Arc<RwLock<HashMap<ModelId, Vec<f64>>>>,
-    decay_factor: f64,
+    decay_factor:            f64,
 }
 
 impl ConfidenceScorer {
@@ -520,7 +501,7 @@ impl ConfidenceScorer {
 #[derive(Debug)]
 pub struct DisagreementResolver {
     resolution_strategy: DisagreementStrategy,
-    conflict_history: Arc<RwLock<Vec<ConflictRecord>>>,
+    conflict_history:    Arc<RwLock<Vec<ConflictRecord>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -532,18 +513,18 @@ pub enum DisagreementStrategy {
 
 #[derive(Debug, Clone)]
 pub struct ConflictRecord {
-    pub timestamp: Instant,
+    pub timestamp:           Instant,
     pub conflicting_outputs: Vec<String>,
     pub resolution_strategy: DisagreementStrategy,
-    pub final_result: String,
-    pub confidence: f64,
+    pub final_result:        String,
+    pub confidence:          f64,
 }
 
 impl DisagreementResolver {
     pub fn new(strategy: DisagreementStrategy) -> Self {
         Self {
             resolution_strategy: strategy,
-            conflict_history: Arc::new(RwLock::new(Vec::new())),
+            conflict_history:    Arc::new(RwLock::new(Vec::new())),
         }
     }
 
@@ -553,32 +534,28 @@ impl DisagreementResolver {
         model_confidences: HashMap<ModelId, f64>,
     ) -> String {
         let result = match &self.resolution_strategy {
-            DisagreementStrategy::FallbackToHighestConfidence => {
-                self.resolve_by_highest_confidence(&conflicting_outputs, &model_confidences)
-            }
-            DisagreementStrategy::WeightedMedianSelection => {
-                self.resolve_by_weighted_median(&conflicting_outputs, &model_confidences)
-            }
+            DisagreementStrategy::FallbackToHighestConfidence =>
+                self.resolve_by_highest_confidence(&conflicting_outputs, &model_confidences),
+            DisagreementStrategy::WeightedMedianSelection =>
+                self.resolve_by_weighted_median(&conflicting_outputs, &model_confidences),
             DisagreementStrategy::ExpertVoting(expert_model) => {
                 // If expert model is available, use its output
                 conflicting_outputs
                     .iter()
                     .find(|(model_id, _)| model_id.0.to_string().contains(expert_model))
                     .map(|(_, output)| output.clone())
-                    .unwrap_or_else(|| {
-                        self.resolve_by_highest_confidence(&conflicting_outputs, &model_confidences)
-                    })
+                    .unwrap_or_else(|| self.resolve_by_highest_confidence(&conflicting_outputs, &model_confidences))
             }
         };
 
         // Record the conflict for future analysis
         let mut history = self.conflict_history.write().await;
         history.push(ConflictRecord {
-            timestamp: Instant::now(),
+            timestamp:           Instant::now(),
             conflicting_outputs: conflicting_outputs.values().cloned().collect(),
             resolution_strategy: self.resolution_strategy.clone(),
-            final_result: result.clone(),
-            confidence: 0.5, // Placeholder
+            final_result:        result.clone(),
+            confidence:          0.5, // Placeholder
         });
 
         // Keep history bounded
@@ -632,12 +609,12 @@ impl DisagreementResolver {
 /// Main Model Consensus Engine
 #[derive(Debug)]
 pub struct ModelConsensusEngine {
-    pub aggregator: Arc<ResultAggregator>,
-    pub consensus_calculator: Arc<ConsensusCalculator>,
-    pub validator: Arc<ResultValidator>,
-    pub confidence_scorer: Arc<ConfidenceScorer>,
+    pub aggregator:            Arc<ResultAggregator>,
+    pub consensus_calculator:  Arc<ConsensusCalculator>,
+    pub validator:             Arc<ResultValidator>,
+    pub confidence_scorer:     Arc<ConfidenceScorer>,
     pub disagreement_resolver: Arc<DisagreementResolver>,
-    config: OrchestrationConfig,
+    config:                    OrchestrationConfig,
 }
 
 impl ModelConsensusEngine {
@@ -646,9 +623,9 @@ impl ModelConsensusEngine {
         Ok(Self {
             aggregator: Arc::new(ResultAggregator::new(100)),
             consensus_calculator: Arc::new(ConsensusCalculator {
-                voting_mechanism: config.consensus_config.voting_mechanism.clone(),
+                voting_mechanism:    config.consensus_config.voting_mechanism.clone(),
                 confidence_function: ConsensusConfidence::WeightedScore,
-                result_cache: Arc::new(RwLock::new(HashMap::new())),
+                result_cache:        Arc::new(RwLock::new(HashMap::new())),
             }),
             validator: Arc::new(ResultValidator::new()),
             confidence_scorer: Arc::new(ConfidenceScorer::new(0.9)),
@@ -682,9 +659,7 @@ impl ModelConsensusEngine {
         }
 
         // Check if we have multiple outputs to build consensus
-        if normalized_outputs.len()
-            >= self.config.consensus_config.min_models_for_consensus as usize
-        {
+        if normalized_outputs.len() >= self.config.consensus_config.min_models_for_consensus as usize {
             let consensus_result = self
                 .consensus_calculator
                 .calculate_consensus(normalized_outputs, model_confidences)
@@ -703,22 +678,19 @@ impl ModelConsensusEngine {
 
             // Create consensus result with single contribution
             let model_id = ModelId::new();
-            let contributions = HashMap::from([(
+            let contributions = HashMap::from([(model_id, ModelContribution {
                 model_id,
-                ModelContribution {
-                    model_id,
-                    result: fallback_result.clone(),
-                    confidence: 0.5,
-                    weight_in_consensus: 1.0,
-                },
-            )]);
+                result: fallback_result.clone(),
+                confidence: 0.5,
+                weight_in_consensus: 1.0,
+            })]);
 
             Ok(ConsensusResult {
-                final_result: fallback_result,
-                confidence_score: 0.5,
+                final_result:        fallback_result,
+                confidence_score:    0.5,
                 model_contributions: contributions,
-                disagreement_score: 0.0,
-                primary_model: model_id,
+                disagreement_score:  0.0,
+                primary_model:       model_id,
             })
         } else {
             Err(OrchestrationError::ConsensusError(
@@ -759,12 +731,12 @@ mod tests {
         ]);
 
         let context = RequestContext {
-            task_type: ModelTask::Completion,
-            input_length: 100,
-            priority: RequestPriority::Medium,
+            task_type:           ModelTask::Completion,
+            input_length:        100,
+            priority:            RequestPriority::Medium,
             expected_complexity: crate::types::Complexity::Medium,
-            acceptable_latency: Duration::from_secs(5),
-            preferred_hardware: None,
+            acceptable_latency:  Duration::from_secs(5),
+            preferred_hardware:  None,
         };
 
         let consensus = engine
@@ -781,12 +753,12 @@ mod tests {
         let engine = ModelConsensusEngine::new(config).await.unwrap();
 
         let context = RequestContext {
-            task_type: ModelTask::Completion,
-            input_length: 100,
-            priority: RequestPriority::Medium,
+            task_type:           ModelTask::Completion,
+            input_length:        100,
+            priority:            RequestPriority::Medium,
             expected_complexity: crate::types::Complexity::Medium,
-            acceptable_latency: Duration::from_secs(5),
-            preferred_hardware: None,
+            acceptable_latency:  Duration::from_secs(5),
+            preferred_hardware:  None,
         };
 
         let result = engine.process_consensus(HashMap::new(), &context).await;

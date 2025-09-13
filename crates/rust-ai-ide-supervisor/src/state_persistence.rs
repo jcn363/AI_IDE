@@ -1,8 +1,9 @@
 //! State Persistence Layer - Checkpoint/savepoint mechanisms for crash recovery
 
-use rusqlite::{params, Connection, Transaction};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+
+use rusqlite::{params, Connection, Transaction};
 use tokio::fs;
 use tokio::sync::Mutex;
 use tokio::time::{timeout, Duration};
@@ -15,8 +16,8 @@ pub type Checkpoint = StateSnapshot;
 /// State Persistence Manager using SQLite and file-based storage
 #[derive(Debug, Clone)]
 pub struct StatePersistence {
-    db_path: PathBuf,
-    checkpoint_dir: PathBuf,
+    db_path:         PathBuf,
+    checkpoint_dir:  PathBuf,
     connection_pool: Arc<Mutex<Connection>>,
 }
 
@@ -28,31 +29,20 @@ impl StatePersistence {
 
         // Create directories if they don't exist
         fs::create_dir_all(&checkpoint_dir).await.map_err(|e| {
-            SupervisorError::persistence_error(format!(
-                "Failed to create checkpoint directory: {:?}",
-                e
-            ))
+            SupervisorError::persistence_error(format!("Failed to create checkpoint directory: {:?}", e))
         })?;
 
         // Create SQLite connection
-        let conn = Connection::open(&db_path).map_err(|e| {
-            SupervisorError::persistence_error(format!("Failed to open database: {:?}", e))
-        })?;
+        let conn = Connection::open(&db_path)
+            .map_err(|e| SupervisorError::persistence_error(format!("Failed to open database: {:?}", e)))?;
 
         // Enable WAL mode for better concurrency
         conn.pragma_update(None, "journal_mode", "WAL")
-            .map_err(|e| {
-                SupervisorError::persistence_error(format!("Failed to set journal mode: {:?}", e))
-            })?;
+            .map_err(|e| SupervisorError::persistence_error(format!("Failed to set journal mode: {:?}", e)))?;
 
         // Enable foreign keys
         conn.pragma_update(None, "foreign_keys", "ON")
-            .map_err(|e| {
-                SupervisorError::persistence_error(format!(
-                    "Failed to enable foreign keys: {:?}",
-                    e
-                ))
-            })?;
+            .map_err(|e| SupervisorError::persistence_error(format!("Failed to enable foreign keys: {:?}", e)))?;
 
         // Initialize schema
         Self::initialize_schema(&conn)?;
@@ -111,9 +101,7 @@ impl StatePersistence {
         "#;
 
         conn.execute(schema_sql, params![chrono::Utc::now().to_rfc3339()])
-            .map_err(|e| {
-                SupervisorError::migration_error(format!("Failed to initialize schema: {:?}", e))
-            })?;
+            .map_err(|e| SupervisorError::migration_error(format!("Failed to initialize schema: {:?}", e)))?;
 
         Ok(())
     }
@@ -136,9 +124,8 @@ impl StatePersistence {
         };
 
         // Serialize snapshot
-        let data = serde_json::to_vec(&snapshot).map_err(|e| {
-            SupervisorError::persistence_error(format!("Failed to serialize snapshot: {:?}", e))
-        })?;
+        let data = serde_json::to_vec(&snapshot)
+            .map_err(|e| SupervisorError::persistence_error(format!("Failed to serialize snapshot: {:?}", e)))?;
 
         // Create checksum for integrity verification
         let checksum = format!("{:x}", md5::compute(&data));
@@ -160,12 +147,7 @@ impl StatePersistence {
     }
 
     /// Store checkpoint asynchronously
-    async fn store_checkpoint_async(
-        &self,
-        id: CheckpointId,
-        data: Vec<u8>,
-        checksum: String,
-    ) -> SupervisorResult<()> {
+    async fn store_checkpoint_async(&self, id: CheckpointId, data: Vec<u8>, checksum: String) -> SupervisorResult<()> {
         let conn_guard = self.connection_pool.lock().await;
 
         conn_guard
@@ -178,9 +160,7 @@ impl StatePersistence {
                     checksum
                 ],
             )
-            .map_err(|e| {
-                SupervisorError::persistence_error(format!("Failed to store checkpoint: {:?}", e))
-            })?;
+            .map_err(|e| SupervisorError::persistence_error(format!("Failed to store checkpoint: {:?}", e)))?;
 
         Ok(())
     }
@@ -199,9 +179,7 @@ impl StatePersistence {
                     Ok((data, checksum))
                 },
             )
-            .map_err(|e| {
-                SupervisorError::persistence_error(format!("Failed to load checkpoint: {:?}", e))
-            })?;
+            .map_err(|e| SupervisorError::persistence_error(format!("Failed to load checkpoint: {:?}", e)))?;
 
         // Verify checksum
         let calculated_checksum = format!("{:x}", md5::compute(&data));
@@ -212,9 +190,8 @@ impl StatePersistence {
         }
 
         // Deserialize snapshot
-        let snapshot: StateSnapshot = serde_json::from_slice(&data).map_err(|e| {
-            SupervisorError::persistence_error(format!("Failed to deserialize snapshot: {:?}", e))
-        })?;
+        let snapshot: StateSnapshot = serde_json::from_slice(&data)
+            .map_err(|e| SupervisorError::persistence_error(format!("Failed to deserialize snapshot: {:?}", e)))?;
 
         Ok(snapshot)
     }
@@ -233,12 +210,7 @@ impl StatePersistence {
                     Ok((data, checksum))
                 },
             )
-            .map_err(|e| {
-                SupervisorError::persistence_error(format!(
-                    "Failed to load latest checkpoint: {:?}",
-                    e
-                ))
-            })?;
+            .map_err(|e| SupervisorError::persistence_error(format!("Failed to load latest checkpoint: {:?}", e)))?;
 
         // Verify checksum
         let calculated_checksum = format!("{:x}", md5::compute(&data));
@@ -250,54 +222,54 @@ impl StatePersistence {
 
         // Deserialize snapshot
         let snapshot: StateSnapshot = serde_json::from_slice(&data).map_err(|e| {
-            SupervisorError::persistence_error(format!(
-                "Failed to deserialize latest snapshot: {:?}",
-                e
-            ))
+            SupervisorError::persistence_error(format!("Failed to deserialize latest snapshot: {:?}", e))
         })?;
 
         Ok(snapshot)
     }
 
     /// Store pending operation
-    pub async fn store_pending_operation(
-        &self,
-        operation: &PendingOperation,
-    ) -> SupervisorResult<()> {
+    pub async fn store_pending_operation(&self, operation: &PendingOperation) -> SupervisorResult<()> {
         let conn_guard = self.connection_pool.lock().await;
 
-        conn_guard.execute(
-            "INSERT INTO pending_operations (id, operation_type, service_id, parameters, queued_time, max_retries, retry_count)
+        conn_guard
+            .execute(
+                "INSERT INTO pending_operations (id, operation_type, service_id, parameters, queued_time, \
+                 max_retries, retry_count)
              VALUES (?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT(id) DO UPDATE SET
                 retry_count = excluded.retry_count,
                 service_id = excluded.service_id,
                 parameters = excluded.parameters",
-            params![
-                operation.id.to_string(),
-                operation.operation_type,
-                operation.service_id,
-                serde_json::to_string(&operation.parameters).unwrap_or_default(),
-                operation.queued_time.to_rfc3339(),
-                operation.max_retries,
-                operation.retry_count
-            ]
-        ).map_err(|e| SupervisorError::persistence_error(format!("Failed to store pending operation: {:?}", e)))?;
+                params![
+                    operation.id.to_string(),
+                    operation.operation_type,
+                    operation.service_id,
+                    serde_json::to_string(&operation.parameters).unwrap_or_default(),
+                    operation.queued_time.to_rfc3339(),
+                    operation.max_retries,
+                    operation.retry_count
+                ],
+            )
+            .map_err(|e| SupervisorError::persistence_error(format!("Failed to store pending operation: {:?}", e)))?;
 
         Ok(())
     }
 
     /// Load pending operations for a service
-    pub async fn load_pending_operations(
-        &self,
-        service_id: Option<&str>,
-    ) -> SupervisorResult<Vec<PendingOperation>> {
+    pub async fn load_pending_operations(&self, service_id: Option<&str>) -> SupervisorResult<Vec<PendingOperation>> {
         let conn_guard = self.connection_pool.lock().await;
 
         let mut stmt = if let Some(service_id) = service_id {
-            conn_guard.prepare("SELECT id, operation_type, service_id, parameters, queued_time, max_retries, retry_count FROM pending_operations WHERE service_id = ?")
+            conn_guard.prepare(
+                "SELECT id, operation_type, service_id, parameters, queued_time, max_retries, retry_count FROM \
+                 pending_operations WHERE service_id = ?",
+            )
         } else {
-            conn_guard.prepare("SELECT id, operation_type, service_id, parameters, queued_time, max_retries, retry_count FROM pending_operations")
+            conn_guard.prepare(
+                "SELECT id, operation_type, service_id, parameters, queued_time, max_retries, retry_count FROM \
+                 pending_operations",
+            )
         }?;
 
         let params = if let Some(service_id) = service_id {
@@ -314,8 +286,7 @@ impl StatePersistence {
             let max_retries: u32 = row.get(5)?;
             let retry_count: u32 = row.get(6)?;
 
-            let parameters: serde_json::Value =
-                serde_json::from_str(&parameters_str).unwrap_or(serde_json::json!({}));
+            let parameters: serde_json::Value = serde_json::from_str(&parameters_str).unwrap_or(serde_json::json!({}));
             let queued_time = chrono::DateTime::parse_from_rfc3339(&queued_time_str)
                 .map(|dt| dt.with_timezone(&chrono::Utc))
                 .unwrap_or_else(|_| chrono::Utc::now());
@@ -333,29 +304,24 @@ impl StatePersistence {
 
         let mut operations = Vec::new();
         for operation in operations_iter {
-            operations.push(operation.map_err(|e| {
-                SupervisorError::persistence_error(format!("Failed to parse operation: {:?}", e))
-            })?);
+            operations.push(
+                operation
+                    .map_err(|e| SupervisorError::persistence_error(format!("Failed to parse operation: {:?}", e)))?,
+            );
         }
 
         Ok(operations)
     }
 
     /// Remove completed operations
-    pub async fn remove_pending_operation(
-        &self,
-        operation_id: &uuid::Uuid,
-    ) -> SupervisorResult<()> {
+    pub async fn remove_pending_operation(&self, operation_id: &uuid::Uuid) -> SupervisorResult<()> {
         let conn_guard = self.connection_pool.lock().await;
 
         conn_guard
-            .execute(
-                "DELETE FROM pending_operations WHERE id = ?",
-                params![operation_id.to_string()],
-            )
-            .map_err(|e| {
-                SupervisorError::persistence_error(format!("Failed to remove operation: {:?}", e))
-            })?;
+            .execute("DELETE FROM pending_operations WHERE id = ?", params![
+                operation_id.to_string()
+            ])
+            .map_err(|e| SupervisorError::persistence_error(format!("Failed to remove operation: {:?}", e)))?;
 
         Ok(())
     }
@@ -396,19 +362,17 @@ impl StatePersistence {
     pub async fn get_statistics(&self) -> SupervisorResult<DatabaseStats> {
         let conn_guard = self.connection_pool.lock().await;
 
-        let checkpoint_count =
-            conn_guard.query_row("SELECT COUNT(*) FROM checkpoints", params![], |row| {
-                row.get::<_, i64>(0)
-            })?;
+        let checkpoint_count = conn_guard.query_row("SELECT COUNT(*) FROM checkpoints", params![], |row| {
+            row.get::<_, i64>(0)
+        })?;
         let pending_operations_count = conn_guard.query_row(
             "SELECT COUNT(*) FROM pending_operations",
             params![],
             |row| row.get::<_, i64>(0),
         )?;
-        let service_states_count =
-            conn_guard.query_row("SELECT COUNT(*) FROM service_states", params![], |row| {
-                row.get::<_, i64>(0)
-            })?;
+        let service_states_count = conn_guard.query_row("SELECT COUNT(*) FROM service_states", params![], |row| {
+            row.get::<_, i64>(0)
+        })?;
 
         // Calculate database size
         let db_size = tokio::fs::metadata(&self.db_path)
@@ -417,10 +381,10 @@ impl StatePersistence {
             .unwrap_or(0);
 
         Ok(DatabaseStats {
-            checkpoint_count: checkpoint_count as u64,
+            checkpoint_count:         checkpoint_count as u64,
             pending_operations_count: pending_operations_count as u64,
-            service_states_count: service_states_count as u64,
-            database_size: db_size,
+            service_states_count:     service_states_count as u64,
+            database_size:            db_size,
         })
     }
 }
@@ -428,16 +392,17 @@ impl StatePersistence {
 /// Database statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DatabaseStats {
-    pub checkpoint_count: u64,
+    pub checkpoint_count:         u64,
     pub pending_operations_count: u64,
-    pub service_states_count: u64,
-    pub database_size: u64,
+    pub service_states_count:     u64,
+    pub database_size:            u64,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     async fn create_test_persistence() -> StatePersistence {
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
@@ -457,16 +422,13 @@ mod tests {
         let persistence = create_test_persistence().await;
 
         let mut services = HashMap::new();
-        services.insert(
-            "test_service".to_string(),
-            ServiceSnapshot {
-                service_id: "test_service".to_string(),
-                state: ServiceState::Running,
-                metrics: ServiceMetrics::default(),
-                last_start_time: Some(chrono::Utc::now()),
-                process_id: Some(1234),
-            },
-        );
+        services.insert("test_service".to_string(), ServiceSnapshot {
+            service_id:      "test_service".to_string(),
+            state:           ServiceState::Running,
+            metrics:         ServiceMetrics::default(),
+            last_start_time: Some(chrono::Utc::now()),
+            process_id:      Some(1234),
+        });
 
         let operations = vec![];
         let checkpoint_id = persistence
@@ -488,13 +450,13 @@ mod tests {
         let persistence = create_test_persistence().await;
 
         let operation = PendingOperation {
-            id: uuid::Uuid::new_v4(),
+            id:             uuid::Uuid::new_v4(),
             operation_type: "test".to_string(),
-            service_id: "test_service".to_string(),
-            parameters: serde_json::json!({"action": "restart"}),
-            queued_time: chrono::Utc::now(),
-            max_retries: 3,
-            retry_count: 0,
+            service_id:     "test_service".to_string(),
+            parameters:     serde_json::json!({"action": "restart"}),
+            queued_time:    chrono::Utc::now(),
+            max_retries:    3,
+            retry_count:    0,
         };
 
         persistence

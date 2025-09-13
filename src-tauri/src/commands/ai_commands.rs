@@ -1,19 +1,19 @@
-use serde_json::json;
 use std::sync::Arc;
-use tauri::{async_runtime, AppHandle, State};
-use tokio::sync::Mutex;
 
 use rust_ai_ide_ai_codegen;
 use rust_ai_ide_common::validation::TauriInputSanitizer;
 use rust_ai_ide_shared_types::{
-    ABTestConfiguration, ABTestResults, CodeSearchRequest, CodeSearchResult, InferenceRequest,
-    InferenceResult, PerformanceMetrics, VectorSearchRequest, VectorSearchResult,
+    ABTestConfiguration, ABTestResults, CodeSearchRequest, CodeSearchResult, InferenceRequest, InferenceResult,
+    PerformanceMetrics, VectorSearchRequest, VectorSearchResult,
 };
+use serde_json::json;
+use tauri::{async_runtime, AppHandle, State};
+use tokio::sync::Mutex;
 
 // State management for AI services
 #[derive(Default)]
 pub struct AIServices {
-    pub onnx_service: Option<Arc<dyn rust_ai_ide_onnx_runtime::InferenceService>>,
+    pub onnx_service:    Option<Arc<dyn rust_ai_ide_onnx_runtime::InferenceService>>,
     pub vector_database: Option<Arc<rust_ai_ide_vector_database::VectorDatabase>>,
     pub semantic_search: Option<Arc<rust_ai_ide_semantic_search::SemanticSearchEngine>>,
 }
@@ -41,19 +41,19 @@ pub async fn onnx_inference(
         match onnx_service.infer(request).await {
             Ok(result) => Ok(result),
             Err(e) => Ok(InferenceResult {
-                output: json!({"error": e.to_string()}),
+                output:            json!({"error": e.to_string()}),
                 inference_time_ms: 0,
-                model_used: "error".to_string(),
-                confidence_score: None,
+                model_used:        "error".to_string(),
+                confidence_score:  None,
             }),
         }
     } else {
         // Return dummy data when service is not available
         Ok(InferenceResult {
-            output: json!({"status": "ok", "result": "dummy_inference_result", "model": request.model_name}),
+            output:            json!({"status": "ok", "result": "dummy_inference_result", "model": request.model_name}),
             inference_time_ms: 42,
-            model_used: request.model_name,
-            confidence_score: Some(0.85),
+            model_used:        request.model_name,
+            confidence_score:  Some(0.85),
         })
     }
 }
@@ -100,9 +100,7 @@ pub async fn configure_ab_test(
     let services_lock = services.inner().lock().await;
 
     if let Some(onnx_service) = &services_lock.onnx_service {
-        if let Some(ab_service) =
-            onnx_service.downcast_ref::<rust_ai_ide_onnx_runtime::ONNXInferenceService>()
-        {
+        if let Some(ab_service) = onnx_service.downcast_ref::<rust_ai_ide_onnx_runtime::ONNXInferenceService>() {
             ab_service
                 .configure_ab_test(&test_name, config)
                 .await
@@ -127,9 +125,7 @@ pub async fn get_ab_test_results(
     let services_lock = services.inner().lock().await;
 
     if let Some(onnx_service) = &services_lock.onnx_service {
-        if let Some(ab_service) =
-            onnx_service.downcast_ref::<rust_ai_ide_onnx_runtime::ONNXInferenceService>()
-        {
+        if let Some(ab_service) = onnx_service.downcast_ref::<rust_ai_ide_onnx_runtime::ONNXInferenceService>() {
             let results = ab_service.get_ab_test_results(&test_name).await?;
             Ok(serde_json::from_value(results).unwrap_or_default())
         } else {
@@ -151,9 +147,7 @@ pub async fn get_performance_metrics(
     let mut gpu_metrics = Vec::new();
 
     if let Some(onnx_service) = &services_lock.onnx_service {
-        if let Some(onx_service) =
-            onnx_service.downcast_ref::<rust_ai_ide_onnx_runtime::ONNXInferenceService>()
-        {
+        if let Some(onx_service) = onnx_service.downcast_ref::<rust_ai_ide_onnx_runtime::ONNXInferenceService>() {
             if let Ok(metrics) = onx_service.get_performance_metrics().await {
                 // Parse CPU/memory stats from ONNX metrics
                 // This would be populated with actual GPU metrics in production
@@ -163,12 +157,12 @@ pub async fn get_performance_metrics(
 
     Ok(PerformanceMetrics {
         system_health: 85.0,
-        memory_stats: Default::default(),
-        gpu_stats: gpu_metrics,
-        model_stats: Default::default(),
-        cache_stats: Default::default(),
-        active_tasks: vec![],
-        timestamp: std::time::SystemTime::now()
+        memory_stats:  Default::default(),
+        gpu_stats:     gpu_metrics,
+        model_stats:   Default::default(),
+        cache_stats:   Default::default(),
+        active_tasks:  vec![],
+        timestamp:     std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs(),
@@ -409,41 +403,40 @@ pub async fn semantic_inference(
         if let Ok(analysis_svc) = bridge_guard.analysis_service().await {
             // Enhanced semantic inference using input code for deeper analysis
             let semantic_request = rust_ai_ide_commands_ai::analysis::FileAnalysisRequest {
-                file_path: "semantic_inference_input.rs".to_string(), // Placeholder path
+                file_path:            "semantic_inference_input.rs".to_string(), // Placeholder path
                 analyze_dependencies: true,
-                analyze_complexity: true,
-                include_performance: true,
+                analyze_complexity:   true,
+                include_performance:  true,
             };
 
             match analysis_svc.analyze_file(semantic_request).await {
                 Ok(analysis_result) => {
                     // Create enhanced semantic output based on analysis
-                    let semantic_entities: Vec<String> = if let Some(metrics) =
-                        analysis_result.metrics.get("cyclomatic_complexity")
-                    {
-                        if *metrics > 5.0 {
-                            vec![
-                                "complex_function".to_string(),
-                                "high_complexity_block".to_string(),
-                                "nested_loops".to_string(),
-                            ]
+                    let semantic_entities: Vec<String> =
+                        if let Some(metrics) = analysis_result.metrics.get("cyclomatic_complexity") {
+                            if *metrics > 5.0 {
+                                vec![
+                                    "complex_function".to_string(),
+                                    "high_complexity_block".to_string(),
+                                    "nested_loops".to_string(),
+                                ]
+                            } else {
+                                vec![
+                                    "simple_function".to_string(),
+                                    "clean_code".to_string(),
+                                    "moderate_complexity".to_string(),
+                                ]
+                            }
                         } else {
                             vec![
-                                "simple_function".to_string(),
-                                "clean_code".to_string(),
-                                "moderate_complexity".to_string(),
+                                "function".to_string(),
+                                "class".to_string(),
+                                "variable".to_string(),
                             ]
-                        }
-                    } else {
-                        vec![
-                            "function".to_string(),
-                            "class".to_string(),
-                            "variable".to_string(),
-                        ]
-                    };
+                        };
 
                     let semantic_result = InferenceResult {
-                        output: json!({
+                        output:            json!({
                             "original": request.input_data,
                             "semantic_analysis": {
                                 "entities": semantic_entities,
@@ -460,8 +453,8 @@ pub async fn semantic_inference(
                             }
                         }),
                         inference_time_ms: 150,
-                        model_used: request.model_name,
-                        confidence_score: Some(0.89),
+                        model_used:        request.model_name,
+                        confidence_score:  Some(0.89),
                     };
 
                     return Ok(semantic_result);
@@ -500,16 +493,16 @@ pub async fn semantic_inference(
                 Ok(enhanced_result)
             }
             Err(e) => Ok(InferenceResult {
-                output: json!({"error": format!("Semantic inference failed: {}", e)}),
+                output:            json!({"error": format!("Semantic inference failed: {}", e)}),
                 inference_time_ms: 0,
-                model_used: request.model_name,
-                confidence_score: None,
+                model_used:        request.model_name,
+                confidence_score:  None,
             }),
         }
     } else {
         // Return dummy semantic inference data
         Ok(InferenceResult {
-            output: json!({
+            output:            json!({
                 "semantic_analysis": {
                     "entities": ["class", "function", "method"],
                     "relationships": [
@@ -522,8 +515,8 @@ pub async fn semantic_inference(
                 "model": request.model_name
             }),
             inference_time_ms: 85,
-            model_used: request.model_name,
-            confidence_score: Some(0.82),
+            model_used:        request.model_name,
+            confidence_score:  Some(0.82),
         })
     }
 }
@@ -553,10 +546,10 @@ pub async fn vector_index_file(
         if let Ok(analysis_svc) = bridge_guard.analysis_service().await {
             // First perform analysis to enhance indexing with semantic understanding
             let file_request = rust_ai_ide_commands_ai::analysis::FileAnalysisRequest {
-                file_path: file_path.clone(),
+                file_path:            file_path.clone(),
                 analyze_dependencies: true,
-                analyze_complexity: true,
-                include_performance: false,
+                analyze_complexity:   true,
+                include_performance:  false,
             };
 
             match analysis_svc.analyze_file(file_request).await {
@@ -604,13 +597,14 @@ pub async fn vector_index_file(
                                 }));
                             }
                         }
-                        Err(e) => {
-                            return Ok(json!({"error": format!("Failed to read file: {}", e)}))
-                        }
+                        Err(e) => return Ok(json!({"error": format!("Failed to read file: {}", e)})),
                     }
                 }
                 Err(e) => {
-                    log::warn!("Failed to enhance indexing via commands-ai, falling back to basic indexing: {}", e);
+                    log::warn!(
+                        "Failed to enhance indexing via commands-ai, falling back to basic indexing: {}",
+                        e
+                    );
                 }
             }
         }
@@ -667,11 +661,8 @@ pub async fn vector_query(
                 .analyze_workspace(
                     rust_ai_ide_commands_ai::analysis::WorkspaceAnalysisRequest {
                         include_dependencies: true,
-                        analysis_depth: 3,
-                        exclude_patterns: vec![
-                            "target/*".to_string(),
-                            "node_modules/*".to_string(),
-                        ],
+                        analysis_depth:       3,
+                        exclude_patterns:     vec!["target/*".to_string(), "node_modules/*".to_string()],
                     },
                 )
                 .await;
@@ -706,11 +697,11 @@ pub async fn vector_query(
                 // Return enhanced dummy data with workspace insights
                 let results: Vec<VectorSearchResult> = (0..5)
                     .map(|i| VectorSearchResult {
-                        file_path: format!("/src/enhanced_example{}.rs", i),
-                        score: 0.90 - (i as f64 * 0.03),
-                        context: format!("Enhanced semantic context with workspace insights {}", i),
+                        file_path:   format!("/src/enhanced_example{}.rs", i),
+                        score:       0.90 - (i as f64 * 0.03),
+                        context:     format!("Enhanced semantic context with workspace insights {}", i),
                         line_number: 10 + i * 5,
-                        matches: vec![
+                        matches:     vec![
                             format!("semantic_match_{}", i),
                             format!("workspace_insight_{}", i),
                         ],
@@ -735,11 +726,11 @@ pub async fn vector_query(
         // Return enhanced dummy data with semantic insights
         let results: Vec<VectorSearchResult> = (0..5)
             .map(|i| VectorSearchResult {
-                file_path: format!("/src/example{}.rs", i),
-                score: 0.85 - (i as f64 * 0.05),
-                context: format!("Semantic context for result {}", i),
+                file_path:   format!("/src/example{}.rs", i),
+                score:       0.85 - (i as f64 * 0.05),
+                context:     format!("Semantic context for result {}", i),
                 line_number: 10 + i * 5,
-                matches: vec![format!("semantic_match_{}", i)],
+                matches:     vec![format!("semantic_match_{}", i)],
             })
             .collect();
 
@@ -775,10 +766,10 @@ pub async fn pattern_analysis(
         if let Ok(analysis_svc) = bridge_guard.analysis_service().await {
             // Create analysis request for the file
             let file_request = rust_ai_ide_commands_ai::analysis::FileAnalysisRequest {
-                file_path: file_path.clone(),
+                file_path:            file_path.clone(),
                 analyze_dependencies: true,
-                analyze_complexity: true,
-                include_performance: true,
+                analyze_complexity:   true,
+                include_performance:  true,
             };
 
             match analysis_svc.analyze_file(file_request).await {
@@ -828,7 +819,10 @@ pub async fn pattern_analysis(
                     }));
                 }
                 Err(e) => {
-                    log::warn!("Failed to analyze patterns via commands-ai, falling back to placeholder: {}", e);
+                    log::warn!(
+                        "Failed to analyze patterns via commands-ai, falling back to placeholder: {}",
+                        e
+                    );
                 }
             }
         }
@@ -1121,12 +1115,10 @@ fn ai_codegen_generate_code_context() -> rust_ai_ide_ai_codegen::CodeGenerationC
 // Register all AI commands
 pub fn register_commands(app: &mut tauri::App) -> Result<(), tauri::Error> {
     // Initialize original AI services
-    let ai_services =
-        async_runtime::block_on(async { initialize_ai_services(app.handle()).await })?;
+    let ai_services = async_runtime::block_on(async { initialize_ai_services(app.handle()).await })?;
 
     // Initialize new AI bridge state
-    let ai_bridge =
-        async_runtime::block_on(async { crate::commands::ai::AIStateBridge::new().await })?;
+    let ai_bridge = async_runtime::block_on(async { crate::commands::ai::AIStateBridge::new().await })?;
 
     // Register AI services in app state (original state)
     app.manage(Arc::new(Mutex::new(ai_services)));

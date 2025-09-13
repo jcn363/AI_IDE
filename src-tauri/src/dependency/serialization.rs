@@ -1,9 +1,10 @@
 //! Serialization logic for dependency graphs
 
-use super::models::*;
 use petgraph::visit::EdgeRef;
 use serde::{Deserialize, Serialize};
 use serde_json;
+
+use super::models::*;
 
 /// Supported export formats for the dependency graph
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -16,10 +17,7 @@ pub enum ExportFormat {
 }
 
 /// Export a dependency graph to the specified format
-pub fn export_graph(
-    graph: &DependencyGraph,
-    format: ExportFormat,
-) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+pub fn export_graph(graph: &DependencyGraph, format: ExportFormat) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     match format {
         ExportFormat::Dot => export_dot(graph),
         ExportFormat::Json => export_json(graph),
@@ -90,9 +88,9 @@ fn export_dot(graph: &DependencyGraph) -> Result<Vec<u8>, Box<dyn std::error::Er
 fn export_json(graph: &DependencyGraph) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     #[derive(Serialize)]
     struct ExportNode {
-        id: String,
-        name: String,
-        version: String,
+        id:           String,
+        name:         String,
+        version:      String,
         is_workspace: bool,
     }
 
@@ -109,9 +107,9 @@ fn export_json(graph: &DependencyGraph) -> Result<Vec<u8>, Box<dyn std::error::E
     for node_idx in graph.graph.node_indices() {
         if let Some(node) = graph.graph.node_weight(node_idx) {
             export.0.push(ExportNode {
-                id: format!("{}:{}", node.name, node.version),
-                name: node.name.clone(),
-                version: node.version.clone(),
+                id:           format!("{}:{}", node.name, node.version),
+                name:         node.name.clone(),
+                version:      node.version.clone(),
                 is_workspace: node.is_workspace(),
             });
         }

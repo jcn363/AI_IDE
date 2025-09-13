@@ -7,11 +7,12 @@
 //! - Configurable alert generation and dispatch
 //! - Scalable log storage with retention policies
 
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use moka::future::Cache;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tokio::sync::{mpsc, RwLock};
 use tracing::{error, info, warn};
 use uuid::Uuid;
@@ -19,10 +20,7 @@ use uuid::Uuid;
 use crate::{EventSeverity, MonitoringError, Result, SecurityEvent};
 
 pub trait SiemGateway {
-    fn store_event(
-        &self,
-        event: &SecurityEvent,
-    ) -> impl std::future::Future<Output = Result<()>> + Send;
+    fn store_event(&self, event: &SecurityEvent) -> impl std::future::Future<Output = Result<()>> + Send;
     fn search_events(
         &self,
         query: &str,
@@ -43,20 +41,20 @@ pub trait EventCollector {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SiemIntegrationManager {
-    collectors: Arc<RwLock<Vec<Arc<dyn EventCollector + Send + Sync>>>>,
-    event_cache: Arc<Cache<String, SecurityEvent>>,
+    collectors:         Arc<RwLock<Vec<Arc<dyn EventCollector + Send + Sync>>>>,
+    event_cache:        Arc<Cache<String, SecurityEvent>>,
     correlation_engine: Arc<CorrelationEngine>,
-    alert_dispatcher: Arc<AlertDispatcher>,
-    event_sender: mpsc::UnboundedSender<SecurityEvent>,
-    event_receiver: Arc<RwLock<mpsc::UnboundedReceiver<SecurityEvent>>>,
+    alert_dispatcher:   Arc<AlertDispatcher>,
+    event_sender:       mpsc::UnboundedSender<SecurityEvent>,
+    event_receiver:     Arc<RwLock<mpsc::UnboundedReceiver<SecurityEvent>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventAggregate {
-    pub total_events: u64,
+    pub total_events:       u64,
     pub severity_breakdown: std::collections::HashMap<EventSeverity, u64>,
-    pub top_sources: Vec<String>,
-    pub correlation_count: u64,
+    pub top_sources:        Vec<String>,
+    pub correlation_count:  u64,
 }
 
 #[derive(Debug)]
@@ -66,24 +64,24 @@ struct CorrelationEngine {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct AlertDispatcher {
-    alert_rules: Vec<AlertRule>,
+    alert_rules:   Vec<AlertRule>,
     active_alerts: Arc<RwLock<Vec<SecurityAlert>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CorrelationRule {
-    pub id: String,
-    pub name: String,
+    pub id:         String,
+    pub name:       String,
     pub conditions: Vec<EventCondition>,
-    pub threshold: u32,
-    pub timeframe: std::time::Duration,
+    pub threshold:  u32,
+    pub timeframe:  std::time::Duration,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventCondition {
-    pub field: String,
+    pub field:    String,
     pub operator: ConditionOperator,
-    pub value: String,
+    pub value:    String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -97,11 +95,11 @@ pub enum ConditionOperator {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertRule {
-    pub id: String,
-    pub name: String,
-    pub correlation_id: Option<String>,
+    pub id:                 String,
+    pub name:               String,
+    pub correlation_id:     Option<String>,
     pub severity_threshold: EventSeverity,
-    pub actions: Vec<AlertAction>,
+    pub actions:            Vec<AlertAction>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -115,13 +113,13 @@ pub enum AlertAction {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityAlert {
-    pub id: Uuid,
-    pub timestamp: DateTime<Utc>,
-    pub rule_id: String,
-    pub severity: EventSeverity,
-    pub description: String,
+    pub id:             Uuid,
+    pub timestamp:      DateTime<Utc>,
+    pub rule_id:        String,
+    pub severity:       EventSeverity,
+    pub description:    String,
     pub related_events: Vec<Uuid>,
-    pub actions_taken: Vec<AlertAction>,
+    pub actions_taken:  Vec<AlertAction>,
 }
 
 impl SiemIntegrationManager {
@@ -148,10 +146,7 @@ impl SiemIntegrationManager {
         })
     }
 
-    pub async fn register_collector(
-        &self,
-        collector: Arc<dyn EventCollector + Send + Sync>,
-    ) -> Result<()> {
+    pub async fn register_collector(&self, collector: Arc<dyn EventCollector + Send + Sync>) -> Result<()> {
         let mut collectors = self.collectors.write().await;
         collectors.push(collector);
         Ok(())
@@ -295,13 +290,12 @@ impl EventCondition {
                 .zip(self.value.parse::<f64>().ok())
                 .map(|(a, b)| a < b)
                 .unwrap_or(false),
-            ConditionOperator::Regex => {
+            ConditionOperator::Regex =>
                 if let Ok(regex) = regex::Regex::new(&self.value) {
                     regex.is_match(field_value)
                 } else {
                     false
-                }
-            }
+                },
         }
     }
 }
@@ -309,7 +303,7 @@ impl EventCondition {
 impl AlertDispatcher {
     pub async fn new() -> Self {
         Self {
-            alert_rules: Vec::new(),
+            alert_rules:   Vec::new(),
             active_alerts: Arc::new(RwLock::new(Vec::new())),
         }
     }
@@ -318,13 +312,13 @@ impl AlertDispatcher {
         for rule in &self.alert_rules {
             if rule.severity_threshold >= correlation.severity {
                 let alert = SecurityAlert {
-                    id: Uuid::new_v4(),
-                    timestamp: Utc::now(),
-                    rule_id: rule.id.clone(),
-                    severity: correlation.severity.clone(),
-                    description: format!("Correlation detected for rule: {}", rule.name),
+                    id:             Uuid::new_v4(),
+                    timestamp:      Utc::now(),
+                    rule_id:        rule.id.clone(),
+                    severity:       correlation.severity.clone(),
+                    description:    format!("Correlation detected for rule: {}", rule.name),
                     related_events: vec![correlation.id],
-                    actions_taken: rule.actions.clone(),
+                    actions_taken:  rule.actions.clone(),
                 };
 
                 let mut active_alerts = self.active_alerts.write().await;

@@ -8,34 +8,36 @@
 //! - Performance-optimized parsing algorithms
 //! - Comprehensive error handling and reporting
 
+use std::collections::HashMap;
+
+use regex::Regex;
+
 use crate::error::{Result, SpecGenError, ValidationIssue, ValidationSeverity};
 use crate::types::{
-    ArchitecturalPattern, ComplexityAssessment, Entity, EntityRelationship, EntityType, Field,
-    FunctionComplexity, FunctionSpec, Parameter, ParsedSpecification, PatternComponent,
-    RelationshipDirection, RelationshipType, Requirement, RequirementCategory, Visibility,
+    ArchitecturalPattern, ComplexityAssessment, Entity, EntityRelationship, EntityType, Field, FunctionComplexity,
+    FunctionSpec, Parameter, ParsedSpecification, PatternComponent, RelationshipDirection, RelationshipType,
+    Requirement, RequirementCategory, Visibility,
 };
-use regex::Regex;
-use std::collections::HashMap;
 
 /// Advanced specification parser with NLP capabilities and quality scoring
 #[derive(Debug)]
 pub struct SpecificationParser {
     /// Pre-compiled regular expressions for different entity types
-    pub entity_patterns: HashMap<String, Regex>,
+    pub entity_patterns:      HashMap<String, Regex>,
     /// Function pattern matching with advanced parameter parsing
-    pub function_pattern: Regex,
+    pub function_pattern:     Regex,
     /// Requirement pattern for requirement identification
-    pub requirement_pattern: Regex,
+    pub requirement_pattern:  Regex,
     /// Documentation pattern for extracting documentation
-    pub doc_pattern: Regex,
+    pub doc_pattern:          Regex,
     /// Relationship pattern for detecting entity relationships
     pub relationship_pattern: Regex,
     /// Security pattern for detecting security requirements
-    pub security_pattern: Regex,
+    pub security_pattern:     Regex,
     /// Performance pattern for detecting performance requirements
-    pub performance_pattern: Regex,
+    pub performance_pattern:  Regex,
     /// Complexity analyzer for function complexity assessment
-    pub complexity_analyzer: ComplexityAnalyzer,
+    pub complexity_analyzer:  ComplexityAnalyzer,
 }
 
 impl Default for SpecificationParser {
@@ -60,21 +62,18 @@ impl SpecificationParser {
             r#"(?i)(const\s+)?(?:pub\s+)?(?:async\s+|unsafe\s+)*fn\s+([a-z_][a-z0-9_]*)\s*(\([^)]*\))(?:\s*->\s*([^{\s]+))?"#
         ).expect("Invalid function regex");
 
-        let requirement_pattern = Regex::new(
-            r#"(?i)((?:REQ|req|requirement|Requirement)-?\d+|(?:must|should|shall|may|can)\s+[a-z]+[^.]*)"#
-        ).expect("Invalid requirement regex");
+        let requirement_pattern =
+            Regex::new(r#"(?i)((?:REQ|req|requirement|Requirement)-?\d+|(?:must|should|shall|may|can)\s+[a-z]+[^.]*)"#)
+                .expect("Invalid requirement regex");
 
         let doc_pattern = Regex::new(r#"///?\s*(.+)"#).expect("Invalid doc regex");
         let relationship_pattern =
-            Regex::new(r#"(?i)(?:has|contains|owns|uses|depends|extends)\s+"#)
-                .expect("Invalid relationship regex");
-        let security_pattern = Regex::new(
-            r#"(?i)(?:secure|authentication|authorization|encryption|privacy|trust|vulnerability)"#,
-        )
-        .expect("Invalid security regex");
-        let performance_pattern =
-            Regex::new(r#"(?i)(?:fast|slow|performance|efficient|optimize|latency|throughput)"#)
-                .expect("Invalid performance regex");
+            Regex::new(r#"(?i)(?:has|contains|owns|uses|depends|extends)\s+"#).expect("Invalid relationship regex");
+        let security_pattern =
+            Regex::new(r#"(?i)(?:secure|authentication|authorization|encryption|privacy|trust|vulnerability)"#)
+                .expect("Invalid security regex");
+        let performance_pattern = Regex::new(r#"(?i)(?:fast|slow|performance|efficient|optimize|latency|throughput)"#)
+            .expect("Invalid performance regex");
 
         Self {
             entity_patterns,
@@ -131,8 +130,7 @@ impl SpecificationParser {
         let security_considerations = self.extract_security_considerations(text);
 
         // Calculate overall quality score
-        let quality_score =
-            self.calculate_quality_score(&requirements, &entities, &functions, &issues);
+        let quality_score = self.calculate_quality_score(&requirements, &entities, &functions, &issues);
 
         // Validate the parsed specification
         self.validate_parsed_specification(&requirements, &entities, &functions, &mut issues)?;
@@ -149,11 +147,7 @@ impl SpecificationParser {
     }
 
     /// Enhanced requirement extraction with quality assessment
-    fn extract_requirements_with_quality(
-        &self,
-        text: &str,
-        issues: &mut Vec<ValidationIssue>,
-    ) -> Vec<Requirement> {
+    fn extract_requirements_with_quality(&self, text: &str, issues: &mut Vec<ValidationIssue>) -> Vec<Requirement> {
         let mut requirements = Vec::new();
 
         // Split into sentences and analyze each
@@ -222,11 +216,7 @@ impl SpecificationParser {
     }
 
     /// Enhanced entity extraction with relationship detection
-    fn extract_entities_enhanced(
-        &self,
-        text: &str,
-        issues: &mut Vec<ValidationIssue>,
-    ) -> Vec<Entity> {
+    fn extract_entities_enhanced(&self, text: &str, issues: &mut Vec<ValidationIssue>) -> Vec<Entity> {
         let mut entities = Vec::new();
 
         // Process each entity pattern
@@ -245,19 +235,14 @@ impl SpecificationParser {
         // Add relationships between entities (create a separate vector to avoid borrow conflicts)
         let entities_clone = entities.clone();
         for entity in &mut entities {
-            entity.relationships =
-                self.detect_entity_relationships(text, &entity.name, &entities_clone);
+            entity.relationships = self.detect_entity_relationships(text, &entity.name, &entities_clone);
         }
 
         entities
     }
 
     /// Enhanced function extraction with complexity analysis
-    fn extract_functions_enhanced(
-        &self,
-        text: &str,
-        issues: &mut Vec<ValidationIssue>,
-    ) -> Vec<FunctionSpec> {
+    fn extract_functions_enhanced(&self, text: &str, issues: &mut Vec<ValidationIssue>) -> Vec<FunctionSpec> {
         let mut functions = Vec::new();
 
         for capture in self.function_pattern.captures_iter(text) {
@@ -350,10 +335,7 @@ impl SpecificationParser {
             Some(RequirementCategory::Performance)
         } else if text.contains("api") || text.contains("interface") || text.contains("endpoint") {
             Some(RequirementCategory::Functional)
-        } else if text.contains("maintainable")
-            || text.contains("readable")
-            || text.contains("scalable")
-        {
+        } else if text.contains("maintainable") || text.contains("readable") || text.contains("scalable") {
             Some(RequirementCategory::NonFunctional)
         } else {
             Some(RequirementCategory::Functional)
@@ -608,40 +590,38 @@ impl SpecificationParser {
 
         if has_repository && has_service && has_crud_functions {
             Some(ArchitecturalPattern {
-                name: "Repository Pattern".to_string(),
-                confidence: 0.85,
-                description: "Detected Repository and Service components with CRUD operations"
-                    .to_string(),
-                components: entities
+                name:             "Repository Pattern".to_string(),
+                confidence:       0.85,
+                description:      "Detected Repository and Service components with CRUD operations".to_string(),
+                components:       entities
                     .iter()
                     .filter(|e| {
-                        e.name.to_lowercase().contains("repository")
-                            || e.name.to_lowercase().contains("service")
+                        e.name.to_lowercase().contains("repository") || e.name.to_lowercase().contains("service")
                     })
                     .map(|e| PatternComponent {
-                        role: if e.name.to_lowercase().contains("repository") {
+                        role:             if e.name.to_lowercase().contains("repository") {
                             "Repository"
                         } else {
                             "Service"
                         }
                         .to_string(),
-                        name: e.name.clone(),
-                        component_type: format!("{:?}", e.entity_type),
+                        name:             e.name.clone(),
+                        component_type:   format!("{:?}", e.entity_type),
                         responsibilities: Vec::new(),
-                        dependencies: Vec::new(),
+                        dependencies:     Vec::new(),
                     })
                     .collect(),
-                benefits: vec![
+                benefits:         vec![
                     "Clean separation of concerns".to_string(),
                     "Testable business logic".to_string(),
                     "Database abstraction".to_string(),
                 ],
-                tradeoffs: vec![
+                tradeoffs:        vec![
                     "Additional layer of abstraction".to_string(),
                     "Potential performance overhead".to_string(),
                 ],
                 complexity_level: 2,
-                use_cases: vec![
+                use_cases:        vec![
                     "Data-driven applications".to_string(),
                     "Microservices architecture".to_string(),
                 ],
@@ -652,11 +632,7 @@ impl SpecificationParser {
     }
 
     /// Detect CQRS pattern
-    fn detect_cqrs_pattern(
-        &self,
-        entities: &[Entity],
-        functions: &[FunctionSpec],
-    ) -> Option<ArchitecturalPattern> {
+    fn detect_cqrs_pattern(&self, entities: &[Entity], functions: &[FunctionSpec]) -> Option<ArchitecturalPattern> {
         let has_commands = entities
             .iter()
             .any(|e| e.name.to_lowercase().contains("command"));
@@ -669,51 +645,48 @@ impl SpecificationParser {
 
         if has_commands && has_queries && has_handlers {
             Some(ArchitecturalPattern {
-                name: "CQRS Pattern".to_string(),
-                confidence: 0.8,
-                description: "Detected Command and Query separation with handlers".to_string(),
-                components: entities
+                name:             "CQRS Pattern".to_string(),
+                confidence:       0.8,
+                description:      "Detected Command and Query separation with handlers".to_string(),
+                components:       entities
                     .iter()
-                    .filter(|e| {
-                        e.name.to_lowercase().contains("command")
-                            || e.name.to_lowercase().contains("query")
-                    })
+                    .filter(|e| e.name.to_lowercase().contains("command") || e.name.to_lowercase().contains("query"))
                     .map(|e| PatternComponent {
-                        role: if e.name.to_lowercase().contains("command") {
+                        role:             if e.name.to_lowercase().contains("command") {
                             "Command"
                         } else {
                             "Query"
                         }
                         .to_string(),
-                        name: e.name.clone(),
-                        component_type: format!("{:?}", e.entity_type),
+                        name:             e.name.clone(),
+                        component_type:   format!("{:?}", e.entity_type),
                         responsibilities: Vec::new(),
-                        dependencies: Vec::new(),
+                        dependencies:     Vec::new(),
                     })
                     .chain(
                         functions
                             .iter()
                             .filter(|f| f.name.to_lowercase().contains("handler"))
                             .map(|f| PatternComponent {
-                                role: "Handler".to_string(),
-                                name: f.name.clone(),
-                                component_type: "Function".to_string(),
+                                role:             "Handler".to_string(),
+                                name:             f.name.clone(),
+                                component_type:   "Function".to_string(),
                                 responsibilities: Vec::new(),
-                                dependencies: Vec::new(),
+                                dependencies:     Vec::new(),
                             }),
                     )
                     .collect(),
-                benefits: vec![
+                benefits:         vec![
                     "Optimized read/write performance".to_string(),
                     "Scalable architecture".to_string(),
                     "Flexibility in data models".to_string(),
                 ],
-                tradeoffs: vec![
+                tradeoffs:        vec![
                     "Increased complexity".to_string(),
                     "Eventual consistency".to_string(),
                 ],
                 complexity_level: 4,
-                use_cases: vec![
+                use_cases:        vec![
                     "High-performance applications".to_string(),
                     "Distributed systems".to_string(),
                 ],
@@ -740,35 +713,35 @@ impl SpecificationParser {
 
         if has_services && has_business_logic {
             Some(ArchitecturalPattern {
-                name: "Service Layer Pattern".to_string(),
-                confidence: 0.75,
-                description: "Detected service layer with business logic encapsulation".to_string(),
-                components: entities
+                name:             "Service Layer Pattern".to_string(),
+                confidence:       0.75,
+                description:      "Detected service layer with business logic encapsulation".to_string(),
+                components:       entities
                     .iter()
                     .filter(|e| e.name.to_lowercase().contains("service"))
                     .map(|e| PatternComponent {
-                        role: "Service".to_string(),
-                        name: e.name.clone(),
-                        component_type: format!("{:?}", e.entity_type),
+                        role:             "Service".to_string(),
+                        name:             e.name.clone(),
+                        component_type:   format!("{:?}", e.entity_type),
                         responsibilities: vec![
                             "Business logic encapsulation".to_string(),
                             "Transaction management".to_string(),
                             "Data access coordination".to_string(),
                         ],
-                        dependencies: vec!["Repository".to_string()],
+                        dependencies:     vec!["Repository".to_string()],
                     })
                     .collect(),
-                benefits: vec![
+                benefits:         vec![
                     "Centralized business logic".to_string(),
                     "Improved maintainability".to_string(),
                     "Transaction boundaries".to_string(),
                 ],
-                tradeoffs: vec![
+                tradeoffs:        vec![
                     "Additional abstraction layer".to_string(),
                     "Potential performance overhead".to_string(),
                 ],
                 complexity_level: 2,
-                use_cases: vec![
+                use_cases:        vec![
                     "Enterprise applications".to_string(),
                     "Complex business domains".to_string(),
                 ],
@@ -904,9 +877,9 @@ impl SpecificationParser {
                     if line.contains(&entity.name) && entity.name != entity_name {
                         relationships.push(EntityRelationship {
                             relationship_type: RelationshipType::Association,
-                            target_entity: entity.name.clone(),
-                            cardinality: "0..*".to_string(),
-                            direction: RelationshipDirection::Unidirectional,
+                            target_entity:     entity.name.clone(),
+                            cardinality:       "0..*".to_string(),
+                            direction:         RelationshipDirection::Unidirectional,
                         });
                         break;
                     }
@@ -970,10 +943,10 @@ impl ComplexityAnalyzer {
 
         FunctionComplexity {
             cyclomatic_complexity: cyclomatic,
-            parameter_count: function.parameters.len(),
-            local_variable_count: 0, // Would be analyzed from function body
-            time_complexity: "O(1)".to_string(), // Default assumption
-            space_complexity: "O(1)".to_string(), // Default assumption
+            parameter_count:       function.parameters.len(),
+            local_variable_count:  0,                  // Would be analyzed from function body
+            time_complexity:       "O(1)".to_string(), // Default assumption
+            space_complexity:      "O(1)".to_string(), // Default assumption
         }
     }
 }

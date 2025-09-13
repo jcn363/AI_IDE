@@ -4,9 +4,10 @@
 //! CodeLlama and StarCoder models, including hyperparameters, optimization settings,
 //! and model-specific configurations.
 
+use std::collections::HashMap;
+
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use validator::{Validate, ValidationError};
 
 /// Training configuration structure
@@ -222,20 +223,20 @@ pub struct StarCoderConfig {
 /// Code completion tokens
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeCompletionTokens {
-    pub prefix_token: String,
-    pub suffix_token: String,
-    pub middle_token: String,
+    pub prefix_token:     String,
+    pub suffix_token:     String,
+    pub middle_token:     String,
     pub completion_token: String,
 }
 
 /// Code quality filters
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeQualityFilters {
-    pub min_line_length: usize,
-    pub max_line_length: usize,
+    pub min_line_length:    usize,
+    pub max_line_length:    usize,
     pub allowed_extensions: Vec<String>,
-    pub block_patterns: Vec<String>,
-    pub required_patterns: Vec<String>,
+    pub block_patterns:     Vec<String>,
+    pub required_patterns:  Vec<String>,
 }
 
 /// Fill-in-the-Middle configuration for StarCoder
@@ -312,9 +313,9 @@ pub enum EvaluationMetric {
 /// Training hooks for custom behavior
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingHook {
-    pub hook_type: HookType,
-    pub name: String,
-    pub enabled: bool,
+    pub hook_type:  HookType,
+    pub name:       String,
+    pub enabled:    bool,
     pub parameters: HashMap<String, serde_json::Value>,
 }
 
@@ -455,10 +456,7 @@ impl TrainingConfig {
     }
 
     /// Get recommended configuration based on hardware
-    pub fn get_recommended_for_hardware(
-        &self,
-        hardware: HardwareProfile,
-    ) -> Result<TrainingConfig> {
+    pub fn get_recommended_for_hardware(&self, hardware: HardwareProfile) -> Result<TrainingConfig> {
         let mut config = self.clone();
 
         match hardware.gpu_memory_gb {
@@ -513,8 +511,7 @@ impl TrainingConfig {
         hardware: &HardwareProfile,
     ) -> TrainingTimeEstimate {
         let samples_per_step = self.batch_size * self.gradient_accumulation_steps;
-        let total_steps =
-            (dataset_stats.sample_count as usize * self.max_epochs) / samples_per_step;
+        let total_steps = (dataset_stats.sample_count as usize * self.max_epochs) / samples_per_step;
         let steps_per_hour = hardware.estimated_performance_steps_per_hour;
 
         let estimated_hours = total_steps as f64 / steps_per_hour;
@@ -550,8 +547,7 @@ impl TrainingConfig {
 
     /// Get optimal batch size for hardware
     pub fn get_optimal_batch_size(&self, hardware: &HardwareProfile) -> usize {
-        let memory_per_sample_gb =
-            self.estimate_memory_requirement(hardware) / self.batch_size as f64;
+        let memory_per_sample_gb = self.estimate_memory_requirement(hardware) / self.batch_size as f64;
 
         match hardware.gpu_memory_gb as f64 / memory_per_sample_gb {
             x if x >= 32.0 => 32,
@@ -579,21 +575,21 @@ pub struct HardwareProfile {
 /// Dataset statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DatasetStats {
-    pub sample_count: u64,
-    pub avg_sequence_length: f64,
-    pub max_sequence_length: usize,
-    pub vocabulary_size: usize,
+    pub sample_count:          u64,
+    pub avg_sequence_length:   f64,
+    pub max_sequence_length:   usize,
+    pub vocabulary_size:       usize,
     pub language_distribution: HashMap<String, f64>,
-    pub quality_scores: Vec<f32>,
+    pub quality_scores:        Vec<f32>,
 }
 
 /// Training time estimate
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingTimeEstimate {
-    pub total_steps: usize,
-    pub steps_per_hour: f64,
-    pub estimated_hours: f64,
-    pub estimated_days: f64,
+    pub total_steps:           usize,
+    pub steps_per_hour:        f64,
+    pub estimated_hours:       f64,
+    pub estimated_days:        f64,
     pub memory_requirement_gb: f64,
 }
 
@@ -604,93 +600,93 @@ pub mod presets {
     /// Configuration optimized for code completion
     pub fn code_completion() -> TrainingConfig {
         TrainingConfig {
-            learning_rate: 5e-5,
-            batch_size: 8,
-            max_epochs: 5,
-            warmup_ratio: 0.1,
-            weight_decay: 0.01,
-            max_grad_norm: 1.0,
-            save_steps: 500,
-            eval_steps: 500,
-            logging_steps: 100,
+            learning_rate:               5e-5,
+            batch_size:                  8,
+            max_epochs:                  5,
+            warmup_ratio:                0.1,
+            weight_decay:                0.01,
+            max_grad_norm:               1.0,
+            save_steps:                  500,
+            eval_steps:                  500,
+            logging_steps:               100,
             gradient_accumulation_steps: 4,
-            max_seq_length: 2048,
-            lora_rank: Some(8),
-            lora_alpha: Some(16.0),
-            lora_dropout: Some(0.05),
-            quantization_config: None,
-            dataloader_num_workers: 4,
-            dataloader_pin_memory: true,
-            mixed_precision: Some(MixedPrecision::Fp16),
-            gradient_checkpointing: true,
-            early_stopping_patience: Some(3),
-            label_smoothing: None,
-            distributed_config: None,
-            model_specific_config: None,
-            evaluation_config: None,
-            training_hooks: vec![],
+            max_seq_length:              2048,
+            lora_rank:                   Some(8),
+            lora_alpha:                  Some(16.0),
+            lora_dropout:                Some(0.05),
+            quantization_config:         None,
+            dataloader_num_workers:      4,
+            dataloader_pin_memory:       true,
+            mixed_precision:             Some(MixedPrecision::Fp16),
+            gradient_checkpointing:      true,
+            early_stopping_patience:     Some(3),
+            label_smoothing:             None,
+            distributed_config:          None,
+            model_specific_config:       None,
+            evaluation_config:           None,
+            training_hooks:              vec![],
         }
     }
 
     /// Configuration optimized for error fixing
     pub fn error_fixing() -> TrainingConfig {
         TrainingConfig {
-            learning_rate: 2e-5,
-            batch_size: 4,
-            max_epochs: 10,
-            warmup_ratio: 0.05,
-            weight_decay: 0.01,
-            max_grad_norm: 1.0,
-            save_steps: 1000,
-            eval_steps: 500,
-            logging_steps: 50,
+            learning_rate:               2e-5,
+            batch_size:                  4,
+            max_epochs:                  10,
+            warmup_ratio:                0.05,
+            weight_decay:                0.01,
+            max_grad_norm:               1.0,
+            save_steps:                  1000,
+            eval_steps:                  500,
+            logging_steps:               50,
             gradient_accumulation_steps: 8,
-            max_seq_length: 4096,
-            lora_rank: Some(16),
-            lora_alpha: Some(32.0),
-            lora_dropout: Some(0.1),
-            quantization_config: None,
-            dataloader_num_workers: 2,
-            dataloader_pin_memory: true,
-            mixed_precision: Some(MixedPrecision::Bf16),
-            gradient_checkpointing: true,
-            early_stopping_patience: Some(5),
-            label_smoothing: Some(0.1),
-            distributed_config: None,
-            model_specific_config: None,
-            evaluation_config: None,
-            training_hooks: vec![],
+            max_seq_length:              4096,
+            lora_rank:                   Some(16),
+            lora_alpha:                  Some(32.0),
+            lora_dropout:                Some(0.1),
+            quantization_config:         None,
+            dataloader_num_workers:      2,
+            dataloader_pin_memory:       true,
+            mixed_precision:             Some(MixedPrecision::Bf16),
+            gradient_checkpointing:      true,
+            early_stopping_patience:     Some(5),
+            label_smoothing:             Some(0.1),
+            distributed_config:          None,
+            model_specific_config:       None,
+            evaluation_config:           None,
+            training_hooks:              vec![],
         }
     }
 
     /// Configuration optimized for documentation generation
     pub fn documentation_generation() -> TrainingConfig {
         TrainingConfig {
-            learning_rate: 8e-5,
-            batch_size: 12,
-            max_epochs: 3,
-            warmup_ratio: 0.15,
-            weight_decay: 0.05,
-            max_grad_norm: 1.0,
-            save_steps: 200,
-            eval_steps: 200,
-            logging_steps: 50,
+            learning_rate:               8e-5,
+            batch_size:                  12,
+            max_epochs:                  3,
+            warmup_ratio:                0.15,
+            weight_decay:                0.05,
+            max_grad_norm:               1.0,
+            save_steps:                  200,
+            eval_steps:                  200,
+            logging_steps:               50,
             gradient_accumulation_steps: 2,
-            max_seq_length: 1024,
-            lora_rank: Some(8),
-            lora_alpha: Some(16.0),
-            lora_dropout: Some(0.1),
-            quantization_config: None,
-            dataloader_num_workers: 6,
-            dataloader_pin_memory: true,
-            mixed_precision: Some(MixedPrecision::Fp16),
-            gradient_checkpointing: false,
-            early_stopping_patience: Some(2),
-            label_smoothing: None,
-            distributed_config: None,
-            model_specific_config: None,
-            evaluation_config: None,
-            training_hooks: vec![],
+            max_seq_length:              1024,
+            lora_rank:                   Some(8),
+            lora_alpha:                  Some(16.0),
+            lora_dropout:                Some(0.1),
+            quantization_config:         None,
+            dataloader_num_workers:      6,
+            dataloader_pin_memory:       true,
+            mixed_precision:             Some(MixedPrecision::Fp16),
+            gradient_checkpointing:      false,
+            early_stopping_patience:     Some(2),
+            label_smoothing:             None,
+            distributed_config:          None,
+            model_specific_config:       None,
+            evaluation_config:           None,
+            training_hooks:              vec![],
         }
     }
 
@@ -733,58 +729,53 @@ pub mod utils {
     /// Merge two configurations (config2 values override config1)
     pub fn merge_configs(config1: TrainingConfig, config2: TrainingConfig) -> TrainingConfig {
         TrainingConfig {
-            learning_rate: config2.learning_rate,
-            batch_size: config2.batch_size,
-            max_epochs: config2.max_epochs,
-            warmup_ratio: config2.warmup_ratio,
-            weight_decay: config2.weight_decay,
-            max_grad_norm: config2.max_grad_norm,
-            save_steps: config2.save_steps,
-            eval_steps: config2.eval_steps,
-            logging_steps: config2.logging_steps,
+            learning_rate:               config2.learning_rate,
+            batch_size:                  config2.batch_size,
+            max_epochs:                  config2.max_epochs,
+            warmup_ratio:                config2.warmup_ratio,
+            weight_decay:                config2.weight_decay,
+            max_grad_norm:               config2.max_grad_norm,
+            save_steps:                  config2.save_steps,
+            eval_steps:                  config2.eval_steps,
+            logging_steps:               config2.logging_steps,
             gradient_accumulation_steps: config2.gradient_accumulation_steps,
-            max_seq_length: config2.max_seq_length,
-            lora_rank: config2.lora_rank.or(config1.lora_rank),
-            lora_alpha: config2.lora_alpha.or(config1.lora_alpha),
-            lora_dropout: config2.lora_dropout.or(config1.lora_dropout),
-            quantization_config: config2.quantization_config.or(config1.quantization_config),
-            dataloader_num_workers: config2.dataloader_num_workers,
-            dataloader_pin_memory: config2.dataloader_pin_memory,
-            mixed_precision: config2.mixed_precision.or(config1.mixed_precision),
-            gradient_checkpointing: config2.gradient_checkpointing,
-            early_stopping_patience: config2
+            max_seq_length:              config2.max_seq_length,
+            lora_rank:                   config2.lora_rank.or(config1.lora_rank),
+            lora_alpha:                  config2.lora_alpha.or(config1.lora_alpha),
+            lora_dropout:                config2.lora_dropout.or(config1.lora_dropout),
+            quantization_config:         config2.quantization_config.or(config1.quantization_config),
+            dataloader_num_workers:      config2.dataloader_num_workers,
+            dataloader_pin_memory:       config2.dataloader_pin_memory,
+            mixed_precision:             config2.mixed_precision.or(config1.mixed_precision),
+            gradient_checkpointing:      config2.gradient_checkpointing,
+            early_stopping_patience:     config2
                 .early_stopping_patience
                 .or(config1.early_stopping_patience),
-            label_smoothing: config2.label_smoothing.or(config1.label_smoothing),
-            distributed_config: config2.distributed_config.or(config1.distributed_config),
-            model_specific_config: config2
+            label_smoothing:             config2.label_smoothing.or(config1.label_smoothing),
+            distributed_config:          config2.distributed_config.or(config1.distributed_config),
+            model_specific_config:       config2
                 .model_specific_config
                 .or(config1.model_specific_config),
-            evaluation_config: config2.evaluation_config.or(config1.evaluation_config),
-            training_hooks: config2.training_hooks,
+            evaluation_config:           config2.evaluation_config.or(config1.evaluation_config),
+            training_hooks:              config2.training_hooks,
         }
     }
 
     /// Validate configuration for a specific model type
-    pub fn validate_for_model(
-        config: &TrainingConfig,
-        model_type: &crate::finetune::ModelType,
-    ) -> Result<()> {
+    pub fn validate_for_model(config: &TrainingConfig, model_type: &crate::finetune::ModelType) -> Result<()> {
         match model_type {
-            crate::finetune::ModelType::CodeLlama => {
+            crate::finetune::ModelType::CodeLlama =>
                 if config.max_seq_length > 16384 {
                     return Err(anyhow::anyhow!(
                         "CodeLlama context length cannot exceed 16384"
                     ));
-                }
-            }
-            crate::finetune::ModelType::StarCoder => {
+                },
+            crate::finetune::ModelType::StarCoder =>
                 if config.max_seq_length > 8192 {
                     return Err(anyhow::anyhow!(
                         "StarCoder context length cannot exceed 8192"
                     ));
-                }
-            }
+                },
         }
 
         Ok(())
@@ -793,31 +784,31 @@ pub mod utils {
     /// Get safe default configuration
     pub fn safe_defaults() -> TrainingConfig {
         TrainingConfig {
-            learning_rate: 5e-5,
-            batch_size: 4,
-            max_epochs: 3,
-            warmup_ratio: 0.1,
-            weight_decay: 0.01,
-            max_grad_norm: 1.0,
-            save_steps: 500,
-            eval_steps: 500,
-            logging_steps: 100,
+            learning_rate:               5e-5,
+            batch_size:                  4,
+            max_epochs:                  3,
+            warmup_ratio:                0.1,
+            weight_decay:                0.01,
+            max_grad_norm:               1.0,
+            save_steps:                  500,
+            eval_steps:                  500,
+            logging_steps:               100,
             gradient_accumulation_steps: 4,
-            max_seq_length: 2048,
-            lora_rank: Some(8),
-            lora_alpha: Some(16.0),
-            lora_dropout: Some(0.1),
-            quantization_config: None,
-            dataloader_num_workers: 2,
-            dataloader_pin_memory: true,
-            mixed_precision: Some(MixedPrecision::Fp16),
-            gradient_checkpointing: true,
-            early_stopping_patience: Some(3),
-            label_smoothing: None,
-            distributed_config: None,
-            model_specific_config: None,
-            evaluation_config: None,
-            training_hooks: vec![],
+            max_seq_length:              2048,
+            lora_rank:                   Some(8),
+            lora_alpha:                  Some(16.0),
+            lora_dropout:                Some(0.1),
+            quantization_config:         None,
+            dataloader_num_workers:      2,
+            dataloader_pin_memory:       true,
+            mixed_precision:             Some(MixedPrecision::Fp16),
+            gradient_checkpointing:      true,
+            early_stopping_patience:     Some(3),
+            label_smoothing:             None,
+            distributed_config:          None,
+            model_specific_config:       None,
+            evaluation_config:           None,
+            training_hooks:              vec![],
         }
     }
 }
@@ -829,154 +820,154 @@ pub mod templates {
     /// Template for resource-constrained environments
     pub fn low_resource() -> TrainingConfig {
         TrainingConfig {
-            learning_rate: 1e-4,
-            batch_size: 1,
-            max_epochs: 5,
-            warmup_ratio: 0.2,
-            weight_decay: 0.05,
-            max_grad_norm: 1.0,
-            save_steps: 200,
-            eval_steps: 200,
-            logging_steps: 50,
+            learning_rate:               1e-4,
+            batch_size:                  1,
+            max_epochs:                  5,
+            warmup_ratio:                0.2,
+            weight_decay:                0.05,
+            max_grad_norm:               1.0,
+            save_steps:                  200,
+            eval_steps:                  200,
+            logging_steps:               50,
             gradient_accumulation_steps: 16,
-            max_seq_length: 512,
-            lora_rank: Some(4),
-            lora_alpha: Some(8.0),
-            lora_dropout: Some(0.1),
-            quantization_config: Some(QuantizationConfig {
+            max_seq_length:              512,
+            lora_rank:                   Some(4),
+            lora_alpha:                  Some(8.0),
+            lora_dropout:                Some(0.1),
+            quantization_config:         Some(QuantizationConfig {
                 quantization_type: QuantizationType::Int8,
-                bits: 8,
-                symmetric: true,
-                group_size: None,
+                bits:              8,
+                symmetric:         true,
+                group_size:        None,
                 quantize_channels: None,
-                skip_quantize: vec!["lm_head".to_string()],
+                skip_quantize:     vec!["lm_head".to_string()],
             }),
-            dataloader_num_workers: 1,
-            dataloader_pin_memory: false,
-            mixed_precision: Some(MixedPrecision::Fp16),
-            gradient_checkpointing: true,
-            early_stopping_patience: Some(2),
-            label_smoothing: None,
-            distributed_config: None,
-            model_specific_config: None,
-            evaluation_config: None,
-            training_hooks: vec![],
+            dataloader_num_workers:      1,
+            dataloader_pin_memory:       false,
+            mixed_precision:             Some(MixedPrecision::Fp16),
+            gradient_checkpointing:      true,
+            early_stopping_patience:     Some(2),
+            label_smoothing:             None,
+            distributed_config:          None,
+            model_specific_config:       None,
+            evaluation_config:           None,
+            training_hooks:              vec![],
         }
     }
 
     /// Template for high-performance computing environments
     pub fn high_performance() -> TrainingConfig {
         TrainingConfig {
-            learning_rate: 1e-5,
-            batch_size: 32,
-            max_epochs: 10,
-            warmup_ratio: 0.05,
-            weight_decay: 0.001,
-            max_grad_norm: 0.5,
-            save_steps: 1000,
-            eval_steps: 500,
-            logging_steps: 10,
+            learning_rate:               1e-5,
+            batch_size:                  32,
+            max_epochs:                  10,
+            warmup_ratio:                0.05,
+            weight_decay:                0.001,
+            max_grad_norm:               0.5,
+            save_steps:                  1000,
+            eval_steps:                  500,
+            logging_steps:               10,
             gradient_accumulation_steps: 1,
-            max_seq_length: 4096,
-            lora_rank: Some(64),
-            lora_alpha: Some(128.0),
-            lora_dropout: Some(0.05),
-            quantization_config: None,
-            dataloader_num_workers: 8,
-            dataloader_pin_memory: true,
-            mixed_precision: Some(MixedPrecision::Bf16),
-            gradient_checkpointing: false,
-            early_stopping_patience: Some(5),
-            label_smoothing: Some(0.1),
-            distributed_config: Some(DistributedConfig {
-                world_size: 4,
-                rank: 0,
-                master_addr: "127.0.0.1".to_string(),
-                master_port: 12345,
-                backend: "nccl".to_string(),
-                data_parallelism: DataParallelismConfig {
-                    enabled: true,
+            max_seq_length:              4096,
+            lora_rank:                   Some(64),
+            lora_alpha:                  Some(128.0),
+            lora_dropout:                Some(0.05),
+            quantization_config:         None,
+            dataloader_num_workers:      8,
+            dataloader_pin_memory:       true,
+            mixed_precision:             Some(MixedPrecision::Bf16),
+            gradient_checkpointing:      false,
+            early_stopping_patience:     Some(5),
+            label_smoothing:             Some(0.1),
+            distributed_config:          Some(DistributedConfig {
+                world_size:         4,
+                rank:               0,
+                master_addr:        "127.0.0.1".to_string(),
+                master_port:        12345,
+                backend:            "nccl".to_string(),
+                data_parallelism:   DataParallelismConfig {
+                    enabled:            true,
                     accumulation_steps: 1,
                 },
                 tensor_parallelism: TensorParallelismConfig {
-                    enabled: true,
+                    enabled:              true,
                     tensor_parallel_size: 2,
                 },
             }),
-            model_specific_config: None,
-            evaluation_config: None,
-            training_hooks: vec![],
+            model_specific_config:       None,
+            evaluation_config:           None,
+            training_hooks:              vec![],
         }
     }
 
     /// Experimental template for advanced techniques
     pub fn experimental() -> TrainingConfig {
         TrainingConfig {
-            learning_rate: 2e-5,
-            batch_size: 4,
-            max_epochs: 15,
-            warmup_ratio: 0.1,
-            weight_decay: 0.001,
-            max_grad_norm: 0.1,
-            save_steps: 250,
-            eval_steps: 125,
-            logging_steps: 25,
+            learning_rate:               2e-5,
+            batch_size:                  4,
+            max_epochs:                  15,
+            warmup_ratio:                0.1,
+            weight_decay:                0.001,
+            max_grad_norm:               0.1,
+            save_steps:                  250,
+            eval_steps:                  125,
+            logging_steps:               25,
             gradient_accumulation_steps: 8,
-            max_seq_length: 8192,
-            lora_rank: Some(128),
-            lora_alpha: Some(256.0),
-            lora_dropout: Some(0.0),
-            quantization_config: Some(QuantizationConfig {
+            max_seq_length:              8192,
+            lora_rank:                   Some(128),
+            lora_alpha:                  Some(256.0),
+            lora_dropout:                Some(0.0),
+            quantization_config:         Some(QuantizationConfig {
                 quantization_type: QuantizationType::Gptq,
-                bits: 4,
-                symmetric: false,
-                group_size: Some(128),
+                bits:              4,
+                symmetric:         false,
+                group_size:        Some(128),
                 quantize_channels: None,
-                skip_quantize: vec!["lm_head".to_string(), "embed_tokens".to_string()],
+                skip_quantize:     vec!["lm_head".to_string(), "embed_tokens".to_string()],
             }),
-            dataloader_num_workers: 4,
-            dataloader_pin_memory: true,
-            mixed_precision: Some(MixedPrecision::Bf16),
-            gradient_checkpointing: true,
-            early_stopping_patience: None,
-            label_smoothing: Some(0.2),
-            distributed_config: None,
-            model_specific_config: Some(ModelSpecificConfig {
+            dataloader_num_workers:      4,
+            dataloader_pin_memory:       true,
+            mixed_precision:             Some(MixedPrecision::Bf16),
+            gradient_checkpointing:      true,
+            early_stopping_patience:     None,
+            label_smoothing:             Some(0.2),
+            distributed_config:          None,
+            model_specific_config:       Some(ModelSpecificConfig {
                 codellama: None,
                 starcoder: Some(StarCoderConfig {
-                    fim_config: Some(FimConfig {
-                        enabled: true,
-                        prefix_token: "<prefix>".to_string(),
-                        suffix_token: "<suffix>".to_string(),
-                        middle_token: "<fim-middle><middle>".to_string(),
-                        probability: 0.5,
+                    fim_config:            Some(FimConfig {
+                        enabled:                  true,
+                        prefix_token:             "<prefix>".to_string(),
+                        suffix_token:             "<suffix>".to_string(),
+                        middle_token:             "<fim-middle><middle>".to_string(),
+                        probability:              0.5,
                         max_prefix_suffix_length: 512,
                     }),
                     multi_query_attention: true,
-                    context_adaptation: Some(ContextAdaptation {
-                        rope_theta_scale: 2.0,
+                    context_adaptation:    Some(ContextAdaptation {
+                        rope_theta_scale:              2.0,
                         position_interpolation_factor: 1.5,
                     }),
                 }),
-                custom: None,
+                custom:    None,
             }),
-            evaluation_config: Some(EvaluationConfig {
-                metrics: vec![
+            evaluation_config:           Some(EvaluationConfig {
+                metrics:               vec![
                     EvaluationMetric::Perplexity,
                     EvaluationMetric::PassAtK,
                     EvaluationMetric::CodeBleu,
                 ],
-                eval_dataset_path: None,
-                eval_batch_size: 4,
-                eval_frequency: 100,
+                eval_dataset_path:     None,
+                eval_batch_size:       4,
+                eval_frequency:        100,
                 early_stopping_metric: Some("perplexity".to_string()),
-                metric_thresholds: HashMap::from([
+                metric_thresholds:     HashMap::from([
                     ("perplexity".to_string(), 15.0),
                     ("code_bleu".to_string(), 0.6),
                 ]),
-                save_best_checkpoint: true,
+                save_best_checkpoint:  true,
             }),
-            training_hooks: vec![],
+            training_hooks:              vec![],
         }
     }
 }
@@ -988,31 +979,31 @@ mod tests {
     #[test]
     fn test_config_validation() {
         let config = TrainingConfig {
-            learning_rate: 5e-5,
-            batch_size: 8,
-            max_epochs: 3,
-            warmup_ratio: 0.1,
-            weight_decay: 0.01,
-            max_grad_norm: 1.0,
-            save_steps: 500,
-            eval_steps: 500,
-            logging_steps: 100,
+            learning_rate:               5e-5,
+            batch_size:                  8,
+            max_epochs:                  3,
+            warmup_ratio:                0.1,
+            weight_decay:                0.01,
+            max_grad_norm:               1.0,
+            save_steps:                  500,
+            eval_steps:                  500,
+            logging_steps:               100,
             gradient_accumulation_steps: 4,
-            max_seq_length: 2048,
-            lora_rank: Some(8),
-            lora_alpha: Some(16.0),
-            lora_dropout: Some(0.1),
-            quantization_config: None,
-            dataloader_num_workers: 4,
-            dataloader_pin_memory: true,
-            mixed_precision: Some(MixedPrecision::Fp16),
-            gradient_checkpointing: true,
-            early_stopping_patience: Some(3),
-            label_smoothing: None,
-            distributed_config: None,
-            model_specific_config: None,
-            evaluation_config: None,
-            training_hooks: vec![],
+            max_seq_length:              2048,
+            lora_rank:                   Some(8),
+            lora_alpha:                  Some(16.0),
+            lora_dropout:                Some(0.1),
+            quantization_config:         None,
+            dataloader_num_workers:      4,
+            dataloader_pin_memory:       true,
+            mixed_precision:             Some(MixedPrecision::Fp16),
+            gradient_checkpointing:      true,
+            early_stopping_patience:     Some(3),
+            label_smoothing:             None,
+            distributed_config:          None,
+            model_specific_config:       None,
+            evaluation_config:           None,
+            training_hooks:              vec![],
         };
 
         assert!(config.validate_comprehensive().is_ok());
@@ -1044,59 +1035,59 @@ mod tests {
     #[test]
     fn test_config_merge() {
         let config1 = TrainingConfig {
-            learning_rate: 1e-4,
-            batch_size: 4,
-            max_epochs: 3,
-            warmup_ratio: 0.1,
-            weight_decay: 0.01,
-            max_grad_norm: 1.0,
-            save_steps: 500,
-            eval_steps: 500,
-            logging_steps: 100,
+            learning_rate:               1e-4,
+            batch_size:                  4,
+            max_epochs:                  3,
+            warmup_ratio:                0.1,
+            weight_decay:                0.01,
+            max_grad_norm:               1.0,
+            save_steps:                  500,
+            eval_steps:                  500,
+            logging_steps:               100,
             gradient_accumulation_steps: 1,
-            max_seq_length: 1024,
-            lora_rank: Some(4),
-            lora_alpha: Some(8.0),
-            lora_dropout: Some(0.1),
-            quantization_config: None,
-            dataloader_num_workers: 2,
-            dataloader_pin_memory: false,
-            mixed_precision: Some(MixedPrecision::Fp16),
-            gradient_checkpointing: false,
-            early_stopping_patience: Some(3),
-            label_smoothing: None,
-            distributed_config: None,
-            model_specific_config: None,
-            evaluation_config: None,
-            training_hooks: vec![],
+            max_seq_length:              1024,
+            lora_rank:                   Some(4),
+            lora_alpha:                  Some(8.0),
+            lora_dropout:                Some(0.1),
+            quantization_config:         None,
+            dataloader_num_workers:      2,
+            dataloader_pin_memory:       false,
+            mixed_precision:             Some(MixedPrecision::Fp16),
+            gradient_checkpointing:      false,
+            early_stopping_patience:     Some(3),
+            label_smoothing:             None,
+            distributed_config:          None,
+            model_specific_config:       None,
+            evaluation_config:           None,
+            training_hooks:              vec![],
         };
 
         let config2 = TrainingConfig {
-            learning_rate: 5e-5,
-            batch_size: 8,
-            max_epochs: 5,
-            warmup_ratio: 0.05,
-            weight_decay: 0.001,
-            max_grad_norm: 0.5,
-            save_steps: 1000,
-            eval_steps: 1000,
-            logging_steps: 50,
+            learning_rate:               5e-5,
+            batch_size:                  8,
+            max_epochs:                  5,
+            warmup_ratio:                0.05,
+            weight_decay:                0.001,
+            max_grad_norm:               0.5,
+            save_steps:                  1000,
+            eval_steps:                  1000,
+            logging_steps:               50,
             gradient_accumulation_steps: 2,
-            max_seq_length: 2048,
-            lora_rank: Some(8),
-            lora_alpha: Some(16.0),
-            lora_dropout: Some(0.05),
-            quantization_config: None,
-            dataloader_num_workers: 4,
-            dataloader_pin_memory: true,
-            mixed_precision: Some(MixedPrecision::Bf16),
-            gradient_checkpointing: true,
-            early_stopping_patience: Some(5),
-            label_smoothing: Some(0.1),
-            distributed_config: None,
-            model_specific_config: None,
-            evaluation_config: None,
-            training_hooks: vec![],
+            max_seq_length:              2048,
+            lora_rank:                   Some(8),
+            lora_alpha:                  Some(16.0),
+            lora_dropout:                Some(0.05),
+            quantization_config:         None,
+            dataloader_num_workers:      4,
+            dataloader_pin_memory:       true,
+            mixed_precision:             Some(MixedPrecision::Bf16),
+            gradient_checkpointing:      true,
+            early_stopping_patience:     Some(5),
+            label_smoothing:             Some(0.1),
+            distributed_config:          None,
+            model_specific_config:       None,
+            evaluation_config:           None,
+            training_hooks:              vec![],
         };
 
         let merged = utils::merge_configs(config1, config2);

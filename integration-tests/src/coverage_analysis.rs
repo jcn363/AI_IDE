@@ -3,56 +3,58 @@
 //! Comprehensive coverage analysis system that tracks test coverage over time,
 //! provides trend analysis, and generates quality gate checks for CI/CD pipelines.
 
-use crate::{GlobalTestConfig, IntegrationTestResult};
+use std::collections::{BTreeMap, HashMap};
+use std::time::Duration;
+
 use chrono::{DateTime, Utc};
 use rust_ai_ide_errors::RustAIError;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap};
-use std::time::Duration;
+
+use crate::{GlobalTestConfig, IntegrationTestResult};
 
 /// Main coverage analysis system
 #[derive(Debug)]
 pub struct CoverageAnalyzer {
-    trend_history: BTreeMap<DateTime<Utc>, CoverageSnapshot>,
+    trend_history:    BTreeMap<DateTime<Utc>, CoverageSnapshot>,
     current_snapshot: Option<CoverageSnapshot>,
     trend_thresholds: TrendThresholds,
-    analysis_config: CoverageAnalysisConfig,
+    analysis_config:  CoverageAnalysisConfig,
 }
 
 #[derive(Debug, Clone)]
 pub struct CoverageSnapshot {
-    pub timestamp: DateTime<Utc>,
-    pub branch: String,
-    pub commit_hash: String,
-    pub coverage_data: CoverageData,
+    pub timestamp:           DateTime<Utc>,
+    pub branch:              String,
+    pub commit_hash:         String,
+    pub coverage_data:       CoverageData,
     pub test_execution_data: TestExecutionData,
-    pub metadata: HashMap<String, String>,
+    pub metadata:            HashMap<String, String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct CoverageData {
-    pub overall_percentage: f64,
-    pub lines_covered: u64,
-    pub total_lines: u64,
-    pub branches_covered: u64,
-    pub total_branches: u64,
-    pub functions_covered: u64,
-    pub total_functions: u64,
+    pub overall_percentage:  f64,
+    pub lines_covered:       u64,
+    pub total_lines:         u64,
+    pub branches_covered:    u64,
+    pub total_branches:      u64,
+    pub functions_covered:   u64,
+    pub total_functions:     u64,
     pub files_with_coverage: Vec<FileCoverage>,
-    pub uncovered_lines: Vec<UncoveredLine>,
-    pub coverage_trends: CoverageTrends,
+    pub uncovered_lines:     Vec<UncoveredLine>,
+    pub coverage_trends:     CoverageTrends,
 }
 
 #[derive(Debug, Clone)]
 pub struct FileCoverage {
-    pub file_path: String,
-    pub lines_covered: u64,
-    pub total_lines: u64,
-    pub branches_covered: u64,
-    pub total_branches: u64,
+    pub file_path:         String,
+    pub lines_covered:     u64,
+    pub total_lines:       u64,
+    pub branches_covered:  u64,
+    pub total_branches:    u64,
     pub functions_covered: u64,
-    pub total_functions: u64,
-    pub categories: Vec<CoverageCategory>,
+    pub total_functions:   u64,
+    pub categories:        Vec<CoverageCategory>,
 }
 
 #[derive(Debug, Clone)]
@@ -66,11 +68,11 @@ pub enum CoverageCategory {
 
 #[derive(Debug, Clone)]
 pub struct UncoveredLine {
-    pub file_path: String,
-    pub line_number: u32,
+    pub file_path:    String,
+    pub line_number:  u32,
     pub line_content: Option<String>,
-    pub reason: UncoveredReason,
-    pub suggestion: Option<String>,
+    pub reason:       UncoveredReason,
+    pub suggestion:   Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -85,10 +87,10 @@ pub enum UncoveredReason {
 
 #[derive(Debug, Clone)]
 pub struct CoverageTrends {
-    pub coverage_trend: TrendDirection,
-    pub velocity: f64,         // percentage points per day
+    pub coverage_trend:   TrendDirection,
+    pub velocity:         f64, // percentage points per day
     pub plateau_duration: u32, // days without significant change
-    pub coverage_gaps: Vec<CoverageGap>,
+    pub coverage_gaps:    Vec<CoverageGap>,
 }
 
 #[derive(Debug, Clone)]
@@ -102,9 +104,9 @@ pub enum TrendDirection {
 #[derive(Debug, Clone)]
 pub struct CoverageGap {
     pub file_path: String,
-    pub gap_type: GapType,
-    pub impact: f64,
-    pub priority: Priority,
+    pub gap_type:  GapType,
+    pub impact:    f64,
+    pub priority:  Priority,
 }
 
 #[derive(Debug, Clone)]
@@ -124,38 +126,38 @@ pub enum Priority {
 
 #[derive(Debug, Clone)]
 pub struct TestExecutionData {
-    pub test_results: Vec<TestResult>,
+    pub test_results:  Vec<TestResult>,
     pub test_duration: Duration,
-    pub test_count: u32,
-    pub passed_tests: u32,
-    pub failed_tests: u32,
+    pub test_count:    u32,
+    pub passed_tests:  u32,
+    pub failed_tests:  u32,
     pub skipped_tests: u32,
-    pub flaky_tests: Vec<String>,
+    pub flaky_tests:   Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct TestResult {
-    pub name: String,
-    pub duration: Duration,
-    pub success: bool,
+    pub name:                  String,
+    pub duration:              Duration,
+    pub success:               bool,
     pub coverage_contribution: u64,
 }
 
 #[derive(Debug, Clone)]
 pub struct TrendThresholds {
     pub min_coverage_percentage: f64,
-    pub max_decline_rate: f64, // percentage points per day
-    pub max_plateau_days: u32,
-    pub min_velocity: f64,
+    pub max_decline_rate:        f64, // percentage points per day
+    pub max_plateau_days:        u32,
+    pub min_velocity:            f64,
 }
 
 #[derive(Debug, Clone)]
 pub struct CoverageAnalysisConfig {
-    pub track_individual_files: bool,
-    pub track_uncovered_reasons: bool,
-    pub generate_trend_reports: bool,
+    pub track_individual_files:    bool,
+    pub track_uncovered_reasons:   bool,
+    pub generate_trend_reports:    bool,
     pub enable_consistency_checks: bool,
-    pub coverage_tool: CoverageTool,
+    pub coverage_tool:             CoverageTool,
 }
 
 #[derive(Debug, Clone)]
@@ -169,36 +171,36 @@ pub enum CoverageTool {
 /// Coverage analysis report
 #[derive(Debug, Clone)]
 pub struct CoverageReport {
-    pub snapshot: CoverageSnapshot,
-    pub trends: TrendAnalysis,
+    pub snapshot:        CoverageSnapshot,
+    pub trends:          TrendAnalysis,
     pub recommendations: Vec<CoverageRecommendation>,
-    pub gate_status: CoverageGateStatus,
+    pub gate_status:     CoverageGateStatus,
     pub risk_assessment: RiskAssessment,
 }
 
 #[derive(Debug, Clone)]
 pub struct TrendAnalysis {
-    pub direction: TrendDirection,
+    pub direction:        TrendDirection,
     pub confidence_level: f64,
-    pub prediction: Option<CoveragePrediction>,
-    pub velocities: HashMap<String, f64>,
-    pub bottlenecks: Vec<BottleneckAnalysis>,
+    pub prediction:       Option<CoveragePrediction>,
+    pub velocities:       HashMap<String, f64>,
+    pub bottlenecks:      Vec<BottleneckAnalysis>,
 }
 
 #[derive(Debug, Clone)]
 pub struct CoveragePrediction {
-    pub predicted_coverage: f64,
+    pub predicted_coverage:  f64,
     pub confidence_interval: (f64, f64),
-    pub time_horizon_days: u32,
+    pub time_horizon_days:   u32,
     pub factors_influencing: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct BottleneckAnalysis {
-    pub file_path: String,
+    pub file_path:       String,
     pub bottleneck_type: BottleneckType,
-    pub impact: f64,
-    pub ease_of_fix: f64,
+    pub impact:          f64,
+    pub ease_of_fix:     f64,
 }
 
 #[derive(Debug, Clone)]
@@ -212,12 +214,12 @@ pub enum BottleneckType {
 
 #[derive(Debug, Clone)]
 pub struct CoverageRecommendation {
-    pub priority: Priority,
-    pub category: RecommendationCategory,
-    pub description: String,
-    pub estimated_impact: f64,
+    pub priority:              Priority,
+    pub category:              RecommendationCategory,
+    pub description:           String,
+    pub estimated_impact:      f64,
     pub implementation_effort: EffortLevel,
-    pub file_path: Option<String>,
+    pub file_path:             Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -246,10 +248,10 @@ pub enum CoverageGateStatus {
 
 #[derive(Debug, Clone)]
 pub struct RiskAssessment {
-    pub overall_risk: RiskLevel,
-    pub risk_factors: Vec<RiskFactor>,
+    pub overall_risk:          RiskLevel,
+    pub risk_factors:          Vec<RiskFactor>,
     pub mitigation_strategies: Vec<String>,
-    pub deadline_at_risk: Option<DateTime<Utc>>,
+    pub deadline_at_risk:      Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone)]
@@ -263,9 +265,9 @@ pub enum RiskLevel {
 #[derive(Debug, Clone)]
 pub struct RiskFactor {
     pub factor_type: RiskType,
-    pub severity: f64,
+    pub severity:    f64,
     pub description: String,
-    pub impact: f64,
+    pub impact:      f64,
 }
 
 #[derive(Debug, Clone)]
@@ -281,9 +283,9 @@ impl Default for TrendThresholds {
     fn default() -> Self {
         Self {
             min_coverage_percentage: 80.0,
-            max_decline_rate: 2.0, // 2 percentage points per day max decline
-            max_plateau_days: 14,  // 2 weeks
-            min_velocity: 0.1,     // 0.1 percentage points per day improvement
+            max_decline_rate:        2.0, // 2 percentage points per day max decline
+            max_plateau_days:        14,  // 2 weeks
+            min_velocity:            0.1, // 0.1 percentage points per day improvement
         }
     }
 }
@@ -291,11 +293,11 @@ impl Default for TrendThresholds {
 impl Default for CoverageAnalysisConfig {
     fn default() -> Self {
         Self {
-            track_individual_files: true,
-            track_uncovered_reasons: true,
-            generate_trend_reports: true,
+            track_individual_files:    true,
+            track_uncovered_reasons:   true,
+            generate_trend_reports:    true,
             enable_consistency_checks: true,
-            coverage_tool: CoverageTool::Tarpaulin,
+            coverage_tool:             CoverageTool::Tarpaulin,
         }
     }
 }
@@ -303,10 +305,10 @@ impl Default for CoverageAnalysisConfig {
 impl CoverageAnalyzer {
     pub fn new() -> Self {
         Self {
-            trend_history: BTreeMap::new(),
+            trend_history:    BTreeMap::new(),
             current_snapshot: None,
             trend_thresholds: TrendThresholds::default(),
-            analysis_config: CoverageAnalysisConfig::default(),
+            analysis_config:  CoverageAnalysisConfig::default(),
         }
     }
 
@@ -319,9 +321,10 @@ impl CoverageAnalyzer {
 
     /// Generate comprehensive coverage report
     pub fn generate_coverage_report(&self) -> Result<CoverageReport, RustAIError> {
-        let snapshot = self.current_snapshot.clone().ok_or_else(|| {
-            RustAIError::ConfigurationError("No coverage snapshot available".to_string())
-        })?;
+        let snapshot = self
+            .current_snapshot
+            .clone()
+            .ok_or_else(|| RustAIError::ConfigurationError("No coverage snapshot available".to_string()))?;
 
         let trends = self.analyze_trends()?;
         let recommendations = self.generate_recommendations(&snapshot, &trends)?;
@@ -342,11 +345,11 @@ impl CoverageAnalyzer {
         if self.trend_history.len() < 2 {
             // Not enough data for trend analysis
             return Ok(TrendAnalysis {
-                direction: TrendDirection::Stable,
+                direction:        TrendDirection::Stable,
                 confidence_level: 0.5,
-                prediction: None,
-                velocities: HashMap::new(),
-                bottlenecks: vec![],
+                prediction:       None,
+                velocities:       HashMap::new(),
+                bottlenecks:      vec![],
             });
         }
 
@@ -483,9 +486,7 @@ impl CoverageAnalyzer {
             BottleneckType::ErrorConditions
         } else if file_coverage.branches_covered < file_coverage.total_branches / 2 {
             BottleneckType::ComplexBranching
-        } else if file_coverage.file_path.contains("platform")
-            || file_coverage.file_path.contains("ffi")
-        {
+        } else if file_coverage.file_path.contains("platform") || file_coverage.file_path.contains("ffi") {
             BottleneckType::PlatformIntegration
         } else if file_coverage.functions_covered < file_coverage.total_functions / 2 {
             BottleneckType::ExternalDependencies
@@ -641,14 +642,14 @@ mod tests {
         let analyzer = CoverageAnalyzer::new();
 
         let file_coverage = FileCoverage {
-            file_path: "src/error_handling.rs".to_string(),
-            lines_covered: 50,
-            total_lines: 100,
-            branches_covered: 5,
-            total_branches: 20,
+            file_path:         "src/error_handling.rs".to_string(),
+            lines_covered:     50,
+            total_lines:       100,
+            branches_covered:  5,
+            total_branches:    20,
             functions_covered: 8,
-            total_functions: 10,
-            categories: vec![],
+            total_functions:   10,
+            categories:        vec![],
         };
 
         let bottleneck_type = analyzer.identify_bottleneck_type(&file_coverage);

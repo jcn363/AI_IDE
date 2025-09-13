@@ -1,9 +1,10 @@
 // Integration test demonstrating performance & memory management enhancements
 
+use std::time::Instant;
+
 use rust_ai_ide_cache::{DistributedWorkStealingCache, WorkStealingConfig};
 use rust_ai_ide_performance::*;
 use rust_ai_ide_shared_types::MemoryUsageSample;
-use std::time::Instant;
 
 #[tokio::test]
 async fn test_integrated_performance_system() {
@@ -13,11 +14,11 @@ async fn test_integrated_performance_system() {
     println!("📊 Testing Distributed Work-Stealing Cache Performance...");
 
     let cache_config = WorkStealingConfig {
-        max_steal_attempts: 5,
-        steal_batch_size: 10,
+        max_steal_attempts:     5,
+        steal_batch_size:       10,
         load_balance_threshold: 0.8,
-        adaptive_partitioning: true,
-        predictive_placement: false,
+        adaptive_partitioning:  true,
+        predictive_placement:   false,
     };
 
     let mut cache = DistributedWorkStealingCache::new(cache_config.clone());
@@ -53,22 +54,22 @@ async fn test_integrated_performance_system() {
 
     let adaptive_config = AdaptiveConfig {
         enable_predictive_allocation: true,
-        monitoring_interval_seconds: 1,
-        prediction_horizon_minutes: 1,
-        adaptation_threshold: 0.1,
-        min_confidence_threshold: 0.5,
+        monitoring_interval_seconds:  1,
+        prediction_horizon_minutes:   1,
+        adaptation_threshold:         0.1,
+        min_confidence_threshold:     0.5,
     };
 
     let mut memory_manager = AdaptiveMemoryManager::new(adaptive_config);
 
     // Simulate memory usage patterns
     let sample = MemoryUsageSample {
-        total_memory_mb: 8192,
-        used_memory_mb: 4096,
-        free_memory_mb: 4096,
-        available_memory_mb: 4096,
+        total_memory_mb:      8192,
+        used_memory_mb:       4096,
+        free_memory_mb:       4096,
+        available_memory_mb:  4096,
         allocation_rate_kbps: 256.0,
-        timestamp: chrono::Utc::now(),
+        timestamp:            chrono::Utc::now(),
     };
 
     memory_manager
@@ -102,15 +103,12 @@ async fn test_integrated_performance_system() {
         memory_analyzer.record_allocation(ptr, layout);
 
         // Track with leak detector
-        leak_detector.track_allocation(
-            ptr as usize,
-            AllocationInfo {
-                size: 1024 * 1024,
-                alignment: 8,
-                ptr,
-                backtrace: None,
-            },
-        );
+        leak_detector.track_allocation(ptr as usize, AllocationInfo {
+            size: 1024 * 1024,
+            alignment: 8,
+            ptr,
+            backtrace: None,
+        });
 
         // Access the allocation a few times
         for _ in 0..5 {
@@ -140,11 +138,11 @@ async fn test_integrated_performance_system() {
     println!("🚀 GPU Acceleration Framework Ready...");
     let gpu_config = GPUConfig {
         enable_gpu_acceleration: true,
-        prefer_gpu: true,
-        memory_threshold_gb: 1.0,
-        operation_Timeout_ms: 30000,
-        max_queued_operations: 100,
-        fallback_to_cpu: true,
+        prefer_gpu:              true,
+        memory_threshold_gb:     1.0,
+        operation_Timeout_ms:    30000,
+        max_queued_operations:   100,
+        fallback_to_cpu:         true,
     };
 
     let gpu_manager = GPUAccelerationManager::new(gpu_config);

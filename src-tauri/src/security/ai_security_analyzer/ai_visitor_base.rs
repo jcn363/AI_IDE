@@ -5,8 +5,9 @@
 //! It eliminates duplicate visit_file() implementations and provides consistent
 //! behavior for collecting security issues.
 
-use crate::security::*;
 use syn::visit::Visit;
+
+use crate::security::*;
 
 /// Base trait for all security analysis visitors
 /// This trait provides common functionality and ensures consistent behavior
@@ -29,9 +30,7 @@ pub trait BaseSecurityVisitor<'ast> {
     fn is_library_code(&self) -> bool {
         let file_path = self.get_file_path();
         file_path.contains("/src/lib.rs")
-            || file_path.contains("/src/")
-                && !file_path.contains("/examples/")
-                && !file_path.contains("/tests/")
+            || file_path.contains("/src/") && !file_path.contains("/examples/") && !file_path.contains("/tests/")
     }
 
     /// Check if this visitor is analyzing test code

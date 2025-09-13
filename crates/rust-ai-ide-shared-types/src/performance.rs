@@ -4,9 +4,10 @@
 //! that consolidates all disparate PerformanceMetrics definitions found across
 //! the various crates in the workspace.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
+
+use serde::{Deserialize, Serialize};
 
 /// Unified Performance Metrics Structure
 ///
@@ -70,51 +71,51 @@ pub struct PerformanceMetrics {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct TimingMetrics {
     /// Total execution time
-    pub total_time_ns: Option<u64>,
+    pub total_time_ns:    Option<u64>,
     /// Response time/average response time
     pub response_time_ns: Option<u64>,
     /// Compilation time
-    pub compile_time_ns: Option<u64>,
+    pub compile_time_ns:  Option<u64>,
     /// Analysis time
     pub analysis_time_ns: Option<u64>,
     /// Cache operation time
-    pub cache_time_ns: Option<u64>,
+    pub cache_time_ns:    Option<u64>,
     /// Encryption/decryption time
-    pub crypto_time_ns: Option<u64>,
+    pub crypto_time_ns:   Option<u64>,
     /// Latency measurements (vec for multiple samples)
-    pub latency_ns: Vec<u64>,
+    pub latency_ns:       Vec<u64>,
 }
 
 /// Counter metrics
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CounterMetrics {
     /// Total number of operations
-    pub total_operations: Option<u64>,
+    pub total_operations:      Option<u64>,
     /// Operations completed successfully
     pub successful_operations: Option<u64>,
     /// Operations that failed
-    pub failed_operations: Option<u64>,
+    pub failed_operations:     Option<u64>,
     /// Cache hits
-    pub cache_hits: Option<u64>,
+    pub cache_hits:            Option<u64>,
     /// Cache misses
-    pub cache_misses: Option<u64>,
+    pub cache_misses:          Option<u64>,
     /// Memory allocations analyzed
-    pub allocations_analyzed: Option<u64>,
+    pub allocations_analyzed:  Option<u64>,
     /// Errors detected/counted
-    pub error_count: Option<u64>,
+    pub error_count:           Option<u64>,
 }
 
 /// Rate and percentage metrics
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RateMetrics {
     /// CPU usage percentage
-    pub cpu_usage_percent: Option<f64>,
+    pub cpu_usage_percent:      Option<f64>,
     /// Memory usage percentage
-    pub memory_usage_percent: Option<f64>,
+    pub memory_usage_percent:   Option<f64>,
     /// Cache hit rate
-    pub cache_hit_rate: Option<f64>,
+    pub cache_hit_rate:         Option<f64>,
     /// Success rate
-    pub success_rate: Option<f64>,
+    pub success_rate:           Option<f64>,
     /// Throughput (operations per second)
     pub throughput_ops_per_sec: Option<f64>,
 }
@@ -123,54 +124,54 @@ pub struct RateMetrics {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ResourceMetrics {
     /// Memory usage in bytes
-    pub memory_bytes: Option<u64>,
+    pub memory_bytes:      Option<u64>,
     /// Peak memory usage
     pub peak_memory_bytes: Option<u64>,
     /// CPU time used
-    pub cpu_time_ns: Option<u64>,
+    pub cpu_time_ns:       Option<u64>,
     /// Network bytes transferred
-    pub network_bytes: Option<u64>,
+    pub network_bytes:     Option<u64>,
 }
 
 /// Analysis-specific metrics
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AnalysisMetrics {
     /// Files analyzed
-    pub files_analyzed: Option<u64>,
+    pub files_analyzed:          Option<u64>,
     /// Lines of code analyzed
-    pub lines_analyzed: Option<u64>,
+    pub lines_analyzed:          Option<u64>,
     /// Refactoring suggestions generated
     pub refactoring_suggestions: Option<u64>,
     /// Code quality score
-    pub quality_score: Option<f64>,
+    pub quality_score:           Option<f64>,
 }
 
 /// Security-specific metrics
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct SecurityMetrics {
     /// Encryption operations
-    pub encryption_ops: Option<u64>,
+    pub encryption_ops:         Option<u64>,
     /// Decryption operations
-    pub decryption_ops: Option<u64>,
+    pub decryption_ops:         Option<u64>,
     /// Average encryption time
     pub avg_encryption_time_ns: Option<u64>,
     /// Security scans performed
-    pub security_scans: Option<u64>,
+    pub security_scans:         Option<u64>,
     /// Vulnerabilities found
-    pub vulnerabilities_found: Option<u64>,
+    pub vulnerabilities_found:  Option<u64>,
 }
 
 /// Build and compilation metrics
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct BuildMetrics {
     /// Total build time
-    pub build_time_ns: Option<u64>,
+    pub build_time_ns:     Option<u64>,
     /// Build success
-    pub build_successful: Option<bool>,
+    pub build_successful:  Option<bool>,
     /// Number of compilation warnings
-    pub warnings_count: Option<u64>,
+    pub warnings_count:    Option<u64>,
     /// Number of compilation errors
-    pub errors_count: Option<u64>,
+    pub errors_count:      Option<u64>,
     /// Incremental build flag
     pub incremental_build: Option<bool>,
 }
@@ -179,15 +180,15 @@ pub struct BuildMetrics {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct LearningMetrics {
     /// Training operations
-    pub training_ops: Option<u64>,
+    pub training_ops:        Option<u64>,
     /// Model predictions
-    pub predictions: Option<u64>,
+    pub predictions:         Option<u64>,
     /// Learning algorithm iterations
     pub learning_iterations: Option<u64>,
     /// Model accuracy
-    pub model_accuracy: Option<f64>,
+    pub model_accuracy:      Option<f64>,
     /// Training loss
-    pub training_loss: Option<f64>,
+    pub training_loss:       Option<f64>,
 }
 
 /// Flexible metric value for extensions
@@ -307,9 +308,7 @@ impl PerformanceMetrics {
 
     /// Calculate throughput from operations and time
     pub fn calculate_throughput(&mut self) {
-        if let (Some(ops), Some(time_ns)) =
-            (self.counters.total_operations, self.timing.total_time_ns)
-        {
+        if let (Some(ops), Some(time_ns)) = (self.counters.total_operations, self.timing.total_time_ns) {
             if time_ns > 0 {
                 let time_sec = time_ns as f64 / 1_000_000_000.0;
                 self.rates.throughput_ops_per_sec = Some(ops as f64 / time_sec);
@@ -340,14 +339,12 @@ impl PerformanceMetrics {
             other.counters.failed_operations,
         );
         self.counters.cache_hits = add_options(self.counters.cache_hits, other.counters.cache_hits);
-        self.counters.cache_misses =
-            add_options(self.counters.cache_misses, other.counters.cache_misses);
+        self.counters.cache_misses = add_options(self.counters.cache_misses, other.counters.cache_misses);
         self.counters.allocations_analyzed = add_options(
             self.counters.allocations_analyzed,
             other.counters.allocations_analyzed,
         );
-        self.counters.error_count =
-            add_options(self.counters.error_count, other.counters.error_count);
+        self.counters.error_count = add_options(self.counters.error_count, other.counters.error_count);
 
         // For extensions, union with overwrite
         for (key, value) in &other.extensions {
@@ -478,9 +475,7 @@ impl Default for MetricsBuilder {
 impl TryFrom<&rust_ai_ide_common::perf_utils::PerformanceMetrics> for PerformanceMetrics {
     type Error = String;
 
-    fn try_from(
-        old: &rust_ai_ide_common::perf_utils::PerformanceMetrics,
-    ) -> Result<Self, Self::Error> {
+    fn try_from(old: &rust_ai_ide_common::perf_utils::PerformanceMetrics) -> Result<Self, Self::Error> {
         let mut metrics = PerformanceMetrics::new();
         metrics.timing.total_time_ns = Some(old.duration.as_nanos() as u64);
         metrics.add_extension(
@@ -495,8 +490,8 @@ impl TryFrom<&rust_ai_ide_common::perf_utils::PerformanceMetrics> for Performanc
 // impl TryFrom<&rust_ai_ide_cargo::commands::PerformanceMetrics> for PerformanceMetrics {
 //     type Error = String;
 
-//     fn try_from(old: &rust_ai_ide_cargo::commands::PerformanceMetrics) -> Result<Self, Self::Error> {
-//         let mut metrics = PerformanceMetrics::new();
+//     fn try_from(old: &rust_ai_ide_cargo::commands::PerformanceMetrics) -> Result<Self,
+// Self::Error> {         let mut metrics = PerformanceMetrics::new();
 //         metrics.timing.total_time_ns = Some(old.total_time_ms as u64 * 1_000_000);
 //         metrics.timing.compile_time_ns = Some(old.compile_time_ms as u64 * 1_000_000);
 //         Ok(metrics)
@@ -519,8 +514,8 @@ impl TryFrom<&rust_ai_ide_common::perf_utils::PerformanceMetrics> for Performanc
 /// Create a metrics scope that automatically records timing
 #[derive(Debug)]
 pub struct MetricsScope {
-    metrics: PerformanceMetrics,
-    start_time: Instant,
+    metrics:        PerformanceMetrics,
+    start_time:     Instant,
     operation_name: String,
 }
 
@@ -528,8 +523,8 @@ impl MetricsScope {
     /// Create a new metrics scope
     pub fn new(operation_name: impl Into<String>) -> Self {
         Self {
-            metrics: PerformanceMetrics::new(),
-            start_time: Instant::now(),
+            metrics:        PerformanceMetrics::new(),
+            start_time:     Instant::now(),
             operation_name: operation_name.into(),
         }
     }

@@ -3,13 +3,14 @@
 //! This module provides comprehensive layout management for split views,
 //! tabbed interfaces, and panel organization in the IDE.
 
+use std::collections::HashMap;
+use std::fmt;
+use std::sync::Arc;
+
 use lazy_static::lazy_static;
 use rust_ai_ide_core::security::{audit_action, audit_logger};
 use rust_ai_ide_core::validation::validate_secure_path;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fmt;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::command_templates::*;
@@ -24,10 +25,10 @@ pub enum SplitOrientation {
 /// Split configuration for a panel
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SplitConfig {
-    pub id: String,
+    pub id:          String,
     pub orientation: SplitOrientation,
-    pub size: f32, // Ratio 0.0 to 1.0
-    pub children: Vec<PanelNode>,
+    pub size:        f32, // Ratio 0.0 to 1.0
+    pub children:    Vec<PanelNode>,
 }
 
 /// Panel node representing the layout hierarchy
@@ -40,11 +41,11 @@ pub enum PanelNode {
 /// Panel information for leaf nodes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PanelInfo {
-    pub id: String,
+    pub id:           String,
     pub content_type: PanelContentType,
-    pub title: Option<String>,
-    pub is_active: bool,
-    pub tabs: Vec<PanelTab>,
+    pub title:        Option<String>,
+    pub is_active:    bool,
+    pub tabs:         Vec<PanelTab>,
 }
 
 /// Content types for panels
@@ -63,48 +64,48 @@ pub enum PanelContentType {
 /// Tab information for panel
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PanelTab {
-    pub id: String,
-    pub title: String,
-    pub content_id: String,
+    pub id:          String,
+    pub title:       String,
+    pub content_id:  String,
     pub is_modified: bool,
-    pub is_pinned: bool,
+    pub is_pinned:   bool,
 }
 
 /// Layout configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LayoutConfig {
-    pub root_panel: PanelNode,
-    pub focused_panel: String,
+    pub root_panel:     PanelNode,
+    pub focused_panel:  String,
     pub layout_version: u32,
-    pub last_updated: u64,
+    pub last_updated:   u64,
 }
 
 /// Split view manager service
 #[derive(Debug)]
 pub struct SplitViewManager {
     current_layout: Arc<Mutex<LayoutConfig>>,
-    saved_layouts: Arc<Mutex<HashMap<String, LayoutConfig>>>,
+    saved_layouts:  Arc<Mutex<HashMap<String, LayoutConfig>>>,
 }
 
 impl SplitViewManager {
     pub fn new() -> Self {
         Self {
             current_layout: Arc::new(Mutex::new(LayoutConfig {
-                root_panel: PanelNode::Leaf(PanelInfo {
-                    id: "main".to_string(),
+                root_panel:     PanelNode::Leaf(PanelInfo {
+                    id:           "main".to_string(),
                     content_type: PanelContentType::Editor,
-                    title: Some("Main Editor".to_string()),
-                    is_active: true,
-                    tabs: Vec::new(),
+                    title:        Some("Main Editor".to_string()),
+                    is_active:    true,
+                    tabs:         Vec::new(),
                 }),
-                focused_panel: "main".to_string(),
+                focused_panel:  "main".to_string(),
                 layout_version: 1,
-                last_updated: std::time::SystemTime::now()
+                last_updated:   std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap_or_default()
                     .as_secs(),
             })),
-            saved_layouts: Arc::new(Mutex::new(HashMap::new())),
+            saved_layouts:  Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -137,37 +138,34 @@ impl SplitViewManager {
         size_ratio: f32,
     ) -> Result<(), String> {
         match node {
-            PanelNode::Leaf(panel_info) => {
+            PanelNode::Leaf(panel_info) =>
                 if panel_info.id == target_id {
                     let new_panel_id = format!("{}_right", target_id);
                     let original_panel = panel_info.clone();
                     original_panel.id = format!("{}_left", target_id);
 
                     *node = PanelNode::Split(SplitConfig {
-                        id: format!("split_{}", target_id),
+                        id:          format!("split_{}", target_id),
                         orientation: orientation.clone(),
-                        size: size_ratio,
-                        children: vec![
+                        size:        size_ratio,
+                        children:    vec![
                             PanelNode::Leaf(original_panel),
                             PanelNode::Leaf(PanelInfo {
-                                id: new_panel_id,
+                                id:           new_panel_id,
                                 content_type: PanelContentType::Editor,
-                                title: Some("New Panel".to_string()),
-                                is_active: false,
-                                tabs: Vec::new(),
+                                title:        Some("New Panel".to_string()),
+                                is_active:    false,
+                                tabs:         Vec::new(),
                             }),
                         ],
                     });
                     Ok(())
                 } else {
                     Err(format!("Panel '{}' not found", target_id))
-                }
-            }
+                },
             PanelNode::Split(split_config) => {
                 for child in &mut split_config.children {
-                    if let Ok(_) =
-                        self.find_and_split_panel(child, target_id, orientation, size_ratio)
-                    {
+                    if let Ok(_) = self.find_and_split_panel(child, target_id, orientation, size_ratio) {
                         return Ok(());
                     }
                 }
@@ -238,13 +236,12 @@ impl SplitViewManager {
                     Err(format!("Panel '{}' not found", target_id))
                 }
             }
-            PanelNode::Leaf(panel_info) => {
+            PanelNode::Leaf(panel_info) =>
                 if panel_info.id == target_id {
                     Err("Cannot remove root level leaf panel".to_string())
                 } else {
                     Err(format!("Panel '{}' not found", target_id))
-                }
-            }
+                },
         }
     }
 
@@ -339,13 +336,12 @@ impl SplitViewManager {
 
     fn find_panel(&self, node: &PanelNode, panel_id: &str) -> Option<&PanelInfo> {
         match node {
-            PanelNode::Leaf(panel_info) => {
+            PanelNode::Leaf(panel_info) =>
                 if panel_info.id == panel_id {
                     Some(panel_info)
                 } else {
                     None
-                }
-            }
+                },
             PanelNode::Split(split_config) => {
                 for child in &split_config.children {
                     if let Some(panel) = self.find_panel(child, panel_id) {
@@ -359,13 +355,12 @@ impl SplitViewManager {
 
     fn find_panel_mut(&self, node: &mut PanelNode, panel_id: &str) -> Option<&mut PanelInfo> {
         match node {
-            PanelNode::Leaf(panel_info) => {
+            PanelNode::Leaf(panel_info) =>
                 if panel_info.id == panel_id {
                     Some(panel_info)
                 } else {
                     None
-                }
-            }
+                },
             PanelNode::Split(split_config) => {
                 for child in &mut split_config.children {
                     if let Some(panel) = self.find_panel_mut(child, panel_id) {

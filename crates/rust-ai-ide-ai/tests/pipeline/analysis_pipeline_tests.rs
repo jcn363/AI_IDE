@@ -1,17 +1,13 @@
 //! Tests for the analysis pipeline and its components
 
-use rust_ai_ide_ai::{
-    analysis::{
-        architectural::{
-            CircularDependencyAnalyzer, DependencyInversionAnalyzer, InterfaceSegregationAnalyzer,
-            LayerViolationDetector,
-        },
-        security::{HardcodedSecretsDetector, InsecureCryptoDetector, SqlInjectionDetector},
-        AnalysisPipeline, AnalysisPipelineBuilder, AnalysisResult, AnalysisType, Severity,
-    },
-    test_helpers::*,
-};
 use std::path::PathBuf;
+
+use rust_ai_ide_ai::analysis::architectural::{
+    CircularDependencyAnalyzer, DependencyInversionAnalyzer, InterfaceSegregationAnalyzer, LayerViolationDetector,
+};
+use rust_ai_ide_ai::analysis::security::{HardcodedSecretsDetector, InsecureCryptoDetector, SqlInjectionDetector};
+use rust_ai_ide_ai::analysis::{AnalysisPipeline, AnalysisPipelineBuilder, AnalysisResult, AnalysisType, Severity};
+use rust_ai_ide_ai::test_helpers::*;
 
 /// Test the basic pipeline construction and execution
 #[test]

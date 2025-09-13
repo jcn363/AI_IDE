@@ -3,17 +3,15 @@
 //! Comprehensive HIPAA compliance implementation including security rule,
 //! privacy rule, and breach notification requirements.
 
-use crate::core::{
-    ComplianceConfig, ComplianceError, ComplianceResult, ComplianceStatus,
-    FrameworkProcessingResult,
-};
-use crate::engine::{ComplianceProcessor, DataBreachNotification, DataProcessingContext};
 use async_trait::async_trait;
+
+use crate::core::{ComplianceConfig, ComplianceError, ComplianceResult, ComplianceStatus, FrameworkProcessingResult};
+use crate::engine::{ComplianceProcessor, DataBreachNotification, DataProcessingContext};
 
 /// HIPAA compliance processor
 #[derive(Debug)]
 pub struct HipaaProcessor {
-    config: ComplianceConfig,
+    config:       ComplianceConfig,
     phi_registry: std::collections::HashMap<String, ProtectedHealthInformation>,
 }
 
@@ -21,7 +19,7 @@ impl HipaaProcessor {
     /// Create a new HIPAA processor
     pub async fn new(config: std::sync::Arc<ComplianceConfig>) -> ComplianceResult<Self> {
         Ok(Self {
-            config: (*config).clone(),
+            config:       (*config).clone(),
             phi_registry: std::collections::HashMap::new(),
         })
     }
@@ -62,10 +60,7 @@ impl ComplianceProcessor for HipaaProcessor {
         }))
     }
 
-    async fn handle_breach_notification(
-        &self,
-        breach: &DataBreachNotification,
-    ) -> ComplianceResult<()> {
+    async fn handle_breach_notification(&self, breach: &DataBreachNotification) -> ComplianceResult<()> {
         log::warn!("HIPAA breach notification received: {}", breach.details);
 
         // HIPAA requires notification within 60 days (breach analysis) + individual notice timing
@@ -88,20 +83,13 @@ impl HipaaProcessor {
     }
 
     /// Register PHI access
-    pub async fn register_phi_access(
-        &mut self,
-        _phi_id: &str,
-        _access: &PhiAccess,
-    ) -> ComplianceResult<()> {
+    pub async fn register_phi_access(&mut self, _phi_id: &str, _access: &PhiAccess) -> ComplianceResult<()> {
         // Implementation for PHI access logging
         Ok(())
     }
 
     /// Check BAA compliance
-    pub fn check_business_associate_agreement(
-        &self,
-        _associate_id: &str,
-    ) -> ComplianceResult<BusinessAssociateStatus> {
+    pub fn check_business_associate_agreement(&self, _associate_id: &str) -> ComplianceResult<BusinessAssociateStatus> {
         // Implementation for BAA verification
         Ok(BusinessAssociateStatus::Compliant)
     }
@@ -110,11 +98,11 @@ impl HipaaProcessor {
 /// Protected Health Information (PHI) structure
 #[derive(Debug, Clone)]
 pub struct ProtectedHealthInformation {
-    pub id: String,
-    pub data_type: PhiType,
+    pub id:                String,
+    pub data_type:         PhiType,
     pub encryption_status: EncryptionStatus,
-    pub access_controls: Vec<AccessControl>,
-    pub retention_period: Option<chrono::Duration>,
+    pub access_controls:   Vec<AccessControl>,
+    pub retention_period:  Option<chrono::Duration>,
 }
 
 /// PHI data type enumeration
@@ -140,11 +128,11 @@ pub enum EncryptionStatus {
 /// Access controls for PHI
 #[derive(Debug, Clone)]
 pub struct AccessControl {
-    pub user_id: String,
-    pub permission: AccessPermission,
-    pub purpose: AccessPurpose,
+    pub user_id:       String,
+    pub permission:    AccessPermission,
+    pub purpose:       AccessPurpose,
     pub authorized_at: chrono::DateTime<chrono::Utc>,
-    pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub expires_at:    Option<chrono::DateTime<chrono::Utc>>,
 }
 
 /// Access permission levels
@@ -168,13 +156,13 @@ pub enum AccessPurpose {
 /// PHI access record structure
 #[derive(Debug, Clone)]
 pub struct PhiAccess {
-    pub phi_id: String,
+    pub phi_id:      String,
     pub accessor_id: String,
     pub access_type: AccessPermission,
-    pub purpose: AccessPurpose,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
-    pub success: bool,
-    pub ip_address: Option<String>,
+    pub purpose:     AccessPurpose,
+    pub timestamp:   chrono::DateTime<chrono::Utc>,
+    pub success:     bool,
+    pub ip_address:  Option<String>,
 }
 
 /// Business Associate (BA) status

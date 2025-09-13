@@ -2,22 +2,21 @@
 //!
 //! Core model registry implementation with resource management and automated policies.
 
-use anyhow::{anyhow, Result};
-use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
+
+use anyhow::{anyhow, Result};
+use once_cell::sync::Lazy;
 use tokio::sync::RwLock;
 use tracing::{error, info, warn};
 
 // Internal helper modules for deduplication
 mod internal {
     use super::*;
-    use crate::{
-        loaders::ModelLoader,
-        resource_types::ModelType,
-        unloading_policies::{PolicyEvaluator, UnloadingRecommendation},
-    };
+    use crate::loaders::ModelLoader;
+    use crate::resource_types::ModelType;
+    use crate::unloading_policies::{PolicyEvaluator, UnloadingRecommendation};
 
     /// Shared implementation for auto unloading models
     /// This eliminates the duplication between ModelRegistry and ModelRegistryInner
@@ -82,25 +81,23 @@ mod internal {
     }
 }
 
-use crate::{
-    loaders::{LoaderFactory, ModelLoader},
-    model_handle::ModelHandle,
-    resource_monitor::SystemMonitor,
-    resource_types::{ModelSize, ModelType, Quantization, UnloadingPolicy},
-    unloading_policies::{PolicyEvaluator, UnloadingRecommendation},
-};
+use crate::loaders::{LoaderFactory, ModelLoader};
+use crate::model_handle::ModelHandle;
+use crate::resource_monitor::SystemMonitor;
+use crate::resource_types::{ModelSize, ModelType, Quantization, UnloadingPolicy};
+use crate::unloading_policies::{PolicyEvaluator, UnloadingRecommendation};
 
 /// Advanced model registry with resource monitoring and automatic policies
 #[derive(Debug)]
 pub struct ModelRegistry {
     /// Loaded models with their handles
-    loaded_models: Arc<RwLock<HashMap<String, ModelHandle>>>,
+    loaded_models:    Arc<RwLock<HashMap<String, ModelHandle>>>,
     /// Available model loaders
-    model_loaders: HashMap<ModelType, Arc<dyn ModelLoader>>,
+    model_loaders:    HashMap<ModelType, Arc<dyn ModelLoader>>,
     /// Operations in progress (for preventing concurrent loads)
     load_in_progress: Arc<RwLock<HashMap<String, tokio::sync::mpsc::Sender<()>>>>,
     /// System resource monitor
-    system_monitor: Arc<SystemMonitor>,
+    system_monitor:   Arc<SystemMonitor>,
     /// Policy evaluator for automatic unloading
     policy_evaluator: PolicyEvaluator,
     /// Current unloading policy
@@ -152,15 +149,11 @@ impl ModelRegistry {
     }
 
     /// Check if a load is already in progress and prevent concurrent loads
-    async fn check_and_prepare_load(
-        &self,
-        load_key: String,
-    ) -> Result<tokio::sync::mpsc::Sender<()>> {
+    async fn check_and_prepare_load(&self, load_key: String) -> Result<tokio::sync::mpsc::Sender<()>> {
         let (tx, _rx) = tokio::sync::mpsc::channel::<()>(1);
 
         let mut in_progress = self.load_in_progress.write().await;
-        if let std::collections::hash_map::Entry::Occupied(_) = in_progress.entry(load_key.clone())
-        {
+        if let std::collections::hash_map::Entry::Occupied(_) = in_progress.entry(load_key.clone()) {
             return Err(anyhow!("Model load already in progress"));
         }
         in_progress.insert(load_key, tx.clone());
@@ -379,9 +372,7 @@ impl ModelRegistry {
     }
 
     /// Get detailed resource usage statistics
-    pub async fn get_resource_usage_stats(
-        &self,
-    ) -> HashMap<String, crate::resource_types::ResourceUsage> {
+    pub async fn get_resource_usage_stats(&self) -> HashMap<String, crate::resource_types::ResourceUsage> {
         let models = self.loaded_models.read().await;
         models
             .values()
@@ -414,20 +405,16 @@ impl ModelRegistry {
     }
 
     /// Start background automatic unloading task
-    pub async fn start_auto_unloading_task(
-        &self,
-        interval_seconds: u64,
-    ) -> tokio::task::JoinHandle<()> {
+    pub async fn start_auto_unloading_task(&self, interval_seconds: u64) -> tokio::task::JoinHandle<()> {
         let registry_ref = Arc::new(ModelRegistryInner {
-            loaded_models: Arc::clone(&self.loaded_models),
-            model_loaders: self.model_loaders.clone(),
+            loaded_models:    Arc::clone(&self.loaded_models),
+            model_loaders:    self.model_loaders.clone(),
             policy_evaluator: self.policy_evaluator.clone(),
             unloading_policy: self.unloading_policy.clone(),
         });
 
         tokio::spawn(async move {
-            let mut interval =
-                tokio::time::interval(std::time::Duration::from_secs(interval_seconds));
+            let mut interval = tokio::time::interval(std::time::Duration::from_secs(interval_seconds));
 
             loop {
                 interval.tick().await;
@@ -448,8 +435,8 @@ impl ModelRegistry {
 
 /// Internal registry wrapper for background tasks
 struct ModelRegistryInner {
-    loaded_models: Arc<RwLock<HashMap<String, ModelHandle>>>,
-    model_loaders: HashMap<ModelType, Arc<dyn ModelLoader>>,
+    loaded_models:    Arc<RwLock<HashMap<String, ModelHandle>>>,
+    model_loaders:    HashMap<ModelType, Arc<dyn ModelLoader>>,
     policy_evaluator: PolicyEvaluator,
     unloading_policy: UnloadingPolicy,
 }
@@ -483,17 +470,18 @@ impl Default for ModelRegistry {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::time::Duration;
+
     use tokio::time::sleep;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_registry_creation() {
         let registry = ModelRegistry::new();
         assert_eq!(registry.get_total_memory_usage().await, 0);
 
-        let policy_registry =
-            ModelRegistry::with_policy(UnloadingPolicy::MemoryThreshold { max_memory_gb: 8.0 });
+        let policy_registry = ModelRegistry::with_policy(UnloadingPolicy::MemoryThreshold { max_memory_gb: 8.0 });
         assert!(matches!(
             policy_registry.get_unloading_policy(),
             UnloadingPolicy::MemoryThreshold { .. }
@@ -548,7 +536,8 @@ mod tests {
         registry.update_model_access("test_model").await.unwrap();
 
         if let Some(updated_handle) = registry.get_model("test_model").await {
-            // Access count will be 1 (from touch in update_model_access) + 1 (from get_model which also updates)
+            // Access count will be 1 (from touch in update_model_access) + 1 (from get_model which also
+            // updates)
             assert!(updated_handle.resource_usage.access_count >= 1);
         } else {
             panic!("Model should exist");

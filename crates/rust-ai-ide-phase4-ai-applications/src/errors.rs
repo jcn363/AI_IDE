@@ -431,8 +431,7 @@ mod tests {
 
     #[test]
     fn test_error_display() {
-        let error =
-            Phase4Error::Configuration(ConfigurationError::InvalidValue("test".to_string()));
+        let error = Phase4Error::Configuration(ConfigurationError::InvalidValue("test".to_string()));
         let display = format!("{}", error);
         assert!(display.contains("Configuration error"));
         assert!(display.contains("test"));
@@ -447,8 +446,7 @@ mod tests {
 
     #[test]
     fn test_workflow_orchestration_error() {
-        let error =
-            WorkflowOrchestrationError::WorkflowExecutionFailed("execution failed".to_string());
+        let error = WorkflowOrchestrationError::WorkflowExecutionFailed("execution failed".to_string());
         let phase4_error: Phase4Error = error.into();
         assert!(matches!(
             phase4_error,

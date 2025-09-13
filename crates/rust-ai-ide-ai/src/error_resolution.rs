@@ -9,28 +9,28 @@
 //! The system employs a sophisticated multi-phase error resolution architecture:
 //!
 //! ### 🤖 Phase 1: Intelligent Pattern Recognition Engine
-//! - **Machine Learning Pattern Matching**: Uses trained models to identify error patterns
-//!   rather than relying solely on rule-based approaches
-//! - **Context-Aware Error Classification**: Analyzes surrounding code context to improve
-//!   pattern matching accuracy and reduce false positives
-//! - **Confidence-Weighted Pattern Scoring**: Assigns probabilistic confidence scores to
-//!   pattern matches based on historical success rates and contextual factors
+//! - **Machine Learning Pattern Matching**: Uses trained models to identify error patterns rather
+//!   than relying solely on rule-based approaches
+//! - **Context-Aware Error Classification**: Analyzes surrounding code context to improve pattern
+//!   matching accuracy and reduce false positives
+//! - **Confidence-Weighted Pattern Scoring**: Assigns probabilistic confidence scores to pattern
+//!   matches based on historical success rates and contextual factors
 //!
 //! ### 🔧 Phase 2: AI-Enhanced Fix Generation
-//! - **Evidence-Based Fix Suggestions**: Generates multiple fix options ranked by
-//!   estimated success probability and implementation effort
-//! - **Semantic Code Understanding**: Uses language models to understand code intent
-//!   and generate contextually appropriate fixes
-//! - **Impact Assessment Algorithm**: Predicts the scope and potential side effects of
-//!   proposed fixes before application
+//! - **Evidence-Based Fix Suggestions**: Generates multiple fix options ranked by estimated success
+//!   probability and implementation effort
+//! - **Semantic Code Understanding**: Uses language models to understand code intent and generate
+//!   contextually appropriate fixes
+//! - **Impact Assessment Algorithm**: Predicts the scope and potential side effects of proposed
+//!   fixes before application
 //!
 //! ### 📈 Phase 3: Continuous Learning and Adaptation
 //! - **Feedback Loop Integration**: Learns from user-applied fixes to improve future
 //!   recommendations and confidence scoring
-//! - **Pattern Evolution System**: Adapts existing patterns and learns new ones from
-//!   human-provided solutions
-//! - **Success Rate Optimization**: Continuously refines suggestions based on
-//!   measured effectiveness across different codebases
+//! - **Pattern Evolution System**: Adapts existing patterns and learns new ones from human-provided
+//!   solutions
+//! - **Success Rate Optimization**: Continuously refines suggestions based on measured
+//!   effectiveness across different codebases
 //!
 //! ## Advanced Error Resolution Algorithm
 //!
@@ -47,7 +47,7 @@
 //!     // Process compilation errors
 //!     let errors = vec![
 //!         "error[E0382]: borrow of moved value: `x`".to_string(),
-//!         "warning: unused variable: `y`".to_string()
+//!         "warning: unused variable: `y`".to_string(),
 //!     ];
 //!
 //!     // AI-powered resolution pipeline
@@ -65,7 +65,9 @@
 //!
 //!         // Track learning from user acceptance/rejection
 //!         if user_accepts_fix(&suggestion) {
-//!             resolver.record_successful_fix(&suggestion.id, &suggestion, true).await?;
+//!             resolver
+//!                 .record_successful_fix(&suggestion.id, &suggestion, true)
+//!                 .await?;
 //!         }
 //!     }
 //!
@@ -135,19 +137,20 @@
 //! - **Pattern-Based Prediction**: Uses historical data to predict likely errors
 //! - **Context-Aware Suggestions**: Provides preventive fixes during development
 
-use crate::advanced_error_analysis::{
-    AdvancedAnalysisResult, AdvancedErrorAnalyzer, ImpactAssessment, PredictionResult,
-    RootCauseAnalysis,
-};
-use crate::learning::types::{AIContext, AIResult, AIServiceError};
-use crate::AIProvider;
-use chrono::{DateTime, Utc};
-use fancy_regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
+
+use chrono::{DateTime, Utc};
+use fancy_regex::Regex;
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
+
+use crate::advanced_error_analysis::{
+    AdvancedAnalysisResult, AdvancedErrorAnalyzer, ImpactAssessment, PredictionResult, RootCauseAnalysis,
+};
+use crate::learning::types::{AIContext, AIResult, AIServiceError};
+use crate::AIProvider;
 
 // Re-export commonly used types for convenience
 
@@ -322,32 +325,32 @@ pub enum FixImpact {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeChange {
     /// File path relative to project root
-    pub file_path: String,
+    pub file_path:     String,
     /// Line range to modify (start_line, end_line)
-    pub line_range: (u32, u32),
+    pub line_range:    (u32, u32),
     /// Column range to modify (start_col, end_col)
-    pub column_range: (u32, u32),
+    pub column_range:  (u32, u32),
     /// Original text to replace
     pub original_text: String,
     /// New text to insert
-    pub new_text: String,
+    pub new_text:      String,
     /// Type of change
-    pub change_type: ChangeType,
+    pub change_type:   ChangeType,
     /// Description of this specific change
-    pub description: String,
+    pub description:   String,
 }
 
 /// Documentation link for error explanations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocumentationLink {
     /// Title of the documentation
-    pub title: String,
+    pub title:       String,
     /// URL to the documentation
-    pub url: String,
+    pub url:         String,
     /// Brief description of what this link contains
     pub description: String,
     /// Type of documentation
-    pub link_type: DocumentationLinkType,
+    pub link_type:   DocumentationLinkType,
 }
 
 /// Type of documentation link
@@ -373,43 +376,43 @@ pub enum DocumentationLinkType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FixSuggestion {
     /// Unique identifier for this suggestion
-    pub id: String,
+    pub id:                  String,
     /// Human-readable title for the fix
-    pub title: String,
+    pub title:               String,
     /// Detailed description of what the fix does
-    pub description: String,
+    pub description:         String,
     /// The actual code changes to apply
-    pub changes: Vec<CodeChange>,
+    pub changes:             Vec<CodeChange>,
     /// Confidence score for this suggestion (0.0 to 1.0)
-    pub confidence: f32,
+    pub confidence:          f32,
     /// Explanation of why this fix should work
-    pub explanation: String,
+    pub explanation:         String,
     /// Links to relevant documentation
     pub documentation_links: Vec<DocumentationLink>,
     /// Whether this fix can be applied automatically
-    pub auto_applicable: bool,
+    pub auto_applicable:     bool,
     /// Estimated impact of applying this fix
-    pub impact: FixImpact,
+    pub impact:              FixImpact,
     /// The pattern that generated this suggestion
-    pub source_pattern: Option<String>,
+    pub source_pattern:      Option<String>,
     /// Additional context or warnings
-    pub warnings: Vec<String>,
+    pub warnings:            Vec<String>,
 }
 
 impl Default for FixSuggestion {
     fn default() -> Self {
         Self {
-            id: uuid::Uuid::new_v4().to_string(),
-            title: "Default Fix".to_string(),
-            description: "A default fix suggestion".to_string(),
-            changes: vec![],
-            confidence: 0.0,
-            explanation: "Default explanation".to_string(),
+            id:                  uuid::Uuid::new_v4().to_string(),
+            title:               "Default Fix".to_string(),
+            description:         "A default fix suggestion".to_string(),
+            changes:             vec![],
+            confidence:          0.0,
+            explanation:         "Default explanation".to_string(),
             documentation_links: vec![],
-            auto_applicable: false,
-            impact: FixImpact::Local,
-            source_pattern: None,
-            warnings: vec![],
+            auto_applicable:     false,
+            impact:              FixImpact::Local,
+            source_pattern:      None,
+            warnings:            vec![],
         }
     }
 }
@@ -417,7 +420,7 @@ impl Default for FixSuggestion {
 /// Pattern manager for caching and retrieval
 #[derive(Debug)]
 pub struct PatternManager {
-    patterns: HashMap<String, ErrorPattern>,
+    patterns:    HashMap<String, ErrorPattern>,
     regex_cache: HashMap<String, Regex>,
 }
 
@@ -431,7 +434,7 @@ impl PatternManager {
     /// Create a new pattern manager
     pub fn new() -> Self {
         Self {
-            patterns: HashMap::new(),
+            patterns:    HashMap::new(),
             regex_cache: HashMap::new(),
         }
     }
@@ -493,8 +496,8 @@ impl PatternManager {
         // For now, compile on each use (not efficient, but works)
         // In a production environment, we should use a proper caching mechanism
         // with interior mutability (like parking_lot::Mutex or dashmap::DashMap)
-        let regex = Regex::new(pattern)
-            .map_err(|e| AIServiceError::ProviderError(format!("Invalid regex pattern: {}", e)))?;
+        let regex =
+            Regex::new(pattern).map_err(|e| AIServiceError::ProviderError(format!("Invalid regex pattern: {}", e)))?;
 
         // Convert to a static lifetime - this is safe because we're leaking the memory
         // and the Regex type doesn't contain any references to stack-allocated data
@@ -551,30 +554,34 @@ impl FixSuggestionManager {
 
         // Suggestion 1: Prefix with underscore
         let underscore_suggestion = FixSuggestion {
-            id: id.clone(),
-            title: format!("Prefix '{}' with underscore", variable_name),
-            description: "Prefix the variable name with an underscore to indicate it's intentionally unused".to_string(),
-            changes: vec![CodeChange {
-                file_path: file_path.to_string(),
-                line_range: (line, line),
-                column_range: (column, column + variable_name.len() as u32),
+            id:                  id.clone(),
+            title:               format!("Prefix '{}' with underscore", variable_name),
+            description:         "Prefix the variable name with an underscore to indicate it's intentionally unused"
+                .to_string(),
+            changes:             vec![CodeChange {
+                file_path:     file_path.to_string(),
+                line_range:    (line, line),
+                column_range:  (column, column + variable_name.len() as u32),
                 original_text: variable_name.to_string(),
-                new_text: format!("_{}", variable_name),
-                change_type: ChangeType::Replace,
-                description: "Add underscore prefix".to_string(),
+                new_text:      format!("_{}", variable_name),
+                change_type:   ChangeType::Replace,
+                description:   "Add underscore prefix".to_string(),
             }],
-            confidence: 0.9,
-            explanation: "In Rust, prefixing a variable with an underscore tells the compiler that you intentionally don't use it, which suppresses the warning.".to_string(),
+            confidence:          0.9,
+            explanation:         "In Rust, prefixing a variable with an underscore tells the compiler that you \
+                                  intentionally don't use it, which suppresses the warning."
+                .to_string(),
             documentation_links: vec![DocumentationLink {
-                title: "Unused Variables in Rust".to_string(),
-                url: "https://doc.rust-lang.org/rust-by-example/variable_bindings/underscore_prefix.html".to_string(),
+                title:       "Unused Variables in Rust".to_string(),
+                url:         "https://doc.rust-lang.org/rust-by-example/variable_bindings/underscore_prefix.html"
+                    .to_string(),
                 description: "Rust by Example documentation on underscore prefixes".to_string(),
-                link_type: DocumentationLinkType::RustByExample,
+                link_type:   DocumentationLinkType::RustByExample,
             }],
-            auto_applicable: true,
-            impact: FixImpact::Local,
-            source_pattern: Some("unused_variable".to_string()),
-            warnings: vec![],
+            auto_applicable:     true,
+            impact:              FixImpact::Local,
+            source_pattern:      Some("unused_variable".to_string()),
+            warnings:            vec![],
         };
 
         underscore_suggestion
@@ -597,12 +604,15 @@ impl FixSuggestionManager {
             description: format!("Add a conversion from {} to {}", found_type, expected_type),
             changes: vec![], // Would need more context to generate specific changes
             confidence: 0.8,
-            explanation: format!("The compiler expected type '{}' but found '{}'. Adding a conversion can resolve this.", expected_type, found_type),
+            explanation: format!(
+                "The compiler expected type '{}' but found '{}'. Adding a conversion can resolve this.",
+                expected_type, found_type
+            ),
             documentation_links: vec![DocumentationLink {
-                title: "Type Conversions in Rust".to_string(),
-                url: "https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html".to_string(),
+                title:       "Type Conversions in Rust".to_string(),
+                url:         "https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html".to_string(),
                 description: "The Rust Book chapter on references and borrowing".to_string(),
-                link_type: DocumentationLinkType::RustBook,
+                link_type:   DocumentationLinkType::RustBook,
             }],
             auto_applicable: false,
             impact: FixImpact::Local,
@@ -621,12 +631,16 @@ impl FixSuggestionManager {
             description: "Change the variable to be mutable or use a mutable reference".to_string(),
             changes: vec![], // Would need AST analysis
             confidence: 0.7,
-            explanation: format!("The borrow checker is preventing a {}. You may need to make the variable mutable or restructure the borrowing.", error_type),
+            explanation: format!(
+                "The borrow checker is preventing a {}. You may need to make the variable mutable or restructure the \
+                 borrowing.",
+                error_type
+            ),
             documentation_links: vec![DocumentationLink {
-                title: "Understanding Ownership".to_string(),
-                url: "https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html".to_string(),
+                title:       "Understanding Ownership".to_string(),
+                url:         "https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html".to_string(),
                 description: "The Rust Book chapter on ownership and borrowing".to_string(),
-                link_type: DocumentationLinkType::RustBook,
+                link_type:   DocumentationLinkType::RustBook,
             }],
             auto_applicable: false,
             impact: FixImpact::Local,
@@ -681,31 +695,49 @@ impl FixSuggestionManager {
 /// impl ErrorResolutionAlgorithm for ErrorResolver {
 ///     async fn resolve_error_pipeline(&self, error_input: ErrorInput) -> ResolutionResult {
 ///         // Phase 1: Error Classification and Context Building
-///         let error_context = self.diagnostic_processor.build_error_context(&error_input).await?;
+///         let error_context = self
+///             .diagnostic_processor
+///             .build_error_context(&error_input)
+///             .await?;
 ///
 ///         // Phase 2: Multi-Engine Analysis
-///         let pattern_matches = self.pattern_engine.find_matching_patterns(&error_context).await?;
-///         let learning_insights = self.learning_manager.get_relevant_insights(&error_context).await?;
+///         let pattern_matches = self
+///             .pattern_engine
+///             .find_matching_patterns(&error_context)
+///             .await?;
+///         let learning_insights = self
+///             .learning_manager
+///             .get_relevant_insights(&error_context)
+///             .await?;
 ///         let advanced_insights = if self.has_advanced_features() {
 ///             self.advanced_analyzer.analyze_deep(&error_context).await?
-///         } else { None };
+///         } else {
+///             None
+///         };
 ///
 ///         // Phase 3: Fix Synthesis and Ranking
 ///         let candidate_fixes = self.generate_candidate_fixes(pattern_matches).await?;
-///         let ranked_fixes = self.rank_fixes_with_ai(candidate_fixes, learning_insights).await?;
+///         let ranked_fixes = self
+///             .rank_fixes_with_ai(candidate_fixes, learning_insights)
+///             .await?;
 ///
 ///         // Phase 4: Safety and Impact Assessment
 ///         let validated_fixes = self.fix_manager.validate_fixes(&ranked_fixes).await?;
 ///         let impact_assessment = self.assess_total_system_impact(&validated_fixes).await?;
 ///
 ///         // Phase 5: Confidence Calibration and Final Ranking
-///         let final_fixes = self.calibrate_confidence_and_rank(
-///             validated_fixes,
-///             learning_insights,
-///             advanced_insights
-///         ).await?;
+///         let final_fixes = self
+///             .calibrate_confidence_and_rank(
+///                 validated_fixes,
+///                 learning_insights,
+///                 advanced_insights,
+///             )
+///             .await?;
 ///
-///         Ok(ResolutionResult { fixes: final_fixes, assessment: impact_assessment })
+///         Ok(ResolutionResult {
+///             fixes:      final_fixes,
+///             assessment: impact_assessment,
+///         })
 ///     }
 /// }
 /// ```
@@ -727,7 +759,7 @@ impl FixSuggestionManager {
 ///     base_ml_confidence * 0.4,
 ///     historical_success_rate * 0.3,
 ///     contextual_relevance * 0.2,
-///     user_trust_signals * 0.1
+///     user_trust_signals * 0.1,
 /// )
 /// ```
 ///
@@ -764,9 +796,14 @@ impl FixSuggestionManager {
 ///         let fixes = resolver.resolve_errors(context).await?;
 ///
 ///         // Apply highest-confidence auto-fixable suggestion
-///         if let Some(auto_fix) = fixes.iter().find(|f| f.auto_applicable && f.confidence > 0.8) {
+///         if let Some(auto_fix) = fixes
+///             .iter()
+///             .find(|f| f.auto_applicable && f.confidence > 0.8)
+///         {
 ///             apply_auto_fix(auto_fix);
-///             resolver.record_successful_fix(&auto_fix.id, auto_fix, true).await?;
+///             resolver
+///                 .record_successful_fix(&auto_fix.id, auto_fix, true)
+///                 .await?;
 ///         } else {
 ///             present_user_fix_options(&fixes);
 ///         }
@@ -781,7 +818,9 @@ impl FixSuggestionManager {
 ///     let mut batch_context = AIContext::batch_processing();
 ///
 ///     for error_chunk in project_errors.chunks(10) {
-///         let fixes = resolver.resolve_errors_batch(batch_context, error_chunk).await?;
+///         let fixes = resolver
+///             .resolve_errors_batch(batch_context, error_chunk)
+///             .await?;
 ///         process_and_apply_batch_fixes(fixes).await?;
 ///     }
 /// }
@@ -826,7 +865,7 @@ pub struct PatternEngine {
     /// Pattern manager for storage
     pub pattern_manager: PatternManager,
     /// AI provider for enhanced analysis
-    provider: AIProvider,
+    provider:            AIProvider,
 }
 
 impl PatternEngine {
@@ -846,10 +885,7 @@ impl PatternEngine {
     }
 
     /// Analyze error context and generate fix suggestions
-    pub async fn analyze_and_suggest(
-        &self,
-        context: &ErrorContext,
-    ) -> AIResult<Vec<FixSuggestion>> {
+    pub async fn analyze_and_suggest(&self, context: &ErrorContext) -> AIResult<Vec<FixSuggestion>> {
         let mut suggestions = Vec::new();
 
         // Try pattern-based matching first
@@ -896,17 +932,17 @@ impl PatternEngine {
         // For now, return a basic suggestion
 
         Ok(FixSuggestion {
-            id: format!("pattern_{}", pattern.id),
-            title: format!("Apply pattern fix for: {}", pattern.name),
-            description: "Generated from pattern matching".to_string(),
-            changes: vec![], // Would populate with specific changes
-            confidence: pattern.effective_confidence(),
-            explanation: format!("This fix was generated based on pattern '{}'", pattern.name),
+            id:                  format!("pattern_{}", pattern.id),
+            title:               format!("Apply pattern fix for: {}", pattern.name),
+            description:         "Generated from pattern matching".to_string(),
+            changes:             vec![], // Would populate with specific changes
+            confidence:          pattern.effective_confidence(),
+            explanation:         format!("This fix was generated based on pattern '{}'", pattern.name),
             documentation_links: vec![],
-            auto_applicable: false,
-            impact: FixImpact::Local,
-            source_pattern: Some(pattern.id.clone()),
-            warnings: vec![],
+            auto_applicable:     false,
+            impact:              FixImpact::Local,
+            source_pattern:      Some(pattern.id.clone()),
+            warnings:            vec![],
         })
     }
 
@@ -962,11 +998,7 @@ impl LearningManager {
     }
 
     /// Learn a new pattern from user feedback
-    pub async fn learn_new_pattern(
-        &self,
-        _context: &ErrorContext,
-        _fix_data: &serde_json::Value,
-    ) -> AIResult<String> {
+    pub async fn learn_new_pattern(&self, _context: &ErrorContext, _fix_data: &serde_json::Value) -> AIResult<String> {
         // Implementation would create and store a new learned pattern
         Ok(uuid::Uuid::new_v4().to_string())
     }
@@ -975,9 +1007,9 @@ impl LearningManager {
     pub async fn get_learning_stats(&self) -> AIResult<LearningStats> {
         Ok(LearningStats {
             total_learned_patterns: self.learned_patterns.len() as u32,
-            total_fixes_applied: 0, // Would track this properly
-            success_rate: 0.0,
-            last_pattern_updated: Utc::now(),
+            total_fixes_applied:    0, // Would track this properly
+            success_rate:           0.0,
+            last_pattern_updated:   Utc::now(),
         })
     }
 }
@@ -999,27 +1031,20 @@ impl DiagnosticProcessor {
     }
 
     /// Get compiler diagnostics from project
-    pub async fn get_compiler_diagnostics(
-        &self,
-        _project_path: &str,
-    ) -> AIResult<Vec<CompilerDiagnostic>> {
+    pub async fn get_compiler_diagnostics(&self, _project_path: &str) -> AIResult<Vec<CompilerDiagnostic>> {
         // Implementation would run cargo check and parse output
         Ok(vec![])
     }
 
     /// Build error context from error message
-    pub async fn build_error_context(
-        &self,
-        error: &str,
-        _context: &AIContext,
-    ) -> AIResult<ErrorContext> {
+    pub async fn build_error_context(&self, error: &str, _context: &AIContext) -> AIResult<ErrorContext> {
         Ok(ErrorContext {
-            message: error.to_string(),
-            error_code: None,
+            message:       error.to_string(),
+            error_code:    None,
             context_lines: vec![],
-            file_path: None,
-            line: None,
-            column: None,
+            file_path:     None,
+            line:          None,
+            column:        None,
         })
     }
 
@@ -1032,90 +1057,90 @@ impl DiagnosticProcessor {
 /// Context information about an error
 #[derive(Debug, Clone)]
 pub struct ErrorContext {
-    pub message: String,
-    pub error_code: Option<String>,
+    pub message:       String,
+    pub error_code:    Option<String>,
     pub context_lines: Vec<String>,
-    pub file_path: Option<String>,
-    pub line: Option<u32>,
-    pub column: Option<u32>,
+    pub file_path:     Option<String>,
+    pub line:          Option<u32>,
+    pub column:        Option<u32>,
 }
 
 /// Compiler diagnostic information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompilerDiagnostic {
-    pub level: String,
-    pub message: String,
+    pub level:     String,
+    pub message:   String,
     pub file_path: String,
-    pub line: u32,
-    pub column: u32,
+    pub line:      u32,
+    pub column:    u32,
 }
 
-/*/// Learned pattern from user feedback
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LearnedPattern {
-    /// Unique identifier
-    pub id: String,
-    /// Pattern description
-    pub description: String,
-    /// Error message pattern
-    pub error_pattern: String,
-    /// Associated error code
-    pub error_code: Option<String>,
-    /// Surrounding context patterns
-    pub context_patterns: Vec<String>,
-    /// Fix template for this pattern
-    //pub fix_template: super::learning::models::FixTemplate,
-    /// Confidence in this pattern
-    pub confidence: f32,
-    /// Success counts
-    pub success_count: u32,
-    pub attempt_count: u32,
-    /// Timestamps
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    /// Additional metadata
-    pub context_hash: String,
-    pub tags: Vec<String>,
-    /// Contributor information (anonymized)
-    pub contributor_id: Option<String>,
-}*/
+// /// Learned pattern from user feedback
+// #[derive(Debug, Clone, Serialize, Deserialize)]
+// pub struct LearnedPattern {
+// Unique identifier
+// pub id: String,
+// Pattern description
+// pub description: String,
+// Error message pattern
+// pub error_pattern: String,
+// Associated error code
+// pub error_code: Option<String>,
+// Surrounding context patterns
+// pub context_patterns: Vec<String>,
+// Fix template for this pattern
+// pub fix_template: super::learning::models::FixTemplate,
+// Confidence in this pattern
+// pub confidence: f32,
+// Success counts
+// pub success_count: u32,
+// pub attempt_count: u32,
+// Timestamps
+// pub created_at: DateTime<Utc>,
+// pub updated_at: DateTime<Utc>,
+// Additional metadata
+// pub context_hash: String,
+// pub tags: Vec<String>,
+// Contributor information (anonymized)
+// pub contributor_id: Option<String>,
+// }
 
 /// Learning statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LearningStats {
     pub total_learned_patterns: u32,
-    pub total_fixes_applied: u32,
-    pub success_rate: f32,
-    pub last_pattern_updated: DateTime<Utc>,
+    pub total_fixes_applied:    u32,
+    pub success_rate:           f32,
+    pub last_pattern_updated:   DateTime<Utc>,
 }
 
 /// Placeholder for LearnedPattern - would need full implementation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LearnedPattern {
-    pub id: String,
-    pub description: String,
-    pub error_pattern: String,
-    pub error_code: Option<String>,
+    pub id:               String,
+    pub description:      String,
+    pub error_pattern:    String,
+    pub error_code:       Option<String>,
     pub context_patterns: Vec<String>,
-    pub confidence: f32,
-    pub success_count: u32,
-    pub attempt_count: u32,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub context_hash: String,
-    pub tags: Vec<String>,
-    pub contributor_id: Option<String>,
+    pub confidence:       f32,
+    pub success_count:    u32,
+    pub attempt_count:    u32,
+    pub created_at:       DateTime<Utc>,
+    pub updated_at:       DateTime<Utc>,
+    pub context_hash:     String,
+    pub tags:             Vec<String>,
+    pub contributor_id:   Option<String>,
 }
 
 impl ErrorResolver {
     /// Create a new error resolver with all components
     pub fn new(provider: AIProvider) -> Self {
         Self {
-            pattern_engine: PatternEngine::new(provider.clone()),
-            learning_manager: LearningManager::new(),
+            pattern_engine:       PatternEngine::new(provider.clone()),
+            learning_manager:     LearningManager::new(),
             diagnostic_processor: DiagnosticProcessor::new(),
-            fix_manager: FixSuggestionManager::new(),
-            advanced_analyzer: Some(Arc::new(RwLock::new(AdvancedErrorAnalyzer::new(provider)))),
+            fix_manager:          FixSuggestionManager::new(),
+            advanced_analyzer:    Some(Arc::new(RwLock::new(AdvancedErrorAnalyzer::new(provider)))),
         }
     }
 
@@ -1140,7 +1165,8 @@ impl ErrorResolver {
     /// ## Phase 1: Error Classification and Context Enrichment
     /// - **Compiler Output Analysis**: Parses raw error strings into structured representations
     /// - **Context Building**: Constructs comprehensive error context with surrounding code
-    /// - **Error Type Classification**: Determines error category for appropriate resolution strategy
+    /// - **Error Type Classification**: Determines error category for appropriate resolution
+    ///   strategy
     ///
     /// ## Phase 2: Multi-Engine Analysis (Parallel Processing)
     /// - **Pattern Recognition**: ML-powered pattern matching against known error templates
@@ -1175,7 +1201,7 @@ impl ErrorResolver {
     ///     (ml_model_confidence, 0.35),     // ML pattern recognition
     ///     (historical_success_rate, 0.30), // Learning-based adjustment
     ///     (context_relevance, 0.20),       // Semantic relevance assessment
-    ///     (safety_score, 0.15)             // Impact and safety evaluation
+    ///     (safety_score, 0.15),            // Impact and safety evaluation
     /// ]);
     /// ```
     ///
@@ -1207,11 +1233,7 @@ impl ErrorResolver {
     /// - **Resource Caching**: Patterns and ML models cached for repeated access
     /// - **Adaptive Precision**: Analysis depth adjusted based on error complexity
     /// - **Batch Optimization**: Dedicated pathways for bulk error processing
-    pub async fn resolve_errors(
-        &self,
-        _context: AIContext,
-        errors: Vec<String>,
-    ) -> AIResult<Vec<FixSuggestion>> {
+    pub async fn resolve_errors(&self, _context: AIContext, errors: Vec<String>) -> AIResult<Vec<FixSuggestion>> {
         let mut all_suggestions = Vec::new();
 
         // AI/ML Pipeline: Phase 1 - Error Classification and Context Building
@@ -1252,10 +1274,7 @@ impl ErrorResolver {
     }
 
     /// Get compiler diagnostics by running cargo check
-    pub async fn get_compiler_diagnostics(
-        &self,
-        project_path: &str,
-    ) -> AIResult<Vec<CompilerDiagnostic>> {
+    pub async fn get_compiler_diagnostics(&self, project_path: &str) -> AIResult<Vec<CompilerDiagnostic>> {
         self.diagnostic_processor
             .get_compiler_diagnostics(project_path)
             .await
@@ -1287,19 +1306,12 @@ impl ErrorResolver {
     }
 
     /// Analyze a single error context and generate suggestions
-    pub async fn analyze_error_context(
-        &self,
-        context: &ErrorContext,
-    ) -> AIResult<Vec<FixSuggestion>> {
+    pub async fn analyze_error_context(&self, context: &ErrorContext) -> AIResult<Vec<FixSuggestion>> {
         self.pattern_engine.analyze_and_suggest(context).await
     }
 
     /// Learn a new pattern from a successful fix
-    pub async fn learn_pattern_from_fix(
-        &self,
-        context: &ErrorContext,
-        fix: &FixSuggestion,
-    ) -> AIResult<String> {
+    pub async fn learn_pattern_from_fix(&self, context: &ErrorContext, fix: &FixSuggestion) -> AIResult<String> {
         let fix_data = serde_json::to_value(fix)?;
         self.learning_manager
             .learn_new_pattern(context, &fix_data)
@@ -1314,11 +1326,7 @@ impl ErrorResolver {
     }
 
     /// Validate a fix suggestion for safety
-    pub fn validate_fix(
-        &self,
-        fix: &FixSuggestion,
-        _error_context: &ErrorContext,
-    ) -> AIResult<bool> {
+    pub fn validate_fix(&self, fix: &FixSuggestion, _error_context: &ErrorContext) -> AIResult<bool> {
         // Check if the fix is safe to apply
         if fix.confidence < 0.7 {
             return Ok(false);
@@ -1365,10 +1373,7 @@ impl ErrorResolver {
     }
 
     /// Generate predictive error warnings
-    pub async fn predict_errors(
-        &self,
-        current_analysis: &RootCauseAnalysis,
-    ) -> AIResult<Vec<PredictionResult>> {
+    pub async fn predict_errors(&self, current_analysis: &RootCauseAnalysis) -> AIResult<Vec<PredictionResult>> {
         if let Some(analyzer) = &self.advanced_analyzer {
             let analyzer_read = analyzer.read().await;
             analyzer_read
@@ -1394,11 +1399,11 @@ impl ErrorResolver {
                 .await
         } else {
             Ok(ImpactAssessment {
-                scope: crate::advanced_error_analysis::ImpactScope::Local,
-                affected_files: vec![],
-                risk_level: crate::advanced_error_analysis::RiskLevel::Low,
+                scope:           crate::advanced_error_analysis::ImpactScope::Local,
+                affected_files:  vec![],
+                risk_level:      crate::advanced_error_analysis::RiskLevel::Low,
                 level_breakdown: HashMap::new(),
-                urgency_score: 0.5,
+                urgency_score:   0.5,
                 business_impact: "Impact assessment unavailable".to_string(),
             })
         }
@@ -1479,16 +1484,16 @@ mod tests {
     #[test]
     fn test_pattern_success_rate() {
         let pattern = ErrorPattern {
-            id: "test".to_string(),
-            name: "test pattern".to_string(),
-            message_pattern: "test".to_string(),
-            error_code: None,
+            id:               "test".to_string(),
+            name:             "test pattern".to_string(),
+            message_pattern:  "test".to_string(),
+            error_code:       None,
             context_patterns: vec![],
-            confidence: 0.8,
-            success_count: 2,
-            attempt_count: 4,
-            last_updated: Utc::now(),
-            is_learned: false,
+            confidence:       0.8,
+            success_count:    2,
+            attempt_count:    4,
+            last_updated:     Utc::now(),
+            is_learned:       false,
         };
 
         assert_eq!(pattern.success_rate(), 0.5);

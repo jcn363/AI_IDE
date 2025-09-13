@@ -3,26 +3,28 @@
 //! This module provides mechanisms for handling performance alerts,
 //! including notification channels, alert policies, and escalation procedures.
 
-use crate::{AlertSeverity, PerformanceAlert};
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
+
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
+
+use crate::{AlertSeverity, PerformanceAlert};
 
 /// Alert policy configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertPolicy {
     /// Enable this policy
-    pub enabled: bool,
+    pub enabled:             bool,
     /// Alert severity thresholds
     pub severity_thresholds: HashMap<String, f64>,
     /// Cooldown period between alerts (seconds)
-    pub cooldown_seconds: u64,
+    pub cooldown_seconds:    u64,
     /// Maximum alerts per hour
     pub max_alerts_per_hour: usize,
     /// Notification channels
-    pub channels: Vec<NotificationChannel>,
+    pub channels:            Vec<NotificationChannel>,
 }
 
 /// Notification channel configuration
@@ -31,9 +33,9 @@ pub struct NotificationChannel {
     /// Channel type
     pub channel_type: ChannelType,
     /// Channel-specific configuration
-    pub config: HashMap<String, String>,
+    pub config:       HashMap<String, String>,
     /// Channel enabled flag
-    pub enabled: bool,
+    pub enabled:      bool,
 }
 
 /// Types of notification channels
@@ -58,11 +60,11 @@ pub enum ChannelType {
 /// Alert manager for processing and routing performance alerts
 pub struct AlertManager {
     /// Alert policies by alert type
-    policies: HashMap<String, AlertPolicy>,
+    policies:              HashMap<String, AlertPolicy>,
     /// Active alerts (to prevent duplicate alerts during cooldown)
-    active_alerts: Arc<RwLock<HashMap<String, DateTime<Utc>>>>,
+    active_alerts:         Arc<RwLock<HashMap<String, DateTime<Utc>>>>,
     /// Alert counters for rate limiting
-    alert_counters: Arc<RwLock<HashMap<String, AlertCounter>>>,
+    alert_counters:        Arc<RwLock<HashMap<String, AlertCounter>>>,
     /// Channel senders for notifications
     notification_channels: HashMap<String, mpsc::Sender<NotificationMessage>>,
 }
@@ -70,7 +72,7 @@ pub struct AlertManager {
 /// Counter for rate limiting alerts
 #[derive(Debug, Clone)]
 struct AlertCounter {
-    count: usize,
+    count:      usize,
     hour_start: DateTime<Utc>,
 }
 
@@ -78,17 +80,17 @@ struct AlertCounter {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NotificationMessage {
     /// Alert title
-    pub title: String,
+    pub title:       String,
     /// Alert description
     pub description: String,
     /// Alert severity
-    pub severity: AlertSeverity,
+    pub severity:    AlertSeverity,
     /// Alert timestamp
-    pub timestamp: DateTime<Utc>,
+    pub timestamp:   DateTime<Utc>,
     /// Alert details (key-value pairs)
-    pub details: HashMap<String, String>,
+    pub details:     HashMap<String, String>,
     /// Additional context
-    pub context: HashMap<String, serde_json::Value>,
+    pub context:     HashMap<String, serde_json::Value>,
 }
 
 impl AlertManager {
@@ -97,36 +99,30 @@ impl AlertManager {
         let mut policies = HashMap::new();
 
         // Default policy for regressions
-        policies.insert(
-            "regression".to_string(),
-            AlertPolicy {
-                enabled: true,
-                severity_thresholds: HashMap::new(),
-                cooldown_seconds: 300, // 5 minutes
-                max_alerts_per_hour: 5,
-                channels: vec![NotificationChannel {
-                    channel_type: ChannelType::Console,
-                    config: HashMap::new(),
-                    enabled: true,
-                }],
-            },
-        );
+        policies.insert("regression".to_string(), AlertPolicy {
+            enabled:             true,
+            severity_thresholds: HashMap::new(),
+            cooldown_seconds:    300, // 5 minutes
+            max_alerts_per_hour: 5,
+            channels:            vec![NotificationChannel {
+                channel_type: ChannelType::Console,
+                config:       HashMap::new(),
+                enabled:      true,
+            }],
+        });
 
         // Default policy for threshold exceeded
-        policies.insert(
-            "threshold_exceeded".to_string(),
-            AlertPolicy {
-                enabled: true,
-                severity_thresholds: HashMap::new(),
-                cooldown_seconds: 600, // 10 minutes
-                max_alerts_per_hour: 10,
-                channels: vec![NotificationChannel {
-                    channel_type: ChannelType::Console,
-                    config: HashMap::new(),
-                    enabled: true,
-                }],
-            },
-        );
+        policies.insert("threshold_exceeded".to_string(), AlertPolicy {
+            enabled:             true,
+            severity_thresholds: HashMap::new(),
+            cooldown_seconds:    600, // 10 minutes
+            max_alerts_per_hour: 10,
+            channels:            vec![NotificationChannel {
+                channel_type: ChannelType::Console,
+                config:       HashMap::new(),
+                enabled:      true,
+            }],
+        });
 
         Self {
             policies,
@@ -251,7 +247,7 @@ impl AlertManager {
         let counter = counters
             .entry(alert_type.to_string())
             .or_insert(AlertCounter {
-                count: 0,
+                count:      0,
                 hour_start: Utc::now(),
             });
 
@@ -366,11 +362,7 @@ impl AlertManager {
     }
 
     /// Send notification to channel
-    async fn send_notification(
-        &self,
-        channel: &NotificationChannel,
-        message: &NotificationMessage,
-    ) {
+    async fn send_notification(&self, channel: &NotificationChannel, message: &NotificationMessage) {
         match channel.channel_type {
             ChannelType::Console => {
                 self.send_to_console(message);
@@ -461,8 +453,9 @@ impl AlertManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Utc;
+
+    use super::*;
 
     #[test]
     fn test_alert_manager_creation() {
@@ -480,11 +473,11 @@ mod tests {
     fn test_alert_key_generation() {
         let manager = AlertManager::new();
         let alert = PerformanceAlert::RegressionDetected {
-            metric_name: "cpu_usage".to_string(),
-            baseline_value: 50.0,
-            current_value: 75.0,
+            metric_name:         "cpu_usage".to_string(),
+            baseline_value:      50.0,
+            current_value:       75.0,
             degradation_percent: 0.5,
-            timestamp: Utc::now(),
+            timestamp:           Utc::now(),
         };
 
         let key = manager.get_alert_key(&alert);
@@ -497,14 +490,14 @@ mod tests {
 
         // Create a policy with low rate limit for testing
         let policy = AlertPolicy {
-            enabled: true,
+            enabled:             true,
             severity_thresholds: HashMap::new(),
-            cooldown_seconds: 0, // No cooldown for this test
+            cooldown_seconds:    0, // No cooldown for this test
             max_alerts_per_hour: 2,
-            channels: vec![NotificationChannel {
+            channels:            vec![NotificationChannel {
                 channel_type: ChannelType::Console,
-                config: HashMap::new(),
-                enabled: true,
+                config:       HashMap::new(),
+                enabled:      true,
             }],
         };
 
@@ -512,10 +505,10 @@ mod tests {
 
         // First two alerts should be allowed
         let alert = PerformanceAlert::ThresholdExceeded {
-            metric_name: "test_metric".to_string(),
+            metric_name:   "test_metric".to_string(),
             current_value: 100.0,
-            threshold: 80.0,
-            timestamp: Utc::now(),
+            threshold:     80.0,
+            timestamp:     Utc::now(),
         };
 
         assert!(manager.can_send_alert("test_key", "test_type").await);

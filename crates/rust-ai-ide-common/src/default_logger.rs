@@ -3,12 +3,11 @@
 //! This module provides a default implementation of the `Loggable` trait
 //! that can be used throughout the application.
 
-use crate::{
-    logging::LoggingManager,
-    traits::{Loggable, LoggableWrapper},
-    unified_logger::UnifiedLogger,
-};
 use std::sync::Arc;
+
+use crate::logging::LoggingManager;
+use crate::traits::{Loggable, LoggableWrapper};
+use crate::unified_logger::UnifiedLogger;
 
 /// Default logger implementation that wraps a `UnifiedLogger`
 #[derive(Debug, Clone)]
@@ -19,8 +18,7 @@ pub struct DefaultLogger {
 impl Default for DefaultLogger {
     fn default() -> Self {
         let _manager = LoggingManager::new();
-        let logger = UnifiedLogger::new("default")
-            .with_context(crate::logging::LogContext::new("init", "default"));
+        let logger = UnifiedLogger::new("default").with_context(crate::logging::LogContext::new("init", "default"));
 
         Self {
             logger: Arc::new(logger),

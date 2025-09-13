@@ -1,7 +1,8 @@
+use std::collections::HashMap;
+
 use js_sys::{Array, Reflect, Uint8Array};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use web_sys::{console, CssStyleDeclaration, Document, Element, Performance, Text};
 
@@ -9,15 +10,15 @@ use web_sys::{console, CssStyleDeclaration, Document, Element, Performance, Text
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct PerformanceMetrics {
     pub start_time: f64,
-    pub end_time: f64,
-    pub duration: f64,
+    pub end_time:   f64,
+    pub duration:   f64,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct TextMetrics {
-    pub line_count: usize,
-    pub char_count: usize,
-    pub word_count: usize,
+    pub line_count:          usize,
+    pub char_count:          usize,
+    pub word_count:          usize,
     pub average_word_length: f64,
 }
 
@@ -62,7 +63,7 @@ impl PerformanceMetrics {
 /// Fast text processing and syntax highlighting utilities
 #[wasm_bindgen]
 pub struct TextProcessor {
-    buffer: Vec<u8>,
+    buffer:           Vec<u8>,
     processing_cache: HashMap<String, String>,
 }
 
@@ -73,7 +74,7 @@ impl TextProcessor {
         console::log_1(&"TextProcessor initialized".into());
 
         TextProcessor {
-            buffer: Vec::with_capacity(1024 * 1024), // 1MB initial capacity
+            buffer:           Vec::with_capacity(1024 * 1024), // 1MB initial capacity
             processing_cache: HashMap::new(),
         }
     }

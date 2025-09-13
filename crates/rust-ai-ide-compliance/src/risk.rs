@@ -29,8 +29,8 @@ impl RiskAssessmentEngine {
     ) -> ComplianceResult<RiskAssessmentResult> {
         // Placeholder implementation
         Ok(RiskAssessmentResult {
-            risk_score: 0.0,
-            risk_level: RiskLevel::Low,
+            risk_score:      0.0,
+            risk_level:      RiskLevel::Low,
             recommendations: Vec::new(),
         })
     }
@@ -51,8 +51,8 @@ impl RiskAssessmentEngine {
 /// Risk assessment result
 #[derive(Debug, Clone)]
 pub struct RiskAssessmentResult {
-    pub risk_score: f64,
-    pub risk_level: RiskLevel,
+    pub risk_score:      f64,
+    pub risk_level:      RiskLevel,
     pub recommendations: Vec<String>,
 }
 

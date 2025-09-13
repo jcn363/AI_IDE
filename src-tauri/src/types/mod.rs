@@ -85,19 +85,19 @@ pub enum Priority {
 // Common data transfer objects
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ApiResponse<T> {
-    pub status: Status,
-    pub data: Option<T>,
-    pub message: Option<String>,
+    pub status:    Status,
+    pub data:      Option<T>,
+    pub message:   Option<String>,
     pub timestamp: Timestamp,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct PaginatedResponse<T> {
-    pub items: Vec<T>,
+    pub items:       Vec<T>,
     pub total_count: usize,
-    pub page: usize,
-    pub per_page: usize,
-    pub has_more: bool,
+    pub page:        usize,
+    pub per_page:    usize,
+    pub has_more:    bool,
 }
 
 // Utility functions for creating responses
@@ -106,18 +106,18 @@ pub mod responses {
 
     pub fn ok<T>(data: T) -> ApiResponse<T> {
         ApiResponse {
-            status: Status::Ok,
-            data: Some(data),
-            message: None,
+            status:    Status::Ok,
+            data:      Some(data),
+            message:   None,
             timestamp: chrono::Utc::now(),
         }
     }
 
     pub fn error<T>(message: String) -> ApiResponse<T> {
         ApiResponse {
-            status: Status::Error,
-            data: None,
-            message: Some(message),
+            status:    Status::Error,
+            data:      None,
+            message:   Some(message),
             timestamp: chrono::Utc::now(),
         }
     }
@@ -143,8 +143,7 @@ mod tests {
         assert_eq!(response.data, Some("test".to_string()));
         assert!(response.timestamp <= chrono::Utc::now());
 
-        let error_response: ApiResponse<String> =
-            responses::error("something went wrong".to_string());
+        let error_response: ApiResponse<String> = responses::error("something went wrong".to_string());
         assert!(matches!(error_response.status, Status::Error));
         assert_eq!(error_response.data, None);
         assert_eq!(
@@ -156,11 +155,11 @@ mod tests {
     #[test]
     fn test_paginated_response_structure() {
         let response = PaginatedResponse {
-            items: vec!["item1".to_string(), "item2".to_string()],
+            items:       vec!["item1".to_string(), "item2".to_string()],
             total_count: 10,
-            page: 1,
-            per_page: 5,
-            has_more: true,
+            page:        1,
+            per_page:    5,
+            has_more:    true,
         };
 
         assert_eq!(response.items.len(), 2);

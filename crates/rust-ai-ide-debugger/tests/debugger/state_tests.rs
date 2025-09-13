@@ -14,13 +14,13 @@ fn test_state_management() {
 
     // Test call stack updates
     let stack = vec![StackFrame {
-        id: 1,
+        id:       1,
         function: "main".to_string(),
-        file: "main.rs".to_string(),
-        line: 10,
-        column: Some(5),
-        args: Vec::new(),
-        locals: Vec::new(),
+        file:     "main.rs".to_string(),
+        line:     10,
+        column:   Some(5),
+        args:     Vec::new(),
+        locals:   Vec::new(),
     }];
 
     manager.update_call_stack(stack.clone());
@@ -28,12 +28,12 @@ fn test_state_management() {
 
     // Test variable updates
     let vars = vec![VariableInfo {
-        id: Some(1),
-        name: "x".to_string(),
-        value: "42".to_string(),
-        type_name: "i32".to_string(),
-        in_scope: true,
-        children: Vec::new(),
+        id:         Some(1),
+        name:       "x".to_string(),
+        value:      "42".to_string(),
+        type_name:  "i32".to_string(),
+        in_scope:   true,
+        children:   Vec::new(),
         expression: None,
     }];
 

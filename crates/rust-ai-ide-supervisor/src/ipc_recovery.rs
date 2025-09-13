@@ -1,8 +1,9 @@
 //! IPC Recovery System - Channel health monitoring and automatic reconnection
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, oneshot, Mutex};
 use tokio::time::{interval, timeout, Duration};
 
@@ -11,8 +12,8 @@ use crate::types::*;
 
 /// IPC Monitor for channel health and recovery
 pub struct IpcMonitor {
-    channels: Arc<Mutex<HashMap<ChannelId, ChannelState>>>,
-    recovery_tasks: Arc<Mutex<HashMap<ChannelId, tokio::task::JoinHandle<()>>>>,
+    channels:        Arc<Mutex<HashMap<ChannelId, ChannelState>>>,
+    recovery_tasks:  Arc<Mutex<HashMap<ChannelId, tokio::task::JoinHandle<()>>>>,
     recovery_config: RecoveryConfig,
 }
 
@@ -20,28 +21,28 @@ pub struct IpcMonitor {
 #[derive(Debug, Clone)]
 pub struct RecoveryConfig {
     /// Health check interval in seconds
-    pub health_check_interval: Duration,
+    pub health_check_interval:     Duration,
     /// Maximum time to wait for reconnection
-    pub reconnection_timeout: Duration,
+    pub reconnection_timeout:      Duration,
     /// Maximum number of reconnection attempts
     pub max_reconnection_attempts: usize,
     /// Base delay between reconnection attempts
-    pub base_reconnection_delay: Duration,
+    pub base_reconnection_delay:   Duration,
     /// Maximum delay between reconnection attempts
-    pub max_reconnection_delay: Duration,
+    pub max_reconnection_delay:    Duration,
     /// Buffer size for message queuing
-    pub message_buffer_size: usize,
+    pub message_buffer_size:       usize,
 }
 
 impl Default for RecoveryConfig {
     fn default() -> Self {
         Self {
-            health_check_interval: Duration::from_secs(10),
-            reconnection_timeout: Duration::from_secs(30),
+            health_check_interval:     Duration::from_secs(10),
+            reconnection_timeout:      Duration::from_secs(30),
             max_reconnection_attempts: 5,
-            base_reconnection_delay: Duration::from_secs(1),
-            max_reconnection_delay: Duration::from_secs(60),
-            message_buffer_size: 100,
+            base_reconnection_delay:   Duration::from_secs(1),
+            max_reconnection_delay:    Duration::from_secs(60),
+            message_buffer_size:       100,
         }
     }
 }
@@ -49,10 +50,10 @@ impl Default for RecoveryConfig {
 /// Internal channel state
 #[derive(Debug)]
 struct ChannelState {
-    health: ChannelHealth,
-    tx: Option<mpsc::Sender<IpcMessage>>,
-    rx: Option<mpsc::Receiver<IpcMessage>>,
-    buffer: Vec<BufferedMessage>,
+    health:            ChannelHealth,
+    tx:                Option<mpsc::Sender<IpcMessage>>,
+    rx:                Option<mpsc::Receiver<IpcMessage>>,
+    buffer:            Vec<BufferedMessage>,
     reconnect_attempt: usize,
     last_message_time: Option<chrono::DateTime<chrono::Utc>>,
 }
@@ -60,8 +61,8 @@ struct ChannelState {
 /// Buffered message with retry information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct BufferedMessage {
-    message: IpcMessage,
-    retry_count: usize,
+    message:            IpcMessage,
+    retry_count:        usize,
     first_attempt_time: chrono::DateTime<chrono::Utc>,
 }
 
@@ -74,8 +75,8 @@ impl IpcMonitor {
     /// Create a new IPC monitor with custom config
     pub fn with_config(config: RecoveryConfig) -> Self {
         Self {
-            channels: Arc::new(Mutex::new(HashMap::new())),
-            recovery_tasks: Arc::new(Mutex::new(HashMap::new())),
+            channels:        Arc::new(Mutex::new(HashMap::new())),
+            recovery_tasks:  Arc::new(Mutex::new(HashMap::new())),
             recovery_config: config,
         }
     }
@@ -94,17 +95,17 @@ impl IpcMonitor {
         let (tx, rx) = mpsc::channel(self.recovery_config.message_buffer_size);
 
         let state = ChannelState {
-            health: ChannelHealth {
-                id: channel_id.clone(),
-                healthy: true,
-                last_message_time: None,
-                last_failure_time: None,
+            health:            ChannelHealth {
+                id:                     channel_id.clone(),
+                healthy:                true,
+                last_message_time:      None,
+                last_failure_time:      None,
                 buffered_message_count: 0,
-                reconnection_attempts: 0,
+                reconnection_attempts:  0,
             },
-            tx: Some(tx),
-            rx: Some(rx),
-            buffer: Vec::new(),
+            tx:                Some(tx),
+            rx:                Some(rx),
+            buffer:            Vec::new(),
             reconnect_attempt: 0,
             last_message_time: None,
         };
@@ -120,11 +121,7 @@ impl IpcMonitor {
     }
 
     /// Send message through a channel
-    pub async fn send_message(
-        &self,
-        channel_id: &ChannelId,
-        message: IpcMessage,
-    ) -> SupervisorResult<()> {
+    pub async fn send_message(&self, channel_id: &ChannelId, message: IpcMessage) -> SupervisorResult<()> {
         let mut channels = self.channels.lock().await;
 
         let state = channels
@@ -208,10 +205,7 @@ impl IpcMonitor {
     }
 
     /// Get channel health status
-    pub async fn get_channel_health(
-        &self,
-        channel_id: &ChannelId,
-    ) -> SupervisorResult<ChannelHealth> {
+    pub async fn get_channel_health(&self, channel_id: &ChannelId) -> SupervisorResult<ChannelHealth> {
         let channels = self.channels.lock().await;
 
         let state = channels
@@ -262,9 +256,7 @@ impl IpcMonitor {
             loop {
                 interval.tick().await;
 
-                if let Err(e) =
-                    Self::perform_channel_monitoring(&channel_id, &channels, &recovery_config).await
-                {
+                if let Err(e) = Self::perform_channel_monitoring(&channel_id, &channels, &recovery_config).await {
                     log::error!("Channel monitoring failed for {}: {:?}", channel_id, e);
                 }
             }
@@ -454,20 +446,13 @@ impl RecoveryQueue {
     }
 
     /// Queue a message for recovery
-    pub async fn queue_message(
-        &self,
-        channel_id: &ChannelId,
-        message: IpcMessage,
-    ) -> SupervisorResult<()> {
+    pub async fn queue_message(&self, channel_id: &ChannelId, message: IpcMessage) -> SupervisorResult<()> {
         let mut queues = self.queues.lock().await;
 
         if let Some(tx) = queues.get(channel_id) {
-            tx.send(message).await.map_err(|e| {
-                SupervisorError::ipc_recovery_error(
-                    channel_id,
-                    format!("Queue send failed: {:?}", e),
-                )
-            })?;
+            tx.send(message)
+                .await
+                .map_err(|e| SupervisorError::ipc_recovery_error(channel_id, format!("Queue send failed: {:?}", e)))?;
             Ok(())
         } else {
             Err(SupervisorError::ipc_recovery_error(
@@ -482,9 +467,9 @@ impl RecoveryQueue {
         // This would return statistics about the queue
         // For now, return placeholder stats
         Ok(QueueStats {
-            pending_messages: 0,
+            pending_messages:   0,
             processed_messages: 0,
-            failed_messages: 0,
+            failed_messages:    0,
         })
     }
 }
@@ -492,9 +477,9 @@ impl RecoveryQueue {
 /// Queue statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueueStats {
-    pub pending_messages: u32,
+    pub pending_messages:   u32,
     pub processed_messages: u64,
-    pub failed_messages: u64,
+    pub failed_messages:    u64,
 }
 
 #[cfg(test)]
@@ -534,11 +519,11 @@ mod tests {
             .expect("Failed to register channel");
 
         let message = IpcMessage {
-            id: uuid::Uuid::new_v4(),
+            id:           uuid::Uuid::new_v4(),
             message_type: "test".to_string(),
-            payload: serde_json::json!({"action": "test"}),
-            timestamp: chrono::Utc::now(),
-            retry_count: 0,
+            payload:      serde_json::json!({"action": "test"}),
+            timestamp:    chrono::Utc::now(),
+            retry_count:  0,
         };
 
         // Send should work initially
@@ -558,7 +543,8 @@ mod tests {
             .get_channel_health(&channel_id)
             .await
             .expect("Should get health");
-        assert!(!health.healthy || health.reconnection_attempts > 0); // Either unhealthy or has attempted recovery
+        assert!(!health.healthy || health.reconnection_attempts > 0); // Either unhealthy or has
+                                                                      // attempted recovery
     }
 
     #[tokio::test]
@@ -566,11 +552,11 @@ mod tests {
         let queue = RecoveryQueue::new();
 
         let message = IpcMessage {
-            id: uuid::Uuid::new_v4(),
+            id:           uuid::Uuid::new_v4(),
             message_type: "test".to_string(),
-            payload: serde_json::json!({"action": "test"}),
-            timestamp: chrono::Utc::now(),
-            retry_count: 0,
+            payload:      serde_json::json!({"action": "test"}),
+            timestamp:    chrono::Utc::now(),
+            retry_count:  0,
         };
 
         // Test queuing to non-existent channel

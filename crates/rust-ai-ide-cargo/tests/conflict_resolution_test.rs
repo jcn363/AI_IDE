@@ -1,40 +1,38 @@
-use rust_ai_ide_cargo::dependency::conflict::{
-    self, ConflictVersion, DependentInfo, VersionConflict,
-};
+use rust_ai_ide_cargo::dependency::conflict::{self, ConflictVersion, DependentInfo, VersionConflict};
 
 #[test]
 fn test_conflict_resolution_logic() {
     // Create a simple test conflict
     let conflict = VersionConflict {
         package_name: "test_pkg".to_string(),
-        versions: vec![
+        versions:     vec![
             ConflictVersion {
-                version: "^1.0.0".to_string(),
+                version:     "^1.0.0".to_string(),
                 required_by: vec![DependentInfo {
-                    name: "test_dep1".to_string(),
+                    name:    "test_dep1".to_string(),
                     version: "0.1.0".to_string(),
-                    path: "test1/Cargo.toml".to_string(),
+                    path:    "test1/Cargo.toml".to_string(),
                 }],
             },
             ConflictVersion {
-                version: "^2.0.0".to_string(),
+                version:     "^2.0.0".to_string(),
                 required_by: vec![DependentInfo {
-                    name: "test_dep2".to_string(),
+                    name:    "test_dep2".to_string(),
                     version: "0.2.0".to_string(),
-                    path: "test2/Cargo.toml".to_string(),
+                    path:    "test2/Cargo.toml".to_string(),
                 }],
             },
         ],
-        dependents: vec![
+        dependents:   vec![
             DependentInfo {
-                name: "test_dep1".to_string(),
+                name:    "test_dep1".to_string(),
                 version: "0.1.0".to_string(),
-                path: "test1/Cargo.toml".to_string(),
+                path:    "test1/Cargo.toml".to_string(),
             },
             DependentInfo {
-                name: "test_dep2".to_string(),
+                name:    "test_dep2".to_string(),
                 version: "0.2.0".to_string(),
-                path: "test2/Cargo.toml".to_string(),
+                path:    "test2/Cargo.toml".to_string(),
             },
         ],
     };
@@ -56,34 +54,34 @@ fn test_conflict_resolution_logic() {
 fn test_suggest_resolution_with_compatible_versions() {
     let conflict = VersionConflict {
         package_name: "test_pkg".to_string(),
-        versions: vec![
+        versions:     vec![
             ConflictVersion {
-                version: ">=1.0.0, <2.0.0".to_string(),
+                version:     ">=1.0.0, <2.0.0".to_string(),
                 required_by: vec![DependentInfo {
-                    name: "dep1".to_string(),
+                    name:    "dep1".to_string(),
                     version: "1.0.0".to_string(),
-                    path: "test/Cargo.toml".to_string(),
+                    path:    "test/Cargo.toml".to_string(),
                 }],
             },
             ConflictVersion {
-                version: "^1.2.0".to_string(),
+                version:     "^1.2.0".to_string(),
                 required_by: vec![DependentInfo {
-                    name: "dep2".to_string(),
+                    name:    "dep2".to_string(),
                     version: "1.0.0".to_string(),
-                    path: "test/Cargo.toml".to_string(),
+                    path:    "test/Cargo.toml".to_string(),
                 }],
             },
         ],
-        dependents: vec![
+        dependents:   vec![
             DependentInfo {
-                name: "dep1".to_string(),
+                name:    "dep1".to_string(),
                 version: "1.0.0".to_string(),
-                path: "test/Cargo.toml".to_string(),
+                path:    "test/Cargo.toml".to_string(),
             },
             DependentInfo {
-                name: "dep2".to_string(),
+                name:    "dep2".to_string(),
                 version: "1.0.0".to_string(),
-                path: "test/Cargo.toml".to_string(),
+                path:    "test/Cargo.toml".to_string(),
             },
         ],
     };

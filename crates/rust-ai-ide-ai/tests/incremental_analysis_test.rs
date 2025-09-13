@@ -1,10 +1,10 @@
-use rust_ai_ide_ai::analysis::{
-    AnalysisCategory, AnalysisConfig, AnalysisFinding, AnalysisPreferences, AnalysisRegistry,
-    Range, Severity,
-};
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::Path;
+
+use rust_ai_ide_ai::analysis::{
+    AnalysisCategory, AnalysisConfig, AnalysisFinding, AnalysisPreferences, AnalysisRegistry, Range, Severity,
+};
 use tempfile::tempdir;
 
 #[test]
@@ -30,21 +30,16 @@ fn test_incremental_analysis() -> anyhow::Result<()> {
     impl rust_ai_ide_ai::analysis::Analyzer for TestAnalyzer {
         type Finding = AnalysisFinding;
 
-        fn analyze(
-            &self,
-            _ast: &syn::File,
-            _code: &str,
-            file_path: &str,
-        ) -> anyhow::Result<Vec<Self::Finding>> {
+        fn analyze(&self, _ast: &syn::File, _code: &str, file_path: &str) -> anyhow::Result<Vec<Self::Finding>> {
             Ok(vec![AnalysisFinding {
-                message: "Test finding".to_string(),
-                severity: Severity::Info,
-                category: AnalysisCategory::CodeSmell,
-                location: Range::new(1, 1, 1, 10),
-                file: file_path.to_string(),
+                message:    "Test finding".to_string(),
+                severity:   Severity::Info,
+                category:   AnalysisCategory::CodeSmell,
+                location:   Range::new(1, 1, 1, 10),
+                file:       file_path.to_string(),
                 suggestion: Some("Test suggestion".to_string()),
                 confidence: 1.0,
-                rule_id: "test-rule".to_string(),
+                rule_id:    "test-rule".to_string(),
             }])
         }
 
