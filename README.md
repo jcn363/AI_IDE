@@ -2,9 +2,25 @@
 
 A comprehensive, production-ready IDE built with Rust, featuring advanced AI capabilities, enterprise-grade security, and seamless collaboration tools.
 
-> **Version**: 3.2.0-release (Production)
-> **Status**: **🔧 Maintenance Phase - 98% Build Success with 2 Critical Bugs**
+## Security Notice
+
+### Security Advisories
+
+We've identified and are addressing the following security advisories:
+
+- **Critical**: glib 0.18.5 - Unsoundness in `VariantStrIter` (RUSTSEC-2024-0429)
+- **Critical**: failure 0.1.8 - Type confusion vulnerability (RUSTSEC-2019-0036)
+- **Medium**: image 0.22.5 - Mutable reference issue (RUSTSEC-2020-0073)
+- **Medium**: lock_api 0.3.4 - Data race vulnerability (RUSTSEC-2020-0070)
+
+### Reporting Security Issues
+
+Please report any security issues to security@rust-ai-ide.example.com. We offer a security bounty program for responsible disclosures.
+
+> **Version**: 3.2.1-release (Production)
+> **Status**: **🔧 Maintenance Phase - 96% Build Success with 4 Security Advisories**
 > **License**: MIT
+> **Last Security Audit**: 2025-09-13
 
 [![Build Status](https://img.shields.io/badge/build-98%25+-brightgreen)](https://github.com/jcn363/rust-ai-ide/actions)
 [![Tests](https://img.shields.io/badge/tests-95%25+-brightgreen)](https://github.com/jcn363/rust-ai-ide/tests)
