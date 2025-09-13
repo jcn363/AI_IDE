@@ -12,7 +12,6 @@
 //! - File system operations with automatic cleanup
 //! - Integration test runner framework for systematic LSP testing
 //! - Concurrent LSP client scenarios with proper synchronization
-//!
 
 use std::fs;
 use std::path::Path;
