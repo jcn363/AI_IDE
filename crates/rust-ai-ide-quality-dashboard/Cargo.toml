@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-quality-dashboard"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 description = "Phase 3.4: Quality Intelligence Dashboard - Interactive real-time quality metrics visualization with trend analysis and team collaboration"
@@ -94,10 +94,10 @@ fake = "2.9.2"
 
 [[bench]]
 name = "dashboard_performance_benchmark"
-readme = { workspace = true }
+
 harness = false
 
 [[bench]]
 name = "metric_collection_benchmark"
-readme = { workspace = true }
+
 harness = false

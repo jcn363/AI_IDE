@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-multi-model-orchestrator"
-readme = { workspace = true }
+
 version = { workspace = true }
 edition = { workspace = true }
 rust-version = { workspace = true }

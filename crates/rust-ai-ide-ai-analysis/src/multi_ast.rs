@@ -32,83 +32,83 @@ pub enum Language {
 /// Unified AST representation for cross-language analysis
 #[derive(Debug, Clone)]
 pub struct UnifiedAST {
-    pub language: Language,
+    pub language:  Language,
     pub root_node: ASTNode,
-    pub metadata: ASTMetadata,
+    pub metadata:  ASTMetadata,
 }
 
 /// Metadata about the parsed AST
 #[derive(Debug, Clone, Default)]
 pub struct ASTMetadata {
-    pub parse_errors: Vec<ParseError>,
+    pub parse_errors:     Vec<ParseError>,
     pub language_version: Option<String>,
-    pub compiler_flags: Vec<String>,
-    pub includes: Vec<String>,
+    pub compiler_flags:   Vec<String>,
+    pub includes:         Vec<String>,
 }
 
 /// Parse error information
 #[derive(Debug, Clone)]
 pub struct ParseError {
     pub message: String,
-    pub line: usize,
-    pub column: usize,
-    pub source: String,
+    pub line:    usize,
+    pub column:  usize,
+    pub source:  String,
 }
 
 /// Unified AST node representation
 #[derive(Debug, Clone)]
 pub enum ASTNode {
     Document {
-        children: Vec<ASTNode>,
+        children:     Vec<ASTNode>,
         source_range: SourceRange,
     },
     Function {
-        name: String,
-        parameters: Vec<Parameter>,
-        return_type: Option<String>,
-        body: Vec<ASTNode>,
-        visibility: Visibility,
+        name:         String,
+        parameters:   Vec<Parameter>,
+        return_type:  Option<String>,
+        body:         Vec<ASTNode>,
+        visibility:   Visibility,
         source_range: SourceRange,
     },
     Class {
-        name: String,
-        extends: Vec<String>,
-        implements: Vec<String>,
-        methods: Vec<ASTNode>,
-        fields: Vec<Field>,
-        visibility: Visibility,
+        name:         String,
+        extends:      Vec<String>,
+        implements:   Vec<String>,
+        methods:      Vec<ASTNode>,
+        fields:       Vec<Field>,
+        visibility:   Visibility,
         source_range: SourceRange,
     },
     Variable {
-        name: String,
-        var_type: Option<String>,
-        value: Option<String>,
-        visibility: Visibility,
+        name:         String,
+        var_type:     Option<String>,
+        value:        Option<String>,
+        visibility:   Visibility,
         source_range: SourceRange,
     },
     Import {
-        module: String,
-        symbols: Vec<String>,
-        alias: Option<String>,
+        module:       String,
+        symbols:      Vec<String>,
+        alias:        Option<String>,
         source_range: SourceRange,
     },
     Statement {
-        kind: StatementKind,
-        content: Vec<ASTNode>,
+        kind:         StatementKind,
+        content:      Vec<ASTNode>,
         source_range: SourceRange,
     },
     Expression {
-        kind: ExpressionKind,
-        operands: Vec<ASTNode>,
+        kind:         ExpressionKind,
+        operands:     Vec<ASTNode>,
         source_range: SourceRange,
     },
     Comment {
-        content: String,
+        content:      String,
         source_range: SourceRange,
     },
     Other {
-        node_type: String,
-        properties: HashMap<String, String>,
+        node_type:    String,
+        properties:   HashMap<String, String>,
         source_range: SourceRange,
     },
 }
@@ -116,26 +116,26 @@ pub enum ASTNode {
 /// Source range information
 #[derive(Debug, Clone)]
 pub struct SourceRange {
-    pub start_line: usize,
+    pub start_line:   usize,
     pub start_column: usize,
-    pub end_line: usize,
-    pub end_column: usize,
+    pub end_line:     usize,
+    pub end_column:   usize,
 }
 
 /// Function parameter
 #[derive(Debug, Clone)]
 pub struct Parameter {
-    pub name: String,
-    pub param_type: Option<String>,
+    pub name:          String,
+    pub param_type:    Option<String>,
     pub default_value: Option<String>,
 }
 
 /// Class field
 #[derive(Debug, Clone)]
 pub struct Field {
-    pub name: String,
-    pub field_type: Option<String>,
-    pub visibility: Visibility,
+    pub name:          String,
+    pub field_type:    Option<String>,
+    pub visibility:    Visibility,
     pub default_value: Option<String>,
 }
 
@@ -254,14 +254,11 @@ impl MultiASTParser {
     }
 
     /// Parse code using tree-sitter
-    fn parse_treesitter(
-        &mut self,
-        language: &Language,
-        content: &str,
-    ) -> AnalysisResult<UnifiedAST> {
-        let parser = self.parsers.get_mut(language).ok_or_else(|| {
-            AnalysisError::UnsupportedLanguage(format!("No parser for {:?}", language))
-        })?;
+    fn parse_treesitter(&mut self, language: &Language, content: &str) -> AnalysisResult<UnifiedAST> {
+        let parser = self
+            .parsers
+            .get_mut(language)
+            .ok_or_else(|| AnalysisError::UnsupportedLanguage(format!("No parser for {:?}", language)))?;
 
         let tree = parser
             .parse(content, None)
@@ -285,15 +282,15 @@ impl MultiASTParser {
             .map(|item| {
                 match item {
                     syn::Item::Fn(func) => ASTNode::Function {
-                        name: func.sig.ident.to_string(),
-                        parameters: func
+                        name:         func.sig.ident.to_string(),
+                        parameters:   func
                             .sig
                             .inputs
                             .iter()
                             .map(|param| match param {
                                 syn::FnArg::Receiver(_) => Parameter {
-                                    name: "self".to_string(),
-                                    param_type: None,
+                                    name:          "self".to_string(),
+                                    param_type:    None,
                                     default_value: None,
                                 },
                                 syn::FnArg::Typed(pat_type) => {
@@ -310,27 +307,27 @@ impl MultiASTParser {
                                 }
                             })
                             .collect(),
-                        return_type: match &func.sig.output {
+                        return_type:  match &func.sig.output {
                             syn::ReturnType::Default => None,
                             syn::ReturnType::Type(_, ty) => Some(quote::quote!(#ty).to_string()),
                         },
-                        body: vec![],                   // Would need deeper conversion
-                        visibility: Visibility::Public, // Assume public for now
+                        body:         vec![],             // Would need deeper conversion
+                        visibility:   Visibility::Public, // Assume public for now
                         source_range: SourceRange {
-                            start_line: 0,
+                            start_line:   0,
                             start_column: 0,
-                            end_line: 0,
-                            end_column: 0,
+                            end_line:     0,
+                            end_column:   0,
                         },
                     },
                     _ => ASTNode::Other {
-                        node_type: "item".to_string(),
-                        properties: HashMap::new(),
+                        node_type:    "item".to_string(),
+                        properties:   HashMap::new(),
                         source_range: SourceRange {
-                            start_line: 0,
+                            start_line:   0,
                             start_column: 0,
-                            end_line: 0,
-                            end_column: 0,
+                            end_line:     0,
+                            end_column:   0,
                         },
                     },
                 }
@@ -340,10 +337,10 @@ impl MultiASTParser {
         ASTNode::Document {
             children,
             source_range: SourceRange {
-                start_line: 1,
+                start_line:   1,
                 start_column: 0,
-                end_line: content.lines().count(),
-                end_column: 0,
+                end_line:     content.lines().count(),
+                end_column:   0,
             },
         }
     }
@@ -351,10 +348,10 @@ impl MultiASTParser {
     /// Convert tree-sitter node to unified AST
     fn convert_treesitter_to_unified(&self, node: Node, source: &str) -> ASTNode {
         let source_range = SourceRange {
-            start_line: node.start_position().row + 1,
+            start_line:   node.start_position().row + 1,
             start_column: node.start_position().column,
-            end_line: node.end_position().row + 1,
-            end_column: node.end_position().column,
+            end_line:     node.end_position().row + 1,
+            end_column:   node.end_position().column,
         };
 
         match node.kind() {
@@ -399,14 +396,13 @@ impl MultiASTParser {
                     fields: node
                         .named_children(&mut node.walk())
                         .filter_map(|child| {
-                            if matches!(child.kind(), "field_declaration" | "variable_declaration")
-                            {
+                            if matches!(child.kind(), "field_declaration" | "variable_declaration") {
                                 Some(Field {
-                                    name: self
+                                    name:          self
                                         .find_child_text(&child, &["identifier"], source)
                                         .unwrap_or_default(),
-                                    field_type: self.find_child_text(&child, &["type"], source),
-                                    visibility: Visibility::Public,
+                                    field_type:    self.find_child_text(&child, &["type"], source),
+                                    visibility:    Visibility::Public,
                                     default_value: None,
                                 })
                             } else {

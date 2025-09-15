@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-semantic-search"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 
@@ -34,8 +34,3 @@ rust-ai-ide-common = { path = "../../crates/rust-ai-ide-common", default-feature
 rust-ai-ide-security = { path = "../../crates/rust-ai-ide-security", default-features = false }
 rust-ai-ide-cache = { path = "../../crates/rust-ai-ide-cache", default-features = false }
 rust-ai-ide-errors = { path = "../../crates/rust-ai-ide-errors", default-features = false }
-
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1

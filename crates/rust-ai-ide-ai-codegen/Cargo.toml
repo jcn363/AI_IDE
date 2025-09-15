@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-ai-codegen"
-readme = { workspace = true }
+
 version = { workspace = true }
 edition = { workspace = true }
 description = "AI-powered multi-language code generation with template systems for the Rust AI IDE"

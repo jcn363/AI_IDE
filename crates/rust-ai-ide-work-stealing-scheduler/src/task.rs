@@ -7,9 +7,9 @@ use async_trait::async_trait;
 /// Task priority levels for scheduling
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TaskPriority {
-    Low = 0,
-    Normal = 1,
-    High = 2,
+    Low      = 0,
+    Normal   = 1,
+    High     = 2,
     Critical = 3,
 }
 
@@ -62,17 +62,16 @@ pub struct CpuBoundTask<T, F, Fut>
 where
     T: Send + Sync + 'static,
     F: Fn(T) -> Fut + Send + Sync + Clone + 'static,
-    Fut: std::future::Future<
-            Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>,
-        > + Send
+    Fut: std::future::Future<Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>>
+        + Send
         + 'static,
 {
-    pub task_type: &'static str,
-    pub priority: TaskPriority,
-    pub data: T,
-    pub processor: F,
+    pub task_type:          &'static str,
+    pub priority:           TaskPriority,
+    pub data:               T,
+    pub processor:          F,
     pub estimated_duration: Option<u64>,
-    pub memory_hint: Option<usize>,
+    pub memory_hint:        Option<usize>,
 }
 
 #[async_trait]
@@ -80,9 +79,8 @@ impl<T, F, Fut> Task for CpuBoundTask<T, F, Fut>
 where
     T: Send + Sync + fmt::Debug + 'static,
     F: Fn(T) -> Fut + Send + Sync + Clone + 'static,
-    Fut: std::future::Future<
-            Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>,
-        > + Send
+    Fut: std::future::Future<Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>>
+        + Send
         + 'static,
 {
     fn task_type(&self) -> &'static str {
@@ -110,9 +108,8 @@ impl<T, F, Fut> fmt::Debug for CpuBoundTask<T, F, Fut>
 where
     T: Send + Sync + fmt::Debug + 'static,
     F: Fn(T) -> Fut + Send + Sync + Clone + 'static,
-    Fut: std::future::Future<
-            Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>,
-        > + Send
+    Fut: std::future::Future<Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>>
+        + Send
         + 'static,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -131,15 +128,14 @@ pub struct IoBoundTask<T, F, Fut>
 where
     T: Send + Sync + 'static,
     F: Fn(T) -> Fut + Send + Sync + Clone + 'static,
-    Fut: std::future::Future<
-            Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>,
-        > + Send
+    Fut: std::future::Future<Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>>
+        + Send
         + 'static,
 {
-    pub task_type: &'static str,
-    pub priority: TaskPriority,
-    pub data: T,
-    pub processor: F,
+    pub task_type:  &'static str,
+    pub priority:   TaskPriority,
+    pub data:       T,
+    pub processor:  F,
     pub timeout_ms: Option<u64>,
 }
 
@@ -148,9 +144,8 @@ impl<T, F, Fut> Task for IoBoundTask<T, F, Fut>
 where
     T: Send + Sync + fmt::Debug + 'static,
     F: Fn(T) -> Fut + Send + Sync + Clone + 'static,
-    Fut: std::future::Future<
-            Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>,
-        > + Send
+    Fut: std::future::Future<Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>>
+        + Send
         + 'static,
 {
     fn task_type(&self) -> &'static str {
@@ -186,9 +181,8 @@ impl<T, F, Fut> fmt::Debug for IoBoundTask<T, F, Fut>
 where
     T: Send + Sync + fmt::Debug + 'static,
     F: Fn(T) -> Fut + Send + Sync + Clone + 'static,
-    Fut: std::future::Future<
-            Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>,
-        > + Send
+    Fut: std::future::Future<Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>>
+        + Send
         + 'static,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -206,17 +200,12 @@ pub mod helpers {
     use super::*;
 
     /// Create a CPU-bound task
-    pub fn cpu_task<T, F, Fut>(
-        task_type: &'static str,
-        data: T,
-        processor: F,
-    ) -> CpuBoundTask<T, F, Fut>
+    pub fn cpu_task<T, F, Fut>(task_type: &'static str, data: T, processor: F) -> CpuBoundTask<T, F, Fut>
     where
         T: Send + Sync + fmt::Debug + 'static,
         F: Fn(T) -> Fut + Send + Sync + Clone + 'static,
-        Fut: std::future::Future<
-                Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>,
-            > + Send
+        Fut: std::future::Future<Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>>
+            + Send
             + 'static,
     {
         CpuBoundTask {
@@ -230,17 +219,12 @@ pub mod helpers {
     }
 
     /// Create an IO-bound task
-    pub fn io_task<T, F, Fut>(
-        task_type: &'static str,
-        data: T,
-        processor: F,
-    ) -> IoBoundTask<T, F, Fut>
+    pub fn io_task<T, F, Fut>(task_type: &'static str, data: T, processor: F) -> IoBoundTask<T, F, Fut>
     where
         T: Send + Sync + fmt::Debug + 'static,
         F: Fn(T) -> Fut + Send + Sync + Clone + 'static,
-        Fut: std::future::Future<
-                Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>,
-            > + Send
+        Fut: std::future::Future<Output = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>>
+            + Send
             + 'static,
     {
         IoBoundTask {

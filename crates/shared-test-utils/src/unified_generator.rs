@@ -9,94 +9,94 @@ use super::test_config::*;
 /// Comprehensive test suite result
 #[derive(Debug, Clone)]
 pub struct GeneratedTestSuite {
-    pub tests: Vec<GeneratedTest>,
-    pub unit_tests: Vec<GeneratedTest>,
-    pub integration_tests: Vec<GeneratedTest>,
-    pub property_tests: Vec<GeneratedTest>,
-    pub benchmark_tests: Vec<GeneratedTest>,
+    pub tests:              Vec<GeneratedTest>,
+    pub unit_tests:         Vec<GeneratedTest>,
+    pub integration_tests:  Vec<GeneratedTest>,
+    pub property_tests:     Vec<GeneratedTest>,
+    pub benchmark_tests:    Vec<GeneratedTest>,
     pub coverage_estimates: Vec<TestCoverage>,
-    pub metadata: TestSuiteMetadata,
+    pub metadata:           TestSuiteMetadata,
 }
 
 /// Metadata for generated test suites
 #[derive(Debug, Clone)]
 pub struct TestSuiteMetadata {
-    pub source_file: Option<String>,
-    pub language: ProgrammingLanguage,
-    pub framework: String,
+    pub source_file:     Option<String>,
+    pub language:        ProgrammingLanguage,
+    pub framework:       String,
     pub coverage_target: f32,
-    pub generated_at: std::time::SystemTime,
+    pub generated_at:    std::time::SystemTime,
 }
 
 /// Refactoring context and result types
 #[derive(Debug, Clone)]
 pub struct RefactoringContext {
-    pub file_path: String,
-    pub symbol_name: Option<String>,
+    pub file_path:         String,
+    pub symbol_name:       Option<String>,
     pub symbol_line_start: usize,
-    pub symbol_line_end: usize,
-    pub symbol_type: Option<String>,
-    pub language: ProgrammingLanguage,
+    pub symbol_line_end:   usize,
+    pub symbol_type:       Option<String>,
+    pub language:          ProgrammingLanguage,
 }
 
 #[derive(Debug, Clone)]
 pub struct RefactoringResult {
-    pub success: bool,
-    pub changes_made: Vec<CodeChange>,
-    pub new_symbol_name: Option<String>,
+    pub success:                 bool,
+    pub changes_made:            Vec<CodeChange>,
+    pub new_symbol_name:         Option<String>,
     pub extracted_function_name: Option<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct CodeChange {
-    pub file_path: String,
-    pub line_start: usize,
-    pub line_end: usize,
+    pub file_path:     String,
+    pub line_start:    usize,
+    pub line_end:      usize,
     pub original_code: String,
-    pub new_code: String,
+    pub new_code:      String,
 }
 
 /// Core test data structures
 #[derive(Debug, Clone)]
 pub struct GeneratedTest {
-    pub name: String,
-    pub code: String,
-    pub test_type: TestType,
-    pub description: String,
-    pub framework: String,
-    pub language: ProgrammingLanguage,
+    pub name:              String,
+    pub code:              String,
+    pub test_type:         TestType,
+    pub description:       String,
+    pub framework:         String,
+    pub language:          ProgrammingLanguage,
     pub expected_coverage: Vec<String>,
-    pub dependencies: Vec<String>,
-    pub tags: Vec<String>,
-    pub confidence_score: f32,
+    pub dependencies:      Vec<String>,
+    pub tags:              Vec<String>,
+    pub confidence_score:  f32,
 }
 
 #[derive(Debug, Clone)]
 pub struct GeneratedTests {
-    pub unit_tests: Vec<GeneratedTest>,
-    pub integration_tests: Vec<GeneratedTest>,
-    pub property_tests: Vec<GeneratedTest>,
-    pub benchmark_tests: Vec<GeneratedTest>,
+    pub unit_tests:         Vec<GeneratedTest>,
+    pub integration_tests:  Vec<GeneratedTest>,
+    pub property_tests:     Vec<GeneratedTest>,
+    pub benchmark_tests:    Vec<GeneratedTest>,
     pub coverage_estimates: Vec<TestCoverage>,
 }
 
 /// Test coverage estimation information
 #[derive(Debug, Clone)]
 pub struct TestCoverage {
-    pub target: String,
-    pub coverage_type: CoverageType,
-    pub lines_covered: u32,
-    pub branches_covered: u32,
+    pub target:                     String,
+    pub coverage_type:              CoverageType,
+    pub lines_covered:              u32,
+    pub branches_covered:           u32,
     pub estimated_coverage_percent: f32,
 }
 
 impl Default for TestCoverage {
     fn default() -> Self {
         Self {
-            target: String::new(),
-            coverage_type: CoverageType::Function,
-            lines_covered: 0,
-            branches_covered: 0,
+            target:                     String::new(),
+            coverage_type:              CoverageType::Function,
+            lines_covered:              0,
+            branches_covered:           0,
             estimated_coverage_percent: 0.0,
         }
     }
@@ -106,7 +106,7 @@ impl Default for TestCoverage {
 // Prepared for advanced test generation capabilities across languages
 #[derive(Debug)]
 pub struct UnifiedTestGenerator {
-    config: TestGenerationConfig,
+    config:            TestGenerationConfig,
     language_detector: LanguageDetector,
 }
 
@@ -114,7 +114,7 @@ impl UnifiedTestGenerator {
     /// Create new test generator with default configuration
     pub fn new() -> Self {
         Self {
-            config: TestGenerationConfig::default(),
+            config:            TestGenerationConfig::default(),
             language_detector: LanguageDetector::new(),
         }
     }
@@ -147,10 +147,10 @@ impl UnifiedTestGenerator {
         let basic_test = self.generate_basic_unit_test(code, &language, &framework)?;
 
         Ok(GeneratedTests {
-            unit_tests: vec![basic_test],
-            integration_tests: vec![],
-            property_tests: vec![],
-            benchmark_tests: vec![],
+            unit_tests:         vec![basic_test],
+            integration_tests:  vec![],
+            property_tests:     vec![],
+            benchmark_tests:    vec![],
             coverage_estimates: vec![],
         })
     }
@@ -165,12 +165,9 @@ impl UnifiedTestGenerator {
         let (language, framework) = self.language_detector.detect_language(&context.file_path);
 
         match refactoring_type {
-            RefactoringType::Rename => {
-                self.generate_rename_tests(context, result, &language, &framework)
-            }
-            RefactoringType::ExtractFunction => {
-                self.generate_extract_function_tests(context, result, &language, &framework)
-            }
+            RefactoringType::Rename => self.generate_rename_tests(context, result, &language, &framework),
+            RefactoringType::ExtractFunction =>
+                self.generate_extract_function_tests(context, result, &language, &framework),
             _ => Ok(vec![self.generate_generic_refactoring_test(
                 refactoring_type,
                 &language,
@@ -190,16 +187,16 @@ impl UnifiedTestGenerator {
         let test_code = generate_unit_test_code("function_under_test", language, framework);
 
         Ok(GeneratedTest {
-            name: test_name,
-            code: test_code,
-            test_type: TestType::Unit,
-            description: "Test basic functionality of the function".to_string(),
-            language: language.clone(),
-            framework: framework.to_string(),
+            name:              test_name,
+            code:              test_code,
+            test_type:         TestType::Unit,
+            description:       "Test basic functionality of the function".to_string(),
+            language:          language.clone(),
+            framework:         framework.to_string(),
             expected_coverage: vec!["function_under_test".to_string()],
-            dependencies: vec![],
-            tags: vec!["unit".to_string(), "basic".to_string()],
-            confidence_score: 0.9,
+            dependencies:      vec![],
+            tags:              vec!["unit".to_string(), "basic".to_string()],
+            confidence_score:  0.9,
         })
     }
 
@@ -224,9 +221,7 @@ impl UnifiedTestGenerator {
             ProgrammingLanguage::TypeScript => Ok(vec![generate_typescript_rename_unit_test(
                 old_name, new_name,
             )?]),
-            ProgrammingLanguage::Python => {
-                Ok(vec![generate_python_rename_unit_test(old_name, new_name)?])
-            }
+            ProgrammingLanguage::Python => Ok(vec![generate_python_rename_unit_test(old_name, new_name)?]),
             _ => Ok(vec![generate_generic_rename_test(
                 old_name, new_name, language, framework,
             )?]),
@@ -252,11 +247,9 @@ impl UnifiedTestGenerator {
                 generate_rust_extract_function_unit_test(function_name)?,
                 generate_rust_extract_function_integration_test(function_name)?,
             ]),
-            ProgrammingLanguage::TypeScript => {
-                Ok(vec![generate_typescript_extract_function_unit_test(
-                    function_name,
-                )?])
-            }
+            ProgrammingLanguage::TypeScript => Ok(vec![generate_typescript_extract_function_unit_test(
+                function_name,
+            )?]),
             _ => Ok(vec![generate_generic_extract_function_test(
                 function_name,
                 language,
@@ -278,26 +271,22 @@ impl UnifiedTestGenerator {
         let test_code = generate_generic_test_code(&refactoring_name, language);
 
         Ok(GeneratedTest {
-            name: test_name,
-            code: test_code,
-            test_type: TestType::Unit,
-            description: format!("Test {:?} refactoring preserves behavior", refactoring_type),
-            language: language.clone(),
-            framework: framework.to_string(),
+            name:              test_name,
+            code:              test_code,
+            test_type:         TestType::Unit,
+            description:       format!("Test {:?} refactoring preserves behavior", refactoring_type),
+            language:          language.clone(),
+            framework:         framework.to_string(),
             expected_coverage: vec![format!("{:?}", refactoring_type)],
-            dependencies: vec![],
-            tags: vec!["refactoring".to_string(), "behavior".to_string()],
-            confidence_score: 0.85,
+            dependencies:      vec![],
+            tags:              vec!["refactoring".to_string(), "behavior".to_string()],
+            confidence_score:  0.85,
         })
     }
 }
 
 /// Helper functions for generating language-specific test code
-pub fn generate_unit_test_code(
-    function_name: &str,
-    language: &ProgrammingLanguage,
-    _framework: &str,
-) -> String {
+pub fn generate_unit_test_code(function_name: &str, language: &ProgrammingLanguage, _framework: &str) -> String {
     match language {
         ProgrammingLanguage::Rust => format!(
             r#"
@@ -429,16 +418,16 @@ fn test_rename_{0}_to_{1}() {{
     );
 
     Ok(GeneratedTest {
-        name: format!("test_rename_{}_to_{}", old_name, new_name),
-        code: test_code,
-        test_type: TestType::Unit,
-        description: format!("Test renaming {} to {} in Rust", old_name, new_name),
-        language: ProgrammingLanguage::Rust,
-        framework: "cargo-test".to_string(),
+        name:              format!("test_rename_{}_to_{}", old_name, new_name),
+        code:              test_code,
+        test_type:         TestType::Unit,
+        description:       format!("Test renaming {} to {} in Rust", old_name, new_name),
+        language:          ProgrammingLanguage::Rust,
+        framework:         "cargo-test".to_string(),
         expected_coverage: vec![old_name.to_string(), new_name.to_string()],
-        dependencies: vec![],
-        tags: vec!["rename".to_string(), "refactoring".to_string()],
-        confidence_score: 0.95,
+        dependencies:      vec![],
+        tags:              vec!["rename".to_string(), "refactoring".to_string()],
+        confidence_score:  0.95,
     })
 }
 
@@ -464,16 +453,16 @@ fn test_{}_integration() {{
     );
 
     Ok(GeneratedTest {
-        name: format!("test_{}_integration", new_name),
-        code: test_code,
-        test_type: TestType::Integration,
-        description: format!("Integration test for renamed {} to {}", old_name, new_name),
-        language: ProgrammingLanguage::Rust,
-        framework: "cargo-test".to_string(),
+        name:              format!("test_{}_integration", new_name),
+        code:              test_code,
+        test_type:         TestType::Integration,
+        description:       format!("Integration test for renamed {} to {}", old_name, new_name),
+        language:          ProgrammingLanguage::Rust,
+        framework:         "cargo-test".to_string(),
         expected_coverage: vec![format!("process_data_with_renamed_{}", new_name)],
-        dependencies: vec![],
-        tags: vec!["rename".to_string(), "integration".to_string()],
-        confidence_score: 0.90,
+        dependencies:      vec![],
+        tags:              vec!["rename".to_string(), "integration".to_string()],
+        confidence_score:  0.90,
     })
 }
 
@@ -501,16 +490,16 @@ describe("Rename Test: {0} -> {1}", () => {{
     );
 
     Ok(GeneratedTest {
-        name: format!("test_rename_{}_to_{}", old_name, new_name),
-        code: test_code,
-        test_type: TestType::Unit,
-        description: format!("Test renaming {} to {} in TypeScript", old_name, new_name),
-        language: ProgrammingLanguage::TypeScript,
-        framework: "jest".to_string(),
+        name:              format!("test_rename_{}_to_{}", old_name, new_name),
+        code:              test_code,
+        test_type:         TestType::Unit,
+        description:       format!("Test renaming {} to {} in TypeScript", old_name, new_name),
+        language:          ProgrammingLanguage::TypeScript,
+        framework:         "jest".to_string(),
         expected_coverage: vec![old_name.to_string(), new_name.to_string()],
-        dependencies: vec![],
-        tags: vec!["rename".to_string(), "refactoring".to_string()],
-        confidence_score: 0.92,
+        dependencies:      vec![],
+        tags:              vec!["rename".to_string(), "refactoring".to_string()],
+        confidence_score:  0.92,
     })
 }
 
@@ -530,16 +519,16 @@ class TestRename:
     );
 
     Ok(GeneratedTest {
-        name: format!("test_rename_{}_to_{}", old_name, new_name),
-        code: test_code,
-        test_type: TestType::Unit,
-        description: format!("Test renaming {} to {} in Python", old_name, new_name),
-        language: ProgrammingLanguage::Python,
-        framework: "unittest".to_string(),
+        name:              format!("test_rename_{}_to_{}", old_name, new_name),
+        code:              test_code,
+        test_type:         TestType::Unit,
+        description:       format!("Test renaming {} to {} in Python", old_name, new_name),
+        language:          ProgrammingLanguage::Python,
+        framework:         "unittest".to_string(),
         expected_coverage: vec![old_name.to_string(), new_name.to_string()],
-        dependencies: vec![],
-        tags: vec!["rename".to_string(), "refactoring".to_string()],
-        confidence_score: 0.91,
+        dependencies:      vec![],
+        tags:              vec!["rename".to_string(), "refactoring".to_string()],
+        confidence_score:  0.91,
     })
 }
 
@@ -561,16 +550,16 @@ test_rename_{}_to_{}() {{
     );
 
     Ok(GeneratedTest {
-        name: format!("test_rename_{}_to_{}", old_name, new_name),
-        code: test_code,
-        test_type: TestType::Unit,
-        description: format!("Generic test for renaming {} to {}", old_name, new_name),
-        language: language.clone(),
-        framework: framework.to_string(),
+        name:              format!("test_rename_{}_to_{}", old_name, new_name),
+        code:              test_code,
+        test_type:         TestType::Unit,
+        description:       format!("Generic test for renaming {} to {}", old_name, new_name),
+        language:          language.clone(),
+        framework:         framework.to_string(),
         expected_coverage: vec![old_name.to_string(), new_name.to_string()],
-        dependencies: vec![],
-        tags: vec!["rename".to_string(), "generic".to_string()],
-        confidence_score: 0.80,
+        dependencies:      vec![],
+        tags:              vec!["rename".to_string(), "generic".to_string()],
+        confidence_score:  0.80,
     })
 }
 
@@ -594,19 +583,19 @@ fn test_{}_with_various_inputs() {{
     );
 
     Ok(GeneratedTest {
-        name: format!("test_{}_unit", function_name),
-        code: test_code,
-        test_type: TestType::Unit,
-        description: format!(
+        name:              format!("test_{}_unit", function_name),
+        code:              test_code,
+        test_type:         TestType::Unit,
+        description:       format!(
             "Unit tests for extracted function {} in Rust",
             function_name
         ),
-        language: ProgrammingLanguage::Rust,
-        framework: "cargo-test".to_string(),
+        language:          ProgrammingLanguage::Rust,
+        framework:         "cargo-test".to_string(),
         expected_coverage: vec![function_name.to_string()],
-        dependencies: vec![],
-        tags: vec!["extract".to_string(), "function".to_string()],
-        confidence_score: 0.90,
+        dependencies:      vec![],
+        tags:              vec!["extract".to_string(), "function".to_string()],
+        confidence_score:  0.90,
     })
 }
 
@@ -627,23 +616,23 @@ fn test_{}_integration() {{
     );
 
     Ok(GeneratedTest {
-        name: format!("test_{}_integration", function_name),
-        code: test_code,
-        test_type: TestType::Integration,
-        description: format!(
+        name:              format!("test_{}_integration", function_name),
+        code:              test_code,
+        test_type:         TestType::Integration,
+        description:       format!(
             "Integration tests for extracted function {} in Rust",
             function_name
         ),
-        language: ProgrammingLanguage::Rust,
-        framework: "cargo-test".to_string(),
+        language:          ProgrammingLanguage::Rust,
+        framework:         "cargo-test".to_string(),
         expected_coverage: vec![function_name.to_string()],
-        dependencies: vec![],
-        tags: vec![
+        dependencies:      vec![],
+        tags:              vec![
             "extract".to_string(),
             "function".to_string(),
             "integration".to_string(),
         ],
-        confidence_score: 0.85,
+        confidence_score:  0.85,
     })
 }
 
@@ -669,16 +658,16 @@ describe("Extracted Function: {}", () => {{
     );
 
     Ok(GeneratedTest {
-        name: format!("test_extracted_function_{}", function_name),
-        code: test_code,
-        test_type: TestType::Unit,
-        description: format!("Test extracted function {} in TypeScript", function_name),
-        language: ProgrammingLanguage::TypeScript,
-        framework: "jest".to_string(),
+        name:              format!("test_extracted_function_{}", function_name),
+        code:              test_code,
+        test_type:         TestType::Unit,
+        description:       format!("Test extracted function {} in TypeScript", function_name),
+        language:          ProgrammingLanguage::TypeScript,
+        framework:         "jest".to_string(),
         expected_coverage: vec![function_name.to_string()],
-        dependencies: vec![],
-        tags: vec!["extract".to_string(), "function".to_string()],
-        confidence_score: 0.92,
+        dependencies:      vec![],
+        tags:              vec!["extract".to_string(), "function".to_string()],
+        confidence_score:  0.92,
     })
 }
 
@@ -699,19 +688,19 @@ test_{}_function() {{
     );
 
     Ok(GeneratedTest {
-        name: format!("test_extracted_{}", function_name),
-        code: test_code,
-        test_type: TestType::Unit,
-        description: format!("Generic test for extracted function {}", function_name),
-        language: language.clone(),
-        framework: framework.to_string(),
+        name:              format!("test_extracted_{}", function_name),
+        code:              test_code,
+        test_type:         TestType::Unit,
+        description:       format!("Generic test for extracted function {}", function_name),
+        language:          language.clone(),
+        framework:         framework.to_string(),
         expected_coverage: vec![function_name.to_string()],
-        dependencies: vec![],
-        tags: vec![
+        dependencies:      vec![],
+        tags:              vec![
             "extract".to_string(),
             "function".to_string(),
             "generic".to_string(),
         ],
-        confidence_score: 0.85,
+        confidence_score:  0.85,
     })
 }

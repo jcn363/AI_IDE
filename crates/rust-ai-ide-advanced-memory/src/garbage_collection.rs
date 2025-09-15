@@ -12,18 +12,18 @@ use tokio::sync::{mpsc, Mutex, RwLock};
 
 #[derive(Clone)]
 pub struct GcConfig {
-    pub max_collection_frequency_ms: u64,
-    pub memory_pressure_threshold: f64,
-    pub fragmentation_threshold: f64,
+    pub max_collection_frequency_ms:   u64,
+    pub memory_pressure_threshold:     f64,
+    pub fragmentation_threshold:       f64,
     pub enable_performance_scheduling: bool,
 }
 
 impl Default for GcConfig {
     fn default() -> Self {
         Self {
-            max_collection_frequency_ms: 60000, // 1 minute
-            memory_pressure_threshold: 0.8,
-            fragmentation_threshold: 0.7,
+            max_collection_frequency_ms:   60000, // 1 minute
+            memory_pressure_threshold:     0.8,
+            fragmentation_threshold:       0.7,
             enable_performance_scheduling: true,
         }
     }
@@ -31,16 +31,16 @@ impl Default for GcConfig {
 
 #[derive(Debug)]
 pub struct ComponentMemoryTracker {
-    component_refs: HashMap<String, HashSet<String>>, // component_id -> object_ids
-    reverse_refs: HashMap<String, HashSet<String>>,   // object_id -> component_ids
+    component_refs:   HashMap<String, HashSet<String>>, // component_id -> object_ids
+    reverse_refs:     HashMap<String, HashSet<String>>, // object_id -> component_ids
     reference_counts: HashMap<String, usize>,
 }
 
 impl ComponentMemoryTracker {
     pub fn new() -> Self {
         Self {
-            component_refs: HashMap::new(),
-            reverse_refs: HashMap::new(),
+            component_refs:   HashMap::new(),
+            reverse_refs:     HashMap::new(),
             reference_counts: HashMap::new(),
         }
     }
@@ -89,22 +89,19 @@ impl ComponentMemoryTracker {
 
 #[derive(Debug)]
 pub struct ReferenceCycleDetector {
-    cycles_detected: HashMap<String, Vec<String>>, // component_id -> cycle_path
+    cycles_detected:   HashMap<String, Vec<String>>, // component_id -> cycle_path
     detection_enabled: bool,
 }
 
 impl ReferenceCycleDetector {
     pub fn new() -> Self {
         Self {
-            cycles_detected: HashMap::new(),
+            cycles_detected:   HashMap::new(),
             detection_enabled: true,
         }
     }
 
-    pub async fn detect_cycles(
-        &mut self,
-        tracker: &ComponentMemoryTracker,
-    ) -> Result<HashSet<String>, IDEError> {
+    pub async fn detect_cycles(&mut self, tracker: &ComponentMemoryTracker) -> Result<HashSet<String>, IDEError> {
         let mut cycles = HashSet::new();
 
         if !self.detection_enabled {
@@ -144,13 +141,7 @@ impl ReferenceCycleDetector {
         if let Some(component_refs) = tracker.reverse_refs.get(component_id) {
             for ref_component_id in component_refs {
                 if !visited.contains(ref_component_id) {
-                    self.dfs_cycle_detection(
-                        ref_component_id,
-                        tracker,
-                        visited,
-                        recursion_stack,
-                        cycles,
-                    )?;
+                    self.dfs_cycle_detection(ref_component_id, tracker, visited, recursion_stack, cycles)?;
                 } else if recursion_stack.contains(ref_component_id) {
                     cycles.insert(ref_component_id.clone());
                 }
@@ -164,7 +155,7 @@ impl ReferenceCycleDetector {
 
 #[derive(Debug)]
 pub struct PerformanceAwareGcScheduler {
-    config: GcConfig,
+    config:       GcConfig,
     last_gc_time: std::time::Instant,
     gc_events_tx: mpsc::UnboundedSender<GcEvent>,
     gc_events_rx: mpsc::UnboundedReceiver<GcEvent>,
@@ -215,17 +206,17 @@ impl PerformanceAwareGcScheduler {
 
 #[derive(Debug)]
 pub struct FragmentationMonitor {
-    config: GcConfig,
-    allocation_patterns: HashMap<String, AllocationPattern>,
+    config:                GcConfig,
+    allocation_patterns:   HashMap<String, AllocationPattern>,
     fragmentation_metrics: HashMap<String, f64>,
 }
 
 #[derive(Debug)]
 pub struct AllocationPattern {
-    small_allocations: usize,
-    large_allocations: usize,
+    small_allocations:   usize,
+    large_allocations:   usize,
     fragmentation_score: f64,
-    last_update: chrono::DateTime<chrono::Utc>,
+    last_update:         chrono::DateTime<chrono::Utc>,
 }
 
 impl FragmentationMonitor {
@@ -270,9 +261,9 @@ impl FragmentationMonitor {
 
 #[derive(Debug)]
 pub struct OwnershipSystemCoordinator {
-    config: GcConfig,
-    ownership_tracking: HashMap<String, String>, // object_id -> owner_component
-    borrowed_references: HashMap<String, usize>, // object_id -> borrow_count
+    config:              GcConfig,
+    ownership_tracking:  HashMap<String, String>, // object_id -> owner_component
+    borrowed_references: HashMap<String, usize>,  // object_id -> borrow_count
 }
 
 impl OwnershipSystemCoordinator {
@@ -301,13 +292,13 @@ impl OwnershipSystemCoordinator {
 
 /// Main Garbage Collection Coordinator
 pub struct GarbageCollectionCoordinator {
-    config: GcConfig,
-    component_tracker: Arc<Mutex<ComponentMemoryTracker>>,
-    cycle_detector: Arc<Mutex<ReferenceCycleDetector>>,
-    gc_scheduler: Arc<Mutex<PerformanceAwareGcScheduler>>,
+    config:                GcConfig,
+    component_tracker:     Arc<Mutex<ComponentMemoryTracker>>,
+    cycle_detector:        Arc<Mutex<ReferenceCycleDetector>>,
+    gc_scheduler:          Arc<Mutex<PerformanceAwareGcScheduler>>,
     fragmentation_monitor: Arc<Mutex<FragmentationMonitor>>,
     ownership_coordinator: Arc<Mutex<OwnershipSystemCoordinator>>,
-    gc_active: Arc<Mutex<bool>>,
+    gc_active:             Arc<Mutex<bool>>,
 }
 
 impl GarbageCollectionCoordinator {
@@ -317,13 +308,13 @@ impl GarbageCollectionCoordinator {
 
     pub async fn new_with_config(config: GcConfig) -> Result<Self, IDEError> {
         Ok(Self {
-            config: config.clone(),
-            component_tracker: Arc::new(Mutex::new(ComponentMemoryTracker::new())),
-            cycle_detector: Arc::new(Mutex::new(ReferenceCycleDetector::new())),
-            gc_scheduler: Arc::new(Mutex::new(PerformanceAwareGcScheduler::new(config.clone()))),
+            config:                config.clone(),
+            component_tracker:     Arc::new(Mutex::new(ComponentMemoryTracker::new())),
+            cycle_detector:        Arc::new(Mutex::new(ReferenceCycleDetector::new())),
+            gc_scheduler:          Arc::new(Mutex::new(PerformanceAwareGcScheduler::new(config.clone()))),
             fragmentation_monitor: Arc::new(Mutex::new(FragmentationMonitor::new(config.clone()))),
             ownership_coordinator: Arc::new(Mutex::new(OwnershipSystemCoordinator::new(config))),
-            gc_active: Arc::new(Mutex::new(false)),
+            gc_active:             Arc::new(Mutex::new(false)),
         })
     }
 
@@ -338,11 +329,7 @@ impl GarbageCollectionCoordinator {
         Ok(())
     }
 
-    pub async fn trigger_gc_cycle(
-        &self,
-        memory_pressure: f64,
-        fragmentation: f64,
-    ) -> Result<(), IDEError> {
+    pub async fn trigger_gc_cycle(&self, memory_pressure: f64, fragmentation: f64) -> Result<(), IDEError> {
         let should_run = {
             let scheduler = self.gc_scheduler.lock().await;
             scheduler

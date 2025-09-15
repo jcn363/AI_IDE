@@ -46,12 +46,12 @@ impl IOSBatteryMonitor {
 
         // Placeholder implementation for development
         Ok(BatteryState {
-            level: 0.78,             // 78% battery
-            voltage: Some(3.82),     // Typical iOS Li-ion voltage
-            temperature: Some(28.5), // Celsius (iOS-devices generally cooler)
-            is_charging: false,
-            health_percentage: Some(0.92), // 92% health (iOS reports this differently)
-            time_remaining_minutes: Some(180), // 3 hours remaining
+            level:                  0.78,       // 78% battery
+            voltage:                Some(3.82), // Typical iOS Li-ion voltage
+            temperature:            Some(28.5), // Celsius (iOS-devices generally cooler)
+            is_charging:            false,
+            health_percentage:      Some(0.92), // 92% health (iOS reports this differently)
+            time_remaining_minutes: Some(180),  // 3 hours remaining
         })
     }
 
@@ -130,11 +130,11 @@ impl IOSBatteryMonitor {
     async fn get_cached_battery_state() -> anyhow::Result<BatteryState> {
         // Return cached iOS state with slight modifications
         Ok(BatteryState {
-            level: 0.77,
-            voltage: Some(3.81),
-            temperature: Some(29.0),
-            is_charging: false,
-            health_percentage: Some(0.92),
+            level:                  0.77,
+            voltage:                Some(3.81),
+            temperature:            Some(29.0),
+            is_charging:            false,
+            health_percentage:      Some(0.92),
             time_remaining_minutes: Some(175),
         })
     }

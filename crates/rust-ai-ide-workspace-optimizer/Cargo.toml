@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-workspace-optimizer"
-readme = { workspace = true }
+
 version = { workspace = true }
 edition = { workspace = true }
 rust-version = { workspace = true }

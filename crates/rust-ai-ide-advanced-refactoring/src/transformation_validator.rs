@@ -10,7 +10,7 @@ use crate::types::{RefactoringTransformation, ValidationResult as ValResult};
 
 /// Transformation validator using syn AST analysis
 pub struct TransformationValidator {
-    ai_service: Arc<dyn crate::ai_suggester::AiService>,
+    ai_service:       Arc<dyn crate::ai_suggester::AiService>,
     validation_cache: Arc<Mutex<std::collections::HashMap<String, bool>>>,
 }
 
@@ -44,16 +44,14 @@ impl TransformationValidator {
         }
 
         // Read and parse the file
-        let content = std::fs::read_to_string(&transformation.file_path).map_err(|e| {
-            AnalysisError::DataProcessing {
+        let content =
+            std::fs::read_to_string(&transformation.file_path).map_err(|e| AnalysisError::DataProcessing {
                 stage: format!("Failed to read file {}: {}", transformation.file_path, e),
-            }
-        })?;
-
-        let syntax_tree: SynFile =
-            parse_file(&content).map_err(|e| AnalysisError::DataProcessing {
-                stage: format!("Failed to parse file {}: {}", transformation.file_path, e),
             })?;
+
+        let syntax_tree: SynFile = parse_file(&content).map_err(|e| AnalysisError::DataProcessing {
+            stage: format!("Failed to parse file {}: {}", transformation.file_path, e),
+        })?;
 
         // Perform validation checks
         let validation_result = self
@@ -166,10 +164,7 @@ impl TransformationValidator {
     }
 
     /// Check transformation consistency
-    fn check_transformation_consistency(
-        &self,
-        transformation: &RefactoringTransformation,
-    ) -> Result<(), String> {
+    fn check_transformation_consistency(&self, transformation: &RefactoringTransformation) -> Result<(), String> {
         // Check that the transformation makes sense
         if transformation.original_text.is_empty() {
             return Err("Original text cannot be empty".to_string());
@@ -292,17 +287,17 @@ mod tests {
         let validator = TransformationValidator::new(ai_service);
 
         let transformation = RefactoringTransformation {
-            id: uuid::Uuid::new_v4(),
-            suggestion_id: uuid::Uuid::new_v4(),
-            operation_type: crate::types::TransformationOperation::ReplaceText,
-            file_path: "test.rs".to_string(),
-            line_number: 1,
-            column_number: 0,
-            original_text: "old".to_string(),
+            id:               uuid::Uuid::new_v4(),
+            suggestion_id:    uuid::Uuid::new_v4(),
+            operation_type:   crate::types::TransformationOperation::ReplaceText,
+            file_path:        "test.rs".to_string(),
+            line_number:      1,
+            column_number:    0,
+            original_text:    "old".to_string(),
             transformed_text: "new".to_string(),
-            dependencies: vec![],
-            rollback_steps: vec![],
-            validation_hash: String::new(),
+            dependencies:     vec![],
+            rollback_steps:   vec![],
+            validation_hash:  String::new(),
         };
 
         // This will fail because the file doesn't exist, but tests the structure

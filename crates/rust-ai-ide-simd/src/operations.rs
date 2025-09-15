@@ -36,7 +36,7 @@ impl SIMDOperations {
         if lhs.len() != rhs.len() {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: lhs.len(),
-                actual: rhs.len(),
+                actual:   rhs.len(),
             });
         }
 
@@ -59,7 +59,7 @@ impl SIMDOperations {
         if cols != vector.len() {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: cols,
-                actual: vector.len(),
+                actual:   vector.len(),
             });
         }
 
@@ -104,7 +104,7 @@ impl SIMDOperations {
         if a.len() != b.len() {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: a.len(),
-                actual: b.len(),
+                actual:   b.len(),
             });
         }
 
@@ -312,8 +312,7 @@ impl SIMDOperations {
                             if j + 8 <= cols {
                                 let matrix_chunk = _mm256_loadu_ps(&matrix[row_start + j]);
                                 let broadcast_vec = _mm256_broadcast_ss(&vector[j]);
-                                sum =
-                                    _mm256_add_ps(sum, _mm256_mul_ps(matrix_chunk, broadcast_vec));
+                                sum = _mm256_add_ps(sum, _mm256_mul_ps(matrix_chunk, broadcast_vec));
                             } else {
                                 // Handle remaining elements
                                 for k in j..cols.min(j + 8) {
@@ -426,7 +425,7 @@ impl SIMDOperations {
         if lhs.len() != rhs.len() {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: lhs.len(),
-                actual: rhs.len(),
+                actual:   rhs.len(),
             });
         }
         Ok(lhs.iter().zip(rhs.iter()).map(|(a, b)| a + b).collect())
@@ -436,7 +435,7 @@ impl SIMDOperations {
         if lhs.len() != rhs.len() {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: lhs.len(),
-                actual: rhs.len(),
+                actual:   rhs.len(),
             });
         }
         Ok(lhs.iter().zip(rhs.iter()).map(|(a, b)| a * b).collect())

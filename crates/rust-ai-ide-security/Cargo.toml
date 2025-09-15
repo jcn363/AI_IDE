@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-security"
-readme = { workspace = true }
+
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
@@ -35,7 +35,7 @@ lazy_static = { workspace = true, features = ["spin_no_std"] }
 regex = { workspace = true }
 
 # Cryptography and security
-jsonwebtoken = { workspace = true, default-features = false, features = [
+jsonwebtoken = { workspace = true, features = [
   "pem",
   "use_pem",
 ] }
@@ -44,7 +44,7 @@ bcrypt = { workspace = true }
 rand = { workspace = true }
 sha2 = { workspace = true }
 aes-gcm = { workspace = true }
-rsa = { workspace = true, features = ["pem", "std"] }
+rsa = { workspace = true }
 webauthn-rs = { version = "0.5.2", features = [
   "danger-allow-state-serialisation",
 ], optional = true }
@@ -88,7 +88,9 @@ chacha20poly1305 = { workspace = true }
 generic-array = { workspace = true }
 argon2 = { workspace = true }
 base64 = { workspace = true }
-cargo-fuzz = { workspace = true }
+
+[build-dependencies]
+cargo-fuzz = { workspace = true, optional = true }
 
 [features]
 default = ["webauthn"]

@@ -10,10 +10,10 @@ use crate::types::*;
 #[derive(Clone)]
 pub struct MetricCollector {
     pub collection_orchestrator: Arc<RwLock<MetricOrchestrator>>,
-    pub aggregation_engine: Arc<RwLock<MetricAggregation>>,
-    pub historical_storage: Arc<RwLock<MetricHistoryStorage>>,
-    pub metadata_enricher: Arc<RwLock<MetadataEnrichment>>,
-    pub integration_bridge: Arc<RwLock<MonitoringIntegration>>,
+    pub aggregation_engine:      Arc<RwLock<MetricAggregation>>,
+    pub historical_storage:      Arc<RwLock<MetricHistoryStorage>>,
+    pub metadata_enricher:       Arc<RwLock<MetadataEnrichment>>,
+    pub integration_bridge:      Arc<RwLock<MonitoringIntegration>>,
 }
 
 #[derive(Clone)]
@@ -31,10 +31,10 @@ impl MetricCollector {
     pub async fn new(_config: Arc<RwLock<DashboardConfiguration>>) -> MetricCollector {
         MetricCollector {
             collection_orchestrator: Arc::new(RwLock::new(MetricOrchestrator)),
-            aggregation_engine: Arc::new(RwLock::new(MetricAggregation)),
-            historical_storage: Arc::new(RwLock::new(MetricHistoryStorage)),
-            metadata_enricher: Arc::new(RwLock::new(MetadataEnrichment)),
-            integration_bridge: Arc::new(RwLock::new(MonitoringIntegration)),
+            aggregation_engine:      Arc::new(RwLock::new(MetricAggregation)),
+            historical_storage:      Arc::new(RwLock::new(MetricHistoryStorage)),
+            metadata_enricher:       Arc::new(RwLock::new(MetadataEnrichment)),
+            integration_bridge:      Arc::new(RwLock::new(MonitoringIntegration)),
         }
     }
 

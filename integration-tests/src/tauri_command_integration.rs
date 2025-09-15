@@ -21,37 +21,34 @@ use crate::IntegrationTestResult;
 #[derive(Clone)]
 pub struct MockTauriState {
     pub command_count: Arc<Mutex<u64>>,
-    pub last_command: Arc<Mutex<String>>,
-    pub error_count: Arc<Mutex<u64>>,
+    pub last_command:  Arc<Mutex<String>>,
+    pub error_count:   Arc<Mutex<u64>>,
 }
 
 /// Tauri Command Integration Test Runner
 #[derive(Clone)]
 pub struct TauriCommandIntegrationTestRunner {
-    context: Option<ExtendedIntegrationContext>,
+    context:    Option<ExtendedIntegrationContext>,
     mock_state: Option<MockTauriState>,
-    results: Vec<IntegrationTestResult>,
+    results:    Vec<IntegrationTestResult>,
 }
 
 impl TauriCommandIntegrationTestRunner {
     pub fn new() -> Self {
         Self {
-            context: None,
+            context:    None,
             mock_state: None,
-            results: Vec::new(),
+            results:    Vec::new(),
         }
     }
 
     /// Setup test environment with mock Tauri state
-    pub async fn setup_test_environment(
-        &mut self,
-        context: ExtendedIntegrationContext,
-    ) -> IdeResult<()> {
+    pub async fn setup_test_environment(&mut self, context: ExtendedIntegrationContext) -> IdeResult<()> {
         self.context = Some(context);
         self.mock_state = Some(MockTauriState {
             command_count: Arc::new(Mutex::new(0)),
-            last_command: Arc::new(Mutex::new(String::new())),
-            error_count: Arc::new(Mutex::new(0)),
+            last_command:  Arc::new(Mutex::new(String::new())),
+            error_count:   Arc::new(Mutex::new(0)),
         });
         Ok(())
     }
@@ -341,9 +338,7 @@ impl crate::test_runner::TestSuiteRunner for TauriCommandIntegrationTestRunner {
         "tauri_commands"
     }
 
-    async fn run_test_suite(
-        &self,
-    ) -> Result<Vec<IntegrationTestResult>, rust_ai_ide_errors::RustAIError> {
+    async fn run_test_suite(&self) -> Result<Vec<IntegrationTestResult>, rust_ai_ide_errors::RustAIError> {
         let mut runner = TauriCommandIntegrationTestRunner::new();
 
         if let Some(context) = &self.context {
@@ -375,11 +370,7 @@ impl crate::test_runner::TestSuiteRunner for TauriCommandIntegrationTestRunner {
     fn is_test_enabled(&self, test_name: &str) -> bool {
         matches!(
             test_name,
-            "command_communication"
-                | "state_management"
-                | "error_handling"
-                | "ipc_communication"
-                | "input_validation"
+            "command_communication" | "state_management" | "error_handling" | "ipc_communication" | "input_validation"
         )
     }
 
@@ -429,8 +420,8 @@ mod tests {
 
         let context = ExtendedIntegrationContext::new(shared_test_utils::IntegrationContext {
             test_dir: workspace_path,
-            config: shared_test_utils::IntegrationConfig::default(),
-            state: std::collections::HashMap::new(),
+            config:   shared_test_utils::IntegrationConfig::default(),
+            state:    std::collections::HashMap::new(),
         });
 
         runner.setup_test_environment(context).await?;

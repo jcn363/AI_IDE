@@ -14,13 +14,13 @@ use crate::CloudProvider;
 pub struct AwsConfig {
     pub access_key: String,
     pub secret_key: String,
-    pub region: String,
+    pub region:     String,
 }
 
 /// AWS client wrapper
 pub struct AwsClient {
     s3_client: S3Client,
-    config: AwsConfig,
+    config:    AwsConfig,
 }
 
 #[async_trait]

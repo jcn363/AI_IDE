@@ -14,19 +14,18 @@ use tokio::sync::RwLock;
 
 /// Core dependency analyzer for predictive modeling
 pub struct CrossFileDependencyAnalyzer {
-    learning_engine: Arc<LearningEngine>,
+    learning_engine:  Arc<LearningEngine>,
     dependency_graph: Arc<RwLock<DependencyGraph>>,
-    analysis_cache: moka::future::Cache<String, CrossFileDependencyAnalysis>,
+    analysis_cache:   moka::future::Cache<String, CrossFileDependencyAnalysis>,
 }
 
 impl CrossFileDependencyAnalyzer {
     /// Create new dependency analyzer
     pub async fn new(learning_engine: Arc<LearningEngine>) -> Self {
         let dependency_graph = Arc::new(RwLock::new(DependencyGraph::new()));
-        let analysis_cache: moka::future::Cache<String, CrossFileDependencyAnalysis> =
-            moka::future::Cache::builder()
-                .time_to_live(std::time::Duration::from_secs(900))
-                .build();
+        let analysis_cache: moka::future::Cache<String, CrossFileDependencyAnalysis> = moka::future::Cache::builder()
+            .time_to_live(std::time::Duration::from_secs(900))
+            .build();
 
         Self {
             learning_engine,
@@ -36,15 +35,12 @@ impl CrossFileDependencyAnalyzer {
     }
 
     /// Analyze cross-file dependencies for predictive modeling
-    pub async fn analyze_dependencies(
-        &self,
-        project_path: &str,
-    ) -> Result<CrossFileDependencyAnalysis> {
+    pub async fn analyze_dependencies(&self, project_path: &str) -> Result<CrossFileDependencyAnalysis> {
         // TODO: Implement comprehensive dependency analysis
         Ok(CrossFileDependencyAnalysis {
-            dependency_graph: DependencyGraph::new(),
-            circular_dependencies: vec![],
-            impact_assessment: HashMap::new(),
+            dependency_graph:           DependencyGraph::new(),
+            circular_dependencies:      vec![],
+            impact_assessment:          HashMap::new(),
             optimization_opportunities: vec![],
         })
     }
@@ -58,16 +54,16 @@ pub struct CodeRelationshipMapper {
 /// Core dependency graph representation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyGraph {
-    pub nodes: Vec<String>,
-    pub edges: Vec<DependencyEdge>,
+    pub nodes:   Vec<String>,
+    pub edges:   Vec<DependencyEdge>,
     pub metrics: DependencyMetrics,
 }
 
 impl DependencyGraph {
     fn new() -> Self {
         Self {
-            nodes: vec![],
-            edges: vec![],
+            nodes:   vec![],
+            edges:   vec![],
             metrics: DependencyMetrics::new(),
         }
     }
@@ -76,10 +72,10 @@ impl DependencyGraph {
 /// Dependency relationships
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyEdge {
-    pub from: String,
-    pub to: String,
+    pub from:            String,
+    pub to:              String,
     pub dependency_type: DependencyType,
-    pub strength: f64,
+    pub strength:        f64,
 }
 
 /// Types of file dependencies
@@ -95,18 +91,18 @@ pub enum DependencyType {
 /// Graph-wide metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyMetrics {
-    pub average_path_length: f64,
-    pub clustering_coefficient: f64,
-    pub centrality_scores: HashMap<String, f64>,
+    pub average_path_length:           f64,
+    pub clustering_coefficient:        f64,
+    pub centrality_scores:             HashMap<String, f64>,
     pub strongly_connected_components: Vec<Vec<String>>,
 }
 
 impl DependencyMetrics {
     fn new() -> Self {
         Self {
-            average_path_length: 0.0,
-            clustering_coefficient: 0.0,
-            centrality_scores: HashMap::new(),
+            average_path_length:           0.0,
+            clustering_coefficient:        0.0,
+            centrality_scores:             HashMap::new(),
             strongly_connected_components: vec![],
         }
     }

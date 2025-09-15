@@ -59,9 +59,7 @@ impl PluginRegistry {
     }
 
     /// Gets a reference to a registered plugin by ID using a callback pattern.
-    #[deprecated(
-        note = "Use with_plugin instead to avoid lifetime issues. Removal planned in v2.0.0"
-    )]
+    #[deprecated(note = "Use with_plugin instead to avoid lifetime issues. Removal planned in v2.0.0")]
     pub async fn get_plugin(&self, plugin_id: &str) -> Option<Box<dyn Plugin>> {
         let plugins = self.plugins.read().await;
         let plugin_id_owned = plugin_id.to_string();

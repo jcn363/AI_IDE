@@ -76,13 +76,13 @@ pub enum SecurityError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserContext {
     /// The user's unique identifier
-    pub user_id: String,
+    pub user_id:    String,
     /// The user's username
-    pub username: String,
+    pub username:   String,
     /// The user's email
-    pub email: String,
+    pub email:      String,
     /// The user's roles
-    pub roles: Vec<String>,
+    pub roles:      Vec<String>,
     /// When the context was created
     pub created_at: DateTime<Utc>,
     /// When the context expires
@@ -141,17 +141,17 @@ pub struct AuditEventContext {
     /// The event type
     pub event_type: AuditEventType,
     /// The event severity
-    pub severity: AuditEventSeverity,
+    pub severity:   AuditEventSeverity,
     /// The event message
-    pub message: String,
+    pub message:    String,
     /// Additional event data
-    pub data: serde_json::Value,
+    pub data:       serde_json::Value,
     /// The source IP address
-    pub source_ip: Option<String>,
+    pub source_ip:  Option<String>,
     /// The user agent
     pub user_agent: Option<String>,
     /// The timestamp of the event
-    pub timestamp: DateTime<Utc>,
+    pub timestamp:  DateTime<Utc>,
 }
 
 impl AuditEventContext {
@@ -257,11 +257,11 @@ pub trait DataKeyManager: Send + Sync + 'static {
 #[derive(Debug, Clone, Default)]
 pub struct NetworkContext {
     /// Source IP address
-    pub source_ip: Option<String>,
+    pub source_ip:  Option<String>,
     /// User agent
     pub user_agent: Option<String>,
     /// Protocol used
-    pub protocol: Option<String>,
+    pub protocol:   Option<String>,
 }
 
 /// Represents a resource context
@@ -270,9 +270,9 @@ pub struct ResourceContext {
     /// Resource type
     pub resource_type: String,
     /// Resource ID
-    pub resource_id: String,
+    pub resource_id:   String,
     /// Resource action
-    pub action: String,
+    pub action:        String,
 }
 
 /// Represents the type of operation
@@ -294,30 +294,30 @@ pub enum OperationType {
 #[derive(Debug, Clone)]
 pub struct OperationContext {
     /// Unique operation ID
-    pub operation_id: String,
+    pub operation_id:     String,
     /// Request ID for correlation
-    pub request_id: String,
+    pub request_id:       String,
     /// Operation start time
-    pub start_time: DateTime<Utc>,
+    pub start_time:       DateTime<Utc>,
     /// Network context
-    pub network_context: Option<NetworkContext>,
+    pub network_context:  Option<NetworkContext>,
     /// Resource context
     pub resource_context: Option<ResourceContext>,
     /// Operation timestamp
-    pub timestamp: DateTime<Utc>,
+    pub timestamp:        DateTime<Utc>,
     /// Operation type
-    pub operation_type: OperationType,
+    pub operation_type:   OperationType,
 }
 
 /// Represents encryption configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptionConfig {
     /// The encryption algorithm to use
-    pub algorithm: String,
+    pub algorithm:     String,
     /// The key size in bits
-    pub key_size: usize,
+    pub key_size:      usize,
     /// The initialization vector size in bytes
-    pub iv_size: usize,
+    pub iv_size:       usize,
     /// Whether to use authenticated encryption
     pub authenticated: bool,
 }

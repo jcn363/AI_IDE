@@ -31,7 +31,7 @@ pub mod types {
 
     /// Graceful shutdown coordinator
     pub struct ShutdownCoordinator {
-        pub token: CancellationToken,
+        pub token:        CancellationToken,
         _shutdown_sender: broadcast::Sender<()>,
     }
 
@@ -76,10 +76,7 @@ pub mod types {
 // ===== TIMEOUT UTILITIES =================================================================
 
 /// Enhanced timeout wrapper for async operations
-pub async fn with_timeout<T, F, Fut>(
-    future: F,
-    duration: Duration,
-) -> IdeResult<types::TimeoutResult<T>>
+pub async fn with_timeout<T, F, Fut>(future: F, duration: Duration) -> IdeResult<types::TimeoutResult<T>>
 where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = T>,
@@ -108,9 +105,9 @@ where
     match with_timeout(future, duration).await {
         Ok(types::TimeoutResult::Completed(result)) => Ok(result),
         Ok(types::TimeoutResult::TimedOut) => Err(IdeError::Timeout {
-            message: "async operation timed out".to_string(),
+            message:   "async operation timed out".to_string(),
             operation: "unknown".to_string(),
-            duration: std::time::Duration::new(30, 0),
+            duration:  std::time::Duration::new(30, 0),
         }),
         Ok(types::TimeoutResult::Cancelled) => Err(IdeError::Generic {
             message: "async operation cancelled".to_string(),
@@ -124,11 +121,11 @@ where
 /// Configurable retry options
 pub struct RetryConfig {
     /// Maximum number of attempts (including first attempt)
-    pub max_attempts: u32,
+    pub max_attempts:       u32,
     /// Initial delay between attempts
-    pub initial_delay: Duration,
+    pub initial_delay:      Duration,
     /// Maximum delay between attempts
-    pub max_delay: Duration,
+    pub max_delay:          Duration,
     /// Backoff multiplier (default: 2.0 for exponential)
     pub backoff_multiplier: f64,
 }
@@ -136,9 +133,9 @@ pub struct RetryConfig {
 impl Default for RetryConfig {
     fn default() -> Self {
         Self {
-            max_attempts: 3,
-            initial_delay: Duration::from_millis(1000),
-            max_delay: Duration::from_secs(30),
+            max_attempts:       3,
+            initial_delay:      Duration::from_millis(1000),
+            max_delay:          Duration::from_secs(30),
             backoff_multiplier: 2.0,
         }
     }
@@ -163,9 +160,7 @@ where
         // Check for cancellation
         if let Some(token) = cancellation {
             if token.is_cancelled() {
-                return Err(
-                    last_error.unwrap_or_else(|| panic!("No error to return after cancellation"))
-                );
+                return Err(last_error.unwrap_or_else(|| panic!("No error to return after cancellation")));
             }
         }
 
@@ -175,9 +170,7 @@ where
                 last_error = Some(err);
 
                 // Don't retry on the last attempt or if error shouldn't be retried
-                if attempt == config.max_attempts
-                    || !should_retry(last_error.as_ref().unwrap(), attempt)
-                {
+                if attempt == config.max_attempts || !should_retry(last_error.as_ref().unwrap(), attempt) {
                     return Err(last_error.unwrap());
                 }
 
@@ -231,9 +224,7 @@ where
         &config,
         |error: &String, _attempt| {
             // Retry network-related and transient errors
-            !error.contains("fatal")
-                && !error.contains("unauthorized")
-                && !error.contains("forbidden")
+            !error.contains("fatal") && !error.contains("unauthorized") && !error.contains("forbidden")
         },
         cancellation,
     )
@@ -297,7 +288,7 @@ pub mod task {
     /// Background task manager for graceful shutdown
     pub struct TaskManager {
         coordinator: types::ShutdownCoordinator,
-        handles: Vec<tokio::task::JoinHandle<()>>,
+        handles:     Vec<tokio::task::JoinHandle<()>>,
     }
 
     impl Default for TaskManager {
@@ -310,7 +301,7 @@ pub mod task {
         pub fn new() -> Self {
             Self {
                 coordinator: types::ShutdownCoordinator::new(),
-                handles: Vec::new(),
+                handles:     Vec::new(),
             }
         }
 
@@ -457,7 +448,7 @@ pub mod concurrency {
     /// Rate limiter for operations
     pub struct RateLimiter {
         semaphore: Arc<Semaphore>,
-        interval: Duration,
+        interval:  Duration,
     }
 
     impl RateLimiter {
@@ -499,16 +490,13 @@ pub mod concurrency {
 
 /// Configuration for async operations
 pub struct AsyncOperationConfig {
-    pub timeout: Option<Duration>,
-    pub retry: Option<RetryConfig>,
+    pub timeout:           Option<Duration>,
+    pub retry:             Option<RetryConfig>,
     pub concurrency_limit: Option<usize>,
-    pub cancellation: Option<CancellationToken>,
+    pub cancellation:      Option<CancellationToken>,
 }
 
-pub async fn async_operation<T, F, Fut, E>(
-    operation: F,
-    config: AsyncOperationConfig,
-) -> IdeResult<T>
+pub async fn async_operation<T, F, Fut, E>(operation: F, config: AsyncOperationConfig) -> IdeResult<T>
 where
     F: Fn() -> Fut + Clone + Send + 'static,
     Fut: std::future::Future<Output = Result<T, E>> + Send + 'static,
@@ -533,8 +521,7 @@ where
                     }
                 })
                 .await
-        })
-            as std::pin::Pin<Box<dyn std::future::Future<Output = Result<T, IdeError>> + Send>>
+        }) as std::pin::Pin<Box<dyn std::future::Future<Output = Result<T, IdeError>> + Send>>
     } else {
         let operation_clone = operation.clone();
         Box::pin(async move {
@@ -552,9 +539,7 @@ where
             retry_with_backoff(
                 operation_clone,
                 retry_config,
-                |error: &E, _attempt| {
-                    !error.as_ref().contains("fatal") && !error.as_ref().contains("unauthorized")
-                },
+                |error: &E, _attempt| !error.as_ref().contains("fatal") && !error.as_ref().contains("unauthorized"),
                 cancellation,
             )
             .await

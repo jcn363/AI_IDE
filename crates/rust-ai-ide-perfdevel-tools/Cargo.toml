@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-perfdevel-tools"
-readme = { workspace = true }
+
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
@@ -50,18 +50,15 @@ development = ["benchmarking", "performance_monitoring"]
 
 [[bench]]
 name = "lsp_server_benchmark"
-readme = { workspace = true }
 harness = false
 required-features = ["benchmarking"]
 
 [[bench]]
 name = "completion_perf_benchmark"
-readme = { workspace = true }
 harness = false
 required-features = ["benchmarking"]
 
 [[bench]]
 name = "memory_usage_benchmark"
-readme = { workspace = true }
 harness = false
 required-features = ["benchmarking"]

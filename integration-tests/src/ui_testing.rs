@@ -19,38 +19,38 @@ use crate::{GlobalTestConfig, IntegrationTestResult};
 
 /// UI test automation framework for Tauri applications
 pub struct UITestFramework {
-    app_handle: Option<AppHandle>,
+    app_handle:     Option<AppHandle>,
     browser_config: BrowserConfig,
-    scenarios: Vec<UITestScenario>,
-    reports: Vec<UITestReport>,
+    scenarios:      Vec<UITestScenario>,
+    reports:        Vec<UITestReport>,
 }
 
 #[derive(Debug, Clone)]
 pub struct BrowserConfig {
-    pub headless: bool,
-    pub slow_mo: u64,
+    pub headless:        bool,
+    pub slow_mo:         u64,
     pub default_timeout: Duration,
-    pub viewport: Viewport,
-    pub user_agent: Option<String>,
+    pub viewport:        Viewport,
+    pub user_agent:      Option<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Viewport {
-    pub width: u32,
+    pub width:  u32,
     pub height: u32,
 }
 
 impl Default for BrowserConfig {
     fn default() -> Self {
         Self {
-            headless: true,
-            slow_mo: 50,
+            headless:        true,
+            slow_mo:         50,
             default_timeout: Duration::from_secs(30),
-            viewport: Viewport {
-                width: 1280,
+            viewport:        Viewport {
+                width:  1280,
                 height: 720,
             },
-            user_agent: Some("Rust-AI-IDE-Test/1.0".to_string()),
+            user_agent:      Some("Rust-AI-IDE-Test/1.0".to_string()),
         }
     }
 }
@@ -58,12 +58,12 @@ impl Default for BrowserConfig {
 /// Individual UI test scenario
 #[derive(Debug, Clone)]
 pub struct UITestScenario {
-    pub name: String,
-    pub description: String,
-    pub steps: Vec<TestStep>,
-    pub tags: HashSet<String>,
-    pub timeout: Duration,
-    pub prerequisites: Vec<String>,
+    pub name:              String,
+    pub description:       String,
+    pub steps:             Vec<TestStep>,
+    pub tags:              HashSet<String>,
+    pub timeout:           Duration,
+    pub prerequisites:     Vec<String>,
     pub expected_outcomes: Vec<String>,
 }
 
@@ -77,24 +77,24 @@ pub enum TestStep {
     },
     Type {
         selector: String,
-        text: String,
-        clear: bool,
+        text:     String,
+        clear:    bool,
     },
     Select {
         selector: String,
-        value: Option<String>,
-        text: Option<String>,
+        value:    Option<String>,
+        text:     Option<String>,
     },
     Wait {
         duration: Duration,
     },
     WaitForElement {
         selector: String,
-        visible: bool,
+        visible:  bool,
     },
     WaitForText {
         selector: String,
-        text: String,
+        text:     String,
     },
     AssertVisible {
         selector: String,
@@ -103,7 +103,7 @@ pub enum TestStep {
         selector: String,
     },
     AssertText {
-        selector: String,
+        selector:      String,
         expected_text: String,
     },
     Screenshot {
@@ -114,12 +114,12 @@ pub enum TestStep {
     },
     ApiCall {
         endpoint: String,
-        method: String,
-        body: Option<String>,
+        method:   String,
+        body:     Option<String>,
     },
     CommandCall {
         command: String,
-        args: Vec<String>,
+        args:    Vec<String>,
     },
 }
 
@@ -127,55 +127,55 @@ pub enum TestStep {
 #[derive(Debug)]
 pub struct TestExecutionContext {
     pub scenario_name: String,
-    pub current_step: usize,
-    pub variables: HashMap<String, String>,
-    pub screenshots: Vec<String>,
+    pub current_step:  usize,
+    pub variables:     HashMap<String, String>,
+    pub screenshots:   Vec<String>,
     pub api_responses: Vec<ApiResponse>,
-    pub errors: Vec<String>,
-    pub start_time: DateTime<Utc>,
+    pub errors:        Vec<String>,
+    pub start_time:    DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApiResponse {
-    pub endpoint: String,
-    pub status_code: u16,
-    pub response_body: String,
+    pub endpoint:         String,
+    pub status_code:      u16,
+    pub response_body:    String,
     pub response_time_ms: u64,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp:        DateTime<Utc>,
 }
 
 /// Test report for UI scenario execution
 #[derive(Debug, Clone)]
 pub struct UITestReport {
-    pub scenario_name: String,
-    pub success: bool,
-    pub duration: Duration,
-    pub steps_completed: usize,
-    pub total_steps: usize,
-    pub screenshots: Vec<String>,
-    pub errors: Vec<String>,
+    pub scenario_name:       String,
+    pub success:             bool,
+    pub duration:            Duration,
+    pub steps_completed:     usize,
+    pub total_steps:         usize,
+    pub screenshots:         Vec<String>,
+    pub errors:              Vec<String>,
     pub performance_metrics: HashMap<String, f64>,
-    pub coverage_data: Option<CoverageData>,
-    pub timestamp: DateTime<Utc>,
+    pub coverage_data:       Option<CoverageData>,
+    pub timestamp:           DateTime<Utc>,
 }
 
 #[derive(Debug, Clone)]
 pub struct CoverageData {
-    pub lines_covered: u64,
-    pub total_lines: u64,
-    pub branches_covered: u64,
-    pub total_branches: u64,
+    pub lines_covered:     u64,
+    pub total_lines:       u64,
+    pub branches_covered:  u64,
+    pub total_branches:    u64,
     pub functions_covered: u64,
-    pub total_functions: u64,
+    pub total_functions:   u64,
 }
 
 impl UITestFramework {
     pub fn new() -> Self {
         Self {
-            app_handle: None,
+            app_handle:     None,
             browser_config: BrowserConfig::default(),
-            scenarios: Vec::new(),
-            reports: Vec::new(),
+            scenarios:      Vec::new(),
+            reports:        Vec::new(),
         }
     }
 
@@ -191,10 +191,7 @@ impl UITestFramework {
     }
 
     /// Load scenarios from configuration file
-    pub fn load_scenarios_from_file<P: AsRef<std::path::Path>>(
-        &mut self,
-        path: P,
-    ) -> Result<(), RustAIError> {
+    pub fn load_scenarios_from_file<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), RustAIError> {
         use std::fs;
         use std::path::Path;
 
@@ -244,16 +241,16 @@ impl UITestFramework {
                 Err(e) => {
                     // Handle task panic
                     reports.push(UITestReport {
-                        scenario_name: "unknown".to_string(),
-                        success: false,
-                        duration: Duration::from_secs(0),
-                        steps_completed: 0,
-                        total_steps: 0,
-                        screenshots: vec![],
-                        errors: vec![format!("Task panicked: {}", e)],
+                        scenario_name:       "unknown".to_string(),
+                        success:             false,
+                        duration:            Duration::from_secs(0),
+                        steps_completed:     0,
+                        total_steps:         0,
+                        screenshots:         vec![],
+                        errors:              vec![format!("Task panicked: {}", e)],
                         performance_metrics: HashMap::new(),
-                        coverage_data: None,
-                        timestamp: Utc::now(),
+                        coverage_data:       None,
+                        timestamp:           Utc::now(),
                     });
                 }
             }
@@ -321,12 +318,12 @@ impl UITestFramework {
         let start_time = Instant::now();
         let mut context = TestExecutionContext {
             scenario_name: scenario.name.clone(),
-            current_step: 0,
-            variables: HashMap::new(),
-            screenshots: Vec::new(),
+            current_step:  0,
+            variables:     HashMap::new(),
+            screenshots:   Vec::new(),
             api_responses: Vec::new(),
-            errors: Vec::new(),
-            start_time: Utc::now(),
+            errors:        Vec::new(),
+            start_time:    Utc::now(),
         };
 
         for (step_index, step) in scenario.steps.iter().enumerate() {
@@ -400,18 +397,11 @@ impl UITestFramework {
                 text,
             } => Self::execute_select(selector, value.as_deref(), text.as_deref(), context).await,
             TestStep::Wait { duration } => Self::execute_wait(*duration).await,
-            TestStep::WaitForElement { selector, visible } => {
-                Self::execute_wait_for_element(selector, *visible, context).await
-            }
-            TestStep::WaitForText { selector, text } => {
-                Self::execute_wait_for_text(selector, text, context).await
-            }
-            TestStep::AssertVisible { selector } => {
-                Self::execute_assert_visible(selector, context).await
-            }
-            TestStep::AssertHidden { selector } => {
-                Self::execute_assert_hidden(selector, context).await
-            }
+            TestStep::WaitForElement { selector, visible } =>
+                Self::execute_wait_for_element(selector, *visible, context).await,
+            TestStep::WaitForText { selector, text } => Self::execute_wait_for_text(selector, text, context).await,
+            TestStep::AssertVisible { selector } => Self::execute_assert_visible(selector, context).await,
+            TestStep::AssertHidden { selector } => Self::execute_assert_hidden(selector, context).await,
             TestStep::AssertText {
                 selector,
                 expected_text,
@@ -423,9 +413,7 @@ impl UITestFramework {
                 method,
                 body,
             } => Self::execute_api_call(endpoint, method, body.as_deref(), context).await,
-            TestStep::CommandCall { command, args } => {
-                Self::execute_command_call(command, args, context).await
-            }
+            TestStep::CommandCall { command, args } => Self::execute_command_call(command, args, context).await,
         }
     }
 
@@ -576,17 +564,11 @@ impl UITestFramework {
             .collect::<Vec<_>>()
             .join("\n")
     } // Test implementations for UI steps
-    async fn execute_navigate(
-        _url: &str,
-        _context: &mut TestExecutionContext,
-    ) -> Result<(), RustAIError> {
+    async fn execute_navigate(_url: &str, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
         tracing::info!("Navigating to URL: {}", _url);
         Ok(())
     }
-    async fn execute_click(
-        _selector: &str,
-        _context: &mut TestExecutionContext,
-    ) -> Result<(), RustAIError> {
+    async fn execute_click(_selector: &str, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
         tracing::info!("Clicking element: {}", _selector);
         Ok(())
     }
@@ -644,18 +626,12 @@ impl UITestFramework {
         Ok(())
     }
 
-    async fn execute_assert_visible(
-        _selector: &str,
-        _context: &mut TestExecutionContext,
-    ) -> Result<(), RustAIError> {
+    async fn execute_assert_visible(_selector: &str, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
         tracing::info!("Asserting element is visible: {}", _selector);
         Ok(())
     }
 
-    async fn execute_assert_hidden(
-        _selector: &str,
-        _context: &mut TestExecutionContext,
-    ) -> Result<(), RustAIError> {
+    async fn execute_assert_hidden(_selector: &str, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
         tracing::info!("Asserting element is hidden: {}", _selector);
         Ok(())
     }
@@ -673,20 +649,14 @@ impl UITestFramework {
         Ok(())
     }
 
-    async fn execute_screenshot(
-        name: &str,
-        context: &mut TestExecutionContext,
-    ) -> Result<(), RustAIError> {
+    async fn execute_screenshot(name: &str, context: &mut TestExecutionContext) -> Result<(), RustAIError> {
         let screenshot_path = format!("{}_{}.png", context.scenario_name, name);
         tracing::info!("Taking screenshot: {}", screenshot_path);
         context.screenshots.push(screenshot_path);
         Ok(())
     }
 
-    async fn execute_evaluate(
-        _script: &str,
-        _context: &mut TestExecutionContext,
-    ) -> Result<(), RustAIError> {
+    async fn execute_evaluate(_script: &str, _context: &mut TestExecutionContext) -> Result<(), RustAIError> {
         tracing::info!("Evaluating JavaScript script");
         Ok(())
     }
@@ -781,19 +751,19 @@ mod tests {
         let mut framework = UITestFramework::new();
 
         let report = UITestReport {
-            scenario_name: "test_scenario".to_string(),
-            success: true,
-            duration: Duration::from_millis(1500),
-            steps_completed: 5,
-            total_steps: 5,
-            screenshots: vec!["screenshot1.png".to_string()],
-            errors: vec![],
+            scenario_name:       "test_scenario".to_string(),
+            success:             true,
+            duration:            Duration::from_millis(1500),
+            steps_completed:     5,
+            total_steps:         5,
+            screenshots:         vec!["screenshot1.png".to_string()],
+            errors:              vec![],
             performance_metrics: HashMap::from([
                 ("total_duration_ms".to_string(), 1500.0),
                 ("steps_per_second".to_string(), 3.33),
             ]),
-            coverage_data: None,
-            timestamp: Utc::now(),
+            coverage_data:       None,
+            timestamp:           Utc::now(),
         };
 
         framework.reports.push(report);

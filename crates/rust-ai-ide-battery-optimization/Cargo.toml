@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-battery-optimization"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 
@@ -36,5 +36,5 @@ mobile-ai = []
 
 [lib]
 name = "rust_ai_ide_battery_optimization"
-readme = { workspace = true }
+
 path = "src/lib.rs"

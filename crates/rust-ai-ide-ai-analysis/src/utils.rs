@@ -8,25 +8,25 @@ use crate::analysis::types::{AnalysisCategory, Range, Severity};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisFinding {
     /// The type of the finding
-    pub kind: String,
+    pub kind:       String,
     /// Description of the finding
-    pub message: String,
+    pub message:    String,
     /// The actual finding data as a JSON string
-    pub data: String,
+    pub data:       String,
     /// Severity level
-    pub severity: Severity,
+    pub severity:   Severity,
     /// Category of the finding
-    pub category: AnalysisCategory,
+    pub category:   AnalysisCategory,
     /// Location in the source code
-    pub location: String,
+    pub location:   String,
     /// Code range where the finding was detected
-    pub range: Range,
+    pub range:      Range,
     /// Optional suggestion for fixing the issue
     pub suggestion: Option<String>,
     /// Confidence level (0.0 to 1.0)
     pub confidence: f32,
     /// Unique identifier for the rule that generated this finding
-    pub rule_id: String,
+    pub rule_id:    String,
 }
 
 /// Create a progress bar for analysis operations
@@ -87,9 +87,9 @@ pub fn span_to_range(span: &proc_macro2::Span) -> Range {
     // This will need to be updated if we need accurate positions
     Range {
         start_line: 1,
-        start_col: 1,
-        end_line: 1,
-        end_col: source_text.len() as u32 + 1, // Approximate end column
+        start_col:  1,
+        end_line:   1,
+        end_col:    source_text.len() as u32 + 1, // Approximate end column
     }
 }
 

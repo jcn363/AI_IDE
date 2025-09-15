@@ -59,8 +59,7 @@ macro_rules! setup_test_workspace {
         $crate::filesystem::TempWorkspace::new().expect_test("Failed to create test workspace")
     };
     ($scenario:expr) => {{
-        let workspace =
-            $crate::filesystem::TempWorkspace::new().expect_test("Failed to create test workspace");
+        let workspace = $crate::filesystem::TempWorkspace::new().expect_test("Failed to create test workspace");
         workspace
             .setup_scenario($scenario)
             .expect_test("Failed to setup test scenario");

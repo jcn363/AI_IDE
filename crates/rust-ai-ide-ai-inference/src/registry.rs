@@ -91,13 +91,13 @@ use crate::unloading_policies::{PolicyEvaluator, UnloadingRecommendation};
 #[derive(Debug)]
 pub struct ModelRegistry {
     /// Loaded models with their handles
-    loaded_models: Arc<RwLock<HashMap<String, ModelHandle>>>,
+    loaded_models:    Arc<RwLock<HashMap<String, ModelHandle>>>,
     /// Available model loaders
-    model_loaders: HashMap<ModelType, Arc<dyn ModelLoader>>,
+    model_loaders:    HashMap<ModelType, Arc<dyn ModelLoader>>,
     /// Operations in progress (for preventing concurrent loads)
     load_in_progress: Arc<RwLock<HashMap<String, tokio::sync::mpsc::Sender<()>>>>,
     /// System resource monitor
-    system_monitor: Arc<SystemMonitor>,
+    system_monitor:   Arc<SystemMonitor>,
     /// Policy evaluator for automatic unloading
     policy_evaluator: PolicyEvaluator,
     /// Current unloading policy
@@ -149,15 +149,11 @@ impl ModelRegistry {
     }
 
     /// Check if a load is already in progress and prevent concurrent loads
-    async fn check_and_prepare_load(
-        &self,
-        load_key: String,
-    ) -> Result<tokio::sync::mpsc::Sender<()>> {
+    async fn check_and_prepare_load(&self, load_key: String) -> Result<tokio::sync::mpsc::Sender<()>> {
         let (tx, _rx) = tokio::sync::mpsc::channel::<()>(1);
 
         let mut in_progress = self.load_in_progress.write().await;
-        if let std::collections::hash_map::Entry::Occupied(_) = in_progress.entry(load_key.clone())
-        {
+        if let std::collections::hash_map::Entry::Occupied(_) = in_progress.entry(load_key.clone()) {
             return Err(anyhow!("Model load already in progress"));
         }
         in_progress.insert(load_key, tx.clone());
@@ -376,9 +372,7 @@ impl ModelRegistry {
     }
 
     /// Get detailed resource usage statistics
-    pub async fn get_resource_usage_stats(
-        &self,
-    ) -> HashMap<String, crate::resource_types::ResourceUsage> {
+    pub async fn get_resource_usage_stats(&self) -> HashMap<String, crate::resource_types::ResourceUsage> {
         let models = self.loaded_models.read().await;
         models
             .values()
@@ -411,20 +405,16 @@ impl ModelRegistry {
     }
 
     /// Start background automatic unloading task
-    pub async fn start_auto_unloading_task(
-        &self,
-        interval_seconds: u64,
-    ) -> tokio::task::JoinHandle<()> {
+    pub async fn start_auto_unloading_task(&self, interval_seconds: u64) -> tokio::task::JoinHandle<()> {
         let registry_ref = Arc::new(ModelRegistryInner {
-            loaded_models: Arc::clone(&self.loaded_models),
-            model_loaders: self.model_loaders.clone(),
+            loaded_models:    Arc::clone(&self.loaded_models),
+            model_loaders:    self.model_loaders.clone(),
             policy_evaluator: self.policy_evaluator.clone(),
             unloading_policy: self.unloading_policy.clone(),
         });
 
         tokio::spawn(async move {
-            let mut interval =
-                tokio::time::interval(std::time::Duration::from_secs(interval_seconds));
+            let mut interval = tokio::time::interval(std::time::Duration::from_secs(interval_seconds));
 
             loop {
                 interval.tick().await;
@@ -445,8 +435,8 @@ impl ModelRegistry {
 
 /// Internal registry wrapper for background tasks
 struct ModelRegistryInner {
-    loaded_models: Arc<RwLock<HashMap<String, ModelHandle>>>,
-    model_loaders: HashMap<ModelType, Arc<dyn ModelLoader>>,
+    loaded_models:    Arc<RwLock<HashMap<String, ModelHandle>>>,
+    model_loaders:    HashMap<ModelType, Arc<dyn ModelLoader>>,
     policy_evaluator: PolicyEvaluator,
     unloading_policy: UnloadingPolicy,
 }
@@ -491,8 +481,7 @@ mod tests {
         let registry = ModelRegistry::new();
         assert_eq!(registry.get_total_memory_usage().await, 0);
 
-        let policy_registry =
-            ModelRegistry::with_policy(UnloadingPolicy::MemoryThreshold { max_memory_gb: 8.0 });
+        let policy_registry = ModelRegistry::with_policy(UnloadingPolicy::MemoryThreshold { max_memory_gb: 8.0 });
         assert!(matches!(
             policy_registry.get_unloading_policy(),
             UnloadingPolicy::MemoryThreshold { .. }

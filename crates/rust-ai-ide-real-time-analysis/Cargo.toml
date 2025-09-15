@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-real-time-analysis"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 description = "Phase 3.1: Real-Time Code Analysis Engine - Real-time file monitoring, multi-threaded analysis pipeline, and live quality dashboards"

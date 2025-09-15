@@ -39,10 +39,7 @@ impl MetricsAnalyzer {
     }
 
     /// Calculate quality metrics for the given context
-    pub async fn calculate_metrics(
-        &self,
-        context: &ArchitecturalContext,
-    ) -> AdvisorResult<QualityMetrics> {
+    pub async fn calculate_metrics(&self, context: &ArchitecturalContext) -> AdvisorResult<QualityMetrics> {
         let lines_of_code = self.calculate_lines_of_code(&context.codebase_path).await?;
         let cyclomatic_complexity = self
             .calculate_cyclomatic_complexity(&context.codebase_path)
@@ -50,8 +47,7 @@ impl MetricsAnalyzer {
         let halstead_complexity = self
             .calculate_halstead_complexity(&context.codebase_path)
             .await?;
-        let maintainability_index =
-            self.calculate_maintainability_index(lines_of_code, cyclomatic_complexity)?;
+        let maintainability_index = self.calculate_maintainability_index(lines_of_code, cyclomatic_complexity)?;
         let technical_debt_ratio = self
             .calculate_technical_debt_ratio(&context.codebase_path)
             .await?;
@@ -68,10 +64,7 @@ impl MetricsAnalyzer {
     }
 
     /// Assess overall system complexity
-    pub async fn assess_complexity(
-        &self,
-        codebase_analysis: &CodebaseAnalysis,
-    ) -> AdvisorResult<ComplexityAssessment> {
+    pub async fn assess_complexity(&self, codebase_analysis: &CodebaseAnalysis) -> AdvisorResult<ComplexityAssessment> {
         let overall_complexity = self.calculate_overall_complexity(codebase_analysis);
         let hotspot_complexity = self.find_complexity_hotspots(codebase_analysis);
         let complexity_trends = self.analyze_complexity_trends(codebase_analysis);
@@ -151,9 +144,9 @@ impl MetricsAnalyzer {
     fn find_complexity_hotspots(&self, _analysis: &CodebaseAnalysis) -> Vec<ComplexityHotspot> {
         // In a real implementation, this would identify files with high complexity
         vec![ComplexityHotspot {
-            file: "src/complex_module.rs".to_string(),
+            file:             "src/complex_module.rs".to_string(),
             complexity_score: 35.7,
-            description: "High cyclomatic complexity due to nested conditionals".to_string(),
+            description:      "High cyclomatic complexity due to nested conditionals".to_string(),
         }]
     }
 
@@ -161,9 +154,9 @@ impl MetricsAnalyzer {
     fn analyze_complexity_trends(&self, _analysis: &CodebaseAnalysis) -> Vec<ComplexityTrend> {
         // In a real implementation, this would analyze complexity changes over time
         vec![ComplexityTrend {
-            period: "Last 3 months".to_string(),
+            period:            "Last 3 months".to_string(),
             complexity_change: 5.2,
-            description: "Moderate increase in complexity due to feature additions".to_string(),
+            description:       "Moderate increase in complexity due to feature additions".to_string(),
         }]
     }
 }
@@ -234,24 +227,21 @@ impl DecisionEngine {
     fn initialize_decision_knowledge() -> HashMap<String, DecisionTemplate> {
         let mut knowledge = HashMap::new();
 
-        knowledge.insert(
-            "Database Selection".to_string(),
-            DecisionTemplate {
-                name: "Database Selection Decision Template".to_string(),
-                criteria_weights: HashMap::from([
-                    ("Performance".to_string(), 0.3),
-                    ("Scalability".to_string(), 0.25),
-                    ("Maintainability".to_string(), 0.2),
-                    ("Cost".to_string(), 0.15),
-                    ("Security".to_string(), 0.1),
-                ]),
-                risk_factors: vec![
-                    "Vendor lock-in".to_string(),
-                    "Migration complexity".to_string(),
-                    "Team expertise".to_string(),
-                ],
-            },
-        );
+        knowledge.insert("Database Selection".to_string(), DecisionTemplate {
+            name:             "Database Selection Decision Template".to_string(),
+            criteria_weights: HashMap::from([
+                ("Performance".to_string(), 0.3),
+                ("Scalability".to_string(), 0.25),
+                ("Maintainability".to_string(), 0.2),
+                ("Cost".to_string(), 0.15),
+                ("Security".to_string(), 0.1),
+            ]),
+            risk_factors:     vec![
+                "Vendor lock-in".to_string(),
+                "Migration complexity".to_string(),
+                "Team expertise".to_string(),
+            ],
+        });
 
         knowledge
     }
@@ -260,24 +250,24 @@ impl DecisionEngine {
 /// Decision template for evaluation guidance
 #[derive(Debug)]
 struct DecisionTemplate {
-    name: String,
+    name:             String,
     criteria_weights: HashMap<String, f32>,
-    risk_factors: Vec<String>,
+    risk_factors:     Vec<String>,
 }
 
 /// Knowledge base for architectural decisions
 #[derive(Debug, Default)]
 pub struct KnowledgeBase {
-    patterns: HashMap<String, HashMap<String, f32>>,
-    risks: Vec<String>,
+    patterns:    HashMap<String, HashMap<String, f32>>,
+    risks:       Vec<String>,
     constraints: Vec<String>,
 }
 
 impl KnowledgeBase {
     pub fn new() -> Self {
         Self {
-            patterns: Self::initialize_patterns(),
-            risks: Self::initialize_risks(),
+            patterns:    Self::initialize_patterns(),
+            risks:       Self::initialize_risks(),
             constraints: Self::initialize_constraints(),
         }
     }
@@ -397,10 +387,7 @@ pub mod analysis_utils {
     }
 
     /// Analyze dependency depth for potential circular dependencies
-    pub fn analyze_dependency_depth(
-        dependencies: &HashMap<String, Vec<String>>,
-        max_depth: usize,
-    ) -> Vec<String> {
+    pub fn analyze_dependency_depth(dependencies: &HashMap<String, Vec<String>>, max_depth: usize) -> Vec<String> {
         let mut circular_deps = Vec::new();
 
         for (module, deps) in dependencies {

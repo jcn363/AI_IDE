@@ -44,53 +44,53 @@ impl SerializationFormat {
 /// Serializable representation of the dependency graph
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SerializableGraph {
-    pub nodes: Vec<SerializableNode>,
-    pub edges: Vec<SerializableEdge>,
-    pub root_package: Option<String>,
+    pub nodes:             Vec<SerializableNode>,
+    pub edges:             Vec<SerializableEdge>,
+    pub root_package:      Option<String>,
     pub workspace_members: Vec<String>,
-    pub metadata: GraphMetadata,
+    pub metadata:          GraphMetadata,
 }
 
 /// Metadata about the serialized graph
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphMetadata {
-    pub total_packages: usize,
+    pub total_packages:     usize,
     pub total_dependencies: usize,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-    pub format_version: String,
-    pub source: String,
+    pub created_at:         chrono::DateTime<chrono::Utc>,
+    pub format_version:     String,
+    pub source:             String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SerializableNode {
-    pub name: String,
-    pub version: Option<String>,
-    pub description: Option<String>,
-    pub repository: Option<String>,
-    pub license: Option<String>,
-    pub authors: Vec<String>,
-    pub keywords: Vec<String>,
-    pub categories: Vec<String>,
-    pub homepage: Option<String>,
-    pub documentation: Option<String>,
-    pub readme: Option<String>,
+    pub name:                String,
+    pub version:             Option<String>,
+    pub description:         Option<String>,
+    pub repository:          Option<String>,
+    pub license:             Option<String>,
+    pub authors:             Vec<String>,
+    pub keywords:            Vec<String>,
+    pub categories:          Vec<String>,
+    pub homepage:            Option<String>,
+    pub documentation:       Option<String>,
+    pub readme:              Option<String>,
     pub is_workspace_member: bool,
-    pub source_url: Option<String>,
-    pub checksum: Option<String>,
-    pub yanked: bool,
-    pub created_at: Option<String>,
+    pub source_url:          Option<String>,
+    pub checksum:            Option<String>,
+    pub yanked:              bool,
+    pub created_at:          Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SerializableEdge {
-    pub source_node: String,
-    pub target_node: String,
-    pub dep_type: String,
+    pub source_node:        String,
+    pub target_node:        String,
+    pub dep_type:           String,
     pub version_constraint: Option<String>,
     pub features_requested: Vec<String>,
-    pub features_enabled: Vec<String>,
-    pub optional: bool,
-    pub req_depth: usize,
+    pub features_enabled:   Vec<String>,
+    pub optional:           bool,
+    pub req_depth:          usize,
 }
 
 /// Graph serializer with multiple format support
@@ -104,17 +104,12 @@ impl GraphSerializer {
     }
 
     pub fn from_extension(extension: &str) -> DependencyResult<Self> {
-        let format = SerializationFormat::from_extension(extension).ok_or_else(|| {
-            DependencyError::ParseError(format!("Unsupported file extension: {}", extension))
-        })?;
+        let format = SerializationFormat::from_extension(extension)
+            .ok_or_else(|| DependencyError::ParseError(format!("Unsupported file extension: {}", extension)))?;
         Ok(Self::new(format))
     }
 
-    pub async fn serialize_to_file(
-        &self,
-        graph: &DependencyGraph,
-        path: &Path,
-    ) -> DependencyResult<()> {
+    pub async fn serialize_to_file(&self, graph: &DependencyGraph, path: &Path) -> DependencyResult<()> {
         let serializable = self.convert_to_serializable(graph).await?;
         let data = self.serialize_data(&serializable)?;
         self.write_to_file(path, &data).await?;
@@ -141,65 +136,53 @@ impl GraphSerializer {
 
     fn serialize_data(&self, data: &SerializableGraph) -> DependencyResult<String> {
         match self.format {
-            SerializationFormat::Json => serde_json::to_string_pretty(data).map_err(|e| {
-                DependencyError::ParseError(format!("JSON serialization error: {}", e))
-            }),
-            SerializationFormat::Yaml => serde_yaml::to_string(data).map_err(|e| {
-                DependencyError::ParseError(format!("YAML serialization error: {}", e))
-            }),
-            SerializationFormat::Toml => Ok(toml::to_string(data).map_err(|e| {
-                DependencyError::ParseError(format!("TOML serialization error: {}", e))
-            })?),
+            SerializationFormat::Json => serde_json::to_string_pretty(data)
+                .map_err(|e| DependencyError::ParseError(format!("JSON serialization error: {}", e))),
+            SerializationFormat::Yaml => serde_yaml::to_string(data)
+                .map_err(|e| DependencyError::ParseError(format!("YAML serialization error: {}", e))),
+            SerializationFormat::Toml => Ok(toml::to_string(data)
+                .map_err(|e| DependencyError::ParseError(format!("TOML serialization error: {}", e)))?),
             SerializationFormat::Msgpack => Err(DependencyError::ParseError(
                 "Msgpack serialization not implemented".to_string(),
             )),
         }
     }
 
-    fn deserialize_data<'a, T: serde::Deserialize<'a>>(
-        &self,
-        data: &'a str,
-    ) -> DependencyResult<T> {
+    fn deserialize_data<'a, T: serde::Deserialize<'a>>(&self, data: &'a str) -> DependencyResult<T> {
         match self.format {
-            SerializationFormat::Json => serde_json::from_str(data).map_err(|e| {
-                DependencyError::ParseError(format!("JSON deserialization error: {}", e))
-            }),
-            SerializationFormat::Yaml => serde_yaml::from_str(data).map_err(|e| {
-                DependencyError::ParseError(format!("YAML deserialization error: {}", e))
-            }),
-            SerializationFormat::Toml => toml::from_str(data).map_err(|e| {
-                DependencyError::ParseError(format!("TOML deserialization error: {}", e))
-            }),
+            SerializationFormat::Json => serde_json::from_str(data)
+                .map_err(|e| DependencyError::ParseError(format!("JSON deserialization error: {}", e))),
+            SerializationFormat::Yaml => serde_yaml::from_str(data)
+                .map_err(|e| DependencyError::ParseError(format!("YAML deserialization error: {}", e))),
+            SerializationFormat::Toml => toml::from_str(data)
+                .map_err(|e| DependencyError::ParseError(format!("TOML deserialization error: {}", e))),
             SerializationFormat::Msgpack => Err(DependencyError::ParseError(
                 "Msgpack deserialization not implemented".to_string(),
             )),
         }
     }
 
-    async fn convert_to_serializable(
-        &self,
-        graph: &DependencyGraph,
-    ) -> DependencyResult<SerializableGraph> {
+    async fn convert_to_serializable(&self, graph: &DependencyGraph) -> DependencyResult<SerializableGraph> {
         let nodes: Vec<SerializableNode> = graph
             .get_all_packages()
             .iter()
             .map(|node| SerializableNode {
-                name: node.name.clone(),
-                version: node.version.clone(),
-                description: node.description.clone(),
-                repository: node.repository.clone(),
-                license: node.license.clone(),
-                authors: node.authors.clone(),
-                keywords: node.keywords.clone(),
-                categories: node.categories.clone(),
-                homepage: node.homepage.clone(),
-                documentation: node.documentation.clone(),
-                readme: node.readme.clone(),
+                name:                node.name.clone(),
+                version:             node.version.clone(),
+                description:         node.description.clone(),
+                repository:          node.repository.clone(),
+                license:             node.license.clone(),
+                authors:             node.authors.clone(),
+                keywords:            node.keywords.clone(),
+                categories:          node.categories.clone(),
+                homepage:            node.homepage.clone(),
+                documentation:       node.documentation.clone(),
+                readme:              node.readme.clone(),
                 is_workspace_member: node.is_workspace_member,
-                source_url: node.source_url.clone(),
-                checksum: node.checksum.clone(),
-                yanked: node.yanked,
-                created_at: node.created_at.clone(),
+                source_url:          node.source_url.clone(),
+                checksum:            node.checksum.clone(),
+                yanked:              node.yanked,
+                created_at:          node.created_at.clone(),
             })
             .collect();
 
@@ -212,14 +195,14 @@ impl GraphSerializer {
                 if let Some(source_node) = graph.graph.node_weight(edge_ref.source()) {
                     if let Some(target_node) = graph.graph.node_weight(edge_ref.target()) {
                         let edge = SerializableEdge {
-                            source_node: source_node.name.clone(),
-                            target_node: target_node.name.clone(),
-                            dep_type: format!("{:?}", edge_ref.weight().dep_type),
+                            source_node:        source_node.name.clone(),
+                            target_node:        target_node.name.clone(),
+                            dep_type:           format!("{:?}", edge_ref.weight().dep_type),
                             version_constraint: edge_ref.weight().version_constraint.clone(),
                             features_requested: edge_ref.weight().features_requested.clone(),
-                            features_enabled: edge_ref.weight().features_enabled.clone(),
-                            optional: edge_ref.weight().optional,
-                            req_depth: edge_ref.weight().req_depth,
+                            features_enabled:   edge_ref.weight().features_enabled.clone(),
+                            optional:           edge_ref.weight().optional,
+                            req_depth:          edge_ref.weight().req_depth,
                         };
                         edges.push(edge);
                     }
@@ -228,11 +211,11 @@ impl GraphSerializer {
         }
 
         let metadata = GraphMetadata {
-            total_packages: nodes.len(),
+            total_packages:     nodes.len(),
             total_dependencies: edges.len(),
-            created_at: chrono::Utc::now(),
-            format_version: "1.0".to_string(),
-            source: "rust-ai-ide-dependency-graph".to_string(),
+            created_at:         chrono::Utc::now(),
+            format_version:     "1.0".to_string(),
+            source:             "rust-ai-ide-dependency-graph".to_string(),
         };
 
         Ok(SerializableGraph {
@@ -244,31 +227,28 @@ impl GraphSerializer {
         })
     }
 
-    fn convert_from_serializable(
-        &self,
-        serializable: SerializableGraph,
-    ) -> DependencyResult<DependencyGraph> {
+    fn convert_from_serializable(&self, serializable: SerializableGraph) -> DependencyResult<DependencyGraph> {
         let mut graph = DependencyGraph::new();
 
         // Add nodes
         for node_data in serializable.nodes {
             let node = DependencyNode {
-                name: node_data.name,
-                version: node_data.version,
-                description: node_data.description,
-                repository: node_data.repository,
-                license: node_data.license,
-                authors: node_data.authors,
-                keywords: node_data.keywords,
-                categories: node_data.categories,
-                homepage: node_data.homepage,
-                documentation: node_data.documentation,
-                readme: node_data.readme,
+                name:                node_data.name,
+                version:             node_data.version,
+                description:         node_data.description,
+                repository:          node_data.repository,
+                license:             node_data.license,
+                authors:             node_data.authors,
+                keywords:            node_data.keywords,
+                categories:          node_data.categories,
+                homepage:            node_data.homepage,
+                documentation:       node_data.documentation,
+                readme:              node_data.readme,
                 is_workspace_member: node_data.is_workspace_member,
-                source_url: node_data.source_url,
-                checksum: node_data.checksum,
-                yanked: node_data.yanked,
-                created_at: node_data.created_at,
+                source_url:          node_data.source_url,
+                checksum:            node_data.checksum,
+                yanked:              node_data.yanked,
+                created_at:          node_data.created_at,
             };
 
             graph.add_package(node)?;
@@ -318,8 +298,7 @@ impl GraphSerializer {
         let path = path.to_path_buf();
         let data = data.to_string();
         task::spawn_blocking(move || {
-            fs::write(&path, &data)
-                .map_err(|e| DependencyError::IoError(format!("Failed to write file: {}", e)))
+            fs::write(&path, &data).map_err(|e| DependencyError::IoError(format!("Failed to write file: {}", e)))
         })
         .await
         .map_err(|e| DependencyError::IoError(format!("Task join error: {}", e)))?
@@ -328,8 +307,7 @@ impl GraphSerializer {
     async fn read_from_file(&self, path: &Path) -> DependencyResult<String> {
         let path = path.to_path_buf();
         task::spawn_blocking(move || {
-            fs::read_to_string(&path)
-                .map_err(|e| DependencyError::IoError(format!("Failed to read file: {}", e)))
+            fs::read_to_string(&path).map_err(|e| DependencyError::IoError(format!("Failed to read file: {}", e)))
         })
         .await
         .map_err(|e| DependencyError::IoError(format!("Task join error: {}", e)))?
@@ -350,10 +328,7 @@ impl GraphExporter {
         serializer.serialize_to_file(graph, path).await
     }
 
-    pub async fn export_to_string(
-        graph: &DependencyGraph,
-        format: SerializationFormat,
-    ) -> DependencyResult<String> {
+    pub async fn export_to_string(graph: &DependencyGraph, format: SerializationFormat) -> DependencyResult<String> {
         let serializer = GraphSerializer::new(format);
         serializer.serialize_to_string(graph).await
     }
@@ -373,10 +348,7 @@ impl GraphImporter {
         serializer.deserialize_from_file(path).await
     }
 
-    pub async fn import_from_string(
-        data: &str,
-        format: SerializationFormat,
-    ) -> DependencyResult<DependencyGraph> {
+    pub async fn import_from_string(data: &str, format: SerializationFormat) -> DependencyResult<DependencyGraph> {
         let serializer = GraphSerializer::new(format);
         serializer.deserialize_from_string(data).await
     }

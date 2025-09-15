@@ -14,23 +14,23 @@ use crate::{key_utils, Cache, CacheConfig, CacheStats, IDEResult, InMemoryCache,
 /// LSP-specific cache configuration
 #[derive(Debug, Clone)]
 pub struct LspCacheConfig {
-    pub base_config: CacheConfig,
-    pub enable_file_validation: bool,
+    pub base_config:                CacheConfig,
+    pub enable_file_validation:     bool,
     pub max_file_cache_age_seconds: u64,
-    pub analysis_ttl_seconds: u64,
+    pub analysis_ttl_seconds:       u64,
 }
 
 impl Default for LspCacheConfig {
     fn default() -> Self {
         Self {
-            base_config: CacheConfig {
+            base_config:                CacheConfig {
                 max_entries: Some(5000),                      // Higher limit for LSP analysis
                 default_ttl: Some(Duration::from_secs(1800)), // 30 minutes
                 ..Default::default()
             },
-            enable_file_validation: true,
+            enable_file_validation:     true,
             max_file_cache_age_seconds: 3600, // 1 hour
-            analysis_ttl_seconds: 1800,       // 30 minutes
+            analysis_ttl_seconds:       1800, // 30 minutes
         }
     }
 }
@@ -38,7 +38,7 @@ impl Default for LspCacheConfig {
 /// LSP-optimized cache implementation
 pub struct LspAnalysisCache {
     pub cache: InMemoryCache<String, JsonValue>,
-    config: LspCacheConfig,
+    config:    LspCacheConfig,
 }
 
 impl LspAnalysisCache {

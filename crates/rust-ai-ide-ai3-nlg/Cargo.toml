@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-ai3-nlg"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 description = "Wave 3: Natural Language Code Generation - Human Language to Production Code"

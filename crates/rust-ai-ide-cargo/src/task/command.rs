@@ -48,7 +48,7 @@ pub enum CommandStatus {
 
 /// Handles execution of Cargo commands
 pub struct CommandExecutor {
-    task: CargoTask,
+    task:   CargoTask,
     status: CommandStatus,
     result: Option<CommandResult>,
 }

@@ -13,9 +13,9 @@ use super::federated_learning::{FederatedTrainingRequest, FederatedTrainingResul
 /// Participant configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParticipantConfig {
-    pub id: String,
+    pub id:         String,
     pub public_key: Vec<u8>,
-    pub address: String,
+    pub address:    String,
 }
 
 /// Federated security configuration
@@ -23,16 +23,16 @@ pub struct ParticipantConfig {
 pub struct FederatedConfig {
     pub min_participants: usize,
     pub max_participants: usize,
-    pub security_level: String,
+    pub security_level:   String,
 }
 
 /// Main federated security manager
 #[derive(Debug)]
 pub struct FederatedSecurity {
-    participants: Vec<String>,
+    participants:     Vec<String>,
     participant_keys: HashMap<String, Vec<u8>>,
-    is_secured: Mutex<bool>,
-    config: FederatedConfig,
+    is_secured:       Mutex<bool>,
+    config:           FederatedConfig,
 }
 
 impl FederatedSecurity {
@@ -41,7 +41,7 @@ impl FederatedSecurity {
         let config = FederatedConfig {
             min_participants: 3,
             max_participants: 100,
-            security_level: "high".to_string(),
+            security_level:   "high".to_string(),
         };
 
         Ok(Self {
@@ -60,22 +60,13 @@ impl FederatedSecurity {
     }
 
     /// Register participant with public key
-    pub async fn register_participant(
-        &mut self,
-        participant: String,
-        public_key: Vec<u8>,
-    ) -> Result<()> {
+    pub async fn register_participant(&mut self, participant: String, public_key: Vec<u8>) -> Result<()> {
         self.participant_keys.insert(participant, public_key);
         Ok(())
     }
 
     /// Verify participant authentication
-    pub async fn verify_participant(
-        &self,
-        participant: &str,
-        signature: &[u8],
-        message: &[u8],
-    ) -> Result<bool> {
+    pub async fn verify_participant(&self, participant: &str, signature: &[u8], message: &[u8]) -> Result<bool> {
         let public_key = self
             .participant_keys
             .get(participant)
@@ -104,10 +95,7 @@ impl FederatedSecurity {
     }
 
     /// Secure federated training with participant coordination
-    pub async fn secure_training(
-        &self,
-        request: &FederatedTrainingRequest,
-    ) -> Result<FederatedTrainingResult> {
+    pub async fn secure_training(&self, request: &FederatedTrainingRequest) -> Result<FederatedTrainingResult> {
         if !self.check_minimum_participants() {
             return Err(anyhow::anyhow!(
                 "Insufficient participants for federated training"

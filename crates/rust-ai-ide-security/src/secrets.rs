@@ -20,23 +20,23 @@ use tracing::warn;
 /// Main secrets scanning engine
 #[derive(Clone)]
 pub struct SecretsScanner {
-    pattern_engine: Arc<PatternEngine>,
+    pattern_engine:   Arc<PatternEngine>,
     entropy_analyzer: Arc<EntropyAnalyzer>,
     context_analyzer: Arc<ContextAnalyzer>,
-    audit_logger: Arc<dyn AuditLogger>,
-    findings: Arc<RwLock<Vec<SecretFinding>>>,
+    audit_logger:     Arc<dyn AuditLogger>,
+    findings:         Arc<RwLock<Vec<SecretFinding>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecretFinding {
-    pub id: String,
-    pub file_path: String,
-    pub line_number: usize,
-    pub secret_type: SecretType,
-    pub confidence: f64,
-    pub severity: VulnerabilitySeverity,
-    pub context: String,
-    pub detected_at: DateTime<Utc>,
+    pub id:             String,
+    pub file_path:      String,
+    pub line_number:    usize,
+    pub secret_type:    SecretType,
+    pub confidence:     f64,
+    pub severity:       VulnerabilitySeverity,
+    pub context:        String,
+    pub detected_at:    DateTime<Utc>,
     pub false_positive: bool,
 }
 
@@ -66,15 +66,15 @@ struct PatternEngine {
 
 #[derive(Clone)]
 struct SecretPattern {
-    name: String,
-    regex: Regex,
+    name:              String,
+    regex:             Regex,
     entropy_threshold: f64,
-    context_keywords: Vec<String>,
+    context_keywords:  Vec<String>,
 }
 
 #[derive(Clone)]
 struct EntropyAnalyzer {
-    min_entropy: f64,
+    min_entropy:            f64,
     high_entropy_threshold: f64,
 }
 
@@ -87,13 +87,11 @@ struct ContextAnalyzer {
 struct AllowedContext {
     file_patterns: Vec<Regex>,
     line_patterns: Vec<Regex>,
-    reason: String,
+    reason:        String,
 }
 
 impl SecretsScanner {
-    pub async fn new(
-        audit_logger: Arc<dyn AuditLogger>,
-    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn new(audit_logger: Arc<dyn AuditLogger>) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let pattern_engine = Arc::new(PatternEngine::new().await?);
         let entropy_analyzer = Arc::new(EntropyAnalyzer::default());
         let context_analyzer = Arc::new(ContextAnalyzer::new().await?);
@@ -247,35 +245,28 @@ impl SecretsScanner {
         confidence.min(1.0)
     }
 
-    fn determine_severity(
-        &self,
-        pattern: &SecretPatternMatch,
-        confidence: f64,
-    ) -> VulnerabilitySeverity {
+    fn determine_severity(&self, pattern: &SecretPatternMatch, confidence: f64) -> VulnerabilitySeverity {
         match pattern.secret_type {
-            SecretType::PrivateKey | SecretType::Certificate => {
+            SecretType::PrivateKey | SecretType::Certificate =>
                 if confidence > 0.8 {
                     VulnerabilitySeverity::Critical
                 } else {
                     VulnerabilitySeverity::High
-                }
-            }
-            SecretType::Password => {
+                },
+            SecretType::Password =>
                 if confidence > 0.7 {
                     VulnerabilitySeverity::High
                 } else {
                     VulnerabilitySeverity::Medium
-                }
-            }
-            _ => {
+                },
+            _ =>
                 if confidence > 0.8 {
                     VulnerabilitySeverity::High
                 } else if confidence > 0.6 {
                     VulnerabilitySeverity::Medium
                 } else {
                     VulnerabilitySeverity::Low
-                }
-            }
+                },
         }
     }
 }
@@ -287,21 +278,21 @@ impl PatternEngine {
         // Define patterns for different secret types
         let api_key_patterns = vec![
             SecretPattern {
-                name: "Common API Key".to_string(),
-                regex: Regex::new(r"([a-zA-Z0-9]{20,50})")?,
+                name:              "Common API Key".to_string(),
+                regex:             Regex::new(r"([a-zA-Z0-9]{20,50})")?,
                 //                entropy_threshold: 4.0,
                 entropy_threshold: 4.0,
-                context_keywords: vec!["api_key", "apikey", "token", "key", "secret"]
+                context_keywords:  vec!["api_key", "apikey", "token", "key", "secret"]
                     .into_iter()
                     .map(|s| s.to_string())
                     .collect(),
             },
             SecretPattern {
-                name: "Base64 API Key".to_string(),
-                regex: Regex::new(r"([A-Za-z0-9+/=]{20,})")?,
+                name:              "Base64 API Key".to_string(),
+                regex:             Regex::new(r"([A-Za-z0-9+/=]{20,})")?,
                 //                entropy_threshold: 4.5,
                 entropy_threshold: 4.5,
-                context_keywords: vec!["api_key", "apikey", "token"]
+                context_keywords:  vec!["api_key", "apikey", "token"]
                     .into_iter()
                     .map(|s| s.to_string())
                     .collect(),
@@ -309,33 +300,33 @@ impl PatternEngine {
         ];
 
         let token_patterns = vec![SecretPattern {
-            name: "Bearer Token".to_string(),
-            regex: Regex::new(r"Bearer\s+([A-Za-z0-9+/=\.]{20,})")?,
+            name:              "Bearer Token".to_string(),
+            regex:             Regex::new(r"Bearer\s+([A-Za-z0-9+/=\.]{20,})")?,
             //                entropy_threshold: 4.5,
             entropy_threshold: 4.5,
-            context_keywords: vec!["authorization", "bearer", "token"]
+            context_keywords:  vec!["authorization", "bearer", "token"]
                 .into_iter()
                 .map(|s| s.to_string())
                 .collect(),
         }];
 
         let password_patterns = vec![SecretPattern {
-            name: "Password Pattern".to_string(),
-            regex: Regex::new(r#"password[\s]*[=:]+\s*['"]([^'"]{8,})['"]"#)?,
+            name:              "Password Pattern".to_string(),
+            regex:             Regex::new(r#"password[\s]*[=:]+\s*['"]([^'"]{8,})['"]"#)?,
             //                entropy_threshold: 3.5,
             entropy_threshold: 3.5,
-            context_keywords: vec!["password", "passwd"]
+            context_keywords:  vec!["password", "passwd"]
                 .into_iter()
                 .map(|s| s.to_string())
                 .collect(),
         }];
 
         let private_key_patterns = vec![SecretPattern {
-            name: "SSH Private Key".to_string(),
-            regex: Regex::new(r"-----BEGIN\s+(RSA|DSA|ECDSA|OPENSSH)\s+PRIVATE\s+KEY-----")?,
+            name:              "SSH Private Key".to_string(),
+            regex:             Regex::new(r"-----BEGIN\s+(RSA|DSA|ECDSA|OPENSSH)\s+PRIVATE\s+KEY-----")?,
             //                entropy_threshold: 5.0,
             entropy_threshold: 5.0,
-            context_keywords: vec!["private", "key", "rsa", "dsa"]
+            context_keywords:  vec!["private", "key", "rsa", "dsa"]
                 .into_iter()
                 .map(|s| s.to_string())
                 .collect(),
@@ -361,11 +352,11 @@ impl PatternEngine {
                 for capture in pattern.regex.captures_iter(line) {
                     if let Some(matched_text) = capture.get(1) {
                         matches.push(SecretPatternMatch {
-                            text: matched_text.as_str().to_string(),
-                            secret_type: secret_type.clone(),
+                            text:              matched_text.as_str().to_string(),
+                            secret_type:       secret_type.clone(),
                             entropy_threshold: pattern.entropy_threshold,
-                            context_keywords: pattern.context_keywords.clone(),
-                            line: line.to_string(),
+                            context_keywords:  pattern.context_keywords.clone(),
+                            line:              line.to_string(),
                         });
                     }
                 }
@@ -378,17 +369,17 @@ impl PatternEngine {
 
 #[derive(Debug)]
 struct SecretPatternMatch {
-    text: String,
-    secret_type: SecretType,
+    text:              String,
+    secret_type:       SecretType,
     entropy_threshold: f64,
-    context_keywords: Vec<String>,
-    line: String,
+    context_keywords:  Vec<String>,
+    line:              String,
 }
 
 impl EntropyAnalyzer {
     pub fn default() -> Self {
         Self {
-            min_entropy: 2.5,
+            min_entropy:            2.5,
             high_entropy_threshold: 4.0,
         }
     }
@@ -430,7 +421,7 @@ impl ContextAnalyzer {
                     Regex::new(r"//.*test")?,
                     Regex::new(r"EXAMPLE.*KEY")?,
                 ],
-                reason: "Test file patterns and documentation".to_string(),
+                reason:        "Test file patterns and documentation".to_string(),
             },
         ];
 
@@ -677,11 +668,11 @@ mod tests {
 
         // Create mock pattern match for different secret types
         let mock_match = SecretPatternMatch {
-            text: "test".to_string(),
-            secret_type: SecretType::PrivateKey,
+            text:              "test".to_string(),
+            secret_type:       SecretType::PrivateKey,
             entropy_threshold: 5.0,
-            context_keywords: vec!["private".to_string()],
-            line: "private key content".to_string(),
+            context_keywords:  vec!["private".to_string()],
+            line:              "private key content".to_string(),
         };
 
         // Test private key severity
@@ -693,11 +684,11 @@ mod tests {
 
         // Test password severity
         let password_match = SecretPatternMatch {
-            text: "password123".to_string(),
-            secret_type: SecretType::Password,
+            text:              "password123".to_string(),
+            secret_type:       SecretType::Password,
             entropy_threshold: 3.5,
-            context_keywords: vec!["password".to_string()],
-            line: "password: secret".to_string(),
+            context_keywords:  vec!["password".to_string()],
+            line:              "password: secret".to_string(),
         };
 
         let severity = scanner.determine_severity(&password_match, 0.8);
@@ -712,11 +703,11 @@ mod tests {
         let test_file = "src/test.rs";
         let test_line = "// TODO: Add API key";
         let mock_match = SecretPatternMatch {
-            text: "EXAMPLE_KEY".to_string(),
-            secret_type: SecretType::ApiKey,
+            text:              "EXAMPLE_KEY".to_string(),
+            secret_type:       SecretType::ApiKey,
             entropy_threshold: 4.0,
-            context_keywords: vec!["key".to_string()],
-            line: test_line.to_string(),
+            context_keywords:  vec!["key".to_string()],
+            line:              test_line.to_string(),
         };
 
         let is_allowed = context_analyzer
@@ -757,8 +748,7 @@ mod tests {
     async fn test_pattern_engine_multiple_matches() {
         let pattern_engine = PatternEngine::new().await.unwrap();
 
-        let line_with_multiple =
-            "const apiKey = 'sk-1234567890abcdef'; const token = 'Bearer abc123';";
+        let line_with_multiple = "const apiKey = 'sk-1234567890abcdef'; const token = 'Bearer abc123';";
 
         let matches = pattern_engine
             .find_matches(line_with_multiple)
@@ -769,8 +759,7 @@ mod tests {
         assert!(matches.len() >= 1); // At least one match
 
         // Check that different secret types are detected
-        let secret_types: std::collections::HashSet<_> =
-            matches.iter().map(|m| &m.secret_type).collect();
+        let secret_types: std::collections::HashSet<_> = matches.iter().map(|m| &m.secret_type).collect();
         assert!(!secret_types.is_empty());
     }
 

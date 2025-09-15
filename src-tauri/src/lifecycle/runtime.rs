@@ -17,35 +17,35 @@ use super::{LifecycleEvent, LifecyclePhase};
 
 pub struct RuntimePhase {
     monitoring_config: MonitoringConfig,
-    service_health: Arc<Mutex<ServiceHealth>>,
-    event_listeners: Vec<Box<dyn Fn(LifecycleEvent) + Send + Sync>>,
+    service_health:    Arc<Mutex<ServiceHealth>>,
+    event_listeners:   Vec<Box<dyn Fn(LifecycleEvent) + Send + Sync>>,
 }
 
 #[derive(Clone)]
 pub struct MonitoringConfig {
-    pub health_check_interval: Duration,
-    pub memory_check_interval: Duration,
+    pub health_check_interval:      Duration,
+    pub memory_check_interval:      Duration,
     pub performance_check_interval: Duration,
-    pub enable_detailed_logging: bool,
+    pub enable_detailed_logging:    bool,
 }
 
 impl Default for MonitoringConfig {
     fn default() -> Self {
         Self {
-            health_check_interval: Duration::from_secs(60), // Health check every minute
-            memory_check_interval: Duration::from_secs(30), // Memory check every 30 seconds
+            health_check_interval:      Duration::from_secs(60), // Health check every minute
+            memory_check_interval:      Duration::from_secs(30), // Memory check every 30 seconds
             performance_check_interval: Duration::from_secs(120), // Performance check every 2 minutes
-            enable_detailed_logging: true,
+            enable_detailed_logging:    true,
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct ServiceHealth {
-    pub ai_service_status: ServiceStatus,
-    pub cache_status: ServiceStatus,
-    pub last_health_check: std::time::SystemTime,
-    pub memory_usage_mb: u64,
+    pub ai_service_status:  ServiceStatus,
+    pub cache_status:       ServiceStatus,
+    pub last_health_check:  std::time::SystemTime,
+    pub memory_usage_mb:    u64,
     pub active_connections: usize,
 }
 
@@ -61,28 +61,28 @@ impl RuntimePhase {
     pub fn new() -> Self {
         Self {
             monitoring_config: MonitoringConfig::default(),
-            service_health: Arc::new(Mutex::new(ServiceHealth {
-                ai_service_status: ServiceStatus::Unknown,
-                cache_status: ServiceStatus::Unknown,
-                last_health_check: std::time::SystemTime::now(),
-                memory_usage_mb: 0,
+            service_health:    Arc::new(Mutex::new(ServiceHealth {
+                ai_service_status:  ServiceStatus::Unknown,
+                cache_status:       ServiceStatus::Unknown,
+                last_health_check:  std::time::SystemTime::now(),
+                memory_usage_mb:    0,
                 active_connections: 0,
             })),
-            event_listeners: Vec::new(),
+            event_listeners:   Vec::new(),
         }
     }
 
     pub fn with_config(config: MonitoringConfig) -> Self {
         Self {
             monitoring_config: config,
-            service_health: Arc::new(Mutex::new(ServiceHealth {
-                ai_service_status: ServiceStatus::Unknown,
-                cache_status: ServiceStatus::Unknown,
-                last_health_check: std::time::SystemTime::now(),
-                memory_usage_mb: 0,
+            service_health:    Arc::new(Mutex::new(ServiceHealth {
+                ai_service_status:  ServiceStatus::Unknown,
+                cache_status:       ServiceStatus::Unknown,
+                last_health_check:  std::time::SystemTime::now(),
+                memory_usage_mb:    0,
                 active_connections: 0,
             })),
-            event_listeners: Vec::new(),
+            event_listeners:   Vec::new(),
         }
     }
 
@@ -179,10 +179,7 @@ impl RuntimePhase {
         Ok(())
     }
 
-    async fn performance_monitoring_loop(
-        &self,
-        phase_state: Arc<Mutex<LifecyclePhase>>,
-    ) -> Result<()> {
+    async fn performance_monitoring_loop(&self, phase_state: Arc<Mutex<LifecyclePhase>>) -> Result<()> {
         let mut interval = time::interval(self.monitoring_config.performance_check_interval);
 
         loop {
@@ -287,8 +284,8 @@ impl RuntimePhase {
 
 #[derive(Debug, Clone)]
 pub struct PerformanceMetrics {
-    pub response_time: u64,
-    pub cpu_usage: f32,
+    pub response_time:  u64,
+    pub cpu_usage:      f32,
     pub active_threads: u32,
-    pub timestamp: std::time::SystemTime,
+    pub timestamp:      std::time::SystemTime,
 }

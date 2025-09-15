@@ -9,7 +9,5 @@ pub mod registry;
 
 // Re-export the main registry trait and implementation
 // Re-export client functionality
-pub use client::{
-    InstallResult, InstalledPlugin, MarketplaceClient, MarketplaceSearchResult, MarketplaceServer,
-};
+pub use client::{InstallResult, InstalledPlugin, MarketplaceClient, MarketplaceSearchResult, MarketplaceServer};
 pub use registry::{PluginRegistry, PluginRegistryImpl};

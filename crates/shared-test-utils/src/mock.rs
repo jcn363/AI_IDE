@@ -13,7 +13,7 @@ use crate::error::TestError;
 
 /// Generic mock implementation with configurable behavior
 pub struct GenericMock<T> {
-    behaviors: Arc<Mutex<HashMap<String, Box<dyn Fn(&[&dyn std::any::Any]) -> T + Send + Sync>>>>,
+    behaviors:    Arc<Mutex<HashMap<String, Box<dyn Fn(&[&dyn std::any::Any]) -> T + Send + Sync>>>>,
     call_history: Arc<Mutex<Vec<(String, Vec<String>)>>>,
 }
 
@@ -29,7 +29,7 @@ impl<T> std::fmt::Debug for GenericMock<T> {
 impl<T: Clone + 'static> GenericMock<T> {
     pub fn new() -> Self {
         Self {
-            behaviors: Arc::new(Mutex::new(HashMap::new())),
+            behaviors:    Arc::new(Mutex::new(HashMap::new())),
             call_history: Arc::new(Mutex::new(Vec::new())),
         }
     }
@@ -124,11 +124,7 @@ impl MockBehaviors {
     }
 
     /// Return based on argument value
-    pub fn conditional<T, F>(
-        condition: F,
-        true_value: T,
-        false_value: T,
-    ) -> impl Fn(&[&dyn std::any::Any]) -> T
+    pub fn conditional<T, F>(condition: F, true_value: T, false_value: T) -> impl Fn(&[&dyn std::any::Any]) -> T
     where
         F: Fn(&[&dyn std::any::Any]) -> bool,
         T: Clone,
@@ -202,16 +198,16 @@ impl Default for MockFactory {
 
 /// Mock scenario builder for complex test setups
 pub struct MockScenario {
-    name: String,
-    setup_steps: Vec<Box<dyn FnOnce() -> Result<(), TestError> + Send>>,
+    name:           String,
+    setup_steps:    Vec<Box<dyn FnOnce() -> Result<(), TestError> + Send>>,
     teardown_steps: Vec<Box<dyn FnOnce() -> Result<(), TestError> + Send>>,
 }
 
 impl MockScenario {
     pub fn new(name: &str) -> Self {
         Self {
-            name: name.to_string(),
-            setup_steps: Vec::new(),
+            name:           name.to_string(),
+            setup_steps:    Vec::new(),
             teardown_steps: Vec::new(),
         }
     }
@@ -254,29 +250,29 @@ impl MockScenario {
 /// HTTP mock utilities for API testing
 pub struct HttpMock {
     endpoints: HashMap<String, MockHttpResponse>,
-    history: Arc<Mutex<Vec<MockHttpRequest>>>,
+    history:   Arc<Mutex<Vec<MockHttpRequest>>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct MockHttpRequest {
-    pub method: String,
-    pub url: String,
+    pub method:  String,
+    pub url:     String,
     pub headers: HashMap<String, String>,
-    pub body: Option<String>,
+    pub body:    Option<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct MockHttpResponse {
-    pub status: u16,
+    pub status:  u16,
     pub headers: HashMap<String, String>,
-    pub body: Option<String>,
+    pub body:    Option<String>,
 }
 
 impl HttpMock {
     pub fn new() -> Self {
         Self {
             endpoints: HashMap::new(),
-            history: Arc::new(Mutex::new(Vec::new())),
+            history:   Arc::new(Mutex::new(Vec::new())),
         }
     }
 
@@ -295,10 +291,10 @@ impl HttpMock {
         body: Option<String>,
     ) -> Option<MockHttpResponse> {
         let request = MockHttpRequest {
-            method: method.to_string(),
-            url: url.to_string(),
+            method:  method.to_string(),
+            url:     url.to_string(),
             headers: headers.clone(),
-            body: body.clone(),
+            body:    body.clone(),
         };
 
         self.history.lock().unwrap().push(request);
@@ -330,9 +326,9 @@ impl Default for HttpMock {
 
 /// File system mock for testing file operations
 pub struct FileSystemMock {
-    files: Arc<Mutex<HashMap<String, String>>>,
+    files:       Arc<Mutex<HashMap<String, String>>>,
     directories: Arc<Mutex<HashMap<String, Vec<String>>>>,
-    history: Arc<Mutex<Vec<FileOperation>>>,
+    history:     Arc<Mutex<Vec<FileOperation>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -347,9 +343,9 @@ pub enum FileOperation {
 impl FileSystemMock {
     pub fn new() -> Self {
         Self {
-            files: Arc::new(Mutex::new(HashMap::new())),
+            files:       Arc::new(Mutex::new(HashMap::new())),
             directories: Arc::new(Mutex::new(HashMap::new())),
-            history: Arc::new(Mutex::new(Vec::new())),
+            history:     Arc::new(Mutex::new(Vec::new())),
         }
     }
 
@@ -449,15 +445,11 @@ impl MockPresets {
     /// Create a successful API mock
     pub fn successful_api() -> HttpMock {
         let mut mock = HttpMock::new();
-        mock.mock_endpoint(
-            "GET",
-            "/api/status",
-            MockHttpResponse {
-                status: 200,
-                headers: HashMap::new(),
-                body: Some(r#"{"status": "ok"}"#.to_string()),
-            },
-        );
+        mock.mock_endpoint("GET", "/api/status", MockHttpResponse {
+            status:  200,
+            headers: HashMap::new(),
+            body:    Some(r#"{"status": "ok"}"#.to_string()),
+        });
         mock
     }
 
@@ -519,15 +511,11 @@ mod tests {
     #[test]
     fn test_http_mock() {
         let mut mock = HttpMock::new();
-        mock.mock_endpoint(
-            "GET",
-            "/test",
-            MockHttpResponse {
-                status: 200,
-                headers: HashMap::new(),
-                body: Some("success".to_string()),
-            },
-        );
+        mock.mock_endpoint("GET", "/test", MockHttpResponse {
+            status:  200,
+            headers: HashMap::new(),
+            body:    Some("success".to_string()),
+        });
 
         let response = mock.request("GET", "/test", HashMap::new(), None).unwrap();
         assert_eq!(response.status, 200);

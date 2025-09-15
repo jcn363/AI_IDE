@@ -4,7 +4,6 @@
 
 [package]
 name = "rust-ai-ide-workspace-hack"
-readme = { workspace = true }
 version = "0.1.0"
 edition = "2021"
 description = "workspace-hack package, managed by hakari"

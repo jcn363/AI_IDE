@@ -48,11 +48,7 @@ pub trait ModelLoader: Send + Sync + std::fmt::Debug {
 #[async_trait]
 pub trait ResourceAwareLoader: ModelLoader + std::fmt::Debug {
     /// Check if the system has sufficient resources for loading
-    async fn can_load_with_resources(
-        &self,
-        model_path: &str,
-        system_monitor: &SystemMonitor,
-    ) -> Result<bool> {
+    async fn can_load_with_resources(&self, model_path: &str, system_monitor: &SystemMonitor) -> Result<bool> {
         let required_memory = self.estimate_memory(model_path).await?;
         Ok(system_monitor.has_sufficient_memory(required_memory).await)
     }
@@ -74,16 +70,16 @@ pub trait ResourceAwareLoader: ModelLoader + std::fmt::Debug {
 /// Base configuration for model loaders
 #[derive(Debug, Clone)]
 pub struct LoaderConfig {
-    pub max_concurrent_loads: usize,
-    pub memory_buffer_gb: f64,
+    pub max_concurrent_loads:     usize,
+    pub memory_buffer_gb:         f64,
     pub allow_model_optimization: bool,
 }
 
 impl Default for LoaderConfig {
     fn default() -> Self {
         Self {
-            max_concurrent_loads: 1,
-            memory_buffer_gb: 0.5,
+            max_concurrent_loads:     1,
+            memory_buffer_gb:         0.5,
             allow_model_optimization: true,
         }
     }
@@ -159,11 +155,7 @@ impl ModelLoader for CodeLlamaLoader {
 
 #[async_trait]
 impl ResourceAwareLoader for CodeLlamaLoader {
-    async fn can_load_with_resources(
-        &self,
-        model_path: &str,
-        system_monitor: &SystemMonitor,
-    ) -> Result<bool> {
+    async fn can_load_with_resources(&self, model_path: &str, system_monitor: &SystemMonitor) -> Result<bool> {
         // Check if model exists
         if !std::path::Path::new(model_path).exists() {
             return Ok(false);
@@ -247,11 +239,7 @@ impl ModelLoader for StarCoderLoader {
 
 #[async_trait]
 impl ResourceAwareLoader for StarCoderLoader {
-    async fn can_load_with_resources(
-        &self,
-        model_path: &str,
-        system_monitor: &SystemMonitor,
-    ) -> Result<bool> {
+    async fn can_load_with_resources(&self, model_path: &str, system_monitor: &SystemMonitor) -> Result<bool> {
         // Check if model exists
         if !std::path::Path::new(model_path).exists() {
             return Ok(false);
@@ -333,8 +321,8 @@ mod tests {
     #[test]
     fn test_loader_config() {
         let config = LoaderConfig {
-            max_concurrent_loads: 3,
-            memory_buffer_gb: 1.0,
+            max_concurrent_loads:     3,
+            memory_buffer_gb:         1.0,
             allow_model_optimization: false,
         };
 

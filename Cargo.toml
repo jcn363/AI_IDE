@@ -146,7 +146,7 @@ hmac = { version = "0.13.0-rc.1" }
 statrs = { version = "0.18.0" }
 sha2 = { version = "0.10.9" }
 sha3 = { version = "0.11.0-rc.3" }
-rsa = { version = "0.10.0-rc.8" }
+rsa = { version = "0.10.0-rc.8", features = ["std"] }
 futures = { version = "^0.3.31" }
 governor = { version = "0.10.1" }
 lazy_static = { version = "^1.5.0" }
@@ -325,6 +325,9 @@ aes-gcm = { version = "0.10.3", default-features = false, features = [
 bcrypt = { version = "0.15" }
 jsonwebtoken = { version = "9.0" }
 base64 = { version = "^0.22.1" }
+base16ct = { version = "0.2.0", features = ["alloc"] }
+rustls = { version = "0.23.0", default-features = false, features = ["tls12"] }
+rustls-pemfile = { version = "2.0" }
 argon2 = "0.5"
 chacha20poly1305 = { version = "0.10" }
 
@@ -345,6 +348,7 @@ rstest = { version = "0.18" }
 
 # Workspace hack for dependency deduplication
 
+# Profiles
 [profile.dev]
 opt-level = 0
 debug = true
@@ -355,12 +359,10 @@ panic = "unwind"
 incremental = true
 codegen-units = 256
 
-# Optimized dev profile with faster compilation
 [profile.dev.package."*"]
 opt-level = 1
 codegen-units = 16
 
-# Fast debug profile for development iteration
 [profile.fast-debug]
 inherits = "dev"
 opt-level = 1
@@ -388,7 +390,10 @@ incremental = false
 codegen-units = 1
 lto = true
 
-# CI-optimized profile for faster builds in CI/CD
+[profile.test]
+opt-level = 0
+debug = true
+
 [profile.ci]
 inherits = "release"
 opt-level = 2

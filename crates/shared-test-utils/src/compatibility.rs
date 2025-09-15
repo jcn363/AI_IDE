@@ -5,9 +5,7 @@
 
 use async_trait::async_trait;
 
-use crate::builder::{
-    TestFixture as GenericTestFixture, TestFixtureBuilder as GenericTestFixtureBuilder,
-};
+use crate::builder::{TestFixture as GenericTestFixture, TestFixtureBuilder as GenericTestFixtureBuilder};
 use crate::error::TestError;
 use crate::fixtures::{TestFixture, TestFixtureBuilder};
 use crate::harness::{TestHarness, TestResult};
@@ -26,11 +24,7 @@ impl LegacyTestFixtureBuilder {
     }
 
     /// Add file to fixture
-    pub fn with_file(
-        self,
-        path: impl Into<std::path::PathBuf>,
-        content: impl Into<String>,
-    ) -> Self {
+    pub fn with_file(self, path: impl Into<std::path::PathBuf>, content: impl Into<String>) -> Self {
         Self {
             inner: self.inner.with_file(path, content),
         }
@@ -60,10 +54,7 @@ impl LegacyTestFixtureBuilder {
         }
     }
 
-    pub fn build(
-        self,
-        workspace: &crate::filesystem::TempWorkspace,
-    ) -> Result<LegacyTestFixture, TestError> {
+    pub fn build(self, workspace: &crate::filesystem::TempWorkspace) -> Result<LegacyTestFixture, TestError> {
         Ok(LegacyTestFixture {
             inner: self.inner.build(workspace)?,
         })
@@ -100,26 +91,24 @@ impl FixtureAdapter {
     /// Convert legacy fixture to generic
     pub fn legacy_to_generic<T>(legacy: LegacyTestFixture) -> GenericTestFixture<T> {
         GenericTestFixture {
-            files: legacy
+            files:        legacy
                 .inner
                 .files()
                 .map(|path| (path.clone(), "".to_string()))
                 .collect::<std::collections::HashMap<_, _>>(),
-            directories: legacy.inner.directories().cloned().collect(),
-            metadata: legacy.inner.metadata.clone(),
+            directories:  legacy.inner.directories().cloned().collect(),
+            metadata:     legacy.inner.metadata.clone(),
             context_data: None,
         }
     }
 
     /// Convert generic fixture to legacy (with context loss)
-    pub fn generic_to_legacy<T>(
-        generic: GenericTestFixture<T>,
-    ) -> Result<LegacyTestFixture, TestError> {
+    pub fn generic_to_legacy<T>(generic: GenericTestFixture<T>) -> Result<LegacyTestFixture, TestError> {
         Ok(LegacyTestFixture {
             inner: crate::fixtures::TestFixture {
-                files: generic.files,
+                files:       generic.files,
                 directories: generic.directories,
-                metadata: generic.metadata,
+                metadata:    generic.metadata,
             },
         })
     }
@@ -162,7 +151,7 @@ pub trait LegacyTestHarness {
 
 /// Adapter to wrap legacy harness in new harness interface
 pub struct LegacyHarnessAdapter<T, H> {
-    harness: H,
+    harness:  H,
     _phantom: std::marker::PhantomData<T>,
 }
 
@@ -193,11 +182,7 @@ where
         self.harness.execute(&()).await
     }
 
-    async fn validate(
-        &self,
-        _context: Self::Context,
-        _output: Self::Output,
-    ) -> Result<TestResult, TestError> {
+    async fn validate(&self, _context: Self::Context, _output: Self::Output) -> Result<TestResult, TestError> {
         let passed = self.harness.validate(&(), ()).await?;
         Ok(TestResult {
             passed,
@@ -233,15 +218,11 @@ macro_rules! wrap_legacy_harness {
                 Ok("legacy".to_string())
             }
 
-            fn validate(
-                &self,
-                _context: Self::Context,
-                _output: Self::Output,
-            ) -> Result<TestResult, TestError> {
+            fn validate(&self, _context: Self::Context, _output: Self::Output) -> Result<TestResult, TestError> {
                 Ok(TestResult {
-                    passed: true,
-                    message: "Legacy test passed".to_string(),
-                    details: None,
+                    passed:   true,
+                    message:  "Legacy test passed".to_string(),
+                    details:  None,
                     duration: std::time::Duration::from_millis(1),
                 })
             }
@@ -316,9 +297,9 @@ mod tests {
     fn test_adapter_conversions() {
         let legacy_fixture = LegacyTestFixture {
             inner: TestFixture {
-                files: [("test.rs".into(), "fn main() {}".into())].into(),
+                files:       [("test.rs".into(), "fn main() {}".into())].into(),
                 directories: vec!["src".into()],
-                metadata: [("lang".into(), "rust".into())].into(),
+                metadata:    [("lang".into(), "rust".into())].into(),
             },
         };
 

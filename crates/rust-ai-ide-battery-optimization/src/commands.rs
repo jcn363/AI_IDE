@@ -13,9 +13,7 @@ pub type BatteryServiceState = Arc<RwLock<BatteryOptimizationService>>;
 
 /// Get current battery state
 #[tauri::command]
-pub async fn get_battery_state(
-    state: tauri::State<'_, BatteryServiceState>,
-) -> Result<String, String> {
+pub async fn get_battery_state(state: tauri::State<'_, BatteryServiceState>) -> Result<String, String> {
     let service = state.read().await;
     match service.get_battery_state().await {
         Ok(state) => Ok(serde_json::to_string(&state).unwrap_or_default()),
@@ -25,9 +23,7 @@ pub async fn get_battery_state(
 
 /// Get battery optimization status
 #[tauri::command]
-pub async fn get_battery_status(
-    state: tauri::State<'_, BatteryServiceState>,
-) -> Result<String, String> {
+pub async fn get_battery_status(state: tauri::State<'_, BatteryServiceState>) -> Result<String, String> {
     // Return placeholder status for now
     let status = json!({
         "optimization_enabled": true,

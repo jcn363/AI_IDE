@@ -34,12 +34,12 @@ impl CostEstimator {
     /// Create a new cost estimator with the given configuration
     pub async fn new(config: &MaintenanceConfig) -> MaintenanceResult<Self> {
         Ok(Self {
-            complexity_mapper: ComplexityToCostMapper::new(config).await?,
-            effort_estimator: EffortEstimator::new(config).await?,
+            complexity_mapper:   ComplexityToCostMapper::new(config).await?,
+            effort_estimator:    EffortEstimator::new(config).await?,
             resource_forecaster: ResourceForecaster::new(config).await?,
-            risk_assessor: DebtRiskAssessor::new(config).await?,
-            cost_optimizer: CostOptimizationEngine::new(config).await?,
-            config: config.clone(),
+            risk_assessor:       DebtRiskAssessor::new(config).await?,
+            cost_optimizer:      CostOptimizationEngine::new(config).await?,
+            config:              config.clone(),
         })
     }
 
@@ -160,19 +160,19 @@ impl CostEstimator {
 
         // Analysis phase
         components.push(CostComponent {
-            component_name: "Analysis and Planning".to_string(),
-            base_effort_hours: base_effort * 0.3,
+            component_name:        "Analysis and Planning".to_string(),
+            base_effort_hours:     base_effort * 0.3,
             adjusted_effort_hours: adjusted_effort * 0.3,
-            justification: "Understanding the debt and planning the fix".to_string(),
+            justification:         "Understanding the debt and planning the fix".to_string(),
         });
 
         // Implementation phase
         let implementation_effort = adjusted_effort * 0.5;
         components.push(CostComponent {
-            component_name: "Implementation".to_string(),
-            base_effort_hours: base_effort * 0.5,
+            component_name:        "Implementation".to_string(),
+            base_effort_hours:     base_effort * 0.5,
             adjusted_effort_hours: implementation_effort,
-            justification: format!(
+            justification:         format!(
                 "Actual code changes to address the {} debt",
                 debt_item.debt_type
             ),
@@ -182,10 +182,10 @@ impl CostEstimator {
         let testing_multiplier = self.calculate_testing_multiplier(debt_item);
         let testing_effort = adjusted_effort * 0.15 * testing_multiplier;
         components.push(CostComponent {
-            component_name: "Testing and Validation".to_string(),
-            base_effort_hours: base_effort * 0.15,
+            component_name:        "Testing and Validation".to_string(),
+            base_effort_hours:     base_effort * 0.15,
             adjusted_effort_hours: testing_effort,
-            justification: "Ensuring the fix doesn't break existing functionality".to_string(),
+            justification:         "Ensuring the fix doesn't break existing functionality".to_string(),
         });
 
         // Documentation phase (if needed)
@@ -196,10 +196,10 @@ impl CostEstimator {
                 .contains("documentation")
         {
             components.push(CostComponent {
-                component_name: "Documentation Updates".to_string(),
-                base_effort_hours: base_effort * 0.05,
+                component_name:        "Documentation Updates".to_string(),
+                base_effort_hours:     base_effort * 0.05,
                 adjusted_effort_hours: adjusted_effort * 0.05,
-                justification: "Updating documentation to reflect changes".to_string(),
+                justification:         "Updating documentation to reflect changes".to_string(),
             });
         }
 
@@ -207,20 +207,19 @@ impl CostEstimator {
         if risk_factor > 1.5 {
             let risk_mitigation_effort = adjusted_effort * 0.1 * (risk_factor - 1.0);
             components.push(CostComponent {
-                component_name: "Risk Mitigation".to_string(),
-                base_effort_hours: 0.0, // Risk mitigation is over base estimate
+                component_name:        "Risk Mitigation".to_string(),
+                base_effort_hours:     0.0, // Risk mitigation is over base estimate
                 adjusted_effort_hours: risk_mitigation_effort,
-                justification: "Additional time for careful handling of high-risk changes"
-                    .to_string(),
+                justification:         "Additional time for careful handling of high-risk changes".to_string(),
             });
         }
 
         // Review and integration
         components.push(CostComponent {
-            component_name: "Review and Integration".to_string(),
-            base_effort_hours: base_effort * 0.1,
+            component_name:        "Review and Integration".to_string(),
+            base_effort_hours:     base_effort * 0.1,
             adjusted_effort_hours: adjusted_effort * 0.1,
-            justification: "Code review and integration with existing codebase".to_string(),
+            justification:         "Code review and integration with existing codebase".to_string(),
         });
 
         Ok(components)
@@ -243,9 +242,7 @@ impl CostEstimator {
         }
 
         // Higher testing for core components
-        if debt_item.tags.contains(&"core".to_string())
-            || debt_item.tags.contains(&"critical-path".to_string())
-        {
+        if debt_item.tags.contains(&"core".to_string()) || debt_item.tags.contains(&"critical-path".to_string()) {
             multiplier *= 1.25;
         }
 
@@ -267,7 +264,7 @@ impl ComplexityToCostMapper {
     pub async fn new(config: &MaintenanceConfig) -> MaintenanceResult<Self> {
         Ok(Self {
             mappings: Self::load_default_mappings(),
-            config: config.clone(),
+            config:   config.clone(),
         })
     }
 
@@ -323,10 +320,7 @@ impl EffortEstimator {
     }
 
     // Placeholder for effort estimation logic
-    pub async fn estimate_effort_distribution(
-        &self,
-        debt_items: &[DebtItem],
-    ) -> MaintenanceResult<EffortDistribution> {
+    pub async fn estimate_effort_distribution(&self, debt_items: &[DebtItem]) -> MaintenanceResult<EffortDistribution> {
         let total_effort: f64 = debt_items
             .iter()
             .map(|item| item.estimated_effort_hours)
@@ -504,10 +498,7 @@ impl CostOptimizationEngine {
     }
 
     /// Optimize cost allocation across multiple debt items
-    pub async fn optimize_costs(
-        &self,
-        cost_breakdowns: &[CostBreakdown],
-    ) -> MaintenanceResult<CostOptimization> {
+    pub async fn optimize_costs(&self, cost_breakdowns: &[CostBreakdown]) -> MaintenanceResult<CostOptimization> {
         let total_cost: f64 = cost_breakdowns
             .iter()
             .map(|cb| cb.estimated_effort_hours)
@@ -571,39 +562,39 @@ impl CostOptimizationEngine {
 /// Effort distribution across tasks
 #[derive(Debug, Clone)]
 pub struct EffortDistribution {
-    pub total_effort: f64,
+    pub total_effort:   f64,
     pub average_effort: f64,
-    pub max_effort: f64,
-    pub min_effort: f64,
-    pub task_count: usize,
+    pub max_effort:     f64,
+    pub min_effort:     f64,
+    pub task_count:     usize,
 }
 
 /// Resource forecast for maintenance effort
 #[derive(Debug, Clone)]
 pub struct ResourceForecast {
-    pub required_person_days: f64,
-    pub available_person_days: f64,
-    pub capacity_utilization: f64,
+    pub required_person_days:    f64,
+    pub available_person_days:   f64,
+    pub capacity_utilization:    f64,
     pub estimated_duration_days: u32,
-    pub bottlenecks_identified: bool,
+    pub bottlenecks_identified:  bool,
 }
 
 /// Timeline risk assessment
 #[derive(Debug, Clone)]
 pub struct TimelineRisk {
-    pub immediate_risk: f64,
-    pub delayed_risk: f64,
+    pub immediate_risk:        f64,
+    pub delayed_risk:          f64,
     pub risk_increase_percent: f64,
-    pub optimal_fix_window: u32,
+    pub optimal_fix_window:    u32,
 }
 
 /// Cost optimization results
 #[derive(Debug, Clone)]
 pub struct CostOptimization {
-    pub total_optimized_cost: f64,
+    pub total_optimized_cost:         f64,
     pub estimated_savings_percentage: f64,
-    pub optimization_tips: Vec<String>,
-    pub recommended_sequence: Vec<usize>,
+    pub optimization_tips:            Vec<String>,
+    pub recommended_sequence:         Vec<usize>,
 }
 
 #[cfg(test)]
@@ -623,17 +614,17 @@ mod tests {
         let estimator = CostEstimator::new(&config).await.unwrap();
 
         let debt_item = DebtItem {
-            id: "test-1".to_string(),
-            file_path: "src/main.rs".to_string(),
-            start_line: 1,
-            end_line: 10,
-            debt_type: DebtType::Complexity,
-            severity: 0.7,
-            description: "High cyclic complexity".to_string(),
+            id:                     "test-1".to_string(),
+            file_path:              "src/main.rs".to_string(),
+            start_line:             1,
+            end_line:               10,
+            debt_type:              DebtType::Complexity,
+            severity:               0.7,
+            description:            "High cyclic complexity".to_string(),
             estimated_effort_hours: 8.0,
             maintainability_impact: 0.6,
-            age_days: 30,
-            tags: vec!["core".to_string()],
+            age_days:               30,
+            tags:                   vec!["core".to_string()],
         };
 
         let result = estimator.estimate_cost(&debt_item).await;
@@ -653,17 +644,17 @@ mod tests {
         let estimator = CostEstimator::new(&config).await.unwrap();
 
         let mut debt_item = DebtItem {
-            id: "test-2".to_string(),
-            file_path: "src/main.rs".to_string(),
-            start_line: 1,
-            end_line: 10,
-            debt_type: DebtType::Security,
-            severity: 0.8,
-            description: "Security vulnerability".to_string(),
+            id:                     "test-2".to_string(),
+            file_path:              "src/main.rs".to_string(),
+            start_line:             1,
+            end_line:               10,
+            debt_type:              DebtType::Security,
+            severity:               0.8,
+            description:            "Security vulnerability".to_string(),
             estimated_effort_hours: 12.0,
             maintainability_impact: 0.8,
-            age_days: 365, // Very old debt
-            tags: vec!["critical".to_string()],
+            age_days:               365, // Very old debt
+            tags:                   vec!["critical".to_string()],
         };
 
         let multiplier = estimator.calculate_complexity_multiplier(&debt_item);

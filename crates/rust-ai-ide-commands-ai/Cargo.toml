@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-commands-ai"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 description = "Modular AI/ML commands for Rust AI IDE - AI code completion, analysis, and model management"

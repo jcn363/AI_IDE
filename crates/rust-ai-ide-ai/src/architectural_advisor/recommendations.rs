@@ -67,8 +67,7 @@ impl RecommendationGenerator {
         // Generate suggestions based on detected patterns
         for pattern in &analysis.detected_patterns {
             if let Some(template) = self.recommendation_templates.get(&pattern.pattern_type) {
-                if let Some(suggestion) = self.generate_pattern_suggestion(pattern, template).await
-                {
+                if let Some(suggestion) = self.generate_pattern_suggestion(pattern, template).await {
                     suggestions.push(suggestion);
                 }
             }
@@ -77,12 +76,11 @@ impl RecommendationGenerator {
         // Generic improvement suggestions
         if analysis.complexity_assessment.overall_complexity == ComplexityLevel::High {
             suggestions.push(ArchitecturalSuggestion {
-                title: "Consider implementing CQRS pattern".to_string(),
-                description: "Separate read and write operations for better scalability"
-                    .to_string(),
-                category: SuggestionCategory::DesignPattern,
-                priority: PriorityLevel::Medium,
-                impact: ImpactLevel::Major,
+                title:       "Consider implementing CQRS pattern".to_string(),
+                description: "Separate read and write operations for better scalability".to_string(),
+                category:    SuggestionCategory::DesignPattern,
+                priority:    PriorityLevel::Medium,
+                impact:      ImpactLevel::Major,
             });
         }
 
@@ -101,13 +99,10 @@ impl RecommendationGenerator {
         for anti_pattern in &analysis.anti_patterns {
             if anti_pattern.severity > 0.6 {
                 risk_factors.push(RiskFactor {
-                    factor: anti_pattern.anti_pattern_type.clone(),
+                    factor:      anti_pattern.anti_pattern_type.clone(),
                     probability: anti_pattern.severity,
-                    impact: 0.7,
-                    description: format!(
-                        "{} increases system risk",
-                        anti_pattern.anti_pattern_type
-                    ),
+                    impact:      0.7,
+                    description: format!("{} increases system risk", anti_pattern.anti_pattern_type),
                 });
             }
         }
@@ -115,9 +110,9 @@ impl RecommendationGenerator {
         // Calculate risks from quality metrics
         if quality.complexity_score < 0.5 {
             risk_factors.push(RiskFactor {
-                factor: "High Complexity".to_string(),
+                factor:      "High Complexity".to_string(),
                 probability: 0.8,
-                impact: 0.6,
+                impact:      0.6,
                 description: "High complexity increases maintenance and bug fix costs".to_string(),
             });
         }
@@ -151,9 +146,9 @@ impl RecommendationGenerator {
         for rec in primary {
             if rec.implementation_effort <= ImplementationEffort::Medium {
                 actions.push(PriorityAction {
-                    action: rec.title.clone(),
-                    deadline: Some("30 days".to_string()),
-                    responsible: None,
+                    action:       rec.title.clone(),
+                    deadline:     Some("30 days".to_string()),
+                    responsible:  None,
                     dependencies: rec.prerequisites.clone(),
                 });
             }
@@ -163,9 +158,9 @@ impl RecommendationGenerator {
         for sug in secondary {
             if sug.impact >= ImpactLevel::Major && sug.priority >= PriorityLevel::High {
                 actions.push(PriorityAction {
-                    action: sug.title.clone(),
-                    deadline: Some("60 days".to_string()),
-                    responsible: None,
+                    action:       sug.title.clone(),
+                    deadline:     Some("60 days".to_string()),
+                    responsible:  None,
                     dependencies: vec![],
                 });
             }
@@ -188,10 +183,10 @@ impl RecommendationGenerator {
             match rec.implementation_effort {
                 ImplementationEffort::Low => {
                     short_term.push(RoadmapItem {
-                        title: rec.title.clone(),
-                        description: rec.description.clone(),
-                        timeline: "1-3 months".to_string(),
-                        dependencies: rec.prerequisites.clone(),
+                        title:            rec.title.clone(),
+                        description:      rec.description.clone(),
+                        timeline:         "1-3 months".to_string(),
+                        dependencies:     rec.prerequisites.clone(),
                         success_criteria: vec![
                             "Implementation completed".to_string(),
                             "No breaking changes introduced".to_string(),
@@ -201,10 +196,10 @@ impl RecommendationGenerator {
                 }
                 ImplementationEffort::Medium => {
                     medium_term.push(RoadmapItem {
-                        title: rec.title.clone(),
-                        description: rec.description.clone(),
-                        timeline: "3-6 months".to_string(),
-                        dependencies: rec.prerequisites.clone(),
+                        title:            rec.title.clone(),
+                        description:      rec.description.clone(),
+                        timeline:         "3-6 months".to_string(),
+                        dependencies:     rec.prerequisites.clone(),
                         success_criteria: vec![
                             "Implementation completed".to_string(),
                             "Team trained on new patterns".to_string(),
@@ -214,10 +209,10 @@ impl RecommendationGenerator {
                 }
                 ImplementationEffort::High | ImplementationEffort::VeryHigh => {
                     long_term.push(RoadmapItem {
-                        title: rec.title.clone(),
-                        description: rec.description.clone(),
-                        timeline: "6-12 months".to_string(),
-                        dependencies: rec.prerequisites.clone(),
+                        title:            rec.title.clone(),
+                        description:      rec.description.clone(),
+                        timeline:         "6-12 months".to_string(),
+                        dependencies:     rec.prerequisites.clone(),
                         success_criteria: vec![
                             "Major refactoring completed".to_string(),
                             "System performance improved".to_string(),
@@ -241,14 +236,14 @@ impl RecommendationGenerator {
         anti_pattern: &AntiPattern,
     ) -> AdvisorResult<ArchitecturalRecommendation> {
         Ok(ArchitecturalRecommendation {
-            title: format!("Address {}", anti_pattern.anti_pattern_type),
-            description: format!(
+            title:                 format!("Address {}", anti_pattern.anti_pattern_type),
+            description:           format!(
                 "High-severity anti-pattern detected: {}",
                 anti_pattern.description
             ),
-            rationale: "Anti-patterns reduce system maintainability and can lead to technical debt"
+            rationale:             "Anti-patterns reduce system maintainability and can lead to technical debt"
                 .to_string(),
-            expected_benefits: vec![
+            expected_benefits:     vec![
                 "Improved system stability".to_string(),
                 "Reduced maintenance costs".to_string(),
                 "Better code quality".to_string(),
@@ -259,40 +254,38 @@ impl RecommendationGenerator {
                 0.7..=0.9 => ImplementationEffort::High,
                 _ => ImplementationEffort::VeryHigh,
             },
-            risk_level: if anti_pattern.severity > 0.8 {
+            risk_level:            if anti_pattern.severity > 0.8 {
                 RiskLevel::High
             } else {
                 RiskLevel::Medium
             },
-            prerequisites: vec![
+            prerequisites:         vec![
                 "Code review scheduled".to_string(),
                 "Testing strategy prepared".to_string(),
             ],
-            alternatives: anti_pattern.refactoring_suggestions.clone(),
+            alternatives:          anti_pattern.refactoring_suggestions.clone(),
         })
     }
 
     /// Generate complexity reduction recommendation
-    async fn generate_complexity_recommendation(
-        &self,
-    ) -> AdvisorResult<ArchitecturalRecommendation> {
+    async fn generate_complexity_recommendation(&self) -> AdvisorResult<ArchitecturalRecommendation> {
         Ok(ArchitecturalRecommendation {
-            title: "Refactor Complex Modules".to_string(),
-            description: "High system complexity detected that impacts maintainability".to_string(),
-            rationale: "Complex systems are harder to maintain, test, and modify".to_string(),
-            expected_benefits: vec![
+            title:                 "Refactor Complex Modules".to_string(),
+            description:           "High system complexity detected that impacts maintainability".to_string(),
+            rationale:             "Complex systems are harder to maintain, test, and modify".to_string(),
+            expected_benefits:     vec![
                 "Easier maintenance".to_string(),
                 "Reduced bug introduction rate".to_string(),
                 "Faster feature development".to_string(),
             ],
             implementation_effort: ImplementationEffort::High,
-            risk_level: RiskLevel::High,
-            prerequisites: vec![
+            risk_level:            RiskLevel::High,
+            prerequisites:         vec![
                 "Code complexity analysis completed".to_string(),
                 "Refactoring strategy approved".to_string(),
                 "Testing resources allocated".to_string(),
             ],
-            alternatives: vec![
+            alternatives:          vec![
                 "Extract microservices".to_string(),
                 "Apply design patterns".to_string(),
                 "Create domain-specific languages".to_string(),
@@ -303,18 +296,18 @@ impl RecommendationGenerator {
     /// Generate coupling reduction recommendation
     async fn generate_coupling_recommendation(&self) -> AdvisorResult<ArchitecturalRecommendation> {
         Ok(ArchitecturalRecommendation {
-            title: "Reduce Module Coupling".to_string(),
-            description: "High coupling detected between modules".to_string(),
-            rationale: "Tight coupling makes changes difficult and increases risk".to_string(),
-            expected_benefits: vec![
+            title:                 "Reduce Module Coupling".to_string(),
+            description:           "High coupling detected between modules".to_string(),
+            rationale:             "Tight coupling makes changes difficult and increases risk".to_string(),
+            expected_benefits:     vec![
                 "Independent module evolution".to_string(),
                 "Reduced change impact".to_string(),
                 "Easier testing".to_string(),
             ],
             implementation_effort: ImplementationEffort::Medium,
-            risk_level: RiskLevel::Medium,
-            prerequisites: vec!["Dependency analysis completed".to_string()],
-            alternatives: vec![
+            risk_level:            RiskLevel::Medium,
+            prerequisites:         vec!["Dependency analysis completed".to_string()],
+            alternatives:          vec![
                 "Interface segregation".to_string(),
                 "Dependency injection".to_string(),
                 "Event-driven architecture".to_string(),
@@ -325,18 +318,18 @@ impl RecommendationGenerator {
     /// Generate cohesion improvement recommendation
     async fn generate_cohesion_recommendation(&self) -> AdvisorResult<ArchitecturalRecommendation> {
         Ok(ArchitecturalRecommendation {
-            title: "Improve Module Cohesion".to_string(),
-            description: "Low cohesion detected within modules".to_string(),
-            rationale: "Low cohesion indicates modules have mixed responsibilities".to_string(),
-            expected_benefits: vec![
+            title:                 "Improve Module Cohesion".to_string(),
+            description:           "Low cohesion detected within modules".to_string(),
+            rationale:             "Low cohesion indicates modules have mixed responsibilities".to_string(),
+            expected_benefits:     vec![
                 "Single responsibility principle".to_string(),
                 "Easier testing and maintenance".to_string(),
                 "Clear module boundaries".to_string(),
             ],
             implementation_effort: ImplementationEffort::Medium,
-            risk_level: RiskLevel::Low,
-            prerequisites: vec!["Module analysis completed".to_string()],
-            alternatives: vec![
+            risk_level:            RiskLevel::Low,
+            prerequisites:         vec!["Module analysis completed".to_string()],
+            alternatives:          vec![
                 "Extract related functionality".to_string(),
                 "Apply SOLID principles".to_string(),
                 "Domain-driven design".to_string(),
@@ -378,26 +371,23 @@ impl RecommendationGenerator {
     fn initialize_templates() -> std::collections::HashMap<String, RecommendationTemplate> {
         let mut templates = std::collections::HashMap::new();
 
-        templates.insert(
-            "God Object".to_string(),
-            RecommendationTemplate {
-                pattern_name: "God Object".to_string(),
-                suggestion_generator: Box::new(move |pattern: &DetectedPattern| {
-                    Box::pin(async move {
-                        Ok(ArchitecturalSuggestion {
-                            title: format!("Refactor {}", pattern.pattern_type),
-                            description: format!(
-                                "Apply Single Responsibility Principle to {}",
-                                pattern.pattern_type.to_lowercase()
-                            ),
-                            category: SuggestionCategory::Refactoring,
-                            priority: PriorityLevel::High,
-                            impact: ImpactLevel::Major,
-                        })
+        templates.insert("God Object".to_string(), RecommendationTemplate {
+            pattern_name:         "God Object".to_string(),
+            suggestion_generator: Box::new(move |pattern: &DetectedPattern| {
+                Box::pin(async move {
+                    Ok(ArchitecturalSuggestion {
+                        title:       format!("Refactor {}", pattern.pattern_type),
+                        description: format!(
+                            "Apply Single Responsibility Principle to {}",
+                            pattern.pattern_type.to_lowercase()
+                        ),
+                        category:    SuggestionCategory::Refactoring,
+                        priority:    PriorityLevel::High,
+                        impact:      ImpactLevel::Major,
                     })
-                }),
-            },
-        );
+                })
+            }),
+        });
 
         templates
     }
@@ -405,12 +395,9 @@ impl RecommendationGenerator {
 
 /// Recommendation template for pattern-based suggestions
 pub struct RecommendationTemplate {
-    pattern_name: String,
+    pattern_name:         String,
     suggestion_generator: Box<
-        dyn Fn(
-                &DetectedPattern,
-            )
-                -> futures::future::BoxFuture<'_, AdvisorResult<ArchitecturalSuggestion>>
+        dyn Fn(&DetectedPattern) -> futures::future::BoxFuture<'_, AdvisorResult<ArchitecturalSuggestion>>
             + Send
             + Sync,
     >,
@@ -427,23 +414,23 @@ impl std::fmt::Debug for RecommendationTemplate {
 /// Quality assessment using analysis results
 #[derive(Debug, Clone)]
 pub struct QualityAssessment {
-    pub overall_score: f32,
+    pub overall_score:         f32,
     pub maintainability_score: f32,
-    pub complexity_score: f32,
-    pub coupling_score: f32,
-    pub cohesion_score: f32,
-    pub grading_scale: String,
+    pub complexity_score:      f32,
+    pub coupling_score:        f32,
+    pub cohesion_score:        f32,
+    pub grading_scale:         String,
 }
 
 /// Decision analysis using evaluation framework
 #[derive(Debug)]
 pub struct DecisionAnalysisResult {
-    pub decision: DecisionOption,
+    pub decision:       DecisionOption,
     pub recommendation: DecisionRecommendation,
-    pub analysis: std::collections::HashMap<String, f32>,
-    pub trade_offs: Vec<TradeOff>,
-    pub risks: Vec<String>,
-    pub assumptions: Vec<String>,
+    pub analysis:       std::collections::HashMap<String, f32>,
+    pub trade_offs:     Vec<TradeOff>,
+    pub risks:          Vec<String>,
+    pub assumptions:    Vec<String>,
 }
 
 /// Analysis utilities for recommendation generation
@@ -478,9 +465,7 @@ pub mod recommendation_utils {
             // Determine priority based on risk and effort
             let priority = match (&rec.risk_level, &rec.implementation_effort) {
                 (RiskLevel::Critical, _) => PriorityLevel::High,
-                (RiskLevel::High, ImplementationEffort::Low | ImplementationEffort::Medium) => {
-                    PriorityLevel::High
-                }
+                (RiskLevel::High, ImplementationEffort::Low | ImplementationEffort::Medium) => PriorityLevel::High,
                 (RiskLevel::High, _) => PriorityLevel::Medium,
                 (RiskLevel::Medium, ImplementationEffort::VeryHigh) => PriorityLevel::Low,
                 (RiskLevel::Medium, _) => PriorityLevel::Medium,
@@ -495,9 +480,7 @@ pub mod recommendation_utils {
     }
 
     /// Generate implementation plan from recommendations
-    pub fn generate_implementation_plan(
-        primary: &[ArchitecturalRecommendation],
-    ) -> Vec<(String, String, String)> {
+    pub fn generate_implementation_plan(primary: &[ArchitecturalRecommendation]) -> Vec<(String, String, String)> {
         primary
             .iter()
             .map(|rec| {
@@ -538,11 +521,11 @@ mod tests {
     #[test]
     fn test_priority_score_calculation() {
         let suggestion = ArchitecturalSuggestion {
-            title: "Test suggestion".to_string(),
+            title:       "Test suggestion".to_string(),
             description: "Test description".to_string(),
-            category: SuggestionCategory::Refactoring,
-            priority: PriorityLevel::High,
-            impact: ImpactLevel::Major,
+            category:    SuggestionCategory::Refactoring,
+            priority:    PriorityLevel::High,
+            impact:      ImpactLevel::Major,
         };
 
         let score = recommendation_utils::calculate_priority_score(&suggestion);
@@ -552,8 +535,8 @@ mod tests {
     #[test]
     fn test_mitigation_effectiveness() {
         let risk_assessment = RiskAssessment {
-            overall_risk: 0.8,
-            risk_factors: vec![],
+            overall_risk:          0.8,
+            risk_factors:          vec![],
             mitigation_strategies: vec![
                 "Code review".to_string(),
                 "Testing".to_string(),
@@ -573,52 +556,52 @@ mod tests {
     async fn test_risk_assessment_generation() {
         let generator = RecommendationGenerator::new();
         let analysis = PatternAnalysis {
-            detected_patterns: vec![],
-            anti_patterns: vec![AntiPattern {
-                anti_pattern_type: "God Object".to_string(),
-                severity: 0.8,
-                location: PatternLocation {
-                    files: vec!["src/main.rs".to_string()],
+            detected_patterns:     vec![],
+            anti_patterns:         vec![AntiPattern {
+                anti_pattern_type:       "God Object".to_string(),
+                severity:                0.8,
+                location:                PatternLocation {
+                    files:   vec!["src/main.rs".to_string()],
                     modules: vec![],
-                    lines: Some((1, 100)),
+                    lines:   Some((1, 100)),
                 },
-                description: "Large class with too many responsibilities".to_string(),
-                consequences: vec!["Difficult to maintain".to_string()],
+                description:             "Large class with too many responsibilities".to_string(),
+                consequences:            vec!["Difficult to maintain".to_string()],
                 refactoring_suggestions: vec!["Apply SRP".to_string()],
             }],
-            quality_metrics: QualityMetrics {
+            quality_metrics:       QualityMetrics {
                 maintainability_index: 75.0,
                 cyclomatic_complexity: 25.0,
-                halstead_complexity: 30.0,
-                lines_of_code: 1000,
-                technical_debt_ratio: 0.2,
-                test_coverage: Some(0.7),
+                halstead_complexity:   30.0,
+                lines_of_code:         1000,
+                technical_debt_ratio:  0.2,
+                test_coverage:         Some(0.7),
             },
             complexity_assessment: ComplexityAssessment {
                 overall_complexity: ComplexityLevel::High,
                 hotspot_complexity: vec![],
-                complexity_trends: vec![],
+                complexity_trends:  vec![],
             },
-            coupling_analysis: CouplingAnalysis {
-                afferent_coupling: std::collections::HashMap::new(),
-                efferent_coupling: std::collections::HashMap::new(),
-                instability: std::collections::HashMap::new(),
-                abstractness: std::collections::HashMap::new(),
+            coupling_analysis:     CouplingAnalysis {
+                afferent_coupling:  std::collections::HashMap::new(),
+                efferent_coupling:  std::collections::HashMap::new(),
+                instability:        std::collections::HashMap::new(),
+                abstractness:       std::collections::HashMap::new(),
                 distance_from_main: std::collections::HashMap::new(),
             },
-            cohesion_analysis: CohesionAnalysis {
-                lack_of_cohesion: std::collections::HashMap::new(),
+            cohesion_analysis:     CohesionAnalysis {
+                lack_of_cohesion:    std::collections::HashMap::new(),
                 functional_cohesion: std::collections::HashMap::new(),
             },
         };
 
         let quality = QualityAssessment {
-            overall_score: 0.7,
+            overall_score:         0.7,
             maintainability_score: 0.6,
-            complexity_score: 0.4,
-            coupling_score: 0.8,
-            cohesion_score: 0.5,
-            grading_scale: "0.0-1.0".to_string(),
+            complexity_score:      0.4,
+            coupling_score:        0.8,
+            cohesion_score:        0.5,
+            grading_scale:         "0.0-1.0".to_string(),
         };
 
         let risk_assessment = generator.assess_risks(&analysis, &quality).await.unwrap();

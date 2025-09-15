@@ -10,21 +10,21 @@ pub use super::*;
 /// Configuration for style checking
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StyleCheckConfig {
-    pub max_line_length: usize,
-    pub use_spaces: bool,
-    pub indent_size: usize,
+    pub max_line_length:  usize,
+    pub use_spaces:       bool,
+    pub indent_size:      usize,
     pub require_comments: bool,
-    pub strict_naming: bool,
+    pub strict_naming:    bool,
 }
 
 impl Default for StyleCheckConfig {
     fn default() -> Self {
         Self {
-            max_line_length: 100,
-            use_spaces: true,
-            indent_size: 4,
+            max_line_length:  100,
+            use_spaces:       true,
+            indent_size:      4,
             require_comments: true,
-            strict_naming: false,
+            strict_naming:    false,
         }
     }
 }
@@ -32,30 +32,30 @@ impl Default for StyleCheckConfig {
 /// Result of style checking
 #[derive(Debug, Clone)]
 pub struct StyleCheckResult {
-    pub issues: Vec<StyleIssue>,
+    pub issues:            Vec<StyleIssue>,
     pub consistency_score: f64,
-    pub metrics: StyleMetrics,
-    pub suggestions: Vec<rust_ai_ide_ai_analysis::Suggestion>,
+    pub metrics:           StyleMetrics,
+    pub suggestions:       Vec<rust_ai_ide_ai_analysis::Suggestion>,
 }
 
 /// A style-related issue
 #[derive(Debug, Clone)]
 pub struct StyleIssue {
-    pub id: Uuid,
-    pub rule: StyleRule,
-    pub message: String,
-    pub location: rust_ai_ide_ai_analysis::Location,
-    pub severity: rust_ai_ide_ai_analysis::Severity,
+    pub id:         Uuid,
+    pub rule:       StyleRule,
+    pub message:    String,
+    pub location:   rust_ai_ide_ai_analysis::Location,
+    pub severity:   rust_ai_ide_ai_analysis::Severity,
     pub suggestion: Option<String>,
 }
 
 /// Style metrics for analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StyleMetrics {
-    pub total_lines: usize,
-    pub code_lines: usize,
+    pub total_lines:   usize,
+    pub code_lines:    usize,
     pub comment_lines: usize,
-    pub blank_lines: usize,
+    pub blank_lines:   usize,
     pub comment_ratio: f64,
 }
 

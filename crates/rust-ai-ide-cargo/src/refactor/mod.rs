@@ -6,12 +6,7 @@ use crate::utils;
 use crate::workspace::CargoManager;
 
 /// Perform a workspace-wide search and replace
-pub async fn workspace_replace(
-    manager: &CargoManager,
-    search: &str,
-    replace: &str,
-    dry_run: bool,
-) -> Result<usize> {
+pub async fn workspace_replace(manager: &CargoManager, search: &str, replace: &str, dry_run: bool) -> Result<usize> {
     let mut count = 0;
     let mut files_modified = 0;
 
@@ -50,12 +45,7 @@ pub async fn workspace_replace(
 }
 
 /// Rename a symbol across the entire workspace
-pub async fn rename_symbol(
-    manager: &CargoManager,
-    old_name: &str,
-    new_name: &str,
-    dry_run: bool,
-) -> Result<usize> {
+pub async fn rename_symbol(manager: &CargoManager, old_name: &str, new_name: &str, dry_run: bool) -> Result<usize> {
     // First find all references to ensure we can safely rename
     let references = find_references(manager, old_name).await?;
 
@@ -68,10 +58,7 @@ pub async fn rename_symbol(
 }
 
 /// Find all references to a symbol across the workspace
-pub async fn find_references(
-    manager: &CargoManager,
-    symbol: &str,
-) -> Result<Vec<(std::path::PathBuf, Vec<usize>)>> {
+pub async fn find_references(manager: &CargoManager, symbol: &str) -> Result<Vec<(std::path::PathBuf, Vec<usize>)>> {
     use std::fs;
     use std::path::PathBuf;
 
@@ -172,9 +159,7 @@ pub async fn find_references(
         for entry in walkdir::WalkDir::new(&path)
             .into_iter()
             .filter_map(Result::ok)
-            .filter(|e| {
-                e.file_type().is_file() && e.path().extension().is_some_and(|ext| ext == "rs")
-            })
+            .filter(|e| e.file_type().is_file() && e.path().extension().is_some_and(|ext| ext == "rs"))
         {
             let file_path = entry.path();
             println!("  Checking file: {:?}", file_path);
@@ -208,9 +193,7 @@ pub async fn find_references(
 }
 
 /// Get dependency graph of the workspace
-pub async fn get_dependency_graph(
-    manager: &CargoManager,
-) -> Result<std::collections::HashMap<String, Vec<String>>> {
+pub async fn get_dependency_graph(manager: &CargoManager) -> Result<std::collections::HashMap<String, Vec<String>>> {
     use serde_json;
     let mut graph = std::collections::HashMap::new();
 

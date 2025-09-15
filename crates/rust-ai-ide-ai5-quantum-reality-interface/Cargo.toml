@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-ai5-quantum-reality-interface"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 description = "Quantum reality development interfaces for Wave 5 Rust AI IDE"

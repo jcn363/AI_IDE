@@ -19,9 +19,9 @@ use crate::security::rate_limit_middleware::{RateLimitMiddleware, RateLimitMiddl
 
 // Command configuration for WebAuthn operations
 const WEBAUTHN_COMMAND_CONFIG: CommandConfig = CommandConfig {
-    enable_logging: true,
-    log_level: log::Level::Info,
-    enable_validation: true,
+    enable_logging:     true,
+    log_level:          log::Level::Info,
+    enable_validation:  true,
     async_timeout_secs: Some(30), // 30 second timeout for WebAuthn operations
 };
 
@@ -29,12 +29,12 @@ const WEBAUTHN_COMMAND_CONFIG: CommandConfig = CommandConfig {
 #[derive(Debug, Deserialize)]
 pub struct StartRegistrationInput {
     pub user_display_name: String,
-    pub user_name: String,
+    pub user_name:         String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct FinishRegistrationInput {
-    pub challenge_id: String,
+    pub challenge_id:          String,
     pub registration_response: RegisterPublicKeyCredential,
 }
 
@@ -45,7 +45,7 @@ pub struct StartAuthenticationInput {
 
 #[derive(Debug, Deserialize)]
 pub struct FinishAuthenticationInput {
-    pub challenge_id: String,
+    pub challenge_id:            String,
     pub authentication_response: PublicKeyCredential,
 }
 
@@ -176,7 +176,7 @@ pub async fn webauthn_finish_registration(
                 .await;
 
             match rate_limit_result {
-                Ok((rate_limited, headers)) => {
+                Ok((rate_limited, headers)) =>
                     if rate_limited {
                         return Err(serde_json::json!({
                             "error": "Too Many Requests",
@@ -184,8 +184,7 @@ pub async fn webauthn_finish_registration(
                             "code": "RATE_LIMIT_EXCEEDED"
                         })
                         .to_string());
-                    }
-                }
+                    },
                 Err(e) => {
                     log::warn!(
                         "Rate limit check failed, allowing command to proceed: {}",
@@ -249,11 +248,11 @@ pub async fn webauthn_start_authentication(
         async move || {
             // Create anonymous user context for rate limiting
             let user_context = UserContext {
-                user_id: input.user_id.clone(),
-                username: input.user_id.clone(),
-                roles: vec![],
-                permissions: vec![],
-                session_id: None,
+                user_id:      input.user_id.clone(),
+                username:     input.user_id.clone(),
+                roles:        vec![],
+                permissions:  vec![],
+                session_id:   None,
                 mfa_verified: false,
             };
 
@@ -263,7 +262,7 @@ pub async fn webauthn_start_authentication(
                 .await;
 
             match rate_limit_result {
-                Ok((rate_limited, headers)) => {
+                Ok((rate_limited, headers)) =>
                     if rate_limited {
                         return Err(serde_json::json!({
                             "error": "Too Many Requests",
@@ -271,8 +270,7 @@ pub async fn webauthn_start_authentication(
                             "code": "RATE_LIMIT_EXCEEDED"
                         })
                         .to_string());
-                    }
-                }
+                    },
                 Err(e) => {
                     log::warn!(
                         "Rate limit check failed, allowing command to proceed: {}",
@@ -330,11 +328,11 @@ pub async fn webauthn_finish_authentication(
             // Since we don't know the user_id yet at this point, we use a generic user context
             // The rate limiter will handle this as an anonymous request initially
             let temp_user_context = UserContext {
-                user_id: "temp_webauthn_user".to_string(),
-                username: "temp_webauthn_user".to_string(),
-                roles: vec![],
-                permissions: vec![],
-                session_id: None,
+                user_id:      "temp_webauthn_user".to_string(),
+                username:     "temp_webauthn_user".to_string(),
+                roles:        vec![],
+                permissions:  vec![],
+                session_id:   None,
                 mfa_verified: false,
             };
 
@@ -348,7 +346,7 @@ pub async fn webauthn_finish_authentication(
                 .await;
 
             match rate_limit_result {
-                Ok((rate_limited, _)) => {
+                Ok((rate_limited, _)) =>
                     if rate_limited {
                         return Err(serde_json::json!({
                             "error": "Too Many Requests",
@@ -356,8 +354,7 @@ pub async fn webauthn_finish_authentication(
                             "code": "RATE_LIMIT_EXCEEDED"
                         })
                         .to_string());
-                    }
-                }
+                    },
                 Err(e) => {
                     log::warn!(
                         "Rate limit check failed, allowing command to proceed: {}",
@@ -408,10 +405,7 @@ pub async fn webauthn_finish_authentication(
 ///
 /// Returns a list of all WebAuthn credentials registered for the current user.
 #[tauri::command]
-pub async fn webauthn_list_credentials(
-    state: State<'_, WebAuthnService>,
-    user: UserContext,
-) -> Result<String, String> {
+pub async fn webauthn_list_credentials(state: State<'_, WebAuthnService>, user: UserContext) -> Result<String, String> {
     execute_command!(
         "webauthn_list_credentials",
         &WEBAUTHN_COMMAND_CONFIG,
@@ -487,9 +481,7 @@ pub async fn webauthn_get_status(state: State<'_, WebAuthnService>) -> Result<St
 ///
 /// Removes expired registration and authentication challenges to maintain system hygiene.
 #[tauri::command]
-pub async fn webauthn_cleanup_expired_challenges(
-    state: State<'_, WebAuthnService>,
-) -> Result<String, String> {
+pub async fn webauthn_cleanup_expired_challenges(state: State<'_, WebAuthnService>) -> Result<String, String> {
     execute_command!(
         "webauthn_cleanup_expired_challenges",
         &WEBAUTHN_COMMAND_CONFIG,
@@ -517,7 +509,7 @@ mod tests {
     fn test_input_sanitization() {
         let input = StartRegistrationInput {
             user_display_name: "Test User".to_string(),
-            user_name: "testuser".to_string(),
+            user_name:         "testuser".to_string(),
         };
 
         let result = sanitize_webauthn_input(input);

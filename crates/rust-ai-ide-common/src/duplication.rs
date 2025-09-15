@@ -13,23 +13,23 @@ use serde::{Deserialize, Serialize};
 /// Statistics about detected duplications
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct DuplicationStats {
-    pub total_files: usize,
+    pub total_files:          usize,
     pub duplicated_functions: usize,
-    pub similar_structs: usize,
-    pub repeated_patterns: usize,
-    pub trait_duplicates: usize,
-    pub total_duplicates: usize,
+    pub similar_structs:      usize,
+    pub repeated_patterns:    usize,
+    pub trait_duplicates:     usize,
+    pub total_duplicates:     usize,
 }
 
 /// A duplication detection result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DuplicationResult {
-    pub file_path: String,
-    pub line_start: usize,
-    pub line_end: usize,
-    pub kind: DuplicationKind,
-    pub confidence: f64,
-    pub similar_to: String,
+    pub file_path:    String,
+    pub line_start:   usize,
+    pub line_end:     usize,
+    pub kind:         DuplicationKind,
+    pub confidence:   f64,
+    pub similar_to:   String,
     pub code_snippet: String,
 }
 
@@ -47,8 +47,8 @@ pub enum DuplicationKind {
 #[derive(Debug, Clone)]
 pub struct SimilarityMatch {
     pub similarity_score: f64,
-    pub matched_content: String,
-    pub source_location: String,
+    pub matched_content:  String,
+    pub source_location:  String,
 }
 
 /// Detect duplications across a set of source files
@@ -114,19 +114,16 @@ pub fn detect_duplications(files: &HashMap<String, String>) -> Result<Duplicatio
     }
 
     stats.repeated_patterns = detect_repeated_patterns(&code_fragments, 0.8);
-    stats.total_duplicates = stats.duplicated_functions
-        + stats.similar_structs
-        + stats.trait_duplicates
-        + stats.repeated_patterns;
+    stats.total_duplicates =
+        stats.duplicated_functions + stats.similar_structs + stats.trait_duplicates + stats.repeated_patterns;
 
     Ok(stats)
 }
 
 /// Extract function signatures from code for duplication detection
 pub fn extract_functions(code: &str) -> Result<Vec<(String, String)>, String> {
-    static FN_REGEX: Lazy<Regex> = Lazy::new(|| {
-        Regex::new(r"fn\s+(\w+)\s*\([^)]*\)\s*(->\s*[^;\{]*)?\s*\{").expect("Invalid regex pattern")
-    });
+    static FN_REGEX: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r"fn\s+(\w+)\s*\([^)]*\)\s*(->\s*[^;\{]*)?\s*\{").expect("Invalid regex pattern"));
 
     let mut functions = Vec::new();
     for cap in FN_REGEX.captures_iter(code) {
@@ -155,9 +152,8 @@ pub fn extract_structs(code: &str) -> Result<Vec<(String, String)>, String> {
 
 /// Extract trait implementations
 pub fn extract_trait_implementations(code: &str) -> Result<Vec<(String, String)>, String> {
-    static IMPL_REGEX: Lazy<Regex> = Lazy::new(|| {
-        Regex::new(r"impl\s+<[^>]*>\s*(\w+)\s+for\s+(\w+)").expect("Invalid regex pattern")
-    });
+    static IMPL_REGEX: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r"impl\s+<[^>]*>\s*(\w+)\s+for\s+(\w+)").expect("Invalid regex pattern"));
 
     let mut impls = Vec::new();
     for cap in IMPL_REGEX.captures_iter(code) {
@@ -187,9 +183,9 @@ pub fn extract_code_fragments(code: &str, file_path: &str) -> Vec<CodeFragment> 
             let fragment = lines[i..end].join("\n").trim().to_string();
             if !fragment.is_empty() {
                 fragments.push(CodeFragment {
-                    content: fragment,
+                    content:    fragment,
                     start_line: i + 1,
-                    file_path: file_path.to_string(),
+                    file_path:  file_path.to_string(),
                 });
             }
         }
@@ -201,9 +197,9 @@ pub fn extract_code_fragments(code: &str, file_path: &str) -> Vec<CodeFragment> 
 /// A code fragment with metadata for comparison
 #[derive(Debug, Clone)]
 pub struct CodeFragment {
-    pub content: String,
+    pub content:    String,
     pub start_line: usize,
-    pub file_path: String,
+    pub file_path:  String,
 }
 
 /// Detect repeated patterns using fuzzy matching
@@ -277,10 +273,7 @@ pub fn tokenize_code(code: &str) -> HashSet<&str> {
 }
 
 /// Utility to check for potential duplications before adding new code
-pub fn check_potential_duplication(
-    new_code: &str,
-    existing_files: &HashMap<String, String>,
-) -> Vec<SimilarityMatch> {
+pub fn check_potential_duplication(new_code: &str, existing_files: &HashMap<String, String>) -> Vec<SimilarityMatch> {
     let mut matches = Vec::new();
     let new_fragments = extract_code_fragments(new_code, "new_code");
 
@@ -294,11 +287,8 @@ pub fn check_potential_duplication(
                     // High similarity threshold for warnings
                     matches.push(SimilarityMatch {
                         similarity_score: similarity,
-                        matched_content: existing_frag.content.clone(),
-                        source_location: format!(
-                            "{}:{}",
-                            existing_frag.file_path, existing_frag.start_line
-                        ),
+                        matched_content:  existing_frag.content.clone(),
+                        source_location:  format!("{}:{}", existing_frag.file_path, existing_frag.start_line),
                     });
                 }
             }
@@ -416,8 +406,7 @@ pub fn verify_duplication_free(file_content: &str) -> Result<(), Vec<String>> {
     ];
 
     for (pattern_name, pattern) in &patterns {
-        let re = Regex::new(pattern)
-            .map_err(|_| vec![format!("Invalid regex pattern: {}", pattern_name)])?;
+        let re = Regex::new(pattern).map_err(|_| vec![format!("Invalid regex pattern: {}", pattern_name)])?;
         let count = re.find_iter(file_content).count();
         if count > 3 {
             // Threshold for potential duplication
@@ -484,7 +473,7 @@ mod tests {
 pub mod exports {
     pub use super::{
         calculate_similarity, check_potential_duplication, create_duplication_prevention_template,
-        create_safe_function_template, detect_duplications, verify_duplication_free,
-        DuplicationKind, DuplicationResult, DuplicationStats, SimilarityMatch,
+        create_safe_function_template, detect_duplications, verify_duplication_free, DuplicationKind,
+        DuplicationResult, DuplicationStats, SimilarityMatch,
     };
 }

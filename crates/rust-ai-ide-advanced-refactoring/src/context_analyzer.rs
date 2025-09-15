@@ -10,11 +10,11 @@ use crate::error::{AnalysisError, AnalysisResult};
 #[derive(Debug, Clone)]
 pub struct ContextAnalysis {
     pub analysis_type: ContextAnalysisType,
-    pub confidence: f64,
-    pub start_line: usize,
-    pub end_line: usize,
-    pub description: String,
-    pub suggestions: Vec<String>,
+    pub confidence:    f64,
+    pub start_line:    usize,
+    pub end_line:      usize,
+    pub description:   String,
+    pub suggestions:   Vec<String>,
 }
 
 /// Types of context analysis

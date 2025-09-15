@@ -41,14 +41,14 @@ use super::services::{AIError, AIResult, AIService};
 /// Training job information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingJob {
-    pub id: String,
-    pub model_id: String,
-    pub status: TrainingStatus,
-    pub start_time: u64,
+    pub id:                   String,
+    pub model_id:             String,
+    pub status:               TrainingStatus,
+    pub start_time:           u64,
     pub estimated_completion: Option<u64>,
-    pub progress: TrainingProgress,
-    pub resources: TrainingResources,
-    pub configuration: TrainingConfiguration,
+    pub progress:             TrainingProgress,
+    pub resources:            TrainingResources,
+    pub configuration:        TrainingConfiguration,
 }
 
 /// Training status enumeration
@@ -66,13 +66,13 @@ pub enum TrainingStatus {
 /// Training progress information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingProgress {
-    pub epochs_completed: u32,
-    pub epochs_total: u32,
-    pub loss_current: f64,
-    pub loss_history: Vec<f64>,
-    pub accuracy_current: f64,
-    pub accuracy_history: Vec<f64>,
-    pub time_elapsed_seconds: u64,
+    pub epochs_completed:                 u32,
+    pub epochs_total:                     u32,
+    pub loss_current:                     f64,
+    pub loss_history:                     Vec<f64>,
+    pub accuracy_current:                 f64,
+    pub accuracy_history:                 Vec<f64>,
+    pub time_elapsed_seconds:             u64,
     pub estimated_time_remaining_seconds: Option<u64>,
 }
 
@@ -80,56 +80,56 @@ pub struct TrainingProgress {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingResources {
     pub cpu_usage_percent: f64,
-    pub memory_usage_mb: u64,
+    pub memory_usage_mb:   u64,
     pub gpu_usage_percent: Option<f64>,
-    pub gpu_memory_mb: Option<u64>,
-    pub disk_write_mb: u64,
+    pub gpu_memory_mb:     Option<u64>,
+    pub disk_write_mb:     u64,
 }
 
 /// Training configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingConfiguration {
-    pub learning_rate: f64,
-    pub batch_size: usize,
-    pub epochs: u32,
-    pub dataset_path: String,
+    pub learning_rate:     f64,
+    pub batch_size:        usize,
+    pub epochs:            u32,
+    pub dataset_path:      String,
     pub output_model_path: String,
-    pub hyperparameters: HashMap<String, serde_json::Value>,
+    pub hyperparameters:   HashMap<String, serde_json::Value>,
 }
 
 /// Fine-tune job request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FineTuneRequest {
-    pub model_id: String,
-    pub dataset_path: String,
+    pub model_id:      String,
+    pub dataset_path:  String,
     pub configuration: TrainingConfiguration,
 }
 
 /// Training job response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingJobResponse {
-    pub job_id: String,
-    pub status: TrainingStatus,
+    pub job_id:  String,
+    pub status:  TrainingStatus,
     pub message: String,
 }
 
 /// Progress tracking response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingProgressResponse {
-    pub job_id: String,
-    pub progress: Option<TrainingProgress>,
+    pub job_id:         String,
+    pub progress:       Option<TrainingProgress>,
     pub current_status: TrainingStatus,
-    pub error_message: Option<String>,
+    pub error_message:  Option<String>,
 }
 
 /// Resource status information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceStatus {
-    pub available_cpus: usize,
+    pub available_cpus:      usize,
     pub available_memory_mb: u64,
-    pub available_gpus: usize,
-    pub running_jobs: usize,
-    pub queued_jobs: usize,
+    pub available_gpus:      usize,
+    pub running_jobs:        usize,
+    pub queued_jobs:         usize,
 }
 
 /// Error types specific to training operations
@@ -164,23 +164,23 @@ pub enum TrainingError {
 #[derive(serde::Serialize)]
 pub struct TrainingErrorWrapper {
     pub message: String,
-    pub code: String,
+    pub code:    String,
 }
 
 impl From<&TrainingError> for TrainingErrorWrapper {
     fn from(error: &TrainingError) -> Self {
         Self {
             message: error.to_string(),
-            code: "TRAINING_ERROR".to_string(),
+            code:    "TRAINING_ERROR".to_string(),
         }
     }
 }
 
 /// AI Training Coordinator
 pub struct TrainingCoordinator {
-    ai_service: Arc<RwLock<AIService>>,
-    active_jobs: Arc<RwLock<HashMap<String, TrainingJob>>>,
-    job_queue: Arc<RwLock<Vec<String>>>,
+    ai_service:       Arc<RwLock<AIService>>,
+    active_jobs:      Arc<RwLock<HashMap<String, TrainingJob>>>,
+    job_queue:        Arc<RwLock<Vec<String>>>,
     background_tasks: Arc<RwLock<Vec<String>>>,
 }
 
@@ -188,18 +188,15 @@ impl TrainingCoordinator {
     /// Create a new training coordinator
     pub async fn new() -> AIResult<Self> {
         Ok(Self {
-            ai_service: Arc::new(RwLock::new(AIService::new().await?)),
-            active_jobs: Arc::new(RwLock::new(HashMap::new())),
-            job_queue: Arc::new(RwLock::new(Vec::new())),
+            ai_service:       Arc::new(RwLock::new(AIService::new().await?)),
+            active_jobs:      Arc::new(RwLock::new(HashMap::new())),
+            job_queue:        Arc::new(RwLock::new(Vec::new())),
             background_tasks: Arc::new(RwLock::new(Vec::new())),
         })
     }
 
     /// Start a fine-tuning job
-    pub async fn start_finetune_job(
-        &self,
-        request: FineTuneRequest,
-    ) -> AIResult<TrainingJobResponse> {
+    pub async fn start_finetune_job(&self, request: FineTuneRequest) -> AIResult<TrainingJobResponse> {
         // TODO: Implement actual fine-tuning job logic
         // This is a placeholder implementation
 
@@ -225,10 +222,10 @@ impl TrainingCoordinator {
                 .as_secs()
         );
         let job = TrainingJob {
-            id: job_id.clone(),
-            model_id: request.model_id.clone(),
-            status: TrainingStatus::Queued,
-            start_time: std::time::SystemTime::now()
+            id:                   job_id.clone(),
+            model_id:             request.model_id.clone(),
+            status:               TrainingStatus::Queued,
+            start_time:           std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_secs(),
@@ -239,24 +236,24 @@ impl TrainingCoordinator {
                     .as_secs()
                     + 3600,
             ), // 1 hour estimate
-            progress: TrainingProgress {
-                epochs_completed: 0,
-                epochs_total: request.configuration.epochs,
-                loss_current: 0.0,
-                loss_history: vec![],
-                accuracy_current: 0.0,
-                accuracy_history: vec![],
-                time_elapsed_seconds: 0,
+            progress:             TrainingProgress {
+                epochs_completed:                 0,
+                epochs_total:                     request.configuration.epochs,
+                loss_current:                     0.0,
+                loss_history:                     vec![],
+                accuracy_current:                 0.0,
+                accuracy_history:                 vec![],
+                time_elapsed_seconds:             0,
                 estimated_time_remaining_seconds: Some(3600),
             },
-            resources: TrainingResources {
+            resources:            TrainingResources {
                 cpu_usage_percent: 0.0,
-                memory_usage_mb: 0,
+                memory_usage_mb:   0,
                 gpu_usage_percent: None,
-                gpu_memory_mb: None,
-                disk_write_mb: 0,
+                gpu_memory_mb:     None,
+                disk_write_mb:     0,
             },
-            configuration: request.configuration,
+            configuration:        request.configuration,
         };
 
         // Add to active jobs
@@ -272,8 +269,8 @@ impl TrainingCoordinator {
         self.start_background_training_task(job_id.clone()).await?;
 
         Ok(TrainingJobResponse {
-            job_id: job_id.clone(),
-            status: TrainingStatus::Starting,
+            job_id:  job_id.clone(),
+            status:  TrainingStatus::Starting,
             message: "Fine-tuning job started successfully".to_string(),
         })
     }
@@ -284,17 +281,17 @@ impl TrainingCoordinator {
 
         if let Some(job) = active.get(job_id) {
             TrainingProgressResponse {
-                job_id: job_id.to_string(),
-                progress: Some(job.progress.clone()),
+                job_id:         job_id.to_string(),
+                progress:       Some(job.progress.clone()),
                 current_status: job.status.clone(),
-                error_message: None,
+                error_message:  None,
             }
         } else {
             TrainingProgressResponse {
-                job_id: job_id.to_string(),
-                progress: None,
+                job_id:         job_id.to_string(),
+                progress:       None,
                 current_status: TrainingStatus::Failed,
-                error_message: Some(format!("Training job not found: {}", job_id)),
+                error_message:  Some(format!("Training job not found: {}", job_id)),
             }
         }
     }
@@ -327,11 +324,11 @@ impl TrainingCoordinator {
         let queue = self.job_queue.read().await;
 
         ResourceStatus {
-            available_cpus: 8,
+            available_cpus:      8,
             available_memory_mb: 16384,
-            available_gpus: 1,
-            running_jobs: active.len(),
-            queued_jobs: queue.len(),
+            available_gpus:      1,
+            running_jobs:        active.len(),
+            queued_jobs:         queue.len(),
         }
     }
 
@@ -510,15 +507,15 @@ mod tests {
         let coordinator = TrainingCoordinator::new().await.unwrap();
 
         let request = FineTuneRequest {
-            model_id: "test-model".to_string(),
-            dataset_path: "/path/to/dataset".to_string(),
+            model_id:      "test-model".to_string(),
+            dataset_path:  "/path/to/dataset".to_string(),
             configuration: TrainingConfiguration {
-                learning_rate: 0.001,
-                batch_size: 32,
-                epochs: 10,
-                dataset_path: "/path/to/dataset".to_string(),
+                learning_rate:     0.001,
+                batch_size:        32,
+                epochs:            10,
+                dataset_path:      "/path/to/dataset".to_string(),
                 output_model_path: "/path/to/output".to_string(),
-                hyperparameters: HashMap::new(),
+                hyperparameters:   HashMap::new(),
             },
         };
 

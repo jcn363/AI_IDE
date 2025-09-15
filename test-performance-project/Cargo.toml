@@ -1,6 +1,5 @@
 [package]
 name = "test-performance-project"
-readme = { workspace = true }
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -11,7 +10,6 @@ path = "src/lib.rs"
 
 [[bin]]
 name = "test-performance"
-readme = { workspace = true }
 path = "src/main.rs"
 
 [dependencies]

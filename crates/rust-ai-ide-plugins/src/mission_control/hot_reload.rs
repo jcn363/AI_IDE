@@ -20,28 +20,28 @@ use crate::registry::PluginRegistry;
 #[derive(Debug, Clone)]
 struct FileRecord {
     modified: SystemTime,
-    size: u64,
+    size:     u64,
 }
 
 /// Hot-reload watcher configuration
 #[derive(Debug, Clone)]
 pub struct WatcherConfig {
     /// Paths to monitor for changes
-    pub watch_paths: Vec<PathBuf>,
+    pub watch_paths:    Vec<PathBuf>,
     /// File patterns to monitor
     pub watch_patterns: Vec<String>,
     /// Watch interval (how often to check for changes)
-    pub poll_interval: Duration,
+    pub poll_interval:  Duration,
     /// Debounce time for rapid file changes
-    pub debounce_time: Duration,
+    pub debounce_time:  Duration,
     /// Maximum depth for directory watching
-    pub max_depth: usize,
+    pub max_depth:      usize,
 }
 
 impl Default for WatcherConfig {
     fn default() -> Self {
         Self {
-            watch_paths: vec![
+            watch_paths:    vec![
                 PathBuf::from("./plugins"),
                 dirs::home_dir()
                     .map(|d| d.join(".rust-ai-ide").join("plugins"))
@@ -56,19 +56,19 @@ impl Default for WatcherConfig {
                 "*.dylib".to_string(),
                 "*.dll".to_string(),
             ],
-            poll_interval: Duration::from_millis(500),
-            debounce_time: Duration::from_millis(100),
-            max_depth: 3,
+            poll_interval:  Duration::from_millis(500),
+            debounce_time:  Duration::from_millis(100),
+            max_depth:      3,
         }
     }
 }
 
 /// Hot-reload watcher for real-time plugin monitoring
 pub struct HotReloadWatcher {
-    config: WatcherConfig,
+    config:       WatcherConfig,
     file_records: Arc<RwLock<HashMap<PathBuf, FileRecord>>>,
-    running: Arc<RwLock<bool>>,
-    _watcher: Option<RecommendedWatcher>,
+    running:      Arc<RwLock<bool>>,
+    _watcher:     Option<RecommendedWatcher>,
 }
 
 impl HotReloadWatcher {
@@ -164,7 +164,7 @@ impl HotReloadWatcher {
                     if let Ok(metadata) = fs::metadata(&path).await {
                         let record = FileRecord {
                             modified: metadata.modified().unwrap_or(SystemTime::now()),
-                            size: metadata.len(),
+                            size:     metadata.len(),
                         };
                         records.insert(path, record);
                     }
@@ -223,9 +223,7 @@ impl HotReloadWatcher {
             while *running.read().await {
                 interval.tick().await;
 
-                if let Err(e) =
-                    Self::check_for_changes(&file_records, &config, &registries, &event_tx).await
-                {
+                if let Err(e) = Self::check_for_changes(&file_records, &config, &registries, &event_tx).await {
                     eprintln!("Error checking for plugin changes: {:?}", e);
                 }
             }
@@ -245,8 +243,7 @@ impl HotReloadWatcher {
         // Rescan all directories to find changes
         for watch_path in &config.watch_paths {
             if watch_path.exists() {
-                Self::scan_for_changes(watch_path, &mut records, config, &mut changed_plugins)
-                    .await?;
+                Self::scan_for_changes(watch_path, &mut records, config, &mut changed_plugins).await?;
             }
         }
 
@@ -302,7 +299,7 @@ impl HotReloadWatcher {
                 if needs_reload {
                     let record = FileRecord {
                         modified: current_modified,
-                        size: current_size,
+                        size:     current_size,
                     };
                     records.insert(path.clone(), record);
                     changed_plugins.push(path);

@@ -21,15 +21,15 @@ use crate::types::*;
 #[derive(Debug)]
 pub struct WorkspaceHealthMonitor {
     /// Health metrics cache
-    metrics_cache: Cache<String, HealthMetrics>,
+    metrics_cache:        Cache<String, HealthMetrics>,
     /// Alert history
-    alert_history: Arc<RwLock<Vec<HealthAlert>>>,
+    alert_history:        Arc<RwLock<Vec<HealthAlert>>>,
     /// Performance baseline
     performance_baseline: Arc<RwLock<Option<PerformanceBaseline>>>,
     /// Health thresholds
-    thresholds: Arc<RwLock<AlertThresholds>>,
+    thresholds:           Arc<RwLock<AlertThresholds>>,
     /// Monitoring state
-    monitoring_state: Arc<RwLock<MonitoringState>>,
+    monitoring_state:     Arc<RwLock<MonitoringState>>,
 }
 
 impl WorkspaceHealthMonitor {
@@ -114,10 +114,7 @@ impl WorkspaceHealthMonitor {
     }
 
     /// Get health trend analysis
-    pub async fn get_health_trends(
-        &self,
-        duration: ChronoDuration,
-    ) -> OptimizerResult<HealthTrends> {
+    pub async fn get_health_trends(&self, duration: ChronoDuration) -> OptimizerResult<HealthTrends> {
         let start_time = Utc::now() - duration;
         let mut data_points = Vec::new();
 
@@ -126,11 +123,11 @@ impl WorkspaceHealthMonitor {
 
         if let Some(metrics) = self.metrics_cache.get(&"current".to_string()).await {
             data_points.push(HealthDataPoint {
-                timestamp: metrics.timestamp,
-                health_score: metrics.overall_score,
+                timestamp:          metrics.timestamp,
+                health_score:       metrics.overall_score,
                 build_success_rate: metrics.build_health.success_rate,
-                memory_usage_mb: metrics.performance_metrics.memory_usage_mb,
-                cpu_usage_percent: metrics.performance_metrics.cpu_usage_percent,
+                memory_usage_mb:    metrics.performance_metrics.memory_usage_mb,
+                cpu_usage_percent:  metrics.performance_metrics.cpu_usage_percent,
             });
         }
 
@@ -195,11 +192,11 @@ impl WorkspaceHealthMonitor {
     async fn establish_performance_baseline(&self) -> OptimizerResult<()> {
         // In a real implementation, this would run baseline measurements
         let baseline = PerformanceBaseline {
-            average_build_time: std::time::Duration::from_secs(120),
-            average_memory_usage_mb: 512.0,
+            average_build_time:        std::time::Duration::from_secs(120),
+            average_memory_usage_mb:   512.0,
             average_cpu_usage_percent: 70.0,
-            established_at: Utc::now(),
-            sample_count: 10,
+            established_at:            Utc::now(),
+            sample_count:              10,
         };
 
         let mut performance_baseline = self.performance_baseline.write().await;
@@ -226,11 +223,11 @@ impl WorkspaceHealthMonitor {
         // and collect actual metrics
 
         Ok(BuildHealth {
-            success_rate: 95.0,
+            success_rate:       95.0,
             average_build_time: std::time::Duration::from_secs(90),
-            stability_score: 92.0,
-            warnings_count: 5,
-            errors_count: 1,
+            stability_score:    92.0,
+            warnings_count:     5,
+            errors_count:       1,
         })
     }
 
@@ -240,10 +237,10 @@ impl WorkspaceHealthMonitor {
         // and check for vulnerabilities, outdated packages, etc.
 
         Ok(DependencyHealth {
-            circular_dependencies_count: 2,
-            unused_dependencies_count: 8,
-            average_dependency_depth: 3.2,
-            outdated_dependencies_count: 3,
+            circular_dependencies_count:    2,
+            unused_dependencies_count:      8,
+            average_dependency_depth:       3.2,
+            outdated_dependencies_count:    3,
             security_vulnerabilities_count: 0,
         })
     }
@@ -254,11 +251,11 @@ impl WorkspaceHealthMonitor {
         // to collect actual performance metrics
 
         Ok(PerformanceMetrics {
-            memory_usage_mb: 450.0,
+            memory_usage_mb:   450.0,
             cpu_usage_percent: 65.0,
-            disk_iops: 1250.0,
-            network_iops: Some(150.0),
-            active_threads: 24,
+            disk_iops:         1250.0,
+            network_iops:      Some(150.0),
+            active_threads:    24,
         })
     }
 
@@ -270,46 +267,42 @@ impl WorkspaceHealthMonitor {
         // Check build health alerts
         if metrics.build_health.success_rate < 90.0 {
             alerts.push(HealthAlert {
-                level: AlertLevel::Warning,
-                message: format!(
+                level:              AlertLevel::Warning,
+                message:            format!(
                     "Build success rate is low: {:.1}%",
                     metrics.build_health.success_rate
                 ),
-                component: "Build System".to_string(),
-                recommended_action: "Review build configuration and fix compilation errors"
-                    .to_string(),
-                timestamp: Utc::now(),
+                component:          "Build System".to_string(),
+                recommended_action: "Review build configuration and fix compilation errors".to_string(),
+                timestamp:          Utc::now(),
             });
         }
 
         // Check memory usage alerts
         if metrics.performance_metrics.memory_usage_mb > thresholds.max_memory_threshold_mb {
             alerts.push(HealthAlert {
-                level: AlertLevel::Error,
-                message: format!(
+                level:              AlertLevel::Error,
+                message:            format!(
                     "High memory usage: {:.1}MB",
                     metrics.performance_metrics.memory_usage_mb
                 ),
-                component: "Memory Management".to_string(),
-                recommended_action: "Consider optimizing memory usage or increasing system memory"
-                    .to_string(),
-                timestamp: Utc::now(),
+                component:          "Memory Management".to_string(),
+                recommended_action: "Consider optimizing memory usage or increasing system memory".to_string(),
+                timestamp:          Utc::now(),
             });
         }
 
         // Check dependency health alerts
-        if metrics.dependency_health.circular_dependencies_count
-            > thresholds.circular_deps_warning_threshold
-        {
+        if metrics.dependency_health.circular_dependencies_count > thresholds.circular_deps_warning_threshold {
             alerts.push(HealthAlert {
-                level: AlertLevel::High,
-                message: format!(
+                level:              AlertLevel::High,
+                message:            format!(
                     "Found {} circular dependencies",
                     metrics.dependency_health.circular_dependencies_count
                 ),
-                component: "Dependency Management".to_string(),
+                component:          "Dependency Management".to_string(),
                 recommended_action: "Review and resolve circular dependencies".to_string(),
-                timestamp: Utc::now(),
+                timestamp:          Utc::now(),
             });
         }
 
@@ -361,11 +354,11 @@ impl WorkspaceHealthMonitor {
         };
 
         HealthTrendAnalysis {
-            overall_trend: health_trend,
+            overall_trend:       health_trend,
             build_success_trend: health_trend, // Simplified
-            memory_usage_trend: HealthTrend::Stable,
-            cpu_usage_trend: HealthTrend::Stable,
-            recommendations: vec![
+            memory_usage_trend:  HealthTrend::Stable,
+            cpu_usage_trend:     HealthTrend::Stable,
+            recommendations:     vec![
                 "Continue monitoring build performance".to_string(),
                 "Review dependency health regularly".to_string(),
             ],
@@ -390,24 +383,24 @@ impl Default for WorkspaceHealthMonitor {
 #[derive(Debug, Clone)]
 pub struct PerformanceBaseline {
     /// Average build time
-    pub average_build_time: std::time::Duration,
+    pub average_build_time:        std::time::Duration,
     /// Average memory usage (MB)
-    pub average_memory_usage_mb: f64,
+    pub average_memory_usage_mb:   f64,
     /// Average CPU usage (%)
     pub average_cpu_usage_percent: f64,
     /// When baseline was established
-    pub established_at: DateTime<Utc>,
+    pub established_at:            DateTime<Utc>,
     /// Number of samples used for baseline
-    pub sample_count: usize,
+    pub sample_count:              usize,
 }
 
 /// Monitoring state
 #[derive(Debug, Clone, Default)]
 pub struct MonitoringState {
     /// Whether monitoring is active
-    pub is_active: bool,
+    pub is_active:      bool,
     /// Last health check timestamp
-    pub last_check: Option<DateTime<Utc>>,
+    pub last_check:     Option<DateTime<Utc>>,
     /// Monitoring interval
     pub check_interval: std::time::Duration,
 }
@@ -416,43 +409,43 @@ pub struct MonitoringState {
 #[derive(Debug, Clone)]
 pub struct HealthTrends {
     /// Historical data points
-    pub data_points: Vec<HealthDataPoint>,
+    pub data_points:     Vec<HealthDataPoint>,
     /// Trend analysis
-    pub trends: HealthTrendAnalysis,
+    pub trends:          HealthTrendAnalysis,
     /// Analysis period
     pub analysis_period: ChronoDuration,
     /// When trends were generated
-    pub generated_at: DateTime<Utc>,
+    pub generated_at:    DateTime<Utc>,
 }
 
 /// Health data point
 #[derive(Debug, Clone)]
 pub struct HealthDataPoint {
     /// Timestamp
-    pub timestamp: DateTime<Utc>,
+    pub timestamp:          DateTime<Utc>,
     /// Overall health score
-    pub health_score: f64,
+    pub health_score:       f64,
     /// Build success rate
     pub build_success_rate: f64,
     /// Memory usage (MB)
-    pub memory_usage_mb: f64,
+    pub memory_usage_mb:    f64,
     /// CPU usage (%)
-    pub cpu_usage_percent: f64,
+    pub cpu_usage_percent:  f64,
 }
 
 /// Health trend analysis
 #[derive(Debug, Clone, Default)]
 pub struct HealthTrendAnalysis {
     /// Overall health trend
-    pub overall_trend: HealthTrend,
+    pub overall_trend:       HealthTrend,
     /// Build success rate trend
     pub build_success_trend: HealthTrend,
     /// Memory usage trend
-    pub memory_usage_trend: HealthTrend,
+    pub memory_usage_trend:  HealthTrend,
     /// CPU usage trend
-    pub cpu_usage_trend: HealthTrend,
+    pub cpu_usage_trend:     HealthTrend,
     /// Recommendations based on trends
-    pub recommendations: Vec<String>,
+    pub recommendations:     Vec<String>,
 }
 
 /// Health trend direction
@@ -501,10 +494,7 @@ mod tests {
         let status = result.unwrap();
         assert!(matches!(
             status.status,
-            SystemStatus::Healthy
-                | SystemStatus::Warning
-                | SystemStatus::Error
-                | SystemStatus::Critical
+            SystemStatus::Healthy | SystemStatus::Warning | SystemStatus::Error | SystemStatus::Critical
         ));
     }
 

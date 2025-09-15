@@ -23,26 +23,26 @@ pub use types::{ExecutionStrategy, TaskStatus};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CargoTask {
     /// The Cargo command to run (e.g., "build", "test", "run")
-    pub command: String,
+    pub command:     String,
     /// Arguments to pass to the command
-    pub args: Vec<String>,
+    pub args:        Vec<String>,
     /// Working directory for the command
     pub working_dir: PathBuf,
     /// Whether to build in release mode
-    pub release: bool,
+    pub release:     bool,
     /// Environment variables to set for the command
-    pub env: Vec<(String, String)>,
+    pub env:         Vec<(String, String)>,
 }
 
 impl CargoTask {
     /// Create a new Cargo task
     pub fn new<S: Into<String>>(command: S) -> Self {
         Self {
-            command: command.into(),
-            args: Vec::new(),
+            command:     command.into(),
+            args:        Vec::new(),
             working_dir: std::env::current_dir().unwrap_or_default(),
-            release: false,
-            env: Vec::new(),
+            release:     false,
+            env:         Vec::new(),
         }
     }
 
@@ -75,19 +75,19 @@ impl CargoTask {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskResult {
     /// The task that was executed
-    pub task: CargoTask,
+    pub task:       CargoTask,
     /// Exit code of the command, if available
-    pub exit_code: Option<i32>,
+    pub exit_code:  Option<i32>,
     /// Standard output of the command
-    pub stdout: String,
+    pub stdout:     String,
     /// Standard error of the command
-    pub stderr: String,
+    pub stderr:     String,
     /// When the command started
     pub start_time: SystemTime,
     /// When the command finished
-    pub end_time: Option<SystemTime>,
+    pub end_time:   Option<SystemTime>,
     /// Whether the command was successful
-    pub success: bool,
+    pub success:    bool,
 }
 
 impl TaskResult {
@@ -124,12 +124,7 @@ impl TaskResult {
     }
 
     /// Create a new failed task result
-    pub fn failure(
-        task: CargoTask,
-        exit_code: Option<i32>,
-        stdout: String,
-        stderr: String,
-    ) -> Self {
+    pub fn failure(task: CargoTask, exit_code: Option<i32>, stdout: String, stderr: String) -> Self {
         let now = SystemTime::now();
         Self {
             task,
@@ -149,9 +144,7 @@ impl TaskResult {
             Err(e) => {
                 let task = match e {
                     CommandError::ExecutionError(_) => CargoTask::new("unknown"),
-                    CommandError::CommandError(code) => {
-                        CargoTask::new("unknown").arg(code.to_string())
-                    }
+                    CommandError::CommandError(code) => CargoTask::new("unknown").arg(code.to_string()),
                     CommandError::CommandTerminated => CargoTask::new("unknown").arg("terminated"),
                 };
                 Self::failure(task, None, String::new(), e.to_string())

@@ -13,21 +13,21 @@ use crate::*;
 
 /// Presence service for tracking user activity and collaboration state
 pub struct PresenceService {
-    user_presence: Arc<RwLock<HashMap<String, UserPresence>>>,
+    user_presence:     Arc<RwLock<HashMap<String, UserPresence>>>,
     document_presence: Arc<RwLock<HashMap<String, Vec<String>>>>, // document_id -> [user_ids]
-    cursor_positions: Arc<RwLock<HashMap<String, CursorPosition>>>,
+    cursor_positions:  Arc<RwLock<HashMap<String, CursorPosition>>>,
 }
 
 /// User presence information
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UserPresence {
-    pub user_id: String,
-    pub username: String,
-    pub status: PresenceStatus,
-    pub last_seen: std::time::SystemTime,
+    pub user_id:          String,
+    pub username:         String,
+    pub status:           PresenceStatus,
+    pub last_seen:        std::time::SystemTime,
     pub current_document: Option<String>,
-    pub current_session: Option<String>,
-    pub activity_type: ActivityType,
+    pub current_session:  Option<String>,
+    pub activity_type:    ActivityType,
 }
 
 /// Presence status types
@@ -42,42 +42,42 @@ pub enum PresenceStatus {
 /// Cursor position tracking
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CursorPosition {
-    pub user_id: String,
-    pub document_id: String,
-    pub line: usize,
-    pub column: usize,
+    pub user_id:         String,
+    pub document_id:     String,
+    pub line:            usize,
+    pub column:          usize,
     pub selection_start: Option<(usize, usize)>, // line, column
-    pub selection_end: Option<(usize, usize)>,   // line, column
-    pub last_updated: std::time::SystemTime,
+    pub selection_end:   Option<(usize, usize)>, // line, column
+    pub last_updated:    std::time::SystemTime,
 }
 
 /// Activity feed entry
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ActivityFeedEntry {
-    pub user_id: String,
-    pub username: String,
+    pub user_id:       String,
+    pub username:      String,
     pub activity_type: ActivityType,
-    pub description: String,
-    pub timestamp: std::time::SystemTime,
-    pub document_id: Option<String>,
-    pub session_id: Option<String>,
+    pub description:   String,
+    pub timestamp:     std::time::SystemTime,
+    pub document_id:   Option<String>,
+    pub session_id:    Option<String>,
 }
 
 /// Collaboration indicators
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CollaborationIndicators {
-    pub active_users: Vec<String>,
-    pub editing_users: Vec<String>,
-    pub viewing_users: Vec<String>,
+    pub active_users:      Vec<String>,
+    pub editing_users:     Vec<String>,
+    pub viewing_users:     Vec<String>,
     pub recent_activities: Vec<ActivityFeedEntry>,
 }
 
 impl PresenceService {
     pub fn new() -> Self {
         Self {
-            user_presence: Arc::new(RwLock::new(HashMap::new())),
+            user_presence:     Arc::new(RwLock::new(HashMap::new())),
             document_presence: Arc::new(RwLock::new(HashMap::new())),
-            cursor_positions: Arc::new(RwLock::new(HashMap::new())),
+            cursor_positions:  Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -92,13 +92,13 @@ impl PresenceService {
         activity_type: ActivityType,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let presence = UserPresence {
-            user_id: user_id.clone(),
-            username: username.clone(),
-            status: status.clone(),
-            last_seen: std::time::SystemTime::now(),
+            user_id:          user_id.clone(),
+            username:         username.clone(),
+            status:           status.clone(),
+            last_seen:        std::time::SystemTime::now(),
             current_document: document_id.clone(),
-            current_session: session_id.clone(),
-            activity_type: activity_type.clone(),
+            current_session:  session_id.clone(),
+            activity_type:    activity_type.clone(),
         };
 
         // Update user presence
@@ -154,10 +154,7 @@ impl PresenceService {
     }
 
     /// Get active users for a document
-    pub async fn get_document_users(
-        &self,
-        document_id: &str,
-    ) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    pub async fn get_document_users(&self, document_id: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
         let document_presence = self.document_presence.read().await;
         Ok(document_presence
             .get(document_id)
@@ -203,10 +200,7 @@ impl PresenceService {
     }
 
     /// Get user presence
-    pub async fn get_user_presence(
-        &self,
-        user_id: &str,
-    ) -> Result<Option<UserPresence>, Box<dyn std::error::Error>> {
+    pub async fn get_user_presence(&self, user_id: &str) -> Result<Option<UserPresence>, Box<dyn std::error::Error>> {
         let user_presence = self.user_presence.read().await;
         Ok(user_presence.get(user_id).cloned())
     }
@@ -222,10 +216,7 @@ impl PresenceService {
     }
 
     /// Remove user from presence (when they disconnect)
-    pub async fn remove_user_presence(
-        &self,
-        user_id: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn remove_user_presence(&self, user_id: &str) -> Result<(), Box<dyn std::error::Error>> {
         // Update status to offline
         {
             let mut user_presence = self.user_presence.write().await;
@@ -266,12 +257,7 @@ impl PresenceService {
     }
 
     // Internal methods for broadcasting updates
-    async fn broadcast_presence_update(
-        &self,
-        user_id: &str,
-        status: &PresenceStatus,
-        activity: &ActivityType,
-    ) {
+    async fn broadcast_presence_update(&self, user_id: &str, status: &PresenceStatus, activity: &ActivityType) {
         // This would integrate with the event bus system
         log::debug!(
             "Presence update for user {}: {:?} - {:?}",
@@ -282,13 +268,7 @@ impl PresenceService {
         // EventBus::publish(Event::PresenceUpdate { user_id, status, activity });
     }
 
-    async fn broadcast_cursor_update(
-        &self,
-        user_id: &str,
-        document_id: &str,
-        line: usize,
-        column: usize,
-    ) {
+    async fn broadcast_cursor_update(&self, user_id: &str, document_id: &str, line: usize, column: usize) {
         // This would integrate with the event bus system
         log::debug!(
             "Cursor update for user {} in document {}: {}:{}",

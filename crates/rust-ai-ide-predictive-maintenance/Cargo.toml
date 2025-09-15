@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-predictive-maintenance"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 description = "Phase 3.2: Predictive Maintenance Forecasting System - ML-driven technical debt forecasting and automated maintenance recommendations"
@@ -85,15 +85,15 @@ fake = "2.9.2"
 
 [[bench]]
 name = "forecast_accuracy_benchmark"
-readme = { workspace = true }
+
 harness = false
 
 [[bench]]
 name = "cost_estimation_performance"
-readme = { workspace = true }
+
 harness = false
 
 [[bench]]
 name = "maintenance_prioritization"
-readme = { workspace = true }
+
 harness = false

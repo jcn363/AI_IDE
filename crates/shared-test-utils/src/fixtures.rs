@@ -7,9 +7,9 @@ use crate::filesystem::TempWorkspace;
 /// Builder pattern for creating test fixtures
 #[derive(Clone, Debug, Default)]
 pub struct TestFixtureBuilder {
-    pub files: HashMap<PathBuf, String>,
+    pub files:       HashMap<PathBuf, String>,
     pub directories: Vec<PathBuf>,
-    pub metadata: HashMap<String, String>,
+    pub metadata:    HashMap<String, String>,
 }
 
 impl TestFixtureBuilder {
@@ -62,9 +62,9 @@ impl TestFixtureBuilder {
         }
 
         Ok(TestFixture {
-            files: self.files,
+            files:       self.files,
             directories: self.directories,
-            metadata: self.metadata,
+            metadata:    self.metadata,
         })
     }
 }
@@ -72,9 +72,9 @@ impl TestFixtureBuilder {
 /// A completed test fixture
 #[derive(Clone, Debug)]
 pub struct TestFixture {
-    pub files: HashMap<PathBuf, String>,
+    pub files:       HashMap<PathBuf, String>,
     pub directories: Vec<PathBuf>,
-    pub metadata: HashMap<String, String>,
+    pub metadata:    HashMap<String, String>,
 }
 
 impl TestFixture {

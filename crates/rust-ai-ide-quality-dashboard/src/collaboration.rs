@@ -11,10 +11,10 @@ use crate::types::*;
 
 #[derive(Clone)]
 pub struct CollaborationHub {
-    pub session_manager: Arc<RwLock<CollaborationSession>>,
-    pub sharing_system: Arc<RwLock<DashboardSharing>>,
-    pub progress_tracker: Arc<RwLock<TeamProgressTracker>>,
-    pub knowledge_base: Arc<RwLock<QualityKnowledgeBase>>,
+    pub session_manager:      Arc<RwLock<CollaborationSession>>,
+    pub sharing_system:       Arc<RwLock<DashboardSharing>>,
+    pub progress_tracker:     Arc<RwLock<TeamProgressTracker>>,
+    pub knowledge_base:       Arc<RwLock<QualityKnowledgeBase>>,
     pub communication_bridge: Arc<RwLock<CollaborationBridge>>,
 }
 
@@ -32,10 +32,10 @@ pub struct CollaborationBridge;
 impl CollaborationHub {
     pub async fn new(_config: Arc<RwLock<DashboardConfiguration>>) -> CollaborationHub {
         CollaborationHub {
-            session_manager: Arc::new(RwLock::new(CollaborationSession)),
-            sharing_system: Arc::new(RwLock::new(DashboardSharing)),
-            progress_tracker: Arc::new(RwLock::new(TeamProgressTracker)),
-            knowledge_base: Arc::new(RwLock::new(QualityKnowledgeBase)),
+            session_manager:      Arc::new(RwLock::new(CollaborationSession)),
+            sharing_system:       Arc::new(RwLock::new(DashboardSharing)),
+            progress_tracker:     Arc::new(RwLock::new(TeamProgressTracker)),
+            knowledge_base:       Arc::new(RwLock::new(QualityKnowledgeBase)),
             communication_bridge: Arc::new(RwLock::new(CollaborationBridge)),
         }
     }

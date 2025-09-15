@@ -17,10 +17,10 @@ pub struct FileSystemService;
 /// File metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileMetadata {
-    pub path: PathBuf,
-    pub size: u64,
+    pub path:         PathBuf,
+    pub size:         u64,
     pub is_directory: bool,
-    pub modified: Option<u64>,
+    pub modified:     Option<u64>,
 }
 
 impl FileSystemService {

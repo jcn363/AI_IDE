@@ -16,7 +16,7 @@ pub struct CoreService;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkspaceConfig {
     pub root_path: PathBuf,
-    pub name: String,
+    pub name:      String,
 }
 
 impl CoreService {

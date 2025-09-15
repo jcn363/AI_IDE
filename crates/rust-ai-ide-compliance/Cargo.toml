@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-compliance"
-readme = { workspace = true }
+
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
@@ -21,15 +21,15 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 
 # Cryptography for data protection and integrity
-rustls = "0.23.0"
-rustls-pemfile = "2.0.0"
-aes-gcm = "0.10.3"
-chacha20poly1305 = "0.10.1"
-argon2 = "0.5.3"
-rsa = "0.10.0-rc.6"
-base64 = "0.22.1"
-base16ct = { version = "0.2.0", features = ["alloc"] }
-regex = "1.11.2"
+rustls = { workspace = true }
+rustls-pemfile = { workspace = true }
+aes-gcm = { workspace = true }
+chacha20poly1305 = { workspace = true }
+argon2 = { workspace = true }
+rsa = { workspace = true }
+base64 = { workspace = true }
+base16ct = { workspace = true }
+regex = { workspace = true }
 
 # Audit logging and compliance tracking
 chrono = { workspace = true }
@@ -83,18 +83,18 @@ ai-risk-analysis = ["risk-assessment"]
 
 # Full compliance suite
 full-compliance = [
-    "gdpr",
-    "hipaa",
-    "ccpa",
-    "automated-policies",
-    "risk-assessment",
-    "data-anonymization",
-    "breach-detection",
-    "audit-trails",
-    "consent-management",
-    "data-portability",
-    "compliance-dashboard",
-    "regulatory-reporting",
-    "policy-enforcement",
-    "ai-risk-analysis"
+  "gdpr",
+  "hipaa",
+  "ccpa",
+  "automated-policies",
+  "risk-assessment",
+  "data-anonymization",
+  "breach-detection",
+  "audit-trails",
+  "consent-management",
+  "data-portability",
+  "compliance-dashboard",
+  "regulatory-reporting",
+  "policy-enforcement",
+  "ai-risk-analysis",
 ]

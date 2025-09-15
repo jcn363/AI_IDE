@@ -47,9 +47,9 @@ mod local_tests {
 /// Integration test context extension with specialized helpers
 #[derive(Clone)]
 pub struct ExtendedIntegrationContext {
-    pub base: IntegrationContext,
+    pub base:           IntegrationContext,
     pub test_workspace: PathBuf,
-    pub mock_data: Arc<Mutex<std::collections::HashMap<String, serde_json::Value>>>,
+    pub mock_data:      Arc<Mutex<std::collections::HashMap<String, serde_json::Value>>>,
 }
 
 impl ExtendedIntegrationContext {
@@ -95,11 +95,7 @@ tokio = "1.0"
     }
 
     /// Create mock LSP response data
-    pub async fn store_mock_data(
-        &self,
-        key: &str,
-        value: serde_json::Value,
-    ) -> Result<(), RustAIError> {
+    pub async fn store_mock_data(&self, key: &str, value: serde_json::Value) -> Result<(), RustAIError> {
         let mut mock_data = self.mock_data.lock().await;
         mock_data.insert(key.to_string(), value);
         Ok(())
@@ -152,42 +148,32 @@ tokio = "1.0"
     }
 
     /// Validate that a file exists and contains expected content
-    pub async fn validate_file_content(
-        &self,
-        path: &Path,
-        expected_content: &str,
-    ) -> Result<bool, RustAIError> {
+    pub async fn validate_file_content(&self, path: &Path, expected_content: &str) -> Result<bool, RustAIError> {
         if path.is_absolute() {
             return Ok(path.exists() && std::fs::read_to_string(path)?.contains(expected_content));
         } else {
             let full_path = self.test_workspace.join(path);
-            Ok(
-                full_path.exists()
-                    && std::fs::read_to_string(full_path)?.contains(expected_content),
-            )
+            Ok(full_path.exists() && std::fs::read_to_string(full_path)?.contains(expected_content))
         }
     }
 }
 
 /// Enhanced test runner with LSP and AI integration support
 pub struct EnhancedIntegrationTestRunner {
-    runner: IntegrationTestRunner,
+    runner:           IntegrationTestRunner,
     extended_context: Option<ExtendedIntegrationContext>,
 }
 
 impl EnhancedIntegrationTestRunner {
     pub fn new() -> Result<Self, RustAIError> {
         Ok(Self {
-            runner: IntegrationTestRunner::new()?,
+            runner:           IntegrationTestRunner::new()?,
             extended_context: None,
         })
     }
 
     /// Initialize with enhanced context
-    pub async fn setup_enhanced(
-        &mut self,
-        config: shared_test_utils::IntegrationContext,
-    ) -> Result<(), RustAIError> {
+    pub async fn setup_enhanced(&mut self, config: shared_test_utils::IntegrationContext) -> Result<(), RustAIError> {
         self.runner.setup(config.clone()).await?;
 
         if let Some(base_context) = self.runner.context() {
@@ -204,11 +190,7 @@ impl EnhancedIntegrationTestRunner {
     }
 
     /// Run a test with enhanced context
-    pub async fn run_with_enhanced_context<T, F>(
-        &mut self,
-        scenario_name: &str,
-        test_fn: F,
-    ) -> Result<T, RustAIError>
+    pub async fn run_with_enhanced_context<T, F>(&mut self, scenario_name: &str, test_fn: F) -> Result<T, RustAIError>
     where
         F: FnOnce(&mut ExtendedIntegrationContext) -> Result<T, RustAIError> + Send + 'static,
         T: Send + 'static,
@@ -236,14 +218,14 @@ pub mod scenarios {
 
     /// Builder for LSP integration scenarios
     pub struct LSPScenarioBuilder {
-        pub project_files: Vec<(String, String)>,
+        pub project_files:       Vec<(String, String)>,
         pub expected_operations: Vec<String>,
     }
 
     impl LSPScenarioBuilder {
         pub fn new() -> Self {
             Self {
-                project_files: Vec::new(),
+                project_files:       Vec::new(),
                 expected_operations: Vec::new(),
             }
         }
@@ -289,16 +271,16 @@ pub mod scenarios {
 
     /// Builder for AI analysis scenarios
     pub struct AIScenarioBuilder {
-        pub analysis_type: String,
-        pub input_code: String,
+        pub analysis_type:   String,
+        pub input_code:      String,
         pub expected_issues: Vec<String>,
     }
 
     impl AIScenarioBuilder {
         pub fn new(analysis_type: &str) -> Self {
             Self {
-                analysis_type: analysis_type.to_string(),
-                input_code: String::new(),
+                analysis_type:   analysis_type.to_string(),
+                input_code:      String::new(),
                 expected_issues: Vec::new(),
             }
         }
@@ -313,10 +295,7 @@ pub mod scenarios {
             self
         }
 
-        pub async fn build(
-            self,
-            context: &mut ExtendedIntegrationContext,
-        ) -> Result<(), RustAIError> {
+        pub async fn build(self, context: &mut ExtendedIntegrationContext) -> Result<(), RustAIError> {
             context
                 .store_mock_data("analysis_type", serde_json::json!(self.analysis_type))
                 .await?;

@@ -13,30 +13,28 @@ use rust_ai_ide_lsp::client::LSPError;
 use rust_ai_ide_lsp::{AIContext, LSPClient, LSPClientConfig};
 use tokio::sync::Mutex;
 
-use crate::command_templates::{
-    acquire_service_and_execute, execute_with_retry, spawn_background_task, CommandConfig,
-};
+use crate::command_templates::{acquire_service_and_execute, execute_with_retry, spawn_background_task, CommandConfig};
 use crate::modules::ai::services::common::{AIServiceTrait, WrappedAIService, GLOBAL_AI_REGISTRY};
 
 /// Global LSP client state management
 pub struct LSPState {
     /// Active LSP clients
-    clients: HashMap<String, LSPClient>,
+    clients:       HashMap<String, LSPClient>,
     /// Server health status
     health_status: HashMap<String, LSPHealthStatus>,
     /// Performance metrics
-    metrics: LSPMetrics,
+    metrics:       LSPMetrics,
     /// Initialization status
-    initialized: bool,
+    initialized:   bool,
 }
 
 impl LSPState {
     pub fn new() -> Self {
         Self {
-            clients: HashMap::new(),
+            clients:       HashMap::new(),
             health_status: HashMap::new(),
-            metrics: LSPMetrics::default(),
-            initialized: false,
+            metrics:       LSPMetrics::default(),
+            initialized:   false,
         }
     }
 
@@ -47,20 +45,20 @@ impl LSPState {
         workspace_path: &std::path::Path,
     ) -> Result<(), LSPError> {
         let config = LSPClientConfig {
-            server_path: Some("rust-analyzer".to_string()),
-            server_args: vec![
+            server_path:            Some("rust-analyzer".to_string()),
+            server_args:            vec![
                 "--log-file".to_string(),
                 "/tmp/rust-ai-ide-lsp.log".to_string(),
                 "--client-version".to_string(),
                 env!("CARGO_PKG_VERSION", "Cargo package version not found").to_string(),
             ],
-            root_dir: Some(workspace_path.to_path_buf()),
+            root_dir:               Some(workspace_path.to_path_buf()),
             initialization_options: Some(serde_json::json!({})),
-            enable_inlay_hints: true,
-            enable_proc_macro: true,
-            enable_cargo_watch: true,
-            request_timeout: 30,
-            enable_tracing: true,
+            enable_inlay_hints:     true,
+            enable_proc_macro:      true,
+            enable_cargo_watch:     true,
+            request_timeout:        30,
+            enable_tracing:         true,
         };
 
         let mut client = LSPClient::with_config(config)?;
@@ -90,30 +88,30 @@ impl LSPState {
 /// LSP server health status
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct LSPHealthStatus {
-    pub server_name: String,
-    pub status: String,
-    pub uptime_seconds: u64,
+    pub server_name:       String,
+    pub status:            String,
+    pub uptime_seconds:    u64,
     pub last_request_time: String,
-    pub request_count: u64,
-    pub error_count: u64,
+    pub request_count:     u64,
+    pub error_count:       u64,
 }
 
 /// LSP performance metrics
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct LSPMetrics {
-    pub total_requests: u64,
-    pub total_errors: u64,
+    pub total_requests:           u64,
+    pub total_errors:             u64,
     pub average_response_time_ms: f64,
-    pub servers_active: usize,
+    pub servers_active:           usize,
 }
 
 impl Default for LSPMetrics {
     fn default() -> Self {
         Self {
-            total_requests: 0,
-            total_errors: 0,
+            total_requests:           0,
+            total_errors:             0,
             average_response_time_ms: 0.0,
-            servers_active: 0,
+            servers_active:           0,
         }
     }
 }
@@ -125,9 +123,9 @@ lazy_static::lazy_static! {
 
 /// Command configuration for LSP operations
 const LSP_COMMAND_CONFIG: CommandConfig = CommandConfig {
-    enable_logging: true,
-    log_level: log::Level::Info,
-    enable_validation: true,
+    enable_logging:     true,
+    log_level:          log::Level::Info,
+    enable_validation:  true,
     async_timeout_secs: Some(30),
 };
 
@@ -144,8 +142,7 @@ pub async fn init_lsp(
         );
 
         // Validate workspace path for security
-        validate_secure_path(&workspace_path, false)
-            .map_err(|_| "Invalid workspace path provided".to_string())?;
+        validate_secure_path(&workspace_path, false).map_err(|_| "Invalid workspace path provided".to_string())?;
 
         let workspace_path_buf = std::path::PathBuf::from(&workspace_path);
         if !workspace_path_buf.exists() || !workspace_path_buf.is_dir() {
@@ -170,12 +167,12 @@ pub async fn init_lsp(
             Ok(_) => {
                 log::info!("Enhanced LSP server initialized successfully");
                 Ok(LSPHealthStatus {
-                    server_name: "rust-analyzer".to_string(),
-                    status: "active".to_string(),
-                    uptime_seconds: 0,
+                    server_name:       "rust-analyzer".to_string(),
+                    status:            "active".to_string(),
+                    uptime_seconds:    0,
                     last_request_time: chrono::Utc::now().to_rfc3339(),
-                    request_count: 0,
-                    error_count: 0,
+                    request_count:     0,
+                    error_count:       0,
                 })
             }
             Err(e) => {
@@ -196,8 +193,7 @@ pub async fn get_code_completion(
     context_lines: Option<Vec<String>>,
 ) -> Result<serde_json::Value, String> {
     // Validate file path for security
-    validate_secure_path(&file_path, false)
-        .map_err(|_| "Invalid file path provided".to_string())?;
+    validate_secure_path(&file_path, false).map_err(|_| "Invalid file path provided".to_string())?;
 
     log::info!(
         "Getting enhanced code completion for {}:{}",
@@ -214,13 +210,13 @@ pub async fn get_code_completion(
         Ok(mut service_guard) => {
             // Create AI context from the request
             let ai_context = AIContext {
-                current_code: context_lines
+                current_code:    context_lines
                     .as_ref()
                     .and_then(|lines| lines.get(line as usize).cloned())
                     .unwrap_or_else(|| "".to_string()),
-                file_name: Some(file_path.clone()),
+                file_name:       Some(file_path.clone()),
                 cursor_position: Some((line, character)),
-                selection: None,
+                selection:       None,
                 project_context: HashMap::new(),
             };
 
@@ -307,13 +303,9 @@ pub async fn get_code_completion(
 
 /// Analyze code for diagnostics with enhanced AI analysis
 #[tauri::command]
-pub async fn get_diagnostics(
-    file_path: String,
-    content: Option<String>,
-) -> Result<serde_json::Value, String> {
+pub async fn get_diagnostics(file_path: String, content: Option<String>) -> Result<serde_json::Value, String> {
     // Validate file path for security
-    validate_secure_path(&file_path, false)
-        .map_err(|_| "Invalid file path provided".to_string())?;
+    validate_secure_path(&file_path, false).map_err(|_| "Invalid file path provided".to_string())?;
 
     log::info!("Getting enhanced diagnostics for: {}", file_path);
 
@@ -345,10 +337,10 @@ pub async fn get_diagnostics(
         Ok(mut service_guard) => {
             // Create AI context for analysis
             let ai_context = AIContext {
-                current_code: code_content.clone(),
-                file_name: Some(file_path.clone()),
+                current_code:    code_content.clone(),
+                file_name:       Some(file_path.clone()),
                 cursor_position: None,
-                selection: None,
+                selection:       None,
                 project_context: HashMap::new(),
             };
 
@@ -364,8 +356,7 @@ pub async fn get_diagnostics(
             {
                 Ok(analysis_result) => {
                     // Parse AI analysis result and convert to diagnostics
-                    let diagnostics =
-                        parse_ai_analysis_to_diagnostics(&analysis_result, &file_path);
+                    let diagnostics = parse_ai_analysis_to_diagnostics(&analysis_result, &file_path);
 
                     let response = serde_json::json!({
                         "diagnostics": diagnostics,
@@ -493,8 +484,7 @@ pub async fn goto_definition(
 ) -> Result<serde_json::Value, String> {
     execute_command!("goto_definition", &LSP_COMMAND_CONFIG, async move || {
         // Validate file path for security
-        validate_secure_path(&file_path, false)
-            .map_err(|_| "Invalid file path provided".to_string())?;
+        validate_secure_path(&file_path, false).map_err(|_| "Invalid file path provided".to_string())?;
 
         log::info!("Navigating to definition of '{}' in {}", symbol, file_path);
 
@@ -593,8 +583,7 @@ pub async fn goto_definition(
                     }
                     None => {
                         // Try AI-assisted fallback
-                        let ai_fallback =
-                            try_ai_definition_fallback(&file_path, line, character, &symbol).await;
+                        let ai_fallback = try_ai_definition_fallback(&file_path, line, character, &symbol).await;
                         match ai_fallback {
                             Ok(ai_response) => ai_response,
                             Err(_) => serde_json::json!({
@@ -632,10 +621,10 @@ async fn try_ai_definition_fallback(
         Ok(mut service_guard) => {
             // Create AI context for definition search
             let ai_context = AIContext {
-                current_code: format!("Looking for definition of: {}", symbol),
-                file_name: Some(file_path.to_string()),
+                current_code:    format!("Looking for definition of: {}", symbol),
+                file_name:       Some(file_path.to_string()),
                 cursor_position: Some((line, character)),
-                selection: None,
+                selection:       None,
                 project_context: HashMap::new(),
             };
 
@@ -683,10 +672,7 @@ async fn try_ai_definition_fallback(
 
 /// Get workspace symbols with cross-language search
 #[tauri::command]
-pub async fn get_workspace_symbols(
-    query: String,
-    max_results: Option<u32>,
-) -> Result<serde_json::Value, String> {
+pub async fn get_workspace_symbols(query: String, max_results: Option<u32>) -> Result<serde_json::Value, String> {
     if query.is_empty() {
         return Err("Query cannot be empty".to_string());
     }
@@ -736,14 +722,9 @@ pub async fn get_workspace_symbols(
 
 /// Get hover information with AI-enhanced context
 #[tauri::command]
-pub async fn get_hover_info(
-    file_path: String,
-    line: u32,
-    character: u32,
-) -> Result<serde_json::Value, String> {
+pub async fn get_hover_info(file_path: String, line: u32, character: u32) -> Result<serde_json::Value, String> {
     // Validate file path for security
-    validate_secure_path(&file_path, false)
-        .map_err(|_| "Invalid file path provided".to_string())?;
+    validate_secure_path(&file_path, false).map_err(|_| "Invalid file path provided".to_string())?;
 
     log::info!(
         "Getting enhanced hover information for {}:{}:{}",
@@ -815,8 +796,7 @@ pub async fn get_lsp_health_status() -> Result<serde_json::Value, String> {
             };
 
             let error_rate = if lsp_state.metrics.total_requests > 0 {
-                (lsp_state.metrics.total_errors as f64 / lsp_state.metrics.total_requests as f64)
-                    * 100.0
+                (lsp_state.metrics.total_errors as f64 / lsp_state.metrics.total_requests as f64) * 100.0
             } else {
                 0.0
             };
@@ -853,8 +833,7 @@ pub async fn rename_symbol(
     new_name: String,
 ) -> Result<serde_json::Value, String> {
     // Validate inputs
-    validate_secure_path(&file_path, false)
-        .map_err(|_| "Invalid file path provided".to_string())?;
+    validate_secure_path(&file_path, false).map_err(|_| "Invalid file path provided".to_string())?;
 
     if old_name.is_empty() || new_name.is_empty() {
         return Err("Symbol names cannot be empty".to_string());
@@ -912,8 +891,7 @@ pub async fn format_code(
 ) -> Result<String, String> {
     execute_command!("format_code", &LSP_COMMAND_CONFIG, async move || {
         // Validate file path for security
-        validate_secure_path(&file_path, false)
-            .map_err(|_| "Invalid file path provided".to_string())?;
+        validate_secure_path(&file_path, false).map_err(|_| "Invalid file path provided".to_string())?;
 
         log::info!("Formatting code for {}", file_path);
 
@@ -938,10 +916,10 @@ pub async fn format_code(
         // First, ensure the file is opened in the LSP client
         let did_open_params = lsp_types::DidOpenTextDocumentParams {
             text_document: lsp_types::TextDocumentItem {
-                uri: uri.clone(),
+                uri:         uri.clone(),
                 language_id: "rust".to_string(),
-                version: 1,
-                text: content.clone(),
+                version:     1,
+                text:        content.clone(),
             },
         };
 
@@ -1051,8 +1029,7 @@ pub async fn get_document_symbols(file_path: String) -> Result<serde_json::Value
         &LSP_COMMAND_CONFIG,
         async move || {
             // Validate file path for security
-            validate_secure_path(&file_path, false)
-                .map_err(|_| "Invalid file path provided".to_string())?;
+            validate_secure_path(&file_path, false).map_err(|_| "Invalid file path provided".to_string())?;
 
             log::info!("Getting document symbols for {}", file_path);
 
@@ -1225,10 +1202,10 @@ async fn try_ai_document_symbols_fallback(file_path: &str) -> Result<serde_json:
 
             // Create AI context for symbols analysis
             let ai_context = AIContext {
-                current_code: content.clone(),
-                file_name: Some(file_path.to_string()),
+                current_code:    content.clone(),
+                file_name:       Some(file_path.to_string()),
                 cursor_position: None,
-                selection: None,
+                selection:       None,
                 project_context: HashMap::new(),
             };
 

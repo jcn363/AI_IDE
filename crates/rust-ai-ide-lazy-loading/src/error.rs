@@ -8,12 +8,12 @@ pub enum LazyLoadingError {
     #[error("Component initialization failed: {component_name} - {reason}")]
     InitializationFailed {
         component_name: String,
-        reason: String,
+        reason:         String,
     },
 
     #[error("Component loading timeout after {timeout_seconds} seconds: {component_name}")]
     LoadingTimeout {
-        component_name: String,
+        component_name:  String,
         timeout_seconds: u64,
     },
 
@@ -33,12 +33,12 @@ pub enum LazyLoadingError {
     #[error("Component unload failed: {component_name} - {reason}")]
     UnloadFailed {
         component_name: String,
-        reason: String,
+        reason:         String,
     },
 
     #[error("Memory limit exceeded: used {used_bytes}, limit {limit_bytes}")]
     MemoryLimitExceeded {
-        used_bytes: usize,
+        used_bytes:  usize,
         limit_bytes: usize,
     },
 
@@ -51,13 +51,10 @@ pub enum LazyLoadingError {
 
 impl LazyLoadingError {
     /// Create an initialization error
-    pub fn initialization_failed(
-        component_name: impl Into<String>,
-        reason: impl Into<String>,
-    ) -> Self {
+    pub fn initialization_failed(component_name: impl Into<String>, reason: impl Into<String>) -> Self {
         Self::InitializationFailed {
             component_name: component_name.into(),
-            reason: reason.into(),
+            reason:         reason.into(),
         }
     }
 
@@ -77,11 +74,7 @@ impl LazyLoadingError {
     }
 
     /// Create a memory pool exhausted error
-    pub fn memory_pool_exhausted(
-        pool_type: impl Into<String>,
-        requested: usize,
-        available: usize,
-    ) -> Self {
+    pub fn memory_pool_exhausted(pool_type: impl Into<String>, requested: usize, available: usize) -> Self {
         Self::MemoryPoolExhausted {
             pool_type: pool_type.into(),
             requested,
@@ -98,7 +91,7 @@ impl LazyLoadingError {
     pub fn unload_failed(component_name: impl Into<String>, reason: impl Into<String>) -> Self {
         Self::UnloadFailed {
             component_name: component_name.into(),
-            reason: reason.into(),
+            reason:         reason.into(),
         }
     }
 
@@ -113,7 +106,7 @@ impl LazyLoadingError {
     /// Create an invalid configuration error
     pub fn invalid_configuration(field: impl Into<String>, reason: impl Into<String>) -> Self {
         Self::InvalidConfiguration {
-            field: field.into(),
+            field:  field.into(),
             reason: reason.into(),
         }
     }

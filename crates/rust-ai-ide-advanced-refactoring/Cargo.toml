@@ -1,6 +1,5 @@
 [package]
 name = "rust-ai-ide-advanced-refactoring"
-readme = { workspace = true }
 version = "0.1.0"
 edition = "2021"
 description = "Phase 3.3: Advanced Refactoring Pipeline - AI-driven refactoring suggestions with automated transformation validation and safety mechanisms"
@@ -128,25 +127,20 @@ fake = "4.4.0"
 
 [[bench]]
 name = "refactoring_suggestion_benchmark"
-readme = { workspace = true }
 harness = false
 
 [[bench]]
 name = "transformation_validation_benchmark"
-readme = { workspace = true }
 harness = false
 
 [[bench]]
 name = "safety_guard_performance"
-readme = { workspace = true }
 harness = false
 
 [[bench]]
 name = "impact_assessment_performance"
-readme = { workspace = true }
 harness = false
 
 [[bench]]
 name = "execution_orchestration_benchmark"
-readme = { workspace = true }
 harness = false

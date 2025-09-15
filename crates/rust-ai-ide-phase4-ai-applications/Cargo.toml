@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-phase4-ai-applications"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 description = "Phase 4.1: Advanced AI Applications - Sophisticated AI-powered development workflows and intelligent assistance"
@@ -88,10 +88,10 @@ fake = "2.9.2"
 
 [[bench]]
 name = "ai_applications_performance_benchmark"
-readme = { workspace = true }
+
 harness = false
 
 [[bench]]
 name = "workflow_orchestration_benchmark"
-readme = { workspace = true }
+
 harness = false

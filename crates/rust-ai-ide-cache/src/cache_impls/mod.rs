@@ -11,8 +11,7 @@ mod in_memory_impl;
 
 // Re-exports for convenience
 pub use distributed_work_stealing::{
-    DistributedWorkStealingCache, HashPartitioner, Partitioner, PredictivePredictor,
-    WorkStealingConfig,
+    DistributedWorkStealingCache, HashPartitioner, Partitioner, PredictivePredictor, WorkStealingConfig,
 };
 pub use hybrid::HybridCache;
 pub use in_memory::InMemoryCache;

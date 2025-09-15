@@ -43,8 +43,7 @@ impl RefactoringImpactAssessor {
         }
 
         // Aggregate results
-        let overall_impact_score =
-            self.calculate_overall_impact_score(suggestions.len(), &all_dependencies);
+        let overall_impact_score = self.calculate_overall_impact_score(suggestions.len(), &all_dependencies);
         let cost_benefit = self.calculate_cost_benefit_analysis(total_cost, total_benefit);
         let risk_assessment = self.calculate_risk_assessment(risk_score, suggestions.len());
 
@@ -67,35 +66,29 @@ impl RefactoringImpactAssessor {
         context: &AnalysisContext,
     ) -> AnalysisResult<ImpactAssessment> {
         // Parse the file to analyze dependencies
-        let content = std::fs::read_to_string(&suggestion.target_file).map_err(|e| {
-            AnalysisError::DataProcessing {
-                stage: format!("Failed to read file {}: {}", suggestion.target_file, e),
-            }
+        let content = std::fs::read_to_string(&suggestion.target_file).map_err(|e| AnalysisError::DataProcessing {
+            stage: format!("Failed to read file {}: {}", suggestion.target_file, e),
         })?;
 
-        let syntax_tree: SynFile =
-            parse_file(&content).map_err(|e| AnalysisError::DataProcessing {
-                stage: format!("Failed to parse file {}: {}", suggestion.target_file, e),
-            })?;
+        let syntax_tree: SynFile = parse_file(&content).map_err(|e| AnalysisError::DataProcessing {
+            stage: format!("Failed to parse file {}: {}", suggestion.target_file, e),
+        })?;
 
         // Use syn visitor to analyze dependencies
         let mut visitor = DependencyVisitor::new();
         visitor.visit_file(&syntax_tree);
 
         // Calculate costs and benefits based on suggestion type and dependencies
-        let cost_benefit =
-            self.calculate_suggestion_cost_benefit(suggestion, &visitor.dependencies);
+        let cost_benefit = self.calculate_suggestion_cost_benefit(suggestion, &visitor.dependencies);
         let risk_assessment = self.calculate_suggestion_risk(suggestion, &visitor.dependencies);
 
         // Create dependency chain
-        let dependency_chain =
-            self.build_dependency_chain(&visitor.dependencies, &suggestion.target_file);
+        let dependency_chain = self.build_dependency_chain(&visitor.dependencies, &suggestion.target_file);
 
         Ok(ImpactAssessment {
             assessment_id: uuid::Uuid::new_v4(),
             suggestion_id: suggestion.id,
-            overall_impact_score: self
-                .calculate_single_impact_score(&cost_benefit, &risk_assessment),
+            overall_impact_score: self.calculate_single_impact_score(&cost_benefit, &risk_assessment),
             cost_benefit_analysis: cost_benefit,
             dependency_chain,
             performance_impact: Default::default(),
@@ -127,8 +120,7 @@ impl RefactoringImpactAssessor {
             crate::types::Complexity::VeryHigh => 4.0,
         };
 
-        let development_cost =
-            base_cost * complexity_multiplier * (dependencies.len() as f64 + 1.0);
+        let development_cost = base_cost * complexity_multiplier * (dependencies.len() as f64 + 1.0);
 
         // Benefits are harder to quantify, use heuristics
         let maintainability_improvement = match suggestion.suggestion_type {
@@ -173,28 +165,20 @@ impl RefactoringImpactAssessor {
     }
 
     /// Build dependency chain from analyzed dependencies
-    fn build_dependency_chain(
-        &self,
-        dependencies: &HashSet<String>,
-        file_path: &str,
-    ) -> Vec<FileDependency> {
+    fn build_dependency_chain(&self, dependencies: &HashSet<String>, file_path: &str) -> Vec<FileDependency> {
         dependencies
             .iter()
             .map(|dep| FileDependency {
-                file_path: dep.clone(),
+                file_path:       dep.clone(),
                 dependency_type: crate::types::DependencyType::SymbolReference,
                 impact_severity: ImpactSeverity::Medium,
-                lines_affected: vec![], // Would need more detailed analysis
+                lines_affected:  vec![], // Would need more detailed analysis
             })
             .collect()
     }
 
     /// Calculate overall impact score
-    fn calculate_overall_impact_score(
-        &self,
-        suggestion_count: usize,
-        dependencies: &[FileDependency],
-    ) -> f64 {
+    fn calculate_overall_impact_score(&self, suggestion_count: usize, dependencies: &[FileDependency]) -> f64 {
         let base_score = suggestion_count as f64 * 10.0;
         let dependency_penalty = dependencies.len() as f64 * 2.0;
         (base_score - dependency_penalty).max(0.0)
@@ -207,21 +191,17 @@ impl RefactoringImpactAssessor {
         total_benefit: f64,
     ) -> crate::types::CostBenefitAnalysis {
         crate::types::CostBenefitAnalysis {
-            development_cost: total_cost,
-            maintenance_cost: total_cost * 0.3,
-            performance_benefit: 0.0,
+            development_cost:            total_cost,
+            maintenance_cost:            total_cost * 0.3,
+            performance_benefit:         0.0,
             maintainability_improvement: total_benefit,
-            breaking_change_risk: 0.2,
-            net_benefit_score: total_benefit - total_cost,
+            breaking_change_risk:        0.2,
+            net_benefit_score:           total_benefit - total_cost,
         }
     }
 
     /// Calculate aggregated risk assessment
-    fn calculate_risk_assessment(
-        &self,
-        total_risk: f64,
-        suggestion_count: usize,
-    ) -> crate::types::RiskAssessment {
+    fn calculate_risk_assessment(&self, total_risk: f64, suggestion_count: usize) -> crate::types::RiskAssessment {
         let avg_risk = if suggestion_count > 0 {
             total_risk / suggestion_count as f64
         } else {
@@ -229,9 +209,9 @@ impl RefactoringImpactAssessor {
         };
 
         crate::types::RiskAssessment {
-            likelihood_of_failure: avg_risk,
-            impact_if_failed: avg_risk * 0.7,
-            mitigation_strategies: vec![],
+            likelihood_of_failure:    avg_risk,
+            impact_if_failed:         avg_risk * 0.7,
+            mitigation_strategies:    vec![],
             confidence_in_assessment: 0.6,
         }
     }

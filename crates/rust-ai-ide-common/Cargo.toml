@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-common"
-readme = { workspace = true }
+
 version = { workspace = true }
 edition = { workspace = true }
 publish = { workspace = true }
@@ -59,13 +59,13 @@ unused_imports = "warn"
 
 [[example]]
 name = "logging_example"
-readme = { workspace = true }
+
 path = "examples/logging_example.rs"
 required-features = []
 
 [[example]]
 name = "default_logger"
-readme = { workspace = true }
+
 path = "examples/default_logger.rs"
 required-features = []
 

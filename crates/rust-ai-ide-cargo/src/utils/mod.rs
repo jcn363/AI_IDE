@@ -9,10 +9,7 @@ use toml;
 use crate::models::CargoDepVersion;
 
 /// Parse dependencies from TOML value
-pub fn parse_dependencies(
-    toml_value: &toml::Value,
-    section: &str,
-) -> Result<HashMap<String, CargoDepVersion>> {
+pub fn parse_dependencies(toml_value: &toml::Value, section: &str) -> Result<HashMap<String, CargoDepVersion>> {
     let mut deps = HashMap::new();
 
     if let Some(deps_table) = toml_value.get(section) {
@@ -22,18 +19,18 @@ pub fn parse_dependencies(
                     CargoDepVersion::Simple(value.as_str().unwrap().to_string())
                 } else if let Some(table) = value.as_table() {
                     let mut dep = CargoDepVersion::Detailed {
-                        version: table
+                        version:          table
                             .get("version")
                             .and_then(|v| v.as_str())
                             .map(String::from),
-                        path: table.get("path").and_then(|v| v.as_str()).map(String::from),
-                        git: table.get("git").and_then(|v| v.as_str()).map(String::from),
-                        branch: table
+                        path:             table.get("path").and_then(|v| v.as_str()).map(String::from),
+                        git:              table.get("git").and_then(|v| v.as_str()).map(String::from),
+                        branch:           table
                             .get("branch")
                             .and_then(|v| v.as_str())
                             .map(String::from),
-                        tag: table.get("tag").and_then(|v| v.as_str()).map(String::from),
-                        features: table.get("features").and_then(|v| v.as_array()).map(|arr| {
+                        tag:              table.get("tag").and_then(|v| v.as_str()).map(String::from),
+                        features:         table.get("features").and_then(|v| v.as_array()).map(|arr| {
                             arr.iter()
                                 .filter_map(|v| v.as_str().map(String::from))
                                 .collect()

@@ -37,52 +37,52 @@ use super::services::{AIError, AIResult, AIService};
 /// File analysis request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileAnalysisRequest {
-    pub file_path: String,
+    pub file_path:            String,
     pub analyze_dependencies: bool,
-    pub analyze_complexity: bool,
-    pub include_performance: bool,
+    pub analyze_complexity:   bool,
+    pub include_performance:  bool,
 }
 
 /// Workspace analysis request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkspaceAnalysisRequest {
     pub include_dependencies: bool,
-    pub analysis_depth: usize,
-    pub exclude_patterns: Vec<String>,
+    pub analysis_depth:       usize,
+    pub exclude_patterns:     Vec<String>,
 }
 
 /// Code quality request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeQualityRequest {
-    pub target_files: Vec<String>,
+    pub target_files:    Vec<String>,
     pub quality_metrics: Vec<String>,
 }
 
 /// Analysis result structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisResult {
-    pub file_path: Option<String>,
-    pub issues: Vec<AnalysisIssue>,
-    pub suggestions: Vec<String>,
-    pub metrics: HashMap<String, f64>,
+    pub file_path:            Option<String>,
+    pub issues:               Vec<AnalysisIssue>,
+    pub suggestions:          Vec<String>,
+    pub metrics:              HashMap<String, f64>,
     pub performance_insights: Vec<String>,
 }
 
 /// Individual analysis issue
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisIssue {
-    pub severity: String, // "error", "warning", "info"
-    pub line: Option<usize>,
-    pub message: String,
-    pub category: String,
+    pub severity:   String, // "error", "warning", "info"
+    pub line:       Option<usize>,
+    pub message:    String,
+    pub category:   String,
     pub suggestion: Option<String>,
 }
 
 /// Code quality assessment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeQualityAssessment {
-    pub overall_score: f64,
-    pub metrics: HashMap<String, f64>,
+    pub overall_score:   f64,
+    pub metrics:         HashMap<String, f64>,
     pub recommendations: Vec<String>,
     pub critical_issues: usize,
 }
@@ -112,21 +112,21 @@ pub enum AnalysisError {
 #[derive(serde::Serialize)]
 pub struct AnalysisErrorWrapper {
     pub message: String,
-    pub code: String,
+    pub code:    String,
 }
 
 impl From<&AnalysisError> for AnalysisErrorWrapper {
     fn from(error: &AnalysisError) -> Self {
         Self {
             message: error.to_string(),
-            code: "ANALYSIS_ERROR".to_string(),
+            code:    "ANALYSIS_ERROR".to_string(),
         }
     }
 }
 
 /// AI Analysis Service
 pub struct AnalysisService {
-    ai_service: Arc<RwLock<AIService>>,
+    ai_service:     Arc<RwLock<AIService>>,
     analysis_cache: Arc<RwLock<HashMap<String, AnalysisResult>>>,
 }
 
@@ -145,10 +145,10 @@ impl AnalysisService {
         // This is a placeholder implementation
 
         let issues = vec![AnalysisIssue {
-            severity: "info".to_string(),
-            line: Some(42),
-            message: "Consider using more descriptive variable names".to_string(),
-            category: "style".to_string(),
+            severity:   "info".to_string(),
+            line:       Some(42),
+            message:    "Consider using more descriptive variable names".to_string(),
+            category:   "style".to_string(),
             suggestion: Some("Use 'user_input' instead of 'u'".to_string()),
         }];
 
@@ -184,18 +184,15 @@ impl AnalysisService {
     }
 
     /// Analyze entire workspace
-    pub async fn analyze_workspace(
-        &self,
-        request: WorkspaceAnalysisRequest,
-    ) -> AIResult<AnalysisResult> {
+    pub async fn analyze_workspace(&self, request: WorkspaceAnalysisRequest) -> AIResult<AnalysisResult> {
         // TODO: Implement actual AI workspace analysis logic
         // This is a placeholder implementation
 
         let issues = vec![AnalysisIssue {
-            severity: "warning".to_string(),
-            line: None,
-            message: "Large workspace detected - analysis may be slow".to_string(),
-            category: "performance".to_string(),
+            severity:   "warning".to_string(),
+            line:       None,
+            message:    "Large workspace detected - analysis may be slow".to_string(),
+            category:   "performance".to_string(),
             suggestion: Some("Consider analyzing specific directories instead".to_string()),
         }];
 
@@ -225,10 +222,7 @@ impl AnalysisService {
     }
 
     /// Assess code quality
-    pub async fn assess_code_quality(
-        &self,
-        request: CodeQualityRequest,
-    ) -> AIResult<CodeQualityAssessment> {
+    pub async fn assess_code_quality(&self, request: CodeQualityRequest) -> AIResult<CodeQualityAssessment> {
         // TODO: Implement actual AI code quality assessment
         // This is a placeholder implementation
 
@@ -299,9 +293,7 @@ pub fn code_quality_command() -> Box<dyn std::any::Any + Send + Sync> {
 /// Tauri command for file analysis with service integration
 #[cfg(feature = "tauri")]
 #[tauri::command]
-pub async fn analyze_file(
-    ai_service: tauri::State<'_, Arc<RwLock<AIService>>>,
-) -> Result<serde_json::Value, String> {
+pub async fn analyze_file(ai_service: tauri::State<'_, Arc<RwLock<AIService>>>) -> Result<serde_json::Value, String> {
     let config = CommandConfig::default();
 
     execute_command!("analyze_file", &config, async move || {
@@ -372,10 +364,10 @@ mod tests {
         let analysis_service = AnalysisService::new(ai_service).await.unwrap();
 
         let request = FileAnalysisRequest {
-            file_path: "src/main.rs".to_string(),
+            file_path:            "src/main.rs".to_string(),
             analyze_dependencies: true,
-            analyze_complexity: true,
-            include_performance: false,
+            analyze_complexity:   true,
+            include_performance:  false,
         };
 
         let result = analysis_service.analyze_file(request).await.unwrap();
@@ -390,8 +382,8 @@ mod tests {
 
         let request = WorkspaceAnalysisRequest {
             include_dependencies: true,
-            analysis_depth: 2,
-            exclude_patterns: vec!["target/*".to_string()],
+            analysis_depth:       2,
+            exclude_patterns:     vec!["target/*".to_string()],
         };
 
         let result = analysis_service.analyze_workspace(request).await.unwrap();
@@ -405,10 +397,10 @@ mod tests {
         let analysis_service = AnalysisService::new(ai_service).await.unwrap();
 
         let request = FileAnalysisRequest {
-            file_path: "src/complex.rs".to_string(),
+            file_path:            "src/complex.rs".to_string(),
             analyze_dependencies: true,
-            analyze_complexity: true,
-            include_performance: true,
+            analyze_complexity:   true,
+            include_performance:  true,
         };
 
         let result = analysis_service.analyze_file(request).await.unwrap();
@@ -438,8 +430,8 @@ mod tests {
 
         let request = WorkspaceAnalysisRequest {
             include_dependencies: false,
-            analysis_depth: 1,
-            exclude_patterns: vec!["target/*".to_string(), ".git/*".to_string()],
+            analysis_depth:       1,
+            exclude_patterns:     vec!["target/*".to_string(), ".git/*".to_string()],
         };
 
         let result = analysis_service.analyze_workspace(request).await.unwrap();
@@ -456,7 +448,7 @@ mod tests {
         let analysis_service = AnalysisService::new(ai_service).await.unwrap();
 
         let request = CodeQualityRequest {
-            target_files: vec!["src/main.rs".to_string(), "src/lib.rs".to_string()],
+            target_files:    vec!["src/main.rs".to_string(), "src/lib.rs".to_string()],
             quality_metrics: vec!["coverage".to_string(), "complexity".to_string()],
         };
 
@@ -475,10 +467,10 @@ mod tests {
 
         let file_path = "test_file.rs";
         let request = FileAnalysisRequest {
-            file_path: file_path.to_string(),
+            file_path:            file_path.to_string(),
             analyze_dependencies: false,
-            analyze_complexity: false,
-            include_performance: false,
+            analyze_complexity:   false,
+            include_performance:  false,
         };
 
         // First analysis should cache the result
@@ -511,10 +503,10 @@ mod tests {
 
         // Test with empty file path (should still work)
         let request = FileAnalysisRequest {
-            file_path: "".to_string(),
+            file_path:            "".to_string(),
             analyze_dependencies: false,
-            analyze_complexity: false,
-            include_performance: false,
+            analyze_complexity:   false,
+            include_performance:  false,
         };
 
         let result = analysis_service.analyze_file(request).await.unwrap();
@@ -524,8 +516,8 @@ mod tests {
         // Test workspace analysis with no exclude patterns
         let ws_request = WorkspaceAnalysisRequest {
             include_dependencies: false,
-            analysis_depth: 0,
-            exclude_patterns: vec![],
+            analysis_depth:       0,
+            exclude_patterns:     vec![],
         };
 
         let ws_result = analysis_service
@@ -542,7 +534,7 @@ mod tests {
 
         // Test with empty files list
         let request = CodeQualityRequest {
-            target_files: vec![],
+            target_files:    vec![],
             quality_metrics: vec![],
         };
 
@@ -570,10 +562,10 @@ mod tests {
     #[tokio::test]
     async fn test_analysis_request_serialization() {
         let file_request = FileAnalysisRequest {
-            file_path: "src/test.rs".to_string(),
+            file_path:            "src/test.rs".to_string(),
             analyze_dependencies: true,
-            analyze_complexity: false,
-            include_performance: true,
+            analyze_complexity:   false,
+            include_performance:  true,
         };
 
         let json = serde_json::to_string(&file_request).unwrap();
@@ -594,8 +586,8 @@ mod tests {
 
         let ws_request = WorkspaceAnalysisRequest {
             include_dependencies: false,
-            analysis_depth: 3,
-            exclude_patterns: vec!["*.tmp".to_string()],
+            analysis_depth:       3,
+            exclude_patterns:     vec!["*.tmp".to_string()],
         };
 
         let ws_json = serde_json::to_string(&ws_request).unwrap();
@@ -613,10 +605,10 @@ mod tests {
         metrics.insert("complexity".to_string(), 8.5);
 
         let issue = AnalysisIssue {
-            severity: "warning".to_string(),
-            line: Some(10),
-            message: "Test issue".to_string(),
-            category: "style".to_string(),
+            severity:   "warning".to_string(),
+            line:       Some(10),
+            message:    "Test issue".to_string(),
+            category:   "style".to_string(),
             suggestion: Some("Fix it".to_string()),
         };
 
@@ -666,10 +658,10 @@ mod tests {
         // Test with complex file path
         let complex_path = "very/deep/nested/directory/structure/file_with_special_chars_123.rs";
         let request = FileAnalysisRequest {
-            file_path: complex_path.to_string(),
+            file_path:            complex_path.to_string(),
             analyze_dependencies: true,
-            analyze_complexity: true,
-            include_performance: false,
+            analyze_complexity:   true,
+            include_performance:  false,
         };
 
         let result = analysis_service.analyze_file(request).await.unwrap();
@@ -685,16 +677,16 @@ mod tests {
         let service_clone = Arc::new(analysis_service);
         let analyses = vec![
             service_clone.analyze_file(FileAnalysisRequest {
-                file_path: file_path.to_string(),
+                file_path:            file_path.to_string(),
                 analyze_dependencies: false,
-                analyze_complexity: false,
-                include_performance: false,
+                analyze_complexity:   false,
+                include_performance:  false,
             }),
             service_clone.analyze_file(FileAnalysisRequest {
-                file_path: file_path.to_string(),
+                file_path:            file_path.to_string(),
                 analyze_dependencies: true,
-                analyze_complexity: false,
-                include_performance: false,
+                analyze_complexity:   false,
+                include_performance:  false,
             }),
         ];
 

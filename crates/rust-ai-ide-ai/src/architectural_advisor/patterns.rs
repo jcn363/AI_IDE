@@ -9,7 +9,7 @@ use super::AdvisorResult;
 #[derive(Debug)]
 pub struct PatternDetector {
     pattern_knowledge_base: HashMap<String, PatternTemplate>,
-    anti_pattern_rules: Vec<AntiPatternRule>,
+    anti_pattern_rules:     Vec<AntiPatternRule>,
 }
 
 impl Default for PatternDetector {
@@ -31,25 +31,19 @@ impl PatternDetector {
     }
 
     /// Detect architectural patterns in the codebase
-    pub async fn detect_patterns(
-        &self,
-        codebase_analysis: &CodebaseAnalysis,
-    ) -> AdvisorResult<Vec<DetectedPattern>> {
+    pub async fn detect_patterns(&self, codebase_analysis: &CodebaseAnalysis) -> AdvisorResult<Vec<DetectedPattern>> {
         let mut detected_patterns = Vec::new();
 
         // Analyze directory structure for layering patterns
-        let layering_patterns =
-            self.detect_layering_patterns(&codebase_analysis.directory_structure)?;
+        let layering_patterns = self.detect_layering_patterns(&codebase_analysis.directory_structure)?;
         detected_patterns.extend(layering_patterns);
 
         // Analyze module dependencies for patterns
-        let dependency_patterns =
-            self.detect_dependency_patterns(&codebase_analysis.dependencies)?;
+        let dependency_patterns = self.detect_dependency_patterns(&codebase_analysis.dependencies)?;
         detected_patterns.extend(dependency_patterns);
 
         // Analyze interface patterns
-        let interface_patterns =
-            self.detect_interface_patterns(&codebase_analysis.module_organization)?;
+        let interface_patterns = self.detect_interface_patterns(&codebase_analysis.module_organization)?;
         detected_patterns.extend(interface_patterns);
 
         Ok(detected_patterns)
@@ -82,14 +76,14 @@ impl PatternDetector {
         if Self::has_layered_structure(directory_structure) {
             patterns.push(DetectedPattern {
                 pattern_type: "Layered Architecture".to_string(),
-                confidence: 0.85,
-                location: PatternLocation {
-                    files: vec![],
+                confidence:   0.85,
+                location:     PatternLocation {
+                    files:   vec![],
                     modules: vec![],
-                    lines: None,
+                    lines:   None,
                 },
-                description: "Clear separation of concerns through layering".to_string(),
-                benefits: vec![
+                description:  "Clear separation of concerns through layering".to_string(),
+                benefits:     vec![
                     "Improved maintainability".to_string(),
                     "Ability to evolve layers independently".to_string(),
                     "Clear boundaries between concerns".to_string(),
@@ -106,24 +100,21 @@ impl PatternDetector {
     }
 
     /// Detect dependency patterns
-    fn detect_dependency_patterns(
-        &self,
-        dependencies: &DependencyAnalysis,
-    ) -> AdvisorResult<Vec<DetectedPattern>> {
+    fn detect_dependency_patterns(&self, dependencies: &DependencyAnalysis) -> AdvisorResult<Vec<DetectedPattern>> {
         let mut patterns = Vec::new();
 
         // Detect hexagonal architecture (ports and adapters)
         if Self::has_hexagonal_dependencies(dependencies) {
             patterns.push(DetectedPattern {
                 pattern_type: "Hexagonal Architecture".to_string(),
-                confidence: 0.75,
-                location: PatternLocation {
-                    files: vec![],
+                confidence:   0.75,
+                location:     PatternLocation {
+                    files:   vec![],
                     modules: vec![],
-                    lines: None,
+                    lines:   None,
                 },
-                description: "Ports and adapters pattern for clean architecture".to_string(),
-                benefits: vec![
+                description:  "Ports and adapters pattern for clean architecture".to_string(),
+                benefits:     vec![
                     "Technology agnostic business logic".to_string(),
                     "Easy testing with mocked adapters".to_string(),
                     "Flexible integration with external systems".to_string(),
@@ -150,14 +141,14 @@ impl PatternDetector {
         if Self::has_repository_interfaces(module_organization) {
             patterns.push(DetectedPattern {
                 pattern_type: "Repository Pattern".to_string(),
-                confidence: 0.80,
-                location: PatternLocation {
-                    files: vec![],
+                confidence:   0.80,
+                location:     PatternLocation {
+                    files:   vec![],
                     modules: vec![],
-                    lines: None,
+                    lines:   None,
                 },
-                description: "Abstraction of data access through repository interfaces".to_string(),
-                benefits: vec![
+                description:  "Abstraction of data access through repository interfaces".to_string(),
+                benefits:     vec![
                     "Decoupling of business logic from data access".to_string(),
                     "Testability through repository mocks".to_string(),
                     "Consistent data access patterns".to_string(),
@@ -223,44 +214,37 @@ impl PatternDetector {
         let mut kb = HashMap::new();
 
         // MVC Pattern
-        kb.insert(
-            "MVC".to_string(),
-            PatternTemplate {
-                name: "Model-View-Controller".to_string(),
-                description: "Separation of presentation, business logic, and data layers"
-                    .to_string(),
-                indicators: vec![
-                    "controller".to_string(),
-                    "view".to_string(),
-                    "model".to_string(),
-                    "presentation".to_string(),
-                    "business".to_string(),
-                ],
-                confidence_rules: vec![ConfidenceRule {
-                    condition: "Has separate layers".to_string(),
-                    weight: 0.8,
-                }],
-            },
-        );
+        kb.insert("MVC".to_string(), PatternTemplate {
+            name:             "Model-View-Controller".to_string(),
+            description:      "Separation of presentation, business logic, and data layers".to_string(),
+            indicators:       vec![
+                "controller".to_string(),
+                "view".to_string(),
+                "model".to_string(),
+                "presentation".to_string(),
+                "business".to_string(),
+            ],
+            confidence_rules: vec![ConfidenceRule {
+                condition: "Has separate layers".to_string(),
+                weight:    0.8,
+            }],
+        });
 
         // Microservices Pattern
-        kb.insert(
-            "Microservices".to_string(),
-            PatternTemplate {
-                name: "Microservices Architecture".to_string(),
-                description: "Decoupled services with bounded contexts".to_string(),
-                indicators: vec![
-                    "service".to_string(),
-                    "api".to_string(),
-                    "bounded context".to_string(),
-                    "domain".to_string(),
-                ],
-                confidence_rules: vec![ConfidenceRule {
-                    condition: "Has multiple independent services".to_string(),
-                    weight: 0.9,
-                }],
-            },
-        );
+        kb.insert("Microservices".to_string(), PatternTemplate {
+            name:             "Microservices Architecture".to_string(),
+            description:      "Decoupled services with bounded contexts".to_string(),
+            indicators:       vec![
+                "service".to_string(),
+                "api".to_string(),
+                "bounded context".to_string(),
+                "domain".to_string(),
+            ],
+            confidence_rules: vec![ConfidenceRule {
+                condition: "Has multiple independent services".to_string(),
+                weight:    0.9,
+            }],
+        });
 
         kb
     }
@@ -269,10 +253,10 @@ impl PatternDetector {
     fn initialize_anti_pattern_rules() -> Vec<AntiPatternRule> {
         vec![
             AntiPatternRule {
-                name: "God Object".to_string(),
-                description: "A class or module that knows too much and does too much".to_string(),
-                severity: 0.8,
-                detection_criteria: vec![DetectionCriterion::MetricThreshold(
+                name:                    "God Object".to_string(),
+                description:             "A class or module that knows too much and does too much".to_string(),
+                severity:                0.8,
+                detection_criteria:      vec![DetectionCriterion::MetricThreshold(
                     "module_size_lines".to_string(),
                     1000.0,
                     Comparison::GreaterThan,
@@ -284,11 +268,10 @@ impl PatternDetector {
                 ],
             },
             AntiPatternRule {
-                name: "Circular Dependencies".to_string(),
-                description: "Modules that depend on each other creating tight coupling"
-                    .to_string(),
-                severity: 0.9,
-                detection_criteria: vec![DetectionCriterion::DependencyPattern(
+                name:                    "Circular Dependencies".to_string(),
+                description:             "Modules that depend on each other creating tight coupling".to_string(),
+                severity:                0.9,
+                detection_criteria:      vec![DetectionCriterion::DependencyPattern(
                     "circular".to_string(),
                 )],
                 refactoring_suggestions: vec![
@@ -304,9 +287,9 @@ impl PatternDetector {
 /// Pattern template for detection rules
 #[derive(Debug)]
 struct PatternTemplate {
-    name: String,
-    description: String,
-    indicators: Vec<String>,
+    name:             String,
+    description:      String,
+    indicators:       Vec<String>,
     confidence_rules: Vec<ConfidenceRule>,
 }
 
@@ -314,24 +297,21 @@ struct PatternTemplate {
 #[derive(Debug)]
 struct ConfidenceRule {
     condition: String,
-    weight: f32,
+    weight:    f32,
 }
 
 /// Anti-pattern detection rule
 #[derive(Debug)]
 struct AntiPatternRule {
-    name: String,
-    description: String,
-    severity: f32,
-    detection_criteria: Vec<DetectionCriterion>,
+    name:                    String,
+    description:             String,
+    severity:                f32,
+    detection_criteria:      Vec<DetectionCriterion>,
     refactoring_suggestions: Vec<String>,
 }
 
 impl AntiPatternRule {
-    async fn detect(
-        &self,
-        _codebase_analysis: &CodebaseAnalysis,
-    ) -> AdvisorResult<Option<AntiPattern>> {
+    async fn detect(&self, _codebase_analysis: &CodebaseAnalysis) -> AdvisorResult<Option<AntiPattern>> {
         // Would implement actual detection logic based on criteria
         // For now, return None
         Ok(None)
@@ -359,25 +339,25 @@ enum Comparison {
 pub struct CodebaseAnalysis {
     pub directory_structure: DirectoryStructure,
     pub module_organization: ModuleOrganization,
-    pub dependencies: DependencyAnalysis,
+    pub dependencies:        DependencyAnalysis,
 }
 
 /// Directory structure analysis
 #[derive(Debug, Default)]
 pub struct DirectoryStructure {
-    pub total_files: usize,
-    pub directories: Vec<String>,
-    pub file_types: HashMap<String, usize>,
+    pub total_files:           usize,
+    pub directories:           Vec<String>,
+    pub file_types:            HashMap<String, usize>,
     pub organization_patterns: Vec<String>,
-    pub issues: Vec<String>,
+    pub issues:                Vec<String>,
 }
 
 /// Module organization analysis
 #[derive(Debug, Default)]
 pub struct ModuleOrganization {
-    pub modules: Vec<String>,
-    pub module_hierarchy: HashMap<String, Vec<String>>,
-    pub public_interfaces: Vec<String>,
+    pub modules:               Vec<String>,
+    pub module_hierarchy:      HashMap<String, Vec<String>>,
+    pub public_interfaces:     Vec<String>,
     pub internal_dependencies: HashMap<String, Vec<String>>,
     pub circular_dependencies: Vec<(String, String)>,
 }
@@ -387,9 +367,9 @@ pub struct ModuleOrganization {
 pub struct DependencyAnalysis {
     pub internal_dependencies: HashMap<String, Vec<String>>,
     pub external_dependencies: Vec<String>,
-    pub dependency_depth: HashMap<String, usize>,
-    pub shared_dependencies: Vec<String>,
-    pub unused_dependencies: Vec<String>,
+    pub dependency_depth:      HashMap<String, usize>,
+    pub shared_dependencies:   Vec<String>,
+    pub unused_dependencies:   Vec<String>,
 }
 
 /// Pattern analysis utilities
@@ -500,10 +480,11 @@ mod tests {
     #[test]
     fn test_coupling_analysis() {
         let mut deps = DependencyAnalysis::default();
-        deps.internal_dependencies.insert(
-            "module_a".to_string(),
-            vec!["module_b".to_string(), "module_c".to_string()],
-        );
+        deps.internal_dependencies
+            .insert("module_a".to_string(), vec![
+                "module_b".to_string(),
+                "module_c".to_string(),
+            ]);
 
         let coupling = analysis_utils::analyze_coupling_level(&deps);
         assert_eq!(coupling, analysis_utils::CouplingLevel::Moderate);

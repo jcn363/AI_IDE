@@ -8,9 +8,9 @@ use crate::IDEError;
 /// GGUF file header structure
 #[derive(Debug)]
 pub struct GGUFHeader {
-    pub magic: [u8; 4],
-    pub version: u32,
-    pub tensor_count: u64,
+    pub magic:             [u8; 4],
+    pub version:           u32,
+    pub tensor_count:      u64,
     pub metadata_kv_count: u64,
 }
 
@@ -33,18 +33,18 @@ pub enum GGUFMetadataType {
 /// GGUF tensor information
 #[derive(Debug)]
 pub struct GGUFTensorInfo {
-    pub name: String,
+    pub name:         String,
     pub n_dimensions: u32,
-    pub dimensions: Vec<u64>,
-    pub dtype: GGUFDType,
-    pub offset: u64,
+    pub dimensions:   Vec<u64>,
+    pub dtype:        GGUFDType,
+    pub offset:       u64,
 }
 
 /// GGUF data types
 #[derive(Debug, Clone, Copy)]
 pub enum GGUFDType {
-    F32 = 0,
-    F16 = 1,
+    F32  = 0,
+    F16  = 1,
     Q4_0 = 2,
     Q4_1 = 3,
     Q5_0 = 6,
@@ -114,8 +114,7 @@ impl GGUFQuantizer {
         let quantized_data: Vec<u8> = flat_data
             .into_iter()
             .map(|val| {
-                let quantized =
-                    ((val - min_val) / (max_val - min_val) * 15.0).clamp(0.0, 15.0) as u8;
+                let quantized = ((val - min_val) / (max_val - min_val) * 15.0).clamp(0.0, 15.0) as u8;
                 quantized
             })
             .collect();
@@ -147,8 +146,7 @@ impl GGUFQuantizer {
         let quantized_data: Vec<u8> = flat_data
             .into_iter()
             .map(|val| {
-                let quantized =
-                    ((val - min_val) / (max_val - min_val) * 31.0).clamp(0.0, 31.0) as u8;
+                let quantized = ((val - min_val) / (max_val - min_val) * 31.0).clamp(0.0, 31.0) as u8;
                 quantized
             })
             .collect();

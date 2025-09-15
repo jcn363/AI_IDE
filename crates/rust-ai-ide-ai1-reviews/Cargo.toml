@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-ai1-reviews"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 description = "Wave 1: Automated Code Reviews and Quality Assessment"

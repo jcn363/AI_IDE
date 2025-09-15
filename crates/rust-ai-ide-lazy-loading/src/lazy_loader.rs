@@ -12,9 +12,9 @@ use crate::{LazyComponent, LazyLoadingConfig, LazyLoadingError, LazyResult};
 
 /// Manager for lazy loading components
 pub struct LazyLoader {
-    registry: Arc<RwLock<HashMap<String, Box<dyn LazyComponent>>>>,
-    config: LazyLoadingConfig,
-    semaphore: Arc<Semaphore>,
+    registry:          Arc<RwLock<HashMap<String, Box<dyn LazyComponent>>>>,
+    config:            LazyLoadingConfig,
+    semaphore:         Arc<Semaphore>,
     loaded_components: Arc<RwLock<HashMap<String, Arc<dyn Any + Send + Sync>>>>,
 }
 
@@ -73,9 +73,7 @@ impl LazyLoader {
             load_future,
         )
         .await
-        .map_err(|_| {
-            LazyLoadingError::loading_timeout(name.to_string(), self.config.load_timeout_seconds)
-        })?
+        .map_err(|_| LazyLoadingError::loading_timeout(name.to_string(), self.config.load_timeout_seconds))?
         .map_err(|e| LazyLoadingError::initialization_failed(name.to_string(), e.to_string()))?;
 
         // Try to downcast to the requested type
@@ -191,9 +189,9 @@ impl LazyLoader {
 impl Clone for LazyLoader {
     fn clone(&self) -> Self {
         Self {
-            registry: self.registry.clone(),
-            config: self.config.clone(),
-            semaphore: self.semaphore.clone(),
+            registry:          self.registry.clone(),
+            config:            self.config.clone(),
+            semaphore:         self.semaphore.clone(),
             loaded_components: self.loaded_components.clone(),
         }
     }
@@ -204,9 +202,9 @@ pub struct SimpleLazyComponent<T>
 where
     T: Send + Sync + 'static,
 {
-    name: String,
+    name:        String,
     initializer: Arc<dyn Fn() -> LazyResult<T> + Send + Sync>,
-    loaded: Mutex<Option<Arc<T>>>,
+    loaded:      Mutex<Option<Arc<T>>>,
 }
 
 impl<T> Clone for SimpleLazyComponent<T>
@@ -215,9 +213,9 @@ where
 {
     fn clone(&self) -> Self {
         Self {
-            name: self.name.clone(),
+            name:        self.name.clone(),
             initializer: self.initializer.clone(),
-            loaded: Mutex::new(None),
+            loaded:      Mutex::new(None),
         }
     }
 }
@@ -227,10 +225,7 @@ where
     T: Send + Sync + 'static,
 {
     /// Create a new simple lazy component
-    pub fn new(
-        name: impl Into<String>,
-        initializer: Arc<dyn Fn() -> LazyResult<T> + Send + Sync>,
-    ) -> Self {
+    pub fn new(name: impl Into<String>, initializer: Arc<dyn Fn() -> LazyResult<T> + Send + Sync>) -> Self {
         Self {
             name: name.into(),
             initializer,

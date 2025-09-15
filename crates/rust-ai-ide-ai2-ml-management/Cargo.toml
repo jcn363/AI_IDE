@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-ai2-ml-management"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 description = "Wave 2: Advanced ML Model Management and Lifecycle System"

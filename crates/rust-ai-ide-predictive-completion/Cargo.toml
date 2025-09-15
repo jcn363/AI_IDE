@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-predictive-completion"
-readme = { workspace = true }
+
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }

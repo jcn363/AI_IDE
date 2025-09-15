@@ -27,32 +27,22 @@ impl PolicyEvaluator {
         policy: &UnloadingPolicy,
     ) -> Vec<String> {
         match policy {
-            UnloadingPolicy::LRU { max_age_hours } => {
-                self.evaluate_lru_policy(models, *max_age_hours)
-            }
-            UnloadingPolicy::MemoryThreshold { max_memory_gb } => {
+            UnloadingPolicy::LRU { max_age_hours } => self.evaluate_lru_policy(models, *max_age_hours),
+            UnloadingPolicy::MemoryThreshold { max_memory_gb } =>
                 self.evaluate_memory_threshold_policy(models, *max_memory_gb)
-                    .await
-            }
-            UnloadingPolicy::TimeBased { max_age_hours } => {
-                self.evaluate_time_based_policy(models, *max_age_hours)
-            }
+                    .await,
+            UnloadingPolicy::TimeBased { max_age_hours } => self.evaluate_time_based_policy(models, *max_age_hours),
             UnloadingPolicy::Hybrid {
                 max_age_hours,
                 max_memory_gb,
-            } => {
+            } =>
                 self.evaluate_hybrid_policy(models, *max_age_hours, *max_memory_gb)
-                    .await
-            }
+                    .await,
         }
     }
 
     /// Evaluate LRU policy - unload least recently used models
-    fn evaluate_lru_policy(
-        &self,
-        models: &HashMap<String, ModelHandle>,
-        max_age_hours: u32,
-    ) -> Vec<String> {
+    fn evaluate_lru_policy(&self, models: &HashMap<String, ModelHandle>, max_age_hours: u32) -> Vec<String> {
         models
             .iter()
             .filter(|(_, handle)| handle.should_unload_lru(max_age_hours))
@@ -76,11 +66,7 @@ impl PolicyEvaluator {
     }
 
     /// Evaluate time-based policy - unload old models
-    fn evaluate_time_based_policy(
-        &self,
-        models: &HashMap<String, ModelHandle>,
-        max_age_hours: u32,
-    ) -> Vec<String> {
+    fn evaluate_time_based_policy(&self, models: &HashMap<String, ModelHandle>, max_age_hours: u32) -> Vec<String> {
         models
             .iter()
             .filter(|(_, handle)| handle.should_unload_time_based(max_age_hours))
@@ -104,10 +90,7 @@ impl PolicyEvaluator {
         // Find models that are both old and memory-intensive
         models
             .iter()
-            .filter(|(_, handle)| {
-                handle.should_unload_lru(max_age_hours)
-                    || self.is_memory_intensive(handle, &summary)
-            })
+            .filter(|(_, handle)| handle.should_unload_lru(max_age_hours) || self.is_memory_intensive(handle, &summary))
             .map(|(id, _)| id.clone())
             .collect()
     }
@@ -143,9 +126,8 @@ impl PolicyEvaluator {
 
     /// Check if a model is memory intensive relative to system
     fn is_memory_intensive(&self, handle: &ModelHandle, summary: &ResourceSummary) -> bool {
-        let memory_percentage = (handle.resource_usage.memory_usage_bytes as f64
-            / summary.total_memory_bytes as f64)
-            * 100.0;
+        let memory_percentage =
+            (handle.resource_usage.memory_usage_bytes as f64 / summary.total_memory_bytes as f64) * 100.0;
         memory_percentage >= 20.0 // Models using >= 20% of system memory
     }
 
@@ -198,10 +180,10 @@ pub enum UnloadingRecommendation {
     None { reason: String },
     /// Models should be unloaded
     Unload {
-        model_ids: Vec<String>,
+        model_ids:       Vec<String>,
         memory_freed_mb: f64,
-        reason: String,
-        urgency: UnloadingUrgency,
+        reason:          String,
+        urgency:         UnloadingUrgency,
     },
 }
 
@@ -288,10 +270,10 @@ mod tests {
     #[test]
     fn test_unloading_recommendation_methods() {
         let recommendation = UnloadingRecommendation::Unload {
-            model_ids: vec!["test1".to_string(), "test2".to_string()],
+            model_ids:       vec!["test1".to_string(), "test2".to_string()],
             memory_freed_mb: 1024.0,
-            reason: "Test reason".to_string(),
-            urgency: UnloadingUrgency::Medium,
+            reason:          "Test reason".to_string(),
+            urgency:         UnloadingUrgency::Medium,
         };
 
         assert!(recommendation.should_unload());

@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 publish = false
 repository = "https://github.com/rust-ai-ide/rust-ai-ide"
 homepage = "https://github.com/rust-ai-ide/rust-ai-ide"
-readme = { workspace = true }
+
 
 [features]
 default = ["work-stealing"]

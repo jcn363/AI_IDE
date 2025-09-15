@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-ai-predictive"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 description = "Phase 9: AI Predictive Development Assistant - Context-aware code suggestions, proactive refactoring, and intent prediction"

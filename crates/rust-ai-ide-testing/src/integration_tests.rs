@@ -30,9 +30,9 @@ async fn test_ai_inference_pipeline_integration() {
     // Test model loading
     let loader = ONNXLoader;
     let config = ModelLoadConfig {
-        quantization: QuantizationLevel::None,
-        backend: HardwareBackend::Cpu,
-        max_memory_mb: 512,
+        quantization:     QuantizationLevel::None,
+        backend:          HardwareBackend::Cpu,
+        max_memory_mb:    512,
         enable_profiling: false,
     };
 
@@ -307,8 +307,8 @@ async fn test_cross_crate_integration() {
             println!("Configuration manager initialized successfully");
             // Test basic configuration operations
             let test_config = rust_ai_ide_config::ConfigEntry {
-                key: "test.integration.key".to_string(),
-                value: serde_json::json!({"test": "value"}),
+                key:        "test.integration.key".to_string(),
+                value:      serde_json::json!({"test": "value"}),
                 created_at: std::time::SystemTime::now(),
                 updated_at: std::time::SystemTime::now(),
             };
@@ -464,8 +464,7 @@ async fn test_complete_ai_ide_workflow_integration() {
             println!("✅ All systems initialized successfully");
 
             // 2. Test AI-assisted code generation workflow
-            let workflow_spec =
-                "Create a REST API endpoint for user management with authentication";
+            let workflow_spec = "Create a REST API endpoint for user management with authentication";
             let generation_result = timeout(
                 Duration::from_secs(30),
                 generator.generate_from_spec(workflow_spec),
@@ -481,8 +480,7 @@ async fn test_complete_ai_ide_workflow_integration() {
                     );
 
                     // 3. Test terminal command integration
-                    let terminal_validation =
-                        rust_ai_ide_ai_codegen::validate_program("cargo").await;
+                    let terminal_validation = rust_ai_ide_ai_codegen::validate_program("cargo").await;
                     match terminal_validation {
                         Ok(_) => println!("✅ Terminal validation successful"),
                         Err(e) => println!("⚠️ Terminal validation failed: {}", e),

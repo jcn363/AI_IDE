@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-predictive-quality"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 description = "Phase 2.2: Predictive Quality Intelligence - ML-driven vulnerability prediction and automated maintenance forecasting"
@@ -78,17 +78,17 @@ tempfile = "3.10"
 
 [lib]
 name = "rust_ai_ide_predictive_quality"
-readme = { workspace = true }
+
 path = "src/lib.rs"
 
 [[bench]]
 name = "health_scoring"
-readme = { workspace = true }
+
 harness = false
 path = "benches/health_scoring.rs"
 
 [[bench]]
 name = "integration_performance"
-readme = { workspace = true }
+
 harness = false
 path = "benches/integration_performance.rs"

@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-simd"
-readme = { workspace = true }
+
 version = { workspace = true }
 edition = { workspace = true }
 
@@ -33,7 +33,7 @@ criterion = { workspace = true }
 
 [lib]
 name = "rust_ai_ide_simd"
-readme = { workspace = true }
+
 path = "src/lib.rs"
 
 [features]
@@ -43,10 +43,10 @@ experimental = []
 
 [[bench]]
 name = "simd_benchmark"
-readme = { workspace = true }
+
 harness = false
 
 [[bench]]
 name = "memory_benchmark"
-readme = { workspace = true }
+
 harness = false

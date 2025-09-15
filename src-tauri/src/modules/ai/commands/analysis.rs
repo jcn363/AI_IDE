@@ -47,10 +47,10 @@ pub async fn ai_explain_code(
     };
 
     let ctx = rust_ai_ide_lsp::AIContext {
-        current_code: code,
-        file_name: None,
+        current_code:    code,
+        file_name:       None,
         cursor_position: None,
-        selection: Some(sel.clone()),
+        selection:       Some(sel.clone()),
         project_context: Default::default(),
     };
 
@@ -107,7 +107,7 @@ pub async fn ai_doc_assist(
     let ai_service = utils::get_or_create_ai_service(&ai_service_state).await?;
 
     let ctx = rust_ai_ide_lsp::AIContext {
-        current_code: match code_context {
+        current_code:    match code_context {
             Some(code) if !code.is_empty() => code,
             Some(code) => {
                 log::warn!("Empty code_context provided for documentation");
@@ -118,9 +118,9 @@ pub async fn ai_doc_assist(
                 String::new()
             }
         },
-        file_name: None,
+        file_name:       None,
         cursor_position: None,
-        selection: None,
+        selection:       None,
         project_context: Default::default(),
     };
 
@@ -185,10 +185,10 @@ pub async fn ai_refactor_code(
     let ai_service = utils::get_or_create_ai_service(&ai_service_state).await?;
 
     let ctx = rust_ai_ide_lsp::AIContext {
-        current_code: code,
-        file_name: None,
+        current_code:    code,
+        file_name:       None,
         cursor_position: None,
-        selection: None,
+        selection:       None,
         project_context: Default::default(),
     };
 

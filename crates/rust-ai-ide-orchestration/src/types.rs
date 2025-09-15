@@ -77,47 +77,47 @@ impl ServiceStatus {
 /// Health check result for a service
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthCheckResult {
-    pub service_id: ServiceId,
-    pub status: ServiceStatus,
-    pub message: Option<String>,
+    pub service_id:       ServiceId,
+    pub status:           ServiceStatus,
+    pub message:          Option<String>,
     pub response_time_ms: u64,
-    pub last_check: chrono::DateTime<chrono::Utc>,
-    pub next_check: chrono::DateTime<chrono::Utc>,
+    pub last_check:       chrono::DateTime<chrono::Utc>,
+    pub next_check:       chrono::DateTime<chrono::Utc>,
 }
 
 /// Service capabilities declaration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceCapabilities {
-    pub supported_operations: Vec<String>,
+    pub supported_operations:    Vec<String>,
     pub max_concurrent_requests: Option<u32>,
-    pub rate_limits: Option<HashMap<String, u32>>,
-    pub dependencies: Vec<ServiceId>,
-    pub provides: Vec<String>,
+    pub rate_limits:             Option<HashMap<String, u32>>,
+    pub dependencies:            Vec<ServiceId>,
+    pub provides:                Vec<String>,
 }
 
 /// Service registration information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceRegistration {
-    pub id: ServiceId,
-    pub name: String,
-    pub description: String,
-    pub version: ServiceVersion,
-    pub status: ServiceStatus,
-    pub capabilities: ServiceCapabilities,
+    pub id:                    ServiceId,
+    pub name:                  String,
+    pub description:           String,
+    pub version:               ServiceVersion,
+    pub status:                ServiceStatus,
+    pub capabilities:          ServiceCapabilities,
     pub health_check_endpoint: Option<String>,
-    pub priority: ServicePriority,
-    pub tags: Vec<String>,
+    pub priority:              ServicePriority,
+    pub tags:                  Vec<String>,
 }
 
 /// Service priority levels
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ServicePriority {
     /// Lowest priority - clean up tasks, analytics
-    Low = 0,
+    Low      = 0,
     /// Normal priority - standard operations
-    Normal = 1,
+    Normal   = 1,
     /// High priority - critical operations
-    High = 2,
+    High     = 2,
     /// Critical priority - must never fail
     Critical = 3,
 }
@@ -142,24 +142,24 @@ pub enum MessageType {
 /// Message envelope for inter-service communication
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceMessage {
-    pub message_id: String,
-    pub message_type: MessageType,
+    pub message_id:     String,
+    pub message_type:   MessageType,
     pub source_service: ServiceId,
     pub target_service: Option<ServiceId>,
-    pub command: String,
-    pub payload: serde_json::Value,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub command:        String,
+    pub payload:        serde_json::Value,
+    pub timestamp:      chrono::DateTime<chrono::Utc>,
     pub correlation_id: Option<String>,
-    pub priority: ServicePriority,
-    pub immediate: bool,
+    pub priority:       ServicePriority,
+    pub immediate:      bool,
 }
 
 /// Service configuration properties
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceConfiguration {
-    pub properties: HashMap<String, serde_json::Value>,
+    pub properties:  HashMap<String, serde_json::Value>,
     pub environment: HashMap<String, String>,
-    pub secrets: HashMap<String, String>,
+    pub secrets:     HashMap<String, String>,
 }
 
 /// Lifecycle event types
@@ -183,7 +183,7 @@ pub enum LifecycleEvent {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LifecycleNotification {
     pub service_id: ServiceId,
-    pub event: LifecycleEvent,
-    pub message: Option<String>,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub event:      LifecycleEvent,
+    pub message:    Option<String>,
+    pub timestamp:  chrono::DateTime<chrono::Utc>,
 }

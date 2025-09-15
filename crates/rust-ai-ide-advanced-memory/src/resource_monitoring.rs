@@ -12,17 +12,17 @@ use tokio::sync::{Mutex, RwLock};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MemoryUsageSnapshot {
-    pub total_memory_kb: u64,
+    pub total_memory_kb:     u64,
     pub available_memory_kb: u64,
-    pub used_memory_kb: u64,
-    pub memory_pressure: f64,
+    pub used_memory_kb:      u64,
+    pub memory_pressure:     f64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ComponentResourceStats {
-    pub component_id: String,
-    pub memory_usage_kb: u64,
-    pub cpu_time_ms: u64,
+    pub component_id:     String,
+    pub memory_usage_kb:  u64,
+    pub cpu_time_ms:      u64,
     pub efficiency_score: f64,
 }
 
@@ -74,15 +74,12 @@ impl CrossComponentResourceCoordinator {
 
     pub async fn register_component(&self, component_id: String) {
         let mut stats = self.component_stats.write().await;
-        stats.insert(
-            component_id.clone(),
-            ComponentResourceStats {
-                component_id,
-                memory_usage_kb: 0,
-                cpu_time_ms: 0,
-                efficiency_score: 1.0,
-            },
-        );
+        stats.insert(component_id.clone(), ComponentResourceStats {
+            component_id,
+            memory_usage_kb: 0,
+            cpu_time_ms: 0,
+            efficiency_score: 1.0,
+        });
     }
 }
 
@@ -109,10 +106,7 @@ impl ResourceAllocationPlanner {
         Self
     }
 
-    pub async fn create_allocation_plan(
-        &self,
-        _recommendations: &[String],
-    ) -> Result<serde_json::Value, IDEError> {
+    pub async fn create_allocation_plan(&self, _recommendations: &[String]) -> Result<serde_json::Value, IDEError> {
         Ok(serde_json::json!({"status": "planning complete"}))
     }
 }
@@ -120,20 +114,20 @@ impl ResourceAllocationPlanner {
 /// Main Resource Monitoring Integration
 pub struct ResourceMonitoringIntegration {
     usage_tracker: Arc<RealtimeMemoryUsageTracker>,
-    alert_system: Arc<MemoryAlertSystem>,
-    coordinator: Arc<CrossComponentResourceCoordinator>,
-    recommender: Arc<MemoryOptimizationRecommender>,
-    planner: Arc<ResourceAllocationPlanner>,
+    alert_system:  Arc<MemoryAlertSystem>,
+    coordinator:   Arc<CrossComponentResourceCoordinator>,
+    recommender:   Arc<MemoryOptimizationRecommender>,
+    planner:       Arc<ResourceAllocationPlanner>,
 }
 
 impl ResourceMonitoringIntegration {
     pub fn new() -> Self {
         Self {
             usage_tracker: Arc::new(RealtimeMemoryUsageTracker::new()),
-            alert_system: Arc::new(MemoryAlertSystem::new()),
-            coordinator: Arc::new(CrossComponentResourceCoordinator::new()),
-            recommender: Arc::new(MemoryOptimizationRecommender::new()),
-            planner: Arc::new(ResourceAllocationPlanner::new()),
+            alert_system:  Arc::new(MemoryAlertSystem::new()),
+            coordinator:   Arc::new(CrossComponentResourceCoordinator::new()),
+            recommender:   Arc::new(MemoryOptimizationRecommender::new()),
+            planner:       Arc::new(ResourceAllocationPlanner::new()),
         }
     }
 

@@ -23,27 +23,27 @@ pub enum TestSuiteRunnerImpl {
 /// Test execution statistics
 #[derive(Debug, Clone)]
 pub struct TestExecutionStats {
-    pub total_tests: usize,
-    pub passed_tests: usize,
-    pub failed_tests: usize,
-    pub skipped_tests: usize,
+    pub total_tests:       usize,
+    pub passed_tests:      usize,
+    pub failed_tests:      usize,
+    pub skipped_tests:     usize,
     pub total_duration_ms: u64,
-    pub avg_duration_ms: u64,
-    pub max_duration_ms: u64,
-    pub min_duration_ms: u64,
+    pub avg_duration_ms:   u64,
+    pub max_duration_ms:   u64,
+    pub min_duration_ms:   u64,
 }
 
 impl TestExecutionStats {
     pub fn new() -> Self {
         Self {
-            total_tests: 0,
-            passed_tests: 0,
-            failed_tests: 0,
-            skipped_tests: 0,
+            total_tests:       0,
+            passed_tests:      0,
+            failed_tests:      0,
+            skipped_tests:     0,
             total_duration_ms: 0,
-            avg_duration_ms: 0,
-            max_duration_ms: u64::MIN,
-            min_duration_ms: u64::MAX,
+            avg_duration_ms:   0,
+            max_duration_ms:   u64::MIN,
+            min_duration_ms:   u64::MAX,
         }
     }
 
@@ -76,11 +76,11 @@ impl TestExecutionStats {
 
 /// Comprehensive integration test runner
 pub struct ComprehensiveTestRunner {
-    config: MasterTestConfig,
+    config:        MasterTestConfig,
     global_config: GlobalTestConfig,
-    test_runners: Vec<TestSuiteRunnerImpl>,
-    semaphore: Arc<Semaphore>,
-    stats: TestExecutionStats,
+    test_runners:  Vec<TestSuiteRunnerImpl>,
+    semaphore:     Arc<Semaphore>,
+    stats:         TestExecutionStats,
 }
 
 impl ComprehensiveTestRunner {
@@ -102,10 +102,7 @@ impl ComprehensiveTestRunner {
     }
 
     /// Load configuration from file
-    pub fn with_config_path<P: AsRef<std::path::Path>>(
-        mut self,
-        path: P,
-    ) -> Result<Self, RustAIError> {
+    pub fn with_config_path<P: AsRef<std::path::Path>>(mut self, path: P) -> Result<Self, RustAIError> {
         let loaded_config = TestConfigLoader::load_config(path)?;
         self.config = loaded_config;
         Ok(self)
@@ -157,20 +154,10 @@ impl ComprehensiveTestRunner {
     fn is_suite_enabled(&self, suite_name: &str) -> bool {
         match suite_name {
             "lsp" => self.config.global_settings.enable_all_tests && self.config.lsp_tests.enabled,
-            "ai_ml" => {
-                self.config.global_settings.enable_all_tests && self.config.ai_ml_tests.enabled
-            }
-            "cargo" => {
-                self.config.global_settings.enable_all_tests && self.config.cargo_tests.enabled
-            }
-            "cross_crate" => {
-                self.config.global_settings.enable_all_tests
-                    && self.config.cross_crate_tests.enabled
-            }
-            "performance" => {
-                self.config.global_settings.enable_all_tests
-                    && self.config.performance_tests.enabled
-            }
+            "ai_ml" => self.config.global_settings.enable_all_tests && self.config.ai_ml_tests.enabled,
+            "cargo" => self.config.global_settings.enable_all_tests && self.config.cargo_tests.enabled,
+            "cross_crate" => self.config.global_settings.enable_all_tests && self.config.cross_crate_tests.enabled,
+            "performance" => self.config.global_settings.enable_all_tests && self.config.performance_tests.enabled,
             _ => false,
         }
     }
@@ -184,8 +171,8 @@ impl ComprehensiveTestRunner {
     pub fn create_integration_config(&self) -> shared_test_utils::IntegrationContext {
         let mut config = IntegrationConfig {
             cleanup_on_exit: self.config.global_settings.cleanup_on_failure,
-            isolated_tests: true,
-            enable_logging: self.config.global_settings.log_level == "debug"
+            isolated_tests:  true,
+            enable_logging:  self.config.global_settings.log_level == "debug"
                 || self.config.global_settings.log_level == "trace",
             timeout_seconds: self
                 .config
@@ -260,11 +247,7 @@ impl TestSuiteRunner for TestSuiteRunnerImpl {
 }
 
 /// Helper to execute tests with retry logic
-pub async fn execute_with_retry<F, Fut, T>(
-    test_fn: F,
-    test_name: &str,
-    max_retries: u32,
-) -> IntegrationTestResult
+pub async fn execute_with_retry<F, Fut, T>(test_fn: F, test_name: &str, max_retries: u32) -> IntegrationTestResult
 where
     F: Fn() -> Fut,
     Fut: std::future::Future<Output = Result<T, RustAIError>>,
@@ -288,32 +271,28 @@ where
                 result.add_metric("attempts", attempt.to_string());
                 break;
             }
-            Ok(Err(e)) => {
+            Ok(Err(e)) =>
                 if attempt <= max_retries {
                     result
                         .errors
                         .push(format!("Attempt {} failed: {}", attempt, e));
-                    tokio::time::sleep(std::time::Duration::from_millis(500 * attempt as u64))
-                        .await;
+                    tokio::time::sleep(std::time::Duration::from_millis(500 * attempt as u64)).await;
                 } else {
                     result.errors.push(format!(
                         "Test failed after {} attempts: {}",
                         max_retries + 1,
                         e
                     ));
-                }
-            }
-            Err(_) => {
+                },
+            Err(_) =>
                 if attempt <= max_retries {
                     result.errors.push(format!("Attempt {} timed out", attempt));
-                    tokio::time::sleep(std::time::Duration::from_millis(1000 * attempt as u64))
-                        .await;
+                    tokio::time::sleep(std::time::Duration::from_millis(1000 * attempt as u64)).await;
                 } else {
                     result
                         .errors
                         .push("Test timed out after all retry attempts".to_string());
-                }
-            }
+                },
         }
     }
 
@@ -360,8 +339,8 @@ where
 
 /// Test result reporter
 pub struct TestResultReporter {
-    results: Vec<IntegrationTestResult>,
-    start_time: std::time::Instant,
+    results:       Vec<IntegrationTestResult>,
+    start_time:    std::time::Instant,
     output_format: OutputFormat,
 }
 

@@ -11,13 +11,13 @@ use crate::dependency::DependencyManager;
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct VersionAlignment {
     /// The name of the dependency
-    pub name: String,
+    pub name:             String,
     /// The current version requirements across the workspace
     pub current_versions: Vec<(String, String)>, // (version_req, source_crate)
     /// The aligned version that should be used
-    pub aligned_version: String,
+    pub aligned_version:  String,
     /// The crates that need to be updated
-    pub needs_update: Vec<String>,
+    pub needs_update:     Vec<String>,
 }
 
 impl DependencyManager {

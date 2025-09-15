@@ -17,10 +17,10 @@ pub struct MockBatteryMonitor {
 
 struct SimulatedBatteryState {
     current_level: f32,
-    is_plugged: bool,
-    temperature: f32,
-    cycle_count: u32,
-    max_cycles: u32,
+    is_plugged:    bool,
+    temperature:   f32,
+    cycle_count:   u32,
+    max_cycles:    u32,
 }
 
 impl MockBatteryMonitor {
@@ -30,10 +30,10 @@ impl MockBatteryMonitor {
         Self {
             simulated_state: Arc::new(RwLock::new(SimulatedBatteryState {
                 current_level: rng.gen_range(0.1..1.0),
-                is_plugged: rng.gen_bool(0.3), // 30% chance of being plugged in
-                temperature: rng.gen_range(20.0..45.0),
-                cycle_count: rng.gen_range(0..500),
-                max_cycles: rng.gen_range(500..1000),
+                is_plugged:    rng.gen_bool(0.3), // 30% chance of being plugged in
+                temperature:   rng.gen_range(20.0..45.0),
+                cycle_count:   rng.gen_range(0..500),
+                max_cycles:    rng.gen_range(500..1000),
             })),
         }
     }

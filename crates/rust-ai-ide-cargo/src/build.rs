@@ -19,18 +19,18 @@ use crate::models::BuildMetrics;
 pub enum BuildStatus {
     Pending,
     Building {
-        progress: f32,
+        progress:       f32,
         current_target: Option<String>,
-        jobs_running: usize,
-        jobs_total: usize,
+        jobs_running:   usize,
+        jobs_total:     usize,
     },
     Success {
         duration: f64,
-        metrics: BuildMetrics,
+        metrics:  BuildMetrics,
     },
     Failed {
-        error: String,
-        duration: f64,
+        error:         String,
+        duration:      f64,
         error_details: Vec<BuildError>,
     },
     Cancelled,
@@ -164,11 +164,11 @@ impl BuildStatus {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BuildError {
     pub message: String,
-    pub file: Option<String>,
-    pub line: Option<u32>,
-    pub column: Option<u32>,
-    pub code: Option<String>,
-    pub level: ErrorLevel,
+    pub file:    Option<String>,
+    pub line:    Option<u32>,
+    pub column:  Option<u32>,
+    pub code:    Option<String>,
+    pub level:   ErrorLevel,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
@@ -181,67 +181,67 @@ pub enum ErrorLevel {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BuildProgress {
-    pub status: BuildStatus,
-    pub output: String,
-    pub warnings: Vec<BuildError>,
-    pub errors: Vec<BuildError>,
-    pub current_operation: String,
-    pub elapsed: f64,
+    pub status:              BuildStatus,
+    pub output:              String,
+    pub warnings:            Vec<BuildError>,
+    pub errors:              Vec<BuildError>,
+    pub current_operation:   String,
+    pub elapsed:             f64,
     pub estimated_remaining: Option<f64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BuildTarget {
-    pub name: String,
-    pub kind: String,
+    pub name:     String,
+    pub kind:     String,
     pub src_path: PathBuf,
-    pub edition: String,
-    pub doc: bool,
-    pub doctest: bool,
-    pub test: bool,
+    pub edition:  String,
+    pub doc:      bool,
+    pub doctest:  bool,
+    pub test:     bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BuildProfile {
-    pub name: String,
-    pub description: Option<String>,
-    pub opt_level: String,
-    pub debug: bool,
-    pub debug_assertions: bool,
-    pub overflow_checks: bool,
-    pub lto: bool,
-    pub incremental: bool,
-    pub codegen_units: Option<u32>,
-    pub strip: Option<String>,
-    pub panic: Option<String>,
-    pub incremental_pat: Option<String>,
-    pub split_debuginfo: Option<String>,
+    pub name:                 String,
+    pub description:          Option<String>,
+    pub opt_level:            String,
+    pub debug:                bool,
+    pub debug_assertions:     bool,
+    pub overflow_checks:      bool,
+    pub lto:                  bool,
+    pub incremental:          bool,
+    pub codegen_units:        Option<u32>,
+    pub strip:                Option<String>,
+    pub panic:                Option<String>,
+    pub incremental_pat:      Option<String>,
+    pub split_debuginfo:      Option<String>,
     pub debug_assertions_opt: Option<bool>,
-    pub debuginfo: Option<u32>,
-    pub extra_args: Vec<String>,
-    pub env_vars: HashMap<String, String>,
+    pub debuginfo:            Option<u32>,
+    pub extra_args:           Vec<String>,
+    pub env_vars:             HashMap<String, String>,
 }
 
 impl Default for BuildProfile {
     fn default() -> Self {
         Self {
-            name: "dev".to_string(),
-            description: Some("Development profile".to_string()),
-            opt_level: "0".to_string(),
-            debug: true,
-            debug_assertions: true,
-            overflow_checks: true,
-            lto: false,
-            incremental: true,
-            codegen_units: None,
-            strip: None,
-            panic: None,
-            incremental_pat: None,
-            split_debuginfo: None,
+            name:                 "dev".to_string(),
+            description:          Some("Development profile".to_string()),
+            opt_level:            "0".to_string(),
+            debug:                true,
+            debug_assertions:     true,
+            overflow_checks:      true,
+            lto:                  false,
+            incremental:          true,
+            codegen_units:        None,
+            strip:                None,
+            panic:                None,
+            incremental_pat:      None,
+            split_debuginfo:      None,
             debug_assertions_opt: None,
-            debuginfo: Some(2),
-            extra_args: vec![],
-            env_vars: HashMap::new(),
+            debuginfo:            Some(2),
+            extra_args:           vec![],
+            env_vars:             HashMap::new(),
         }
     }
 }
@@ -249,23 +249,23 @@ impl Default for BuildProfile {
 impl BuildProfile {
     pub fn release() -> Self {
         Self {
-            name: "release".to_string(),
-            description: Some("Release profile".to_string()),
-            opt_level: "3".to_string(),
-            debug: false,
-            debug_assertions: false,
-            overflow_checks: false,
-            lto: true,
-            incremental: false,
-            codegen_units: Some(16),
-            strip: Some("none".to_string()),
-            panic: Some("unwind".to_string()),
-            incremental_pat: None,
-            split_debuginfo: Some("off".to_string()),
+            name:                 "release".to_string(),
+            description:          Some("Release profile".to_string()),
+            opt_level:            "3".to_string(),
+            debug:                false,
+            debug_assertions:     false,
+            overflow_checks:      false,
+            lto:                  true,
+            incremental:          false,
+            codegen_units:        Some(16),
+            strip:                Some("none".to_string()),
+            panic:                Some("unwind".to_string()),
+            incremental_pat:      None,
+            split_debuginfo:      Some("off".to_string()),
             debug_assertions_opt: Some(false),
-            debuginfo: Some(0),
-            extra_args: vec!["--release".to_string()],
-            env_vars: HashMap::new(),
+            debuginfo:            Some(0),
+            extra_args:           vec!["--release".to_string()],
+            env_vars:             HashMap::new(),
         }
     }
 
@@ -280,22 +280,22 @@ impl BuildProfile {
 }
 
 pub struct BuildSystem {
-    app_handle: AppHandle,
-    current_build: Arc<Mutex<Option<Child>>>,
-    build_status: Arc<RwLock<BuildStatus>>,
+    app_handle:       AppHandle,
+    current_build:    Arc<Mutex<Option<Child>>>,
+    build_status:     Arc<RwLock<BuildStatus>>,
     build_start_time: Arc<Mutex<Option<Instant>>>,
-    build_metrics: Arc<RwLock<BuildMetrics>>,
-    active_profiles: Arc<RwLock<HashMap<String, BuildProfile>>>,
-    build_history: Arc<RwLock<Vec<BuildHistoryEntry>>>,
+    build_metrics:    Arc<RwLock<BuildMetrics>>,
+    active_profiles:  Arc<RwLock<HashMap<String, BuildProfile>>>,
+    build_history:    Arc<RwLock<Vec<BuildHistoryEntry>>>,
     resource_monitor: Arc<Mutex<ResourceMonitor>>,
 }
 
 #[derive(Debug)]
 struct ResourceMonitor {
-    system: System,
-    max_cpu_usage: f32,
+    system:           System,
+    max_cpu_usage:    f32,
     max_memory_usage: u64,
-    sample_interval: Duration,
+    sample_interval:  Duration,
 }
 
 impl ResourceMonitor {
@@ -350,19 +350,19 @@ impl ResourceMonitor {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildHistoryEntry {
-    pub id: String,
-    pub profile: String,
-    pub status: BuildStatus,
-    pub start_time: chrono::DateTime<chrono::Utc>,
-    pub end_time: Option<chrono::DateTime<chrono::Utc>>,
-    pub duration: Option<f64>,
-    pub metrics: Option<BuildMetrics>,
-    pub command: String,
-    pub args: Vec<String>,
-    pub env_vars: HashMap<String, String>,
+    pub id:          String,
+    pub profile:     String,
+    pub status:      BuildStatus,
+    pub start_time:  chrono::DateTime<chrono::Utc>,
+    pub end_time:    Option<chrono::DateTime<chrono::Utc>>,
+    pub duration:    Option<f64>,
+    pub metrics:     Option<BuildMetrics>,
+    pub command:     String,
+    pub args:        Vec<String>,
+    pub env_vars:    HashMap<String, String>,
     pub working_dir: String,
-    pub success: bool,
-    pub error: Option<String>,
+    pub success:     bool,
+    pub error:       Option<String>,
 }
 
 impl BuildSystem {
@@ -467,34 +467,34 @@ impl BuildSystem {
         // Create build history entry
         let mut history = self.build_history.write().await;
         let history_entry = BuildHistoryEntry {
-            id: build_id.clone(),
-            profile: profile_name.to_string(),
-            status: BuildStatus::Building {
-                progress: 0.0,
+            id:          build_id.clone(),
+            profile:     profile_name.to_string(),
+            status:      BuildStatus::Building {
+                progress:       0.0,
                 current_target: None,
-                jobs_running: 0,
-                jobs_total: 1,
+                jobs_running:   0,
+                jobs_total:     1,
             },
-            start_time: chrono::Utc::now(),
-            end_time: None,
-            duration: None,
-            metrics: Some(BuildMetrics::default()),
-            command: "cargo build".to_string(),
-            args: Vec::new(),
-            env_vars: profile.env_vars.clone(),
+            start_time:  chrono::Utc::now(),
+            end_time:    None,
+            duration:    None,
+            metrics:     Some(BuildMetrics::default()),
+            command:     "cargo build".to_string(),
+            args:        Vec::new(),
+            env_vars:    profile.env_vars.clone(),
             working_dir: project_path.display().to_string(),
-            success: false,
-            error: None,
+            success:     false,
+            error:       None,
         };
         history.push(history_entry);
         drop(history);
 
         // Update build status
         *self.build_status.write().await = BuildStatus::Building {
-            progress: 0.0,
+            progress:       0.0,
             current_target: None,
-            jobs_running: 0,
-            jobs_total: 1,
+            jobs_running:   0,
+            jobs_total:     1,
         };
         *self.build_start_time.lock().await = Some(Instant::now());
 
@@ -606,12 +606,12 @@ impl BuildSystem {
         *status = if success {
             BuildStatus::Success {
                 duration: duration.as_millis() as f64,
-                metrics: BuildMetrics::default(),
+                metrics:  BuildMetrics::default(),
             }
         } else {
             BuildStatus::Failed {
-                error: format!("Build failed with exit code: {}", exit_code),
-                duration: duration.as_millis() as f64,
+                error:         format!("Build failed with exit code: {}", exit_code),
+                duration:      duration.as_millis() as f64,
                 error_details: vec![],
             }
         };
@@ -656,12 +656,12 @@ impl BuildSystem {
         *status = if success {
             BuildStatus::Success {
                 duration: duration.as_millis() as f64,
-                metrics: BuildMetrics::default(),
+                metrics:  BuildMetrics::default(),
             }
         } else {
             BuildStatus::Failed {
-                error: format!("Build failed with exit code: {}", exit_code),
-                duration: duration.as_millis() as f64,
+                error:         format!("Build failed with exit code: {}", exit_code),
+                duration:      duration.as_millis() as f64,
                 error_details: vec![],
             }
         };

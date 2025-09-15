@@ -11,9 +11,9 @@ use super::test_config::ProgrammingLanguage;
 /// Test framework information
 #[derive(Debug, Clone)]
 pub struct TestFrameworkInfo {
-    pub language: ProgrammingLanguage,
-    pub test_frameworks: Vec<String>,
-    pub file_extensions: Vec<String>,
+    pub language:            ProgrammingLanguage,
+    pub test_frameworks:     Vec<String>,
+    pub file_extensions:     Vec<String>,
     pub preferred_framework: String,
 }
 
@@ -103,15 +103,12 @@ impl LanguageDetector {
         frameworks: Vec<&str>,
         preferred: &str,
     ) {
-        map.insert(
-            extension.to_string(),
-            TestFrameworkInfo {
-                language,
-                test_frameworks: frameworks.into_iter().map(|s| s.to_string()).collect(),
-                file_extensions: vec![extension.to_string()],
-                preferred_framework: preferred.to_string(),
-            },
-        );
+        map.insert(extension.to_string(), TestFrameworkInfo {
+            language,
+            test_frameworks: frameworks.into_iter().map(|s| s.to_string()).collect(),
+            file_extensions: vec![extension.to_string()],
+            preferred_framework: preferred.to_string(),
+        });
     }
 
     /// Detect language and framework from file path

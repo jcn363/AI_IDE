@@ -16,9 +16,9 @@ use serde::{Deserialize, Serialize};
 /// Cache statistics for monitoring performance
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct CacheStats {
-    pub hits: u64,
-    pub misses: u64,
-    pub evictions: u64,
+    pub hits:       u64,
+    pub misses:     u64,
+    pub evictions:  u64,
     pub insertions: u64,
 }
 
@@ -37,7 +37,7 @@ impl CacheStats {
 /// Cache entry with expiration time
 #[derive(Debug, Clone)]
 pub struct CacheEntry<V> {
-    value: V,
+    value:      V,
     expires_at: Option<Instant>,
 }
 
@@ -93,7 +93,7 @@ where
     V: std::fmt::Debug,
 {
     storage: Arc<DashMap<K, CacheEntry<V>>>,
-    stats: Arc<std::sync::RwLock<CacheStats>>,
+    stats:   Arc<std::sync::RwLock<CacheStats>>,
 }
 
 impl<K, V> MemoryCache<K, V>
@@ -105,7 +105,7 @@ where
     pub fn new() -> Self {
         Self {
             storage: Arc::new(DashMap::new()),
-            stats: Arc::new(RwLock::new(CacheStats::default())),
+            stats:   Arc::new(RwLock::new(CacheStats::default())),
         }
     }
 
@@ -113,7 +113,7 @@ where
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             storage: Arc::new(DashMap::with_capacity(capacity)),
-            stats: Arc::new(RwLock::new(CacheStats::default())),
+            stats:   Arc::new(RwLock::new(CacheStats::default())),
         }
     }
 

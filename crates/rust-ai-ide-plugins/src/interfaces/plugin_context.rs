@@ -7,23 +7,22 @@ use std::sync::Arc;
 /// with the editor, file system, LSP, and other core functionalities.
 pub struct PluginContext {
     /// Reference to the file system service
-    pub file_system: Arc<dyn FileSystemInterface>,
+    pub file_system:   Arc<dyn FileSystemInterface>,
     /// Reference to the LSP service
-    pub lsp_service: Arc<dyn LspInterface>,
+    pub lsp_service:   Arc<dyn LspInterface>,
     /// Reference to the editor interface
-    pub editor: Arc<dyn EditorInterface>,
+    pub editor:        Arc<dyn EditorInterface>,
     /// Reference to the notification service
     pub notifications: Arc<dyn NotificationInterface>,
     /// Reference to the settings manager
-    pub settings: Arc<dyn SettingsInterface>,
+    pub settings:      Arc<dyn SettingsInterface>,
 }
 
 /// Trait for file system operations available to plugins.
 #[async_trait::async_trait]
 pub trait FileSystemInterface: Send + Sync {
     async fn read_file(&self, path: &str) -> Result<String, Box<dyn std::error::Error>>;
-    async fn write_file(&self, path: &str, content: &str)
-        -> Result<(), Box<dyn std::error::Error>>;
+    async fn write_file(&self, path: &str, content: &str) -> Result<(), Box<dyn std::error::Error>>;
     async fn list_directory(&self, path: &str) -> Result<Vec<String>, Box<dyn std::error::Error>>;
     async fn exists(&self, path: &str) -> Result<bool, Box<dyn std::error::Error>>;
 }
@@ -31,18 +30,8 @@ pub trait FileSystemInterface: Send + Sync {
 /// Trait for LSP-related operations available to plugins.
 #[async_trait::async_trait]
 pub trait LspInterface: Send + Sync {
-    async fn goto_definition(
-        &self,
-        uri: &str,
-        line: u32,
-        col: u32,
-    ) -> Result<(), Box<dyn std::error::Error>>;
-    async fn hover_info(
-        &self,
-        uri: &str,
-        line: u32,
-        col: u32,
-    ) -> Result<String, Box<dyn std::error::Error>>;
+    async fn goto_definition(&self, uri: &str, line: u32, col: u32) -> Result<(), Box<dyn std::error::Error>>;
+    async fn hover_info(&self, uri: &str, line: u32, col: u32) -> Result<String, Box<dyn std::error::Error>>;
     async fn diagnostics(&self, uri: &str) -> Result<Vec<Diagnostic>, Box<dyn std::error::Error>>;
 }
 
@@ -78,22 +67,22 @@ pub trait SettingsInterface: Send + Sync {
 /// Simple diagnostic structure for LSP integration.
 #[derive(Debug, Clone)]
 pub struct Diagnostic {
-    pub range: Range,
+    pub range:    Range,
     pub severity: DiagnosticSeverity,
-    pub message: String,
+    pub message:  String,
 }
 
 /// Simple range structure for diagnostics.
 #[derive(Debug, Clone)]
 pub struct Range {
     pub start: Position,
-    pub end: Position,
+    pub end:   Position,
 }
 
 /// Simple position structure.
 #[derive(Debug, Clone)]
 pub struct Position {
-    pub line: u32,
+    pub line:   u32,
     pub column: u32,
 }
 

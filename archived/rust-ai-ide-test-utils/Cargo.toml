@@ -1,6 +1,5 @@
 [package]
 name = "rust-ai-ide-test-utils"
-readme = { workspace = true }
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }

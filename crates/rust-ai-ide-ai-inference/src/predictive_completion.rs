@@ -36,7 +36,7 @@ use crate::types::{SecurityResult, *};
 /// Basic position in a text document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Position {
-    pub line: u32,
+    pub line:      u32,
     pub character: u32,
 }
 
@@ -44,21 +44,21 @@ pub struct Position {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompletionContext {
     /// Current file content up to cursor
-    pub prefix: String,
+    pub prefix:           String,
     /// Content after cursor (for mid-line completions)
-    pub suffix: String,
+    pub suffix:           String,
     /// Current cursor position
-    pub position: Position,
+    pub position:         Position,
     /// File path and type
-    pub file_info: FileInfo,
+    pub file_info:        FileInfo,
     /// Recent code changes for temporal context
-    pub recent_changes: Vec<String>,
+    pub recent_changes:   Vec<String>,
     /// Current function/method scope
-    pub scope_context: ScopeContext,
+    pub scope_context:    ScopeContext,
     /// Available symbols and imports
-    pub symbol_context: SymbolContext,
+    pub symbol_context:   SymbolContext,
     /// User preferences and coding style
-    pub user_profile: UserProfile,
+    pub user_profile:     UserProfile,
     /// Security context and restrictions
     pub security_context: SecurityContext,
 }
@@ -66,20 +66,20 @@ pub struct CompletionContext {
 /// Current code scope information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScopeContext {
-    pub function_name: Option<String>,
+    pub function_name:      Option<String>,
     pub function_signature: Option<String>,
-    pub class_name: Option<String>,
-    pub namespace: Option<String>,
+    pub class_name:         Option<String>,
+    pub namespace:          Option<String>,
     pub accessible_symbols: Vec<String>,
-    pub variable_types: HashMap<String, String>,
-    pub import_statements: Vec<String>,
+    pub variable_types:     HashMap<String, String>,
+    pub import_statements:  Vec<String>,
 }
 
 /// Symbol information for completion
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SymbolContext {
-    pub local_symbols: HashSet<String>,
-    pub global_symbols: HashSet<String>,
+    pub local_symbols:    HashSet<String>,
+    pub global_symbols:   HashSet<String>,
     pub imported_symbols: HashSet<String>,
     pub type_definitions: HashMap<String, Vec<String>>, // method names, etc.
     pub module_functions: HashMap<String, Vec<String>>,
@@ -88,10 +88,10 @@ pub struct SymbolContext {
 /// User profile for personalized completions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserProfile {
-    pub coding_style: CodingStyle,
-    pub preferred_libraries: Vec<String>,
-    pub naming_conventions: NamingConvention,
-    pub indentation_style: IndentationStyle,
+    pub coding_style:         CodingStyle,
+    pub preferred_libraries:  Vec<String>,
+    pub naming_conventions:   NamingConvention,
+    pub indentation_style:    IndentationStyle,
     pub language_proficiency: HashMap<String, ProficiencyLevel>,
 }
 
@@ -133,10 +133,10 @@ pub enum ProficiencyLevel {
 /// Security context for completion filtering
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityContext {
-    pub restricted_keywords: HashSet<String>,
-    pub allowed_patterns: Vec<String>,
+    pub restricted_keywords:  HashSet<String>,
+    pub allowed_patterns:     Vec<String>,
     pub confidence_threshold: f64,
-    pub privacy_level: PrivacyLevel,
+    pub privacy_level:        PrivacyLevel,
 }
 
 /// Privacy levels for completion content
@@ -151,18 +151,18 @@ pub enum PrivacyLevel {
 /// Code completion suggestion
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompletionSuggestion {
-    pub id: String,
-    pub completion_text: String,
-    pub display_text: Option<String>,
-    pub completion_type: CompletionType,
-    pub confidence_score: f64,
-    pub sort_priority: u32,
-    pub additional_edits: Vec<EditOperation>,
-    pub documentation: Option<String>,
-    pub symbol_info: Option<SymbolInfo>,
+    pub id:                String,
+    pub completion_text:   String,
+    pub display_text:      Option<String>,
+    pub completion_type:   CompletionType,
+    pub confidence_score:  f64,
+    pub sort_priority:     u32,
+    pub additional_edits:  Vec<EditOperation>,
+    pub documentation:     Option<String>,
+    pub symbol_info:       Option<SymbolInfo>,
     pub context_relevance: ContextRelevance,
-    pub generated_at: DateTime<Utc>,
-    pub model_version: String,
+    pub generated_at:      DateTime<Utc>,
+    pub model_version:     String,
 }
 
 /// Types of completions available
@@ -195,19 +195,19 @@ pub enum CompletionType {
 /// Symbol information for enhanced completions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SymbolInfo {
-    pub name: String,
-    pub symbol_type: String,
-    pub return_type: Option<String>,
-    pub parameters: Vec<ParameterInfo>,
-    pub documentation: Option<String>,
+    pub name:                String,
+    pub symbol_type:         String,
+    pub return_type:         Option<String>,
+    pub parameters:          Vec<ParameterInfo>,
+    pub documentation:       Option<String>,
     pub definition_location: Option<String>,
 }
 
 /// Parameter information for function completions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParameterInfo {
-    pub name: String,
-    pub param_type: String,
+    pub name:          String,
+    pub param_type:    String,
     pub default_value: Option<String>,
     pub documentation: Option<String>,
 }
@@ -215,9 +215,9 @@ pub struct ParameterInfo {
 /// Context relevance scoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContextRelevance {
-    pub semantic_match: f64,
-    pub lexical_match: f64,
-    pub recency_score: f64,
+    pub semantic_match:        f64,
+    pub lexical_match:         f64,
+    pub recency_score:         f64,
     pub user_preference_score: f64,
     pub project_context_score: f64,
 }
@@ -225,9 +225,9 @@ pub struct ContextRelevance {
 /// Completion response with multiple suggestions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompletionResponse {
-    pub suggestions: Vec<CompletionSuggestion>,
-    pub is_incomplete: bool,
-    pub cache_hit: bool,
+    pub suggestions:        Vec<CompletionSuggestion>,
+    pub is_incomplete:      bool,
+    pub cache_hit:          bool,
     pub processing_time_ms: u64,
     pub completion_context: CompletionContext,
 }
@@ -235,27 +235,27 @@ pub struct CompletionResponse {
 /// Completion configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompletionConfig {
-    pub max_suggestions: usize,
-    pub min_confidence: f64,
-    pub enable_snippets: bool,
-    pub enable_type_hints: bool,
-    pub enable_documentation: bool,
-    pub priority_keywords: Vec<String>,
-    pub excluded_keywords: Vec<String>,
-    pub completion_timeout_ms: u64,
-    pub cache_enabled: bool,
-    pub personalization_enabled: bool,
+    pub max_suggestions:            usize,
+    pub min_confidence:             f64,
+    pub enable_snippets:            bool,
+    pub enable_type_hints:          bool,
+    pub enable_documentation:       bool,
+    pub priority_keywords:          Vec<String>,
+    pub excluded_keywords:          Vec<String>,
+    pub completion_timeout_ms:      u64,
+    pub cache_enabled:              bool,
+    pub personalization_enabled:    bool,
     pub security_filtering_enabled: bool,
 }
 
 /// Predictive completion engine with model distillation
 pub struct PredictiveCompletionEngine {
-    config: CompletionConfig,
-    distilled_models: RwLock<HashMap<String, Arc<dyn DistilledModel>>>,
-    completion_cache: RwLock<HashMap<String, CachedCompletion>>,
-    user_profiles: RwLock<HashMap<String, UserProfile>>,
+    config:              CompletionConfig,
+    distilled_models:    RwLock<HashMap<String, Arc<dyn DistilledModel>>>,
+    completion_cache:    RwLock<HashMap<String, CachedCompletion>>,
+    user_profiles:       RwLock<HashMap<String, UserProfile>>,
     performance_metrics: RwLock<CompletionMetrics>,
-    security_filter: Arc<dyn CompletionSecurityFilter>,
+    security_filter:     Arc<dyn CompletionSecurityFilter>,
 }
 
 /// Distilled model interface for efficient completion
@@ -276,10 +276,10 @@ pub trait DistilledModel: Send + Sync {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CachedCompletion {
     pub context_hash: String,
-    pub completions: Vec<CompletionSuggestion>,
-    pub ttl_seconds: u64,
-    pub cached_at: DateTime<Utc>,
-    pub is_expired: bool,
+    pub completions:  Vec<CompletionSuggestion>,
+    pub ttl_seconds:  u64,
+    pub cached_at:    DateTime<Utc>,
+    pub is_expired:   bool,
 }
 
 impl CachedCompletion {
@@ -294,23 +294,23 @@ impl CachedCompletion {
 /// Completion metrics for monitoring and optimization
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompletionMetrics {
-    pub total_requests: u64,
-    pub cache_hits: u64,
-    pub cache_misses: u64,
-    pub avg_response_time_ms: f64,
-    pub completion_success_rate: f64,
+    pub total_requests:             u64,
+    pub cache_hits:                 u64,
+    pub cache_misses:               u64,
+    pub avg_response_time_ms:       f64,
+    pub completion_success_rate:    f64,
     pub suggestion_acceptance_rate: f64,
-    pub user_satisfaction_score: f64, // Based on user feedback
-    pub by_language: HashMap<String, LanguageMetrics>,
+    pub user_satisfaction_score:    f64, // Based on user feedback
+    pub by_language:                HashMap<String, LanguageMetrics>,
 }
 
 /// Language-specific metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LanguageMetrics {
-    pub requests: u64,
+    pub requests:             u64,
     pub avg_response_time_ms: f64,
-    pub success_rate: f64,
-    pub popular_completions: Vec<String>,
+    pub success_rate:         f64,
+    pub popular_completions:  Vec<String>,
 }
 
 /// Security filter for completion suggestions
@@ -328,12 +328,12 @@ pub trait CompletionSecurityFilter: Send + Sync {
 /// File information for completion context
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileInfo {
-    pub path: String,
-    pub language: String,
-    pub encoding: String,
-    pub size_bytes: u64,
+    pub path:          String,
+    pub language:      String,
+    pub encoding:      String,
+    pub size_bytes:    u64,
     pub last_modified: DateTime<Utc>,
-    pub dependencies: Vec<String>,
+    pub dependencies:  Vec<String>,
 }
 
 // Remove manual Clone implementation - using derived implementation
@@ -342,21 +342,21 @@ impl PredictiveCompletionEngine {
     /// Create a new predictive completion engine with built-in language models
     pub async fn new() -> Result<Self, crate::SecurityError> {
         let engine = Self {
-            config: CompletionConfig::default(),
-            distilled_models: RwLock::new(HashMap::new()),
-            completion_cache: RwLock::new(HashMap::new()),
-            user_profiles: RwLock::new(HashMap::new()),
+            config:              CompletionConfig::default(),
+            distilled_models:    RwLock::new(HashMap::new()),
+            completion_cache:    RwLock::new(HashMap::new()),
+            user_profiles:       RwLock::new(HashMap::new()),
             performance_metrics: RwLock::new(CompletionMetrics {
-                total_requests: 0,
-                cache_hits: 0,
-                cache_misses: 0,
-                avg_response_time_ms: 0.0,
-                completion_success_rate: 0.0,
+                total_requests:             0,
+                cache_hits:                 0,
+                cache_misses:               0,
+                avg_response_time_ms:       0.0,
+                completion_success_rate:    0.0,
                 suggestion_acceptance_rate: 0.0,
-                user_satisfaction_score: 0.0,
-                by_language: HashMap::new(),
+                user_satisfaction_score:    0.0,
+                by_language:                HashMap::new(),
             }),
-            security_filter: Arc::new(DefaultSecurityFilter),
+            security_filter:     Arc::new(DefaultSecurityFilter),
         };
 
         // Register built-in language models
@@ -388,10 +388,7 @@ impl PredictiveCompletionEngine {
     }
 
     /// Generate completion suggestions for the given context
-    pub async fn generate_completions(
-        &self,
-        context: CompletionContext,
-    ) -> SecurityResult<CompletionResponse> {
+    pub async fn generate_completions(&self, context: CompletionContext) -> SecurityResult<CompletionResponse> {
         let start_time = std::time::Instant::now();
         let request_id = Uuid::new_v4().to_string();
 
@@ -404,9 +401,9 @@ impl PredictiveCompletionEngine {
                 metrics.cache_hits += 1;
                 metrics.total_requests += 1;
                 return Ok(CompletionResponse {
-                    suggestions: cached.completions.to_vec(),
-                    is_incomplete: false,
-                    cache_hit: true,
+                    suggestions:        cached.completions.to_vec(),
+                    is_incomplete:      false,
+                    cache_hit:          true,
                     processing_time_ms: start_time.elapsed().as_millis() as u64,
                     completion_context: context,
                 });
@@ -481,11 +478,7 @@ impl PredictiveCompletionEngine {
     }
 
     /// Accept user feedback on suggestions
-    pub async fn accept_suggestion(
-        &self,
-        suggestion_id: &str,
-        user_context: &CompletionContext,
-    ) -> SecurityResult<()> {
+    pub async fn accept_suggestion(&self, suggestion_id: &str, user_context: &CompletionContext) -> SecurityResult<()> {
         let mut metrics = self.performance_metrics.write().await;
 
         // TODO: Track acceptance for future learning, this would update ML models
@@ -519,11 +512,7 @@ impl PredictiveCompletionEngine {
     }
 
     /// Update user profile based on usage patterns
-    pub async fn update_user_profile(
-        &self,
-        user_id: &str,
-        profile: UserProfile,
-    ) -> SecurityResult<()> {
+    pub async fn update_user_profile(&self, user_id: &str, profile: UserProfile) -> SecurityResult<()> {
         let mut profiles = self.user_profiles.write().await;
         profiles.insert(user_id.to_string(), profile);
         Ok(())
@@ -542,10 +531,7 @@ impl PredictiveCompletionEngine {
 
     // Private methods
 
-    async fn get_model_for_language(
-        &self,
-        language: &str,
-    ) -> SecurityResult<Arc<dyn DistilledModel>> {
+    async fn get_model_for_language(&self, language: &str) -> SecurityResult<Arc<dyn DistilledModel>> {
         let models = self.distilled_models.read().await;
         models
             .get(language)
@@ -568,18 +554,14 @@ impl PredictiveCompletionEngine {
         None
     }
 
-    async fn cache_completions(
-        &self,
-        context: &CompletionContext,
-        suggestions: &[CompletionSuggestion],
-    ) {
+    async fn cache_completions(&self, context: &CompletionContext, suggestions: &[CompletionSuggestion]) {
         let cache_key = self.generate_cache_key(context);
         let cached = CachedCompletion {
             context_hash: cache_key.clone(),
-            completions: suggestions.to_vec(),
-            ttl_seconds: 300, // 5 minutes
-            cached_at: Utc::now(),
-            is_expired: false,
+            completions:  suggestions.to_vec(),
+            ttl_seconds:  300, // 5 minutes
+            cached_at:    Utc::now(),
+            is_expired:   false,
         };
 
         let mut cache = self.completion_cache.write().await;
@@ -641,20 +623,18 @@ impl PredictiveCompletionEngine {
 
     async fn update_language_metrics(&self, language: &str, response_time_ms: f64, success: bool) {
         let mut metrics = self.performance_metrics.write().await;
-        let lang_metrics =
-            metrics
-                .by_language
-                .entry(language.to_string())
-                .or_insert(LanguageMetrics {
-                    requests: 0,
-                    avg_response_time_ms: 0.0,
-                    success_rate: 0.0,
-                    popular_completions: Vec::new(),
-                });
+        let lang_metrics = metrics
+            .by_language
+            .entry(language.to_string())
+            .or_insert(LanguageMetrics {
+                requests:             0,
+                avg_response_time_ms: 0.0,
+                success_rate:         0.0,
+                popular_completions:  Vec::new(),
+            });
 
         lang_metrics.requests += 1;
-        lang_metrics.avg_response_time_ms =
-            (lang_metrics.avg_response_time_ms + response_time_ms) / 2.0;
+        lang_metrics.avg_response_time_ms = (lang_metrics.avg_response_time_ms + response_time_ms) / 2.0;
 
         if success {
             lang_metrics.success_rate = (lang_metrics.success_rate + 1.0) / 2.0;
@@ -692,32 +672,32 @@ impl ContextRelevance {
 impl CompletionConfig {
     pub fn performance_mode() -> Self {
         Self {
-            max_suggestions: 10,
-            min_confidence: 0.5,
-            enable_snippets: true,
-            enable_type_hints: true,
-            enable_documentation: true,
-            priority_keywords: vec![],
-            excluded_keywords: vec![],
-            completion_timeout_ms: 50,
-            cache_enabled: true,
-            personalization_enabled: true,
+            max_suggestions:            10,
+            min_confidence:             0.5,
+            enable_snippets:            true,
+            enable_type_hints:          true,
+            enable_documentation:       true,
+            priority_keywords:          vec![],
+            excluded_keywords:          vec![],
+            completion_timeout_ms:      50,
+            cache_enabled:              true,
+            personalization_enabled:    true,
             security_filtering_enabled: true,
         }
     }
 
     pub fn accuracy_mode() -> Self {
         Self {
-            max_suggestions: 15,
-            min_confidence: 0.7,
-            enable_snippets: true,
-            enable_type_hints: true,
-            enable_documentation: true,
-            priority_keywords: vec![],
-            excluded_keywords: vec![],
-            completion_timeout_ms: 100,
-            cache_enabled: true,
-            personalization_enabled: true,
+            max_suggestions:            15,
+            min_confidence:             0.7,
+            enable_snippets:            true,
+            enable_type_hints:          true,
+            enable_documentation:       true,
+            priority_keywords:          vec![],
+            excluded_keywords:          vec![],
+            completion_timeout_ms:      100,
+            cache_enabled:              true,
+            personalization_enabled:    true,
             security_filtering_enabled: true,
         }
     }
@@ -726,16 +706,16 @@ impl CompletionConfig {
 impl Default for CompletionConfig {
     fn default() -> Self {
         Self {
-            max_suggestions: 20,
-            min_confidence: 0.3,
-            enable_snippets: true,
-            enable_type_hints: false,
-            enable_documentation: false,
-            priority_keywords: vec![],
-            excluded_keywords: vec![],
-            completion_timeout_ms: 100,
-            cache_enabled: true,
-            personalization_enabled: false,
+            max_suggestions:            20,
+            min_confidence:             0.3,
+            enable_snippets:            true,
+            enable_type_hints:          false,
+            enable_documentation:       false,
+            priority_keywords:          vec![],
+            excluded_keywords:          vec![],
+            completion_timeout_ms:      100,
+            cache_enabled:              true,
+            personalization_enabled:    false,
             security_filtering_enabled: false,
         }
     }
@@ -845,24 +825,24 @@ impl DistilledModel for RustCompletionModel {
                 // Contains in current line
 
                 let suggestion = CompletionSuggestion {
-                    id: Uuid::new_v4().to_string(),
-                    completion_text: completion.to_string(),
-                    display_text: Some(completion.to_string()),
-                    completion_type: comp_type.clone(),
-                    confidence_score: *confidence,
-                    sort_priority: (*confidence * 100.0) as u32,
-                    additional_edits: Vec::new(),
-                    documentation: Some(format!("Rust {} completion", prefix.trim())),
-                    symbol_info: None,
+                    id:                Uuid::new_v4().to_string(),
+                    completion_text:   completion.to_string(),
+                    display_text:      Some(completion.to_string()),
+                    completion_type:   comp_type.clone(),
+                    confidence_score:  *confidence,
+                    sort_priority:     (*confidence * 100.0) as u32,
+                    additional_edits:  Vec::new(),
+                    documentation:     Some(format!("Rust {} completion", prefix.trim())),
+                    symbol_info:       None,
                     context_relevance: ContextRelevance {
-                        semantic_match: 0.8,
-                        lexical_match: 0.9,
-                        recency_score: 0.7,
+                        semantic_match:        0.8,
+                        lexical_match:         0.9,
+                        recency_score:         0.7,
                         user_preference_score: 0.6,
                         project_context_score: 0.5,
                     },
-                    generated_at: Utc::now(),
-                    model_version: "rust-completion-v1.0".to_string(),
+                    generated_at:      Utc::now(),
+                    model_version:     "rust-completion-v1.0".to_string(),
                 };
 
                 suggestions.push(suggestion);
@@ -979,24 +959,24 @@ impl DistilledModel for JavaScriptCompletionModel {
                 || context.prefix.lines().last().unwrap_or("").contains(prefix)
             {
                 let suggestion = CompletionSuggestion {
-                    id: Uuid::new_v4().to_string(),
-                    completion_text: completion.to_string(),
-                    display_text: Some(completion.to_string()),
-                    completion_type: comp_type.clone(),
-                    confidence_score: *confidence,
-                    sort_priority: (*confidence * 100.0) as u32,
-                    additional_edits: Vec::new(),
-                    documentation: Some(format!("JavaScript {} completion", prefix.trim())),
-                    symbol_info: None,
+                    id:                Uuid::new_v4().to_string(),
+                    completion_text:   completion.to_string(),
+                    display_text:      Some(completion.to_string()),
+                    completion_type:   comp_type.clone(),
+                    confidence_score:  *confidence,
+                    sort_priority:     (*confidence * 100.0) as u32,
+                    additional_edits:  Vec::new(),
+                    documentation:     Some(format!("JavaScript {} completion", prefix.trim())),
+                    symbol_info:       None,
                     context_relevance: ContextRelevance {
-                        semantic_match: 0.8,
-                        lexical_match: 0.85,
-                        recency_score: 0.75,
+                        semantic_match:        0.8,
+                        lexical_match:         0.85,
+                        recency_score:         0.75,
                         user_preference_score: 0.65,
                         project_context_score: 0.55,
                     },
-                    generated_at: Utc::now(),
-                    model_version: "js-completion-v1.0".to_string(),
+                    generated_at:      Utc::now(),
+                    model_version:     "js-completion-v1.0".to_string(),
                 };
 
                 suggestions.push(suggestion);
@@ -1095,24 +1075,24 @@ impl DistilledModel for TypeScriptCompletionModel {
                 || context.prefix.lines().last().unwrap_or("").contains(prefix)
             {
                 let suggestion = CompletionSuggestion {
-                    id: Uuid::new_v4().to_string(),
-                    completion_text: completion.to_string(),
-                    display_text: Some(completion.to_string()),
-                    completion_type: comp_type.clone(),
-                    confidence_score: *confidence,
-                    sort_priority: (*confidence * 100.0) as u32,
-                    additional_edits: Vec::new(),
-                    documentation: Some(format!("TypeScript {} completion", prefix.trim())),
-                    symbol_info: None,
+                    id:                Uuid::new_v4().to_string(),
+                    completion_text:   completion.to_string(),
+                    display_text:      Some(completion.to_string()),
+                    completion_type:   comp_type.clone(),
+                    confidence_score:  *confidence,
+                    sort_priority:     (*confidence * 100.0) as u32,
+                    additional_edits:  Vec::new(),
+                    documentation:     Some(format!("TypeScript {} completion", prefix.trim())),
+                    symbol_info:       None,
                     context_relevance: ContextRelevance {
-                        semantic_match: 0.85,
-                        lexical_match: 0.9,
-                        recency_score: 0.8,
+                        semantic_match:        0.85,
+                        lexical_match:         0.9,
+                        recency_score:         0.8,
                         user_preference_score: 0.7,
                         project_context_score: 0.6,
                     },
-                    generated_at: Utc::now(),
-                    model_version: "ts-completion-v1.0".to_string(),
+                    generated_at:      Utc::now(),
+                    model_version:     "ts-completion-v1.0".to_string(),
                 };
 
                 suggestions.push(suggestion);
@@ -1244,24 +1224,24 @@ impl DistilledModel for PythonCompletionModel {
                 || context.prefix.lines().last().unwrap_or("").contains(prefix)
             {
                 let suggestion = CompletionSuggestion {
-                    id: Uuid::new_v4().to_string(),
-                    completion_text: completion.to_string(),
-                    display_text: Some(completion.to_string()),
-                    completion_type: comp_type.clone(),
-                    confidence_score: *confidence,
-                    sort_priority: (*confidence * 100.0) as u32,
-                    additional_edits: Vec::new(),
-                    documentation: Some(format!("Python {} completion", prefix.trim())),
-                    symbol_info: None,
+                    id:                Uuid::new_v4().to_string(),
+                    completion_text:   completion.to_string(),
+                    display_text:      Some(completion.to_string()),
+                    completion_type:   comp_type.clone(),
+                    confidence_score:  *confidence,
+                    sort_priority:     (*confidence * 100.0) as u32,
+                    additional_edits:  Vec::new(),
+                    documentation:     Some(format!("Python {} completion", prefix.trim())),
+                    symbol_info:       None,
                     context_relevance: ContextRelevance {
-                        semantic_match: 0.8,
-                        lexical_match: 0.9,
-                        recency_score: 0.75,
+                        semantic_match:        0.8,
+                        lexical_match:         0.9,
+                        recency_score:         0.75,
                         user_preference_score: 0.65,
                         project_context_score: 0.55,
                     },
-                    generated_at: Utc::now(),
-                    model_version: "python-completion-v1.0".to_string(),
+                    generated_at:      Utc::now(),
+                    model_version:     "python-completion-v1.0".to_string(),
                 };
 
                 suggestions.push(suggestion);
@@ -1301,9 +1281,9 @@ mod tests {
     #[async_test]
     async fn test_context_relevance_scoring() {
         let relevance = ContextRelevance {
-            semantic_match: 0.8,
-            lexical_match: 0.9,
-            recency_score: 0.7,
+            semantic_match:        0.8,
+            lexical_match:         0.9,
+            recency_score:         0.7,
             user_preference_score: 0.6,
             project_context_score: 0.5,
         };
@@ -1367,49 +1347,49 @@ mod tests {
 
         // Test JavaScript completion
         let js_context = CompletionContext {
-            prefix: "func".to_string(),
-            suffix: "".to_string(),
-            position: Position {
-                line: 0,
+            prefix:           "func".to_string(),
+            suffix:           "".to_string(),
+            position:         Position {
+                line:      0,
                 character: 4,
             },
-            file_info: FileInfo {
-                path: "test.js".to_string(),
-                language: "javascript".to_string(),
-                encoding: "utf-8".to_string(),
-                size_bytes: 100,
+            file_info:        FileInfo {
+                path:          "test.js".to_string(),
+                language:      "javascript".to_string(),
+                encoding:      "utf-8".to_string(),
+                size_bytes:    100,
                 last_modified: Utc::now(),
-                dependencies: vec![],
+                dependencies:  vec![],
             },
-            recent_changes: vec![],
-            scope_context: ScopeContext {
-                function_name: None,
+            recent_changes:   vec![],
+            scope_context:    ScopeContext {
+                function_name:      None,
                 function_signature: None,
-                class_name: None,
-                namespace: None,
+                class_name:         None,
+                namespace:          None,
                 accessible_symbols: vec![],
-                variable_types: HashMap::new(),
-                import_statements: vec![],
+                variable_types:     HashMap::new(),
+                import_statements:  vec![],
             },
-            symbol_context: SymbolContext {
-                local_symbols: HashSet::new(),
-                global_symbols: HashSet::new(),
+            symbol_context:   SymbolContext {
+                local_symbols:    HashSet::new(),
+                global_symbols:   HashSet::new(),
                 imported_symbols: HashSet::new(),
                 type_definitions: HashMap::new(),
                 module_functions: HashMap::new(),
             },
-            user_profile: UserProfile {
-                coding_style: CodingStyle::Functional,
-                preferred_libraries: vec![],
-                naming_conventions: NamingConvention::CamelCase,
-                indentation_style: IndentationStyle::Spaces { width: 2 },
+            user_profile:     UserProfile {
+                coding_style:         CodingStyle::Functional,
+                preferred_libraries:  vec![],
+                naming_conventions:   NamingConvention::CamelCase,
+                indentation_style:    IndentationStyle::Spaces { width: 2 },
                 language_proficiency: HashMap::new(),
             },
             security_context: SecurityContext {
-                restricted_keywords: HashSet::new(),
-                allowed_patterns: vec![],
+                restricted_keywords:  HashSet::new(),
+                allowed_patterns:     vec![],
                 confidence_threshold: 0.5,
-                privacy_level: PrivacyLevel::Public,
+                privacy_level:        PrivacyLevel::Public,
             },
         };
 
@@ -1425,16 +1405,16 @@ mod tests {
             prefix: "inter".to_string(),
             suffix: "".to_string(),
             position: Position {
-                line: 0,
+                line:      0,
                 character: 5,
             },
             file_info: FileInfo {
-                path: "test.ts".to_string(),
-                language: "typescript".to_string(),
-                encoding: "utf-8".to_string(),
-                size_bytes: 100,
+                path:          "test.ts".to_string(),
+                language:      "typescript".to_string(),
+                encoding:      "utf-8".to_string(),
+                size_bytes:    100,
                 last_modified: Utc::now(),
-                dependencies: vec![],
+                dependencies:  vec![],
             },
             ..js_context
         };
@@ -1451,16 +1431,16 @@ mod tests {
             prefix: "def".to_string(),
             suffix: "".to_string(),
             position: Position {
-                line: 0,
+                line:      0,
                 character: 3,
             },
             file_info: FileInfo {
-                path: "test.py".to_string(),
-                language: "python".to_string(),
-                encoding: "utf-8".to_string(),
-                size_bytes: 100,
+                path:          "test.py".to_string(),
+                language:      "python".to_string(),
+                encoding:      "utf-8".to_string(),
+                size_bytes:    100,
                 last_modified: Utc::now(),
-                dependencies: vec![],
+                dependencies:  vec![],
             },
             ..js_context
         };

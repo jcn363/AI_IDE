@@ -15,7 +15,7 @@ use crate::error::TestError;
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LSPRequest {
-    pub id: Option<u64>,
+    pub id:     Option<u64>,
     pub method: String,
     pub params: Option<serde_json::Value>,
 }
@@ -23,9 +23,9 @@ pub struct LSPRequest {
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LSPResponse {
-    pub id: Option<u64>,
+    pub id:     Option<u64>,
     pub result: Option<serde_json::Value>,
-    pub error: Option<LSPError>,
+    pub error:  Option<LSPError>,
 }
 
 #[derive(Debug, Clone)]
@@ -38,24 +38,24 @@ pub struct LSPNotification {
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LSPError {
-    pub code: i32,
+    pub code:    i32,
     pub message: String,
-    pub data: Option<serde_json::Value>,
+    pub data:    Option<serde_json::Value>,
 }
 
 /// Mock LSP server for testing
 #[derive(Clone)]
 pub struct MockLSPServer {
-    requests: Arc<Mutex<Vec<LSPRequest>>>,
-    responses: HashMap<String, serde_json::Value>,
+    requests:      Arc<Mutex<Vec<LSPRequest>>>,
+    responses:     HashMap<String, serde_json::Value>,
     notifications: Arc<Mutex<Vec<LSPNotification>>>,
 }
 
 impl MockLSPServer {
     pub fn new() -> Self {
         Self {
-            requests: Arc::new(Mutex::new(Vec::new())),
-            responses: HashMap::new(),
+            requests:      Arc::new(Mutex::new(Vec::new())),
+            responses:     HashMap::new(),
             notifications: Arc::new(Mutex::new(Vec::new())),
         }
     }
@@ -71,9 +71,9 @@ impl MockLSPServer {
 
         if let Some(response_data) = self.responses.get(&request.method) {
             Ok(Some(LSPResponse {
-                id: request.id,
+                id:     request.id,
                 result: Some(response_data.clone()),
-                error: None,
+                error:  None,
             }))
         } else {
             Ok(None)
@@ -102,10 +102,7 @@ impl MockLSPServer {
             Ok(())
         } else {
             Err(TestError::Validation(
-                crate::ValidationError::invalid_setup(format!(
-                    "Expected request '{}' was not received",
-                    method
-                )),
+                crate::ValidationError::invalid_setup(format!("Expected request '{}' was not received", method)),
             ))
         }
     }
@@ -119,7 +116,7 @@ impl Default for MockLSPServer {
 
 /// Mock LSP client for testing
 pub struct MockLSPClient {
-    server: Arc<MockLSPServer>,
+    server:                 Arc<MockLSPServer>,
     outbound_notifications: Arc<Mutex<Vec<LSPNotification>>>,
 }
 
@@ -132,10 +129,7 @@ impl MockLSPClient {
     }
 
     /// Send a request to the server
-    pub async fn send_request(
-        &self,
-        request: LSPRequest,
-    ) -> Result<Option<LSPResponse>, TestError> {
+    pub async fn send_request(&self, request: LSPRequest) -> Result<Option<LSPResponse>, TestError> {
         self.server.handle_request(request)
     }
 
@@ -180,7 +174,7 @@ impl LSPFixture {
     pub async fn setup_with_init(&mut self) -> Result<(), TestError> {
         // Mock initialize request/response
         let init_request = LSPRequest {
-            id: Some(1),
+            id:     Some(1),
             method: "initialize".to_string(),
             params: Some(serde_json::json!({
                 "processId": null,
@@ -314,7 +308,7 @@ impl LSPMessageBuilder {
     /// Create an initialize request
     pub fn initialize_request(root_path: &str) -> LSPRequest {
         LSPRequest {
-            id: Some(1),
+            id:     Some(1),
             method: "initialize".to_string(),
             params: Some(serde_json::json!({
                 "processId": null,
@@ -351,7 +345,7 @@ impl LSPMessageBuilder {
     /// Create a completion request
     pub fn completion_request(uri: &str, line: u32, character: u32) -> LSPRequest {
         LSPRequest {
-            id: Some(2),
+            id:     Some(2),
             method: "textDocument/completion".to_string(),
             params: Some(serde_json::json!({
                 "textDocument": {
@@ -368,7 +362,7 @@ impl LSPMessageBuilder {
     /// Create a hover request
     pub fn hover_request(uri: &str, line: u32, character: u32) -> LSPRequest {
         LSPRequest {
-            id: Some(3),
+            id:     Some(3),
             method: "textDocument/hover".to_string(),
             params: Some(serde_json::json!({
                 "textDocument": {
@@ -385,7 +379,7 @@ impl LSPMessageBuilder {
     /// Create a definition request
     pub fn definition_request(uri: &str, line: u32, character: u32) -> LSPRequest {
         LSPRequest {
-            id: Some(4),
+            id:     Some(4),
             method: "textDocument/definition".to_string(),
             params: Some(serde_json::json!({
                 "textDocument": {
@@ -427,10 +421,7 @@ impl LSPAssertions {
                 }
             } else {
                 Err(TestError::Validation(
-                    crate::ValidationError::invalid_setup(format!(
-                        "Key '{}' not found in response",
-                        key
-                    )),
+                    crate::ValidationError::invalid_setup(format!("Key '{}' not found in response", key)),
                 ))
             }
         } else {
@@ -446,10 +437,7 @@ impl LSPAssertions {
             Ok(())
         } else {
             Err(TestError::Validation(
-                crate::ValidationError::invalid_setup(format!(
-                    "Expected notification '{}' was not sent",
-                    method
-                )),
+                crate::ValidationError::invalid_setup(format!("Expected notification '{}' was not sent", method)),
             ))
         }
     }
@@ -466,7 +454,7 @@ mod tests {
         server.add_response("test/method", serde_json::json!("test response"));
 
         let request = LSPRequest {
-            id: Some(1),
+            id:     Some(1),
             method: "test/method".to_string(),
             params: None,
         };
@@ -500,7 +488,7 @@ mod tests {
     fn test_lsp_assertions() {
         let mut server = MockLSPServer::new();
         let request = LSPRequest {
-            id: Some(1),
+            id:     Some(1),
             method: "test".to_string(),
             params: None,
         };

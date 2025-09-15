@@ -19,9 +19,9 @@ pub trait FeatureFlagProvider: Send + Sync {
 
 /// Kubernetes ConfigMap provider
 pub struct K8sConfigMapProvider {
-    namespace: String,
+    namespace:      String,
     configmap_name: String,
-    k8s_client: Arc<RwLock<Option<k8s_openapi::api::core::v1::ConfigMap>>>,
+    k8s_client:     Arc<RwLock<Option<k8s_openapi::api::core::v1::ConfigMap>>>,
 }
 
 impl K8sConfigMapProvider {
@@ -86,7 +86,7 @@ impl FeatureFlagProvider for EnvVarProvider {
 
 /// HTTP provider for remote flag service
 pub struct HttpProvider {
-    url: String,
+    url:    String,
     client: reqwest::Client,
 }
 
@@ -179,9 +179,9 @@ impl FeatureFlagProvider for CompositeProvider {
 
 /// Cached provider with refresh capability
 pub struct CachedProvider<P: FeatureFlagProvider + 'static> {
-    inner: P,
-    cache: Arc<RwLock<Option<HashMap<String, String>>>>,
-    ttl: std::time::Duration,
+    inner:        P,
+    cache:        Arc<RwLock<Option<HashMap<String, String>>>>,
+    ttl:          std::time::Duration,
     last_refresh: Arc<RwLock<std::time::Instant>>,
 }
 

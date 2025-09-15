@@ -14,33 +14,33 @@ use super::{CargoTask, TaskResult};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistoryEntry {
     /// The task that was executed
-    pub task: CargoTask,
+    pub task:      CargoTask,
     /// When the task was executed
     pub timestamp: DateTime<Utc>,
     /// Whether the task was successful
-    pub success: bool,
+    pub success:   bool,
     /// The duration of the task execution
-    pub duration: Option<u64>,
+    pub duration:  Option<u64>,
     /// The end time of the task execution
-    pub end_time: Option<SystemTime>,
+    pub end_time:  Option<SystemTime>,
 }
 
 impl HistoryEntry {
     /// Create a new history entry from a task result
     pub fn from_result(result: &TaskResult) -> Self {
         Self {
-            task: result.task.clone(),
+            task:      result.task.clone(),
             timestamp: result.start_time.into(),
-            success: result.success,
-            duration: result.duration().map(|d| d.as_secs()),
-            end_time: result.end_time,
+            success:   result.success,
+            duration:  result.duration().map(|d| d.as_secs()),
+            end_time:  result.end_time,
         }
     }
 }
 
 /// Manages command history with a fixed capacity
 pub struct CommandHistory {
-    history: RwLock<VecDeque<HistoryEntry>>,
+    history:  RwLock<VecDeque<HistoryEntry>>,
     capacity: usize,
 }
 
@@ -114,11 +114,11 @@ mod tests {
 
     fn create_test_task() -> CargoTask {
         CargoTask {
-            command: "test".to_string(),
-            args: vec!["--no-fail-fast".to_string()],
+            command:     "test".to_string(),
+            args:        vec!["--no-fail-fast".to_string()],
             working_dir: std::env::current_dir().unwrap(),
-            release: false,
-            env: vec![],
+            release:     false,
+            env:         vec![],
         }
     }
 
@@ -128,13 +128,13 @@ mod tests {
         let task = create_test_task();
 
         let result = TaskResult {
-            task: task.clone(),
-            exit_code: Some(0),
-            stdout: "".to_string(),
-            stderr: "".to_string(),
+            task:       task.clone(),
+            exit_code:  Some(0),
+            stdout:     "".to_string(),
+            stderr:     "".to_string(),
             start_time: SystemTime::now(),
-            end_time: Some(SystemTime::now()),
-            success: true,
+            end_time:   Some(SystemTime::now()),
+            success:    true,
         };
 
         let entry = HistoryEntry::from_result(&result);

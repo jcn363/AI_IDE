@@ -8,9 +8,9 @@ use mockall::Sequence;
 pub use mockall::*;
 pub use webauthn_rs::prelude::*;
 use webauthn_rs::prelude::{
-    AttestationConveyancePreference, CreationChallengeResponse, Credential as WebAuthnCredential,
-    CredentialID, PublicKeyCredential, RegisterPublicKeyCredential, RequestChallengeResponse,
-    ResidentKeyRequirement, UserVerificationRequirement,
+    AttestationConveyancePreference, CreationChallengeResponse, Credential as WebAuthnCredential, CredentialID,
+    PublicKeyCredential, RegisterPublicKeyCredential, RequestChallengeResponse, ResidentKeyRequirement,
+    UserVerificationRequirement,
 };
 
 use crate::security::audit::AuditLogger;
@@ -58,10 +58,10 @@ mock! {
 /// Create a test user
 pub fn create_test_user() -> UserContext {
     UserContext {
-        user_id: "test-user-123".to_string(),
-        username: Some("testuser".to_string()),
-        email: Some("test@example.com".to_string()),
-        roles: vec!["user".to_string()],
+        user_id:     "test-user-123".to_string(),
+        username:    Some("testuser".to_string()),
+        email:       Some("test@example.com".to_string()),
+        roles:       vec!["user".to_string()],
         permissions: vec![
             "webauthn.register".to_string(),
             "webauthn.authenticate".to_string(),
@@ -72,17 +72,17 @@ pub fn create_test_user() -> UserContext {
 /// Create a test WebAuthn service with mocks
 pub async fn create_test_service() -> (WebAuthnService, Arc<MockAuditLogger>) {
     let config = WebAuthnConfig {
-        enabled: true,
-        rp_name: "Test RP".to_string(),
-        rp_id: "localhost".to_string(),
-        rp_origin: "http://localhost:3000".to_string(),
-        credential_timeout_ms: 60000,
+        enabled:                   true,
+        rp_name:                   "Test RP".to_string(),
+        rp_id:                     "localhost".to_string(),
+        rp_origin:                 "http://localhost:3000".to_string(),
+        credential_timeout_ms:     60000,
         challenge_timeout_seconds: 300,
-        max_credentials_per_user: 5,
-        allow_software_keys: true,
-        attestation_preference: AttestationConveyancePreference::None,
-        user_verification: UserVerificationRequirement::Preferred,
-        resident_key_requirement: ResidentKeyRequirement::Discouraged,
+        max_credentials_per_user:  5,
+        allow_software_keys:       true,
+        attestation_preference:    AttestationConveyancePreference::None,
+        user_verification:         UserVerificationRequirement::Preferred,
+        resident_key_requirement:  ResidentKeyRequirement::Discouraged,
     };
 
     let audit_logger = Arc::new(MockAuditLogger::new());

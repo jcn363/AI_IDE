@@ -13,12 +13,12 @@ use crate::types::*;
 
 /// Main AI Performance Router structure
 pub struct AiPerformanceRouter {
-    load_balancer: Arc<AiLoadBalancer>,
+    load_balancer:      Arc<AiLoadBalancer>,
     response_optimizer: Arc<AiResponseOptimizer>,
-    cache_manager: Arc<AiCacheManager>,
-    priority_router: Arc<AiPriorityRouter>,
-    fallback_engine: Arc<AiFallbackEngine>,
-    state: Arc<RwLock<RouterState>>,
+    cache_manager:      Arc<AiCacheManager>,
+    priority_router:    Arc<AiPriorityRouter>,
+    fallback_engine:    Arc<AiFallbackEngine>,
+    state:              Arc<RwLock<RouterState>>,
 }
 
 /// Router state management
@@ -28,37 +28,37 @@ pub struct RouterState {
     /// Route performance metrics
     pub route_metrics: std::collections::HashMap<String, RouteMetrics>,
     /// Router statistics
-    pub statistics: RouterStatistics,
+    pub statistics:    RouterStatistics,
     /// Router status
-    pub status: RouterStatus,
+    pub status:        RouterStatus,
 }
 
 /// Routing rule definition
 #[derive(Debug, Clone)]
 pub struct RoutingRule {
     /// Rule ID
-    pub id: String,
+    pub id:                    String,
     /// Rule name
-    pub name: String,
+    pub name:                  String,
     /// Model type condition
-    pub model_condition: ModelCondition,
+    pub model_condition:       ModelCondition,
     /// Performance condition
     pub performance_condition: PerformanceCondition,
     /// Priority condition
-    pub priority_condition: PriorityCondition,
+    pub priority_condition:    PriorityCondition,
     /// Target route
-    pub target_route: String,
+    pub target_route:          String,
     /// Rule weight (0.0-1.0)
-    pub weight: f64,
+    pub weight:                f64,
 }
 
 /// Model condition for routing
 #[derive(Debug, Clone)]
 pub struct ModelCondition {
     /// Required model type
-    pub required_type: Option<AiModel>,
+    pub required_type:       Option<AiModel>,
     /// Acceptable response quality ranges
-    pub quality_ranges: Vec<QualityRange>,
+    pub quality_ranges:      Vec<QualityRange>,
     /// Supported languages
     pub supported_languages: Vec<String>,
 }
@@ -67,9 +67,9 @@ pub struct ModelCondition {
 #[derive(Debug, Clone)]
 pub struct QualityRange {
     /// Minimum quality score (0.0-1.0)
-    pub min_score: f64,
+    pub min_score:                 f64,
     /// Maximum quality score (0.0-1.0)
-    pub max_score: f64,
+    pub max_score:                 f64,
     /// Expected response time
     pub expected_response_time_ms: u64,
 }
@@ -78,11 +78,11 @@ pub struct QualityRange {
 #[derive(Debug, Clone)]
 pub struct PerformanceCondition {
     /// Maximum acceptable response time
-    pub max_response_time_ms: Option<u64>,
+    pub max_response_time_ms:           Option<u64>,
     /// Minimum success rate (0.0-1.0)
-    pub min_success_rate: Option<f64>,
+    pub min_success_rate:               Option<f64>,
     /// Maximum number of concurrent requests
-    pub max_concurrent_requests: Option<usize>,
+    pub max_concurrent_requests:        Option<usize>,
     /// Resource utilization threshold (0.0-1.0)
     pub resource_utilization_threshold: Option<f64>,
 }
@@ -91,11 +91,11 @@ pub struct PerformanceCondition {
 #[derive(Debug, Clone)]
 pub struct PriorityCondition {
     /// Minimum priority level
-    pub min_priority: Option<ResponsePriority>,
+    pub min_priority:          Option<ResponsePriority>,
     /// User permission level
     pub user_permission_level: Option<String>,
     /// Service availability requirements
-    pub service_availability: AvailabilityPriority,
+    pub service_availability:  AvailabilityPriority,
 }
 
 /// Service availability priority
@@ -115,38 +115,38 @@ pub enum AvailabilityPriority {
 #[derive(Debug, Clone)]
 pub struct RouteMetrics {
     /// Route identifier
-    pub route_id: String,
+    pub route_id:                  String,
     /// Total requests served
-    pub total_requests: u64,
+    pub total_requests:            u64,
     /// Successful requests
-    pub successful_requests: u64,
+    pub successful_requests:       u64,
     /// Failed requests
-    pub failed_requests: u64,
+    pub failed_requests:           u64,
     /// Average response time
-    pub avg_response_time_ms: f64,
+    pub avg_response_time_ms:      f64,
     /// Response time percentiles
     pub response_time_percentiles: Vec<f64>,
     /// Current active requests
-    pub active_requests: usize,
+    pub active_requests:           usize,
     /// Route capacity utilization (0.0-1.0)
-    pub capacity_utilization: f64,
+    pub capacity_utilization:      f64,
     /// Last updated timestamp
-    pub last_updated: chrono::DateTime<chrono::Utc>,
+    pub last_updated:              chrono::DateTime<chrono::Utc>,
 }
 
 /// Router statistics
 #[derive(Debug, Clone)]
 pub struct RouterStatistics {
     /// Total routing decisions made
-    pub total_routing_decisions: u64,
+    pub total_routing_decisions:      u64,
     /// Successful routing decisions
     pub successful_routing_decisions: u64,
     /// Failed routing decisions
-    pub failed_routing_decisions: u64,
+    pub failed_routing_decisions:     u64,
     /// Average routing decision time
     pub avg_routing_decision_time_ms: f64,
     /// Route distribution
-    pub route_distribution: std::collections::HashMap<String, u64>,
+    pub route_distribution:           std::collections::HashMap<String, u64>,
 }
 
 /// Router status
@@ -168,15 +168,10 @@ pub enum RouterStatus {
 #[async_trait]
 pub trait AiLoadBalancer {
     /// Distribute AI request across available services
-    async fn balance_request(
-        &self,
-        request: &AiRequestContext,
-    ) -> Result<String, PerformanceRouterError>;
+    async fn balance_request(&self, request: &AiRequestContext) -> Result<String, PerformanceRouterError>;
 
     /// Get load status for all routes
-    async fn get_load_status(
-        &self,
-    ) -> Result<std::collections::HashMap<String, LoadStatus>, PerformanceRouterError>;
+    async fn get_load_status(&self) -> Result<std::collections::HashMap<String, LoadStatus>, PerformanceRouterError>;
 }
 
 /// AI response optimizer trait
@@ -214,10 +209,7 @@ pub trait AiCacheManager {
 #[async_trait]
 pub trait AiPriorityRouter {
     /// Route request based on priority and conditions
-    async fn route_priority(
-        &self,
-        request: &AiRequestContext,
-    ) -> Result<String, PerformanceRouterError>;
+    async fn route_priority(&self, request: &AiRequestContext) -> Result<String, PerformanceRouterError>;
 
     /// Adjust routing based on user preferences
     async fn adjust_for_preferences(
@@ -247,11 +239,11 @@ pub trait AiFallbackEngine {
 #[derive(Debug, Clone)]
 pub struct LoadStatus {
     /// Current load percentage (0.0-1.0)
-    pub load_percentage: f64,
+    pub load_percentage:    f64,
     /// Queue depth
-    pub queue_depth: usize,
+    pub queue_depth:        usize,
     /// Health status
-    pub health_status: HealthStatus,
+    pub health_status:      HealthStatus,
     /// Estimated available capacity
     pub available_capacity: usize,
 }
@@ -276,14 +268,14 @@ impl AiPerformanceRouter {
         let state = Arc::new(RwLock::new(RouterState {
             routing_rules: Vec::new(),
             route_metrics: std::collections::HashMap::new(),
-            statistics: RouterStatistics {
-                total_routing_decisions: 0,
+            statistics:    RouterStatistics {
+                total_routing_decisions:      0,
                 successful_routing_decisions: 0,
-                failed_routing_decisions: 0,
+                failed_routing_decisions:     0,
                 avg_routing_decision_time_ms: 0.0,
-                route_distribution: std::collections::HashMap::new(),
+                route_distribution:           std::collections::HashMap::new(),
             },
-            status: RouterStatus::Initializing,
+            status:        RouterStatus::Initializing,
         }));
 
         // Placeholder implementations - in real implementation, these would be properly initialized
@@ -304,10 +296,7 @@ impl AiPerformanceRouter {
     }
 
     /// Route AI request to appropriate service
-    pub async fn route_request(
-        &self,
-        request: &AiRequestContext,
-    ) -> Result<String, PerformanceRouterError> {
+    pub async fn route_request(&self, request: &AiRequestContext) -> Result<String, PerformanceRouterError> {
         // Check cache first
         if let Some(cached_response) = self.cache_manager.check_cache(request).await? {
             // Return cached route
@@ -351,10 +340,7 @@ impl AiPerformanceRouter {
     }
 
     /// Update routing rules dynamically
-    pub async fn update_routing_rules(
-        &self,
-        rules: Vec<RoutingRule>,
-    ) -> Result<(), PerformanceRouterError> {
+    pub async fn update_routing_rules(&self, rules: Vec<RoutingRule>) -> Result<(), PerformanceRouterError> {
         let mut state = self.state.write().await;
         state.routing_rules = rules;
         Ok(())
@@ -406,26 +392,18 @@ pub struct PlaceholderFallbackEngine;
 
 #[async_trait]
 impl AiLoadBalancer for PlaceholderLoadBalancer {
-    async fn balance_request(
-        &self,
-        _request: &AiRequestContext,
-    ) -> Result<String, PerformanceRouterError> {
+    async fn balance_request(&self, _request: &AiRequestContext) -> Result<String, PerformanceRouterError> {
         Ok("balanced-route".to_string())
     }
 
-    async fn get_load_status(
-        &self,
-    ) -> Result<std::collections::HashMap<String, LoadStatus>, PerformanceRouterError> {
+    async fn get_load_status(&self) -> Result<std::collections::HashMap<String, LoadStatus>, PerformanceRouterError> {
         let mut status = std::collections::HashMap::new();
-        status.insert(
-            "route-1".to_string(),
-            LoadStatus {
-                load_percentage: 0.65,
-                queue_depth: 5,
-                health_status: HealthStatus::Healthy,
-                available_capacity: 15,
-            },
-        );
+        status.insert("route-1".to_string(), LoadStatus {
+            load_percentage:    0.65,
+            queue_depth:        5,
+            health_status:      HealthStatus::Healthy,
+            available_capacity: 15,
+        });
         Ok(status)
     }
 }
@@ -465,10 +443,7 @@ impl AiCacheManager for PlaceholderCacheManager {
 
 #[async_trait]
 impl AiPriorityRouter for PlaceholderPriorityRouter {
-    async fn route_priority(
-        &self,
-        _request: &AiRequestContext,
-    ) -> Result<String, PerformanceRouterError> {
+    async fn route_priority(&self, _request: &AiRequestContext) -> Result<String, PerformanceRouterError> {
         Ok("priority-route".to_string())
     }
 

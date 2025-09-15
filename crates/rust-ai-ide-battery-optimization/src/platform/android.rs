@@ -47,12 +47,12 @@ impl AndroidBatteryMonitor {
 
         // Placeholder implementation for development
         Ok(BatteryState {
-            level: 0.85,             // 85% battery
-            voltage: Some(4.05),     // Typical Android voltage
-            temperature: Some(32.0), // Celsius
-            is_charging: true,
-            health_percentage: Some(0.95),     // 95% health
-            time_remaining_minutes: Some(240), // 4 hours remaining
+            level:                  0.85,       // 85% battery
+            voltage:                Some(4.05), // Typical Android voltage
+            temperature:            Some(32.0), // Celsius
+            is_charging:            true,
+            health_percentage:      Some(0.95), // 95% health
+            time_remaining_minutes: Some(240),  // 4 hours remaining
         })
     }
 
@@ -122,11 +122,11 @@ impl AndroidBatteryMonitor {
     async fn get_cached_battery_state() -> anyhow::Result<BatteryState> {
         // Return a slightly modified cached state
         Ok(BatteryState {
-            level: 0.84,
-            voltage: Some(4.04),
-            temperature: Some(32.5),
-            is_charging: true,
-            health_percentage: Some(0.95),
+            level:                  0.84,
+            voltage:                Some(4.04),
+            temperature:            Some(32.5),
+            is_charging:            true,
+            health_percentage:      Some(0.95),
             time_remaining_minutes: Some(235),
         })
     }

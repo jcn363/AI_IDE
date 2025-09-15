@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-plugins"
-readme = { workspace = true }
+
 version = { workspace = true }
 edition = { workspace = true }
 

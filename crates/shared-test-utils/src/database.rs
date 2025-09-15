@@ -20,44 +20,44 @@ pub enum DatabaseType {
 /// Database configuration for test setup
 #[derive(Debug, Clone)]
 pub struct DatabaseConfig {
-    pub db_type: DatabaseType,
+    pub db_type:           DatabaseType,
     pub connection_string: String,
-    pub schema_path: Option<PathBuf>,
-    pub seed_data_path: Option<PathBuf>,
-    pub migrations_path: Option<PathBuf>,
+    pub schema_path:       Option<PathBuf>,
+    pub seed_data_path:    Option<PathBuf>,
+    pub migrations_path:   Option<PathBuf>,
 }
 
 impl DatabaseConfig {
     /// Create a new SQLite in-memory database configuration
     pub fn sqlite_memory() -> Self {
         Self {
-            db_type: DatabaseType::Sqlite,
+            db_type:           DatabaseType::Sqlite,
             connection_string: ":memory:".to_string(),
-            schema_path: None,
-            seed_data_path: None,
-            migrations_path: None,
+            schema_path:       None,
+            seed_data_path:    None,
+            migrations_path:   None,
         }
     }
 
     /// Create a new SQLite file-based database configuration
     pub fn sqlite_file(path: impl Into<PathBuf>) -> Self {
         Self {
-            db_type: DatabaseType::Sqlite,
+            db_type:           DatabaseType::Sqlite,
             connection_string: path.into().to_string_lossy().to_string(),
-            schema_path: None,
-            seed_data_path: None,
-            migrations_path: None,
+            schema_path:       None,
+            seed_data_path:    None,
+            migrations_path:   None,
         }
     }
 
     /// Create a new PostgreSQL database configuration
     pub fn postgres(connection_string: impl Into<String>) -> Self {
         Self {
-            db_type: DatabaseType::Postgres,
+            db_type:           DatabaseType::Postgres,
             connection_string: connection_string.into(),
-            schema_path: None,
-            seed_data_path: None,
-            migrations_path: None,
+            schema_path:       None,
+            seed_data_path:    None,
+            migrations_path:   None,
         }
     }
 
@@ -82,7 +82,7 @@ impl DatabaseConfig {
 
 /// Database test fixture that manages database lifecycle
 pub struct DatabaseFixture {
-    config: DatabaseConfig,
+    config:     DatabaseConfig,
     #[cfg(feature = "database")]
     connection: Option<rusqlite::Connection>,
     temp_files: Vec<PathBuf>,
@@ -137,9 +137,7 @@ impl DatabaseFixture {
     #[cfg(not(feature = "database"))]
     async fn setup_sqlite(&mut self) -> Result<(), TestError> {
         Err(TestError::Validation(
-            crate::ValidationError::invalid_setup(
-                "Database feature not enabled. Add 'database' feature flag.",
-            ),
+            crate::ValidationError::invalid_setup("Database feature not enabled. Add 'database' feature flag."),
         ))
     }
 
@@ -152,11 +150,7 @@ impl DatabaseFixture {
 
     /// Execute a query and return results
     #[cfg(feature = "database")]
-    pub fn execute_query(
-        &self,
-        sql: &str,
-        params: &[&dyn rusqlite::ToSql],
-    ) -> Result<Vec<rusqlite::Row>, TestError> {
+    pub fn execute_query(&self, sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<Vec<rusqlite::Row>, TestError> {
         let conn = self.connection.as_ref().ok_or_else(|| {
             TestError::Validation(crate::ValidationError::invalid_setup(
                 "Database not initialized",
@@ -214,10 +208,7 @@ impl DatabaseFixtures {
 
 /// Mock database for testing without real database dependencies
 pub struct MockDatabase {
-    tables: std::collections::HashMap<
-        String,
-        Vec<std::collections::HashMap<String, serde_json::Value>>,
-    >,
+    tables: std::collections::HashMap<String, Vec<std::collections::HashMap<String, serde_json::Value>>>,
 }
 
 impl MockDatabase {

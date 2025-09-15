@@ -7,7 +7,7 @@ use tokio::process::Command;
 
 /// Cargo project manager
 pub struct CargoManager {
-    workspace_root: Option<PathBuf>,
+    workspace_root:    Option<PathBuf>,
     workspace_members: Vec<PathBuf>,
 }
 
@@ -15,7 +15,7 @@ impl CargoManager {
     /// Create a new CargoManager
     pub fn new() -> Self {
         Self {
-            workspace_root: None,
+            workspace_root:    None,
             workspace_members: Vec::new(),
         }
     }

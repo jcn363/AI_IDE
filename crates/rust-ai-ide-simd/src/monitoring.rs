@@ -8,17 +8,17 @@ use crate::error::SIMDError;
 
 /// SIMD performance monitoring and metrics
 pub struct SIMDPerformanceMonitor {
-    operation_times: HashMap<String, Vec<Duration>>,
+    operation_times:   HashMap<String, Vec<Duration>>,
     active_operations: HashMap<String, Instant>,
-    total_operations: HashMap<String, usize>,
+    total_operations:  HashMap<String, usize>,
 }
 
 impl SIMDPerformanceMonitor {
     pub fn new() -> Self {
         Self {
-            operation_times: HashMap::new(),
+            operation_times:   HashMap::new(),
             active_operations: HashMap::new(),
-            total_operations: HashMap::new(),
+            total_operations:  HashMap::new(),
         }
     }
 
@@ -56,16 +56,16 @@ impl SIMDPerformanceMonitor {
         self.operation_times.get(operation_name).map(|durations| {
             if durations.is_empty() {
                 return OperationStats {
-                    operation_name: operation_name.to_string(),
-                    total_calls: self
+                    operation_name:    operation_name.to_string(),
+                    total_calls:       self
                         .total_operations
                         .get(operation_name)
                         .copied()
                         .unwrap_or(0),
-                    avg_duration: Duration::ZERO,
-                    min_duration: Duration::ZERO,
-                    max_duration: Duration::ZERO,
-                    total_duration: Duration::ZERO,
+                    avg_duration:      Duration::ZERO,
+                    min_duration:      Duration::ZERO,
+                    max_duration:      Duration::ZERO,
+                    total_duration:    Duration::ZERO,
                     performance_score: 0.0,
                 };
             }
@@ -82,8 +82,7 @@ impl SIMDPerformanceMonitor {
 
             // Performance score (arbitrary units, higher is better)
             let performance_score = if avg_duration.as_nanos() > 0 {
-                let ops_per_second =
-                    1_000_000_000.0 / avg_duration.as_nanos() as f64 * total_calls as f64;
+                let ops_per_second = 1_000_000_000.0 / avg_duration.as_nanos() as f64 * total_calls as f64;
                 ops_per_second / 10_000.0 // Normalize to reasonable range
             } else {
                 1000.0 // Very fast operations
@@ -124,7 +123,7 @@ impl SIMDPerformanceMonitor {
 
 /// Fallback strategy manager for SIMD operations
 pub struct SIMDFallbackManager {
-    capabilities: &'static crate::capability::SIMDCapabilities,
+    capabilities:   &'static crate::capability::SIMDCapabilities,
     fallback_count: HashMap<String, usize>,
 }
 
@@ -137,19 +136,14 @@ impl SIMDFallbackManager {
     }
 
     /// Process vectorized operation with fallback to scalar operations
-    pub fn vectorized_f32_fallback<F>(
-        &mut self,
-        lhs: &[f32],
-        rhs: &[f32],
-        operation: F,
-    ) -> Result<Vec<f32>, SIMDError>
+    pub fn vectorized_f32_fallback<F>(&mut self, lhs: &[f32], rhs: &[f32], operation: F) -> Result<Vec<f32>, SIMDError>
     where
         F: Fn(f32, f32) -> f32,
     {
         if lhs.len() != rhs.len() {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: lhs.len(),
-                actual: rhs.len(),
+                actual:   rhs.len(),
             });
         }
 
@@ -217,7 +211,7 @@ impl SIMDFallbackManager {
         if query.len() % dimension != 0 || database.len() % dimension != 0 {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: (query.len() / dimension) * dimension,
-                actual: query.len(),
+                actual:   query.len(),
             });
         }
 
@@ -276,27 +270,27 @@ impl SIMDFallbackManager {
 /// Performance statistics for SIMD monitoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OperationStats {
-    pub operation_name: String,
-    pub total_calls: usize,
-    pub avg_duration: Duration,
-    pub min_duration: Duration,
-    pub max_duration: Duration,
-    pub total_duration: Duration,
+    pub operation_name:    String,
+    pub total_calls:       usize,
+    pub avg_duration:      Duration,
+    pub min_duration:      Duration,
+    pub max_duration:      Duration,
+    pub total_duration:    Duration,
     pub performance_score: f64,
 }
 
 /// Fallback operation statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FallbackStats {
-    pub total_fallbacks: usize,
-    pub per_operation: HashMap<String, usize>,
+    pub total_fallbacks:      usize,
+    pub per_operation:        HashMap<String, usize>,
     pub most_common_fallback: (String, usize),
-    pub fallback_rate: f64,
+    pub fallback_rate:        f64,
 }
 
 /// SIMD performance recommendation engine
 pub struct SIMDPerformanceAdvisor {
-    monitor: SIMDPerformanceMonitor,
+    monitor:          SIMDPerformanceMonitor,
     fallback_manager: SIMDFallbackManager,
 }
 
@@ -338,22 +332,22 @@ impl SIMDPerformanceAdvisor {
         // Check for high fallback rates
         if fallback_stats.fallback_rate > 0.1 {
             recommendations.push(PerformanceRecommendation {
-                category: RecommendationCategory::Infrastructure,
-                title: "High SIMD fallback rate detected".to_string(),
+                category:    RecommendationCategory::Infrastructure,
+                title:       "High SIMD fallback rate detected".to_string(),
                 description: format!(
                     "{:.1}% of SIMD operations are falling back to scalar operations",
                     fallback_stats.fallback_rate * 100.0
                 ),
-                severity: RecommendationSeverity::High,
-                suggestion: "Ensure SIMD feature flags are properly configured".to_string(),
+                severity:    RecommendationSeverity::High,
+                suggestion:  "Ensure SIMD feature flags are properly configured".to_string(),
             });
         }
 
         // Check for most common fallback operations
         if fallback_stats.most_common_fallback.1 > 10 {
             recommendations.push(PerformanceRecommendation {
-                category: RecommendationCategory::OptimizationOpportunity,
-                title: format!(
+                category:    RecommendationCategory::OptimizationOpportunity,
+                title:       format!(
                     "Optimize '{}' operation",
                     fallback_stats.most_common_fallback.0
                 ),
@@ -361,8 +355,8 @@ impl SIMDPerformanceAdvisor {
                     "'{}' operation fell back {} times - consider optimizing for SIMD",
                     fallback_stats.most_common_fallback.0, fallback_stats.most_common_fallback.1
                 ),
-                severity: RecommendationSeverity::Medium,
-                suggestion: "Implement SIMD version of this operation".to_string(),
+                severity:    RecommendationSeverity::Medium,
+                suggestion:  "Implement SIMD version of this operation".to_string(),
             });
         }
 
@@ -372,11 +366,11 @@ impl SIMDPerformanceAdvisor {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceRecommendation {
-    pub category: RecommendationCategory,
-    pub title: String,
+    pub category:    RecommendationCategory,
+    pub title:       String,
     pub description: String,
-    pub severity: RecommendationSeverity,
-    pub suggestion: String,
+    pub severity:    RecommendationSeverity,
+    pub suggestion:  String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

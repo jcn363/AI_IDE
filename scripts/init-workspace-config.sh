@@ -72,7 +72,6 @@ generate_crate_cargo_toml() {
     cat > "$crate_path/Cargo.toml" << EOF
 [package]
 name = "$crate_name"
-readme = { workspace = true }
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }

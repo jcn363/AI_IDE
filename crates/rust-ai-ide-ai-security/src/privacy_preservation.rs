@@ -15,9 +15,9 @@ pub enum PrivacyLevel {
 /// Configuration for privacy-preserving operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PrivacyConfig {
-    pub differential_privacy: f32,
-    pub homomorphic_encryption: bool,
-    pub zero_knowledge_proofs: bool,
+    pub differential_privacy:    f32,
+    pub homomorphic_encryption:  bool,
+    pub zero_knowledge_proofs:   bool,
     pub anonymization_technique: String,
 }
 
@@ -25,9 +25,9 @@ impl PrivacyConfig {
     /// High privacy configuration
     pub fn high_privacy() -> Self {
         Self {
-            differential_privacy: 0.1,
-            homomorphic_encryption: true,
-            zero_knowledge_proofs: true,
+            differential_privacy:    0.1,
+            homomorphic_encryption:  true,
+            zero_knowledge_proofs:   true,
             anonymization_technique: "diff-privacy".to_string(),
         }
     }
@@ -35,9 +35,9 @@ impl PrivacyConfig {
     /// Balanced privacy/security
     pub fn balanced() -> Self {
         Self {
-            differential_privacy: 0.5,
-            homomorphic_encryption: false,
-            zero_knowledge_proofs: true,
+            differential_privacy:    0.5,
+            homomorphic_encryption:  false,
+            zero_knowledge_proofs:   true,
             anonymization_technique: "anonymize".to_string(),
         }
     }
@@ -45,7 +45,7 @@ impl PrivacyConfig {
 
 /// Main privacy guard for AI operations
 pub struct PrivacyGuard {
-    config: PrivacyConfig,
+    config:          PrivacyConfig,
     noise_generator: NoiseGenerator,
 }
 
@@ -133,8 +133,8 @@ impl NoiseGenerator {
 
 /// Privacy-preserved request
 pub struct PrivacyPreservedRequest {
-    pub original_request: crate::secure_ai_engine::AIInferenceRequest,
-    pub sanitized_prompt: String,
+    pub original_request:   crate::secure_ai_engine::AIInferenceRequest,
+    pub sanitized_prompt:   String,
     pub privacy_guarantees: Vec<String>,
 }
 

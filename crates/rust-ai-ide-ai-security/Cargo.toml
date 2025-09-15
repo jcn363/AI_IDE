@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-ai-security"
-readme = { workspace = true }
+
 version = "4.0.0"
 edition = "2021"
 description = "Wave 4: Secure AI Operations with Privacy-Preserving Computation"

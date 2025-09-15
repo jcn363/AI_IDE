@@ -8,27 +8,27 @@ use serde::{Deserialize, Serialize};
 /// Code graph representing symbol relationships
 #[derive(Debug, Clone)]
 pub struct CodeGraph {
-    pub nodes: HashMap<String, CodeNode>,
-    pub edges: HashMap<String, RelationshipGraph>,
-    pub files: HashSet<String>,
+    pub nodes:   HashMap<String, CodeNode>,
+    pub edges:   HashMap<String, RelationshipGraph>,
+    pub files:   HashSet<String>,
     pub modules: HashSet<String>,
 }
 
 /// Relationship graph for a specific symbol
 #[derive(Debug, Clone)]
 pub struct RelationshipGraph {
-    pub symbol_id: String,
+    pub symbol_id:     String,
     pub relationships: Vec<CodeRelationship>,
-    pub centrality: f32,
+    pub centrality:    f32,
 }
 
 /// Code node representing a symbol
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeNode {
-    pub id: String,
-    pub name: String,
-    pub kind: SymbolKind,
-    pub location: CodeLocation,
+    pub id:         String,
+    pub name:       String,
+    pub kind:       SymbolKind,
+    pub location:   CodeLocation,
     pub properties: HashMap<String, String>,
 }
 
@@ -46,17 +46,17 @@ pub enum CodeRelationship {
 /// Local CodeLocation for the module
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeLocation {
-    pub file: String,
-    pub line: u32,
+    pub file:   String,
+    pub line:   u32,
     pub column: u32,
 }
 
 impl CodeGraph {
     pub fn new() -> Self {
         Self {
-            nodes: HashMap::new(),
-            edges: HashMap::new(),
-            files: HashSet::new(),
+            nodes:   HashMap::new(),
+            edges:   HashMap::new(),
+            files:   HashSet::new(),
             modules: HashSet::new(),
         }
     }
@@ -68,14 +68,11 @@ impl CodeGraph {
     pub fn add_relationship(&mut self, from: &str, to: &str, relationship: CodeRelationship) {
         let from_key = from.to_string();
         if !self.edges.contains_key(&from_key) {
-            self.edges.insert(
-                from_key.clone(),
-                RelationshipGraph {
-                    symbol_id: from_key.clone(),
-                    relationships: vec![],
-                    centrality: 0.0,
-                },
-            );
+            self.edges.insert(from_key.clone(), RelationshipGraph {
+                symbol_id:     from_key.clone(),
+                relationships: vec![],
+                centrality:    0.0,
+            });
         }
 
         if let Some(graph) = self.edges.get_mut(&from_key) {

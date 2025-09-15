@@ -21,28 +21,28 @@ pub enum QuantizationStrategy {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuantizationConfig {
     /// Quantization strategy to use
-    pub strategy: QuantizationStrategy,
+    pub strategy:           QuantizationStrategy,
     /// Target precision for output tensors
-    pub target_dtype: String,
+    pub target_dtype:       String,
     /// Whether to use CUDA acceleration if available
-    pub use_cuda: bool,
+    pub use_cuda:           bool,
     /// Memory limit in bytes (0 = unlimited)
     pub memory_limit_bytes: u64,
     /// Minimum tensor size to quantize (in elements)
-    pub min_tensor_size: usize,
+    pub min_tensor_size:    usize,
     /// Maximum quantization error tolerance
-    pub error_tolerance: f32,
+    pub error_tolerance:    f32,
 }
 
 impl Default for QuantizationConfig {
     fn default() -> Self {
         Self {
-            strategy: QuantizationStrategy::GGUF_Q4_0,
-            target_dtype: "q4_0".to_string(),
-            use_cuda: false,
+            strategy:           QuantizationStrategy::GGUF_Q4_0,
+            target_dtype:       "q4_0".to_string(),
+            use_cuda:           false,
             memory_limit_bytes: 4 * 1024 * 1024 * 1024, // 4GB default
-            min_tensor_size: 1024,
-            error_tolerance: 0.05, // 5% error tolerance
+            min_tensor_size:    1024,
+            error_tolerance:    0.05, // 5% error tolerance
         }
     }
 }
@@ -51,15 +51,15 @@ impl Default for QuantizationConfig {
 #[derive(Clone)]
 pub struct QuantizedModel {
     /// The quantized tensors
-    pub tensors: HashMap<String, Tensor>,
+    pub tensors:              HashMap<String, Tensor>,
     /// Original model file path
-    pub original_path: PathBuf,
+    pub original_path:        PathBuf,
     /// Quantization strategy used
-    pub strategy: QuantizationStrategy,
+    pub strategy:             QuantizationStrategy,
     /// Time taken for quantization in milliseconds
     pub quantization_time_ms: f64,
     /// Estimated size of quantized model in bytes
-    pub size_bytes: usize,
+    pub size_bytes:           usize,
 }
 
 /// Main quantizer implementation
@@ -127,31 +127,28 @@ impl Quantizer {
     pub fn get_quantization_info(&self, strategy: QuantizationStrategy) -> QuantizationInfo {
         match strategy {
             QuantizationStrategy::GGUF_Q4_0 => QuantizationInfo {
-                bits_per_weight: 4.0,
+                bits_per_weight:   4.0,
                 compression_ratio: 0.25,
-                target_precision: "Q4_0".to_string(),
-                description: "GGUF 4-bit quantization for maximum compression".to_string(),
+                target_precision:  "Q4_0".to_string(),
+                description:       "GGUF 4-bit quantization for maximum compression".to_string(),
             },
             QuantizationStrategy::GGUF_Q5_0 => QuantizationInfo {
-                bits_per_weight: 5.0,
+                bits_per_weight:   5.0,
                 compression_ratio: 0.31,
-                target_precision: "Q5_0".to_string(),
-                description: "GGUF 5-bit quantization balancing size and quality".to_string(),
+                target_precision:  "Q5_0".to_string(),
+                description:       "GGUF 5-bit quantization balancing size and quality".to_string(),
             },
             QuantizationStrategy::SafeTensorOptimized => QuantizationInfo {
-                bits_per_weight: 16.0, // FP16
+                bits_per_weight:   16.0, // FP16
                 compression_ratio: 0.5,
-                target_precision: "FP16".to_string(),
-                description: "SafeTensor precision optimization".to_string(),
+                target_precision:  "FP16".to_string(),
+                description:       "SafeTensor precision optimization".to_string(),
             },
         }
     }
 
     /// Internal Q4_0 quantization implementation
-    async fn quantize_q4_0(
-        &self,
-        tensors: &HashMap<String, Tensor>,
-    ) -> Result<HashMap<String, Tensor>, IDEError> {
+    async fn quantize_q4_0(&self, tensors: &HashMap<String, Tensor>) -> Result<HashMap<String, Tensor>, IDEError> {
         let mut quantized = HashMap::new();
 
         for (name, tensor) in tensors {
@@ -167,10 +164,7 @@ impl Quantizer {
     }
 
     /// Internal Q5_0 quantization implementation
-    async fn quantize_q5_0(
-        &self,
-        tensors: &HashMap<String, Tensor>,
-    ) -> Result<HashMap<String, Tensor>, IDEError> {
+    async fn quantize_q5_0(&self, tensors: &HashMap<String, Tensor>) -> Result<HashMap<String, Tensor>, IDEError> {
         let mut quantized = HashMap::new();
 
         for (name, tensor) in tensors {
@@ -348,11 +342,11 @@ impl Quantizer {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuantizationInfo {
     /// Bits per weight in the quantized format
-    pub bits_per_weight: f32,
+    pub bits_per_weight:   f32,
     /// Compression ratio compared to original
     pub compression_ratio: f32,
     /// Target precision name
-    pub target_precision: String,
+    pub target_precision:  String,
     /// Human-readable description
-    pub description: String,
+    pub description:       String,
 }

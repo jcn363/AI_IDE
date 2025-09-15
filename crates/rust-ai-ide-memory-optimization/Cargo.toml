@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-memory-optimization"
-readme = { workspace = true }
+
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
@@ -42,7 +42,7 @@ moka = { workspace = true }
 
 [lib]
 name = "rust_ai_ide_memory_optimization"
-readme = { workspace = true }
+
 path = "src/lib.rs"
 
 [features]

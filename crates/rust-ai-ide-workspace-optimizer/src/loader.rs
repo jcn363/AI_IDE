@@ -19,11 +19,11 @@ use crate::types::*;
 #[derive(Debug)]
 pub struct ModularLoader {
     /// Currently loaded crates
-    loaded_crates: Arc<RwLock<HashSet<String>>>,
+    loaded_crates:  Arc<RwLock<HashSet<String>>>,
     /// Feature flag state
-    feature_flags: Arc<DashMap<String, bool>>,
+    feature_flags:  Arc<DashMap<String, bool>>,
     /// Loading state cache
-    loading_state: Arc<RwLock<LoadingState>>,
+    loading_state:  Arc<RwLock<LoadingState>>,
     /// Memory usage tracking
     memory_tracker: Arc<RwLock<MemoryTracker>>,
 }
@@ -32,9 +32,9 @@ impl ModularLoader {
     /// Create a new modular loader
     pub fn new() -> Self {
         Self {
-            loaded_crates: Arc::new(RwLock::new(HashSet::new())),
-            feature_flags: Arc::new(DashMap::new()),
-            loading_state: Arc::new(RwLock::new(LoadingState::default())),
+            loaded_crates:  Arc::new(RwLock::new(HashSet::new())),
+            feature_flags:  Arc::new(DashMap::new()),
+            loading_state:  Arc::new(RwLock::new(LoadingState::default())),
             memory_tracker: Arc::new(RwLock::new(MemoryTracker::default())),
         }
     }
@@ -164,9 +164,9 @@ impl ModularLoader {
         for crate_name in &loaded_crates {
             if self.is_rarely_used(crate_name).await? {
                 recommendations.push(LoadingRecommendation {
-                    crate_name: crate_name.clone(),
-                    action: LoadingAction::Unload,
-                    reason: "Crate is rarely used".to_string(),
+                    crate_name:           crate_name.clone(),
+                    action:               LoadingAction::Unload,
+                    reason:               "Crate is rarely used".to_string(),
                     estimated_savings_mb: self.estimate_memory_savings(crate_name).await?,
                 });
             }
@@ -176,9 +176,9 @@ impl ModularLoader {
         let frequently_used_features = self.get_frequently_used_features().await?;
         for feature_name in frequently_used_features {
             recommendations.push(LoadingRecommendation {
-                crate_name: feature_name,
-                action: LoadingAction::Preload,
-                reason: "Feature is frequently used".to_string(),
+                crate_name:           feature_name,
+                action:               LoadingAction::Preload,
+                reason:               "Feature is frequently used".to_string(),
                 estimated_savings_mb: 0.0, // Preloading doesn't save memory
             });
         }
@@ -192,20 +192,16 @@ impl ModularLoader {
     }
 
     /// Apply loading optimizations
-    pub async fn apply_loading_optimizations(
-        &self,
-        optimizations: LoadingOptimization,
-    ) -> OptimizerResult<()> {
+    pub async fn apply_loading_optimizations(&self, optimizations: LoadingOptimization) -> OptimizerResult<()> {
         for recommendation in &optimizations.recommendations {
             match recommendation.action {
                 LoadingAction::Load => {
                     self.load_crate(&recommendation.crate_name).await?;
                 }
-                LoadingAction::Unload => {
+                LoadingAction::Unload =>
                     if self.can_unload_crate(&recommendation.crate_name).await? {
                         self.unload_crate(&recommendation.crate_name).await?;
-                    }
-                }
+                    },
                 LoadingAction::Preload => {
                     self.load_crate(&recommendation.crate_name).await?;
                 }
@@ -336,9 +332,9 @@ impl Default for ModularLoader {
 #[derive(Debug, Clone, Default)]
 pub struct LoadingState {
     /// Number of loaded crates
-    pub loaded_count: usize,
+    pub loaded_count:      usize,
     /// Memory usage in MB
-    pub memory_usage_mb: f64,
+    pub memory_usage_mb:   f64,
     /// Last optimization timestamp
     pub last_optimization: Option<chrono::DateTime<chrono::Utc>>,
 }
@@ -349,7 +345,7 @@ pub struct MemoryTracker {
     /// Current memory usage in MB
     pub current_usage_mb: f64,
     /// Peak memory usage in MB
-    pub peak_usage_mb: f64,
+    pub peak_usage_mb:    f64,
     /// Memory allocation count
     pub allocation_count: usize,
 }
@@ -360,22 +356,22 @@ pub struct LoadingOptimization {
     /// Current memory usage in MB
     pub current_memory_usage_mb: f64,
     /// Number of loaded crates
-    pub loaded_crates_count: usize,
+    pub loaded_crates_count:     usize,
     /// Optimization recommendations
-    pub recommendations: Vec<LoadingRecommendation>,
+    pub recommendations:         Vec<LoadingRecommendation>,
     /// Optimization score (0-100)
-    pub optimization_score: f64,
+    pub optimization_score:      f64,
 }
 
 /// Loading recommendation
 #[derive(Debug, Clone)]
 pub struct LoadingRecommendation {
     /// Crate name
-    pub crate_name: String,
+    pub crate_name:           String,
     /// Recommended action
-    pub action: LoadingAction,
+    pub action:               LoadingAction,
     /// Reason for recommendation
-    pub reason: String,
+    pub reason:               String,
     /// Estimated memory savings in MB
     pub estimated_savings_mb: f64,
 }

@@ -46,19 +46,19 @@ impl std::fmt::Display for ModalityType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisRequest {
     /// Unique identifier for the request
-    pub id: Uuid,
+    pub id:               Uuid,
     /// Types of modalities to analyze
-    pub modality_types: Vec<ModalityType>,
+    pub modality_types:   Vec<ModalityType>,
     /// Text content (for text modality)
-    pub text_content: Option<String>,
+    pub text_content:     Option<String>,
     /// Image data as base64 (for image modality)
-    pub image_data: Option<String>,
+    pub image_data:       Option<String>,
     /// Audio data as base64 (for audio modality)
-    pub audio_data: Option<String>,
+    pub audio_data:       Option<String>,
     /// Additional metadata
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata:         HashMap<String, serde_json::Value>,
     /// Processing options
-    pub options: ProcessingOptions,
+    pub options:          ProcessingOptions,
     /// Indicate if this is just a query for supported capabilities
     pub capability_query: bool,
 }
@@ -68,13 +68,13 @@ impl AnalysisRequest {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            id: Uuid::new_v4(),
-            modality_types: Vec::new(),
-            text_content: None,
-            image_data: None,
-            audio_data: None,
-            metadata: HashMap::new(),
-            options: ProcessingOptions::default(),
+            id:               Uuid::new_v4(),
+            modality_types:   Vec::new(),
+            text_content:     None,
+            image_data:       None,
+            audio_data:       None,
+            metadata:         HashMap::new(),
+            options:          ProcessingOptions::default(),
             capability_query: false,
         }
     }
@@ -132,34 +132,34 @@ impl Default for AnalysisRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProcessingOptions {
     /// Enable GPU acceleration if available
-    pub gpu_acceleration: bool,
+    pub gpu_acceleration:     bool,
     /// Timeout in seconds
-    pub timeout_seconds: u32,
+    pub timeout_seconds:      u32,
     /// Enable caching of results
-    pub enable_caching: bool,
+    pub enable_caching:       bool,
     /// Minimum confidence threshold (0.0 to 1.0)
     pub confidence_threshold: f32,
     /// Enable detailed logging
-    pub detailed_logging: bool,
+    pub detailed_logging:     bool,
     /// Language for text processing
-    pub language: Option<String>,
+    pub language:             Option<String>,
     /// Expected image format (auto-detect if None)
-    pub image_format: Option<String>,
+    pub image_format:         Option<String>,
     /// Audio sample rate (auto-detect if None)
-    pub audio_sample_rate: Option<u32>,
+    pub audio_sample_rate:    Option<u32>,
 }
 
 impl Default for ProcessingOptions {
     fn default() -> Self {
         Self {
-            gpu_acceleration: true,
-            timeout_seconds: 30,
-            enable_caching: true,
+            gpu_acceleration:     true,
+            timeout_seconds:      30,
+            enable_caching:       true,
             confidence_threshold: 0.7,
-            detailed_logging: false,
-            language: Some("en".to_string()),
-            image_format: None,
-            audio_sample_rate: None,
+            detailed_logging:     false,
+            language:             Some("en".to_string()),
+            image_format:         None,
+            audio_sample_rate:    None,
         }
     }
 }
@@ -168,38 +168,38 @@ impl Default for ProcessingOptions {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisResponse {
     /// Request ID that this response corresponds to
-    pub request_id: Uuid,
+    pub request_id:             Uuid,
     /// Processing timestamp
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp:              chrono::DateTime<chrono::Utc>,
     /// Overall confidence score (0.0 to 1.0)
-    pub confidence_score: f32,
+    pub confidence_score:       f32,
     /// Results by modality
-    pub modality_results: HashMap<ModalityType, ModalityResult>,
+    pub modality_results:       HashMap<ModalityType, ModalityResult>,
     /// Combined multimodal result
-    pub combined_result: Option<CombinedResult>,
+    pub combined_result:        Option<CombinedResult>,
     /// Processing duration in milliseconds
     pub processing_duration_ms: u64,
     /// Whether the processing was successful
-    pub success: bool,
+    pub success:                bool,
     /// Error message if any
-    pub error_message: Option<String>,
+    pub error_message:          Option<String>,
     /// Metadata about the processing
-    pub processing_metadata: HashMap<String, serde_json::Value>,
+    pub processing_metadata:    HashMap<String, serde_json::Value>,
 }
 
 /// Result for a specific modality
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModalityResult {
     /// Modality type
-    pub modality_type: ModalityType,
+    pub modality_type:      ModalityType,
     /// Whether processing was successful for this modality
-    pub success: bool,
+    pub success:            bool,
     /// Confidence score (0.0 to 1.0)
-    pub confidence: f32,
+    pub confidence:         f32,
     /// Extracted data
-    pub data: ModalityData,
+    pub data:               ModalityData,
     /// Bounding boxes for image results
-    pub bounding_boxes: Vec<BoundingBox>,
+    pub bounding_boxes:     Vec<BoundingBox>,
     /// Processing time for this modality
     pub processing_time_ms: u64,
 }
@@ -211,7 +211,7 @@ pub enum ModalityData {
     /// Text content
     Text {
         /// Full text content
-        content: String,
+        content:  String,
         /// Detected language
         language: String,
         /// Key phrases or entities
@@ -222,22 +222,22 @@ pub enum ModalityData {
         /// Image description
         description: String,
         /// Objects detected in the image
-        objects: Vec<Detection>,
+        objects:     Vec<Detection>,
         /// OCR text if applicable
-        ocr_text: Option<String>,
+        ocr_text:    Option<String>,
         /// Scene analysis
-        scene: Option<String>,
+        scene:       Option<String>,
     },
     /// Audio-based results
     Audio {
         /// Transcribed text
         transcription: String,
         /// Language spoken
-        language: String,
+        language:      String,
         /// Speaker identification if available
-        speakers: Vec<SpeakerSegment>,
+        speakers:      Vec<SpeakerSegment>,
         /// Audio events or sounds detected
-        audio_events: Vec<AudioEvent>,
+        audio_events:  Vec<AudioEvent>,
     },
     /// Multi-modal combined results
     Multimodal {},
@@ -247,25 +247,25 @@ pub enum ModalityData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Entity {
     /// Entity text
-    pub text: String,
+    pub text:           String,
     /// Entity type (person, organization, etc.)
-    pub entity_type: String,
+    pub entity_type:    String,
     /// Confidence score
-    pub confidence: f32,
+    pub confidence:     f32,
     /// Position in the text
     pub start_position: usize,
-    pub end_position: usize,
+    pub end_position:   usize,
 }
 
 /// Object detected in an image
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Detection {
     /// Class name
-    pub class: String,
+    pub class:      String,
     /// Confidence score
     pub confidence: f32,
     /// Bounding box
-    pub bbox: BoundingBox,
+    pub bbox:       BoundingBox,
 }
 
 /// Bounding box coordinates
@@ -289,7 +289,7 @@ pub struct SpeakerSegment {
     /// Start time in seconds
     pub start_time: f32,
     /// End time in seconds
-    pub end_time: f32,
+    pub end_time:   f32,
     /// Confidence score
     pub confidence: f32,
 }
@@ -304,7 +304,7 @@ pub struct AudioEvent {
     /// Start time in seconds
     pub start_time: f32,
     /// End time in seconds
-    pub end_time: f32,
+    pub end_time:   f32,
 }
 
 /// Combined result for multi-modal analysis
@@ -313,26 +313,26 @@ pub struct CombinedResult {
     /// Overall fused understanding
     pub fused_understanding: String,
     /// Cross-modal relationships
-    pub relationships: Vec<CrossModalRelationship>,
+    pub relationships:       Vec<CrossModalRelationship>,
     /// Higher-level insights
-    pub insights: Vec<String>,
+    pub insights:            Vec<String>,
     /// Recommendations
-    pub recommendations: Vec<String>,
+    pub recommendations:     Vec<String>,
 }
 
 /// Relationship between modalities
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CrossModalRelationship {
     /// Source modality
-    pub source_modality: ModalityType,
+    pub source_modality:   ModalityType,
     /// Target modality
-    pub target_modality: ModalityType,
+    pub target_modality:   ModalityType,
     /// Type of relationship
     pub relationship_type: String,
     /// Confidence score
-    pub confidence: f32,
+    pub confidence:        f32,
     /// Description of the relationship
-    pub description: String,
+    pub description:       String,
 }
 
 /// Capabilities query response
@@ -341,26 +341,26 @@ pub struct CapabilitiesResponse {
     /// Supported modalities
     pub supported_modalities: Vec<ModalityType>,
     /// Supported languages
-    pub supported_languages: Vec<String>,
+    pub supported_languages:  Vec<String>,
     /// Maximum input size limits
-    pub max_input_sizes: HashMap<String, u64>,
+    pub max_input_sizes:      HashMap<String, u64>,
     /// Whether GPU acceleration is available
-    pub gpu_available: bool,
+    pub gpu_available:        bool,
     /// Version information
-    pub version: String,
+    pub version:              String,
 }
 
 /// Processing result wrapper
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProcessingResult<T> {
     /// Result data
-    pub data: Option<T>,
+    pub data:        Option<T>,
     /// Error message if any
-    pub error: Option<String>,
+    pub error:       Option<String>,
     /// Processing duration
     pub duration_ms: u64,
     /// Whether result is from cache
-    pub cached: bool,
+    pub cached:      bool,
 }
 
 impl<T> ProcessingResult<T> {
@@ -436,7 +436,7 @@ mod tests {
     #[test]
     fn test_modality_data_deserialization() {
         let text_data = ModalityData::Text {
-            content: "Hello world".to_string(),
+            content:  "Hello world".to_string(),
             language: "en".to_string(),
             entities: Vec::new(),
         };

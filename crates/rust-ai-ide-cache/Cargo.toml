@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-cache"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 description = "Unified caching infrastructure for Rust AI IDE"
@@ -39,5 +39,5 @@ tokio-test = "0.4.4"
 
 [[bench]]
 name = "cache_benchmark"
-readme = { workspace = true }
+
 harness = false

@@ -13,10 +13,10 @@ use syn::{Block, Stmt, Type};
 /// Definition information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SymbolDefinition {
-    pub name: String,
-    pub kind: SymbolKind,
-    pub location: CodeLocation,
-    pub visibility: Visibility,
+    pub name:          String,
+    pub kind:          SymbolKind,
+    pub location:      CodeLocation,
+    pub visibility:    Visibility,
     pub documentation: Option<String>,
 }
 
@@ -24,17 +24,17 @@ pub struct SymbolDefinition {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SymbolUsage {
     pub definition: SymbolIndex,
-    pub location: CodeLocation,
+    pub location:   CodeLocation,
     pub usage_type: UsageType,
 }
 
 /// Semantic relationships
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SemanticRelationship {
-    pub from_symbol: SymbolIndex,
-    pub to_symbol: SymbolIndex,
+    pub from_symbol:       SymbolIndex,
+    pub to_symbol:         SymbolIndex,
     pub relationship_type: RelationshipType,
-    pub strength: f32,
+    pub strength:          f32,
 }
 
 /// Symbol kinds
@@ -77,11 +77,11 @@ pub enum RelationshipType {
 /// Code location
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeLocation {
-    pub file: String,
-    pub start_line: u32,
-    pub end_line: u32,
+    pub file:         String,
+    pub start_line:   u32,
+    pub end_line:     u32,
     pub start_column: u32,
-    pub end_column: u32,
+    pub end_column:   u32,
 }
 
 /// Symbol index for fast lookups
@@ -99,20 +99,20 @@ pub enum Visibility {
 /// Semantic context from analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SemanticContext {
-    pub definitions: Vec<SymbolDefinition>,
-    pub usages: Vec<SymbolUsage>,
-    pub relationships: Vec<SemanticRelationship>,
-    pub code_smells: Vec<CodeSmell>,
+    pub definitions:        Vec<SymbolDefinition>,
+    pub usages:             Vec<SymbolUsage>,
+    pub relationships:      Vec<SemanticRelationship>,
+    pub code_smells:        Vec<CodeSmell>,
     pub complexity_metrics: ComplexityMetrics,
-    pub analyzed_files: HashSet<String>,
+    pub analyzed_files:     HashSet<String>,
 }
 
 /// Code smell detection
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeSmell {
-    pub smell_type: String,
-    pub location: CodeLocation,
-    pub severity: f32,
+    pub smell_type:  String,
+    pub location:    CodeLocation,
+    pub severity:    f32,
     pub description: String,
     pub suggestions: Vec<String>,
 }
@@ -120,24 +120,24 @@ pub struct CodeSmell {
 /// Complexity metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplexityMetrics {
-    pub cyclomatic_complexity: HashMap<String, u32>,
-    pub lines_of_code: HashMap<String, u32>,
-    pub function_count: u32,
-    pub type_count: u32,
+    pub cyclomatic_complexity:       HashMap<String, u32>,
+    pub lines_of_code:               HashMap<String, u32>,
+    pub function_count:              u32,
+    pub type_count:                  u32,
     pub average_function_complexity: f32,
 }
 
 /// Main semantic analyzer
 #[derive(Debug)]
 pub struct SemanticAnalyzer {
-    config: SemanticConfig,
+    config:        SemanticConfig,
     context_cache: HashMap<String, SemanticContext>,
 }
 
 #[derive(Debug, Clone)]
 pub struct SemanticConfig {
-    pub max_function_complexity: u32,
-    pub enable_code_smell_detection: bool,
+    pub max_function_complexity:      u32,
+    pub enable_code_smell_detection:  bool,
     pub enable_relationship_analysis: bool,
 }
 
@@ -145,17 +145,13 @@ impl SemanticAnalyzer {
     /// Create a new semantic analyzer
     pub fn new(config: &SemanticConfig) -> Self {
         Self {
-            config: config.clone(),
+            config:        config.clone(),
             context_cache: HashMap::new(),
         }
     }
 
     /// Analyze source code for semantic understanding
-    pub async fn analyze(
-        &mut self,
-        source_code: &str,
-        language: &str,
-    ) -> Result<SemanticContext, String> {
+    pub async fn analyze(&mut self, source_code: &str, language: &str) -> Result<SemanticContext, String> {
         if language != "rust" {
             return Err(format!("Unsupported language: {}", language));
         }
@@ -165,18 +161,18 @@ impl SemanticAnalyzer {
 
         // Perform semantic analysis
         let mut context = SemanticContext {
-            definitions: vec![],
-            usages: vec![],
-            relationships: vec![],
-            code_smells: vec![],
+            definitions:        vec![],
+            usages:             vec![],
+            relationships:      vec![],
+            code_smells:        vec![],
             complexity_metrics: ComplexityMetrics {
-                cyclomatic_complexity: HashMap::new(),
-                lines_of_code: HashMap::new(),
-                function_count: 0,
-                type_count: 0,
+                cyclomatic_complexity:       HashMap::new(),
+                lines_of_code:               HashMap::new(),
+                function_count:              0,
+                type_count:                  0,
                 average_function_complexity: 0.0,
             },
-            analyzed_files: HashSet::new(),
+            analyzed_files:     HashSet::new(),
         };
 
         // Walk the AST and extract semantic information
@@ -200,20 +196,12 @@ impl SemanticAnalyzer {
     }
 
     /// Find definitions by name
-    pub fn find_definition(
-        &self,
-        name: &str,
-        context: &SemanticContext,
-    ) -> Option<&SymbolDefinition> {
+    pub fn find_definition(&self, name: &str, context: &SemanticContext) -> Option<&SymbolDefinition> {
         context.definitions.iter().find(|def| def.name == name)
     }
 
     /// Find all usages of a symbol
-    pub fn find_usages(
-        &self,
-        definition: &SymbolDefinition,
-        context: &SemanticContext,
-    ) -> Vec<&SymbolUsage> {
+    pub fn find_usages(&self, definition: &SymbolDefinition, context: &SemanticContext) -> Vec<&SymbolUsage> {
         context
             .usages
             .iter()
@@ -302,13 +290,10 @@ impl SemanticAnalyzer {
                 let length = def.location.end_line - def.location.start_line;
                 if length > 30 {
                     context.code_smells.push(CodeSmell {
-                        smell_type: "Long Function".to_string(),
-                        location: def.location.clone(),
-                        severity: 0.7,
-                        description: format!(
-                            "Function '{}' is too long ({} lines)",
-                            def.name, length
-                        ),
+                        smell_type:  "Long Function".to_string(),
+                        location:    def.location.clone(),
+                        severity:    0.7,
+                        description: format!("Function '{}' is too long ({} lines)", def.name, length),
                         suggestions: vec![
                             "Consider breaking down into smaller functions".to_string(),
                             "Extract duplicate code into separate functions".to_string(),
@@ -323,9 +308,9 @@ impl SemanticAnalyzer {
             if *complexity > self.config.max_function_complexity {
                 if let Some(def) = context.definitions.iter().find(|d| d.name == *name) {
                     context.code_smells.push(CodeSmell {
-                        smell_type: "High Complexity".to_string(),
-                        location: def.location.clone(),
-                        severity: 0.8,
+                        smell_type:  "High Complexity".to_string(),
+                        location:    def.location.clone(),
+                        severity:    0.8,
                         description: format!(
                             "Function '{}' has high cyclomatic complexity ({})",
                             name, complexity
@@ -347,17 +332,14 @@ impl SemanticAnalyzer {
         for i in 0..context.definitions.len() {
             for j in 0..context.definitions.len() {
                 if i != j {
-                    let rel_type = self.determine_relationship_type(
-                        &context.definitions[i],
-                        &context.definitions[j],
-                    );
+                    let rel_type = self.determine_relationship_type(&context.definitions[i], &context.definitions[j]);
 
                     if rel_type.is_some() {
                         context.relationships.push(SemanticRelationship {
-                            from_symbol: i as SymbolIndex,
-                            to_symbol: j as SymbolIndex,
+                            from_symbol:       i as SymbolIndex,
+                            to_symbol:         j as SymbolIndex,
                             relationship_type: rel_type.unwrap(),
-                            strength: 0.8,
+                            strength:          0.8,
                         });
                     }
                 }
@@ -365,11 +347,7 @@ impl SemanticAnalyzer {
         }
     }
 
-    fn determine_relationship_type(
-        &self,
-        from: &SymbolDefinition,
-        to: &SymbolDefinition,
-    ) -> Option<RelationshipType> {
+    fn determine_relationship_type(&self, from: &SymbolDefinition, to: &SymbolDefinition) -> Option<RelationshipType> {
         // Simplified relationship determination
         match (&from.kind, &to.kind) {
             (SymbolKind::Function, SymbolKind::Function) => Some(RelationshipType::Calls),
@@ -382,7 +360,7 @@ impl SemanticAnalyzer {
 
 /// AST visitor for semantic analysis
 pub struct SemanticVisitor<'a> {
-    context: &'a mut SemanticContext,
+    context:      &'a mut SemanticContext,
     symbol_index: SymbolIndex,
 }
 
@@ -394,13 +372,7 @@ impl<'a> SemanticVisitor<'a> {
         }
     }
 
-    fn add_definition(
-        &mut self,
-        name: String,
-        kind: SymbolKind,
-        location: CodeLocation,
-        visibility: Visibility,
-    ) {
+    fn add_definition(&mut self, name: String, kind: SymbolKind, location: CodeLocation, visibility: Visibility) {
         self.context.definitions.push(SymbolDefinition {
             name,
             kind,
@@ -424,11 +396,11 @@ impl<'a> Visit<'_> for SemanticVisitor<'a> {
         };
 
         let location = CodeLocation {
-            file: "current".to_string(), // Would get from file path
-            start_line: 0,               // Would get from span
-            end_line: 0,
+            file:         "current".to_string(), // Would get from file path
+            start_line:   0,                     // Would get from span
+            end_line:     0,
             start_column: 0,
-            end_column: 0,
+            end_column:   0,
         };
 
         self.add_definition(name, kind, location, visibility);
@@ -438,11 +410,11 @@ impl<'a> Visit<'_> for SemanticVisitor<'a> {
         // Analyze struct definitions
         let name = node.ident.to_string();
         let location = CodeLocation {
-            file: "current".to_string(),
-            start_line: 0,
-            end_line: 0,
+            file:         "current".to_string(),
+            start_line:   0,
+            end_line:     0,
             start_column: 0,
-            end_column: 0,
+            end_column:   0,
         };
 
         self.add_definition(name, SymbolKind::Struct, location, Visibility::Private);
@@ -452,11 +424,11 @@ impl<'a> Visit<'_> for SemanticVisitor<'a> {
         // Analyze enum definitions
         let name = node.ident.to_string();
         let location = CodeLocation {
-            file: "current".to_string(),
-            start_line: 0,
-            end_line: 0,
+            file:         "current".to_string(),
+            start_line:   0,
+            end_line:     0,
             start_column: 0,
-            end_column: 0,
+            end_column:   0,
         };
 
         self.add_definition(name, SymbolKind::Enum, location, Visibility::Private);
@@ -466,11 +438,11 @@ impl<'a> Visit<'_> for SemanticVisitor<'a> {
         // Analyze trait definitions
         let name = node.ident.to_string();
         let location = CodeLocation {
-            file: "current".to_string(),
-            start_line: 0,
-            end_line: 0,
+            file:         "current".to_string(),
+            start_line:   0,
+            end_line:     0,
             start_column: 0,
-            end_column: 0,
+            end_column:   0,
         };
 
         self.add_definition(name, SymbolKind::Trait, location, Visibility::Private);
@@ -480,8 +452,8 @@ impl<'a> Visit<'_> for SemanticVisitor<'a> {
 impl Default for SemanticConfig {
     fn default() -> Self {
         Self {
-            max_function_complexity: 10,
-            enable_code_smell_detection: true,
+            max_function_complexity:      10,
+            enable_code_smell_detection:  true,
             enable_relationship_analysis: true,
         }
     }

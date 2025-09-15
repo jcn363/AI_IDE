@@ -9,10 +9,10 @@ use crate::types::*;
 
 #[derive(Clone)]
 pub struct UiIntegration {
-    pub layout_manager: Arc<RwLock<DashboardLayout>>,
-    pub widget_system: Arc<RwLock<WidgetManager>>,
-    pub update_manager: Arc<RwLock<RealtimeUpdate>>,
-    pub export_engine: Arc<RwLock<DashboardExport>>,
+    pub layout_manager:       Arc<RwLock<DashboardLayout>>,
+    pub widget_system:        Arc<RwLock<WidgetManager>>,
+    pub update_manager:       Arc<RwLock<RealtimeUpdate>>,
+    pub export_engine:        Arc<RwLock<DashboardExport>>,
     pub accessibility_engine: Arc<RwLock<AccessibilitySupport>>,
 }
 
@@ -30,10 +30,10 @@ pub struct AccessibilitySupport;
 impl UiIntegration {
     pub async fn new(_config: Arc<RwLock<DashboardConfiguration>>) -> UiIntegration {
         UiIntegration {
-            layout_manager: Arc::new(RwLock::new(DashboardLayout)),
-            widget_system: Arc::new(RwLock::new(WidgetManager)),
-            update_manager: Arc::new(RwLock::new(RealtimeUpdate)),
-            export_engine: Arc::new(RwLock::new(DashboardExport)),
+            layout_manager:       Arc::new(RwLock::new(DashboardLayout)),
+            widget_system:        Arc::new(RwLock::new(WidgetManager)),
+            update_manager:       Arc::new(RwLock::new(RealtimeUpdate)),
+            export_engine:        Arc::new(RwLock::new(DashboardExport)),
             accessibility_engine: Arc::new(RwLock::new(AccessibilitySupport)),
         }
     }

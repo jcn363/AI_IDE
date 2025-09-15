@@ -207,7 +207,7 @@ impl OptimizerError {
     /// Create a new validation error
     pub fn validation_error<F: Into<String>, M: Into<String>>(field: F, message: M) -> Self {
         Self::ValidationError {
-            field: field.into(),
+            field:   field.into(),
             message: message.into(),
         }
     }

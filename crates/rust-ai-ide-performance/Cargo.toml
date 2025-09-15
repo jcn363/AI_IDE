@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-performance"
-readme = { workspace = true }
+
 version = "0.1.0"
 edition = "2021"
 
@@ -30,5 +30,5 @@ warp = "0.3"
 
 [lib]
 name = "rust_ai_ide_performance"
-readme = { workspace = true }
+
 path = "src/lib.rs"

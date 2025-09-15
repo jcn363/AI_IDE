@@ -23,7 +23,7 @@ impl SIMDConfidenceScorer {
         if predictions.len() != uncertainties.len() || predictions.len() != weights.len() {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: predictions.len(),
-                actual: uncertainties.len().max(weights.len()),
+                actual:   uncertainties.len().max(weights.len()),
             });
         }
 
@@ -377,7 +377,7 @@ impl SIMDEmbeddingSearch {
         if embeddings.len() % embedding_dim != 0 {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: embeddings.len(),
-                actual: embeddings.len(),
+                actual:   embeddings.len(),
             });
         }
 
@@ -389,25 +389,20 @@ impl SIMDEmbeddingSearch {
         #[cfg(target_arch = "x86_64")]
         {
             if caps.has_avx2 && embedding_dim >= 8 {
-                similarities =
-                    Self::cosine_similarity_search_avx2(query, embeddings, embedding_dim)?;
+                similarities = Self::cosine_similarity_search_avx2(query, embeddings, embedding_dim)?;
             } else if caps.has_sse && embedding_dim >= 4 {
-                similarities =
-                    Self::cosine_similarity_search_sse(query, embeddings, embedding_dim)?;
+                similarities = Self::cosine_similarity_search_sse(query, embeddings, embedding_dim)?;
             } else {
-                similarities =
-                    Self::cosine_similarity_search_scalar(query, embeddings, embedding_dim)?;
+                similarities = Self::cosine_similarity_search_scalar(query, embeddings, embedding_dim)?;
             }
         }
 
         #[cfg(target_arch = "aarch64")]
         {
             if caps.has_neon && embedding_dim >= 4 {
-                similarities =
-                    Self::cosine_similarity_search_neon(query, embeddings, embedding_dim)?;
+                similarities = Self::cosine_similarity_search_neon(query, embeddings, embedding_dim)?;
             } else {
-                similarities =
-                    Self::cosine_similarity_search_scalar(query, embeddings, embedding_dim)?;
+                similarities = Self::cosine_similarity_search_scalar(query, embeddings, embedding_dim)?;
             }
         }
 
@@ -669,16 +664,11 @@ impl SIMDEmbeddingSearch {
 
 impl SIMDAIInferenceOps {
     /// SIMD-accelerated matrix-vector multiplication for inference layers
-    pub fn matrix_vector_mul(
-        matrix: &[f32],
-        vector: &[f32],
-        rows: usize,
-        cols: usize,
-    ) -> SIMDResult<Vec<f32>> {
+    pub fn matrix_vector_mul(matrix: &[f32], vector: &[f32], rows: usize, cols: usize) -> SIMDResult<Vec<f32>> {
         if cols != vector.len() {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: cols,
-                actual: vector.len(),
+                actual:   vector.len(),
             });
         }
 
@@ -710,12 +700,7 @@ impl SIMDAIInferenceOps {
 
     /// AVX2 matrix-vector multiplication
     #[cfg(target_arch = "x86_64")]
-    fn matrix_vector_mul_avx2(
-        matrix: &[f32],
-        vector: &[f32],
-        rows: usize,
-        cols: usize,
-    ) -> SIMDResult<Vec<f32>> {
+    fn matrix_vector_mul_avx2(matrix: &[f32], vector: &[f32], rows: usize, cols: usize) -> SIMDResult<Vec<f32>> {
         use std::simd::f32x8;
 
         let mut result = vec![0.0; rows];
@@ -751,12 +736,7 @@ impl SIMDAIInferenceOps {
 
     /// SSE matrix-vector multiplication
     #[cfg(target_arch = "x86_64")]
-    fn matrix_vector_mul_sse(
-        matrix: &[f32],
-        vector: &[f32],
-        rows: usize,
-        cols: usize,
-    ) -> SIMDResult<Vec<f32>> {
+    fn matrix_vector_mul_sse(matrix: &[f32], vector: &[f32], rows: usize, cols: usize) -> SIMDResult<Vec<f32>> {
         use std::simd::f32x4;
 
         let mut result = vec![0.0; rows];
@@ -791,12 +771,7 @@ impl SIMDAIInferenceOps {
 
     /// NEON matrix-vector multiplication
     #[cfg(target_arch = "aarch64")]
-    fn matrix_vector_mul_neon(
-        matrix: &[f32],
-        vector: &[f32],
-        rows: usize,
-        cols: usize,
-    ) -> SIMDResult<Vec<f32>> {
+    fn matrix_vector_mul_neon(matrix: &[f32], vector: &[f32], rows: usize, cols: usize) -> SIMDResult<Vec<f32>> {
         use std::simd::f32x4;
 
         let mut result = vec![0.0; rows];
@@ -830,12 +805,7 @@ impl SIMDAIInferenceOps {
     }
 
     /// Scalar matrix-vector multiplication
-    fn matrix_vector_mul_scalar(
-        matrix: &[f32],
-        vector: &[f32],
-        rows: usize,
-        cols: usize,
-    ) -> SIMDResult<Vec<f32>> {
+    fn matrix_vector_mul_scalar(matrix: &[f32], vector: &[f32], rows: usize, cols: usize) -> SIMDResult<Vec<f32>> {
         let mut result = vec![0.0; rows];
 
         for i in 0..rows {
@@ -848,10 +818,7 @@ impl SIMDAIInferenceOps {
     }
 
     /// SIMD-accelerated activation functions for inference layers
-    pub fn apply_activation(
-        input: &[f32],
-        activation_type: ActivationType,
-    ) -> SIMDResult<Vec<f32>> {
+    pub fn apply_activation(input: &[f32], activation_type: ActivationType) -> SIMDResult<Vec<f32>> {
         let caps = get_cached_capabilities();
 
         #[cfg(target_arch = "x86_64")]
@@ -880,10 +847,7 @@ impl SIMDAIInferenceOps {
 
     /// AVX2 activation functions
     #[cfg(target_arch = "x86_64")]
-    fn apply_activation_avx2(
-        input: &[f32],
-        activation_type: ActivationType,
-    ) -> SIMDResult<Vec<f32>> {
+    fn apply_activation_avx2(input: &[f32], activation_type: ActivationType) -> SIMDResult<Vec<f32>> {
         use std::simd::f32x8;
 
         let mut result = Vec::with_capacity(input.len());
@@ -914,13 +878,12 @@ impl SIMDAIInferenceOps {
                         ActivationType::ReLU => input[j].max(0.0),
                         ActivationType::Sigmoid => 1.0 / (1.0 + (-input[j]).exp()),
                         ActivationType::Tanh => input[j].tanh(),
-                        ActivationType::LeakyReLU => {
+                        ActivationType::LeakyReLU =>
                             if input[j] > 0.0 {
                                 input[j]
                             } else {
                                 0.01 * input[j]
-                            }
-                        }
+                            },
                     };
                     result.push(output_val);
                 }
@@ -932,10 +895,7 @@ impl SIMDAIInferenceOps {
 
     /// SSE activation functions
     #[cfg(target_arch = "x86_64")]
-    fn apply_activation_sse(
-        input: &[f32],
-        activation_type: ActivationType,
-    ) -> SIMDResult<Vec<f32>> {
+    fn apply_activation_sse(input: &[f32], activation_type: ActivationType) -> SIMDResult<Vec<f32>> {
         use std::simd::f32x4;
 
         let mut result = Vec::with_capacity(input.len());
@@ -966,13 +926,12 @@ impl SIMDAIInferenceOps {
                         ActivationType::ReLU => input[j].max(0.0),
                         ActivationType::Sigmoid => 1.0 / (1.0 + (-input[j]).exp()),
                         ActivationType::Tanh => input[j].tanh(),
-                        ActivationType::LeakyReLU => {
+                        ActivationType::LeakyReLU =>
                             if input[j] > 0.0 {
                                 input[j]
                             } else {
                                 0.01 * input[j]
-                            }
-                        }
+                            },
                     };
                     result.push(output_val);
                 }
@@ -984,10 +943,7 @@ impl SIMDAIInferenceOps {
 
     /// NEON activation functions
     #[cfg(target_arch = "aarch64")]
-    fn apply_activation_neon(
-        input: &[f32],
-        activation_type: ActivationType,
-    ) -> SIMDResult<Vec<f32>> {
+    fn apply_activation_neon(input: &[f32], activation_type: ActivationType) -> SIMDResult<Vec<f32>> {
         use std::simd::f32x4;
 
         let mut result = Vec::with_capacity(input.len());
@@ -1018,13 +974,12 @@ impl SIMDAIInferenceOps {
                         ActivationType::ReLU => input[j].max(0.0),
                         ActivationType::Sigmoid => 1.0 / (1.0 + (-input[j]).exp()),
                         ActivationType::Tanh => input[j].tanh(),
-                        ActivationType::LeakyReLU => {
+                        ActivationType::LeakyReLU =>
                             if input[j] > 0.0 {
                                 input[j]
                             } else {
                                 0.01 * input[j]
-                            }
-                        }
+                            },
                     };
                     result.push(output_val);
                 }
@@ -1035,23 +990,19 @@ impl SIMDAIInferenceOps {
     }
 
     /// Scalar activation functions
-    fn apply_activation_scalar(
-        input: &[f32],
-        activation_type: ActivationType,
-    ) -> SIMDResult<Vec<f32>> {
+    fn apply_activation_scalar(input: &[f32], activation_type: ActivationType) -> SIMDResult<Vec<f32>> {
         let result = input
             .iter()
             .map(|&x| match activation_type {
                 ActivationType::ReLU => x.max(0.0),
                 ActivationType::Sigmoid => 1.0 / (1.0 + (-x).exp()),
                 ActivationType::Tanh => x.tanh(),
-                ActivationType::LeakyReLU => {
+                ActivationType::LeakyReLU =>
                     if x > 0.0 {
                         x
                     } else {
                         0.01 * x
-                    }
-                }
+                    },
             })
             .collect();
 
@@ -1078,8 +1029,7 @@ mod tests {
         let uncertainties = vec![0.1, 0.2, 0.05];
         let weights = vec![0.5, 0.7, 0.8];
 
-        let result =
-            SIMDConfidenceScorer::compute_confidence_scores(&predictions, &uncertainties, &weights);
+        let result = SIMDConfidenceScorer::compute_confidence_scores(&predictions, &uncertainties, &weights);
 
         match result {
             Ok(scores) => {
@@ -1121,8 +1071,7 @@ mod tests {
         let embeddings = vec![1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
         let embedding_dim = 3;
 
-        let result =
-            SIMDEmbeddingSearch::cosine_similarity_search(&query, &embeddings, embedding_dim, 2);
+        let result = SIMDEmbeddingSearch::cosine_similarity_search(&query, &embeddings, embedding_dim, 2);
 
         match result {
             Ok(similarities) => {

@@ -1,6 +1,6 @@
 [package]
 name = "rust-ai-ide-shared-types"
-readme = { workspace = true }
+
 version = { workspace = true }
 edition = { workspace = true }
 authors = { workspace = true }
@@ -70,12 +70,12 @@ development = ["full"]
 
 [lib]
 name = "rust_ai_ide_shared_types"
-readme = { workspace = true }
+
 path = "src/lib.rs"
 
 [[bin]]
 name = "type_generator"
-readme = { workspace = true }
+
 path = "src/bin/type_generator.rs"
 
 [package.metadata.docs.rs]

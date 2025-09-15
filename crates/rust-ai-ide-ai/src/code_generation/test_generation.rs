@@ -8,29 +8,29 @@ use crate::code_generation::*;
 /// Generated test suite
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct GeneratedTests {
-    pub unit_tests: Vec<GeneratedTest>,
-    pub integration_tests: Vec<GeneratedTest>,
-    pub property_tests: Vec<GeneratedTest>,
-    pub benchmark_tests: Vec<GeneratedTest>,
+    pub unit_tests:         Vec<GeneratedTest>,
+    pub integration_tests:  Vec<GeneratedTest>,
+    pub property_tests:     Vec<GeneratedTest>,
+    pub benchmark_tests:    Vec<GeneratedTest>,
     pub coverage_estimates: Vec<TestCoverage>,
 }
 
 /// Generated individual test
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct GeneratedTest {
-    pub test_name: String,
-    pub test_code: String,
-    pub description: String,
-    pub test_type: TestKind,
+    pub test_name:         String,
+    pub test_code:         String,
+    pub description:       String,
+    pub test_type:         TestKind,
     pub expected_coverage: Vec<String>,
 }
 
 /// Test coverage information
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct TestCoverage {
-    pub target: String,
-    pub coverage_type: CoverageType,
-    pub lines_covered: u32,
+    pub target:           String,
+    pub coverage_type:    CoverageType,
+    pub lines_covered:    u32,
     pub branches_covered: u32,
 }
 
@@ -92,8 +92,8 @@ impl TestGenerator {
         _context: &CodeGenerationContext,
     ) -> Result<Vec<GeneratedTest>, CodeGenerationError> {
         let tests = vec![GeneratedTest {
-            test_name: "test_basic_functionality".to_string(),
-            test_code: r#"
+            test_name:         "test_basic_functionality".to_string(),
+            test_code:         r#"
     #[test]
     fn test_basic_functionality() {
         // Test basic functionality
@@ -102,8 +102,8 @@ impl TestGenerator {
     }
 "#
             .to_string(),
-            description: "Test basic functionality of the function".to_string(),
-            test_type: TestKind::Unit,
+            description:       "Test basic functionality of the function".to_string(),
+            test_type:         TestKind::Unit,
             expected_coverage: vec!["function_under_test".to_string()],
         }];
 

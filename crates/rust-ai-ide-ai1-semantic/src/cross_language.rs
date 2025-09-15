@@ -33,10 +33,7 @@ impl CrossLanguageRefactor {
         self.supported_languages.get(language)
     }
 
-    pub fn analyze_cross_language_dependencies(
-        &self,
-        codebases: &[(String, String)],
-    ) -> Vec<CrossLanguageDependency> {
+    pub fn analyze_cross_language_dependencies(&self, codebases: &[(String, String)]) -> Vec<CrossLanguageDependency> {
         vec![] // Placeholder
     }
 }
@@ -44,18 +41,18 @@ impl CrossLanguageRefactor {
 /// Language support configuration
 #[derive(Debug)]
 pub struct LanguageSupport {
-    pub name: String,
-    pub parser_supported: bool,
-    pub refactoring_rules: Vec<String>,
+    pub name:                    String,
+    pub parser_supported:        bool,
+    pub refactoring_rules:       Vec<String>,
     pub transformation_patterns: Vec<TransformationPattern>,
 }
 
 impl LanguageSupport {
     pub fn new(name: &str) -> Self {
         Self {
-            name: name.to_string(),
-            parser_supported: name == "rust",
-            refactoring_rules: vec![],
+            name:                    name.to_string(),
+            parser_supported:        name == "rust",
+            refactoring_rules:       vec![],
             transformation_patterns: vec![],
         }
     }
@@ -64,18 +61,18 @@ impl LanguageSupport {
 /// Cross-language dependency
 #[derive(Debug, Clone)]
 pub struct CrossLanguageDependency {
-    pub from_language: String,
-    pub to_language: String,
+    pub from_language:   String,
+    pub to_language:     String,
     pub dependency_type: String,
-    pub strength: f32,
+    pub strength:        f32,
 }
 
 /// Transformation pattern
 #[derive(Debug, Clone)]
 pub struct TransformationPattern {
-    pub name: String,
-    pub from_pattern: String,
-    pub to_pattern: String,
+    pub name:          String,
+    pub from_pattern:  String,
+    pub to_pattern:    String,
     pub language_from: String,
-    pub language_to: String,
+    pub language_to:   String,
 }

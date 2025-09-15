@@ -10,11 +10,11 @@ use crate::types::{ServiceId, ServiceRegistration, ServiceStatus, ServiceVersion
 /// Service registry that manages service discovery and registration
 #[derive(Debug)]
 pub struct ServiceRegistry {
-    services: Arc<RwLock<HashMap<ServiceId, ServiceRegistration>>>,
-    discovery_event_sender: tokio::sync::mpsc::Sender<DiscoveryEvent>,
+    services:                 Arc<RwLock<HashMap<ServiceId, ServiceRegistration>>>,
+    discovery_event_sender:   tokio::sync::mpsc::Sender<DiscoveryEvent>,
     discovery_event_receiver: Arc<tokio::sync::Mutex<tokio::sync::mpsc::Receiver<DiscoveryEvent>>>,
-    service_timeout: Duration,
-    max_services: usize,
+    service_timeout:          Duration,
+    max_services:             usize,
 }
 
 impl ServiceRegistry {
@@ -32,10 +32,7 @@ impl ServiceRegistry {
     }
 
     /// Register a new service
-    pub async fn register_service(
-        &self,
-        registration: ServiceRegistration,
-    ) -> OrchestrationResult<()> {
+    pub async fn register_service(&self, registration: ServiceRegistration) -> OrchestrationResult<()> {
         let mut services = self.services.write().await;
 
         // Check capacity
@@ -94,9 +91,9 @@ impl ServiceRegistry {
     ) -> OrchestrationResult<()> {
         let mut services = self.services.write().await;
 
-        let service = services.get_mut(service_id).ok_or_else(|| {
-            OrchestrationError::UnknownService(format!("Service {} not found", service_id))
-        })?;
+        let service = services
+            .get_mut(service_id)
+            .ok_or_else(|| OrchestrationError::UnknownService(format!("Service {} not found", service_id)))?;
 
         service.status = status.clone();
 
@@ -110,15 +107,13 @@ impl ServiceRegistry {
     }
 
     /// Get service information by ID
-    pub async fn get_service(
-        &self,
-        service_id: &ServiceId,
-    ) -> OrchestrationResult<ServiceRegistration> {
+    pub async fn get_service(&self, service_id: &ServiceId) -> OrchestrationResult<ServiceRegistration> {
         let services = self.services.read().await;
 
-        services.get(service_id).cloned().ok_or_else(|| {
-            OrchestrationError::UnknownService(format!("Service {} not found", service_id))
-        })
+        services
+            .get(service_id)
+            .cloned()
+            .ok_or_else(|| OrchestrationError::UnknownService(format!("Service {} not found", service_id)))
     }
 
     /// List all registered services
@@ -128,10 +123,7 @@ impl ServiceRegistry {
     }
 
     /// List services by status
-    pub async fn list_services_by_status(
-        &self,
-        status: &ServiceStatus,
-    ) -> Vec<ServiceRegistration> {
+    pub async fn list_services_by_status(&self, status: &ServiceStatus) -> Vec<ServiceRegistration> {
         let services = self.services.read().await;
         services
             .values()
@@ -141,10 +133,7 @@ impl ServiceRegistry {
     }
 
     /// Discover services by capability
-    pub async fn discover_services_by_capability(
-        &self,
-        capability: &str,
-    ) -> Vec<ServiceRegistration> {
+    pub async fn discover_services_by_capability(&self, capability: &str) -> Vec<ServiceRegistration> {
         let services = self.services.read().await;
         services
             .values()
@@ -219,9 +208,9 @@ pub enum DiscoveryEvent {
 /// Registry statistics
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RegistryStatistics {
-    pub total_services: usize,
+    pub total_services:     usize,
     pub available_services: usize,
-    pub failed_services: usize,
+    pub failed_services:    usize,
 }
 
 impl Default for ServiceRegistry {
@@ -241,21 +230,21 @@ mod tests {
 
         let service_id = "test-service".to_string();
         let registration = ServiceRegistration {
-            id: service_id.clone(),
-            name: "Test Service".to_string(),
-            description: "A test service".to_string(),
-            version: ServiceVersion::new(1, 0, 0),
-            status: ServiceStatus::Ready,
-            capabilities: ServiceCapabilities {
-                supported_operations: vec!["test".to_string()],
+            id:                    service_id.clone(),
+            name:                  "Test Service".to_string(),
+            description:           "A test service".to_string(),
+            version:               ServiceVersion::new(1, 0, 0),
+            status:                ServiceStatus::Ready,
+            capabilities:          ServiceCapabilities {
+                supported_operations:    vec!["test".to_string()],
                 max_concurrent_requests: Some(10),
-                rate_limits: None,
-                dependencies: vec![],
-                provides: vec!["test".to_string()],
+                rate_limits:             None,
+                dependencies:            vec![],
+                provides:                vec!["test".to_string()],
             },
             health_check_endpoint: None,
-            priority: ServicePriority::Normal,
-            tags: vec![],
+            priority:              ServicePriority::Normal,
+            tags:                  vec![],
         };
 
         // Register service

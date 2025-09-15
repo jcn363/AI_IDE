@@ -17,12 +17,12 @@ use crate::types::*;
 
 /// Core maintenance forecaster
 pub struct MaintenanceForecaster {
-    technical_debt_predictor: Arc<TechnicalDebtPredictor>,
+    technical_debt_predictor:    Arc<TechnicalDebtPredictor>,
     maintenance_impact_analyzer: Arc<MaintenanceImpactAnalyzer>,
-    maintenance_cost_estimator: Arc<MaintenanceCostEstimator>,
+    maintenance_cost_estimator:  Arc<MaintenanceCostEstimator>,
     maintenance_priority_scorer: Arc<MaintenancePriorityScorer>,
-    code_relationship_mapper: Arc<CodeRelationshipMapper>,
-    forecast_cache: moka::future::Cache<String, MaintenanceForecastResult>,
+    code_relationship_mapper:    Arc<CodeRelationshipMapper>,
+    forecast_cache:              moka::future::Cache<String, MaintenanceForecastResult>,
 }
 
 impl MaintenanceForecaster {
@@ -41,17 +41,15 @@ impl MaintenanceForecaster {
 
         let maintenance_cost_estimator = Arc::new(MaintenanceCostEstimator::new());
 
-        let maintenance_priority_scorer =
-            Arc::new(MaintenancePriorityScorer::new(Arc::clone(&health_scorer)));
+        let maintenance_priority_scorer = Arc::new(MaintenancePriorityScorer::new(Arc::clone(&health_scorer)));
 
         let code_relationship_mapper = Arc::new(CodeRelationshipMapper::new(Arc::clone(
             &dependency_analyzer,
         )));
 
-        let forecast_cache: moka::future::Cache<String, MaintenanceForecastResult> =
-            moka::future::Cache::builder()
-                .time_to_live(std::time::Duration::from_secs(1800))
-                .build();
+        let forecast_cache: moka::future::Cache<String, MaintenanceForecastResult> = moka::future::Cache::builder()
+            .time_to_live(std::time::Duration::from_secs(1800))
+            .build();
 
         Self {
             technical_debt_predictor,
@@ -64,10 +62,7 @@ impl MaintenanceForecaster {
     }
 
     /// Forecast maintenance costs and schedules
-    pub async fn forecast(
-        &self,
-        schedule_request: &MaintenanceScheduleRequest,
-    ) -> Result<MaintenanceForecastResult> {
+    pub async fn forecast(&self, schedule_request: &MaintenanceScheduleRequest) -> Result<MaintenanceForecastResult> {
         let cache_key = format!(
             "maintenance_forecast_{}",
             schedule_request.time_horizon_days
@@ -134,16 +129,12 @@ impl MaintenanceForecaster {
         vec![] // Placeholder
     }
 
-    fn assess_overall_risk(
-        &self,
-        _tasks: &[MaintenanceTask],
-        _impact: &ImpactAnalysis,
-    ) -> Result<RiskAssessment> {
+    fn assess_overall_risk(&self, _tasks: &[MaintenanceTask], _impact: &ImpactAnalysis) -> Result<RiskAssessment> {
         // TODO: Implement comprehensive risk assessment
         Ok(RiskAssessment {
             overall_risk: SeverityLevel::Medium,
             risk_factors: HashMap::new(),
-            mitigations: vec![],
+            mitigations:  vec![],
         })
     }
 
@@ -160,7 +151,7 @@ impl MaintenanceForecaster {
 /// Technical debt forecasting component
 pub struct TechnicalDebtPredictor {
     dependency_analyzer: Arc<CrossFileDependencyAnalyzer>,
-    debt_model: Arc<DebtEvolutionModel>,
+    debt_model:          Arc<DebtEvolutionModel>,
 }
 
 impl TechnicalDebtPredictor {
@@ -171,10 +162,7 @@ impl TechnicalDebtPredictor {
         }
     }
 
-    async fn forecast_debt(
-        &self,
-        _schedule_request: &MaintenanceScheduleRequest,
-    ) -> Result<DebtForecast> {
+    async fn forecast_debt(&self, _schedule_request: &MaintenanceScheduleRequest) -> Result<DebtForecast> {
         // TODO: Implement debt forecasting using time-series analysis
         Ok(DebtForecast {
             projected_debt_ratio: 0.15,
@@ -196,14 +184,11 @@ impl MaintenanceImpactAnalyzer {
         }
     }
 
-    async fn analyze_impact(
-        &self,
-        _schedule_request: &MaintenanceScheduleRequest,
-    ) -> Result<ImpactAnalysis> {
+    async fn analyze_impact(&self, _schedule_request: &MaintenanceScheduleRequest) -> Result<ImpactAnalysis> {
         // TODO: Analyze how maintenance tasks impact the broader codebase
         Ok(ImpactAnalysis {
             affected_components: vec![],
-            cascading_effects: vec![],
+            cascading_effects:   vec![],
         })
     }
 }
@@ -220,10 +205,7 @@ impl MaintenanceCostEstimator {
         }
     }
 
-    async fn estimate_costs(
-        &self,
-        _impact_analysis: &ImpactAnalysis,
-    ) -> Result<Vec<MaintenanceTask>> {
+    async fn estimate_costs(&self, _impact_analysis: &ImpactAnalysis) -> Result<Vec<MaintenanceTask>> {
         // TODO: Estimate costs using historical data and complexity metrics
         vec![] // Placeholder
     }
@@ -270,7 +252,7 @@ pub struct DebtForecast {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImpactAnalysis {
     pub affected_components: Vec<String>,
-    pub cascading_effects: Vec<String>,
+    pub cascading_effects:   Vec<String>,
 }
 
 #[derive(Debug, Clone)]

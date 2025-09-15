@@ -17,25 +17,25 @@ use crate::{Cache, IDEResult, LspCacheExt};
 /// Legacy LSP analysis result format for backward compatibility
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CachedAnalysisResult {
-    pub result: serde_json::Value,
-    pub file_hash: String,
-    pub file_size: u64,
-    pub file_mtime: std::time::SystemTime,
+    pub result:       serde_json::Value,
+    pub file_hash:    String,
+    pub file_size:    u64,
+    pub file_mtime:   std::time::SystemTime,
     pub dependencies: Vec<PathBuf>,
-    pub cached_at: chrono::DateTime<chrono::Utc>,
-    pub ttl: u64,
+    pub cached_at:    chrono::DateTime<chrono::Utc>,
+    pub ttl:          u64,
 }
 
 /// Legacy cache statistics format
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LegacyCacheStats {
-    pub total_entries: usize,
+    pub total_entries:    usize,
     pub total_size_bytes: u64,
-    pub hits: u64,
-    pub misses: u64,
-    pub hit_ratio: f64,
-    pub invalidated: u64,
-    pub uptime_seconds: u64,
+    pub hits:             u64,
+    pub misses:           u64,
+    pub hit_ratio:        f64,
+    pub invalidated:      u64,
+    pub uptime_seconds:   u64,
 }
 
 /// Legacy AnalysisCaching trait for backward compatibility
@@ -54,20 +54,20 @@ pub trait LegacyAnalysisCaching: Send + Sync {
 /// Adapter that provides legacy AnalysisCaching interface using unified cache
 pub struct LegacyLspCacheAdapter {
     unified_cache: UnifiedLspCache,
-    legacy_stats: std::sync::RwLock<LegacyCacheStats>,
+    legacy_stats:  std::sync::RwLock<LegacyCacheStats>,
 }
 
 impl LegacyLspCacheAdapter {
     pub fn new(config: LspCacheConfig) -> Self {
         let unified_cache = UnifiedLspCache::new(config);
         let stats = LegacyCacheStats {
-            total_entries: 0,
+            total_entries:    0,
             total_size_bytes: 0,
-            hits: 0,
-            misses: 0,
-            hit_ratio: 0.0,
-            invalidated: 0,
-            uptime_seconds: 0,
+            hits:             0,
+            misses:           0,
+            hit_ratio:        0.0,
+            invalidated:      0,
+            uptime_seconds:   0,
         };
 
         Self {
@@ -78,18 +78,18 @@ impl LegacyLspCacheAdapter {
 
     pub fn new_from_unified(cache: UnifiedLspCache) -> Self {
         let stats = LegacyCacheStats {
-            total_entries: 0,
+            total_entries:    0,
             total_size_bytes: 0,
-            hits: 0,
-            misses: 0,
-            hit_ratio: 0.0,
-            invalidated: 0,
-            uptime_seconds: 0,
+            hits:             0,
+            misses:           0,
+            hit_ratio:        0.0,
+            invalidated:      0,
+            uptime_seconds:   0,
         };
 
         Self {
             unified_cache: cache,
-            legacy_stats: std::sync::RwLock::new(stats),
+            legacy_stats:  std::sync::RwLock::new(stats),
         }
     }
 
@@ -132,18 +132,17 @@ impl LegacyAnalysisCaching for LegacyLspCacheAdapter {
 
         // Create legacy-style cached result
         let cached_result = CachedAnalysisResult {
-            result: result.clone(),
-            file_hash: "legacy".to_string(), // Simplified for backward compatibility
-            file_size: 0,
-            file_mtime: std::time::SystemTime::now(),
+            result:       result.clone(),
+            file_hash:    "legacy".to_string(), // Simplified for backward compatibility
+            file_size:    0,
+            file_mtime:   std::time::SystemTime::now(),
             dependencies: Vec::new(),
-            cached_at: chrono::Utc::now(),
-            ttl: 1800, // 30 minutes
+            cached_at:    chrono::Utc::now(),
+            ttl:          1800, // 30 minutes
         };
 
         // Convert to JSON and store
-        let json_result = serde_json::to_value(&cached_result)
-            .map_err(|e| format!("Serialization error: {}", e))?;
+        let json_result = serde_json::to_value(&cached_result).map_err(|e| format!("Serialization error: {}", e))?;
 
         // Use unified cache
         self.unified_cache
@@ -169,8 +168,7 @@ impl LegacyAnalysisCaching for LegacyLspCacheAdapter {
             .map_err(|e| format!("Cache error: {:?}", e))?;
 
         if let Some(json_result) = result {
-            if let Ok(cached) = serde_json::from_value::<CachedAnalysisResult>(json_result.clone())
-            {
+            if let Ok(cached) = serde_json::from_value::<CachedAnalysisResult>(json_result.clone()) {
                 self.update_stats(true).await;
                 Ok(Some(cached.result))
             } else {
@@ -202,13 +200,13 @@ impl LegacyAnalysisCaching for LegacyLspCacheAdapter {
 
         let mut stats = self.legacy_stats.write().unwrap();
         *stats = LegacyCacheStats {
-            total_entries: 0,
+            total_entries:    0,
             total_size_bytes: 0,
-            hits: 0,
-            misses: 0,
-            hit_ratio: 0.0,
-            invalidated: 0,
-            uptime_seconds: stats.uptime_seconds,
+            hits:             0,
+            misses:           0,
+            hit_ratio:        0.0,
+            invalidated:      0,
+            uptime_seconds:   stats.uptime_seconds,
         };
 
         Ok(())

@@ -29,9 +29,9 @@ impl ImpactAnalyzer {
         // Analysis implementation would go here
         // For now, return placeholder analysis
         Ok(ImpactAnalysis {
-            impacts: vec![],
+            impacts:            vec![],
             overall_risk_score: 0.5,
-            safe_sequences: vec![],
+            safe_sequences:     vec![],
         })
     }
 }

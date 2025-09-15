@@ -10,7 +10,7 @@ use crate::error::TestError;
 #[derive(Debug)]
 pub struct TempWorkspace {
     /// The underlying temporary directory
-    _temp_dir: TempDir,
+    _temp_dir:      TempDir,
     /// Path to the temporary workspace directory
     workspace_path: PathBuf,
 }

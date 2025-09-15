@@ -11,19 +11,17 @@ use crate::fallback_manager::ModelFallbackManager;
 use crate::health_monitor::ModelHealthMonitor;
 use crate::load_balancer::ModelLoadBalancer;
 use crate::model_selector::PerformanceBasedModelSelector;
-use crate::types::{
-    ConsensusResult, LoadDecision, ModelRecommendation, OrchestrationConfig, RequestContext,
-};
+use crate::types::{ConsensusResult, LoadDecision, ModelRecommendation, OrchestrationConfig, RequestContext};
 use crate::{OrchestrationError, Result};
 
 /// Main Multi-Model Orchestrator
 #[derive(Debug)]
 pub struct MultiModelOrchestrator {
-    pub model_selector: Arc<PerformanceBasedModelSelector>,
-    pub load_balancer: Arc<ModelLoadBalancer>,
+    pub model_selector:   Arc<PerformanceBasedModelSelector>,
+    pub load_balancer:    Arc<ModelLoadBalancer>,
     pub consensus_engine: Arc<ModelConsensusEngine>,
     pub fallback_manager: Arc<ModelFallbackManager>,
-    pub health_monitor: Arc<ModelHealthMonitor>,
+    pub health_monitor:   Arc<ModelHealthMonitor>,
 }
 
 impl MultiModelOrchestrator {
@@ -35,11 +33,11 @@ impl MultiModelOrchestrator {
     /// Create a new orchestrator with custom configuration
     pub async fn with_config(config: OrchestrationConfig) -> Result<Self> {
         Ok(Self {
-            model_selector: Arc::new(PerformanceBasedModelSelector::new(config.clone())?),
-            load_balancer: Arc::new(ModelLoadBalancer::new(config.clone()).await?),
+            model_selector:   Arc::new(PerformanceBasedModelSelector::new(config.clone())?),
+            load_balancer:    Arc::new(ModelLoadBalancer::new(config.clone()).await?),
             consensus_engine: Arc::new(ModelConsensusEngine::new(config.clone())?),
             fallback_manager: Arc::new(ModelFallbackManager::new()),
-            health_monitor: Arc::new(ModelHealthMonitor::new()),
+            health_monitor:   Arc::new(ModelHealthMonitor::new()),
         })
     }
 
@@ -64,11 +62,11 @@ impl MultiModelOrchestrator {
         } else {
             // Use selected model directly
             ConsensusResult {
-                final_result: "placeholder output".to_string(), // Placeholder
-                confidence_score: model_recommendation.confidence_score,
+                final_result:        "placeholder output".to_string(), // Placeholder
+                confidence_score:    model_recommendation.confidence_score,
                 model_contributions: std::collections::HashMap::new(),
-                disagreement_score: 0.0,
-                primary_model: model_recommendation.model_id,
+                disagreement_score:  0.0,
+                primary_model:       model_recommendation.model_id,
             }
         };
 
@@ -90,11 +88,11 @@ impl MultiModelOrchestrator {
     /// Get orchestrator health status
     pub async fn get_health_status(&self) -> OrchestratorHealth {
         OrchestratorHealth {
-            model_selector_health: true,   // Placeholder
-            load_balancer_health: true,    // Placeholder
+            model_selector_health:   true, // Placeholder
+            load_balancer_health:    true, // Placeholder
             consensus_engine_health: true, // Placeholder
             fallback_manager_health: true, // Placeholder
-            overall_health: true,          // Placeholder
+            overall_health:          true, // Placeholder
         }
     }
 }
@@ -103,20 +101,20 @@ impl MultiModelOrchestrator {
 #[derive(Debug, Clone)]
 pub struct OrchestrationResult {
     pub model_recommendation: ModelRecommendation,
-    pub load_decision: LoadDecision,
-    pub consensus_result: ConsensusResult,
-    pub offline_status: crate::types::OfflineStatus,
-    pub processing_time: std::time::Duration,
+    pub load_decision:        LoadDecision,
+    pub consensus_result:     ConsensusResult,
+    pub offline_status:       crate::types::OfflineStatus,
+    pub processing_time:      std::time::Duration,
 }
 
 /// Orchestrator health status
 #[derive(Debug, Clone)]
 pub struct OrchestratorHealth {
-    pub model_selector_health: bool,
-    pub load_balancer_health: bool,
+    pub model_selector_health:   bool,
+    pub load_balancer_health:    bool,
     pub consensus_engine_health: bool,
     pub fallback_manager_health: bool,
-    pub overall_health: bool,
+    pub overall_health:          bool,
 }
 
 #[cfg(test)]
@@ -136,12 +134,12 @@ mod tests {
         let orchestrator = MultiModelOrchestrator::new().await.unwrap();
 
         let context = RequestContext {
-            task_type: ModelTask::Completion,
-            input_length: 100,
-            priority: RequestPriority::Medium,
+            task_type:           ModelTask::Completion,
+            input_length:        100,
+            priority:            RequestPriority::Medium,
             expected_complexity: Complexity::Medium,
-            acceptable_latency: std::time::Duration::from_secs(5),
-            preferred_hardware: None,
+            acceptable_latency:  std::time::Duration::from_secs(5),
+            preferred_hardware:  None,
         };
 
         // Note: This will fail due to no actual models - but tests the flow

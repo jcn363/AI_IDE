@@ -20,8 +20,8 @@ pub enum ResolutionStrategy {
 }
 
 pub struct DependencyResolver {
-    graph: Arc<RwLock<DependencyGraph>>,
-    strategy: ResolutionStrategy,
+    graph:                Arc<RwLock<DependencyGraph>>,
+    strategy:             ResolutionStrategy,
     max_parallel_fetches: usize,
 }
 
@@ -166,11 +166,7 @@ impl DependencyResolver {
                         conflicts
                             .entry(dep_name.clone())
                             .or_insert_with(VersionConflict::new)
-                            .add_constraint(
-                                node.name.clone(),
-                                version_req.clone(),
-                                dep_edge.req_depth,
-                            );
+                            .add_constraint(node.name.clone(), version_req.clone(), dep_edge.req_depth);
                     }
                 }
             }
@@ -221,10 +217,7 @@ impl DependencyResolver {
         Ok(latest_version)
     }
 
-    fn select_workspace_aware_version(
-        &self,
-        conflict: &VersionConflict,
-    ) -> DependencyResult<String> {
+    fn select_workspace_aware_version(&self, conflict: &VersionConflict) -> DependencyResult<String> {
         // Prefer versions that are already used in the workspace
         self.select_conservative_version(conflict)
     }
@@ -249,10 +242,7 @@ impl DependencyResolver {
         Err(())
     }
 
-    fn get_all_compatible_versions(
-        &self,
-        conflict: &VersionConflict,
-    ) -> DependencyResult<Vec<String>> {
+    fn get_all_compatible_versions(&self, conflict: &VersionConflict) -> DependencyResult<Vec<String>> {
         let mut compatible_versions = HashSet::new();
 
         for constraint in &conflict.constraints {
@@ -278,20 +268,15 @@ impl DependencyResolver {
         Ok(compatible_versions.into_iter().collect())
     }
 
-    async fn find_latest_compatible_version(
-        &self,
-        package: &str,
-        version_req: &str,
-    ) -> DependencyResult<String> {
-        let version_req = VersionReq::parse(version_req).map_err(|_| {
-            DependencyError::ParseError(format!("Invalid version requirement: {}", version_req))
-        })?;
+    async fn find_latest_compatible_version(&self, package: &str, version_req: &str) -> DependencyResult<String> {
+        let version_req = VersionReq::parse(version_req)
+            .map_err(|_| DependencyError::ParseError(format!("Invalid version requirement: {}", version_req)))?;
 
         // Simplified - would fetch real latest version from registry
         self.select_matching_version(&version_req, &[])
             .map_err(|_| DependencyError::ResolutionError {
                 package: package.to_string(),
-                reason: "No compatible version found".to_string(),
+                reason:  "No compatible version found".to_string(),
             })
     }
 
@@ -312,10 +297,7 @@ impl DependencyResolver {
     }
 
     /// Perform parallel resolution of multiple packages
-    pub async fn resolve_parallel(
-        &self,
-        packages: Vec<String>,
-    ) -> DependencyResult<HashMap<String, String>> {
+    pub async fn resolve_parallel(&self, packages: Vec<String>) -> DependencyResult<HashMap<String, String>> {
         let results: Vec<_> = packages
             .par_chunks(self.max_parallel_fetches)
             .map(|chunk| {
@@ -338,10 +320,7 @@ impl DependencyResolver {
     }
 
     /// Apply resolved versions back to the graph
-    pub async fn apply_resolved_versions(
-        &self,
-        resolved_versions: &HashMap<String, String>,
-    ) -> DependencyResult<()> {
+    pub async fn apply_resolved_versions(&self, resolved_versions: &HashMap<String, String>) -> DependencyResult<()> {
         let mut graph = self.graph.write().await;
 
         for (package_name, version) in resolved_versions {
@@ -359,24 +338,19 @@ impl DependencyResolver {
 /// Representation of a version conflict between packages
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct VersionConflict {
-    pub package: String,
+    pub package:     String,
     pub constraints: Vec<PackageConstraint>,
 }
 
 impl VersionConflict {
     pub fn new() -> Self {
         Self {
-            package: String::new(),
+            package:     String::new(),
             constraints: Vec::new(),
         }
     }
 
-    pub fn add_constraint(
-        &mut self,
-        source_package: String,
-        version_req: String,
-        depth: usize,
-    ) -> &mut Self {
+    pub fn add_constraint(&mut self, source_package: String, version_req: String, depth: usize) -> &mut Self {
         self.constraints.push(PackageConstraint {
             source_package,
             version_req,
@@ -405,8 +379,8 @@ impl VersionConflict {
 #[derive(Debug, Clone, Hash, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct PackageConstraint {
     pub source_package: String,
-    pub version_req: String,
-    pub depth: usize,
+    pub version_req:    String,
+    pub depth:          usize,
 }
 
 impl Ord for PackageConstraint {

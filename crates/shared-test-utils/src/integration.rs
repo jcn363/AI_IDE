@@ -11,15 +11,15 @@ use crate::filesystem::TempWorkspace;
 #[derive(Clone)]
 pub struct IntegrationContext {
     pub test_dir: PathBuf,
-    pub config: IntegrationConfig,
-    pub state: HashMap<String, serde_json::Value>,
+    pub config:   IntegrationConfig,
+    pub state:    HashMap<String, serde_json::Value>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct IntegrationConfig {
     pub cleanup_on_exit: bool,
-    pub isolated_tests: bool,
-    pub enable_logging: bool,
+    pub isolated_tests:  bool,
+    pub enable_logging:  bool,
     pub timeout_seconds: u64,
 }
 
@@ -27,8 +27,8 @@ impl Default for IntegrationConfig {
     fn default() -> Self {
         IntegrationConfig {
             cleanup_on_exit: true,
-            isolated_tests: true,
-            enable_logging: false,
+            isolated_tests:  true,
+            enable_logging:  false,
             timeout_seconds: 60,
         }
     }
@@ -36,17 +36,17 @@ impl Default for IntegrationConfig {
 
 /// Main runner for integration tests
 pub struct IntegrationTestRunner {
-    context: Option<IntegrationContext>,
+    context:   Option<IntegrationContext>,
     workspace: Option<TempWorkspace>,
-    runtime: Option<Runtime>,
+    runtime:   Option<Runtime>,
 }
 
 impl IntegrationTestRunner {
     pub fn new() -> Result<Self, TestError> {
         Ok(IntegrationTestRunner {
-            context: None,
+            context:   None,
             workspace: None,
-            runtime: None,
+            runtime:   None,
         })
     }
 
@@ -68,10 +68,7 @@ isolated_tests = {}
 enable_logging = {}
 timeout_seconds = {}
 "#,
-                config.cleanup_on_exit,
-                config.isolated_tests,
-                config.enable_logging,
-                config.timeout_seconds
+                config.cleanup_on_exit, config.isolated_tests, config.enable_logging, config.timeout_seconds
             ),
         )?;
 
@@ -82,29 +79,23 @@ timeout_seconds = {}
 
         self.context = Some(IntegrationContext {
             test_dir: workspace.path().to_path_buf(),
-            config: config.clone(),
-            state: HashMap::new(),
+            config:   config.clone(),
+            state:    HashMap::new(),
         });
 
         self.workspace = Some(workspace);
 
         // Setup Tokio runtime for async operations
         if self.runtime.is_none() {
-            self.runtime = Some(
-                Runtime::new()
-                    .map_err(|e| TestError::Async(format!("Failed to create runtime: {}", e)))?,
-            );
+            self.runtime =
+                Some(Runtime::new().map_err(|e| TestError::Async(format!("Failed to create runtime: {}", e)))?);
         }
 
         Ok(())
     }
 
     /// Runs an integration test scenario
-    pub async fn run_scenario<T, F>(
-        &mut self,
-        scenario_name: &str,
-        test_fn: F,
-    ) -> Result<T, TestError>
+    pub async fn run_scenario<T, F>(&mut self, scenario_name: &str, test_fn: F) -> Result<T, TestError>
     where
         F: FnOnce(&mut IntegrationContext) -> Result<T, TestError>,
         T: Send + 'static,
@@ -176,11 +167,7 @@ impl Drop for IntegrationTestRunner {
 
 impl IntegrationContext {
     /// Stores state in the context
-    pub fn store_state<T: serde::Serialize>(
-        &mut self,
-        key: &str,
-        value: T,
-    ) -> Result<(), TestError> {
+    pub fn store_state<T: serde::Serialize>(&mut self, key: &str, value: T) -> Result<(), TestError> {
         self.state.insert(
             key.to_string(),
             serde_json::to_value(value).map_err(|e| TestError::Serialization(e.to_string()))?,
@@ -195,10 +182,7 @@ impl IntegrationContext {
                 .map_err(|arg0: serde_json::Error| TestError::Serialization(arg0.to_string()))
         } else {
             Err(TestError::Validation(
-                crate::error::ValidationError::invalid_setup(format!(
-                    "State key '{}' not found",
-                    key
-                )),
+                crate::error::ValidationError::invalid_setup(format!("State key '{}' not found", key)),
             ))
         }
     }
@@ -227,8 +211,8 @@ impl IntegrationPresets {
     pub fn full_stack() -> IntegrationConfig {
         IntegrationConfig {
             cleanup_on_exit: true,
-            isolated_tests: true,
-            enable_logging: true,
+            isolated_tests:  true,
+            enable_logging:  true,
             timeout_seconds: 120,
         }
     }
@@ -237,8 +221,8 @@ impl IntegrationPresets {
     pub fn minimal() -> IntegrationConfig {
         IntegrationConfig {
             cleanup_on_exit: true,
-            isolated_tests: false,
-            enable_logging: false,
+            isolated_tests:  false,
+            enable_logging:  false,
             timeout_seconds: 30,
         }
     }
@@ -247,8 +231,8 @@ impl IntegrationPresets {
     pub fn development() -> IntegrationConfig {
         IntegrationConfig {
             cleanup_on_exit: false, // Leave files for inspection
-            isolated_tests: true,
-            enable_logging: true,
+            isolated_tests:  true,
+            enable_logging:  true,
             timeout_seconds: 300,
         }
     }
